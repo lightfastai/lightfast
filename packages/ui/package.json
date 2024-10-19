@@ -8,7 +8,7 @@
     "./tailwind.config": "./tailwind.config.ts",
     "./postcss.config": "./postcss.config.mjs",
     "./globals.css": "./src/globals.css",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./hooks/*": "./src/hooks/*.tsx"
   },
   "peerDependencies": {
     "react": "^18"
