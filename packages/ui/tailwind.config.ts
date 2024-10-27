@@ -21,6 +21,12 @@ const config = {
       },
     },
     extend: {
+      spacing: {
+        "canvas-grid": "10000px",
+      },
+      backgroundImage: {
+        "canvas-grid": `radial-gradient(circle, hsl(var(--canvas-grid-dot)) 1px, transparent 1px), linear-gradient(to right, hsl(var(--canvas-grid-line)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--canvas-grid-line)) 1px, transparent 1px)`,
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
