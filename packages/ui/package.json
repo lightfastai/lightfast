@@ -16,7 +16,8 @@
   "scripts": {
     "ui": "pnpm dlx shadcn@latest",
     "lint": "eslint . --max-warnings 0",
-    "generate:component": "turbo gen react-component"
+    "generate:component": "turbo gen react-component",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -35,9 +36,11 @@
     "@radix-ui/react-checkbox": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-popover": "^1.1.2",
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slider": "^1.2.1",
     "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-toast": "^1.2.2",
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.3",
