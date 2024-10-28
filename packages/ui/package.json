@@ -16,7 +16,8 @@
   "scripts": {
     "ui": "pnpm dlx shadcn@latest",
     "lint": "eslint . --max-warnings 0",
-    "generate:component": "turbo gen react-component"
+    "generate:component": "turbo gen react-component",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
