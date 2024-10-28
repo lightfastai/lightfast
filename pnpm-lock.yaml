@@ -19,7 +19,7 @@ catalogs:
       specifier: ^11.0.0-rc.477
       version: 11.0.0-rc.593
     '@types/node':
-      specifier: ^20
+      specifier: ^20.16.11
       version: 20.17.1
     eslint:
       specifier: ^8

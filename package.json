@@ -2,13 +2,16 @@
   "name": "x",
   "private": true,
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
+    "build": "turbo run build",
+    "clean": "git clean -xdf node_modules",
+    "clean:workspaces": "turbo run clean",
+    "db:push": "turbo -F @repo/db push",
+    "db:studio": "turbo -F @repo/db studio",
+    "dev": "turbo watch dev --continue",
+    "dev:tdx": "turbo watch dev -F @repo/dev...",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "ui": "pnpm --filter @repo/ui ui",
-    "clean": "git clean -xdf node_modules",
-    "clean:workspaces": "turbo run clean"
+    "ui": "pnpm --filter @repo/ui ui"
   },
   "devDependencies": {
     "prettier": "catalog:",
