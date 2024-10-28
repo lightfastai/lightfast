@@ -7,8 +7,8 @@
     "clean:workspaces": "turbo run clean",
     "db:push": "turbo -F @repo/db push",
     "db:studio": "turbo -F @repo/db studio",
-    "dev": "turbo watch dev --continue",
-    "dev:tdx": "turbo watch dev -F @repo/dev...",
+    "dev": "turbo dev",
+    "dev:tdx": "turbo dev -F dev...",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "ui": "pnpm --filter @repo/ui ui"
