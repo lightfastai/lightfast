@@ -15,7 +15,7 @@ catalog:
   "@types/node": ^20.16.11
   "@types/eslint": ^8
   zod: ^3.23.8
-  next: ^14.2.15
+  next: 14.2.15
   
 catalogs:
   react18:
