@@ -25,7 +25,6 @@
     "POSTGRES_URL",
     "OPENAI_API_KEY",
     "ANTHROPIC_API_KEY",
-    "AUTH_REDIRECT_PROXY_URL",
     "AUTH_SECRET",
     "PORT"
   ],
