@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
-import noScrollbar from "./src/plugins/no-scrollbar";
+import { noScrollbar } from "./src/plugins/no-scrollbar";
 
 const config = {
   darkMode: ["class"],
