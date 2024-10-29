@@ -1,4 +1,8 @@
 import type * as THREE from "three";
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+
+import type { Uniform } from "./types";
 
 export const vertexShader = `
   varying vec2 vUv;
@@ -70,16 +74,41 @@ export const fragmentShader = `
   }
 `;
 
-export interface PerlinNoiseMaterialProps {
-  u_time: number;
-  u_frequency: number;
-  u_amplitude: number;
-  u_octaves: number;
-  u_persistence: number;
-  u_lacunarity: number;
-  u_scale: THREE.Vector2;
-  u_offset: THREE.Vector2;
-  u_rotation: number;
-}
+type PerlinNoiseShaderUniformNames =
+  | "u_time"
+  | "u_frequency"
+  | "u_amplitude"
+  | "u_octaves"
+  | "u_persistence"
+  | "u_lacunarity"
+  | "u_scale"
+  | "u_offset"
+  | "u_rotation";
 
-export type NoiseShaderUniforms = Record<string, THREE.IUniform<any>>;
+export type PerlinNoiseShaderUniforms = Record<
+  PerlinNoiseShaderUniformNames,
+  Uniform
+>;
+
+export const PerlinNoiseShaderMaterial = ({
+  uniforms,
+}: {
+  uniforms: PerlinNoiseShaderUniforms;
+}) => {
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+
+  useFrame((state) => {
+    if (!materialRef.current) return;
+    if (!materialRef.current.uniforms.u_time) return;
+    materialRef.current.uniforms.u_time.value = state.clock.elapsedTime;
+  });
+
+  return (
+    <shaderMaterial
+      vertexShader={vertexShader}
+      fragmentShader={fragmentShader}
+      uniforms={uniforms}
+      ref={materialRef}
+    />
+  );
+};
