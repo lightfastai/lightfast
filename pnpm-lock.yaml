@@ -11,16 +11,16 @@ catalogs:
       version: 5.59.16
     '@trpc/client':
       specifier: ^11.0.0-rc.477
-      version: 11.0.0-rc.593
+      version: 11.0.0-rc.599
     '@trpc/react-query':
       specifier: ^11.0.0-rc.477
-      version: 11.0.0-rc.593
+      version: 11.0.0-rc.599
     '@trpc/server':
       specifier: ^11.0.0-rc.477
-      version: 11.0.0-rc.593
+      version: 11.0.0-rc.599
     '@types/node':
       specifier: ^20.16.11
-      version: 20.17.1
+      version: 20.17.2
     eslint:
       specifier: ^9.12.0
       version: 9.13.0
@@ -114,7 +114,7 @@ importers:
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: 'catalog:'
-        version: 20.17.1
+        version: 20.17.2
       '@types/react':
         specifier: catalog:react18
         version: 18.3.12
@@ -135,7 +135,7 @@ importers:
         version: 8.4.47
       tailwindcss:
         specifier: 'catalog:'
-        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3))
+        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
       typescript:
         specifier: 'catalog:'
         version: 5.6.3
@@ -174,19 +174,19 @@ importers:
         version: 5.59.16(react@18.3.1)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.0.0-rc.593(@trpc/server@11.0.0-rc.593)
+        version: 11.0.0-rc.599(@trpc/server@11.0.0-rc.599)
       '@trpc/react-query':
         specifier: 'catalog:'
-        version: 11.0.0-rc.593(@tanstack/react-query@5.59.16(react@18.3.1))(@trpc/client@11.0.0-rc.593(@trpc/server@11.0.0-rc.593))(@trpc/server@11.0.0-rc.593)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 11.0.0-rc.599(@tanstack/react-query@5.59.16(react@18.3.1))(@trpc/client@11.0.0-rc.599(@trpc/server@11.0.0-rc.599))(@trpc/server@11.0.0-rc.599)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.0.0-rc.593
+        version: 11.0.0-rc.599
       '@xstate/react':
         specifier: ^4.1.3
         version: 4.1.3(@types/react@18.3.12)(react@18.3.1)(xstate@5.18.2)
       ai:
         specifier: ^3.4.20
-        version: 3.4.22(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@3.23.8)
+        version: 3.4.23(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@3.23.8)
       framer-motion:
         specifier: ^11.11.9
         version: 11.11.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -232,7 +232,7 @@ importers:
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: 'catalog:'
-        version: 20.17.1
+        version: 20.17.2
       '@types/react':
         specifier: catalog:react18
         version: 18.3.12
@@ -259,7 +259,7 @@ importers:
         version: 8.4.47
       tailwindcss:
         specifier: 'catalog:'
-        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3))
+        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
       typescript:
         specifier: 'catalog:'
         version: 5.6.3
@@ -314,7 +314,7 @@ importers:
         version: link:../../packages/typescript-config
       '@types/node':
         specifier: 'catalog:'
-        version: 20.17.1
+        version: 20.17.2
       '@types/react':
         specifier: catalog:react18
         version: 18.3.12
@@ -335,7 +335,7 @@ importers:
         version: 8.4.47
       tailwindcss:
         specifier: 'catalog:'
-        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3))
+        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
       typescript:
         specifier: 'catalog:'
         version: 5.6.3
@@ -350,7 +350,7 @@ importers:
         version: link:../db
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.0.0-rc.593
+        version: 11.0.0-rc.599
       bcrypt-ts:
         specifier: ^5.0.2
         version: 5.0.2
@@ -597,7 +597,7 @@ importers:
         version: 2.5.4
       tailwindcss-animate:
         specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@3.4.14(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3)))
+        version: 1.0.7(tailwindcss@3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3)))
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -610,13 +610,13 @@ importers:
         version: link:../typescript-config
       '@turbo/gen':
         specifier: ^1.12.4
-        version: 1.13.4(@types/node@20.17.1)(typescript@5.6.3)
+        version: 1.13.4(@types/node@20.17.2)(typescript@5.6.3)
       '@types/eslint':
         specifier: ^8.56.5
         version: 8.56.12
       '@types/node':
         specifier: 'catalog:'
-        version: 20.17.1
+        version: 20.17.2
       '@types/react':
         specifier: catalog:react18
         version: 18.3.12
@@ -628,7 +628,7 @@ importers:
         version: 9.13.0(jiti@2.3.3)
       tailwindcss:
         specifier: 'catalog:'
-        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3))
+        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
       typescript:
         specifier: 'catalog:'
         version: 5.6.3
@@ -660,11 +660,11 @@ packages:
     resolution: {integrity: sha512-dQkfBDs2lTYpKM8389oopPdQgIU007GQyCbuPPrV+K6MtSII3HBfE0stUIMXUb44L+LK1t6GXPP7wjSzjO6uKg==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@0.0.67':
-    resolution: {integrity: sha512-+Fp0DNUHAJ8MOnMCms8ythEiFCSxktjHieArlp2pES6xovI1YJF8zmTiF0GTUQeA1tFs4HFbWxVwYklf8hQOZw==}
+  '@ai-sdk/react@0.0.68':
+    resolution: {integrity: sha512-dD7cm2UsPWkuWg+qKRXjF+sNLVcUzWUnV25FxvEliJP7I2ajOpq8c+/xyGlm+YodyvAB0fX+oSODOeIWi7lCKg==}
     engines: {node: '>=18'}
     peerDependencies:
-      react: ^18 || ^19
+      react: ^18 || ^19 || ^19.0.0-rc
       zod: ^3.0.0
     peerDependenciesMeta:
       react:
@@ -808,8 +808,8 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@drizzle-team/brocli@0.10.1':
-    resolution: {integrity: sha512-AHy0vjc+n/4w/8Mif+w86qpppHuF3AyXbcWW+R/W7GNA3F5/p2nuhlkCJaTXSLZheB4l1rtHzOfr9A7NwoR/Zg==}
+  '@drizzle-team/brocli@0.10.2':
+    resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
@@ -1971,22 +1971,22 @@ packages:
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
 
-  '@trpc/client@11.0.0-rc.593':
-    resolution: {integrity: sha512-uQORhYMwUeY4TluQmhl6N183BiLZz5mgIzBynkSWKxtQ7TIHt+3iRzTSiJH1jTl3SEOtCacRHS6b1yvFP2RJXw==}
+  '@trpc/client@11.0.0-rc.599':
+    resolution: {integrity: sha512-CyfbV6c2pz1coJBkMDMfAP/pNpHLgSJD45EUSyVlDSYJVXtsONApi7jNhf8AHjjgsbSoFWb0LyAcWds0i1C0hg==}
     peerDependencies:
-      '@trpc/server': 11.0.0-rc.593+f73cd3fd9
+      '@trpc/server': 11.0.0-rc.599+e16cd8d7c
 
-  '@trpc/react-query@11.0.0-rc.593':
-    resolution: {integrity: sha512-T5abZpWKW+Ndk3SAGwXqRLnIXTpdiQd0OF5TqTGbE1RuAWVf6rOZJWSjxp0M16aypkc0uEDAUia912VnKhrOqA==}
+  '@trpc/react-query@11.0.0-rc.599':
+    resolution: {integrity: sha512-W95wLU5GG9oldlmhxmHS+tXeRuCmLqWBYRTedpT7qMmzKT5wyrgUyV66t4H2i6y4Rf6EtbwkGOvAgFQGVN+R7w==}
     peerDependencies:
       '@tanstack/react-query': ^5.59.15
-      '@trpc/client': 11.0.0-rc.593+f73cd3fd9
-      '@trpc/server': 11.0.0-rc.593+f73cd3fd9
+      '@trpc/client': 11.0.0-rc.599+e16cd8d7c
+      '@trpc/server': 11.0.0-rc.599+e16cd8d7c
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@trpc/server@11.0.0-rc.593':
-    resolution: {integrity: sha512-ihZNf7nM3OriZkkuOUFjuB51FJdtCXZUUj8FIXkq0VXF9VmMOD7j4QTl5YojIzMTJBMGUK9VADcO0shgELEmyw==}
+  '@trpc/server@11.0.0-rc.599':
+    resolution: {integrity: sha512-XhhinuXAH6Jsr6aCpJ7Q5DyIKaBh9moyMyqaBbnzPqeae5LzUCKuTNmCIT/yl5Nga7rfSB5VybVscQIYrXYDxg==}
 
   '@tsconfig/node10@1.0.11':
     resolution: {integrity: sha512-DcRjDCujK/kCk/cUe8Xz8ZSpm8mS3mNNpta+jGCA6USEDfktlNvm1+IuZ9eTcDbNk41BHwpHHeW+N1lKCz4zOw==}
@@ -2047,11 +2047,11 @@ packages:
   '@types/minimatch@5.1.2':
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
 
-  '@types/node@20.17.1':
-    resolution: {integrity: sha512-j2VlPv1NnwPJbaCNv69FO/1z4lId0QmGvpT41YxitRtWlg96g/j8qcv2RKsLKe2F6OJgyXhupN1Xo17b2m139Q==}
+  '@types/node@20.17.2':
+    resolution: {integrity: sha512-OOHK4sjXqkL7yQ7VEEHcf6+0jSvKjWqwnaCtY7AKD/VLEvRHMsxxu7eI8ErnjxHS8VwmekD4PeVCpu4qZEZSxg==}
 
-  '@types/node@22.8.1':
-    resolution: {integrity: sha512-k6Gi8Yyo8EtrNtkHXutUu2corfDf9su95VYVP10aGYMMROM6SAItZi0w1XszA6RtWTHSVp5OeFof37w0IEqCQg==}
+  '@types/node@22.8.2':
+    resolution: {integrity: sha512-NzaRNFV+FZkvK/KLCsNdTvID0SThyrs5SHB6tsD/lajr22FGC73N2QeDPM2wHtVde8mgcXuSsHQkH5cX1pbPLw==}
 
   '@types/offscreencanvas@2019.7.3':
     resolution: {integrity: sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A==}
@@ -2224,12 +2224,12 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@3.4.22:
-    resolution: {integrity: sha512-Yhcbq1ZiKWezdbp4IMJVgJZGisqZRHFEDWE85teKpbFImsNNty72Trzo6P7LRPCmLbiiR4RN30luA6+0xFBy2Q==}
+  ai@3.4.23:
+    resolution: {integrity: sha512-ZA10Cg9smMZkzT6Y5wkz7K2pUUnIQdiBSH1OdHkfE6MFvA0J7PHItaQuixCr5OFv4Aoliq5J8XN1E0W8PH6S4g==}
     engines: {node: '>=18'}
     peerDependencies:
       openai: ^4.42.0
-      react: ^18 || ^19
+      react: ^18 || ^19 || ^19.0.0-rc
       sswr: ^2.1.0
       svelte: ^3.0.0 || ^4.0.0
       zod: ^3.0.0
@@ -2788,8 +2788,8 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
-  electron-to-chromium@1.5.47:
-    resolution: {integrity: sha512-zS5Yer0MOYw4rtK2iq43cJagHZ8sXN0jDHDKzB+86gSBSAI4v07S97mcq+Gs2vclAxSh1j7vOAHxSVgduiiuVQ==}
+  electron-to-chromium@1.5.48:
+    resolution: {integrity: sha512-FXULnNK7ACNI9MTMOVAzUGiz/YrK9Kcb0s/JT4aJgsam7Eh6XYe7Y6q95lPq+VdBe1DpT2eTnfXFtnuPGCks4w==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -4835,7 +4835,7 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@0.0.67(react@18.3.1)(zod@3.23.8)':
+  '@ai-sdk/react@0.0.68(react@18.3.1)(zod@3.23.8)':
     dependencies:
       '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
       '@ai-sdk/ui-utils': 0.0.49(zod@3.23.8)
@@ -5017,7 +5017,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@drizzle-team/brocli@0.10.1': {}
+  '@drizzle-team/brocli@0.10.2': {}
 
   '@esbuild-kit/core-utils@3.3.2':
     dependencies:
@@ -6009,19 +6009,19 @@ snapshots:
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 
-  '@trpc/client@11.0.0-rc.593(@trpc/server@11.0.0-rc.593)':
+  '@trpc/client@11.0.0-rc.599(@trpc/server@11.0.0-rc.599)':
     dependencies:
-      '@trpc/server': 11.0.0-rc.593
+      '@trpc/server': 11.0.0-rc.599
 
-  '@trpc/react-query@11.0.0-rc.593(@tanstack/react-query@5.59.16(react@18.3.1))(@trpc/client@11.0.0-rc.593(@trpc/server@11.0.0-rc.593))(@trpc/server@11.0.0-rc.593)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@trpc/react-query@11.0.0-rc.599(@tanstack/react-query@5.59.16(react@18.3.1))(@trpc/client@11.0.0-rc.599(@trpc/server@11.0.0-rc.599))(@trpc/server@11.0.0-rc.599)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@tanstack/react-query': 5.59.16(react@18.3.1)
-      '@trpc/client': 11.0.0-rc.593(@trpc/server@11.0.0-rc.593)
-      '@trpc/server': 11.0.0-rc.593
+      '@trpc/client': 11.0.0-rc.599(@trpc/server@11.0.0-rc.599)
+      '@trpc/server': 11.0.0-rc.599
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@trpc/server@11.0.0-rc.593': {}
+  '@trpc/server@11.0.0-rc.599': {}
 
   '@tsconfig/node10@1.0.11': {}
 
@@ -6031,7 +6031,7 @@ snapshots:
 
   '@tsconfig/node16@1.0.4': {}
 
-  '@turbo/gen@1.13.4(@types/node@20.17.1)(typescript@5.6.3)':
+  '@turbo/gen@1.13.4(@types/node@20.17.2)(typescript@5.6.3)':
     dependencies:
       '@turbo/workspaces': 1.13.4
       chalk: 2.4.2
@@ -6041,7 +6041,7 @@ snapshots:
       minimatch: 9.0.5
       node-plop: 0.26.3
       proxy-agent: 6.4.0
-      ts-node: 10.9.2(@types/node@20.17.1)(typescript@5.6.3)
+      ts-node: 10.9.2(@types/node@20.17.2)(typescript@5.6.3)
       update-check: 1.5.4
       validate-npm-package-name: 5.0.1
     transitivePeerDependencies:
@@ -6090,7 +6090,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.17.1
+      '@types/node': 20.17.2
 
   '@types/inquirer@6.5.0':
     dependencies:
@@ -6103,11 +6103,11 @@ snapshots:
 
   '@types/minimatch@5.1.2': {}
 
-  '@types/node@20.17.1':
+  '@types/node@20.17.2':
     dependencies:
       undici-types: 6.19.8
 
-  '@types/node@22.8.1':
+  '@types/node@22.8.2':
     dependencies:
       undici-types: 6.19.8
 
@@ -6115,7 +6115,7 @@ snapshots:
 
   '@types/pg@8.11.6':
     dependencies:
-      '@types/node': 22.8.1
+      '@types/node': 22.8.2
       pg-protocol: 1.7.0
       pg-types: 4.0.2
 
@@ -6159,7 +6159,7 @@ snapshots:
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 20.17.1
+      '@types/node': 20.17.2
 
   '@types/tinycolor2@1.4.6': {}
 
@@ -6348,11 +6348,11 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@3.4.22(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@3.23.8):
+  ai@3.4.23(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@3.23.8):
     dependencies:
       '@ai-sdk/provider': 0.0.26
       '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      '@ai-sdk/react': 0.0.67(react@18.3.1)(zod@3.23.8)
+      '@ai-sdk/react': 0.0.68(react@18.3.1)(zod@3.23.8)
       '@ai-sdk/solid': 0.0.53(zod@3.23.8)
       '@ai-sdk/svelte': 0.0.55(svelte@4.2.19)(zod@3.23.8)
       '@ai-sdk/ui-utils': 0.0.49(zod@3.23.8)
@@ -6543,7 +6543,7 @@ snapshots:
   browserslist@4.24.2:
     dependencies:
       caniuse-lite: 1.0.30001673
-      electron-to-chromium: 1.5.47
+      electron-to-chromium: 1.5.48
       node-releases: 2.0.18
       update-browserslist-db: 1.1.1(browserslist@4.24.2)
 
@@ -6849,7 +6849,7 @@ snapshots:
 
   drizzle-kit@0.26.2:
     dependencies:
-      '@drizzle-team/brocli': 0.10.1
+      '@drizzle-team/brocli': 0.10.2
       '@esbuild-kit/esm-loader': 2.6.5
       esbuild: 0.19.12
       esbuild-register: 3.6.0(esbuild@0.19.12)
@@ -6874,7 +6874,7 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
-  electron-to-chromium@1.5.47: {}
+  electron-to-chromium@1.5.48: {}
 
   emoji-regex@8.0.0: {}
 
@@ -8157,13 +8157,13 @@ snapshots:
       camelcase-css: 2.0.1
       postcss: 8.4.47
 
-  postcss-load-config@4.0.2(postcss@8.4.47)(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3)):
+  postcss-load-config@4.0.2(postcss@8.4.47)(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3)):
     dependencies:
       lilconfig: 3.1.2
       yaml: 2.6.0
     optionalDependencies:
       postcss: 8.4.47
-      ts-node: 10.9.2(@types/node@20.17.1)(typescript@5.6.3)
+      ts-node: 10.9.2(@types/node@20.17.2)(typescript@5.6.3)
 
   postcss-nested@6.2.0(postcss@8.4.47):
     dependencies:
@@ -8680,11 +8680,11 @@ snapshots:
 
   tailwind-merge@2.5.4: {}
 
-  tailwindcss-animate@1.0.7(tailwindcss@3.4.14(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3))):
+  tailwindcss-animate@1.0.7(tailwindcss@3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))):
     dependencies:
-      tailwindcss: 3.4.14(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3))
+      tailwindcss: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
 
-  tailwindcss@3.4.14(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3)):
+  tailwindcss@3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3)):
     dependencies:
       '@alloc/quick-lru': 5.2.0
       arg: 5.0.2
@@ -8703,7 +8703,7 @@ snapshots:
       postcss: 8.4.47
       postcss-import: 15.1.0(postcss@8.4.47)
       postcss-js: 4.0.1(postcss@8.4.47)
-      postcss-load-config: 4.0.2(postcss@8.4.47)(ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3))
+      postcss-load-config: 4.0.2(postcss@8.4.47)(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
       postcss-nested: 6.2.0(postcss@8.4.47)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.8
@@ -8779,14 +8779,14 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  ts-node@10.9.2(@types/node@20.17.1)(typescript@5.6.3):
+  ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.11
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 20.17.1
+      '@types/node': 20.17.2
       acorn: 8.14.0
       acorn-walk: 8.3.4
       arg: 4.1.3
