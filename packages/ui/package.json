@@ -22,6 +22,7 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
     "@turbo/gen": "^1.12.4",
     "@types/eslint": "^8.56.5",
     "@types/node": "catalog:",
@@ -52,5 +53,6 @@
     "react-resizable-panels": "^2.1.4",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7"
-  }
+  },
+  "prettier": "@repo/prettier-config"
 }
