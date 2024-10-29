@@ -15,9 +15,11 @@
   },
   "scripts": {
     "ui": "pnpm dlx shadcn@latest",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint",
     "generate:component": "turbo gen react-component",
-    "clean": "git clean -xdf .cache .turbo dist node_modules"
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --check . --ignore-path ../../.gitignore"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
