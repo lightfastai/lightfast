@@ -1,8 +1,8 @@
 "use client";
 
+import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 
@@ -78,9 +78,7 @@ const SidebarProvider = React.forwardRef<
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         if (setOpenProp) {
-          return setOpenProp(
-            typeof value === "function" ? value(open) : value,
-          );
+          return setOpenProp(typeof value === "function" ? value(open) : value);
         }
 
         _setOpen(value);
