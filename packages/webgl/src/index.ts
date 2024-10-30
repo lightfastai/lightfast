@@ -1,10 +1,10 @@
 import type { PerlinNoiseShaderUniforms } from "./noise/perlin-noise-material";
 import {
-  fragmentShader,
+  perlinNoiseFragmentShader,
   PerlinNoiseShaderMaterial,
-  vertexShader,
+  perlinNoiseVertexShader,
 } from "./noise/perlin-noise-material";
 
 export { PerlinNoiseShaderMaterial, type PerlinNoiseShaderUniforms };
 
-export { vertexShader, fragmentShader };
+export { perlinNoiseVertexShader, perlinNoiseFragmentShader };

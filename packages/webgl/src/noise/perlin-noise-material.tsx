@@ -4,7 +4,7 @@ import { useFrame } from "@react-three/fiber";
 
 import type { Uniform } from "./types";
 
-export const vertexShader = `
+export const perlinNoiseVertexShader = `
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -12,7 +12,7 @@ export const vertexShader = `
   }
 `;
 
-export const fragmentShader = `
+export const perlinNoiseFragmentShader = `
   uniform float u_time;
   uniform float u_frequency;
   uniform float u_amplitude;
@@ -105,8 +105,8 @@ export const PerlinNoiseShaderMaterial = ({
 
   return (
     <shaderMaterial
-      vertexShader={vertexShader}
-      fragmentShader={fragmentShader}
+      vertexShader={perlinNoiseVertexShader}
+      fragmentShader={perlinNoiseFragmentShader}
       uniforms={uniforms}
       ref={materialRef}
     />
