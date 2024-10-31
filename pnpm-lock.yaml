@@ -163,18 +163,12 @@ importers:
       '@repo/auth':
         specifier: workspace:*
         version: link:../../packages/auth
-      '@repo/brand':
-        specifier: workspace:^
-        version: link:../brand
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@repo/web':
-        specifier: workspace:^
-        version: link:../web
       '@repo/webgl':
         specifier: workspace:*
         version: link:../../packages/webgl
