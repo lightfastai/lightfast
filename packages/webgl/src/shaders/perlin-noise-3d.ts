@@ -20,6 +20,9 @@ export const $PerlinNoise3D = z.object({
     x: { min: -1000, max: 1000, default: 0 },
     y: { min: -1000, max: 1000, default: 0 },
   }),
+
+  // inputs
+  u_texture: z.number().nullable(),
 });
 
 export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
@@ -34,6 +37,7 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_amplitude: 1,
     u_scale: { x: 1, y: 1 },
     u_offset: { x: 0, y: 0 },
+    u_texture: null,
   });
 };
 
@@ -54,6 +58,7 @@ export const perlinNoise3DFragmentShader = `
   uniform vec2 u_scale;
   uniform vec2 u_offset;
   uniform float u_rotation;
+  uniform sampler2D u_texture;
 
   varying vec2 vUv;
 
@@ -102,6 +107,13 @@ export const perlinNoise3DFragmentShader = `
     }
 
     noiseValue = noiseValue * 0.5 + 0.5;
-    gl_FragColor = vec4(vec3(noiseValue), 1.0);
+    vec4 textureColor = texture2D(u_texture, vUv);
+    vec3 finalColor;
+    if (textureColor.a > 0.0) {
+      finalColor = mix(textureColor.rgb, vec3(noiseValue), 0.5);
+    } else {
+      finalColor = vec3(noiseValue);
+    }
+    gl_FragColor = vec4(finalColor, 1.0);
   }
 `;
