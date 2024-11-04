@@ -32,7 +32,7 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_persistence: 0.5,
     u_lacunarity: 2,
     u_amplitude: 1,
-    u_scale: { x: 0, y: 0 },
+    u_scale: { x: 1, y: 1 },
     u_offset: { x: 0, y: 0 },
   });
 };
