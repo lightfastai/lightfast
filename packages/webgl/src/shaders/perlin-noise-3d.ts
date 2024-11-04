@@ -1,18 +1,50 @@
-import type * as THREE from "three";
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { z } from "zod";
 
-import type { Uniform } from "./types";
+import { createConstrainedVec2 } from "../schema/vec2";
 
-export const vertexShader = `
+export const $PerlinNoise3D = z.object({
+  // noise
+  u_time: z.number().default(0),
+  u_frequency: z.number().min(0.01).max(2).default(1), // Base frequency; max value adjusted to 2
+  u_octaves: z.number().int().min(1).max(10).default(3), // Number of harmonics; max value is 10
+  u_persistence: z.number().min(0).max(2).default(0.5), // Amplitude multiplier; max value adjusted to 2
+  u_lacunarity: z.number().min(0).max(2).default(2), // Frequency multiplier; max value adjusted to 20
+  u_amplitude: z.number().min(0).max(2).default(1), // Overall amplitude scaling; max value adjusted to 2
+
+  // transform
+  u_scale: createConstrainedVec2({
+    x: { min: -1000, max: 1000, default: 0 },
+    y: { min: -1000, max: 1000, default: 0 },
+  }),
+  u_offset: createConstrainedVec2({
+    x: { min: -1000, max: 1000, default: 0 },
+    y: { min: -1000, max: 1000, default: 0 },
+  }),
+});
+
+export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
+
+export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
+  return $PerlinNoise3D.parse({
+    u_time: 0,
+    u_frequency: 1,
+    u_octaves: 3,
+    u_persistence: 0.5,
+    u_lacunarity: 2,
+    u_amplitude: 1,
+    u_scale: { x: 1, y: 1 },
+    u_offset: { x: 0, y: 0 },
+  });
+};
+
+export const perlinNoise3DVertexShader = `
   varying vec2 vUv;
   void main() {
     vUv = uv;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
+  }`;
 
-export const fragmentShader = `
+export const perlinNoise3DFragmentShader = `
   uniform float u_time;
   uniform float u_frequency;
   uniform float u_amplitude;
@@ -73,42 +105,3 @@ export const fragmentShader = `
     gl_FragColor = vec4(vec3(noiseValue), 1.0);
   }
 `;
-
-type PerlinNoiseShaderUniformNames =
-  | "u_time"
-  | "u_frequency"
-  | "u_amplitude"
-  | "u_octaves"
-  | "u_persistence"
-  | "u_lacunarity"
-  | "u_scale"
-  | "u_offset"
-  | "u_rotation";
-
-export type PerlinNoiseShaderUniforms = Record<
-  PerlinNoiseShaderUniformNames,
-  Uniform
->;
-
-export const PerlinNoiseShaderMaterial = ({
-  uniforms,
-}: {
-  uniforms: PerlinNoiseShaderUniforms;
-}) => {
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-
-  useFrame((state) => {
-    if (!materialRef.current) return;
-    if (!materialRef.current.uniforms.u_time) return;
-    materialRef.current.uniforms.u_time.value = state.clock.elapsedTime;
-  });
-
-  return (
-    <shaderMaterial
-      vertexShader={vertexShader}
-      fragmentShader={fragmentShader}
-      uniforms={uniforms}
-      ref={materialRef}
-    />
-  );
-};
