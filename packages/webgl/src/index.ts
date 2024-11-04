@@ -1,5 +1,3 @@
-import { limitFragmentShader, limitVertexShader } from "./shaders/limit";
-
 /**
  * base modules
  */
@@ -19,6 +17,12 @@ export {
 } from "./shaders/perlin-noise-3d";
 
 /**
- * shader modules
+ * limit modules
  */
-export { limitVertexShader, limitFragmentShader };
+export type { LimitParams } from "./shaders/limit";
+export {
+  $Limit,
+  createDefaultLimit,
+  limitFragmentShader,
+  limitVertexShader,
+} from "./shaders/limit";

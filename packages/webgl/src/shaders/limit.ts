@@ -1,3 +1,19 @@
+import { z } from "zod";
+
+export const $Limit = z.object({
+  u_texture: z.number().nullable(),
+  u_quantizationSteps: z.number().min(0.01).max(1).default(0.1),
+});
+
+export type LimitParams = z.infer<typeof $Limit>;
+
+export const createDefaultLimit = (): LimitParams => {
+  return $Limit.parse({
+    u_texture: null,
+    u_quantizationSteps: 0.1,
+  });
+};
+
 export const limitVertexShader = `
   varying vec2 vUv;
   void main() {
