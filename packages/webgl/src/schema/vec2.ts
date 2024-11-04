@@ -1,9 +1,13 @@
 import { z } from "zod";
 
+import type { Value } from "./value";
+
 export const $Vec2 = z.object({
   x: z.number(),
   y: z.number(),
 });
+
+export type Vec2 = z.infer<typeof $Vec2>;
 
 interface ConstrainedVec2 {
   x: {
@@ -32,3 +36,7 @@ export const createConstrainedVec2 = (constraints: ConstrainedVec2) => {
       .default(constraints.y.default),
   });
 };
+
+export function isVec2(value: Value): value is Vec2 {
+  return $Vec2.safeParse(value).success;
+}

@@ -1,11 +1,15 @@
 import { z } from "zod";
 
+import type { Value } from "./value";
+
 // Base Vec3 schema without constraints
 export const $Vec3 = z.object({
   x: z.number(),
   y: z.number(),
   z: z.number(),
 });
+
+export type Vec3 = z.infer<typeof $Vec3>;
 
 interface ConstrainedVec3 {
   x: {
@@ -44,3 +48,7 @@ export const createConstrainedVec3 = (constraints: ConstrainedVec3) => {
       .default(constraints.z.default),
   });
 };
+
+export function isVec3(value: Value): value is Vec3 {
+  return $Vec3.safeParse(value).success;
+}
