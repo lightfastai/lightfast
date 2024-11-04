@@ -1,15 +1,23 @@
-import type { PerlinNoiseShaderUniforms } from "./noise/perlin-noise-material";
-import {
-  perlinNoiseFragmentShader,
-  PerlinNoiseShaderMaterial,
-  perlinNoiseVertexShader,
-} from "./noise/perlin-noise-material";
 import { limitFragmentShader, limitVertexShader } from "./shaders/limit";
 
-export { PerlinNoiseShaderMaterial, type PerlinNoiseShaderUniforms };
+/**
+ * base modules
+ */
+export { $Vec3, createConstrainedVec3 } from "./schema/vec3";
+export { $Vec2, createConstrainedVec2 } from "./schema/vec2";
+export { $Color } from "./schema/color";
+
+/**
+ * noise modules
+ */
+export type { PerlinNoise3DParams } from "./shaders/perlin-noise-3d";
+export { $PerlinNoise3D } from "./shaders/perlin-noise-3d";
+export {
+  perlinNoise3DFragmentShader,
+  perlinNoise3DVertexShader,
+} from "./shaders/perlin-noise-3d";
 
 /**
  * shader modules
  */
-export { perlinNoiseVertexShader, perlinNoiseFragmentShader };
 export { limitVertexShader, limitFragmentShader };
