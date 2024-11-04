@@ -42,6 +42,7 @@ const useFormField = () => {
 
   const fieldState = getFieldState(fieldContext.name, formState);
 
+  // @todo eslint-error
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>");
   }
