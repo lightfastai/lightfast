@@ -15,6 +15,7 @@ export { $PerlinNoise3D } from "./shaders/perlin-noise-3d";
 export {
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
+  createDefaultPerlinNoise3D,
 } from "./shaders/perlin-noise-3d";
 
 /**
