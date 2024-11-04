@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const $Limit = z.object({
   u_texture: z.number().nullable(),
-  u_quantizationSteps: z.number().min(0.01).max(1).default(0.1),
+  u_quantizationSteps: z.number().min(1).max(5).default(1.01),
 });
 
 export type LimitParams = z.infer<typeof $Limit>;
@@ -10,7 +10,7 @@ export type LimitParams = z.infer<typeof $Limit>;
 export const createDefaultLimit = (): LimitParams => {
   return $Limit.parse({
     u_texture: null,
-    u_quantizationSteps: 0.1,
+    u_quantizationSteps: 1.01,
   });
 };
 
