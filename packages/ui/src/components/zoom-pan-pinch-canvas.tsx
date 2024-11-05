@@ -20,6 +20,9 @@ interface ZoomPanPinchCanvasProps {
 const ZoomPanPinchCanvas = ({
   children,
   debug = false,
+  minZoom = 0.1,
+  maxZoom = 10,
+  zoomSpeed = 0.1,
 }: ZoomPanPinchCanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const gridSize = 20; // Size of each grid cell in pixels
@@ -37,10 +40,10 @@ const ZoomPanPinchCanvas = ({
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        const delta = -e.deltaY * ZOOM_SPEED;
+        const delta = -e.deltaY * zoomSpeed;
         setZoom((prevZoom) => {
           let newZoom = prevZoom + delta;
-          newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
+          newZoom = Math.min(maxZoom, Math.max(minZoom, newZoom));
 
           const scaleFactor = newZoom / prevZoom;
 
@@ -119,7 +122,7 @@ const ZoomPanPinchCanvas = ({
         <div
           className="h-canvas-grid w-canvas-grid origin-top-left bg-canvas-grid bg-[0_0,0_0,0_0]"
           style={{
-            backgroundSize: `${gridSize * zoom}px ${gridSize * zoom}px, ${gridSize * zoom}px ${gridSize * zoom}px, ${gridSize * zoom}px ${gridSize * zoom}px`,
+            backgroundSize: `${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px`,
             transform: `scale(${zoom})`,
           }}
         >
