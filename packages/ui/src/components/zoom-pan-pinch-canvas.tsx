@@ -17,7 +17,7 @@ interface ZoomPanPinchCanvasProps {
   zoomSpeed?: number;
 }
 
-const ZoomPanPinchCanvas = ({
+export const ZoomPanPinchCanvas = ({
   children,
   debug = false,
   minZoom = 0.1,
@@ -151,5 +151,3 @@ const ZoomPanPinchCanvas = ({
     </div>
   );
 };
-
-export default ZoomPanPinchCanvas;
