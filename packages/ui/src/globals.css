@@ -87,3 +87,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .parallax-card {
+    position: sticky;
+    top: 25vh; /* (100vh - 75vh) / 2 to center vertically */
+    transform: translateY(100vh);
+    will-change: transform;
+  }
+}
+
+@keyframes parallax-slide {
+  to {
+    transform: translateY(0);
+  }
+}
+
+.parallax-card {
+  animation: parallax-slide 1s linear;
+  animation-timeline: scroll();
+  animation-range: 0 100vh;
+}
