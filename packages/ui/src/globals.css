@@ -97,14 +97,33 @@
   }
 }
 
-@keyframes parallax-slide {
-  to {
+@keyframes spring-parallax {
+  0% {
+    transform: translateY(100vh);
+  }
+  60% {
+    transform: translateY(-15vh);
+  }
+  80% {
+    transform: translateY(5vh);
+  }
+  95% {
+    transform: translateY(-2vh);
+  }
+  100% {
     transform: translateY(0);
   }
 }
 
 .parallax-card {
-  animation: parallax-slide 1s linear;
+  animation: spring-parallax 1s cubic-bezier(0.25, 0.1, 0.25, 1);
   animation-timeline: scroll();
   animation-range: 0 100vh;
+}
+
+@supports not (animation-timeline: scroll()) {
+  .parallax-card {
+    transform: translateY(0);
+    transition: transform 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
 }
