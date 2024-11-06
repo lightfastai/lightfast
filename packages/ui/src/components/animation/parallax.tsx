@@ -2,6 +2,14 @@ import type { MotionStyle, MotionValue } from "framer-motion";
 import type { ReactNode } from "react";
 import { createContext, useContext, useRef } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { ArrowDown } from "lucide-react";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 // Types
 interface ParallaxContextType {
@@ -152,9 +160,52 @@ const Percentage: React.FC<ParallaxPercentageProps> = ({ className = "" }) => {
   );
 };
 
+// Scroll Extension Component
+// @todo only supports vertical scrolling for 200vh for now
+const ScrollExtension: React.FC = () => {
+  return <div className="h-[200vh]"></div>;
+};
+
+const ScrollHelperIcon: React.FC = () => {
+  const { scrollYProgress } = useParallaxContext();
+  const opacity = useTransform(
+    scrollYProgress,
+    [0, 0.01], // Very small scroll threshold
+    [1, 0],
+  );
+
+  return (
+    <motion.div
+      style={{ opacity }}
+      className="pointer-events-none fixed bottom-8 left-1/2 z-50 flex -translate-x-1/2 items-center justify-center"
+    >
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <motion.div
+              className="pointer-events-auto cursor-pointer"
+              whileHover={{
+                y: [0, 4, 0],
+                transition: { repeat: Infinity, duration: 1.5 },
+              }}
+            >
+              <ArrowDown className="h-4 w-4 text-muted-foreground/80" />
+            </motion.div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">Scroll to explore</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </motion.div>
+  );
+};
+
 // Export as namespace
 export const Parallax = {
   Root,
   Section,
   Percentage,
+  ScrollExtension,
+  ScrollHelperIcon,
 };
