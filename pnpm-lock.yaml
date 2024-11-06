@@ -102,6 +102,9 @@ importers:
       react-dom:
         specifier: catalog:react18
         version: 18.3.1(react@18.3.1)
+      react-scroll-parallax:
+        specifier: ^3.4.5
+        version: 3.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       three:
         specifier: ^0.169.0
         version: 0.169.0
