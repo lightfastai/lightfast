@@ -13,7 +13,7 @@
     "db:push": "turbo -F @repo/db push",
     "db:studio": "turbo -F @repo/db studio",
     "dev": "turbo watch dev --continue",
-    "dev:tdx": "turbo dev -F dev",
+    "dev:dev": "turbo dev -F @repo/dev",
     "dev:personal": "turbo dev -F @repo/personal",
     "dev:brand": "turbo dev -F @repo/brand",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
