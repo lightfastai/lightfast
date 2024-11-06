@@ -1,49 +1,34 @@
 import type { MotionStyle, MotionValue } from "framer-motion";
-import type { ReactNode, RefObject } from "react";
+import type { ReactNode } from "react";
 import { createContext, useContext, useRef } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 
-interface ParallaxScrollConfig {
-  container: RefObject<HTMLElement>;
-  springConfig?: {
-    stiffness: number;
-    damping: number;
-    restDelta: number;
-  };
+// Types
+interface ParallaxContextType {
+  scrollYProgress: MotionValue<number>;
+  useCreateTransform: (config: TransformConfig) => MotionValue<string | number>;
 }
 
-interface ParallaxTransformConfig {
+interface TransformConfig {
   property: string;
   inputRange: number[];
   outputRange: (string | number)[];
 }
 
-export const useParallaxScroll = ({
-  container,
-  springConfig = {
-    stiffness: 300,
-    damping: 30,
-    restDelta: 0.001,
-  },
-}: ParallaxScrollConfig) => {
-  const { scrollYProgress } = useScroll({ container });
-  const springScrollYProgress = useSpring(scrollYProgress, springConfig);
+// Context
+const ParallaxContext = createContext<ParallaxContextType | null>(null);
 
-  const useCreateTransform = ({
-    property,
-    inputRange,
-    outputRange,
-  }: ParallaxTransformConfig) => {
-    return useTransform(springScrollYProgress, inputRange, outputRange);
-  };
-
-  return {
-    scrollYProgress: springScrollYProgress,
-    useCreateTransform,
-  };
+// Hook
+const useParallaxContext = () => {
+  const context = useContext(ParallaxContext);
+  if (!context) {
+    throw new Error("Parallax components must be used within Parallax.Root");
+  }
+  return context;
 };
 
-interface ParallaxContainerProps {
+// Root Component and Namespace
+const Root: React.FC<{
   children: ReactNode;
   className?: string;
   springConfig?: {
@@ -51,21 +36,29 @@ interface ParallaxContainerProps {
     damping: number;
     restDelta: number;
   };
-}
-
-export const ParallaxContainer: React.FC<ParallaxContainerProps> = ({
-  children,
-  className = "",
-  springConfig,
-}) => {
+}> = ({ children, className = "", springConfig }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress, useCreateTransform } = useParallaxScroll({
-    container: scrollRef,
-    springConfig,
+
+  const { scrollYProgress } = useScroll({ container: scrollRef });
+  const springScrollYProgress = useSpring(scrollYProgress, {
+    stiffness: 300,
+    damping: 30,
+    restDelta: 0.001,
+    ...springConfig,
   });
 
+  const useCreateTransform = ({
+    property,
+    inputRange,
+    outputRange,
+  }: TransformConfig) => {
+    return useTransform(springScrollYProgress, inputRange, outputRange);
+  };
+
   return (
-    <ParallaxContext.Provider value={{ scrollYProgress, useCreateTransform }}>
+    <ParallaxContext.Provider
+      value={{ scrollYProgress: springScrollYProgress, useCreateTransform }}
+    >
       <div
         ref={scrollRef}
         className={`relative h-screen overflow-y-auto overscroll-none no-scrollbar ${className}`}
@@ -76,26 +69,8 @@ export const ParallaxContainer: React.FC<ParallaxContainerProps> = ({
   );
 };
 
-interface ParallaxContextType {
-  scrollYProgress: MotionValue<number>;
-  useCreateTransform: (config: {
-    property: string;
-    inputRange: number[];
-    outputRange: (string | number)[];
-  }) => MotionValue<string | number>;
-}
-
-export const ParallaxContext = createContext<ParallaxContextType | null>(null);
-
-export const useParallaxContext = () => {
-  const context = useContext(ParallaxContext);
-  if (!context) {
-    throw new Error("useParallaxContext must be used within ParallaxContainer");
-  }
-  return context;
-};
-
-interface ParallaxSectionProps {
+// Section Component
+const Section: React.FC<{
   children: ReactNode;
   className?: string;
   translateY?: {
@@ -107,17 +82,8 @@ interface ParallaxSectionProps {
     outputRange: number[];
   };
   fixed?: boolean;
-}
-
-export const ParallaxSection: React.FC<ParallaxSectionProps> = ({
-  children,
-  className = "",
-  translateY,
-  opacity,
-  fixed = false,
-}) => {
+}> = ({ children, className = "", translateY, opacity, fixed = false }) => {
   const { useCreateTransform } = useParallaxContext();
-
   const style: MotionStyle = {};
 
   const translateYTransform = useCreateTransform({
@@ -150,15 +116,13 @@ export const ParallaxSection: React.FC<ParallaxSectionProps> = ({
   );
 };
 
-interface ParallaxScrollPercentageProps {
+interface ParallaxPercentageProps {
   className?: string;
 }
 
-export const ParallaxScrollPercentage: React.FC<
-  ParallaxScrollPercentageProps
-> = ({ className = "" }) => {
+// Percentage Component
+const Percentage: React.FC<ParallaxPercentageProps> = ({ className = "" }) => {
   const { scrollYProgress } = useParallaxContext();
-
   const formattedPercentage = useTransform(scrollYProgress, (value) =>
     (value * 100).toFixed(2),
   );
@@ -177,4 +141,11 @@ export const ParallaxScrollPercentage: React.FC<
       </div>
     </motion.div>
   );
+};
+
+// Export as namespace
+export const Parallax = {
+  Root,
+  Section,
+  Percentage,
 };
