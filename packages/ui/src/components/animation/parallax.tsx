@@ -132,12 +132,13 @@ const Percentage: React.FC<ParallaxPercentageProps> = ({ className = "" }) => {
       className={`fixed bottom-8 right-16 z-50 mix-blend-difference ${className}`}
     >
       <div className="font-mono text-xs font-bold uppercase tracking-wider">
-        <span className="text-muted-foreground/80">Scroll</span>
-        <span className="text-muted-foreground/60">(</span>
+        <span className="text-muted-foreground">Scroll</span>
+        <span className="text-muted-foreground">(</span>
         <motion.span className="inline-block min-w-[2ch] text-right text-primary">
           {formattedPercentage}
         </motion.span>
-        <span className="text-muted-foreground/60">%)</span>
+        <span className="text-primary">%</span>
+        <span className="text-muted-foreground">)</span>
       </div>
     </motion.div>
   );
