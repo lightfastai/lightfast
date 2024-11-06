@@ -149,3 +149,32 @@ export const ParallaxSection: React.FC<ParallaxSectionProps> = ({
     </motion.section>
   );
 };
+
+interface ParallaxScrollPercentageProps {
+  className?: string;
+}
+
+export const ParallaxScrollPercentage: React.FC<
+  ParallaxScrollPercentageProps
+> = ({ className = "" }) => {
+  const { scrollYProgress } = useParallaxContext();
+
+  const formattedPercentage = useTransform(scrollYProgress, (value) =>
+    (value * 100).toFixed(2),
+  );
+
+  return (
+    <motion.div
+      className={`fixed bottom-8 right-16 z-50 mix-blend-difference ${className}`}
+    >
+      <div className="font-mono text-xs font-bold uppercase tracking-wider">
+        <span className="text-muted-foreground/80">Scroll</span>
+        <span className="text-muted-foreground/60">(</span>
+        <motion.span className="inline-block min-w-[2ch] text-right text-primary">
+          {formattedPercentage}
+        </motion.span>
+        <span className="text-muted-foreground/60">%)</span>
+      </div>
+    </motion.div>
+  );
+};
