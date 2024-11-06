@@ -27,8 +27,7 @@ const useParallaxContext = () => {
   return context;
 };
 
-// Root Component and Namespace
-const Root: React.FC<{
+interface ParallaxRootProps {
   children: ReactNode;
   className?: string;
   springConfig?: {
@@ -36,7 +35,14 @@ const Root: React.FC<{
     damping: number;
     restDelta: number;
   };
-}> = ({ children, className = "", springConfig }) => {
+}
+
+// Root Component and Namespace
+const Root: React.FC<ParallaxRootProps> = ({
+  children,
+  className = "",
+  springConfig,
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({ container: scrollRef });
@@ -69,20 +75,22 @@ const Root: React.FC<{
   );
 };
 
-// Section Component
-const Section: React.FC<{
+interface ParallaxSectionProps {
   children: ReactNode;
   className?: string;
-  translateY?: {
-    inputRange: number[];
-    outputRange: string[];
-  };
-  opacity?: {
-    inputRange: number[];
-    outputRange: number[];
-  };
+  translateY?: TransformConfig;
+  opacity?: TransformConfig;
   fixed?: boolean;
-}> = ({ children, className = "", translateY, opacity, fixed = false }) => {
+}
+
+// Section Component
+const Section: React.FC<ParallaxSectionProps> = ({
+  children,
+  className = "",
+  translateY,
+  opacity,
+  fixed = false,
+}) => {
   const { useCreateTransform } = useParallaxContext();
   const style: MotionStyle = {};
 
