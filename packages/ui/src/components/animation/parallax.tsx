@@ -75,7 +75,7 @@ const Root: React.FC<ParallaxRootProps> = ({
     >
       <div
         ref={scrollRef}
-        className={`relative h-screen overflow-y-auto overscroll-none no-scrollbar ${className}`}
+        className={`relative min-h-screen overflow-y-auto overscroll-none no-scrollbar ${className}`}
       >
         {children}
       </div>
@@ -88,7 +88,6 @@ interface ParallaxSectionProps {
   className?: string;
   translateY?: TransformConfig;
   opacity?: TransformConfig;
-  fixed?: boolean;
 }
 
 // Section Component
@@ -96,8 +95,7 @@ const Section: React.FC<ParallaxSectionProps> = ({
   children,
   className = "",
   translateY,
-  opacity,
-  fixed = false,
+  // opacity,
 }) => {
   const { useCreateTransform } = useParallaxContext();
   const style: MotionStyle = {};
@@ -108,25 +106,22 @@ const Section: React.FC<ParallaxSectionProps> = ({
     outputRange: translateY?.outputRange ?? [0, 0],
   });
 
-  const opacityTransform = useCreateTransform({
-    property: "opacity",
-    inputRange: opacity?.inputRange ?? [0, 1],
-    outputRange: opacity?.outputRange ?? [0, 0],
-  });
+  // const opacityTransform = useCreateTransform({
+  //   property: "opacity",
+  //   inputRange: opacity?.inputRange ?? [0, 1],
+  //   outputRange: opacity?.outputRange ?? [0, 0],
+  // });
 
   if (translateY) {
     style.translateY = translateYTransform;
   }
 
-  if (opacity) {
-    style.opacity = opacityTransform;
-  }
+  // if (opacity) {
+  //   style.opacity = opacityTransform;
+  // }
 
   return (
-    <motion.section
-      className={`${fixed ? "fixed bottom-0 left-0 right-0 top-0" : ""} ${className}`}
-      style={style}
-    >
+    <motion.section className={`relative ${className}`} style={style}>
       {children}
     </motion.section>
   );
@@ -158,12 +153,6 @@ const Percentage: React.FC<ParallaxPercentageProps> = ({ className = "" }) => {
       </div>
     </motion.div>
   );
-};
-
-// Scroll Extension Component
-// @todo only supports vertical scrolling for 200vh for now
-const ScrollExtension: React.FC = () => {
-  return <div className="h-[200vh]"></div>;
 };
 
 const ScrollHelperIcon: React.FC = () => {
@@ -206,6 +195,5 @@ export const Parallax = {
   Root,
   Section,
   Percentage,
-  ScrollExtension,
   ScrollHelperIcon,
 };
