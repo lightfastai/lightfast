@@ -9,6 +9,7 @@
     "./tailwind.config": "./tailwind.config.ts",
     "./postcss.config": "./postcss.config.mjs",
     "./globals.css": "./src/globals.css",
+    "./mdx.css": "./src/mdx.css",
     "./hooks/*": "./src/hooks/*.tsx",
     "./fonts/*": "./src/fonts/*.ts"
   },
