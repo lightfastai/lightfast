@@ -10,18 +10,19 @@ interface ZoomPanPinchCanvasProps {
     zoom: number;
     cursorPosition: { x: number; y: number };
     gridSize: number;
+    setStopPropagation: React.Dispatch<React.SetStateAction<boolean>>;
   }) => ReactNode;
   debug?: boolean;
-  minZoom?: number;
   maxZoom?: number;
+  minZoom?: number;
   zoomSpeed?: number;
 }
 
 export const ZoomPanPinchCanvas = ({
   children,
   debug = false,
-  minZoom = 0.1,
   maxZoom = 10,
+  minZoom = 0.1,
   zoomSpeed = 0.1,
 }: ZoomPanPinchCanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -30,6 +31,7 @@ export const ZoomPanPinchCanvas = ({
   const [isPanningCanvas, setIsPanningCanvas] = useState(false);
   const [dragStartCanvas, setDragStartCanvas] = useState({ x: 0, y: 0 });
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [stopPropagation, setStopPropagation] = useState(false); // Add this state
 
   const handleZoom = useCallback((e: WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
@@ -37,24 +39,24 @@ export const ZoomPanPinchCanvas = ({
       const canvas = canvasRef.current;
       if (canvas) {
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+
+        // Calculate mouse position relative to the canvas content
+        const mouseX = e.clientX - rect.left + canvas.scrollLeft;
+        const mouseY = e.clientY - rect.top + canvas.scrollTop;
 
         const delta = -e.deltaY * zoomSpeed;
         setZoom((prevZoom) => {
-          let newZoom = prevZoom + delta;
-          newZoom = Math.min(maxZoom, Math.max(minZoom, newZoom));
+          const newZoom = Math.min(
+            maxZoom,
+            Math.max(minZoom, prevZoom + delta),
+          );
 
-          const scaleFactor = newZoom / prevZoom;
+          // Calculate how the content will scale
+          const scale = newZoom / prevZoom;
 
-          // Calculate the new scroll positions to keep the zoom centered on the mouse
-          const newScrollLeft =
-            (canvas.scrollLeft + mouseX) * scaleFactor - mouseX;
-          const newScrollTop =
-            (canvas.scrollTop + mouseY) * scaleFactor - mouseY;
-
-          canvas.scrollLeft = newScrollLeft;
-          canvas.scrollTop = newScrollTop;
+          // Calculate new scroll position to keep mouse point fixed
+          canvas.scrollLeft = mouseX * scale - (e.clientX - rect.left);
+          canvas.scrollTop = mouseY * scale - (e.clientY - rect.top);
 
           return newZoom;
         });
@@ -71,8 +73,8 @@ export const ZoomPanPinchCanvas = ({
   }, [handleZoom]);
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0) {
-      // Left mouse button
+    if (e.button === 0 && !stopPropagation) {
+      // Check disablePanning
       setIsPanningCanvas(true);
       setDragStartCanvas({ x: e.clientX, y: e.clientY });
     }
@@ -126,7 +128,12 @@ export const ZoomPanPinchCanvas = ({
             transform: `scale(${zoom})`,
           }}
         >
-          {children({ zoom, cursorPosition, gridSize })}
+          {children({
+            zoom,
+            cursorPosition,
+            gridSize,
+            setStopPropagation,
+          })}
         </div>
       </div>
       {debug && (
