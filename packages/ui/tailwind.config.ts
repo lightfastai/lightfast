@@ -80,12 +80,20 @@ const config = {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
         },
       },
       animation: {
@@ -93,12 +101,6 @@ const config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
-        /**
-         * This is a custom font family that is defined in the root layout of the app.
-         * Geist Font is designed and mainted by Vercel.
-         *
-         * @see apps/brand/app/layout.tsx
-         */
         sans: ["var(--font-geist-sans)"],
         mono: ["var(--font-geist-mono)"],
       },

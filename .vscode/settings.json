@@ -24,5 +24,9 @@
     "next/router.d.ts",
     "next/dist/client/router.d.ts"
   ],
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  // @note Unkown rule at @tailwind fix: https://github.com/tailwindlabs/tailwindcss/discussions/13881
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }
