@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { cn } from "@repo/ui/lib/utils";
-
 import { Icons } from "~/app/icons";
 import { siteConfig } from "~/config/site";
 
@@ -12,18 +10,13 @@ export const MainNav = () => {
   const pathname = usePathname();
 
   return (
-    <div className="mr-4 hidden h-full items-center gap-4 md:flex">
-      <div className="flex h-full w-14 items-center justify-center border-r">
-        <Link href="/">
-          <Icons.logo className="h-6 w-6" />
-        </Link>
-      </div>
+    <div className="flex h-full flex-row items-center gap-4">
+      <Link href="/" className="flex flex-row items-center gap-4">
+        <Icons.logo className="h-6 w-6" />
+        <span className="font-bold tracking-widest">{siteConfig.name}</span>
+      </Link>
 
-      <span className="hidden font-mono font-bold lowercase tracking-widest lg:inline-block">
-        {siteConfig.name}
-      </span>
-
-      <nav className="flex items-center gap-4 text-sm lg:gap-6">
+      {/* <nav className="flex items-center gap-4 text-sm lg:gap-6">
         <Link
           href="/playground"
           className={cn(
@@ -31,7 +24,7 @@ export const MainNav = () => {
             pathname === "/playground"
               ? "text-foreground"
               : "text-foreground/60",
-          )}
+        )}
         >
           Playground
         </Link>
@@ -47,7 +40,7 @@ export const MainNav = () => {
         >
           Docs
         </Link>
-      </nav>
+      </nav> */}
     </div>
   );
 };

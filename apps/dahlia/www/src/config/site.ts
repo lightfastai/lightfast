@@ -1,7 +1,7 @@
 import type { DocsNavItem, MainNavItem } from "~/types/nav";
 
 export const siteConfig = {
-  name: "dahlia",
+  name: "Dahlia",
   url: "https://dahlia.ai",
   ogImage: "https://dahlia.ai/og.jpg",
   description:
