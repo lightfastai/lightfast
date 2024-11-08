@@ -16,7 +16,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.53",
     "@ai-sdk/openai": "^0.0.70",
-    "@react-three/drei": "^9.114.5",
+    "@hookform/resolvers": "^3.9.1",
     "@react-three/fiber": "^8.17.10",
     "@repo/api": "workspace:*",
     "@repo/auth": "workspace:*",
