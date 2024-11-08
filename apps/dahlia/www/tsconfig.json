@@ -11,6 +11,32 @@
     "plugins": [{ "name": "next" }],
     "module": "esnext"
   },
-  "include": [".", ".next/types/**/*.ts", ".contentlayer/generated"],
+  "include": [
+    ".",
+    ".next/types/**/*.ts",
+    ".contentlayer/generated",
+    "../app/src/components/machine",
+    "../app/src/components/r3f",
+    "../app/src/components/texture",
+    "../app/src/components/constants.tsx",
+    "../app/src/components/geometry-ai-gen.tsx",
+    "../app/src/components/info-card.tsx",
+    "../app/src/components/path-utils.tsx",
+    "../app/src/components/schema.ts",
+    "../app/src/components/td-x-app.tsx",
+    "../app/src/components/td-x-canvas.tsx",
+    "../app/src/components/td-x-command-dialog.tsx",
+    "../app/src/components/td-x-form-field.tsx",
+    "../app/src/components/td-x-network-editor-geometry-node.tsx",
+    "../app/src/components/td-x-network-editor-material-node.tsx",
+    "../app/src/components/td-x-network-editor-texture-node.tsx",
+    "../app/src/components/td-x-network-editor.tsx",
+    "../app/src/components/td-x-property-inspector-geometry.tsx",
+    "../app/src/components/td-x-property-inspector-material.tsx",
+    "../app/src/components/td-x-property-inspector-texture.tsx",
+    "../app/src/components/types.ts",
+    "../app/src/app/(app)/editor",
+    "../app/src/app/(app)/page.tsx"
+  ],
   "exclude": ["node_modules"]
 }

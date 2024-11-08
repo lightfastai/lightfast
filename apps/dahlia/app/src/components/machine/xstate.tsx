@@ -2,8 +2,13 @@ import * as THREE from "three";
 import { assign, setup } from "xstate";
 
 import type { Texture, TextureType } from "../texture/types";
-import type { Geometry, GeometryType, Material, MaterialType } from "../types";
-import { TEXTURE_RESOLUTION } from "../constants";
+import type {
+  Geometry,
+  GeometryType,
+  Material,
+  MaterialType,
+} from "~/components/types";
+import { TEXTURE_RESOLUTION } from "~/components/constants";
 import { $Texture } from "../texture/schema";
 
 type CanvasEvent =

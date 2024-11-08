@@ -1,4 +1,3 @@
-// BGSnapCanvas.tsx
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";

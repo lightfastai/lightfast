@@ -1,4 +1,4 @@
-import { TDxApp } from "~/app/components/td-x-app";
+import { TDxApp } from "~/components/td-x-app";
 
 export default function Page() {
   return <TDxApp />;
