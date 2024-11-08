@@ -67,7 +67,7 @@ importers:
         specifier: 'catalog:'
         version: 3.3.3
       turbo:
-        specifier: ^2.1.3
+        specifier: ^2.2.3
         version: 2.2.3
       typescript:
         specifier: 'catalog:'
@@ -175,6 +175,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@repo/webgl':
+        specifier: workspace:*
+        version: link:../../packages/webgl
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
         version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
@@ -409,6 +412,8 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
+  apps/web: {}
+
   packages/api:
     dependencies:
       '@repo/auth':
@@ -607,6 +612,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@hookform/resolvers':
+        specifier: ^3.9.1
+        version: 3.9.1(react-hook-form@7.53.1(react@18.3.1))
       '@radix-ui/react-accordion':
         specifier: ^1.2.1
         version: 1.2.1(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -676,6 +684,9 @@ importers:
       react:
         specifier: catalog:react18
         version: 18.3.1
+      react-hook-form:
+        specifier: ^7.53.1
+        version: 7.53.1(react@18.3.1)
       react-resizable-panels:
         specifier: ^2.1.4
         version: 2.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -685,6 +696,9 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3)))
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -720,7 +734,42 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
-  packages/webgl: {}
+  packages/webgl:
+    dependencies:
+      '@react-three/drei':
+        specifier: ^9.114.5
+        version: 9.115.0(@react-three/fiber@8.17.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0))(@types/react@18.3.12)(@types/three@0.169.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0)
+      '@react-three/fiber':
+        specifier: ^8.17.10
+        version: 8.17.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0)
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../ui
+      three:
+        specifier: ^0.169.0
+        version: 0.169.0
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/three':
+        specifier: ^0.169.0
+        version: 0.169.0
+      eslint:
+        specifier: 'catalog:'
+        version: 9.13.0(jiti@2.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
 
 packages:
 
@@ -870,6 +919,11 @@ packages:
 
   '@babel/parser@7.26.1':
     resolution: {integrity: sha512-reoQYNiAJreZNsJzyrDNzFQ+IQ5JFiIzAHJg9bn94S3l+4++J7RsIhNMoB+lgP/9tpmiAQqspv+xfdxTSzREOw==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+
+  '@babel/parser@7.26.2':
+    resolution: {integrity: sha512-DWMCZH9WA4Maitz2q21SRKHo9QXZxkDsbNZoVD62gusNtNBBqDg9i7uOhASfTfIGNzW+O+r7+jAlM8dwphcJKQ==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -1306,6 +1360,11 @@ packages:
     resolution: {integrity: sha512-AiXO/bfe9bmxBjxxtYxFAXGZvMaN5s8kO+jBHAJCON8rJoB5YS/D6X7ZNc6XQkuHNmyl4CYaMI1fJ/Gn27RGGw==}
     engines: {node: '>=6'}
     hasBin: true
+
+  '@hookform/resolvers@3.9.1':
+    resolution: {integrity: sha512-ud2HqmGBM0P0IABqoskKWI6PEf6ZDDBZkFqe2Vnl+mTHCEHzr3ISjjZyCwTjC/qpL25JC9aIDkloQejvMeq0ug==}
+    peerDependencies:
+      react-hook-form: ^7.0.0
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -6204,6 +6263,10 @@ snapshots:
     dependencies:
       '@babel/types': 7.26.0
 
+  '@babel/parser@7.26.2':
+    dependencies:
+      '@babel/types': 7.26.0
+
   '@babel/runtime-corejs3@7.26.0':
     dependencies:
       core-js-pure: 3.38.1
@@ -6589,6 +6652,10 @@ snapshots:
       long: 5.2.3
       protobufjs: 7.4.0
       yargs: 17.7.2
+
+  '@hookform/resolvers@3.9.1(react-hook-form@7.53.1(react@18.3.1))':
+    dependencies:
+      react-hook-form: 7.53.1(react@18.3.1)
 
   '@humanfs/core@0.19.1': {}
 
@@ -8053,7 +8120,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.12':
     dependencies:
-      '@babel/parser': 7.26.1
+      '@babel/parser': 7.26.2
       '@vue/shared': 3.5.12
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -8066,7 +8133,7 @@ snapshots:
 
   '@vue/compiler-sfc@3.5.12':
     dependencies:
-      '@babel/parser': 7.26.1
+      '@babel/parser': 7.26.2
       '@vue/compiler-core': 3.5.12
       '@vue/compiler-dom': 3.5.12
       '@vue/compiler-ssr': 3.5.12
