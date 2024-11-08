@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
-import noScrollbar from "./src/plugins/no-scrollbar";
+
+import { noScrollbar } from "./src/plugins/no-scrollbar";
 
 const config = {
   darkMode: ["class"],
@@ -21,6 +22,12 @@ const config = {
       },
     },
     extend: {
+      spacing: {
+        "canvas-grid": "10000px",
+      },
+      backgroundImage: {
+        "canvas-grid": `radial-gradient(circle, hsl(var(--canvas-grid-dot)) 1px, transparent 1px), linear-gradient(to right, hsl(var(--canvas-grid-line)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--canvas-grid-line)) 1px, transparent 1px)`,
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -52,15 +59,15 @@ const config = {
           foreground: "hsl(var(--popover-foreground))",
         },
         sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar-background))',
-  				foreground: 'hsl(var(--sidebar-foreground))',
-  				primary: 'hsl(var(--sidebar-primary))',
-  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-  				accent: 'hsl(var(--sidebar-accent))',
-  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-  				border: 'hsl(var(--sidebar-border))',
-  				ring: 'hsl(var(--sidebar-ring))'
-  			},
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
@@ -73,12 +80,20 @@ const config = {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
         },
       },
       animation: {
@@ -86,12 +101,6 @@ const config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
-      /**
-       * This is a custom font family that is defined in the root layout of the app.
-       * Geist Font is designed and mainted by Vercel.
-       * 
-       * @see apps/brand/app/layout.tsx
-       */
         sans: ["var(--font-geist-sans)"],
         mono: ["var(--font-geist-mono)"],
       },
