@@ -22,6 +22,7 @@ import {
   SidebarRail,
 } from "@repo/ui/components/ui/sidebar";
 
+import { api } from "~/trpc/react";
 import { SidebarLogo } from "./app-sidebar-logo";
 import { SidebarNavUser } from "./app-sidebar-nav-user";
 
@@ -156,6 +157,7 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: user } = api.user.get.useQuery();
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -166,7 +168,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
-        <SidebarNavUser user={data.user} />
+        <SidebarNavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
