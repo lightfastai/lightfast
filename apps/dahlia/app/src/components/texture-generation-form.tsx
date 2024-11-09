@@ -12,6 +12,7 @@ import { SignUpDialog } from "./sign-up-dialog";
 
 export function TextureGenerationForm() {
   const router = useRouter();
+  const utils = api.useUtils();
   const { data: session } = api.auth.getSession.useQuery();
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -22,6 +23,7 @@ export function TextureGenerationForm() {
       if (data?.id) {
         console.log("Project created:", data);
         setInputValue("");
+        utils.projects.getProjects.invalidate();
         router.push(`/chat/${data.id}`);
       }
     },
