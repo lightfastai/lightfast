@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -42,7 +44,22 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
           </div>
         </div>
         <p className="text-center text-sm text-muted-foreground">
-          By continuing, you agree to our Terms of Service and Privacy Policy
+          By continuing, you agree to our{" "}
+          <Link
+            href="https://dahlia.art/legal/terms"
+            className="underline"
+            target="_blank"
+          >
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="https://dahlia.art/legal/privacy"
+            className="underline"
+            target="_blank"
+          >
+            Privacy Policy
+          </Link>
         </p>
       </DialogContent>
     </Dialog>
