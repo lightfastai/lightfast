@@ -8,8 +8,6 @@ import { GeistSans } from "geist/font/sans";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { cn } from "@repo/ui/lib/utils";
 
-import { TRPCReactProvider } from "../trpc/react";
-
 export const metadata: Metadata = {
   title: "Jeevan Pillay | Brand",
   description: "", // @TODO
@@ -31,11 +29,9 @@ export default function RootLayout({
           GeistMono.variable,
         )}
       >
-        <TRPCReactProvider>
-          <div className="relative flex min-h-screen flex-col bg-background">
-            {children}
-          </div>
-        </TRPCReactProvider>
+        <div className="relative flex min-h-screen flex-col bg-background">
+          {children}
+        </div>
         <Toaster />
       </body>
     </html>
