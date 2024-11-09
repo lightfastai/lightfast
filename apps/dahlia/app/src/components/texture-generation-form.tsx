@@ -10,6 +10,7 @@ import { SignUpDialog } from "./sign-up-dialog";
 
 export function TextureGenerationForm() {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const handleGenerateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +29,15 @@ export function TextureGenerationForm() {
           placeholder="Generate a cool texture..."
           className="pr-12 text-sm transition-all duration-200 ease-in-out sm:text-base"
           aria-label="Texture generation prompt"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
         />
         <div className="absolute right-0 top-0">
           <Button
             type="submit"
-            variant="outline"
+            variant="ghost"
             size="icon"
+            disabled={!inputValue.trim()}
             aria-label="Generate texture"
           >
             <ArrowRightIcon className="h-4 w-4" />
