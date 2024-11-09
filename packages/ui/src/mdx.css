@@ -19,37 +19,15 @@ code[data-line-numbers] {
 }
 
 code[data-line-numbers] > [data-line]::before {
-  @apply inline-block px-4 py-1 font-mono text-xs text-zinc-50/40;
+  @apply ml-2 mr-4 inline-block py-1.5 font-mono text-xs text-muted-foreground;
   counter-increment: line;
   content: counter(line);
-  width: 1.8rem;
-  margin-right: 1.4rem;
   text-align: right;
 }
 
-code[data-line-numbers] .line--highlighted {
-  @apply bg-zinc-700/50;
+code[data-line-numbers] > [data-highlighted-line] {
+  @apply relative rounded-md border border-muted bg-muted/50;
 }
-
-code[data-line-numbers] .line-highlighted span {
-  @apply relative;
-}
-
-/* [data-rehype-pretty-code-fragment] .word--highlighted {
-  @apply rounded-md border-zinc-700/70 bg-zinc-700/50 p-1;
-}
-
-.dark [data-rehype-pretty-code-fragment] .word--highlighted {
-  @apply bg-zinc-900;
-}
-
-[data-rehype-pretty-code-title] {
-  @apply mt-2 px-4 pt-6 text-sm font-medium text-foreground;
-}
-
-[data-rehype-pretty-code-title] + pre {
-  @apply mt-2;
-} */
 
 .mdx > .steps:first-child > h3:first-child {
   @apply mt-0;
