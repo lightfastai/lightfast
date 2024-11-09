@@ -7,8 +7,8 @@ import {
   ResizablePanelGroup,
 } from "@repo/ui/components/ui/resizable";
 
+import { TDxMachineContext } from "~/machine/context";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_FAR } from "./constants";
-import { TDxMachineContext } from "./machine/context";
 import { GeometryViewer } from "./r3f/geometry-viewer";
 import { TDxNetworkEditor } from "./td-x-network-editor";
 import { TDxGeometryPropertyInspector } from "./td-x-property-inspector-geometry";

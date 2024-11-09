@@ -9,8 +9,8 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Geometry } from "./types";
+import { TDxMachineContext } from "~/machine/context";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_CLOSE } from "./constants";
-import { TDxMachineContext } from "./machine/context";
 import { GeometryViewer } from "./r3f/geometry-viewer";
 
 export const NetworkGeometryNode = ({ geometryId }: { geometryId: number }) => {

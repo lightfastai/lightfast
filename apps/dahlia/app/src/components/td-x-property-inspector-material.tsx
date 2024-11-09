@@ -7,7 +7,7 @@ import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 
 import type { Material } from "./types";
-import { TDxMachineContext } from "./machine/context";
+import { TDxMachineContext } from "~/machine/context";
 import { $Material } from "./schema";
 import { TDxFormField } from "./td-x-form-field";
 

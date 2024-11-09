@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { assign, setup } from "xstate";
 
-import type { Texture, TextureType } from "../texture/types";
+import type { Texture, TextureType } from "~/components/texture/types";
 import type {
   Geometry,
   GeometryType,
@@ -9,7 +9,7 @@ import type {
   MaterialType,
 } from "~/components/types";
 import { TEXTURE_RESOLUTION } from "~/components/constants";
-import { $Texture } from "../texture/schema";
+import { $Texture } from "~/components/texture/schema";
 
 type CanvasEvent =
   /** Add a geometry to the canvas */

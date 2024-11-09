@@ -8,13 +8,13 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Material } from "./types";
+import { TDxMachineContext } from "~/machine/context";
 import {
   CENTER_OF_WORLD,
   DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,
   DEFAULT_SCALE,
   WORLD_CAMERA_POSITION_CLOSE,
 } from "./constants";
-import { TDxMachineContext } from "./machine/context";
 import { GeometryViewer } from "./r3f/geometry-viewer";
 import { $GeometryType } from "./schema";
 

@@ -2,13 +2,13 @@ import { ZoomPanPinchCanvas } from "@repo/ui/components/zoom-pan-pinch-canvas";
 import { cn } from "@repo/ui/lib/utils";
 import { createDefaultLimit, createDefaultPerlinNoise3D } from "@repo/webgl";
 
+import { TDxMachineContext } from "~/machine/context";
 import {
   DEFAULT_MATERIAL_COLOR,
   DEFAULT_POSITION,
   DEFAULT_ROTATION,
   DEFAULT_SCALE,
 } from "./constants";
-import { TDxMachineContext } from "./machine/context";
 import { createPath } from "./path-utils";
 import { NetworkGeometryNode } from "./td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "./td-x-network-editor-material-node";

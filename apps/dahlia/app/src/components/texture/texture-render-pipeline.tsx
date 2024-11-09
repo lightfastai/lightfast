@@ -12,7 +12,7 @@ import {
 } from "@repo/webgl";
 
 import type { Texture } from "./types";
-import { TDxMachineContext } from "../machine/context";
+import { TDxMachineContext } from "~/machine/context";
 import { useRenderTargetPipeline } from "./use-texture-render-pipeline";
 
 export const TextureRenderPipeline = () => {

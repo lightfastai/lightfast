@@ -12,7 +12,7 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
-import { TDxMachineContext } from "./machine/context";
+import { TDxMachineContext } from "~/machine/context";
 import { $GeometryType, $MaterialType } from "./schema";
 import { $TextureTypes } from "./texture/schema";
 

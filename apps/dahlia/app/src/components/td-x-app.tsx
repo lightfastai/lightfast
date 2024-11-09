@@ -1,6 +1,6 @@
 "use client";
 
-import { TDxMachineContext } from "./machine/context";
+import { TDxMachineContext } from "~/machine/context";
 import TDxCanvas from "./td-x-canvas";
 import { TDxCommandDialog } from "./td-x-command-dialog";
 
