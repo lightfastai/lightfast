@@ -15,10 +15,10 @@ import { Input } from "@repo/ui/components/ui/input";
 export default function Page() {
   return (
     <main
-      className="relative mx-auto flex min-h-screen w-full flex-col items-center justify-center px-4 pb-20 sm:max-w-4xl sm:px-0 sm:pb-32"
+      className="relative mx-auto flex min-h-screen w-full flex-col items-center justify-center px-6 pb-20 sm:max-w-4xl sm:px-8 sm:pb-32 lg:px-12"
       aria-label="Main content"
     >
-      <div className="flex h-[30vh] w-full flex-col items-center justify-center gap-6 sm:h-[40vh] sm:gap-12">
+      <div className="flex h-[30vh] w-full flex-col items-center justify-center gap-6 sm:h-[30vh] sm:gap-12">
         <h1 className="text-balance px-4 text-center text-xl font-bold sm:text-2xl">
           What can I help you create?
         </h1>
@@ -38,7 +38,6 @@ export default function Page() {
               variant="outline"
               size="icon"
               disabled={true}
-              className="h-10 w-10 sm:h-12 sm:w-12"
               aria-label="Generate texture"
             >
               <ArrowRightIcon className="h-4 w-4" />
@@ -48,7 +47,7 @@ export default function Page() {
         </form>
       </div>
 
-      <div className="flex w-full flex-col items-start gap-4 px-4 sm:gap-6 sm:px-0">
+      <div className="flex w-full flex-col items-start gap-4 px-0 sm:gap-6">
         <h2 className="text-balance text-left text-xl leading-6 text-primary sm:text-2xl">
           Or start with a template
         </h2>
@@ -73,8 +72,11 @@ export default function Page() {
                   <Image
                     src={`/playground-placeholder-${id}.webp`}
                     alt={`Template preview ${id}`}
-                    width={1000}
-                    height={1000}
+                    width={800}
+                    height={600}
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    quality={70}
+                    priority={id === 1}
                     className="h-full w-full object-cover"
                   />
                 </Card>
@@ -83,10 +85,13 @@ export default function Page() {
           </CarouselContent>
           <div className="block">
             <CarouselPrevious
-              className="left-4"
+              className="left-6 lg:left-8"
               aria-label="View previous template"
             />
-            <CarouselNext className="right-4" aria-label="View next template" />
+            <CarouselNext
+              className="right-6 lg:right-8"
+              aria-label="View next template"
+            />
           </div>
         </Carousel>
       </div>
