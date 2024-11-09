@@ -22,8 +22,8 @@ import {
   SidebarRail,
 } from "@repo/ui/components/ui/sidebar";
 
-import { NavUser } from "./nav-user";
-import { TeamSwitcher } from "./team-switcher";
+import { SidebarLogo } from "./app-sidebar-logo";
+import { SidebarNavUser } from "./app-sidebar-nav-user";
 
 // This is sample data.
 const data = {
@@ -159,14 +159,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <SidebarLogo />
       </SidebarHeader>
       <SidebarContent>
         {/* <NavMain items={data.navMain} /> */}
         {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <SidebarNavUser user={data.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
