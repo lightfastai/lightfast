@@ -14,6 +14,7 @@
     "db:studio": "turbo -F @repo/db studio",
     "dev": "turbo watch dev --continue",
     "dev:dahlia-www": "turbo dev -F @dahlia/www",
+    "dev:dahlia-app": "turbo dev -F @dahlia/app",
     "dev:jps0000-www": "turbo dev -F @jps0000/www",
     "dev:jps0000-brand": "turbo dev -F @jps0000/brand",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
