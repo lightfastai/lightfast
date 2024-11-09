@@ -65,11 +65,11 @@ export default function Page() {
             {[1, 2, 3].map((id) => (
               <CarouselItem
                 key={id}
-                className="pl-2 sm:pl-4 md:basis-1/2 lg:basis-1/3"
+                className="pl-2 sm:pl-4 md:basis-1/2"
                 role="group"
                 aria-label={`Template ${id}`}
               >
-                <Card className="relative h-[400px] w-full overflow-hidden rounded-[0.25rem] transition-transform duration-300 hover:scale-[1.02] sm:h-[600px]">
+                <Card className="relative h-[400px] w-full overflow-hidden rounded-[0.25rem] transition-transform duration-300 hover:scale-[1.02] sm:h-[300px]">
                   <Image
                     src={`/playground-placeholder-${id}.webp`}
                     alt={`Template preview ${id}`}
@@ -81,7 +81,7 @@ export default function Page() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <div className="hidden sm:block">
+          <div className="block">
             <CarouselPrevious
               className="left-4"
               aria-label="View previous template"
