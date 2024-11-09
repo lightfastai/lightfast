@@ -12,6 +12,10 @@ export const SiteFooter = () => {
         >
           GitHub
         </FooterLink>
+        <FooterDot />
+        <FooterLink href="https://dahlia.art/legal/terms">Terms</FooterLink>
+        <FooterDot />
+        <FooterLink href="https://dahlia.art/legal/privacy">Privacy</FooterLink>
       </nav>
     </footer>
   );
