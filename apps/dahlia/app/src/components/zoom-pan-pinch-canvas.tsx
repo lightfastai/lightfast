@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
+import InfoCard from "@repo/ui/components/info-card";
 import { cn } from "@repo/ui/lib/utils";
-
-import InfoCard from "./info-card";
 
 interface ZoomPanPinchCanvasProps {
   children: (params: {

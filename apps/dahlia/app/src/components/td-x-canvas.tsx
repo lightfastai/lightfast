@@ -22,8 +22,8 @@ export default function TDxCanvas() {
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="flex items-center justify-between border-b bg-background">
-        <div className="flex gap-2">
+      <div className="flex w-full items-center justify-end border-b">
+        <div className="flex gap-4">
           <Button
             variant="ghost"
             onClick={() => machineRef.send({ type: "TOGGLE_COMMAND" })}

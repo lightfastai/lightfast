@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 

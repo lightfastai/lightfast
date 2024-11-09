@@ -31,11 +31,7 @@ export default function RootLayout({
           GeistMono.variable,
         )}
       >
-        <TRPCReactProvider>
-          <div className="relative flex min-h-screen flex-col bg-background">
-            {children}
-          </div>
-        </TRPCReactProvider>
+        <TRPCReactProvider>{children}</TRPCReactProvider>
         <Toaster />
       </body>
     </html>

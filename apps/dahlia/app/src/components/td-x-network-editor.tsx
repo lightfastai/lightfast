@@ -1,4 +1,3 @@
-import { ZoomPanPinchCanvas } from "@repo/ui/components/zoom-pan-pinch-canvas";
 import { cn } from "@repo/ui/lib/utils";
 import { createDefaultLimit, createDefaultPerlinNoise3D } from "@repo/webgl";
 
@@ -13,6 +12,7 @@ import { createPath } from "./path-utils";
 import { NetworkGeometryNode } from "./td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "./td-x-network-editor-material-node";
 import { NetworkTextureNode } from "./td-x-network-editor-texture-node";
+import { ZoomPanPinchCanvas } from "./zoom-pan-pinch-canvas";
 
 export const TDxNetworkEditor = () => {
   const state = TDxMachineContext.useSelector((state) => state);
