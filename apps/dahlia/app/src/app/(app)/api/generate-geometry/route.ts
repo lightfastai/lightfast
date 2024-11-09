@@ -3,7 +3,7 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
-import { $Geometries } from "../../components/schema";
+import { $Geometries } from "~/components/schema";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;

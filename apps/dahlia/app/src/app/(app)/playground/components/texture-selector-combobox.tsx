@@ -19,7 +19,7 @@ import {
 } from "@repo/ui/components/ui/popover";
 import { cn } from "@repo/ui/lib/utils";
 
-import { $TextureTypeValues } from "~/app/components/texture/schema";
+import { $TextureTypeValues } from "~/components/texture/schema";
 
 export const TextureSelectorCombobox = () => {
   const [open, setOpen] = React.useState(false);
