@@ -13,7 +13,7 @@ export default async function Layout({
 
   return (
     <>
-      <SidebarProvider>
+      <SidebarProvider defaultOpen={false}>
         {session && <AppSidebar />}
         <SidebarInset>
           {children}

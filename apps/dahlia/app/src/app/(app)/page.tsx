@@ -9,13 +9,13 @@ import {
   CarouselPrevious,
 } from "@repo/ui/components/ui/carousel";
 
-import { AuthWrapper } from "~/components/auth-wrapper";
+import { AuthLoginSignupRedirect } from "~/components/auth-login-signup-redirect";
 import { TextureGenerationForm } from "~/components/texture-generation-form";
 
 export default function Page() {
   return (
     <>
-      <AuthWrapper />
+      <AuthLoginSignupRedirect />
       <main
         className="relative mx-auto flex min-h-screen w-full flex-col items-center justify-center px-6 pb-20 sm:max-w-4xl sm:px-8 sm:pb-32 lg:px-12"
         aria-label="Main content"

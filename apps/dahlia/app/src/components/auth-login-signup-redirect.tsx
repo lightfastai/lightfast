@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@repo/auth";
 import { Button } from "@repo/ui/components/ui/button";
 
-export async function AuthWrapper() {
+export async function AuthLoginSignupRedirect() {
   const session = await auth();
 
   if (session) {
