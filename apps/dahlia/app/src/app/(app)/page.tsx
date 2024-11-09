@@ -72,8 +72,11 @@ export default function Page() {
                   <Image
                     src={`/playground-placeholder-${id}.webp`}
                     alt={`Template preview ${id}`}
-                    width={1000}
-                    height={1000}
+                    width={800}
+                    height={600}
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    quality={70}
+                    priority={id === 1}
                     className="h-full w-full object-cover"
                   />
                 </Card>
