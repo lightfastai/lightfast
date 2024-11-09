@@ -10,7 +10,7 @@ import { siteConfig } from "~/config/site";
 export const SidebarLogo = () => {
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
+      <SidebarMenuItem className="py-4">
         <Link
           href="/"
           className="flex items-center gap-4 transition-colors hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
