@@ -18,7 +18,7 @@ export default function Page() {
       className="relative mx-auto flex min-h-screen w-full flex-col items-center justify-center px-4 pb-20 sm:max-w-4xl sm:px-0 sm:pb-32"
       aria-label="Main content"
     >
-      <div className="flex h-[30vh] w-full flex-col items-center justify-center gap-6 sm:h-[40vh] sm:gap-12">
+      <div className="flex h-[30vh] w-full flex-col items-center justify-center gap-6 sm:h-[30vh] sm:gap-12">
         <h1 className="text-balance px-4 text-center text-xl font-bold sm:text-2xl">
           What can I help you create?
         </h1>
