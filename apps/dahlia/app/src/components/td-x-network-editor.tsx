@@ -1,3 +1,5 @@
+import { Canvas } from "@react-three/fiber";
+
 import { cn } from "@repo/ui/lib/utils";
 import { createDefaultLimit, createDefaultPerlinNoise3D } from "@repo/webgl";
 
@@ -12,6 +14,7 @@ import { createPath } from "./path-utils";
 import { NetworkGeometryNode } from "./td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "./td-x-network-editor-material-node";
 import { NetworkTextureNode } from "./td-x-network-editor-texture-node";
+import { TextureRenderPipeline } from "./texture/texture-render-pipeline";
 import { ZoomPanPinchCanvas } from "./zoom-pan-pinch-canvas";
 
 export const TDxNetworkEditor = () => {
@@ -123,7 +126,7 @@ export const TDxNetworkEditor = () => {
 
   return (
     <>
-      {/* <Canvas
+      <Canvas
         shadows
         style={{
           position: "absolute",
@@ -135,7 +138,7 @@ export const TDxNetworkEditor = () => {
         }}
       >
         <TextureRenderPipeline />
-      </Canvas> */}
+      </Canvas>
       <ZoomPanPinchCanvas debug>
         {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
           <div
