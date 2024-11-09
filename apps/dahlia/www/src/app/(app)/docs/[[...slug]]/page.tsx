@@ -14,14 +14,21 @@ import { DocsPager } from "~/components/pager";
 import { DashboardTableOfContents } from "~/components/toc";
 import { getTableOfContents } from "~/lib/toc";
 
+/**
+ * If the slug is not provided, the page will not be generated.
+ * Example:
+ * - /docs/texture-operators/limit -> ["texture-operators", "limit"]
+ * - /docs/texture-operators -> ["texture-operators"]
+ * - /docs -> undefined hence needs `slugs?`
+ */
 interface DocPageProps {
   params: {
-    slug: string[];
+    slug?: string[];
   };
 }
 
 function getDocFromParams({ params }: DocPageProps) {
-  const slug = params.slug.join("/") || "";
+  const slug = params.slug?.join("/") || "";
   const doc = allDocs.find((doc) => doc.slugAsParams === slug);
 
   if (!doc) {
