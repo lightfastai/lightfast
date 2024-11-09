@@ -38,7 +38,6 @@ export default function Page() {
               variant="outline"
               size="icon"
               disabled={true}
-              className="h-10 w-10 sm:h-12 sm:w-12"
               aria-label="Generate texture"
             >
               <ArrowRightIcon className="h-4 w-4" />
