@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 
 import { cn } from "@repo/ui/lib/utils";
@@ -11,6 +12,7 @@ import {
   DEFAULT_SCALE,
 } from "./constants";
 import { createPath } from "./path-utils";
+import { SelectionIndicator } from "./selection-indicator";
 import { NetworkGeometryNode } from "./td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "./td-x-network-editor-material-node";
 import { NetworkTextureNode } from "./td-x-network-editor-texture-node";
@@ -123,6 +125,23 @@ export const TDxNetworkEditor = () => {
       });
     }
   };
+
+  const isPlacingAny = useMemo(
+    () =>
+      [
+        state.context.isPlacingGeometry && state.context.selectedGeometry,
+        state.context.isPlacingMaterial && state.context.selectedMaterial,
+        state.context.isPlacingTexture && state.context.selectedTexture,
+      ].some(Boolean),
+    [
+      state.context.isPlacingGeometry,
+      state.context.selectedGeometry,
+      state.context.isPlacingMaterial,
+      state.context.selectedMaterial,
+      state.context.isPlacingTexture,
+      state.context.selectedTexture,
+    ],
+  );
 
   return (
     <>
@@ -277,25 +296,12 @@ export const TDxNetworkEditor = () => {
               ))}
             </div>
 
-            {/* Selection Indicator */}
-            {/* {[
-              state.context.isPlacingGeometry && state.context.selectedGeometry,
-              state.context.isPlacingMaterial && state.context.selectedMaterial,
-              state.context.isPlacingTexture && state.context.selectedTexture,
-            ].some(Boolean) && (
-              <motion.div
-                className="pointer-events-none absolute rounded-sm border-2 border-dashed border-primary"
-                style={{
-                  left: x,
-                  top: y,
-                  width: `${gridSize * 3}px`,
-                  height: `${gridSize * 2}px`,
-                }}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              />
-            )} */}
+            <SelectionIndicator
+              x={x}
+              y={y}
+              gridSize={gridSize}
+              isActive={isPlacingAny}
+            />
           </div>
         )}
       </ZoomPanPinchCanvas>
