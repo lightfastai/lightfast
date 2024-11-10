@@ -11,14 +11,11 @@ export async function POST(req: Request) {
       data.append("call completed");
       data.close();
     },
-    messages: [
-      {
-        role: "user",
-        content:
-          "You are an expert at understanding textures and materials. Given a user's request, generate a detailed description of the texture that would best match their needs. Be specific about patterns, colors, and material properties.",
-      },
-      ...messages,
-    ],
+    system:
+      "You are an artistic bot that is creative focusing on creating art using WebGL. " +
+      "Your response should be a single idea for a render target pipeline texture that the user can use to create art. Keep it short and simple." +
+      "We dont intend to use to manipulate geometry, only create art.",
+    messages: [...messages],
   });
 
   return result.toDataStreamResponse({ data });
