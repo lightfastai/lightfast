@@ -10,25 +10,56 @@ export const TextureAIGenerator = () => {
   const [input, setInput] = useState("");
   const [textureData, setTextureData] = useState<Texture[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [generatedIdea, setGeneratedIdea] = useState<string>("");
+
+  const generateIdea = async (prompt: string) => {
+    try {
+      const response = await fetch("/api/chat/idea", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: prompt, model: "gpt-4o" }),
+      });
+
+      const data = await response.json();
+      return data.idea as string;
+    } catch (error) {
+      console.error("Error generating idea:", error);
+      throw error;
+    }
+  };
+
+  const generateTexture = async (idea: string) => {
+    try {
+      const response = await fetch("/api/chat/generate-texture", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: idea, model: "gpt-4o" }),
+      });
+
+      const data = await response.json();
+      setTextureData(data.textures);
+    } catch (error) {
+      console.error("Error generating texture:", error);
+      throw error;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTextureData([]);
+    setGeneratedIdea("");
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/generate-texture", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: input, model: "gpt-4o" }),
-      });
+      // Step 1: Generate the idea
+      const idea = await generateIdea(input);
+      setGeneratedIdea(idea);
 
-      const data = (await response.json()) as { textures: Texture[] };
-      console.log(data);
-      // setGeometryData(data.geometries);
+      // Step 2: Generate the texture based on the idea
+      await generateTexture(idea);
       setInput("");
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Pipeline error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -50,6 +81,26 @@ export const TextureAIGenerator = () => {
           </div>
         )}
       </form>
+
+      {generatedIdea && (
+        <div className="rounded-lg border bg-card p-4">
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            Generated Idea
+          </h2>
+          <p className="mt-2 text-sm">{generatedIdea}</p>
+        </div>
+      )}
+
+      {textureData.length > 0 && (
+        <div className="rounded-lg border bg-card p-4">
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            Generated Texture Data
+          </h2>
+          <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-sm">
+            {JSON.stringify(textureData, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 };
