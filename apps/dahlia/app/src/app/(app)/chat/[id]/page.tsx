@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 
-import { TextureAIGenerator } from "~/components/texture-ai-gen";
+import { TextureAIGeneratorStateWrapper } from "~/components/texture-ai-gen-state-wrapper";
 import { api } from "~/trpc/react";
 
 export default function ChatPage() {
@@ -30,7 +30,7 @@ export default function ChatPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1">
-        <TextureAIGenerator />
+        <TextureAIGeneratorStateWrapper />
       </div>
     </div>
   );

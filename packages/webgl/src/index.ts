@@ -1,13 +1,7 @@
 import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 
-import {
-  $Limit,
-  $LimitJsonSchema,
-  LimitDescription,
-  limitFragmentShader,
-  limitVertexShader,
-} from "./shaders/limit";
+import { $Limit } from "./shaders/limit";
 import {
   $PerlinNoise3D,
   $PerlinNoise3DJsonSchema,
@@ -77,14 +71,14 @@ export const $TextureSystemJsonSchema = {
         fragmentShader: perlinNoise3DFragmentShader,
       },
     },
-    {
-      title: $TextureType.Values.Limit,
-      description: LimitDescription,
-      properties: {
-        uniforms: $LimitJsonSchema,
-        vertexShader: limitVertexShader,
-        fragmentShader: limitFragmentShader,
-      },
-    },
+    // {
+    //   title: $TextureType.Values.Limit,
+    //   description: LimitDescription,
+    //   properties: {
+    //     uniforms: $LimitJsonSchema,
+    //     vertexShader: limitVertexShader,
+    //     fragmentShader: limitFragmentShader,
+    //   },
+    // },
   ],
 } as JSONSchema7;

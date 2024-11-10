@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { $TextureSystemJsonSchema } from "@repo/webgl";
 
-import { $Texture } from "~/components/texture/schema";
+import { $TextureV2 } from "~/components/texture/schema";
 
 export const maxDuration = 30;
 
@@ -29,7 +29,7 @@ export async function POST(req: Request): Promise<Response> {
   const response = await generateObject({
     model: modelToUse,
     schema: z.object({
-      textures: z.array($Texture),
+      texture: $TextureV2,
     }),
     system:
       "You are an intelligent texture creator bot that loves creating textures for 3D objects using ThreeJS. " +

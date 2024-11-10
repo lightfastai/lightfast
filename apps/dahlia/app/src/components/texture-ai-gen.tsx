@@ -2,6 +2,8 @@
 
 import type { Message as AIChatMessage } from "ai";
 import { useState } from "react";
+import { View } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
 import { useChat } from "ai/react";
 import { Loader2, User } from "lucide-react";
 
@@ -20,7 +22,9 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
-import { Texture } from "./texture/types";
+import { TDxMachineContext } from "~/machine/context";
+import { TextureRenderPipeline } from "./texture/texture-render-pipeline";
+import { TextureV2 } from "./texture/types";
 
 type ChatMessage = {
   id: string;
@@ -31,8 +35,12 @@ type ChatMessage = {
 export const TextureAIGenerator = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isGeneratingTexture, setIsGeneratingTexture] = useState(false);
-  const [currentTexture, setCurrentTexture] = useState<Texture[] | null>(null);
-
+  const [currentTexture, setCurrentTexture] = useState<TextureV2 | null>(null);
+  const rtarget = TDxMachineContext.useSelector(
+    (state) => state.context.rtargets[1],
+  );
+  console.log("rtarget", rtarget);
+  const machineRef = TDxMachineContext.useActorRef();
   const {
     messages: ideaMessages,
     input,
@@ -58,8 +66,24 @@ export const TextureAIGenerator = () => {
         body: JSON.stringify({ messages: idea, model: "gpt-4o" }),
       });
 
-      const data = await response.json();
-      setCurrentTexture(data.textures);
+      const data = (await response.json()) as { texture: TextureV2 };
+      setCurrentTexture(data.texture);
+
+      machineRef.send({
+        type: "ADD_TEXTURE",
+        texture: {
+          id: 1,
+          x: 0,
+          y: 0,
+          type: "Noise",
+          uniforms: data.texture.uniforms,
+          input: null,
+          outputs: [],
+          shouldRenderInNode: true,
+          inputPos: { x: 0, y: 0 },
+          outputPos: { x: 0, y: 0 },
+        },
+      });
     } catch (error) {
       console.error("Error generating texture:", error);
     } finally {
@@ -189,7 +213,28 @@ export const TextureAIGenerator = () => {
             <CardContent>
               <div className="space-y-6">
                 <div className="aspect-square rounded-lg border bg-muted">
-                  <canvas className="h-full w-full" />
+                  <Canvas
+                    shadows
+                    style={{
+                      position: "absolute",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    <TextureRenderPipeline />
+                  </Canvas>
+                  <View
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    <mesh>
+                      <planeGeometry args={[8, 8]} />
+                      <meshBasicMaterial map={rtarget?.texture} />
+                    </mesh>
+                  </View>
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
