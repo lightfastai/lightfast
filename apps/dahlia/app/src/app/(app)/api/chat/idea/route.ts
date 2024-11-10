@@ -32,12 +32,15 @@ export async function POST(req: Request): Promise<Response> {
     schema: z.object({
       idea: z.string(),
     }),
-    system:
-      "You are an intelligent texture creator bot that loves creating textures for 3D objects using ThreeJS. " +
-      "Given the conversation between you and the user, use the texture json schema create render target pipeline texture data." +
-      "Think thoroughly about the user's request and the context of the conversation to create the best possible textures. " +
-      "Your response should be a single idea for a texture that the user can use to create a 3D object.",
     messages: [
+      {
+        role: "system",
+        content:
+          "You are an intelligent texture creator bot that loves creating textures for 3D objects using ThreeJS. " +
+          "Given the conversation between you and the user, use the texture json schema create render target pipeline texture data." +
+          "Think thoroughly about the user's request and the context of the conversation to create the best possible textures. " +
+          "Your response should be a single idea for a texture that the user can use to create a 3D object.",
+      },
       {
         role: "system",
         content: JSON.stringify($TextureSystemJsonSchema),

@@ -6,27 +6,15 @@ import { Input } from "@repo/ui/components/ui/input";
 
 import { Texture } from "./texture/types";
 
+type Message = {
+  type: "prompt" | "idea" | "texture";
+  content: string | Texture[];
+};
+
 export const TextureAIGenerator = () => {
   const [input, setInput] = useState("");
-  const [textureData, setTextureData] = useState<Texture[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedIdea, setGeneratedIdea] = useState<string>("");
-
-  const generateIdea = async (prompt: string) => {
-    try {
-      const response = await fetch("/api/chat/idea", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: prompt, model: "gpt-4o" }),
-      });
-
-      const data = await response.json();
-      return data.idea as string;
-    } catch (error) {
-      console.error("Error generating idea:", error);
-      throw error;
-    }
-  };
 
   const generateTexture = async (idea: string) => {
     try {
@@ -37,26 +25,40 @@ export const TextureAIGenerator = () => {
       });
 
       const data = await response.json();
-      setTextureData(data.textures);
+      setMessages((prev) => [
+        ...prev,
+        { type: "texture", content: data.textures },
+      ]);
     } catch (error) {
       console.error("Error generating texture:", error);
-      throw error;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTextureData([]);
-    setGeneratedIdea("");
+    if (!input.trim()) return;
+
     setIsLoading(true);
-
     try {
-      // Step 1: Generate the idea
-      const idea = await generateIdea(input);
-      setGeneratedIdea(idea);
+      // Add user prompt to messages
+      setMessages((prev) => [...prev, { type: "prompt", content: input }]);
 
-      // Step 2: Generate the texture based on the idea
+      // Step 1: Generate the idea
+      const response = await fetch("/api/chat/idea", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: input, model: "gpt-4o" }),
+      });
+
+      const data = await response.json();
+      const idea = data.idea as string;
+
+      // Add generated idea to messages
+      setMessages((prev) => [...prev, { type: "idea", content: idea }]);
+
+      // Step 2: Automatically generate texture from the idea
       await generateTexture(idea);
+
       setInput("");
     } catch (error) {
       console.error("Pipeline error:", error);
@@ -67,13 +69,58 @@ export const TextureAIGenerator = () => {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+      {/* Messages Display */}
+      <div className="flex flex-col gap-4">
+        {messages.map((message, index) => {
+          if (message.type === "prompt") {
+            return (
+              <div
+                key={index}
+                className="ml-auto max-w-[80%] rounded-lg bg-primary p-4"
+              >
+                <p className="text-sm text-primary-foreground">
+                  {message.content as string}
+                </p>
+              </div>
+            );
+          } else if (message.type === "idea") {
+            return (
+              <div
+                key={index}
+                className="mr-auto max-w-[80%] rounded-lg border bg-card p-4"
+              >
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  Generated Idea
+                </h2>
+                <p className="mt-2 text-sm">{message.content as string}</p>
+              </div>
+            );
+          } else {
+            return (
+              <div
+                key={index}
+                className="mr-auto max-w-[80%] rounded-lg border bg-card p-4"
+              >
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  Generated Texture Data
+                </h2>
+                <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-sm">
+                  {JSON.stringify(message.content, null, 2)}
+                </pre>
+              </div>
+            );
+          }
+        })}
+      </div>
+
+      {/* Input Area */}
       <form onSubmit={handleSubmit} className="relative">
         <Input
           value={input}
-          placeholder="Generate a texture..."
+          placeholder="Describe the texture you want..."
           onChange={(e) => setInput(e.target.value)}
           disabled={isLoading}
-          className="pr-12 transition-all duration-200 ease-in-out"
+          className="pr-12"
         />
         {isLoading && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -81,26 +128,6 @@ export const TextureAIGenerator = () => {
           </div>
         )}
       </form>
-
-      {generatedIdea && (
-        <div className="rounded-lg border bg-card p-4">
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            Generated Idea
-          </h2>
-          <p className="mt-2 text-sm">{generatedIdea}</p>
-        </div>
-      )}
-
-      {textureData.length > 0 && (
-        <div className="rounded-lg border bg-card p-4">
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            Generated Texture Data
-          </h2>
-          <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-sm">
-            {JSON.stringify(textureData, null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   );
 };
