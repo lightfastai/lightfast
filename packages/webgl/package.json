@@ -22,7 +22,10 @@
     "@react-three/drei": "^9.114.5",
     "@react-three/fiber": "^8.17.10",
     "@repo/ui": "workspace:*",
-    "three": "^0.169.0"
+    "json-schema": "^0.4.0",
+    "three": "^0.169.0",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

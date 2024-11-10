@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 
+import { TextureAIGenerator } from "~/components/texture-ai-gen";
 import { api } from "~/trpc/react";
 
 export default function ChatPage() {
@@ -47,6 +48,8 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+
+      <TextureAIGenerator />
 
       {/* {project.result && Object.keys(project.result).length > 0 && (
         <div className="rounded-lg border bg-card p-4">

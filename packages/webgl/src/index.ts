@@ -1,3 +1,21 @@
+import type { JSONSchema7 } from "json-schema";
+import { z } from "zod";
+
+import {
+  $Limit,
+  $LimitJsonSchema,
+  LimitDescription,
+  limitFragmentShader,
+  limitVertexShader,
+} from "./shaders/limit";
+import {
+  $PerlinNoise3D,
+  $PerlinNoise3DJsonSchema,
+  PerlinNoise3DDescription,
+  perlinNoise3DFragmentShader,
+  perlinNoise3DVertexShader,
+} from "./shaders/perlin-noise-3d";
+
 /**
  * base modules
  */
@@ -12,9 +30,11 @@ export { type Value, isString, isNumber } from "./schema/value";
 export type { PerlinNoise3DParams } from "./shaders/perlin-noise-3d";
 export { $PerlinNoise3D } from "./shaders/perlin-noise-3d";
 export {
+  $PerlinNoise3DJsonSchema,
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
   createDefaultPerlinNoise3D,
+  PerlinNoise3DDescription,
 } from "./shaders/perlin-noise-3d";
 
 /**
@@ -23,7 +43,48 @@ export {
 export type { LimitParams } from "./shaders/limit";
 export {
   $Limit,
+  $LimitJsonSchema,
   createDefaultLimit,
   limitFragmentShader,
   limitVertexShader,
+  LimitDescription,
 } from "./shaders/limit";
+
+/**
+ * Shared texture uniforms type
+ */
+export const $TextureUniforms = $PerlinNoise3D.merge($Limit);
+export type TextureUniforms = z.infer<typeof $TextureUniforms>;
+
+/**
+ * Texture type
+ */
+export const $TextureType = z.enum(["Noise", "Limit"]);
+export type TextureType = z.infer<typeof $TextureType>;
+
+/** Build JSON Schema for Texture System */
+export const $TextureSystemJsonSchema = {
+  title: "Texture Operator Primitives",
+  description:
+    "A collection of texture operators that can be used to create textures for 3D objects using ThreeJS. A pipelined approach using WebGL render targets are created where each texture operator is a render target and can be used as an input to the next texture operator. The textures are created using GLSL shaders.",
+  textures: [
+    {
+      title: $TextureType.Values.Noise,
+      description: PerlinNoise3DDescription,
+      properties: {
+        uniforms: $PerlinNoise3DJsonSchema,
+        vertexShader: perlinNoise3DVertexShader,
+        fragmentShader: perlinNoise3DFragmentShader,
+      },
+    },
+    {
+      title: $TextureType.Values.Limit,
+      description: LimitDescription,
+      properties: {
+        uniforms: $LimitJsonSchema,
+        vertexShader: limitVertexShader,
+        fragmentShader: limitFragmentShader,
+      },
+    },
+  ],
+} as JSONSchema7;
