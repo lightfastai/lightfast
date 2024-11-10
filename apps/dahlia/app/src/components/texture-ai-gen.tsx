@@ -13,12 +13,6 @@ import {
   AvatarImage,
 } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@repo/ui/components/ui/card";
 import { Input } from "@repo/ui/components/ui/input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
@@ -197,66 +191,52 @@ export const TextureAIGenerator = () => {
 
       {currentTexture && (
         <div className="w-1/2 p-6">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {isGeneratingTexture ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Generating Texture
-                  </>
-                ) : (
-                  "Generated Texture"
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="aspect-square rounded-lg border bg-muted">
-                  <Canvas
-                    shadows
-                    style={{
-                      position: "absolute",
-                      width: "100%",
-                      height: "100%",
-                    }}
-                  >
-                    <TextureRenderPipeline />
-                  </Canvas>
-                  <View
-                    style={{
-                      position: "relative",
-                      width: "100%",
-                      height: "100%",
-                    }}
-                  >
-                    <mesh>
-                      <planeGeometry args={[8, 8]} />
-                      <meshBasicMaterial map={rtarget?.texture} />
-                    </mesh>
-                  </View>
-                </div>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Status</div>
-                    <div className="text-sm">
-                      {isGeneratingTexture
-                        ? "Processing texture pipeline..."
-                        : "Texture generated successfully"}
-                    </div>
-                  </div>
-                  {!isGeneratingTexture && currentTexture && (
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium">Texture Data</div>
-                      <pre className="rounded-lg bg-muted p-4 text-xs">
-                        {JSON.stringify(currentTexture, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-                </div>
+          <div className="h-full">
+            <div className="space-y-6">
+              <div className="aspect-square rounded-lg border bg-muted">
+                <Canvas
+                  shadows
+                  style={{
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <TextureRenderPipeline />
+                </Canvas>
+                <View
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <mesh>
+                    <planeGeometry args={[8, 8]} />
+                    <meshBasicMaterial map={rtarget?.texture} />
+                  </mesh>
+                </View>
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Status</div>
+                  <div className="text-sm">
+                    {isGeneratingTexture
+                      ? "Processing texture pipeline..."
+                      : "Texture generated successfully"}
+                  </div>
+                </div>
+                {!isGeneratingTexture && currentTexture && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">Texture Data</div>
+                    <pre className="rounded-lg bg-muted p-4 text-xs">
+                      {JSON.stringify(currentTexture, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
