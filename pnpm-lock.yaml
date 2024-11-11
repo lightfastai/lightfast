@@ -62,7 +62,7 @@ importers:
     devDependencies:
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:packages/prettier
+        version: link:internal/prettier
       prettier:
         specifier: 'catalog:'
         version: 3.3.3
@@ -159,13 +159,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../packages/eslint
+        version: link:../../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../packages/prettier
+        version: link:../../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../packages/typescript-config
+        version: link:../../../internal/typescript
       '@types/node':
         specifier: 'catalog:'
         version: 20.17.2
@@ -253,13 +253,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../packages/eslint
+        version: link:../../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../packages/prettier
+        version: link:../../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../packages/typescript-config
+        version: link:../../../internal/typescript
       '@shikijs/compat':
         specifier: ^1.22.2
         version: 1.22.2
@@ -315,79 +315,6 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
 
-  apps/jps0000/brand:
-    dependencies:
-      '@react-three/drei':
-        specifier: ^9.114.5
-        version: 9.115.0(@react-three/fiber@8.17.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0))(@types/react@18.3.12)(@types/three@0.169.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0)
-      '@react-three/fiber':
-        specifier: ^8.17.10
-        version: 8.17.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0)
-      '@repo/ui':
-        specifier: workspace:*
-        version: link:../../../packages/ui
-      geist:
-        specifier: ^1.3.1
-        version: 1.3.1(next@14.2.15(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
-      lucide-react:
-        specifier: 'catalog:'
-        version: 0.451.0(react@18.3.1)
-      next:
-        specifier: 'catalog:'
-        version: 14.2.15(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react:
-        specifier: catalog:react18
-        version: 18.3.1
-      react-dom:
-        specifier: catalog:react18
-        version: 18.3.1(react@18.3.1)
-      react-scroll-parallax:
-        specifier: ^3.4.5
-        version: 3.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      three:
-        specifier: ^0.169.0
-        version: 0.169.0
-      zustand:
-        specifier: ^5.0.1
-        version: 5.0.1(@types/react@18.3.12)(react@18.3.1)(use-sync-external-store@1.2.2(react@18.3.1))
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../../packages/eslint
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../../../packages/prettier
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../../packages/typescript-config
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.17.2
-      '@types/react':
-        specifier: catalog:react18
-        version: 18.3.12
-      '@types/react-dom':
-        specifier: catalog:react18
-        version: 18.3.1
-      '@types/three':
-        specifier: ^0.169.0
-        version: 0.169.0
-      autoprefixer:
-        specifier: ^10
-        version: 10.4.20(postcss@8.4.47)
-      eslint:
-        specifier: 'catalog:'
-        version: 9.13.0(jiti@2.3.3)
-      postcss:
-        specifier: ^8
-        version: 8.4.47
-      tailwindcss:
-        specifier: 'catalog:'
-        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
-      typescript:
-        specifier: 'catalog:'
-        version: 5.6.3
-
   apps/jps0000/www:
     dependencies:
       '@react-spring/web':
@@ -420,13 +347,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../packages/eslint
+        version: link:../../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../packages/prettier
+        version: link:../../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../packages/typescript-config
+        version: link:../../../internal/typescript
       '@types/node':
         specifier: 'catalog:'
         version: 20.17.2
@@ -455,36 +382,42 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
-  packages/ai:
+  internal/eslint:
     dependencies:
-      '@ai-sdk/anthropic':
-        specifier: ^0.0.53
-        version: 0.0.53(zod@3.23.8)
-      '@ai-sdk/openai':
-        specifier: ^0.0.70
-        version: 0.0.70(zod@3.23.8)
-      '@repo/webgl':
-        specifier: workspace:*
-        version: link:../webgl
-      '@t3-oss/env-nextjs':
-        specifier: ^0.11.1
-        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
-      ai:
-        specifier: ^3.4.20
-        version: 3.4.23(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@3.23.8)
-      zod:
-        specifier: 'catalog:'
-        version: 3.23.8
+      '@eslint/compat':
+        specifier: ^1.2.0
+        version: 1.2.2(eslint@9.13.0(jiti@2.3.3))
+      '@next/eslint-plugin-next':
+        specifier: ^14.2.15
+        version: 14.2.16
+      eslint-plugin-import:
+        specifier: ^2.31.0
+        version: 2.31.0(@typescript-eslint/parser@8.12.1(eslint@9.13.0(jiti@2.3.3))(typescript@5.6.3))(eslint@9.13.0(jiti@2.3.3))
+      eslint-plugin-jsx-a11y:
+        specifier: ^6.10.0
+        version: 6.10.2(eslint@9.13.0(jiti@2.3.3))
+      eslint-plugin-react:
+        specifier: ^7.37.1
+        version: 7.37.2(eslint@9.13.0(jiti@2.3.3))
+      eslint-plugin-react-hooks:
+        specifier: ^5.0.0
+        version: 5.0.0(eslint@9.13.0(jiti@2.3.3))
+      eslint-plugin-turbo:
+        specifier: ^2.1.3
+        version: 2.2.3(eslint@9.13.0(jiti@2.3.3))
+      typescript-eslint:
+        specifier: ^8.9.0
+        version: 8.12.1(eslint@9.13.0(jiti@2.3.3))(typescript@5.6.3)
     devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../eslint
       '@repo/prettier-config':
         specifier: workspace:*
         version: link:../prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../typescript
+      '@types/eslint__js':
+        specifier: 8.42.3
+        version: 8.42.3
       eslint:
         specifier: 'catalog:'
         version: 9.13.0(jiti@2.3.3)
@@ -494,6 +427,27 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.6.3
+
+  internal/prettier:
+    dependencies:
+      '@ianvs/prettier-plugin-sort-imports':
+        specifier: ^4.3.1
+        version: 4.3.1(@vue/compiler-sfc@3.5.12)(prettier@3.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      prettier-plugin-tailwindcss:
+        specifier: ^0.6.8
+        version: 0.6.8(@ianvs/prettier-plugin-sort-imports@4.3.1(@vue/compiler-sfc@3.5.12)(prettier@3.3.3))(prettier@3.3.3)
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
+
+  internal/typescript: {}
 
   packages/api:
     dependencies:
@@ -518,13 +472,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../internal/typescript
       eslint:
         specifier: 'catalog:'
         version: 9.13.0(jiti@2.3.3)
@@ -567,13 +521,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../internal/typescript
       eslint:
         specifier: 'catalog:'
         version: 9.13.0(jiti@2.3.3)
@@ -604,13 +558,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../internal/typescript
       dotenv-cli:
         specifier: ^7.4.2
         version: 7.4.2
@@ -626,73 +580,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.6.3
-
-  packages/eslint:
-    dependencies:
-      '@eslint/compat':
-        specifier: ^1.2.0
-        version: 1.2.2(eslint@9.13.0(jiti@2.3.3))
-      '@next/eslint-plugin-next':
-        specifier: ^14.2.15
-        version: 14.2.16
-      eslint-plugin-import:
-        specifier: ^2.31.0
-        version: 2.31.0(@typescript-eslint/parser@8.12.1(eslint@9.13.0(jiti@2.3.3))(typescript@5.6.3))(eslint@9.13.0(jiti@2.3.3))
-      eslint-plugin-jsx-a11y:
-        specifier: ^6.10.0
-        version: 6.10.2(eslint@9.13.0(jiti@2.3.3))
-      eslint-plugin-react:
-        specifier: ^7.37.1
-        version: 7.37.2(eslint@9.13.0(jiti@2.3.3))
-      eslint-plugin-react-hooks:
-        specifier: ^5.0.0
-        version: 5.0.0(eslint@9.13.0(jiti@2.3.3))
-      eslint-plugin-turbo:
-        specifier: ^2.1.3
-        version: 2.2.3(eslint@9.13.0(jiti@2.3.3))
-      typescript-eslint:
-        specifier: ^8.9.0
-        version: 8.12.1(eslint@9.13.0(jiti@2.3.3))(typescript@5.6.3)
-    devDependencies:
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../prettier
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/eslint__js':
-        specifier: 8.42.3
-        version: 8.42.3
-      eslint:
-        specifier: 'catalog:'
-        version: 9.13.0(jiti@2.3.3)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.3.3
-      typescript:
-        specifier: 'catalog:'
-        version: 5.6.3
-
-  packages/prettier:
-    dependencies:
-      '@ianvs/prettier-plugin-sort-imports':
-        specifier: ^4.3.1
-        version: 4.3.1(@vue/compiler-sfc@3.5.12)(prettier@3.3.3)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.3.3
-      prettier-plugin-tailwindcss:
-        specifier: ^0.6.8
-        version: 0.6.8(@ianvs/prettier-plugin-sort-imports@4.3.1(@vue/compiler-sfc@3.5.12)(prettier@3.3.3))(prettier@3.3.3)
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      typescript:
-        specifier: 'catalog:'
-        version: 5.6.3
-
-  packages/typescript-config: {}
 
   packages/ui:
     dependencies:
@@ -789,13 +676,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../internal/typescript
       '@turbo/gen':
         specifier: ^1.12.4
         version: 1.13.4(@types/node@20.17.2)(typescript@5.6.3)
@@ -847,13 +734,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../internal/typescript
       '@types/three':
         specifier: ^0.169.0
         version: 0.169.0
@@ -1012,11 +899,6 @@ packages:
   '@babel/helpers@7.26.0':
     resolution: {integrity: sha512-tbhNuIxNcVb21pInl3ZSjksLCvgdZy9KwJ8brv993QtIVKJBBkYXz4q4ZbAv31GdnC+R90np23L5FbEBlthAEw==}
     engines: {node: '>=6.9.0'}
-
-  '@babel/parser@7.26.1':
-    resolution: {integrity: sha512-reoQYNiAJreZNsJzyrDNzFQ+IQ5JFiIzAHJg9bn94S3l+4++J7RsIhNMoB+lgP/9tpmiAQqspv+xfdxTSzREOw==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
 
   '@babel/parser@7.26.2':
     resolution: {integrity: sha512-DWMCZH9WA4Maitz2q21SRKHo9QXZxkDsbNZoVD62gusNtNBBqDg9i7uOhASfTfIGNzW+O+r7+jAlM8dwphcJKQ==}
@@ -6177,24 +6059,6 @@ packages:
       react:
         optional: true
 
-  zustand@5.0.1:
-    resolution: {integrity: sha512-pRET7Lao2z+n5R/HduXMio35TncTlSW68WsYBq2Lg1ASspsNGjpwLAsij3RpouyV6+kHMwwwzP0bZPD70/Jx/w==}
-    engines: {node: '>=12.20.0'}
-    peerDependencies:
-      '@types/react': '>=18.0.0'
-      immer: '>=9.0.6'
-      react: '>=18.0.0'
-      use-sync-external-store: '>=1.2.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      immer:
-        optional: true
-      react:
-        optional: true
-      use-sync-external-store:
-        optional: true
-
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -6312,7 +6176,7 @@ snapshots:
       '@babel/helper-compilation-targets': 7.25.9
       '@babel/helper-module-transforms': 7.26.0(@babel/core@7.26.0)
       '@babel/helpers': 7.26.0
-      '@babel/parser': 7.26.1
+      '@babel/parser': 7.26.2
       '@babel/template': 7.25.9
       '@babel/traverse': 7.25.9
       '@babel/types': 7.26.0
@@ -6326,7 +6190,7 @@ snapshots:
 
   '@babel/generator@7.26.0':
     dependencies:
-      '@babel/parser': 7.26.1
+      '@babel/parser': 7.26.2
       '@babel/types': 7.26.0
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
@@ -6367,10 +6231,6 @@ snapshots:
       '@babel/template': 7.25.9
       '@babel/types': 7.26.0
 
-  '@babel/parser@7.26.1':
-    dependencies:
-      '@babel/types': 7.26.0
-
   '@babel/parser@7.26.2':
     dependencies:
       '@babel/types': 7.26.0
@@ -6387,14 +6247,14 @@ snapshots:
   '@babel/template@7.25.9':
     dependencies:
       '@babel/code-frame': 7.26.0
-      '@babel/parser': 7.26.1
+      '@babel/parser': 7.26.2
       '@babel/types': 7.26.0
 
   '@babel/traverse@7.25.9':
     dependencies:
       '@babel/code-frame': 7.26.0
       '@babel/generator': 7.26.0
-      '@babel/parser': 7.26.1
+      '@babel/parser': 7.26.2
       '@babel/template': 7.25.9
       '@babel/types': 7.26.0
       debug: 4.3.7
@@ -6780,7 +6640,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.26.0
       '@babel/generator': 7.26.0
-      '@babel/parser': 7.26.1
+      '@babel/parser': 7.26.2
       '@babel/traverse': 7.25.9
       '@babel/types': 7.26.0
       prettier: 3.3.3
@@ -12273,11 +12133,5 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.12
       react: 18.3.1
-
-  zustand@5.0.1(@types/react@18.3.12)(react@18.3.1)(use-sync-external-store@1.2.2(react@18.3.1)):
-    optionalDependencies:
-      '@types/react': 18.3.12
-      react: 18.3.1
-      use-sync-external-store: 1.2.2(react@18.3.1)
 
   zwitch@2.0.4: {}

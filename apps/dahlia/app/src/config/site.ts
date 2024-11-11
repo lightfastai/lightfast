@@ -1,81 +1,42 @@
-import type { DocsNavItem, MainNavItem } from "~/types/nav";
+import type { SiteConfig } from "@repo/ui/types/site";
+import type { NavItem } from "@repo/ui/types/nav";
 
-export const siteConfig = {
+export const siteConfig: SiteConfig = {
   name: "Dahlia",
-  url: "https://dahlia.ai",
-  ogImage: "https://dahlia.ai/og.jpg",
-  description:
-    "Beautifully designed components that you can copy and paste into your apps. Accessible. Customizable. Open Source.",
-  links: {
-    twitter: "https://twitter.com/dahlia_ai",
-    github: "https://github.com/dahlia-ai",
-  },
+    url: "https://dahlia.art",
+    ogImage: "https://dahlia.art/og.jpg",
+    description:
+      "Beautifully designed components that you can copy and paste into your apps. Accessible. Customizable. Open Source.",
+    links: {
+      twitter: "https://twitter.com/dahlia-ai",
+      github: "https://github.com/dahlia-ai",
+    },
 };
 
-export type SiteConfig = typeof siteConfig;
 
 export interface SiteNav {
-  mainNav: MainNavItem[];
-  docsNav: DocsNavItem[];
+  mainNav: NavItem[];
+  footerNav: NavItem[];
 }
 
 export const siteNav: SiteNav = {
-  mainNav: [
-    {
-      title: "Playground",
-      href: "/playground",
-    },
+  mainNav: [],
+  footerNav: [
     {
       title: "Docs",
-      href: "/docs/introduction",
-    },
-  ],
-  docsNav: [
-    {
-      title: "Dahlia SDK",
-      items: [
-        {
-          title: "Introduction",
-          href: "/docs/introduction",
-          items: [],
-        },
-      ],
+      href: "https://dahlia.art/docs",
     },
     {
-      title: "Foundations",
-      items: [
-        {
-          title: "Overview",
-          href: "/docs/foundations/overview",
-          items: [],
-        },
-        {
-          title: "WebGL",
-          href: "/docs/foundations/webgl",
-          items: [],
-        },
-        {
-          title: "Dahlia Engine",
-          href: "/docs/foundations/engine",
-          items: [],
-        },
-      ],
+      title: "GitHub",
+      href: "https://github.com/dahlia-ai",
     },
     {
-      title: "Texture Operators",
-      href: "/docs/texture-operators",
-      items: [
-        {
-          title: "Noise",
-          href: "/docs/texture-operators/noise",
-          items: [],
-        },
-        {
-          title: "Limit",
-          href: "/docs/texture-operators/limit",
-          items: [],
-        },
-      ],
+      title: "Terms",
+      href: "https://dahlia.art/legal/terms",
+    },
+    {
+      title: "Privacy",
+      href: "https://dahlia.art/legal/privacy",
     },
   ],
 };

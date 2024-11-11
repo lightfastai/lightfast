@@ -1,12 +1,11 @@
-"use client";
-
+"use client";;
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@repo/ui/lib/utils";
 
 import type { SiteNav } from "~/config/site";
-import type { DocsNavItem } from "~/types/nav";
+import { NavItemWithChildren } from "@repo/ui/types/nav";
 
 export interface DocsSidebarNavProps {
   config: SiteNav;
@@ -14,14 +13,9 @@ export interface DocsSidebarNavProps {
 
 export function DocsSidebarNav({ config }: DocsSidebarNavProps) {
   const pathname = usePathname();
-
-  const items = pathname.startsWith("/charts")
-    ? config.docsNav
-    : config.docsNav;
-
-  return items.length ? (
+  return config.docsNav.length ? (
     <div className="w-full">
-      {items.map((item, index) => (
+      {config.docsNav.map((item, index) => (
         <div key={index} className={cn("pb-4")}>
           <h4 className="mb-1 rounded-md px-2 py-1 text-sm font-semibold">
             {item.title}
@@ -36,7 +30,7 @@ export function DocsSidebarNav({ config }: DocsSidebarNavProps) {
 }
 
 interface DocsSidebarNavItemsProps {
-  items: DocsNavItem[];
+  items: NavItemWithChildren[];
   pathname: string | null;
 }
 
