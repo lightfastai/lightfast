@@ -3,14 +3,15 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
-import { $Geometries } from "~/components/schema";
+import { $TextureSystemJsonSchema } from "@repo/webgl";
 
-// Allow streaming responses up to 30 seconds
+import { $TextureV2 } from "~/components/texture/schema";
+
 export const maxDuration = 30;
 
 export async function POST(req: Request): Promise<Response> {
   const { messages, model } = (await req.json()) as {
-    messages: string[];
+    messages: string;
     model: string;
   };
 
@@ -27,16 +28,18 @@ export async function POST(req: Request): Promise<Response> {
 
   const response = await generateObject({
     model: modelToUse,
-    output: "object",
     schema: z.object({
-      geometries: $Geometries,
+      texture: $TextureV2,
     }),
     system:
-      "You are an intelligent geometry creator bot that loves creating 3D Geometry using ThreeJS. " +
-      "Given the conversation between you and the user, use the provided skills and world functions to write ThreeJS Geometry data." +
-      "Think thoroughly about the user's request and the context of the conversation to create the best possible geometries." +
-      "Strictly follow the schema provided. ",
+      "You are an intelligent texture creator bot that loves creating textures for 3D objects using ThreeJS. " +
+      "Given the idea provided, use the texture json schema create render target pipeline texture data." +
+      "Think thoroughly about the provided idea and create the best possible textures.",
     messages: [
+      {
+        role: "system",
+        content: JSON.stringify($TextureSystemJsonSchema),
+      },
       {
         role: "user",
         content: messages,

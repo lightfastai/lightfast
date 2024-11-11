@@ -2,7 +2,6 @@ import { auth } from "@repo/auth";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 
 import { AppSidebar } from "~/components/app-sidebar";
-import { SiteFooter } from "~/components/site-footer";
 
 export default async function Layout({
   children,
@@ -17,7 +16,7 @@ export default async function Layout({
         {session && <AppSidebar />}
         <SidebarInset>
           {children}
-          <SiteFooter />
+          {/* <SiteFooter /> */}
         </SidebarInset>
       </SidebarProvider>
     </>

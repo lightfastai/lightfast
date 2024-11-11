@@ -11,8 +11,31 @@ export const $TextureTypes = z.enum($TextureTypeValues);
 
 // Base schema that all textures share
 const $TextureShared = $Node.extend({
-  input: z.number().nullable().default(null), // single input reference
-  outputs: z.array(z.number()).default([]), // default output
+  input: z
+    .number()
+    .nullable()
+    .default(null)
+    .describe(
+      "the id texture to use as an input; commonly reference to as u_texture",
+    ),
+  outputs: z
+    .array(z.number())
+    .default([])
+    .describe("the ids of textures to use as an output"),
+});
+
+const $TextureSharedV2 = z.object({
+  input: z
+    .number()
+    .nullable()
+    .default(null)
+    .describe(
+      "the id texture to use as an input; commonly reference to as u_texture",
+    ),
+  outputs: z
+    .array(z.number())
+    .default([])
+    .describe("the ids of textures to use as an output"),
 });
 
 // Update TextureSchema with base schema
@@ -26,5 +49,10 @@ export const $Texture = z.discriminatedUnion("type", [
     uniforms: $Limit,
   }),
 ]);
+
+export const $TextureV2 = $TextureSharedV2.extend({
+  type: z.literal("Noise"),
+  uniforms: $PerlinNoise3D,
+});
 
 export const $TextureUniforms = $PerlinNoise3D.merge($Limit);

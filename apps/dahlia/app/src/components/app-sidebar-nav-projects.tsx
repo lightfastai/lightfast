@@ -22,7 +22,7 @@ export function NavProjects() {
           .map((project) => (
             <SidebarMenuItem key={project.id}>
               <SidebarMenuButton asChild>
-                <a href={`/chat/${project.id}`}>
+                <a href={`/ai/chat/${project.id}`}>
                   <span>{project.id}</span>
                 </a>
               </SidebarMenuButton>
