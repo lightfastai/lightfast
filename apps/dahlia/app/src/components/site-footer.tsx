@@ -1,21 +1,16 @@
-import Link from "next/link";
+import Link, { LinkProps } from "next/link";
+import { siteNav } from "~/config/site";
 
 export const SiteFooter = () => {
   return (
     <footer className="fixed bottom-0 left-0 right-0 flex justify-center bg-gradient-to-t from-background/80 to-transparent pb-4 pt-2 backdrop-blur-sm">
       <nav className="flex items-center gap-4 text-sm text-muted-foreground">
-        <FooterLink href="https://dahlia.art/docs">Docs</FooterLink>
-        <FooterDot />
-        <FooterLink
-          href="https://github.com/jeevanpillaystudio"
-          target="_blank"
-        >
-          GitHub
-        </FooterLink>
-        <FooterDot />
-        <FooterLink href="https://dahlia.art/legal/terms">Terms</FooterLink>
-        <FooterDot />
-        <FooterLink href="https://dahlia.art/legal/privacy">Privacy</FooterLink>
+        {siteNav.footerNav.map((item) => (
+          <>
+            <FooterLink href={item.href ?? "/"}>{item.title}</FooterLink> {/** TODO: fix this ?? "/"*/}
+            <FooterDot />
+          </>
+        ))}
       </nav>
     </footer>
   );
@@ -23,17 +18,17 @@ export const SiteFooter = () => {
 
 const FooterDot = () => <span className="text-muted-foreground/40">•</span>;
 
-const FooterLink = ({
+interface FooterLinkProps extends LinkProps {
+  children: React.ReactNode;
+}
+
+const FooterLink: React.FC<FooterLinkProps> = ({
   href,
   children,
   ...props
-}: {
-  href: string;
-  children: React.ReactNode;
-  [key: string]: any;
 }) => {
   return (
-    <Link href={href} {...props}>
+    <Link href={href} {...props} target="_blank">
       <span className="inline-block transition-all duration-200 hover:-translate-y-[1px] hover:text-foreground">
         {children}
       </span>

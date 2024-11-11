@@ -16,8 +16,27 @@ export const siteConfig: SiteConfig = {
 
 export interface SiteNav {
   mainNav: NavItem[];
+  footerNav: NavItem[];
 }
 
 export const siteNav: SiteNav = {
   mainNav: [],
+  footerNav: [
+    {
+      title: "Docs",
+      href: "https://dahlia.art/docs",
+    },
+    {
+      title: "GitHub",
+      href: "https://github.com/dahlia-ai",
+    },
+    {
+      title: "Terms",
+      href: "https://dahlia.art/legal/terms",
+    },
+    {
+      title: "Privacy",
+      href: "https://dahlia.art/legal/privacy",
+    },
+  ],
 };
