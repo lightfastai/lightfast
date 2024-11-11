@@ -11,7 +11,8 @@
     "./globals.css": "./src/globals.css",
     "./mdx.css": "./src/mdx.css",
     "./hooks/*": "./src/hooks/*.tsx",
-    "./fonts/*": "./src/fonts/*.ts"
+    "./fonts/*": "./src/fonts/*.ts",
+    "./types/*": "./src/types/*.ts"
   },
   "peerDependencies": {
     "react": "^18"

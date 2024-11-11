@@ -1,6 +1,7 @@
-import type { DocsNavItem, MainNavItem } from "~/types/nav";
+import type { NavItem, NavItemWithChildren } from "@repo/ui/types/nav";
+import type { SiteConfig } from "@repo/ui/types/site";
 
-export const siteConfig = {
+export const siteConfig: SiteConfig = {
   name: "Dahlia",
   url: "https://dahlia.ai",
   ogImage: "https://dahlia.ai/og.jpg",
@@ -12,11 +13,9 @@ export const siteConfig = {
   },
 };
 
-export type SiteConfig = typeof siteConfig;
-
 export interface SiteNav {
-  mainNav: MainNavItem[];
-  docsNav: DocsNavItem[];
+  mainNav: NavItem[];
+  docsNav: NavItemWithChildren[];
 }
 
 export const siteNav: SiteNav = {
