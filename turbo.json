@@ -43,6 +43,10 @@
     "ui-add": {
       "cache": false,
       "interactive": true
+    },
+    "eval": {
+      "cache": false,
+      "interactive": true
     }
   },
   "globalEnv": [
@@ -52,7 +56,8 @@
     "OPENAI_API_KEY",
     "ANTHROPIC_API_KEY",
     "AUTH_SECRET",
-    "PORT"
+    "PORT",
+    "BRAINTRUST_API_KEY"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",
