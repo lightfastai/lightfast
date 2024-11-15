@@ -22,18 +22,22 @@ export const $PerlinNoise3D = z.object({
     .max(10)
     .default(2)
     .describe("amount of iterations of noise."), // Number of harmonics; max value is 10
-  u_persistence: z
+  u_harmonic_gain: z
     .number()
     .min(0)
     .max(2)
-    .default(0.5)
-    .describe("The amplitude multiplier for the noise."), // Amplitude multiplier; max value adjusted to 2
-  u_lacunarity: z
+    .default(0.7)
+    .describe(
+      "how much the amplitude changes per iterations (scalar of the amplitude)",
+    ),
+  u_harmonic_spread: z
     .number()
     .min(0)
-    .max(2)
+    .max(20)
     .default(2)
-    .describe("The frequency multiplier for the noise."), // Frequency multiplier; max value adjusted to 20
+    .describe(
+      "how much the frequency changes per iteration (scalar of the frequency)",
+    ),
   u_amplitude: z
     .number()
     .min(0)
@@ -67,8 +71,8 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_time: 0,
     u_period: 1,
     u_harmonics: 2,
-    u_persistence: 0.5,
-    u_lacunarity: 2,
+    u_harmonic_gain: 0.5,
+    u_harmonic_spread: 2,
     u_amplitude: 1,
     u_scale: { x: 1, y: 1 },
     u_offset: { x: 0, y: 0 },
