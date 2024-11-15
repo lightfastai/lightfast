@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { $Limit, $PerlinNoise3D } from "@repo/webgl";
+import { $Limit } from "@repo/webgl";
+import { $PerlinNoise3D } from "@repo/webgl/shaders/pnoise";
 
 import { $Node } from "../schema";
 

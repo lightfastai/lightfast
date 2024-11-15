@@ -4,12 +4,11 @@ import { View } from "@react-three/drei";
 import { createPortal } from "@react-three/fiber";
 import * as THREE from "three";
 
+import { limitFragmentShader, limitVertexShader } from "@repo/webgl";
 import {
-  limitFragmentShader,
-  limitVertexShader,
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
-} from "@repo/webgl";
+} from "@repo/webgl/shaders/pnoise";
 
 import type { Texture } from "./types";
 import { TDxMachineContext } from "~/machine/context";

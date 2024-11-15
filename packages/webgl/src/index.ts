@@ -25,8 +25,6 @@ export type { PerlinNoise3DParams } from "./shaders/pnoise/pnoise";
 export { $PerlinNoise3D } from "./shaders/pnoise/pnoise";
 export {
   $PerlinNoise3DJsonSchema,
-  perlinNoise3DFragmentShader,
-  perlinNoise3DVertexShader,
   createDefaultPerlinNoise3D,
   PerlinNoise3DDescription,
 } from "./shaders/pnoise/pnoise";
