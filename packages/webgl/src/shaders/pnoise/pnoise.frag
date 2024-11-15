@@ -240,44 +240,58 @@ float cnoise(vec4 P)
   return 2.2 * n_xyzw;
 }
 
-// Noise Uniforms
+mat2 rotation(vec2 angle) {
+  return mat2(cos(angle.x), -sin(angle.y), sin(angle.x), cos(angle.y));
+}
+
+/** noise uniforms */
 uniform float u_time;
-uniform float u_frequency;
-uniform float u_amplitude;
-uniform int u_octaves;
-uniform float u_persistence;
-uniform float u_lacunarity;
-uniform vec2 u_scale;
-uniform vec2 u_offset;
-uniform float u_rotation;
+uniform float u_frequency; // period
+uniform int u_octaves; // harmonics
+uniform float u_persistence; // gain
+uniform float u_lacunarity; // spread
 uniform sampler2D u_texture;
+
+/** transformation uniforms */
+uniform vec2 u_scale;
+uniform vec2 u_rotation;
+uniform vec2 u_offset; // translate
+
+/** to be added */
+const float ua_offset = 0.5;
+uniform float u_amplitude;
+const float ua_exponent = 2.0;
 
 varying vec2 vUv;
 
 void main() {
-  mat2 rotationMatrix = mat2(cos(u_rotation), -sin(u_rotation), sin(u_rotation), cos(u_rotation));
-  vec2 coords = vUv * u_scale - u_offset;
-  coords = rotationMatrix * coords;
+  // Transform coordinates
+  vec2 uv = vUv * u_scale - u_offset;
+  uv = rotation(u_rotation) * uv;
 
-  float frequency = u_frequency;
+  // initial values
+  float frequency = 1. / u_frequency;
   float amplitude = u_amplitude;
-  float noiseValue = 0.0;
+  float noise = 0.0;
 
-  for (int i = 0; i < 10; i++) {
-    if (i >= u_octaves) break;
-    float noise = cnoise2d(coords * frequency + u_time);
-    noiseValue += noise * amplitude;
+  // sum up the harmonics
+  for (int i = 0; i < u_octaves; i++) {
+    noise += cnoise2d(uv * frequency) * amplitude;
     frequency *= u_lacunarity;
     amplitude *= u_persistence;
   }
 
-  noiseValue = noiseValue * 0.5 + 0.5;
+  // add offset
+  noise = sign(noise) * pow(abs(noise), ua_exponent);
+  noise += ua_offset;
+
+  // mix with texture
   vec4 textureColor = texture2D(u_texture, vUv);
   vec3 finalColor;
   if (textureColor.a > 0.0) {
-    finalColor = mix(textureColor.rgb, vec3(noiseValue), 0.5);
+    finalColor = mix(textureColor.rgb, vec3(noise), 0.5);
   } else {
-    finalColor = vec3(noiseValue);
+    finalColor = vec3(noise);
   }
   gl_FragColor = vec4(finalColor, 1.0);
 }
