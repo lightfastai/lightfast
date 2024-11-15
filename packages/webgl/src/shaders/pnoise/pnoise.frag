@@ -245,28 +245,28 @@ mat2 rotation(vec2 angle) {
 }
 
 /** noise uniforms */
-uniform float u_time;
 uniform float u_period;
 uniform int u_harmonics;
 uniform float u_harmonic_gain; 
-uniform float u_harmonic_spread; // spread
-uniform sampler2D u_texture;
+uniform float u_harmonic_spread; 
+uniform float u_offset;
+uniform float u_amplitude;
+uniform float u_exponent;
 
 /** transformation uniforms */
 uniform vec2 u_scale;
 uniform vec2 u_rotation;
-uniform vec2 u_offset; // translate
+uniform vec2 u_translate; // translate
 
-/** to be added */
-const float ua_offset = 0.5;
-uniform float u_amplitude;
-const float ua_exponent = 2.0;
+/** texture */
+uniform sampler2D u_texture;
 
+/** varying */
 varying vec2 vUv;
 
 void main() {
   // Transform coordinates
-  vec2 uv = vUv * u_scale - u_offset;
+  vec2 uv = vUv * u_scale - u_translate;
   uv = rotation(u_rotation) * uv;
 
   // initial values
@@ -282,8 +282,8 @@ void main() {
   }
 
   // add offset
-  noise = sign(noise) * pow(abs(noise), ua_exponent);
-  noise += ua_offset;
+  noise = sign(noise) * pow(abs(noise), u_exponent);
+  noise += u_offset;
 
   // mix with texture
   vec4 textureColor = texture2D(u_texture, vUv);

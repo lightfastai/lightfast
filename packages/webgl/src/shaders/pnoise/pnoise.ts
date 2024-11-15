@@ -8,7 +8,6 @@ import perlinNoise3DVertexShader from "./pnoise.vert";
 
 export const $PerlinNoise3D = z.object({
   // noise
-  u_time: z.number().default(0).describe("The time value for the noise."),
   u_period: z
     .number()
     .min(0.01)
@@ -42,15 +41,27 @@ export const $PerlinNoise3D = z.object({
     .number()
     .min(0)
     .max(2)
-    .default(1)
+    .default(0.5)
     .describe("The overall amplitude scaling for the noise."), // Overall amplitude scaling; max value adjusted to 2
+  u_offset: z
+    .number()
+    .min(0)
+    .max(1)
+    .default(0.5)
+    .describe("The offset of the noise."),
+  u_exponent: z
+    .number()
+    .min(0)
+    .max(4)
+    .default(1)
+    .describe("The exponent of the noise."),
 
   // transform
   u_scale: createConstrainedVec2({
-    x: { min: -1000, max: 1000, default: 0 },
-    y: { min: -1000, max: 1000, default: 0 },
+    x: { min: -1000, max: 1000, default: 1 },
+    y: { min: -1000, max: 1000, default: 1 },
   }).describe("The scale of the noise."),
-  u_offset: createConstrainedVec2({
+  u_translate: createConstrainedVec2({
     x: { min: -1000, max: 1000, default: 0 },
     y: { min: -1000, max: 1000, default: 0 },
   }).describe("The offset of the noise."),
@@ -68,14 +79,15 @@ export const PerlinNoise3DDescription =
 
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return $PerlinNoise3D.parse({
-    u_time: 0,
     u_period: 1,
     u_harmonics: 2,
-    u_harmonic_gain: 0.5,
+    u_harmonic_gain: 0.7,
     u_harmonic_spread: 2,
-    u_amplitude: 1,
+    u_amplitude: 0.5,
+    u_offset: 0.5,
+    u_exponent: 1,
     u_scale: { x: 1, y: 1 },
-    u_offset: { x: 0, y: 0 },
+    u_translate: { x: 0, y: 0 },
     u_texture: null,
   });
 };
