@@ -246,8 +246,8 @@ mat2 rotation(vec2 angle) {
 
 /** noise uniforms */
 uniform float u_time;
-uniform float u_frequency; // period
-uniform int u_octaves; // harmonics
+uniform float u_period;
+uniform int u_harmonics;
 uniform float u_persistence; // gain
 uniform float u_lacunarity; // spread
 uniform sampler2D u_texture;
@@ -270,12 +270,12 @@ void main() {
   uv = rotation(u_rotation) * uv;
 
   // initial values
-  float frequency = 1. / u_frequency;
+  float frequency = 1. / u_period; // @todo enforce no zero period
   float amplitude = u_amplitude;
   float noise = 0.0;
 
   // sum up the harmonics
-  for (int i = 0; i < u_octaves; i++) {
+  for (int i = 0; i < u_harmonics; i++) {
     noise += cnoise2d(uv * frequency) * amplitude;
     frequency *= u_lacunarity;
     amplitude *= u_persistence;

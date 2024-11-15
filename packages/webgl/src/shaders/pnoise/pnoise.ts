@@ -9,19 +9,19 @@ import perlinNoise3DVertexShader from "./pnoise.vert";
 export const $PerlinNoise3D = z.object({
   // noise
   u_time: z.number().default(0).describe("The time value for the noise."),
-  u_frequency: z
+  u_period: z
     .number()
     .min(0.01)
     .max(2)
     .default(1)
-    .describe("The base frequency for the noise."), // Base frequency; max value adjusted to 2
-  u_octaves: z
+    .describe("1/u_period is the frequency of the input of noise function"),
+  u_harmonics: z
     .number()
     .int()
     .min(1)
     .max(10)
-    .default(3)
-    .describe("The number of harmonics for the noise."), // Number of harmonics; max value is 10
+    .default(2)
+    .describe("amount of iterations of noise."), // Number of harmonics; max value is 10
   u_persistence: z
     .number()
     .min(0)
@@ -55,9 +55,7 @@ export const $PerlinNoise3D = z.object({
   u_texture: z.number().nullable(),
 });
 
-export const $PerlinNoise3DJsonSchema = zodToJsonSchema(
-  $PerlinNoise3D,
-) as JSONSchema7;
+export const u_harmonics = zodToJsonSchema($PerlinNoise3D) as JSONSchema7;
 
 export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
 
@@ -67,8 +65,8 @@ export const PerlinNoise3DDescription =
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return $PerlinNoise3D.parse({
     u_time: 0,
-    u_frequency: 1,
-    u_octaves: 3,
+    u_period: 1,
+    u_harmonics: 2,
     u_persistence: 0.5,
     u_lacunarity: 2,
     u_amplitude: 1,

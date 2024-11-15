@@ -34,8 +34,8 @@ export const TextureRenderPipeline = () => {
         // Create unique uniform instances for each node
         const uniforms = {
           u_time: { value: u.u_time },
-          u_frequency: { value: u.u_frequency },
-          u_octaves: { value: u.u_octaves },
+          u_period: { value: u.u_period },
+          u_harmonics: { value: u.u_harmonics },
           u_persistence: { value: u.u_persistence },
           u_lacunarity: { value: u.u_lacunarity },
           u_scale: { value: new THREE.Vector2(u.u_scale.x, u.u_scale.y) },

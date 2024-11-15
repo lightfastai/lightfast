@@ -4,10 +4,10 @@ import { z } from "zod";
 import { $Limit } from "./shaders/limit/limit";
 import {
   $PerlinNoise3D,
-  $PerlinNoise3DJsonSchema,
   PerlinNoise3DDescription,
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
+  u_harmonics,
 } from "./shaders/pnoise/pnoise";
 
 /**
@@ -24,7 +24,7 @@ export { type Value, isString, isNumber } from "./schema/value";
 export type { PerlinNoise3DParams } from "./shaders/pnoise/pnoise";
 export { $PerlinNoise3D } from "./shaders/pnoise/pnoise";
 export {
-  $PerlinNoise3DJsonSchema,
+  u_harmonics as $PerlinNoise3DJsonSchema,
   createDefaultPerlinNoise3D,
   PerlinNoise3DDescription,
 } from "./shaders/pnoise/pnoise";
@@ -64,7 +64,7 @@ export const $TextureSystemJsonSchema = {
       title: $TextureType.Values.Noise,
       description: PerlinNoise3DDescription,
       properties: {
-        uniforms: $PerlinNoise3DJsonSchema,
+        uniforms: u_harmonics,
         vertexShader: perlinNoise3DVertexShader,
         fragmentShader: perlinNoise3DFragmentShader,
       },
