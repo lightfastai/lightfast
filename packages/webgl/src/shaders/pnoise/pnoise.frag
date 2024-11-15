@@ -10,27 +10,24 @@
 // Distributed under the MIT license. See LICENSE file.
 // https://github.com/stegu/webgl-noise
 
-vec4 mod289(vec4 x)
-{
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
+vec2 mod289(const in vec2 x) { return x - floor(x * (1. / 289.)) * 289.; }
+vec3 mod289(const in vec3 x) { return x - floor(x * (1. / 289.)) * 289.; }
+vec4 mod289(const in vec4 x) { return x - floor(x * (1. / 289.)) * 289.; }
 
-vec4 permute(vec4 x)
-{
-  return mod289(((x*34.0)+10.0)*x);
-}
+vec2 permute(const in vec2 v) { return mod289(((v * 34.0) + 1.0) * v); }
+vec3 permute(const in vec3 v) { return mod289(((v * 34.0) + 1.0) * v); }
+vec4 permute(const in vec4 v) { return mod289(((v * 34.0) + 1.0) * v); }
 
-vec4 taylorInvSqrt(vec4 r)
-{
-  return 1.79284291400159 - 0.85373472095314 * r;
-}
+vec2 taylorInvSqrt(in vec2 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+vec3 taylorInvSqrt(in vec3 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+vec4 taylorInvSqrt(in vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
 
-vec2 fade(vec2 t) {
-  return t*t*t*(t*(t*6.0-15.0)+10.0);
-}
+vec2 fade(const in vec2 v)  { return v*v*v*(v*(v*6.0-15.0)+10.0); }
+vec3 fade(const in vec3 v)  { return v*v*v*(v*(v*6.0-15.0)+10.0); }
+vec4 fade(const in vec4 v)  { return v*v*v*(v*(v*6.0-15.0)+10.0); }
 
 // Classic Perlin noise 2D
-float cnoise(vec2 P)
+float cnoise2d(vec2 P)
 {
   vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
   vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
@@ -255,6 +252,7 @@ uniform vec2 u_offset;
 uniform float u_rotation;
 uniform sampler2D u_texture;
 
+varying vec2 vUv;
 
 void main() {
   mat2 rotationMatrix = mat2(cos(u_rotation), -sin(u_rotation), sin(u_rotation), cos(u_rotation));
@@ -267,7 +265,7 @@ void main() {
 
   for (int i = 0; i < 10; i++) {
     if (i >= u_octaves) break;
-    float noise = cnoise(coords * frequency + u_time);
+    float noise = cnoise2d(coords * frequency + u_time);
     noiseValue += noise * amplitude;
     frequency *= u_lacunarity;
     amplitude *= u_persistence;

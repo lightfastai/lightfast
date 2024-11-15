@@ -1,0 +1,82 @@
+import type { JSONSchema7 } from "json-schema";
+import { z } from "zod";
+import zodToJsonSchema from "zod-to-json-schema";
+
+import { createConstrainedVec2 } from "../../schema/vec2";
+import perlinNoise3DFragmentShader from "./pnoise.frag";
+import perlinNoise3DVertexShader from "./pnoise.vert";
+
+export const $PerlinNoise3D = z.object({
+  // noise
+  u_time: z.number().default(0).describe("The time value for the noise."),
+  u_frequency: z
+    .number()
+    .min(0.01)
+    .max(2)
+    .default(1)
+    .describe("The base frequency for the noise."), // Base frequency; max value adjusted to 2
+  u_octaves: z
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .default(3)
+    .describe("The number of harmonics for the noise."), // Number of harmonics; max value is 10
+  u_persistence: z
+    .number()
+    .min(0)
+    .max(2)
+    .default(0.5)
+    .describe("The amplitude multiplier for the noise."), // Amplitude multiplier; max value adjusted to 2
+  u_lacunarity: z
+    .number()
+    .min(0)
+    .max(2)
+    .default(2)
+    .describe("The frequency multiplier for the noise."), // Frequency multiplier; max value adjusted to 20
+  u_amplitude: z
+    .number()
+    .min(0)
+    .max(2)
+    .default(1)
+    .describe("The overall amplitude scaling for the noise."), // Overall amplitude scaling; max value adjusted to 2
+
+  // transform
+  u_scale: createConstrainedVec2({
+    x: { min: -1000, max: 1000, default: 0 },
+    y: { min: -1000, max: 1000, default: 0 },
+  }).describe("The scale of the noise."),
+  u_offset: createConstrainedVec2({
+    x: { min: -1000, max: 1000, default: 0 },
+    y: { min: -1000, max: 1000, default: 0 },
+  }).describe("The offset of the noise."),
+
+  // inputs
+  u_texture: z.number().nullable(),
+});
+
+export const $PerlinNoise3DJsonSchema = zodToJsonSchema(
+  $PerlinNoise3D,
+) as JSONSchema7;
+
+export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
+
+export const PerlinNoise3DDescription =
+  "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture.";
+
+export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
+  return $PerlinNoise3D.parse({
+    u_time: 0,
+    u_frequency: 1,
+    u_octaves: 3,
+    u_persistence: 0.5,
+    u_lacunarity: 2,
+    u_amplitude: 1,
+    u_scale: { x: 1, y: 1 },
+    u_offset: { x: 0, y: 0 },
+    u_texture: null,
+  });
+};
+
+export { perlinNoise3DVertexShader };
+export { perlinNoise3DFragmentShader };

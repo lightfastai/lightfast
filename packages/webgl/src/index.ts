@@ -1,14 +1,14 @@
 import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 
-import { $Limit } from "./shaders/limit";
+import { $Limit } from "./shaders/limit/limit";
 import {
   $PerlinNoise3D,
   $PerlinNoise3DJsonSchema,
   PerlinNoise3DDescription,
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
-} from "./shaders/perlin-noise-3d";
+} from "./shaders/pnoise/pnoise";
 
 /**
  * base modules
@@ -21,20 +21,20 @@ export { type Value, isString, isNumber } from "./schema/value";
 /**
  * noise modules
  */
-export type { PerlinNoise3DParams } from "./shaders/perlin-noise-3d";
-export { $PerlinNoise3D } from "./shaders/perlin-noise-3d";
+export type { PerlinNoise3DParams } from "./shaders/pnoise/pnoise";
+export { $PerlinNoise3D } from "./shaders/pnoise/pnoise";
 export {
   $PerlinNoise3DJsonSchema,
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
   createDefaultPerlinNoise3D,
   PerlinNoise3DDescription,
-} from "./shaders/perlin-noise-3d";
+} from "./shaders/pnoise/pnoise";
 
 /**
  * limit modules
  */
-export type { LimitParams } from "./shaders/limit";
+export type { LimitParams } from "./shaders/limit/limit";
 export {
   $Limit,
   $LimitJsonSchema,
@@ -42,7 +42,7 @@ export {
   limitFragmentShader,
   limitVertexShader,
   LimitDescription,
-} from "./shaders/limit";
+} from "./shaders/limit/limit";
 
 /**
  * Shared texture uniforms type

@@ -56,7 +56,8 @@
     "jiti": "^2.3.3",
     "postcss": "^8",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "webpack-glsl-loader": "^1.0.1"
   },
   "prettier": "@repo/prettier-config"
 }
