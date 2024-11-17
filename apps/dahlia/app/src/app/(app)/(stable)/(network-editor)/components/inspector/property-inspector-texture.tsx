@@ -4,32 +4,31 @@ import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import type { Value } from "@repo/webgl";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
+import { $TextureUniforms, Value } from "@repo/webgl";
 
-import type { Texture } from "../app/(app)/(stable)/(network-editor)/types/texture";
+import type { Texture } from "~/app/(app)/(stable)/(network-editor)/types/texture";
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
-import { $TextureUniforms } from "../app/(app)/(stable)/(network-editor)/types/texture.schema";
-import { TDxFormField } from "./td-x-form-field";
+import { PropertyFormField } from "./property-form-field";
 
-export const TDxTexturePropertyInspector = () => {
+export const PropertyInspectorTexture = () => {
   const texture = NetworkEditorContext.useSelector((state) =>
     state.context.textures.find(
       (m) => m.id === state.context.selectedProperty?.id,
     ),
   );
 
-  if (!texture) return <TDxMaterialPropertyInspectorLoading />;
+  if (!texture) return <PropertyInspectorTextureLoading />;
 
-  return <TDxMaterialPropertyInspectorForm texture={texture} />;
+  return <PropertyInspectorTextureForm texture={texture} />;
 };
 
-export const TDxMaterialPropertyInspectorLoading = () => {
+export const PropertyInspectorTextureLoading = () => {
   return <div>Loading...</div>;
 };
 
-export const TDxMaterialPropertyInspectorForm = ({
+export const PropertyInspectorTextureForm = ({
   texture,
 }: {
   texture: Texture;
@@ -59,11 +58,11 @@ export const TDxMaterialPropertyInspectorForm = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between p-4">
-        <h2 className="font-mono text-sm font-bold uppercase tracking-widest">
+      <div className="flex items-center justify-between p-2">
+        <h2 className="font-mono text-xs font-bold uppercase tracking-widest">
           Properties
         </h2>
-        <h3 className="font-mono text-sm font-bold uppercase tracking-widest">
+        <h3 className="font-mono text-xs font-bold uppercase tracking-widest">
           {texture.type}
         </h3>
       </div>
@@ -71,7 +70,7 @@ export const TDxMaterialPropertyInspectorForm = ({
       <Form {...form}>
         <form className="flex flex-col space-y-2 py-2">
           {Object.entries(texture.uniforms).map(([property]) => (
-            <TDxFormField
+            <PropertyFormField
               key={property}
               label={property}
               control={form.control}

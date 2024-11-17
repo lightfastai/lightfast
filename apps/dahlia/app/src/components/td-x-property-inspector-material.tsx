@@ -8,8 +8,8 @@ import { Separator } from "@repo/ui/components/ui/separator";
 
 import type { Material } from "../app/(app)/(stable)/(network-editor)/types/primitives";
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { PropertyFormField } from "../app/(app)/(stable)/(network-editor)/components/inspector/property-form-field";
 import { $Material } from "../app/(app)/(stable)/(network-editor)/types/primitives.schema";
-import { TDxFormField } from "./td-x-form-field";
 
 export const TDxMaterialPropertyInspector = () => {
   const material = NetworkEditorContext.useSelector((state) =>
@@ -72,7 +72,7 @@ export const TDxMaterialPropertyInspectorForm = ({
       <Separator />
       <Form {...form}>
         <form className="flex flex-col space-y-2 py-2">
-          <TDxFormField
+          <PropertyFormField
             name={"color"}
             label={"Color"}
             control={form.control}

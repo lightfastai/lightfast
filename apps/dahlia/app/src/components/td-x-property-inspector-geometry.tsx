@@ -8,8 +8,8 @@ import { Separator } from "@repo/ui/components/ui/separator";
 
 import type { Geometry } from "../app/(app)/(stable)/(network-editor)/types/primitives";
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { PropertyFormField } from "../app/(app)/(stable)/(network-editor)/components/inspector/property-form-field";
 import { $Geometry } from "../app/(app)/(stable)/(network-editor)/types/primitives.schema";
-import { TDxFormField } from "./td-x-form-field";
 
 export const TDxGeometryPropertyInspector = () => {
   const geometry = NetworkEditorContext.useSelector((state) =>
@@ -78,7 +78,7 @@ export const TDxGeometryPropertyInspectorForm = ({
         <form className="flex flex-col space-y-2 py-2">
           <div className="space-y-2 py-4">
             {(["position", "rotation", "scale"] as const).map((property) => (
-              <TDxFormField
+              <PropertyFormField
                 key={property}
                 name={property}
                 label={property}

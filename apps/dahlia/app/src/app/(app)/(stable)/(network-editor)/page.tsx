@@ -9,6 +9,7 @@ import { SelectionIndicator } from "~/components/selection-indicator";
 import { NetworkGeometryNode } from "~/components/td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "~/components/td-x-network-editor-material-node";
 import { NetworkTextureNode } from "~/components/td-x-network-editor-texture-node";
+import { PropertyInspector } from "./components/inspector/property-inspector";
 import { TextureRenderPipeline } from "./components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "./components/webgl/webgl-canvas";
 import { Workspace } from "./components/workspace/workspace";
@@ -191,6 +192,8 @@ export default function Page() {
           </div>
         )}
       </Workspace>
+
+      <PropertyInspector />
 
       <WebGLCanvas
         shadows

@@ -24,6 +24,9 @@ import {
 import { Slider } from "@repo/ui/components/ui/slider";
 import { isColor, isNumber, isVec2, isVec3 } from "@repo/webgl";
 
+import { PropertyInputNumber } from "./property-input";
+import { extractMinMax } from "./utils";
+
 interface FormFieldProps<T extends FieldValues> {
   name: Path<T>;
   label: string;
@@ -32,7 +35,7 @@ interface FormFieldProps<T extends FieldValues> {
   parentSchema: z.ZodObject<Record<string, z.ZodTypeAny>>;
 }
 
-export const TDxFormField = <T extends FieldValues>({
+export const PropertyFormField = <T extends FieldValues>({
   name,
   label,
   control,
@@ -48,37 +51,6 @@ export const TDxFormField = <T extends FieldValues>({
     // @todo log-error
     return null; // or throw an error if this should never happen
   }
-
-  const extractMinMax = (
-    schema: z.ZodTypeAny,
-  ): { min?: number; max?: number } => {
-    // Recursively unwrap default, optional, and nullable schemas
-    while (
-      schema instanceof z.ZodDefault ||
-      schema instanceof z.ZodOptional ||
-      schema instanceof z.ZodNullable
-    ) {
-      schema = schema._def.innerType as z.ZodTypeAny;
-    }
-
-    const minMax: { min?: number; max?: number } = {
-      min: 0,
-      max: 1,
-    };
-
-    if (schema instanceof z.ZodNumber) {
-      const checks = schema._def.checks;
-      for (const check of checks) {
-        if (check.kind === "min") {
-          minMax.min = check.value;
-        } else if (check.kind === "max") {
-          minMax.max = check.value;
-        }
-      }
-    }
-
-    return minMax;
-  };
 
   const renderField = (field: ControllerRenderProps<T, Path<T>>) => {
     if (isNumber(field.value)) {
@@ -97,12 +69,12 @@ export const TDxFormField = <T extends FieldValues>({
               onValueChange(newValue);
             }}
           />
-          <Input
+          <PropertyInputNumber
             {...field}
             min={min}
             max={max}
-            type="number"
-            className="w-20 text-xs uppercase tracking-widest"
+            step={0.1}
+            className="w-20"
             onChange={(e) => {
               const newValue = Number(e.target.value);
               field.onChange(newValue);
@@ -118,10 +90,11 @@ export const TDxFormField = <T extends FieldValues>({
       return (
         <div className="flex gap-2">
           {["x", "y", "z"].map((axis) => (
-            <Input
+            <PropertyInputNumber
+              min={0}
+              max={0}
+              step={0}
               {...field}
-              type="number"
-              className="text-xs uppercase tracking-widest"
               onChange={(e) => {
                 const newValue = Number(e.target.value);
                 field.onChange(newValue);
@@ -136,12 +109,13 @@ export const TDxFormField = <T extends FieldValues>({
 
     if (isVec2(field.value)) {
       return (
-        <div className="flex gap-2">
+        <div className="flex w-full gap-2">
           {["x", "y"].map((axis) => (
-            <Input
+            <PropertyInputNumber
+              min={0}
+              max={0}
+              step={0}
               {...field}
-              type="number"
-              className="text-xs uppercase tracking-widest"
               onChange={(e) => {
                 const newValue = Number(e.target.value);
                 field.onChange(newValue);
@@ -197,11 +171,11 @@ export const TDxFormField = <T extends FieldValues>({
       name={name}
       control={control}
       render={({ field }) => (
-        <FormItem className="grid grid-cols-8 gap-4">
+        <FormItem className="grid grid-cols-8 gap-4 px-2">
           <FormLabel className="col-span-3 flex items-center justify-end font-mono text-xs uppercase">
             {label}
           </FormLabel>
-          <FormControl className="col-span-4">{renderField(field)}</FormControl>
+          <FormControl className="col-span-5">{renderField(field)}</FormControl>
         </FormItem>
       )}
     />

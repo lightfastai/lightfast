@@ -55,5 +55,3 @@ export const $TextureV2 = $TextureSharedV2.extend({
   type: z.literal("Noise"),
   uniforms: $PerlinNoise3D,
 });
-
-export const $TextureUniforms = $PerlinNoise3D.merge($Limit);
