@@ -1,17 +1,17 @@
 "use client";
 
 import { useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
 
 import { cn } from "@repo/ui/lib/utils";
 
-import { Workspace } from "~/app/(app)/(stable)/(network-editor)/components/workspace/workspace";
 import { createPath } from "~/components/path-utils";
 import { SelectionIndicator } from "~/components/selection-indicator";
 import { NetworkGeometryNode } from "~/components/td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "~/components/td-x-network-editor-material-node";
 import { NetworkTextureNode } from "~/components/td-x-network-editor-texture-node";
-import { TextureRenderPipeline } from "~/components/texture/texture-render-pipeline";
+import { TextureRenderPipeline } from "./components/webgl/texture-render-pipeline";
+import { WebGLCanvas } from "./components/webgl/webgl-canvas";
+import { Workspace } from "./components/workspace/workspace";
 import { useCreateGeometry } from "./hooks/use-create-geometry";
 import { useCreateMaterial } from "./hooks/use-create-material";
 import { useCreateTexture } from "./hooks/use-create-texture";
@@ -44,19 +44,6 @@ export default function Page() {
 
   return (
     <main className="relative flex-1 overflow-hidden">
-      <Canvas
-        shadows
-        style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: -1, // @important {zIndex: 1} allows the canvas to be rendered on top of the editor
-        }}
-      >
-        <TextureRenderPipeline />
-      </Canvas>
       <Workspace debug>
         {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
           <div
@@ -204,6 +191,20 @@ export default function Page() {
           </div>
         )}
       </Workspace>
+
+      <WebGLCanvas
+        shadows
+        style={{
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: -1, // @important {zIndex: 1} allows the canvas to be rendered on top of the editor
+        }}
+      >
+        <TextureRenderPipeline />
+      </WebGLCanvas>
     </main>
   );
 }

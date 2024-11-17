@@ -10,9 +10,8 @@ import {
   perlinNoise3DVertexShader,
 } from "@repo/webgl/shaders/pnoise";
 
-import type { Texture } from "./types";
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
-import { useRenderTargetPipeline } from "./use-texture-render-pipeline";
+import { useRenderTargetPipeline } from "~/components/texture/use-texture-render-pipeline";
+import { NetworkEditorContext } from "../../state/context";
 
 export const TextureRenderPipeline = () => {
   const textures = NetworkEditorContext.useSelector(
@@ -26,7 +25,7 @@ export const TextureRenderPipeline = () => {
   const noiseNodes = useMemo(() => {
     return Object.values(textures)
       .filter(
-        (texture): texture is Extract<Texture, { type: "Noise" }> =>
+        (texture): texture is Extract<THREE.Texture, { type: "Noise" }> =>
           texture.type === "Noise",
       )
       .map((texture) => {
@@ -69,7 +68,7 @@ export const TextureRenderPipeline = () => {
   const limitNodes = useMemo(() => {
     return Object.values(textures)
       .filter(
-        (texture): texture is Extract<Texture, { type: "Limit" }> =>
+        (texture): texture is Extract<THREE.Texture, { type: "Limit" }> =>
           texture.type === "Limit",
       )
       .map((texture) => {
