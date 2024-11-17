@@ -5,7 +5,7 @@ import { EditorHeaderButton } from "./editor-header-button";
 export const EditorHeaderHelpers = () => {
   const machineRef = TDxMachineContext.useActorRef();
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-1">
       <EditorHeaderButton
         onClick={() => machineRef.send({ type: "TOGGLE_COMMAND" })}
       >

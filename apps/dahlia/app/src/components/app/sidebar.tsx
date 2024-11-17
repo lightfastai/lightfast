@@ -20,7 +20,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: user } = api.user.get.useQuery();
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="px-2 py-1">
+        {" "}
+        {/** @important we've change padding to match the network-editor header */}
         <SidebarLogo />
       </SidebarHeader>
       <SidebarContent>

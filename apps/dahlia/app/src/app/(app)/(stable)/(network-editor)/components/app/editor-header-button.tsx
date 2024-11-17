@@ -7,7 +7,12 @@ export const EditorHeaderButton = React.forwardRef<
   ButtonProps
 >(({ children, ...props }, ref) => {
   return (
-    <Button variant="ghost" className="m-0 h-auto py-1.5" ref={ref} {...props}>
+    <Button
+      variant="ghost"
+      className="m-0 h-auto py-1.5 text-xs"
+      ref={ref}
+      {...props}
+    >
       {children}
     </Button>
   );

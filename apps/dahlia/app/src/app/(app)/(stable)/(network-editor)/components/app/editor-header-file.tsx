@@ -1,7 +1,5 @@
 "use client";
 
-import { PlusCircle } from "lucide-react";
-
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -15,12 +13,11 @@ export function EditorHeaderFile() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 px-2">
-          File
+          <span className="text-xs tracking-wide">File</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
         <DropdownMenuItem>
-          <PlusCircle className="mr-2 h-4 w-4" />
           <span>New File...</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
