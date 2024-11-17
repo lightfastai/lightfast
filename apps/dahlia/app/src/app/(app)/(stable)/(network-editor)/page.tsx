@@ -4,7 +4,7 @@ import { TDxNetworkEditor } from "~/components/td-x-network-editor";
 
 export default function Page() {
   return (
-    <main>
+    <main className="flex-1 overflow-hidden">
       <TDxNetworkEditor />
     </main>
   );

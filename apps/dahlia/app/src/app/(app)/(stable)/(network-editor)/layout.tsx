@@ -10,7 +10,7 @@ export default function NetworkEditorLayout({
 }) {
   return (
     <TDxMachineContext.Provider>
-      <div className="flex h-screen w-full flex-1 flex-col">
+      <div className="fixed inset-0 flex flex-col">
         <EditorHeader />
         {children}
       </div>
