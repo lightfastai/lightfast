@@ -367,7 +367,7 @@ const SidebarHeader = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 p-2", className)}
+      className={cn("flex flex-col gap-2 px-2 py-1", className)} // @important we've changed the padding to py-1 to match the editor header
       {...props}
     />
   );
