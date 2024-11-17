@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import InfoCard from "@repo/ui/components/info-card";
 import { cn } from "@repo/ui/lib/utils";
 
-interface ZoomPanPinchCanvasProps {
+import InfoCard from "~/components/info-card";
+import { GRID_SIZE, MAX_ZOOM, MIN_ZOOM, ZOOM_SPEED } from "./_defaults";
+
+interface WorkspaceProps {
   children: (params: {
     zoom: number;
     cursorPosition: { x: number; y: number };
@@ -15,17 +17,18 @@ interface ZoomPanPinchCanvasProps {
   maxZoom?: number;
   minZoom?: number;
   zoomSpeed?: number;
+  gridSize?: number;
 }
 
-export const ZoomPanPinchCanvas = ({
+export const Workspace = ({
   children,
   debug = false,
-  maxZoom = 10,
-  minZoom = 0.5,
-  zoomSpeed = 0.005,
-}: ZoomPanPinchCanvasProps) => {
+  maxZoom = MAX_ZOOM,
+  minZoom = MIN_ZOOM,
+  zoomSpeed = ZOOM_SPEED,
+  gridSize = GRID_SIZE,
+}: WorkspaceProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const gridSize = 20; // Size of each grid cell in pixels
   const [zoom, setZoom] = useState(1);
   const [isPanningCanvas, setIsPanningCanvas] = useState(false);
   const [dragStartCanvas, setDragStartCanvas] = useState({ x: 0, y: 0 });
@@ -121,10 +124,17 @@ export const ZoomPanPinchCanvas = ({
         onMouseUp={handleCanvasMouseUp}
       >
         <div
-          className="h-canvas-grid w-canvas-grid origin-top-left bg-canvas-grid bg-[0_0,0_0,0_0]"
+          className="h-canvas-grid w-canvas-grid origin-top-left"
           style={{
             backgroundSize: `${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px`,
             transform: `scale(${zoom})`,
+            backgroundImage:
+              // This CSS background image creates a grid pattern on the canvas.
+              // The grid consists of three layers:
+              // 1. A radial gradient for the grid dots, using the --workspace-grid-dot color variable.
+              // 2. A linear gradient for the vertical grid lines, using the --workspace-grid-line color variable.
+              // 3. A linear gradient for the horizontal grid lines, also using the --workspace-grid-line color variable.
+              "radial-gradient(circle, hsl(var(--workspace-grid-dot)) 1px, transparent 1px), linear-gradient(to right, hsl(var(--workspace-grid-line)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--workspace-grid-line)) 1px, transparent 1px)",
           }}
         >
           {children({
