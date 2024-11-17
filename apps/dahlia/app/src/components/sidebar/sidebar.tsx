@@ -10,25 +10,21 @@ import {
   SidebarRail,
 } from "@repo/ui/components/ui/sidebar";
 
-import { api } from "~/trpc/react";
-import { SidebarLogo } from "./app-sidebar-logo";
-import { NavProjects } from "./app-sidebar-nav-projects";
-import { SidebarNavUser } from "./app-sidebar-nav-user";
-import { NewChatButton } from "./app-sidebar-new-chat";
+import { SidebarLogo } from "./sidebar-logo";
+import { NavProjects } from "./sidebar-nav-projects";
+import { SidebarNavUser } from "./sidebar-nav-user";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: user } = api.user.get.useQuery();
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarLogo />
-        <NewChatButton />
       </SidebarHeader>
       <SidebarContent>
         <NavProjects />
       </SidebarContent>
       <SidebarFooter>
-        <SidebarNavUser user={user} />
+        <SidebarNavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

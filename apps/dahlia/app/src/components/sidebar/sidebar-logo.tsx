@@ -5,14 +5,14 @@ import Link from "next/link";
 import { SidebarMenu, SidebarMenuItem } from "@repo/ui/components/ui/sidebar";
 
 import { Icons } from "~/app/icons";
-import { siteConfig } from "~/config/site";
+import { siteConfig, siteNav } from "~/config/site";
 
 export const SidebarLogo = () => {
   return (
     <SidebarMenu>
-      <SidebarMenuItem className="py-4">
+      <SidebarMenuItem>
         <Link
-          href="/"
+          href={siteNav.mainNav[0]?.href ?? "/"} // @TODO: seems like if i change relative index, it will be an issue.
           className="flex items-center gap-4 transition-colors hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           aria-label={`Return to ${siteConfig.name} homepage`}
         >
