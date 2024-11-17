@@ -1,4 +1,3 @@
-import type { RootState } from "@react-three/fiber";
 import { useMemo } from "react";
 import * as THREE from "three";
 
@@ -7,6 +6,7 @@ import {
   perlinNoise3DVertexShader,
 } from "@repo/webgl/shaders/pnoise";
 
+import { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { TextureRenderNode } from "../types/render";
 import { useGetTextureData } from "./use-get-texture-data";
 
@@ -47,7 +47,7 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
         return {
           id: texture.id,
           shader,
-          onEachFrame: (state: RootState) => {
+          onEachFrame: (_: WebGLRootState) => {
             // uniforms.u_time.value = state.clock.elapsedTime;
           },
         };

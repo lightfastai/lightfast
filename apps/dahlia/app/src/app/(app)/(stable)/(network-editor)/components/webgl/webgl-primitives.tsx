@@ -1,3 +1,4 @@
+import type { RootState } from "@react-three/fiber";
 import { View } from "@react-three/drei";
 import { createPortal } from "@react-three/fiber";
 
@@ -24,5 +25,6 @@ export { WebGLView };
  * const portal = createWebGLPortal(<div>Hello, world!</div>, scene);
  */
 const createWebGLPortal = createPortal;
-
 export { createWebGLPortal };
+
+export type { RootState as WebGLRootState };

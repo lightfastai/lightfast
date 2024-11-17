@@ -1,9 +1,9 @@
-import type { RootState } from "@react-three/fiber";
 import { useMemo } from "react";
 import * as THREE from "three";
 
 import { limitFragmentShader, limitVertexShader } from "@repo/webgl";
 
+import { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { TextureRenderNode } from "../types/render";
 import { useGetTextureData } from "./use-get-texture-data";
 
@@ -34,7 +34,7 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
         return {
           id: texture.id,
           shader,
-          onEachFrame: (_: RootState) => {
+          onEachFrame: (_: WebGLRootState) => {
             // uniforms.u_time.value = state.clock.elapsedTime;
           },
         };

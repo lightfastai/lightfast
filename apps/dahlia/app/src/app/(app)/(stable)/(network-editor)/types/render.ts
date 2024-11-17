@@ -1,5 +1,6 @@
-import type { RootState } from "@react-three/fiber";
 import * as THREE from "three";
+
+import { WebGLRootState } from "../components/webgl/webgl-primitives";
 
 /**
  * @description A node in the texture render pipeline.
@@ -10,7 +11,7 @@ import * as THREE from "three";
 export interface TextureRenderNode {
   id: number;
   shader: THREE.ShaderMaterial;
-  onEachFrame: (state: RootState) => void;
+  onEachFrame: (state: WebGLRootState) => void;
 }
 
 /**
@@ -28,6 +29,6 @@ export interface TextureRenderNode {
  * });
  */
 export interface TextureRenderPipeline {
-  onEachFrame: Record<number, (state: RootState) => void>;
+  onEachFrame: Record<number, (state: WebGLRootState) => void>;
   meshes: Record<number, THREE.Mesh>;
 }
