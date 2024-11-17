@@ -14,11 +14,11 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
+import { $GeometryType, $MaterialType } from "~/components/schema";
+import { $TextureTypes } from "~/components/texture/schema";
 import { TDxMachineContext } from "~/machine/context";
-import { $GeometryType, $MaterialType } from "./schema";
-import { $TextureTypes } from "./texture/schema";
 
-export const TDxCommandDialog = () => {
+export const EditorCommandDialog = () => {
   const state = TDxMachineContext.useSelector((state) => state);
   const machineRef = TDxMachineContext.useActorRef();
 

@@ -1,14 +1,14 @@
 "use client";
 
 import { TDxMachineContext } from "~/machine/context";
+import { EditorCommandDialog } from "../app/(app)/(stable)/(network-editor)/components/app/editor-command-dialog";
 import TDxCanvas from "./td-x-canvas";
-import { TDxCommandDialog } from "./td-x-command-dialog";
 
 export const TDxApp = () => {
   return (
     <TDxMachineContext.Provider>
       <TDxCanvas />
-      <TDxCommandDialog />
+      <EditorCommandDialog />
     </TDxMachineContext.Provider>
   );
 };
