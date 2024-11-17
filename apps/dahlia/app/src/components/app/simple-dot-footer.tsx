@@ -1,13 +1,17 @@
-import Link, { LinkProps } from "next/link";
-import { siteNav } from "~/config/site";
+import type { LinkProps } from "next/link";
+import Link from "next/link";
 
-export const SiteFooter = () => {
+import type { NavItemRecord } from "@repo/ui/types/nav";
+
+export const SimpleDotFooter = ({ nav }: { nav: NavItemRecord<string> }) => {
   return (
     <footer className="fixed bottom-0 left-0 right-0 flex justify-center bg-gradient-to-t from-background/80 to-transparent pb-4 pt-2 backdrop-blur-sm">
       <nav className="flex items-center gap-4 text-sm text-muted-foreground">
-        {siteNav.footerNav.map((item) => (
+        {Object.values(nav).map((item) => (
           <>
-            <FooterLink href={item.href ?? "/"}>{item.title}</FooterLink> {/** TODO: fix this ?? "/"*/}
+            <FooterLink key={item.title} href={item.href}>
+              {item.title}
+            </FooterLink>{" "}
             <FooterDot />
           </>
         ))}

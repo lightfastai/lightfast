@@ -2,6 +2,7 @@
 
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
+import { RouterOutputs } from "@repo/api";
 import { signOut } from "@repo/auth/client";
 import {
   Avatar,
@@ -23,11 +24,13 @@ import {
   useSidebar,
 } from "@repo/ui/components/ui/sidebar";
 
-import { api } from "~/trpc/react";
-
-export function SidebarNavUser() {
-  const { data: user } = api.user.get.useQuery();
+export function SidebarNavUser({
+  user,
+}: {
+  user: RouterOutputs["user"]["get"] | undefined;
+}) {
   const { isMobile } = useSidebar();
+  if (!user) return null;
   return (
     <SidebarMenu>
       <SidebarMenuItem>

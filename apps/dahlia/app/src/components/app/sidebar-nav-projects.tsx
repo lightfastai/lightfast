@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+
+import { RouterOutputs } from "@repo/api";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -8,11 +11,12 @@ import {
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
 
-import { api } from "~/trpc/react";
-
-export function NavProjects() {
-  const { data: projects } = api.projects.getProjects.useQuery();
-  if (!projects) return null;
+export function SidebarNavProjects({
+  projects,
+}: {
+  projects: RouterOutputs["projects"]["getProjects"] | undefined;
+}) {
+  if (!projects || projects.length === 0) return null;
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
@@ -22,9 +26,9 @@ export function NavProjects() {
           .map((project) => (
             <SidebarMenuItem key={project.id}>
               <SidebarMenuButton asChild>
-                <a href={`/ai/chat/${project.id}`}>
+                <Link href={`/ai/chat/${project.id}`}>
                   <span>{project.id}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
