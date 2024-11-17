@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./shaders/pnoise": {
+      "types": "./dist/shaders/pnoise/pnoise.d.ts",
+      "default": "./src/shaders/pnoise/pnoise.ts"
     }
   },
   "license": "MIT",

@@ -2,6 +2,9 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
+import limitFragmentShader from "./limit.frag";
+import limitVertexShader from "./limit.vert";
+
 export const $Limit = z.object({
   u_texture: z
     .number()
@@ -29,24 +32,5 @@ export const createDefaultLimit = (): LimitParams => {
 export const LimitDescription =
   "A type of texture functionality that limits the color values of a texture to a certain number of steps.";
 
-export const limitVertexShader = `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-export const limitFragmentShader = `
-  uniform sampler2D u_texture;
-  uniform float u_quantizationSteps;
-  varying vec2 vUv;
-
-  void main() {
-    vec4 color = texture2D(u_texture, vUv);
-    if (u_quantizationSteps > 1.0) {
-      color.rgb = floor(color.rgb * u_quantizationSteps) / u_quantizationSteps;
-    }
-    gl_FragColor = color;
-  }
-`;
+export { limitVertexShader };
+export { limitFragmentShader };

@@ -9,11 +9,25 @@ const config = {
   reactStrictMode: true,
 
   /** Enables hot reloading for local packages without a build step */
-  transpilePackages: ["@repo/api", "@repo/auth", "@repo/db", "@repo/ui"],
+  transpilePackages: [
+    "@repo/api",
+    "@repo/auth",
+    "@repo/db",
+    "@repo/ui",
+    "@repo/webgl",
+  ],
 
   /** We already do linting and typechecking as separate tasks in CI */
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+
+  webpack: (config, { isServer }) => {
+    config.module.rules.push({
+      test: /\.(vert|frag)$/,
+      use: "webpack-glsl-loader",
+    });
+    return config;
+  },
 };
 
 export default config;

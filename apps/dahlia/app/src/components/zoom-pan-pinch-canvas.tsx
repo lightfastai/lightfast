@@ -21,8 +21,8 @@ export const ZoomPanPinchCanvas = ({
   children,
   debug = false,
   maxZoom = 10,
-  minZoom = 0.1,
-  zoomSpeed = 0.1,
+  minZoom = 0.5,
+  zoomSpeed = 0.005,
 }: ZoomPanPinchCanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const gridSize = 20; // Size of each grid cell in pixels
