@@ -9,7 +9,7 @@ export default function NetworkEditorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-screen w-full border">
+    <div className="h-screen w-full">
       <TDxMachineContext.Provider>
         <EditorHeader />
         {children}
