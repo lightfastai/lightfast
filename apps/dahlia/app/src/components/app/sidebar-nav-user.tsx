@@ -44,11 +44,9 @@ export function SidebarNavUser({
                 <AvatarImage
                   src={user?.image ?? "/avatar-placeholder.webp"}
                   alt={user?.name ?? ""}
-                  className="rounded-[0.25rem]"
+                  className="rounded-lg"
                 />
-                <AvatarFallback className="rounded-[0.25rem]">
-                  CN
-                </AvatarFallback>
+                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user?.name}</span>

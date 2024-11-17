@@ -139,7 +139,7 @@ export const TextureAIGenerator = () => {
                       <AvatarImage
                         src="/avatar-placeholder.webp"
                         alt="dahlia-ai"
-                        className="rounded-[0.25rem]"
+                        className="rounded-lg"
                       />
                     </Avatar>
 

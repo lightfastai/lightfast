@@ -48,7 +48,7 @@ export default function Page() {
                   role="group"
                   aria-label={`Template ${id}`}
                 >
-                  <Card className="relative h-[400px] w-full overflow-hidden rounded-[0.25rem] transition-transform duration-300 hover:scale-[1.02] sm:h-[300px]">
+                  <Card className="relative h-[400px] w-full overflow-hidden rounded-lg transition-transform duration-300 hover:scale-[1.02] sm:h-[300px]">
                     <Image
                       src={`/playground-placeholder-${id}.webp`}
                       alt={`Template preview ${id}`}
