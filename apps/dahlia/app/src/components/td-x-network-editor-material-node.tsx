@@ -8,7 +8,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Material } from "./types";
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import {
   CENTER_OF_WORLD,
   DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,
@@ -19,10 +19,10 @@ import { GeometryViewer } from "./r3f/geometry-viewer";
 import { $GeometryType } from "./schema";
 
 export const NetworkMaterialNode = ({ materialId }: { materialId: number }) => {
-  const material = TDxMachineContext.useSelector((state) =>
+  const material = NetworkEditorContext.useSelector((state) =>
     state.context.materials.find((m) => m.id === materialId),
   );
-  const machineRef = TDxMachineContext.useActorRef();
+  const machineRef = NetworkEditorContext.useActorRef();
 
   // Geometry Drag Handlers
   const handleMaterialClick = (material: Material) => {

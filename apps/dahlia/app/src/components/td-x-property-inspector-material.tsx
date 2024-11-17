@@ -7,12 +7,12 @@ import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 
 import type { Material } from "./types";
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { $Material } from "./schema";
 import { TDxFormField } from "./td-x-form-field";
 
 export const TDxMaterialPropertyInspector = () => {
-  const material = TDxMachineContext.useSelector((state) =>
+  const material = NetworkEditorContext.useSelector((state) =>
     state.context.materials.find(
       (m) => m.id === state.context.selectedProperty?.id,
     ),
@@ -32,7 +32,7 @@ export const TDxMaterialPropertyInspectorForm = ({
 }: {
   material: Material;
 }) => {
-  const machineRef = TDxMachineContext.useActorRef();
+  const machineRef = NetworkEditorContext.useActorRef();
   const form = useForm<Material>({
     resolver: zodResolver($Material),
     defaultValues: {

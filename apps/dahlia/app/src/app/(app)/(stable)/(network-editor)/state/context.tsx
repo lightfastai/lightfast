@@ -2,4 +2,4 @@ import { createActorContext } from "@xstate/react";
 
 import { canvasMachine } from "./state";
 
-export const TDxMachineContext = createActorContext(canvasMachine);
+export const NetworkEditorContext = createActorContext(canvasMachine);

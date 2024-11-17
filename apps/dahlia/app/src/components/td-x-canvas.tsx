@@ -7,18 +7,18 @@ import {
   ResizablePanelGroup,
 } from "@repo/ui/components/ui/resizable";
 
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkCanvas } from "../app/(app)/(stable)/(network-editor)/components/network/network-canvas";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_FAR } from "./constants";
 import { GeometryViewer } from "./r3f/geometry-viewer";
-import { TDxNetworkEditor } from "./td-x-network-editor";
 import { TDxGeometryPropertyInspector } from "./td-x-property-inspector-geometry";
 import { TDxMaterialPropertyInspector } from "./td-x-property-inspector-material";
 import { TDxTexturePropertyInspector } from "./td-x-property-inspector-texture";
 import { isGeometry, isMaterial, isTexture } from "./types";
 
 export default function TDxCanvas() {
-  const state = TDxMachineContext.useSelector((state) => state);
-  const machineRef = TDxMachineContext.useActorRef();
+  const state = NetworkEditorContext.useSelector((state) => state);
+  const machineRef = NetworkEditorContext.useActorRef();
 
   return (
     <div className="flex h-screen flex-col">
@@ -48,7 +48,7 @@ export default function TDxCanvas() {
           defaultSize={70}
           className="flex flex-grow overflow-hidden"
         >
-          <TDxNetworkEditor />
+          <NetworkCanvas />
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel defaultSize={30} className="flex-1 overflow-hidden">

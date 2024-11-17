@@ -11,7 +11,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Texture } from "./texture/types";
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 
 export const NetworkTextureNode = ({
   textureId,
@@ -20,17 +20,17 @@ export const NetworkTextureNode = ({
   textureId: number;
   zoom: number;
 }) => {
-  const texture = TDxMachineContext.useSelector((state) =>
+  const texture = NetworkEditorContext.useSelector((state) =>
     state.context.textures.find((m) => m.id === textureId),
   );
-  const machineRef = TDxMachineContext.useActorRef();
+  const machineRef = NetworkEditorContext.useActorRef();
   const [isHovered, setIsHovered] = useState(false);
   const outputButtonRef = useRef<HTMLButtonElement>(null);
   const inputButtonRef = useRef<HTMLButtonElement>(null);
-  const rtarget = TDxMachineContext.useSelector(
+  const rtarget = NetworkEditorContext.useSelector(
     (state) => state.context.rtargets[textureId],
   );
-  const activeConnection = TDxMachineContext.useSelector(
+  const activeConnection = NetworkEditorContext.useSelector(
     (state) => state.context.activeConnection,
   );
 

@@ -11,15 +11,15 @@ import {
 } from "@repo/webgl/shaders/pnoise";
 
 import type { Texture } from "./types";
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { useRenderTargetPipeline } from "./use-texture-render-pipeline";
 
 export const TextureRenderPipeline = () => {
-  const textures = TDxMachineContext.useSelector(
+  const textures = NetworkEditorContext.useSelector(
     (state) => state.context.textures,
   );
   const meshRefs = useRef<Record<number, THREE.Mesh>>({});
-  const rtargets = TDxMachineContext.useSelector(
+  const rtargets = NetworkEditorContext.useSelector(
     (state) => state.context.rtargets,
   );
 

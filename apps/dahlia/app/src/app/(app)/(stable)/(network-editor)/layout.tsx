@@ -1,7 +1,7 @@
 "use client";
 
 import { EditorHeader } from "./components/app/editor-header";
-import { TDxMachineContext } from "./state/context";
+import { NetworkEditorContext } from "./state/context";
 
 export default function NetworkEditorLayout({
   children,
@@ -9,11 +9,11 @@ export default function NetworkEditorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <TDxMachineContext.Provider>
+    <NetworkEditorContext.Provider>
       <div className="fixed inset-0 flex flex-col">
         <EditorHeader />
         {children}
       </div>
-    </TDxMachineContext.Provider>
+    </NetworkEditorContext.Provider>
   );
 }

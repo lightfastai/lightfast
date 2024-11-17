@@ -1,12 +1,12 @@
 "use client";
 
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { TextureAIGenerator } from "./texture-ai-gen";
 
 export const TextureAIGeneratorStateWrapper = () => {
   return (
-    <TDxMachineContext.Provider>
+    <NetworkEditorContext.Provider>
       <TextureAIGenerator />
-    </TDxMachineContext.Provider>
+    </NetworkEditorContext.Provider>
   );
 };

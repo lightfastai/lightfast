@@ -9,12 +9,12 @@ import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 
 import type { Texture } from "./texture/types";
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { TDxFormField } from "./td-x-form-field";
 import { $TextureUniforms } from "./texture/schema";
 
 export const TDxTexturePropertyInspector = () => {
-  const texture = TDxMachineContext.useSelector((state) =>
+  const texture = NetworkEditorContext.useSelector((state) =>
     state.context.textures.find(
       (m) => m.id === state.context.selectedProperty?.id,
     ),
@@ -34,7 +34,7 @@ export const TDxMaterialPropertyInspectorForm = ({
 }: {
   texture: Texture;
 }) => {
-  const machineRef = TDxMachineContext.useActorRef();
+  const machineRef = NetworkEditorContext.useActorRef();
   const form = useForm<z.infer<typeof $TextureUniforms>>({
     resolver: zodResolver($TextureUniforms),
     defaultValues: texture.uniforms,

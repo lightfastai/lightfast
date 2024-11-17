@@ -3,7 +3,7 @@ import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 
 // Custom hook for render target pipeline
 export const useRenderTargetPipeline = ({
@@ -14,7 +14,7 @@ export const useRenderTargetPipeline = ({
   meshes: Record<number, THREE.Mesh>;
 }) => {
   const { gl } = useThree();
-  const rtargets = TDxMachineContext.useSelector(
+  const rtargets = NetworkEditorContext.useSelector(
     (state) => state.context.rtargets,
   );
   const scene = useMemo(() => new THREE.Scene(), []);

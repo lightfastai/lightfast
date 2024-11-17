@@ -1,9 +1,9 @@
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { EditorCommandDialog } from "./editor-command-dialog";
 import { EditorHeaderButton } from "./editor-header-button";
 
 export const EditorHeaderHelpers = () => {
-  const machineRef = TDxMachineContext.useActorRef();
+  const machineRef = NetworkEditorContext.useActorRef();
   return (
     <div className="flex gap-1">
       <EditorHeaderButton

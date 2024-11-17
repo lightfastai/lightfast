@@ -9,15 +9,15 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Geometry } from "./types";
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_CLOSE } from "./constants";
 import { GeometryViewer } from "./r3f/geometry-viewer";
 
 export const NetworkGeometryNode = ({ geometryId }: { geometryId: number }) => {
-  const geometry = TDxMachineContext.useSelector((state) =>
+  const geometry = NetworkEditorContext.useSelector((state) =>
     state.context.geometries.find((g) => g.id === geometryId),
   );
-  const machineRef = TDxMachineContext.useActorRef();
+  const machineRef = NetworkEditorContext.useActorRef();
 
   const handleGeometryClick = (geometry: Geometry) => {
     machineRef.send({ type: "UPDATE_SELECTED_PROPERTY", property: geometry });

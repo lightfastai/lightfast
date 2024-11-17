@@ -7,12 +7,12 @@ import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 
 import type { Geometry } from "./types";
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { $Geometry } from "./schema";
 import { TDxFormField } from "./td-x-form-field";
 
 export const TDxGeometryPropertyInspector = () => {
-  const geometry = TDxMachineContext.useSelector((state) =>
+  const geometry = NetworkEditorContext.useSelector((state) =>
     state.context.geometries.find(
       (g) => g.id === state.context.selectedProperty?.id,
     ),
@@ -32,7 +32,7 @@ export const TDxGeometryPropertyInspectorForm = ({
 }: {
   geometry: Geometry;
 }) => {
-  const machineRef = TDxMachineContext.useActorRef();
+  const machineRef = NetworkEditorContext.useActorRef();
   const form = useForm<Geometry>({
     resolver: zodResolver($Geometry),
     defaultValues: {

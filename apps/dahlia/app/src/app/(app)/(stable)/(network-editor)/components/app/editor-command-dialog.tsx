@@ -14,13 +14,13 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
-import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { $GeometryType, $MaterialType } from "~/components/schema";
 import { $TextureTypes } from "~/components/texture/schema";
 
 export const EditorCommandDialog = () => {
-  const state = TDxMachineContext.useSelector((state) => state);
-  const machineRef = TDxMachineContext.useActorRef();
+  const state = NetworkEditorContext.useSelector((state) => state);
+  const machineRef = NetworkEditorContext.useActorRef();
 
   /**
    * Handle global command dialog toggle
