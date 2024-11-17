@@ -9,11 +9,11 @@ export default function NetworkEditorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-screen w-full">
-      <TDxMachineContext.Provider>
+    <TDxMachineContext.Provider>
+      <div className="flex h-screen w-full flex-1 flex-col">
         <EditorHeader />
         {children}
-      </TDxMachineContext.Provider>
-    </div>
+      </div>
+    </TDxMachineContext.Provider>
   );
 }
