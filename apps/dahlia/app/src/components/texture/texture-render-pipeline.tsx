@@ -11,7 +11,7 @@ import {
 } from "@repo/webgl/shaders/pnoise";
 
 import type { Texture } from "./types";
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { useRenderTargetPipeline } from "./use-texture-render-pipeline";
 
 export const TextureRenderPipeline = () => {

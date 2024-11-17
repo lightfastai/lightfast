@@ -16,7 +16,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { TextureRenderPipeline } from "./texture/texture-render-pipeline";
 import { TextureV2 } from "./texture/types";
 

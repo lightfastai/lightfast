@@ -9,7 +9,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Geometry } from "./types";
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_CLOSE } from "./constants";
 import { GeometryViewer } from "./r3f/geometry-viewer";
 

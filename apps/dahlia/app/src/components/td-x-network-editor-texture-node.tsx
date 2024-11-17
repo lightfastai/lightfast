@@ -11,7 +11,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Texture } from "./texture/types";
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 
 export const NetworkTextureNode = ({
   textureId,

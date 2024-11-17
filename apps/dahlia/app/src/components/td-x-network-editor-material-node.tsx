@@ -8,7 +8,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Material } from "./types";
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import {
   CENTER_OF_WORLD,
   DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,

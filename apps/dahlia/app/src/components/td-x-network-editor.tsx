@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { cn } from "@repo/ui/lib/utils";
 import { createDefaultLimit, createDefaultPerlinNoise3D } from "@repo/webgl";
 
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import {
   DEFAULT_MATERIAL_COLOR,
   DEFAULT_POSITION,

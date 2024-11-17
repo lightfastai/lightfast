@@ -1,7 +1,7 @@
 "use client";
 
-import { TDxMachineContext } from "~/machine/context";
 import { EditorHeader } from "./components/app/editor-header";
+import { TDxMachineContext } from "./state/context";
 
 export default function NetworkEditorLayout({
   children,

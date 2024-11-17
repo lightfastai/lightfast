@@ -1,4 +1,4 @@
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { EditorCommandDialog } from "./editor-command-dialog";
 import { EditorHeaderButton } from "./editor-header-button";
 

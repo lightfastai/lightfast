@@ -9,7 +9,7 @@ import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 
 import type { Texture } from "./texture/types";
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { TDxFormField } from "./td-x-form-field";
 import { $TextureUniforms } from "./texture/schema";
 

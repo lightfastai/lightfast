@@ -1,5 +1,5 @@
 import { createActorContext } from "@xstate/react";
 
-import { canvasMachine } from "./xstate";
+import { canvasMachine } from "./state";
 
 export const TDxMachineContext = createActorContext(canvasMachine);

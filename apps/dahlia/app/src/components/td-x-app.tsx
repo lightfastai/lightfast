@@ -1,6 +1,6 @@
 "use client";
 
-import { TDxMachineContext } from "~/machine/context";
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { EditorCommandDialog } from "../app/(app)/(stable)/(network-editor)/components/app/editor-command-dialog";
 import TDxCanvas from "./td-x-canvas";
 

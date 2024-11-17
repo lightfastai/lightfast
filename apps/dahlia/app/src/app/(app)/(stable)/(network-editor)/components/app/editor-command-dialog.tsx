@@ -14,9 +14,9 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
+import { TDxMachineContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { $GeometryType, $MaterialType } from "~/components/schema";
 import { $TextureTypes } from "~/components/texture/schema";
-import { TDxMachineContext } from "~/machine/context";
 
 export const EditorCommandDialog = () => {
   const state = TDxMachineContext.useSelector((state) => state);
