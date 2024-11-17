@@ -146,7 +146,7 @@ export default function Page() {
   );
 
   return (
-    <main className="flex-1 overflow-hidden">
+    <main className="relative flex-1 overflow-hidden">
       <Canvas
         shadows
         style={{
