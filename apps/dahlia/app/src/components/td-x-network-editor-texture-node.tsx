@@ -125,7 +125,7 @@ export const NetworkTextureNode = ({
       <div
         key={texture.id}
         className={cn(
-          `cursor-pointer flex-col gap-1 border p-1 text-card-foreground shadow-sm`,
+          `borderp-1 cursor-pointer flex-col gap-1 text-card-foreground shadow-sm`,
           isConnectionTarget && "ring-2 ring-primary",
         )}
         onClick={() => {
@@ -202,8 +202,8 @@ export const NetworkTextureNode = ({
                   left: 0,
                   width: "100%",
                   height: "100%",
+                  zIndex: 1000,
                 }}
-                index={Infinity}
               >
                 <color attach="background" args={["black"]} />
                 <mesh>

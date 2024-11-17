@@ -1,130 +1,29 @@
 "use client";
 
 import { useMemo } from "react";
+import { Canvas } from "@react-three/fiber";
 
 import { cn } from "@repo/ui/lib/utils";
-import { createDefaultLimit, createDefaultPerlinNoise3D } from "@repo/webgl";
 
 import { Workspace } from "~/app/(app)/(stable)/(network-editor)/components/workspace/workspace";
-import {
-  DEFAULT_MATERIAL_COLOR,
-  DEFAULT_POSITION,
-  DEFAULT_ROTATION,
-  DEFAULT_SCALE,
-} from "~/components/constants";
 import { createPath } from "~/components/path-utils";
 import { SelectionIndicator } from "~/components/selection-indicator";
 import { NetworkGeometryNode } from "~/components/td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "~/components/td-x-network-editor-material-node";
 import { NetworkTextureNode } from "~/components/td-x-network-editor-texture-node";
+import { TextureRenderPipeline } from "~/components/texture/texture-render-pipeline";
+import { useCreateGeometry } from "./hooks/use-create-geometry";
+import { useCreateMaterial } from "./hooks/use-create-material";
+import { useCreateTexture } from "./hooks/use-create-texture";
 import { NetworkEditorContext } from "./state/context";
 
 export default function Page() {
   const state = NetworkEditorContext.useSelector((state) => state);
   const machineRef = NetworkEditorContext.useActorRef();
 
-  const handleGeometryCreate = (x: number, y: number) => {
-    if (!state.context.selectedGeometry) return;
-
-    machineRef.send({
-      type: "ADD_GEOMETRY",
-      geometry: {
-        id: Date.now(),
-        type: state.context.selectedGeometry,
-        position: DEFAULT_POSITION,
-        scale: DEFAULT_SCALE,
-        rotation: DEFAULT_ROTATION,
-        inputPos: {
-          x: x,
-          y: y,
-        },
-        outputPos: {
-          x: x,
-          y: y,
-        },
-        x,
-        y,
-        wireframe: false,
-        material: null,
-        shouldRenderInNode: true,
-      },
-    });
-  };
-
-  const handleMaterialCreate = (x: number, y: number) => {
-    if (!state.context.selectedMaterial) return;
-    machineRef.send({
-      type: "ADD_MATERIAL",
-      material: {
-        id: Date.now(),
-        inputPos: {
-          x: x,
-          y: y,
-        },
-        outputPos: {
-          x: x,
-          y: y,
-        },
-        type: state.context.selectedMaterial,
-        color: DEFAULT_MATERIAL_COLOR,
-        x,
-        y,
-        shouldRenderInNode: true,
-      },
-    });
-  };
-
-  const handleTextureCreate = (x: number, y: number) => {
-    if (!state.context.selectedTexture) return;
-
-    if (state.context.selectedTexture === "Noise") {
-      machineRef.send({
-        type: "ADD_TEXTURE",
-        texture: {
-          id: Date.now(), // @todo: Fix this back to Date
-          x,
-          inputPos: {
-            x: x,
-            y: y,
-          },
-          outputPos: {
-            x: x,
-            y: y,
-          },
-          y,
-          shouldRenderInNode: true,
-          type: "Noise",
-          uniforms: createDefaultPerlinNoise3D(),
-          input: null,
-          outputs: [],
-        },
-      });
-    }
-
-    if (state.context.selectedTexture === "Limit") {
-      machineRef.send({
-        type: "ADD_TEXTURE",
-        texture: {
-          id: Date.now(),
-          x,
-          y,
-          inputPos: {
-            x: x,
-            y: y,
-          },
-          outputPos: {
-            x: x,
-            y: y,
-          },
-          shouldRenderInNode: true,
-          type: "Limit",
-          uniforms: createDefaultLimit(),
-          input: null,
-          outputs: [],
-        },
-      });
-    }
-  };
+  const { handleGeometryCreate } = useCreateGeometry();
+  const { handleMaterialCreate } = useCreateMaterial();
+  const { handleTextureCreate } = useCreateTexture();
 
   const isPlacingAny = useMemo(
     () =>
@@ -145,7 +44,7 @@ export default function Page() {
 
   return (
     <main className="relative flex-1 overflow-hidden">
-      {/* <Canvas
+      <Canvas
         shadows
         style={{
           position: "absolute",
@@ -157,7 +56,7 @@ export default function Page() {
         }}
       >
         <TextureRenderPipeline />
-      </Canvas> */}
+      </Canvas>
       <Workspace debug>
         {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
           <div

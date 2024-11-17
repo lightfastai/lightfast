@@ -10,7 +10,7 @@ export default function NetworkEditorLayout({
 }) {
   return (
     <NetworkEditorContext.Provider>
-      <div className="fixed inset-0 flex flex-col">
+      <div className="fixed inset-0 flex flex-col pl-[3rem]">
         <EditorHeader />
         {children}
       </div>
