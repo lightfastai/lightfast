@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
+import { InfoCard } from "@repo/ui/components/info-card";
 import { cn } from "@repo/ui/lib/utils";
 
-import InfoCard from "~/components/info-card";
 import { GRID_SIZE, MAX_ZOOM, MIN_ZOOM, ZOOM_SPEED } from "./_defaults";
 
 interface WorkspaceProps {
@@ -148,7 +148,7 @@ export const Workspace = ({
       {debug && (
         <div className="absolute bottom-4 right-4 z-50">
           <InfoCard
-            title="Debug"
+            title="Workspace Info"
             items={[
               { label: "gridSize", value: gridSize },
               {

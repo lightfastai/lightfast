@@ -3,6 +3,7 @@ import React from "react";
 
 import { Card, CardContent, CardHeader } from "@repo/ui/components/ui/card";
 import { Label } from "@repo/ui/components/ui/label";
+import { cn } from "@repo/ui/lib/utils";
 
 /**
  * Represents a single label-value pair in the InfoCard.
@@ -35,10 +36,14 @@ export interface InfoCardProps {
  * @param {InfoCardProps} props - The props for the component.
  * @returns {JSX.Element} The rendered InfoCard component.
  */
-const InfoCard: React.FC<InfoCardProps> = ({ title, items, className }) => {
+export const InfoCard: React.FC<InfoCardProps> = ({
+  title,
+  items,
+  className,
+}) => {
   return (
-    <Card className={className}>
-      <CardHeader className="flex font-mono text-sm uppercase text-muted-foreground">
+    <Card className={cn(className)}>
+      <CardHeader className="flex font-mono text-xs uppercase text-muted-foreground">
         <h3>{title}</h3>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
@@ -60,5 +65,3 @@ const InfoCard: React.FC<InfoCardProps> = ({ title, items, className }) => {
     </Card>
   );
 };
-
-export default InfoCard;
