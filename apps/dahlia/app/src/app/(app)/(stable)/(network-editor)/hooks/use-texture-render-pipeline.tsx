@@ -1,30 +1,25 @@
-import type { RootState } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { TextureRenderPipeline } from "../types/texture";
+import { useGetTextureData } from "./use-get-texture-data";
 
-// Custom hook for render target pipeline
+/**
+ * @description A pipeline for rendering textures to render targets.
+ */
 export const useRenderTargetPipeline = ({
   onEachFrame,
   meshes,
-}: {
-  onEachFrame: Record<number, (state: RootState) => void>;
-  meshes: Record<number, THREE.Mesh>;
-}) => {
+}: TextureRenderPipeline) => {
   const { gl } = useThree();
-  const rtargets = NetworkEditorContext.useSelector(
-    (state) => state.context.rtargets,
-  );
+  const { rtargets } = useGetTextureData();
   const scene = useMemo(() => new THREE.Scene(), []);
   const camera = useMemo(
     () => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1),
     [],
   );
   const geometry = useMemo(() => new THREE.PlaneGeometry(2, 2), []);
-
-  const noiseMaterial = useRef();
 
   useFrame((state) => {
     Object.entries(rtargets).forEach(([key, target]) => {
@@ -49,7 +44,6 @@ export const useRenderTargetPipeline = ({
   });
 
   return {
-    noiseMaterial,
     scene,
     geometry,
   };
