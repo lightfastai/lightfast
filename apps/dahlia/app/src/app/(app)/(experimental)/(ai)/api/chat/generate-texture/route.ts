@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { $TextureSystemJsonSchema } from "@repo/webgl";
 
-import { $TextureV2 } from "~/components/texture/schema";
+import { $TextureV2 } from "~/app/(app)/(stable)/(network-editor)/types/texture.schema";
 
 export const maxDuration = 30;
 

@@ -1,15 +1,18 @@
 import * as THREE from "three";
 import { assign, setup } from "xstate";
 
-import type { Texture, TextureType } from "~/components/texture/types";
 import type {
   Geometry,
   GeometryType,
   Material,
   MaterialType,
-} from "~/components/types";
+} from "~/app/(app)/(stable)/(network-editor)/types/primitives";
+import type {
+  Texture,
+  TextureType,
+} from "~/app/(app)/(stable)/(network-editor)/types/texture";
+import { $Texture } from "~/app/(app)/(stable)/(network-editor)/types/texture.schema";
 import { TEXTURE_RESOLUTION } from "~/components/constants";
-import { $Texture } from "~/components/texture/schema";
 
 type CanvasEvent =
   /** Add a geometry to the canvas */

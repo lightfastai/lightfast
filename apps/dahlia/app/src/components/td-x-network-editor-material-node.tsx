@@ -7,8 +7,9 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import type { Material } from "./types";
+import type { Material } from "../app/(app)/(stable)/(network-editor)/types/primitives";
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { $GeometryType } from "../app/(app)/(stable)/(network-editor)/types/primitives.schema";
 import {
   CENTER_OF_WORLD,
   DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,
@@ -16,7 +17,6 @@ import {
   WORLD_CAMERA_POSITION_CLOSE,
 } from "./constants";
 import { GeometryViewer } from "./r3f/geometry-viewer";
-import { $GeometryType } from "./schema";
 
 export const NetworkMaterialNode = ({ materialId }: { materialId: number }) => {
   const material = NetworkEditorContext.useSelector((state) =>

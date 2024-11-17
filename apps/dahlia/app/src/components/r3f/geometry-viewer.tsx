@@ -6,7 +6,7 @@ import { Vector3 } from "three";
 
 import type { Vec3 } from "@repo/webgl";
 
-import type { Geometry } from "../types";
+import type { Geometry } from "../../app/(app)/(stable)/(network-editor)/types/primitives";
 import { GeometryRenderer } from "./geometry-renderer";
 
 export const GeometryViewer = ({

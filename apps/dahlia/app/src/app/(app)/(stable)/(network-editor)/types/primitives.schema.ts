@@ -7,7 +7,7 @@ import {
   DEFAULT_POSITION,
   DEFAULT_ROTATION,
   DEFAULT_SCALE,
-} from "./constants";
+} from "~/components/constants";
 
 // Node schema
 export const $Node = z.object({

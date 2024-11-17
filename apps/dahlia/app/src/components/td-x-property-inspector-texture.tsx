@@ -8,10 +8,10 @@ import type { Value } from "@repo/webgl";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 
-import type { Texture } from "./texture/types";
+import type { Texture } from "../app/(app)/(stable)/(network-editor)/types/texture";
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { $TextureUniforms } from "../app/(app)/(stable)/(network-editor)/types/texture.schema";
 import { TDxFormField } from "./td-x-form-field";
-import { $TextureUniforms } from "./texture/schema";
 
 export const TDxTexturePropertyInspector = () => {
   const texture = NetworkEditorContext.useSelector((state) =>

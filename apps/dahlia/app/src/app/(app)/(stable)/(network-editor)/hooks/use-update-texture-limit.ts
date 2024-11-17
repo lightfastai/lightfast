@@ -4,7 +4,7 @@ import * as THREE from "three";
 
 import { limitFragmentShader, limitVertexShader } from "@repo/webgl";
 
-import { TextureRenderNode } from "../types/texture";
+import { TextureRenderNode } from "../types/render";
 import { useGetTextureData } from "./use-get-texture-data";
 
 export const useUpdateTextureLimit = (): TextureRenderNode[] => {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { $Limit } from "@repo/webgl";
 import { $PerlinNoise3D } from "@repo/webgl/shaders/pnoise";
 
-import { $Node } from "../schema";
+import { $Node } from "~/app/(app)/(stable)/(network-editor)/types/primitives.schema";
 
 export const $TextureTypeValues = ["Noise", "Limit"] as const;
 

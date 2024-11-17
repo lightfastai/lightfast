@@ -7,7 +7,7 @@ import {
   perlinNoise3DVertexShader,
 } from "@repo/webgl/shaders/pnoise";
 
-import { TextureRenderNode } from "../types/texture";
+import { TextureRenderNode } from "../types/render";
 import { useGetTextureData } from "./use-get-texture-data";
 
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {

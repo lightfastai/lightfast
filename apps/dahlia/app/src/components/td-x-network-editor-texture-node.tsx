@@ -10,7 +10,7 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import type { Texture } from "./texture/types";
+import type { Texture } from "../app/(app)/(stable)/(network-editor)/types/texture";
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 
 export const NetworkTextureNode = ({

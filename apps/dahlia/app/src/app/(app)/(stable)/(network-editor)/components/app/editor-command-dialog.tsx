@@ -15,8 +15,11 @@ import {
 import { Label } from "@repo/ui/components/ui/label";
 
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
-import { $GeometryType, $MaterialType } from "~/components/schema";
-import { $TextureTypes } from "~/components/texture/schema";
+import {
+  $GeometryType,
+  $MaterialType,
+} from "~/app/(app)/(stable)/(network-editor)/types/primitives.schema";
+import { $TextureTypes } from "~/app/(app)/(stable)/(network-editor)/types/texture.schema";
 
 export const EditorCommandDialog = () => {
   const state = NetworkEditorContext.useSelector((state) => state);

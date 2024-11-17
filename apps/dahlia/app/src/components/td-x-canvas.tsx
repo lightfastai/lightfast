@@ -9,12 +9,16 @@ import {
 
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { NetworkCanvas } from "../app/(app)/(stable)/(network-editor)/components/network/network-canvas";
+import {
+  isGeometry,
+  isMaterial,
+  isTexture,
+} from "../app/(app)/(stable)/(network-editor)/types/primitives";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_FAR } from "./constants";
 import { GeometryViewer } from "./r3f/geometry-viewer";
 import { TDxGeometryPropertyInspector } from "./td-x-property-inspector-geometry";
 import { TDxMaterialPropertyInspector } from "./td-x-property-inspector-material";
 import { TDxTexturePropertyInspector } from "./td-x-property-inspector-texture";
-import { isGeometry, isMaterial, isTexture } from "./types";
 
 export default function TDxCanvas() {
   const state = NetworkEditorContext.useSelector((state) => state);

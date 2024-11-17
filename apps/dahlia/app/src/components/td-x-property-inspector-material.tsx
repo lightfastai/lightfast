@@ -6,9 +6,9 @@ import type { Color, Value } from "@repo/webgl";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 
-import type { Material } from "./types";
+import type { Material } from "../app/(app)/(stable)/(network-editor)/types/primitives";
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
-import { $Material } from "./schema";
+import { $Material } from "../app/(app)/(stable)/(network-editor)/types/primitives.schema";
 import { TDxFormField } from "./td-x-form-field";
 
 export const TDxMaterialPropertyInspector = () => {

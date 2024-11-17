@@ -10,7 +10,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Input } from "@repo/ui/components/ui/input";
 
-import type { Geometry } from "./types";
+import type { Geometry } from "../app/(app)/(stable)/(network-editor)/types/primitives";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_FAR } from "./constants";
 import { GeometryViewer } from "./r3f/geometry-viewer";
 

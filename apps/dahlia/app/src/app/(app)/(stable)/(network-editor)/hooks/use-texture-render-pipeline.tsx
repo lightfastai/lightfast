@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { TextureRenderPipeline } from "../types/texture";
+import { TextureRenderPipeline } from "../types/render";
 import { useGetTextureData } from "./use-get-texture-data";
 
 /**

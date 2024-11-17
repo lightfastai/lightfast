@@ -18,7 +18,7 @@ import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { TextureRenderPipeline } from "../app/(app)/(stable)/(network-editor)/components/webgl/texture-render-pipeline";
-import { TextureV2 } from "./texture/types";
+import { TextureV2 } from "../app/(app)/(stable)/(network-editor)/types/texture";
 
 type ChatMessage = {
   id: string;

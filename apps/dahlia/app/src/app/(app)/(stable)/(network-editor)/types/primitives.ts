@@ -1,9 +1,14 @@
 import type { z } from "zod";
 
-import type { $Geometry, $Material, $Node } from "./schema";
-import type { Texture } from "./texture/types";
-import { $GeometryType, $MaterialType } from "./schema";
-import { $TextureTypes } from "./texture/schema";
+import {
+  $Geometry,
+  $GeometryType,
+  $Material,
+  $MaterialType,
+  $Node,
+} from "./primitives.schema";
+import { Texture } from "./texture";
+import { $TextureTypes } from "./texture.schema";
 
 /**
  * @note Used internally to determine if the geometry should be rendered in node-display.
