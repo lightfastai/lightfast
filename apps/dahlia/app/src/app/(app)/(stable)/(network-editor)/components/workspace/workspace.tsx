@@ -41,16 +41,7 @@ export const Workspace = ({
     zoomSpeed,
   });
 
-  const {
-    isPanningCanvas,
-    panOffset,
-    handleCanvasMouseDown,
-    handleCanvasMouseMove,
-    handleCanvasMouseUp,
-    handleCanvasTouchStart,
-    handleCanvasTouchMove,
-    handleCanvasTouchEnd,
-  } = useWorkspacePan({
+  const { isPanningCanvas, panOffset, handleWheel } = useWorkspacePan({
     canvasRef,
     stopPropagation,
   });
@@ -65,47 +56,40 @@ export const Workspace = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      canvas.addEventListener("wheel", handleZoom, { passive: false });
-      return () => canvas.removeEventListener("wheel", handleZoom);
+      // Handle both zoom and pan with wheel events
+      const handleWheelEvent = (e: WheelEvent) => {
+        if (e.ctrlKey) {
+          // Pinch zoom
+          handleZoom(e);
+        } else {
+          // Pan
+          handleWheel(e);
+        }
+      };
+
+      canvas.addEventListener("wheel", handleWheelEvent, { passive: false });
+      return () => canvas.removeEventListener("wheel", handleWheelEvent);
     }
-  }, [handleZoom]);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    handleCanvasMouseMove(e);
-    updateCursorPosition(e);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    handleCanvasTouchMove(e);
-    updateCursorPosition(e);
-  };
+  }, [handleZoom, handleWheel]);
 
   return (
     <div className="relative h-full w-full">
       <div
         ref={canvasRef}
-        className={cn(
-          "relative h-full w-full cursor-grab overflow-hidden active:cursor-grabbing",
-        )}
-        onMouseDown={handleCanvasMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleCanvasMouseUp}
-        onTouchStart={handleCanvasTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleCanvasTouchEnd}
+        className={cn("relative h-full w-full select-none overflow-hidden")}
+        onMouseMove={(e) => updateCursorPosition(e)}
+        style={{
+          WebkitUserSelect: "none",
+        }}
       >
         <div
           className="h-canvas-grid w-canvas-grid origin-top-left"
           style={{
             backgroundSize: `${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px`,
-            transform: `scale(${zoom})`,
+            transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoom})`,
             backgroundImage:
-              // This CSS background image creates a grid pattern on the canvas.
-              // The grid consists of three layers:
-              // 1. A radial gradient for the grid dots, using the --workspace-grid-dot color variable.
-              // 2. A linear gradient for the vertical grid lines, using the --workspace-grid-line color variable.
-              // 3. A linear gradient for the horizontal grid lines, also using the --workspace-grid-line color variable.
               "radial-gradient(circle, hsl(var(--workspace-grid-dot)) 1px, transparent 1px), linear-gradient(to right, hsl(var(--workspace-grid-line)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--workspace-grid-line)) 1px, transparent 1px)",
+            willChange: "transform",
           }}
         >
           {children({
@@ -122,11 +106,12 @@ export const Workspace = ({
             title="Workspace Info"
             items={[
               { label: "gridSize", value: gridSize },
-              {
-                label: "panning",
-                value: isPanningCanvas.toString(),
-              },
+              { label: "panning", value: isPanningCanvas.toString() },
               { label: "zoom", value: zoom.toFixed(2) },
+              {
+                label: "panOffset",
+                value: `${panOffset.x.toFixed(0)}, ${panOffset.y.toFixed(0)}`,
+              },
               {
                 label: "cursor",
                 value: `${cursorPosition.x}, ${cursorPosition.y}`,

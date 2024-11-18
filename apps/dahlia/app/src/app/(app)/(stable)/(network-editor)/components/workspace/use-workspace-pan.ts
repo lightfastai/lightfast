@@ -1,8 +1,7 @@
-import type { RefObject } from "react";
-import { useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 interface UseWorkspacePanProps {
-  canvasRef: RefObject<HTMLDivElement>;
+  canvasRef: React.RefObject<HTMLDivElement>;
   stopPropagation: boolean;
 }
 
@@ -12,67 +11,29 @@ export const useWorkspacePan = ({
 }: UseWorkspacePanProps) => {
   const [isPanningCanvas, setIsPanningCanvas] = useState(false);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const lastPositionRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    if (stopPropagation) return;
-    setIsPanningCanvas(true);
-    lastPositionRef.current = { x: e.clientX, y: e.clientY };
-  };
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+      if (stopPropagation) {
+        e.stopPropagation();
+      }
 
-  const handleCanvasMouseMove = (e: React.MouseEvent) => {
-    if (!isPanningCanvas || stopPropagation) return;
-    const dx = e.clientX - lastPositionRef.current.x;
-    const dy = e.clientY - lastPositionRef.current.y;
-    setPanOffset((prev) => ({
-      x: prev.x + dx,
-      y: prev.y + dy,
-    }));
-    lastPositionRef.current = { x: e.clientX, y: e.clientY };
-  };
+      // If ctrl key is pressed, it's a pinch zoom gesture
+      if (e.ctrlKey) return;
 
-  const handleCanvasMouseUp = () => {
-    setIsPanningCanvas(false);
-    lastPositionRef.current = null;
-  };
-
-  // Touch event handlers
-  const handleCanvasTouchStart = (e: React.TouchEvent) => {
-    if (stopPropagation) return;
-    setIsPanningCanvas(true);
-    const touch = e.touches[0];
-    if (touch) {
-      lastPositionRef.current = { x: touch.clientX, y: touch.clientY };
-    }
-  };
-
-  const handleCanvasTouchMove = (e: React.TouchEvent) => {
-    if (!isPanningCanvas || stopPropagation) return;
-    if (lastPositionRef.current) {
-      const touch = e.touches[0];
-      const dx = touch.clientX - lastPositionRef.current.x;
-      const dy = touch.clientY - lastPositionRef.current.y;
+      // Otherwise it's a pan gesture
       setPanOffset((prev) => ({
-        x: prev.x + dx,
-        y: prev.y + dy,
+        x: prev.x - e.deltaX,
+        y: prev.y - e.deltaY,
       }));
-      lastPositionRef.current = { x: touch.clientX, y: touch.clientY };
-    }
-  };
-
-  const handleCanvasTouchEnd = () => {
-    setIsPanningCanvas(false);
-    lastPositionRef.current = null;
-  };
+    },
+    [stopPropagation],
+  );
 
   return {
     isPanningCanvas,
     panOffset,
-    handleCanvasMouseDown,
-    handleCanvasMouseMove,
-    handleCanvasMouseUp,
-    handleCanvasTouchStart,
-    handleCanvasTouchMove,
-    handleCanvasTouchEnd,
+    handleWheel,
   };
 };
