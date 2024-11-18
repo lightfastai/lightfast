@@ -43,9 +43,13 @@ export const Workspace = ({
 
   const {
     isPanningCanvas,
+    panOffset,
     handleCanvasMouseDown,
     handleCanvasMouseMove,
     handleCanvasMouseUp,
+    handleCanvasTouchStart,
+    handleCanvasTouchMove,
+    handleCanvasTouchEnd,
   } = useWorkspacePan({
     canvasRef,
     stopPropagation,
@@ -55,6 +59,7 @@ export const Workspace = ({
     canvasRef,
     zoom,
     gridSize,
+    panOffset,
   });
 
   useEffect(() => {
@@ -70,6 +75,11 @@ export const Workspace = ({
     updateCursorPosition(e);
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    handleCanvasTouchMove(e);
+    updateCursorPosition(e);
+  };
+
   return (
     <div className="relative h-full w-full">
       <div
@@ -80,6 +90,9 @@ export const Workspace = ({
         onMouseDown={handleCanvasMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleCanvasMouseUp}
+        onTouchStart={handleCanvasTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleCanvasTouchEnd}
       >
         <div
           className="h-canvas-grid w-canvas-grid origin-top-left"
