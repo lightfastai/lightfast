@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo } from "react";
 
 import { cn } from "@repo/ui/lib/utils";
 
-import { createPath } from "~/components/path-utils";
 import { SelectionIndicator } from "~/components/selection-indicator";
 import { NetworkGeometryNode } from "~/components/td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "~/components/td-x-network-editor-material-node";
@@ -122,9 +121,54 @@ export default function Page() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  // Prepare connections data
+  const connections = useMemo(() => {
+    return state.context.textures
+      .flatMap((texture) =>
+        texture.outputs.map((targetId) => {
+          const targetNode = state.context.textures.find(
+            (t) => t.id === targetId,
+          );
+          if (!targetNode) return null;
+
+          return {
+            sourceId: String(texture.id),
+            sourcePos: texture.outputPos,
+            targetId: String(targetNode.id),
+            targetPos: targetNode.inputPos,
+          };
+        }),
+      )
+      .filter(
+        (connection): connection is NonNullable<typeof connection> =>
+          connection !== null,
+      );
+  }, [state.context.textures]);
+
+  // Prepare connection in progress data
+  const connectionInProgress = useMemo(() => {
+    if (!state.context.activeConnection) return undefined;
+
+    const sourceTexture = state.context.textures.find(
+      (t) => t.id === state.context.activeConnection?.sourceId,
+    );
+
+    if (!sourceTexture) return undefined;
+
+    return {
+      sourceId: String(sourceTexture.id),
+      sourcePos: sourceTexture.outputPos,
+    };
+  }, [state.context.activeConnection, state.context.textures]);
+
   return (
     <main className="relative flex-1 overflow-hidden">
-      <Workspace debug onSelect={handleSelect}>
+      <Workspace
+        debug
+        onSelect={handleSelect}
+        connections={connections}
+        connectionInProgress={connectionInProgress}
+      >
         {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
           <div
             className={cn("h-full w-full")}
@@ -142,60 +186,6 @@ export default function Page() {
               }
             }}
           >
-            {/* Render permanent connections */}
-            <svg
-              className="pointer-events-none fixed inset-0 h-canvas-grid w-canvas-grid"
-              style={{ zIndex: 0 }}
-            >
-              {state.context.textures.map((texture) =>
-                texture.outputs.map((targetId) => {
-                  const targetNode = state.context.textures.find(
-                    (t) => t.id === targetId,
-                  );
-                  if (!targetNode) return null;
-
-                  return (
-                    <path
-                      key={`${texture.id}-${targetId}`}
-                      d={createPath(
-                        texture.outputPos.x,
-                        texture.outputPos.y,
-                        targetNode.inputPos.x,
-                        targetNode.inputPos.y,
-                      )}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={1}
-                    />
-                  );
-                }),
-              )}
-            </svg>
-
-            {state.context.activeConnection && (
-              <svg
-                className="pointer-events-none fixed inset-0 h-canvas-grid w-canvas-grid"
-                style={{ zIndex: 0 }} // Add zIndex: 0
-              >
-                <path
-                  d={createPath(
-                    state.context.textures.find(
-                      (t) => t.id === state.context.activeConnection?.sourceId,
-                    )?.outputPos.x ?? 0,
-                    state.context.textures.find(
-                      (t) => t.id === state.context.activeConnection?.sourceId,
-                    )?.outputPos.y ?? 0,
-                    x,
-                    y,
-                  )}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeDasharray="4"
-                />
-              </svg>
-            )}
-
             {/* Render Geometries, Materials, and Textures with higher z-index */}
             <div style={{ position: "relative", zIndex: 1 }}>
               {/* Render Geometries */}

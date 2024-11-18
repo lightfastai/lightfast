@@ -11,6 +11,19 @@ import { useCursorPosition } from "./use-cursor-position";
 import { useWorkspacePan } from "./use-workspace-pan";
 import { useWorkspaceSelectionBox } from "./use-workspace-selection-box";
 import { useWorkspaceZoom } from "./use-workspace-zoom";
+import { WorkspaceConnections } from "./workspace-connections";
+
+interface Connection {
+  sourceId: string;
+  sourcePos: { x: number; y: number };
+  targetId: string;
+  targetPos: { x: number; y: number };
+}
+
+interface ConnectionInProgress {
+  sourceId: string;
+  sourcePos: { x: number; y: number };
+}
 
 interface WorkspaceProps {
   children: (params: {
@@ -20,6 +33,8 @@ interface WorkspaceProps {
     setStopPropagation: React.Dispatch<React.SetStateAction<boolean>>;
     isSelecting: boolean;
   }) => ReactNode;
+  connections: Connection[];
+  connectionInProgress?: ConnectionInProgress;
   onSelect?: (start: CursorPosition, end: CursorPosition, zoom: number) => void;
   debug?: boolean;
   maxZoom?: number;
@@ -30,6 +45,8 @@ interface WorkspaceProps {
 
 export const Workspace = ({
   children,
+  connections,
+  connectionInProgress,
   onSelect,
   debug = false,
   maxZoom = MAX_ZOOM,
@@ -123,6 +140,12 @@ export const Workspace = ({
             setStopPropagation,
             isSelecting,
           })}
+
+          <WorkspaceConnections
+            cursorPosition={snappedPosition}
+            connections={connections}
+            connectionInProgress={connectionInProgress}
+          />
 
           {isSelecting && (
             <SelectionBox
