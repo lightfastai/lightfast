@@ -5,6 +5,7 @@ import { InfoCard } from "@repo/ui/components/info-card";
 import { cn } from "@repo/ui/lib/utils";
 
 import { GRID_SIZE, MAX_ZOOM, MIN_ZOOM, ZOOM_SPEED } from "./_defaults";
+import { SelectionBox } from "./selection-box";
 import { useCursorPosition } from "./use-cursor-position";
 import { useWorkspacePan } from "./use-workspace-pan";
 import { useWorkspaceZoom } from "./use-workspace-zoom";
@@ -15,7 +16,15 @@ interface WorkspaceProps {
     cursorPosition: { x: number; y: number };
     gridSize: number;
     setStopPropagation: React.Dispatch<React.SetStateAction<boolean>>;
+    isSelecting: boolean;
+    selectionStart: { x: number; y: number };
+    selectionEnd: { x: number; y: number };
   }) => ReactNode;
+  onSelect?: (
+    start: { x: number; y: number },
+    end: { x: number; y: number },
+    zoom: number,
+  ) => void;
   debug?: boolean;
   maxZoom?: number;
   minZoom?: number;
@@ -25,6 +34,7 @@ interface WorkspaceProps {
 
 export const Workspace = ({
   children,
+  onSelect,
   debug = false,
   maxZoom = MAX_ZOOM,
   minZoom = MIN_ZOOM,
@@ -33,6 +43,9 @@ export const Workspace = ({
 }: WorkspaceProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [stopPropagation, setStopPropagation] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
+  const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
 
   const { zoom, handleZoom } = useWorkspaceZoom({
     canvasRef,
@@ -77,7 +90,25 @@ export const Workspace = ({
       <div
         ref={canvasRef}
         className={cn("relative h-full w-full select-none overflow-hidden")}
-        onMouseMove={(e) => updateCursorPosition(e)}
+        onMouseMove={(e) => {
+          updateCursorPosition(e);
+          if (isSelecting) {
+            setSelectionEnd(cursorPosition);
+          }
+        }}
+        onMouseDown={(e) => {
+          if (e.button === 0) {
+            setIsSelecting(true);
+            setSelectionStart(cursorPosition);
+            setSelectionEnd(cursorPosition);
+          }
+        }}
+        onMouseUp={(e) => {
+          if (isSelecting) {
+            onSelect?.(selectionStart, selectionEnd, zoom);
+            setIsSelecting(false);
+          }
+        }}
         style={{
           WebkitUserSelect: "none",
         }}
@@ -97,7 +128,21 @@ export const Workspace = ({
             cursorPosition,
             gridSize,
             setStopPropagation,
+            isSelecting,
+            selectionStart,
+            selectionEnd,
           })}
+
+          {isSelecting && (
+            <div style={{ position: "relative", zIndex: 5 }}>
+              <SelectionBox
+                startX={selectionStart.x}
+                startY={selectionStart.y}
+                endX={selectionEnd.x}
+                endY={selectionEnd.y}
+              />
+            </div>
+          )}
         </div>
       </div>
       {debug && (

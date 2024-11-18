@@ -12,7 +12,6 @@ import { NetworkTextureNode } from "~/components/td-x-network-editor-texture-nod
 import { PropertyInspector } from "./components/inspector/property-inspector";
 import { TextureRenderPipeline } from "./components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "./components/webgl/webgl-canvas";
-import { SelectionBox } from "./components/workspace/selection-box";
 import { Workspace } from "./components/workspace/workspace";
 import { useCreateGeometry } from "./hooks/use-create-geometry";
 import { useCreateMaterial } from "./hooks/use-create-material";
@@ -32,18 +31,21 @@ export default function Page() {
   const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
 
   const isNodeInSelection = useCallback(
-    (nodeX: number, nodeY: number, zoom: number) => {
-      // Define node dimensions (adjust these values based on your actual node sizes)
-      const NODE_WIDTH = 200 * zoom; // Scale dimensions with zoom
+    (
+      nodeX: number,
+      nodeY: number,
+      zoom: number,
+      start: { x: number; y: number },
+      end: { x: number; y: number },
+    ) => {
+      const NODE_WIDTH = 200 * zoom;
       const NODE_HEIGHT = 100 * zoom;
 
-      // Selection box coordinates - scale with zoom
-      const selectionLeft = Math.min(selectionStart.x, selectionEnd.x) / zoom;
-      const selectionRight = Math.max(selectionStart.x, selectionEnd.x) / zoom;
-      const selectionTop = Math.min(selectionStart.y, selectionEnd.y) / zoom;
-      const selectionBottom = Math.max(selectionStart.y, selectionEnd.y) / zoom;
+      const selectionLeft = Math.min(start.x, end.x) / zoom;
+      const selectionRight = Math.max(start.x, end.x) / zoom;
+      const selectionTop = Math.min(start.y, end.y) / zoom;
+      const selectionBottom = Math.max(start.y, end.y) / zoom;
 
-      // Node box coordinates
       const nodeLeft = nodeX;
       const nodeRight = nodeX + NODE_WIDTH;
       const nodeTop = nodeY;
@@ -56,7 +58,37 @@ export default function Page() {
         nodeBottom < selectionTop
       );
     },
-    [selectionStart, selectionEnd],
+    [],
+  );
+
+  const handleSelect = useCallback(
+    (
+      start: { x: number; y: number },
+      end: { x: number; y: number },
+      zoom: number,
+    ) => {
+      const selectedNodes = [
+        ...state.context.geometries,
+        ...state.context.materials,
+        ...state.context.textures,
+      ].filter((node) => isNodeInSelection(node.x, node.y, zoom, start, end));
+
+      if (selectedNodes.length > 0) {
+        machineRef.send({
+          type: "SELECT_NODES",
+          ids: selectedNodes.map((node) => node.id),
+        });
+      } else {
+        machineRef.send({ type: "DESELECT_ALL" });
+      }
+    },
+    [
+      state.context.geometries,
+      state.context.materials,
+      state.context.textures,
+      machineRef,
+      isNodeInSelection,
+    ],
   );
 
   const isPlacingAny = useMemo(
@@ -76,50 +108,12 @@ export default function Page() {
     ],
   );
 
-  console.log("state.context.selectedNodeIds", state.context.selectedNodeIds);
-
   return (
     <main className="relative flex-1 overflow-hidden">
-      <Workspace debug>
+      <Workspace debug onSelect={handleSelect}>
         {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
           <div
             className={cn("h-full w-full")}
-            onMouseDown={(e) => {
-              if (e.button === 0) {
-                setIsSelecting(true);
-                setSelectionStart({ x, y });
-                setSelectionEnd({ x, y });
-              }
-            }}
-            onMouseMove={(e) => {
-              if (isSelecting) {
-                setSelectionEnd({ x, y });
-              }
-            }}
-            onMouseUp={(e) => {
-              if (isSelecting) {
-                const selectedNodes = [
-                  ...state.context.geometries,
-                  ...state.context.materials,
-                  ...state.context.textures,
-                ].filter((node) => isNodeInSelection(node.x, node.y, zoom));
-
-                if (selectedNodes.length > 0) {
-                  machineRef.send({
-                    type: "SELECT_NODES",
-                    ids: selectedNodes.map((node) => node.id),
-                  });
-                } else if (e.target === e.currentTarget) {
-                  machineRef.send({ type: "DESELECT_ALL" });
-                }
-
-                setIsSelecting(false);
-              }
-
-              if (state.context.activeConnection) {
-                machineRef.send({ type: "CANCEL_CONNECTION" });
-              }
-            }}
             onClick={(e) => {
               if (state.context.isPlacingGeometry) {
                 handleGeometryCreate(x, y);
@@ -186,17 +180,6 @@ export default function Page() {
                   strokeDasharray="4"
                 />
               </svg>
-            )}
-
-            {isSelecting && (
-              <div style={{ position: "relative", zIndex: 1000 }}>
-                <SelectionBox
-                  startX={selectionStart.x}
-                  startY={selectionStart.y}
-                  endX={selectionEnd.x}
-                  endY={selectionEnd.y}
-                />
-              </div>
             )}
 
             {/* Render Geometries, Materials, and Textures with higher z-index */}
