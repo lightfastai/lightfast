@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { InfoCard } from "@repo/ui/components/info-card";
 import { cn } from "@repo/ui/lib/utils";
@@ -21,7 +21,6 @@ interface WorkspaceProps {
     isSelecting: boolean;
   }) => ReactNode;
   onSelect?: (start: CursorPosition, end: CursorPosition, zoom: number) => void;
-  onDeleteSelectedNodes?: () => void;
   debug?: boolean;
   maxZoom?: number;
   minZoom?: number;
@@ -32,7 +31,6 @@ interface WorkspaceProps {
 export const Workspace = ({
   children,
   onSelect,
-  onDeleteSelectedNodes,
   debug = false,
   maxZoom = MAX_ZOOM,
   minZoom = MIN_ZOOM,
@@ -74,15 +72,6 @@ export const Workspace = ({
     exactPosition,
   });
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Delete" || e.key === "Backspace") {
-        onDeleteSelectedNodes?.();
-      }
-    },
-    [onDeleteSelectedNodes],
-  );
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -101,11 +90,6 @@ export const Workspace = ({
       return () => canvas.removeEventListener("wheel", handleWheelEvent);
     }
   }, [handleZoom, handleWheel]);
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
 
   return (
     <div className="relative h-full w-full">

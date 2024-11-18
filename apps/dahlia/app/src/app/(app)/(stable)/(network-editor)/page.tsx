@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { cn } from "@repo/ui/lib/utils";
 
@@ -16,6 +16,7 @@ import { Workspace } from "./components/workspace/workspace";
 import { useCreateGeometry } from "./hooks/use-create-geometry";
 import { useCreateMaterial } from "./hooks/use-create-material";
 import { useCreateTexture } from "./hooks/use-create-texture";
+import { useDeleteSelected } from "./hooks/use-delete-selected";
 import { NetworkEditorContext } from "./state/context";
 
 export default function Page() {
@@ -25,10 +26,7 @@ export default function Page() {
   const { handleGeometryCreate } = useCreateGeometry();
   const { handleMaterialCreate } = useCreateMaterial();
   const { handleTextureCreate } = useCreateTexture();
-
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
-  const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
+  const { handleDeleteSelectedNodes } = useDeleteSelected();
 
   const isNodeInSelection = useCallback(
     (
@@ -108,17 +106,25 @@ export default function Page() {
     ],
   );
 
-  const handleDeleteSelectedNodes = useCallback(() => {
-    machineRef.send({ type: "DELETE_SELECTED_NODES" });
-  }, [machineRef]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (state.context.selectedNodeIds.length > 0) {
+          handleDeleteSelectedNodes();
+        }
+      }
+    },
+    [handleDeleteSelectedNodes],
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <main className="relative flex-1 overflow-hidden">
-      <Workspace
-        debug
-        onSelect={handleSelect}
-        onDeleteSelectedNodes={handleDeleteSelectedNodes}
-      >
+      <Workspace debug onSelect={handleSelect}>
         {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
           <div
             className={cn("h-full w-full")}
@@ -139,7 +145,7 @@ export default function Page() {
             {/* Render permanent connections */}
             <svg
               className="pointer-events-none fixed inset-0 h-canvas-grid w-canvas-grid"
-              style={{ zIndex: 0 }} // Changed from 999 to 0
+              style={{ zIndex: 0 }}
             >
               {state.context.textures.map((texture) =>
                 texture.outputs.map((targetId) => {
@@ -208,13 +214,6 @@ export default function Page() {
                   }}
                   onMouseEnter={() => setStopPropagation(true)}
                   onMouseLeave={() => setStopPropagation(false)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    machineRef.send({
-                      type: "SELECT_NODES",
-                      ids: [geometry.id],
-                    });
-                  }}
                 >
                   <NetworkGeometryNode
                     key={geometry.id}
@@ -239,13 +238,6 @@ export default function Page() {
                   }}
                   onMouseEnter={() => setStopPropagation(true)}
                   onMouseLeave={() => setStopPropagation(false)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    machineRef.send({
-                      type: "SELECT_NODES",
-                      ids: [material.id],
-                    });
-                  }}
                 >
                   <NetworkMaterialNode
                     key={material.id}
@@ -273,8 +265,8 @@ export default function Page() {
                   onClick={(e) => {
                     e.stopPropagation();
                     machineRef.send({
-                      type: "SELECT_NODES",
-                      ids: [texture.id],
+                      type: "UPDATE_SELECTED_PROPERTY",
+                      property: texture,
                     });
                   }}
                 >
