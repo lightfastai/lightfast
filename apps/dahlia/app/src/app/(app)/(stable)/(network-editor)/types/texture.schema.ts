@@ -50,7 +50,6 @@ export const $Texture = z.discriminatedUnion("type", [
     uniforms: $Limit,
   }),
 ]);
-
 export const $TextureV2 = $TextureSharedV2.extend({
   type: z.literal("Noise"),
   uniforms: $PerlinNoise3D,

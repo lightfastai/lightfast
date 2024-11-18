@@ -69,21 +69,23 @@ export const PropertyInspectorTextureForm = ({
       <Separator />
       <Form {...form}>
         <form className="flex flex-col space-y-2 py-2">
-          {Object.entries(texture.uniforms).map(([property]) => (
-            <PropertyFormField
-              key={property}
-              label={property}
-              control={form.control}
-              parentSchema={$TextureUniforms}
-              name={property as FieldPath<z.infer<typeof $TextureUniforms>>}
-              onValueChange={(value) =>
-                handleUpdate(
-                  property as keyof z.infer<typeof $TextureUniforms>,
-                  value,
-                )
-              }
-            />
-          ))}
+          {Object.entries(texture.uniforms)
+            .filter(([property]) => property !== "u_texture")
+            .map(([property]) => (
+              <PropertyFormField
+                key={property}
+                label={property}
+                control={form.control}
+                parentSchema={$TextureUniforms}
+                name={property as FieldPath<z.infer<typeof $TextureUniforms>>}
+                onValueChange={(value) =>
+                  handleUpdate(
+                    property as keyof z.infer<typeof $TextureUniforms>,
+                    value,
+                  )
+                }
+              />
+            ))}
         </form>
       </Form>
     </div>

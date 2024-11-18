@@ -25,7 +25,7 @@ import { Slider } from "@repo/ui/components/ui/slider";
 import { isColor, isNumber, isVec2, isVec3 } from "@repo/webgl";
 
 import { PropertyInputNumber } from "./property-input";
-import { extractMinMax } from "./utils";
+import { extractMinMax, extractUniformName } from "./utils";
 
 interface FormFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -173,7 +173,7 @@ export const PropertyFormField = <T extends FieldValues>({
       render={({ field }) => (
         <FormItem className="grid grid-cols-8 gap-4 px-2">
           <FormLabel className="col-span-3 flex items-center justify-end font-mono text-xs uppercase">
-            {label}
+            {extractUniformName(label)}
           </FormLabel>
           <FormControl className="col-span-5">{renderField(field)}</FormControl>
         </FormItem>

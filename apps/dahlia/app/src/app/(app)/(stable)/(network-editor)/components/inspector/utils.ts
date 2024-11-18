@@ -38,3 +38,13 @@ export const extractMinMax = (schema: z.ZodTypeAny): MinMax => {
 
   return minMax;
 };
+
+/**
+ * Extracts the name of the uniform from the field name.
+ * @param name - The name of the field.
+ * @returns The name of the uniform.
+ */
+export const extractUniformName = (name: string) => {
+  // remove u_ and replaced any _ with a space
+  return name.replace("u_", "").replace(/_/g, " ");
+};

@@ -3,10 +3,11 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import { createConstrainedVec2 } from "../../schema/vec2";
+import { $Shared } from "../shared/schema";
 import perlinNoise3DFragmentShader from "./pnoise.frag";
 import perlinNoise3DVertexShader from "./pnoise.vert";
 
-export const $PerlinNoise3D = z.object({
+export const $NoiseBase = z.object({
   // noise
   u_period: z
     .number()
@@ -55,7 +56,9 @@ export const $PerlinNoise3D = z.object({
     .max(4)
     .default(1)
     .describe("The exponent of the noise."),
+});
 
+export const $NoiseTransform = z.object({
   // transform
   u_scale: createConstrainedVec2({
     x: { min: -1000, max: 1000, default: 1 },
@@ -65,10 +68,9 @@ export const $PerlinNoise3D = z.object({
     x: { min: -1000, max: 1000, default: 0 },
     y: { min: -1000, max: 1000, default: 0 },
   }).describe("The offset of the noise."),
-
-  // inputs
-  u_texture: z.number().nullable(),
 });
+
+export const $PerlinNoise3D = $Shared.merge($NoiseTransform).merge($NoiseBase);
 
 export const u_harmonics = zodToJsonSchema($PerlinNoise3D) as JSONSchema7;
 
