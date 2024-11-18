@@ -32,13 +32,29 @@ export default function Page() {
   const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
 
   const isNodeInSelection = useCallback(
-    (nodeX: number, nodeY: number) => {
-      const left = Math.min(selectionStart.x, selectionEnd.x);
-      const right = Math.max(selectionStart.x, selectionEnd.x);
-      const top = Math.min(selectionStart.y, selectionEnd.y);
-      const bottom = Math.max(selectionStart.y, selectionEnd.y);
+    (nodeX: number, nodeY: number, zoom: number) => {
+      // Define node dimensions (adjust these values based on your actual node sizes)
+      const NODE_WIDTH = 200 * zoom; // Scale dimensions with zoom
+      const NODE_HEIGHT = 100 * zoom;
 
-      return nodeX >= left && nodeX <= right && nodeY >= top && nodeY <= bottom;
+      // Selection box coordinates - scale with zoom
+      const selectionLeft = Math.min(selectionStart.x, selectionEnd.x) / zoom;
+      const selectionRight = Math.max(selectionStart.x, selectionEnd.x) / zoom;
+      const selectionTop = Math.min(selectionStart.y, selectionEnd.y) / zoom;
+      const selectionBottom = Math.max(selectionStart.y, selectionEnd.y) / zoom;
+
+      // Node box coordinates
+      const nodeLeft = nodeX;
+      const nodeRight = nodeX + NODE_WIDTH;
+      const nodeTop = nodeY;
+      const nodeBottom = nodeY + NODE_HEIGHT;
+
+      return !(
+        nodeLeft > selectionRight ||
+        nodeRight < selectionLeft ||
+        nodeTop > selectionBottom ||
+        nodeBottom < selectionTop
+      );
     },
     [selectionStart, selectionEnd],
   );
@@ -86,7 +102,7 @@ export default function Page() {
                   ...state.context.geometries,
                   ...state.context.materials,
                   ...state.context.textures,
-                ].filter((node) => isNodeInSelection(node.x, node.y));
+                ].filter((node) => isNodeInSelection(node.x, node.y, zoom));
 
                 if (selectedNodes.length > 0) {
                   machineRef.send({
@@ -173,12 +189,14 @@ export default function Page() {
             )}
 
             {isSelecting && (
-              <SelectionBox
-                startX={selectionStart.x}
-                startY={selectionStart.y}
-                endX={selectionEnd.x}
-                endY={selectionEnd.y}
-              />
+              <div style={{ position: "relative", zIndex: 1000 }}>
+                <SelectionBox
+                  startX={selectionStart.x}
+                  startY={selectionStart.y}
+                  endX={selectionEnd.x}
+                  endY={selectionEnd.y}
+                />
+              </div>
             )}
 
             {/* Render Geometries, Materials, and Textures with higher z-index */}
