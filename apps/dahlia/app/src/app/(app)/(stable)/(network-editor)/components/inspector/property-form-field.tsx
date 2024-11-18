@@ -91,6 +91,7 @@ export const PropertyFormField = <T extends FieldValues>({
         <div className="flex gap-2">
           {["x", "y", "z"].map((axis) => (
             <PropertyInputNumber
+              key={axis}
               min={0}
               max={0}
               step={0}
@@ -112,6 +113,7 @@ export const PropertyFormField = <T extends FieldValues>({
         <div className="flex w-full gap-2">
           {["x", "y"].map((axis) => (
             <PropertyInputNumber
+              key={axis}
               min={0}
               max={0}
               step={0}

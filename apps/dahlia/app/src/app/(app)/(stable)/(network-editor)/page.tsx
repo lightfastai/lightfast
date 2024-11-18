@@ -60,6 +60,8 @@ export default function Page() {
     ],
   );
 
+  console.log("state.context.selectedNodeIds", state.context.selectedNodeIds);
+
   return (
     <main className="relative flex-1 overflow-hidden">
       <Workspace debug>
@@ -78,7 +80,7 @@ export default function Page() {
                 setSelectionEnd({ x, y });
               }
             }}
-            onMouseUp={() => {
+            onMouseUp={(e) => {
               if (isSelecting) {
                 const selectedNodes = [
                   ...state.context.geometries,
@@ -87,7 +89,12 @@ export default function Page() {
                 ].filter((node) => isNodeInSelection(node.x, node.y));
 
                 if (selectedNodes.length > 0) {
-                  console.log("Selected nodes:", selectedNodes);
+                  machineRef.send({
+                    type: "SELECT_NODES",
+                    ids: selectedNodes.map((node) => node.id),
+                  });
+                } else if (e.target === e.currentTarget) {
+                  machineRef.send({ type: "DESELECT_ALL" });
                 }
 
                 setIsSelecting(false);
@@ -98,10 +105,6 @@ export default function Page() {
               }
             }}
             onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                machineRef.send({ type: "DESELECT_ALL" });
-              }
-
               if (state.context.isPlacingGeometry) {
                 handleGeometryCreate(x, y);
               }
@@ -198,7 +201,10 @@ export default function Page() {
                   onMouseLeave={() => setStopPropagation(false)}
                   onClick={(e) => {
                     e.stopPropagation();
-                    machineRef.send({ type: "SELECT_NODE", id: geometry.id });
+                    machineRef.send({
+                      type: "SELECT_NODES",
+                      ids: [geometry.id],
+                    });
                   }}
                 >
                   <NetworkGeometryNode
@@ -226,7 +232,10 @@ export default function Page() {
                   onMouseLeave={() => setStopPropagation(false)}
                   onClick={(e) => {
                     e.stopPropagation();
-                    machineRef.send({ type: "SELECT_NODE", id: material.id });
+                    machineRef.send({
+                      type: "SELECT_NODES",
+                      ids: [material.id],
+                    });
                   }}
                 >
                   <NetworkMaterialNode
@@ -254,7 +263,10 @@ export default function Page() {
                   onMouseLeave={() => setStopPropagation(false)}
                   onClick={(e) => {
                     e.stopPropagation();
-                    machineRef.send({ type: "SELECT_NODE", id: texture.id });
+                    machineRef.send({
+                      type: "SELECT_NODES",
+                      ids: [texture.id],
+                    });
                   }}
                 >
                   <NetworkTextureNode

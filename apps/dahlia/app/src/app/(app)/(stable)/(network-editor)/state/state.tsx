@@ -54,7 +54,7 @@ type CanvasEvent =
     }
   | { type: "END_CONNECTION"; targetId: number }
   | { type: "CANCEL_CONNECTION" }
-  | { type: "SELECT_NODE"; id: number }
+  | { type: "SELECT_NODES"; ids: number[] }
   | { type: "DESELECT_ALL" };
 
 interface CanvasContext {
@@ -131,11 +131,11 @@ export const canvasMachine = setup({
   states: {
     idle: {
       on: {
-        SELECT_NODE: {
+        SELECT_NODES: {
           actions: assign({
             selectedNodeIds: ({ context, event }) => [
               ...context.selectedNodeIds,
-              event.id,
+              ...event.ids,
             ],
           }),
         },
