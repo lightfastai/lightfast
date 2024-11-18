@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { InfoCard } from "@repo/ui/components/info-card";
 import { cn } from "@repo/ui/lib/utils";
@@ -9,6 +9,7 @@ import { SelectionBox } from "./selection-box";
 import { CursorPosition } from "./types";
 import { useCursorPosition } from "./use-cursor-position";
 import { useWorkspacePan } from "./use-workspace-pan";
+import { useWorkspaceSelectionBox } from "./use-workspace-selection-box";
 import { useWorkspaceZoom } from "./use-workspace-zoom";
 
 interface WorkspaceProps {
@@ -20,6 +21,7 @@ interface WorkspaceProps {
     isSelecting: boolean;
   }) => ReactNode;
   onSelect?: (start: CursorPosition, end: CursorPosition, zoom: number) => void;
+  onDeleteSelectedNodes?: () => void;
   debug?: boolean;
   maxZoom?: number;
   minZoom?: number;
@@ -30,6 +32,7 @@ interface WorkspaceProps {
 export const Workspace = ({
   children,
   onSelect,
+  onDeleteSelectedNodes,
   debug = false,
   maxZoom = MAX_ZOOM,
   minZoom = MIN_ZOOM,
@@ -38,15 +41,6 @@ export const Workspace = ({
 }: WorkspaceProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [stopPropagation, setStopPropagation] = useState(false);
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectionStart, setSelectionStart] = useState<CursorPosition>({
-    x: 0,
-    y: 0,
-  });
-  const [selectionEnd, setSelectionEnd] = useState<CursorPosition>({
-    x: 0,
-    y: 0,
-  });
 
   const { zoom, handleZoom } = useWorkspaceZoom({
     canvasRef,
@@ -68,6 +62,27 @@ export const Workspace = ({
       panOffset,
     });
 
+  const {
+    isSelecting,
+    selectionStart,
+    selectionEnd,
+    handleMouseMove,
+    handleMouseDown,
+    handleMouseUp,
+  } = useWorkspaceSelectionBox({
+    onSelect,
+    exactPosition,
+  });
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        onDeleteSelectedNodes?.();
+      }
+    },
+    [onDeleteSelectedNodes],
+  );
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -87,6 +102,11 @@ export const Workspace = ({
     }
   }, [handleZoom, handleWheel]);
 
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   return (
     <div className="relative h-full w-full">
       <div
@@ -94,23 +114,10 @@ export const Workspace = ({
         className={cn("relative h-full w-full select-none overflow-hidden")}
         onMouseMove={(e) => {
           updateCursorPosition(e);
-          if (isSelecting) {
-            setSelectionEnd(exactPosition);
-          }
+          handleMouseMove();
         }}
-        onMouseDown={(e) => {
-          if (e.button === 0) {
-            setIsSelecting(true);
-            setSelectionStart(exactPosition);
-            setSelectionEnd(exactPosition);
-          }
-        }}
-        onMouseUp={(e) => {
-          if (isSelecting) {
-            onSelect?.(selectionStart, selectionEnd, zoom);
-            setIsSelecting(false);
-          }
-        }}
+        onMouseDown={handleMouseDown}
+        onMouseUp={() => handleMouseUp(zoom)}
         style={{
           WebkitUserSelect: "none",
         }}
@@ -135,6 +142,7 @@ export const Workspace = ({
 
           {isSelecting && (
             <SelectionBox
+              className="z-[5]"
               startX={selectionStart.x}
               startY={selectionStart.y}
               endX={selectionEnd.x}

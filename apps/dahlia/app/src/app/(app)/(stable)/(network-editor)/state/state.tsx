@@ -55,7 +55,8 @@ type CanvasEvent =
   | { type: "END_CONNECTION"; targetId: number }
   | { type: "CANCEL_CONNECTION" }
   | { type: "SELECT_NODES"; ids: number[] }
-  | { type: "DESELECT_ALL" };
+  | { type: "DESELECT_ALL" }
+  | { type: "DELETE_SELECTED_NODES" };
 
 interface CanvasContext {
   textures: Texture[];
@@ -131,6 +132,12 @@ export const canvasMachine = setup({
   states: {
     idle: {
       on: {
+        /** @TODO implement... */
+        DELETE_SELECTED_NODES: {
+          actions: assign({
+            selectedNodeIds: [],
+          }),
+        },
         SELECT_NODES: {
           actions: assign({
             selectedNodeIds: ({ context, event }) => [

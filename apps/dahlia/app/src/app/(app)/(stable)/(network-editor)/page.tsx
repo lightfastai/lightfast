@@ -108,9 +108,17 @@ export default function Page() {
     ],
   );
 
+  const handleDeleteSelectedNodes = useCallback(() => {
+    machineRef.send({ type: "DELETE_SELECTED_NODES" });
+  }, [machineRef]);
+
   return (
     <main className="relative flex-1 overflow-hidden">
-      <Workspace debug onSelect={handleSelect}>
+      <Workspace
+        debug
+        onSelect={handleSelect}
+        onDeleteSelectedNodes={handleDeleteSelectedNodes}
+      >
         {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
           <div
             className={cn("h-full w-full")}
