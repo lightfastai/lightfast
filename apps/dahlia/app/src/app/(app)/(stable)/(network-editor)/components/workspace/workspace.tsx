@@ -5,7 +5,6 @@ import {
   BackgroundVariant,
   Connection,
   ConnectionMode,
-  Controls,
   Edge,
   NodeTypes,
   Panel,
@@ -14,11 +13,11 @@ import {
   useNodesState,
 } from "@xyflow/react";
 
-import "@xyflow/react/dist/style.css";
+import "@xyflow/react/dist/base.css";
+import "./workspace.css";
 
 import { InfoCard } from "@repo/ui/components/info-card";
 
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { GRID_SIZE, MAX_ZOOM, MIN_ZOOM, ZOOM_SPEED } from "./_defaults";
 import { GeometryNode } from "./nodes/geometry-node";
 import { CursorPosition } from "./types";
@@ -81,48 +80,12 @@ export const Workspace = ({
   zoomSpeed = ZOOM_SPEED,
   gridSize = GRID_SIZE,
 }: WorkspaceProps) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
-
-  const geometries = NetworkEditorContext.useSelector(
-    (state) => state.context.geometries,
-  );
-
-  // useEffect(() => {
-  //   const geometryNodes = geometries.map((geometry) => ({
-  //     id: `geometry-${geometry.id}`,
-  //     type: "geometryNode",
-  //     position: { x: geometry.position?.x || 0, y: geometry.position?.y || 0 },
-  //     data: {
-  //       geometryId: geometry.id,
-  //       geometry,
-  //     },
-  //   }));
-
-  //   setNodes(geometryNodes);
-  // }, [geometries, setNodes]);
-
-  // useEffect(() => {
-  //   const rfEdges = connections.map((conn) => ({
-  //     id: `${conn.sourceId}-${conn.targetId}`,
-  //     source: conn.sourceId,
-  //     target: conn.targetId,
-  //     type: "smoothstep",
-  //   }));
-  //   setEdges(rfEdges);
-  // }, [connections, setEdges]);
-
-  // const onConnect = useCallback(
-  //   (params: Connection) => {
-  //     setEdges((eds) => addEdge(params, eds));
-  //   },
-  //   [setEdges],
-  // );
-
   return (
     <div className="relative h-full w-full">
       <ReactFlow
-        nodes={INITIAL_NODES}
+        nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
@@ -131,32 +94,14 @@ export const Workspace = ({
         connectionMode={ConnectionMode.Loose}
         minZoom={minZoom}
         maxZoom={maxZoom}
-        fitView
-        style={{
-          background: "hsl(var(--background))",
-        }}
-        defaultEdgeOptions={{
-          type: "smoothstep",
-          style: {
-            strokeWidth: 2,
-          },
-        }}
-        colorMode="dark"
       >
-        <Background
-          gap={gridSize}
-          size={1}
-          variant={BackgroundVariant.Dots}
-          color="hsl(var(--muted-foreground))"
-        />
-        <Controls showZoom={true} showFitView={true} showInteractive={false} />
+        <Background gap={gridSize} size={1} variant={BackgroundVariant.Dots} />
         {debug && (
           <Panel position="bottom-right">
             <InfoCard
               title="Workspace Info"
               items={[
-                { label: "gridSize", value: gridSize },
-                { label: "zoom", value: nodes.length },
+                { label: "nodes", value: nodes.length },
                 { label: "edges", value: edges.length },
               ]}
             />
