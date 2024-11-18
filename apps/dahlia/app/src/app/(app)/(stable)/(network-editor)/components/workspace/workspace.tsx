@@ -6,6 +6,7 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { GRID_SIZE, MAX_ZOOM, MIN_ZOOM, ZOOM_SPEED } from "./_defaults";
 import { SelectionBox } from "./selection-box";
+import { CursorPosition } from "./types";
 import { useCursorPosition } from "./use-cursor-position";
 import { useWorkspacePan } from "./use-workspace-pan";
 import { useWorkspaceZoom } from "./use-workspace-zoom";
@@ -13,18 +14,12 @@ import { useWorkspaceZoom } from "./use-workspace-zoom";
 interface WorkspaceProps {
   children: (params: {
     zoom: number;
-    cursorPosition: { x: number; y: number };
+    cursorPosition: CursorPosition;
     gridSize: number;
     setStopPropagation: React.Dispatch<React.SetStateAction<boolean>>;
     isSelecting: boolean;
-    selectionStart: { x: number; y: number };
-    selectionEnd: { x: number; y: number };
   }) => ReactNode;
-  onSelect?: (
-    start: { x: number; y: number },
-    end: { x: number; y: number },
-    zoom: number,
-  ) => void;
+  onSelect?: (start: CursorPosition, end: CursorPosition, zoom: number) => void;
   debug?: boolean;
   maxZoom?: number;
   minZoom?: number;
@@ -44,8 +39,14 @@ export const Workspace = ({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [stopPropagation, setStopPropagation] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
-  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
-  const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
+  const [selectionStart, setSelectionStart] = useState<CursorPosition>({
+    x: 0,
+    y: 0,
+  });
+  const [selectionEnd, setSelectionEnd] = useState<CursorPosition>({
+    x: 0,
+    y: 0,
+  });
 
   const { zoom, handleZoom } = useWorkspaceZoom({
     canvasRef,
@@ -59,12 +60,13 @@ export const Workspace = ({
     stopPropagation,
   });
 
-  const { cursorPosition, updateCursorPosition } = useCursorPosition({
-    canvasRef,
-    zoom,
-    gridSize,
-    panOffset,
-  });
+  const { exactPosition, updateCursorPosition, snappedPosition } =
+    useCursorPosition({
+      canvasRef,
+      zoom,
+      gridSize,
+      panOffset,
+    });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -93,14 +95,14 @@ export const Workspace = ({
         onMouseMove={(e) => {
           updateCursorPosition(e);
           if (isSelecting) {
-            setSelectionEnd(cursorPosition);
+            setSelectionEnd(exactPosition);
           }
         }}
         onMouseDown={(e) => {
           if (e.button === 0) {
             setIsSelecting(true);
-            setSelectionStart(cursorPosition);
-            setSelectionEnd(cursorPosition);
+            setSelectionStart(exactPosition);
+            setSelectionEnd(exactPosition);
           }
         }}
         onMouseUp={(e) => {
@@ -125,23 +127,19 @@ export const Workspace = ({
         >
           {children({
             zoom,
-            cursorPosition,
+            cursorPosition: snappedPosition,
             gridSize,
             setStopPropagation,
             isSelecting,
-            selectionStart,
-            selectionEnd,
           })}
 
           {isSelecting && (
-            <div style={{ position: "relative", zIndex: 5 }}>
-              <SelectionBox
-                startX={selectionStart.x}
-                startY={selectionStart.y}
-                endX={selectionEnd.x}
-                endY={selectionEnd.y}
-              />
-            </div>
+            <SelectionBox
+              startX={selectionStart.x}
+              startY={selectionStart.y}
+              endX={selectionEnd.x}
+              endY={selectionEnd.y}
+            />
           )}
         </div>
       </div>
@@ -158,8 +156,12 @@ export const Workspace = ({
                 value: `${panOffset.x.toFixed(0)}, ${panOffset.y.toFixed(0)}`,
               },
               {
-                label: "cursor",
-                value: `${cursorPosition.x}, ${cursorPosition.y}`,
+                label: "exact",
+                value: `${exactPosition.x}, ${exactPosition.y}`,
+              },
+              {
+                label: "snapped",
+                value: `${snappedPosition.x}, ${snappedPosition.y}`,
               },
             ]}
           />

@@ -1,6 +1,8 @@
 import type { RefObject } from "react";
 import { useState } from "react";
 
+import { CursorPosition } from "./types";
+
 interface UseCursorPositionProps {
   canvasRef: RefObject<HTMLDivElement>;
   zoom: number;
@@ -14,7 +16,14 @@ export const useCursorPosition = ({
   gridSize,
   panOffset,
 }: UseCursorPositionProps) => {
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [exactPosition, setExactPosition] = useState<CursorPosition>({
+    x: 0,
+    y: 0,
+  });
+  const [snappedPosition, setSnappedPosition] = useState<CursorPosition>({
+    x: 0,
+    y: 0,
+  });
 
   const updateCursorPosition = (e: React.MouseEvent) => {
     if (canvasRef.current) {
@@ -26,12 +35,19 @@ export const useCursorPosition = ({
       const y =
         (e.clientY - rect.top + canvas.scrollTop) / zoom - panOffset.y / zoom;
 
+      // Store exact position
+      setExactPosition({ x, y });
+
+      // Calculate and store snapped position
       const snappedX = Math.floor(x / gridSize) * gridSize;
       const snappedY = Math.floor(y / gridSize) * gridSize;
-
-      setCursorPosition({ x: snappedX, y: snappedY });
+      setSnappedPosition({ x: snappedX, y: snappedY });
     }
   };
 
-  return { cursorPosition, updateCursorPosition };
+  return {
+    exactPosition,
+    snappedPosition,
+    updateCursorPosition,
+  };
 };
