@@ -169,7 +169,7 @@ export default function Page() {
         connections={connections}
         connectionInProgress={connectionInProgress}
       >
-        {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
+        {({ cursorPosition: { x, y }, gridSize, renderNode, zoom }) => (
           <div
             className={cn("h-full w-full")}
             onClick={(e) => {
@@ -189,84 +189,52 @@ export default function Page() {
             {/* Render Geometries, Materials, and Textures with higher z-index */}
             <div style={{ position: "relative", zIndex: 1 }}>
               {/* Render Geometries */}
-              {state.context.geometries.map((geometry) => (
-                <div
-                  key={geometry.id}
-                  className={cn(
-                    "absolute transition-all",
-                    state.context.selectedNodeIds.find(
-                      (id) => id === geometry.id,
-                    ) && "ring-2 ring-blue-500",
-                  )}
-                  style={{
-                    left: `${geometry.x}px`,
-                    top: `${geometry.y}px`,
-                  }}
-                  onMouseEnter={() => setStopPropagation(true)}
-                  onMouseLeave={() => setStopPropagation(false)}
-                >
-                  <NetworkGeometryNode
-                    key={geometry.id}
-                    geometryId={geometry.id}
-                  />
-                </div>
-              ))}
+              {state.context.geometries.map((geometry) =>
+                renderNode({
+                  id: geometry.id,
+                  x: geometry.x,
+                  y: geometry.y,
+                  isSelected: state.context.selectedNodeIds.includes(
+                    geometry.id,
+                  ),
+                  children: <NetworkGeometryNode geometryId={geometry.id} />,
+                }),
+              )}
 
               {/* Render Materials */}
-              {state.context.materials.map((material) => (
-                <div
-                  key={material.id}
-                  className={cn(
-                    "absolute transition-all",
-                    state.context.selectedNodeIds.find(
-                      (id) => id === material.id,
-                    ) && "ring-2 ring-blue-500",
-                  )}
-                  style={{
-                    left: `${material.x}px`,
-                    top: `${material.y}px`,
-                  }}
-                  onMouseEnter={() => setStopPropagation(true)}
-                  onMouseLeave={() => setStopPropagation(false)}
-                >
-                  <NetworkMaterialNode
-                    key={material.id}
-                    materialId={material.id}
-                  />
-                </div>
-              ))}
+              {state.context.materials.map((material) =>
+                renderNode({
+                  id: material.id,
+                  x: material.x,
+                  y: material.y,
+                  isSelected: state.context.selectedNodeIds.includes(
+                    material.id,
+                  ),
+                  children: <NetworkMaterialNode materialId={material.id} />,
+                }),
+              )}
 
               {/* Render Textures */}
-              {state.context.textures.map((texture) => (
-                <div
-                  key={texture.id}
-                  className={cn(
-                    "absolute transition-all",
-                    state.context.selectedNodeIds.find(
-                      (id) => id === texture.id,
-                    ) && "ring-2 ring-blue-500",
-                  )}
-                  style={{
-                    left: `${texture.x}px`,
-                    top: `${texture.y}px`,
-                  }}
-                  onMouseEnter={() => setStopPropagation(true)}
-                  onMouseLeave={() => setStopPropagation(false)}
-                  onClick={(e) => {
+              {state.context.textures.map((texture) =>
+                renderNode({
+                  id: texture.id,
+                  x: texture.x,
+                  y: texture.y,
+                  isSelected: state.context.selectedNodeIds.includes(
+                    texture.id,
+                  ),
+                  onClick: (e) => {
                     e.stopPropagation();
                     machineRef.send({
                       type: "UPDATE_SELECTED_PROPERTY",
                       property: texture,
                     });
-                  }}
-                >
-                  <NetworkTextureNode
-                    key={texture.id}
-                    textureId={texture.id}
-                    zoom={zoom}
-                  />
-                </div>
-              ))}
+                  },
+                  children: (
+                    <NetworkTextureNode textureId={texture.id} zoom={zoom} />
+                  ),
+                }),
+              )}
             </div>
 
             <SelectionIndicator
@@ -289,7 +257,7 @@ export default function Page() {
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: -1, // @important {zIndex: 1} allows the canvas to be rendered on top of the editor
+          zIndex: -1,
         }}
       >
         <TextureRenderPipeline />

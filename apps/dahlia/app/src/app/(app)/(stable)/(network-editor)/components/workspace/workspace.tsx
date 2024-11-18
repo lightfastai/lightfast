@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { InfoCard } from "@repo/ui/components/info-card";
 import { cn } from "@repo/ui/lib/utils";
@@ -12,6 +12,7 @@ import { useWorkspacePan } from "./use-workspace-pan";
 import { useWorkspaceSelectionBox } from "./use-workspace-selection-box";
 import { useWorkspaceZoom } from "./use-workspace-zoom";
 import { WorkspaceConnections } from "./workspace-connections";
+import { WorkspaceNodeWrapper } from "./workspace-node-wrapper";
 
 interface Connection {
   sourceId: string;
@@ -25,14 +26,24 @@ interface ConnectionInProgress {
   sourcePos: { x: number; y: number };
 }
 
-interface WorkspaceProps {
-  children: (params: {
-    zoom: number;
-    cursorPosition: CursorPosition;
-    gridSize: number;
-    setStopPropagation: React.Dispatch<React.SetStateAction<boolean>>;
-    isSelecting: boolean;
+interface WorkspaceRenderHelpers {
+  zoom: number;
+  cursorPosition: CursorPosition;
+  gridSize: number;
+  setStopPropagation: React.Dispatch<React.SetStateAction<boolean>>;
+  isSelecting: boolean;
+  renderNode: (params: {
+    id: number;
+    x: number;
+    y: number;
+    isSelected: boolean;
+    onClick?: (e: React.MouseEvent) => void;
+    children: ReactNode;
   }) => ReactNode;
+}
+
+interface WorkspaceProps {
+  children: (helpers: WorkspaceRenderHelpers) => ReactNode;
   connections: Connection[];
   connectionInProgress?: ConnectionInProgress;
   onSelect?: (start: CursorPosition, end: CursorPosition, zoom: number) => void;
@@ -89,6 +100,38 @@ export const Workspace = ({
     exactPosition,
   });
 
+  const renderNode = useCallback(
+    ({
+      id,
+      x,
+      y,
+      isSelected,
+      onClick,
+      children,
+    }: {
+      id: number;
+      x: number;
+      y: number;
+      isSelected: boolean;
+      onClick?: (e: React.MouseEvent) => void;
+      children: ReactNode;
+    }) => (
+      <WorkspaceNodeWrapper
+        key={id}
+        id={String(id)}
+        x={x}
+        y={y}
+        isSelected={isSelected}
+        onMouseEnter={() => setStopPropagation(true)}
+        onMouseLeave={() => setStopPropagation(false)}
+        onClick={onClick}
+      >
+        {children}
+      </WorkspaceNodeWrapper>
+    ),
+    [setStopPropagation],
+  );
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -139,6 +182,7 @@ export const Workspace = ({
             gridSize,
             setStopPropagation,
             isSelecting,
+            renderNode,
           })}
 
           <WorkspaceConnections
