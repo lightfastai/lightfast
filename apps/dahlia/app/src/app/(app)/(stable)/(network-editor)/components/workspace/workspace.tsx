@@ -1,25 +1,27 @@
 import type { ReactNode } from "react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React from "react";
+import {
+  Background,
+  BackgroundVariant,
+  Connection,
+  ConnectionMode,
+  Controls,
+  Edge,
+  NodeTypes,
+  Panel,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+} from "@xyflow/react";
+
+import "@xyflow/react/dist/style.css";
 
 import { InfoCard } from "@repo/ui/components/info-card";
-import { cn } from "@repo/ui/lib/utils";
 
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
 import { GRID_SIZE, MAX_ZOOM, MIN_ZOOM, ZOOM_SPEED } from "./_defaults";
-import { SelectionBox } from "./selection-box";
+import { GeometryNode } from "./nodes/geometry-node";
 import { CursorPosition } from "./types";
-import { useCursorPosition } from "./use-cursor-position";
-import { useWorkspacePan } from "./use-workspace-pan";
-import { useWorkspaceSelectionBox } from "./use-workspace-selection-box";
-import { useWorkspaceZoom } from "./use-workspace-zoom";
-import { WorkspaceConnections } from "./workspace-connections";
-import { WorkspaceNodeWrapper } from "./workspace-node-wrapper";
-
-interface Connection {
-  sourceId: string;
-  sourcePos: { x: number; y: number };
-  targetId: string;
-  targetPos: { x: number; y: number };
-}
 
 interface ConnectionInProgress {
   sourceId: string;
@@ -54,178 +56,113 @@ interface WorkspaceProps {
   gridSize?: number;
 }
 
+const nodeTypes: NodeTypes = {
+  geometry: GeometryNode,
+} as const;
+
+interface FlowEdge extends Edge {
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+}
+
+const INITIAL_NODES = [
+  {
+    id: "1",
+    type: "geometry",
+    data: { geometryId: 1 },
+    position: { x: 0, y: 0 },
+  },
+];
+
 export const Workspace = ({
-  children,
-  connections,
-  connectionInProgress,
-  onSelect,
   debug = false,
   maxZoom = MAX_ZOOM,
   minZoom = MIN_ZOOM,
   zoomSpeed = ZOOM_SPEED,
   gridSize = GRID_SIZE,
 }: WorkspaceProps) => {
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const [stopPropagation, setStopPropagation] = useState(false);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
 
-  const { zoom, handleZoom } = useWorkspaceZoom({
-    canvasRef,
-    maxZoom,
-    minZoom,
-    zoomSpeed,
-  });
-
-  const { isPanningCanvas, panOffset, handleWheel } = useWorkspacePan({
-    canvasRef,
-    stopPropagation,
-  });
-
-  const { exactPosition, updateCursorPosition, snappedPosition } =
-    useCursorPosition({
-      canvasRef,
-      zoom,
-      gridSize,
-      panOffset,
-    });
-
-  const {
-    isSelecting,
-    selectionStart,
-    selectionEnd,
-    handleMouseMove,
-    handleMouseDown,
-    handleMouseUp,
-  } = useWorkspaceSelectionBox({
-    onSelect,
-    exactPosition,
-  });
-
-  const renderNode = useCallback(
-    ({
-      id,
-      x,
-      y,
-      isSelected,
-      onClick,
-      children,
-    }: {
-      id: number;
-      x: number;
-      y: number;
-      isSelected: boolean;
-      onClick?: (e: React.MouseEvent) => void;
-      children: ReactNode;
-    }) => (
-      <WorkspaceNodeWrapper
-        key={id}
-        id={String(id)}
-        x={x}
-        y={y}
-        isSelected={isSelected}
-        onMouseEnter={() => setStopPropagation(true)}
-        onMouseLeave={() => setStopPropagation(false)}
-        onClick={onClick}
-      >
-        {children}
-      </WorkspaceNodeWrapper>
-    ),
-    [setStopPropagation],
+  const geometries = NetworkEditorContext.useSelector(
+    (state) => state.context.geometries,
   );
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      // Handle both zoom and pan with wheel events
-      const handleWheelEvent = (e: WheelEvent) => {
-        if (e.ctrlKey) {
-          // Pinch zoom
-          handleZoom(e);
-        } else {
-          // Pan
-          handleWheel(e);
-        }
-      };
+  // useEffect(() => {
+  //   const geometryNodes = geometries.map((geometry) => ({
+  //     id: `geometry-${geometry.id}`,
+  //     type: "geometryNode",
+  //     position: { x: geometry.position?.x || 0, y: geometry.position?.y || 0 },
+  //     data: {
+  //       geometryId: geometry.id,
+  //       geometry,
+  //     },
+  //   }));
 
-      canvas.addEventListener("wheel", handleWheelEvent, { passive: false });
-      return () => canvas.removeEventListener("wheel", handleWheelEvent);
-    }
-  }, [handleZoom, handleWheel]);
+  //   setNodes(geometryNodes);
+  // }, [geometries, setNodes]);
+
+  // useEffect(() => {
+  //   const rfEdges = connections.map((conn) => ({
+  //     id: `${conn.sourceId}-${conn.targetId}`,
+  //     source: conn.sourceId,
+  //     target: conn.targetId,
+  //     type: "smoothstep",
+  //   }));
+  //   setEdges(rfEdges);
+  // }, [connections, setEdges]);
+
+  // const onConnect = useCallback(
+  //   (params: Connection) => {
+  //     setEdges((eds) => addEdge(params, eds));
+  //   },
+  //   [setEdges],
+  // );
 
   return (
     <div className="relative h-full w-full">
-      <div
-        ref={canvasRef}
-        className={cn("relative h-full w-full select-none overflow-hidden")}
-        onMouseMove={(e) => {
-          updateCursorPosition(e);
-          handleMouseMove();
-        }}
-        onMouseDown={handleMouseDown}
-        onMouseUp={() => handleMouseUp(zoom)}
+      <ReactFlow
+        nodes={INITIAL_NODES}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        // onConnect={onConnect}
+        nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Loose}
+        minZoom={minZoom}
+        maxZoom={maxZoom}
+        fitView
         style={{
-          WebkitUserSelect: "none",
+          background: "hsl(var(--background))",
         }}
+        defaultEdgeOptions={{
+          type: "smoothstep",
+          style: {
+            strokeWidth: 2,
+          },
+        }}
+        colorMode="dark"
       >
-        <div
-          className="h-canvas-grid w-canvas-grid origin-top-left"
-          style={{
-            backgroundSize: `${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px`,
-            transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoom})`,
-            backgroundImage:
-              "radial-gradient(circle, hsl(var(--workspace-grid-dot)) 1px, transparent 1px), linear-gradient(to right, hsl(var(--workspace-grid-line)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--workspace-grid-line)) 1px, transparent 1px)",
-            willChange: "transform",
-          }}
-        >
-          {children({
-            zoom,
-            cursorPosition: snappedPosition,
-            gridSize,
-            setStopPropagation,
-            isSelecting,
-            renderNode,
-          })}
-
-          <WorkspaceConnections
-            cursorPosition={snappedPosition}
-            connections={connections}
-            connectionInProgress={connectionInProgress}
-          />
-
-          {isSelecting && (
-            <SelectionBox
-              className="z-[5]"
-              startX={selectionStart.x}
-              startY={selectionStart.y}
-              endX={selectionEnd.x}
-              endY={selectionEnd.y}
+        <Background
+          gap={gridSize}
+          size={1}
+          variant={BackgroundVariant.Dots}
+          color="hsl(var(--muted-foreground))"
+        />
+        <Controls showZoom={true} showFitView={true} showInteractive={false} />
+        {debug && (
+          <Panel position="bottom-right">
+            <InfoCard
+              title="Workspace Info"
+              items={[
+                { label: "gridSize", value: gridSize },
+                { label: "zoom", value: nodes.length },
+                { label: "edges", value: edges.length },
+              ]}
             />
-          )}
-        </div>
-      </div>
-      {debug && (
-        <div className="absolute bottom-4 right-4 z-50">
-          <InfoCard
-            title="Workspace Info"
-            items={[
-              { label: "gridSize", value: gridSize },
-              { label: "panning", value: isPanningCanvas.toString() },
-              { label: "zoom", value: zoom.toFixed(2) },
-              {
-                label: "panOffset",
-                value: `${panOffset.x.toFixed(0)}, ${panOffset.y.toFixed(0)}`,
-              },
-              {
-                label: "exact",
-                value: `${exactPosition.x}, ${exactPosition.y}`,
-              },
-              {
-                label: "snapped",
-                value: `${snappedPosition.x}, ${snappedPosition.y}`,
-              },
-            ]}
-          />
-        </div>
-      )}
+          </Panel>
+        )}
+      </ReactFlow>
     </div>
   );
 };
