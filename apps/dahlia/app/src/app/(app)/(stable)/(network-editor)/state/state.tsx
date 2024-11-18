@@ -37,7 +37,6 @@ type CanvasEvent =
       value: Partial<Texture["uniforms"]>;
     }
   | { type: "SELECT_TEXTURE"; texture: TextureType }
-
   /** History */
   | { type: "UNDO" }
   | { type: "REDO" }
@@ -54,7 +53,9 @@ type CanvasEvent =
       sourceId: number;
     }
   | { type: "END_CONNECTION"; targetId: number }
-  | { type: "CANCEL_CONNECTION" };
+  | { type: "CANCEL_CONNECTION" }
+  | { type: "SELECT_NODE"; id: number }
+  | { type: "DESELECT_ALL" };
 
 interface CanvasContext {
   textures: Texture[];
@@ -84,6 +85,7 @@ interface CanvasContext {
   activeConnection: {
     sourceId: number | null;
   } | null;
+  selectedNodeIds: number[];
 }
 
 export const canvasMachine = setup({
@@ -124,10 +126,24 @@ export const canvasMachine = setup({
     },
     isCommandOpen: false,
     activeConnection: null,
+    selectedNodeIds: [],
   },
   states: {
     idle: {
       on: {
+        SELECT_NODE: {
+          actions: assign({
+            selectedNodeIds: ({ context, event }) => [
+              ...context.selectedNodeIds,
+              event.id,
+            ],
+          }),
+        },
+        DESELECT_ALL: {
+          actions: assign({
+            selectedNodeIds: [],
+          }),
+        },
         SELECT_TEXTURE: {
           actions: assign({
             selectedTexture: ({ event }) => event.texture,

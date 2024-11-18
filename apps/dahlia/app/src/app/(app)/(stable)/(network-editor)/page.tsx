@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { cn } from "@repo/ui/lib/utils";
 
@@ -12,6 +12,7 @@ import { NetworkTextureNode } from "~/components/td-x-network-editor-texture-nod
 import { PropertyInspector } from "./components/inspector/property-inspector";
 import { TextureRenderPipeline } from "./components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "./components/webgl/webgl-canvas";
+import { SelectionBox } from "./components/workspace/selection-box";
 import { Workspace } from "./components/workspace/workspace";
 import { useCreateGeometry } from "./hooks/use-create-geometry";
 import { useCreateMaterial } from "./hooks/use-create-material";
@@ -25,6 +26,22 @@ export default function Page() {
   const { handleGeometryCreate } = useCreateGeometry();
   const { handleMaterialCreate } = useCreateMaterial();
   const { handleTextureCreate } = useCreateTexture();
+
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
+  const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
+
+  const isNodeInSelection = useCallback(
+    (nodeX: number, nodeY: number) => {
+      const left = Math.min(selectionStart.x, selectionEnd.x);
+      const right = Math.max(selectionStart.x, selectionEnd.x);
+      const top = Math.min(selectionStart.y, selectionEnd.y);
+      const bottom = Math.max(selectionStart.y, selectionEnd.y);
+
+      return nodeX >= left && nodeX <= right && nodeY >= top && nodeY <= bottom;
+    },
+    [selectionStart, selectionEnd],
+  );
 
   const isPlacingAny = useMemo(
     () =>
@@ -49,12 +66,42 @@ export default function Page() {
         {({ cursorPosition: { x, y }, gridSize, setStopPropagation, zoom }) => (
           <div
             className={cn("h-full w-full")}
+            onMouseDown={(e) => {
+              if (e.button === 0) {
+                setIsSelecting(true);
+                setSelectionStart({ x, y });
+                setSelectionEnd({ x, y });
+              }
+            }}
+            onMouseMove={(e) => {
+              if (isSelecting) {
+                setSelectionEnd({ x, y });
+              }
+            }}
             onMouseUp={() => {
+              if (isSelecting) {
+                const selectedNodes = [
+                  ...state.context.geometries,
+                  ...state.context.materials,
+                  ...state.context.textures,
+                ].filter((node) => isNodeInSelection(node.x, node.y));
+
+                if (selectedNodes.length > 0) {
+                  console.log("Selected nodes:", selectedNodes);
+                }
+
+                setIsSelecting(false);
+              }
+
               if (state.context.activeConnection) {
                 machineRef.send({ type: "CANCEL_CONNECTION" });
               }
             }}
-            onClick={() => {
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                machineRef.send({ type: "DESELECT_ALL" });
+              }
+
               if (state.context.isPlacingGeometry) {
                 handleGeometryCreate(x, y);
               }
@@ -122,19 +169,37 @@ export default function Page() {
               </svg>
             )}
 
+            {isSelecting && (
+              <SelectionBox
+                startX={selectionStart.x}
+                startY={selectionStart.y}
+                endX={selectionEnd.x}
+                endY={selectionEnd.y}
+              />
+            )}
+
             {/* Render Geometries, Materials, and Textures with higher z-index */}
             <div style={{ position: "relative", zIndex: 1 }}>
               {/* Render Geometries */}
               {state.context.geometries.map((geometry) => (
                 <div
                   key={geometry.id}
-                  className="absolute"
+                  className={cn(
+                    "absolute transition-all",
+                    state.context.selectedNodeIds.find(
+                      (id) => id === geometry.id,
+                    ) && "ring-2 ring-blue-500",
+                  )}
                   style={{
                     left: `${geometry.x}px`,
                     top: `${geometry.y}px`,
                   }}
                   onMouseEnter={() => setStopPropagation(true)}
                   onMouseLeave={() => setStopPropagation(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    machineRef.send({ type: "SELECT_NODE", id: geometry.id });
+                  }}
                 >
                   <NetworkGeometryNode
                     key={geometry.id}
@@ -147,13 +212,22 @@ export default function Page() {
               {state.context.materials.map((material) => (
                 <div
                   key={material.id}
-                  className="absolute"
+                  className={cn(
+                    "absolute transition-all",
+                    state.context.selectedNodeIds.find(
+                      (id) => id === material.id,
+                    ) && "ring-2 ring-blue-500",
+                  )}
                   style={{
                     left: `${material.x}px`,
                     top: `${material.y}px`,
                   }}
                   onMouseEnter={() => setStopPropagation(true)}
                   onMouseLeave={() => setStopPropagation(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    machineRef.send({ type: "SELECT_NODE", id: material.id });
+                  }}
                 >
                   <NetworkMaterialNode
                     key={material.id}
@@ -166,13 +240,22 @@ export default function Page() {
               {state.context.textures.map((texture) => (
                 <div
                   key={texture.id}
-                  className="absolute"
+                  className={cn(
+                    "absolute transition-all",
+                    state.context.selectedNodeIds.find(
+                      (id) => id === texture.id,
+                    ) && "ring-2 ring-blue-500",
+                  )}
                   style={{
                     left: `${texture.x}px`,
                     top: `${texture.y}px`,
                   }}
                   onMouseEnter={() => setStopPropagation(true)}
                   onMouseLeave={() => setStopPropagation(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    machineRef.send({ type: "SELECT_NODE", id: texture.id });
+                  }}
                 >
                   <NetworkTextureNode
                     key={texture.id}
