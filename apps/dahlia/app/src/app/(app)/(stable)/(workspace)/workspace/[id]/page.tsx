@@ -29,7 +29,8 @@ import "../components/workspace/workspace.css";
 
 import type { FlowNode, GeometryFlowNode } from "../types/flow-nodes";
 import { api } from "~/trpc/react";
-import { DEFAULT_GEOMETRY_NODE } from "../types/flow-nodes";
+import { TempNode } from "../components/workspace/nodes/temp-node";
+import { DEFAULT_GEOMETRY_NODE, isTempFlowNode } from "../types/flow-nodes";
 
 interface WorkspacePageProps {
   params: {
@@ -39,6 +40,7 @@ interface WorkspacePageProps {
 
 const nodeTypes: NodeTypes = {
   geometry: GeometryNode,
+  temp: TempNode,
 } as const;
 
 interface FlowEdge extends Edge {
@@ -62,17 +64,34 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     }
   }, [workspaceNodes, isLoading, setNodes]);
 
+  // Only update nodes in DB if they're not temporary
+  const debouncedUpdateNodes = useCallback(
+    debounce((newNodes: FlowNode[]) => {
+      const persistentNodes = newNodes.filter(
+        (node) => !isTempFlowNode(node),
+      ) as GeometryFlowNode[];
+
+      if (persistentNodes.length > 0) {
+        updateNodesMutation.mutate({
+          id,
+          nodes: persistentNodes,
+        });
+      }
+    }, 500),
+    [id, updateNodesMutation],
+  );
+
   // Handle node changes and persist to database
   const handleNodesChange = useCallback(
     (changes: any) => {
       onNodesChange(changes);
-      // Debounce this in production
-      updateNodesMutation.mutate({
-        id,
-        nodes: nodes,
+      // Get the latest nodes after the change
+      setNodes((currentNodes) => {
+        debouncedUpdateNodes(currentNodes);
+        return currentNodes;
       });
     },
-    [nodes, id, updateNodesMutation, onNodesChange],
+    [debouncedUpdateNodes, onNodesChange, setNodes],
   );
 
   const onConnect = useCallback(
@@ -91,10 +110,6 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     setNodes((nds) => [...nds, newNode]);
   }, [setNodes]);
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <main className="relative flex-1 overflow-hidden">
       <div className="relative h-full w-full">
@@ -106,6 +121,12 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           connectionMode={ConnectionMode.Loose}
+          deleteKeyCode={null}
+          panOnDrag={true}
+          selectionOnDrag={false}
+          panOnScroll={false}
+          zoomOnScroll={false}
+          proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} />
           <Panel position="bottom-left">
@@ -128,19 +149,21 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         </ReactFlow>
       </div>
       <PropertyInspector />
-      <WebGLCanvas
-        shadows
-        style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: -1,
-        }}
-      >
+      <WebGLCanvas>
         <TextureRenderPipeline />
       </WebGLCanvas>
     </main>
   );
+}
+
+// Utility function for debouncing
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 }

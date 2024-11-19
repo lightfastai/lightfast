@@ -20,7 +20,18 @@ export interface MaterialFlowNode extends Node {
   };
 }
 
-export type FlowNode = GeometryFlowNode | MaterialFlowNode;
+export interface TempFlowNode extends Node {
+  type: "temp";
+  data: {
+    node_to_add: "geometry" | "material";
+    preview?: {
+      geometryType?: string;
+      materialType?: string;
+    };
+  };
+}
+
+export type FlowNode = GeometryFlowNode | MaterialFlowNode | TempFlowNode;
 
 // Type guards
 export const isGeometryFlowNode = (node: FlowNode): node is GeometryFlowNode =>
@@ -28,6 +39,9 @@ export const isGeometryFlowNode = (node: FlowNode): node is GeometryFlowNode =>
 
 export const isMaterialFlowNode = (node: FlowNode): node is MaterialFlowNode =>
   node.type === "material";
+
+export const isTempFlowNode = (node: FlowNode): node is TempFlowNode =>
+  node.type === "temp";
 
 // Default values aligned with schema types
 export const DEFAULT_GEOMETRY_NODE: Omit<GeometryFlowNode, "id" | "position"> =
@@ -57,6 +71,11 @@ export const DEFAULT_MATERIAL_NODE: Omit<MaterialFlowNode, "id" | "position"> =
         shouldRenderInNode: true,
       },
     },
+  };
+
+export const DEFAULT_TEMP_NODE: Omit<TempFlowNode, "id" | "position" | "data"> =
+  {
+    type: "temp",
   };
 
 // Helper type for node data
@@ -89,5 +108,23 @@ export const createMaterialNode = (
   data: {
     ...DEFAULT_MATERIAL_NODE.data,
     ...data,
+  },
+});
+
+export const createTempNode = (
+  id: string,
+  position: { x: number; y: number },
+  node_to_add: "geometry" | "material",
+  preview?: {
+    geometryType?: string;
+    materialType?: string;
+  },
+): TempFlowNode => ({
+  ...DEFAULT_TEMP_NODE,
+  id,
+  position,
+  data: {
+    node_to_add,
+    preview,
   },
 });

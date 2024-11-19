@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useReactFlow } from "@xyflow/react";
 import { Circle, Square, Triangle } from "lucide-react";
 
 import {
@@ -14,16 +15,34 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
-import {
-  $GeometryType,
-  $MaterialType,
-} from "~/app/(app)/(stable)/(workspace)/workspace/types/primitives.schema";
-import { $TextureTypes } from "~/app/(app)/(stable)/(workspace)/workspace/types/texture.schema";
+import { useTempNode } from "../../hooks/use-temp-node";
+import { NetworkEditorContext } from "../../state/context";
+import { $MaterialType } from "../../types/primitives.schema";
+import { $TextureTypes } from "../../types/texture.schema";
 
 export const EditorCommandDialog = () => {
   const state = NetworkEditorContext.useSelector((state) => state);
   const machineRef = NetworkEditorContext.useActorRef();
+  const { screenToFlowPosition, setNodes, getNodes } = useReactFlow();
+
+  const { startTempNodeWorkflow } = useTempNode({
+    onComplete: () => {
+      // Optional callback when node placement is complete
+    },
+  });
+
+  const handleGeometrySelect = (geometryType: string) => {
+    // Close the command dialog first
+    machineRef.send({ type: "TOGGLE_COMMAND" });
+
+    // Start the temp node workflow after a small delay to avoid immediate placement
+    setTimeout(() => {
+      startTempNodeWorkflow({
+        type: "geometry",
+        preview: { geometryType },
+      });
+    }, 0);
+  };
 
   /**
    * Handle global command dialog toggle
@@ -82,40 +101,25 @@ export const EditorCommandDialog = () => {
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="WebGL Geometry">
             <CommandItem
-              onSelect={() =>
-                machineRef.send({
-                  type: "SELECT_GEOMETRY",
-                  geometry: $GeometryType.Enum.Box,
-                })
-              }
+              onSelect={() => handleGeometrySelect("Box")}
               className="flex items-center gap-2"
             >
               <Square className="h-4 w-4" />
               <Label>Box</Label>
             </CommandItem>
             <CommandItem
-              onSelect={() =>
-                machineRef.send({
-                  type: "SELECT_GEOMETRY",
-                  geometry: $GeometryType.Enum.Cylinder,
-                })
-              }
+              onSelect={() => handleGeometrySelect("Sphere")}
               className="flex items-center gap-2"
             >
               <Circle className="h-4 w-4" />
-              <Label>Cylinder</Label>
+              <Label>Sphere</Label>
             </CommandItem>
             <CommandItem
-              onSelect={() =>
-                machineRef.send({
-                  type: "SELECT_GEOMETRY",
-                  geometry: $GeometryType.Enum.Tetrahedron,
-                })
-              }
+              onSelect={() => handleGeometrySelect("Plane")}
               className="flex items-center gap-2"
             >
               <Triangle className="h-4 w-4" />
-              <Label>Tetrahedron</Label>
+              <Label>Plane</Label>
             </CommandItem>
           </CommandGroup>
           <CommandGroup heading="Material">

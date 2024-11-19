@@ -19,7 +19,7 @@ import { GeometryViewer } from "~/components/r3f/geometry-viewer";
 import { NetworkEditorContext } from "../../../state/context";
 
 export const GeometryNode = memo(
-  ({ data, isConnectable }: NodeProps<GeometryFlowNode>) => {
+  ({ data, id, isConnectable }: NodeProps<GeometryFlowNode>) => {
     const machineRef = NetworkEditorContext.useActorRef();
 
     return (
@@ -28,7 +28,6 @@ export const GeometryNode = memo(
           "flex cursor-pointer flex-col gap-y-1 border bg-card p-1 text-card-foreground shadow-sm",
           "node-container",
         )}
-        // onClick={handleGeometryClick}
       >
         <Handle
           type="target"
@@ -49,7 +48,7 @@ export const GeometryNode = memo(
                 e.stopPropagation();
                 machineRef.send({
                   type: "UPDATE_GEOMETRY",
-                  geometryId: data.id,
+                  geometryId: id,
                   value: {
                     shouldRenderInNode: !data.geometry.shouldRenderInNode,
                   },
@@ -66,7 +65,7 @@ export const GeometryNode = memo(
                 e.stopPropagation();
                 machineRef.send({
                   type: "DELETE_GEOMETRY",
-                  geometryId: data.id,
+                  geometryId: id,
                 });
               }}
             >
@@ -81,6 +80,8 @@ export const GeometryNode = memo(
               {
                 ...data.geometry,
                 position: CENTER_OF_WORLD,
+                type: (data.geometry.type.charAt(0).toUpperCase() +
+                  data.geometry.type.slice(1)) as "Box" | "Sphere" | "Plane",
               },
             ]}
             cameraPosition={WORLD_CAMERA_POSITION_CLOSE}
@@ -93,12 +94,12 @@ export const GeometryNode = memo(
 
         <div className="flex items-center justify-end">
           <Checkbox
-            id={`wireframe-${data.id}`}
+            id={`wireframe-${id}`}
             checked={data.geometry.wireframe}
             onCheckedChange={() => {
               machineRef.send({
                 type: "UPDATE_GEOMETRY",
-                geometryId: data.id,
+                geometryId: id,
                 value: {
                   wireframe: !data.geometry.wireframe,
                 },
