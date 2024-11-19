@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import { RouterOutputs } from "@repo/api";
 import { UpdateNameWorkspaceSchema } from "@repo/db/schema";
@@ -33,10 +33,20 @@ export const EditorWorkspaceNameInput = ({
   const form = useForm({
     schema: UpdateNameWorkspaceSchema,
     defaultValues: {
-      name: workspace?.name ?? "",
+      name: "",
       id,
     },
   });
+
+  // Reset form values when workspace data changes
+  useEffect(() => {
+    if (workspace?.name !== undefined) {
+      form.reset({
+        name: workspace.name,
+        id,
+      });
+    }
+  }, [workspace?.name, form, id]);
 
   const onSubmit = async (
     data: WorkspaceUpdateName,
@@ -110,7 +120,13 @@ export const EditorWorkspaceNameInput = ({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input {...field} variant="ghost" onBlur={handleBlur} />
+                <Input
+                  {...field}
+                  variant="ghost"
+                  onBlur={handleBlur}
+                  // Disable the input until the workspace data is loaded
+                  disabled={workspace?.name === undefined}
+                />
               </FormControl>
             </FormItem>
           )}
