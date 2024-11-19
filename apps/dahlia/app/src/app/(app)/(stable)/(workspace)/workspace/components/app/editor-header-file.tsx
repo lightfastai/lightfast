@@ -10,7 +10,7 @@ import { useCreateWorkspace } from "~/app/(app)/(stable)/(workspace)/workspace/h
 import { Icons } from "~/app/icons";
 
 export function EditorHeaderFile() {
-  const { createWorkspace } = useCreateWorkspace();
+  const { mutateAsync } = useCreateWorkspace();
 
   return (
     <div className="fixed inset-x-0 top-0 z-[1] p-4">
@@ -21,7 +21,7 @@ export function EditorHeaderFile() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => createWorkspace()}>
+          <DropdownMenuItem onClick={() => mutateAsync()}>
             <span>New Workspace</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
