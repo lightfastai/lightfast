@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import React from "react";
 
 import { RouterOutputs } from "@repo/api";
 import { UpdateNameWorkspaceSchema } from "@repo/db/schema";
@@ -36,16 +36,12 @@ export const EditorWorkspaceNameInput = ({
       name: workspace?.name ?? "",
       id,
     },
-    values: {
-      name: workspace?.name ?? "",
-      id,
-    },
   });
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const skipBlurRef = useRef<boolean>(false); // Ensure this is a MutableRefObject
-
-  const onSubmit = (data: WorkspaceUpdateName) => {
+  const onSubmit = async (
+    data: WorkspaceUpdateName,
+    event?: React.BaseSyntheticEvent,
+  ) => {
     // If values haven't changed, do nothing
     if (data.name === workspace?.name) {
       return;
@@ -54,30 +50,31 @@ export const EditorWorkspaceNameInput = ({
     // Submit the data
     mutate({ id, name: data.name });
 
-    // Set flag to skip the next blur event
-    skipBlurRef.current = true;
+    // Try to blur the input without using refs
+    if (event) {
+      // Prevent default form submission
+      event.preventDefault();
 
-    // Blur the input
-    inputRef.current?.blur();
+      // Access the input element via the event
+      const formElement = event.target as HTMLFormElement;
+      const inputElement = formElement.elements.namedItem(
+        "name",
+      ) as HTMLInputElement;
+      inputElement?.blur();
+    }
   };
 
-  const onInvalid = () => {
+  const onInvalid = (errors: any) => {
     // Show validation errors
     toast({
       title: "Invalid workspace name",
-      description: form.formState.errors.name?.message,
+      description: errors.name?.message || "Validation failed",
     });
     // Keep input active for correction
   };
 
   const handleBlur = async () => {
-    if (skipBlurRef.current) {
-      // Reset the flag and skip this blur handler
-      skipBlurRef.current = false;
-      return;
-    }
-
-    const isValid = await form.trigger();
+    const isValid = await form.trigger("name");
 
     if (!isValid) {
       // Reset the input to previous value
@@ -113,15 +110,7 @@ export const EditorWorkspaceNameInput = ({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input
-                  {...field}
-                  ref={(e) => {
-                    field.ref(e);
-                    inputRef.current = e;
-                  }}
-                  variant="ghost"
-                  onBlur={handleBlur}
-                />
+                <Input {...field} variant="ghost" onBlur={handleBlur} />
               </FormControl>
             </FormItem>
           )}
