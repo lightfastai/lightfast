@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { api } from "~/trpc/server";
-import { EditorBreadcrumbLinks } from "../components/app/workspace-breadcrumb-links";
+import { EditorWorkspaceLinks } from "../components/app/editor-workspace-links";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export default async function WorkspaceLayout({
 
   return (
     <div className="relative flex h-screen flex-col">
-      <EditorBreadcrumbLinks id={id} />
+      <EditorWorkspaceLinks id={id} />
       {children}
     </div>
   );

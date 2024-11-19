@@ -6,8 +6,10 @@ import { api } from "~/trpc/react";
 
 export const useCreateWorkspace = () => {
   const router = useRouter();
+  const utils = api.useUtils();
   const { mutateAsync: createWorkspace } = api.workspace.create.useMutation({
     onSuccess: (data) => {
+      utils.workspace.getAll.invalidate();
       router.push(`/workspace/${data.id}`);
     },
     onError: (error) => {
