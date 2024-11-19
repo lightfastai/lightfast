@@ -6,9 +6,12 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 
+import { useCreateWorkspace } from "~/app/(app)/(stable)/(workspace)/workspace/hooks/use-create-workspace";
 import { Icons } from "~/app/icons";
 
 export function EditorHeaderFile() {
+  const { createWorkspace } = useCreateWorkspace();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -19,7 +22,7 @@ export function EditorHeaderFile() {
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => createWorkspace()}>
           <span>New Workspace</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

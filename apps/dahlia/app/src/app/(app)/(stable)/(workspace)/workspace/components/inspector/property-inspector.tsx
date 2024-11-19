@@ -1,3 +1,5 @@
+"use client";
+
 import { useInspectProperty } from "../../hooks/use-inspect-property";
 import { PropertyInspectorTexture } from "./property-inspector-texture";
 

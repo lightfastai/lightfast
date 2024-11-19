@@ -1,3 +1,5 @@
+"use client";
+
 import type { CanvasProps } from "@react-three/fiber";
 import React from "react";
 import { Canvas } from "@react-three/fiber";
