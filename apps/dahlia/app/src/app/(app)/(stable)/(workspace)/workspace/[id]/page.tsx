@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   addEdge,
   Background,
@@ -27,7 +27,11 @@ import { useGetWorkspaceNodes } from "../hooks/use-get-workspace-nodes";
 import "@xyflow/react/dist/base.css";
 import "../components/workspace/workspace.css";
 
-import type { FlowNode, GeometryFlowNode } from "../types/flow-nodes";
+import type {
+  FlowNode,
+  GeometryFlowNode,
+  TempFlowNode,
+} from "../types/flow-nodes";
 import { api } from "~/trpc/react";
 import { TempNode } from "../components/workspace/nodes/temp-node";
 import { DEFAULT_GEOMETRY_NODE, isTempFlowNode } from "../types/flow-nodes";
@@ -54,6 +58,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { data: workspaceNodes, isLoading } = useGetWorkspaceNodes({ id });
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
+  const [tempNodes, setTempNodes] = useState<TempFlowNode[]>([]);
 
   const updateNodesMutation = api.workspace.updateNodes.useMutation();
 
@@ -71,6 +76,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         (node) => !isTempFlowNode(node),
       ) as GeometryFlowNode[];
 
+      console.log("Persistent Nodes being sent to update:", persistentNodes);
+
       if (persistentNodes.length > 0) {
         updateNodesMutation.mutate({
           id,
@@ -81,13 +88,16 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     [id, updateNodesMutation],
   );
 
-  // Handle node changes and persist to database
+  // Update handleNodesChange to exclude temp nodes before debouncing
   const handleNodesChange = useCallback(
     (changes: any) => {
       onNodesChange(changes);
       // Get the latest nodes after the change
       setNodes((currentNodes) => {
-        debouncedUpdateNodes(currentNodes);
+        const nonTempNodes = currentNodes.filter(
+          (node) => !isTempFlowNode(node),
+        );
+        debouncedUpdateNodes(nonTempNodes);
         return currentNodes;
       });
     },
@@ -114,7 +124,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     <main className="relative flex-1 overflow-hidden">
       <div className="relative h-full w-full">
         <ReactFlow
-          nodes={nodes}
+          nodes={[...nodes, ...tempNodes]}
           edges={edges}
           onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}

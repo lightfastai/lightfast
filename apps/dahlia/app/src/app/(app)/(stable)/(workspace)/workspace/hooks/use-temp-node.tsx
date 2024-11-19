@@ -1,13 +1,23 @@
 import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 
-import { createGeometryNode, createTempNode } from "../types/flow-nodes";
+import {
+  createGeometryNode,
+  createTempNode,
+  GeometryFlowNode,
+  isTempFlowNode,
+  TempFlowNode,
+} from "../types/flow-nodes";
 
 interface UseTempNodeProps {
   onComplete?: () => void;
+  setTempNodes: React.Dispatch<React.SetStateAction<TempFlowNode[]>>;
 }
 
-export const useTempNode = ({ onComplete }: UseTempNodeProps = {}) => {
+export const useTempNode = ({
+  onComplete,
+  setTempNodes,
+}: UseTempNodeProps = {}) => {
   const { screenToFlowPosition, setNodes } = useReactFlow();
 
   const startTempNodeWorkflow = useCallback(
@@ -23,8 +33,8 @@ export const useTempNode = ({ onComplete }: UseTempNodeProps = {}) => {
           y: event.clientY,
         });
 
-        setNodes((nodes) => {
-          const tempExists = nodes.some((node) => node.id === tempId);
+        setTempNodes((prevTempNodes) => {
+          const tempExists = prevTempNodes.some((node) => node.id === tempId);
           if (!tempExists) {
             const tempNode = createTempNode(
               tempId,
@@ -32,10 +42,10 @@ export const useTempNode = ({ onComplete }: UseTempNodeProps = {}) => {
               params.type,
               params.preview,
             );
-            return [...nodes, tempNode];
+            return [...prevTempNodes, tempNode];
           }
 
-          return nodes.map((node) =>
+          return prevTempNodes.map((node) =>
             node.id === tempId ? { ...node, position } : node,
           );
         });
@@ -53,7 +63,9 @@ export const useTempNode = ({ onComplete }: UseTempNodeProps = {}) => {
         });
 
         setNodes((nodes) => {
-          const filteredNodes = nodes.filter((node) => node.id !== tempId);
+          const persistentNodes = nodes.filter(
+            (node) => !isTempFlowNode(node),
+          ) as GeometryFlowNode[];
 
           if (params.type === "geometry") {
             const geometryNode = createGeometryNode(
@@ -71,11 +83,15 @@ export const useTempNode = ({ onComplete }: UseTempNodeProps = {}) => {
                 },
               },
             );
-            return [...filteredNodes, geometryNode];
+            return [...persistentNodes, geometryNode];
           }
 
-          return filteredNodes;
+          return persistentNodes;
         });
+
+        setTempNodes((prevTempNodes) =>
+          prevTempNodes.filter((node) => node.id !== tempId),
+        );
 
         cleanup();
         onComplete?.();
@@ -89,9 +105,6 @@ export const useTempNode = ({ onComplete }: UseTempNodeProps = {}) => {
         if (rfPane) {
           rfPane.removeEventListener("click", handlePaneClick);
         }
-
-        // Clean up temp node if it exists
-        setNodes((nodes) => nodes.filter((node) => node.id !== tempId));
       };
 
       // Add listeners
@@ -105,7 +118,7 @@ export const useTempNode = ({ onComplete }: UseTempNodeProps = {}) => {
 
       return cleanup;
     },
-    [screenToFlowPosition, setNodes, onComplete],
+    [screenToFlowPosition, setNodes, onComplete, setTempNodes],
   );
 
   return { startTempNodeWorkflow };
