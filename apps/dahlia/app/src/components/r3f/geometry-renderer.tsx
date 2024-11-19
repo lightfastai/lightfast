@@ -5,11 +5,11 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
-import { Geometry } from "~/app/(app)/(stable)/(network-editor)/types/primitives";
+import { Geometry } from "~/app/(app)/(stable)/(workspace)/workspace/types/primitives";
 import {
   $GeometryType,
   $MaterialType,
-} from "~/app/(app)/(stable)/(network-editor)/types/primitives.schema";
+} from "~/app/(app)/(stable)/(workspace)/workspace/types/primitives.schema";
 
 export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
   const meshRef = useRef<Mesh>(null);

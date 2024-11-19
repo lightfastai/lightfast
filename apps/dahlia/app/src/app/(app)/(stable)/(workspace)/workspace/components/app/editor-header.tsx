@@ -3,7 +3,7 @@ import { EditorHeaderHelpers } from "./editor-header-helpers";
 
 export function EditorHeader() {
   return (
-    <section className="flex h-[3rem] items-center justify-between border-b p-1.5">
+    <section className="fixed inset-x-0 top-0 z-[1] flex items-center justify-between p-4">
       <EditorHeaderFile />
       <EditorHeaderHelpers />
     </section>

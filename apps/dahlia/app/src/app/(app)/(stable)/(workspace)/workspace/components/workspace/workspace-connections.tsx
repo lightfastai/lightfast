@@ -1,4 +1,4 @@
-import { createPath } from "~/components/path-utils";
+import { createPath } from "~/app/(app)/(stable)/(workspace)/workspace/components/workspace/utils";
 import { CursorPosition } from "./types";
 
 interface Connection {

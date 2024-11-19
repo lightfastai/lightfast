@@ -8,8 +8,8 @@ import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { $TextureUniforms, Value } from "@repo/webgl";
 
-import type { Texture } from "~/app/(app)/(stable)/(network-editor)/types/texture";
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import type { Texture } from "~/app/(app)/(stable)/(workspace)/workspace/types/texture";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
 import { PropertyFormField } from "./property-form-field";
 
 export const PropertyInspectorTexture = () => {

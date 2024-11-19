@@ -8,8 +8,8 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import type { Geometry } from "../app/(app)/(stable)/(network-editor)/types/primitives";
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import type { Geometry } from "../app/(app)/(stable)/(workspace)/workspace/types/primitives";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_CLOSE } from "./constants";
 import { GeometryViewer } from "./r3f/geometry-viewer";
 
