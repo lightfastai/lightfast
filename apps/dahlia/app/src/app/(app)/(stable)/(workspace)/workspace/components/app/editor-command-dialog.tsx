@@ -14,12 +14,12 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
 import {
   $GeometryType,
   $MaterialType,
-} from "~/app/(app)/(stable)/(network-editor)/types/primitives.schema";
-import { $TextureTypes } from "~/app/(app)/(stable)/(network-editor)/types/texture.schema";
+} from "~/app/(app)/(stable)/(workspace)/workspace/types/primitives.schema";
+import { $TextureTypes } from "~/app/(app)/(stable)/(workspace)/workspace/types/texture.schema";
 
 export const EditorCommandDialog = () => {
   const state = NetworkEditorContext.useSelector((state) => state);

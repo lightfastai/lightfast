@@ -16,9 +16,9 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
-import { TextureRenderPipeline } from "../app/(app)/(stable)/(network-editor)/components/webgl/texture-render-pipeline";
-import { TextureV2 } from "../app/(app)/(stable)/(network-editor)/types/texture";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
+import { TextureRenderPipeline } from "../app/(app)/(stable)/(workspace)/workspace/components/webgl/texture-render-pipeline";
+import { TextureV2 } from "../app/(app)/(stable)/(workspace)/workspace/types/texture";
 
 type ChatMessage = {
   id: string;

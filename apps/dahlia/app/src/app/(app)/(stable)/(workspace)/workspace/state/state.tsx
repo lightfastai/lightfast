@@ -6,12 +6,12 @@ import type {
   GeometryType,
   Material,
   MaterialType,
-} from "~/app/(app)/(stable)/(network-editor)/types/primitives";
+} from "~/app/(app)/(stable)/(workspace)/workspace/types/primitives";
 import type {
   Texture,
   TextureType,
-} from "~/app/(app)/(stable)/(network-editor)/types/texture";
-import { $Texture } from "~/app/(app)/(stable)/(network-editor)/types/texture.schema";
+} from "~/app/(app)/(stable)/(workspace)/workspace/types/texture";
+import { $Texture } from "~/app/(app)/(stable)/(workspace)/workspace/types/texture.schema";
 import { TEXTURE_RESOLUTION } from "~/components/constants";
 
 type CanvasEvent =

@@ -7,13 +7,13 @@ import {
   ResizablePanelGroup,
 } from "@repo/ui/components/ui/resizable";
 
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(network-editor)/state/context";
-import { NetworkCanvas } from "../app/(app)/(stable)/(network-editor)/components/network/network-canvas";
+import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
+import { NetworkCanvas } from "../app/(app)/(stable)/(workspace)/workspace/components/network/network-canvas";
 import {
   isGeometry,
   isMaterial,
   isTexture,
-} from "../app/(app)/(stable)/(network-editor)/types/primitives";
+} from "../app/(app)/(stable)/(workspace)/workspace/types/primitives";
 import { CENTER_OF_WORLD, WORLD_CAMERA_POSITION_FAR } from "./constants";
 import { PropertyInspectorTexture } from "./property-inspector-texture";
 import { GeometryViewer } from "./r3f/geometry-viewer";

@@ -9,7 +9,7 @@ export const EditorHeaderButton = React.forwardRef<
   return (
     <Button
       variant="ghost"
-      className="m-0 h-auto py-1.5 text-xs"
+      className="m-0 h-auto rounded-none text-xs"
       ref={ref}
       {...props}
     >
