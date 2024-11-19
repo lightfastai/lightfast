@@ -4,6 +4,7 @@ import { PropertyInspector } from "../components/inspector/property-inspector";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../components/webgl/webgl-canvas";
 import { Workspace } from "../components/workspace/workspace";
+import { useGetWorkspace } from "../hooks/use-get-workspace";
 
 interface WorkspacePageProps {
   params: {
@@ -13,6 +14,7 @@ interface WorkspacePageProps {
 
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
+  const workspace = useGetWorkspace({ id });
   return (
     <main className="relative flex-1 overflow-hidden">
       <Workspace debug />
