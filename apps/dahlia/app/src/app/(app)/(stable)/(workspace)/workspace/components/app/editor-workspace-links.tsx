@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@repo/ui/components/ui/breadcrumb";
@@ -23,13 +21,11 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
-import { useGetWorkspace } from "../../hooks/use-get-workspace";
-import { useGetAllWorkspaces } from "../../hooks/use-get-workspace copy";
+import { useGetAllWorkspaces } from "../../hooks/use-get-all-workspace";
+import { EditorWorkspaceNameInput } from "./editor-workspace-name-input";
 import { EditorWorkspaceSearch } from "./editor-workspace-search";
 
 export const EditorWorkspaceLinks = ({ id }: { id: string }) => {
-  const router = useRouter();
-  const workspace = useGetWorkspace({ id });
   const allWorkspaces = useGetAllWorkspaces();
   const [search, setSearch] = useState("");
   return (
@@ -41,7 +37,7 @@ export const EditorWorkspaceLinks = ({ id }: { id: string }) => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">Workspace</Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 p-0">
+              <DropdownMenuContent align="start">
                 <EditorWorkspaceSearch value={search} onChange={setSearch} />
                 <DropdownMenuSeparator className="my-0" />
                 <DropdownMenuGroup>
@@ -54,7 +50,7 @@ export const EditorWorkspaceLinks = ({ id }: { id: string }) => {
                         ws.name.toLowerCase().includes(search.toLowerCase()),
                       )
                       .map((ws) => (
-                        <DropdownMenuItem key={ws.id}>
+                        <DropdownMenuItem key={ws.id} asChild>
                           <Link href={`/workspace/${ws.id}`}>
                             <span className="truncate">{ws.name}</span>
                           </Link>
@@ -66,8 +62,8 @@ export const EditorWorkspaceLinks = ({ id }: { id: string }) => {
             </DropdownMenu>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>{workspace?.name}</BreadcrumbLink>
+          <BreadcrumbItem className="w-72">
+            <EditorWorkspaceNameInput id={id} />
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

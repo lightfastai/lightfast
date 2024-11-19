@@ -1,6 +1,12 @@
+import { RouterOutputs } from "@repo/api";
+
 import { api } from "~/trpc/react";
 
-export const useGetWorkspace = ({ id }: { id: string }) => {
+interface UseGetWorkspaceProps {
+  id: RouterOutputs["workspace"]["get"]["id"];
+}
+
+export const useGetWorkspace = ({ id }: UseGetWorkspaceProps) => {
   const { data } = api.workspace.get.useQuery({ id });
-  return data;
+  return { data };
 };
