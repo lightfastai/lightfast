@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo } from "react";
 
 import { cn } from "@repo/ui/lib/utils";
 
-import { SelectionIndicator } from "~/components/selection-indicator";
+import { SelectionIndicator } from "~/app/(app)/(stable)/(workspace)/workspace/components/workspace/selection-indicator";
 import { NetworkGeometryNode } from "~/components/td-x-network-editor-geometry-node";
 import { NetworkMaterialNode } from "~/components/td-x-network-editor-material-node";
 import { NetworkTextureNode } from "~/components/td-x-network-editor-texture-node";
