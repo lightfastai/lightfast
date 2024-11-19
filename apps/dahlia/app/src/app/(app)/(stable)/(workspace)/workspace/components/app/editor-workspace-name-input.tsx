@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { FieldErrors } from "react-hook-form";
 
 import { RouterOutputs } from "@repo/api";
-import { UpdateNameWorkspaceSchema } from "@repo/db/schema";
+import {
+  UpdateNameWorkspace,
+  UpdateNameWorkspaceSchema,
+} from "@repo/db/schema";
 import {
   Form,
   FormControl,
@@ -74,11 +78,12 @@ export const EditorWorkspaceNameInput = ({
     }
   };
 
-  const onInvalid = (errors: any) => {
+  const onInvalid = (errors: FieldErrors<UpdateNameWorkspace>) => {
+    const nameError = errors.name?.message;
     // Show validation errors
     toast({
       title: "Invalid workspace name",
-      description: errors.name?.message || "Validation failed",
+      description: nameError || "Validation failed",
     });
     // Keep input active for correction
   };
