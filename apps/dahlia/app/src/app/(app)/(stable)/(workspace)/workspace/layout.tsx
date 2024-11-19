@@ -1,6 +1,7 @@
 "use client";
 
-import { EditorHeader } from "./components/app/editor-header";
+import { EditorHeaderFile } from "./components/app/editor-header-file";
+import { EditorHeaderHelpers } from "./components/app/editor-header-helpers";
 import { NetworkEditorContext } from "./state/context";
 
 export default function NetworkEditorLayout({
@@ -10,10 +11,9 @@ export default function NetworkEditorLayout({
 }) {
   return (
     <NetworkEditorContext.Provider>
-      <div className="fixed inset-0 flex flex-col">
-        <EditorHeader />
-        {children}
-      </div>
+      <EditorHeaderFile />
+      <EditorHeaderHelpers />
+      {children}
     </NetworkEditorContext.Provider>
   );
 }

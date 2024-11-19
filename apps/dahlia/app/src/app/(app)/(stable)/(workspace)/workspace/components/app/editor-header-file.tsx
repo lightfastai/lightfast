@@ -13,19 +13,19 @@ export function EditorHeaderFile() {
   const { createWorkspace } = useCreateWorkspace();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="h-8">
+    <div className="fixed inset-x-0 top-0 z-[1] p-4">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">
             <Icons.logo className="size-4" />
           </Button>
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48">
-        <DropdownMenuItem onClick={() => createWorkspace()}>
-          <span>New Workspace</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48">
+          <DropdownMenuItem onClick={() => createWorkspace()}>
+            <span>New Workspace</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

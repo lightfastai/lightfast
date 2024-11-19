@@ -80,7 +80,7 @@ export const Workspace = ({
   zoomSpeed = ZOOM_SPEED,
   gridSize = GRID_SIZE,
 }: WorkspaceProps) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   return (
     <div className="relative h-full w-full">
