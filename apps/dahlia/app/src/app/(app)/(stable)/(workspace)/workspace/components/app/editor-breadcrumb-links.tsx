@@ -38,7 +38,7 @@ export const EditorBreadcrumbLinks = ({ id }: { id: string }) => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">Workspace</Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="max-h-96 w-48">
+              <DropdownMenuContent align="start" className="max-h-72 w-48">
                 {allWorkspaces?.map((ws) => (
                   <DropdownMenuItem
                     key={ws.id}
