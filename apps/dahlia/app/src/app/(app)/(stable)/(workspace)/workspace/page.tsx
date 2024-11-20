@@ -3,7 +3,6 @@
 import { PropertyInspector } from "./components/inspector/property-inspector";
 import { TextureRenderPipeline } from "./components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "./components/webgl/webgl-canvas";
-import { Workspace } from "./components/workspace/workspace";
 import { useCreateGeometry } from "./hooks/use-create-geometry";
 import { useCreateMaterial } from "./hooks/use-create-material";
 import { useCreateTexture } from "./hooks/use-create-texture";
@@ -21,7 +20,7 @@ export default function Page() {
 
   return (
     <main className="relative flex-1 overflow-hidden">
-      <Workspace debug />
+      {/* <Workspace debug /> */}
       <PropertyInspector />
       <WebGLCanvas
         shadows

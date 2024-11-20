@@ -11,6 +11,10 @@
     "./shaders/pnoise": {
       "types": "./dist/shaders/pnoise/pnoise.d.ts",
       "default": "./src/shaders/pnoise/pnoise.ts"
+    },
+    "./schema/vec3": {
+      "types": "./dist/schema/vec3.d.ts",
+      "default": "./src/schema/vec3.ts"
     }
   },
   "license": "MIT",

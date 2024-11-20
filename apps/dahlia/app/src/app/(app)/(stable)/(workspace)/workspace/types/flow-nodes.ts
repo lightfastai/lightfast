@@ -1,12 +1,15 @@
 import type { Node } from "@xyflow/react";
 import type { z } from "zod";
 
-import { $Geometry } from "@repo/db/schema";
+import { type Geometry } from "@repo/db/schema";
 
 import { $MaterialType } from "./primitives.schema";
 
 // Extend Node type with our GeometryNode
-export type GeometryFlowNode = z.infer<typeof $Geometry> & Node;
+export interface GeometryFlowNode extends Node {
+  type: "geometry";
+  data: Geometry;
+}
 
 export interface MaterialFlowNode extends Node {
   type: "material";

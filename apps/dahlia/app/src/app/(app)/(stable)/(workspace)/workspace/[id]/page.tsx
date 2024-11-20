@@ -56,6 +56,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     handleCanvasClick,
   } = useWorkspaceFlow({
     initialNodes: workspaceNodes ?? [],
+    workspaceId: id,
   });
 
   const { render, handleMouseMove } = useWorkspaceSelectionPreview({
