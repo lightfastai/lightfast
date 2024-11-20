@@ -13,6 +13,7 @@ import {
   ReactFlow,
   useEdgesState,
   useNodesState,
+  useReactFlow,
 } from "@xyflow/react";
 
 import { InfoCard } from "@repo/ui/components/info-card";
@@ -55,6 +56,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const [pendingGeometry, setPendingGeometry] = useState<string | null>(null);
+  const { screenToFlowPosition } = useReactFlow();
 
   const updateNodesMutation = api.workspace.updateNodes.useMutation();
 
@@ -90,11 +92,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       if (!pendingGeometry) return;
 
       // Get ReactFlow instance to convert screen to flow coordinates
-      const { top, left } = event.currentTarget.getBoundingClientRect();
-      const position = {
-        x: event.clientX - left,
-        y: event.clientY - top,
-      };
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
 
       const newNode: GeometryFlowNode = {
         id: `geometry-${Math.random()}`,
@@ -113,7 +114,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       setNodes((nds) => [...nds, newNode]);
       setPendingGeometry(null);
     },
-    [pendingGeometry, setNodes],
+    [pendingGeometry, setNodes, screenToFlowPosition],
   );
 
   return (

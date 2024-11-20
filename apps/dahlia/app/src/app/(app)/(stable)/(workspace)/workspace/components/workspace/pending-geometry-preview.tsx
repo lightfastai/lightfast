@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReactFlow, useStore } from "@xyflow/react";
 import { Circle, Square, Triangle } from "lucide-react";
 
 interface PendingGeometryPreviewProps {
@@ -16,10 +17,20 @@ export const PendingGeometryPreview = ({
   geometryType,
 }: PendingGeometryPreviewProps) => {
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
+  const { screenToFlowPosition } = useReactFlow();
+
+  // Get the current zoom level from the store
+  const zoom = useStore((state) => state.transform[2]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setPosition({ x: e.clientX, y: e.clientY });
+      // Convert screen coordinates to flow coordinates
+      const flowPosition = screenToFlowPosition({
+        x: e.clientX,
+        y: e.clientY,
+      });
+
+      setPosition(flowPosition);
     };
 
     if (geometryType) {
@@ -29,7 +40,7 @@ export const PendingGeometryPreview = ({
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [geometryType]);
+  }, [geometryType, screenToFlowPosition]);
 
   if (!geometryType) return null;
 
@@ -46,13 +57,19 @@ export const PendingGeometryPreview = ({
     }
   };
 
+  // Scale the preview size based on zoom level
+  const previewSize = 96 / zoom; // 96px is our base size (24 * 4)
+
   return (
     <div
-      className="pointer-events-none fixed z-50 flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-gray-400 bg-white/10 backdrop-blur-sm"
+      className="pointer-events-none absolute z-50 flex items-center justify-center rounded-lg border border-dashed border-gray-400 bg-white/10 backdrop-blur-sm"
       style={{
-        left: position.x - 48, // Center horizontally (half of width)
-        top: position.y - 48, // Center vertically (half of height)
-        transform: "translate(-50%, -50%)",
+        left: position.x,
+        top: position.y,
+        width: previewSize,
+        height: previewSize,
+        transform: `translate(-50%, -50%) scale(${zoom})`,
+        // transformOrigin: "center center",
       }}
     >
       <div className="flex flex-col items-center gap-2 text-gray-600">

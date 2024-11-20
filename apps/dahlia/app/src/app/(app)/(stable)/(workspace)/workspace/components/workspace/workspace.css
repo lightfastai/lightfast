@@ -2,10 +2,10 @@
   --xy-background-color-default: hsl(var(--background));
 }
 
-/* Add these styles for the preview component */
+/* Update preview styles */
 .geometry-preview {
   pointer-events: none;
-  position: fixed;
+  position: absolute;
   z-index: 1000;
   display: flex;
   align-items: center;
