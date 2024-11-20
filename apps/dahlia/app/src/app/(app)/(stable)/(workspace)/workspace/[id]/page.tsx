@@ -72,7 +72,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   }, [workspaceNodes, isLoading, setNodes]);
 
   // Initialize the temp node workflow
-  const { startTempNodeWorkflow } = useTempNode({
+  const { startTempNodeWorkflow, handleDragOver, handleDrop } = useTempNode({
     onComplete: () => {
       // Optional callback when node placement is complete
       // For example, you could show a notification
@@ -150,6 +150,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           selectionOnDrag={false}
           panOnScroll={false}
           zoomOnScroll={false}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} />
