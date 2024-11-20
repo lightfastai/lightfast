@@ -57,6 +57,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const [pendingGeometry, setPendingGeometry] = useState<string | null>(null);
   const { screenToFlowPosition } = useReactFlow();
+  const [mousePosition, setMousePosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const updateNodesMutation = api.workspace.updateNodes.useMutation();
 
@@ -117,10 +121,26 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     [pendingGeometry, setNodes, screenToFlowPosition],
   );
 
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent) => {
+      if (pendingGeometry) {
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        setMousePosition(position);
+      }
+    },
+    [pendingGeometry, screenToFlowPosition],
+  );
+
   return (
     <main className="relative flex-1 overflow-hidden">
       <EditorCommandDialog onGeometrySelect={handleGeometrySelect} />
-      <PendingGeometryPreview geometryType={pendingGeometry} />
+      <PendingGeometryPreview
+        geometryType={pendingGeometry}
+        position={mousePosition}
+      />
 
       <div className="relative h-full w-full">
         <ReactFlow
@@ -131,9 +151,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           onClick={handleCanvasClick}
+          onMouseMove={handleMouseMove}
           connectionMode={ConnectionMode.Loose}
           deleteKeyCode={null}
-          panOnDrag={!pendingGeometry} // Disable panning when placing a node
+          panOnDrag={!pendingGeometry}
           selectionOnDrag={false}
           panOnScroll={false}
           zoomOnScroll={false}
