@@ -22,23 +22,22 @@ import { PropertyInspector } from "../components/inspector/property-inspector";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../components/webgl/webgl-canvas";
 import { GeometryNode } from "../components/workspace/nodes/geometry-node";
-import { WorkspaceSelectionPreview } from "../components/workspace/workspace-selection-preview";
-import { useGetWorkspace } from "../hooks/use-get-workspace";
+import { useWorkspaceSelectionPreview } from "../components/workspace/workspace-selection-preview";
 import { useGetWorkspaceNodes } from "../hooks/use-get-workspace-nodes";
 
 import "@xyflow/react/dist/base.css";
 import "../components/workspace/workspace.css";
 
+import { RouterInputs } from "@repo/api";
 import { GeometryType } from "@repo/db/schema";
 
 import type { FlowNode, GeometryFlowNode } from "../types/flow-nodes";
-import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../state/context";
 import { DEFAULT_GEOMETRY_NODE } from "../types/flow-nodes";
 
 interface WorkspacePageProps {
   params: {
-    id: string;
+    id: RouterInputs["workspace"]["get"]["id"];
   };
 }
 
@@ -55,20 +54,18 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
   const state = NetworkEditorContext.useSelector((state) => state);
   const machineRef = NetworkEditorContext.useActorRef();
-  const workspace = useGetWorkspace({ id });
   const { data: workspaceNodes, isLoading } = useGetWorkspaceNodes({ id });
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const [pendingGeometry, setPendingGeometry] = useState<GeometryType | null>(
     null,
   );
+  const { render, handleMouseMove } = useWorkspaceSelectionPreview({
+    active: !!pendingGeometry,
+  });
   const { screenToFlowPosition } = useReactFlow();
-  const [mousePosition, setMousePosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
 
-  const updateNodesMutation = api.workspace.updateNodes.useMutation();
+  // const updateNodesMutation = api.workspace.updateNodes.useMutation();
 
   // Initialize nodes from workspace data
   useEffect(() => {
@@ -98,10 +95,6 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     };
     setNodes((nds) => [...nds, newNode]);
   }, [setNodes]);
-
-  const handleGeometrySelect = useCallback((geometryType: GeometryType) => {
-    setPendingGeometry(geometryType);
-  }, []);
 
   const handleCanvasClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -134,26 +127,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     [pendingGeometry, setNodes, screenToFlowPosition],
   );
 
-  const handleMouseMove = useCallback(
-    (event: React.MouseEvent) => {
-      if (pendingGeometry) {
-        const position = screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        });
-        setMousePosition(position);
-      }
-    },
-    [pendingGeometry, screenToFlowPosition],
-  );
-
   return (
     <main className="relative flex-1 overflow-hidden">
-      <WorkspaceSelectionPreview
-        geometryType={pendingGeometry}
-        position={mousePosition}
-      />
-
       <div className="relative h-full w-full">
         <ReactFlow
           nodes={nodes}
@@ -165,13 +140,15 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           onClick={handleCanvasClick}
           onMouseMove={handleMouseMove}
           connectionMode={ConnectionMode.Loose}
-          deleteKeyCode={null}
+          // deleteKeyCode={null}
           panOnDrag={!pendingGeometry}
           selectionOnDrag={false}
           panOnScroll={false}
           zoomOnScroll={false}
           proOptions={{ hideAttribution: true }}
         >
+          {render()}
+
           <Background variant={BackgroundVariant.Dots} />
           <Panel position="bottom-left">
             <button
