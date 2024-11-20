@@ -5,8 +5,8 @@ import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
 
 import type { Vec3 } from "@repo/webgl";
+import { Geometry } from "@repo/db/schema";
 
-import type { Geometry } from "../../app/(app)/(stable)/(workspace)/workspace/types/primitives";
 import { GeometryRenderer } from "./geometry-renderer";
 
 export const GeometryViewer = ({
@@ -25,7 +25,6 @@ export const GeometryViewer = ({
   shouldRender: boolean;
 }) => {
   if (!shouldRender) return null;
-
   return (
     <Canvas>
       <PerspectiveCamera
@@ -43,7 +42,7 @@ export const GeometryViewer = ({
       {shouldRenderGrid && <gridHelper args={[50, 100, "white", "gray"]} />}
       {shouldRenderAxes && <axesHelper args={[50]} />}
       {geometries.map((geometry) => (
-        <GeometryRenderer key={geometry.id} geometry={geometry} />
+        <GeometryRenderer geometry={geometry} />
       ))}
 
       <ambientLight intensity={0.5} />

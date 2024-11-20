@@ -7,6 +7,6 @@ interface UseGetWorkspaceNodesProps {
 }
 
 export const useGetWorkspaceNodes = ({ id }: UseGetWorkspaceNodesProps) => {
-  const { data, isLoading } = api.workspace.getNodes.useQuery({ id });
+  const { data, isLoading } = api.workspace.getAllNodes.useQuery({ id });
   return { data, isLoading };
 };

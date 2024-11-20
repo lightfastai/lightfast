@@ -21,7 +21,6 @@ import { NetworkEditorContext } from "../../../state/context";
 export const GeometryNode = memo(
   ({ data, id, isConnectable }: NodeProps<GeometryFlowNode>) => {
     const machineRef = NetworkEditorContext.useActorRef();
-
     return (
       <div
         className={cn(
@@ -37,7 +36,7 @@ export const GeometryNode = memo(
 
         <div className="flex flex-row items-center justify-between">
           <Label className="font-mono text-xs font-bold uppercase tracking-widest">
-            {data.geometry.type}
+            {data.type}
           </Label>
           <ToggleGroup type="single">
             <ToggleGroupItem
@@ -50,7 +49,7 @@ export const GeometryNode = memo(
                   type: "UPDATE_GEOMETRY",
                   geometryId: id,
                   value: {
-                    shouldRenderInNode: !data.geometry.shouldRenderInNode,
+                    shouldRenderInNode: !data.shouldRenderInNode,
                   },
                 });
               }}
@@ -78,30 +77,28 @@ export const GeometryNode = memo(
           <GeometryViewer
             geometries={[
               {
-                ...data.geometry,
+                ...data,
                 position: CENTER_OF_WORLD,
-                type: (data.geometry.type.charAt(0).toUpperCase() +
-                  data.geometry.type.slice(1)) as "Box" | "Sphere" | "Plane",
               },
             ]}
             cameraPosition={WORLD_CAMERA_POSITION_CLOSE}
             lookAt={CENTER_OF_WORLD}
             shouldRenderGrid={false}
             shouldRenderAxes={false}
-            shouldRender={data.geometry.shouldRenderInNode}
+            shouldRender={data.shouldRenderInNode}
           />
         </div>
 
         <div className="flex items-center justify-end">
           <Checkbox
             id={`wireframe-${id}`}
-            checked={data.geometry.wireframe}
+            checked={data.wireframe}
             onCheckedChange={() => {
               machineRef.send({
                 type: "UPDATE_GEOMETRY",
                 geometryId: id,
                 value: {
-                  wireframe: !data.geometry.wireframe,
+                  wireframe: !data.wireframe,
                 },
               });
             }}

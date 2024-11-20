@@ -2,13 +2,11 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 
+import { $NodeType, createDefaultGeometry } from "@repo/db/schema";
+
 import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../../state/context";
-import {
-  DEFAULT_GEOMETRY_NODE,
-  FlowNode,
-  GeometryFlowNode,
-} from "../../types/flow-nodes";
+import { FlowNode, GeometryFlowNode } from "../../types/flow-nodes";
 
 interface UseWorkspaceAddNodeProps {
   setNodes: Dispatch<SetStateAction<FlowNode[]>>;
@@ -48,19 +46,15 @@ export function useWorkspaceAddNode({
       const newNode: GeometryFlowNode = {
         id: `geometry-${Math.random()}`,
         position,
-        ...DEFAULT_GEOMETRY_NODE,
-        data: {
-          ...DEFAULT_GEOMETRY_NODE.data,
-          label: state.context.selectedGeometry,
-          geometry: {
-            ...DEFAULT_GEOMETRY_NODE.data.geometry,
-            type: state.context.selectedGeometry,
-          },
-        },
+        type: $NodeType.Enum.geometry,
+        data: createDefaultGeometry({
+          type: state.context.selectedGeometry,
+        }),
       };
 
       // Optimistically add the node to the UI
       setNodes((nds) => [...nds, newNode]);
+      machineRef.send({ type: "UNSELECT_GEOMETRY" });
 
       try {
         // Add the node to the database
@@ -68,7 +62,7 @@ export function useWorkspaceAddNode({
           workspaceId,
           position: newNode.position,
           data: newNode.data,
-          type: "geometry" as const,
+          type: $NodeType.Enum.geometry,
         });
 
         // Update the node with the database ID
@@ -77,10 +71,11 @@ export function useWorkspaceAddNode({
             node.id === newNode.id ? { ...node, id: result.id } : node,
           ),
         );
-
-        machineRef.send({ type: "UNSELECT_GEOMETRY" });
       } catch (error) {
         // Error handling is done in onError callback
+        // remove the node from the UI
+        // @todo test!
+        setNodes((nodes) => nodes.filter((node) => node.id !== newNode.id));
       }
     },
     [
