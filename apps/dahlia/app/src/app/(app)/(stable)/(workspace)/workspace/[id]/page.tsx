@@ -15,6 +15,7 @@ import { PropertyInspector } from "../components/inspector/property-inspector";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../components/webgl/webgl-canvas";
 import { GeometryNode } from "../components/workspace/nodes/geometry-node";
+import { MaterialNode } from "../components/workspace/nodes/material-node";
 import { useWorkspaceFlow } from "../components/workspace/use-workspace-flow";
 import { useWorkspaceSelectionPreview } from "../components/workspace/use-workspace-selection-preview";
 import { useGetWorkspaceNodes } from "../hooks/use-get-workspace-nodes";
@@ -34,6 +35,7 @@ interface WorkspacePageProps {
 
 const nodeTypes: NodeTypes = {
   geometry: GeometryNode,
+  material: MaterialNode,
 } as const;
 
 export default function WorkspacePage({ params }: WorkspacePageProps) {
@@ -57,7 +59,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   });
 
   const { render, handleMouseMove } = useWorkspaceSelectionPreview({
-    active: !!state.context.selectedGeometry,
+    active:
+      !!state.context.selectedGeometry || !!state.context.selectedMaterial,
   });
 
   return (

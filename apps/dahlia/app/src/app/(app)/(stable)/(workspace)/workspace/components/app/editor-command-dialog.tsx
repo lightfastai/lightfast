@@ -3,7 +3,12 @@
 import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 
-import { $GeometryType, GeometryType } from "@repo/db/schema";
+import {
+  $GeometryType,
+  $MaterialType,
+  GeometryType,
+  MaterialType,
+} from "@repo/db/schema";
 import {
   Command,
   CommandDialog,
@@ -16,7 +21,6 @@ import {
 import { Label } from "@repo/ui/components/ui/label";
 
 import { NetworkEditorContext } from "../../state/context";
-import { $MaterialType } from "../../types/primitives.schema";
 import { $TextureTypes } from "../../types/texture.schema";
 
 export const EditorCommandDialog = () => {
@@ -34,6 +38,17 @@ export const EditorCommandDialog = () => {
     machineRef.send({
       type: "SELECT_GEOMETRY",
       geometry: geometryType,
+    });
+  };
+
+  const handleMaterialSelect = (materialType: MaterialType) => {
+    // Close the command dialog first
+    machineRef.send({ type: "TOGGLE_COMMAND" });
+
+    // Notify parent component of the selected material
+    machineRef.send({
+      type: "SELECT_MATERIAL",
+      material: materialType,
     });
   };
 
@@ -126,14 +141,14 @@ export const EditorCommandDialog = () => {
           </CommandGroup>
           <CommandGroup heading="Material">
             <CommandItem
-              onSelect={() =>
-                machineRef.send({
-                  type: "SELECT_MATERIAL",
-                  material: $MaterialType.Enum.Phong,
-                })
-              }
+              onSelect={() => handleMaterialSelect($MaterialType.Enum.phong)}
             >
               <Label>Phong</Label>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleMaterialSelect($MaterialType.Enum.lambert)}
+            >
+              <Label>Lambert</Label>
             </CommandItem>
           </CommandGroup>
           <CommandGroup heading="TOP">

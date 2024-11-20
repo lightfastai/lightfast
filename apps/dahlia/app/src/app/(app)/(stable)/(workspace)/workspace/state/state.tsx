@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import { assign, setup } from "xstate";
 
-import { Geometry, GeometryType } from "@repo/db/schema";
-
-import type {
+import {
+  Geometry,
+  GeometryType,
   Material,
   MaterialType,
-} from "~/app/(app)/(stable)/(workspace)/workspace/types/primitives";
+} from "@repo/db/schema";
+
 import type {
   Texture,
   TextureType,
@@ -21,6 +22,7 @@ type CanvasEvent =
   | { type: "UPDATE_GEOMETRY"; geometryId: string; value: Partial<Geometry> }
   | { type: "SELECT_GEOMETRY"; geometry: GeometryType }
   | { type: "UNSELECT_GEOMETRY" }
+  | { type: "UNSELECT_MATERIAL" }
 
   /** Add a material to the canvas */
   | { type: "ADD_MATERIAL"; material: Material }
@@ -133,6 +135,11 @@ export const canvasMachine = setup({
   states: {
     idle: {
       on: {
+        UNSELECT_MATERIAL: {
+          actions: assign({
+            selectedMaterial: null,
+          }),
+        },
         /** @TODO implement... */
         DELETE_SELECTED_NODES: {
           actions: assign({

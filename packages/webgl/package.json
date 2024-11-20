@@ -15,6 +15,10 @@
     "./schema/vec3": {
       "types": "./dist/schema/vec3.d.ts",
       "default": "./src/schema/vec3.ts"
+    },
+    "./schema/color": {
+      "types": "./dist/schema/color.d.ts",
+      "default": "./src/schema/color.ts"
     }
   },
   "license": "MIT",
