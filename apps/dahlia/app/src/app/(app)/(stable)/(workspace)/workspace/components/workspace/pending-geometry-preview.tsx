@@ -44,7 +44,6 @@ export const PendingGeometryPreview = ({
         top: screenPosition.y,
         width: previewSize,
         height: previewSize,
-        transform: `translate(-50%, -50%)`,
       }}
     >
       <div className="flex flex-col items-center gap-2 text-gray-600">
