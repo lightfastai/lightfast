@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 
+import { $GeometryType, GeometryType } from "@repo/db/schema";
 import {
   Command,
   CommandDialog,
@@ -18,22 +19,22 @@ import { NetworkEditorContext } from "../../state/context";
 import { $MaterialType } from "../../types/primitives.schema";
 import { $TextureTypes } from "../../types/texture.schema";
 
-interface EditorCommandDialogProps {
-  onGeometrySelect: (geometryType: string) => void;
-}
-
-export const EditorCommandDialog = ({
-  onGeometrySelect,
-}: EditorCommandDialogProps) => {
+export const EditorCommandDialog = () => {
   const state = NetworkEditorContext.useSelector((state) => state);
   const machineRef = NetworkEditorContext.useActorRef();
 
-  const handleGeometrySelect = (geometryType: string) => {
+  /**
+   * Handle geometry selection
+   */
+  const handleGeometrySelect = (geometryType: GeometryType) => {
     // Close the command dialog first
     machineRef.send({ type: "TOGGLE_COMMAND" });
 
     // Notify parent component of the selected geometry
-    onGeometrySelect(geometryType);
+    machineRef.send({
+      type: "SELECT_GEOMETRY",
+      geometry: geometryType,
+    });
   };
 
   /**
@@ -93,25 +94,34 @@ export const EditorCommandDialog = ({
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="WebGL Geometry">
             <CommandItem
-              onSelect={() => handleGeometrySelect("Box")}
+              onSelect={() => handleGeometrySelect($GeometryType.Enum.box)}
               className="flex items-center gap-2"
             >
               <Square className="h-4 w-4" />
               <Label>Box</Label>
             </CommandItem>
             <CommandItem
-              onSelect={() => handleGeometrySelect("Sphere")}
+              onSelect={() => handleGeometrySelect($GeometryType.Enum.sphere)}
               className="flex items-center gap-2"
             >
               <Circle className="h-4 w-4" />
               <Label>Sphere</Label>
             </CommandItem>
             <CommandItem
-              onSelect={() => handleGeometrySelect("Plane")}
+              onSelect={() =>
+                handleGeometrySelect($GeometryType.Enum.tetrahedron)
+              }
               className="flex items-center gap-2"
             >
               <Triangle className="h-4 w-4" />
-              <Label>Plane</Label>
+              <Label>Tetrahedron</Label>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleGeometrySelect($GeometryType.Enum.torus)}
+              className="flex items-center gap-2"
+            >
+              <Circle className="h-4 w-4" />
+              <Label>Torus</Label>
             </CommandItem>
           </CommandGroup>
           <CommandGroup heading="Material">

@@ -1,7 +1,8 @@
 import type { z } from "zod";
 
+import { $Geometry } from "@repo/db/schema";
+
 import {
-  $Geometry,
   $GeometryType,
   $Material,
   $MaterialType,

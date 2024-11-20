@@ -17,6 +17,7 @@ import {
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
 import { useSession } from "~/hooks/use-session";
 import { useSignOut } from "~/hooks/use-sign-out";
+import { EditorCommandDialog } from "./editor-command-dialog";
 
 export const EditorHeaderHelpers = () => {
   const machineRef = NetworkEditorContext.useActorRef();
@@ -69,6 +70,7 @@ export const EditorHeaderHelpers = () => {
           Clear Canvas
         </Button>
       </div>
+      <EditorCommandDialog />
     </div>
   );
 };

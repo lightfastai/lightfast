@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { assign, setup } from "xstate";
 
+import { Geometry, GeometryType } from "@repo/db/schema";
+
 import type {
-  Geometry,
-  GeometryType,
   Material,
   MaterialType,
 } from "~/app/(app)/(stable)/(workspace)/workspace/types/primitives";
@@ -17,9 +17,10 @@ import { TEXTURE_RESOLUTION } from "~/components/constants";
 type CanvasEvent =
   /** Add a geometry to the canvas */
   | { type: "ADD_GEOMETRY"; geometry: Geometry }
-  | { type: "DELETE_GEOMETRY"; geometryId: number }
-  | { type: "UPDATE_GEOMETRY"; geometryId: number; value: Partial<Geometry> }
+  | { type: "DELETE_GEOMETRY"; geometryId: string }
+  | { type: "UPDATE_GEOMETRY"; geometryId: string; value: Partial<Geometry> }
   | { type: "SELECT_GEOMETRY"; geometry: GeometryType }
+  | { type: "UNSELECT_GEOMETRY" }
 
   /** Add a material to the canvas */
   | { type: "ADD_MATERIAL"; material: Material }
@@ -270,6 +271,11 @@ export const canvasMachine = setup({
             selectedGeometry: ({ event }) => event.geometry,
             isCommandOpen: false,
             isPlacingGeometry: true,
+          }),
+        },
+        UNSELECT_GEOMETRY: {
+          actions: assign({
+            selectedGeometry: null,
           }),
         },
         ADD_GEOMETRY: {
