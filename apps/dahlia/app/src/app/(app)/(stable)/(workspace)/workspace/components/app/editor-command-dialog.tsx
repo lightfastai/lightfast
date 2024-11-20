@@ -19,14 +19,11 @@ import { $MaterialType } from "../../types/primitives.schema";
 import { $TextureTypes } from "../../types/texture.schema";
 
 interface EditorCommandDialogProps {
-  startTempNodeWorkflow: (params: {
-    type: "geometry" | "material";
-    preview: any;
-  }) => void;
+  onGeometrySelect: (geometryType: string) => void;
 }
 
 export const EditorCommandDialog = ({
-  startTempNodeWorkflow,
+  onGeometrySelect,
 }: EditorCommandDialogProps) => {
   const state = NetworkEditorContext.useSelector((state) => state);
   const machineRef = NetworkEditorContext.useActorRef();
@@ -35,11 +32,8 @@ export const EditorCommandDialog = ({
     // Close the command dialog first
     machineRef.send({ type: "TOGGLE_COMMAND" });
 
-    // Start the temp node workflow immediately
-    startTempNodeWorkflow({
-      type: "geometry",
-      preview: { geometryType },
-    });
+    // Notify parent component of the selected geometry
+    onGeometrySelect(geometryType);
   };
 
   /**

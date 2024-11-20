@@ -22,21 +22,16 @@ import { PropertyInspector } from "../components/inspector/property-inspector";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../components/webgl/webgl-canvas";
 import { GeometryNode } from "../components/workspace/nodes/geometry-node";
+import { PendingGeometryPreview } from "../components/workspace/pending-geometry-preview";
 import { useGetWorkspace } from "../hooks/use-get-workspace";
 import { useGetWorkspaceNodes } from "../hooks/use-get-workspace-nodes";
 
 import "@xyflow/react/dist/base.css";
 import "../components/workspace/workspace.css";
 
-import type {
-  FlowNode,
-  GeometryFlowNode,
-  TempFlowNode,
-} from "../types/flow-nodes";
+import type { FlowNode, GeometryFlowNode } from "../types/flow-nodes";
 import { api } from "~/trpc/react";
-import { TempNode } from "../components/workspace/nodes/temp-node";
-import { useTempNode } from "../hooks/use-temp-node";
-import { DEFAULT_GEOMETRY_NODE, isTempFlowNode } from "../types/flow-nodes";
+import { DEFAULT_GEOMETRY_NODE } from "../types/flow-nodes";
 
 interface WorkspacePageProps {
   params: {
@@ -46,7 +41,6 @@ interface WorkspacePageProps {
 
 const nodeTypes: NodeTypes = {
   geometry: GeometryNode,
-  temp: TempNode,
 } as const;
 
 interface FlowEdge extends Edge {
@@ -60,7 +54,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { data: workspaceNodes, isLoading } = useGetWorkspaceNodes({ id });
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
-  const [tempNodes, setTempNodes] = useState<TempFlowNode[]>([]);
+  const [pendingGeometry, setPendingGeometry] = useState<string | null>(null);
 
   const updateNodesMutation = api.workspace.updateNodes.useMutation();
 
@@ -70,50 +64,6 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       setNodes(workspaceNodes);
     }
   }, [workspaceNodes, isLoading, setNodes]);
-
-  // Initialize the temp node workflow
-  const { startTempNodeWorkflow, handleDragOver, handleDrop } = useTempNode({
-    onComplete: () => {
-      // Optional callback when node placement is complete
-      // For example, you could show a notification
-    },
-    setTempNodes,
-  });
-
-  // Only update nodes in DB if they're not temporary
-  const debouncedUpdateNodes = useCallback(
-    debounce((newNodes: FlowNode[]) => {
-      const persistentNodes = newNodes.filter(
-        (node) => !isTempFlowNode(node),
-      ) as GeometryFlowNode[];
-
-      console.log("Persistent Nodes being sent to update:", persistentNodes);
-
-      if (persistentNodes.length > 0) {
-        updateNodesMutation.mutate({
-          id,
-          nodes: persistentNodes,
-        });
-      }
-    }, 500),
-    [id, updateNodesMutation],
-  );
-
-  // Update handleNodesChange to exclude temp nodes before debouncing
-  const handleNodesChange = useCallback(
-    (changes: any) => {
-      onNodesChange(changes);
-      // Get the latest nodes after the change
-      setNodes((currentNodes) => {
-        const nonTempNodes = currentNodes.filter(
-          (node) => !isTempFlowNode(node),
-        );
-        debouncedUpdateNodes(nonTempNodes);
-        return currentNodes;
-      });
-    },
-    [debouncedUpdateNodes, onNodesChange, setNodes],
-  );
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -131,27 +81,61 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     setNodes((nds) => [...nds, newNode]);
   }, [setNodes]);
 
+  const handleGeometrySelect = useCallback((geometryType: string) => {
+    setPendingGeometry(geometryType);
+  }, []);
+
+  const handleCanvasClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!pendingGeometry) return;
+
+      // Get ReactFlow instance to convert screen to flow coordinates
+      const { top, left } = event.currentTarget.getBoundingClientRect();
+      const position = {
+        x: event.clientX - left,
+        y: event.clientY - top,
+      };
+
+      const newNode: GeometryFlowNode = {
+        id: `geometry-${Math.random()}`,
+        position,
+        ...DEFAULT_GEOMETRY_NODE,
+        data: {
+          ...DEFAULT_GEOMETRY_NODE.data,
+          label: pendingGeometry,
+          geometry: {
+            ...DEFAULT_GEOMETRY_NODE.data.geometry,
+            type: pendingGeometry.toLowerCase() as "box" | "sphere" | "plane",
+          },
+        },
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+      setPendingGeometry(null);
+    },
+    [pendingGeometry, setNodes],
+  );
+
   return (
     <main className="relative flex-1 overflow-hidden">
-      {/* Pass the startTempNodeWorkflow function as a prop */}
-      <EditorCommandDialog startTempNodeWorkflow={startTempNodeWorkflow} />
+      <EditorCommandDialog onGeometrySelect={handleGeometrySelect} />
+      <PendingGeometryPreview geometryType={pendingGeometry} />
 
       <div className="relative h-full w-full">
         <ReactFlow
-          nodes={[...nodes, ...tempNodes]}
+          nodes={nodes}
           edges={edges}
-          onNodesChange={handleNodesChange}
+          onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          onClick={handleCanvasClick}
           connectionMode={ConnectionMode.Loose}
           deleteKeyCode={null}
-          panOnDrag={true}
+          panOnDrag={!pendingGeometry} // Disable panning when placing a node
           selectionOnDrag={false}
           panOnScroll={false}
           zoomOnScroll={false}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} />

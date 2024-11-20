@@ -3,15 +3,13 @@ import { useReactFlow } from "@xyflow/react";
 
 import {
   createGeometryNode,
-  createTempNode,
   FlowNode,
-  isTempFlowNode,
   TempFlowNode,
 } from "../types/flow-nodes";
 
 interface UseTempNodeProps {
   onComplete?: () => void;
-  setTempNodes: React.Dispatch<React.SetStateAction<TempFlowNode[]>>;
+  setTempNode: React.Dispatch<React.SetStateAction<TempFlowNode | null>>;
 }
 
 interface DraggedItem {
@@ -22,65 +20,8 @@ interface DraggedItem {
   };
 }
 
-export const useTempNode = ({ onComplete, setTempNodes }: UseTempNodeProps) => {
+export const useTempNode = ({ onComplete, setTempNode }: UseTempNodeProps) => {
   const { screenToFlowPosition, setNodes } = useReactFlow<FlowNode>();
-
-  const handleDragOver = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "move";
-    },
-    [],
-  );
-
-  const handleDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      event.preventDefault();
-
-      try {
-        const draggedItem: DraggedItem = JSON.parse(
-          event.dataTransfer.getData("application/json"),
-        );
-
-        const position = screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        });
-
-        setNodes((nodes) => {
-          const persistentNodes = nodes.filter((node): node is FlowNode => {
-            return !isTempFlowNode(node);
-          });
-
-          if (draggedItem.type === "geometry") {
-            const geometryNode = createGeometryNode(
-              `geometry-${Math.random()}`,
-              position,
-              {
-                label: draggedItem.preview.geometryType,
-                geometry: {
-                  type: draggedItem.preview.geometryType,
-                  position: { x: 0, y: 0, z: 0 },
-                  scale: { x: 1, y: 1, z: 1 },
-                  rotation: { x: 0, y: 0, z: 0 },
-                  wireframe: false,
-                  shouldRenderInNode: true,
-                },
-              },
-            );
-            return [...persistentNodes, geometryNode];
-          }
-
-          return persistentNodes;
-        });
-
-        onComplete?.();
-      } catch (error) {
-        console.error("Error processing dropped item:", error);
-      }
-    },
-    [screenToFlowPosition, setNodes, onComplete],
-  );
 
   const startTempNodeWorkflow = useCallback(
     (params: { type: "geometry" | "material"; preview: any }) => {
@@ -94,21 +35,16 @@ export const useTempNode = ({ onComplete, setTempNodes }: UseTempNodeProps) => {
           y: event.clientY,
         });
 
-        setTempNodes((prevTempNodes) => {
-          const tempExists = prevTempNodes.some((node) => node.id === tempId);
-          if (!tempExists) {
-            const tempNode = createTempNode(
+        setTempNode((prevTempNode) => {
+          if (!prevTempNode) {
+            return createTempNode(
               tempId,
               position,
               params.type,
               params.preview,
             );
-            return [...prevTempNodes, tempNode];
           }
-
-          return prevTempNodes.map((node) =>
-            node.id === tempId ? { ...node, position } : node,
-          );
+          return { ...prevTempNode, position };
         });
       };
 
@@ -157,9 +93,7 @@ export const useTempNode = ({ onComplete, setTempNodes }: UseTempNodeProps) => {
           return persistentNodes;
         });
 
-        setTempNodes((prevTempNodes) =>
-          prevTempNodes.filter((node) => node.id !== tempId),
-        );
+        setTempNode(null);
 
         cleanup();
         onComplete?.();
@@ -183,12 +117,10 @@ export const useTempNode = ({ onComplete, setTempNodes }: UseTempNodeProps) => {
 
       return cleanup;
     },
-    [screenToFlowPosition, setNodes, onComplete, setTempNodes],
+    [screenToFlowPosition, setNodes, onComplete, setTempNode],
   );
 
   return {
     startTempNodeWorkflow,
-    handleDragOver,
-    handleDrop,
   };
 };
