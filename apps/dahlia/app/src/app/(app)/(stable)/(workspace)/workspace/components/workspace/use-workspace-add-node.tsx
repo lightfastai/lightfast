@@ -73,9 +73,6 @@ export function useWorkspaceAddNode({
         );
       } catch (error) {
         // Error handling is done in onError callback
-        // remove the node from the UI
-        // @todo test!
-        setNodes((nodes) => nodes.filter((node) => node.id !== newNode.id));
       }
     },
     [
