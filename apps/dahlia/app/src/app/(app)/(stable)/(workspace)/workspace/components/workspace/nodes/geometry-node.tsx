@@ -10,16 +10,16 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import type { GeometryFlowNode } from "../../../types/flow-nodes";
 import {
   CENTER_OF_WORLD,
   WORLD_CAMERA_POSITION_CLOSE,
 } from "~/components/constants";
 import { GeometryViewer } from "~/components/r3f/geometry-viewer";
 import { NetworkEditorContext } from "../../../state/context";
+import { GeometryFlowNode } from "../../../types/flow-nodes";
 
 export const GeometryNode = memo(
-  ({ data, id, isConnectable }: NodeProps<GeometryFlowNode>) => {
+  ({ data, id, type, isConnectable }: NodeProps<GeometryFlowNode>) => {
     const machineRef = NetworkEditorContext.useActorRef();
     return (
       <div
