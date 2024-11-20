@@ -1,10 +1,4 @@
-"use client";
-
-import { ReactFlowProvider } from "@xyflow/react";
-
-import { EditorHeaderFile } from "./components/app/editor-header-file";
-import { EditorHeaderHelpers } from "./components/app/editor-header-helpers";
-import { NetworkEditorContext } from "./state/context";
+import { EditorHeaderMenu } from "./components/app/editor-header-file";
 
 export default function NetworkEditorLayout({
   children,
@@ -12,12 +6,12 @@ export default function NetworkEditorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <NetworkEditorContext.Provider>
-      <ReactFlowProvider>
-        <EditorHeaderFile />
-        <EditorHeaderHelpers />
-        {children}
-      </ReactFlowProvider>
-    </NetworkEditorContext.Provider>
+    <>
+      {/* <ReactFlowProvider> */}
+      <EditorHeaderMenu />
+      {/* <EditorHeaderHelpers /> */}
+      {/* {children} */}
+      {/* </ReactFlowProvider> */}
+    </>
   );
 }
