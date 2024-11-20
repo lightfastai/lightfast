@@ -1,23 +1,16 @@
 import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 
-import {
-  createGeometryNode,
-  FlowNode,
-  TempFlowNode,
-} from "../types/flow-nodes";
+import { createGeometryNode, FlowNode } from "../types/flow-nodes";
+
+// Define the type for prevTempNode to fix the implicit any error
+type TempNode = {
+  position: { x: number; y: number };
+} | null;
 
 interface UseTempNodeProps {
   onComplete?: () => void;
-  setTempNode: React.Dispatch<React.SetStateAction<TempFlowNode | null>>;
-}
-
-interface DraggedItem {
-  type: "geometry" | "material";
-  preview: {
-    geometryType: "box" | "sphere" | "plane";
-    [key: string]: any;
-  };
+  setTempNode: React.Dispatch<React.SetStateAction<TempNode>>;
 }
 
 export const useTempNode = ({ onComplete, setTempNode }: UseTempNodeProps) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useStore } from "@xyflow/react";
+import { useReactFlow, useStore } from "@xyflow/react";
 import { Circle, Square, Triangle } from "lucide-react";
 
 interface PendingGeometryPreviewProps {
@@ -12,10 +12,13 @@ export const PendingGeometryPreview = ({
   geometryType,
   position,
 }: PendingGeometryPreviewProps) => {
-  // Get the current zoom level from the store
   const zoom = useStore((state) => state.transform[2]);
+  const { flowToScreenPosition } = useReactFlow();
 
   if (!geometryType || !position) return null;
+
+  // Convert flow coordinates to screen coordinates
+  const screenPosition = flowToScreenPosition(position);
 
   const getGeometryIcon = () => {
     switch (geometryType.toLowerCase()) {
@@ -30,18 +33,18 @@ export const PendingGeometryPreview = ({
     }
   };
 
-  // Scale the preview size based on zoom level
-  const previewSize = 96 / zoom; // 96px is our base size (24 * 4)
+  // Base size that will be scaled with zoom
+  const previewSize = 96;
 
   return (
     <div
-      className="pointer-events-none absolute z-50 flex items-center justify-center rounded-lg border border-dashed border-gray-400 bg-white/10 backdrop-blur-sm"
+      className="pointer-events-none fixed z-50 flex items-center justify-center rounded-lg border border-dashed border-gray-400 bg-white/10 backdrop-blur-sm"
       style={{
-        left: position.x,
-        top: position.y,
+        left: screenPosition.x,
+        top: screenPosition.y,
         width: previewSize,
         height: previewSize,
-        transform: `translate(-50%, -50%) scale(${zoom})`,
+        transform: `translate(-50%, -50%)`,
       }}
     >
       <div className="flex flex-col items-center gap-2 text-gray-600">
