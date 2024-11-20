@@ -1,18 +1,13 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
 import {
-  addEdge,
   Background,
   BackgroundVariant,
-  Connection,
   ConnectionMode,
   Edge,
   NodeTypes,
   Panel,
   ReactFlow,
-  useEdgesState,
-  useNodesState,
 } from "@xyflow/react";
 
 import { InfoCard } from "@repo/ui/components/info-card";
@@ -21,7 +16,7 @@ import { PropertyInspector } from "../components/inspector/property-inspector";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../components/webgl/webgl-canvas";
 import { GeometryNode } from "../components/workspace/nodes/geometry-node";
-import { useWorkspaceAddNode } from "../components/workspace/use-workspace-add-node";
+import { useWorkspaceFlow } from "../components/workspace/use-workspace-flow";
 import { useWorkspaceSelectionPreview } from "../components/workspace/use-workspace-selection-preview";
 import { useGetWorkspaceNodes } from "../hooks/use-get-workspace-nodes";
 
@@ -30,7 +25,6 @@ import "../components/workspace/workspace.css";
 
 import { RouterInputs } from "@repo/api";
 
-import type { FlowNode } from "../types/flow-nodes";
 import { NetworkEditorContext } from "../state/context";
 
 interface WorkspacePageProps {
@@ -52,29 +46,21 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
   const state = NetworkEditorContext.useSelector((state) => state);
   const { data: workspaceNodes, isLoading } = useGetWorkspaceNodes({ id });
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
+
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    handleCanvasClick,
+  } = useWorkspaceFlow({
+    initialNodes: workspaceNodes ?? [],
+  });
+
   const { render, handleMouseMove } = useWorkspaceSelectionPreview({
     active: !!state.context.selectedGeometry,
   });
-
-  const { handleCanvasClick } = useWorkspaceAddNode({
-    setNodes,
-  });
-
-  // Initialize nodes from workspace data
-  useEffect(() => {
-    if (workspaceNodes && !isLoading) {
-      setNodes(workspaceNodes);
-    }
-  }, [workspaceNodes, isLoading, setNodes]);
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      setEdges((eds) => addEdge(connection, eds));
-    },
-    [setEdges],
-  );
 
   return (
     <main className="relative flex-1 overflow-hidden">
