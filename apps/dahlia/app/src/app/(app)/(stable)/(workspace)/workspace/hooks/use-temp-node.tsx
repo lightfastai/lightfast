@@ -14,10 +14,7 @@ interface UseTempNodeProps {
   setTempNodes: React.Dispatch<React.SetStateAction<TempFlowNode[]>>;
 }
 
-export const useTempNode = ({
-  onComplete,
-  setTempNodes,
-}: UseTempNodeProps = {}) => {
+export const useTempNode = ({ onComplete, setTempNodes }: UseTempNodeProps) => {
   const { screenToFlowPosition, setNodes } = useReactFlow();
 
   const startTempNodeWorkflow = useCallback(
@@ -89,6 +86,7 @@ export const useTempNode = ({
           return persistentNodes;
         });
 
+        // Remove the temporary node from tempNodes state
         setTempNodes((prevTempNodes) =>
           prevTempNodes.filter((node) => node.id !== tempId),
         );

@@ -17,6 +17,7 @@ import {
 
 import { InfoCard } from "@repo/ui/components/info-card";
 
+import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { PropertyInspector } from "../components/inspector/property-inspector";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../components/webgl/webgl-canvas";
@@ -34,6 +35,7 @@ import type {
 } from "../types/flow-nodes";
 import { api } from "~/trpc/react";
 import { TempNode } from "../components/workspace/nodes/temp-node";
+import { useTempNode } from "../hooks/use-temp-node";
 import { DEFAULT_GEOMETRY_NODE, isTempFlowNode } from "../types/flow-nodes";
 
 interface WorkspacePageProps {
@@ -68,6 +70,15 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       setNodes(workspaceNodes);
     }
   }, [workspaceNodes, isLoading, setNodes]);
+
+  // Initialize the temp node workflow
+  const { startTempNodeWorkflow } = useTempNode({
+    onComplete: () => {
+      // Optional callback when node placement is complete
+      // For example, you could show a notification
+    },
+    setTempNodes,
+  });
 
   // Only update nodes in DB if they're not temporary
   const debouncedUpdateNodes = useCallback(
@@ -122,6 +133,9 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
   return (
     <main className="relative flex-1 overflow-hidden">
+      {/* Pass the startTempNodeWorkflow function as a prop */}
+      <EditorCommandDialog startTempNodeWorkflow={startTempNodeWorkflow} />
+
       <div className="relative h-full w-full">
         <ReactFlow
           nodes={[...nodes, ...tempNodes]}
