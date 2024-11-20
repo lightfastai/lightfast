@@ -11,6 +11,7 @@ import { api } from "~/trpc/react";
 import { FlowNode } from "../../types/flow-nodes";
 import { useDebounce } from "./use-debounce";
 import { useWorkspaceAddNode } from "./use-workspace-add-node";
+import { useWorkspaceDeleteNode } from "./use-workspace-delete-node";
 
 interface FlowEdge extends Edge {
   sourceHandle?: string | null;
@@ -31,6 +32,14 @@ export function useWorkspaceFlow({
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
 
   const updateNodePositions = api.workspace.updateNodePositions.useMutation();
+
+  const { onNodesDelete } = useWorkspaceDeleteNode({
+    workspaceId,
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+  });
 
   const updatePositions = useCallback(
     (nodes: FlowNode[]) => {
@@ -90,5 +99,6 @@ export function useWorkspaceFlow({
     onEdgesChange,
     onConnect,
     handleCanvasClick,
+    onNodesDelete,
   };
 }

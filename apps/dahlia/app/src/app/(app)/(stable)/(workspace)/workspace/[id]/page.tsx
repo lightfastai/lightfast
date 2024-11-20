@@ -4,7 +4,6 @@ import {
   Background,
   BackgroundVariant,
   ConnectionMode,
-  Edge,
   NodeTypes,
   Panel,
   ReactFlow,
@@ -37,11 +36,6 @@ const nodeTypes: NodeTypes = {
   geometry: GeometryNode,
 } as const;
 
-interface FlowEdge extends Edge {
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-}
-
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
   const state = NetworkEditorContext.useSelector((state) => state);
@@ -54,6 +48,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     onEdgesChange,
     onConnect,
     handleCanvasClick,
+    onNodesDelete,
   } = useWorkspaceFlow({
     initialNodes: workspaceNodes ?? [],
     workspaceId: id,
@@ -71,6 +66,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodesDelete={onNodesDelete}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           onClick={handleCanvasClick}

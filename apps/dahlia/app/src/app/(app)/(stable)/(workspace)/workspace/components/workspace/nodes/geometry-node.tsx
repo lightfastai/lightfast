@@ -18,6 +18,41 @@ import {
 import { GeometryViewer } from "~/components/r3f/geometry-viewer";
 import { NetworkEditorContext } from "../../../state/context";
 
+interface GeometryNodeProps {
+  data: GeometryFlowNode["data"];
+  id: string;
+  onDelete?: (id: string) => void;
+}
+
+// export function GeometryNode({ data, id, onDelete }: GeometryNodeProps) {
+//   const handleDelete = (e: MouseEvent<HTMLButtonElement>) => {
+//     e.stopPropagation();
+//     onDelete?.(id);
+//   };
+
+//   return (
+//     <div className="relative rounded-lg border border-border bg-card p-4 shadow-sm">
+//       {onDelete && (
+//         <Button
+//           variant="ghost"
+//           size="icon"
+//           className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+//           onClick={handleDelete}
+//         >
+//           <X className="h-4 w-4" />
+//         </Button>
+//       )}
+
+//       <div className="flex flex-col gap-2">
+//         <div className="text-sm font-medium">{data.type}</div>
+//       </div>
+
+//       <Handle type="source" position={Position.Right} />
+//       <Handle type="target" position={Position.Left} />
+//     </div>
+//   );
+// }
+
 export const GeometryNode = memo(
   ({ data, id, isConnectable }: NodeProps<GeometryFlowNode>) => {
     const machineRef = NetworkEditorContext.useActorRef();
