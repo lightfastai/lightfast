@@ -39,7 +39,9 @@ const nodeTypes: NodeTypes = {
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
   const state = NetworkEditorContext.useSelector((state) => state);
-  const { data: workspaceNodes, isLoading } = useGetWorkspaceNodes({ id });
+  const { data: workspaceNodes, isLoading } = useGetWorkspaceNodes({
+    workspaceId: id,
+  });
 
   const {
     nodes,
@@ -74,7 +76,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           connectionMode={ConnectionMode.Loose}
           panOnDrag={!state.context.selectedGeometry}
           selectionOnDrag={false}
-          panOnScroll={false}
+          panOnScroll={true}
           zoomOnScroll={false}
           proOptions={{ hideAttribution: true }}
         >

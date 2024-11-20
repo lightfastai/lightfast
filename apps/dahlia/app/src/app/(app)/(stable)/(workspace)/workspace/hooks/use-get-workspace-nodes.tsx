@@ -3,10 +3,12 @@ import { RouterInputs } from "@repo/api";
 import { api } from "~/trpc/react";
 
 interface UseGetWorkspaceNodesProps {
-  id: RouterInputs["workspace"]["getNodes"]["id"];
+  workspaceId: RouterInputs["node"]["getAllNodes"]["workspaceId"];
 }
 
-export const useGetWorkspaceNodes = ({ id }: UseGetWorkspaceNodesProps) => {
-  const { data, isLoading } = api.workspace.getAllNodes.useQuery({ id });
+export const useGetWorkspaceNodes = ({
+  workspaceId,
+}: UseGetWorkspaceNodesProps) => {
+  const { data, isLoading } = api.node.getAllNodes.useQuery({ workspaceId });
   return { data, isLoading };
 };

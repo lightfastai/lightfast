@@ -9,7 +9,7 @@ export const useCreateWorkspace = () => {
   const utils = api.useUtils();
   const { mutateAsync } = api.workspace.create.useMutation({
     onSuccess: (data) => {
-      utils.workspace.getAll.invalidate();
+      utils.node.getAllNodes.invalidate({ workspaceId: data.id });
       router.push(`/workspace/${data.id}`);
     },
     onError: (error) => {

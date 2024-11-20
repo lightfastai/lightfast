@@ -31,7 +31,7 @@ export function useWorkspaceFlow({
     useNodesState<FlowNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
 
-  const updateNodePositions = api.workspace.updateNodePositions.useMutation();
+  const updateNodePositions = api.node.updatePositions.useMutation();
 
   const { onNodesDelete } = useWorkspaceDeleteNode({
     workspaceId,
@@ -49,7 +49,7 @@ export function useWorkspaceFlow({
       }));
 
       updateNodePositions.mutate({
-        id: workspaceId,
+        workspaceId,
         nodes: nodePositions,
       });
     },

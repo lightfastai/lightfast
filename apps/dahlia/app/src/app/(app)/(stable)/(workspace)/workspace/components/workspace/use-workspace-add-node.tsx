@@ -25,7 +25,7 @@ export function useWorkspaceAddNode({
   const state = NetworkEditorContext.useSelector((state) => state);
   const machineRef = NetworkEditorContext.useActorRef();
 
-  const addNode = api.workspace.addNode.useMutation({
+  const addNode = api.node.create.useMutation({
     onError: (error) => {
       // Rollback optimistic update on error
       setNodes((nodes) => nodes.slice(0, -1));

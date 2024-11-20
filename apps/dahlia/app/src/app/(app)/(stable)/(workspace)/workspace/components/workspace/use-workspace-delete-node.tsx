@@ -20,7 +20,7 @@ export function useWorkspaceDeleteNode({
   setNodes,
   setEdges,
 }: UseWorkspaceDeleteNodeProps) {
-  const deleteNode = api.workspace.deleteNode.useMutation({
+  const deleteNode = api.node.delete.useMutation({
     onError: (error) => {
       console.error("Failed to delete node:", error);
       // Revert the optimistic update
