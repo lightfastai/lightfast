@@ -22,7 +22,7 @@ import { PropertyInspector } from "../components/inspector/property-inspector";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../components/webgl/webgl-canvas";
 import { GeometryNode } from "../components/workspace/nodes/geometry-node";
-import { useWorkspaceSelectionPreview } from "../components/workspace/workspace-selection-preview";
+import { useWorkspaceSelectionPreview } from "../components/workspace/use-workspace-selection-preview";
 import { useGetWorkspaceNodes } from "../hooks/use-get-workspace-nodes";
 
 import "@xyflow/react/dist/base.css";
