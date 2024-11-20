@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, NodeProps, Position } from "@xyflow/react";
-import { ArrowRightIcon, TrashIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
@@ -17,41 +17,6 @@ import {
 } from "~/components/constants";
 import { GeometryViewer } from "~/components/r3f/geometry-viewer";
 import { NetworkEditorContext } from "../../../state/context";
-
-interface GeometryNodeProps {
-  data: GeometryFlowNode["data"];
-  id: string;
-  onDelete?: (id: string) => void;
-}
-
-// export function GeometryNode({ data, id, onDelete }: GeometryNodeProps) {
-//   const handleDelete = (e: MouseEvent<HTMLButtonElement>) => {
-//     e.stopPropagation();
-//     onDelete?.(id);
-//   };
-
-//   return (
-//     <div className="relative rounded-lg border border-border bg-card p-4 shadow-sm">
-//       {onDelete && (
-//         <Button
-//           variant="ghost"
-//           size="icon"
-//           className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-//           onClick={handleDelete}
-//         >
-//           <X className="h-4 w-4" />
-//         </Button>
-//       )}
-
-//       <div className="flex flex-col gap-2">
-//         <div className="text-sm font-medium">{data.type}</div>
-//       </div>
-
-//       <Handle type="source" position={Position.Right} />
-//       <Handle type="target" position={Position.Left} />
-//     </div>
-//   );
-// }
 
 export const GeometryNode = memo(
   ({ data, id, isConnectable }: NodeProps<GeometryFlowNode>) => {
@@ -90,20 +55,6 @@ export const GeometryNode = memo(
               }}
             >
               <ArrowRightIcon className="h-3 w-3" />
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="deleteGeometry"
-              variant="outline"
-              size="xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                machineRef.send({
-                  type: "DELETE_GEOMETRY",
-                  geometryId: id,
-                });
-              }}
-            >
-              <TrashIcon className="h-3 w-3" />
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
