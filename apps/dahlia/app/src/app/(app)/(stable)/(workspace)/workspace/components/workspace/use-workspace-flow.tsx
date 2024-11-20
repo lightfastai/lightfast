@@ -78,7 +78,10 @@ export function useWorkspaceFlow({
     [setEdges],
   );
 
-  const { handleCanvasClick } = useWorkspaceAddNode({ setNodes });
+  const { handleCanvasClick } = useWorkspaceAddNode({
+    setNodes,
+    workspaceId,
+  });
 
   return {
     nodes,

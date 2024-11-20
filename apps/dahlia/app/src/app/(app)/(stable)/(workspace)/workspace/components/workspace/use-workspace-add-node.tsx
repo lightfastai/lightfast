@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 
+import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../../state/context";
 import {
   DEFAULT_GEOMETRY_NODE,
@@ -11,6 +12,7 @@ import {
 
 interface UseWorkspaceAddNodeProps {
   setNodes: Dispatch<SetStateAction<FlowNode[]>>;
+  workspaceId: string;
 }
 
 interface UseWorkspaceAddNodeReturn {
@@ -19,13 +21,22 @@ interface UseWorkspaceAddNodeReturn {
 
 export function useWorkspaceAddNode({
   setNodes,
+  workspaceId,
 }: UseWorkspaceAddNodeProps): UseWorkspaceAddNodeReturn {
   const { screenToFlowPosition } = useReactFlow();
   const state = NetworkEditorContext.useSelector((state) => state);
   const machineRef = NetworkEditorContext.useActorRef();
 
+  const addNode = api.workspace.addNode.useMutation({
+    onError: (error) => {
+      // Rollback optimistic update on error
+      setNodes((nodes) => nodes.slice(0, -1));
+      console.error("Failed to add node:", error);
+    },
+  });
+
   const handleCanvasClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+    async (event: React.MouseEvent<HTMLDivElement>) => {
       if (!state.context.selectedGeometry) return;
 
       const position = screenToFlowPosition({
@@ -33,6 +44,7 @@ export function useWorkspaceAddNode({
         y: event.clientY,
       });
 
+      // Create the node data
       const newNode: GeometryFlowNode = {
         id: `geometry-${Math.random()}`,
         position,
@@ -47,14 +59,37 @@ export function useWorkspaceAddNode({
         },
       };
 
+      // Optimistically add the node to the UI
       setNodes((nds) => [...nds, newNode]);
-      machineRef.send({ type: "UNSELECT_GEOMETRY" });
+
+      try {
+        // Add the node to the database
+        const result = await addNode.mutateAsync({
+          workspaceId,
+          position: newNode.position,
+          data: newNode.data,
+          type: "geometry" as const,
+        });
+
+        // Update the node with the database ID
+        setNodes((nodes) =>
+          nodes.map((node) =>
+            node.id === newNode.id ? { ...node, id: result.id } : node,
+          ),
+        );
+
+        machineRef.send({ type: "UNSELECT_GEOMETRY" });
+      } catch (error) {
+        // Error handling is done in onError callback
+      }
     },
     [
       state.context.selectedGeometry,
       setNodes,
       screenToFlowPosition,
       machineRef,
+      workspaceId,
+      addNode,
     ],
   );
 
