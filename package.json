@@ -14,7 +14,7 @@
     "db:studio": "turbo -F @repo/db studio",
     "dev": "turbo watch dev --continue",
     "dev:dahlia-www": "turbo dev -F @dahlia/www --continue",
-    "dev:dahlia-app": "turbo dev -F @dahlia/app --continue",
+    "dev:dahlia-app": "turbo watch dev -F @dahlia/app",
     "dev:jps0000-www": "turbo dev -F @jps0000/www --continue",
     "dev:jps0000-brand": "turbo dev -F @jps0000/brand --continue",
     "brain": "turbo run eval",
