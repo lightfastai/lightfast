@@ -4,8 +4,8 @@ import { nanoid } from "nanoid";
 import { createDefaultGeometry, createDefaultMaterial } from "@repo/db/schema";
 
 import { api } from "~/trpc/react";
-import { NetworkEditorContext } from "../../state/context";
-import { FlowNode } from "../../types/flow-nodes";
+import { NetworkEditorContext } from "../state/context";
+import { FlowNode } from "../types/flow-nodes";
 
 interface UseWorkspaceAddNodeProps {
   workspaceId: string;
@@ -67,8 +67,8 @@ export const useWorkspaceAddNode = ({
             ? {
                 ...node,
                 data: {
-                  ...node.data,
-                  data: result.data,
+                  dbId: result.id,
+                  workspaceId,
                 },
               }
             : node,
@@ -89,6 +89,8 @@ export const useWorkspaceAddNode = ({
           id: result.id,
         },
       );
+
+      utils.node.getData.setData({ id: result.id, workspaceId }, result.data);
     },
 
     onError: (err, newNode, context) => {

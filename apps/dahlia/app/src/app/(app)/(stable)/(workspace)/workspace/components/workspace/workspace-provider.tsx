@@ -1,10 +1,11 @@
 "use client";
 
+import { memo } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 
 import { NetworkEditorContext } from "../../state/context";
 
-export const WorkspaceProvider = ({
+const WorkspaceProviderComponent = ({
   children,
 }: {
   children: React.ReactNode;
@@ -15,3 +16,5 @@ export const WorkspaceProvider = ({
     </ReactFlowProvider>
   );
 };
+
+export const WorkspaceProvider = memo(WorkspaceProviderComponent);

@@ -12,10 +12,10 @@ import { nanoid } from "nanoid";
 import { RouterInputs, RouterOutputs } from "@repo/api";
 
 import { api } from "~/trpc/react";
-import { useDebounce } from "../components/workspace/use-debounce";
-import { useWorkspaceAddNode } from "../components/workspace/use-workspace-add-node";
-import { useWorkspaceDeleteNode } from "../components/workspace/use-workspace-delete-node";
+import { useDebounce } from "../../../../../../hooks/use-debounce";
 import { FlowNode } from "../types/flow-nodes";
+import { useWorkspaceAddNode } from "./use-workspace-add-node";
+import { useWorkspaceDeleteNode } from "./use-workspace-delete-node";
 
 interface FlowEdge extends Edge {
   sourceHandle?: string | null;

@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from "react";
 import { Edge } from "@xyflow/react";
 
 import { api } from "~/trpc/react";
-import { FlowNode } from "../../types/flow-nodes";
+import { FlowNode } from "../types/flow-nodes";
 
 interface UseWorkspaceDeleteNodeProps {
   workspaceId: string;

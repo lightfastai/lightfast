@@ -28,10 +28,15 @@ export const GeometryNode = ({
 }: NodeProps<FlowNode>) => {
   const machineRef = NetworkEditorContext.useActorRef();
   const { dbId: geometryId, workspaceId } = data;
-  const { data: geometryData } = api.node.getData.useQuery<Geometry>({
-    id: geometryId,
-    workspaceId,
-  });
+  const { data: geometryData } = api.node.getData.useQuery<Geometry>(
+    {
+      id: geometryId,
+      workspaceId,
+    },
+    {
+      enabled: !geometryId.startsWith("temp"),
+    },
+  );
   const utils = api.useUtils();
 
   const updateRenderInNode = api.node.updateRenderInNode.useMutation({

@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useReactFlow, useStore, XYPosition } from "@xyflow/react";
 
-import { useDebounce } from "./use-debounce";
+import { useDebounce } from "../../../../../../../hooks/use-debounce";
 
 // Constants
 const PREVIEW_BASE_WIDTH = 96;
