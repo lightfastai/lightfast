@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
@@ -19,11 +20,16 @@ import { NetworkEditorContext } from "../../../state/context";
 import { GeometryFlowNode } from "../../../types/flow-nodes";
 
 export const GeometryNode = ({
-  data,
+  data: flowData,
   id,
+  type,
   isConnectable,
 }: NodeProps<GeometryFlowNode>) => {
   const machineRef = NetworkEditorContext.useActorRef();
+  useEffect(() => {
+    console.log("created", id);
+  }, []);
+  const { data } = flowData;
   return (
     <BaseNode>
       <div
@@ -40,7 +46,7 @@ export const GeometryNode = ({
 
         <div className="flex flex-row items-center justify-between">
           <Label className="font-mono text-xs font-bold uppercase tracking-widest">
-            {data.type} {id}
+            {type} {id}
           </Label>
           <ToggleGroup type="single">
             <ToggleGroupItem

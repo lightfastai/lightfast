@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
+import { nanoid } from "nanoid";
 
 import {
   createDefaultGeometry,
@@ -25,20 +26,22 @@ export const useWorkspaceAddNode = ({
 
   const addNode = api.node.create.useMutation({
     onMutate: async (newNode) => {
-      console.log("onMutate", newNode);
       await utils.node.getAllNodeIds.cancel({ workspaceId });
 
       const previousIds =
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
       const optimisticNode: FlowNode = {
-        id: `temp-${Date.now()}`,
+        id: nanoid(),
         type: newNode.type,
         position: newNode.position,
-        data: newNode.data as Geometry | Material,
+        data: {
+          id: `temp-${Date.now()}`,
+          data: newNode.data as Geometry | Material,
+        },
       };
 
-      setNodes((nodes) => [...nodes, optimisticNode]);
+      setNodes((nodes) => nodes.concat(optimisticNode));
 
       utils.node.getAllNodeIds.setData({ workspaceId }, [
         ...previousIds,
@@ -47,7 +50,12 @@ export const useWorkspaceAddNode = ({
 
       utils.node.get.setData(
         { id: optimisticNode.id, workspaceId },
-        optimisticNode,
+        {
+          id: optimisticNode.data.id,
+          data: optimisticNode.data.data,
+          type: optimisticNode.type,
+          position: optimisticNode.position,
+        },
       );
 
       return { optimisticNode, previousIds };
@@ -62,7 +70,13 @@ export const useWorkspaceAddNode = ({
       setNodes((nodes) =>
         nodes.map((node) =>
           node.id === context.optimisticNode.id
-            ? { ...node, id: result.id, data: result.data }
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  data: result.data,
+                },
+              }
             : node,
         ),
       );
@@ -108,7 +122,6 @@ export const useWorkspaceAddNode = ({
   const handleCanvasClick = (event: React.MouseEvent) => {
     console.log("handleCanvasClick", event);
     if (state.context.selectedGeometry) {
-      console.log("adding geometry");
       addNode.mutate({
         workspaceId,
         type: "geometry",
@@ -118,7 +131,6 @@ export const useWorkspaceAddNode = ({
         }),
       });
     } else if (state.context.selectedMaterial) {
-      console.log("adding material");
       addNode.mutate({
         workspaceId,
         type: "material",

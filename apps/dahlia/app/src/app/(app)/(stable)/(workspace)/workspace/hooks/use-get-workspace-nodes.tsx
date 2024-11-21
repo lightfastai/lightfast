@@ -7,6 +7,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
+import { nanoid } from "nanoid";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
 
@@ -54,10 +55,13 @@ export const useGetWorkspaceNodes = ({
       )
       .map(
         (node): FlowNode => ({
-          id: node.id,
+          id: nanoid(),
           type: node.type,
+          data: {
+            id: node.id,
+            data: node.data,
+          },
           position: node.position,
-          data: node.data,
         }),
       ),
   );
@@ -76,7 +80,7 @@ export const useGetWorkspaceNodes = ({
   const updatePositions = useCallback(
     (nodes: FlowNode[]) => {
       const nodePositions = nodes.map((node) => ({
-        id: node.id,
+        id: node.data.id,
         position: node.position,
       }));
 

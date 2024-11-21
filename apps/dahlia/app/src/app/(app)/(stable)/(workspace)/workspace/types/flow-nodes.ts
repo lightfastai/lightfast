@@ -5,15 +5,24 @@ import { Material } from "@repo/db/schema";
 
 export interface FlowNode extends Node {
   type: NodeType;
-  data: Material | Geometry;
+  data: {
+    id: string;
+    data: Material | Geometry;
+  };
 }
 
 export interface MaterialFlowNode extends FlowNode {
   type: (typeof $NodeType)["enum"]["material"];
-  data: Material;
+  data: {
+    id: string;
+    data: Material;
+  };
 }
 
 export interface GeometryFlowNode extends FlowNode {
   type: (typeof $NodeType)["enum"]["geometry"];
-  data: Geometry;
+  data: {
+    id: string;
+    data: Geometry;
+  };
 }
