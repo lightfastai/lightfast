@@ -25,20 +25,23 @@ import {
 } from "../../hooks/use-update-workspace-name";
 
 interface EditorWorkspaceNameInputProps {
-  id: RouterOutputs["workspace"]["get"]["id"];
+  initialWorkspace: RouterOutputs["workspace"]["get"];
 }
 
 export const EditorWorkspaceNameInput = ({
-  id,
+  initialWorkspace,
 }: EditorWorkspaceNameInputProps) => {
-  const { data: workspace } = useGetWorkspace({ id });
+  const { data: workspace } = useGetWorkspace({
+    id: initialWorkspace.id,
+    initialData: initialWorkspace,
+  });
   const { mutate } = useUpdateWorkspaceName();
 
   const form = useForm({
     schema: UpdateNameWorkspaceSchema,
     defaultValues: {
-      name: "",
-      id,
+      name: initialWorkspace.name,
+      id: initialWorkspace.id,
     },
   });
 
@@ -47,10 +50,10 @@ export const EditorWorkspaceNameInput = ({
     if (workspace?.name !== undefined) {
       form.reset({
         name: workspace.name,
-        id,
+        id: initialWorkspace.id,
       });
     }
-  }, [workspace?.name, form, id]);
+  }, [workspace?.name, form, initialWorkspace.id]);
 
   const onSubmit = async (
     data: WorkspaceUpdateName,
@@ -62,7 +65,7 @@ export const EditorWorkspaceNameInput = ({
     }
 
     // Submit the data
-    mutate({ id, name: data.name });
+    mutate({ id: initialWorkspace.id, name: data.name });
 
     // Try to blur the input without using refs
     if (event) {
@@ -95,7 +98,7 @@ export const EditorWorkspaceNameInput = ({
       // Reset the input to previous value
       form.reset({
         name: workspace?.name ?? "",
-        id,
+        id: initialWorkspace.id,
       });
       form.clearErrors();
       toast({
@@ -113,7 +116,7 @@ export const EditorWorkspaceNameInput = ({
     }
 
     // Submit the data
-    mutate({ id, name: values.name });
+    mutate({ id: initialWorkspace.id, name: values.name });
   };
 
   return (

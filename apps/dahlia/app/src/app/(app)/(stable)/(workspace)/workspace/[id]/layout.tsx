@@ -2,9 +2,16 @@ import { notFound } from "next/navigation";
 import { TRPCError } from "@trpc/server";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@repo/ui/components/ui/breadcrumb";
 
 import { api } from "~/trpc/server";
-import { EditorWorkspaceLinks } from "../components/app/editor-workspace-links";
+import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";
+import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -60,7 +67,20 @@ export default async function WorkspaceLayout({
 
   return (
     <div className="relative flex h-screen flex-col">
-      <EditorWorkspaceLinks id={id} />
+      <div className="fixed inset-x-20 top-4 z-50 flex w-max items-center">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <EditorWorkspaceSelect />
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <EditorWorkspaceNameInput initialWorkspace={workspace} />
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
       {children}
     </div>
   );
