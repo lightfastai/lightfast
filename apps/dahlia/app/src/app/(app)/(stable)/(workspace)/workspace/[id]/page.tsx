@@ -11,13 +11,23 @@ interface WorkspacePageProps {
   };
 }
 
-export default function WorkspacePage({ params }: WorkspacePageProps) {
+const getWorkspaceNodes = async ({
+  id,
+}: RouterInputs["workspace"]["get"] & { id: string }) => {
+  const nodes = await api.node.getAllNodeIds({ workspaceId: id });
+  return nodes;
+};
+
+export default async function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
-  void api.node.getAllNodeIds.prefetch({ workspaceId: id });
+  const nodes = await getWorkspaceNodes({ id });
+  nodes.forEach((nodeId) => {
+    void api.node.get.prefetch({ id: nodeId, workspaceId: id });
+  });
   return (
     <HydrateClient>
       <WorkspaceProvider>
-        <Workspace params={{ id }} />
+        <Workspace params={{ id, initialNodeIds: nodes }} />
         <EditorCommandDialog />
       </WorkspaceProvider>
     </HydrateClient>

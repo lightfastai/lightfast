@@ -5,6 +5,7 @@ import {
   Edge,
   NodeChange,
   useEdgesState,
+  useNodesState,
 } from "@xyflow/react";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
@@ -22,36 +23,43 @@ interface FlowEdge extends Edge {
 
 interface UseGetWorkspaceNodesProps {
   workspaceId: RouterInputs["node"]["getAllNodeIds"]["workspaceId"];
+  initialNodeIds: string[];
 }
 
 export const useGetWorkspaceNodes = ({
   workspaceId,
+  initialNodeIds,
 }: UseGetWorkspaceNodesProps) => {
   const utils = api.useUtils();
 
-  const [nodeIds] = api.node.getAllNodeIds.useSuspenseQuery({
-    workspaceId,
-  });
-
-  const nodeQueries = api.useQueries((t) =>
-    nodeIds.map((id) => t.node.get({ id, workspaceId })),
+  const { data: nodeIds } = api.node.getAllNodeIds.useQuery(
+    {
+      workspaceId,
+    },
+    {
+      initialData: initialNodeIds,
+    },
   );
 
-  const nodes = nodeQueries
-    .map((query) => query.data)
-    .filter(
-      (data): data is RouterOutputs["node"]["get"] =>
-        data !== null && data !== undefined,
-    )
-    .map(
-      (node): FlowNode => ({
-        id: node.id,
-        type: node.type,
-        position: node.position,
-        data: node.data,
-      }),
-    );
-
+  const [nodeQueries] = api.useSuspenseQueries((t) =>
+    nodeIds.map((id) => t.node.get({ id, workspaceId })),
+  );
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(
+    nodeQueries
+      .map((query) => query)
+      .filter(
+        (data): data is RouterOutputs["node"]["get"] =>
+          data !== null && data !== undefined,
+      )
+      .map(
+        (node): FlowNode => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: node.data,
+        }),
+      ),
+  );
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
 
   const updateNodePositions = api.node.updatePositions.useMutation();

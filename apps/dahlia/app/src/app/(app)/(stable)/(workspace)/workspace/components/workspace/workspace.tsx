@@ -27,6 +27,7 @@ import { MaterialNode } from "./nodes/material-node";
 interface WorkspacePageProps {
   params: {
     id: RouterInputs["workspace"]["get"]["id"];
+    initialNodeIds: string[];
   };
 }
 
@@ -37,7 +38,7 @@ const nodeTypes: NodeTypes = {
 
 export const Workspace = ({ params }: WorkspacePageProps) => {
   const zoom = useStore((state) => state.transform[2]);
-  const { id } = params;
+  const { id, initialNodeIds } = params;
   const {
     nodes: flowNodes,
     edges,
@@ -48,6 +49,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
     onNodesDelete,
   } = useGetWorkspaceNodes({
     workspaceId: id,
+    initialNodeIds,
   });
 
   // const { render, handleMouseMove } = useWorkspaceSelectionPreview({
