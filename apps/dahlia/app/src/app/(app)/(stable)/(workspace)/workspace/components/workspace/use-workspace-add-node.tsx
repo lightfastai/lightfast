@@ -26,6 +26,7 @@ export function useWorkspaceAddNode({
   workspaceId,
 }: UseWorkspaceAddNodeProps): UseWorkspaceAddNodeReturn {
   const { screenToFlowPosition } = useReactFlow();
+  const utils = api.useUtils();
   const state = NetworkEditorContext.useSelector((state) => state);
   const machineRef = NetworkEditorContext.useActorRef();
 
@@ -74,6 +75,10 @@ export function useWorkspaceAddNode({
               node.id === newNode.id ? { ...node, id: result.id } : node,
             ),
           );
+
+          utils.node.getAllNodes.invalidate({
+            workspaceId,
+          });
         } catch (error) {
           // Error handling is done in onError callback
         }
@@ -116,6 +121,10 @@ export function useWorkspaceAddNode({
               node.id === newNode.id ? { ...node, id: result.id } : node,
             ),
           );
+
+          utils.node.getAllNodes.invalidate({
+            workspaceId,
+          });
         } catch (error) {
           // Error handling is done in onError callback
         }

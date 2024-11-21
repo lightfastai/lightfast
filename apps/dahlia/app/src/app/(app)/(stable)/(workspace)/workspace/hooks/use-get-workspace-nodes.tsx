@@ -9,6 +9,8 @@ interface UseGetWorkspaceNodesProps {
 export const useGetWorkspaceNodes = ({
   workspaceId,
 }: UseGetWorkspaceNodesProps) => {
-  const { data, isLoading } = api.node.getAllNodes.useQuery({ workspaceId });
-  return { data, isLoading };
+  const [data] = api.node.getAllNodes.useSuspenseQuery({
+    workspaceId,
+  });
+  return { data };
 };
