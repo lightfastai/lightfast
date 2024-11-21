@@ -1,4 +1,4 @@
-import { Handle, Position } from "@xyflow/react";
+import { Handle, NodeProps, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
 import { BaseNode } from "@repo/ui/components/base-node";
@@ -22,11 +22,7 @@ export const GeometryNode = ({
   data,
   id,
   isConnectable,
-}: {
-  data: GeometryFlowNode;
-  id: string;
-  isConnectable: boolean;
-}) => {
+}: NodeProps<GeometryFlowNode>) => {
   const machineRef = NetworkEditorContext.useActorRef();
   return (
     <BaseNode>
@@ -44,7 +40,7 @@ export const GeometryNode = ({
 
         <div className="flex flex-row items-center justify-between">
           <Label className="font-mono text-xs font-bold uppercase tracking-widest">
-            {data.type}
+            {data.type} {id}
           </Label>
           <ToggleGroup type="single">
             <ToggleGroupItem

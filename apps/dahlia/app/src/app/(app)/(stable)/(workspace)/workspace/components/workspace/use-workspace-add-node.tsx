@@ -1,4 +1,11 @@
-import { createDefaultGeometry, createDefaultMaterial } from "@repo/db/schema";
+import { Dispatch, SetStateAction } from "react";
+
+import {
+  createDefaultGeometry,
+  createDefaultMaterial,
+  Geometry,
+  Material,
+} from "@repo/db/schema";
 
 import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../../state/context";
@@ -6,39 +13,38 @@ import { FlowNode } from "../../types/flow-nodes";
 
 interface UseWorkspaceAddNodeProps {
   workspaceId: string;
-  utils: ReturnType<typeof api.useUtils>;
+  setNodes: Dispatch<SetStateAction<FlowNode[]>>;
 }
 
 export const useWorkspaceAddNode = ({
   workspaceId,
-  utils,
+  setNodes,
 }: UseWorkspaceAddNodeProps) => {
+  const utils = api.useUtils();
   const state = NetworkEditorContext.useSelector((state) => state);
 
   const addNode = api.node.create.useMutation({
     onMutate: async (newNode) => {
-      // Cancel any outgoing refetches
+      console.log("onMutate", newNode);
       await utils.node.getAllNodeIds.cancel({ workspaceId });
 
-      // Get current data
       const previousIds =
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
-      // Create optimistic node
       const optimisticNode: FlowNode = {
-        id: `temp-${Date.now()}`, // Temporary ID
+        id: `temp-${Date.now()}`,
         type: newNode.type,
         position: newNode.position,
-        data: newNode.data,
+        data: newNode.data as Geometry | Material,
       };
 
-      // Update getAllNodeIds cache
+      setNodes((nodes) => [...nodes, optimisticNode]);
+
       utils.node.getAllNodeIds.setData({ workspaceId }, [
         ...previousIds,
         optimisticNode.id,
       ]);
 
-      // Update individual node cache
       utils.node.get.setData(
         { id: optimisticNode.id, workspaceId },
         optimisticNode,
@@ -50,11 +56,17 @@ export const useWorkspaceAddNode = ({
     onSuccess: (result, variables, context) => {
       if (!context) return;
 
-      // Get current nodeIds
       const currentIds =
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
-      // Replace temp id with real id in nodeIds list
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === context.optimisticNode.id
+            ? { ...node, id: result.id, data: result.data }
+            : node,
+        ),
+      );
+
       utils.node.getAllNodeIds.setData(
         { workspaceId },
         currentIds.map((id) =>
@@ -62,29 +74,24 @@ export const useWorkspaceAddNode = ({
         ),
       );
 
-      // Update the node's ID and data
-      const optimisticNode = utils.node.get.getData({
-        id: context.optimisticNode.id,
-        workspaceId,
-      });
-
-      if (optimisticNode) {
-        // Set the node with the new ID
-        utils.node.get.setData(
-          { id: result.id, workspaceId },
-          {
-            ...optimisticNode,
-            id: result.id,
-            data: result.data,
-          },
-        );
-      }
+      utils.node.get.setData(
+        { id: result.id, workspaceId },
+        {
+          ...context.optimisticNode,
+          id: result.id,
+          data: result.data,
+        },
+      );
     },
 
     onError: (err, newNode, context) => {
+      console.log("onError", err, newNode, context);
       if (!context) return;
 
-      // Rollback on error
+      setNodes((nodes) =>
+        nodes.filter((node) => node.id !== context.optimisticNode.id),
+      );
+
       utils.node.getAllNodeIds.setData({ workspaceId }, context.previousIds);
       utils.node.get.setData(
         { id: context.optimisticNode.id, workspaceId },
@@ -99,7 +106,9 @@ export const useWorkspaceAddNode = ({
   });
 
   const handleCanvasClick = (event: React.MouseEvent) => {
+    console.log("handleCanvasClick", event);
     if (state.context.selectedGeometry) {
+      console.log("adding geometry");
       addNode.mutate({
         workspaceId,
         type: "geometry",
@@ -109,6 +118,7 @@ export const useWorkspaceAddNode = ({
         }),
       });
     } else if (state.context.selectedMaterial) {
+      console.log("adding material");
       addNode.mutate({
         workspaceId,
         type: "material",

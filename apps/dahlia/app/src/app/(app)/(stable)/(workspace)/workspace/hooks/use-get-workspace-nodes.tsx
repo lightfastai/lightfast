@@ -115,7 +115,7 @@ export const useGetWorkspaceNodes = ({
 
   const { handleCanvasClick } = useWorkspaceAddNode({
     workspaceId,
-    utils,
+    setNodes,
   });
 
   return {
