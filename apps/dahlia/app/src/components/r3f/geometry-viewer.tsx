@@ -47,12 +47,7 @@ export const GeometryViewer = ({
 
       {shouldRenderGrid && <gridHelper args={[50, 100, "white", "gray"]} />}
       {shouldRenderAxes && <axesHelper args={[50]} />}
-      {/* {renderers} */}
-      <mesh>
-        <planeGeometry />
-        <meshBasicMaterial />
-      </mesh>
-
+      {renderers}
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
     </Canvas>

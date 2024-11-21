@@ -58,8 +58,8 @@ export const useGetWorkspaceNodes = ({
           id: nanoid(),
           type: node.type,
           data: {
-            id: node.id,
-            data: node.data,
+            dbId: node.id,
+            workspaceId: workspaceId,
           },
           position: node.position,
         }),
@@ -80,7 +80,7 @@ export const useGetWorkspaceNodes = ({
   const updatePositions = useCallback(
     (nodes: FlowNode[]) => {
       const nodePositions = nodes.map((node) => ({
-        id: node.data.id,
+        id: node.data.dbId,
         position: node.position,
       }));
 

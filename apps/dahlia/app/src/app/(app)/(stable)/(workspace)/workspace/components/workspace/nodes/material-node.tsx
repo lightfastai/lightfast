@@ -2,7 +2,7 @@ import { memo } from "react";
 import { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
-import { $GeometryType } from "@repo/db/schema";
+import { $GeometryType, Material } from "@repo/db/schema";
 import { Label } from "@repo/ui/components/ui/label";
 import {
   ToggleGroup,
@@ -17,11 +17,16 @@ import {
   WORLD_CAMERA_POSITION_CLOSE,
 } from "~/components/constants";
 import { GeometryViewer } from "~/components/r3f/geometry-viewer";
-import { MaterialFlowNode } from "../../../types/flow-nodes";
+import { api } from "~/trpc/react";
+import { FlowNode } from "../../../types/flow-nodes";
 
 export const MaterialNode = memo(
-  ({ data, id, isConnectable }: NodeProps<MaterialFlowNode>) => {
-    const { color, type } = data;
+  ({ data, type, id, isConnectable }: NodeProps<FlowNode>) => {
+    const { dbId: materialId, workspaceId } = data;
+    const { data: materialData } = api.node.getData.useQuery<Material>({
+      id: materialId,
+      workspaceId,
+    });
     return (
       <div
         key={id}
@@ -31,7 +36,7 @@ export const MaterialNode = memo(
       >
         <div className="flex flex-row items-center justify-between">
           <Label className="font-mono text-xs font-bold uppercase tracking-widest">
-            {type}
+            {type} {id}
           </Label>
           <ToggleGroup type="single">
             <ToggleGroupItem

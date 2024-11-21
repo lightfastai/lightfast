@@ -23,6 +23,7 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
   const nodes = await getWorkspaceNodes({ id });
   nodes.forEach((nodeId) => {
     void api.node.get.prefetch({ id: nodeId, workspaceId: id });
+    void api.node.getData.prefetch({ id: nodeId, workspaceId: id });
   });
   return (
     <HydrateClient>

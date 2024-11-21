@@ -1,7 +1,7 @@
-import { useEffect } from "react";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
+import { Geometry } from "@repo/db/schema";
 import { BaseNode } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
@@ -16,20 +16,61 @@ import {
   WORLD_CAMERA_POSITION_CLOSE,
 } from "~/components/constants";
 import { GeometryViewer } from "~/components/r3f/geometry-viewer";
+import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../../../state/context";
-import { GeometryFlowNode } from "../../../types/flow-nodes";
+import { FlowNode } from "../../../types/flow-nodes";
 
 export const GeometryNode = ({
-  data: flowData,
+  data,
   id,
   type,
   isConnectable,
-}: NodeProps<GeometryFlowNode>) => {
+}: NodeProps<FlowNode>) => {
   const machineRef = NetworkEditorContext.useActorRef();
-  useEffect(() => {
-    console.log("created", id);
-  }, []);
-  const { data } = flowData;
+  const { dbId: geometryId, workspaceId } = data;
+  const { data: geometryData } = api.node.getData.useQuery<Geometry>({
+    id: geometryId,
+    workspaceId,
+  });
+  const utils = api.useUtils();
+
+  const updateRenderInNode = api.node.updateRenderInNode.useMutation({
+    // optimistic update
+    onMutate: async (input) => {
+      await utils.node.getData.cancel({ id: geometryId, workspaceId });
+      const previousGeometryData = utils.node.getData.getData({
+        id: geometryId,
+        workspaceId,
+      }) as Geometry;
+      utils.node.getData.setData(
+        { id: geometryId, workspaceId },
+        {
+          ...previousGeometryData,
+          shouldRenderInNode: input.shouldRenderInNode,
+        },
+      );
+      return { previousGeometryData };
+    },
+    onSuccess: (data, variables, context) => {
+      console.log("success", data, variables, context);
+      if (!context) return;
+      utils.node.getData.setData(
+        { id: geometryId, workspaceId },
+        context.previousGeometryData,
+      );
+    },
+    onError: (error, variables, context) => {
+      if (!context) return;
+      utils.node.getData.setData(
+        { id: geometryId, workspaceId },
+        context.previousGeometryData,
+      );
+    },
+    onSettled: () => {
+      utils.node.getData.invalidate({ id: geometryId, workspaceId });
+    },
+  });
+
   return (
     <BaseNode>
       <div
@@ -55,12 +96,11 @@ export const GeometryNode = ({
               size="xs"
               onClick={(e) => {
                 e.stopPropagation();
-                machineRef.send({
-                  type: "UPDATE_GEOMETRY",
-                  geometryId: id,
-                  value: {
-                    shouldRenderInNode: !data.shouldRenderInNode,
-                  },
+                if (!geometryData) return;
+                updateRenderInNode.mutate({
+                  id: geometryId,
+                  workspaceId,
+                  shouldRenderInNode: !geometryData.shouldRenderInNode,
                 });
               }}
             >
@@ -70,31 +110,33 @@ export const GeometryNode = ({
         </div>
 
         <div className="flex h-32 w-72 items-center justify-center border">
-          <GeometryViewer
-            geometries={[
-              {
-                ...data,
-                position: CENTER_OF_WORLD,
-              },
-            ]}
-            cameraPosition={WORLD_CAMERA_POSITION_CLOSE}
-            lookAt={CENTER_OF_WORLD}
-            shouldRenderGrid={false}
-            shouldRenderAxes={false}
-            shouldRender={data.shouldRenderInNode}
-          />
+          {geometryData && geometryData.shouldRenderInNode && (
+            <GeometryViewer
+              geometries={[
+                {
+                  ...geometryData,
+                  position: CENTER_OF_WORLD,
+                },
+              ]}
+              cameraPosition={WORLD_CAMERA_POSITION_CLOSE}
+              lookAt={CENTER_OF_WORLD}
+              shouldRenderGrid={false}
+              shouldRenderAxes={false}
+              shouldRender={geometryData?.shouldRenderInNode ?? false}
+            />
+          )}
         </div>
 
         <div className="flex items-center justify-end">
           <Checkbox
             id={`wireframe-${id}`}
-            checked={data.wireframe}
+            checked={geometryData?.wireframe ?? false}
             onCheckedChange={() => {
               machineRef.send({
                 type: "UPDATE_GEOMETRY",
                 geometryId: id,
                 value: {
-                  wireframe: !data.wireframe,
+                  wireframe: !geometryData?.wireframe,
                 },
               });
             }}

@@ -1,12 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { nanoid } from "nanoid";
 
-import {
-  createDefaultGeometry,
-  createDefaultMaterial,
-  Geometry,
-  Material,
-} from "@repo/db/schema";
+import { createDefaultGeometry, createDefaultMaterial } from "@repo/db/schema";
 
 import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../../state/context";
@@ -36,8 +31,8 @@ export const useWorkspaceAddNode = ({
         type: newNode.type,
         position: newNode.position,
         data: {
-          id: `temp-${Date.now()}`,
-          data: newNode.data as Geometry | Material,
+          dbId: `temp-${Date.now()}`,
+          workspaceId,
         },
       };
 
@@ -51,8 +46,7 @@ export const useWorkspaceAddNode = ({
       utils.node.get.setData(
         { id: optimisticNode.id, workspaceId },
         {
-          id: optimisticNode.data.id,
-          data: optimisticNode.data.data,
+          id: optimisticNode.data.dbId,
           type: optimisticNode.type,
           position: optimisticNode.position,
         },
@@ -93,7 +87,6 @@ export const useWorkspaceAddNode = ({
         {
           ...context.optimisticNode,
           id: result.id,
-          data: result.data,
         },
       );
     },
