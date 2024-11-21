@@ -503,9 +503,6 @@ importers:
       '@sentry/node':
         specifier: ^8.39.0
         version: 8.39.0
-      '@sentry/profiling-node':
-        specifier: ^8.39.0
-        version: 8.39.0
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.0.0-rc.599
@@ -2808,11 +2805,6 @@ packages:
       '@opentelemetry/sdk-trace-base': ^1.26.0
       '@opentelemetry/semantic-conventions': ^1.27.0
 
-  '@sentry/profiling-node@8.39.0':
-    resolution: {integrity: sha512-0/xHWEkB40IRUs5p3UAdIw28HxG9j1vprWno9SLKXZ2e7zNpz7MZmtOKdiXcs/uzOCcxW069sENf9uue5WqOxA==}
-    engines: {node: '>=14.18'}
-    hasBin: true
-
   '@sentry/react@8.39.0':
     resolution: {integrity: sha512-IBtAE/lIiDyp+5GY7k2saZ0bRM3Lz7oFGYKCT14anpUCDyaUFAUZd/q3iuoOpHb7hMpAV4ABB69JhuimAboqGg==}
     engines: {node: '>=14.18'}
@@ -3913,10 +3905,6 @@ packages:
 
   detect-gpu@5.0.54:
     resolution: {integrity: sha512-mPfxFyfiJraOkxtDe/oaSzCt21QAmNmFtcaN7te41SwAZ2UbBsC526kAaSY6EosniNUL/K0pzh1cjqgZ3fN45A==}
-
-  detect-libc@2.0.3:
-    resolution: {integrity: sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw==}
-    engines: {node: '>=8'}
 
   detect-node-es@1.1.0:
     resolution: {integrity: sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==}
@@ -5490,10 +5478,6 @@ packages:
 
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
-
-  node-abi@3.71.0:
-    resolution: {integrity: sha512-SZ40vRiy/+wRTf21hxkkEjPJZpARzUMVcJoQse2EF8qkUWbbO2z7vd5oA/H6bVH6SZQ5STGcu0KRDS7biNRfxw==}
-    engines: {node: '>=10'}
 
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
@@ -9226,17 +9210,6 @@ snapshots:
       '@sentry/types': 8.39.0
       '@sentry/utils': 8.39.0
 
-  '@sentry/profiling-node@8.39.0':
-    dependencies:
-      '@sentry/core': 8.39.0
-      '@sentry/node': 8.39.0
-      '@sentry/types': 8.39.0
-      '@sentry/utils': 8.39.0
-      detect-libc: 2.0.3
-      node-abi: 3.71.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@sentry/react@8.39.0(react@18.3.1)':
     dependencies:
       '@sentry/browser': 8.39.0
@@ -10573,8 +10546,6 @@ snapshots:
   detect-gpu@5.0.54:
     dependencies:
       webgl-constants: 1.1.1
-
-  detect-libc@2.0.3: {}
 
   detect-node-es@1.1.0: {}
 
@@ -12606,10 +12577,6 @@ snapshots:
     dependencies:
       lower-case: 2.0.2
       tslib: 2.8.0
-
-  node-abi@3.71.0:
-    dependencies:
-      semver: 7.6.3
 
   node-domexception@1.0.0: {}
 
