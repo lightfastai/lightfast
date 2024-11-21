@@ -9,12 +9,11 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 
-import { InfoCard } from "@repo/ui/components/info-card";
-
 import "@xyflow/react/dist/base.css";
 import "./workspace.css";
 
 import { RouterInputs } from "@repo/api";
+import { InfoCard } from "@repo/ui/components/info-card";
 
 import { useGetWorkspaceNodes } from "../../hooks/use-get-workspace-nodes";
 import { NetworkEditorContext } from "../../state/context";
@@ -53,7 +52,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
     handleCanvasClick,
     onNodesDelete,
   } = useWorkspaceFlow({
-    initialNodes: workspaceNodes ?? [],
+    initialNodes: workspaceNodes,
     workspaceId: id,
   });
 
@@ -68,9 +67,9 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodesDelete={onNodesDelete}
+          // onNodesChange={onNodesChange}
+          // onEdgesChange={onEdgesChange}
+          // onNodesDelete={onNodesDelete}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           onClick={handleCanvasClick}

@@ -76,7 +76,7 @@ export function useWorkspaceAddNode({
             ),
           );
 
-          utils.node.getAllNodes.invalidate({
+          utils.node.getAllNodeIds.invalidate({
             workspaceId,
           });
         } catch (error) {
@@ -122,7 +122,7 @@ export function useWorkspaceAddNode({
             ),
           );
 
-          utils.node.getAllNodes.invalidate({
+          utils.node.getAllNodeIds.invalidate({
             workspaceId,
           });
         } catch (error) {

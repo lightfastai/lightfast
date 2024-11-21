@@ -13,7 +13,7 @@ interface WorkspacePageProps {
 
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
-  void api.node.getAllNodes.prefetch({ workspaceId: id });
+  void api.node.getAllNodeIds.prefetch({ workspaceId: id });
   return (
     <HydrateClient>
       <WorkspaceProvider>

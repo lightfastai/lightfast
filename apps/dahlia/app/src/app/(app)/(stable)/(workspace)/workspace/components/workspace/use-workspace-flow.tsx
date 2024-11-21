@@ -1,5 +1,5 @@
 import type { Edge, NodeChange } from "@xyflow/react";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import {
   addEdge,
   Connection,
@@ -19,7 +19,7 @@ interface FlowEdge extends Edge {
 }
 
 interface UseWorkspaceFlowProps {
-  initialNodes?: FlowNode[];
+  initialNodes: FlowNode[];
   workspaceId: string;
 }
 
@@ -73,12 +73,6 @@ export function useWorkspaceFlow({
     },
     [nodes, debouncedUpdatePositions, onNodesChange],
   );
-
-  useEffect(() => {
-    if (initialNodes.length > 0) {
-      setNodes(initialNodes);
-    }
-  }, [initialNodes, setNodes]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
