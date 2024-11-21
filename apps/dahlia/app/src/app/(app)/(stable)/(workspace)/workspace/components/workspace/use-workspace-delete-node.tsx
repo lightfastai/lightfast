@@ -1,75 +1,43 @@
-import type { Edge } from "@xyflow/react";
-import { useCallback } from "react";
-import { getConnectedEdges, getIncomers, getOutgoers } from "@xyflow/react";
+import { Edge } from "@xyflow/react";
 
-import type { FlowNode } from "../../types/flow-nodes";
 import { api } from "~/trpc/react";
+import { FlowNode } from "../../types/flow-nodes";
 
 interface UseWorkspaceDeleteNodeProps {
   workspaceId: string;
-  nodes: FlowNode[];
   edges: Edge[];
-  setNodes: React.Dispatch<React.SetStateAction<FlowNode[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  setEdges: (edges: Edge[] | ((edges: Edge[]) => Edge[])) => void;
+  utils: ReturnType<typeof api.useUtils>;
 }
 
-export function useWorkspaceDeleteNode({
+export const useWorkspaceDeleteNode = ({
   workspaceId,
-  nodes,
   edges,
-  setNodes,
   setEdges,
-}: UseWorkspaceDeleteNodeProps) {
+  utils,
+}: UseWorkspaceDeleteNodeProps) => {
   const deleteNode = api.node.delete.useMutation({
-    onError: (error) => {
-      console.error("Failed to delete node:", error);
-      // Revert the optimistic update
-      setNodes((nodes) => {
-        // We should store the deleted node somewhere before deletion
-        // For now, we'll just log the error
-        console.error("Unable to revert node deletion - implement backup");
-        return nodes;
-      });
+    onSuccess: () => {
+      utils.node.getAllNodeIds.invalidate({ workspaceId });
     },
   });
 
-  const onNodesDelete = useCallback(
-    (deleted: FlowNode[]) => {
-      // Handle reconnecting edges when nodes are deleted
-      setEdges((eds) => {
-        return deleted.reduce((acc, node) => {
-          const incomers = getIncomers(node, nodes, edges);
-          const outgoers = getOutgoers(node, nodes, edges);
-          const connectedEdges = getConnectedEdges([node], edges);
+  const onNodesDelete = (nodesToDelete: FlowNode[]) => {
+    const nodeIds = nodesToDelete.map((node) => node.id);
 
-          const remainingEdges = acc.filter(
-            (edge) => !connectedEdges.includes(edge),
-          );
+    // Remove connected edges
+    setEdges(
+      edges.filter(
+        (edge) =>
+          !nodeIds.includes(edge.source) && !nodeIds.includes(edge.target),
+      ),
+    );
 
-          const createdEdges = incomers.flatMap(({ id: source }) =>
-            outgoers.map(({ id: target }) => ({
-              id: `${source}->${target}`,
-              source,
-              target,
-            })),
-          );
-
-          return [...remainingEdges, ...createdEdges];
-        }, eds);
-      });
-
-      // Delete nodes from the database
-      deleted.forEach((node) => {
-        deleteNode.mutate({
-          id: node.id,
-          workspaceId,
-        });
-      });
-    },
-    [nodes, edges, workspaceId, deleteNode, setEdges],
-  );
-
-  return {
-    onNodesDelete,
+    // Delete nodes
+    nodeIds.forEach((id) => {
+      deleteNode.mutate({ id, workspaceId });
+    });
   };
-}
+
+  return { onNodesDelete };
+};

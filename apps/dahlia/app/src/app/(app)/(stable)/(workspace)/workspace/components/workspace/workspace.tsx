@@ -22,7 +22,6 @@ import { TextureRenderPipeline } from "../webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../webgl/webgl-canvas";
 import { GeometryNode } from "./nodes/geometry-node";
 import { MaterialNode } from "./nodes/material-node";
-import { useWorkspaceFlow } from "./use-workspace-flow";
 import { useWorkspaceSelectionPreview } from "./use-workspace-selection-preview";
 
 interface WorkspacePageProps {
@@ -38,34 +37,31 @@ const nodeTypes: NodeTypes = {
 
 export const Workspace = ({ params }: WorkspacePageProps) => {
   const { id } = params;
-  const state = NetworkEditorContext.useSelector((state) => state);
-  const { data: workspaceNodes } = useGetWorkspaceNodes({
-    workspaceId: id,
-  });
-
   const {
-    nodes,
+    nodes: flowNodes,
     edges,
     onNodesChange,
     onEdgesChange,
     onConnect,
     handleCanvasClick,
     onNodesDelete,
-  } = useWorkspaceFlow({
-    initialNodes: workspaceNodes,
+  } = useGetWorkspaceNodes({
     workspaceId: id,
   });
 
   const { render, handleMouseMove } = useWorkspaceSelectionPreview({
     active:
-      !!state.context.selectedGeometry || !!state.context.selectedMaterial,
+      !!NetworkEditorContext.useSelector((state) => state).context
+        .selectedGeometry ||
+      !!NetworkEditorContext.useSelector((state) => state).context
+        .selectedMaterial,
   });
 
   return (
     <main className="relative flex-1 overflow-hidden">
       <div className="relative h-full w-full">
         <ReactFlow
-          nodes={nodes}
+          nodes={flowNodes}
           edges={edges}
           // onNodesChange={onNodesChange}
           // onEdgesChange={onEdgesChange}
@@ -75,7 +71,10 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
           onClick={handleCanvasClick}
           onMouseMove={handleMouseMove}
           connectionMode={ConnectionMode.Loose}
-          panOnDrag={!state.context.selectedGeometry}
+          panOnDrag={
+            !NetworkEditorContext.useSelector((state) => state).context
+              .selectedGeometry
+          }
           selectionOnDrag={false}
           panOnScroll={true}
           zoomOnScroll={false}
@@ -88,7 +87,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
             <InfoCard
               title="Workspace Info"
               items={[
-                { label: "nodes", value: nodes.length },
+                { label: "nodes", value: flowNodes.length },
                 { label: "edges", value: edges.length },
               ]}
             />

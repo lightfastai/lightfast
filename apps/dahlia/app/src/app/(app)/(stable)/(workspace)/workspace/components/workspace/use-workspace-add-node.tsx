@@ -1,147 +1,48 @@
-import type { Dispatch, SetStateAction } from "react";
-import { useCallback } from "react";
-import { useReactFlow } from "@xyflow/react";
-
-import { $NodeType, createDefaultGeometry } from "@repo/db/schema";
-
 import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../../state/context";
-import {
-  FlowNode,
-  GeometryFlowNode,
-  MaterialFlowNode,
-} from "../../types/flow-nodes";
 
 interface UseWorkspaceAddNodeProps {
-  setNodes: Dispatch<SetStateAction<FlowNode[]>>;
   workspaceId: string;
+  utils: ReturnType<typeof api.useUtils>;
 }
 
-interface UseWorkspaceAddNodeReturn {
-  handleCanvasClick: (event: React.MouseEvent<HTMLDivElement>) => void;
-}
-
-export function useWorkspaceAddNode({
-  setNodes,
+export const useWorkspaceAddNode = ({
   workspaceId,
-}: UseWorkspaceAddNodeProps): UseWorkspaceAddNodeReturn {
-  const { screenToFlowPosition } = useReactFlow();
-  const utils = api.useUtils();
+  utils,
+}: UseWorkspaceAddNodeProps) => {
   const state = NetworkEditorContext.useSelector((state) => state);
-  const machineRef = NetworkEditorContext.useActorRef();
-
   const addNode = api.node.create.useMutation({
-    onError: (error) => {
-      // Rollback optimistic update on error
-      setNodes((nodes) => nodes.slice(0, -1));
-      console.error("Failed to add node:", error);
+    onSuccess: () => {
+      utils.node.getAllNodeIds.invalidate({ workspaceId });
     },
   });
 
-  const handleCanvasClick = useCallback(
-    async (event: React.MouseEvent<HTMLDivElement>) => {
-      if (state.context.selectedGeometry) {
-        const position = screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        });
-
-        // Create the node data for geometry
-        const newNode: GeometryFlowNode = {
-          id: `geometry-${Math.random()}`,
-          position,
-          type: $NodeType.Enum.geometry,
-          data: createDefaultGeometry({
-            type: state.context.selectedGeometry,
-          }),
-        };
-
-        // Optimistically add the node to the UI
-        setNodes((nds) => [...nds, newNode]);
-        machineRef.send({ type: "UNSELECT_GEOMETRY" });
-
-        try {
-          // Add the node to the database
-          const result = await addNode.mutateAsync({
-            workspaceId,
-            position: newNode.position,
-            data: newNode.data,
-            type: $NodeType.Enum.geometry,
-          });
-
-          // Update the node with the database ID
-          setNodes((nodes) =>
-            nodes.map((node) =>
-              node.id === newNode.id ? { ...node, id: result.id } : node,
-            ),
-          );
-
-          utils.node.getAllNodeIds.invalidate({
-            workspaceId,
-          });
-        } catch (error) {
-          // Error handling is done in onError callback
-        }
-      }
-
-      if (state.context.selectedMaterial) {
-        const position = screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        });
-
-        // Create the node data for material
-        const newNode: MaterialFlowNode = {
-          id: `material-${Math.random()}`,
-          position,
-          type: $NodeType.Enum.material,
-          data: {
-            type: state.context.selectedMaterial,
-            color: "#ffffff", // Default color
-            shouldRenderInNode: true,
-          },
-        };
-
-        // Optimistically add the node to the UI
-        setNodes((nds) => [...nds, newNode]);
-        machineRef.send({ type: "UNSELECT_MATERIAL" });
-
-        try {
-          // Add the node to the database
-          const result = await addNode.mutateAsync({
-            workspaceId,
-            position: newNode.position,
-            data: newNode.data,
-            type: "material",
-          });
-
-          // Update the node with the database ID
-          setNodes((nodes) =>
-            nodes.map((node) =>
-              node.id === newNode.id ? { ...node, id: result.id } : node,
-            ),
-          );
-
-          utils.node.getAllNodeIds.invalidate({
-            workspaceId,
-          });
-        } catch (error) {
-          // Error handling is done in onError callback
-        }
-      }
-    },
-    [
-      state.context.selectedGeometry,
-      state.context.selectedMaterial,
-      setNodes,
-      screenToFlowPosition,
-      machineRef,
-      workspaceId,
-      addNode,
-    ],
-  );
-
-  return {
-    handleCanvasClick,
+  const handleCanvasClick = (event: React.MouseEvent) => {
+    if (state.context.selectedGeometry) {
+      addNode.mutate({
+        workspaceId,
+        type: "geometry",
+        position: { x: event.clientX, y: event.clientY },
+        data: {
+          type: state.context.selectedGeometry,
+          position: { x: 0, y: 0, z: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          scale: { x: 1, y: 1, z: 1 },
+        },
+      });
+    } else if (state.context.selectedMaterial) {
+      addNode.mutate({
+        workspaceId,
+        type: "material",
+        position: { x: event.clientX, y: event.clientY },
+        data: {
+          type: state.context.selectedMaterial,
+          color: "#ffffff",
+          shouldRenderInNode: true,
+        },
+      });
+    }
   };
-}
+
+  return { handleCanvasClick };
+};
