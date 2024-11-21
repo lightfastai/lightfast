@@ -19,6 +19,9 @@ export const env = createEnv({
     OPENAI_API_KEY: z.string(),
     ANTHROPIC_API_KEY: z.string(),
     POSTGRES_URL: z.string().url(),
+    SENTRY_ORG: z.string(),
+    SENTRY_PROJECT: z.string(),
+    SENTRY_AUTH_TOKEN: z.string(),
   },
 
   /**
@@ -27,13 +30,14 @@ export const env = createEnv({
    */
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_SENTRY_DSN: z.string().url(),
   },
   /**
    * Destructure all variables from `process.env` to make sure they aren't tree-shaken away.
    */
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   skipValidation:
