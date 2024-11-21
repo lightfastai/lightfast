@@ -7,6 +7,7 @@ import {
   NodeTypes,
   Panel,
   ReactFlow,
+  useStore,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/base.css";
@@ -22,7 +23,6 @@ import { TextureRenderPipeline } from "../webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../webgl/webgl-canvas";
 import { GeometryNode } from "./nodes/geometry-node";
 import { MaterialNode } from "./nodes/material-node";
-import { useWorkspaceSelectionPreview } from "./use-workspace-selection-preview";
 
 interface WorkspacePageProps {
   params: {
@@ -36,6 +36,7 @@ const nodeTypes: NodeTypes = {
 } as const;
 
 export const Workspace = ({ params }: WorkspacePageProps) => {
+  const zoom = useStore((state) => state.transform[2]);
   const { id } = params;
   const {
     nodes: flowNodes,
@@ -49,13 +50,13 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
     workspaceId: id,
   });
 
-  const { render, handleMouseMove } = useWorkspaceSelectionPreview({
-    active:
-      !!NetworkEditorContext.useSelector((state) => state).context
-        .selectedGeometry ||
-      !!NetworkEditorContext.useSelector((state) => state).context
-        .selectedMaterial,
-  });
+  // const { render, handleMouseMove } = useWorkspaceSelectionPreview({
+  //   active:
+  //     !!NetworkEditorContext.useSelector((state) => state).context
+  //       .selectedGeometry ||
+  //     !!NetworkEditorContext.useSelector((state) => state).context
+  //       .selectedMaterial,
+  // });
 
   return (
     <main className="relative flex-1 overflow-hidden">
@@ -69,7 +70,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           onClick={handleCanvasClick}
-          onMouseMove={handleMouseMove}
+          // onMouseMove={handleMouseMove}
           connectionMode={ConnectionMode.Loose}
           panOnDrag={
             !NetworkEditorContext.useSelector((state) => state).context
@@ -80,7 +81,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
           zoomOnScroll={false}
           proOptions={{ hideAttribution: true }}
         >
-          {render()}
+          {/* {render()} */}
 
           <Background variant={BackgroundVariant.Dots} />
           <Panel position="bottom-right">

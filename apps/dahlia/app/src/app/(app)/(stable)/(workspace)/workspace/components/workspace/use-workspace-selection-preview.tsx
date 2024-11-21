@@ -29,9 +29,9 @@ interface UseWorkspaceSelectionPreviewReturn {
 export const useWorkspaceSelectionPreview = ({
   active,
 }: UseWorkspaceSelectionPreviewParams): UseWorkspaceSelectionPreviewReturn => {
-  const zoom = useStore((state) => state.transform[2]);
   const [position, setPosition] = useState<XYPosition | null>(null);
   const { flowToScreenPosition, screenToFlowPosition } = useReactFlow();
+  const zoom = useStore((state) => state.transform[2]);
 
   /**
    * Calculates the size of the preview based on the current zoom level.

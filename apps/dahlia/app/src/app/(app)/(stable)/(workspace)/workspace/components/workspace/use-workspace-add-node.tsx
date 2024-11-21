@@ -1,5 +1,8 @@
+import { createDefaultGeometry, createDefaultMaterial } from "@repo/db/schema";
+
 import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../../state/context";
+import { FlowNode } from "../../types/flow-nodes";
 
 interface UseWorkspaceAddNodeProps {
   workspaceId: string;
@@ -11,9 +14,87 @@ export const useWorkspaceAddNode = ({
   utils,
 }: UseWorkspaceAddNodeProps) => {
   const state = NetworkEditorContext.useSelector((state) => state);
+
   const addNode = api.node.create.useMutation({
-    onSuccess: () => {
+    onMutate: async (newNode) => {
+      // Cancel any outgoing refetches
+      await utils.node.getAllNodeIds.cancel({ workspaceId });
+      await utils.node.get.cancel();
+
+      // Get current data
+      const previousIds =
+        utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
+
+      // Create optimistic node
+      const optimisticNode: FlowNode = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        type: newNode.type,
+        position: newNode.position,
+        data: newNode.data,
+      };
+
+      // Update getAllNodeIds cache
+      utils.node.getAllNodeIds.setData({ workspaceId }, [
+        ...previousIds,
+        optimisticNode.id,
+      ]);
+
+      // Update individual node cache
+      utils.node.get.setData(
+        { id: optimisticNode.id, workspaceId },
+        optimisticNode,
+      );
+
+      return { optimisticNode, previousIds };
+    },
+
+    onSuccess: (result, variables, context) => {
+      if (!context) return;
+
+      // Get current nodeIds
+      const currentIds =
+        utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
+
+      // Replace temp id with real id in nodeIds list
+      utils.node.getAllNodeIds.setData(
+        { workspaceId },
+        currentIds.map((id) =>
+          id === context.optimisticNode.id ? result.id : id,
+        ),
+      );
+
+      // Update the node's ID and data
+      const optimisticNode = utils.node.get.getData({
+        id: context.optimisticNode.id,
+        workspaceId,
+      });
+
+      if (optimisticNode) {
+        // Set the node with the new ID
+        utils.node.get.setData(
+          { id: result.id, workspaceId },
+          {
+            ...optimisticNode,
+            id: result.id,
+            data: result.data,
+          },
+        );
+      }
+    },
+
+    onError: (err, newNode, context) => {
+      if (!context) return;
+
+      // Rollback on error
+      utils.node.getAllNodeIds.setData({ workspaceId }, context.previousIds);
+      utils.node.get.setData(
+        { id: context.optimisticNode.id, workspaceId },
+        undefined,
+      );
+    },
+    onSettled: () => {
       utils.node.getAllNodeIds.invalidate({ workspaceId });
+      utils.node.get.invalidate();
     },
   });
 
@@ -23,23 +104,18 @@ export const useWorkspaceAddNode = ({
         workspaceId,
         type: "geometry",
         position: { x: event.clientX, y: event.clientY },
-        data: {
+        data: createDefaultGeometry({
           type: state.context.selectedGeometry,
-          position: { x: 0, y: 0, z: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          scale: { x: 1, y: 1, z: 1 },
-        },
+        }),
       });
     } else if (state.context.selectedMaterial) {
       addNode.mutate({
         workspaceId,
         type: "material",
         position: { x: event.clientX, y: event.clientY },
-        data: {
+        data: createDefaultMaterial({
           type: state.context.selectedMaterial,
-          color: "#ffffff",
-          shouldRenderInNode: true,
-        },
+        }),
       });
     }
   };
