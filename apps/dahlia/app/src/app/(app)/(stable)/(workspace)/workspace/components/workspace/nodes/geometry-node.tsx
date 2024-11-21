@@ -1,7 +1,7 @@
-import { memo } from "react";
-import { Handle, NodeProps, Position } from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
+import { BaseNode } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -18,13 +18,21 @@ import { GeometryViewer } from "~/components/r3f/geometry-viewer";
 import { NetworkEditorContext } from "../../../state/context";
 import { GeometryFlowNode } from "../../../types/flow-nodes";
 
-export const GeometryNode = memo(
-  ({ data, id, type, isConnectable }: NodeProps<GeometryFlowNode>) => {
-    const machineRef = NetworkEditorContext.useActorRef();
-    return (
+export const GeometryNode = ({
+  data,
+  id,
+  isConnectable,
+}: {
+  data: GeometryFlowNode;
+  id: string;
+  isConnectable: boolean;
+}) => {
+  const machineRef = NetworkEditorContext.useActorRef();
+  return (
+    <BaseNode>
       <div
         className={cn(
-          "flex cursor-pointer flex-col gap-y-1 border bg-card p-1 text-card-foreground shadow-sm",
+          "flex cursor-pointer flex-col gap-y-1 p-1 text-card-foreground shadow-sm",
           "node-container",
         )}
       >
@@ -97,8 +105,8 @@ export const GeometryNode = memo(
           isConnectable={isConnectable}
         />
       </div>
-    );
-  },
-);
+    </BaseNode>
+  );
+};
 
 GeometryNode.displayName = "GeometryNode";
