@@ -66,7 +66,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         <ReactFlow
           nodes={flowNodes}
           edges={edges}
-          // onNodesChange={onNodesChange}
+          onNodesChange={onNodesChange}
           // onEdgesChange={onEdgesChange}
           // onNodesDelete={onNodesDelete}
           onConnect={onConnect}

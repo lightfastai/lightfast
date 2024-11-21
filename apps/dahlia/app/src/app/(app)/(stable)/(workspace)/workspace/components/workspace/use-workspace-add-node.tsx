@@ -19,7 +19,6 @@ export const useWorkspaceAddNode = ({
     onMutate: async (newNode) => {
       // Cancel any outgoing refetches
       await utils.node.getAllNodeIds.cancel({ workspaceId });
-      await utils.node.get.cancel();
 
       // Get current data
       const previousIds =
@@ -92,9 +91,10 @@ export const useWorkspaceAddNode = ({
         undefined,
       );
     },
-    onSettled: () => {
+    onSettled: (newNode) => {
       utils.node.getAllNodeIds.invalidate({ workspaceId });
-      utils.node.get.invalidate();
+      if (!newNode) return;
+      utils.node.get.invalidate({ id: newNode.id, workspaceId });
     },
   });
 

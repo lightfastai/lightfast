@@ -44,6 +44,7 @@ export const useGetWorkspaceNodes = ({
   const [nodeQueries] = api.useSuspenseQueries((t) =>
     nodeIds.map((id) => t.node.get({ id, workspaceId })),
   );
+
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(
     nodeQueries
       .map((query) => query)
@@ -60,6 +61,7 @@ export const useGetWorkspaceNodes = ({
         }),
       ),
   );
+
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
 
   const updateNodePositions = api.node.updatePositions.useMutation();
@@ -90,6 +92,8 @@ export const useGetWorkspaceNodes = ({
 
   const handleNodesChange = useCallback(
     (changes: NodeChange<FlowNode>[]) => {
+      onNodesChange(changes);
+
       const hasPositionChanges = changes.some(
         (change): change is NodeChange<FlowNode> & { type: "position" } =>
           change.type === "position",
@@ -99,7 +103,7 @@ export const useGetWorkspaceNodes = ({
         debouncedUpdatePositions(nodes);
       }
     },
-    [nodes, debouncedUpdatePositions],
+    [nodes, debouncedUpdatePositions, onNodesChange],
   );
 
   const onConnect = useCallback(
@@ -122,7 +126,5 @@ export const useGetWorkspaceNodes = ({
     onConnect,
     handleCanvasClick,
     onNodesDelete,
-    isLoading: nodeQueries.some((q) => q.isLoading),
-    isError: nodeQueries.some((q) => q.isError),
   };
 };
