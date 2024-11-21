@@ -7,7 +7,6 @@ import {
   NodeTypes,
   Panel,
   ReactFlow,
-  useStore,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/base.css";
@@ -17,7 +16,6 @@ import { RouterInputs } from "@repo/api";
 import { InfoCard } from "@repo/ui/components/info-card";
 
 import { useGetWorkspaceNodes } from "../../hooks/use-get-workspace-nodes";
-import { NetworkEditorContext } from "../../state/context";
 import { PropertyInspector } from "../inspector/property-inspector";
 import { TextureRenderPipeline } from "../webgl/texture-render-pipeline";
 import { WebGLCanvas } from "../webgl/webgl-canvas";
@@ -37,7 +35,6 @@ const nodeTypes: NodeTypes = {
 } as const;
 
 export const Workspace = ({ params }: WorkspacePageProps) => {
-  const zoom = useStore((state) => state.transform[2]);
   const { id, initialNodeIds } = params;
   const {
     nodes: flowNodes,
@@ -67,17 +64,12 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
           nodes={flowNodes}
           edges={edges}
           onNodesChange={onNodesChange}
-          // onEdgesChange={onEdgesChange}
-          // onNodesDelete={onNodesDelete}
+          onNodesDelete={onNodesDelete}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           onClick={handleCanvasClick}
           // onMouseMove={handleMouseMove}
           connectionMode={ConnectionMode.Loose}
-          panOnDrag={
-            !NetworkEditorContext.useSelector((state) => state).context
-              .selectedGeometry
-          }
           selectionOnDrag={false}
           panOnScroll={true}
           zoomOnScroll={false}

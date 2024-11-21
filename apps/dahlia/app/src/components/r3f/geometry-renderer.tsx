@@ -7,8 +7,6 @@ import { Vector3 } from "three";
 
 import { $GeometryType, Geometry } from "@repo/db/schema";
 
-import { $MaterialType } from "~/app/(app)/(stable)/(workspace)/workspace/types/primitives.schema";
-
 export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
   const meshRef = useRef<Mesh>(null);
 
@@ -29,22 +27,6 @@ export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
     case $GeometryType.Enum.torus:
       Geometry = <torusGeometry args={[1, 0.4, 16, 100]} />;
       break;
-  }
-  let Material;
-  switch (geometry.material?.type) {
-    case $MaterialType.Enum.Phong:
-      Material = (
-        <meshPhongMaterial
-          wireframe={geometry.wireframe}
-          color={geometry.material.color}
-        />
-      );
-      break;
-    /**
-     * Default to basic material.
-     */
-    default:
-      Material = <meshBasicMaterial wireframe={geometry.wireframe} />;
   }
 
   /**
@@ -73,7 +55,7 @@ export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
       ref={meshRef}
     >
       {Geometry}
-      {Material}
+      <meshBasicMaterial wireframe={geometry.wireframe} />
     </mesh>
   );
 };

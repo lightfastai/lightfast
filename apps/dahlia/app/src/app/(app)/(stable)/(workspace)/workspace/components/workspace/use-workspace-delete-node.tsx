@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction } from "react";
 import { Edge } from "@xyflow/react";
 
 import { api } from "~/trpc/react";
@@ -7,23 +8,57 @@ interface UseWorkspaceDeleteNodeProps {
   workspaceId: string;
   edges: Edge[];
   setEdges: (edges: Edge[] | ((edges: Edge[]) => Edge[])) => void;
-  utils: ReturnType<typeof api.useUtils>;
+  setNodes: Dispatch<SetStateAction<FlowNode[]>>;
 }
 
 export const useWorkspaceDeleteNode = ({
   workspaceId,
   edges,
   setEdges,
-  utils,
+  setNodes,
 }: UseWorkspaceDeleteNodeProps) => {
-  const deleteNode = api.node.delete.useMutation({
-    onSuccess: () => {
+  const utils = api.useUtils();
+  const { mutate } = api.node.delete.useMutation({
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches
+      await utils.node.getAllNodeIds.cancel({ workspaceId });
+
+      // Snapshot the previous value
+      const previousIds =
+        utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
+
+      // Optimistically remove the node from the UI
+      setNodes((nodes) => nodes.filter((node) => node.data.dbId !== id));
+
+      // Optimistically update the cache
+      utils.node.getAllNodeIds.setData(
+        { workspaceId },
+        previousIds.filter((nodeId) => nodeId !== id),
+      );
+
+      // Remove the node data from the cache
+      utils.node.get.setData({ id, workspaceId }, undefined);
+
+      return { previousIds };
+    },
+    onError: (err, { id }, context) => {
+      // If the mutation fails, restore the previous state
+      if (!context) return;
+
+      utils.node.getAllNodeIds.setData({ workspaceId }, context.previousIds);
+
+      // Refetch to ensure consistency
+      utils.node.getAllNodeIds.invalidate({ workspaceId });
+      utils.node.get.invalidate({ id, workspaceId });
+    },
+    onSettled: () => {
+      // Always invalidate queries after mutation
       utils.node.getAllNodeIds.invalidate({ workspaceId });
     },
   });
 
   const onNodesDelete = (nodesToDelete: FlowNode[]) => {
-    const nodeIds = nodesToDelete.map((node) => node.id);
+    const nodeIds = nodesToDelete.map((node) => node.data.dbId);
 
     // Remove connected edges
     setEdges(
@@ -35,7 +70,7 @@ export const useWorkspaceDeleteNode = ({
 
     // Delete nodes
     nodeIds.forEach((id) => {
-      deleteNode.mutate({ id, workspaceId });
+      mutate({ id, workspaceId });
     });
   };
 

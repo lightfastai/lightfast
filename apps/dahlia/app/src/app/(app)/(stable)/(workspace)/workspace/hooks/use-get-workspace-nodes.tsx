@@ -31,8 +31,6 @@ export const useGetWorkspaceNodes = ({
   workspaceId,
   initialNodeIds,
 }: UseGetWorkspaceNodesProps) => {
-  const utils = api.useUtils();
-
   const { data: nodeIds } = api.node.getAllNodeIds.useQuery(
     {
       workspaceId,
@@ -74,7 +72,7 @@ export const useGetWorkspaceNodes = ({
     workspaceId,
     edges,
     setEdges,
-    utils,
+    setNodes,
   });
 
   const updatePositions = useCallback(
