@@ -2,6 +2,7 @@
 
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import { nanoid } from "ai";
 import { Vector3 } from "three";
 
 import type { Vec3 } from "@repo/webgl";
@@ -42,7 +43,7 @@ export const GeometryViewer = ({
       {shouldRenderGrid && <gridHelper args={[50, 100, "white", "gray"]} />}
       {shouldRenderAxes && <axesHelper args={[50]} />}
       {geometries.map((geometry) => (
-        <GeometryRenderer geometry={geometry} />
+        <GeometryRenderer key={nanoid()} geometry={geometry} />
       ))}
 
       <ambientLight intensity={0.5} />
