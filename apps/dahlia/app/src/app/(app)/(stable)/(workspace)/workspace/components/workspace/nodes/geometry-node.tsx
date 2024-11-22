@@ -17,7 +17,6 @@ import {
 } from "~/components/constants";
 import { GeometryViewer } from "~/components/r3f/geometry-viewer";
 import { api } from "~/trpc/react";
-import { NetworkEditorContext } from "../../../state/context";
 import { FlowNode } from "../../../types/flow-nodes";
 
 export const GeometryNode = ({
@@ -25,7 +24,6 @@ export const GeometryNode = ({
   type,
   isConnectable,
 }: NodeProps<FlowNode>) => {
-  const machineRef = NetworkEditorContext.useActorRef();
   const { data } = api.node.getData.useQuery<Geometry>({ id });
   return (
     <BaseNode>
@@ -82,15 +80,7 @@ export const GeometryNode = ({
           <Checkbox
             id={`wireframe-${id}`}
             checked={data?.wireframe ?? false}
-            onCheckedChange={() => {
-              machineRef.send({
-                type: "UPDATE_GEOMETRY",
-                geometryId: id,
-                value: {
-                  wireframe: !data?.wireframe,
-                },
-              });
-            }}
+            // onCheckedChange={() => {}}
           />
         </div>
 

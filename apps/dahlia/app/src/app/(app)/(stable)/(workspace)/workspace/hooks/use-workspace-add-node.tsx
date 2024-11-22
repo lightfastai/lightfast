@@ -1,10 +1,15 @@
 import { Dispatch, SetStateAction } from "react";
+import { useReactFlow } from "@xyflow/react";
 
-import { createDefaultGeometry, createDefaultMaterial } from "@repo/db/schema";
+import {
+  $NodeType,
+  createDefaultGeometry,
+  createDefaultMaterial,
+} from "@repo/db/schema";
 import { nanoid } from "@repo/lib";
 
 import { api } from "~/trpc/react";
-import { NetworkEditorContext } from "../state/context";
+import { useSelectionStore } from "../providers/selection-store-provider";
 import { FlowNode } from "../types/flow-nodes";
 
 interface UseWorkspaceAddNodeProps {
@@ -17,8 +22,8 @@ export const useWorkspaceAddNode = ({
   setNodes,
 }: UseWorkspaceAddNodeProps) => {
   const utils = api.useUtils();
-  const state = NetworkEditorContext.useSelector((state) => state);
-
+  const { selection, clearSelection } = useSelectionStore((state) => state);
+  const { screenToFlowPosition } = useReactFlow();
   const create = api.node.create.useMutation({
     onMutate: async (newNode) => {
       await utils.node.getAllNodeIds.cancel({ workspaceId });
@@ -30,6 +35,7 @@ export const useWorkspaceAddNode = ({
         id: newNode.id,
         type: newNode.type,
         position: newNode.position,
+        data: {},
       };
 
       setNodes((nodes) => nodes.concat(optimisticNode));
@@ -95,27 +101,36 @@ export const useWorkspaceAddNode = ({
   });
 
   const handleCanvasClick = (event: React.MouseEvent) => {
-    if (state.context.selectedGeometry) {
+    if (!selection) return;
+
+    const position = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    if (selection.type === $NodeType.enum.geometry) {
       create.mutate({
         id: nanoid(),
         workspaceId,
-        type: "geometry",
-        position: { x: event.clientX, y: event.clientY },
+        type: $NodeType.enum.geometry,
+        position,
         data: createDefaultGeometry({
-          type: state.context.selectedGeometry,
+          type: "box",
         }),
       });
-    } else if (state.context.selectedMaterial) {
+    } else if (selection.type === $NodeType.enum.material) {
       create.mutate({
         id: nanoid(),
         workspaceId,
-        type: "material",
-        position: { x: event.clientX, y: event.clientY },
+        type: $NodeType.enum.material,
+        position,
         data: createDefaultMaterial({
-          type: state.context.selectedMaterial,
+          type: "phong",
         }),
       });
     }
+
+    clearSelection();
   };
 
   return { handleCanvasClick };

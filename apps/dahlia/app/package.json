@@ -43,7 +43,8 @@
     "superjson": "2.2.1",
     "three": "^0.169.0",
     "xstate": "^5.18.2",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

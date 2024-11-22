@@ -4,6 +4,8 @@ import { api, HydrateClient } from "~/trpc/server";
 import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { Workspace } from "../components/workspace/workspace";
 import { WorkspaceProvider } from "../components/workspace/workspace-provider";
+import { EditorStoreProvider } from "../providers/editor-store-provider";
+import { SelectionStoreProvider } from "../providers/selection-store-provider";
 
 interface WorkspacePageProps {
   params: {
@@ -27,10 +29,14 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
   });
   return (
     <HydrateClient>
-      <WorkspaceProvider>
-        <Workspace params={{ id, initialNodeIds: nodes }} />
-        <EditorCommandDialog />
-      </WorkspaceProvider>
+      <SelectionStoreProvider>
+        <EditorStoreProvider>
+          <WorkspaceProvider>
+            <Workspace params={{ id, initialNodeIds: nodes }} />
+            <EditorCommandDialog />
+          </WorkspaceProvider>
+        </EditorStoreProvider>
+      </SelectionStoreProvider>
     </HydrateClient>
   );
 }

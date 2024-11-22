@@ -1,23 +1,12 @@
-"use client";
-
 import { useCallback, useMemo, useState } from "react";
 import { useReactFlow, useStore, XYPosition } from "@xyflow/react";
 
-import { useDebounce } from "../../../../../../../hooks/use-debounce";
+import { useDebounce } from "~/hooks/use-debounce";
+import { useSelectionStore } from "../../providers/selection-store-provider";
 
 // Constants
 const PREVIEW_BASE_WIDTH = 96;
 const PREVIEW_BASE_HEIGHT = 48;
-
-// Interfaces
-interface UseWorkspaceSelectionPreviewParams {
-  active: boolean;
-}
-
-interface UseWorkspaceSelectionPreviewReturn {
-  render: () => React.ReactNode | null;
-  handleMouseMove: (event: React.MouseEvent) => void;
-}
 
 /**
  * Custom hook to manage the workspace selection preview functionality.
@@ -26,11 +15,10 @@ interface UseWorkspaceSelectionPreviewReturn {
  * @param {boolean} params.active - Indicates whether the preview is active.
  * @returns {Object} - Contains the render function and mouse move handler.
  */
-export const useWorkspaceSelectionPreview = ({
-  active,
-}: UseWorkspaceSelectionPreviewParams): UseWorkspaceSelectionPreviewReturn => {
+export const useWorkspaceSelectionPreview = () => {
   const [position, setPosition] = useState<XYPosition | null>(null);
   const { flowToScreenPosition, screenToFlowPosition } = useReactFlow();
+  const { selection } = useSelectionStore((state) => state);
   const zoom = useStore((state) => state.transform[2]);
 
   /**
@@ -69,7 +57,7 @@ export const useWorkspaceSelectionPreview = ({
   const handleMouseMove = useCallback(
     (event: React.MouseEvent) => {
       // ensure calculations are only made when the preview is active
-      if (!active) return;
+      if (!selection) return;
 
       const newPosition = screenToFlowPosition({
         x: event.clientX,
@@ -78,11 +66,11 @@ export const useWorkspaceSelectionPreview = ({
 
       debouncedUpdatePosition(newPosition);
     },
-    [active, screenToFlowPosition, debouncedUpdatePosition],
+    [selection, screenToFlowPosition, debouncedUpdatePosition],
   );
 
   const render = useCallback(() => {
-    if (!active || !screenPosition) return null;
+    if (!selection || !screenPosition) return null;
 
     return (
       <div
@@ -95,7 +83,7 @@ export const useWorkspaceSelectionPreview = ({
         }}
       />
     );
-  }, [active, screenPosition, calculatedPreviewSize]);
+  }, [selection, screenPosition, calculatedPreviewSize]);
 
   return {
     render,

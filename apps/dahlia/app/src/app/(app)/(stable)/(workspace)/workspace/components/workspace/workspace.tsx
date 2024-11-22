@@ -17,10 +17,9 @@ import { InfoCard } from "@repo/ui/components/info-card";
 
 import { useGetWorkspaceNodes } from "../../hooks/use-get-workspace-nodes";
 import { PropertyInspector } from "../inspector/property-inspector";
-import { TextureRenderPipeline } from "../webgl/texture-render-pipeline";
-import { WebGLCanvas } from "../webgl/webgl-canvas";
 import { GeometryNode } from "./nodes/geometry-node";
 import { MaterialNode } from "./nodes/material-node";
+import { useWorkspaceSelectionPreview } from "./use-workspace-selection-preview";
 
 interface WorkspacePageProps {
   params: {
@@ -36,6 +35,8 @@ const nodeTypes: NodeTypes = {
 
 export const Workspace = ({ params }: WorkspacePageProps) => {
   const { id, initialNodeIds } = params;
+  const { handleMouseMove, render } = useWorkspaceSelectionPreview();
+
   const {
     nodes,
     edges,
@@ -49,14 +50,6 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
     initialNodeIds,
   });
 
-  // const { render, handleMouseMove } = useWorkspaceSelectionPreview({
-  //   active:
-  //     !!NetworkEditorContext.useSelector((state) => state).context
-  //       .selectedGeometry ||
-  //     !!NetworkEditorContext.useSelector((state) => state).context
-  //       .selectedMaterial,
-  // });
-
   return (
     <main className="relative flex-1 overflow-hidden">
       <div className="relative h-full w-full">
@@ -68,14 +61,14 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           onClick={handleCanvasClick}
-          // onMouseMove={handleMouseMove}
+          onMouseMove={handleMouseMove}
           connectionMode={ConnectionMode.Loose}
           selectionOnDrag={false}
           panOnScroll={true}
           zoomOnScroll={false}
           proOptions={{ hideAttribution: true }}
         >
-          {/* {render()} */}
+          {render()}
 
           <Background variant={BackgroundVariant.Dots} />
           <Panel position="bottom-right">
@@ -89,9 +82,6 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
           </Panel>
         </ReactFlow>
         <PropertyInspector />
-        <WebGLCanvas>
-          <TextureRenderPipeline />
-        </WebGLCanvas>
       </div>
     </main>
   );
