@@ -17,7 +17,7 @@ import {
 } from "~/components/constants";
 import { GeometryViewer } from "~/components/r3f/geometry-viewer";
 import { api } from "~/trpc/react";
-import { FlowNode } from "../../../types/flow-nodes";
+import { FlowNode } from "../../../types/node";
 
 export const GeometryNode = ({
   id,

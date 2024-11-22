@@ -1,22 +1,11 @@
 import { Dispatch, SetStateAction } from "react";
-import { useReactFlow } from "@xyflow/react";
+import { nanoid } from "nanoid";
 
-import {
-  $GeometryType,
-  $MaterialType,
-  $NodeType,
-  createDefaultGeometry,
-  createDefaultMaterial,
-  Geometry,
-  GeometryType,
-  Material,
-  MaterialType,
-} from "@repo/db/schema";
-import { nanoid } from "@repo/lib";
+import { createDefaultGeometry, createDefaultMaterial } from "@repo/db/schema";
 
 import { api } from "~/trpc/react";
-import { useSelectionStore } from "../providers/selection-store-provider";
-import { FlowNode } from "../types/node";
+import { NetworkEditorContext } from "../../state/context";
+import { FlowNode } from "../../types/node";
 
 interface UseWorkspaceAddNodeProps {
   workspaceId: string;
@@ -28,9 +17,9 @@ export const useWorkspaceAddNode = ({
   setNodes,
 }: UseWorkspaceAddNodeProps) => {
   const utils = api.useUtils();
-  const { selection, clearSelection } = useSelectionStore((state) => state);
-  const { screenToFlowPosition } = useReactFlow();
-  const create = api.node.create.useMutation({
+  const state = NetworkEditorContext.useSelector((state) => state);
+
+  const addNode = api.node.create.useMutation({
     onMutate: async (newNode) => {
       await utils.node.getAllNodeIds.cancel({ workspaceId });
 
@@ -38,10 +27,13 @@ export const useWorkspaceAddNode = ({
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
       const optimisticNode: FlowNode = {
-        id: newNode.id,
+        id: nanoid(),
         type: newNode.type,
         position: newNode.position,
-        data: {},
+        data: {
+          dbId: `temp-${Date.now()}`,
+          workspaceId,
+        },
       };
 
       setNodes((nodes) => nodes.concat(optimisticNode));
@@ -52,17 +44,12 @@ export const useWorkspaceAddNode = ({
       ]);
 
       utils.node.get.setData(
-        { id: optimisticNode.id },
+        { id: optimisticNode.id, workspaceId },
         {
-          id: optimisticNode.id,
+          id: optimisticNode.data.dbId,
           type: optimisticNode.type,
           position: optimisticNode.position,
         },
-      );
-
-      utils.node.getData.setData(
-        { id: optimisticNode.id },
-        newNode.data as Geometry | Material,
       );
 
       return { optimisticNode, previousIds };
@@ -74,6 +61,20 @@ export const useWorkspaceAddNode = ({
       const currentIds =
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === context.optimisticNode.id
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  data: result.data,
+                },
+              }
+            : node,
+        ),
+      );
+
       utils.node.getAllNodeIds.setData(
         { workspaceId },
         currentIds.map((id) =>
@@ -82,17 +83,16 @@ export const useWorkspaceAddNode = ({
       );
 
       utils.node.get.setData(
-        { id: result.id },
+        { id: result.id, workspaceId },
         {
           ...context.optimisticNode,
           id: result.id,
         },
       );
-
-      utils.node.getData.setData({ id: result.id }, result.data);
     },
 
     onError: (err, newNode, context) => {
+      console.log("onError", err, newNode, context);
       if (!context) return;
 
       setNodes((nodes) =>
@@ -100,52 +100,39 @@ export const useWorkspaceAddNode = ({
       );
 
       utils.node.getAllNodeIds.setData({ workspaceId }, context.previousIds);
-      utils.node.get.setData({ id: context.optimisticNode.id }, undefined);
+      utils.node.get.setData(
+        { id: context.optimisticNode.id, workspaceId },
+        undefined,
+      );
     },
     onSettled: (newNode) => {
       utils.node.getAllNodeIds.invalidate({ workspaceId });
       if (!newNode) return;
-      utils.node.get.invalidate({ id: newNode.id });
+      utils.node.get.invalidate({ id: newNode.id, workspaceId });
     },
   });
 
   const handleCanvasClick = (event: React.MouseEvent) => {
-    if (!selection) return;
-
-    const position = screenToFlowPosition({
-      x: event.clientX,
-      y: event.clientY,
-    });
-
-    if (
-      selection.type === $NodeType.enum.geometry &&
-      $GeometryType.safeParse(selection.value).success
-    ) {
-      create.mutate({
-        id: nanoid(),
+    console.log("handleCanvasClick", event);
+    if (state.context.selectedGeometry) {
+      addNode.mutate({
         workspaceId,
-        type: $NodeType.enum.geometry,
-        position,
+        type: "geometry",
+        position: { x: event.clientX, y: event.clientY },
         data: createDefaultGeometry({
-          type: selection.value as GeometryType,
+          type: state.context.selectedGeometry,
         }),
       });
-    } else if (
-      selection.type === $NodeType.enum.material &&
-      $MaterialType.safeParse(selection.value).success
-    ) {
-      create.mutate({
-        id: nanoid(),
+    } else if (state.context.selectedMaterial) {
+      addNode.mutate({
         workspaceId,
-        type: $NodeType.enum.material,
-        position,
+        type: "material",
+        position: { x: event.clientX, y: event.clientY },
         data: createDefaultMaterial({
-          type: selection.value as MaterialType,
+          type: state.context.selectedMaterial,
         }),
       });
     }
-
-    clearSelection();
   };
 
   return { handleCanvasClick };

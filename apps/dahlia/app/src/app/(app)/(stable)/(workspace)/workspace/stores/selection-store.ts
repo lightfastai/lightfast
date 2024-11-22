@@ -36,13 +36,13 @@ export const createSelectionStore = (
   return createStore<SelectionStore>()((set) => ({
     ...initState,
     setGeometry: (geometry: GeometryType) =>
-      set((state) => ({
+      set(() => ({
         selection: { type: $NodeType.Enum.geometry, value: geometry },
       })),
     setMaterial: (material: MaterialType) =>
-      set((state) => ({
+      set(() => ({
         selection: { type: $NodeType.Enum.material, value: material },
       })),
-    clearSelection: () => set((state) => ({ selection: null })),
+    clearSelection: () => set(() => ({ selection: null })),
   }));
 };

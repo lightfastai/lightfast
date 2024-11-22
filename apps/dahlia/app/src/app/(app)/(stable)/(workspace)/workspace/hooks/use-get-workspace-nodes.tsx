@@ -12,7 +12,7 @@ import { RouterInputs, RouterOutputs } from "@repo/api";
 
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/react";
-import { FlowNode } from "../types/flow-nodes";
+import { FlowNode } from "../types/node";
 import { useWorkspaceAddNode } from "./use-workspace-add-node";
 import { useWorkspaceDeleteNode } from "./use-workspace-delete-node";
 

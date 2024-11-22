@@ -23,6 +23,7 @@ export const createEditorStore = (
 ) => {
   return createStore<EditorStore>()((set) => ({
     ...initState,
-    setIsCommandDialogOpen: (isOpen) => set({ isCommandDialogOpen: isOpen }),
+    setIsCommandDialogOpen: (isOpen) =>
+      set(() => ({ isCommandDialogOpen: isOpen })),
   }));
 };
