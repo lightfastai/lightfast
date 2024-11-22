@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
-import { nanoid } from "nanoid";
 
 import { createDefaultGeometry, createDefaultMaterial } from "@repo/db/schema";
+import { nanoid } from "@repo/lib";
 
 import { api } from "~/trpc/react";
 import { NetworkEditorContext } from "../state/context";
@@ -19,7 +19,7 @@ export const useWorkspaceAddNode = ({
   const utils = api.useUtils();
   const state = NetworkEditorContext.useSelector((state) => state);
 
-  const addNode = api.node.create.useMutation({
+  const create = api.node.create.useMutation({
     onMutate: async (newNode) => {
       await utils.node.getAllNodeIds.cancel({ workspaceId });
 
@@ -27,13 +27,9 @@ export const useWorkspaceAddNode = ({
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
       const optimisticNode: FlowNode = {
-        id: nanoid(),
+        id: newNode.id,
         type: newNode.type,
         position: newNode.position,
-        data: {
-          dbId: `temp-${Date.now()}`,
-          workspaceId,
-        },
       };
 
       setNodes((nodes) => nodes.concat(optimisticNode));
@@ -44,13 +40,15 @@ export const useWorkspaceAddNode = ({
       ]);
 
       utils.node.get.setData(
-        { id: optimisticNode.id, workspaceId },
+        { id: optimisticNode.id },
         {
-          id: optimisticNode.data.dbId,
+          id: optimisticNode.id,
           type: optimisticNode.type,
           position: optimisticNode.position,
         },
       );
+
+      utils.node.getData.setData({ id: optimisticNode.id }, newNode.data);
 
       return { optimisticNode, previousIds };
     },
@@ -61,20 +59,6 @@ export const useWorkspaceAddNode = ({
       const currentIds =
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
-      setNodes((nodes) =>
-        nodes.map((node) =>
-          node.id === context.optimisticNode.id
-            ? {
-                ...node,
-                data: {
-                  dbId: result.id,
-                  workspaceId,
-                },
-              }
-            : node,
-        ),
-      );
-
       utils.node.getAllNodeIds.setData(
         { workspaceId },
         currentIds.map((id) =>
@@ -83,18 +67,17 @@ export const useWorkspaceAddNode = ({
       );
 
       utils.node.get.setData(
-        { id: result.id, workspaceId },
+        { id: result.id },
         {
           ...context.optimisticNode,
           id: result.id,
         },
       );
 
-      utils.node.getData.setData({ id: result.id, workspaceId }, result.data);
+      utils.node.getData.setData({ id: result.id }, result.data);
     },
 
     onError: (err, newNode, context) => {
-      console.log("onError", err, newNode, context);
       if (!context) return;
 
       setNodes((nodes) =>
@@ -102,22 +85,19 @@ export const useWorkspaceAddNode = ({
       );
 
       utils.node.getAllNodeIds.setData({ workspaceId }, context.previousIds);
-      utils.node.get.setData(
-        { id: context.optimisticNode.id, workspaceId },
-        undefined,
-      );
+      utils.node.get.setData({ id: context.optimisticNode.id }, undefined);
     },
     onSettled: (newNode) => {
       utils.node.getAllNodeIds.invalidate({ workspaceId });
       if (!newNode) return;
-      utils.node.get.invalidate({ id: newNode.id, workspaceId });
+      utils.node.get.invalidate({ id: newNode.id });
     },
   });
 
   const handleCanvasClick = (event: React.MouseEvent) => {
-    console.log("handleCanvasClick", event);
     if (state.context.selectedGeometry) {
-      addNode.mutate({
+      create.mutate({
+        id: nanoid(),
         workspaceId,
         type: "geometry",
         position: { x: event.clientX, y: event.clientY },
@@ -126,7 +106,8 @@ export const useWorkspaceAddNode = ({
         }),
       });
     } else if (state.context.selectedMaterial) {
-      addNode.mutate({
+      create.mutate({
+        id: nanoid(),
         workspaceId,
         type: "material",
         position: { x: event.clientX, y: event.clientY },

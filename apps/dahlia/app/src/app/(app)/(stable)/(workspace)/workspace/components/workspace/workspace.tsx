@@ -37,7 +37,7 @@ const nodeTypes: NodeTypes = {
 export const Workspace = ({ params }: WorkspacePageProps) => {
   const { id, initialNodeIds } = params;
   const {
-    nodes: flowNodes,
+    nodes,
     edges,
     onNodesChange,
     onEdgesChange,
@@ -61,7 +61,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
     <main className="relative flex-1 overflow-hidden">
       <div className="relative h-full w-full">
         <ReactFlow
-          nodes={flowNodes}
+          nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onNodesDelete={onNodesDelete}
@@ -82,7 +82,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
             <InfoCard
               title="Workspace Info"
               items={[
-                { label: "nodes", value: flowNodes.length },
+                { label: "nodes", value: nodes.length },
                 { label: "edges", value: edges.length },
               ]}
             />

@@ -96,6 +96,9 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../../../packages/db
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../../packages/lib
       '@repo/ui':
         specifier: workspace:*
         version: link:../../../packages/ui
@@ -135,9 +138,6 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 0.451.0(react@18.3.1)
-      nanoid:
-        specifier: ^5.0.8
-        version: 5.0.8
       next:
         specifier: 'catalog:'
         version: 14.2.15(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -586,6 +586,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../lib
       '@repo/webgl':
         specifier: workspace:*
         version: link:../webgl
@@ -598,9 +601,6 @@ importers:
       drizzle-zod:
         specifier: ^0.5.1
         version: 0.5.1(drizzle-orm@0.35.3(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@0.9.5)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.12)(@vercel/postgres@0.10.0)(react@18.3.1))(zod@3.23.8)
-      nanoid:
-        specifier: ^5.0.8
-        version: 5.0.8
       zod:
         specifier: 'catalog:'
         version: 3.23.8
@@ -620,6 +620,31 @@ importers:
       drizzle-kit:
         specifier: ^0.26.2
         version: 0.26.2
+      eslint:
+        specifier: 'catalog:'
+        version: 9.13.0(jiti@2.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
+
+  packages/lib:
+    dependencies:
+      nanoid:
+        specifier: ^5.0.8
+        version: 5.0.8
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
       eslint:
         specifier: 'catalog:'
         version: 9.13.0(jiti@2.3.3)

@@ -7,12 +7,11 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { nanoid } from "nanoid";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
 
+import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/react";
-import { useDebounce } from "../../../../../../hooks/use-debounce";
 import { FlowNode } from "../types/flow-nodes";
 import { useWorkspaceAddNode } from "./use-workspace-add-node";
 import { useWorkspaceDeleteNode } from "./use-workspace-delete-node";
@@ -41,7 +40,7 @@ export const useGetWorkspaceNodes = ({
   );
 
   const [nodeQueries] = api.useSuspenseQueries((t) =>
-    nodeIds.map((id) => t.node.get({ id, workspaceId })),
+    nodeIds.map((id) => t.node.get({ id })),
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(
@@ -53,13 +52,10 @@ export const useGetWorkspaceNodes = ({
       )
       .map(
         (node): FlowNode => ({
-          id: nanoid(),
+          id: node.id,
           type: node.type,
-          data: {
-            dbId: node.id,
-            workspaceId: workspaceId,
-          },
           position: node.position,
+          data: {},
         }),
       ),
   );
@@ -78,7 +74,7 @@ export const useGetWorkspaceNodes = ({
   const updatePositions = useCallback(
     (nodes: FlowNode[]) => {
       const nodePositions = nodes.map((node) => ({
-        id: node.data.dbId,
+        id: node.id,
         position: node.position,
       }));
 

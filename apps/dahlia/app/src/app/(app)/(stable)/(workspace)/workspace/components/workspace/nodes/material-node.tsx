@@ -21,11 +21,9 @@ import { api } from "~/trpc/react";
 import { FlowNode } from "../../../types/flow-nodes";
 
 export const MaterialNode = memo(
-  ({ data, type, id, isConnectable }: NodeProps<FlowNode>) => {
-    const { dbId: materialId, workspaceId } = data;
-    const { data: materialData } = api.node.getData.useQuery<Material>({
-      id: materialId,
-      workspaceId,
+  ({ type, id, isConnectable }: NodeProps<FlowNode>) => {
+    const { data } = api.node.getData.useQuery<Material>({
+      id,
     });
     return (
       <div

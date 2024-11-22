@@ -21,61 +21,12 @@ import { NetworkEditorContext } from "../../../state/context";
 import { FlowNode } from "../../../types/flow-nodes";
 
 export const GeometryNode = ({
-  data,
   id,
   type,
   isConnectable,
 }: NodeProps<FlowNode>) => {
   const machineRef = NetworkEditorContext.useActorRef();
-  const { dbId: geometryId, workspaceId } = data;
-  const { data: geometryData } = api.node.getData.useQuery<Geometry>(
-    {
-      id: geometryId,
-      workspaceId,
-    },
-    {
-      enabled: !geometryId.startsWith("temp"),
-    },
-  );
-  const utils = api.useUtils();
-
-  const updateRenderInNode = api.node.updateRenderInNode.useMutation({
-    // optimistic update
-    onMutate: async (input) => {
-      await utils.node.getData.cancel({ id: geometryId, workspaceId });
-      const previousGeometryData = utils.node.getData.getData({
-        id: geometryId,
-        workspaceId,
-      }) as Geometry;
-      utils.node.getData.setData(
-        { id: geometryId, workspaceId },
-        {
-          ...previousGeometryData,
-          shouldRenderInNode: input.shouldRenderInNode,
-        },
-      );
-      return { previousGeometryData };
-    },
-    onSuccess: (data, variables, context) => {
-      console.log("success", data, variables, context);
-      if (!context) return;
-      utils.node.getData.setData(
-        { id: geometryId, workspaceId },
-        context.previousGeometryData,
-      );
-    },
-    onError: (error, variables, context) => {
-      if (!context) return;
-      utils.node.getData.setData(
-        { id: geometryId, workspaceId },
-        context.previousGeometryData,
-      );
-    },
-    onSettled: () => {
-      utils.node.getData.invalidate({ id: geometryId, workspaceId });
-    },
-  });
-
+  const { data } = api.node.getData.useQuery<Geometry>({ id });
   return (
     <BaseNode>
       <div
@@ -101,12 +52,7 @@ export const GeometryNode = ({
               size="xs"
               onClick={(e) => {
                 e.stopPropagation();
-                if (!geometryData) return;
-                updateRenderInNode.mutate({
-                  id: geometryId,
-                  workspaceId,
-                  shouldRenderInNode: !geometryData.shouldRenderInNode,
-                });
+                if (!data) return;
               }}
             >
               <ArrowRightIcon className="h-3 w-3" />
@@ -115,11 +61,11 @@ export const GeometryNode = ({
         </div>
 
         <div className="flex h-32 w-72 items-center justify-center border">
-          {geometryData && geometryData.shouldRenderInNode && (
+          {data && data.shouldRenderInNode && (
             <GeometryViewer
               geometries={[
                 {
-                  ...geometryData,
+                  ...data,
                   position: CENTER_OF_WORLD,
                 },
               ]}
@@ -127,7 +73,7 @@ export const GeometryNode = ({
               lookAt={CENTER_OF_WORLD}
               shouldRenderGrid={false}
               shouldRenderAxes={false}
-              shouldRender={geometryData?.shouldRenderInNode ?? false}
+              shouldRender={data.shouldRenderInNode ?? false}
             />
           )}
         </div>
@@ -135,13 +81,13 @@ export const GeometryNode = ({
         <div className="flex items-center justify-end">
           <Checkbox
             id={`wireframe-${id}`}
-            checked={geometryData?.wireframe ?? false}
+            checked={data?.wireframe ?? false}
             onCheckedChange={() => {
               machineRef.send({
                 type: "UPDATE_GEOMETRY",
                 geometryId: id,
                 value: {
-                  wireframe: !geometryData?.wireframe,
+                  wireframe: !data?.wireframe,
                 },
               });
             }}
