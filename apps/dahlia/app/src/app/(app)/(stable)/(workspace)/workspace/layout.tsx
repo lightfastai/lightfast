@@ -1,17 +1,14 @@
 import { EditorHeaderMenu } from "./components/app/editor-header-file";
 
-export default function NetworkEditorLayout({
+export default function WorkspaceLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <>
-      {/* <ReactFlowProvider> */}
       <EditorHeaderMenu />
-      {/* <EditorHeaderHelpers /> */}
       {children}
-      {/* </ReactFlowProvider> */}
     </>
   );
 }

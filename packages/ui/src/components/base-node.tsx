@@ -2,7 +2,7 @@ import React from "react";
 
 import { cn } from "@repo/ui/lib/utils";
 
-export const BaseNode = React.forwardRef<
+export const BaseNodeComponent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & { selected?: boolean }
 >(({ className, selected, ...props }, ref) => (
@@ -17,4 +17,4 @@ export const BaseNode = React.forwardRef<
     {...props}
   />
 ));
-BaseNode.displayName = "BaseNode";
+BaseNodeComponent.displayName = "BaseNodeComponent";

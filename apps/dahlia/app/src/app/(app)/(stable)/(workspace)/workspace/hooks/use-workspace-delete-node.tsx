@@ -1,23 +1,16 @@
-import { Dispatch, SetStateAction } from "react";
-import { Edge } from "@xyflow/react";
-
 import { api } from "~/trpc/react";
-import { FlowNode } from "../types/node";
+import { useNodeStore } from "../providers/node-store-provider";
+import { BaseNode } from "../types/node";
 
 interface UseWorkspaceDeleteNodeProps {
   workspaceId: string;
-  edges: Edge[];
-  setEdges: (edges: Edge[] | ((edges: Edge[]) => Edge[])) => void;
-  setNodes: Dispatch<SetStateAction<FlowNode[]>>;
 }
 
 export const useWorkspaceDeleteNode = ({
   workspaceId,
-  edges,
-  setEdges,
-  setNodes,
 }: UseWorkspaceDeleteNodeProps) => {
   const utils = api.useUtils();
+  const { deleteNode } = useNodeStore((state) => state);
   const { mutate } = api.node.delete.useMutation({
     onMutate: async ({ id }) => {
       // Cancel any outgoing refetches
@@ -28,7 +21,7 @@ export const useWorkspaceDeleteNode = ({
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
       // Optimistically remove the node from the UI
-      setNodes((nodes) => nodes.filter((node) => node.data.dbId !== id));
+      deleteNode(id);
 
       // Optimistically update the cache
       utils.node.getAllNodeIds.setData(
@@ -58,16 +51,8 @@ export const useWorkspaceDeleteNode = ({
     },
   });
 
-  const onNodesDelete = (nodesToDelete: FlowNode[]) => {
+  const onNodesDelete = (nodesToDelete: BaseNode[]) => {
     const nodeIds = nodesToDelete.map((node) => node.id);
-
-    // Remove connected edges
-    setEdges(
-      edges.filter(
-        (edge) =>
-          !nodeIds.includes(edge.source) && !nodeIds.includes(edge.target),
-      ),
-    );
 
     // Delete nodes
     nodeIds.forEach((id) => {

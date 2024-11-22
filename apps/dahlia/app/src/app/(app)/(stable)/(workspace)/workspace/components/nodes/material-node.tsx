@@ -18,9 +18,9 @@ import {
 } from "~/components/constants";
 import { GeometryViewer } from "~/components/r3f/geometry-viewer";
 import { api } from "~/trpc/react";
-import { FlowNode } from "../../../types/node";
+import { BaseNode } from "../../types/node";
 
-export const MaterialNode = memo(({ type, id }: NodeProps<FlowNode>) => {
+export const MaterialNode = memo(({ type, id }: NodeProps<BaseNode>) => {
   const { data } = api.node.getData.useQuery<Material>({
     id,
   });

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useReactFlow, useStore, XYPosition } from "@xyflow/react";
 
 import { useDebounce } from "~/hooks/use-debounce";
-import { useSelectionStore } from "../../providers/selection-store-provider";
+import { useSelectionStore } from "../providers/selection-store-provider";
 
 // Constants
 const PREVIEW_BASE_WIDTH = 96;
@@ -15,7 +15,7 @@ const PREVIEW_BASE_HEIGHT = 48;
  * @param {boolean} params.active - Indicates whether the preview is active.
  * @returns {Object} - Contains the render function and mouse move handler.
  */
-export const useWorkspaceSelectionPreview = () => {
+export const useWorkspaceNodeSelectionPreview = () => {
   const [position, setPosition] = useState<XYPosition | null>(null);
   const { flowToScreenPosition, screenToFlowPosition } = useReactFlow();
   const { selection } = useSelectionStore((state) => state);

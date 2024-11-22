@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from "react";
 import { useReactFlow } from "@xyflow/react";
 
 import {
@@ -15,19 +14,19 @@ import {
 import { nanoid } from "@repo/lib";
 
 import { api } from "~/trpc/react";
+import { useNodeStore } from "../providers/node-store-provider";
 import { useSelectionStore } from "../providers/selection-store-provider";
-import { FlowNode } from "../types/node";
+import { BaseNode } from "../types/node";
 
 interface UseWorkspaceAddNodeProps {
   workspaceId: string;
-  setNodes: Dispatch<SetStateAction<FlowNode[]>>;
 }
 
 export const useWorkspaceAddNode = ({
   workspaceId,
-  setNodes,
 }: UseWorkspaceAddNodeProps) => {
   const utils = api.useUtils();
+  const { addNode, deleteNode } = useNodeStore((state) => state);
   const { selection, clearSelection } = useSelectionStore((state) => state);
   const { screenToFlowPosition } = useReactFlow();
   const create = api.node.create.useMutation({
@@ -37,18 +36,18 @@ export const useWorkspaceAddNode = ({
       const previousIds =
         utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
 
-      const optimisticNode: FlowNode = {
+      const optimisticNode: BaseNode = {
         id: newNode.id,
         type: newNode.type,
         position: newNode.position,
         data: {},
       };
 
-      setNodes((nodes) => nodes.concat(optimisticNode));
+      addNode(optimisticNode);
 
       utils.node.getAllNodeIds.setData({ workspaceId }, [
         ...previousIds,
-        optimisticNode.id,
+        optimisticNode,
       ]);
 
       utils.node.get.setData(
@@ -95,9 +94,7 @@ export const useWorkspaceAddNode = ({
     onError: (err, newNode, context) => {
       if (!context) return;
 
-      setNodes((nodes) =>
-        nodes.filter((node) => node.id !== context.optimisticNode.id),
-      );
+      deleteNode(context.optimisticNode.id);
 
       utils.node.getAllNodeIds.setData({ workspaceId }, context.previousIds);
       utils.node.get.setData({ id: context.optimisticNode.id }, undefined);
@@ -109,7 +106,7 @@ export const useWorkspaceAddNode = ({
     },
   });
 
-  const handleCanvasClick = (event: React.MouseEvent) => {
+  const onClick = (event: React.MouseEvent) => {
     if (!selection) return;
 
     const position = screenToFlowPosition({
@@ -148,5 +145,5 @@ export const useWorkspaceAddNode = ({
     clearSelection();
   };
 
-  return { handleCanvasClick };
+  return { onClick };
 };

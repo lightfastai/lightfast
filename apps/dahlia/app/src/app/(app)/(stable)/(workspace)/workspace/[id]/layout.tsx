@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { TRPCError } from "@trpc/server";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
 import {
@@ -10,8 +9,13 @@ import {
 } from "@repo/ui/components/ui/breadcrumb";
 
 import { api } from "~/trpc/server";
+import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";
 import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select";
+import { EditorStoreProvider } from "../providers/editor-store-provider";
+import { NodeStoreProvider } from "../providers/node-store-provider";
+import { SelectionStoreProvider } from "../providers/selection-store-provider";
+import { convertToBaseNode } from "../types/node";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -24,35 +28,26 @@ interface WorkspaceLayoutProps {
  * Get workspace from params, handling errors
  * @todo - handle unauthorized and not found errors more gracefully
  */
-const getWorkspaceById = async ({
+const getWorkspace = async ({
   id,
 }: RouterInputs["workspace"]["get"]): Promise<
   RouterOutputs["workspace"]["get"] | null
 > => {
-  try {
-    const workspace = await api.workspace.get({ id });
-    return workspace;
-  } catch (e) {
-    if (e instanceof TRPCError) {
-      switch (e.code) {
-        case "UNAUTHORIZED":
-          // Handle unauthorized access
-          console.error("Unauthorized access to workspace:", id);
-          break;
-        case "NOT_FOUND":
-          // Handle workspace not found
-          console.warn("Workspace not found:", id);
-          break;
-        default:
-          // Handle other TRPC errors
-          console.error("An unexpected TRPC error occurred:", e.message);
-      }
-    } else {
-      // Handle non-TRPC errors
-      console.error("An unexpected error occurred:", e);
-    }
-    return null;
-  }
+  const workspace = await api.workspace.get({ id });
+  return workspace;
+};
+
+/**
+ * Get workspace node ids
+ * @todo - handle unauthorized and not found errors more gracefully
+ */
+const getWorkspaceNodeBaseAll = async ({
+  workspaceId,
+}: RouterInputs["node"]["base"]["getAll"]): Promise<
+  RouterOutputs["node"]["base"]["getAll"]
+> => {
+  const nodes = await api.node.base.getAll({ workspaceId });
+  return nodes;
 };
 
 export default async function WorkspaceLayout({
@@ -60,7 +55,11 @@ export default async function WorkspaceLayout({
   params,
 }: WorkspaceLayoutProps) {
   const { id } = params;
-  const workspace = await getWorkspaceById({ id });
+  const [workspace, nodes] = await Promise.all([
+    getWorkspace({ id }),
+    getWorkspaceNodeBaseAll({ workspaceId: id }),
+  ]);
+
   if (!workspace) {
     notFound();
   }
@@ -81,7 +80,14 @@ export default async function WorkspaceLayout({
         </Breadcrumb>
       </div>
 
-      {children}
+      <NodeStoreProvider initialNodes={convertToBaseNode(nodes)}>
+        <SelectionStoreProvider>
+          <EditorStoreProvider>
+            {children}
+            <EditorCommandDialog />
+          </EditorStoreProvider>
+        </SelectionStoreProvider>
+      </NodeStoreProvider>
     </div>
   );
 }

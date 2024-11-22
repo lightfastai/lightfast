@@ -15,16 +15,18 @@ import "./workspace.css";
 import { RouterInputs } from "@repo/api";
 import { InfoCard } from "@repo/ui/components/info-card";
 
-import { useGetWorkspaceNodes } from "../../hooks/use-get-workspace-nodes";
+import { useWorkspaceAddNode } from "../../hooks/use-workspace-add-node";
+import { useWorkspaceDeleteNode } from "../../hooks/use-workspace-delete-node";
+import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
+import { useWorkspaceUpdateNode } from "../../hooks/use-workspace-update-node";
+import { useNodeStore } from "../../providers/node-store-provider";
 import { PropertyInspector } from "../inspector/property-inspector";
-import { GeometryNode } from "./nodes/geometry-node";
-import { MaterialNode } from "./nodes/material-node";
-import { useWorkspaceSelectionPreview } from "./use-workspace-selection-preview";
+import { GeometryNode } from "../nodes/geometry-node";
+import { MaterialNode } from "../nodes/material-node";
 
 interface WorkspacePageProps {
   params: {
     id: RouterInputs["workspace"]["get"]["id"];
-    initialNodeIds: string[];
   };
 }
 
@@ -34,20 +36,17 @@ const nodeTypes: NodeTypes = {
 } as const;
 
 export const Workspace = ({ params }: WorkspacePageProps) => {
-  const { id, initialNodeIds } = params;
-  const { handleMouseMove, render } = useWorkspaceSelectionPreview();
-
-  const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    handleCanvasClick,
-    onNodesDelete,
-  } = useGetWorkspaceNodes({
+  const { id } = params;
+  const { handleMouseMove, render } = useWorkspaceNodeSelectionPreview();
+  const { nodes } = useNodeStore((state) => state);
+  const { onNodesChange } = useWorkspaceUpdateNode({
     workspaceId: id,
-    initialNodeIds,
+  });
+  const { onClick: onWorkspaceClick } = useWorkspaceAddNode({
+    workspaceId: id,
+  });
+  const { onNodesDelete } = useWorkspaceDeleteNode({
+    workspaceId: id,
   });
 
   return (
@@ -55,12 +54,10 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
       <div className="relative h-full w-full">
         <ReactFlow
           nodes={nodes}
-          edges={edges}
           onNodesChange={onNodesChange}
           onNodesDelete={onNodesDelete}
-          onConnect={onConnect}
           nodeTypes={nodeTypes}
-          onClick={handleCanvasClick}
+          onClick={onWorkspaceClick}
           onMouseMove={handleMouseMove}
           connectionMode={ConnectionMode.Loose}
           selectionOnDrag={false}
@@ -74,10 +71,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
           <Panel position="bottom-right">
             <InfoCard
               title="Workspace Info"
-              items={[
-                { label: "nodes", value: nodes.length },
-                { label: "edges", value: edges.length },
-              ]}
+              items={[{ label: "nodes", value: nodes.length }]}
             />
           </Panel>
         </ReactFlow>
