@@ -27,7 +27,6 @@ export const createNodeStore = (initState: NodeState = defaultNodeState) => {
   return createStore<NodeStore>()((set) => ({
     ...initState,
     addNode: (node) => set((state) => ({ nodes: [...state.nodes, node] })),
-
     deleteNode: (id) =>
       set((state) => ({
         nodes: state.nodes.filter((n) => n.id !== id),

@@ -63,30 +63,29 @@ export default async function WorkspaceLayout({
   if (!workspace) {
     notFound();
   }
-  /**
-   * Prefetch node data using <HydrateClient> (tRPC SSR) & useSuspenseQuery (Tanstack Query)
-   */
+
+  /** Prefetch node data using <HydrateClient> (tRPC SSR) & useSuspenseQuery (Tanstack Query) */
   nodes.forEach((node) => {
     void api.node.data.get.prefetch({ id: node.id });
   });
 
   return (
-    <HydrateClient>
-      <div className="relative flex h-screen flex-col">
-        <div className="fixed inset-x-20 top-4 z-50 flex w-max items-center">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <EditorWorkspaceSelect />
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <EditorWorkspaceNameInput initialWorkspace={workspace} />
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
+    <div className="relative flex h-screen flex-col">
+      <div className="fixed inset-x-20 top-4 z-50 flex w-max items-center">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <EditorWorkspaceSelect />
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <EditorWorkspaceNameInput initialWorkspace={workspace} />
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
+      <HydrateClient>
         <NodeStoreProvider initialNodes={convertToBaseNode(nodes)}>
           <SelectionStoreProvider>
             <EditorStoreProvider>
@@ -95,7 +94,7 @@ export default async function WorkspaceLayout({
             </EditorStoreProvider>
           </SelectionStoreProvider>
         </NodeStoreProvider>
-      </div>
-    </HydrateClient>
+      </HydrateClient>
+    </div>
   );
 }

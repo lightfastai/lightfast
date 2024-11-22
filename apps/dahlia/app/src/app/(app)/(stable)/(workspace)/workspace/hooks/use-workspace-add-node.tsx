@@ -31,6 +31,7 @@ export const useWorkspaceAddNode = ({
   const { screenToFlowPosition } = useReactFlow();
   const create = api.node.create.useMutation({
     onMutate: async (newNode) => {
+      // Cancel any outgoing refetches
       await utils.node.data.get.cancel({ id: newNode.id });
 
       const optimisticNode: BaseNode = {

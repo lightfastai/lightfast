@@ -1,7 +1,7 @@
 import { RouterInputs } from "@repo/api";
 
 import { Workspace } from "../components/workspace/workspace";
-import { WorkspaceProvider } from "../components/workspace/workspace-provider";
+import { WorkspaceProvider } from "../providers/workspace-provider";
 
 interface WorkspacePageProps {
   params: {

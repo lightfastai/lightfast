@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from "react";
 import { useReactFlow, useStore, XYPosition } from "@xyflow/react";
 
 import { useDebounce } from "~/hooks/use-debounce";
-import { useSelectionStore } from "../providers/selection-store-provider";
 
 // Constants
 const PREVIEW_BASE_WIDTH = 96;
@@ -18,7 +17,6 @@ const PREVIEW_BASE_HEIGHT = 48;
 export const useWorkspaceNodeSelectionPreview = () => {
   const [position, setPosition] = useState<XYPosition | null>(null);
   const { flowToScreenPosition, screenToFlowPosition } = useReactFlow();
-  const { selection } = useSelectionStore((state) => state);
   const zoom = useStore((state) => state.transform[2]);
 
   /**
@@ -56,9 +54,6 @@ export const useWorkspaceNodeSelectionPreview = () => {
    */
   const handleMouseMove = useCallback(
     (event: React.MouseEvent) => {
-      // ensure calculations are only made when the preview is active
-      if (!selection) return;
-
       const newPosition = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -66,11 +61,11 @@ export const useWorkspaceNodeSelectionPreview = () => {
 
       debouncedUpdatePosition(newPosition);
     },
-    [selection, screenToFlowPosition, debouncedUpdatePosition],
+    [screenToFlowPosition, debouncedUpdatePosition],
   );
 
   const render = useCallback(() => {
-    if (!selection || !screenPosition) return null;
+    if (!screenPosition) return null;
 
     return (
       <div
@@ -83,7 +78,7 @@ export const useWorkspaceNodeSelectionPreview = () => {
         }}
       />
     );
-  }, [selection, screenPosition, calculatedPreviewSize]);
+  }, [screenPosition, calculatedPreviewSize]);
 
   return {
     render,
