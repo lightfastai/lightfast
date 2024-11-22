@@ -9,7 +9,11 @@ export const useCreateWorkspace = () => {
   const utils = api.useUtils();
   const { mutateAsync } = api.workspace.create.useMutation({
     onSuccess: (data) => {
-      utils.node.getAllNodes.invalidate({ workspaceId: data.id });
+      utils.workspace.getAll.invalidate();
+      toast({
+        title: "Workspace created",
+        description: "You can now start creating nodes",
+      });
       router.push(`/workspace/${data.id}`);
     },
     onError: (error) => {

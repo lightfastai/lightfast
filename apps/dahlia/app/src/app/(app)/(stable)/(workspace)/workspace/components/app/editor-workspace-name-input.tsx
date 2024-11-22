@@ -20,9 +20,9 @@ import { toast } from "@repo/ui/hooks/use-toast";
 
 import { useGetWorkspace } from "../../hooks/use-get-workspace";
 import {
-  useUpdateWorkspaceName,
+  useWorkspaceUpdateName,
   WorkspaceUpdateName,
-} from "../../hooks/use-update-workspace-name";
+} from "../../hooks/use-workspace-update-name";
 
 interface EditorWorkspaceNameInputProps {
   initialWorkspace: RouterOutputs["workspace"]["get"];
@@ -35,7 +35,7 @@ export const EditorWorkspaceNameInput = ({
     id: initialWorkspace.id,
     initialData: initialWorkspace,
   });
-  const { mutate } = useUpdateWorkspaceName();
+  const { mutate } = useWorkspaceUpdateName();
 
   const form = useForm({
     schema: UpdateNameWorkspaceSchema,

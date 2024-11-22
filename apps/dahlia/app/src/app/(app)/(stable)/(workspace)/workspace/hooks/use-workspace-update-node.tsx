@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Edge, NodeChange } from "@xyflow/react";
+import { NodeChange } from "@xyflow/react";
 
 import { RouterInputs } from "@repo/api";
 
@@ -7,11 +7,6 @@ import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/react";
 import { useNodeStore } from "../providers/node-store-provider";
 import { BaseNode } from "../types/node";
-
-interface FlowEdge extends Edge {
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-}
 
 interface UseGetWorkspaceNodesProps {
   workspaceId: RouterInputs["node"]["base"]["getAll"]["workspaceId"];

@@ -5,7 +5,7 @@ import { api } from "~/trpc/react";
 
 export type WorkspaceUpdateName = RouterInputs["workspace"]["updateName"];
 
-export const useUpdateWorkspaceName = () => {
+export const useWorkspaceUpdateName = () => {
   const utils = api.useUtils();
   const { mutate } = api.workspace.updateName.useMutation({
     onSuccess: (input) => {
