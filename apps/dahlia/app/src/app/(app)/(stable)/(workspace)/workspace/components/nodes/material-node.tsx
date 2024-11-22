@@ -21,9 +21,7 @@ import { api } from "~/trpc/react";
 import { BaseNode } from "../../types/node";
 
 export const MaterialNode = memo(({ type, id }: NodeProps<BaseNode>) => {
-  const { data } = api.node.getData.useQuery<Material>({
-    id,
-  });
+  const [data] = api.node.data.get.useSuspenseQuery<Material>({ id });
   return (
     <div
       key={id}

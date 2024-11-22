@@ -20,7 +20,7 @@ import { api } from "~/trpc/react";
 import { BaseNode } from "../../types/node";
 
 export const GeometryNode = ({ id, type }: NodeProps<BaseNode>) => {
-  const { data } = api.node.getData.useQuery<Geometry>({ id });
+  const [data] = api.node.data.get.useSuspenseQuery<Geometry>({ id });
   return (
     <BaseNodeComponent>
       <div

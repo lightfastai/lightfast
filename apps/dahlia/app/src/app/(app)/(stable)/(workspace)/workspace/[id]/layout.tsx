@@ -8,7 +8,7 @@ import {
   BreadcrumbSeparator,
 } from "@repo/ui/components/ui/breadcrumb";
 
-import { api } from "~/trpc/server";
+import { api, HydrateClient } from "~/trpc/server";
 import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";
 import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select";
@@ -63,31 +63,39 @@ export default async function WorkspaceLayout({
   if (!workspace) {
     notFound();
   }
+  /**
+   * Prefetch node data using <HydrateClient> (tRPC SSR) & useSuspenseQuery (Tanstack Query)
+   */
+  nodes.forEach((node) => {
+    void api.node.data.get.prefetch({ id: node.id });
+  });
 
   return (
-    <div className="relative flex h-screen flex-col">
-      <div className="fixed inset-x-20 top-4 z-50 flex w-max items-center">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <EditorWorkspaceSelect />
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <EditorWorkspaceNameInput initialWorkspace={workspace} />
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
+    <HydrateClient>
+      <div className="relative flex h-screen flex-col">
+        <div className="fixed inset-x-20 top-4 z-50 flex w-max items-center">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <EditorWorkspaceSelect />
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <EditorWorkspaceNameInput initialWorkspace={workspace} />
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
 
-      <NodeStoreProvider initialNodes={convertToBaseNode(nodes)}>
-        <SelectionStoreProvider>
-          <EditorStoreProvider>
-            {children}
-            <EditorCommandDialog />
-          </EditorStoreProvider>
-        </SelectionStoreProvider>
-      </NodeStoreProvider>
-    </div>
+        <NodeStoreProvider initialNodes={convertToBaseNode(nodes)}>
+          <SelectionStoreProvider>
+            <EditorStoreProvider>
+              {children}
+              <EditorCommandDialog />
+            </EditorStoreProvider>
+          </SelectionStoreProvider>
+        </NodeStoreProvider>
+      </div>
+    </HydrateClient>
   );
 }

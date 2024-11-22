@@ -31,10 +31,7 @@ export const useWorkspaceAddNode = ({
   const { screenToFlowPosition } = useReactFlow();
   const create = api.node.create.useMutation({
     onMutate: async (newNode) => {
-      await utils.node.getAllNodeIds.cancel({ workspaceId });
-
-      const previousIds =
-        utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
+      await utils.node.data.get.cancel({ id: newNode.id });
 
       const optimisticNode: BaseNode = {
         id: newNode.id,
@@ -45,64 +42,25 @@ export const useWorkspaceAddNode = ({
 
       addNode(optimisticNode);
 
-      utils.node.getAllNodeIds.setData({ workspaceId }, [
-        ...previousIds,
-        optimisticNode,
-      ]);
-
-      utils.node.get.setData(
-        { id: optimisticNode.id },
-        {
-          id: optimisticNode.id,
-          type: optimisticNode.type,
-          position: optimisticNode.position,
-        },
-      );
-
-      utils.node.getData.setData(
-        { id: optimisticNode.id },
+      utils.node.data.get.setData(
+        { id: newNode.id },
         newNode.data as Geometry | Material,
       );
 
-      return { optimisticNode, previousIds };
-    },
-
-    onSuccess: (result, variables, context) => {
-      if (!context) return;
-
-      const currentIds =
-        utils.node.getAllNodeIds.getData({ workspaceId }) ?? [];
-
-      utils.node.getAllNodeIds.setData(
-        { workspaceId },
-        currentIds.map((id) =>
-          id === context.optimisticNode.id ? result.id : id,
-        ),
-      );
-
-      utils.node.get.setData(
-        { id: result.id },
-        {
-          ...context.optimisticNode,
-          id: result.id,
-        },
-      );
-
-      utils.node.getData.setData({ id: result.id }, result.data);
+      return { optimisticNode };
     },
 
     onError: (err, newNode, context) => {
       if (!context) return;
+      console.error(err);
 
       deleteNode(context.optimisticNode.id);
 
-      utils.node.getAllNodeIds.setData({ workspaceId }, context.previousIds);
-      utils.node.get.setData({ id: context.optimisticNode.id }, undefined);
+      utils.node.data.get.setData({ id: newNode.id }, undefined);
     },
     onSettled: (newNode) => {
-      utils.node.getAllNodeIds.invalidate({ workspaceId });
       if (!newNode) return;
-      utils.node.get.invalidate({ id: newNode.id });
+      utils.node.data.get.invalidate({ id: newNode.id });
     },
   });
 
