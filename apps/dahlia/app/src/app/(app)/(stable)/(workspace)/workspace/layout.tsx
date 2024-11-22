@@ -10,7 +10,7 @@ export default function NetworkEditorLayout({
       {/* <ReactFlowProvider> */}
       <EditorHeaderMenu />
       {/* <EditorHeaderHelpers /> */}
-      {/* {children} */}
+      {children}
       {/* </ReactFlowProvider> */}
     </>
   );

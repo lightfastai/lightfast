@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm with-env next build",
-    "clean": "git clean -xdf .cache .next .turbo node_modules",
+    "clean": "git clean -xdf .cache .next .turbo node_modules .env.sentry-build-plugin",
     "dev": "pnpm with-env next dev",
     "format": "prettier --check . --ignore-path ../../../.gitignore",
     "lint": "eslint",
@@ -21,6 +21,7 @@
     "@repo/api": "workspace:*",
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:*",
+    "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/webgl": "workspace:*",
     "@sentry/nextjs": "^8",
@@ -42,7 +43,8 @@
     "superjson": "2.2.1",
     "three": "^0.169.0",
     "xstate": "^5.18.2",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

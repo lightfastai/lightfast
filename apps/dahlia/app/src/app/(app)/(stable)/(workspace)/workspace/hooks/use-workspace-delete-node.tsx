@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from "react";
 import { Edge } from "@xyflow/react";
 
 import { api } from "~/trpc/react";
-import { FlowNode } from "../../types/node";
+import { FlowNode } from "../types/node";
 
 interface UseWorkspaceDeleteNodeProps {
   workspaceId: string;
@@ -37,19 +37,20 @@ export const useWorkspaceDeleteNode = ({
       );
 
       // Remove the node data from the cache
-      utils.node.get.setData({ id, workspaceId }, undefined);
+      utils.node.get.setData({ id }, undefined);
 
       return { previousIds };
     },
     onError: (err, { id }, context) => {
       // If the mutation fails, restore the previous state
       if (!context) return;
+      console.error(err);
 
       utils.node.getAllNodeIds.setData({ workspaceId }, context.previousIds);
 
       // Refetch to ensure consistency
       utils.node.getAllNodeIds.invalidate({ workspaceId });
-      utils.node.get.invalidate({ id, workspaceId });
+      utils.node.get.invalidate({ id });
     },
     onSettled: () => {
       // Always invalidate queries after mutation
@@ -58,7 +59,7 @@ export const useWorkspaceDeleteNode = ({
   });
 
   const onNodesDelete = (nodesToDelete: FlowNode[]) => {
-    const nodeIds = nodesToDelete.map((node) => node.data.dbId);
+    const nodeIds = nodesToDelete.map((node) => node.id);
 
     // Remove connected edges
     setEdges(
@@ -70,7 +71,7 @@ export const useWorkspaceDeleteNode = ({
 
     // Delete nodes
     nodeIds.forEach((id) => {
-      mutate({ id, workspaceId });
+      mutate({ id });
     });
   };
 

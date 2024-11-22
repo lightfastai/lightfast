@@ -1,31 +1,11 @@
-"use client";
-
-import {
-  Background,
-  BackgroundVariant,
-  ConnectionMode,
-  NodeTypes,
-  Panel,
-  ReactFlow,
-} from "@xyflow/react";
-
-import { InfoCard } from "@repo/ui/components/info-card";
-
-import { PropertyInspector } from "../components/inspector/property-inspector";
-import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
-import { WebGLCanvas } from "../components/webgl/webgl-canvas";
-import { GeometryNode } from "../components/workspace/nodes/geometry-node";
-import { MaterialNode } from "../components/workspace/nodes/material-node";
-import { useWorkspaceFlow } from "../components/workspace/use-workspace-flow";
-import { useWorkspaceSelectionPreview } from "../components/workspace/use-workspace-selection-preview";
-import { useGetWorkspaceNodes } from "../hooks/use-get-workspace-nodes";
-
-import "@xyflow/react/dist/base.css";
-import "../components/workspace/workspace.css";
-
 import { RouterInputs } from "@repo/api";
 
-import { NetworkEditorContext } from "../state/context";
+import { api, HydrateClient } from "~/trpc/server";
+import { EditorCommandDialog } from "../components/app/editor-command-dialog";
+import { Workspace } from "../components/workspace/workspace";
+import { WorkspaceProvider } from "../components/workspace/workspace-provider";
+import { EditorStoreProvider } from "../providers/editor-store-provider";
+import { SelectionStoreProvider } from "../providers/selection-store-provider";
 
 interface WorkspacePageProps {
   params: {
@@ -33,74 +13,30 @@ interface WorkspacePageProps {
   };
 }
 
-const nodeTypes: NodeTypes = {
-  geometry: GeometryNode,
-  material: MaterialNode,
-} as const;
+const getWorkspaceNodes = async ({
+  id,
+}: RouterInputs["workspace"]["get"] & { id: string }) => {
+  const nodes = await api.node.getAllNodeIds({ workspaceId: id });
+  return nodes;
+};
 
-export default function WorkspacePage({ params }: WorkspacePageProps) {
+export default async function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
-  const state = NetworkEditorContext.useSelector((state) => state);
-  const { data: workspaceNodes, isLoading } = useGetWorkspaceNodes({
-    workspaceId: id,
+  const nodes = await getWorkspaceNodes({ id });
+  nodes.forEach((nodeId) => {
+    void api.node.get.prefetch({ id: nodeId });
+    void api.node.getData.prefetch({ id: nodeId });
   });
-
-  const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    handleCanvasClick,
-    onNodesDelete,
-  } = useWorkspaceFlow({
-    initialNodes: workspaceNodes ?? [],
-    workspaceId: id,
-  });
-
-  const { render, handleMouseMove } = useWorkspaceSelectionPreview({
-    active:
-      !!state.context.selectedGeometry || !!state.context.selectedMaterial,
-  });
-
   return (
-    <main className="relative flex-1 overflow-hidden">
-      <div className="relative h-full w-full">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodesDelete={onNodesDelete}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          onClick={handleCanvasClick}
-          onMouseMove={handleMouseMove}
-          connectionMode={ConnectionMode.Loose}
-          panOnDrag={!state.context.selectedGeometry}
-          selectionOnDrag={false}
-          panOnScroll={true}
-          zoomOnScroll={false}
-          proOptions={{ hideAttribution: true }}
-        >
-          {render()}
-
-          <Background variant={BackgroundVariant.Dots} />
-          <Panel position="bottom-right">
-            <InfoCard
-              title="Workspace Info"
-              items={[
-                { label: "nodes", value: nodes.length },
-                { label: "edges", value: edges.length },
-              ]}
-            />
-          </Panel>
-        </ReactFlow>
-      </div>
-      <PropertyInspector />
-      <WebGLCanvas>
-        <TextureRenderPipeline />
-      </WebGLCanvas>
-    </main>
+    <HydrateClient>
+      <SelectionStoreProvider>
+        <EditorStoreProvider>
+          <WorkspaceProvider>
+            <Workspace params={{ id, initialNodeIds: nodes }} />
+            <EditorCommandDialog />
+          </WorkspaceProvider>
+        </EditorStoreProvider>
+      </SelectionStoreProvider>
+    </HydrateClient>
   );
 }

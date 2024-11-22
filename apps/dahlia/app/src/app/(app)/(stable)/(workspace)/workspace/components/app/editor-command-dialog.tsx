@@ -20,36 +20,35 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
-import { NetworkEditorContext } from "../../state/context";
-import { $TextureTypes } from "../../types/texture.schema";
+import { useEditorStore } from "../../providers/editor-store-provider";
+import { useSelectionStore } from "../../providers/selection-store-provider";
 
 export const EditorCommandDialog = () => {
-  const state = NetworkEditorContext.useSelector((state) => state);
-  const machineRef = NetworkEditorContext.useActorRef();
+  const { setGeometry, setMaterial, clearSelection } = useSelectionStore(
+    (state) => state,
+  );
+
+  const { isCommandDialogOpen, setIsCommandDialogOpen } = useEditorStore(
+    (state) => state,
+  );
 
   /**
    * Handle geometry selection
    */
   const handleGeometrySelect = (geometryType: GeometryType) => {
     // Close the command dialog first
-    machineRef.send({ type: "TOGGLE_COMMAND" });
+    setIsCommandDialogOpen(false);
 
     // Notify parent component of the selected geometry
-    machineRef.send({
-      type: "SELECT_GEOMETRY",
-      geometry: geometryType,
-    });
+    setGeometry(geometryType);
   };
 
   const handleMaterialSelect = (materialType: MaterialType) => {
     // Close the command dialog first
-    machineRef.send({ type: "TOGGLE_COMMAND" });
+    setIsCommandDialogOpen(false);
 
     // Notify parent component of the selected material
-    machineRef.send({
-      type: "SELECT_MATERIAL",
-      material: materialType,
-    });
+    setMaterial(materialType);
   };
 
   /**
@@ -60,7 +59,7 @@ export const EditorCommandDialog = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        machineRef.send({ type: "TOGGLE_COMMAND" });
+        setIsCommandDialogOpen(true);
       }
     };
 
@@ -75,7 +74,7 @@ export const EditorCommandDialog = () => {
        */
       if ((e.metaKey || e.ctrlKey) && e.key === "z") {
         e.preventDefault();
-        machineRef.send({ type: "UNDO" });
+        setIsCommandDialogOpen(true);
       }
     };
 
@@ -90,7 +89,7 @@ export const EditorCommandDialog = () => {
        */
       if ((e.metaKey || e.ctrlKey) && e.key === "y" && e.shiftKey) {
         e.preventDefault();
-        machineRef.send({ type: "REDO" });
+        setIsCommandDialogOpen(true);
       }
     };
 
@@ -100,8 +99,8 @@ export const EditorCommandDialog = () => {
 
   return (
     <CommandDialog
-      open={state.context.isCommandOpen}
-      onOpenChange={() => machineRef.send({ type: "TOGGLE_COMMAND" })}
+      open={isCommandDialogOpen}
+      onOpenChange={() => setIsCommandDialogOpen(false)}
     >
       <Command>
         <CommandInput placeholder="Search a TOP..." />
@@ -145,19 +144,11 @@ export const EditorCommandDialog = () => {
             >
               <Label>Phong</Label>
             </CommandItem>
-            <CommandItem
-              onSelect={() => handleMaterialSelect($MaterialType.Enum.lambert)}
-            >
-              <Label>Lambert</Label>
-            </CommandItem>
           </CommandGroup>
           <CommandGroup heading="TOP">
             <CommandItem
               onSelect={() => {
-                machineRef.send({
-                  type: "SELECT_TEXTURE",
-                  texture: $TextureTypes.Enum.Noise,
-                });
+                // setTexture($TextureTypes.Enum.Noise);
               }}
               className="flex items-center gap-2"
             >
@@ -165,10 +156,7 @@ export const EditorCommandDialog = () => {
             </CommandItem>
             <CommandItem
               onSelect={() => {
-                machineRef.send({
-                  type: "SELECT_TEXTURE",
-                  texture: $TextureTypes.Enum.Limit,
-                });
+                // setTexture($TextureTypes.Enum.Limit);
               }}
               className="flex items-center gap-2"
             >
@@ -178,7 +166,7 @@ export const EditorCommandDialog = () => {
           <CommandGroup heading="Utilities">
             <CommandItem
               onSelect={() => {
-                machineRef.send({ type: "CLEAR" });
+                // clearSelection();
               }}
               className="flex items-center gap-2"
             >

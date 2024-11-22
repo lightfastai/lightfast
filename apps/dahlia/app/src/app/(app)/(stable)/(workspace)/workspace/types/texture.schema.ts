@@ -3,15 +3,13 @@ import { z } from "zod";
 import { $Limit } from "@repo/webgl";
 import { $PerlinNoise3D } from "@repo/webgl/shaders/pnoise";
 
-import { $Node } from "./primitives.schema";
-
 export const $TextureTypeValues = ["Noise", "Limit"] as const;
 
 // Texture Types
 export const $TextureTypes = z.enum($TextureTypeValues);
 
 // Base schema that all textures share
-const $TextureShared = $Node.extend({
+const $TextureShared = z.object({
   input: z
     .number()
     .nullable()

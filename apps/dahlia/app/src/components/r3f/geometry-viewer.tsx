@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
@@ -24,7 +25,12 @@ export const GeometryViewer = ({
   shouldRenderAxes: boolean;
   shouldRender: boolean;
 }) => {
-  if (!shouldRender) return null;
+  const renderers = useMemo(() => {
+    return geometries.map((geometry) => (
+      <GeometryRenderer key={1} geometry={geometry} />
+    ));
+  }, [geometries]);
+
   return (
     <Canvas>
       <PerspectiveCamera
@@ -41,10 +47,7 @@ export const GeometryViewer = ({
 
       {shouldRenderGrid && <gridHelper args={[50, 100, "white", "gray"]} />}
       {shouldRenderAxes && <axesHelper args={[50]} />}
-      {geometries.map((geometry) => (
-        <GeometryRenderer geometry={geometry} />
-      ))}
-
+      {renderers}
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
     </Canvas>
