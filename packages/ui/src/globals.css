@@ -37,8 +37,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --workspace-grid-dot: 240 4.8% 95.9% / 0.75;
-    --workspace-grid-line: 240 4.8% 95.9% / 0.25;
   }
 
   .dark {
