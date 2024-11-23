@@ -1,17 +1,29 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
-import { limitFragmentShader, limitVertexShader } from "@repo/webgl";
+import { Texture } from "@repo/db/schema";
+import {
+  limitFragmentShader,
+  limitVertexShader,
+} from "@repo/webgl/shaders/limit/limit.glsl";
 
+import { api } from "~/trpc/react";
 import { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { TextureRenderNode } from "../types/render";
 import { useGetTextureData } from "./use-get-texture-data";
 
 export const useUpdateTextureLimit = (): TextureRenderNode[] => {
-  const { textures, rtargets } = useGetTextureData();
+  const { targets } = useGetTextureData();
+  const [textures] = api.useQueries((t) =>
+    Object.entries(targets).map(([id, texture]) =>
+      t.node.data.get<Texture>({
+        id,
+      }),
+    ),
+  );
 
   return useMemo(() => {
-    return Object.values(textures)
+    return Object.values(textures?.data ?? {})
       .filter(
         (texture): texture is Extract<typeof texture, { type: "Limit" }> =>
           texture.type === "Limit",
@@ -20,7 +32,7 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
         const { uniforms: u } = texture;
         const uniforms = {
           u_texture: {
-            value: texture.input && rtargets[texture.input]?.texture,
+            value: texture.input && targets[texture.input]?.texture,
           },
           u_quantizationSteps: { value: u.u_quantizationSteps },
         };
@@ -39,5 +51,5 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
           },
         };
       });
-  }, [rtargets, textures]);
+  }, [targets]);
 };

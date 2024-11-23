@@ -13,7 +13,7 @@ export const useRenderTargetPipeline = ({
   meshes,
 }: TextureRenderPipeline) => {
   const { gl } = useThree();
-  const { rtargets } = useGetTextureData();
+  const { targets } = useGetTextureData();
   const scene = useMemo(() => new THREE.Scene(), []);
   const camera = useMemo(
     () => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1),
@@ -22,7 +22,7 @@ export const useRenderTargetPipeline = ({
   const geometry = useMemo(() => new THREE.PlaneGeometry(2, 2), []);
 
   useFrame((state) => {
-    Object.entries(rtargets).forEach(([key, target]) => {
+    Object.entries(targets).forEach(([key, target]) => {
       const run = onEachFrame[Number(key)];
       if (run) {
         run(state);

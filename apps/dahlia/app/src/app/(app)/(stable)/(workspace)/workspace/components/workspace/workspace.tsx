@@ -66,33 +66,31 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   };
 
   return (
-    <main className="relative flex-1 overflow-hidden">
-      <div className="relative h-full w-full">
-        <ReactFlow
-          nodes={nodes}
-          onNodesChange={onWorkspaceNodesChange}
-          onNodesDelete={onNodesDelete}
-          nodeTypes={nodeTypes}
-          onClick={onClick}
-          onMouseMove={onMouseMove}
-          connectionMode={ConnectionMode.Loose}
-          selectionOnDrag={false}
-          panOnScroll={true}
-          zoomOnScroll={false}
-          proOptions={{ hideAttribution: true }}
-        >
-          {selection && render()}
+    <div className="relative h-full w-full">
+      <ReactFlow
+        nodes={nodes}
+        onNodesChange={onWorkspaceNodesChange}
+        onNodesDelete={onNodesDelete}
+        nodeTypes={nodeTypes}
+        onClick={onClick}
+        onMouseMove={onMouseMove}
+        connectionMode={ConnectionMode.Loose}
+        selectionOnDrag={false}
+        panOnScroll={true}
+        zoomOnScroll={false}
+        proOptions={{ hideAttribution: true }}
+      >
+        {selection && render()}
 
-          <Background variant={BackgroundVariant.Dots} />
-          <Panel position="bottom-right">
-            <InfoCard
-              title="Workspace Info"
-              items={[{ label: "nodes", value: nodes.length }]}
-            />
-          </Panel>
-        </ReactFlow>
-        <PropertyInspector />
-      </div>
-    </main>
+        <Background variant={BackgroundVariant.Dots} />
+        <Panel position="bottom-right">
+          <InfoCard
+            title="Workspace Info"
+            items={[{ label: "nodes", value: nodes.length }]}
+          />
+        </Panel>
+      </ReactFlow>
+      <PropertyInspector />
+    </div>
   );
 };

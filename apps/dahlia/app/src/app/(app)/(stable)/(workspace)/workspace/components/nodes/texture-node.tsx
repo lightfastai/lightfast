@@ -1,6 +1,6 @@
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { NodeProps } from "@xyflow/react";
-import { ArrowRightIcon, View } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 
 import { Texture } from "@repo/db/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
@@ -12,17 +12,23 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { api } from "~/trpc/react";
+import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 import { BaseNode } from "../../types/node";
+import { WebGLView } from "../webgl/webgl-primitives";
 
 export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
     const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
+    const { targets, addTexture } = useTextureRenderStore((state) => state);
+    useEffect(() => {
+      addTexture(id);
+    }, [id]);
     return (
-      <BaseNodeComponent selected={selected}>
+      <BaseNodeComponent id={id} selected={selected}>
         <div
           key={id}
           className={cn(
-            `cursor-pointer flex-col gap-1 border p-1 text-card-foreground shadow-sm`,
+            `relative cursor-pointer flex-col gap-1 border p-1 text-card-foreground shadow-sm`,
           )}
         >
           <div className="flex flex-row items-center justify-between">
@@ -61,22 +67,22 @@ export const TextureNode = memo(
             </div>
 
             <div className="h-32 w-72 border">
-              <View
+              <WebGLView
                 style={{
                   position: "relative",
                   top: 0,
                   left: 0,
                   width: "100%",
                   height: "100%",
-                  zIndex: 1000,
                 }}
               >
                 <color attach="background" args={["black"]} />
                 <mesh>
                   <planeGeometry args={[4, 4]} />
-                  <meshBasicMaterial map={data.texture} />
+                  {/* <meshBasicMaterial map={targets[id]?.texture} /> */}
+                  <meshBasicMaterial color="red" />
                 </mesh>
-              </View>
+              </WebGLView>
             </div>
 
             <div className="flex items-center justify-center border">

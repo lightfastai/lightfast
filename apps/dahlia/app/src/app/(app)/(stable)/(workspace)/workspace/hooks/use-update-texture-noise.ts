@@ -1,25 +1,35 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
+import { Texture } from "@repo/db/schema";
 import {
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
-} from "@repo/webgl/shaders/pnoise";
+} from "@repo/webgl/shaders/pnoise/pnoise.glsl";
 
+import { api } from "~/trpc/react";
 import { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { TextureRenderNode } from "../types/render";
 import { useGetTextureData } from "./use-get-texture-data";
 
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {
-  const { textures, rtargets } = useGetTextureData();
+  const { targets } = useGetTextureData();
+  const queries = api.useQueries((t) =>
+    Object.entries(targets).map(([id, texture]) =>
+      t.node.data.get<Texture>({
+        id,
+      }),
+    ),
+  );
 
   return useMemo(() => {
-    return Object.values(textures)
+    return queries
+      .map((query) => query.data)
       .filter(
         (texture): texture is Extract<typeof texture, { type: "Noise" }> =>
-          texture.type === "Noise",
+          texture?.type === "Noise",
       )
-      .map((texture) => {
+      .map((texture, index) => {
         const { uniforms: u } = texture;
         const uniforms = {
           u_period: { value: u.u_period },
@@ -32,7 +42,8 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
           },
           u_amplitude: { value: u.u_amplitude },
           u_texture: {
-            value: texture.input && rtargets[texture.input]?.texture,
+            // value: texture.input && targets[texture.input]?.texture,
+            value: null,
           },
           u_offset: { value: u.u_offset },
           u_exponent: { value: u.u_exponent },
@@ -52,5 +63,5 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
           },
         };
       });
-  }, [rtargets, textures]);
+  }, [queries]);
 };

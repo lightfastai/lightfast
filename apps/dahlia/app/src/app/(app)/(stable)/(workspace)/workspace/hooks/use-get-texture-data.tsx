@@ -1,16 +1,6 @@
-import { NetworkEditorContext } from "../state/context";
+import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
 export const useGetTextureData = () => {
-  const textures = NetworkEditorContext.useSelector(
-    (state) => state.context.textures,
-  );
-
-  const rtargets = NetworkEditorContext.useSelector(
-    (state) => state.context.rtargets,
-  );
-
-  return {
-    textures,
-    rtargets,
-  };
+  const { targets } = useTextureRenderStore((state) => state);
+  return { targets };
 };
