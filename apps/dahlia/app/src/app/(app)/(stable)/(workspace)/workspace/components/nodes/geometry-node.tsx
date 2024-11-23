@@ -1,8 +1,10 @@
-import { memo } from "react";
-import { NodeProps } from "@xyflow/react";
+import { memo, useEffect } from "react";
+import { NodeProps, useUpdateNodeInternals } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
+import { Geometry } from "node_modules/@repo/db/dist/schema";
 
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
 import {
   ToggleGroup,
@@ -10,10 +12,21 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
+import {
+  CENTER_OF_WORLD,
+  WORLD_CAMERA_POSITION_CLOSE,
+} from "~/components/constants";
+import { GeometryViewer } from "~/components/r3f/geometry-viewer";
+import { api } from "~/trpc/react";
 import { BaseNode } from "../../types/node";
 
-export const GeometryNodeComponent = ({ id, type }: NodeProps<BaseNode>) => {
-  // const [data] = api.node.data.get.useSuspenseQuery<Geometry>({ id });
+export const GeometryNode = memo(({ id, type }: NodeProps<BaseNode>) => {
+  const [data] = api.node.data.get.useSuspenseQuery<Geometry>({ id });
+  const updateNodeInternals = useUpdateNodeInternals();
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [id, updateNodeInternals]);
+
   return (
     <BaseNodeComponent>
       <div
@@ -42,7 +55,7 @@ export const GeometryNodeComponent = ({ id, type }: NodeProps<BaseNode>) => {
         </div>
 
         <div className="flex h-32 w-72 items-center justify-center border">
-          {/* {data && data.shouldRenderInNode && (
+          {data && data.shouldRenderInNode && (
             <GeometryViewer
               geometries={[
                 {
@@ -56,19 +69,17 @@ export const GeometryNodeComponent = ({ id, type }: NodeProps<BaseNode>) => {
               shouldRenderAxes={false}
               shouldRender={data.shouldRenderInNode ?? false}
             />
-          )} */}
+          )}
         </div>
 
         <div className="flex items-center justify-end">
-          {/* <Checkbox
+          <Checkbox
             id={`wireframe-${id}`}
             checked={data?.wireframe ?? false}
             // onCheckedChange={() => {}}
-          /> */}
+          />
         </div>
       </div>
     </BaseNodeComponent>
   );
-};
-
-export const GeometryNode = memo(GeometryNodeComponent);
+});
