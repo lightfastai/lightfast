@@ -21,7 +21,6 @@ import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node
 import { useWorkspaceUpdateNode } from "../../hooks/use-workspace-update-node";
 import { useNodeStore } from "../../providers/node-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
-import { PropertyInspector } from "../inspector/property-inspector";
 import { GeometryNode } from "../nodes/geometry-node";
 import { MaterialNode } from "../nodes/material-node";
 import { TextureNode } from "../nodes/texture-node";
@@ -90,7 +89,6 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
           />
         </Panel>
       </ReactFlow>
-      <PropertyInspector />
     </div>
   );
 };

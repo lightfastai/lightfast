@@ -9,11 +9,11 @@ import {
 
 import { api } from "~/trpc/react";
 import { WebGLRootState } from "../components/webgl/webgl-primitives";
+import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { TextureRenderNode } from "../types/render";
-import { useGetTextureData } from "./use-get-texture-data";
 
 export const useUpdateTextureLimit = (): TextureRenderNode[] => {
-  const { targets } = useGetTextureData();
+  const { targets } = useTextureRenderStore((state) => state);
   const [textures] = api.useQueries((t) =>
     Object.entries(targets).map(([id, texture]) =>
       t.node.data.get<Texture>({
@@ -21,7 +21,6 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
       }),
     ),
   );
-
   return useMemo(() => {
     return Object.values(textures?.data ?? {})
       .filter(

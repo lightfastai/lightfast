@@ -66,6 +66,10 @@ export const $NoiseTransform = z.object({
     x: { min: -1000, max: 1000, default: 0 },
     y: { min: -1000, max: 1000, default: 0 },
   }).describe("The offset of the noise."),
+  u_rotation: createConstrainedVec2({
+    x: { min: -Math.PI, max: Math.PI, default: 0 },
+    y: { min: -Math.PI, max: Math.PI, default: 0 },
+  }).describe("The rotation of the noise."),
 });
 
 export const $PerlinNoise3D = $Shared.merge($NoiseTransform).merge($NoiseBase);
@@ -88,6 +92,7 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_exponent: 1,
     u_scale: { x: 1, y: 1 },
     u_translate: { x: 0, y: 0 },
+    u_rotation: { x: 0, y: 0 },
     u_texture: null,
   });
 };

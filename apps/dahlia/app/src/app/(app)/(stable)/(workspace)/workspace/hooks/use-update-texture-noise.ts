@@ -9,11 +9,11 @@ import {
 
 import { api } from "~/trpc/react";
 import { WebGLRootState } from "../components/webgl/webgl-primitives";
+import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { TextureRenderNode } from "../types/render";
-import { useGetTextureData } from "./use-get-texture-data";
 
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {
-  const { targets } = useGetTextureData();
+  const { targets } = useTextureRenderStore((state) => state);
   const queries = api.useQueries((t) =>
     Object.entries(targets).map(([id, texture]) =>
       t.node.data.get<Texture>({
@@ -40,6 +40,9 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
           u_translate: {
             value: new THREE.Vector2(u.u_translate.x, u.u_translate.y),
           },
+          u_rotation: {
+            value: new THREE.Vector2(u.u_rotation.x, u.u_rotation.y),
+          },
           u_amplitude: { value: u.u_amplitude },
           u_texture: {
             // value: texture.input && targets[texture.input]?.texture,
@@ -56,7 +59,7 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
         });
 
         return {
-          id: texture.id,
+          id: "8iei626exioo85rhzi7hn",
           shader,
           onEachFrame: (_: WebGLRootState) => {
             // uniforms.u_time.value = state.clock.elapsedTime;

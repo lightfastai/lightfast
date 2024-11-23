@@ -30,7 +30,7 @@ export const createTextureRenderStore = (
       set((state) => ({
         targets: {
           ...state.targets,
-          [id]: new THREE.WebGLRenderTarget(2, 2),
+          [id]: new THREE.WebGLRenderTarget(256, 256),
         },
       })),
   }));

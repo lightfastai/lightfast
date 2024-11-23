@@ -9,7 +9,7 @@ import { WebGLRootState } from "../components/webgl/webgl-primitives";
  * @param onEachFrame - A function to run on each frame.
  */
 export interface TextureRenderNode {
-  id: number;
+  id: string;
   shader: THREE.ShaderMaterial;
   onEachFrame: (state: WebGLRootState) => void;
 }
@@ -29,6 +29,6 @@ export interface TextureRenderNode {
  * });
  */
 export interface TextureRenderPipeline {
-  onEachFrame: Record<number, (state: WebGLRootState) => void>;
-  meshes: Record<number, THREE.Mesh>;
+  onEachFrame: Record<string, (state: WebGLRootState) => void>;
+  meshes: Record<string, THREE.Mesh>;
 }

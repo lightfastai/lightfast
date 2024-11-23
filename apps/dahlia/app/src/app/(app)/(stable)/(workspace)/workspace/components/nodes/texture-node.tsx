@@ -33,7 +33,7 @@ export const TextureNode = memo(
         >
           <div className="flex flex-row items-center justify-between">
             <Label className="font-mono text-xs font-bold uppercase tracking-widest">
-              {data.type}
+              {data.type} {id}
             </Label>
             <ToggleGroup type="single">
               <ToggleGroupItem
@@ -67,22 +67,22 @@ export const TextureNode = memo(
             </div>
 
             <div className="h-32 w-72 border">
-              <WebGLView
-                style={{
-                  position: "relative",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
-                <color attach="background" args={["black"]} />
-                <mesh>
-                  <planeGeometry args={[4, 4]} />
-                  {/* <meshBasicMaterial map={targets[id]?.texture} /> */}
-                  <meshBasicMaterial color="red" />
-                </mesh>
-              </WebGLView>
+              {targets[id]?.texture && (
+                <WebGLView
+                  style={{
+                    position: "relative",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <mesh>
+                    <planeGeometry args={[4, 4]} />
+                    <meshBasicMaterial map={targets[id].texture} />
+                  </mesh>
+                </WebGLView>
+              )}
             </div>
 
             <div className="flex items-center justify-center border">
