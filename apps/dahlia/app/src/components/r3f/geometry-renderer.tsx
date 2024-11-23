@@ -5,48 +5,28 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
-import { Geometry } from "~/app/(app)/(stable)/(network-editor)/types/primitives";
-import {
-  $GeometryType,
-  $MaterialType,
-} from "~/app/(app)/(stable)/(network-editor)/types/primitives.schema";
+import { $GeometryType, Geometry } from "@repo/db/schema";
 
 export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
   const meshRef = useRef<Mesh>(null);
 
   let Geometry;
   switch (geometry.type) {
-    case $GeometryType.Enum.Box:
+    case $GeometryType.Enum.box:
       Geometry = <boxGeometry />;
       break;
-    case $GeometryType.Enum.Cylinder:
-      Geometry = <cylinderGeometry />;
+    case $GeometryType.Enum.sphere:
+      Geometry = <sphereGeometry />;
       break;
-    case $GeometryType.Enum.Tetrahedron:
+    case $GeometryType.Enum.tetrahedron:
       Geometry = <tetrahedronGeometry />;
       break;
     /**
      * @note Only used for render of Material
      */
-    case $GeometryType.Enum.Torus:
+    case $GeometryType.Enum.torus:
       Geometry = <torusGeometry args={[1, 0.4, 16, 100]} />;
       break;
-  }
-  let Material;
-  switch (geometry.material?.type) {
-    case $MaterialType.Enum.Phong:
-      Material = (
-        <meshPhongMaterial
-          wireframe={geometry.wireframe}
-          color={geometry.material.color}
-        />
-      );
-      break;
-    /**
-     * Default to basic material.
-     */
-    default:
-      Material = <meshBasicMaterial wireframe={geometry.wireframe} />;
   }
 
   /**
@@ -64,7 +44,6 @@ export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
 
   return (
     <mesh
-      key={geometry.id}
       position={
         new Vector3(
           geometry.position.x,
@@ -76,7 +55,7 @@ export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
       ref={meshRef}
     >
       {Geometry}
-      {Material}
+      <meshBasicMaterial wireframe={geometry.wireframe} />
     </mesh>
   );
 };
