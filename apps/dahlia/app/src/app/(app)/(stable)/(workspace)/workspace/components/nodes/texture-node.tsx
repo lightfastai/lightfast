@@ -1,4 +1,4 @@
-import { memo, useEffect } from "react";
+import { memo } from "react";
 import { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
@@ -19,10 +19,7 @@ import { WebGLView } from "../webgl/webgl-primitives";
 export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
     const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
-    const { targets, addTexture } = useTextureRenderStore((state) => state);
-    useEffect(() => {
-      addTexture(id);
-    }, [id]);
+    const { targets } = useTextureRenderStore((state) => state);
     return (
       <BaseNodeComponent id={id} selected={selected}>
         <div

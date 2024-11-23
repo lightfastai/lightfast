@@ -1,6 +1,8 @@
+import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
+import { $NodeType } from "@repo/db/schema";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,12 +15,19 @@ import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";
 import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
-import { WebGLCanvas } from "../components/webgl/webgl-canvas";
 import { EditorStoreProvider } from "../providers/editor-store-provider";
 import { NodeStoreProvider } from "../providers/node-store-provider";
 import { SelectionStoreProvider } from "../providers/selection-store-provider";
 import { TextureRenderStoreProvider } from "../providers/texture-render-store-provider";
 import { convertToBaseNode } from "../types/node";
+
+const WebGLCanvas = dynamic(
+  () =>
+    import("../components/webgl/webgl-canvas").then((mod) => mod.WebGLCanvas),
+  {
+    ssr: false,
+  },
+);
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -72,6 +81,8 @@ export default async function WorkspaceLayout({
     void api.node.data.get.prefetch({ id: node.id });
   });
 
+  const baseNodes = convertToBaseNode(nodes);
+
   return (
     <div className="relative flex h-screen flex-col">
       <div className="fixed inset-x-20 top-4 z-50 flex w-max items-center">
@@ -89,10 +100,14 @@ export default async function WorkspaceLayout({
       </div>
 
       <HydrateClient>
-        <NodeStoreProvider initialNodes={convertToBaseNode(nodes)}>
+        <NodeStoreProvider initialNodes={baseNodes}>
           <SelectionStoreProvider>
             <EditorStoreProvider>
-              <TextureRenderStoreProvider>
+              <TextureRenderStoreProvider
+                initialNodes={baseNodes.filter(
+                  (node) => node.type === $NodeType.Enum.texture,
+                )}
+              >
                 <WebGLCanvas
                   style={{
                     position: "absolute",

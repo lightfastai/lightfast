@@ -9,6 +9,7 @@ import {
   initTextureRenderState,
   TextureRenderStore,
 } from "../stores/texture-render-store";
+import { BaseNode } from "../types/node";
 
 export type TextureRenderStoreApi = ReturnType<typeof createTextureRenderStore>;
 
@@ -18,14 +19,18 @@ export const TextureRenderStoreContext = createContext<
 
 export interface TextureRenderStoreProviderProps {
   children: ReactNode;
+  initialNodes: BaseNode[];
 }
 
 export const TextureRenderStoreProvider = ({
   children,
+  initialNodes,
 }: TextureRenderStoreProviderProps) => {
   const storeRef = useRef<TextureRenderStoreApi>();
   if (!storeRef.current) {
-    storeRef.current = createTextureRenderStore(initTextureRenderState());
+    storeRef.current = createTextureRenderStore(
+      initTextureRenderState(initialNodes),
+    );
   }
 
   return (

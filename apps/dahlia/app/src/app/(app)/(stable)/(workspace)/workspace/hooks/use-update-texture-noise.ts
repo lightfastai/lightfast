@@ -12,6 +12,8 @@ import { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { TextureRenderNode } from "../types/render";
 
+type NoiseTexture = Extract<Texture, { type: "Noise" }>;
+
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const queries = api.useQueries((t) =>
@@ -23,13 +25,24 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
   );
 
   return useMemo(() => {
-    return queries
-      .map((query) => query.data)
-      .filter(
-        (texture): texture is Extract<typeof texture, { type: "Noise" }> =>
-          texture?.type === "Noise",
-      )
-      .map((texture, index) => {
+    // Create a map of query results with their IDs
+    const textureDataMap = Object.entries(targets).reduce<
+      Record<string, Texture>
+    >((acc, [id], index) => {
+      if (queries[index]?.data) {
+        acc[id] = queries[index].data;
+        return acc;
+      } else {
+        return acc;
+      }
+    }, {});
+
+    return Object.entries(textureDataMap)
+      .filter((entry): entry is [string, NoiseTexture] => {
+        const [_, texture] = entry;
+        return texture?.type === "Noise";
+      })
+      .map(([id, texture]) => {
         const { uniforms: u } = texture;
         const uniforms = {
           u_period: { value: u.u_period },
@@ -45,7 +58,6 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
           },
           u_amplitude: { value: u.u_amplitude },
           u_texture: {
-            // value: texture.input && targets[texture.input]?.texture,
             value: null,
           },
           u_offset: { value: u.u_offset },
@@ -59,12 +71,12 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
         });
 
         return {
-          id: "8iei626exioo85rhzi7hn",
+          id,
           shader,
           onEachFrame: (_: WebGLRootState) => {
             // uniforms.u_time.value = state.clock.elapsedTime;
           },
         };
       });
-  }, [queries]);
+  }, [queries, targets]);
 };
