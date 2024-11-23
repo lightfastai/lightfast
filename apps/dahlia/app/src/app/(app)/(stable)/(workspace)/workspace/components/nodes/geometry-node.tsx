@@ -33,7 +33,6 @@ export const GeometryNode = memo(
         <div
           className={cn(
             "flex cursor-pointer flex-col gap-y-1 p-1 text-card-foreground shadow-sm",
-            "node-container",
           )}
         >
           <div className="flex flex-row items-center justify-between">
