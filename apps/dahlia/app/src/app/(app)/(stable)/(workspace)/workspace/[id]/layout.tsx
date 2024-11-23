@@ -12,6 +12,8 @@ import { api, HydrateClient } from "~/trpc/server";
 import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";
 import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select";
+import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
+import { WebGLCanvas } from "../components/webgl/webgl-canvas";
 import { EditorStoreProvider } from "../providers/editor-store-provider";
 import { NodeStoreProvider } from "../providers/node-store-provider";
 import { SelectionStoreProvider } from "../providers/selection-store-provider";
@@ -91,6 +93,19 @@ export default async function WorkspaceLayout({
           <SelectionStoreProvider>
             <EditorStoreProvider>
               <TextureRenderStoreProvider>
+                <WebGLCanvas
+                  style={{
+                    position: "absolute",
+                    pointerEvents: "none",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    zIndex: 1,
+                  }}
+                >
+                  <TextureRenderPipeline />
+                </WebGLCanvas>
                 {children}
                 <EditorCommandDialog />
               </TextureRenderStoreProvider>

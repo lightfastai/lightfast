@@ -2,15 +2,12 @@
 
 import type { DialogProps } from "@radix-ui/react-dialog";
 import * as React from "react";
+import { DialogTitle } from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@repo/ui/components/ui/dialog";
+import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog";
 import { cn } from "@repo/ui/lib/utils";
 
 const Command = React.forwardRef<
