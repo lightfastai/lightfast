@@ -1,8 +1,8 @@
 import { memo, useEffect } from "react";
 import { NodeProps, useUpdateNodeInternals } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
-import { Geometry } from "node_modules/@repo/db/dist/schema";
 
+import { Geometry } from "@repo/db/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
