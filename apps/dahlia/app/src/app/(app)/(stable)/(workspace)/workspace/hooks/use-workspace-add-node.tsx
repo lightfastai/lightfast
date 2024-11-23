@@ -4,12 +4,15 @@ import {
   $GeometryType,
   $MaterialType,
   $NodeType,
+  $TextureTypes,
   createDefaultGeometry,
   createDefaultMaterial,
+  createDefaultTexture,
   Geometry,
   GeometryType,
   Material,
   MaterialType,
+  TextureType,
 } from "@repo/db/schema";
 import { nanoid } from "@repo/lib";
 
@@ -97,6 +100,19 @@ export const useWorkspaceAddNode = ({
         position,
         data: createDefaultMaterial({
           type: selection.value as MaterialType,
+        }),
+      });
+    } else if (
+      selection.type === $NodeType.enum.texture &&
+      $TextureTypes.safeParse(selection.value).success
+    ) {
+      create.mutate({
+        id: nanoid(),
+        workspaceId,
+        type: $NodeType.enum.texture,
+        position,
+        data: createDefaultTexture({
+          type: selection.value as TextureType,
         }),
       });
     }

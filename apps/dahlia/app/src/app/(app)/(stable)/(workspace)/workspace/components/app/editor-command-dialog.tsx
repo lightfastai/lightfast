@@ -6,8 +6,10 @@ import { Circle, Square, Triangle } from "lucide-react";
 import {
   $GeometryType,
   $MaterialType,
+  $TextureTypes,
   GeometryType,
   MaterialType,
+  TextureType,
 } from "@repo/db/schema";
 import {
   Command,
@@ -24,9 +26,8 @@ import { useEditorStore } from "../../providers/editor-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 
 export const EditorCommandDialog = () => {
-  const { setGeometry, setMaterial, clearSelection } = useSelectionStore(
-    (state) => state,
-  );
+  const { setGeometry, setMaterial, setTexture, clearSelection } =
+    useSelectionStore((state) => state);
 
   const { isCommandDialogOpen, setIsCommandDialogOpen } = useEditorStore(
     (state) => state,
@@ -49,6 +50,14 @@ export const EditorCommandDialog = () => {
 
     // Notify parent component of the selected material
     setMaterial(materialType);
+  };
+
+  const handleTextureSelect = (textureType: TextureType) => {
+    // Close the command dialog first
+    setIsCommandDialogOpen(false);
+
+    // Notify parent component of the selected texture
+    setTexture(textureType);
   };
 
   /**
@@ -147,23 +156,19 @@ export const EditorCommandDialog = () => {
           </CommandGroup>
           <CommandGroup heading="TOP">
             <CommandItem
-              onSelect={() => {
-                // setTexture($TextureTypes.Enum.Noise);
-              }}
+              onSelect={() => handleTextureSelect($TextureTypes.Enum.Noise)}
               className="flex items-center gap-2"
             >
               <Label>Noise</Label>
             </CommandItem>
             <CommandItem
-              onSelect={() => {
-                // setTexture($TextureTypes.Enum.Limit);
-              }}
+              onSelect={() => handleTextureSelect($TextureTypes.Enum.Limit)}
               className="flex items-center gap-2"
             >
               <Label>Limit</Label>
             </CommandItem>
           </CommandGroup>
-          <CommandGroup heading="Utilities">
+          {/* <CommandGroup heading="Utilities">
             <CommandItem
               onSelect={() => {
                 // clearSelection();
@@ -172,7 +177,7 @@ export const EditorCommandDialog = () => {
             >
               <Label>Clear Canvas</Label>
             </CommandItem>
-          </CommandGroup>
+          </CommandGroup> */}
         </CommandList>
       </Command>
     </CommandDialog>

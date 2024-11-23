@@ -24,6 +24,7 @@ import { useSelectionStore } from "../../providers/selection-store-provider";
 import { PropertyInspector } from "../inspector/property-inspector";
 import { GeometryNode } from "../nodes/geometry-node";
 import { MaterialNode } from "../nodes/material-node";
+import { TextureNode } from "../nodes/texture-node";
 
 interface WorkspacePageProps {
   params: {
@@ -34,6 +35,7 @@ interface WorkspacePageProps {
 const nodeTypes: NodeTypes = {
   geometry: GeometryNode,
   material: MaterialNode,
+  texture: TextureNode,
 } as const;
 
 export const Workspace = ({ params }: WorkspacePageProps) => {

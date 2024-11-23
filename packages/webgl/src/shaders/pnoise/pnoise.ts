@@ -4,8 +4,6 @@ import zodToJsonSchema from "zod-to-json-schema";
 
 import { createConstrainedVec2 } from "../../schema/vec2";
 import { $Shared } from "../shared/schema";
-import perlinNoise3DFragmentShader from "./pnoise.frag";
-import perlinNoise3DVertexShader from "./pnoise.vert";
 
 export const $NoiseBase = z.object({
   // noise
@@ -93,6 +91,3 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_texture: null,
   });
 };
-
-export { perlinNoise3DVertexShader };
-export { perlinNoise3DFragmentShader };

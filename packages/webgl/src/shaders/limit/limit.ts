@@ -2,9 +2,6 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import limitFragmentShader from "./limit.frag";
-import limitVertexShader from "./limit.vert";
-
 export const $Limit = z.object({
   u_texture: z
     .number()
@@ -22,15 +19,12 @@ export type LimitParams = z.infer<typeof $Limit>;
 
 export const $LimitJsonSchema = zodToJsonSchema($Limit) as JSONSchema7;
 
+export const LimitDescription =
+  "A type of texture functionality that limits the color values of a texture to a certain number of steps.";
+
 export const createDefaultLimit = (): LimitParams => {
   return $Limit.parse({
     u_texture: null,
     u_quantizationSteps: 1.01,
   });
 };
-
-export const LimitDescription =
-  "A type of texture functionality that limits the color values of a texture to a certain number of steps.";
-
-export { limitVertexShader };
-export { limitFragmentShader };

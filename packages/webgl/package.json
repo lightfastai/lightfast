@@ -12,6 +12,10 @@
       "types": "./dist/shaders/pnoise/pnoise.d.ts",
       "default": "./src/shaders/pnoise/pnoise.ts"
     },
+    "./shaders/limit": {
+      "types": "./dist/shaders/limit/limit.d.ts",
+      "default": "./src/shaders/limit/limit.ts"
+    },
     "./schema/vec3": {
       "types": "./dist/schema/vec3.d.ts",
       "default": "./src/schema/vec3.ts"

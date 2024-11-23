@@ -5,8 +5,6 @@ import { $Limit } from "./shaders/limit/limit";
 import {
   $PerlinNoise3D,
   PerlinNoise3DDescription,
-  perlinNoise3DFragmentShader,
-  perlinNoise3DVertexShader,
   u_harmonics,
 } from "./shaders/pnoise/pnoise";
 
@@ -37,8 +35,6 @@ export {
   $Limit,
   $LimitJsonSchema,
   createDefaultLimit,
-  limitFragmentShader,
-  limitVertexShader,
   LimitDescription,
 } from "./shaders/limit/limit";
 
@@ -65,8 +61,8 @@ export const $TextureSystemJsonSchema = {
       description: PerlinNoise3DDescription,
       properties: {
         uniforms: u_harmonics,
-        vertexShader: perlinNoise3DVertexShader,
-        fragmentShader: perlinNoise3DFragmentShader,
+        // vertexShader: perlinNoise3DVertexShader,
+        // fragmentShader: perlinNoise3DFragmentShader,
       },
     },
     // {

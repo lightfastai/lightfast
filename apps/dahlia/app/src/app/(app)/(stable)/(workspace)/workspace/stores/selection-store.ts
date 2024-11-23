@@ -5,18 +5,20 @@ import {
   GeometryType,
   MaterialType,
   NodeType,
+  TextureType,
 } from "@repo/db/schema";
 
 interface SelectionState {
   selection: {
     type: NodeType;
-    value: GeometryType | MaterialType;
+    value: GeometryType | MaterialType | TextureType;
   } | null;
 }
 
 export type SelectionActions = {
   setGeometry: (geometry: GeometryType) => void;
   setMaterial: (material: MaterialType) => void;
+  setTexture: (texture: TextureType) => void;
   clearSelection: () => void;
 };
 
@@ -42,6 +44,10 @@ export const createSelectionStore = (
     setMaterial: (material: MaterialType) =>
       set(() => ({
         selection: { type: $NodeType.Enum.material, value: material },
+      })),
+    setTexture: (texture: TextureType) =>
+      set(() => ({
+        selection: { type: $NodeType.Enum.texture, value: texture },
       })),
     clearSelection: () => set(() => ({ selection: null })),
   }));
