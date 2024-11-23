@@ -16,7 +16,6 @@ import { RouterInputs } from "@repo/api";
 import { InfoCard } from "@repo/ui/components/info-card";
 
 import { useWorkspaceAddNode } from "../../hooks/use-workspace-add-node";
-import { useWorkspaceDeleteNode } from "../../hooks/use-workspace-delete-node";
 import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
 import { useWorkspaceUpdateNode } from "../../hooks/use-workspace-update-node";
 import { useNodeStore } from "../../providers/node-store-provider";
@@ -41,13 +40,13 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   const { nodes } = useNodeStore((state) => state);
   const { selection } = useSelectionStore((state) => state);
   const { handleMouseMove, render } = useWorkspaceNodeSelectionPreview();
-  const { onNodesChange } = useWorkspaceUpdateNode({
+  const { onNodesChange: onWorkspaceNodesChange } = useWorkspaceUpdateNode({
     workspaceId: id,
   });
   const { onClick: onWorkspaceClick } = useWorkspaceAddNode({
     workspaceId: id,
   });
-  const { onNodesDelete } = useWorkspaceDeleteNode();
+  // const { onNodesDelete } = useWorkspaceDeleteNode();
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
   // we don't want to add a node
@@ -68,8 +67,8 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
       <div className="relative h-full w-full">
         <ReactFlow
           nodes={nodes}
-          onNodesChange={onNodesChange}
-          onNodesDelete={onNodesDelete}
+          onNodesChange={onWorkspaceNodesChange}
+          // onNodesDelete={onNodesDelete}
           nodeTypes={nodeTypes}
           onClick={onClick}
           onMouseMove={onMouseMove}

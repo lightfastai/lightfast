@@ -1,4 +1,4 @@
-import { NodeChange } from "@xyflow/react";
+import { applyNodeChanges, OnNodesChange } from "@xyflow/react";
 import { createStore } from "zustand";
 
 import { BaseNode } from "../types/node";
@@ -10,7 +10,7 @@ interface NodeState {
 export type NodeActions = {
   addNode: (node: BaseNode) => void;
   deleteNode: (id: string) => void;
-  onNodesChange: (changes: NodeChange[]) => void;
+  onNodesChange: OnNodesChange<BaseNode>;
 };
 
 export type NodeStore = NodeState & NodeActions;
@@ -32,21 +32,8 @@ export const createNodeStore = (initState: NodeState = defaultNodeState) => {
         nodes: state.nodes.filter((n) => n.id !== id),
       })),
     onNodesChange: (changes) =>
-      set((state) => {
-        changes.forEach((change) => {
-          /**
-           * @todo: handle other change types
-           */
-          if (change.type === "position") {
-            state.nodes = state.nodes.map((node) => {
-              if (node.id === change.id && change.position) {
-                return { ...node, position: change.position };
-              }
-              return node;
-            });
-          }
-        });
-        return { nodes: state.nodes };
-      }),
+      set((state) => ({
+        nodes: applyNodeChanges(changes, state.nodes),
+      })),
   }));
 };
