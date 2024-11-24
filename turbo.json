@@ -40,6 +40,15 @@
       "cache": false,
       "persistent": true
     },
+    "migrate": {
+      "cache": false
+    },
+    "migrate:generate": {
+      "cache": false
+    },
+    "migrate:generate:custom": {
+      "cache": false
+    },
     "ui-add": {
       "cache": false,
       "interactive": true
