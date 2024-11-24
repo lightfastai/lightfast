@@ -16,7 +16,7 @@ export const useNodeAddEdge = () => {
         source: newEdge.edge.source,
         target: newEdge.edge.target,
         createdAt: new Date(),
-        updatedAt: null,
+        updatedAt: new Date(),
       };
 
       addEdge(optimisticEdge);
@@ -31,14 +31,11 @@ export const useNodeAddEdge = () => {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      const newEdge = {
-        id: nanoid(),
-        source: connection.source,
-        target: connection.target,
-      };
-
       // Then send to the server
-      mutate({ id: newEdge.id, edge: connection });
+      mutate({
+        id: nanoid(),
+        edge: { source: connection.source, target: connection.target },
+      });
     },
     [addEdge, mutate],
   );
