@@ -13,7 +13,8 @@ import { BaseEdge } from "../types/node";
 export const useNodeAddEdge = () => {
   const { edges, addEdge, deleteEdge } = useEdgeStore((state) => state);
   const { nodes } = useNodeStore((state) => state);
-  const { mutateAsync } = api.edge.addEdge.useMutation({
+
+  const addEdgeMutation = api.edge.addEdge.useMutation({
     onMutate: async (newEdge) => {
       const optimisticEdge: BaseEdge = {
         id: newEdge.id,
@@ -36,26 +37,57 @@ export const useNodeAddEdge = () => {
     },
   });
 
+  const replaceEdgeMutation = api.edge.replaceEdge.useMutation({
+    onMutate: async ({ oldEdgeId, newEdge }) => {
+      const optimisticEdge: BaseEdge = {
+        id: newEdge.id,
+        source: newEdge.source,
+        target: newEdge.target,
+      };
+      const oldEdge = edges.find((e) => e.id === oldEdgeId);
+      if (oldEdge) {
+        deleteEdge(oldEdgeId);
+      }
+      addEdge(optimisticEdge);
+
+      return { optimisticEdge, oldEdge };
+    },
+    onError: (err, vars, context) => {
+      if (!context) return;
+      deleteEdge(context.optimisticEdge.id);
+      if (context.oldEdge) {
+        addEdge(context.oldEdge);
+      }
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "Failed to replace edge",
+      });
+    },
+  });
+
   const isEdgeValid = useCallback(
     (source: string, target: string) => {
       // check if the target node exists
       const targetNode = nodes.find((n) => n.id === target);
       if (!targetNode) return false;
 
-      // if there already is an existing connection with the same target, return false
-      if (
-        edges.some((edge) => edge.source === source && edge.target === target)
-      )
-        return false;
-
-      // check if the target node has reached the maximum number of incoming edges
+      // Get the maximum allowed edges for this node type
       const maxEdges = getMaxTargetEdges(targetNode.type);
       const currentEdgeCount = edges.filter(
         (edge) => edge.target === target,
       ).length;
 
-      // if the target node has reached the maximum number of incoming edges, return false
-      if (currentEdgeCount >= maxEdges) {
+      // if the target node has reached the maximum number of incoming edges
+      // and there's no existing connection to replace, return false
+      const existingEdge = edges.find(
+        (edge) => edge.target === target && edge.source === source,
+      );
+      const hasExistingConnection = edges.some(
+        (edge) => edge.target === target,
+      );
+
+      if (currentEdgeCount >= maxEdges && !hasExistingConnection) {
         toast({
           variant: "destructive",
           description: `${targetNode.type} nodes cannot accept more than ${maxEdges} incoming connections`,
@@ -63,7 +95,6 @@ export const useNodeAddEdge = () => {
         return false;
       }
 
-      // if the edge is valid, return true
       return true;
     },
     [nodes, edges],
@@ -77,21 +108,36 @@ export const useNodeAddEdge = () => {
           return;
         }
 
-        // Proceed with edge creation
-        await mutateAsync({
-          id: nanoid(),
-          edge: {
-            source: connection.source,
-            target: connection.target,
-          },
-        });
+        // Check if there's an existing edge to the target
+        const existingEdge = edges.find(
+          (edge) => edge.target === connection.target,
+        );
+
+        if (existingEdge) {
+          // Replace the existing edge
+          await replaceEdgeMutation.mutateAsync({
+            oldEdgeId: existingEdge.id,
+            newEdge: {
+              id: nanoid(),
+              source: connection.source,
+              target: connection.target,
+            },
+          });
+        } else {
+          // Create a new edge
+          await addEdgeMutation.mutateAsync({
+            id: nanoid(),
+            edge: {
+              source: connection.source,
+              target: connection.target,
+            },
+          });
+        }
       } catch (error) {
-        // Handle error appropriately
         console.error(error);
-        // Maybe show a toast notification
       }
     },
-    [mutateAsync, isEdgeValid],
+    [addEdgeMutation, replaceEdgeMutation, edges, isEdgeValid],
   );
 
   return { onConnect };
