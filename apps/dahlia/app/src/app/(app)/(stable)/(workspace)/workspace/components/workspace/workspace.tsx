@@ -17,6 +17,7 @@ import { InfoCard } from "@repo/ui/components/info-card";
 
 import { useNodeAddEdge } from "../../hooks/use-node-add-edge";
 import { useWorkspaceAddNode } from "../../hooks/use-workspace-add-node";
+import { useWorkspaceDeleteEdge } from "../../hooks/use-workspace-delete-edge";
 import { useWorkspaceDeleteNode } from "../../hooks/use-workspace-delete-node";
 import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
 import { useWorkspaceUpdateNode } from "../../hooks/use-workspace-update-node";
@@ -53,6 +54,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   });
   const { onNodesDelete } = useWorkspaceDeleteNode();
   const { onConnect } = useNodeAddEdge();
+  const { onEdgesDelete } = useWorkspaceDeleteEdge();
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
   // we don't want to add a node
@@ -74,6 +76,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         nodes={nodes}
         edges={edges}
         onEdgesChange={onEdgesChange}
+        onEdgesDelete={onEdgesDelete}
         onNodesChange={onWorkspaceNodesChange}
         onNodesDelete={onNodesDelete}
         onConnect={onConnect}
