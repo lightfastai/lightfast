@@ -15,10 +15,12 @@ import "./workspace.css";
 import { RouterInputs } from "@repo/api";
 import { InfoCard } from "@repo/ui/components/info-card";
 
+import { useNodeAddEdge } from "../../hooks/use-node-add-edge";
 import { useWorkspaceAddNode } from "../../hooks/use-workspace-add-node";
 import { useWorkspaceDeleteNode } from "../../hooks/use-workspace-delete-node";
 import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
 import { useWorkspaceUpdateNode } from "../../hooks/use-workspace-update-node";
+import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 import { GeometryNode } from "../nodes/geometry-node";
@@ -41,6 +43,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   const { id } = params;
   const { nodes } = useNodeStore((state) => state);
   const { selection } = useSelectionStore((state) => state);
+  const { edges, onEdgesChange } = useEdgeStore((state) => state);
   const { handleMouseMove, render } = useWorkspaceNodeSelectionPreview();
   const { onNodesChange: onWorkspaceNodesChange } = useWorkspaceUpdateNode({
     workspaceId: id,
@@ -49,6 +52,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
     workspaceId: id,
   });
   const { onNodesDelete } = useWorkspaceDeleteNode();
+  const { onConnect } = useNodeAddEdge();
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
   // we don't want to add a node
@@ -68,8 +72,11 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
     <div className="relative h-full w-full">
       <ReactFlow
         nodes={nodes}
+        edges={edges}
+        onEdgesChange={onEdgesChange}
         onNodesChange={onWorkspaceNodesChange}
         onNodesDelete={onNodesDelete}
+        onConnect={onConnect}
         nodeTypes={nodeTypes}
         onClick={onClick}
         onMouseMove={onMouseMove}

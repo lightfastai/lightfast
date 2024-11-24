@@ -15,11 +15,12 @@ import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";
 import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select";
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
+import { EdgeStoreProvider } from "../providers/edge-store-provider";
 import { EditorStoreProvider } from "../providers/editor-store-provider";
 import { NodeStoreProvider } from "../providers/node-store-provider";
 import { SelectionStoreProvider } from "../providers/selection-store-provider";
 import { TextureRenderStoreProvider } from "../providers/texture-render-store-provider";
-import { convertToBaseNode } from "../types/node";
+import { convertToBaseEdge, convertToBaseNode } from "../types/node";
 
 const WebGLCanvas = dynamic(
   () =>
@@ -62,14 +63,27 @@ const getWorkspaceNodeBaseAll = async ({
   return nodes;
 };
 
+/**
+ * Get workspace edges
+ */
+const getWorkspaceEdgeAll = async ({
+  workspaceId,
+}: RouterInputs["edge"]["getAll"]): Promise<
+  RouterOutputs["edge"]["getAll"]
+> => {
+  const edges = await api.edge.getAll({ workspaceId });
+  return edges;
+};
+
 export default async function WorkspaceLayout({
   children,
   params,
 }: WorkspaceLayoutProps) {
   const { id } = params;
-  const [workspace, nodes] = await Promise.all([
+  const [workspace, nodes, edges] = await Promise.all([
     getWorkspace({ id }),
     getWorkspaceNodeBaseAll({ workspaceId: id }),
+    getWorkspaceEdgeAll({ workspaceId: id }),
   ]);
 
   if (!workspace) {
@@ -82,6 +96,7 @@ export default async function WorkspaceLayout({
   });
 
   const baseNodes = convertToBaseNode(nodes);
+  const baseEdges = convertToBaseEdge(edges);
 
   return (
     <div className="relative flex h-screen flex-col">
@@ -101,31 +116,33 @@ export default async function WorkspaceLayout({
 
       <HydrateClient>
         <NodeStoreProvider initialNodes={baseNodes}>
-          <SelectionStoreProvider>
-            <EditorStoreProvider>
-              <TextureRenderStoreProvider
-                initialNodes={baseNodes.filter(
-                  (node) => node.type === $NodeType.Enum.texture,
-                )}
-              >
-                <WebGLCanvas
-                  style={{
-                    position: "absolute",
-                    pointerEvents: "none",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    zIndex: 1,
-                  }}
+          <EdgeStoreProvider initialEdges={baseEdges}>
+            <SelectionStoreProvider>
+              <EditorStoreProvider>
+                <TextureRenderStoreProvider
+                  initialNodes={baseNodes.filter(
+                    (node) => node.type === $NodeType.Enum.texture,
+                  )}
                 >
-                  <TextureRenderPipeline />
-                </WebGLCanvas>
-                {children}
-                <EditorCommandDialog />
-              </TextureRenderStoreProvider>
-            </EditorStoreProvider>
-          </SelectionStoreProvider>
+                  <WebGLCanvas
+                    style={{
+                      position: "absolute",
+                      pointerEvents: "none",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      zIndex: 1,
+                    }}
+                  >
+                    <TextureRenderPipeline />
+                  </WebGLCanvas>
+                  {children}
+                  <EditorCommandDialog />
+                </TextureRenderStoreProvider>
+              </EditorStoreProvider>
+            </SelectionStoreProvider>
+          </EdgeStoreProvider>
         </NodeStoreProvider>
       </HydrateClient>
     </div>

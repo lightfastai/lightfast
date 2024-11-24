@@ -1,4 +1,4 @@
-import type { Node } from "@xyflow/react";
+import type { Edge, Node } from "@xyflow/react";
 
 import { RouterOutputs } from "@repo/api";
 
@@ -16,3 +16,14 @@ export const convertToBaseNode = (
     ...node,
     data: {},
   }));
+
+export type BaseEdge = Edge & RouterOutputs["edge"]["getAll"][number];
+
+/**
+ * We have to convert the base edge to an edge because the data is not
+ * included in the base edge. If data is ever included in the base edge
+ * we can remove this conversion.
+ */
+export const convertToBaseEdge = (
+  edges: RouterOutputs["edge"]["getAll"],
+): BaseEdge[] => edges;

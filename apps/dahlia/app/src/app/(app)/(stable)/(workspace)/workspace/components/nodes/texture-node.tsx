@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { NodeProps } from "@xyflow/react";
+import { Handle, NodeProps, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
 import { Texture } from "@repo/db/schema";
@@ -17,7 +17,7 @@ import { BaseNode } from "../../types/node";
 import { WebGLView } from "../webgl/webgl-primitives";
 
 export const TextureNode = memo(
-  ({ id, type, selected }: NodeProps<BaseNode>) => {
+  ({ id, type, selected, isConnectable }: NodeProps<BaseNode>) => {
     const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
     const { targets } = useTextureRenderStore((state) => state);
     return (
@@ -52,15 +52,12 @@ export const TextureNode = memo(
             </ToggleGroup>
           </div>
           <div className="mt-1 flex flex-row gap-1">
-            <div className="flex items-center justify-center border">
-              {/* <Button
-                ref={inputButtonRef}
-                className={cn(
-                  "h-10 w-3 border-b border-t px-0 py-0",
-                  texture.input && "ring-1 ring-muted-foreground",
-                )}
-                variant="ghost"
-              /> */}
+            <div className="flex items-center justify-center">
+              <Handle
+                type="target"
+                position={Position.Left}
+                className="h-10 w-3"
+              />
             </div>
 
             <div className="h-32 w-72 border">
@@ -82,19 +79,12 @@ export const TextureNode = memo(
               )}
             </div>
 
-            <div className="flex items-center justify-center border">
-              {/* <Button
-                ref={outputButtonRef}
-                className="h-10 w-3 border-b border-t px-0 py-0"
-                variant="ghost"
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  machineRef.send({
-                    type: "START_CONNECTION",
-                    sourceId: textureId,
-                  });
-                }}
-              /> */}
+            <div className="flex items-center justify-center">
+              <Handle
+                type="source"
+                position={Position.Right}
+                className="h-10 w-3"
+              />
             </div>
           </div>
         </div>
