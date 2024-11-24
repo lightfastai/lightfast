@@ -6,7 +6,7 @@ import { useEdgeStore } from "../providers/edge-store-provider";
 
 export const useWorkspaceDeleteEdge = () => {
   const { deleteEdge, addEdge, edges } = useEdgeStore((state) => state);
-  const deleteEdges = api.edge.deleteEdge.useMutation({
+  const { mutateAsync } = api.edge.deleteEdge.useMutation({
     onMutate: (id) => {
       const edge = edges.find((e) => e.id === id.id);
       if (!edge) return;
@@ -17,16 +17,17 @@ export const useWorkspaceDeleteEdge = () => {
     },
     onError: (err, id, context) => {
       if (!context) return;
+      console.error(err);
       addEdge(context.edge);
     },
   });
   const onEdgesDelete = useCallback(
     (edges: Edge[]) => {
       edges.forEach((edge) => {
-        deleteEdges.mutate({ id: edge.id });
+        mutateAsync({ id: edge.id });
       });
     },
-    [deleteEdges],
+    [mutateAsync],
   );
 
   return { onEdgesDelete };

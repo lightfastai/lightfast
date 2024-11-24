@@ -13,14 +13,12 @@ import { BaseEdge } from "../types/node";
 export const useNodeAddEdge = () => {
   const { edges, addEdge, deleteEdge } = useEdgeStore((state) => state);
   const { nodes } = useNodeStore((state) => state);
-  const { mutate } = api.edge.addEdge.useMutation({
+  const { mutateAsync } = api.edge.addEdge.useMutation({
     onMutate: async (newEdge) => {
       const optimisticEdge: BaseEdge = {
         id: newEdge.id,
         source: newEdge.edge.source,
         target: newEdge.edge.target,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
 
       addEdge(optimisticEdge);
@@ -38,34 +36,49 @@ export const useNodeAddEdge = () => {
     },
   });
 
-  const isEdgeValid = (target: string) => {
-    const targetNode = nodes.find((n) => n.id === target);
-    if (!targetNode) return;
-    const maxEdges = getMaxTargetEdges(targetNode.type);
-    const currentEdgeCount = edges.filter(
-      (edge) => edge.target === target,
-    ).length;
-    console.log(currentEdgeCount, maxEdges);
-    if (currentEdgeCount >= maxEdges) {
-      toast({
-        variant: "destructive",
-        description: `${targetNode.type} nodes cannot accept more than ${maxEdges} incoming connections`,
-      });
-      return false;
-    }
-    return true;
-  };
+  const isEdgeValid = useCallback(
+    (source: string, target: string) => {
+      // check if the target node exists
+      const targetNode = nodes.find((n) => n.id === target);
+      if (!targetNode) return false;
+
+      // if there already is an existing connection with the same target, return false
+      if (
+        edges.some((edge) => edge.source === source && edge.target === target)
+      )
+        return false;
+
+      // check if the target node has reached the maximum number of incoming edges
+      const maxEdges = getMaxTargetEdges(targetNode.type);
+      const currentEdgeCount = edges.filter(
+        (edge) => edge.target === target,
+      ).length;
+
+      // if the target node has reached the maximum number of incoming edges, return false
+      if (currentEdgeCount >= maxEdges) {
+        toast({
+          variant: "destructive",
+          description: `${targetNode.type} nodes cannot accept more than ${maxEdges} incoming connections`,
+        });
+        return false;
+      }
+
+      // if the edge is valid, return true
+      return true;
+    },
+    [nodes, edges],
+  );
 
   const onConnect = useCallback(
     async (connection: Connection) => {
       try {
         // Validate before making the API call
-        if (!isEdgeValid(connection.target)) {
+        if (!isEdgeValid(connection.source, connection.target)) {
           return;
         }
 
         // Proceed with edge creation
-        mutate({
+        await mutateAsync({
           id: nanoid(),
           edge: {
             source: connection.source,
@@ -78,7 +91,7 @@ export const useNodeAddEdge = () => {
         // Maybe show a toast notification
       }
     },
-    [mutate],
+    [mutateAsync, isEdgeValid],
   );
 
   return { onConnect };
