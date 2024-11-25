@@ -25,7 +25,7 @@ import { Slider } from "@repo/ui/components/ui/slider";
 import { isColor, isNumber, isVec2, isVec3 } from "@repo/webgl";
 
 import { PropertyInputNumber } from "./property-input";
-import { extractMinMax, extractUniformName } from "./utils";
+import { extractUniformName, extractValueFieldMetadata } from "./utils";
 
 interface FormFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -54,14 +54,14 @@ export const PropertyFormField = <T extends FieldValues>({
 
   const renderField = (field: ControllerRenderProps<T, Path<T>>) => {
     if (isNumber(field.value)) {
-      const { min, max } = extractMinMax(fieldSchema);
+      const { min, max, step } = extractValueFieldMetadata(fieldSchema);
       return (
         <div className="flex items-center gap-2">
           <Slider
             className="flex-1"
             min={min}
             max={max}
-            step={0.1}
+            step={step}
             value={[field.value]}
             onValueChange={(values) => {
               const newValue = values[0];
@@ -73,7 +73,7 @@ export const PropertyFormField = <T extends FieldValues>({
             {...field}
             min={min}
             max={max}
-            step={0.1}
+            step={step}
             className="w-20"
             onChange={(e) => {
               const newValue = Number(e.target.value);
@@ -86,15 +86,16 @@ export const PropertyFormField = <T extends FieldValues>({
       );
     }
 
-    if (isVec3(field.value)) {
+    if (isVec2(field.value)) {
+      const { min, max, step } = extractValueFieldMetadata(fieldSchema);
       return (
-        <div className="flex gap-2">
-          {["x", "y", "z"].map((axis) => (
+        <div className="flex w-full gap-2">
+          {["x", "y"].map((axis) => (
             <PropertyInputNumber
               key={axis}
-              min={0}
-              max={0}
-              step={0}
+              min={min}
+              max={max}
+              step={step}
               {...field}
               onChange={(e) => {
                 const newValue = Number(e.target.value);
@@ -108,15 +109,16 @@ export const PropertyFormField = <T extends FieldValues>({
       );
     }
 
-    if (isVec2(field.value)) {
+    if (isVec3(field.value)) {
+      const { min, max, step } = extractValueFieldMetadata(fieldSchema);
       return (
-        <div className="flex w-full gap-2">
-          {["x", "y"].map((axis) => (
+        <div className="flex gap-2">
+          {["x", "y", "z"].map((axis) => (
             <PropertyInputNumber
               key={axis}
-              min={0}
-              max={0}
-              step={0}
+              min={min}
+              max={max}
+              step={step}
               {...field}
               onChange={(e) => {
                 const newValue = Number(e.target.value);

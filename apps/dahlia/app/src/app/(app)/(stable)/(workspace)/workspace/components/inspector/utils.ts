@@ -1,8 +1,15 @@
 import { z } from "zod";
 
-interface MinMax {
+export const initDefaultMetadata = () => ({
+  min: 0,
+  max: 1,
+  step: 0.1,
+});
+
+interface ValueFieldMetadata {
   min: number;
   max: number;
+  step: number;
 }
 
 /**
@@ -10,7 +17,9 @@ interface MinMax {
  * @param schema - The zod schema to extract the min and max values from.
  * @returns An object with min and max values.
  */
-export const extractMinMax = (schema: z.ZodTypeAny): MinMax => {
+export const extractValueFieldMetadata = (
+  schema: z.ZodTypeAny,
+): ValueFieldMetadata => {
   // Recursively unwrap default, optional, and nullable schemas
   while (
     schema instanceof z.ZodDefault ||
@@ -20,23 +29,22 @@ export const extractMinMax = (schema: z.ZodTypeAny): MinMax => {
     schema = schema._def.innerType as z.ZodTypeAny;
   }
 
-  const minMax: MinMax = {
-    min: 0,
-    max: 1,
-  };
+  const metadata: ValueFieldMetadata = initDefaultMetadata();
 
   if (schema instanceof z.ZodNumber) {
     const checks = schema._def.checks;
     for (const check of checks) {
       if (check.kind === "min") {
-        minMax.min = check.value;
+        metadata.min = check.value;
       } else if (check.kind === "max") {
-        minMax.max = check.value;
+        metadata.max = check.value;
+      } else if (check.kind === "int") {
+        metadata.step = 1;
       }
     }
   }
 
-  return minMax;
+  return metadata;
 };
 
 /**
