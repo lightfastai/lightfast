@@ -16,12 +16,12 @@ export type InspectorStore = InspectorState & InspectorActions;
 
 export const initInspectorState = (): InspectorState => ({
   selected: null,
-  isOpen: false,
+  isOpen: true,
 });
 
 export const defaultInspectorState: InspectorState = {
   selected: null,
-  isOpen: false,
+  isOpen: true,
 };
 
 export const createInspectorStore = (

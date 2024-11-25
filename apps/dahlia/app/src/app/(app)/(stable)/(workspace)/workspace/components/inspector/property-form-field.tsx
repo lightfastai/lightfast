@@ -173,7 +173,7 @@ export const PropertyFormField = <T extends FieldValues>({
       name={name}
       control={control}
       render={({ field }) => (
-        <FormItem className="grid grid-cols-8 gap-4 px-2">
+        <FormItem className="grid grid-cols-8 gap-4 px-4">
           <FormLabel className="col-span-3 flex items-center justify-end font-mono text-xs uppercase">
             {extractUniformName(label)}
           </FormLabel>
