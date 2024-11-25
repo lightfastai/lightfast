@@ -93,16 +93,15 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         );
       }
 
-      // Handle Node Deletions if there are nodes to delete, but don't need to handle edges
-      // as they are handled in db CASCADE DELETE.
+      // Handle Node Deletions recursively
       if (nodesToDelete.length > 0) {
-        // Collect all connections to recreate
-        const connectionsToRecreate: Connection[] = nodesToDelete.flatMap(
-          (deletedNode) => {
-            const incomers = getIncomers(deletedNode, nodes, edges);
-            const outgoers = getOutgoers(deletedNode, nodes, edges);
+        const updated = nodesToDelete.reduce(async (accPromise, node) => {
+          const acc = await accPromise;
+          const incomers = getIncomers(node, acc.nodes, acc.edges);
+          const outgoers = getOutgoers(node, acc.nodes, acc.edges);
 
-            return incomers.flatMap((incomer) =>
+          const connectionsToRecreate: Connection[] = incomers.flatMap(
+            (incomer) =>
               outgoers.map(
                 (outgoer) =>
                   ({
@@ -110,25 +109,43 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
                     target: outgoer.id,
                   }) as Connection,
               ),
-            );
-          },
-        );
+          );
 
-        // Delete Nodes (this will also cascade delete associated edges optimistically)
-        await Promise.all(
-          nodesToDelete.map((node) => deleteNodeMutate({ id: node.id })),
-        );
+          // Remove the node from the accumulated nodes and related edges
+          const filteredNodes = acc.nodes.filter((n) => n.id !== node.id);
+          const filteredEdges = acc.edges.filter(
+            (e) => e.source !== node.id && e.target !== node.id,
+          );
 
-        // Recreate the connections using the existing addEdge handler
-        connectionsToRecreate.forEach((connection) => {
-          addEdgeMutate({
+          // Add new connections to the accumulated edges
+          const newEdges = connectionsToRecreate.map((connection) => ({
             id: nanoid(),
+            source: connection.source,
+            target: connection.target,
+          }));
+
+          return {
+            nodes: filteredNodes,
+            edges: [...filteredEdges, ...newEdges],
+          };
+        }, Promise.resolve({ nodes, edges }));
+
+        const { nodes: newNodes, edges: newEdges } = await updated;
+
+        // **Separate Promise.all calls to ensure deletions complete before additions**
+        for (const node of nodesToDelete) {
+          await deleteNodeMutate({ id: node.id });
+        }
+
+        for (const edge of newEdges) {
+          await addEdgeMutate({
+            id: edge.id,
             edge: {
-              source: connection.source,
-              target: connection.target,
+              source: edge.source,
+              target: edge.target,
             },
           });
-        });
+        }
       }
     },
     [nodes, edges, deleteEdgeMutate, deleteNodeMutate, addEdgeMutate],
