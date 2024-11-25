@@ -1,35 +1,41 @@
 import { api } from "~/trpc/react";
+import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
 
 export const useDeleteNode = () => {
   const utils = api.useUtils();
   const { deleteNode, addNode, nodes } = useNodeStore((state) => state);
+  const { deleteEdge, addEdge, edges } = useEdgeStore((state) => state);
   const { mutateAsync } = api.node.delete.useMutation({
     onMutate: async ({ id }) => {
       // Find the node to delete
       const context = nodes.find((n) => n.id === id);
       if (!context) return;
 
-      // Snapshot the previous value
-      // Optimistically remove the node from the UI
+      // Identify all edges connected to the node
+      const connectedEdges = edges.filter(
+        (edge) => edge.source === id || edge.target === id,
+      );
+
+      // Optimistically remove the node
       deleteNode(id);
 
-      // IMPORTANT: We don't need to update the cache here as we allow onSettled to handle that
-      // Optimistically update the cache
-      // utils.node.data.get.setData({ id }, undefined);
+      // Optimistically remove all connected edges
+      connectedEdges.forEach((edge) => deleteEdge(edge.id));
 
-      return context;
+      return { node: context, edges: connectedEdges }; // Return context for rollback
     },
-    // onError: (err, variables, context) => {
-    //   // If the mutation fails, restore the previous state
-    //   if (!context) return;
+    onError: (err, variables, context) => {
+      if (!context) return;
 
-    //   addNode(context);
+      // Restore the deleted node
+      addNode(context.node);
 
-    //   // IMPORTANT: We haven't deleted the node from the cache, as seen in onMutate,
-    //   // so we don't need to update the cache here
-    //   // utils.node.data.get.setData({ id: variables.id }, context);
-    // },
+      // Restore all connected edges
+      context.edges.forEach((edge) => addEdge(edge));
+
+      console.error("Failed to delete node and its edges:", err);
+    },
     // onSettled: (data) => {
     //   if (!data) return;
     //   // Always invalidate queries after mutation

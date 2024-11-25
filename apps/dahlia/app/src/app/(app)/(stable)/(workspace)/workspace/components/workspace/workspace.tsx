@@ -3,7 +3,10 @@
 import {
   Background,
   BackgroundVariant,
+  Connection,
   ConnectionMode,
+  getIncomers,
+  getOutgoers,
   NodeTypes,
   OnDelete,
   Panel,
@@ -16,8 +19,10 @@ import "./workspace.css";
 import { useCallback } from "react";
 
 import { RouterInputs } from "@repo/api";
+import { nanoid } from "@repo/lib";
 import { InfoCard } from "@repo/ui/components/info-card";
 
+import { useAddEdge } from "../../hooks/use-add-edge";
 import { useNodeAddEdge } from "../../hooks/use-node-add-edge";
 import { useWorkspaceAddNode } from "../../hooks/use-workspace-add-node";
 import { useDeleteEdge } from "../../hooks/use-workspace-delete-edge";
@@ -56,9 +61,10 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   const { onClick: onWorkspaceClick } = useWorkspaceAddNode({
     workspaceId: id,
   });
-  const { mutateAsync: onEdgesDelete } = useDeleteEdge();
-  const { mutateAsync: onNodesDelete } = useDeleteNode();
+  const { mutateAsync: deleteEdgeMutate } = useDeleteEdge();
+  const { mutateAsync: deleteNodeMutate } = useDeleteNode();
   const { onConnect } = useNodeAddEdge();
+  const { mutateAsync: addEdgeMutate } = useAddEdge();
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
   // we don't want to add a node
@@ -74,13 +80,58 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
     handleMouseMove(event);
   };
 
-  // Combined onDelete handler
+  // Combined onDelete handler handling both node and edge deletions
   const onDelete: OnDelete<BaseNode, BaseEdge> = useCallback(
-    async ({ nodes, edges }) => {
-      await Promise.all(edges.map((edge) => onEdgesDelete({ id: edge.id })));
-      await Promise.all(nodes.map((node) => onNodesDelete({ id: node.id })));
+    async ({ nodes: nodesToDelete, edges: edgesToDelete }) => {
+      // If there are no nodes or edges to delete, do nothing
+      if (nodesToDelete.length === 0 && edgesToDelete.length === 0) return;
+
+      // Handle Edge Deletions if there are no nodes to delete
+      if (nodesToDelete.length === 0 && edgesToDelete.length > 0) {
+        await Promise.all(
+          edgesToDelete.map((edge) => deleteEdgeMutate({ id: edge.id })),
+        );
+      }
+
+      // Handle Node Deletions if there are nodes to delete, but don't need to handle edges
+      // as they are handled in db CASCADE DELETE.
+      if (nodesToDelete.length > 0) {
+        // Collect all connections to recreate
+        const connectionsToRecreate: Connection[] = nodesToDelete.flatMap(
+          (deletedNode) => {
+            const incomers = getIncomers(deletedNode, nodes, edges);
+            const outgoers = getOutgoers(deletedNode, nodes, edges);
+
+            return incomers.flatMap((incomer) =>
+              outgoers.map(
+                (outgoer) =>
+                  ({
+                    source: incomer.id,
+                    target: outgoer.id,
+                  }) as Connection,
+              ),
+            );
+          },
+        );
+
+        // Delete Nodes (this will also cascade delete associated edges optimistically)
+        await Promise.all(
+          nodesToDelete.map((node) => deleteNodeMutate({ id: node.id })),
+        );
+
+        // Recreate the connections using the existing addEdge handler
+        connectionsToRecreate.forEach((connection) => {
+          addEdgeMutate({
+            id: nanoid(),
+            edge: {
+              source: connection.source,
+              target: connection.target,
+            },
+          });
+        });
+      }
     },
-    [onNodesDelete, onEdgesDelete],
+    [nodes, edges, deleteEdgeMutate, deleteNodeMutate, addEdgeMutate],
   );
 
   return (

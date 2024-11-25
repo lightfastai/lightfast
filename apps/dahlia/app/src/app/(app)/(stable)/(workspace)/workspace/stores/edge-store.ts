@@ -29,7 +29,7 @@ export const createEdgeStore = (initState: EdgeState = defaultEdgeState) => {
     addEdge: (edge) => set((state) => ({ edges: [...state.edges, edge] })),
     deleteEdge: (id) =>
       set((state) => ({
-        edges: state.edges.filter((e) => e.id !== id),
+        edges: applyEdgeChanges([{ id, type: "remove" }], state.edges),
       })),
     onEdgesChange: (changes) =>
       set((state) => ({

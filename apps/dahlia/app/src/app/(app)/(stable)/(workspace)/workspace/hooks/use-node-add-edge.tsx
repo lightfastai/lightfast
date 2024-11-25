@@ -9,33 +9,12 @@ import { api } from "~/trpc/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
 import { BaseEdge } from "../types/node";
+import { useAddEdge } from "./use-add-edge";
 
 export const useNodeAddEdge = () => {
   const { edges, addEdge, deleteEdge } = useEdgeStore((state) => state);
   const { nodes } = useNodeStore((state) => state);
-
-  const addEdgeMutation = api.edge.addEdge.useMutation({
-    onMutate: async (newEdge) => {
-      const optimisticEdge: BaseEdge = {
-        id: newEdge.id,
-        source: newEdge.edge.source,
-        target: newEdge.edge.target,
-      };
-
-      addEdge(optimisticEdge);
-
-      return { optimisticEdge };
-    },
-    onError: (err, newEdge, context) => {
-      if (!context) return;
-      deleteEdge(context.optimisticEdge.id);
-      console.error(err);
-      toast({
-        title: "Error",
-        description: "Failed to add edge",
-      });
-    },
-  });
+  const { mutateAsync: addEdgeMutation } = useAddEdge();
 
   const replaceEdgeMutation = api.edge.replaceEdge.useMutation({
     onMutate: async ({ oldEdgeId, newEdge }) => {
@@ -125,7 +104,7 @@ export const useNodeAddEdge = () => {
           });
         } else {
           // Create a new edge
-          await addEdgeMutation.mutateAsync({
+          await addEdgeMutation({
             id: nanoid(),
             edge: {
               source: connection.source,
