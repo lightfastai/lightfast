@@ -9,46 +9,65 @@ import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Value } from "@repo/webgl";
 
+import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/react";
 import { InspectorBase } from "./inspector-base";
 import { PropertyFormField } from "./property-form-field";
 
 export const InspectorTexture = ({ id }: { id: string }) => {
-  const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
   const utils = api.useUtils();
-  const { mutate: updateData } = api.node.data.update.useMutation({
-    onSuccess: () => {
-      // Invalidate the node data query to refresh the view
-      utils.node.data.get.invalidate({ id });
-      console.log("updated");
-    },
-  });
+  const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
 
   const form = useForm<TextureUniforms>({
     resolver: zodResolver($TextureUniforms),
     defaultValues: data.uniforms,
   });
 
+  const { mutate: updateData } = api.node.data.update.useMutation({
+    onError: () => {
+      // On error, revert the optimistic update
+      utils.node.data.get.setData({ id }, data);
+    },
+  });
+
   useEffect(() => {
     form.reset(data.uniforms);
   }, [data, form.reset, form]);
+
+  const debouncedServerUpdate = useDebounce((updates: TextureUniforms) => {
+    updateData({
+      id,
+      data: {
+        type: data.type,
+        uniforms: updates,
+      },
+    });
+  }, 500);
 
   const handleUpdate = useCallback(
     (property: keyof TextureUniforms, value: Value) => {
       if (!value) return;
       if (property === "u_texture") return;
-      updateData({
-        id,
-        data: {
+
+      // @ts-expect-error - TODO: fix this
+      const newUniforms = {
+        ...data.uniforms,
+        [property]: value,
+      } as TextureUniforms;
+
+      // Optimistically update the cache
+      utils.node.data.get.setData(
+        { id },
+        {
           type: data.type,
-          uniforms: {
-            ...(data.uniforms as TextureUniforms),
-            [property]: value,
-          },
+          uniforms: newUniforms,
         },
-      });
+      );
+
+      // Debounce the actual server update
+      debouncedServerUpdate(newUniforms);
     },
-    [id, updateData, data],
+    [id, data.type, data.uniforms, utils.node.data.get, debouncedServerUpdate],
   );
 
   return (
