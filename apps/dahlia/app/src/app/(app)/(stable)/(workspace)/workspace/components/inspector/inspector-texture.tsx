@@ -83,7 +83,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
         </div>
         <Separator />
         <Form {...form}>
-          <form className="flex flex-col space-y-2 py-4">
+          <form className="flex flex-col pb-4 pt-2">
             {Object.entries(data.uniforms)
               .filter(([property]) => property !== "u_texture")
               .map(([property]) => (

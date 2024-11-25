@@ -25,7 +25,12 @@ import { Slider } from "@repo/ui/components/ui/slider";
 import { isColor, isNumber, isVec2, isVec3 } from "@repo/webgl";
 
 import { PropertyInputNumber } from "./property-input";
-import { extractUniformName, extractValueFieldMetadata } from "./utils";
+import {
+  extractUniformName,
+  extractValueFieldMetadata,
+  extractVec2FieldMetadata,
+  extractVec3FieldMetadata,
+} from "./utils";
 
 interface FormFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -46,10 +51,7 @@ export const PropertyFormField = <T extends FieldValues>({
 
   if (!fieldSchema) {
     console.warn(`Field schema for ${name} is undefined.`);
-    // Handle the undefined case appropriately
-    // For example, you might return null or provide default values
-    // @todo log-error
-    return null; // or throw an error if this should never happen
+    return null;
   }
 
   const renderField = (field: ControllerRenderProps<T, Path<T>>) => {
@@ -87,15 +89,15 @@ export const PropertyFormField = <T extends FieldValues>({
     }
 
     if (isVec2(field.value)) {
-      const { min, max, step } = extractValueFieldMetadata(fieldSchema);
+      const metadata = extractVec2FieldMetadata(fieldSchema);
       return (
         <div className="flex w-full gap-2">
           {["x", "y"].map((axis) => (
             <PropertyInputNumber
               key={axis}
-              min={min}
-              max={max}
-              step={step}
+              min={metadata[axis as keyof typeof metadata].min}
+              max={metadata[axis as keyof typeof metadata].max}
+              step={metadata[axis as keyof typeof metadata].step}
               {...field}
               onChange={(e) => {
                 const newValue = Number(e.target.value);
@@ -110,15 +112,15 @@ export const PropertyFormField = <T extends FieldValues>({
     }
 
     if (isVec3(field.value)) {
-      const { min, max, step } = extractValueFieldMetadata(fieldSchema);
+      const metadata = extractVec3FieldMetadata(fieldSchema);
       return (
         <div className="flex gap-2">
           {["x", "y", "z"].map((axis) => (
             <PropertyInputNumber
               key={axis}
-              min={min}
-              max={max}
-              step={step}
+              min={metadata[axis as keyof typeof metadata].min}
+              max={metadata[axis as keyof typeof metadata].max}
+              step={metadata[axis as keyof typeof metadata].step}
               {...field}
               onChange={(e) => {
                 const newValue = Number(e.target.value);
@@ -175,7 +177,7 @@ export const PropertyFormField = <T extends FieldValues>({
       name={name}
       control={control}
       render={({ field }) => (
-        <FormItem className="grid grid-cols-8 gap-4 px-4">
+        <FormItem className="grid grid-cols-8 gap-x-4 px-4">
           <FormLabel className="col-span-3 flex items-center justify-end font-mono text-xs uppercase">
             {extractUniformName(label)}
           </FormLabel>
