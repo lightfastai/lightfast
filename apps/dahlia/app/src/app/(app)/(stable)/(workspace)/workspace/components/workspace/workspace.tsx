@@ -5,8 +5,6 @@ import {
   BackgroundVariant,
   Connection,
   ConnectionMode,
-  getIncomers,
-  getOutgoers,
   NodeTypes,
   OnDelete,
   Panel,
@@ -19,7 +17,6 @@ import "./workspace.css";
 import { useCallback } from "react";
 
 import { RouterInputs } from "@repo/api";
-import { nanoid } from "@repo/lib";
 import { InfoCard } from "@repo/ui/components/info-card";
 
 import { useAddEdge } from "../../hooks/use-node-add-edge";
@@ -91,60 +88,11 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         );
       }
 
+      // Handle Node Deletions if there are no edges to delete
       if (nodesToDelete.length > 0) {
-        let updatedNodes = [...nodes];
-        let updatedEdges = [...edges];
-
-        for (const node of nodesToDelete) {
-          // Get incomers and outgoers before node removal
-          const incomers = getIncomers(node, updatedNodes, updatedEdges);
-          const outgoers = getOutgoers(node, updatedNodes, updatedEdges);
-
-          // Remove the node from the updated nodes
-          updatedNodes = updatedNodes.filter((n) => n.id !== node.id);
-          // Remove edges connected to the node
-          updatedEdges = updatedEdges.filter(
-            (e) => e.source !== node.id && e.target !== node.id,
-          );
-
-          // **Prevent self-connections by filtering out connections where source === target**
-          const connectionsToRecreate = incomers.flatMap((incomer) =>
-            outgoers
-              .filter((outgoer) => outgoer.id !== incomer.id)
-              .map(
-                (outgoer) =>
-                  ({
-                    source: incomer.id,
-                    target: outgoer.id,
-                  }) as Connection,
-              ),
-          );
-
-          // Create new edges for the recreated connections
-          const newEdges = connectionsToRecreate.map((connection) => ({
-            id: nanoid(),
-            source: connection.source,
-            target: connection.target,
-          }));
-
-          // **Perform the node deletion mutation**
-          await deleteNodeMutate({ id: node.id });
-
-          console.log(newEdges);
-
-          // **Add new edges mutations after node deletion**
-          for (const edge of newEdges) {
-            await addEdgeMutate(
-              {
-                source: edge.source,
-                target: edge.target,
-              } as Connection,
-              updatedEdges,
-              updatedNodes,
-            );
-            updatedEdges = [...updatedEdges, edge];
-          }
-        }
+        await Promise.all(
+          nodesToDelete.map((node) => deleteNodeMutate({ id: node.id })),
+        );
       }
     },
     [nodes, edges, deleteEdgeMutate, deleteNodeMutate, addEdgeMutate],
