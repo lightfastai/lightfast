@@ -20,6 +20,7 @@ import { RouterInputs } from "@repo/api";
 import { InfoCard } from "@repo/ui/components/info-card";
 
 import { useAddEdge } from "../../hooks/use-node-add-edge";
+import { useReplaceEdge } from "../../hooks/use-node-replace-edge";
 import { useWorkspaceAddNode } from "../../hooks/use-workspace-add-node";
 import { useDeleteEdge } from "../../hooks/use-workspace-delete-edge";
 import { useDeleteNode } from "../../hooks/use-workspace-delete-node";
@@ -60,6 +61,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   const { mutateAsync: deleteEdgeMutate } = useDeleteEdge();
   const { mutateAsync: deleteNodeMutate } = useDeleteNode();
   const { mutateAsync: addEdgeMutate } = useAddEdge();
+  const { mutateAsync: replaceEdgeMutate } = useReplaceEdge();
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
   // we don't want to add a node
@@ -89,20 +91,30 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
       }
 
       // Handle Node Deletions if there are no edges to delete
+      // CASCADE DELETION of all connected edges
       if (nodesToDelete.length > 0) {
         await Promise.all(
           nodesToDelete.map((node) => deleteNodeMutate({ id: node.id })),
         );
       }
     },
-    [nodes, edges, deleteEdgeMutate, deleteNodeMutate, addEdgeMutate],
+    [deleteEdgeMutate, deleteNodeMutate, addEdgeMutate],
   );
 
   const onConnect = useCallback(
     async (params: Connection) => {
-      await addEdgeMutate(params, edges, nodes);
+      // Find any existing edge that connects TO the target node
+      const existingEdge = edges.find((edge) => edge.target === params.target);
+
+      if (existingEdge) {
+        // Replace the existing edge (regardless of its source)
+        await replaceEdgeMutate(existingEdge.id, params);
+      } else {
+        // Add a new edge if the target has no incoming edges
+        await addEdgeMutate(params);
+      }
     },
-    [addEdgeMutate, edges, nodes],
+    [replaceEdgeMutate, addEdgeMutate, edges],
   );
 
   return (

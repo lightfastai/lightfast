@@ -3,7 +3,6 @@ import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
 
 export const useDeleteNode = () => {
-  const utils = api.useUtils();
   const { deleteNode, addNode, nodes } = useNodeStore((state) => state);
   const { deleteEdge, addEdge, edges } = useEdgeStore((state) => state);
   const { mutateAsync } = api.node.delete.useMutation({
