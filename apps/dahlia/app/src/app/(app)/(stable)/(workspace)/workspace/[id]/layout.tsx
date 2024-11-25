@@ -17,6 +17,7 @@ import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select
 import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
 import { EdgeStoreProvider } from "../providers/edge-store-provider";
 import { EditorStoreProvider } from "../providers/editor-store-provider";
+import { InspectorStoreProvider } from "../providers/inspector-store-provider";
 import { NodeStoreProvider } from "../providers/node-store-provider";
 import { SelectionStoreProvider } from "../providers/selection-store-provider";
 import { TextureRenderStoreProvider } from "../providers/texture-render-store-provider";
@@ -25,6 +26,14 @@ import { convertToBaseEdge, convertToBaseNode } from "../types/node";
 const WebGLCanvas = dynamic(
   () =>
     import("../components/webgl/webgl-canvas").then((mod) => mod.WebGLCanvas),
+  {
+    ssr: false,
+  },
+);
+
+const Inspector = dynamic(
+  () =>
+    import("../components/inspector/inspector").then((mod) => mod.Inspector),
   {
     ssr: false,
   },
@@ -124,21 +133,26 @@ export default async function WorkspaceLayout({
                     (node) => node.type === $NodeType.Enum.texture,
                   )}
                 >
-                  <WebGLCanvas
-                    style={{
-                      position: "absolute",
-                      pointerEvents: "none",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      zIndex: 1,
-                    }}
-                  >
-                    <TextureRenderPipeline />
-                  </WebGLCanvas>
-                  {children}
-                  <EditorCommandDialog />
+                  <InspectorStoreProvider>
+                    <WebGLCanvas
+                      style={{
+                        position: "absolute",
+                        pointerEvents: "none",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        zIndex: 1,
+                      }}
+                    >
+                      <TextureRenderPipeline />
+                    </WebGLCanvas>
+                    {children}
+                    <div className="absolute right-4 top-4">
+                      <Inspector />
+                    </div>
+                    <EditorCommandDialog />
+                  </InspectorStoreProvider>
                 </TextureRenderStoreProvider>
               </EditorStoreProvider>
             </SelectionStoreProvider>

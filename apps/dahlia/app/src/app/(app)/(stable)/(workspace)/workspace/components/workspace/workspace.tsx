@@ -137,7 +137,6 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         minZoom={0.25}
       >
         {selection && render()}
-
         <Background variant={BackgroundVariant.Dots} />
         <Panel position="bottom-right">
           <InfoCard

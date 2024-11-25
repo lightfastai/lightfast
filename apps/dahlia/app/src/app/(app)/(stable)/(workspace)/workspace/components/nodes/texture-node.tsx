@@ -12,6 +12,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { api } from "~/trpc/react";
+import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 import { BaseNode } from "../../types/node";
 import { WebGLView } from "../webgl/webgl-primitives";
@@ -20,8 +21,15 @@ export const TextureNode = memo(
   ({ id, type, selected, isConnectable }: NodeProps<BaseNode>) => {
     const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
     const { targets } = useTextureRenderStore((state) => state);
+    const setSelected = useInspectorStore((state) => state.setSelected);
     return (
-      <BaseNodeComponent id={id} selected={selected}>
+      <BaseNodeComponent
+        id={id}
+        selected={selected}
+        onClick={() => {
+          setSelected({ id, type });
+        }}
+      >
         <div
           key={id}
           className={cn(
