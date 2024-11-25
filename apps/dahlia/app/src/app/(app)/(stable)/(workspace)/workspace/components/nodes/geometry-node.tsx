@@ -23,11 +23,6 @@ import { BaseNode } from "../../types/node";
 export const GeometryNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
     const [data] = api.node.data.get.useSuspenseQuery<Geometry>({ id });
-    // const updateNodeInternals = useUpdateNodeInternals();
-    // useEffect(() => {
-    //   updateNodeInternals(id);
-    // }, [id, updateNodeInternals]);
-
     return (
       <BaseNodeComponent selected={selected}>
         <div

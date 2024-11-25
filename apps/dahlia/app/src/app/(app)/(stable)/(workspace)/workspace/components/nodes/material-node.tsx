@@ -1,5 +1,5 @@
-import { memo, useEffect } from "react";
-import { NodeProps, useUpdateNodeInternals } from "@xyflow/react";
+import { memo } from "react";
+import { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
 import { $GeometryType, Material } from "@repo/db/schema";
@@ -24,11 +24,6 @@ import { BaseNode } from "../../types/node";
 export const MaterialNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
     const [data] = api.node.data.get.useSuspenseQuery<Material>({ id });
-    const updateNodeInternals = useUpdateNodeInternals();
-    useEffect(() => {
-      updateNodeInternals(id);
-    }, [id, updateNodeInternals]);
-
     return (
       <BaseNodeComponent selected={selected}>
         <div
