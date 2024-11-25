@@ -4,7 +4,7 @@ import type { InputProps } from "@repo/ui/components/ui/input";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
 
-interface PropertyInputProps extends InputProps {
+interface BaseInputProps extends InputProps {
   value: number;
   min: number;
   max: number;
@@ -12,9 +12,9 @@ interface PropertyInputProps extends InputProps {
   className?: string;
 }
 
-export const PropertyInputNumber = React.forwardRef<
+export const BaseInputNumber = React.forwardRef<
   HTMLInputElement,
-  PropertyInputProps
+  BaseInputProps
 >(({ value, min, max, step, className, ...props }, ref) => {
   return (
     <Input
@@ -33,4 +33,4 @@ export const PropertyInputNumber = React.forwardRef<
   );
 });
 
-PropertyInputNumber.displayName = "PropertyInputNumber";
+BaseInputNumber.displayName = "BaseInputNumber";

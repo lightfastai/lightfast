@@ -12,7 +12,7 @@ import { Value } from "@repo/webgl";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/react";
 import { InspectorBase } from "./inspector-base";
-import { PropertyFormField } from "./property-form-field";
+import { InspectorFormField } from "./inspector-form-field";
 
 export const InspectorTexture = ({ id }: { id: string }) => {
   const utils = api.useUtils();
@@ -87,7 +87,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
             {Object.entries(data.uniforms)
               .filter(([property]) => property !== "u_texture")
               .map(([property]) => (
-                <PropertyFormField
+                <InspectorFormField
                   key={property}
                   label={property}
                   control={form.control}

@@ -8,7 +8,7 @@ import { Separator } from "@repo/ui/components/ui/separator";
 
 import type { Material } from "../app/(app)/(stable)/(workspace)/workspace/types/primitives";
 import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
-import { PropertyFormField } from "../app/(app)/(stable)/(workspace)/workspace/components/inspector/property-form-field";
+import { PropertyFormField } from "../app/(app)/(stable)/(workspace)/workspace/components/inspector/inspector-form-field";
 import { $Material } from "../app/(app)/(stable)/(workspace)/workspace/types/primitives.schema";
 
 export const TDxMaterialPropertyInspector = () => {
