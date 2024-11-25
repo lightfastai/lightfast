@@ -22,8 +22,7 @@ import { RouterInputs } from "@repo/api";
 import { nanoid } from "@repo/lib";
 import { InfoCard } from "@repo/ui/components/info-card";
 
-import { useAddEdge } from "../../hooks/use-add-edge";
-import { useNodeAddEdge } from "../../hooks/use-node-add-edge";
+import { useAddEdge } from "../../hooks/use-node-add-edge";
 import { useWorkspaceAddNode } from "../../hooks/use-workspace-add-node";
 import { useDeleteEdge } from "../../hooks/use-workspace-delete-edge";
 import { useDeleteNode } from "../../hooks/use-workspace-delete-node";
@@ -63,7 +62,6 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   });
   const { mutateAsync: deleteEdgeMutate } = useDeleteEdge();
   const { mutateAsync: deleteNodeMutate } = useDeleteNode();
-  const { onConnect } = useNodeAddEdge();
   const { mutateAsync: addEdgeMutate } = useAddEdge();
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
@@ -109,15 +107,17 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
             (e) => e.source !== node.id && e.target !== node.id,
           );
 
-          // Recreate connections between incomers and outgoers
+          // **Prevent self-connections by filtering out connections where source === target**
           const connectionsToRecreate = incomers.flatMap((incomer) =>
-            outgoers.map(
-              (outgoer) =>
-                ({
-                  source: incomer.id,
-                  target: outgoer.id,
-                }) as Connection,
-            ),
+            outgoers
+              .filter((outgoer) => outgoer.id !== incomer.id)
+              .map(
+                (outgoer) =>
+                  ({
+                    source: incomer.id,
+                    target: outgoer.id,
+                  }) as Connection,
+              ),
           );
 
           // Create new edges for the recreated connections
@@ -127,25 +127,34 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
             target: connection.target,
           }));
 
-          updatedEdges = [...updatedEdges, ...newEdges];
-
           // **Perform the node deletion mutation**
           await deleteNodeMutate({ id: node.id });
 
+          console.log(newEdges);
+
           // **Add new edges mutations after node deletion**
           for (const edge of newEdges) {
-            await addEdgeMutate({
-              id: edge.id,
-              edge: {
+            await addEdgeMutate(
+              {
                 source: edge.source,
                 target: edge.target,
-              },
-            });
+              } as Connection,
+              updatedEdges,
+              updatedNodes,
+            );
+            updatedEdges = [...updatedEdges, edge];
           }
         }
       }
     },
     [nodes, edges, deleteEdgeMutate, deleteNodeMutate, addEdgeMutate],
+  );
+
+  const onConnect = useCallback(
+    async (params: Connection) => {
+      await addEdgeMutate(params, edges, nodes);
+    },
+    [addEdgeMutate, edges, nodes],
   );
 
   return (
@@ -165,6 +174,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         panOnScroll={true}
         zoomOnScroll={false}
         proOptions={{ hideAttribution: true }}
+        minZoom={0.25}
       >
         {selection && render()}
 
