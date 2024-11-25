@@ -1,13 +1,10 @@
-import { useCallback } from "react";
-
 import { api } from "~/trpc/react";
 import { useNodeStore } from "../providers/node-store-provider";
-import { BaseNode } from "../types/node";
 
-export const useWorkspaceDeleteNode = () => {
+export const useDeleteNode = () => {
   const utils = api.useUtils();
   const { deleteNode, addNode, nodes } = useNodeStore((state) => state);
-  const { mutate } = api.node.delete.useMutation({
+  const { mutateAsync } = api.node.delete.useMutation({
     onMutate: async ({ id }) => {
       // Find the node to delete
       const context = nodes.find((n) => n.id === id);
@@ -40,17 +37,5 @@ export const useWorkspaceDeleteNode = () => {
     // },
   });
 
-  const onNodesDelete = useCallback(
-    (nodesToDelete: BaseNode[]) => {
-      const nodeIds = nodesToDelete.map((node) => node.id);
-
-      // Delete nodes
-      nodeIds.forEach((id) => {
-        mutate({ id });
-      });
-    },
-    [mutate],
-  );
-
-  return { onNodesDelete };
+  return { mutateAsync };
 };

@@ -1,10 +1,7 @@
-import { useCallback } from "react";
-import { Edge } from "@xyflow/react";
-
 import { api } from "~/trpc/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 
-export const useWorkspaceDeleteEdge = () => {
+export const useDeleteEdge = () => {
   const { deleteEdge, addEdge, edges } = useEdgeStore((state) => state);
   const { mutateAsync } = api.edge.deleteEdge.useMutation({
     onMutate: (id) => {
@@ -21,14 +18,6 @@ export const useWorkspaceDeleteEdge = () => {
       addEdge(context.edge);
     },
   });
-  const onEdgesDelete = useCallback(
-    (edges: Edge[]) => {
-      edges.forEach((edge) => {
-        mutateAsync({ id: edge.id });
-      });
-    },
-    [mutateAsync],
-  );
 
-  return { onEdgesDelete };
+  return { mutateAsync };
 };
