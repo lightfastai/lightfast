@@ -25,9 +25,7 @@ interface UseWorkspaceAddNodeProps {
   workspaceId: string;
 }
 
-export const useWorkspaceAddNode = ({
-  workspaceId,
-}: UseWorkspaceAddNodeProps) => {
+export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
   const utils = api.useUtils();
   const { addNode, deleteNode } = useNodeStore((state) => state);
   const { selection, clearSelection } = useSelectionStore((state) => state);

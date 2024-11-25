@@ -19,13 +19,13 @@ import { useCallback } from "react";
 import { RouterInputs } from "@repo/api";
 import { InfoCard } from "@repo/ui/components/info-card";
 
-import { useAddEdge } from "../../hooks/use-node-add-edge";
-import { useReplaceEdge } from "../../hooks/use-node-replace-edge";
-import { useWorkspaceAddNode } from "../../hooks/use-workspace-add-node";
-import { useDeleteEdge } from "../../hooks/use-workspace-delete-edge";
-import { useDeleteNode } from "../../hooks/use-workspace-delete-node";
+import { useAddEdge } from "../../hooks/use-add-edge";
+import { useAddNode } from "../../hooks/use-add-node";
+import { useDeleteEdge } from "../../hooks/use-delete-edge";
+import { useDeleteNode } from "../../hooks/use-delete-node";
+import { useReplaceEdge } from "../../hooks/use-replace-edge";
+import { useUpdateNodes } from "../../hooks/use-update-nodes";
 import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
-import { useWorkspaceUpdateNode } from "../../hooks/use-workspace-update-node";
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
@@ -52,10 +52,10 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   const { selection } = useSelectionStore((state) => state);
   const { edges, onEdgesChange } = useEdgeStore((state) => state);
   const { handleMouseMove, render } = useWorkspaceNodeSelectionPreview();
-  const { onNodesChange } = useWorkspaceUpdateNode({
+  const { onNodesChange } = useUpdateNodes({
     workspaceId: id,
   });
-  const { onClick: onWorkspaceClick } = useWorkspaceAddNode({
+  const { onClick: onWorkspaceClick } = useAddNode({
     workspaceId: id,
   });
   const { mutateAsync: deleteEdgeMutate } = useDeleteEdge();

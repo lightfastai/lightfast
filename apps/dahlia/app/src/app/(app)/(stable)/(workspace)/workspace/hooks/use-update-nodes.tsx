@@ -12,9 +12,7 @@ interface UseGetWorkspaceNodesProps {
   workspaceId: RouterInputs["node"]["base"]["getAll"]["workspaceId"];
 }
 
-export const useWorkspaceUpdateNode = ({
-  workspaceId,
-}: UseGetWorkspaceNodesProps) => {
+export const useUpdateNodes = ({ workspaceId }: UseGetWorkspaceNodesProps) => {
   const { nodes, onNodesChange } = useNodeStore((state) => state);
   const updateNodePositions = api.node.updatePositions.useMutation();
 

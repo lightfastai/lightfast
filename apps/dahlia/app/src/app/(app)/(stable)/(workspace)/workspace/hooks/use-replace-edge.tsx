@@ -7,7 +7,7 @@ import { toast } from "@repo/ui/hooks/use-toast";
 import { api } from "~/trpc/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { BaseEdge } from "../types/node";
-import { useEdgeValidation } from "./use-edge-validation";
+import { useEdgeValidation } from "./use-validate-edge";
 
 export const useReplaceEdge = () => {
   const { edges, addEdge, deleteEdge } = useEdgeStore((state) => state);
