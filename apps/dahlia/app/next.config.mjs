@@ -1,9 +1,14 @@
 import { fileURLToPath } from "url";
+import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import { createJiti } from "jiti";
 
 // Import env files to validate at build time. Use jiti so we can load .ts files in here.
 await createJiti(fileURLToPath(import.meta.url)).import("./src/env");
+
+const withAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 /** @type {import("next").NextConfig} */
 const config = {
@@ -32,7 +37,7 @@ const config = {
   },
 };
 
-export default withSentryConfig(config, {
+export default withSentryConfig(withAnalyzer(config), {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
