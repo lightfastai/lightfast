@@ -1,5 +1,6 @@
 import {
   BoxGeometry,
+  PlaneGeometry,
   SphereGeometry,
   TetrahedronGeometry,
   TorusGeometry,
@@ -61,10 +62,16 @@ export const GlobalSphereGeometry = new SphereGeometry(1, 12, 12);
  */
 export const GlobalTetrahedronGeometry = new TetrahedronGeometry(1);
 
+/**
+ * @description A plane geometry.
+ */
+export const GlobalPlaneGeometry = new PlaneGeometry(2, 2);
+
 // Create a static lookup map for geometries.
 export const GeometryMap = {
   [$GeometryType.Enum.box]: GlobalBoxGeometry,
   [$GeometryType.Enum.sphere]: GlobalSphereGeometry,
   [$GeometryType.Enum.tetrahedron]: GlobalTetrahedronGeometry,
   [$GeometryType.Enum.torus]: GlobalTorusGeometry,
+  [$GeometryType.Enum.plane]: GlobalPlaneGeometry,
 } as const;

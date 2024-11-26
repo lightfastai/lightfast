@@ -3,9 +3,12 @@
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
+import { $GeometryType } from "@repo/db/schema";
+
 import { useRenderTargetPipeline } from "../../hooks/use-texture-render-pipeline";
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
 import { useUpdateTextureNoise } from "../../hooks/use-update-texture-noise";
+import { GeometryMap } from "./webgl-globals";
 import { createWebGLPortal, WebGLView } from "./webgl-primitives";
 
 export const TextureRenderPipeline = () => {
@@ -23,7 +26,7 @@ export const TextureRenderPipeline = () => {
     [noiseNodes, limitNodes],
   );
 
-  const { scene, geometry } = useRenderTargetPipeline({
+  const { scene } = useRenderTargetPipeline({
     onEachFrame: updates,
     meshes: meshRefs.current,
   });
@@ -35,7 +38,7 @@ export const TextureRenderPipeline = () => {
           {noiseNodes.map(({ shader, id }) => (
             <mesh
               key={id}
-              geometry={geometry}
+              geometry={GeometryMap[$GeometryType.Enum.plane]}
               ref={(ref) => {
                 if (ref) meshRefs.current[id] = ref;
               }}
@@ -46,7 +49,7 @@ export const TextureRenderPipeline = () => {
           {limitNodes.map(({ shader, id }) => (
             <mesh
               key={id}
-              geometry={geometry}
+              geometry={GeometryMap[$GeometryType.Enum.plane]}
               ref={(ref) => {
                 if (ref) meshRefs.current[id] = ref;
               }}

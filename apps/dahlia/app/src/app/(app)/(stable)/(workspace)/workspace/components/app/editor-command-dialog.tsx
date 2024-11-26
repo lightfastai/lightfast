@@ -146,6 +146,12 @@ export const EditorCommandDialog = () => {
               <Circle className="h-4 w-4" />
               <Label>Torus</Label>
             </CommandItem>
+            <CommandItem
+              onSelect={() => handleGeometrySelect($GeometryType.Enum.plane)}
+              className="flex items-center gap-2"
+            >
+              <Label>Plane</Label>
+            </CommandItem>
           </CommandGroup>
           <CommandGroup heading="Material">
             <CommandItem

@@ -19,7 +19,6 @@ export const useRenderTargetPipeline = ({
     () => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1),
     [],
   );
-  const geometry = useMemo(() => new THREE.PlaneGeometry(2, 2), []);
 
   useFrame((state) => {
     Object.entries(targets).forEach(([key, target]) => {
@@ -45,6 +44,5 @@ export const useRenderTargetPipeline = ({
 
   return {
     scene,
-    geometry,
   };
 };

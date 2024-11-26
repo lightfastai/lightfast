@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
-import { Texture } from "@repo/db/schema";
+import { $GeometryType, Texture } from "@repo/db/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -15,6 +15,7 @@ import { api } from "~/trpc/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 import { BaseNode } from "../../types/node";
+import { GeometryMap } from "../webgl/webgl-globals";
 import { WebGLView } from "../webgl/webgl-primitives";
 
 export const TextureNode = memo(
@@ -79,8 +80,7 @@ export const TextureNode = memo(
                     height: "100%",
                   }}
                 >
-                  <mesh>
-                    <planeGeometry args={[4, 4]} />
+                  <mesh geometry={GeometryMap[$GeometryType.Enum.plane]}>
                     <meshBasicMaterial map={targets[id].texture} />
                   </mesh>
                 </WebGLView>

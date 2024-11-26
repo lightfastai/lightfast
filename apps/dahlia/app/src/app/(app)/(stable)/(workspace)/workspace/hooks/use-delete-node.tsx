@@ -42,6 +42,7 @@ export const useDeleteNode = () => {
     },
     onSuccess: (data, variables, context) => {
       // Clean up the render target after successful deletion
+      console.log("context", context);
       if (context.node.type === $NodeType.Enum.texture) {
         removeTarget(variables.id);
       }
