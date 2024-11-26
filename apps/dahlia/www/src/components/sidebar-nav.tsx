@@ -1,11 +1,12 @@
-"use client";;
+"use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@repo/ui/lib/utils";
+import { NavItemWithChildren } from "@repo/ui/types/nav";
 
 import type { SiteNav } from "~/config/site";
-import { NavItemWithChildren } from "@repo/ui/types/nav";
 
 export interface DocsSidebarNavProps {
   config: SiteNav;

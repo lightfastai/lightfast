@@ -83,10 +83,8 @@ export default tseslint.config(
   },
 );
 
-export const evalConfig = tseslint.config(
-  {
-    rules: {
-      "@typescript-eslint/no-misused-promises": "off",
-    },
+export const evalConfig = tseslint.config({
+  rules: {
+    "@typescript-eslint/no-misused-promises": "off",
   },
-);
+});
