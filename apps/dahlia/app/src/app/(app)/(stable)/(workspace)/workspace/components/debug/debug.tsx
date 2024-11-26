@@ -7,7 +7,9 @@ import { Button } from "@repo/ui/components/ui/button";
 
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
-import { GLStatsCard, PerformanceCard, SystemCard } from "../webgl/webgl-perf";
+import { WebGLStatsCard } from "../webgl/gl-stats-card";
+import { WebGLPerformance } from "../webgl/performance-card";
+import { SystemCard } from "../webgl/system-card";
 
 type DebugSection = {
   id: string;
@@ -67,7 +69,7 @@ export const Debug = memo(() => {
         title: "Performance",
         content: (
           <ErrorBoundary>
-            <PerformanceCard />
+            <WebGLPerformance />
           </ErrorBoundary>
         ),
       },
@@ -85,7 +87,7 @@ export const Debug = memo(() => {
         title: "WebGL",
         content: (
           <ErrorBoundary>
-            <GLStatsCard />
+            <WebGLStatsCard />
           </ErrorBoundary>
         ),
       },
