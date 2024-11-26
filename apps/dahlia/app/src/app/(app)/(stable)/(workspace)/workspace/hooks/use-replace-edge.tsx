@@ -51,14 +51,15 @@ export const useReplaceEdge = () => {
     validateSelfConnection,
     validateTargetExistence,
     validateMaxIncomingEdges,
+    validateSameSource,
   } = useEdgeValidation();
 
   const mutateAsync = useCallback(
     async (oldEdgeId: string, newConnection: Connection) => {
       const { source, target } = newConnection;
-      console.log("Replacing edge", oldEdgeId, newConnection);
       if (
         !validateSelfConnection(source, target) ||
+        !validateSameSource(source, target) ||
         !validateTargetExistence(target) ||
         !validateMaxIncomingEdges(target, { allowance: 1 })
       ) {

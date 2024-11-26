@@ -24,6 +24,13 @@ export const useEdgeValidation = () => {
     [],
   );
 
+  const validateSameSource = useCallback(
+    (source: string, target: string): boolean => {
+      return source === target;
+    },
+    [],
+  );
+
   const validateTargetExistence = useCallback(
     (target: string): boolean => {
       const targetNode = nodes.find((n) => n.id === target);
@@ -78,5 +85,6 @@ export const useEdgeValidation = () => {
     validateSelfConnection,
     validateTargetExistence,
     validateMaxIncomingEdges,
+    validateSameSource,
   };
 };
