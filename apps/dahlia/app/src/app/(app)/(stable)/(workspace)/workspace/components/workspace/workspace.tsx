@@ -7,7 +7,6 @@ import {
   ConnectionMode,
   NodeTypes,
   OnDelete,
-  Panel,
   ReactFlow,
 } from "@xyflow/react";
 
@@ -17,7 +16,6 @@ import "./workspace.css";
 import { useCallback } from "react";
 
 import { RouterInputs } from "@repo/api";
-import { InfoCard } from "@repo/ui/components/info-card";
 
 import { useAddEdge } from "../../hooks/use-add-edge";
 import { useAddNode } from "../../hooks/use-add-node";
@@ -30,6 +28,7 @@ import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 import { BaseEdge, BaseNode } from "../../types/node";
+import { Debug } from "../debug/debug";
 import { GeometryNode } from "../nodes/geometry-node";
 import { MaterialNode } from "../nodes/material-node";
 import { TextureNode } from "../nodes/texture-node";
@@ -138,12 +137,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
       >
         {selection && render()}
         <Background variant={BackgroundVariant.Dots} />
-        <Panel position="bottom-right">
-          <InfoCard
-            title="Workspace Info"
-            items={[{ label: "nodes", value: nodes.length }]}
-          />
-        </Panel>
+        <Debug />
       </ReactFlow>
     </div>
   );

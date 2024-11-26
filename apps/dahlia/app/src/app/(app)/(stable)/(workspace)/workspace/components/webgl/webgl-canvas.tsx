@@ -1,28 +1,32 @@
 "use client";
 
 import type { CanvasProps } from "@react-three/fiber";
-import React from "react";
-import dynamic from "next/dynamic";
+import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
+import { PerfHeadless } from "r3f-perf";
 
-const WebGLPerf = dynamic(() => import("r3f-perf").then((mod) => mod.Perf), {
-  ssr: false,
-});
+
 export interface WebGLCanvasProps extends CanvasProps {
   children: React.ReactNode;
-  showPerf?: boolean;
+  showPerformance?: boolean;
 }
 
 const WebGLCanvas = React.forwardRef<HTMLCanvasElement, WebGLCanvasProps>(
-  ({ children, showPerf = false, ...props }, ref) => {
+  ({ children, showPerformance = false, ...props }, ref) => {
     return (
-      <Canvas ref={ref} {...props}>
-        {showPerf && <WebGLPerf position="top-right" />}
-        {children}
-      </Canvas>
+      <>
+        <Canvas ref={ref} {...props}>
+          {children}
+          <Suspense fallback={null}>
+            {showPerformance && <PerfHeadless />}
+          </Suspense>
+        </Canvas>
+      </>
     );
   },
 );
 
+// Add display names for better debugging
 WebGLCanvas.displayName = "WebGLCanvas";
+
 export { WebGLCanvas };
