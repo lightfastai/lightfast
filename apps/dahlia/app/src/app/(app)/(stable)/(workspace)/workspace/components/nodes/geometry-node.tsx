@@ -15,11 +15,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { GeometryRenderer } from "~/app/(app)/(stable)/(workspace)/workspace/components/webgl/geometry-renderer";
 import { api } from "~/trpc/react";
 import { BaseNode } from "../../types/node";
-import {
-  GlobalOrbitControls,
-  GlobalPerspectiveCamera,
-} from "../webgl/webgl-globals";
-import { WebGLView } from "../webgl/webgl-primitives";
+import { WebGLViewContext } from "../webgl/webgl-context";
 
 export const GeometryNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
@@ -51,20 +47,9 @@ export const GeometryNode = memo(
           </div>
 
           <div className="flex h-32 w-72 items-center justify-center border">
-            <WebGLView
-              style={{
-                position: "relative",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                pointerEvents: "none",
-              }}
-            >
-              {GlobalPerspectiveCamera}
-              {GlobalOrbitControls}
+            <WebGLViewContext>
               <GeometryRenderer geometry={data} />
-            </WebGLView>
+            </WebGLViewContext>
           </div>
 
           <div className="flex items-center justify-end">

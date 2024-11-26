@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
 
@@ -9,6 +8,7 @@ import type { Vec3 } from "@repo/webgl";
 import { Geometry } from "@repo/db/schema";
 
 import { GeometryRenderer } from "./geometry-renderer";
+import { OrbitControls, PerspectiveCamera } from "./webgl-primitives";
 
 export const GeometryViewer = ({
   geometries,

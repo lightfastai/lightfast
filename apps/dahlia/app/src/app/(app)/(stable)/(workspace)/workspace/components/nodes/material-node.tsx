@@ -15,11 +15,7 @@ import { api } from "~/trpc/react";
 import { DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION } from "../../stores/constants";
 import { BaseNode } from "../../types/node";
 import { GeometryRenderer } from "../webgl/geometry-renderer";
-import {
-  GlobalOrbitControls,
-  GlobalPerspectiveCamera,
-} from "../webgl/webgl-globals";
-import { WebGLView } from "../webgl/webgl-primitives";
+import { WebGLViewContext } from "../webgl/webgl-context";
 
 export const MaterialNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
@@ -43,25 +39,14 @@ export const MaterialNode = memo(
             </ToggleGroup>
           </div>
           <div className="flex h-32 w-72 items-center justify-center border">
-            <WebGLView
-              style={{
-                position: "relative",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                pointerEvents: "none",
-              }}
-            >
-              {GlobalPerspectiveCamera}
-              {GlobalOrbitControls}
+            <WebGLViewContext>
               <GeometryRenderer
                 geometry={createDefaultGeometry({
                   type: "torus",
                   rotation: DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,
                 })}
               />
-            </WebGLView>
+            </WebGLViewContext>
           </div>
         </div>
       </BaseNodeComponent>

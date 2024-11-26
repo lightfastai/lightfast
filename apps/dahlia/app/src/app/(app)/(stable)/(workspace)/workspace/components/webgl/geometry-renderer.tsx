@@ -5,22 +5,9 @@ import { memo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
-import { $GeometryType, Geometry } from "@repo/db/schema";
+import { Geometry } from "@repo/db/schema";
 
-import {
-  GlobalBoxGeometry,
-  GlobalSphereGeometry,
-  GlobalTetrahedronGeometry,
-  GlobalTorusGeometry,
-} from "./webgl-globals";
-
-// Create a static lookup map for geometries.
-const GeometryMap = {
-  [$GeometryType.Enum.box]: GlobalBoxGeometry,
-  [$GeometryType.Enum.sphere]: GlobalSphereGeometry,
-  [$GeometryType.Enum.tetrahedron]: GlobalTetrahedronGeometry,
-  [$GeometryType.Enum.torus]: GlobalTorusGeometry,
-} as const;
+import { GeometryMap } from "./webgl-globals";
 
 export const GeometryRenderer = memo(({ geometry }: { geometry: Geometry }) => {
   const meshRef = useRef<Mesh>(null);

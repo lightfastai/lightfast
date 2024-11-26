@@ -1,5 +1,7 @@
 import { Vector3 } from "three";
 
+import { $GeometryType } from "@repo/db/schema";
+
 import {
   CENTER_OF_WORLD,
   WORLD_CAMERA_POSITION_CLOSE,
@@ -48,3 +50,11 @@ export const GlobalSphereGeometry = <sphereGeometry />;
  * @description A tetrahedron geometry.
  */
 export const GlobalTetrahedronGeometry = <tetrahedronGeometry />;
+
+// Create a static lookup map for geometries.
+export const GeometryMap = {
+  [$GeometryType.Enum.box]: GlobalBoxGeometry,
+  [$GeometryType.Enum.sphere]: GlobalSphereGeometry,
+  [$GeometryType.Enum.tetrahedron]: GlobalTetrahedronGeometry,
+  [$GeometryType.Enum.torus]: GlobalTorusGeometry,
+} as const;
