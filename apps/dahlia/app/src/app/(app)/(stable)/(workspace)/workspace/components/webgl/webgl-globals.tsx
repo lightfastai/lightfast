@@ -28,3 +28,23 @@ export const GlobalOrbitControls = (
     }
   />
 );
+
+/**
+ * @description A torus geometry.
+ */
+export const GlobalTorusGeometry = <torusGeometry args={[1, 0.4, 16, 100]} />;
+
+/**
+ * @description A box geometry.
+ */
+export const GlobalBoxGeometry = <boxGeometry />;
+
+/**
+ * @description A sphere geometry.
+ */
+export const GlobalSphereGeometry = <sphereGeometry />;
+
+/**
+ * @description A tetrahedron geometry.
+ */
+export const GlobalTetrahedronGeometry = <tetrahedronGeometry />;

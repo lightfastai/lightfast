@@ -7,31 +7,24 @@ import { Vector3 } from "three";
 
 import { $GeometryType, Geometry } from "@repo/db/schema";
 
+import {
+  GlobalBoxGeometry,
+  GlobalSphereGeometry,
+  GlobalTetrahedronGeometry,
+  GlobalTorusGeometry,
+} from "./webgl-globals";
+
+// Create a static lookup map for geometries.
+const GeometryMap = {
+  [$GeometryType.Enum.box]: GlobalBoxGeometry,
+  [$GeometryType.Enum.sphere]: GlobalSphereGeometry,
+  [$GeometryType.Enum.tetrahedron]: GlobalTetrahedronGeometry,
+  [$GeometryType.Enum.torus]: GlobalTorusGeometry,
+} as const;
+
 export const GeometryRenderer = memo(({ geometry }: { geometry: Geometry }) => {
   const meshRef = useRef<Mesh>(null);
 
-  let Geometry;
-  switch (geometry.type) {
-    case $GeometryType.Enum.box:
-      Geometry = <boxGeometry />;
-      break;
-    case $GeometryType.Enum.sphere:
-      Geometry = <sphereGeometry />;
-      break;
-    case $GeometryType.Enum.tetrahedron:
-      Geometry = <tetrahedronGeometry />;
-      break;
-    /**
-     * @note Only used for render of Material
-     */
-    case $GeometryType.Enum.torus:
-      Geometry = <torusGeometry args={[1, 0.4, 16, 100]} />;
-      break;
-  }
-
-  /**
-   * @todo a more granular rotation; state.clock.elapsedTime is general and cant be controlled granularly.
-   */
   useFrame((state) => {
     if (!meshRef.current) return;
     const rotation = geometry.rotation;
@@ -54,7 +47,7 @@ export const GeometryRenderer = memo(({ geometry }: { geometry: Geometry }) => {
       scale={new Vector3(geometry.scale.x, geometry.scale.y, geometry.scale.z)}
       ref={meshRef}
     >
-      {Geometry}
+      {GeometryMap[geometry.type]}
       <meshBasicMaterial wireframe={geometry.wireframe} />
     </mesh>
   );

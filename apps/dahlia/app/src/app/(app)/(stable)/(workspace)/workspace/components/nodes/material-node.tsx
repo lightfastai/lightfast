@@ -2,7 +2,7 @@ import { memo } from "react";
 import { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
-import { $GeometryType, Material } from "@repo/db/schema";
+import { createDefaultGeometry, Material } from "@repo/db/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -11,15 +11,15 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import { GeometryViewer } from "~/app/(app)/(stable)/(workspace)/workspace/components/webgl/geometry-viewer";
-import {
-  CENTER_OF_WORLD,
-  DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,
-  DEFAULT_SCALE,
-  WORLD_CAMERA_POSITION_CLOSE,
-} from "~/app/(app)/(stable)/(workspace)/workspace/stores/constants";
 import { api } from "~/trpc/react";
+import { DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION } from "../../stores/constants";
 import { BaseNode } from "../../types/node";
+import { GeometryRenderer } from "../webgl/geometry-renderer";
+import {
+  GlobalOrbitControls,
+  GlobalPerspectiveCamera,
+} from "../webgl/webgl-globals";
+import { WebGLView } from "../webgl/webgl-primitives";
 
 export const MaterialNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
@@ -37,42 +37,31 @@ export const MaterialNode = memo(
               {type} {id}
             </Label>
             <ToggleGroup type="single">
-              <ToggleGroupItem
-                value="renderInNode"
-                variant="outline"
-                size="xs"
-                // onClick={() => {
-                //   machineRef.send({
-                //     type: "UPDATE_MATERIAL",
-                //     materialId: material.id,
-                //     value: {
-                //       shouldRenderInNode: !material.shouldRenderInNode,
-                //     },
-                //   });
-                // }}
-              >
+              <ToggleGroupItem value="renderInNode" variant="outline" size="xs">
                 <ArrowRightIcon className="h-3 w-3" />
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
           <div className="flex h-32 w-72 items-center justify-center border">
-            <GeometryViewer
-              geometries={[
-                {
-                  type: $GeometryType.Enum.torus,
-                  position: CENTER_OF_WORLD,
-                  scale: DEFAULT_SCALE,
-                  wireframe: false,
+            <WebGLView
+              style={{
+                position: "relative",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
+              }}
+            >
+              {GlobalPerspectiveCamera}
+              {GlobalOrbitControls}
+              <GeometryRenderer
+                geometry={createDefaultGeometry({
+                  type: "torus",
                   rotation: DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,
-                  shouldRenderInNode: true,
-                },
-              ]}
-              cameraPosition={WORLD_CAMERA_POSITION_CLOSE}
-              lookAt={CENTER_OF_WORLD}
-              shouldRenderGrid={false}
-              shouldRenderAxes={false}
-              shouldRender={data?.shouldRenderInNode ?? false}
-            />
+                })}
+              />
+            </WebGLView>
           </div>
         </div>
       </BaseNodeComponent>
