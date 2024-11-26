@@ -45,10 +45,15 @@ export const createTextureRenderStore = (
         },
       })),
     removeTarget: (id) =>
-      set((state) => ({
-        targets: Object.fromEntries(
-          Object.entries(state.targets).filter(([key]) => key !== id),
-        ),
-      })),
+      set((state) => {
+        // Dispose of the render target before removing it
+        state.targets[id]?.dispose();
+
+        return {
+          targets: Object.fromEntries(
+            Object.entries(state.targets).filter(([key]) => key !== id),
+          ),
+        };
+      }),
   }));
 };
