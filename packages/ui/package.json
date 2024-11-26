@@ -68,6 +68,7 @@
     "react": "catalog:react18",
     "react-hook-form": "^7.53.1",
     "react-resizable-panels": "^2.1.4",
+    "recharts": "^2.13.3",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"

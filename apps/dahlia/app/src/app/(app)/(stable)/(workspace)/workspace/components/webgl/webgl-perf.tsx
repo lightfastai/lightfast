@@ -3,6 +3,8 @@ import { usePerf } from "r3f-perf";
 
 import { InfoCard } from "@repo/ui/components/info-card";
 
+import { PerformanceChart } from "./performance-chart";
+
 // Memoized InfoCard components
 export const PerformanceCard = memo(() => {
   const log = usePerf((state) => state.log);
@@ -14,22 +16,27 @@ export const PerformanceCard = memo(() => {
         value: (log?.fps ?? 0).toFixed(1),
       },
       {
-        label: "CPU Load",
-        value: `${(log?.cpu ?? 0).toFixed(5)}%`,
+        label: "CPU Time",
+        value: `${(log?.cpu ?? 0).toFixed(2)}ms`,
       },
       {
-        label: "GPU Load",
-        value: `${(log?.gpu ?? 0).toFixed(5)}%`,
+        label: "GPU Time",
+        value: `${(log?.gpu ?? 0).toFixed(2)}ms`,
       },
       {
-        label: "Memory Usage",
+        label: "Memory",
         value: `${(log?.mem ?? 0).toFixed(2)}MB`,
       },
     ],
     [log?.fps, log?.cpu, log?.gpu, log?.mem],
   );
 
-  return <InfoCard title="Performance" items={perfItems} />;
+  return (
+    <div className="flex flex-col gap-4">
+      <InfoCard title="Performance" items={perfItems} />
+      <PerformanceChart />
+    </div>
+  );
 });
 
 export const GLStatsCard = memo(() => {

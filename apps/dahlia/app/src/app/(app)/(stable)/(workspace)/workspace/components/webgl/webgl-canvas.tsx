@@ -5,7 +5,6 @@ import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { PerfHeadless } from "r3f-perf";
 
-
 export interface WebGLCanvasProps extends CanvasProps {
   children: React.ReactNode;
   showPerformance?: boolean;
