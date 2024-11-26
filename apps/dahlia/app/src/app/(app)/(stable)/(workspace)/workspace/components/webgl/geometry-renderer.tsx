@@ -1,13 +1,13 @@
 "use client";
 
 import type { Mesh } from "three";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
 import { $GeometryType, Geometry } from "@repo/db/schema";
 
-export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
+export const GeometryRenderer = memo(({ geometry }: { geometry: Geometry }) => {
   const meshRef = useRef<Mesh>(null);
 
   let Geometry;
@@ -58,4 +58,4 @@ export const GeometryRenderer = ({ geometry }: { geometry: Geometry }) => {
       <meshBasicMaterial wireframe={geometry.wireframe} />
     </mesh>
   );
-};
+});

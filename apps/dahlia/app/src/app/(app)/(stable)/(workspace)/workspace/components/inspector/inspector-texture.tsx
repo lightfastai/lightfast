@@ -49,7 +49,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       if (!value) return;
       if (property === "u_texture") return;
 
-      // @ts-expect-error - TODO: fix this
+      // @TODO: fix this type
       const newUniforms = {
         ...data.uniforms,
         [property]: value,

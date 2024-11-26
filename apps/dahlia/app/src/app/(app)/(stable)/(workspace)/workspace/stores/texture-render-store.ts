@@ -7,12 +7,11 @@ import { BaseNode } from "../types/node";
 
 interface TextureRenderState {
   targets: Record<string, THREE.WebGLRenderTarget>;
-  meshes: Record<string, THREE.Mesh>;
 }
 
 interface TextureRenderActions {
-  addTexture: (id: string) => void;
-  addMesh: (id: string, mesh: THREE.Mesh) => void;
+  addTarget: (id: string) => void;
+  removeTarget: (id: string) => void;
 }
 
 export type TextureRenderStore = TextureRenderState & TextureRenderActions;
@@ -27,12 +26,10 @@ export const initTextureRenderState = (
     },
     {} as Record<string, THREE.WebGLRenderTarget>,
   ),
-  meshes: {},
 });
 
 export const defaultTextureRenderState: TextureRenderState = {
   targets: {},
-  meshes: {},
 };
 
 export const createTextureRenderStore = (
@@ -40,19 +37,18 @@ export const createTextureRenderStore = (
 ) => {
   return createStore<TextureRenderStore>()((set) => ({
     ...initState,
-    addTexture: (id) =>
+    addTarget: (id) =>
       set((state) => ({
         targets: {
           ...state.targets,
           [id]: new THREE.WebGLRenderTarget(256, 256),
         },
       })),
-    addMesh: (id, mesh) =>
+    removeTarget: (id) =>
       set((state) => ({
-        meshes: {
-          ...state.meshes,
-          [id]: mesh,
-        },
+        targets: Object.fromEntries(
+          Object.entries(state.targets).filter(([key]) => key !== id),
+        ),
       })),
   }));
 };

@@ -11,13 +11,13 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
+import { GeometryViewer } from "~/app/(app)/(stable)/(workspace)/workspace/components/webgl/geometry-viewer";
 import {
   CENTER_OF_WORLD,
   DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,
   DEFAULT_SCALE,
   WORLD_CAMERA_POSITION_CLOSE,
-} from "~/components/constants";
-import { GeometryViewer } from "~/components/r3f/geometry-viewer";
+} from "~/app/(app)/(stable)/(workspace)/workspace/stores/constants";
 import { api } from "~/trpc/react";
 import { BaseNode } from "../../types/node";
 

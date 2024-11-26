@@ -12,13 +12,14 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import {
-  CENTER_OF_WORLD,
-  WORLD_CAMERA_POSITION_CLOSE,
-} from "~/components/constants";
-import { GeometryViewer } from "~/components/r3f/geometry-viewer";
+import { GeometryRenderer } from "~/app/(app)/(stable)/(workspace)/workspace/components/webgl/geometry-renderer";
 import { api } from "~/trpc/react";
 import { BaseNode } from "../../types/node";
+import {
+  GlobalOrbitControls,
+  GlobalPerspectiveCamera,
+} from "../webgl/webgl-globals";
+import { WebGLView } from "../webgl/webgl-primitives";
 
 export const GeometryNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
@@ -50,21 +51,20 @@ export const GeometryNode = memo(
           </div>
 
           <div className="flex h-32 w-72 items-center justify-center border">
-            {data && data.shouldRenderInNode && (
-              <GeometryViewer
-                geometries={[
-                  {
-                    ...data,
-                    position: CENTER_OF_WORLD,
-                  },
-                ]}
-                cameraPosition={WORLD_CAMERA_POSITION_CLOSE}
-                lookAt={CENTER_OF_WORLD}
-                shouldRenderGrid={false}
-                shouldRenderAxes={false}
-                shouldRender={data.shouldRenderInNode ?? false}
-              />
-            )}
+            <WebGLView
+              style={{
+                position: "relative",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
+              }}
+            >
+              {GlobalPerspectiveCamera}
+              {GlobalOrbitControls}
+              <GeometryRenderer geometry={data} />
+            </WebGLView>
           </div>
 
           <div className="flex items-center justify-end">

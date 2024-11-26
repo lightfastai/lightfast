@@ -1,10 +1,15 @@
+import { $NodeType } from "@repo/db/schema";
+
 import { api } from "~/trpc/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
+import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
 export const useDeleteNode = () => {
   const { deleteNode, addNode, nodes } = useNodeStore((state) => state);
   const { deleteEdge, addEdge, edges } = useEdgeStore((state) => state);
+  const { targets, removeTarget } = useTextureRenderStore((state) => state);
+
   const { mutateAsync } = api.node.delete.useMutation({
     onMutate: async ({ id }) => {
       // Find the node to delete
@@ -35,11 +40,12 @@ export const useDeleteNode = () => {
 
       console.error("Failed to delete node and its edges:", err);
     },
-    // onSettled: (data) => {
-    //   if (!data) return;
-    //   // Always invalidate queries after mutation
-    //   utils.node.data.get.invalidate({ id: data.id });
-    // },
+    onSuccess: (data, variables, context) => {
+      // Clean up the render target after successful deletion
+      if (context.node.type === $NodeType.Enum.texture) {
+        removeTarget(variables.id);
+      }
+    },
   });
 
   return { mutateAsync };

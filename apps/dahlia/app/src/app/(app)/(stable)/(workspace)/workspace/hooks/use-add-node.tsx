@@ -12,6 +12,7 @@ import {
   GeometryType,
   Material,
   MaterialType,
+  Texture,
   TextureType,
 } from "@repo/db/schema";
 import { nanoid } from "@repo/lib";
@@ -19,6 +20,7 @@ import { nanoid } from "@repo/lib";
 import { api } from "~/trpc/react";
 import { useNodeStore } from "../providers/node-store-provider";
 import { useSelectionStore } from "../providers/selection-store-provider";
+import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { BaseNode } from "../types/node";
 
 interface UseWorkspaceAddNodeProps {
@@ -28,6 +30,7 @@ interface UseWorkspaceAddNodeProps {
 export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
   const utils = api.useUtils();
   const { addNode, deleteNode } = useNodeStore((state) => state);
+  const { addTarget } = useTextureRenderStore((state) => state);
   const { selection, clearSelection } = useSelectionStore((state) => state);
   const { screenToFlowPosition } = useReactFlow();
   const create = api.node.create.useMutation({
@@ -46,8 +49,12 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
 
       utils.node.data.get.setData(
         { id: newNode.id },
-        newNode.data as Geometry | Material,
+        newNode.data as Geometry | Material | Texture,
       );
+
+      if (newNode.type === $NodeType.Enum.texture) {
+        addTarget(newNode.id);
+      }
 
       return { optimisticNode };
     },
