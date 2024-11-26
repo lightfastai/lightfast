@@ -13,7 +13,6 @@ import { Icons } from "~/app/icons";
 
 export function EditorHeaderMenu() {
   const { mutateAsync } = useCreateWorkspace();
-
   return (
     <div className="fixed inset-x-0 top-0 z-[1] p-4">
       <DropdownMenu>
