@@ -144,6 +144,7 @@ export default async function WorkspaceLayout({
                         height: "100%",
                         zIndex: 1,
                       }}
+                      showPerf={true}
                     >
                       <TextureRenderPipeline />
                     </WebGLCanvas>

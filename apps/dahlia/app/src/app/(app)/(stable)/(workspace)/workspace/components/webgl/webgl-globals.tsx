@@ -1,4 +1,10 @@
-import { Vector3 } from "three";
+import {
+  BoxGeometry,
+  SphereGeometry,
+  TetrahedronGeometry,
+  TorusGeometry,
+  Vector3,
+} from "three";
 
 import { $GeometryType } from "@repo/db/schema";
 
@@ -33,23 +39,27 @@ export const GlobalOrbitControls = (
 
 /**
  * @description A torus geometry.
+ * Parameters: radius, tube, radialSegments, tubularSegments
+ * Reduced from (1, 0.4, 16, 100) to (1, 0.4, 12, 48)
  */
-export const GlobalTorusGeometry = <torusGeometry args={[1, 0.4, 16, 100]} />;
+export const GlobalTorusGeometry = new TorusGeometry(1, 0.4, 12, 48);
 
 /**
  * @description A box geometry.
  */
-export const GlobalBoxGeometry = <boxGeometry />;
+export const GlobalBoxGeometry = new BoxGeometry(1, 1, 1);
 
 /**
  * @description A sphere geometry.
+ * Parameters: radius, widthSegments, heightSegments
+ * Reduced from (1, 32, 32) to (1, 16, 16)
  */
-export const GlobalSphereGeometry = <sphereGeometry />;
+export const GlobalSphereGeometry = new SphereGeometry(1, 12, 12);
 
 /**
  * @description A tetrahedron geometry.
  */
-export const GlobalTetrahedronGeometry = <tetrahedronGeometry />;
+export const GlobalTetrahedronGeometry = new TetrahedronGeometry(1);
 
 // Create a static lookup map for geometries.
 export const GeometryMap = {

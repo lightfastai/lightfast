@@ -31,10 +31,10 @@ export const GeometryRenderer = memo(({ geometry }: { geometry: Geometry }) => {
           geometry.position.z,
         )
       }
+      geometry={GeometryMap[geometry.type]}
       scale={new Vector3(geometry.scale.x, geometry.scale.y, geometry.scale.z)}
       ref={meshRef}
     >
-      {GeometryMap[geometry.type]}
       <meshBasicMaterial wireframe={geometry.wireframe} />
     </mesh>
   );
