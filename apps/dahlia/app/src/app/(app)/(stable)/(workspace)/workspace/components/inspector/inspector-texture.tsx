@@ -4,13 +4,17 @@ import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { $TextureUniforms, Texture, TextureUniforms } from "@repo/db/schema";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Value } from "@repo/webgl";
 
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/react";
+import {
+  $TextureUniforms,
+  Texture,
+  TextureUniforms,
+} from "../../../../../../../../../../../packages/db/dist/app/src/schema";
 import { InspectorBase } from "./inspector-base";
 import { InspectorFormField } from "./inspector-form-field";
 

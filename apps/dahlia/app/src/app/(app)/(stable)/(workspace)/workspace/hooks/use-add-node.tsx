@@ -1,5 +1,8 @@
 import { useReactFlow } from "@xyflow/react";
 
+import { nanoid } from "@repo/lib";
+
+import { api } from "~/trpc/react";
 import {
   $GeometryType,
   $MaterialType,
@@ -14,10 +17,7 @@ import {
   MaterialType,
   Texture,
   TextureType,
-} from "@repo/db/schema";
-import { nanoid } from "@repo/lib";
-
-import { api } from "~/trpc/react";
+} from "../../../../../../../../../../packages/db/dist/app/src/schema";
 import { useNodeStore } from "../providers/node-store-provider";
 import { useSelectionStore } from "../providers/selection-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";

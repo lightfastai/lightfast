@@ -2,7 +2,6 @@ import { memo } from "react";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
-import { $GeometryType, Texture } from "@repo/db/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -12,6 +11,10 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { api } from "~/trpc/react";
+import {
+  $GeometryType,
+  Texture,
+} from "../../../../../../../../../../../packages/db/dist/app/src/schema";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 import { BaseNode } from "../../types/node";

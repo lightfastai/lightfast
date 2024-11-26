@@ -5,10 +5,6 @@ import { FieldErrors } from "react-hook-form";
 
 import { RouterOutputs } from "@repo/api";
 import {
-  UpdateNameWorkspace,
-  UpdateNameWorkspaceSchema,
-} from "@repo/db/schema";
-import {
   Form,
   FormControl,
   FormField,
@@ -18,6 +14,10 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/hooks/use-toast";
 
+import {
+  UpdateNameWorkspace,
+  UpdateNameWorkspaceSchema,
+} from "../../../../../../../../../../../packages/db/dist/app/src/schema";
 import { useGetWorkspace } from "../../hooks/use-get-workspace";
 import {
   useWorkspaceUpdateName,

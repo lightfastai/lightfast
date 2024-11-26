@@ -4,14 +4,6 @@ import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 
 import {
-  $GeometryType,
-  $MaterialType,
-  $TextureTypes,
-  GeometryType,
-  MaterialType,
-  TextureType,
-} from "@repo/db/schema";
-import {
   Command,
   CommandDialog,
   CommandEmpty,
@@ -22,6 +14,14 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
+import {
+  $GeometryType,
+  $MaterialType,
+  $TextureTypes,
+  GeometryType,
+  MaterialType,
+  TextureType,
+} from "../../../../../../../../../../../packages/db/dist/app/src/schema";
 import { useEditorStore } from "../../providers/editor-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 

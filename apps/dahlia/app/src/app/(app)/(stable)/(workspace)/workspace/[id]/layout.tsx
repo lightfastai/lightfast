@@ -2,7 +2,6 @@ import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
-import { $NodeType } from "@repo/db/schema";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,6 +10,7 @@ import {
 } from "@repo/ui/components/ui/breadcrumb";
 
 import { api, HydrateClient } from "~/trpc/server";
+import { $NodeType } from "../../../../../../../../../../packages/db/dist/app/src/schema";
 import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";
 import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select";

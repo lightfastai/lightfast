@@ -6,7 +6,7 @@ import {
   MaterialType,
   NodeType,
   TextureType,
-} from "@repo/db/schema";
+} from "../../../../../../../../../../packages/db/dist/app/src/schema";
 
 interface SelectionState {
   selection: {
