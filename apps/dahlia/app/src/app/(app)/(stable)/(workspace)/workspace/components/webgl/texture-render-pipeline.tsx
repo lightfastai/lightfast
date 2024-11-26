@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { $GeometryType } from "@repo/db/schema";
@@ -15,6 +15,22 @@ export const TextureRenderPipeline = () => {
   const meshRefs = useRef<Record<string, THREE.Mesh>>({});
   const noiseNodes = useUpdateTextureNoise();
   const limitNodes = useUpdateTextureLimit();
+
+  // clean up unused meshes
+  useEffect(() => {
+    const currentNodeIds = new Set([
+      ...noiseNodes.map((node) => node.id),
+      ...limitNodes.map((node) => node.id),
+    ]);
+
+    Object.keys(meshRefs.current).forEach((id) => {
+      if (!currentNodeIds.has(id)) {
+        delete meshRefs.current[id];
+      }
+    });
+  }, [noiseNodes, limitNodes]);
+
+  // update uniforms
   const updates = useMemo(
     () =>
       Object.fromEntries(

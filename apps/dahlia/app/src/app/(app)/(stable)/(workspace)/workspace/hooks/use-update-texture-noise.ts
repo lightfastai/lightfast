@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
-import { Texture } from "@repo/db/schema";
+import { NoiseTexture, Texture } from "@repo/db/schema";
 import {
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
@@ -11,8 +11,6 @@ import { api } from "~/trpc/react";
 import { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { TextureRenderNode } from "../types/render";
-
-type NoiseTexture = Extract<Texture, { type: "Noise" }>;
 
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
