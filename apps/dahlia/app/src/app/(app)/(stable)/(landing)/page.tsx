@@ -1,3 +1,10 @@
+import CreateDatabase from "./component/create-database";
+
+// let's create a new database
 export default function Page() {
-  return <div>Landing</div>;
+  return (
+    <div>
+      <CreateDatabase />
+    </div>
+  );
 }
