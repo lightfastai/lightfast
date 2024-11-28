@@ -72,7 +72,12 @@
     "SENTRY_PROJECT",
     "SENTRY_AUTH_TOKEN",
     "NEON_API_KEY",
-    "INNGEST_APP_NAME"
+    "INNGEST_APP_NAME",
+    "PG_VERSION",
+    "DB_NAME",
+    "ROLE_NAME",
+    "REGION_ID",
+    "ORG_ID"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",

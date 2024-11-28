@@ -19,6 +19,7 @@ const config = {
     "@repo/api",
     "@repo/auth",
     "@repo/db",
+    "@repo/events",
     "@repo/lib",
     "@repo/ui",
   ],
