@@ -1,3 +1,5 @@
+import { db } from "@repo/db/app/client";
+import { Database } from "@repo/db/app/schema";
 import {
   createDatabase,
   getDatabaseUri,
@@ -22,13 +24,20 @@ export const createDatabaseFunction = inngest.createFunction(
 
     // update the db schema
     await step.run("update-db-schema", async () => {
-      return updateDatabaseSchema(uri);
+      return updateDatabaseSchema(
+        uri,
+        // @ts-expect-error this is a relative path, easilt broken. do something...
+        "../../../packages/db/src/tenant/src/migrations",
+      );
     });
 
     // update the main app db with the new tenant db id
     await step.run("update-main-db", async () => {
-      // return updateMainDb(event.data.user.id, dbId);
-      // @TODO: implement
+      await db
+        .insert(Database)
+        .values({ dbId, userId: event.data.user.id })
+        // check if the user already has a database
+        .onConflictDoNothing();
     });
   },
 );
