@@ -1,0 +1,45 @@
+{
+  "name": "@dahlia/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm with-env next build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules .env.sentry-build-plugin",
+    "dev": "pnpm with-env next dev",
+    "analyze": "ANALYZE=true pnpm with-env next build",
+    "format": "prettier --check . --ignore-path ../../../.gitignore",
+    "lint": "eslint",
+    "start": "pnpm with-env next start",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../../.env --"
+  },
+  "dependencies": {
+    "@next/bundle-analyzer": "^15.0.3",
+    "@repo/api": "workspace:*",
+    "@repo/auth": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@repo/events": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@sentry/nextjs": "^8",
+    "@t3-oss/env-nextjs": "^0.11.1",
+    "next": "catalog:",
+    "react": "catalog:react18",
+    "react-dom": "catalog:react18",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react18",
+    "@types/react-dom": "catalog:react18",
+    "dotenv-cli": "^7.4.2",
+    "eslint": "catalog:",
+    "jiti": "^2.3.3",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}
