@@ -8,7 +8,12 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./env.ts"
+    "./fal": "./src/fal/client.ts",
+    "./env": "./env.ts",
+    "./schema": {
+      "types": "./dist/src/schema.d.ts",
+      "default": "./src/schema.ts"
+    }
   },
   "license": "MIT",
   "scripts": {

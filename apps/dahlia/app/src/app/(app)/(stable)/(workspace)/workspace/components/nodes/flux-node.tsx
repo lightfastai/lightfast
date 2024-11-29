@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { NodeProps } from "@xyflow/react";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, PlayIcon } from "lucide-react";
 
 import { Flux } from "@repo/db/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
@@ -19,6 +19,7 @@ export const FluxNode = memo(
   ({ id, type, selected, isConnectable }: NodeProps<BaseNode>) => {
     const [data] = api.node.data.get.useSuspenseQuery<Flux>({ id });
     const setSelected = useInspectorStore((state) => state.setSelected);
+    const generate = api.node.data.generate.useMutation();
     return (
       <BaseNodeComponent
         id={id}
@@ -30,7 +31,7 @@ export const FluxNode = memo(
         <div
           key={id}
           className={cn(
-            `relative cursor-pointer flex-col gap-1 border p-1 text-card-foreground shadow-sm`,
+            `relative cursor-pointer flex-col space-y-1 p-1 text-card-foreground shadow-sm`,
           )}
         >
           <div className="flex flex-row items-center justify-between">
@@ -56,8 +57,23 @@ export const FluxNode = memo(
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
-          <div className="mt-1 flex flex-row gap-1">
+
+          <div className="flex flex-row gap-1">
             <div className="h-32 w-72 border">{/** Something goes here */}</div>
+          </div>
+
+          <div className="flex flex-row justify-end gap-1">
+            <ToggleGroup type="single" variant="outline" size="xs">
+              <ToggleGroupItem
+                value="generate"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  generate.mutate({ id });
+                }}
+              >
+                <PlayIcon className="h-3 w-3" />
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
         </div>
       </BaseNodeComponent>

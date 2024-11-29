@@ -521,6 +521,9 @@ importers:
 
   packages/api:
     dependencies:
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@repo/auth':
         specifier: workspace:*
         version: link:../auth
@@ -616,6 +619,9 @@ importers:
       '@neondatabase/serverless':
         specifier: ^0.10.4
         version: 0.10.4
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@repo/lib':
         specifier: workspace:*
         version: link:../lib
