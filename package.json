@@ -15,7 +15,7 @@
     "db:migrate": "turbo -F @repo/db migrate",
     "db:migrate:generate": "turbo -F @repo/db migrate:generate",
     "db:migrate:generate:custom": "turbo -F @repo/db migrate:generate:custom",
-    "dev": "turbo watch dev --continue",
+    "dev": "turbo run dev --parallel --filter=@dahlia/app --filter=@dahlia/api --filter=@dahlia/www",
     "dev:dahlia-www": "turbo watch dev -F @dahlia/www --continue",
     "dev:dahlia-api": "turbo watch dev -F @dahlia/api --continue",
     "dev:dahlia-app": "turbo watch dev -F @dahlia/app --continue",
