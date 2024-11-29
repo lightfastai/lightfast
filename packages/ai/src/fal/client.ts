@@ -10,19 +10,10 @@ fal.config({
 const falModelName = (model: Txt2ImgModel) => "fal-ai/" + model;
 
 export const subscribe = async (model: Txt2ImgModel, prompt: string) => {
-  try {
-    const subscription = await fal.subscribe(falModelName(model), {
-      input: {
-        prompt,
-      },
-    });
-    return subscription;
-  } catch (error) {
-    console.error(error);
-    // error happens because the model is not available/found
-    if (error instanceof Error && error.message.includes("404")) {
-      // do something
-    }
-    // do something else
-  }
+  const subscription = await fal.subscribe(falModelName(model), {
+    input: {
+      prompt,
+    },
+  });
+  return subscription;
 };

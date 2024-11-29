@@ -1,4 +1,5 @@
 import { memo } from "react";
+import Image from "next/image";
 import { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon, PlayIcon } from "lucide-react";
 
@@ -59,7 +60,17 @@ export const FluxNode = memo(
           </div>
 
           <div className="flex flex-row gap-1">
-            <div className="h-32 w-72 border">{/** Something goes here */}</div>
+            <div className="h-32 w-72 overflow-hidden">
+              {data.image_url && (
+                <Image
+                  src={data.image_url}
+                  alt="Flux image"
+                  width={288}
+                  height={384}
+                  className="object-cover"
+                />
+              )}
+            </div>
           </div>
 
           <div className="flex flex-row justify-end gap-1">

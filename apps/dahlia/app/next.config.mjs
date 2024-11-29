@@ -29,6 +29,15 @@ const config = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "fal.media",
+      },
+    ],
+  },
+
   webpack: (config, { isServer }) => {
     config.module.rules.push({
       test: /\.(vert|frag)$/,
