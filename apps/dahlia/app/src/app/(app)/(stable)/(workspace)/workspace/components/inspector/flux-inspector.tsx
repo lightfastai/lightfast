@@ -4,7 +4,7 @@ import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { $TextureUniforms, Texture, TextureUniforms } from "@repo/db/schema";
+import { $Flux, Flux } from "@repo/db/schema";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Value } from "@repo/webgl";
@@ -14,13 +14,13 @@ import { api } from "~/trpc/react";
 import { InspectorBase } from "./inspector-base";
 import { InspectorFormField } from "./inspector-form-field";
 
-export const InspectorTexture = ({ id }: { id: string }) => {
+export const FluxInspector = ({ id }: { id: string }) => {
   const utils = api.useUtils();
-  const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
+  const [data] = api.node.data.get.useSuspenseQuery<Flux>({ id });
 
-  const form = useForm<TextureUniforms>({
-    resolver: zodResolver($TextureUniforms),
-    defaultValues: data.uniforms,
+  const form = useForm<Flux>({
+    resolver: zodResolver($Flux),
+    defaultValues: data,
   });
 
   const { mutate: updateData } = api.node.data.update.useMutation({
@@ -31,43 +31,39 @@ export const InspectorTexture = ({ id }: { id: string }) => {
   });
 
   useEffect(() => {
-    form.reset(data.uniforms);
+    form.reset(data);
   }, [data, form.reset, form]);
 
-  const debouncedServerUpdate = useDebounce((updates: TextureUniforms) => {
+  const debouncedServerUpdate = useDebounce((updates: Flux) => {
     updateData({
       id,
-      data: {
-        type: data.type,
-        uniforms: updates,
-      },
+      data: updates,
     });
   }, 500);
 
   const handleUpdate = useCallback(
-    (property: keyof TextureUniforms, value: Value) => {
+    (property: keyof Flux, value: Value) => {
       if (!value) return;
-      if (property === "u_texture") return;
 
       // @TODO: fix this type
       const newUniforms = {
-        ...data.uniforms,
+        ...data,
         [property]: value,
-      } as TextureUniforms;
+      } as Flux;
 
       // Optimistically update the cache
       utils.node.data.get.setData(
         { id },
         {
           type: data.type,
-          uniforms: newUniforms,
+          prompt: newUniforms.prompt,
         },
       );
 
       // Debounce the actual server update
       debouncedServerUpdate(newUniforms);
     },
-    [id, data.type, data.uniforms, utils.node.data.get, debouncedServerUpdate],
+    [id, data, utils.node.data.get, debouncedServerUpdate],
   );
 
   return (
@@ -83,18 +79,18 @@ export const InspectorTexture = ({ id }: { id: string }) => {
         </div>
         <Separator />
         <Form {...form}>
-          <form className="flex flex-col space-y-4 py-4">
-            {Object.entries(data.uniforms)
-              .filter(([property]) => property !== "u_texture")
+          <form className="flex flex-col py-4">
+            {Object.entries(data)
+              .filter(([property]) => property !== "type")
               .map(([property]) => (
                 <InspectorFormField
                   key={property}
                   label={property}
                   control={form.control}
-                  parentSchema={$TextureUniforms}
-                  name={property as FieldPath<z.infer<typeof $TextureUniforms>>}
+                  parentSchema={$Flux}
+                  name={property as FieldPath<z.infer<typeof $Flux>>}
                   onValueChange={(value) =>
-                    handleUpdate(property as keyof TextureUniforms, value)
+                    handleUpdate(property as keyof Flux, value)
                   }
                 />
               ))}

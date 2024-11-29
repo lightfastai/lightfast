@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 
 import {
+  $FluxType,
   $GeometryType,
   $MaterialType,
   $TextureTypes,
+  FluxType,
   GeometryType,
   MaterialType,
   TextureType,
@@ -26,7 +28,7 @@ import { useEditorStore } from "../../providers/editor-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 
 export const EditorCommandDialog = () => {
-  const { setGeometry, setMaterial, setTexture, clearSelection } =
+  const { setGeometry, setMaterial, setTexture, setFlux, clearSelection } =
     useSelectionStore((state) => state);
 
   const { isCommandDialogOpen, setIsCommandDialogOpen } = useEditorStore(
@@ -58,6 +60,14 @@ export const EditorCommandDialog = () => {
 
     // Notify parent component of the selected texture
     setTexture(textureType);
+  };
+
+  const handleFluxSelect = (fluxType: FluxType) => {
+    // Close the command dialog first
+    setIsCommandDialogOpen(false);
+
+    // Notify parent component of the selected flux
+    setFlux(fluxType);
   };
 
   /**
@@ -172,6 +182,14 @@ export const EditorCommandDialog = () => {
               className="flex items-center gap-2"
             >
               <Label>Limit</Label>
+            </CommandItem>
+          </CommandGroup>
+          <CommandGroup heading="AI">
+            <CommandItem
+              onSelect={() => handleFluxSelect($FluxType.Enum["flux/dev"])}
+              className="flex items-center gap-2"
+            >
+              <Label>Flux</Label>
             </CommandItem>
           </CommandGroup>
           {/* <CommandGroup heading="Utilities">

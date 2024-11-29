@@ -2,6 +2,7 @@ import { createStore } from "zustand";
 
 import {
   $NodeType,
+  FluxType,
   GeometryType,
   MaterialType,
   NodeType,
@@ -11,7 +12,7 @@ import {
 interface SelectionState {
   selection: {
     type: NodeType;
-    value: GeometryType | MaterialType | TextureType;
+    value: GeometryType | MaterialType | TextureType | FluxType;
   } | null;
 }
 
@@ -19,6 +20,7 @@ export type SelectionActions = {
   setGeometry: (geometry: GeometryType) => void;
   setMaterial: (material: MaterialType) => void;
   setTexture: (texture: TextureType) => void;
+  setFlux: (flux: FluxType) => void;
   clearSelection: () => void;
 };
 
@@ -48,6 +50,10 @@ export const createSelectionStore = (
     setTexture: (texture: TextureType) =>
       set(() => ({
         selection: { type: $NodeType.Enum.texture, value: texture },
+      })),
+    setFlux: (flux: FluxType) =>
+      set(() => ({
+        selection: { type: $NodeType.Enum.flux, value: flux },
       })),
     clearSelection: () => set(() => ({ selection: null })),
   }));

@@ -14,7 +14,7 @@ import {
   FormItem,
   FormLabel,
 } from "@repo/ui/components/ui/form";
-import { isColor, isNumber, isVec2, isVec3 } from "@repo/webgl";
+import { isColor, isNumber, isString, isVec2, isVec3 } from "@repo/webgl";
 
 import {
   extractUniformName,
@@ -24,6 +24,7 @@ import {
 } from "./utils";
 import { ColorPickerField } from "./value/color-picker-field";
 import { NumberInput } from "./value/number-input";
+import { StringInput } from "./value/string-input";
 import { Vec2Input } from "./value/vec2-input";
 import { Vec3Input } from "./value/vec3-input";
 
@@ -99,6 +100,10 @@ const InspectorFormFieldComponent = <T extends FieldValues>({
       if (isColor(field.value)) {
         return <ColorPickerField field={field} onValueChange={onValueChange} />;
       }
+
+      if (isString(field.value)) {
+        return <StringInput field={field} onValueChange={onValueChange} />;
+      }
     },
     [numberMetadata, vec2Metadata, vec3Metadata, onValueChange],
   );
@@ -110,8 +115,8 @@ const InspectorFormFieldComponent = <T extends FieldValues>({
       name={name}
       control={control}
       render={({ field }) => (
-        <FormItem className="grid grid-cols-8 gap-x-4 px-4">
-          <FormLabel className="col-span-3 flex items-center justify-end font-mono text-xs uppercase">
+        <FormItem className="grid grid-cols-8 gap-x-4 space-y-0 px-4">
+          <FormLabel className="col-span-3 flex items-start justify-end font-mono text-xs uppercase">
             {uniformName}
           </FormLabel>
           <FormControl>

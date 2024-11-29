@@ -29,6 +29,7 @@ import { useNodeStore } from "../../providers/node-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 import { BaseEdge, BaseNode } from "../../types/node";
 import { Debug } from "../debug/debug";
+import { FluxNode } from "../nodes/flux-node";
 import { GeometryNode } from "../nodes/geometry-node";
 import { MaterialNode } from "../nodes/material-node";
 import { TextureNode } from "../nodes/texture-node";
@@ -43,6 +44,7 @@ const nodeTypes: NodeTypes = {
   geometry: GeometryNode,
   material: MaterialNode,
   texture: TextureNode,
+  flux: FluxNode,
 } as const;
 
 export const Workspace = ({ params }: WorkspacePageProps) => {

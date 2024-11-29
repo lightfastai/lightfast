@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react";
 
 import { useInspectorStore } from "../../providers/inspector-store-provider";
+import { FluxInspector } from "./flux-inspector";
 import { InspectorTexture } from "./inspector-texture";
 
 export const Inspector = () => {
@@ -32,6 +33,9 @@ export const Inspector = () => {
   }
   if (selected.type === "material") {
     return null;
+  }
+  if (selected.type === "flux") {
+    return <FluxInspector id={selected.id} />;
   }
   return null;
 };

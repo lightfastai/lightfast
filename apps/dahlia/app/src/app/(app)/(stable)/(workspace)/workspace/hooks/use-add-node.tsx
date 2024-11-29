@@ -5,9 +5,11 @@ import {
   $MaterialType,
   $NodeType,
   $TextureTypes,
+  createDefaultFlux,
   createDefaultGeometry,
   createDefaultMaterial,
   createDefaultTexture,
+  FluxType,
   Geometry,
   GeometryType,
   Material,
@@ -119,6 +121,14 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
         data: createDefaultTexture({
           type: selection.value as TextureType,
         }),
+      });
+    } else if (selection.type === $NodeType.enum.flux) {
+      create.mutate({
+        id: nanoid(),
+        workspaceId,
+        type: $NodeType.enum.flux,
+        position,
+        data: createDefaultFlux({ type: selection.value as FluxType }),
       });
     }
 
