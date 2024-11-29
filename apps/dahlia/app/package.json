@@ -27,7 +27,7 @@
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/webgl": "workspace:*",
-    "@sentry/nextjs": "^8",
+    "@sentry/nextjs": "^8.40.0",
     "@t3-oss/env-nextjs": "^0.11.1",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
