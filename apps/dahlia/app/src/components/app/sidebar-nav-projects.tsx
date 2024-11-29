@@ -12,22 +12,22 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 
 export function SidebarNavProjects({
-  projects,
+  workspaces,
 }: {
-  projects: RouterOutputs["projects"]["getProjects"] | undefined;
+  workspaces: RouterOutputs["workspace"]["getAll"] | undefined;
 }) {
-  if (!projects || projects.length === 0) return null;
+  if (!workspaces || workspaces.length === 0) return null;
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
-        {projects
-          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-          .map((project) => (
-            <SidebarMenuItem key={project.id}>
+        {workspaces
+          // .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .map((workspace) => (
+            <SidebarMenuItem key={workspace.id}>
               <SidebarMenuButton asChild>
-                <Link href={`/ai/chat/${project.id}`}>
-                  <span>{project.id}</span>
+                <Link href={`/workspace/${workspace.id}`}>
+                  <span>{workspace.name}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
