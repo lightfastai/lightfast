@@ -4,7 +4,7 @@ import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { $Flux, Flux } from "@repo/db/schema";
+import { $Txt2Img, Txt2ImgType } from "@repo/db/schema";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Value } from "@repo/webgl";
@@ -16,10 +16,10 @@ import { InspectorFormField } from "./inspector-form-field";
 
 export const FluxInspector = ({ id }: { id: string }) => {
   const utils = api.useUtils();
-  const [data] = api.node.data.get.useSuspenseQuery<Flux>({ id });
+  const [data] = api.node.data.get.useSuspenseQuery<Txt2ImgType>({ id });
 
-  const form = useForm<Flux>({
-    resolver: zodResolver($Flux),
+  const form = useForm<Txt2ImgType>({
+    resolver: zodResolver($Txt2Img),
     defaultValues: data,
   });
 
@@ -34,7 +34,7 @@ export const FluxInspector = ({ id }: { id: string }) => {
     form.reset(data);
   }, [data, form.reset, form]);
 
-  const debouncedServerUpdate = useDebounce((updates: Flux) => {
+  const debouncedServerUpdate = useDebounce((updates: Txt2ImgType) => {
     updateData({
       id,
       data: updates,
@@ -42,14 +42,14 @@ export const FluxInspector = ({ id }: { id: string }) => {
   }, 500);
 
   const handleUpdate = useCallback(
-    (property: keyof Flux, value: Value) => {
+    (property: keyof Txt2ImgType, value: Value) => {
       if (!value) return;
 
       // @TODO: fix this type
       const newUniforms = {
         ...data,
         [property]: value,
-      } as Flux;
+      } as Txt2ImgType;
 
       // Optimistically update the cache
       utils.node.data.get.setData(
@@ -87,10 +87,10 @@ export const FluxInspector = ({ id }: { id: string }) => {
                   key={property}
                   label={property}
                   control={form.control}
-                  parentSchema={$Flux}
-                  name={property as FieldPath<z.infer<typeof $Flux>>}
+                  parentSchema={$Txt2Img}
+                  name={property as FieldPath<z.infer<typeof $Txt2Img>>}
                   onValueChange={(value) =>
-                    handleUpdate(property as keyof Flux, value)
+                    handleUpdate(property as keyof Txt2ImgType, value)
                   }
                 />
               ))}

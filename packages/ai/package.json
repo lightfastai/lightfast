@@ -8,12 +8,13 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./fal": "./src/fal/client.ts",
     "./env": "./env.ts",
     "./schema": {
       "types": "./dist/src/schema.d.ts",
       "default": "./src/schema.ts"
-    }
+    },
+    "./fal": "./src/fal/client.ts",
+    "./fal/server": "./src/fal/nextjs-server-proxy.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "@fal-ai/client": "^1.2.0",
+    "@fal-ai/server-proxy": "^1.1.1",
     "@t3-oss/env-nextjs": "^0.11.1",
     "autoevals": "^0.0.103",
     "braintrust": "^0.0.168",

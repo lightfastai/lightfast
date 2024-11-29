@@ -5,17 +5,17 @@ import {
   $MaterialType,
   $NodeType,
   $TextureTypes,
-  createDefaultFlux,
   createDefaultGeometry,
   createDefaultMaterial,
   createDefaultTexture,
-  FluxType,
+  createDefaultTxt2Img,
   Geometry,
   GeometryType,
   Material,
   MaterialType,
   Texture,
   TextureType,
+  Txt2ImgType,
 } from "@repo/db/schema";
 import { nanoid } from "@repo/lib";
 
@@ -128,7 +128,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
         workspaceId,
         type: $NodeType.enum.flux,
         position,
-        data: createDefaultFlux({ type: selection.value as FluxType }),
+        data: createDefaultTxt2Img({ type: selection.value as Txt2ImgType }),
       });
     }
 

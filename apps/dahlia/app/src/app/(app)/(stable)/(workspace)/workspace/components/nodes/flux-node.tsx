@@ -1,9 +1,10 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import Image from "next/image";
 import { NodeProps } from "@xyflow/react";
-import { ArrowRightIcon, PlayIcon } from "lucide-react";
+import { PlayIcon } from "lucide-react";
 
-import { Flux } from "@repo/db/schema";
+import { createFalClient } from "@repo/ai/fal";
+import { Txt2Img } from "@repo/db/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -16,11 +17,45 @@ import { api } from "~/trpc/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { BaseNode } from "../../types/node";
 
+const fal = createFalClient({
+  proxyUrl: "/api/fal/proxy",
+});
+
 export const FluxNode = memo(
   ({ id, type, selected, isConnectable }: NodeProps<BaseNode>) => {
-    const [data] = api.node.data.get.useSuspenseQuery<Flux>({ id });
+    const [data] = api.node.data.get.useSuspenseQuery<Txt2Img>({ id });
     const setSelected = useInspectorStore((state) => state.setSelected);
-    const generate = api.node.data.generate.useMutation();
+    const [result, setResult] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [logs, setLogs] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
+    const generateImage = async () => {
+      try {
+        setLoading(true);
+        const { data: output } = await fal.subscribe("fal-ai/fast-sdxl", {
+          input: {
+            prompt: data.prompt,
+            image_size: "square_hd",
+          },
+          logs: true,
+          onQueueUpdate(update) {
+            if (
+              update.status === "IN_PROGRESS" ||
+              update.status === "COMPLETED"
+            ) {
+              setLogs((update.logs || []).map((log) => log.message));
+            }
+          },
+        });
+        setResult(output.images[0]?.url ?? "");
+      } catch (error: any) {
+        setError(error);
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     return (
       <BaseNodeComponent
         id={id}
@@ -37,37 +72,19 @@ export const FluxNode = memo(
         >
           <div className="flex flex-row items-center justify-between">
             <Label className="font-mono text-xs font-bold uppercase tracking-widest">
-              {data.type} {id}
+              {data.type}
             </Label>
-            <ToggleGroup type="single">
-              <ToggleGroupItem
-                value="renderInNode"
-                variant="outline"
-                size="xs"
-                onClick={() => {
-                  // machineRef.send({
-                  //   type: "UPDATE_TEXTURE",
-                  //   textureId: data.id,
-                  //   value: {
-                  //     shouldRenderInNode: !data.shouldRenderInNode,
-                  //   },
-                  // });
-                }}
-              >
-                <ArrowRightIcon className="h-3 w-3" />
-              </ToggleGroupItem>
-            </ToggleGroup>
           </div>
 
           <div className="flex flex-row gap-1">
-            <div className="h-32 w-72 overflow-hidden">
-              {data.image_url && (
+            <div className="h-32 w-72 overflow-hidden border">
+              {result && (
                 <Image
-                  src={data.image_url}
+                  src={result}
                   alt="Flux image"
-                  width={288}
-                  height={384}
-                  className="object-cover"
+                  width={512}
+                  height={512}
+                  className="object-contain"
                 />
               )}
             </div>
@@ -79,7 +96,7 @@ export const FluxNode = memo(
                 value="generate"
                 onClick={async (e) => {
                   e.stopPropagation();
-                  generate.mutate({ id });
+                  generateImage();
                 }}
               >
                 <PlayIcon className="h-3 w-3" />

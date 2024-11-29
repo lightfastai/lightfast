@@ -4,14 +4,14 @@ import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 
 import {
-  $FluxType,
   $GeometryType,
   $MaterialType,
   $TextureTypes,
-  FluxType,
+  $Txt2ImgType,
   GeometryType,
   MaterialType,
   TextureType,
+  Txt2ImgType,
 } from "@repo/db/schema";
 import {
   Command,
@@ -62,7 +62,7 @@ export const EditorCommandDialog = () => {
     setTexture(textureType);
   };
 
-  const handleFluxSelect = (fluxType: FluxType) => {
+  const handleFluxSelect = (fluxType: Txt2ImgType) => {
     // Close the command dialog first
     setIsCommandDialogOpen(false);
 
@@ -186,7 +186,7 @@ export const EditorCommandDialog = () => {
           </CommandGroup>
           <CommandGroup heading="AI">
             <CommandItem
-              onSelect={() => handleFluxSelect($FluxType.Enum["flux/dev"])}
+              onSelect={() => handleFluxSelect($Txt2ImgType.Enum["flux/dev"])}
               className="flex items-center gap-2"
             >
               <Label>Flux</Label>
