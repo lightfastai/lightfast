@@ -45,7 +45,6 @@
     "react-error-boundary": "^4.1.2",
     "react-hook-form": "^7.53.1",
     "react-wrap-balancer": "^1.1.1",
-    "recharts": "^2.13.3",
     "superjson": "2.2.1",
     "three": "^0.169.0",
     "zod": "catalog:",
@@ -65,8 +64,7 @@
     "jiti": "^2.3.3",
     "postcss": "^8",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:",
-    "webpack-glsl-loader": "^1.0.1"
+    "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
 }
