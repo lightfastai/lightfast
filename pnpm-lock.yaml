@@ -107,7 +107,7 @@ importers:
         specifier: workspace:*
         version: link:../../../internal/typescript
       '@sentry/nextjs':
-        specifier: ^8.40.0
+        specifier: ^8.41.0
         version: 8.41.0(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.54.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
       '@types/node':
         specifier: 'catalog:'
@@ -167,7 +167,7 @@ importers:
         specifier: workspace:*
         version: link:../../../packages/webgl
       '@sentry/nextjs':
-        specifier: ^8.40.0
+        specifier: ^8.41.0
         version: 8.41.0(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.54.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
@@ -287,6 +287,76 @@ importers:
       webpack-glsl-loader:
         specifier: ^1.0.1
         version: 1.0.1
+
+  apps/dahlia/auth:
+    dependencies:
+      '@repo/auth':
+        specifier: workspace:*
+        version: link:../../../packages/auth
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../../packages/db
+      '@repo/next':
+        specifier: workspace:*
+        version: link:../../../packages/next
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../../../packages/ui
+      '@t3-oss/env-nextjs':
+        specifier: ^0.11.1
+        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+      next:
+        specifier: 'catalog:'
+        version: 14.2.15(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: catalog:react18
+        version: 18.3.1
+      react-dom:
+        specifier: catalog:react18
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../../internal/typescript
+      '@sentry/nextjs':
+        specifier: ^8.41.0
+        version: 8.41.0(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.54.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.17.2
+      '@types/react':
+        specifier: catalog:react18
+        version: 18.3.12
+      '@types/react-dom':
+        specifier: catalog:react18
+        version: 18.3.1
+      autoprefixer:
+        specifier: ^10
+        version: 10.4.20(postcss@8.4.47)
+      dotenv-cli:
+        specifier: ^7.4.2
+        version: 7.4.2
+      eslint:
+        specifier: 'catalog:'
+        version: 9.13.0(jiti@2.3.3)
+      jiti:
+        specifier: ^2.3.3
+        version: 2.3.3
+      postcss:
+        specifier: ^8
+        version: 8.4.47
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
 
   apps/dahlia/www:
     dependencies:
@@ -786,7 +856,7 @@ importers:
         specifier: ^15.0.3
         version: 15.0.3(bufferutil@4.0.8)
       '@sentry/nextjs':
-        specifier: ^8.40.0
+        specifier: ^8.41.0
         version: 8.41.0(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.54.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1

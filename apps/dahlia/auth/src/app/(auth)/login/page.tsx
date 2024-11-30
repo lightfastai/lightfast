@@ -3,14 +3,17 @@ import { redirect } from "next/navigation";
 import { ProviderSchema } from "node_modules/@repo/auth/src/config";
 
 import { auth, signIn } from "@repo/auth";
+import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardHeader } from "@repo/ui/components/ui/card";
-
-import { Icons } from "~/app/icons";
 
 export default async function Page() {
   const session = await auth();
 
+  /**
+   * If the user is already logged in, redirect to the home page.
+   * @TODO: Redirect to the previous page instead of the home page.
+   */
   if (session) {
     redirect("/");
   }
