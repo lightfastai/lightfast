@@ -6,12 +6,8 @@ import {
   MaterialType,
   NodeType,
   TextureType,
-<<<<<<< HEAD:apps/dahlia/app/src/app/(app)/(stable)/(workspace)/workspace/stores/selection-store.ts
-} from "../../../../../../../../../../packages/db/dist/app/src/schema";
-=======
   Txt2ImgType,
-} from "@repo/db/schema";
->>>>>>> jeevanpillay/dahlia-clerk-integration:apps/dahlia/app/src/app/(app)/(workspace)/workspace/stores/selection-store.ts
+} from "@repo/db/tenant/schema";
 
 interface SelectionState {
   selection: {
