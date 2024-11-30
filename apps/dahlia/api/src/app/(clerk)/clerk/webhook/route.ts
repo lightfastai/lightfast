@@ -3,11 +3,25 @@ import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 
 import type { UserJSON, WebhookEvent } from "@repo/auth/server";
+import { inngest } from "@repo/events";
 
 import { env } from "~/env";
 
+/**
+ * Handles the creation of a user in the database. A webhook is sent
+ * by Clerk when a user is created. We then send an event to Inngest
+ * which is handled by the `handle-create-user` function.
+ *
+ * @todo 1. Analytics flow starts here...
+ * @todo 2. Potentially remove this by figuring out how to automatically send
+ *        events to Inngest from Clerk.
+ */
 const handleUserCreated = (data: UserJSON) => {
-  console.log("User created", data);
+  inngest.send({
+    name: "user.created",
+    data,
+  });
+
   return new Response("User created", { status: 201 });
 };
 
@@ -59,7 +73,6 @@ export const POST = async (request: Request): Promise<Response> => {
   const eventType = event.type;
 
   console.log(`Received webhook with ID ${id} and event type of ${eventType}`);
-  console.log("Webhook payload:", body);
 
   let response: Response = new Response("", { status: 201 });
 

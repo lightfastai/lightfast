@@ -14,6 +14,8 @@
     "with-env": "dotenv -e ../../../.env --"
   },
   "dependencies": {
+    "@repo/auth": "workspace:*",
+    "@repo/db": "workspace:*",
     "@repo/events": "workspace:*",
     "@repo/next": "workspace:*",
     "@repo/ui": "workspace:*",

@@ -2,11 +2,12 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets";
 import { z } from "zod";
 
+import { env as dbEnv } from "@repo/db/env";
 import { env as eventsEnv } from "@repo/events/env";
 import { env as nextEnv } from "@repo/next/env";
 
 export const env = createEnv({
-  extends: [eventsEnv, nextEnv, vercel()],
+  extends: [eventsEnv, nextEnv, dbEnv, vercel()],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
