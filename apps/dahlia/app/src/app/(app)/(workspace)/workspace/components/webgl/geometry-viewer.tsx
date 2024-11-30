@@ -5,8 +5,8 @@ import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
 
 import type { Vec3 } from "@repo/webgl";
+import { Geometry } from "@repo/db/tenant/schema";
 
-import { Geometry } from "../../../../../../../../../../../packages/db/dist/app/src/schema";
 import { GeometryRenderer } from "./geometry-renderer";
 import { OrbitControls, PerspectiveCamera } from "./webgl-primitives";
 

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { $GeometryType } from "../../../../../../../../../../../packages/db/dist/app/src/schema";
+import { $GeometryType } from "@repo/db/tenant/schema";
+
 import { useRenderTargetPipeline } from "../../hooks/use-texture-render-pipeline";
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
 import { useUpdateTextureNoise } from "../../hooks/use-update-texture-noise";

@@ -2,6 +2,7 @@ import { memo } from "react";
 import { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
+import { Geometry } from "@repo/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
@@ -12,7 +13,6 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { api } from "~/trpc/react";
-import { Geometry } from "../../../../../../../../../../../packages/db/dist/app/src/schema";
 import { BaseNode } from "../../types/node";
 import { GeometryRenderer } from "../webgl/geometry-renderer";
 import { WebGLViewContext } from "../webgl/webgl-context";

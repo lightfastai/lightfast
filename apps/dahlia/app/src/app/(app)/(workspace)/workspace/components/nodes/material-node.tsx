@@ -2,6 +2,7 @@ import { memo } from "react";
 import { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
+import { createDefaultGeometry, Material } from "@repo/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -11,10 +12,6 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { api } from "~/trpc/react";
-import {
-  createDefaultGeometry,
-  Material,
-} from "../../../../../../../../../../../packages/db/dist/app/src/schema";
 import { DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION } from "../../stores/constants";
 import { BaseNode } from "../../types/node";
 import { GeometryRenderer } from "../webgl/geometry-renderer";

@@ -4,8 +4,6 @@ import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 
 import {
-<<<<<<< HEAD:apps/dahlia/app/src/app/(app)/(stable)/(workspace)/workspace/components/app/editor-command-dialog.tsx
-=======
   $GeometryType,
   $MaterialType,
   $TextureTypes,
@@ -14,9 +12,8 @@ import {
   MaterialType,
   TextureType,
   Txt2ImgType,
-} from "@repo/db/schema";
+} from "@repo/db/tenant/schema";
 import {
->>>>>>> jeevanpillay/dahlia-clerk-integration:apps/dahlia/app/src/app/(app)/(workspace)/workspace/components/app/editor-command-dialog.tsx
   Command,
   CommandDialog,
   CommandEmpty,
@@ -27,14 +24,6 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
-import {
-  $GeometryType,
-  $MaterialType,
-  $TextureTypes,
-  GeometryType,
-  MaterialType,
-  TextureType,
-} from "../../../../../../../../../../../packages/db/dist/app/src/schema";
 import { useEditorStore } from "../../providers/editor-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 
