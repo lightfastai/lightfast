@@ -73,6 +73,8 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
+  apps/dahlia/api: {}
+
   apps/dahlia/app:
     dependencies:
       '@ai-sdk/anthropic':
@@ -202,6 +204,8 @@ importers:
       webpack-glsl-loader:
         specifier: ^1.0.1
         version: 1.0.1
+
+  apps/dahlia/auth: {}
 
   apps/dahlia/www:
     dependencies:
@@ -617,6 +621,12 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.6.3
+
+  packages/events: {}
+
+  packages/lib: {}
+
+  packages/next: {}
 
   packages/ui:
     dependencies:
