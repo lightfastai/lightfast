@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 
+import { Icons } from "@repo/ui/components/icons";
 import { SidebarMenu, SidebarMenuItem } from "@repo/ui/components/ui/sidebar";
 
-import { Icons } from "~/app/icons";
 import { siteConfig, siteNav } from "~/config/site";
 
 export const SidebarLogo = () => {
