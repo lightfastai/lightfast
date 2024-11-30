@@ -2,10 +2,13 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets";
 import { z } from "zod";
 
+import { env as aiEnv } from "@repo/ai/env";
 import { env as authEnv } from "@repo/auth/env";
+import { env as dbEnv } from "@repo/db/env";
+import { env as nextEnv } from "@repo/next/env";
 
 export const env = createEnv({
-  extends: [authEnv, vercel()],
+  extends: [authEnv, dbEnv, aiEnv, nextEnv, vercel()],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -15,14 +18,7 @@ export const env = createEnv({
    * Specify your server-side environment variables schema here.
    * This way you can ensure the app isn't built with invalid env vars.
    */
-  server: {
-    OPENAI_API_KEY: z.string(),
-    ANTHROPIC_API_KEY: z.string(),
-    POSTGRES_URL: z.string().url(),
-    SENTRY_ORG: z.string(),
-    SENTRY_PROJECT: z.string(),
-    SENTRY_AUTH_TOKEN: z.string(),
-  },
+  server: {},
 
   /**
    * Specify your client-side environment variables schema here.

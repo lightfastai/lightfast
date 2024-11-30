@@ -16,7 +16,7 @@ import { SidebarNavProjects } from "./sidebar-nav-projects";
 import { SidebarNavUser } from "./sidebar-nav-user";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: projects } = api.projects.getProjects.useQuery();
+  const { data: workspaces } = api.workspace.getAll.useQuery();
   const { data: user } = api.user.get.useQuery();
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -25,7 +25,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarLogo />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarNavProjects projects={projects} />
+        <SidebarNavProjects workspaces={workspaces} />
       </SidebarContent>
       <SidebarFooter>
         <SidebarNavUser user={user} />

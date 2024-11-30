@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "pnpm with-env next build",
-    "clean": "git clean -xdf .cache .next .turbo node_modules .env.sentry-build-plugin",
-    "dev": "pnpm with-env next dev",
-    "analyze": "ANALYZE=true pnpm with-env next build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules",
+    "dev": "pnpm with-env next dev -p 4101",
     "format": "prettier --check . --ignore-path ../../../.gitignore",
     "lint": "eslint",
     "start": "pnpm with-env next start",
@@ -21,12 +20,14 @@
     "@repo/db": "workspace:*",
     "@repo/events": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@repo/next": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@sentry/nextjs": "^8",
+    "@sentry/nextjs": "^8.41.0",
     "@t3-oss/env-nextjs": "^0.11.1",
     "next": "catalog:",
     "react": "catalog:react18",
     "react-dom": "catalog:react18",
+    "svix": "^1.42.0",
     "zod": "catalog:"
   },
   "devDependencies": {
