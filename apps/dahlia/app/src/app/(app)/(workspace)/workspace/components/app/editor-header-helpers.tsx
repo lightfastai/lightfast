@@ -14,13 +14,11 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 
-import { NetworkEditorContext } from "~/app/(app)/(stable)/(workspace)/workspace/state/context";
 import { useSession } from "~/hooks/use-session";
 import { useSignOut } from "~/hooks/use-sign-out";
 import { EditorCommandDialog } from "./editor-command-dialog";
 
 export const EditorHeaderHelpers = () => {
-  const machineRef = NetworkEditorContext.useActorRef();
   const session = useSession();
   const { signOut } = useSignOut();
   const router = useRouter();
@@ -54,7 +52,7 @@ export const EditorHeaderHelpers = () => {
         )}
         <Button
           variant="ghost"
-          onClick={() => machineRef.send({ type: "TOGGLE_COMMAND" })}
+          // onClick={() => machineRef.send({ type: "TOGGLE_COMMAND" })}
         >
           Press
           <kbd className="pointer-events-none inline-flex select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground opacity-100">
@@ -64,7 +62,7 @@ export const EditorHeaderHelpers = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            machineRef.send({ type: "CLEAR" });
+            // machineRef.send({ type: "CLEAR" });
           }}
         >
           Clear Canvas

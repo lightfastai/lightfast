@@ -12,9 +12,9 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import { GeometryRenderer } from "~/app/(app)/(stable)/(workspace)/workspace/components/webgl/geometry-renderer";
 import { api } from "~/trpc/react";
 import { BaseNode } from "../../types/node";
+import { GeometryRenderer } from "../webgl/geometry-renderer";
 import { WebGLViewContext } from "../webgl/webgl-context";
 
 export const GeometryNode = memo(

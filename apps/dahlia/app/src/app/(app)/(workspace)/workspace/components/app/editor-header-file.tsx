@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 
-import { useCreateWorkspace } from "~/app/(app)/(stable)/(workspace)/workspace/hooks/use-create-workspace";
+import { useCreateWorkspace } from "../../hooks/use-create-workspace";
 
 export function EditorHeaderMenu() {
   const { mutateAsync } = useCreateWorkspace();
