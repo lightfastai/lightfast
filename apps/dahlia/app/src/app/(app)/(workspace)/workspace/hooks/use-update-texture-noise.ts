@@ -1,16 +1,13 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
+import { NoiseTexture, Texture } from "@repo/db/tenant/schema";
 import {
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
 } from "@repo/webgl/shaders/pnoise/pnoise.glsl";
 
 import { api } from "~/trpc/react";
-import {
-  NoiseTexture,
-  Texture,
-} from "../../../../../../../../../../packages/db/dist/app/src/schema";
 import { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { TextureRenderNode } from "../types/render";

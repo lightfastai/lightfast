@@ -1,5 +1,6 @@
+import { $NodeType } from "@repo/db/tenant/schema";
+
 import { api } from "~/trpc/react";
-import { $NodeType } from "../../../../../../../../../../packages/db/dist/app/src/schema";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
 export const useDeleteNode = () => {

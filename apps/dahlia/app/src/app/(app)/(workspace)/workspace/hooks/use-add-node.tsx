@@ -1,8 +1,5 @@
 import { useReactFlow } from "@xyflow/react";
 
-import { nanoid } from "@repo/lib";
-
-import { api } from "~/trpc/react";
 import {
   $GeometryType,
   $MaterialType,
@@ -18,15 +15,11 @@ import {
   MaterialType,
   Texture,
   TextureType,
-<<<<<<< HEAD:apps/dahlia/app/src/app/(app)/(stable)/(workspace)/workspace/hooks/use-add-node.tsx
-} from "../../../../../../../../../../packages/db/dist/app/src/schema";
-=======
   Txt2ImgType,
-} from "@repo/db/schema";
+} from "@repo/db/tenant/schema";
 import { nanoid } from "@repo/lib";
 
 import { api } from "~/trpc/react";
->>>>>>> jeevanpillay/dahlia-clerk-integration:apps/dahlia/app/src/app/(app)/(workspace)/workspace/hooks/use-add-node.tsx
 import { useNodeStore } from "../providers/node-store-provider";
 import { useSelectionStore } from "../providers/selection-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";

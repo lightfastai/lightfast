@@ -1,16 +1,13 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
+import { LimitTexture, Texture } from "@repo/db/tenant/schema";
 import {
   limitFragmentShader,
   limitVertexShader,
 } from "@repo/webgl/shaders/limit/limit.glsl";
 
 import { api } from "~/trpc/react";
-import {
-  LimitTexture,
-  Texture,
-} from "../../../../../../../../../../packages/db/dist/app/src/schema";
 import { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { TextureRenderNode } from "../types/render";
