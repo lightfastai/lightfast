@@ -160,6 +160,9 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../../packages/lib
+      '@repo/next':
+        specifier: workspace:*
+        version: link:../../../packages/next
       '@repo/ui':
         specifier: workspace:*
         version: link:../../../packages/ui

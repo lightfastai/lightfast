@@ -25,6 +25,7 @@
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@repo/next": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/webgl": "workspace:*",
     "@sentry/nextjs": "^8.41.0",

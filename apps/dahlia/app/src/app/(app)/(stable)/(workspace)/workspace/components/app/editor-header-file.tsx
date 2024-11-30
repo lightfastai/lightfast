@@ -1,5 +1,6 @@
 "use client";
 
+import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +10,6 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 
 import { useCreateWorkspace } from "~/app/(app)/(stable)/(workspace)/workspace/hooks/use-create-workspace";
-import { Icons } from "~/app/icons";
 
 export function EditorHeaderMenu() {
   const { mutateAsync } = useCreateWorkspace();

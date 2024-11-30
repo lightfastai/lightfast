@@ -1,5 +1,4 @@
-import * as Sentry from "@sentry/nextjs";
-import { init } from "@sentry/nextjs";
+import { captureRequestError, init } from "@sentry/nextjs";
 
 import { sentryOpts } from "@repo/next/instrumentation";
 
@@ -13,4 +12,4 @@ export const register = () => {
   }
 };
 
-export const onRequestError = Sentry.captureRequestError;
+export const onRequestError = captureRequestError;

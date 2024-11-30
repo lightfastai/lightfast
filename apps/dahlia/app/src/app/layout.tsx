@@ -1,36 +1,21 @@
-import type { Metadata } from "next";
-
 import "@repo/ui/globals.css";
 
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
-
 import { Toaster } from "@repo/ui/components/ui/toaster";
+import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 
 import { TRPCReactProvider } from "../trpc/react";
 
-export const metadata: Metadata = {
-  title: "Jeevan Pillay | Brand",
-  description: "", // @TODO
+type RootLayoutProperties = {
+  readonly children: React.ReactNode;
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: RootLayoutProperties) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
       <link rel="icon" href="/favicon.ico" sizes="any" />
-      <body
-        className={cn(
-          "dark min-h-screen bg-background font-sans antialiased",
-          GeistSans.variable,
-          GeistMono.variable,
-        )}
-      >
+      <body className={cn("dark min-h-screen bg-background", fonts)}>
         <TRPCReactProvider>{children}</TRPCReactProvider>
         <Toaster />
       </body>
