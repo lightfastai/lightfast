@@ -17,9 +17,7 @@ export const env = createEnv({
    * This way you can ensure the app isn't built with invalid env vars.
    */
   server: {
-    SENTRY_ORG: z.string(),
-    SENTRY_PROJECT: z.string(),
-    SENTRY_AUTH_TOKEN: z.string(),
+    CLERK_WEBHOOK_SIGNING_SECRET: z.string(),
   },
 
   /**
