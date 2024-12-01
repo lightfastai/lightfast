@@ -475,6 +475,9 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../../../packages/db
+      '@repo/events':
+        specifier: workspace:*
+        version: link:../../../packages/events
       '@repo/lib':
         specifier: workspace:*
         version: link:../../../packages/lib
@@ -484,6 +487,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../../packages/ui
+      inngest:
+        specifier: ^3.27.0
+        version: 3.27.0(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.6.3)
       lucide-react:
         specifier: 'catalog:'
         version: 0.451.0(react@18.3.1)
@@ -13949,7 +13955,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.7.4(debug@4.3.7))
+      retry-axios: 2.6.0(axios@1.7.4)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -16030,7 +16036,7 @@ snapshots:
       onetime: 5.1.2
       signal-exit: 3.0.7
 
-  retry-axios@2.6.0(axios@1.7.4(debug@4.3.7)):
+  retry-axios@2.6.0(axios@1.7.4):
     dependencies:
       axios: 1.7.4(debug@4.3.7)
 
