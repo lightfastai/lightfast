@@ -17,6 +17,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.53",
     "@ai-sdk/openai": "^0.0.70",
+    "@clerk/nextjs": "^6.5.1",
     "@hookform/resolvers": "^3.9.1",
     "@next/bundle-analyzer": "^15.0.3",
     "@react-three/fiber": "^8.17.10",

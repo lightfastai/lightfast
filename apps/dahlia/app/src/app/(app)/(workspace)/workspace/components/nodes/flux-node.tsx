@@ -4,7 +4,7 @@ import { NodeProps } from "@xyflow/react";
 import { PlayIcon } from "lucide-react";
 
 import { createFalClient } from "@repo/ai/fal";
-import { Txt2Img } from "@repo/db/schema";
+import { Txt2Img } from "@repo/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {

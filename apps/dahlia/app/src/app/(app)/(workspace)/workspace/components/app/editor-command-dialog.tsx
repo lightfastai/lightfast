@@ -12,7 +12,7 @@ import {
   MaterialType,
   TextureType,
   Txt2ImgType,
-} from "@repo/db/schema";
+} from "@repo/db/tenant/schema";
 import {
   Command,
   CommandDialog,

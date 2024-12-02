@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
-import { $GeometryType, Texture } from "@repo/db/schema";
+import { $GeometryType, Texture } from "@repo/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {

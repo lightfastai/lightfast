@@ -5,7 +5,7 @@ import { memo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
-import { Geometry } from "@repo/db/schema";
+import { Geometry } from "@repo/db/tenant/schema";
 
 import { GeometryMap } from "./webgl-globals";
 
