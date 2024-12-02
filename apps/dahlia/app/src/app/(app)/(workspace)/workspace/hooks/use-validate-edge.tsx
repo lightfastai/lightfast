@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { getMaxTargetEdges } from "@repo/db/schema";
+import { getMaxTargetEdges } from "@repo/db/tenant/schema";
 import { toast } from "@repo/ui/hooks/use-toast";
 
 import { useEdgeStore } from "../providers/edge-store-provider";

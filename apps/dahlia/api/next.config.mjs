@@ -15,7 +15,13 @@ let config = {
   reactStrictMode: true,
 
   /** Enables hot reloading for local packages without a build step */
-  transpilePackages: ["@repo/events", "@repo/ui"],
+  transpilePackages: [
+    "@repo/auth",
+    "@repo/events",
+    "@repo/ui",
+    "@repo/db",
+    "@repo/next",
+  ],
 
   /** We already do linting and typechecking as separate tasks in CI */
   eslint: { ignoreDuringBuilds: true },

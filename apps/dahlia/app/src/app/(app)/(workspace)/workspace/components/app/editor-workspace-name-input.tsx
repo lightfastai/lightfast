@@ -7,7 +7,7 @@ import { RouterOutputs } from "@repo/api";
 import {
   UpdateNameWorkspace,
   UpdateNameWorkspaceSchema,
-} from "@repo/db/schema";
+} from "@repo/db/tenant/schema";
 import {
   Form,
   FormControl,

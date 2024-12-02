@@ -1,7 +1,7 @@
+import { auth } from "@clerk/nextjs/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 import { appRouter, createTRPCContext } from "@repo/api";
-import { auth } from "@repo/auth";
 
 export const runtime = "edge";
 
@@ -24,14 +24,15 @@ export const OPTIONS = () => {
   return response;
 };
 
-const handler = auth(async (req) => {
+const handler = async (req: Request) => {
+  const session = await auth();
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,
     req,
     createContext: () =>
       createTRPCContext({
-        session: req.auth,
+        session,
         headers: req.headers,
       }),
     onError({ error, path }) {
@@ -41,6 +42,6 @@ const handler = auth(async (req) => {
 
   setCorsHeaders(response);
   return response;
-});
+};
 
 export { handler as GET, handler as POST };

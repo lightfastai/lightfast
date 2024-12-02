@@ -4,7 +4,11 @@ import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { $TextureUniforms, Texture, TextureUniforms } from "@repo/db/schema";
+import {
+  $TextureUniforms,
+  Texture,
+  TextureUniforms,
+} from "@repo/db/tenant/schema";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Value } from "@repo/webgl";

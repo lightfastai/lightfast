@@ -43,7 +43,10 @@
     "migrate": {
       "cache": false
     },
-    "migrate:generate": {
+    "migrate:generate:app": {
+      "cache": false
+    },
+    "migrate:generate:tenant": {
       "cache": false
     },
     "migrate:generate:custom": {
@@ -70,7 +73,14 @@
     "NEXT_PUBLIC_SENTRY_DSN",
     "SENTRY_ORG",
     "SENTRY_PROJECT",
-    "SENTRY_AUTH_TOKEN"
+    "SENTRY_AUTH_TOKEN",
+    "NEON_API_KEY",
+    "INNGEST_APP_NAME",
+    "PG_VERSION",
+    "DB_NAME",
+    "ROLE_NAME",
+    "REGION_ID",
+    "ORG_ID"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",

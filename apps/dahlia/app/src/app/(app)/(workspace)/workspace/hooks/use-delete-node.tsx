@@ -1,4 +1,4 @@
-import { $NodeType } from "@repo/db/schema";
+import { $NodeType } from "@repo/db/tenant/schema";
 
 import { api } from "~/trpc/react";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";

@@ -10,8 +10,8 @@
     },
     "./env": "./env.ts",
     "./schema": {
-      "types": "./dist/src/schema.d.ts",
-      "default": "./src/schema.ts"
+      "types": "./dist/src/schema/index.d.ts",
+      "default": "./src/schema/index.ts"
     },
     "./fal": "./src/fal/client.ts",
     "./fal/server": "./src/fal/nextjs-server-proxy.ts"

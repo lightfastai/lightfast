@@ -7,7 +7,7 @@ import {
   NodeType,
   TextureType,
   Txt2ImgType,
-} from "@repo/db/schema";
+} from "@repo/db/tenant/schema";
 
 interface SelectionState {
   selection: {

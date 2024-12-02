@@ -16,7 +16,7 @@ import {
   Texture,
   TextureType,
   Txt2ImgType,
-} from "@repo/db/schema";
+} from "@repo/db/tenant/schema";
 import { nanoid } from "@repo/lib";
 
 import { api } from "~/trpc/react";

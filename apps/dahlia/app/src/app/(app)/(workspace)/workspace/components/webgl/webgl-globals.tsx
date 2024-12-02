@@ -7,7 +7,7 @@ import {
   Vector3,
 } from "three";
 
-import { $GeometryType } from "@repo/db/schema";
+import { $GeometryType } from "@repo/db/tenant/schema";
 
 import {
   CENTER_OF_WORLD,

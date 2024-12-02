@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
-import { NoiseTexture, Texture } from "@repo/db/schema";
+import { NoiseTexture, Texture } from "@repo/db/tenant/schema";
 import {
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,

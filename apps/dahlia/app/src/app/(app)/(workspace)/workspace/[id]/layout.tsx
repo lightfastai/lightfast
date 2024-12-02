@@ -2,7 +2,7 @@ import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
-import { $NodeType } from "@repo/db/schema";
+import { $NodeType } from "@repo/db/tenant/schema";
 import {
   Breadcrumb,
   BreadcrumbItem,
