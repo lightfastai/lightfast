@@ -1,0 +1,34 @@
+{
+  "name": "@vendor/next",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "peerDependencies": {
+    "react": "^18"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --check . --ignore-path ../../.gitignore"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/eslint": "^8.56.5",
+    "eslint": "catalog:",
+    "next": "catalog:",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@logtail/next": "^0.1.6",
+    "@next/bundle-analyzer": "^15.0.3",
+    "@sentry/nextjs": "^8.41.0",
+    "@t3-oss/env-nextjs": "^0.11.1",
+    "@vercel/toolbar": "^0.1.27",
+    "next-secure-headers": "^2.2.0",
+    "webpack-glsl-loader": "^1.0.1"
+  },
+  "prettier": "@repo/prettier-config"
+}

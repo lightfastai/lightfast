@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 
 import type { UserJSON, WebhookEvent } from "@repo/auth/server";
-import { inngest } from "@repo/events";
 
 import { env } from "~/env";
+import { inngest } from "~/inngest/client";
 
 /**
  * Handles the creation of a user in the database. A webhook is sent
@@ -18,7 +18,7 @@ import { env } from "~/env";
  */
 const handleUserCreated = (data: UserJSON) => {
   inngest.send({
-    name: "user.created",
+    name: "user/created",
     data,
   });
 

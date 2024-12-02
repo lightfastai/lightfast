@@ -1,9 +1,9 @@
-import { createEventContext } from "@repo/events/server";
+import { createEventContext } from "@vendor/inngest/server";
 
-import { events } from "~/events/client";
+import { inngest } from "~/inngest/client";
 import { handleCreateUser } from "./functions/handle-create-user";
 
 // Create an API that serves zero functions
-export const { GET, POST, PUT } = createEventContext(events, [
+export const { GET, POST, PUT } = createEventContext(inngest, [
   handleCreateUser,
 ]);

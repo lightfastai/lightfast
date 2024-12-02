@@ -1,9 +1,9 @@
-import { EventSchemas, EventsService } from "@repo/events";
+import { EventSchemas, Inngest } from "@vendor/inngest";
 
 import { env } from "~/env";
 import { Events } from "./types";
 
-export const events = new EventsService({
+export const inngest = new Inngest({
   id: env.DAHLIA_INNGEST_APP_NAME,
   schemas: new EventSchemas().fromRecord<Events>(),
 });

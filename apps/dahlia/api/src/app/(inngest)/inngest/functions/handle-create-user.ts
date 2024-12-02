@@ -8,7 +8,7 @@ import {
 } from "@repo/db/tenant/client";
 import { Workspace } from "@repo/db/tenant/schema";
 
-import { events } from "~/events/client";
+import { inngest } from "~/inngest/client";
 
 /**
  * Handles the creation of a user in the database.
@@ -16,7 +16,7 @@ import { events } from "~/events/client";
  * @todo 1. Send welcome email to user
  * @todo 2. Create a multi-tenant database for the user
  */
-export const handleCreateUser = events.createFunction(
+export const handleCreateUser = inngest.createFunction(
   { id: "handle-create-user" },
   { event: "user/created" },
   async ({ event, step }) => {

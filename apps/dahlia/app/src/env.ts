@@ -1,11 +1,11 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets";
+import { env as nextEnv } from "@vendor/next/env";
 import { z } from "zod";
 
 import { env as aiEnv } from "@repo/ai/env";
 import { env as authEnv } from "@repo/auth/env";
 import { env as dbEnv } from "@repo/db/env";
-import { env as nextEnv } from "@repo/next/env";
 
 export const env = createEnv({
   extends: [authEnv, dbEnv, aiEnv, nextEnv, vercel()],

@@ -3,6 +3,7 @@ packages:
   - "apps/jps0000/*"
   - "packages/*"
   - "internal/*"
+  - "vendor/*"
 
 catalog:
   "@tanstack/react-query": ^5.59.15

@@ -1,7 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { init } from "@sentry/nextjs";
-
-import { sentryOpts } from "@repo/next/instrumentation";
+import { sentryOpts } from "@vendor/next/instrumentation";
 
 export const register = () => {
   if (process.env.NEXT_RUNTIME === "nodejs") {
