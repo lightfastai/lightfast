@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ProviderSchema } from "node_modules/@repo/auth/src/config";
+import { auth, signIn } from "@vendor/clerk";
+import { ProviderSchema } from "node_modules/@vendor/clerk/src/config";
 
-import { auth, signIn } from "@repo/auth";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardHeader } from "@repo/ui/components/ui/card";

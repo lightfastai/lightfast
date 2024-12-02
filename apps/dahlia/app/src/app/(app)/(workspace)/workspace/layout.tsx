@@ -9,16 +9,16 @@ export default async function WorkspaceLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await api.auth.getSession();
+  const session = await api.app.auth.getSession();
 
-  if (!session) {
+  if (!session?.userId) {
     notFound();
   }
 
   return (
     <>
       <EditorHeaderMenu />
-      <SentryIdentifier userId={session.user.id} />
+      <SentryIdentifier userId={session.userId} />
       {children}
     </>
   );

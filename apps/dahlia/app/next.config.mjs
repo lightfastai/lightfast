@@ -17,8 +17,8 @@ let config = {
   transpilePackages: [
     "@repo/ai",
     "@repo/api",
-    "@repo/auth",
-    "@repo/db",
+    "@vendor/clerk",
+    "@vendor/db",
     "@repo/lib",
     "@repo/ui",
     "@repo/webgl",

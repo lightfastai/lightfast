@@ -1,4 +1,4 @@
-import { UserJSON } from "@repo/auth/server";
+import { UserJSON } from "@vendor/clerk/server";
 
 export type UserCreatedEventData = UserJSON;
 

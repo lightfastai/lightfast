@@ -1,7 +1,7 @@
-import { auth } from "@repo/auth";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 
 import { AppSidebar } from "~/components/app/sidebar";
+import { auth } from "../../../../../../../vendor/auth/src";
 
 export default async function Layout({
   children,

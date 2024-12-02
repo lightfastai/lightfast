@@ -1,8 +1,8 @@
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
+import { $NodeType } from "@vendor/db/tenant/schema";
 
 import { RouterInputs, RouterOutputs } from "@repo/api";
-import { $NodeType } from "@repo/db/tenant/schema";
 import {
   Breadcrumb,
   BreadcrumbItem,

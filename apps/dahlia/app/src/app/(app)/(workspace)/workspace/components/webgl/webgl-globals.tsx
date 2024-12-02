@@ -1,3 +1,4 @@
+import { $GeometryType } from "@vendor/db/tenant/schema";
 import {
   BoxGeometry,
   PlaneGeometry,
@@ -6,8 +7,6 @@ import {
   TorusGeometry,
   Vector3,
 } from "three";
-
-import { $GeometryType } from "@repo/db/tenant/schema";
 
 import {
   CENTER_OF_WORLD,

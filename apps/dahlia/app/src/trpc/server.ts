@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { headers } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
+import { db } from "@dahlia/db/client";
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
 
 import type { AppRouter } from "@repo/api";
@@ -18,6 +19,7 @@ const createContext = cache(async () => {
 
   return createTRPCContext({
     session: await auth(),
+    db: db,
     headers: heads,
   });
 });

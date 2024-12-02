@@ -15,10 +15,10 @@ let config = {
 
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
-    "@repo/auth",
+    "@vendor/clerk",
     "@vendor/inngest",
     "@repo/ui",
-    "@repo/db",
+    "@vendor/db",
     "@vendor/next",
   ],
 

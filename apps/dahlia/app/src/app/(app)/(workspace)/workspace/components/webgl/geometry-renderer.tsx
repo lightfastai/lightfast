@@ -3,9 +3,8 @@
 import type { Mesh } from "three";
 import { memo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { Geometry } from "@vendor/db/tenant/schema";
 import { Vector3 } from "three";
-
-import { Geometry } from "@repo/db/tenant/schema";
 
 import { GeometryMap } from "./webgl-globals";
 

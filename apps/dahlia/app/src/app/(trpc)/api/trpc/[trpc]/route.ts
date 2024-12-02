@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
+import { db } from "@dahlia/db/client";
 import { appRouter, createTRPCContext } from "@repo/api";
 
 export const runtime = "edge";
@@ -33,6 +34,7 @@ const handler = async (req: Request) => {
     createContext: () =>
       createTRPCContext({
         session,
+        db: db,
         headers: req.headers,
       }),
     onError({ error, path }) {

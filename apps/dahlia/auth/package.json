@@ -14,10 +14,11 @@
     "with-env": "dotenv -e ../../../.env --"
   },
   "dependencies": {
-    "@repo/auth": "workspace:*",
-    "@repo/db": "workspace:*",
+    "@dahlia/db": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "^0.11.1",
+    "@vendor/clerk": "workspace:*",
+    "@vendor/db": "workspace:*",
     "@vendor/next": "workspace:*",
     "next": "catalog:",
     "react": "catalog:react18",

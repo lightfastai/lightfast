@@ -7,9 +7,9 @@ import { api } from "~/trpc/react";
 export const useCreateWorkspace = () => {
   const router = useRouter();
   const utils = api.useUtils();
-  const { mutateAsync } = api.workspace.create.useMutation({
+  const { mutateAsync } = api.tenant.workspace.create.useMutation({
     onSuccess: (data) => {
-      utils.workspace.getAll.invalidate();
+      utils.tenant.workspace.getAll.invalidate();
       toast({
         title: "Workspace created",
         description: "You can now start creating nodes",

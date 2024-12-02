@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { FieldErrors } from "react-hook-form";
-
-import { RouterOutputs } from "@repo/api";
 import {
   UpdateNameWorkspace,
   UpdateNameWorkspaceSchema,
-} from "@repo/db/tenant/schema";
+} from "@vendor/db/tenant/schema";
+import { FieldErrors } from "react-hook-form";
+
+import { RouterOutputs } from "@repo/api";
 import {
   Form,
   FormControl,

@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-
-import { handlers, isSecureContext } from "@repo/auth";
+import { handlers, isSecureContext } from "@vendor/clerk";
 
 export const runtime = "edge";
 

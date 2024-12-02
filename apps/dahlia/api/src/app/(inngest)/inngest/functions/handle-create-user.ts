@@ -1,12 +1,12 @@
-import { db } from "@repo/db/app/client";
-import { Database, User } from "@repo/db/app/schema";
+import { db } from "@vendor/db/app/client";
+import { Database, User } from "@vendor/db/app/schema";
 import {
   createDatabase,
   createDbClient,
   getDatabaseUri,
   updateDatabaseSchema,
-} from "@repo/db/tenant/client";
-import { Workspace } from "@repo/db/tenant/schema";
+} from "@vendor/db/tenant/client";
+import { Workspace } from "@vendor/db/tenant/schema";
 
 import { inngest } from "~/inngest/client";
 

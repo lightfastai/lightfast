@@ -1,5 +1,3 @@
-import { createStore } from "zustand";
-
 import {
   $NodeType,
   GeometryType,
@@ -7,7 +5,8 @@ import {
   NodeType,
   TextureType,
   Txt2ImgType,
-} from "@repo/db/tenant/schema";
+} from "@vendor/db/tenant/schema";
+import { createStore } from "zustand";
 
 interface SelectionState {
   selection: {

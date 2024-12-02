@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-import { auth } from "@repo/auth";
 import { Button } from "@repo/ui/components/ui/button";
+
+import { auth } from "../../../../../vendor/auth/src";
 
 export async function AuthLoginSignupRedirect() {
   const session = await auth();

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
+import { LimitTexture, Texture } from "@vendor/db/tenant/schema";
 import * as THREE from "three";
 
-import { LimitTexture, Texture } from "@repo/db/tenant/schema";
 import {
   limitFragmentShader,
   limitVertexShader,

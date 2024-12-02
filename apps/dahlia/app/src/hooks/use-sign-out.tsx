@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
+import { signOut as signOutClient } from "@vendor/clerk/client";
 
-import { signOut as signOutClient } from "@repo/auth/client";
 import { toast } from "@repo/ui/hooks/use-toast";
 
 import { api } from "~/trpc/react";

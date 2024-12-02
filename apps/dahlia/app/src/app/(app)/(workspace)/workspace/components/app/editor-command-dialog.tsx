@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { Circle, Square, Triangle } from "lucide-react";
-
 import {
   $GeometryType,
   $MaterialType,
@@ -12,7 +10,9 @@ import {
   MaterialType,
   TextureType,
   Txt2ImgType,
-} from "@repo/db/tenant/schema";
+} from "@vendor/db/tenant/schema";
+import { Circle, Square, Triangle } from "lucide-react";
+
 import {
   Command,
   CommandDialog,

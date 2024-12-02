@@ -2,9 +2,9 @@ import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
 import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { $Txt2Img, Txt2ImgType } from "@vendor/db/schema";
 import { useForm } from "react-hook-form";
 
-import { $Txt2Img, Txt2ImgType } from "@repo/db/schema";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Value } from "@repo/webgl";

@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "clerk_id" varchar(255) NOT NULL;

@@ -1,8 +1,7 @@
+import type { UserJSON, WebhookEvent } from "@vendor/clerk/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
-
-import type { UserJSON, WebhookEvent } from "@repo/auth/server";
 
 import { env } from "~/env";
 import { inngest } from "~/inngest/client";

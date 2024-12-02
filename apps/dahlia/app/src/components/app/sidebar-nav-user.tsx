@@ -3,7 +3,6 @@
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
 import { RouterOutputs } from "@repo/api";
-import { signOut } from "@repo/auth/client";
 import {
   Avatar,
   AvatarFallback,
