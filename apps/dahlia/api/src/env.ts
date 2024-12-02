@@ -3,11 +3,10 @@ import { vercel } from "@t3-oss/env-nextjs/presets";
 import { z } from "zod";
 
 import { env as dbEnv } from "@repo/db/env";
-import { env as eventsEnv } from "@repo/events/env";
 import { env as nextEnv } from "@repo/next/env";
 
 export const env = createEnv({
-  extends: [eventsEnv, nextEnv, dbEnv, vercel()],
+  extends: [nextEnv, dbEnv, vercel()],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -18,6 +17,7 @@ export const env = createEnv({
    * This way you can ensure the app isn't built with invalid env vars.
    */
   server: {
+    DAHLIA_INNGEST_APP_NAME: z.string(),
     CLERK_WEBHOOK_SIGNING_SECRET: z.string(),
   },
 
