@@ -1,10 +1,12 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets";
-import { env as nextEnv } from "@vendor/next/env";
 import { z } from "zod";
 
+import { env as dbEnv } from "@dahlia/db/env";
+import { env as nextEnv } from "@vendor/next/env";
+
 export const env = createEnv({
-  extends: [nextEnv, vercel()],
+  extends: [nextEnv, dbEnv, vercel()],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

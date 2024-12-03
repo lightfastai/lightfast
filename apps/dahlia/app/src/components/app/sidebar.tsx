@@ -16,8 +16,8 @@ import { SidebarNavProjects } from "./sidebar-nav-projects";
 import { SidebarNavUser } from "./sidebar-nav-user";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: workspaces } = api.workspace.getAll.useQuery();
-  const { data: user } = api.user.get.useQuery();
+  const { data: workspaces } = api.tenant.workspace.getAll.useQuery();
+  const { data: user } = api.app.user.get.useQuery();
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="px-2 py-1">

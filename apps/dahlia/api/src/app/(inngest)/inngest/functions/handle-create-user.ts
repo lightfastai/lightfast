@@ -1,12 +1,12 @@
-import { db } from "@vendor/db/app/client";
-import { Database, User } from "@vendor/db/app/schema";
+import { Database, User } from "@dahlia/db/app/schema";
+import { db } from "@dahlia/db/client";
 import {
   createDatabase,
   createDbClient,
   getDatabaseUri,
   updateDatabaseSchema,
-} from "@vendor/db/tenant/client";
-import { Workspace } from "@vendor/db/tenant/schema";
+} from "@dahlia/db/tenant/client";
+import { Workspace } from "@dahlia/db/tenant/schema";
 
 import { inngest } from "~/inngest/client";
 
@@ -37,11 +37,7 @@ export const handleCreateUser = inngest.createFunction(
 
       const [result] = await db
         .insert(User)
-        .values({
-          name: event.data.username,
-          email: event.data.email_addresses[0].email_address,
-          clerkId: event.data.id,
-        })
+        .values({ clerkId: event.data.id })
         .returning();
 
       if (!result) {
@@ -63,11 +59,7 @@ export const handleCreateUser = inngest.createFunction(
 
     // update the db schema
     await step.run("app.update.db.schema", async () => {
-      return updateDatabaseSchema(
-        uri,
-        // @ts-expect-error this is a relative path, easilt broken. do something...
-        "../../../packages/db/src/tenant/src/migrations",
-      );
+      return updateDatabaseSchema(uri, "../db/src/tenant/src/migrations");
     });
 
     // update the main app db with the new tenant db id

@@ -11,7 +11,8 @@
     "./client": "./src/app/src/client.ts",
     "./env": "./env.ts",
     "./app/schema": "./src/app/src/schema.ts",
-    "./tenant/schema": "./src/tenant/src/schema.ts"
+    "./tenant/schema": "./src/tenant/src/schema.ts",
+    "./tenant/client": "./src/tenant/src/client.ts"
   },
   "license": "MIT",
   "scripts": {

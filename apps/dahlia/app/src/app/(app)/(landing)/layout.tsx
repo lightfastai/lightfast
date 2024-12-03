@@ -19,15 +19,15 @@ export default async function Layout({
       <SidebarProvider defaultOpen={false}>
         {session && <AppSidebar />}
         <SidebarInset>
-          <header className="relative flex items-center justify-end border p-4">
-            {!session && (
+          {!session && (
+            <header className="relative flex items-center justify-end border p-4">
               <Button variant="outline" asChild>
                 <Link href="/sign-in" prefetch={false}>
                   Sign-in
                 </Link>
               </Button>
-            )}
-          </header>
+            </header>
+          )}
           <div className="flex flex-col gap-4 p-4">{children}</div>
           <SimpleDotFooter nav={siteNav.footer} />
         </SidebarInset>

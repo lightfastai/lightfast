@@ -3,11 +3,7 @@
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
 import { RouterOutputs } from "@repo/api";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@repo/ui/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +22,7 @@ import {
 export function SidebarNavUser({
   user,
 }: {
-  user: RouterOutputs["user"]["get"] | undefined;
+  user: RouterOutputs["app"]["user"]["get"] | undefined;
 }) {
   const { isMobile } = useSidebar();
   if (!user) return null;
@@ -40,16 +36,16 @@ export function SidebarNavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage
+                {/* <AvatarImage
                   src={user?.image ?? "/avatar-placeholder.webp"}
                   alt={user?.name ?? ""}
                   className="rounded-lg"
-                />
+                /> */}
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user?.name}</span>
-                <span className="truncate text-xs">{user?.email}</span>
+                <span className="truncate font-semibold">{user?.id}</span>
+                <span className="truncate text-xs">{user?.clerkId}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -63,24 +59,24 @@ export function SidebarNavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage
+                  {/* <AvatarImage
                     src={user?.image ?? "/avatar-placeholder.webp"}
                     alt={user?.name ?? ""}
-                  />
+                  /> */}
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user?.name}</span>
-                  <span className="truncate text-xs">{user?.email}</span>
+                  <span className="truncate font-semibold">{user?.id}</span>
+                  <span className="truncate text-xs">{user?.clerkId}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                signOut({ redirect: true, callbackUrl: "/" });
-              }}
+            // onClick={(e) => {
+            //   e.stopPropagation();
+            //   signOut({ redirect: true, callbackUrl: "/" });
+            // }}
             >
               <LogOut />
               Log out

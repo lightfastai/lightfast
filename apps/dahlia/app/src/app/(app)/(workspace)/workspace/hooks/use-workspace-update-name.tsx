@@ -9,8 +9,8 @@ export const useWorkspaceUpdateName = () => {
   const utils = api.useUtils();
   const { mutate } = api.workspace.updateName.useMutation({
     onSuccess: (input) => {
-      utils.workspace.getAll.invalidate();
-      utils.workspace.get.invalidate({ id: input.id });
+      utils.tenant.workspace.getAll.invalidate();
+      utils.tenant.workspace.get.invalidate({ id: input.id });
       toast({
         title: "Workspace name updated",
       });
