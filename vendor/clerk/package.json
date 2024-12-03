@@ -9,7 +9,8 @@
     },
     "./env": "./env.ts",
     "./server": "./src/server.ts",
-    "./types": "./src/types.ts"
+    "./types": "./src/types.ts",
+    "./client": "./src/client/index.ts"
   },
   "license": "MIT",
   "scripts": {

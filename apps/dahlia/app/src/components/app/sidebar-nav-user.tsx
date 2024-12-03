@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@repo/ui/components/ui/sidebar";
+import { SignOutButton } from "@vendor/clerk/client";
 
 export function SidebarNavUser({
   user,
@@ -72,14 +73,13 @@ export function SidebarNavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-            // onClick={(e) => {
-            //   e.stopPropagation();
-            //   signOut({ redirect: true, callbackUrl: "/" });
-            // }}
-            >
-              <LogOut />
-              Log out
+            <DropdownMenuItem asChild>
+              <SignOutButton>
+                <div className="flex items-center gap-2">
+                  <LogOut />
+                  Log out
+                </div>
+              </SignOutButton>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
