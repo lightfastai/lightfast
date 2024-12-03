@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { createDefaultGeometry, Material } from "@vendor/db/tenant/schema";
 import { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
+import { createDefaultGeometry, Material } from "@dahlia/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {

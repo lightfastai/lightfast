@@ -18,7 +18,6 @@ let config = {
   transpilePackages: [
     "@dahlia/db",
     "@vendor/clerk",
-    "@vendor/inngest",
     "@vendor/db",
     "@vendor/next",
     "@repo/ui",

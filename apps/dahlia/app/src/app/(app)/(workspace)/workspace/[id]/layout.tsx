@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
-import { $NodeType } from "@vendor/db/tenant/schema";
 
+import { $NodeType } from "@dahlia/db/tenant/schema";
 import { RouterInputs, RouterOutputs } from "@repo/api";
 import {
   Breadcrumb,
@@ -52,10 +52,10 @@ interface WorkspaceLayoutProps {
  */
 const getWorkspace = async ({
   id,
-}: RouterInputs["workspace"]["get"]): Promise<
-  RouterOutputs["workspace"]["get"] | null
+}: RouterInputs["tenant"]["workspace"]["get"]): Promise<
+  RouterOutputs["tenant"]["workspace"]["get"] | null
 > => {
-  const workspace = await api.workspace.get({ id });
+  const workspace = await api.tenant.workspace.get({ id });
   return workspace;
 };
 
@@ -65,10 +65,10 @@ const getWorkspace = async ({
  */
 const getWorkspaceNodeBaseAll = async ({
   workspaceId,
-}: RouterInputs["node"]["base"]["getAll"]): Promise<
-  RouterOutputs["node"]["base"]["getAll"]
+}: RouterInputs["tenant"]["node"]["base"]["getAll"]): Promise<
+  RouterOutputs["tenant"]["node"]["base"]["getAll"]
 > => {
-  const nodes = await api.node.base.getAll({ workspaceId });
+  const nodes = await api.tenant.node.base.getAll({ workspaceId });
   return nodes;
 };
 
@@ -77,10 +77,10 @@ const getWorkspaceNodeBaseAll = async ({
  */
 const getWorkspaceEdgeAll = async ({
   workspaceId,
-}: RouterInputs["edge"]["getAll"]): Promise<
-  RouterOutputs["edge"]["getAll"]
+}: RouterInputs["tenant"]["edge"]["getAll"]): Promise<
+  RouterOutputs["tenant"]["edge"]["getAll"]
 > => {
-  const edges = await api.edge.getAll({ workspaceId });
+  const edges = await api.tenant.edge.getAll({ workspaceId });
   return edges;
 };
 
@@ -101,7 +101,7 @@ export default async function WorkspaceLayout({
 
   /** Prefetch node data using <HydrateClient> (tRPC SSR) & useSuspenseQuery (Tanstack Query) */
   nodes.forEach((node) => {
-    void api.node.data.get.prefetch({ id: node.id });
+    void api.tenant.node.data.get.prefetch({ id: node.id });
   });
 
   const baseNodes = convertToBaseNode(nodes);

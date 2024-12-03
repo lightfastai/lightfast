@@ -8,7 +8,10 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./server": "./src/server.ts"
+    "./server": {
+      "types": "./dist/src/server.d.ts",
+      "default": "./src/server.ts"
+    }
   },
   "license": "MIT",
   "scripts": {

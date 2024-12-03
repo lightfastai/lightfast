@@ -1,1 +1,1 @@
-export { EventSchemas, Inngest } from "inngest";
+export * from "inngest";

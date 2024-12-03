@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { FieldErrors } from "react-hook-form";
+
 import {
   UpdateNameWorkspace,
   UpdateNameWorkspaceSchema,
-} from "@vendor/db/tenant/schema";
-import { FieldErrors } from "react-hook-form";
-
+} from "@dahlia/db/tenant/schema";
 import { RouterOutputs } from "@repo/api";
 import {
   Form,

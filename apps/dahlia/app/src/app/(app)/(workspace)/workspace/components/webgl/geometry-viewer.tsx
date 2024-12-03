@@ -2,10 +2,10 @@
 
 import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Geometry } from "@vendor/db/tenant/schema";
 import { Vector3 } from "three";
 
 import type { Vec3 } from "@repo/webgl";
+import { Geometry } from "@dahlia/db/tenant/schema";
 
 import { GeometryRenderer } from "./geometry-renderer";
 import { OrbitControls, PerspectiveCamera } from "./webgl-primitives";

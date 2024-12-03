@@ -2,13 +2,13 @@ import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
 import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
 import {
   $TextureUniforms,
   Texture,
   TextureUniforms,
-} from "@vendor/db/tenant/schema";
-import { useForm } from "react-hook-form";
-
+} from "@dahlia/db/tenant/schema";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Value } from "@repo/webgl";

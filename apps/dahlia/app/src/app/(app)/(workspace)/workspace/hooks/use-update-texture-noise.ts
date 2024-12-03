@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { NoiseTexture, Texture } from "@vendor/db/tenant/schema";
 import * as THREE from "three";
 
+import { NoiseTexture, Texture } from "@dahlia/db/tenant/schema";
 import {
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,

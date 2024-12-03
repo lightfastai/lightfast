@@ -1,3 +1,5 @@
+import { useReactFlow } from "@xyflow/react";
+
 import {
   $GeometryType,
   $MaterialType,
@@ -14,9 +16,7 @@ import {
   Texture,
   TextureType,
   Txt2ImgType,
-} from "@vendor/db/tenant/schema";
-import { useReactFlow } from "@xyflow/react";
-
+} from "@dahlia/db/tenant/schema";
 import { nanoid } from "@repo/lib";
 
 import { api } from "~/trpc/react";

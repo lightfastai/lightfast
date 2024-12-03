@@ -2,9 +2,9 @@ import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
 import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { $Txt2Img, Txt2ImgType } from "@vendor/db/schema";
 import { useForm } from "react-hook-form";
 
+import { $Txt2Img, Txt2ImgType } from "@dahlia/db/tenant/schema";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Value } from "@repo/webgl";
@@ -16,17 +16,17 @@ import { InspectorFormField } from "./inspector-form-field";
 
 export const FluxInspector = ({ id }: { id: string }) => {
   const utils = api.useUtils();
-  const [data] = api.node.data.get.useSuspenseQuery<Txt2ImgType>({ id });
+  const [data] = api.tenant.node.data.get.useSuspenseQuery<Txt2ImgType>({ id });
 
   const form = useForm<Txt2ImgType>({
     resolver: zodResolver($Txt2Img),
     defaultValues: data,
   });
 
-  const { mutate: updateData } = api.node.data.update.useMutation({
+  const { mutate: updateData } = api.tenant.node.data.update.useMutation({
     onError: () => {
       // On error, revert the optimistic update
-      utils.node.data.get.setData({ id }, data);
+      utils.tenant.node.data.get.setData({ id }, data);
     },
   });
 
@@ -52,7 +52,7 @@ export const FluxInspector = ({ id }: { id: string }) => {
       } as Txt2ImgType;
 
       // Optimistically update the cache
-      utils.node.data.get.setData(
+      utils.tenant.node.data.get.setData(
         { id },
         {
           type: data.type,
@@ -63,7 +63,7 @@ export const FluxInspector = ({ id }: { id: string }) => {
       // Debounce the actual server update
       debouncedServerUpdate(newUniforms);
     },
-    [id, data, utils.node.data.get, debouncedServerUpdate],
+    [id, data, utils.tenant.node.data.get, debouncedServerUpdate],
   );
 
   return (

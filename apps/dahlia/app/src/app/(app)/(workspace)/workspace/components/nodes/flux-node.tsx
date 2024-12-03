@@ -1,9 +1,9 @@
 import { memo, useState } from "react";
 import Image from "next/image";
-import { Txt2Img } from "@vendor/db/tenant/schema";
 import { NodeProps } from "@xyflow/react";
 import { PlayIcon } from "lucide-react";
 
+import { Txt2Img } from "@dahlia/db/tenant/schema";
 import { createFalClient } from "@repo/ai/fal";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";

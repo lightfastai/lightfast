@@ -1,3 +1,5 @@
+import { createStore } from "zustand";
+
 import {
   $NodeType,
   GeometryType,
@@ -5,8 +7,7 @@ import {
   NodeType,
   TextureType,
   Txt2ImgType,
-} from "@vendor/db/tenant/schema";
-import { createStore } from "zustand";
+} from "@dahlia/db/tenant/schema";
 
 interface SelectionState {
   selection: {

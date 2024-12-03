@@ -11,14 +11,14 @@ export default async function WorkspaceLayout({
 }) {
   const session = await api.app.auth.getSession();
 
-  if (!session?.userId) {
+  if (!session?.user?.clerkId) {
     notFound();
   }
 
   return (
     <>
       <EditorHeaderMenu />
-      <SentryIdentifier userId={session.userId} />
+      <SentryIdentifier userId={session.user.id} />
       {children}
     </>
   );
