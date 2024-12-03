@@ -1,4 +1,4 @@
-import { RouterOutputs } from "@repo/api";
+import { RouterOutputs } from "@dahlia/trpc";
 
 import { api } from "~/trpc/react";
 

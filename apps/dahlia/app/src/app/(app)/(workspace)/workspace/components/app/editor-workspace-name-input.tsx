@@ -7,7 +7,7 @@ import {
   UpdateNameWorkspace,
   UpdateNameWorkspaceSchema,
 } from "@dahlia/db/tenant/schema";
-import { RouterOutputs } from "@repo/api";
+import { RouterOutputs } from "@dahlia/trpc";
 import {
   Form,
   FormControl,

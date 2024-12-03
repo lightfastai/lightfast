@@ -1,7 +1,10 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+import { env as vendorDbEnv } from "@vendor/db/env";
+
 export const env = createEnv({
+  extends: [vendorDbEnv],
   server: {
     DAHLIA_APP_PG_VERSION: z
       .string()

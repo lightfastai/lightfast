@@ -2,7 +2,7 @@
 
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
-import { RouterOutputs } from "@repo/api";
+import { RouterOutputs } from "@dahlia/trpc";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import {
   DropdownMenu,

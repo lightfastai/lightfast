@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@dahlia/db": "workspace:*",
+    "@dahlia/trpc": "workspace:*",
     "@next/bundle-analyzer": "^15.0.3",
-    "@repo/api": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
     "@sentry/nextjs": "^8.41.0",

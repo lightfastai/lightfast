@@ -17,7 +17,7 @@ let config = {
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
     "@repo/ai",
-    "@repo/api",
+    "@dahlia/trpc",
     "@repo/lib",
     "@repo/ui",
     "@repo/webgl",

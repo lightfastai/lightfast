@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { NodeChange } from "@xyflow/react";
 
-import { RouterInputs } from "@repo/api";
+import { RouterInputs } from "@dahlia/trpc";
 
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/react";

@@ -1,4 +1,4 @@
-import { RouterInputs } from "@repo/api";
+import { RouterInputs } from "@dahlia/trpc";
 import { toast } from "@repo/ui/hooks/use-toast";
 
 import { api } from "~/trpc/react";

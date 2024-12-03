@@ -2,9 +2,9 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
 
-import type { AppRouter } from "@repo/api";
+import type { AppRouter } from "@dahlia/trpc";
 import { db } from "@dahlia/db/client";
-import { createCaller, createTRPCContext } from "@repo/api";
+import { createCaller, createTRPCContext } from "@dahlia/trpc";
 import { auth } from "@vendor/clerk";
 
 import { createQueryClient } from "./query-client";

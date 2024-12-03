@@ -78,12 +78,12 @@ importers:
       '@dahlia/db':
         specifier: workspace:*
         version: link:../db
+      '@dahlia/trpc':
+        specifier: workspace:*
+        version: link:../trpc
       '@next/bundle-analyzer':
         specifier: ^15.0.3
         version: 15.0.3(bufferutil@4.0.8)
-      '@repo/api':
-        specifier: workspace:*
-        version: link:../../../packages/api
       '@repo/lib':
         specifier: workspace:*
         version: link:../../../packages/lib
@@ -166,6 +166,9 @@ importers:
       '@dahlia/db':
         specifier: workspace:*
         version: link:../db
+      '@dahlia/trpc':
+        specifier: workspace:*
+        version: link:../trpc
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.9.1(react-hook-form@7.53.1(react@18.3.1))
@@ -178,9 +181,6 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../../packages/ai
-      '@repo/api':
-        specifier: workspace:*
-        version: link:../../../packages/api
       '@repo/lib':
         specifier: workspace:*
         version: link:../../../packages/lib
@@ -442,6 +442,55 @@ importers:
       drizzle-kit:
         specifier: ^0.26.2
         version: 0.26.2
+      eslint:
+        specifier: 'catalog:'
+        version: 9.13.0(jiti@2.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
+
+  apps/dahlia/trpc:
+    dependencies:
+      '@dahlia/db':
+        specifier: workspace:*
+        version: link:../db
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../../../packages/ai
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.0.0-rc.599
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../../../vendor/clerk
+      '@vendor/db':
+        specifier: workspace:*
+        version: link:../../../vendor/db
+      '@vendor/trpc':
+        specifier: workspace:*
+        version: link:../../../vendor/trpc
+      bcrypt-ts:
+        specifier: ^5.0.2
+        version: 5.0.2
+      superjson:
+        specifier: 2.2.1
+        version: 2.2.1
+      zod:
+        specifier: 'catalog:'
+        version: 3.23.8
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../../internal/typescript
       eslint:
         specifier: 'catalog:'
         version: 9.13.0(jiti@2.3.3)
@@ -799,55 +848,6 @@ importers:
         version: 0.0.168(openai@4.73.1(zod@3.23.8))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(zod@3.23.8)
       zod:
         specifier: ^3.23.8
-        version: 3.23.8
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../internal/eslint
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../../internal/prettier
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      eslint:
-        specifier: 'catalog:'
-        version: 9.13.0(jiti@2.3.3)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.3.3
-      typescript:
-        specifier: 'catalog:'
-        version: 5.6.3
-
-  packages/api:
-    dependencies:
-      '@dahlia/db':
-        specifier: workspace:*
-        version: link:../../apps/dahlia/db
-      '@repo/ai':
-        specifier: workspace:*
-        version: link:../ai
-      '@trpc/server':
-        specifier: 'catalog:'
-        version: 11.0.0-rc.599
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
-      '@vendor/db':
-        specifier: workspace:*
-        version: link:../../vendor/db
-      '@vendor/trpc':
-        specifier: workspace:*
-        version: link:../../vendor/trpc
-      bcrypt-ts:
-        specifier: ^5.0.2
-        version: 5.0.2
-      superjson:
-        specifier: 2.2.1
-        version: 2.2.1
-      zod:
-        specifier: 'catalog:'
         version: 3.23.8
     devDependencies:
       '@repo/eslint-config':

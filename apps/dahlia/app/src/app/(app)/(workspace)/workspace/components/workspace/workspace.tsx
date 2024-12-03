@@ -15,7 +15,7 @@ import "./workspace.css";
 
 import { useCallback } from "react";
 
-import { RouterInputs } from "@repo/api";
+import { RouterInputs } from "@dahlia/trpc";
 
 import { useAddEdge } from "../../hooks/use-add-edge";
 import { useAddNode } from "../../hooks/use-add-node";

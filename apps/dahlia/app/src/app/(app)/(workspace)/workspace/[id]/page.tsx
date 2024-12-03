@@ -1,4 +1,4 @@
-import { RouterInputs } from "@repo/api";
+import { RouterInputs } from "@dahlia/trpc";
 
 import { Workspace } from "../components/workspace/workspace";
 import { WorkspaceProvider } from "../providers/workspace-provider";

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { RouterOutputs } from "@repo/api";
+import { RouterOutputs } from "@dahlia/trpc";
 import {
   SidebarGroup,
   SidebarGroupLabel,
