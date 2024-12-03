@@ -1,4 +1,3 @@
-import { Database, User } from "@dahlia/db/app/schema";
 import { db } from "@dahlia/db/client";
 import {
   createDatabase,
@@ -7,6 +6,7 @@ import {
   updateDatabaseSchema,
 } from "@dahlia/db/tenant/client";
 import { Workspace } from "@dahlia/db/tenant/schema";
+import { Database, User } from "@vendor/db/app/schema";
 
 import { inngest } from "~/inngest/client";
 
