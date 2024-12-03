@@ -1,4 +1,4 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@vendor/clerk/server";
 
 export default clerkMiddleware();
 

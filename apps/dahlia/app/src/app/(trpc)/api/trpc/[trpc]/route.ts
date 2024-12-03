@@ -1,8 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 import { db } from "@dahlia/db/client";
 import { appRouter, createTRPCContext } from "@repo/api";
+import { auth } from "@vendor/clerk/server";
 
 export const runtime = "edge";
 

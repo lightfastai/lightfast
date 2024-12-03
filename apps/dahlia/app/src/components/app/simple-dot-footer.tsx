@@ -8,12 +8,10 @@ export const SimpleDotFooter = ({ nav }: { nav: NavItemRecord<string> }) => {
     <footer className="fixed bottom-0 left-0 right-0 flex justify-center bg-gradient-to-t from-background/80 to-transparent pb-4 pt-2 backdrop-blur-sm">
       <nav className="flex items-center gap-4 text-sm text-muted-foreground">
         {Object.values(nav).map((item) => (
-          <>
-            <FooterLink key={item.title} href={item.href}>
-              {item.title}
-            </FooterLink>{" "}
+          <div key={item.title} className="flex items-center gap-4">
+            <FooterLink href={item.href}>{item.title}</FooterLink>
             <FooterDot />
-          </>
+          </div>
         ))}
       </nav>
     </footer>

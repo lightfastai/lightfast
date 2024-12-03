@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@repo/ui/components/ui/button";
 
-import { auth } from "../../../../../vendor/auth/src";
+import { auth } from "../../../../../vendor/clerk/src";
 
 export async function AuthLoginSignupRedirect() {
   const session = await auth();
