@@ -23,20 +23,12 @@ import { SelectionStoreProvider } from "../providers/selection-store-provider";
 import { TextureRenderStoreProvider } from "../providers/texture-render-store-provider";
 import { convertToBaseEdge, convertToBaseNode } from "../types/node";
 
-const WebGLCanvas = dynamic(
-  () =>
-    import("../components/webgl/webgl-canvas").then((mod) => mod.WebGLCanvas),
-  {
-    ssr: false,
-  },
+const WebGLCanvas = dynamic(() =>
+  import("../components/webgl/webgl-canvas").then((mod) => mod.WebGLCanvas),
 );
 
-const Inspector = dynamic(
-  () =>
-    import("../components/inspector/inspector").then((mod) => mod.Inspector),
-  {
-    ssr: false,
-  },
+const Inspector = dynamic(() =>
+  import("../components/inspector/inspector").then((mod) => mod.Inspector),
 );
 
 interface WorkspaceLayoutProps {
@@ -149,9 +141,9 @@ export default async function WorkspaceLayout({
                       <TextureRenderPipeline />
                     </WebGLCanvas>
                     {children}
-                    {/* <div className="absolute right-4 top-4">
+                    <div className="absolute right-4 top-4">
                       <Inspector />
-                    </div> */}
+                    </div>
                     <EditorCommandDialog />
                   </InspectorStoreProvider>
                 </TextureRenderStoreProvider>
