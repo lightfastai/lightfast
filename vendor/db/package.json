@@ -10,7 +10,8 @@
     },
     "./app/schema": "./src/app/src/schema.ts",
     "./config": "./src/config.ts",
-    "./env": "./env.ts"
+    "./env": "./env.ts",
+    "./tenant/client": "./src/tenant/client.ts"
   },
   "license": "MIT",
   "scripts": {

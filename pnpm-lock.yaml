@@ -633,15 +633,33 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../../packages/ui
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.59.16(react@18.3.1)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.0.0-rc.599(@trpc/server@11.0.0-rc.599)
+      '@trpc/react-query':
+        specifier: 'catalog:'
+        version: 11.0.0-rc.599(@tanstack/react-query@5.59.16(react@18.3.1))(@trpc/client@11.0.0-rc.599(@trpc/server@11.0.0-rc.599))(@trpc/server@11.0.0-rc.599)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.0.0-rc.599
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
         version: link:../../../vendor/db
-      '@vendor/inngest':
-        specifier: workspace:*
-        version: link:../../../vendor/inngest
       '@vendor/next':
         specifier: workspace:*
         version: link:../../../vendor/next
+      '@vendor/trpc':
+        specifier: workspace:*
+        version: link:../../../vendor/trpc
+      inngest:
+        specifier: ^3.27.0
+        version: 3.27.0(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.6.3)
       lucide-react:
         specifier: 'catalog:'
         version: 0.451.0(react@18.3.1)

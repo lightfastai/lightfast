@@ -16,6 +16,7 @@ export const createApiClient = (apiKey: string) =>
     apiKey,
   });
 
+// @TODO: remove this to the tenant client
 export const apiClient = createApiClient(env.NEON_API_KEY);
 
 export const getDatabaseUri = async (projectId: string) => {
