@@ -1,5 +1,3 @@
-"use server";
-
 import type { Inngest, InngestFunction } from "inngest";
 import { serve } from "inngest/next";
 
