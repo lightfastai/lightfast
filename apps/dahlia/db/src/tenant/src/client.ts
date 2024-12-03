@@ -1,18 +1,15 @@
-import { createApiClient } from "@neondatabase/api-client";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { migrate } from "drizzle-orm/neon-http/migrator";
 import { drizzle as drizzleServerless } from "drizzle-orm/neon-serverless";
 
+import { createApiClient } from "@vendor/db";
+
 import { env } from "~/env";
 
-export const neonApiClient = createApiClient({
-  apiKey: env.DAHLIA_APP_NEON_API_KEY,
-});
+const apiClient = createApiClient("something");
 
 const pg_version = env.DAHLIA_APP_PG_VERSION;
-const db_name = env.DAHLIA_APP_DB_NAME;
-const role_name = env.DAHLIA_APP_ROLE_NAME;
 const region_id = env.DAHLIA_APP_REGION_ID;
 const org_id = env.DAHLIA_APP_ORG_ID;
 
@@ -23,7 +20,7 @@ export const createDbClient = (uri: string) => {
 // Creates a new database and returns the database ID
 export async function createDatabase() {
   try {
-    const response = await neonApiClient.createProject({
+    const response = await apiClient.createProject({
       project: {
         pg_version,
         region_id,
@@ -40,10 +37,10 @@ export async function createDatabase() {
 
 export const getDatabaseUri = async (projectId: string) => {
   try {
-    const { data } = await neonApiClient.getConnectionUri({
+    const { data } = await apiClient.getConnectionUri({
       projectId,
-      database_name: db_name,
-      role_name,
+      database_name: "neondb",
+      role_name: "neondb_owner",
     });
     return data.uri;
   } catch (error) {

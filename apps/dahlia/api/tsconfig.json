@@ -10,6 +10,6 @@
     "plugins": [{ "name": "next" }],
     "module": "esnext"
   },
-  "include": [".", ".next/types/**/*.ts", "../app/src/app/(trpc)"],
+  "include": [".", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

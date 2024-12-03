@@ -2,6 +2,7 @@ import { createApiClient as createNeonApiClient } from "@neondatabase/api-client
 import { drizzle } from "drizzle-orm/neon-serverless";
 
 import type { Db } from "../types/db";
+import { env } from "../../env";
 
 export const createDbClient = (uri: string): Db => {
   return drizzle({
@@ -15,17 +16,14 @@ export const createApiClient = (apiKey: string) =>
     apiKey,
   });
 
-export const getDatabaseUri = async (
-  neonApiClient: ReturnType<typeof createApiClient>,
-  projectId: string,
-  db_name: string,
-  role_name: string,
-) => {
+export const apiClient = createApiClient(env.NEON_API_KEY);
+
+export const getDatabaseUri = async (projectId: string) => {
   try {
-    const { data } = await neonApiClient.getConnectionUri({
+    const { data } = await apiClient.getConnectionUri({
       projectId,
-      database_name: db_name,
-      role_name,
+      database_name: "neondb", // @TODO: make this dynamic
+      role_name: "neondb_owner", // @TODO: make this dynamic
     });
     return data.uri;
   } catch (error) {

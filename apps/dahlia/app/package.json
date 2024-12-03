@@ -35,6 +35,7 @@
     "@vendor/clerk": "workspace:*",
     "@vendor/db": "workspace:*",
     "@vendor/next": "workspace:*",
+    "@vendor/trpc": "workspace:*",
     "@xyflow/react": "^12.3.5",
     "ai": "^3.4.20",
     "lucide-react": "catalog:",

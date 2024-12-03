@@ -9,7 +9,8 @@
       "default": "./src/index.ts"
     },
     "./app/schema": "./src/app/src/schema.ts",
-    "./config": "./src/config.ts"
+    "./config": "./src/config.ts",
+    "./env": "./env.ts"
   },
   "license": "MIT",
   "scripts": {

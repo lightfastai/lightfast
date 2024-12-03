@@ -217,6 +217,9 @@ importers:
       '@vendor/next':
         specifier: workspace:*
         version: link:../../../vendor/next
+      '@vendor/trpc':
+        specifier: workspace:*
+        version: link:../../../vendor/trpc
       '@xyflow/react':
         specifier: ^12.3.5
         version: 12.3.5(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -834,6 +837,9 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
+      '@vendor/trpc':
+        specifier: workspace:*
+        version: link:../../vendor/trpc
       bcrypt-ts:
         specifier: ^5.0.2
         version: 5.0.2
@@ -1232,6 +1238,46 @@ importers:
       next:
         specifier: 'catalog:'
         version: 14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
+
+  vendor/trpc:
+    dependencies:
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.0.0-rc.599
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../clerk
+      '@vendor/db':
+        specifier: workspace:*
+        version: link:../db
+      bcrypt-ts:
+        specifier: ^5.0.2
+        version: 5.0.2
+      superjson:
+        specifier: 2.2.1
+        version: 2.2.1
+      zod:
+        specifier: 'catalog:'
+        version: 3.23.8
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      eslint:
+        specifier: 'catalog:'
+        version: 9.13.0(jiti@2.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
       typescript:
         specifier: 'catalog:'
         version: 5.6.3
