@@ -24,7 +24,8 @@ export default function Page() {
               dividerText: "text-muted-foreground",
               footerAction: "bg-background",
               footerActionLink: "text-foreground",
-              input: "border border-border bg-background",
+              // input: "border border-border bg-transparent",
+              formFieldInput: "border border-border bg-transparent rounded-md",
               formFieldLabel: "text-muted-foreground",
               formButtonPrimary:
                 "bg-background border border-border text-foreground rounded-md transition-all duration-200  hover:bg-accent hover:text-accent-foreground",
