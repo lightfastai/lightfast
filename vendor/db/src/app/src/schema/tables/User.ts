@@ -17,10 +17,6 @@ export const User = pgTable("user", (t) => ({
     .notNull()
     .primaryKey()
     .$defaultFn(() => nanoid()),
-  name: t.varchar({ length: 255 }),
-  email: t.varchar({ length: 255 }).notNull(),
-  emailVerified: t.timestamp({ mode: "date", withTimezone: true }),
-  image: t.varchar({ length: 255 }),
   createdAt: t
     .timestamp("created_at", { withTimezone: true })
     .defaultNow()
