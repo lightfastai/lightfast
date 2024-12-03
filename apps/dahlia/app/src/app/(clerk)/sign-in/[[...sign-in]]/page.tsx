@@ -1,24 +1,31 @@
 "use client";
 
-import * as Clerk from "@clerk/elements/common";
-import * as SignIn from "@clerk/elements/sign-in";
+import { SignIn } from "@clerk/nextjs";
 
 export default function Page() {
   return (
-    <SignIn.Root>
-      <SignIn.Step name="start">
-        <h1>Sign in to your account</h1>
-
-        <Clerk.Connection name="github">Sign in with GitHub</Clerk.Connection>
-
-        <Clerk.Field name="identifier">
-          <Clerk.Label>Email</Clerk.Label>
-          <Clerk.Input />
-          <Clerk.FieldError />
-        </Clerk.Field>
-
-        <SignIn.Action submit>Continue</SignIn.Action>
-      </SignIn.Step>
-    </SignIn.Root>
+    <div className="flex h-screen w-screen items-center justify-center bg-background">
+      <div className="flex w-full flex-col items-center gap-12 overflow-hidden">
+        <SignIn
+          appearance={{
+            elements: {
+              card: "bg-background border-b border-border rounded-none",
+              cardBox: "border border-border rounded-lg",
+              headerTitle: "text-foreground",
+              headerSubtitle: "text-muted-foreground",
+              socialButtons:
+                "border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md",
+              formButtonPrimary: "bg-primary text-primary-foreground",
+              button: "border border-border text-foreground",
+              footer: {
+                background: "none",
+              },
+              footerAction: "bg-background",
+              footerActionLink: "text-foreground",
+            },
+          }}
+        />
+      </div>
+    </div>
   );
 }

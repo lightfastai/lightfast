@@ -6,6 +6,7 @@ import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 
+import { env } from "~/env";
 import { TRPCReactProvider } from "../trpc/react";
 
 type RootLayoutProperties = {
@@ -14,7 +15,7 @@ type RootLayoutProperties = {
 
 export default function RootLayout({ children }: RootLayoutProperties) {
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
       <html lang="en" suppressHydrationWarning>
         <head />
         <link rel="icon" href="/favicon.ico" sizes="any" />

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth, signIn } from "@vendor/clerk";
 import { ProviderSchema } from "node_modules/@vendor/clerk/src/config";
 
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardHeader } from "@repo/ui/components/ui/card";
+import { auth, signIn } from "@vendor/clerk";
 
 export default async function Page() {
   const session = await auth();
@@ -22,7 +22,7 @@ export default async function Page() {
     <div className="flex h-screen w-screen items-center justify-center bg-background">
       <div className="flex w-full flex-col items-center gap-12 overflow-hidden">
         <Card className="animate-fadeIn max-w-3xl">
-          <CardHeader className="flex flex-col items-center space-y-2">
+          <CardHeader className="flex flex-col items-center space-y-2 border">
             <h3 className="text-3xl font-semibold text-foreground">
               Join Dahlia
             </h3>
