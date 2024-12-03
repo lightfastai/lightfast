@@ -7,6 +7,7 @@ export default function Page() {
     <div className="flex h-screen w-screen items-center justify-center bg-background">
       <div className="flex w-full flex-col items-center gap-12 overflow-hidden">
         <SignIn
+          forceRedirectUrl="http://localhost:4100"
           signUpUrl="/sign-up"
           appearance={{
             elements: {
