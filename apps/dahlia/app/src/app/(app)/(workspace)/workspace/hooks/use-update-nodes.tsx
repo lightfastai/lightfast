@@ -9,12 +9,12 @@ import { useNodeStore } from "../providers/node-store-provider";
 import { BaseNode } from "../types/node";
 
 interface UseGetWorkspaceNodesProps {
-  workspaceId: RouterInputs["node"]["base"]["getAll"]["workspaceId"];
+  workspaceId: RouterInputs["tenant"]["workspace"]["get"]["id"];
 }
 
 export const useUpdateNodes = ({ workspaceId }: UseGetWorkspaceNodesProps) => {
   const { nodes, onNodesChange } = useNodeStore((state) => state);
-  const updateNodePositions = api.node.updatePositions.useMutation();
+  const updateNodePositions = api.tenant.node.updatePositions.useMutation();
 
   const updatePositions = useCallback(
     (nodes: BaseNode[]) => {

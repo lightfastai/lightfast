@@ -8,6 +8,6 @@ interface UseGetWorkspaceProps {
 }
 
 export const useGetWorkspace = ({ id, initialData }: UseGetWorkspaceProps) => {
-  const { data } = api.workspace.get.useQuery({ id }, { initialData });
+  const { data } = api.tenant.workspaceget.useQuery({ id }, { initialData });
   return { data };
 };

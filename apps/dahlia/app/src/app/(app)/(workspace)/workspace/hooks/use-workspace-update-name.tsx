@@ -3,11 +3,12 @@ import { toast } from "@repo/ui/hooks/use-toast";
 
 import { api } from "~/trpc/react";
 
-export type WorkspaceUpdateName = RouterInputs["workspace"]["updateName"];
+export type WorkspaceUpdateName =
+  RouterInputs["tenant"]["workspace"]["updateName"];
 
 export const useWorkspaceUpdateName = () => {
   const utils = api.useUtils();
-  const { mutate } = api.workspace.updateName.useMutation({
+  const { mutate } = api.tenant.workspace.updateName.useMutation({
     onSuccess: (input) => {
       utils.tenant.workspace.getAll.invalidate();
       utils.tenant.workspace.get.invalidate({ id: input.id });

@@ -14,6 +14,7 @@ export const auth = async (): Promise<Session | null> => {
   }
   return {
     user: {
+      id: session.userId,
       clerkId: session.userId,
     },
   };

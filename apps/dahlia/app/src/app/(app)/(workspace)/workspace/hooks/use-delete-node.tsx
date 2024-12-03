@@ -6,10 +6,10 @@ import { useTextureRenderStore } from "../providers/texture-render-store-provide
 export const useDeleteNode = () => {
   const { removeTarget } = useTextureRenderStore((state) => state);
   const utils = api.useUtils();
-  const { mutateAsync } = api.node.delete.useMutation({
+  const { mutateAsync } = api.tenant.nodedelete.useMutation({
     onMutate: async ({ id }) => {
       // invalidate the data
-      utils.node.data.get.cancel({ id });
+      utils.tenant.node.data.get.cancel({ id });
     },
     onSuccess: (data, variables) => {
       // Clean up the render target after successful deletion
@@ -18,7 +18,7 @@ export const useDeleteNode = () => {
       }
 
       // set the data to undefined
-      utils.node.data.get.setData({ id: variables.id }, undefined);
+      utils.tenant.node.data.get.setData({ id: variables.id }, undefined);
     },
   });
 

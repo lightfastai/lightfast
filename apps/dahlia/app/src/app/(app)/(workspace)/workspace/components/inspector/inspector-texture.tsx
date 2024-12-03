@@ -20,17 +20,17 @@ import { InspectorFormField } from "./inspector-form-field";
 
 export const InspectorTexture = ({ id }: { id: string }) => {
   const utils = api.useUtils();
-  const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
+  const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
 
   const form = useForm<TextureUniforms>({
     resolver: zodResolver($TextureUniforms),
     defaultValues: data.uniforms,
   });
 
-  const { mutate: updateData } = api.node.data.update.useMutation({
+  const { mutate: updateData } = api.tenant.node.data.update.useMutation({
     onError: () => {
       // On error, revert the optimistic update
-      utils.node.data.get.setData({ id }, data);
+      utils.tenant.node.data.get.setData({ id }, data);
     },
   });
 
@@ -60,7 +60,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       } as TextureUniforms;
 
       // Optimistically update the cache
-      utils.node.data.get.setData(
+      utils.tenant.node.data.get.setData(
         { id },
         {
           type: data.type,
@@ -71,7 +71,13 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       // Debounce the actual server update
       debouncedServerUpdate(newUniforms);
     },
-    [id, data.type, data.uniforms, utils.node.data.get, debouncedServerUpdate],
+    [
+      id,
+      data.type,
+      data.uniforms,
+      utils.tenant.node.data.get,
+      debouncedServerUpdate,
+    ],
   );
 
   return (

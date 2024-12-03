@@ -5,7 +5,7 @@ import { WorkspaceProvider } from "../providers/workspace-provider";
 
 interface WorkspacePageProps {
   params: {
-    id: RouterInputs["workspace"]["get"]["id"];
+    id: RouterInputs["tenant"]["workspace"]["get"]["id"];
   };
 }
 

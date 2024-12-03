@@ -16,7 +16,7 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const queries = api.useQueries((t) =>
     Object.entries(targets).map(([id, texture]) =>
-      t.node.data.get<Texture>({
+      t.tenant.node.data.get<Texture>({
         id,
       }),
     ),

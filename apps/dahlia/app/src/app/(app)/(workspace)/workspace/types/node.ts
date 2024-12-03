@@ -2,7 +2,8 @@ import type { Edge, Node } from "@xyflow/react";
 
 import { RouterOutputs } from "@repo/api";
 
-export type BaseNode = Node & RouterOutputs["node"]["base"]["getAll"][number];
+export type BaseNode = Node &
+  RouterOutputs["tenant"]["node"]["base"]["getAll"][number];
 
 /**
  * We have to convert the base node to a node because the data is not
@@ -10,14 +11,14 @@ export type BaseNode = Node & RouterOutputs["node"]["base"]["getAll"][number];
  * we can remove this conversion.
  */
 export const convertToBaseNode = (
-  nodes: RouterOutputs["node"]["base"]["getAll"],
+  nodes: RouterOutputs["tenant"]["node"]["base"]["getAll"],
 ): BaseNode[] =>
   nodes.map((node) => ({
     ...node,
     data: {},
   }));
 
-export type BaseEdge = Edge & RouterOutputs["edge"]["getAll"][number];
+export type BaseEdge = Edge & RouterOutputs["tenant"]["edge"]["getAll"][number];
 
 /**
  * We have to convert the base edge to an edge because the data is not
@@ -25,5 +26,5 @@ export type BaseEdge = Edge & RouterOutputs["edge"]["getAll"][number];
  * we can remove this conversion.
  */
 export const convertToBaseEdge = (
-  edges: RouterOutputs["edge"]["getAll"],
+  edges: RouterOutputs["tenant"]["edge"]["getAll"],
 ): BaseEdge[] => edges;

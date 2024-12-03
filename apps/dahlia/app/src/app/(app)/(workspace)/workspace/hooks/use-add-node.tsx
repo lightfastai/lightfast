@@ -35,10 +35,10 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
   const { addTarget } = useTextureRenderStore((state) => state);
   const { selection, clearSelection } = useSelectionStore((state) => state);
   const { screenToFlowPosition } = useReactFlow();
-  const create = api.node.create.useMutation({
+  const create = api.tenant.node.create.useMutation({
     onMutate: async (newNode) => {
       // Cancel any outgoing refetches
-      await utils.node.data.get.cancel({ id: newNode.id });
+      await utils.tenant.node.data.get.cancel({ id: newNode.id });
 
       const optimisticNode: BaseNode = {
         id: newNode.id,
@@ -49,7 +49,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
 
       addNode(optimisticNode);
 
-      utils.node.data.get.setData(
+      utils.tenant.node.data.get.setData(
         { id: newNode.id },
         newNode.data as Geometry | Material | Texture,
       );
@@ -67,11 +67,11 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
 
       deleteNode(context.optimisticNode.id);
 
-      utils.node.data.get.setData({ id: newNode.id }, undefined);
+      utils.tenant.node.data.get.setData({ id: newNode.id }, undefined);
     },
     onSettled: (newNode) => {
       if (!newNode) return;
-      utils.node.data.get.invalidate({ id: newNode.id });
+      utils.tenant.node.data.get.invalidate({ id: newNode.id });
     },
   });
 

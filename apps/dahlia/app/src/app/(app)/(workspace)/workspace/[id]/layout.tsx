@@ -149,9 +149,9 @@ export default async function WorkspaceLayout({
                       <TextureRenderPipeline />
                     </WebGLCanvas>
                     {children}
-                    <div className="absolute right-4 top-4">
+                    {/* <div className="absolute right-4 top-4">
                       <Inspector />
-                    </div>
+                    </div> */}
                     <EditorCommandDialog />
                   </InspectorStoreProvider>
                 </TextureRenderStoreProvider>

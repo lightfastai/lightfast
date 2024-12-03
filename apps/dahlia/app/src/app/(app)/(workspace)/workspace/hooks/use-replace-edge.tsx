@@ -12,7 +12,7 @@ import { useEdgeValidation } from "./use-validate-edge";
 export const useReplaceEdge = () => {
   const { edges, addEdge, deleteEdge } = useEdgeStore((state) => state);
 
-  const { mutateAsync: mutReplace } = api.edge.replaceEdge.useMutation({
+  const { mutateAsync: mutReplace } = api.tenant.edge.replace.useMutation({
     onMutate: async ({ oldEdgeId, newEdge }) => {
       // Optimistically remove the old edge
       const oldEdge = edges.find((edge) => edge.id === oldEdgeId);
@@ -21,9 +21,9 @@ export const useReplaceEdge = () => {
 
       // Optimistically add the new edge
       const optimisticEdge: BaseEdge = {
-        id: newEdge.id,
-        source: newEdge.source,
-        target: newEdge.target,
+        ...newEdge,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       addEdge(optimisticEdge);

@@ -20,7 +20,7 @@ import { WebGLView } from "../webgl/webgl-primitives";
 
 export const TextureNode = memo(
   ({ id, type, selected, isConnectable }: NodeProps<BaseNode>) => {
-    const [data] = api.node.data.get.useSuspenseQuery<Texture>({ id });
+    const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
     const { targets } = useTextureRenderStore((state) => state);
     const setSelected = useInspectorStore((state) => state.setSelected);
     return (
