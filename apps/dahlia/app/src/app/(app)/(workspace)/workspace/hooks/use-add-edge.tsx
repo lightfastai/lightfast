@@ -11,12 +11,14 @@ import { useEdgeValidation } from "./use-validate-edge";
 
 export const useAddEdge = () => {
   const { addEdge, deleteEdge } = useEdgeStore((state) => state);
-  const { mutateAsync: mut } = api.tenant.edgeaddEdge.useMutation({
+  const { mutateAsync: mut } = api.tenant.edge.create.useMutation({
     onMutate: async (newEdge) => {
       const optimisticEdge: BaseEdge = {
         id: newEdge.id,
         source: newEdge.edge.source,
         target: newEdge.edge.target,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       addEdge(optimisticEdge);

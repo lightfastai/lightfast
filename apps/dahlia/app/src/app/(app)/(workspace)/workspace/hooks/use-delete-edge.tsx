@@ -3,7 +3,7 @@ import { useEdgeStore } from "../providers/edge-store-provider";
 
 export const useDeleteEdge = () => {
   const { deleteEdge, addEdge, edges } = useEdgeStore((state) => state);
-  const { mutateAsync } = api.tenant.edgedeleteEdge.useMutation({
+  const { mutateAsync } = api.tenant.edge.delete.useMutation({
     onMutate: (id) => {
       const edge = edges.find((e) => e.id === id.id);
       if (!edge) return;

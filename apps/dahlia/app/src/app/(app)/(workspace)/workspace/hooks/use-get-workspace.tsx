@@ -3,11 +3,11 @@ import { RouterOutputs } from "@repo/api";
 import { api } from "~/trpc/react";
 
 interface UseGetWorkspaceProps {
-  id: RouterOutputs["workspace"]["get"]["id"];
-  initialData?: RouterOutputs["workspace"]["get"];
+  id: RouterOutputs["tenant"]["workspace"]["get"]["id"];
+  initialData?: RouterOutputs["tenant"]["workspace"]["get"];
 }
 
 export const useGetWorkspace = ({ id, initialData }: UseGetWorkspaceProps) => {
-  const { data } = api.tenant.workspaceget.useQuery({ id }, { initialData });
+  const { data } = api.tenant.workspace.get.useQuery({ id }, { initialData });
   return { data };
 };

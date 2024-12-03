@@ -6,7 +6,7 @@ import { useTextureRenderStore } from "../providers/texture-render-store-provide
 export const useDeleteNode = () => {
   const { removeTarget } = useTextureRenderStore((state) => state);
   const utils = api.useUtils();
-  const { mutateAsync } = api.tenant.nodedelete.useMutation({
+  const { mutateAsync } = api.tenant.node.delete.useMutation({
     onMutate: async ({ id }) => {
       // invalidate the data
       utils.tenant.node.data.get.cancel({ id });
