@@ -1,10 +1,8 @@
-import Link from "next/link";
-
-import { Button } from "@repo/ui/components/ui/button";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 
 import { AppSidebar } from "~/components/app/sidebar";
 import { SimpleDotFooter } from "~/components/app/simple-dot-footer";
+import { LoginButton } from "~/components/auth/login-button";
 import { siteNav } from "~/config/site";
 import { api } from "~/trpc/server";
 
@@ -20,12 +18,8 @@ export default async function Layout({
         {session && <AppSidebar />}
         <SidebarInset>
           {!session && (
-            <header className="relative flex items-center justify-end border p-4">
-              <Button variant="outline" asChild>
-                <Link href={"http://localhost:4103/sign-in"} prefetch={false}>
-                  Sign-in
-                </Link>
-              </Button>
+            <header className="relative flex items-center justify-end p-4">
+              <LoginButton />
             </header>
           )}
           <div className="flex flex-col gap-4 p-4">{children}</div>

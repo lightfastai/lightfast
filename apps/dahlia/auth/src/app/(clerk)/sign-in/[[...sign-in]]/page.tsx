@@ -18,7 +18,7 @@ export default function Page() {
               socialButtons:
                 "border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md",
               // formButtonPrimary: "bg-primary text-primary-foreground",
-              button: "border border-border text-foreground",
+              button: "border border-border text-foreground h-10 px-4 py-2",
               footer: {
                 background: "none",
               },
@@ -26,7 +26,8 @@ export default function Page() {
               footerAction: "bg-background",
               footerActionLink: "text-foreground",
               // input: "border border-border bg-transparent",
-              formFieldInput: "border border-border bg-transparent rounded-md",
+              formFieldInput:
+                "border border-border bg-transparent rounded-md h-10 px-3 py-2",
               formFieldLabel: "text-muted-foreground",
               formButtonPrimary:
                 "bg-background border border-border text-foreground rounded-md transition-all duration-200  hover:bg-accent hover:text-accent-foreground",

@@ -21,6 +21,7 @@ const RootLayout = ({ children }: RootLayoutProperties) => (
       "http://localhost:4101",
       "http://localhost:4102",
     ]}
+    afterSignOutUrl={"http://localhost:4102"}
   >
     <html lang="en" suppressHydrationWarning>
       <head />
