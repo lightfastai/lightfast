@@ -1,10 +1,11 @@
 import { fileURLToPath } from "url";
+import { createJiti } from "jiti";
+
 import {
   config as nextConfig,
   withAnalyzer,
   withSentry,
 } from "@vendor/next/index.mjs";
-import { createJiti } from "jiti";
 
 // Import env files to validate at build time. Use jiti so we can load .ts files in here.
 await createJiti(fileURLToPath(import.meta.url)).import("./src/env");
@@ -15,11 +16,12 @@ let config = {
 
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
+    "@dahlia/db",
     "@vendor/clerk",
     "@vendor/inngest",
-    "@repo/ui",
     "@vendor/db",
     "@vendor/next",
+    "@repo/ui",
   ],
 
   /** We already do linting and typechecking as separate tasks in CI */
