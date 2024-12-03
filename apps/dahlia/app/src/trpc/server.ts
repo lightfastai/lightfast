@@ -5,7 +5,7 @@ import { createHydrationHelpers } from "@trpc/react-query/rsc";
 import type { AppRouter } from "@repo/api";
 import { db } from "@dahlia/db/client";
 import { createCaller, createTRPCContext } from "@repo/api";
-import { auth } from "@vendor/clerk/server";
+import { auth } from "@vendor/clerk";
 
 import { createQueryClient } from "./query-client";
 

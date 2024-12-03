@@ -8,7 +8,8 @@
       "default": "./src/index.ts"
     },
     "./env": "./env.ts",
-    "./server": "./src/server.ts"
+    "./server": "./src/server.ts",
+    "./types": "./src/types.ts"
   },
   "license": "MIT",
   "scripts": {
