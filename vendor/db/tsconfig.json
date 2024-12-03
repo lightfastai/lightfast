@@ -4,8 +4,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"],
-      "~/env": ["env.ts"]
+      "~/*": ["src/*"]
     }
   },
   "exclude": ["node_modules"]

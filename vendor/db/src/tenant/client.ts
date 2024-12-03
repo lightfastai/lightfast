@@ -1,10 +1,10 @@
-import { Api } from "@neondatabase/api-client";
+import type { Api } from "@neondatabase/api-client";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { migrate } from "drizzle-orm/neon-http/migrator";
 import { drizzle as drizzleServerless } from "drizzle-orm/neon-serverless";
 
-import { createApiClient } from "@vendor/db";
+import { createApiClient } from "../shared/client";
 
 // Define the configuration interface to match the API's expected format
 interface DatabaseConfig {
