@@ -9,9 +9,9 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { env } from "~/env";
 
-type RootLayoutProperties = {
+interface RootLayoutProperties {
   readonly children: ReactNode;
-};
+}
 
 const RootLayout = ({ children }: RootLayoutProperties) => (
   <ClerkProvider

@@ -63,12 +63,8 @@
           "name": "database_user_id_user_id_fk",
           "tableFrom": "database",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -78,16 +74,12 @@
         "database_user_id_unique": {
           "name": "database_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         },
         "database_db_id_unique": {
           "name": "database_db_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "db_id"
-          ]
+          "columns": ["db_id"]
         }
       },
       "checkConstraints": {}
@@ -154,9 +146,7 @@
         "user_clerkId_unique": {
           "name": "user_clerkId_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "clerk_id"
-          ]
+          "columns": ["clerk_id"]
         }
       },
       "checkConstraints": {}

@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { GlobalOrbitControls, GlobalPerspectiveCamera } from "./webgl-globals";
 import { WebGLView } from "./webgl-primitives";

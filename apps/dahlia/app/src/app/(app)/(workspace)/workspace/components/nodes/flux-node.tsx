@@ -1,9 +1,9 @@
 import { memo, useState } from "react";
 import Image from "next/image";
-import { NodeProps } from "@xyflow/react";
+import type { NodeProps } from "@xyflow/react";
 import { PlayIcon } from "lucide-react";
 
-import { Txt2Img } from "@dahlia/db/tenant/schema";
+import type { Txt2Img } from "@dahlia/db/tenant/schema";
 import { createFalClient } from "@repo/ai/fal";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
@@ -15,7 +15,7 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { api } from "~/trpc/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
-import { BaseNode } from "../../types/node";
+import type { BaseNode } from "../../types/node";
 
 const fal = createFalClient({
   proxyUrl: "/api/fal/proxy",

@@ -11,7 +11,7 @@ export default async function WorkspaceLayout({
 }) {
   const session = await api.app.auth.getSession();
 
-  if (!session?.user?.clerkId) {
+  if (!session?.user.clerkId) {
     notFound();
   }
 

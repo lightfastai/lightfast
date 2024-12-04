@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useRef } from "react";
 import { useStore } from "zustand";
 
+import type { SelectionStore } from "../stores/selection-store";
 import {
   createSelectionStore,
   initSelectionState,
-  SelectionStore,
 } from "../stores/selection-store";
 
 export type SelectionStoreApi = ReturnType<typeof createSelectionStore>;

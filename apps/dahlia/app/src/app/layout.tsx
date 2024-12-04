@@ -9,9 +9,9 @@ import { cn } from "@repo/ui/lib/utils";
 import { env } from "~/env";
 import { TRPCReactProvider } from "../trpc/react";
 
-type RootLayoutProperties = {
+interface RootLayoutProperties {
   readonly children: React.ReactNode;
-};
+}
 
 export default function RootLayout({ children }: RootLayoutProperties) {
   return (

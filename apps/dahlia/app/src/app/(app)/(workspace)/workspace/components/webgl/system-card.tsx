@@ -9,18 +9,18 @@ export const SystemCard = memo(() => {
     () => [
       {
         label: "Renderer",
-        value: infos?.renderer ?? "N/A",
+        value: infos.renderer ?? "N/A",
       },
       {
         label: "Version",
-        value: infos?.version ?? "N/A",
+        value: infos.version ?? "N/A",
       },
       {
         label: "Vendor",
-        value: infos?.vendor ?? "N/A",
+        value: infos.vendor ?? "N/A",
       },
     ],
-    [infos?.renderer, infos?.version, infos?.vendor],
+    [infos.renderer, infos.version, infos.vendor],
   );
 
   return <InfoCard title="System" items={systemItems} />;

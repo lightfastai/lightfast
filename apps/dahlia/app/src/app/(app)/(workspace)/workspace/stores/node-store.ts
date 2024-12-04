@@ -1,17 +1,18 @@
-import { applyNodeChanges, OnNodesChange } from "@xyflow/react";
+import type { OnNodesChange } from "@xyflow/react";
+import { applyNodeChanges } from "@xyflow/react";
 import { createStore } from "zustand";
 
-import { BaseNode } from "../types/node";
+import type { BaseNode } from "../types/node";
 
 interface NodeState {
   nodes: BaseNode[];
 }
 
-export type NodeActions = {
+export interface NodeActions {
   addNode: (node: BaseNode) => void;
   deleteNode: (id: string) => void;
   onNodesChange: OnNodesChange<BaseNode>;
-};
+}
 
 export type NodeStore = NodeState & NodeActions;
 

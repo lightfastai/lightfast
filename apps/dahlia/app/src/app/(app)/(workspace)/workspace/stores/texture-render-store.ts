@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { createStore } from "zustand";
 
-import { BaseNode } from "../types/node";
+import type { BaseNode } from "../types/node";
 
 interface TextureRenderState {
   targets: Record<string, THREE.WebGLRenderTarget>;

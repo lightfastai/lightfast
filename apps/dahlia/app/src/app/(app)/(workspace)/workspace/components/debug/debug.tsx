@@ -11,11 +11,11 @@ import { WebGLStatsCard } from "../webgl/gl-stats-card";
 import { WebGLPerformance } from "../webgl/performance-card";
 import { SystemCard } from "../webgl/system-card";
 
-type DebugSection = {
+interface DebugSection {
   id: string;
   title: string;
   content: React.ReactNode;
-};
+}
 
 // Separate the workspace info into its own memoized component
 const WorkspaceInfo = memo(() => {

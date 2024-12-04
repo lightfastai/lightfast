@@ -1,9 +1,9 @@
-import { UserJSON } from "@vendor/clerk/server";
+import type { UserJSON } from "@vendor/clerk/server";
 
 export type UserCreatedEventData = UserJSON;
 
-export type Events = {
+export interface Events {
   "user/created": {
     data: UserCreatedEventData;
   };
-};
+}

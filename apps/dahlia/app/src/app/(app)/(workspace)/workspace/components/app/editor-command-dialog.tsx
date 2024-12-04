@@ -3,15 +3,16 @@
 import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 
+import type {
+  GeometryType,
+  MaterialType,
+  TextureType,
+  Txt2ImgType} from "@dahlia/db/tenant/schema";
 import {
   $GeometryType,
   $MaterialType,
   $TextureTypes,
-  $Txt2ImgType,
-  GeometryType,
-  MaterialType,
-  TextureType,
-  Txt2ImgType,
+  $Txt2ImgType
 } from "@dahlia/db/tenant/schema";
 import {
   Command,

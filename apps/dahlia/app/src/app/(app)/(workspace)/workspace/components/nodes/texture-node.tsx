@@ -1,8 +1,10 @@
 import { memo } from "react";
-import { Handle, NodeProps, Position } from "@xyflow/react";
+import type { NodeProps} from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
-import { $GeometryType, Texture } from "@dahlia/db/tenant/schema";
+import type { Texture } from "@dahlia/db/tenant/schema";
+import { $GeometryType } from "@dahlia/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -14,7 +16,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { api } from "~/trpc/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
-import { BaseNode } from "../../types/node";
+import type { BaseNode } from "../../types/node";
 import { GeometryMap } from "../webgl/webgl-globals";
 import { WebGLView } from "../webgl/webgl-primitives";
 

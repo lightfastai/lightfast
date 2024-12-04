@@ -1,17 +1,18 @@
-import { applyEdgeChanges, OnEdgesChange } from "@xyflow/react";
+import type { OnEdgesChange } from "@xyflow/react";
+import { applyEdgeChanges } from "@xyflow/react";
 import { createStore } from "zustand";
 
-import { BaseEdge } from "../types/node";
+import type { BaseEdge } from "../types/node";
 
 interface EdgeState {
   edges: BaseEdge[];
 }
 
-export type EdgeActions = {
+export interface EdgeActions {
   addEdge: (edge: BaseEdge) => void;
   deleteEdge: (id: string) => void;
   onEdgesChange: OnEdgesChange<BaseEdge>;
-};
+}
 
 export type EdgeStore = EdgeState & EdgeActions;
 
