@@ -8,7 +8,7 @@
   "packageManager": "pnpm@9.14.2",
   "scripts": {
     "build": "turbo run build",
-    "clean": "git clean -xdf node_modules .turbo",
+    "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
     "db:push": "turbo -F @vendor/db push",
     "db:studio": "turbo -F @vendor/db studio",
