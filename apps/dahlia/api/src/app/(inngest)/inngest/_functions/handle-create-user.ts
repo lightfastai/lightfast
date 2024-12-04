@@ -1,6 +1,12 @@
+<<<<<<< Updated upstream:apps/dahlia/api/src/app/(inngest)/inngest/_functions/handle-create-user.ts
 import { db } from "@dahlia/db/client";
+=======
+import type { UserJSON } from "@repo/auth/server";
+import { db } from "@repo/db/app/client";
+import { Database, User } from "@repo/db/app/schema";
+import { create } from "@repo/db/lib/neon";
+>>>>>>> Stashed changes:packages/events/src/functions/handle-create-user.ts
 import {
-  createDatabase,
   createDbClient,
   getDatabaseUri,
   updateDatabaseSchema,
@@ -49,7 +55,11 @@ export const handleCreateUser = inngest.createFunction(
 
     // create a tenant db for the user
     const dbId = await step.run("app.create.db", async () => {
-      return createDatabase();
+      const res = await create();
+      if (res instanceof Error) {
+        throw new Error(res.message);
+      }
+      return res.projectId;
     });
 
     // get the db uri
