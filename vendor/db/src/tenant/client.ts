@@ -33,13 +33,22 @@ export class DatabaseClient {
     return drizzleServerless(uri, { casing: "snake_case" });
   }
 
-  async createDatabase() {
+  /**
+   * Creates a new database and returns the database ID. Ensure we add a more
+   * descriptive name to the database, potentially using the `${app-name}-${user-id}`
+   * pattern.
+   *
+   * @important 1. Validate the name is not already taken
+   * @important 2. Handle errors
+   */
+  async createDatabase(name: string) {
     try {
       const response = await this.apiClient.createProject({
         project: {
           pg_version: this._pg_version,
           region_id: this._region_id,
           org_id: this._org_id,
+          name,
         },
       });
 
