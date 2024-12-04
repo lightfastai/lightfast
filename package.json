@@ -30,7 +30,8 @@
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
     "typecheck": "turbo run typecheck",
-    "ui": "pnpm --filter @repo/ui ui"
+    "ui": "pnpm --filter @repo/ui ui",
+    "vercel:link": "vercel link --repo"
   },
   "devDependencies": {
     "@repo/prettier-config": "workspace:*",
