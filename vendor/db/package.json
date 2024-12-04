@@ -8,10 +8,31 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
+<<<<<<< Updated upstream:vendor/db/package.json
     "./app/schema": "./src/app/src/schema.ts",
     "./config": "./src/config.ts",
     "./env": "./env.ts",
     "./tenant/client": "./src/tenant/client.ts"
+=======
+    "./app/client": {
+      "types": "./dist/app/src/client.d.ts",
+      "default": "./src/app/src/client.ts"
+    },
+    "./app/schema": {
+      "types": "./dist/app/src/schema.d.ts",
+      "default": "./src/app/src/schema.ts"
+    },
+    "./tenant/client": {
+      "types": "./dist/tenant/src/client.d.ts",
+      "default": "./src/tenant/src/client.ts"
+    },
+    "./tenant/schema": {
+      "types": "./dist/tenant/src/schema.d.ts",
+      "default": "./src/tenant/src/schema.ts"
+    },
+    "./env": "./env.ts",
+    "./lib/neon": "./src/lib/neon.ts"
+>>>>>>> Stashed changes:packages/db/package.json
   },
   "license": "MIT",
   "scripts": {
