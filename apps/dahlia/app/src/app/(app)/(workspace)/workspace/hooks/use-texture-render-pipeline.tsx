@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
-import { TextureRenderPipeline } from "../types/render";
+import type { TextureRenderPipeline } from "../types/render";
 
 /**
  * @description A pipeline for rendering textures to render targets.

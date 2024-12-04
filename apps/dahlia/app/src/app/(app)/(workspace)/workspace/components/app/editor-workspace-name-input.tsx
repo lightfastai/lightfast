@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { FieldErrors } from "react-hook-form";
+import type { FieldErrors } from "react-hook-form";
 
+import type {
+  UpdateNameWorkspace} from "@dahlia/db/tenant/schema";
 import {
-  UpdateNameWorkspace,
   UpdateNameWorkspaceSchema,
 } from "@dahlia/db/tenant/schema";
-import { RouterOutputs } from "@dahlia/trpc";
+import type { RouterOutputs } from "@dahlia/trpc";
 import {
   Form,
   FormControl,
@@ -19,9 +20,10 @@ import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/hooks/use-toast";
 
 import { useGetWorkspace } from "../../hooks/use-get-workspace";
+import type {
+  WorkspaceUpdateName} from "../../hooks/use-workspace-update-name";
 import {
-  useWorkspaceUpdateName,
-  WorkspaceUpdateName,
+  useWorkspaceUpdateName
 } from "../../hooks/use-workspace-update-name";
 
 interface EditorWorkspaceNameInputProps {
@@ -77,7 +79,7 @@ export const EditorWorkspaceNameInput = ({
       const inputElement = formElement.elements.namedItem(
         "name",
       ) as HTMLInputElement;
-      inputElement?.blur();
+      inputElement.blur();
     }
   };
 

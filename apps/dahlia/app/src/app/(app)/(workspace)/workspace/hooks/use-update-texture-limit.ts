@@ -1,16 +1,16 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
-import { LimitTexture, Texture } from "@dahlia/db/tenant/schema";
+import type { LimitTexture, Texture } from "@dahlia/db/tenant/schema";
 import {
   limitFragmentShader,
   limitVertexShader,
 } from "@repo/webgl/shaders/limit/limit.glsl";
 
 import { api } from "~/trpc/react";
-import { WebGLRootState } from "../components/webgl/webgl-primitives";
+import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
-import { TextureRenderNode } from "../types/render";
+import type { TextureRenderNode } from "../types/render";
 
 export const useUpdateTextureLimit = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
@@ -36,7 +36,7 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
     return Object.entries(textureDataMap)
       .filter((entry): entry is [string, LimitTexture] => {
         const [_, texture] = entry;
-        return texture?.type === "Limit";
+        return texture.type === "Limit";
       })
       .map(([id, texture]) => {
         const { uniforms: u } = texture;

@@ -13,7 +13,7 @@ interface LegalPageProps {
 }
 
 function getLegalFromParams({ params }: LegalPageProps) {
-  const slug = params.slug?.join("/") || "";
+  const slug = params.slug.join("/") || "";
   const legal = allLegals.find((legal) => legal.slugAsParams === slug);
 
   if (!legal) {

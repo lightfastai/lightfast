@@ -1,4 +1,4 @@
-import { RouterOutputs } from "@dahlia/trpc";
+import type { RouterOutputs } from "@dahlia/trpc";
 
 import { api } from "~/trpc/react";
 

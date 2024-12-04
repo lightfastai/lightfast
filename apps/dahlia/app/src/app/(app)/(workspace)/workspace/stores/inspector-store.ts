@@ -1,16 +1,16 @@
 import { createStore } from "zustand";
 
-import { BaseNode } from "../types/node";
+import type { BaseNode } from "../types/node";
 
 export interface InspectorState {
   selected: Pick<BaseNode, "id" | "type"> | null;
   isOpen: boolean;
 }
 
-export type InspectorActions = {
+export interface InspectorActions {
   setSelected: ({ type, id }: { type: BaseNode["type"]; id: string }) => void;
   setIsOpen: (isOpen: boolean) => void;
-};
+}
 
 export type InspectorStore = InspectorState & InspectorActions;
 

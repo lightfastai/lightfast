@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import * as THREE from "three";
+import type * as THREE from "three";
 
 import { $GeometryType } from "@dahlia/db/tenant/schema";
 

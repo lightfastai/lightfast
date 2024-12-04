@@ -6,7 +6,7 @@ import { useStore } from "zustand";
 
 import type { NodeStore } from "../stores/node-store";
 import { createNodeStore } from "../stores/node-store";
-import { BaseNode } from "../types/node";
+import type { BaseNode } from "../types/node";
 
 export type NodeStoreApi = ReturnType<typeof createNodeStore>;
 

@@ -1,6 +1,6 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
-import { WebGLRootState } from "../components/webgl/webgl-primitives";
+import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 
 /**
  * @description A node in the texture render pipeline.

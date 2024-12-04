@@ -1,5 +1,13 @@
 import { useReactFlow } from "@xyflow/react";
 
+import type {
+  Geometry,
+  GeometryType,
+  Material,
+  MaterialType,
+  Texture,
+  TextureType,
+  Txt2ImgType} from "@dahlia/db/tenant/schema";
 import {
   $GeometryType,
   $MaterialType,
@@ -8,14 +16,7 @@ import {
   createDefaultGeometry,
   createDefaultMaterial,
   createDefaultTexture,
-  createDefaultTxt2Img,
-  Geometry,
-  GeometryType,
-  Material,
-  MaterialType,
-  Texture,
-  TextureType,
-  Txt2ImgType,
+  createDefaultTxt2Img
 } from "@dahlia/db/tenant/schema";
 import { nanoid } from "@repo/lib";
 
@@ -23,7 +24,7 @@ import { api } from "~/trpc/react";
 import { useNodeStore } from "../providers/node-store-provider";
 import { useSelectionStore } from "../providers/selection-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
-import { BaseNode } from "../types/node";
+import type { BaseNode } from "../types/node";
 
 interface UseWorkspaceAddNodeProps {
   workspaceId: string;

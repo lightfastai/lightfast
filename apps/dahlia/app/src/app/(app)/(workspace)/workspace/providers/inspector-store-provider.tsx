@@ -4,10 +4,11 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useRef } from "react";
 import { useStore } from "zustand";
 
+import type {
+  InspectorStore} from "../stores/inspector-store";
 import {
   createInspectorStore,
-  initInspectorState,
-  InspectorStore,
+  initInspectorState
 } from "../stores/inspector-store";
 
 export type InspectorStoreApi = ReturnType<typeof createInspectorStore>;

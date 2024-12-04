@@ -1,12 +1,13 @@
 "use client";
 
+import type {
+  Connection,
+  NodeTypes,
+  OnDelete} from "@xyflow/react";
 import {
   Background,
   BackgroundVariant,
-  Connection,
   ConnectionMode,
-  NodeTypes,
-  OnDelete,
   ReactFlow,
 } from "@xyflow/react";
 
@@ -15,7 +16,7 @@ import "./workspace.css";
 
 import { useCallback } from "react";
 
-import { RouterInputs } from "@dahlia/trpc";
+import type { RouterInputs } from "@dahlia/trpc";
 
 import { useAddEdge } from "../../hooks/use-add-edge";
 import { useAddNode } from "../../hooks/use-add-node";
@@ -27,7 +28,7 @@ import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
-import { BaseEdge, BaseNode } from "../../types/node";
+import type { BaseEdge, BaseNode } from "../../types/node";
 import { Debug } from "../debug/debug";
 import { FluxNode } from "../nodes/flux-node";
 import { GeometryNode } from "../nodes/geometry-node";

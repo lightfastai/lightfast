@@ -5,7 +5,7 @@ import type {
   Path,
 } from "react-hook-form";
 import { memo, useCallback, useMemo } from "react";
-import { z } from "zod";
+import type { z } from "zod";
 
 import type { Value } from "@repo/webgl";
 import {

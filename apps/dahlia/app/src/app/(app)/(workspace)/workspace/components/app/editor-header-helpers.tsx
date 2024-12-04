@@ -31,7 +31,7 @@ export const EditorHeaderHelpers = () => {
               <Button variant="ghost">
                 <Avatar className="size-5 rounded-lg">
                   <AvatarImage
-                    src={session?.user?.image ?? "/avatar-placeholder.webp"}
+                    src={session.user.image ?? "/avatar-placeholder.webp"}
                     className="rounded-lg"
                   />
                   <AvatarFallback className="rounded-lg">v</AvatarFallback>

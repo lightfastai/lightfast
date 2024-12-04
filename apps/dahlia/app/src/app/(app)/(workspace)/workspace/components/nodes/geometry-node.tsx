@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { NodeProps } from "@xyflow/react";
+import type { NodeProps } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
-import { Geometry } from "@dahlia/db/tenant/schema";
+import type { Geometry } from "@dahlia/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
@@ -13,7 +13,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { api } from "~/trpc/react";
-import { BaseNode } from "../../types/node";
+import type { BaseNode } from "../../types/node";
 import { GeometryRenderer } from "../webgl/geometry-renderer";
 import { WebGLViewContext } from "../webgl/webgl-context";
 
@@ -55,7 +55,7 @@ export const GeometryNode = memo(
           <div className="flex items-center justify-end">
             <Checkbox
               id={`wireframe-${id}`}
-              checked={data?.wireframe ?? false}
+              checked={data.wireframe ?? false}
               // onCheckedChange={() => {}}
             />
           </div>

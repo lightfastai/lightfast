@@ -4,9 +4,9 @@ interface EditorState {
   isCommandDialogOpen: boolean;
 }
 
-export type EditorActions = {
+export interface EditorActions {
   setIsCommandDialogOpen: (isOpen: boolean) => void;
-};
+}
 
 export type EditorStore = EditorState & EditorActions;
 

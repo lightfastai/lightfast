@@ -1,12 +1,13 @@
 import { createStore } from "zustand";
 
-import {
-  $NodeType,
+import type {
   GeometryType,
   MaterialType,
   NodeType,
   TextureType,
-  Txt2ImgType,
+  Txt2ImgType} from "@dahlia/db/tenant/schema";
+import {
+  $NodeType
 } from "@dahlia/db/tenant/schema";
 
 interface SelectionState {
@@ -16,13 +17,13 @@ interface SelectionState {
   } | null;
 }
 
-export type SelectionActions = {
+export interface SelectionActions {
   setGeometry: (geometry: GeometryType) => void;
   setMaterial: (material: MaterialType) => void;
   setTexture: (texture: TextureType) => void;
   setFlux: (flux: Txt2ImgType) => void;
   clearSelection: () => void;
-};
+}
 
 export type SelectionStore = SelectionState & SelectionActions;
 

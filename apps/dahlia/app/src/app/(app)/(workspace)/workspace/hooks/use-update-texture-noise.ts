@@ -1,16 +1,16 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
-import { NoiseTexture, Texture } from "@dahlia/db/tenant/schema";
+import type { NoiseTexture, Texture } from "@dahlia/db/tenant/schema";
 import {
   perlinNoise3DFragmentShader,
   perlinNoise3DVertexShader,
 } from "@repo/webgl/shaders/pnoise/pnoise.glsl";
 
 import { api } from "~/trpc/react";
-import { WebGLRootState } from "../components/webgl/webgl-primitives";
+import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
-import { TextureRenderNode } from "../types/render";
+import type { TextureRenderNode } from "../types/render";
 
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
@@ -38,7 +38,7 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
     return Object.entries(textureDataMap)
       .filter((entry): entry is [string, NoiseTexture] => {
         const [_, texture] = entry;
-        return texture?.type === "Noise";
+        return texture.type === "Noise";
       })
       .map(([id, texture]) => {
         const { uniforms: u } = texture;

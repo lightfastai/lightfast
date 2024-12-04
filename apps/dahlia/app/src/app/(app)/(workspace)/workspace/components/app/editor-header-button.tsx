@@ -1,6 +1,7 @@
 import React from "react";
 
-import { Button, ButtonProps } from "@repo/ui/components/ui/button";
+import type { ButtonProps } from "@repo/ui/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 
 export const EditorHeaderButton = React.forwardRef<
   HTMLButtonElement,

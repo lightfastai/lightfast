@@ -7,10 +7,10 @@ import { captureException } from "@sentry/nextjs";
 import { Button } from "@repo/ui/components/ui/button";
 import { fonts } from "@repo/ui/lib/fonts";
 
-type GlobalErrorProperties = {
+interface GlobalErrorProperties {
   readonly error: NextError & { digest?: string };
   readonly reset: () => void;
-};
+}
 
 const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
   useEffect(() => {

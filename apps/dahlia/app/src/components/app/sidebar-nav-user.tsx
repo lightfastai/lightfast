@@ -2,7 +2,7 @@
 
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
-import { RouterOutputs } from "@dahlia/trpc";
+import type { RouterOutputs } from "@dahlia/trpc";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import {
   DropdownMenu,
@@ -45,8 +45,8 @@ export function SidebarNavUser({
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user?.id}</span>
-                <span className="truncate text-xs">{user?.clerkId}</span>
+                <span className="truncate font-semibold">{user.id}</span>
+                <span className="truncate text-xs">{user.clerkId}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -67,8 +67,8 @@ export function SidebarNavUser({
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user?.id}</span>
-                  <span className="truncate text-xs">{user?.clerkId}</span>
+                  <span className="truncate font-semibold">{user.id}</span>
+                  <span className="truncate text-xs">{user.clerkId}</span>
                 </div>
               </div>
             </DropdownMenuLabel>

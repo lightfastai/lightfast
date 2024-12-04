@@ -2,7 +2,7 @@ import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
 import { $NodeType } from "@dahlia/db/tenant/schema";
-import { RouterInputs, RouterOutputs } from "@dahlia/trpc";
+import type { RouterInputs, RouterOutputs } from "@dahlia/trpc";
 import {
   Breadcrumb,
   BreadcrumbItem,
