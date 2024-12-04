@@ -95,12 +95,8 @@
           "name": "node_workspace_id_workspace_id_fk",
           "tableFrom": "node",
           "tableTo": "workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -168,12 +164,8 @@
           "name": "edge_source_node_id_fk",
           "tableFrom": "edge",
           "tableTo": "node",
-          "columnsFrom": [
-            "source"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -181,12 +173,8 @@
           "name": "edge_target_node_id_fk",
           "tableFrom": "edge",
           "tableTo": "node",
-          "columnsFrom": [
-            "target"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["target"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

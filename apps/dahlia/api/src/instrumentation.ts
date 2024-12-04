@@ -1,4 +1,5 @@
 import { captureRequestError, init } from "@sentry/nextjs";
+
 import { sentryOpts } from "@vendor/next/instrumentation";
 
 export const register = () => {
