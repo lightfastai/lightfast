@@ -3,8 +3,10 @@ import { z } from "zod";
 
 export const env = createEnv({
   extends: [],
-  server: {
+  shared: {
     NODE_ENV: z.enum(["development", "production"]).optional(),
+  },
+  server: {
     CLERK_SECRET_KEY: z.string().min(1),
     CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1),
   },
@@ -12,6 +14,7 @@ export const env = createEnv({
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: {
+    NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   },
