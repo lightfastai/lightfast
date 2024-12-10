@@ -2,13 +2,18 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
-  shared: {},
+  shared: {
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
+  },
   server: {
     LOGTAIL_SOURCE_TOKEN: z.string(),
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
   },
   client: {},
-  experimental__runtimeEnv: {},
+  experimental__runtimeEnv: {
+    NODE_ENV: process.env.NODE_ENV,
+  },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
