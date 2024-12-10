@@ -65,7 +65,6 @@ export const workspaceRouter = {
       })
       .from(Workspace)
       .orderBy(desc(Workspace.createdAt));
-    console.log(">>> tRPC Tenant", workspaces);
     return workspaces;
   }),
   updateName: protectedTenantProcedure

@@ -1,3 +1,4 @@
+import { withLogtail as withLogtailNext } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
@@ -107,3 +108,9 @@ export const withSentry = (sourceConfig) =>
  */
 export const withAnalyzer = (sourceConfig) =>
   withBundleAnalyzer()(sourceConfig);
+
+/**
+ * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}
+ * @returns {import("next").NextConfig}
+ */
+export const withLogtail = (sourceConfig) => withLogtailNext(sourceConfig);
