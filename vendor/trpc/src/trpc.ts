@@ -15,6 +15,7 @@ import type { Db } from "@vendor/db";
 import { auth } from "@vendor/clerk";
 import { createDbClient, eq, getDatabaseUri } from "@vendor/db";
 import { Database, User } from "@vendor/db/app/schema";
+import { log } from "@vendor/observability/log";
 
 /**
  * 1. CONTEXT
@@ -36,7 +37,7 @@ export const createTRPCContext = async (opts: {
   const session = await auth();
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
-  console.log(">>> tRPC Request from", source, "by", session?.user.id);
+  log.info(`>>> tRPC Request from ${source} by ${session?.user.id}`);
 
   // fetch tenant db url from db
   let tenantDb: Db | null = null;
@@ -115,7 +116,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
   const result = await next();
 
   const end = Date.now();
-  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
+  log.info(`[TRPC] ${path} took ${end - start}ms to execute`);
 
   return result;
 });
