@@ -5,7 +5,7 @@ export const env = createEnv({
   shared: {},
   server: {
     LOGTAIL_SOURCE_TOKEN: z.string(),
-    NODE_ENV: z.enum(["development", "production"]),
+    NODE_ENV: z.enum(["development", "production"]).default("development"),
   },
   client: {},
   experimental__runtimeEnv: {},
