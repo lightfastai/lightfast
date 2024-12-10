@@ -1,3 +1,1 @@
-import { SignOutButton } from "@clerk/nextjs";
-
-export { SignOutButton };
+export * from "@clerk/nextjs";
