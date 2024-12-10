@@ -1124,6 +1124,9 @@ importers:
       posthog-node:
         specifier: ^4.3.1
         version: 4.3.1
+      react:
+        specifier: ^18
+        version: 18.3.1
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
@@ -1137,9 +1140,18 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
-      concurrently:
-        specifier: ^9.1.0
-        version: 9.1.0
+      '@types/eslint':
+        specifier: ^8.56.5
+        version: 8.56.12
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.17.2
+      '@types/react':
+        specifier: catalog:react18
+        version: 18.3.12
+      '@types/react-dom':
+        specifier: catalog:react18
+        version: 18.3.1
       eslint:
         specifier: 'catalog:'
         version: 9.13.0(jiti@2.3.3)
