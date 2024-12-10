@@ -11,9 +11,9 @@ export const env = createEnv({
     CI: z.boolean().default(false),
   },
   server: {
-    SENTRY_ORG: z.string(),
-    SENTRY_PROJECT: z.string(),
-    SENTRY_AUTH_TOKEN: z.string(),
+    SENTRY_ORG: z.enum(["jps0000"]),
+    SENTRY_PROJECT: z.enum(["iv-jps0000-ai-repo-search", "dahlia-app"]),
+    SENTRY_AUTH_TOKEN: z.string().min(1).startsWith("sntrys_"),
   },
   client: {
     NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
