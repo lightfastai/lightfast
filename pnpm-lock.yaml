@@ -632,7 +632,7 @@ importers:
     dependencies:
       '@langchain/community':
         specifier: ^0.3.16
-        version: 0.3.16(@browserbasehq/sdk@2.0.0)(@browserbasehq/stagehand@1.3.0(@playwright/test@1.49.0)(deepmerge@4.3.1)(dotenv@16.4.5)(openai@4.73.1(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.2.0)(@langchain/core@0.3.19(openai@4.73.1(zod@3.23.8)))(@neondatabase/serverless@0.10.4)(axios@1.7.4)(crypto-js@4.2.0)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.73.1(zod@3.23.8))(playwright@1.49.0)(ws@8.18.0(bufferutil@4.0.8))
+        version: 0.3.16(@browserbasehq/sdk@2.0.0)(@browserbasehq/stagehand@1.3.0(@playwright/test@1.49.0)(deepmerge@4.3.1)(dotenv@16.4.5)(openai@4.73.1(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.2.0)(@langchain/core@0.3.19(openai@4.73.1(zod@3.23.8)))(@neondatabase/serverless@0.10.4)(@upstash/redis@1.34.3)(axios@1.7.4)(crypto-js@4.2.0)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.73.1(zod@3.23.8))(playwright@1.49.0)(ws@8.18.0(bufferutil@4.0.8))
       '@langchain/openai':
         specifier: ^0.3.14
         version: 0.3.14(@langchain/core@0.3.19(openai@4.73.1(zod@3.23.8)))
@@ -678,9 +678,15 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../../vendor/observability
+      '@vendor/redis':
+        specifier: workspace:*
+        version: link:../../../vendor/redis
       '@vendor/security':
         specifier: workspace:*
         version: link:../../../vendor/security
+      '@vendor/storage':
+        specifier: workspace:*
+        version: link:../../../vendor/storage
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../../vendor/trpc
@@ -1377,6 +1383,40 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
+  vendor/redis:
+    dependencies:
+      '@t3-oss/env-nextjs':
+        specifier: ^0.11.1
+        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+      '@upstash/redis':
+        specifier: ^1.34.3
+        version: 1.34.3
+      zod:
+        specifier: 'catalog:'
+        version: 3.23.8
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.17.2
+      eslint:
+        specifier: 'catalog:'
+        version: 9.13.0(jiti@2.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
+
   vendor/security:
     dependencies:
       '@arcjet/next':
@@ -1395,6 +1435,40 @@ importers:
       concurrently:
         specifier: ^9.1.0
         version: 9.1.0
+      eslint:
+        specifier: 'catalog:'
+        version: 9.13.0(jiti@2.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
+
+  vendor/storage:
+    dependencies:
+      '@t3-oss/env-nextjs':
+        specifier: ^0.11.1
+        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+      '@vercel/blob':
+        specifier: ^0.22.0
+        version: 0.22.3
+      zod:
+        specifier: 'catalog:'
+        version: 3.23.8
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.17.2
       eslint:
         specifier: 'catalog:'
         version: 9.13.0(jiti@2.3.3)
@@ -4801,6 +4875,9 @@ packages:
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
 
+  '@upstash/redis@1.34.3':
+    resolution: {integrity: sha512-VT25TyODGy/8ljl7GADnJoMmtmJ1F8d84UXfGonRRF8fWYJz7+2J6GzW+a6ETGtk4OyuRTt7FRSvFG5GvrfSdQ==}
+
   '@use-gesture/core@10.3.1':
     resolution: {integrity: sha512-WcINiDt8WjqBdUXye25anHiNxPc0VOrlT8F6LLkU6cycrOGUDyY/yyFmsg3k8i5OLvv25llc0QC45GhR/C8llw==}
 
@@ -4842,6 +4919,10 @@ packages:
         optional: true
       vue-router:
         optional: true
+
+  '@vercel/blob@0.22.3':
+    resolution: {integrity: sha512-l0t2KhbOO/I8ZNOl9zypYf1NE0837aO4/CPQNGR/RAxtj8FpdYKjhyUADUXj2gERLQmnhun+teaVs/G7vZJ/TQ==}
+    engines: {node: '>=16.14'}
 
   '@vercel/functions@1.5.0':
     resolution: {integrity: sha512-ub3ptVeOsx8UPgiTv9+rpQJqmF7VG8QIzguBZo0E0VRAyJliB8bt1ooB9Wrh3333dKzMNS8NMe3iFtf6OPUP3A==}
@@ -5184,6 +5265,9 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
+  async-retry@1.3.3:
+    resolution: {integrity: sha512-wfr/jstw9xNi/0teMHrRW7dsz3Lt5ARhYNZ2ewpadnhaIp5mbALhOAP+EAdsC7t4Z6wqsDVv9+W6gm1Dk9mEyw==}
+
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
@@ -5291,6 +5375,10 @@ packages:
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
     engines: {node: '>=10.16.0'}
+
+  bytes@3.1.2:
+    resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
+    engines: {node: '>= 0.8'}
 
   call-bind@1.0.7:
     resolution: {integrity: sha512-GHTSNSYICQ7scH7sZ+M2rFopRoLh8t2bLSW6BbgrtLsahOIB5iyAVJf9GjWK3cYTDaMj4XdBpM1cA6pIS0Kv2w==}
@@ -10517,7 +10605,7 @@ snapshots:
 
   '@kwsites/promise-deferred@1.1.1': {}
 
-  '@langchain/community@0.3.16(@browserbasehq/sdk@2.0.0)(@browserbasehq/stagehand@1.3.0(@playwright/test@1.49.0)(deepmerge@4.3.1)(dotenv@16.4.5)(openai@4.73.1(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.2.0)(@langchain/core@0.3.19(openai@4.73.1(zod@3.23.8)))(@neondatabase/serverless@0.10.4)(axios@1.7.4)(crypto-js@4.2.0)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.73.1(zod@3.23.8))(playwright@1.49.0)(ws@8.18.0(bufferutil@4.0.8))':
+  '@langchain/community@0.3.16(@browserbasehq/sdk@2.0.0)(@browserbasehq/stagehand@1.3.0(@playwright/test@1.49.0)(deepmerge@4.3.1)(dotenv@16.4.5)(openai@4.73.1(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.2.0)(@langchain/core@0.3.19(openai@4.73.1(zod@3.23.8)))(@neondatabase/serverless@0.10.4)(@upstash/redis@1.34.3)(axios@1.7.4)(crypto-js@4.2.0)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.73.1(zod@3.23.8))(playwright@1.49.0)(ws@8.18.0(bufferutil@4.0.8))':
     dependencies:
       '@browserbasehq/stagehand': 1.3.0(@playwright/test@1.49.0)(deepmerge@4.3.1)(dotenv@16.4.5)(openai@4.73.1(zod@3.23.8))(zod@3.23.8)
       '@ibm-cloud/watsonx-ai': 1.2.0
@@ -10537,6 +10625,7 @@ snapshots:
     optionalDependencies:
       '@browserbasehq/sdk': 2.0.0
       '@neondatabase/serverless': 0.10.4
+      '@upstash/redis': 1.34.3
       crypto-js: 4.2.0
       ignore: 5.3.2
       jsonwebtoken: 9.0.2
@@ -12722,6 +12811,10 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
+  '@upstash/redis@1.34.3':
+    dependencies:
+      crypto-js: 4.2.0
+
   '@use-gesture/core@10.3.1': {}
 
   '@use-gesture/react@10.3.1(react@18.3.1)':
@@ -12741,6 +12834,13 @@ snapshots:
       react: 18.3.1
       svelte: 4.2.19
       vue: 3.5.12(typescript@5.6.3)
+
+  '@vercel/blob@0.22.3':
+    dependencies:
+      async-retry: 1.3.3
+      bytes: 3.1.2
+      is-buffer: 2.0.5
+      undici: 5.28.4
 
   '@vercel/functions@1.5.0': {}
 
@@ -13154,6 +13254,10 @@ snapshots:
 
   astring@1.9.0: {}
 
+  async-retry@1.3.3:
+    dependencies:
+      retry: 0.13.1
+
   asynckit@0.4.0: {}
 
   autoevals@0.0.103:
@@ -13307,6 +13411,8 @@ snapshots:
   busboy@1.6.0:
     dependencies:
       streamsearch: 1.1.0
+
+  bytes@3.1.2: {}
 
   call-bind@1.0.7:
     dependencies:
