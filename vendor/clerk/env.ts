@@ -7,11 +7,11 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "production"]).optional(),
   },
   server: {
-    CLERK_SECRET_KEY: z.string().min(1),
-    CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1),
+    CLERK_SECRET_KEY: z.string().min(1).startsWith("sk_"),
+    CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1).startsWith("whsec_"),
   },
   client: {
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1).startsWith("pk_"),
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,

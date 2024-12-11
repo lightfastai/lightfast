@@ -8,7 +8,7 @@ export const env = createEnv({
       .default("development"),
   },
   server: {
-    LOGTAIL_SOURCE_TOKEN: z.string(),
+    LOGTAIL_SOURCE_TOKEN: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {
