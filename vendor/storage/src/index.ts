@@ -30,7 +30,9 @@ export const storage = {
   ) => {
     return put(path, content, {
       ...defaultOptions,
-      ...options,
+      addRandomSuffix:
+        options?.addRandomSuffix ?? defaultOptions.addRandomSuffix,
+      token: options?.token ?? defaultOptions.token,
     });
   },
 
@@ -39,7 +41,7 @@ export const storage = {
    */
   delete: async (url: string, options?: StorageOptions) => {
     return del(url, {
-      token: options?.token || defaultOptions.token,
+      token: options?.token ?? defaultOptions.token,
     });
   },
 
@@ -48,7 +50,7 @@ export const storage = {
    */
   list: async (options?: ListOptions) => {
     return list({
-      token: options?.token || defaultOptions.token,
+      token: options?.token ?? defaultOptions.token,
       prefix: options?.prefix,
       limit: options?.limit,
       cursor: options?.cursor,
@@ -60,7 +62,7 @@ export const storage = {
    */
   head: async (url: string, options?: StorageOptions) => {
     return head(url, {
-      token: options?.token || defaultOptions.token,
+      token: options?.token ?? defaultOptions.token,
     });
   },
 };
