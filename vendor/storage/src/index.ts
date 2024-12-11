@@ -6,11 +6,11 @@ import { TypedErrorFormatter } from "@vendor/observability/error-formatter";
 
 import { env } from "../env";
 
-export enum StorageOperationType {
+export enum StorageEvent {
   Upload = "Upload",
   Delete = "Delete",
   List = "List",
-  GetMetadata = "GetMetadata",
+  GetMeta = "GetMetadata",
 }
 
 export interface StorageOptions {
@@ -32,11 +32,11 @@ const defaultOptions = {
 };
 
 function createExecutor(
-  operation: StorageOperationType,
+  operation: StorageEvent,
   path: string,
   logger?: Logger,
 ) {
-  return new AsyncExecutor<StorageOperationType, string>(
+  return new AsyncExecutor<StorageEvent, string>(
     operation,
     path,
     logger,
@@ -55,11 +55,7 @@ export const storage = {
     content: string | Buffer | Uint8Array,
     options?: StorageOptions,
   ) => {
-    const op = createExecutor(
-      StorageOperationType.Upload,
-      path,
-      options?.logger,
-    );
+    const op = createExecutor(StorageEvent.Upload, path, options?.logger);
     return await op.execute(() =>
       put(path, content, {
         ...defaultOptions,
@@ -74,11 +70,7 @@ export const storage = {
    * Delete a file from Vercel Blob
    */
   delete: async (url: string, options?: StorageOptions) => {
-    const op = createExecutor(
-      StorageOperationType.Delete,
-      url,
-      options?.logger,
-    );
+    const op = createExecutor(StorageEvent.Delete, url, options?.logger);
     return await op.execute(() =>
       del(url, {
         token: options?.token ?? defaultOptions.token,
@@ -91,7 +83,7 @@ export const storage = {
    */
   list: async (options?: ListOptions) => {
     const op = createExecutor(
-      StorageOperationType.List,
+      StorageEvent.List,
       options?.prefix ?? "root",
       options?.logger,
     );
@@ -109,11 +101,7 @@ export const storage = {
    * Get file metadata from Vercel Blob
    */
   head: async (url: string, options?: StorageOptions) => {
-    const op = createExecutor(
-      StorageOperationType.GetMetadata,
-      url,
-      options?.logger,
-    );
+    const op = createExecutor(StorageEvent.GetMeta, url, options?.logger);
     return await op.execute(() =>
       head(url, {
         token: options?.token ?? defaultOptions.token,

@@ -2,11 +2,11 @@ import type { ErrorFormatter } from "./error-formatter";
 import type { Logger } from "./log";
 
 /**
- * A generic async executor that can handle different operation types and keys/paths.
+ * A generic async executor that can handle different event types and keys/paths.
  */
-export class AsyncExecutor<OperationType extends string, KeyType> {
+export class AsyncExecutor<EventType extends string, KeyType> {
   constructor(
-    private readonly operation: OperationType,
+    private readonly event: EventType,
     private readonly key: KeyType,
     private readonly logger?: Logger,
     private readonly errorFormatter?: ErrorFormatter,
@@ -15,8 +15,9 @@ export class AsyncExecutor<OperationType extends string, KeyType> {
   async execute<T>(fn: () => Promise<T>): Promise<T> {
     try {
       const result = await fn();
-      this.logger?.debug(`${this.operation} succeeded`, {
-        operation: this.operation,
+      this.logger?.debug(this.event, {
+        msg: this.event,
+        status: "success",
         key: this.key,
       });
       return result;
@@ -25,8 +26,9 @@ export class AsyncExecutor<OperationType extends string, KeyType> {
         ? this.errorFormatter.format(error)
         : { error };
 
-      this.logger?.error(`${this.operation} failed`, {
-        operation: this.operation,
+      this.logger?.error(this.event, {
+        msg: this.event,
+        status: "failed",
         key: this.key,
         ...formattedError,
       });
