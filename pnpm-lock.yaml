@@ -102,6 +102,9 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../../../vendor/db
+      '@vendor/inngest':
+        specifier: workspace:*
+        version: link:../../../vendor/inngest
       '@vendor/next':
         specifier: workspace:*
         version: link:../../../vendor/next
