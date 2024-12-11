@@ -14,8 +14,11 @@
     "with-env": "dotenv -e ../../../.env --"
   },
   "dependencies": {
+    "@repo/ai": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "^0.11.1",
+    "@vendor/clerk": "workspace:*",
+    "@vendor/db": "workspace:*",
     "@vercel/analytics": "^1.4.1",
     "contentlayer2": "^0.5.3",
     "geist": "^1.3.1",
