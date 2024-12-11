@@ -5,7 +5,10 @@
   "type": "module",
   "exports": {
     "./env": "./env.ts",
-    "./log": "./src/log.ts",
+    "./log": {
+      "types": "./dist/src/log.d.ts",
+      "default": "./src/log.ts"
+    },
     "./error": "./src/error.ts"
   },
   "license": "MIT",
