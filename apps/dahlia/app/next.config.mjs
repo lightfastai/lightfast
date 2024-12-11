@@ -1,5 +1,5 @@
 import { fileURLToPath } from "url";
-import { createJiti } from "jiti";
+import createJiti from "jiti";
 
 import {
   config as nextConfig,
@@ -8,7 +8,7 @@ import {
 } from "@vendor/next/index.mjs";
 
 // Import env files to validate at build time. Use jiti so we can load .ts files in here.
-await createJiti(fileURLToPath(import.meta.url)).import("./src/env");
+createJiti(fileURLToPath(import.meta.url))("./src/env");
 
 /** @type {import("next").NextConfig} */
 let config = {

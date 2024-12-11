@@ -63,7 +63,7 @@
     "autoprefixer": "^10",
     "dotenv-cli": "^7.4.2",
     "eslint": "catalog:",
-    "jiti": "^2.3.3",
+    "jiti": "^1.21.6",
     "postcss": "^8",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
