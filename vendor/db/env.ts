@@ -4,7 +4,12 @@ import { z } from "zod";
 export const env = createEnv({
   shared: {},
   server: {
-    NEON_API_KEY: z.string(),
+    DATABASE_URL: z.string().min(1).url(),
+    DATABASE_URL_UNPOOLED: z.string().min(1).url(),
+    NEON_API_KEY: z.string().min(1),
+    NEON_ORG_ID: z.string().min(1),
+    NEON_REGION_ID: z.string().min(1),
+    NEON_PG_VERSION: z.string().default("16").transform(Number),
   },
   client: {},
   experimental__runtimeEnv: {},

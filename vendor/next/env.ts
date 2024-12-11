@@ -5,13 +5,18 @@ import { z } from "zod";
 export const env = createEnv({
   extends: [vercel()],
   shared: {
-    APP_ENV: z.enum(["prod", "staging", "preview", "dev"]).default("dev"), // Custom env for the app based on our dev env
+    // A custom env for the app based on our dev env
+    APP_ENV: z.enum(["prod", "staging", "preview", "dev"]).default("dev"),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
     CI: z.boolean().default(false),
   },
   server: {
+    // Added by Vercel
+    VERCEL: z.string().optional(),
+    NEXT_RUNTIME: z.enum(["nodejs", "edge"]).optional(),
+    // Added by Sentry
     SENTRY_ORG: z.enum(["jps0000"]),
     SENTRY_PROJECT: z.enum(["iv-jps0000-ai-repo-search", "dahlia-app"]),
     SENTRY_AUTH_TOKEN: z.string().min(1).startsWith("sntrys_"),
