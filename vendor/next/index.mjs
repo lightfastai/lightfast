@@ -76,13 +76,13 @@ export const sentryConfig = {
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
 
+  // Only widen client file upload in production on Vercel
+  widenClientFileUpload: process.env.VERCEL_ENV === "production",
+
   /*
    * For all available options, see:
    * https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
    */
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
 
   // Automatically annotate React components to show their full name in breadcrumbs and session replay
   reactComponentAnnotation: {
