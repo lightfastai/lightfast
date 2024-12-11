@@ -630,6 +630,9 @@ importers:
       '@octokit/rest':
         specifier: ^20.0.2
         version: 20.1.1
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../../../packages/ai
       '@repo/lib':
         specifier: workspace:*
         version: link:../../../packages/lib
