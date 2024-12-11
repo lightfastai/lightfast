@@ -7,6 +7,12 @@ export interface StorageOptions {
   token?: string;
 }
 
+export interface ListOptions extends StorageOptions {
+  prefix?: string;
+  limit?: number;
+  cursor?: string;
+}
+
 const defaultOptions = {
   addRandomSuffix: false,
   token: env.BLOB_READ_WRITE_TOKEN,
@@ -40,9 +46,12 @@ export const storage = {
   /**
    * List files in Vercel Blob
    */
-  list: async (options?: StorageOptions) => {
+  list: async (options?: ListOptions) => {
     return list({
       token: options?.token || defaultOptions.token,
+      prefix: options?.prefix,
+      limit: options?.limit,
+      cursor: options?.cursor,
     });
   },
 
