@@ -2,7 +2,7 @@ import { BlobError, del, head, list, put } from "@vercel/blob";
 
 import type { Logger } from "@vendor/observability/log";
 import { AsyncExecutor } from "@vendor/observability/async-executor";
-import { parseError } from "@vendor/observability/error";
+import { TypedErrorFormatter } from "@vendor/observability/error-formatter";
 
 import { env } from "../env";
 
@@ -31,15 +31,19 @@ const defaultOptions = {
   access: "public" as const,
 };
 
-function storageErrorFormatter(error: unknown) {
-  if (error instanceof BlobError) {
-    return {
-      message: error.message,
-      name: error.name,
-      type: error.constructor.name,
-    };
-  }
-  return { error: parseError(error) };
+function createExecutor(
+  operation: StorageOperationType,
+  path: string,
+  logger?: Logger,
+) {
+  return new AsyncExecutor<StorageOperationType, string>(
+    operation,
+    path,
+    logger,
+    new TypedErrorFormatter(BlobError, "storage", {
+      path,
+    }),
+  );
 }
 
 export const storage = {
@@ -51,11 +55,10 @@ export const storage = {
     content: string | Buffer | Uint8Array,
     options?: StorageOptions,
   ) => {
-    const op = new AsyncExecutor<StorageOperationType, string>(
+    const op = createExecutor(
       StorageOperationType.Upload,
       path,
       options?.logger,
-      storageErrorFormatter,
     );
     return await op.execute(() =>
       put(path, content, {
@@ -71,11 +74,10 @@ export const storage = {
    * Delete a file from Vercel Blob
    */
   delete: async (url: string, options?: StorageOptions) => {
-    const op = new AsyncExecutor<StorageOperationType, string>(
+    const op = createExecutor(
       StorageOperationType.Delete,
       url,
       options?.logger,
-      storageErrorFormatter,
     );
     return await op.execute(() =>
       del(url, {
@@ -88,11 +90,10 @@ export const storage = {
    * List files in Vercel Blob
    */
   list: async (options?: ListOptions) => {
-    const op = new AsyncExecutor<StorageOperationType, string>(
+    const op = createExecutor(
       StorageOperationType.List,
       options?.prefix ?? "root",
       options?.logger,
-      storageErrorFormatter,
     );
     return await op.execute(() =>
       list({
@@ -108,11 +109,10 @@ export const storage = {
    * Get file metadata from Vercel Blob
    */
   head: async (url: string, options?: StorageOptions) => {
-    const op = new AsyncExecutor<StorageOperationType, string>(
+    const op = createExecutor(
       StorageOperationType.GetMetadata,
       url,
       options?.logger,
-      storageErrorFormatter,
     );
     return await op.execute(() =>
       head(url, {

@@ -1,5 +1,5 @@
+import type { ErrorFormatter } from "./error-formatter";
 import type { Logger } from "./log";
-import { parseError } from "./error";
 
 /**
  * A generic async executor that can handle different operation types and keys/paths.
@@ -9,14 +9,8 @@ export class AsyncExecutor<OperationType extends string, KeyType> {
     private readonly operation: OperationType,
     private readonly key: KeyType,
     private readonly logger?: Logger,
-    private readonly errorFormatter?: (
-      error: unknown,
-    ) => Record<string, unknown>,
+    private readonly errorFormatter?: ErrorFormatter,
   ) {}
-
-  private defaultErrorFormatter(error: unknown) {
-    return { error: parseError(error) };
-  }
 
   async execute<T>(fn: () => Promise<T>): Promise<T> {
     try {
@@ -28,8 +22,8 @@ export class AsyncExecutor<OperationType extends string, KeyType> {
       return result;
     } catch (error) {
       const formattedError = this.errorFormatter
-        ? this.errorFormatter(error)
-        : this.defaultErrorFormatter(error);
+        ? this.errorFormatter.format(error)
+        : { error };
 
       this.logger?.error(`${this.operation} failed`, {
         operation: this.operation,
