@@ -1,13 +1,12 @@
 {
-  "name": "@vendor/trpc",
-  "version": "0.1.0",
+  "name": "@vendor/observability",
   "private": true,
+  "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    }
+    "./env": "./env.ts",
+    "./log": "./src/log.ts",
+    "./error": "./src/error.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -18,22 +17,19 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
-  "dependencies": {
-    "@trpc/server": "catalog:",
-    "@vendor/clerk": "workspace:*",
-    "@vendor/db": "workspace:*",
-    "@vendor/observability": "workspace:*",
-    "bcrypt-ts": "^5.0.2",
-    "superjson": "2.2.1",
-    "zod": "catalog:"
-  },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "concurrently": "^9.1.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@repo/prettier-config"
+  "prettier": "@repo/prettier-config",
+  "dependencies": {
+    "@logtail/next": "^0.1.6",
+    "@sentry/nextjs": "^8.41.0",
+    "@t3-oss/env-nextjs": "^0.11.1"
+  }
 }

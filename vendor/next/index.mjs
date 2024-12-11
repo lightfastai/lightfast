@@ -1,3 +1,4 @@
+import { withLogtail as withLogtailNext } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
@@ -13,6 +14,23 @@ export const config = withVercelToolbar()({
         hostname: "fal.media",
       },
     ],
+  },
+
+  async rewrites() {
+    return [
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/ingest/:path*",
+        destination: "https://us.i.posthog.com/:path*",
+      },
+      {
+        source: "/ingest/decide",
+        destination: "https://us.i.posthog.com/decide",
+      },
+    ];
   },
 
   async headers() {
@@ -58,13 +76,13 @@ export const sentryConfig = {
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
 
+  // Only widen client file upload in production on Vercel
+  widenClientFileUpload: process.env.VERCEL_ENV === "production",
+
   /*
    * For all available options, see:
    * https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
    */
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
 
   // Automatically annotate React components to show their full name in breadcrumbs and session replay
   reactComponentAnnotation: {
@@ -107,3 +125,9 @@ export const withSentry = (sourceConfig) =>
  */
 export const withAnalyzer = (sourceConfig) =>
   withBundleAnalyzer()(sourceConfig);
+
+/**
+ * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}
+ * @returns {import("next").NextConfig}
+ */
+export const withLogtail = (sourceConfig) => withLogtailNext(sourceConfig);

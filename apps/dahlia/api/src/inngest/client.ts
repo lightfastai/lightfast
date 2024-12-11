@@ -1,9 +1,9 @@
 import { EventSchemas, Inngest } from "inngest";
 
-import { env } from "~/env";
 import type { Events } from "./types";
+import { env } from "~/env";
 
 export const inngest = new Inngest({
-  id: env.DAHLIA_INNGEST_APP_NAME,
+  id: env.INNGEST_APP_NAME,
   schemas: new EventSchemas().fromRecord<Events>(),
 });

@@ -1,14 +1,15 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-import { env as dbEnv } from "@vendor/db/env";
-
 export const env = createEnv({
-  extends: [dbEnv],
   shared: {
-    NODE_ENV: z.enum(["development", "production"]).optional(),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
   },
-  server: {},
+  server: {
+    LOGTAIL_SOURCE_TOKEN: z.string().min(1),
+  },
   client: {},
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,

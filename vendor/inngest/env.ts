@@ -3,8 +3,7 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    BRAINTRUST_API_KEY: z.string().min(1),
-    FAL_KEY: z.string().min(1),
+    INNGEST_APP_NAME: z.string().min(1).startsWith("iv-"),
   },
   client: {},
   experimental__runtimeEnv: {},

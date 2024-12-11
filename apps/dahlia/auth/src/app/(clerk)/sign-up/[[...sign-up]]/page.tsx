@@ -1,6 +1,6 @@
 "use client";
 
-import { SignUp } from "@clerk/nextjs";
+import { SignUp } from "@vendor/clerk/client";
 
 export default function Page() {
   return (

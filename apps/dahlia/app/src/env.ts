@@ -3,12 +3,12 @@ import { vercel } from "@t3-oss/env-nextjs/presets";
 import { z } from "zod";
 
 import { env as dbEnv } from "@dahlia/db/env";
-import { env as aiEnv } from "@repo/ai/env";
+import { falEnv } from "@repo/ai/fal-env";
 import { env as authEnv } from "@vendor/clerk/env";
 import { env as nextEnv } from "@vendor/next/env";
 
 export const env = createEnv({
-  extends: [authEnv, aiEnv, nextEnv, vercel(), dbEnv],
+  extends: [authEnv, falEnv, nextEnv, vercel(), dbEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

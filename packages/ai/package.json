@@ -8,7 +8,8 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./env.ts",
+    "./fal-env": "./fal-env.ts",
+    "./llm-env": "./llm-env.ts",
     "./schema": {
       "types": "./dist/src/schema/index.d.ts",
       "default": "./src/schema/index.ts"
