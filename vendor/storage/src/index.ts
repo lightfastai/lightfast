@@ -1,6 +1,7 @@
 import { BlobError, del, head, list, put } from "@vercel/blob";
 
 import type { Logger } from "@vendor/observability/log";
+import { AsyncExecutor } from "@vendor/observability/async-executor";
 import { parseError } from "@vendor/observability/error";
 
 import { env } from "../env";
@@ -30,39 +31,15 @@ const defaultOptions = {
   access: "public" as const,
 };
 
-class StorageOperation {
-  constructor(
-    private readonly operation: StorageOperationType,
-    private readonly path: string,
-    private readonly logger?: Logger,
-  ) {}
-
-  private formatError(error: unknown) {
-    if (error instanceof BlobError) {
-      return {
-        message: error.message,
-        name: error.name,
-        type: error.constructor.name,
-      };
-    }
-    return { error: parseError(error) };
+function storageErrorFormatter(error: unknown) {
+  if (error instanceof BlobError) {
+    return {
+      message: error.message,
+      name: error.name,
+      type: error.constructor.name,
+    };
   }
-
-  async execute<T>(fn: () => Promise<T>): Promise<T> {
-    try {
-      const result = await fn();
-      this.logger?.debug(`${this.operation} succeeded`, {
-        path: this.path,
-      });
-      return result;
-    } catch (error) {
-      this.logger?.error(`${this.operation} failed`, {
-        path: this.path,
-        ...this.formatError(error),
-      });
-      throw error;
-    }
-  }
+  return { error: parseError(error) };
 }
 
 export const storage = {
@@ -74,12 +51,13 @@ export const storage = {
     content: string | Buffer | Uint8Array,
     options?: StorageOptions,
   ) => {
-    const op = new StorageOperation(
+    const op = new AsyncExecutor<StorageOperationType, string>(
       StorageOperationType.Upload,
       path,
       options?.logger,
+      storageErrorFormatter,
     );
-    return op.execute(() =>
+    return await op.execute(() =>
       put(path, content, {
         ...defaultOptions,
         addRandomSuffix:
@@ -93,12 +71,13 @@ export const storage = {
    * Delete a file from Vercel Blob
    */
   delete: async (url: string, options?: StorageOptions) => {
-    const op = new StorageOperation(
+    const op = new AsyncExecutor<StorageOperationType, string>(
       StorageOperationType.Delete,
       url,
       options?.logger,
+      storageErrorFormatter,
     );
-    return op.execute(() =>
+    return await op.execute(() =>
       del(url, {
         token: options?.token ?? defaultOptions.token,
       }),
@@ -109,12 +88,13 @@ export const storage = {
    * List files in Vercel Blob
    */
   list: async (options?: ListOptions) => {
-    const op = new StorageOperation(
+    const op = new AsyncExecutor<StorageOperationType, string>(
       StorageOperationType.List,
       options?.prefix ?? "root",
       options?.logger,
+      storageErrorFormatter,
     );
-    return op.execute(() =>
+    return await op.execute(() =>
       list({
         token: options?.token ?? defaultOptions.token,
         prefix: options?.prefix,
@@ -128,12 +108,13 @@ export const storage = {
    * Get file metadata from Vercel Blob
    */
   head: async (url: string, options?: StorageOptions) => {
-    const op = new StorageOperation(
+    const op = new AsyncExecutor<StorageOperationType, string>(
       StorageOperationType.GetMetadata,
       url,
       options?.logger,
+      storageErrorFormatter,
     );
-    return op.execute(() =>
+    return await op.execute(() =>
       head(url, {
         token: options?.token ?? defaultOptions.token,
       }),

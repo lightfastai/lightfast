@@ -9,7 +9,8 @@
       "types": "./dist/src/log.d.ts",
       "default": "./src/log.ts"
     },
-    "./error": "./src/error.ts"
+    "./error": "./src/error.ts",
+    "./async-executor": "./src/async-executor.ts"
   },
   "license": "MIT",
   "scripts": {
