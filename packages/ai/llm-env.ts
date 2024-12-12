@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const llmEnv = createEnv({
   server: {
+    VOYAGE_API_KEY: z.string().min(1).startsWith("pa-"),
     OPENAI_API_KEY: z.string().min(1).startsWith("sk-proj-"),
     ANTHROPIC_API_KEY: z.string().min(1).startsWith("sk-ant-"),
     BRAINTRUST_API_KEY: z.string().min(1).startsWith("sk-"),
