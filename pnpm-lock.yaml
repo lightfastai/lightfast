@@ -630,6 +630,9 @@ importers:
 
   apps/jps0000/ai-repo-search:
     dependencies:
+      '@inngest/agent-kit':
+        specifier: ^0.0.3
+        version: 0.0.3(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.6.3)
       '@langchain/community':
         specifier: ^0.3.16
         version: 0.3.16(@aws-crypto/sha256-js@5.2.0)(@aws-sdk/client-s3@3.709.0)(@aws-sdk/credential-provider-node@3.709.0(@aws-sdk/client-sso-oidc@3.709.0(@aws-sdk/client-sts@3.709.0))(@aws-sdk/client-sts@3.709.0))(@browserbasehq/sdk@2.0.0)(@browserbasehq/stagehand@1.3.0(@playwright/test@1.49.0)(deepmerge@4.3.1)(dotenv@16.4.5)(openai@4.73.1(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.2.0)(@langchain/core@0.3.19(openai@4.73.1(zod@3.23.8)))(@neondatabase/serverless@0.10.4)(@smithy/util-utf8@2.3.0)(@upstash/redis@1.34.3)(axios@1.7.4)(crypto-js@4.2.0)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.73.1(zod@3.23.8))(playwright@1.49.0)(ws@8.18.0(bufferutil@4.0.8))
@@ -2801,6 +2804,9 @@ packages:
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [win32]
+
+  '@inngest/agent-kit@0.0.3':
+    resolution: {integrity: sha512-3QkbhLTL2bo80STn9O68J8ADgUUHCkbW56Hp9ieIoySi/wcEwNC+LZOl6UZa9vgh9sWNWh3Tavvbo7hF03b0KQ==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -8232,6 +8238,12 @@ packages:
     resolution: {integrity: sha512-2cScXtwxt5WVIi3+vdkbKoHSeRepRcibnFhdV2ojGxVvj1KU0m0EHfBCsal6XEg1vBkMgTIxnxVd+E/l/Fam3w==}
     engines: {node: '>= 14.17.0'}
 
+  openai-zod-to-json-schema@1.0.3:
+    resolution: {integrity: sha512-CFU+KtOmX1dk2nPCZcGYgbrI3YLJJgMSehx1mLbH1A2fsRmZevHzMau6vFIhtkCpHWkGQ3ossA4a0OzVHlGrkw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.23.8
+
   openai@4.47.1:
     resolution: {integrity: sha512-WWSxhC/69ZhYWxH/OBsLEirIjUcfpQ5+ihkXKp06hmeYXgBBIUCa9IptMzYx6NdkiOCsSGYCnTIsxaic3AjRCQ==}
     hasBin: true
@@ -11545,6 +11557,25 @@ snapshots:
 
   '@img/sharp-win32-x64@0.33.5':
     optional: true
+
+  '@inngest/agent-kit@0.0.3(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.6.3)':
+    dependencies:
+      inngest: 3.27.0(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.6.3)
+      openai-zod-to-json-schema: 1.0.3(zod@3.23.8)
+      zod: 3.23.8
+    transitivePeerDependencies:
+      - '@sveltejs/kit'
+      - '@vercel/node'
+      - aws-lambda
+      - encoding
+      - express
+      - fastify
+      - h3
+      - hono
+      - koa
+      - next
+      - supports-color
+      - typescript
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -16349,7 +16380,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.7.4)
+      retry-axios: 2.6.0(axios@1.7.4(debug@4.3.7))
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -17689,6 +17720,10 @@ snapshots:
 
   oo-ascii-tree@1.104.0: {}
 
+  openai-zod-to-json-schema@1.0.3(zod@3.23.8):
+    dependencies:
+      zod: 3.23.8
+
   openai@4.47.1:
     dependencies:
       '@types/node': 18.19.64
@@ -18512,7 +18547,7 @@ snapshots:
       onetime: 5.1.2
       signal-exit: 3.0.7
 
-  retry-axios@2.6.0(axios@1.7.4):
+  retry-axios@2.6.0(axios@1.7.4(debug@4.3.7)):
     dependencies:
       axios: 1.7.4(debug@4.3.7)
 
