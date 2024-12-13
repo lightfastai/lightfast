@@ -11,6 +11,7 @@ export enum StorageEvent {
   Delete = "Delete",
   List = "List",
   GetMeta = "GetMetadata",
+  Get = "Get",
 }
 
 export interface StorageOptions {
@@ -52,7 +53,7 @@ export const storage = {
    */
   upload: async (
     path: string,
-    content: string | Buffer | Uint8Array,
+    content: string | Buffer | Uint8Array | ReadableStream,
     options?: StorageOptions,
   ) => {
     const op = createExecutor(StorageEvent.Upload, path, options?.logger);
@@ -64,6 +65,15 @@ export const storage = {
         token: options?.token ?? defaultOptions.token,
       }),
     );
+  },
+
+  /**
+   * Download a file from Vercel Blob
+   */
+  get: async (url: string, options?: StorageOptions) => {
+    const finalUrl = `${env.BLOB_BASE_URI}/${url}`;
+    const op = createExecutor(StorageEvent.Get, finalUrl, options?.logger);
+    return await op.execute(() => fetch(finalUrl));
   },
 
   /**
@@ -110,8 +120,4 @@ export const storage = {
   },
 };
 
-export type {
-  PutBlobResult,
-  HeadBlobResult,
-  ListBlobResult,
-} from "@vercel/blob";
+export * from "@vercel/blob";
