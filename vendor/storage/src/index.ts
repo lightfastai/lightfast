@@ -47,7 +47,7 @@ function createExecutor(
   );
 }
 
-export const storage = {
+export const store = {
   /**
    * Upload a file to Vercel Blob
    */
