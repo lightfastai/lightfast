@@ -11,7 +11,6 @@ export const env = createEnv({
   },
   server: {
     VERCEL: z.string().optional(),
-    LOGTAIL_SOURCE_TOKEN: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {
