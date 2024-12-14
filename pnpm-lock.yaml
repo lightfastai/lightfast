@@ -639,12 +639,12 @@ importers:
       '@langchain/openai':
         specifier: ^0.3.14
         version: 0.3.14(@langchain/core@0.3.19(openai@4.73.1(zod@3.23.8)))
-      '@octokit/rest':
-        specifier: ^20.0.2
-        version: 20.1.1
       '@repo/ai':
         specifier: workspace:*
         version: link:../../../packages/ai
+      '@repo/github':
+        specifier: workspace:*
+        version: link:../../../packages/github
       '@repo/lib':
         specifier: workspace:*
         version: link:../../../packages/lib
@@ -939,6 +939,37 @@ importers:
         version: 5.6.3
 
   packages/events: {}
+
+  packages/github:
+    dependencies:
+      '@octokit/rest':
+        specifier: ^20.0.2
+        version: 20.1.1
+      '@t3-oss/env-nextjs':
+        specifier: ^0.11.1
+        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      eslint:
+        specifier: 'catalog:'
+        version: 9.13.0(jiti@2.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.6.3
 
   packages/lib:
     dependencies:
@@ -16380,7 +16411,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.7.4(debug@4.3.7))
+      retry-axios: 2.6.0(axios@1.7.4)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -18547,7 +18578,7 @@ snapshots:
       onetime: 5.1.2
       signal-exit: 3.0.7
 
-  retry-axios@2.6.0(axios@1.7.4(debug@4.3.7)):
+  retry-axios@2.6.0(axios@1.7.4):
     dependencies:
       axios: 1.7.4(debug@4.3.7)
 
