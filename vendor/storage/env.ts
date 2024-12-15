@@ -4,6 +4,7 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
+    BLOB_BASE_URI: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {},
