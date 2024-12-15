@@ -5,12 +5,12 @@ import { z } from "zod";
 export const env = createEnv({
   extends: [vercel()],
   shared: {
-    APP_ENV: z.enum(["prod", "staging", "preview", "dev"]).default("dev"),
+    LOGTAIL_SOURCE_TOKEN: z.string().min(1),
   },
   server: {},
   client: {},
   experimental__runtimeEnv: {
-    APP_ENV: process.env.APP_ENV,
+    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

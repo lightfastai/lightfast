@@ -12,7 +12,6 @@ export const env = createEnv({
   },
   server: {
     // Added by Vercel
-    VERCEL: z.string().optional(),
     NEXT_RUNTIME: z.enum(["nodejs", "edge"]).optional(),
     // Added by Sentry
     SENTRY_ORG: z.enum(["jps0000"]),
