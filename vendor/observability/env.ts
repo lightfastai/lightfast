@@ -4,14 +4,12 @@ import { z } from "zod";
 
 export const env = createEnv({
   extends: [vercel()],
-  shared: {
+  shared: {},
+  server: {
     LOGTAIL_SOURCE_TOKEN: z.string().min(1),
   },
-  server: {},
   client: {},
-  experimental__runtimeEnv: {
-    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
-  },
+  experimental__runtimeEnv: {},
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
