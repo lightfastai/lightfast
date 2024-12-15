@@ -678,9 +678,6 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../../vendor/observability
-      '@vendor/redis':
-        specifier: workspace:*
-        version: link:../../../vendor/redis
       '@vendor/security':
         specifier: workspace:*
         version: link:../../../vendor/security
