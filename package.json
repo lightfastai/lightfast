@@ -22,6 +22,7 @@
     "dev:dahlia-app": "turbo watch dev -F @dahlia/app --continue",
     "dev:jps0000-www": "turbo watch dev -F @jps0000/www --continue",
     "dev:jps0000-ai-repo-search": "turbo watch dev -F @jps0000/ai-repo-search --continue",
+    "dev:jps0000-qol": "turbo watch dev -F @jps0000/qol --continue",
     "brain": "turbo run eval",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
