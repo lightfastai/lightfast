@@ -772,6 +772,15 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../../../vendor/db
+      '@vendor/next':
+        specifier: workspace:^
+        version: link:../../../vendor/next
+      '@vendor/observability':
+        specifier: workspace:^
+        version: link:../../../vendor/observability
+      '@vendor/security':
+        specifier: workspace:^
+        version: link:../../../vendor/security
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../../vendor/trpc
