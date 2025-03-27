@@ -47,7 +47,7 @@ export const TextureNode = memo(
               <ToggleGroupItem
                 value="renderInNode"
                 variant="outline"
-                size="xs"
+                size="sm"
                 onClick={() => {
                   // machineRef.send({
                   //   type: "UPDATE_TEXTURE",

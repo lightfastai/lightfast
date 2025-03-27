@@ -91,7 +91,7 @@ export const FluxNode = memo(
           </div>
 
           <div className="flex flex-row justify-end gap-1">
-            <ToggleGroup type="single" variant="outline" size="xs">
+            <ToggleGroup type="single" variant="outline" size="sm">
               <ToggleGroupItem
                 value="generate"
                 onClick={async (e) => {
