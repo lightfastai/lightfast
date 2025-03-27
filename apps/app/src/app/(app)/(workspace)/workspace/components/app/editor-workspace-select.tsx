@@ -24,10 +24,10 @@ export const EditorWorkspaceSelect = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger>
         <Button variant="outline">Workspace</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent className="w-56">
         <EditorWorkspaceSearch value={search} onChange={setSearch} />
         <DropdownMenuSeparator className="my-0" />
         <DropdownMenuGroup>
