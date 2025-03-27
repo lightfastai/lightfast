@@ -10,7 +10,7 @@ interface SearchFormProps {
 
 export function EditorWorkspaceSearch({ value, onChange }: SearchFormProps) {
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <Label htmlFor="search" className="sr-only">
         Search
       </Label>

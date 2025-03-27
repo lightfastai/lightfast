@@ -1,13 +1,20 @@
 "use client";
 
 import type * as LabelPrimitive from "@radix-ui/react-label";
-import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
+import type {
+  ControllerProps,
+  FieldPath,
+  FieldValues,
+  UseFormProps,
+} from "react-hook-form";
+import type { ZodType, ZodTypeDef } from "zod";
 import * as React from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Slot } from "@radix-ui/react-slot";
 import {
+  useForm as __useForm,
   Controller,
   FormProvider,
-  useForm,
   useFormContext,
   useFormState,
 } from "react-hook-form";
@@ -16,6 +23,23 @@ import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 
 const Form = FormProvider;
+
+const useForm = <
+  TOut extends FieldValues,
+  TDef extends ZodTypeDef,
+  TIn extends FieldValues,
+>(
+  props: Omit<UseFormProps<TIn>, "resolver"> & {
+    schema: ZodType<TOut, TDef, TIn>;
+  },
+) => {
+  const form = __useForm<TIn, unknown, TOut>({
+    ...props,
+    resolver: zodResolver(props.schema, undefined),
+  });
+
+  return form;
+};
 
 interface FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,

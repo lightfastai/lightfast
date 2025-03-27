@@ -25,12 +25,16 @@ export const EditorWorkspaceSelect = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Button variant="outline">Workspace</Button>
+        <Button variant="outline" className="text-xs">
+          Workspace
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
-        <EditorWorkspaceSearch value={search} onChange={setSearch} />
+      <DropdownMenuContent className="w-56 p-0">
+        <DropdownMenuItem className="w-full p-0">
+          <EditorWorkspaceSearch value={search} onChange={setSearch} />
+        </DropdownMenuItem>
         <DropdownMenuSeparator className="my-0" />
-        <DropdownMenuGroup>
+        <DropdownMenuGroup asChild>
           <ScrollArea className="h-64">
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Workspaces

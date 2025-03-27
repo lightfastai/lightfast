@@ -14,11 +14,11 @@ import { useCreateWorkspace } from "../../hooks/use-create-workspace";
 export function EditorHeaderMenu() {
   const { mutateAsync } = useCreateWorkspace();
   return (
-    <div className="fixed inset-x-0 top-0 z-10 p-4">
+    <div className="fixed inset-x-0 top-0 z-[1] p-4">
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
           <Button variant="outline">
-            <Icons.logo />
+            <Icons.logo className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
