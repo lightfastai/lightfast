@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
 
+import type { NodePosition } from "../types/NodePosition";
 import { $Geometry } from "../types/Geometry";
 import { $Material } from "../types/Material";
 import { $NodeType } from "../types/Node";
@@ -24,7 +25,7 @@ export const Node = pgTable("node", (t) => ({
     .notNull()
     .references(() => Workspace.id, { onDelete: "cascade" }),
   type: t.varchar({ length: 50 }).notNull(),
-  position: t.json().notNull(),
+  position: t.json().notNull().$type<NodePosition>(),
   data: t.json().notNull(),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp(),
