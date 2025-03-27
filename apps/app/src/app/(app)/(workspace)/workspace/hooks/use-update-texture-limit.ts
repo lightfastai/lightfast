@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
-import type { LimitTexture, Texture } from "@dahlia/db/tenant/schema";
 import {
   limitFragmentShader,
   limitVertexShader,
@@ -9,6 +8,7 @@ import {
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
+import type { LimitTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
