@@ -4,13 +4,12 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useRef } from "react";
 import { useStore } from "zustand";
 
-import type {
-  TextureRenderStore} from "../stores/texture-render-store";
+import type { TextureRenderStore } from "../stores/texture-render-store";
+import type { BaseNode } from "../types/node";
 import {
   createTextureRenderStore,
-  initTextureRenderState
+  initTextureRenderState,
 } from "../stores/texture-render-store";
-import type { BaseNode } from "../types/node";
 
 export type TextureRenderStoreApi = ReturnType<typeof createTextureRenderStore>;
 
