@@ -73,7 +73,7 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
-  apps/dahlia/api:
+  apps/api:
     dependencies:
       '@dahlia/db':
         specifier: workspace:*
@@ -86,10 +86,10 @@ importers:
         version: 15.0.3(bufferutil@4.0.8)
       '@repo/lib':
         specifier: workspace:*
-        version: link:../../../packages/lib
+        version: link:../../packages/lib
       '@repo/ui':
         specifier: workspace:*
-        version: link:../../../packages/ui
+        version: link:../../packages/ui
       '@sentry/nextjs':
         specifier: ^8.45.0
         version: 8.45.0(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.56.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
@@ -98,16 +98,16 @@ importers:
         version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
       '@vendor/clerk':
         specifier: workspace:*
-        version: link:../../../vendor/clerk
+        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
-        version: link:../../../vendor/db
+        version: link:../../vendor/db
       '@vendor/inngest':
         specifier: workspace:*
-        version: link:../../../vendor/inngest
+        version: link:../../vendor/inngest
       '@vendor/next':
         specifier: workspace:*
-        version: link:../../../vendor/next
+        version: link:../../vendor/next
       inngest:
         specifier: ^3.27.0
         version: 3.27.0(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.6.3)
@@ -129,13 +129,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../internal/eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../internal/prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../internal/typescript
+        version: link:../../internal/typescript
       '@types/node':
         specifier: 'catalog:'
         version: 20.17.2
@@ -158,7 +158,7 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
-  apps/dahlia/app:
+  apps/app:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: ^0.0.53
@@ -183,16 +183,16 @@ importers:
         version: 8.17.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0)
       '@repo/ai':
         specifier: workspace:*
-        version: link:../../../packages/ai
+        version: link:../../packages/ai
       '@repo/lib':
         specifier: workspace:*
-        version: link:../../../packages/lib
+        version: link:../../packages/lib
       '@repo/ui':
         specifier: workspace:*
-        version: link:../../../packages/ui
+        version: link:../../packages/ui
       '@repo/webgl':
         specifier: workspace:*
-        version: link:../../../packages/webgl
+        version: link:../../packages/webgl
       '@sentry/nextjs':
         specifier: ^8.45.0
         version: 8.45.0(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.56.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
@@ -213,16 +213,16 @@ importers:
         version: 11.0.0-rc.599
       '@vendor/clerk':
         specifier: workspace:*
-        version: link:../../../vendor/clerk
+        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
-        version: link:../../../vendor/db
+        version: link:../../vendor/db
       '@vendor/next':
         specifier: workspace:*
-        version: link:../../../vendor/next
+        version: link:../../vendor/next
       '@vendor/trpc':
         specifier: workspace:*
-        version: link:../../../vendor/trpc
+        version: link:../../vendor/trpc
       '@xyflow/react':
         specifier: ^12.3.5
         version: 12.3.5(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -271,13 +271,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../internal/eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../internal/prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../internal/typescript
+        version: link:../../internal/typescript
       '@types/node':
         specifier: 'catalog:'
         version: 20.17.2
@@ -292,7 +292,7 @@ importers:
         version: 0.169.0
       autoprefixer:
         specifier: ^10.4.20
-        version: 10.4.20(postcss@8.4.47)
+        version: 10.4.20(postcss@8.5.3)
       dotenv-cli:
         specifier: ^7.4.2
         version: 7.4.2
@@ -304,7 +304,7 @@ importers:
         version: 1.21.6
       postcss:
         specifier: ^8
-        version: 8.4.47
+        version: 8.5.3
       tailwindcss:
         specifier: 'catalog:'
         version: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
@@ -312,26 +312,26 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
-  apps/dahlia/auth:
+  apps/auth:
     dependencies:
       '@dahlia/db':
         specifier: workspace:*
         version: link:../db
       '@repo/ui':
         specifier: workspace:*
-        version: link:../../../packages/ui
+        version: link:../../packages/ui
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
         version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
       '@vendor/clerk':
         specifier: workspace:*
-        version: link:../../../vendor/clerk
+        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
-        version: link:../../../vendor/db
+        version: link:../../vendor/db
       '@vendor/next':
         specifier: workspace:*
-        version: link:../../../vendor/next
+        version: link:../../vendor/next
       next:
         specifier: 'catalog:'
         version: 14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -344,13 +344,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../internal/eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../internal/prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../internal/typescript
+        version: link:../../internal/typescript
       '@sentry/nextjs':
         specifier: ^8.45.0
         version: 8.45.0(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.56.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
@@ -365,7 +365,7 @@ importers:
         version: 18.3.1
       autoprefixer:
         specifier: ^10.4.20
-        version: 10.4.20(postcss@8.4.47)
+        version: 10.4.20(postcss@8.5.3)
       dotenv-cli:
         specifier: ^7.4.2
         version: 7.4.2
@@ -377,7 +377,7 @@ importers:
         version: 1.21.6
       postcss:
         specifier: ^8
-        version: 8.4.47
+        version: 8.5.3
       tailwindcss:
         specifier: 'catalog:'
         version: 3.4.14(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
@@ -385,7 +385,7 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
-  apps/dahlia/db:
+  apps/db:
     dependencies:
       '@neondatabase/api-client':
         specifier: ^1.10.3
@@ -395,19 +395,19 @@ importers:
         version: 0.10.4
       '@repo/ai':
         specifier: workspace:*
-        version: link:../../../packages/ai
+        version: link:../../packages/ai
       '@repo/lib':
         specifier: workspace:*
-        version: link:../../../packages/lib
+        version: link:../../packages/lib
       '@repo/webgl':
         specifier: workspace:*
-        version: link:../../../packages/webgl
+        version: link:../../packages/webgl
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
         version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
       '@vendor/db':
         specifier: workspace:*
-        version: link:../../../vendor/db
+        version: link:../../vendor/db
       '@vercel/postgres':
         specifier: ^0.10.0
         version: 0.10.0
@@ -432,13 +432,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../internal/eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../internal/prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../internal/typescript
+        version: link:../../internal/typescript
       dotenv-cli:
         specifier: ^7.4.2
         version: 7.4.2
@@ -455,26 +455,26 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
-  apps/dahlia/trpc:
+  apps/trpc:
     dependencies:
       '@dahlia/db':
         specifier: workspace:*
         version: link:../db
       '@repo/ai':
         specifier: workspace:*
-        version: link:../../../packages/ai
+        version: link:../../packages/ai
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.0.0-rc.599
       '@vendor/clerk':
         specifier: workspace:*
-        version: link:../../../vendor/clerk
+        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
-        version: link:../../../vendor/db
+        version: link:../../vendor/db
       '@vendor/trpc':
         specifier: workspace:*
-        version: link:../../../vendor/trpc
+        version: link:../../vendor/trpc
       bcrypt-ts:
         specifier: ^5.0.2
         version: 5.0.2
@@ -487,13 +487,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../internal/eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../internal/prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../internal/typescript
+        version: link:../../internal/typescript
       eslint:
         specifier: 'catalog:'
         version: 9.13.0(jiti@2.3.3)
@@ -504,29 +504,29 @@ importers:
         specifier: 'catalog:'
         version: 5.6.3
 
-  apps/dahlia/www:
+  apps/www:
     dependencies:
       '@repo/ai':
         specifier: workspace:*
-        version: link:../../../packages/ai
+        version: link:../../packages/ai
       '@repo/ui':
         specifier: workspace:*
-        version: link:../../../packages/ui
+        version: link:../../packages/ui
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
         version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
       '@vendor/clerk':
         specifier: workspace:*
-        version: link:../../../vendor/clerk
+        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
-        version: link:../../../vendor/db
+        version: link:../../vendor/db
       '@vercel/analytics':
         specifier: ^1.4.1
         version: 1.4.1(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))
       contentlayer2:
         specifier: ^0.5.3
-        version: 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
+        version: 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
       geist:
         specifier: ^1.3.1
         version: 1.3.1(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
@@ -538,7 +538,7 @@ importers:
         version: 14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next-contentlayer2:
         specifier: ^0.5.3
-        version: 0.5.3(acorn@8.14.0)(contentlayer2@0.5.3(acorn@8.14.0)(esbuild@0.23.1))(esbuild@0.23.1)(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 0.5.3(acorn@8.14.1)(contentlayer2@0.5.3(acorn@8.14.1)(esbuild@0.23.1))(esbuild@0.23.1)(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: catalog:react18
         version: 18.3.1
@@ -566,13 +566,13 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../../internal/eslint
+        version: link:../../internal/eslint
       '@repo/prettier-config':
         specifier: workspace:*
-        version: link:../../../internal/prettier
+        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../../internal/typescript
+        version: link:../../internal/typescript
       '@shikijs/compat':
         specifier: ^1.22.2
         version: 1.22.2
@@ -587,7 +587,7 @@ importers:
         version: 18.3.1
       autoprefixer:
         specifier: ^10.4.20
-        version: 10.4.20(postcss@8.4.47)
+        version: 10.4.20(postcss@8.5.3)
       dotenv-cli:
         specifier: ^7.4.2
         version: 7.4.2
@@ -602,7 +602,7 @@ importers:
         version: 6.1.1
       postcss:
         specifier: ^8
-        version: 8.4.47
+        version: 8.5.3
       remark:
         specifier: ^15.0.1
         version: 15.0.1
@@ -4088,23 +4088,14 @@ packages:
   '@types/node-fetch@2.6.12':
     resolution: {integrity: sha512-8nneRWKCg3rMtF69nLQJnOYUcbafYeFSjqkw3jCRLsqkWFlHaoQrr5mXmofFGOx3DKn7UfmBMyov8ySvLRVldA==}
 
-  '@types/node@18.19.68':
-    resolution: {integrity: sha512-QGtpFH1vB99ZmTa63K4/FU8twThj4fuVSBkGddTp7uIL/cuoLWIUSL2RcOaigBhfR+hg5pgGkBnkoOxrTVBMKw==}
-
   '@types/node@18.19.79':
     resolution: {integrity: sha512-90K8Oayimbctc5zTPHPfZloc/lGVs7f3phUAAMcTgEPtg8kKquGZDERC8K4vkBYkQQh48msiYUslYtxTWvqcAg==}
 
   '@types/node@20.17.2':
     resolution: {integrity: sha512-OOHK4sjXqkL7yQ7VEEHcf6+0jSvKjWqwnaCtY7AKD/VLEvRHMsxxu7eI8ErnjxHS8VwmekD4PeVCpu4qZEZSxg==}
 
-  '@types/node@22.10.2':
-    resolution: {integrity: sha512-Xxr6BBRCAOQixvonOye19wnzyDiUtTeqldOOmj3CkeblonbccA12PFwlufvRdrpjXxqnmUaeiU5EOA+7s5diUQ==}
-
   '@types/node@22.13.9':
     resolution: {integrity: sha512-acBjXdRJ3A6Pb3tqnw9HZmyR3Fiol3aGxRCK1x3d+6CDAMjl7I649wpSd+yNURCjbOUGu9tqtLKnTGxmK6CyGw==}
-
-  '@types/node@22.8.2':
-    resolution: {integrity: sha512-NzaRNFV+FZkvK/KLCsNdTvID0SThyrs5SHB6tsD/lajr22FGC73N2QeDPM2wHtVde8mgcXuSsHQkH5cX1pbPLw==}
 
   '@types/offscreencanvas@2019.7.3':
     resolution: {integrity: sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A==}
@@ -4678,11 +4669,6 @@ packages:
     peerDependencies:
       zod: ^3.0.0
 
-  browserslist@4.24.2:
-    resolution: {integrity: sha512-ZIc+Q62revdMcqC6aChtW4jz3My3klmCO1fEmINZY/8J3EpBg5/A/D0AKmBveUh6pgoeycoMkVMko84tuYS+Gg==}
-    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
-    hasBin: true
-
   browserslist@4.24.4:
     resolution: {integrity: sha512-KDi1Ny1gSePi1vm0q4oxSF8b4DR44GF4BbmS2YdhPLOEqd8pDviZOGH/GsmRwoWJ2+5Lr085X7naowMwKHDG1A==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -4731,9 +4717,6 @@ packages:
     resolution: {integrity: sha512-TpCujnP0vqPppTXXJRYpvIy0xq9Tro6jQf2iYUxlDpPCNxkvE/XGaTuwIxnhINOkVP/ob2CRYXtY3iVYXeMEzA==}
     peerDependencies:
       three: '>=0.126.1'
-
-  caniuse-lite@1.0.30001673:
-    resolution: {integrity: sha512-WTrjUCSMp3LYX0nE12ECkV0a+e6LC85E0Auz75555/qr78Oc8YWhEPNfDd6SHdtlCMSzqtuXY0uyEMNRcsKpKw==}
 
   caniuse-lite@1.0.30001702:
     resolution: {integrity: sha512-LoPe/D7zioC0REI5W73PeR1e1MLCipRGq/VkovJnd6Df+QVqT+vT33OXCp8QUd7kA7RZrHWxb1B36OQKI/0gOA==}
@@ -5074,15 +5057,6 @@ packages:
       supports-color:
         optional: true
 
-  debug@4.3.7:
-    resolution: {integrity: sha512-Er2nc/H7RrMXZBFCEim6TCmMk02Z8vLC2Rbi1KEBggpo0fS6l0S1nnapwmIi3yW/+GOJap1Krg4w0Hg80oCqgQ==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
   debug@4.4.0:
     resolution: {integrity: sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==}
     engines: {node: '>=6.0'}
@@ -5302,9 +5276,6 @@ packages:
 
   electron-to-chromium@1.5.112:
     resolution: {integrity: sha512-oen93kVyqSb3l+ziUgzIOlWt/oOuy4zRmpwestMn4rhFWAoFJeFuCVte9F2fASjeZZo7l/Cif9TiyrdW4CwEMA==}
-
-  electron-to-chromium@1.5.48:
-    resolution: {integrity: sha512-FXULnNK7ACNI9MTMOVAzUGiz/YrK9Kcb0s/JT4aJgsam7Eh6XYe7Y6q95lPq+VdBe1DpT2eTnfXFtnuPGCks4w==}
 
   embla-carousel-react@8.3.1:
     resolution: {integrity: sha512-gBY0zM+2ASvKFwRpTIOn2SLifFqOKKap9R/y0iCpJWS3bc8OHVEn2gAThGYl2uq0N+hu9aBiswffL++OYZOmDQ==}
@@ -6520,9 +6491,6 @@ packages:
       '@types/three': '>=0.134.0'
       three: '>=0.134.0'
 
-  magic-string@0.30.12:
-    resolution: {integrity: sha512-Ea8I3sQMVXr8JhN4z+H/d8zwo+tYDgHE9+5G4Wnrwhs0gaK9fXTKx0Tw5Xwsd/bCPTTZNRAdpyzvoeORe9LYpw==}
-
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
 
@@ -6828,11 +6796,6 @@ packages:
   mz@2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}
 
-  nanoid@3.3.7:
-    resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
   nanoid@3.3.8:
     resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -6922,9 +6885,6 @@ packages:
   node-plop@0.26.3:
     resolution: {integrity: sha512-Cov028YhBZ5aB7MdMWJEmwyBig43aGL5WT4vdoB28Oitau1zZAcHUn8Sgfk9HM33TqhtLJ9PlM/O0Mv+QpV/4Q==}
     engines: {node: '>=8.9.4'}
-
-  node-releases@2.0.18:
-    resolution: {integrity: sha512-d9VeXT4SJ7ZeOqGX6R5EM022wpL+eWPooLI+5UpWn2jCT1aosUQEhQP214x33Wkwx3JQMvIm+tIoVOdodFS40g==}
 
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
@@ -7243,10 +7203,6 @@ packages:
 
   postcss@8.4.31:
     resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
-    engines: {node: ^10 || ^12 || >=14}
-
-  postcss@8.4.47:
-    resolution: {integrity: sha512-56rxCq7G/XfB4EkXq9Egn5GCqugWvDFjafDOThIdMBsI15iqPqR5r15TfSr1YPYeEI19YeaXMCbY6u88Y76GLQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   postcss@8.5.3:
@@ -8406,12 +8362,6 @@ packages:
   unplugin@1.0.1:
     resolution: {integrity: sha512-aqrHaVBWW1JVKBHmGo33T5TxeL0qWzfvjWokObHA9bYmN7eNDkwOxmLjhioHl9878qDFMAaT51XNroRyuz7WxA==}
 
-  update-browserslist-db@1.1.1:
-    resolution: {integrity: sha512-R8UzCaa9Az+38REPiJ1tXlImTJXlVfgHZsglwBD/k6nj76ctsH1E3q4doGrukiLQd3sGQYu56r5+lo5r94l29A==}
-    hasBin: true
-    peerDependencies:
-      browserslist: '>= 4.21.0'
-
   update-browserslist-db@1.1.3:
     resolution: {integrity: sha512-UxhIZQ+QInVdunkDAaiazvvT/+fXL5Osr0JZlJulepYu6Jd7qJtDZjlur0emRlT71EN3ScPoE7gvsuIKKNavKw==}
     hasBin: true
@@ -8765,7 +8715,7 @@ snapshots:
     dependencies:
       '@ai-sdk/provider': 0.0.26
       eventsource-parser: 1.1.2
-      nanoid: 3.3.7
+      nanoid: 3.3.8
       secure-json-parse: 2.7.0
     optionalDependencies:
       zod: 3.23.8
@@ -8841,7 +8791,7 @@ snapshots:
 
   '@ampproject/remapping@2.3.0':
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.5
+      '@jridgewell/gen-mapping': 0.3.8
       '@jridgewell/trace-mapping': 0.3.25
 
   '@asteasolutions/zod-to-openapi@6.4.0(zod@3.23.8)':
@@ -9239,7 +9189,7 @@ snapshots:
       '@babel/traverse': 7.25.9
       '@babel/types': 7.26.0
       convert-source-map: 2.0.0
-      debug: 4.3.7
+      debug: 4.4.0
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -9258,7 +9208,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.26.0
       '@babel/helper-validator-option': 7.25.9
-      browserslist: 4.24.2
+      browserslist: 4.24.4
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -9319,7 +9269,7 @@ snapshots:
       '@babel/parser': 7.26.2
       '@babel/template': 7.25.9
       '@babel/types': 7.26.0
-      debug: 4.3.7
+      debug: 4.4.0
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -9432,9 +9382,9 @@ snapshots:
     dependencies:
       csstype: 3.1.1
 
-  '@contentlayer2/cli@0.5.3(acorn@8.14.0)(esbuild@0.23.1)':
+  '@contentlayer2/cli@0.5.3(acorn@8.14.1)(esbuild@0.23.1)':
     dependencies:
-      '@contentlayer2/core': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
+      '@contentlayer2/core': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
       '@contentlayer2/utils': 0.5.3
       clipanion: 3.2.1(typanion@3.14.0)
       typanion: 3.14.0
@@ -9445,9 +9395,9 @@ snapshots:
       - markdown-wasm
       - supports-color
 
-  '@contentlayer2/client@0.5.3(acorn@8.14.0)(esbuild@0.23.1)':
+  '@contentlayer2/client@0.5.3(acorn@8.14.1)(esbuild@0.23.1)':
     dependencies:
-      '@contentlayer2/core': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
+      '@contentlayer2/core': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
     transitivePeerDependencies:
       - '@effect-ts/otel-node'
       - acorn
@@ -9455,13 +9405,13 @@ snapshots:
       - markdown-wasm
       - supports-color
 
-  '@contentlayer2/core@0.5.3(acorn@8.14.0)(esbuild@0.23.1)':
+  '@contentlayer2/core@0.5.3(acorn@8.14.1)(esbuild@0.23.1)':
     dependencies:
       '@contentlayer2/utils': 0.5.3
       camel-case: 4.1.2
       comment-json: 4.2.5
       gray-matter: 4.0.3
-      mdx-bundler: 10.0.3(acorn@8.14.0)(esbuild@0.23.1)
+      mdx-bundler: 10.0.3(acorn@8.14.1)(esbuild@0.23.1)
       rehype-stringify: 10.0.1
       remark-frontmatter: 5.0.0
       remark-parse: 11.0.0
@@ -9476,9 +9426,9 @@ snapshots:
       - acorn
       - supports-color
 
-  '@contentlayer2/source-files@0.5.3(acorn@8.14.0)(esbuild@0.23.1)':
+  '@contentlayer2/source-files@0.5.3(acorn@8.14.1)(esbuild@0.23.1)':
     dependencies:
-      '@contentlayer2/core': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
+      '@contentlayer2/core': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
       '@contentlayer2/utils': 0.5.3
       chokidar: 3.6.0
       fast-glob: 3.3.2
@@ -9496,10 +9446,10 @@ snapshots:
       - markdown-wasm
       - supports-color
 
-  '@contentlayer2/source-remote-files@0.5.3(acorn@8.14.0)(esbuild@0.23.1)':
+  '@contentlayer2/source-remote-files@0.5.3(acorn@8.14.1)(esbuild@0.23.1)':
     dependencies:
-      '@contentlayer2/core': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
-      '@contentlayer2/source-files': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
+      '@contentlayer2/core': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
+      '@contentlayer2/source-files': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
       '@contentlayer2/utils': 0.5.3
     transitivePeerDependencies:
       - '@effect-ts/otel-node'
@@ -9511,16 +9461,16 @@ snapshots:
   '@contentlayer2/utils@0.5.3':
     dependencies:
       '@effect-ts/core': 0.60.5
-      '@effect-ts/otel': 0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))
-      '@effect-ts/otel-sdk-trace-node': 0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-node@1.27.0(@opentelemetry/api@1.9.0))
+      '@effect-ts/otel': 0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))
+      '@effect-ts/otel-sdk-trace-node': 0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-node@1.27.0(@opentelemetry/api@1.9.0))
       '@js-temporal/polyfill': 0.4.4
       '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 1.27.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/core': 1.29.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/exporter-trace-otlp-grpc': 0.51.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 1.27.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 1.27.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/resources': 1.29.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base': 1.29.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-node': 1.27.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions': 1.27.0
+      '@opentelemetry/semantic-conventions': 1.28.0
       chokidar: 3.6.0
       hash-wasm: 4.11.0
       inflection: 3.0.0
@@ -9541,21 +9491,21 @@ snapshots:
     dependencies:
       '@effect-ts/system': 0.57.5
 
-  '@effect-ts/otel-sdk-trace-node@0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-node@1.27.0(@opentelemetry/api@1.9.0))':
+  '@effect-ts/otel-sdk-trace-node@0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-node@1.27.0(@opentelemetry/api@1.9.0))':
     dependencies:
       '@effect-ts/core': 0.60.5
-      '@effect-ts/otel': 0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))
+      '@effect-ts/otel': 0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))
       '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 1.27.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 1.27.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/core': 1.29.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base': 1.29.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-node': 1.27.0(@opentelemetry/api@1.9.0)
 
-  '@effect-ts/otel@0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.27.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.27.0(@opentelemetry/api@1.9.0))':
+  '@effect-ts/otel@0.15.1(@effect-ts/core@0.60.5)(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))':
     dependencies:
       '@effect-ts/core': 0.60.5
       '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 1.27.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 1.27.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/core': 1.29.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base': 1.29.0(@opentelemetry/api@1.9.0)
 
   '@effect-ts/system@0.57.5': {}
 
@@ -9572,7 +9522,7 @@ snapshots:
   '@esbuild-plugins/node-resolve@0.2.2(esbuild@0.23.1)':
     dependencies:
       '@types/resolve': 1.20.6
-      debug: 4.3.7
+      debug: 4.4.0
       esbuild: 0.23.1
       escape-string-regexp: 4.0.0
       resolve: 1.22.8
@@ -9805,7 +9755,7 @@ snapshots:
   '@eslint/config-array@0.18.0':
     dependencies:
       '@eslint/object-schema': 2.1.4
-      debug: 4.3.7
+      debug: 4.4.0
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -9815,7 +9765,7 @@ snapshots:
   '@eslint/eslintrc@3.1.0':
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.7
+      debug: 4.4.0
       espree: 10.2.0
       globals: 14.0.0
       ignore: 5.3.2
@@ -9974,27 +9924,27 @@ snapshots:
   '@js-temporal/polyfill@0.4.4':
     dependencies:
       jsbi: 4.3.0
-      tslib: 2.8.0
+      tslib: 2.8.1
 
-  '@jsonjoy.com/base64@1.1.2(tslib@2.8.0)':
+  '@jsonjoy.com/base64@1.1.2(tslib@2.8.1)':
     dependencies:
-      tslib: 2.8.0
+      tslib: 2.8.1
 
-  '@jsonjoy.com/json-pack@1.1.0(tslib@2.8.0)':
+  '@jsonjoy.com/json-pack@1.1.0(tslib@2.8.1)':
     dependencies:
-      '@jsonjoy.com/base64': 1.1.2(tslib@2.8.0)
-      '@jsonjoy.com/util': 1.5.0(tslib@2.8.0)
+      '@jsonjoy.com/base64': 1.1.2(tslib@2.8.1)
+      '@jsonjoy.com/util': 1.5.0(tslib@2.8.1)
       hyperdyperid: 1.2.0
-      thingies: 1.21.0(tslib@2.8.0)
-      tslib: 2.8.0
+      thingies: 1.21.0(tslib@2.8.1)
+      tslib: 2.8.1
 
-  '@jsonjoy.com/util@1.5.0(tslib@2.8.0)':
+  '@jsonjoy.com/util@1.5.0(tslib@2.8.1)':
     dependencies:
-      tslib: 2.8.0
+      tslib: 2.8.1
 
   '@kwsites/file-exists@1.1.1':
     dependencies:
-      debug: 4.3.7
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -10014,9 +9964,9 @@ snapshots:
       next: 14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       whatwg-fetch: 3.6.20
 
-  '@mdx-js/esbuild@3.1.0(acorn@8.14.0)(esbuild@0.23.1)':
+  '@mdx-js/esbuild@3.1.0(acorn@8.14.1)(esbuild@0.23.1)':
     dependencies:
-      '@mdx-js/mdx': 3.1.0(acorn@8.14.0)
+      '@mdx-js/mdx': 3.1.0(acorn@8.14.1)
       '@types/unist': 3.0.3
       esbuild: 0.23.1
       source-map: 0.7.4
@@ -10026,7 +9976,7 @@ snapshots:
       - acorn
       - supports-color
 
-  '@mdx-js/mdx@3.1.0(acorn@8.14.0)':
+  '@mdx-js/mdx@3.1.0(acorn@8.14.1)':
     dependencies:
       '@types/estree': 1.0.6
       '@types/estree-jsx': 1.0.5
@@ -10040,7 +9990,7 @@ snapshots:
       hast-util-to-jsx-runtime: 2.3.2
       markdown-extensions: 2.0.0
       recma-build-jsx: 1.0.0
-      recma-jsx: 1.0.0(acorn@8.14.0)
+      recma-jsx: 1.0.0(acorn@8.14.1)
       recma-stringify: 1.0.0
       rehype-recma: 1.0.0
       remark-mdx: 3.1.0
@@ -11330,7 +11280,7 @@ snapshots:
       estree-walker: 2.0.2
       fdir: 6.4.2(picomatch@4.0.2)
       is-reference: 1.2.1
-      magic-string: 0.30.12
+      magic-string: 0.30.17
       picomatch: 4.0.2
     optionalDependencies:
       rollup: 3.29.5
@@ -11883,7 +11833,7 @@ snapshots:
   '@swc/helpers@0.5.5':
     dependencies:
       '@swc/counter': 0.1.3
-      tslib: 2.8.0
+      tslib: 2.8.1
 
   '@t3-oss/env-core@0.11.1(typescript@5.6.3)(zod@3.23.8)':
     dependencies:
@@ -12038,7 +11988,7 @@ snapshots:
 
   '@types/connect@3.4.36':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
 
   '@types/d3-array@3.2.1': {}
 
@@ -12114,7 +12064,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
 
   '@types/hast@3.0.4':
     dependencies:
@@ -12145,53 +12095,40 @@ snapshots:
 
   '@types/mysql@2.15.26':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
 
   '@types/node-fetch@2.6.12':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
       form-data: 4.0.1
-
-  '@types/node@18.19.68':
-    dependencies:
-      undici-types: 5.26.5
 
   '@types/node@18.19.79':
     dependencies:
       undici-types: 5.26.5
-    optional: true
 
   '@types/node@20.17.2':
     dependencies:
       undici-types: 6.19.8
 
-  '@types/node@22.10.2':
-    dependencies:
-      undici-types: 6.20.0
-
   '@types/node@22.13.9':
     dependencies:
       undici-types: 6.20.0
-
-  '@types/node@22.8.2':
-    dependencies:
-      undici-types: 6.19.8
 
   '@types/offscreencanvas@2019.7.3': {}
 
   '@types/pg-pool@2.0.6':
     dependencies:
-      '@types/pg': 8.6.1
+      '@types/pg': 8.11.6
 
   '@types/pg@8.11.6':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
       pg-protocol: 1.7.0
       pg-types: 4.0.2
 
   '@types/pg@8.6.1':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
       pg-protocol: 1.7.0
       pg-types: 2.2.0
 
@@ -12222,7 +12159,7 @@ snapshots:
 
   '@types/tedious@4.0.14':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
 
   '@types/three@0.163.0':
     dependencies:
@@ -12243,7 +12180,7 @@ snapshots:
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
 
   '@types/tinycolor2@1.4.6': {}
 
@@ -12277,7 +12214,7 @@ snapshots:
       '@typescript-eslint/types': 8.12.1
       '@typescript-eslint/typescript-estree': 8.12.1(typescript@5.6.3)
       '@typescript-eslint/visitor-keys': 8.12.1
-      debug: 4.3.7
+      debug: 4.4.0
       eslint: 9.13.0(jiti@2.3.3)
     optionalDependencies:
       typescript: 5.6.3
@@ -12293,7 +12230,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/typescript-estree': 8.12.1(typescript@5.6.3)
       '@typescript-eslint/utils': 8.12.1(eslint@9.13.0(jiti@2.3.3))(typescript@5.6.3)
-      debug: 4.3.7
+      debug: 4.4.0
       ts-api-utils: 1.3.0(typescript@5.6.3)
     optionalDependencies:
       typescript: 5.6.3
@@ -12307,7 +12244,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 8.12.1
       '@typescript-eslint/visitor-keys': 8.12.1
-      debug: 4.3.7
+      debug: 4.4.0
       fast-glob: 3.3.2
       is-glob: 4.0.3
       minimatch: 9.0.5
@@ -12559,17 +12496,17 @@ snapshots:
     dependencies:
       event-target-shim: 5.0.1
 
-  acorn-import-attributes@1.9.5(acorn@8.14.0):
+  acorn-import-attributes@1.9.5(acorn@8.14.1):
     dependencies:
-      acorn: 8.14.0
+      acorn: 8.14.1
 
-  acorn-jsx@5.3.2(acorn@8.14.0):
+  acorn-jsx@5.3.2(acorn@8.14.1):
     dependencies:
-      acorn: 8.14.0
+      acorn: 8.14.1
 
   acorn-walk@8.3.4:
     dependencies:
-      acorn: 8.14.0
+      acorn: 8.14.1
 
   acorn@8.14.0: {}
 
@@ -12583,7 +12520,7 @@ snapshots:
 
   agent-base@7.1.1:
     dependencies:
-      debug: 4.3.7
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -12794,14 +12731,14 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  autoprefixer@10.4.20(postcss@8.4.47):
+  autoprefixer@10.4.20(postcss@8.5.3):
     dependencies:
-      browserslist: 4.24.2
-      caniuse-lite: 1.0.30001673
+      browserslist: 4.24.4
+      caniuse-lite: 1.0.30001702
       fraction.js: 4.3.7
       normalize-range: 0.1.2
       picocolors: 1.1.1
-      postcss: 8.4.47
+      postcss: 8.5.3
       postcss-value-parser: 4.2.0
 
   available-typed-arrays@1.0.7:
@@ -12893,13 +12830,6 @@ snapshots:
       - svelte
       - vue
 
-  browserslist@4.24.2:
-    dependencies:
-      caniuse-lite: 1.0.30001673
-      electron-to-chromium: 1.5.48
-      node-releases: 2.0.18
-      update-browserslist-db: 1.1.1(browserslist@4.24.2)
-
   browserslist@4.24.4:
     dependencies:
       caniuse-lite: 1.0.30001702
@@ -12947,15 +12877,13 @@ snapshots:
   camel-case@4.1.2:
     dependencies:
       pascal-case: 3.1.2
-      tslib: 2.8.0
+      tslib: 2.8.1
 
   camelcase-css@2.0.1: {}
 
   camera-controls@2.9.0(three@0.169.0):
     dependencies:
       three: 0.169.0
-
-  caniuse-lite@1.0.30001673: {}
 
   caniuse-lite@1.0.30001702: {}
 
@@ -13158,13 +13086,13 @@ snapshots:
       snake-case: 2.1.0
       upper-case: 1.1.3
 
-  contentlayer2@0.5.3(acorn@8.14.0)(esbuild@0.23.1):
+  contentlayer2@0.5.3(acorn@8.14.1)(esbuild@0.23.1):
     dependencies:
-      '@contentlayer2/cli': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
-      '@contentlayer2/client': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
-      '@contentlayer2/core': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
-      '@contentlayer2/source-files': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
-      '@contentlayer2/source-remote-files': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
+      '@contentlayer2/cli': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
+      '@contentlayer2/client': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
+      '@contentlayer2/core': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
+      '@contentlayer2/source-files': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
+      '@contentlayer2/source-remote-files': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
       '@contentlayer2/utils': 0.5.3
     transitivePeerDependencies:
       - '@effect-ts/otel-node'
@@ -13318,10 +13246,6 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
-  debug@4.3.7:
-    dependencies:
-      ms: 2.1.3
-
   debug@4.4.0:
     dependencies:
       ms: 2.1.3
@@ -13416,7 +13340,7 @@ snapshots:
   dotenv-cli@7.4.2:
     dependencies:
       cross-spawn: 7.0.3
-      dotenv: 16.4.5
+      dotenv: 16.4.7
       dotenv-expand: 10.0.0
       minimist: 1.2.8
 
@@ -13461,8 +13385,6 @@ snapshots:
   eastasianwidth@0.2.0: {}
 
   electron-to-chromium@1.5.112: {}
-
-  electron-to-chromium@1.5.48: {}
 
   embla-carousel-react@8.3.1(react@18.3.1):
     dependencies:
@@ -13607,13 +13529,13 @@ snapshots:
   esast-util-from-js@2.0.1:
     dependencies:
       '@types/estree-jsx': 1.0.5
-      acorn: 8.14.0
+      acorn: 8.14.1
       esast-util-from-estree: 2.0.0
       vfile-message: 4.0.2
 
   esbuild-register@3.6.0(esbuild@0.19.12):
     dependencies:
-      debug: 4.3.7
+      debug: 4.4.0
       esbuild: 0.19.12
     transitivePeerDependencies:
       - supports-color
@@ -13842,7 +13764,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.3
-      debug: 4.3.7
+      debug: 4.4.0
       escape-string-regexp: 4.0.0
       eslint-scope: 8.1.0
       eslint-visitor-keys: 4.1.0
@@ -13884,7 +13806,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.3
-      debug: 4.3.7
+      debug: 4.4.0
       escape-string-regexp: 4.0.0
       eslint-scope: 8.1.0
       eslint-visitor-keys: 4.1.0
@@ -13911,8 +13833,8 @@ snapshots:
 
   espree@10.2.0:
     dependencies:
-      acorn: 8.14.0
-      acorn-jsx: 5.3.2(acorn@8.14.0)
+      acorn: 8.14.1
+      acorn-jsx: 5.3.2(acorn@8.14.1)
       eslint-visitor-keys: 4.1.0
 
   esprima@4.0.1: {}
@@ -14174,7 +14096,7 @@ snapshots:
     dependencies:
       basic-ftp: 5.0.5
       data-uri-to-buffer: 6.0.2
-      debug: 4.3.7
+      debug: 4.4.0
       fs-extra: 11.2.0
     transitivePeerDependencies:
       - supports-color
@@ -14441,7 +14363,7 @@ snapshots:
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.7
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -14455,7 +14377,7 @@ snapshots:
   https-proxy-agent@7.0.5:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.7
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -14486,8 +14408,8 @@ snapshots:
 
   import-in-the-middle@1.11.3:
     dependencies:
-      acorn: 8.14.0
-      acorn-import-attributes: 1.9.5(acorn@8.14.0)
+      acorn: 8.14.1
+      acorn-import-attributes: 1.9.5(acorn@8.14.1)
       cjs-module-lexer: 1.4.1
       module-details-from-path: 1.0.3
 
@@ -14516,7 +14438,7 @@ snapshots:
       canonicalize: 1.0.8
       chalk: 4.1.2
       cross-fetch: 4.0.0
-      debug: 4.3.7
+      debug: 4.4.0
       hash.js: 1.1.7
       json-stringify-safe: 5.0.1
       ms: 2.1.3
@@ -14941,10 +14863,6 @@ snapshots:
       '@types/three': 0.169.0
       three: 0.169.0
 
-  magic-string@0.30.12:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
-
   magic-string@0.30.17:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -15151,12 +15069,12 @@ snapshots:
 
   mdn-data@2.0.30: {}
 
-  mdx-bundler@10.0.3(acorn@8.14.0)(esbuild@0.23.1):
+  mdx-bundler@10.0.3(acorn@8.14.1)(esbuild@0.23.1):
     dependencies:
       '@babel/runtime': 7.26.0
       '@esbuild-plugins/node-resolve': 0.2.2(esbuild@0.23.1)
       '@fal-works/esbuild-plugin-global-externals': 2.1.2
-      '@mdx-js/esbuild': 3.1.0(acorn@8.14.0)(esbuild@0.23.1)
+      '@mdx-js/esbuild': 3.1.0(acorn@8.14.1)(esbuild@0.23.1)
       esbuild: 0.23.1
       gray-matter: 4.0.3
       remark-frontmatter: 5.0.0
@@ -15169,10 +15087,10 @@ snapshots:
 
   memfs@4.14.0:
     dependencies:
-      '@jsonjoy.com/json-pack': 1.1.0(tslib@2.8.0)
-      '@jsonjoy.com/util': 1.5.0(tslib@2.8.0)
-      tree-dump: 1.0.2(tslib@2.8.0)
-      tslib: 2.8.0
+      '@jsonjoy.com/json-pack': 1.1.0(tslib@2.8.1)
+      '@jsonjoy.com/util': 1.5.0(tslib@2.8.1)
+      tree-dump: 1.0.2(tslib@2.8.1)
+      tslib: 2.8.1
 
   memorystream@0.3.1: {}
 
@@ -15313,8 +15231,8 @@ snapshots:
 
   micromark-extension-mdxjs@3.0.0:
     dependencies:
-      acorn: 8.14.0
-      acorn-jsx: 5.3.2(acorn@8.14.0)
+      acorn: 8.14.1
+      acorn-jsx: 5.3.2(acorn@8.14.1)
       micromark-extension-mdx-expression: 3.0.0
       micromark-extension-mdx-jsx: 3.0.1
       micromark-extension-mdx-md: 2.0.0
@@ -15440,7 +15358,7 @@ snapshots:
   micromark@4.0.0:
     dependencies:
       '@types/debug': 4.1.12
-      debug: 4.3.7
+      debug: 4.4.0
       decode-named-character-reference: 1.0.2
       devlop: 1.1.0
       micromark-core-commonmark: 2.0.1
@@ -15545,8 +15463,6 @@ snapshots:
       object-assign: 4.1.1
       thenify-all: 1.6.0
 
-  nanoid@3.3.7: {}
-
   nanoid@3.3.8: {}
 
   nanoid@5.0.8: {}
@@ -15559,11 +15475,11 @@ snapshots:
 
   netmask@2.0.2: {}
 
-  next-contentlayer2@0.5.3(acorn@8.14.0)(contentlayer2@0.5.3(acorn@8.14.0)(esbuild@0.23.1))(esbuild@0.23.1)(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next-contentlayer2@0.5.3(acorn@8.14.1)(contentlayer2@0.5.3(acorn@8.14.1)(esbuild@0.23.1))(esbuild@0.23.1)(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@contentlayer2/core': 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
+      '@contentlayer2/core': 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
       '@contentlayer2/utils': 0.5.3
-      contentlayer2: 0.5.3(acorn@8.14.0)(esbuild@0.23.1)
+      contentlayer2: 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
       next: 14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -15586,7 +15502,7 @@ snapshots:
       '@next/env': 14.2.15
       '@swc/helpers': 0.5.5
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001673
+      caniuse-lite: 1.0.30001702
       graceful-fs: 4.2.11
       postcss: 8.4.31
       react: 18.3.1
@@ -15640,8 +15556,6 @@ snapshots:
       lodash.get: 4.4.2
       mkdirp: 0.5.6
       resolve: 1.22.8
-
-  node-releases@2.0.18: {}
 
   node-releases@2.0.19: {}
 
@@ -15734,7 +15648,7 @@ snapshots:
 
   openai@4.47.1:
     dependencies:
-      '@types/node': 18.19.68
+      '@types/node': 18.19.79
       '@types/node-fetch': 2.6.12
       abort-controller: 3.0.0
       agentkeepalive: 4.5.0
@@ -15822,7 +15736,7 @@ snapshots:
     dependencies:
       '@tootallnate/quickjs-emscripten': 0.23.0
       agent-base: 7.1.1
-      debug: 4.3.7
+      debug: 4.4.0
       get-uri: 6.0.3
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.5
@@ -15963,29 +15877,29 @@ snapshots:
 
   possible-typed-array-names@1.0.0: {}
 
-  postcss-import@15.1.0(postcss@8.4.47):
+  postcss-import@15.1.0(postcss@8.5.3):
     dependencies:
-      postcss: 8.4.47
+      postcss: 8.5.3
       postcss-value-parser: 4.2.0
       read-cache: 1.0.0
       resolve: 1.22.8
 
-  postcss-js@4.0.1(postcss@8.4.47):
+  postcss-js@4.0.1(postcss@8.5.3):
     dependencies:
       camelcase-css: 2.0.1
-      postcss: 8.4.47
+      postcss: 8.5.3
 
-  postcss-load-config@4.0.2(postcss@8.4.47)(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3)):
+  postcss-load-config@4.0.2(postcss@8.5.3)(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3)):
     dependencies:
       lilconfig: 3.1.2
       yaml: 2.6.0
     optionalDependencies:
-      postcss: 8.4.47
+      postcss: 8.5.3
       ts-node: 10.9.2(@types/node@20.17.2)(typescript@5.6.3)
 
-  postcss-nested@6.2.0(postcss@8.4.47):
+  postcss-nested@6.2.0(postcss@8.5.3):
     dependencies:
-      postcss: 8.4.47
+      postcss: 8.5.3
       postcss-selector-parser: 6.1.2
 
   postcss-selector-parser@6.1.2:
@@ -15997,13 +15911,7 @@ snapshots:
 
   postcss@8.4.31:
     dependencies:
-      nanoid: 3.3.7
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
-
-  postcss@8.4.47:
-    dependencies:
-      nanoid: 3.3.7
+      nanoid: 3.3.8
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -16076,13 +15984,13 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 22.10.2
+      '@types/node': 22.13.9
       long: 5.2.3
 
   proxy-agent@6.4.0:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.7
+      debug: 4.4.0
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.5
       lru-cache: 7.18.3
@@ -16169,7 +16077,7 @@ snapshots:
     dependencies:
       react: 18.3.1
       react-style-singleton: 2.2.1(@types/react@18.3.12)(react@18.3.1)
-      tslib: 2.8.0
+      tslib: 2.8.1
     optionalDependencies:
       '@types/react': 18.3.12
 
@@ -16178,7 +16086,7 @@ snapshots:
       react: 18.3.1
       react-remove-scroll-bar: 2.3.6(@types/react@18.3.12)(react@18.3.1)
       react-style-singleton: 2.2.1(@types/react@18.3.12)(react@18.3.1)
-      tslib: 2.8.0
+      tslib: 2.8.1
       use-callback-ref: 1.3.2(@types/react@18.3.12)(react@18.3.1)
       use-sidecar: 1.1.2(@types/react@18.3.12)(react@18.3.1)
     optionalDependencies:
@@ -16213,7 +16121,7 @@ snapshots:
       get-nonce: 1.0.1
       invariant: 2.2.4
       react: 18.3.1
-      tslib: 2.8.0
+      tslib: 2.8.1
     optionalDependencies:
       '@types/react': 18.3.12
 
@@ -16277,9 +16185,9 @@ snapshots:
       estree-util-build-jsx: 3.0.1
       vfile: 6.0.3
 
-  recma-jsx@1.0.0(acorn@8.14.0):
+  recma-jsx@1.0.0(acorn@8.14.1):
     dependencies:
-      acorn-jsx: 5.3.2(acorn@8.14.0)
+      acorn-jsx: 5.3.2(acorn@8.14.1)
       estree-util-to-js: 2.0.0
       recma-parse: 1.0.0
       recma-stringify: 1.0.0
@@ -16646,7 +16554,7 @@ snapshots:
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
-      debug: 4.3.7
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -16682,7 +16590,7 @@ snapshots:
   socks-proxy-agent@8.0.4:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.7
+      debug: 4.4.0
       socks: 2.8.3
     transitivePeerDependencies:
       - supports-color
@@ -16863,7 +16771,7 @@ snapshots:
 
   sucrase@3.35.0:
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.5
+      '@jridgewell/gen-mapping': 0.3.8
       commander: 4.1.1
       glob: 10.4.5
       lines-and-columns: 1.2.4
@@ -16920,7 +16828,7 @@ snapshots:
   svix@1.42.0:
     dependencies:
       '@stablelib/base64': 1.0.1
-      '@types/node': 22.8.2
+      '@types/node': 22.13.9
       es6-promise: 4.2.8
       fast-sha256: 1.3.0
       svix-fetch: 3.0.0
@@ -16967,11 +16875,11 @@ snapshots:
       normalize-path: 3.0.0
       object-hash: 3.0.0
       picocolors: 1.1.1
-      postcss: 8.4.47
-      postcss-import: 15.1.0(postcss@8.4.47)
-      postcss-js: 4.0.1(postcss@8.4.47)
-      postcss-load-config: 4.0.2(postcss@8.4.47)(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
-      postcss-nested: 6.2.0(postcss@8.4.47)
+      postcss: 8.5.3
+      postcss-import: 15.1.0(postcss@8.5.3)
+      postcss-js: 4.0.1(postcss@8.5.3)
+      postcss-load-config: 4.0.2(postcss@8.5.3)(ts-node@10.9.2(@types/node@20.17.2)(typescript@5.6.3))
+      postcss-nested: 6.2.0(postcss@8.5.3)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.8
       sucrase: 3.35.0
@@ -17006,9 +16914,9 @@ snapshots:
     dependencies:
       any-promise: 1.3.0
 
-  thingies@1.21.0(tslib@2.8.0):
+  thingies@1.21.0(tslib@2.8.1):
     dependencies:
-      tslib: 2.8.0
+      tslib: 2.8.1
 
   three-mesh-bvh@0.7.8(three@0.169.0):
     dependencies:
@@ -17065,9 +16973,9 @@ snapshots:
 
   tr46@0.0.3: {}
 
-  tree-dump@1.0.2(tslib@2.8.0):
+  tree-dump@1.0.2(tslib@2.8.1):
     dependencies:
-      tslib: 2.8.0
+      tslib: 2.8.1
 
   tree-kill@1.2.2: {}
 
@@ -17308,16 +17216,10 @@ snapshots:
 
   unplugin@1.0.1:
     dependencies:
-      acorn: 8.14.0
+      acorn: 8.14.1
       chokidar: 3.6.0
       webpack-sources: 3.2.3
       webpack-virtual-modules: 0.5.0
-
-  update-browserslist-db@1.1.1(browserslist@4.24.2):
-    dependencies:
-      browserslist: 4.24.2
-      escalade: 3.2.0
-      picocolors: 1.1.1
 
   update-browserslist-db@1.1.3(browserslist@4.24.4):
     dependencies:
@@ -17348,7 +17250,7 @@ snapshots:
   use-callback-ref@1.3.2(@types/react@18.3.12)(react@18.3.1):
     dependencies:
       react: 18.3.1
-      tslib: 2.8.0
+      tslib: 2.8.1
     optionalDependencies:
       '@types/react': 18.3.12
 
@@ -17362,7 +17264,7 @@ snapshots:
     dependencies:
       detect-node-es: 1.1.0
       react: 18.3.1
-      tslib: 2.8.0
+      tslib: 2.8.1
     optionalDependencies:
       '@types/react': 18.3.12
 
@@ -17474,7 +17376,7 @@ snapshots:
   webpack-bundle-analyzer@4.10.1(bufferutil@4.0.8):
     dependencies:
       '@discoveryjs/json-ext': 0.5.7
-      acorn: 8.14.0
+      acorn: 8.14.1
       acorn-walk: 8.3.4
       commander: 7.2.0
       debounce: 1.2.1
