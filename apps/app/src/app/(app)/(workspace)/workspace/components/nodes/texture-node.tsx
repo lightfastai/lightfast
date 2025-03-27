@@ -1,5 +1,5 @@
+import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
-import type { NodeProps} from "@xyflow/react";
 import { Handle, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
@@ -13,10 +13,10 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import { api } from "~/trpc/react";
+import type { BaseNode } from "../../types/node";
+import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
-import type { BaseNode } from "../../types/node";
 import { GeometryMap } from "../webgl/webgl-globals";
 import { WebGLView } from "../webgl/webgl-primitives";
 

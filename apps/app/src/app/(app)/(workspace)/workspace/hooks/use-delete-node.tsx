@@ -1,6 +1,6 @@
 import { $NodeType } from "@dahlia/db/tenant/schema";
 
-import { api } from "~/trpc/react";
+import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
 export const useDeleteNode = () => {

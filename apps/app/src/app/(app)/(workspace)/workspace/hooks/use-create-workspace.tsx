@@ -2,7 +2,7 @@ import { useRouter } from "next/navigation";
 
 import { toast } from "@repo/ui/hooks/use-toast";
 
-import { api } from "~/trpc/react";
+import { api } from "~/trpc/client/react";
 
 export const useCreateWorkspace = () => {
   const router = useRouter();

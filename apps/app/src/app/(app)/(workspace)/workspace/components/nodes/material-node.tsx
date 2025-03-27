@@ -1,5 +1,5 @@
-import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
+import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
 
 import type { Material } from "@dahlia/db/tenant/schema";
@@ -12,9 +12,9 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import { api } from "~/trpc/react";
-import { DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION } from "../../stores/constants";
 import type { BaseNode } from "../../types/node";
+import { api } from "~/trpc/client/react";
+import { DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION } from "../../stores/constants";
 import { GeometryRenderer } from "../webgl/geometry-renderer";
 import { WebGLViewContext } from "../webgl/webgl-context";
 

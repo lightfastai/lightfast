@@ -1,7 +1,7 @@
 import type { RouterInputs } from "@dahlia/trpc";
 import { toast } from "@repo/ui/hooks/use-toast";
 
-import { api } from "~/trpc/react";
+import { api } from "~/trpc/client/react";
 
 export type WorkspaceUpdateName =
   RouterInputs["tenant"]["workspace"]["updateName"];

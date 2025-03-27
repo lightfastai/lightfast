@@ -7,7 +7,8 @@ import type {
   MaterialType,
   Texture,
   TextureType,
-  Txt2ImgType} from "@dahlia/db/tenant/schema";
+  Txt2ImgType,
+} from "@dahlia/db/tenant/schema";
 import {
   $GeometryType,
   $MaterialType,
@@ -16,15 +17,15 @@ import {
   createDefaultGeometry,
   createDefaultMaterial,
   createDefaultTexture,
-  createDefaultTxt2Img
+  createDefaultTxt2Img,
 } from "@dahlia/db/tenant/schema";
 import { nanoid } from "@repo/lib";
 
-import { api } from "~/trpc/react";
+import type { BaseNode } from "../types/node";
+import { api } from "~/trpc/client/react";
 import { useNodeStore } from "../providers/node-store-provider";
 import { useSelectionStore } from "../providers/selection-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
-import type { BaseNode } from "../types/node";
 
 interface UseWorkspaceAddNodeProps {
   workspaceId: string;

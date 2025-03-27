@@ -13,8 +13,6 @@ import { ZodError } from "zod";
 import type { Session } from "@vendor/clerk/types";
 import type { Db } from "@vendor/db";
 import { auth } from "@vendor/clerk";
-import { createDbClient, eq, getDatabaseUri } from "@vendor/db";
-import { Database, User } from "@vendor/db/app/schema";
 import { log } from "@vendor/observability/log";
 
 /**
@@ -39,26 +37,9 @@ export const createTRPCContext = async (opts: {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   log.info(`>>> tRPC Request from ${source} by ${session?.user.id}`);
 
-  // fetch tenant db url from db
-  let tenantDb: Db | null = null;
-  let uri: string | null = null;
-  if (session?.user.clerkId) {
-    // fetch tenant db url from db by joining User and Database tables
-    const [tenant] = await opts.db
-      .select({ dbId: Database.dbId })
-      .from(Database)
-      .innerJoin(User, eq(Database.userId, User.id))
-      .where(eq(User.clerkId, session.user.clerkId));
-    if (tenant) {
-      uri = await getDatabaseUri(tenant.dbId);
-      tenantDb = createDbClient(uri);
-    }
-  }
-
   return {
     session,
     db: opts.db,
-    tenant: tenantDb,
   };
 };
 
@@ -128,13 +109,6 @@ const protectedMiddleware = t.middleware(async ({ next, ctx }) => {
   return next({ ctx: { session: ctx.session } });
 });
 
-const tenantMiddleware = t.middleware(async ({ next, ctx }) => {
-  if (!ctx.tenant) {
-    throw new TRPCError({ code: "NOT_FOUND" });
-  }
-  return next({ ctx: { tenant: ctx.tenant } });
-});
-
 /**
  * Public (unauthed) procedure
  *
@@ -163,5 +137,4 @@ export const protectedProcedure = t.procedure
  */
 export const protectedTenantProcedure = t.procedure
   .use(timingMiddleware)
-  .use(protectedMiddleware)
-  .use(tenantMiddleware);
+  .use(protectedMiddleware);

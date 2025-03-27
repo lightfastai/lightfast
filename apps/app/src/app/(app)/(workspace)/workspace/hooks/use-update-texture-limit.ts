@@ -7,10 +7,10 @@ import {
   limitVertexShader,
 } from "@repo/webgl/shaders/limit/limit.glsl";
 
-import { api } from "~/trpc/react";
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
-import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import type { TextureRenderNode } from "../types/render";
+import { api } from "~/trpc/client/react";
+import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
 export const useUpdateTextureLimit = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);

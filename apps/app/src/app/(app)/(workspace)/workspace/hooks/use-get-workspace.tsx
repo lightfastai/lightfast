@@ -1,6 +1,6 @@
 import type { RouterOutputs } from "@dahlia/trpc";
 
-import { api } from "~/trpc/react";
+import { api } from "~/trpc/client/react";
 
 interface UseGetWorkspaceProps {
   id: RouterOutputs["tenant"]["workspace"]["get"]["id"];

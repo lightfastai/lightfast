@@ -1,5 +1,5 @@
-import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
+import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
 
 import type { Geometry } from "@dahlia/db/tenant/schema";
@@ -12,8 +12,8 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import { api } from "~/trpc/react";
 import type { BaseNode } from "../../types/node";
+import { api } from "~/trpc/client/react";
 import { GeometryRenderer } from "../webgl/geometry-renderer";
 import { WebGLViewContext } from "../webgl/webgl-context";
 

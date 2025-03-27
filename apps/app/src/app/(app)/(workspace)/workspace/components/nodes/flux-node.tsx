@@ -1,6 +1,6 @@
+import type { NodeProps } from "@xyflow/react";
 import { memo, useState } from "react";
 import Image from "next/image";
-import type { NodeProps } from "@xyflow/react";
 import { PlayIcon } from "lucide-react";
 
 import type { Txt2Img } from "@dahlia/db/tenant/schema";
@@ -13,9 +13,9 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 
-import { api } from "~/trpc/react";
-import { useInspectorStore } from "../../providers/inspector-store-provider";
 import type { BaseNode } from "../../types/node";
+import { api } from "~/trpc/client/react";
+import { useInspectorStore } from "../../providers/inspector-store-provider";
 
 const fal = createFalClient({
   proxyUrl: "/api/fal/proxy",

@@ -7,10 +7,10 @@ import {
   perlinNoise3DVertexShader,
 } from "@repo/webgl/shaders/pnoise/pnoise.glsl";
 
-import { api } from "~/trpc/react";
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
-import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import type { TextureRenderNode } from "../types/render";
+import { api } from "~/trpc/client/react";
+import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);

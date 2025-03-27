@@ -1,4 +1,4 @@
-import { api } from "~/trpc/react";
+import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 
 export const useDeleteEdge = () => {

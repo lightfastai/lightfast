@@ -10,7 +10,7 @@ import {
   SidebarRail,
 } from "@repo/ui/components/ui/sidebar";
 
-import { api } from "~/trpc/react";
+import { api } from "~/trpc/client/react";
 import { SidebarLogo } from "./sidebar-logo";
 import { SidebarNavProjects } from "./sidebar-nav-projects";
 import { SidebarNavUser } from "./sidebar-nav-user";

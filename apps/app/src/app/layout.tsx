@@ -7,7 +7,7 @@ import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 
 import { env } from "~/env";
-import { TRPCReactProvider } from "../trpc/react";
+import { TRPCReactProvider } from "../trpc/client/react";
 
 interface RootLayoutProperties {
   readonly children: React.ReactNode;

@@ -10,8 +10,7 @@
     },
     "./app/schema": "./src/app/src/schema.ts",
     "./config": "./src/config.ts",
-    "./env": "./env.ts",
-    "./tenant/client": "./src/tenant/client.ts"
+    "./env": "./env.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -22,10 +21,8 @@
     "lint": "eslint",
     "migrate:app": "pnpm with-env drizzle-kit migrate --config=./src/app/drizzle.config.ts",
     "migrate:generate:app": "pnpm with-env drizzle-kit generate --config=./src/app/drizzle.config.ts",
-    "migrate:generate:tenant": "pnpm with-env drizzle-kit generate --config=./src/tenant/drizzle.config.ts",
     "push": "pnpm with-env run-p push:*",
     "push:app": "pnpm with-env drizzle-kit push --config=./src/app/drizzle.config.ts",
-    "push:tenant": "pnpm with-env drizzle-kit push --config=./src/tenant/drizzle.config.ts",
     "studio": "pnpm with-env drizzle-kit studio",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --"

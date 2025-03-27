@@ -1,12 +1,12 @@
-import { useCallback } from "react";
 import type { Connection } from "@xyflow/react";
+import { useCallback } from "react";
 
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
 
-import { api } from "~/trpc/react";
-import { useEdgeStore } from "../providers/edge-store-provider";
 import type { BaseEdge } from "../types/node";
+import { api } from "~/trpc/client/react";
+import { useEdgeStore } from "../providers/edge-store-provider";
 import { useEdgeValidation } from "./use-validate-edge";
 
 export const useReplaceEdge = () => {

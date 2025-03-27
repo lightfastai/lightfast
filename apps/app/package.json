@@ -1,5 +1,5 @@
 {
-  "name": "@dahlia/app",
+  "name": "@react-td/app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -17,8 +17,6 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.53",
     "@ai-sdk/openai": "^0.0.70",
-    "@dahlia/db": "workspace:*",
-    "@dahlia/trpc": "workspace:*",
     "@hookform/resolvers": "^3.9.1",
     "@next/bundle-analyzer": "^15.0.3",
     "@react-three/fiber": "^8.17.10",
@@ -48,6 +46,7 @@
     "react-hook-form": "^7.53.1",
     "react-wrap-balancer": "^1.1.1",
     "superjson": "2.2.1",
+    "svix": "^1.62.0",
     "three": "^0.169.0",
     "zod": "catalog:",
     "zustand": "^5.0.1"

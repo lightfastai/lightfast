@@ -1,5 +1,5 @@
 {
-  "name": "x",
+  "name": "react-td",
   "private": true,
   "engines": {
     "node": ">=20.16.0",
@@ -17,8 +17,6 @@
     "db:migrate:generate:tenant": "turbo -F @vendor/db migrate:generate:tenant",
     "dev": "turbo run dev --parallel --filter=@dahlia/app --filter=@dahlia/api --filter=@dahlia/auth --filter=@dahlia/www",
     "dev:dahlia-www": "turbo watch dev -F @dahlia/www --continue",
-    "dev:dahlia-api": "turbo watch dev -F @dahlia/api --continue",
-    "dev:dahlia-auth": "turbo watch dev -F @dahlia/auth --continue",
     "dev:dahlia-app": "turbo watch dev -F @dahlia/app --continue",
     "brain": "turbo run eval",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",

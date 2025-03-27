@@ -4,7 +4,7 @@ import { AppSidebar } from "~/components/app/sidebar";
 import { SimpleDotFooter } from "~/components/app/simple-dot-footer";
 import { LoginButton } from "~/components/auth/login-button";
 import { siteNav } from "~/config/site";
-import { api } from "~/trpc/server";
+import { api } from "~/trpc/client/server";
 
 export default async function Layout({
   children,

@@ -1,9 +1,7 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { pgTable } from "drizzle-orm/pg-core";
 
 import { nanoid } from "@repo/lib";
-
-import { Database } from "./Database";
 
 /**
  * User table
@@ -27,11 +25,4 @@ export const User = pgTable("user", (t) => ({
     .defaultNow()
     .$onUpdateFn(() => sql`now()`),
   clerkId: t.varchar({ length: 255 }).notNull().unique(),
-}));
-
-export const UserRelations = relations(User, ({ one }) => ({
-  databases: one(Database, {
-    fields: [User.id],
-    references: [Database.userId],
-  }),
 }));
