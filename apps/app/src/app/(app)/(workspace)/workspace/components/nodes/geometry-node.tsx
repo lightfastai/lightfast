@@ -2,7 +2,6 @@ import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
 
-import type { Geometry } from "@dahlia/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
@@ -13,6 +12,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
+import type { Geometry } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { GeometryRenderer } from "../webgl/geometry-renderer";
 import { WebGLViewContext } from "../webgl/webgl-context";

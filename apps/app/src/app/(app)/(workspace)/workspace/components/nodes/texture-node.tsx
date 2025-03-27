@@ -12,6 +12,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
+import type { Texture } from "~/db/schema/types";
 import { $GeometryType } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";

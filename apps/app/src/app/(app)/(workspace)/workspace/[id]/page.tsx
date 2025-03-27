@@ -1,5 +1,4 @@
-import type { RouterInputs } from "@dahlia/trpc";
-
+import type { RouterInputs } from "~/trpc/server/index";
 import { Workspace } from "../components/workspace/workspace";
 import { WorkspaceProvider } from "../providers/workspace-provider";
 
@@ -9,7 +8,7 @@ interface WorkspacePageProps {
   };
 }
 
-export default async function WorkspacePage({ params }: WorkspacePageProps) {
+export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
   return (
     <>

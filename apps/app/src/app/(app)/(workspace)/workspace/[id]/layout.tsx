@@ -8,6 +8,7 @@ import {
   BreadcrumbSeparator,
 } from "@repo/ui/components/ui/breadcrumb";
 
+import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
 import { $NodeType } from "~/db/schema/types";
 import { api, HydrateClient } from "~/trpc/client/server";
 import { EditorCommandDialog } from "../components/app/editor-command-dialog";
