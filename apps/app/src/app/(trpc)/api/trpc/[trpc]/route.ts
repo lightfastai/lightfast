@@ -1,8 +1,10 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-import { db } from "@dahlia/db/client";
-import { appRouter, createTRPCContext } from "@dahlia/trpc";
 import { auth } from "@vendor/clerk";
+import { createTRPCContext } from "@vendor/trpc";
+
+import { db } from "~/db/client";
+import { appRouter } from "~/trpc/server/root";
 
 export const runtime = "edge";
 
