@@ -1,14 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
 import type { FieldErrors } from "react-hook-form";
+import React, { useEffect } from "react";
 
-import type {
-  UpdateNameWorkspace} from "@dahlia/db/tenant/schema";
-import {
-  UpdateNameWorkspaceSchema,
-} from "@dahlia/db/tenant/schema";
-import type { RouterOutputs } from "@dahlia/trpc";
 import {
   Form,
   FormControl,
@@ -19,15 +13,15 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/hooks/use-toast";
 
+import type { WorkspaceUpdateName } from "../../hooks/use-workspace-update-name";
+import type { UpdateNameWorkspace } from "~/db/schema/tables/Workspace";
+import type { RouterOutputs } from "~/trpc/server/index";
+import { UpdateNameWorkspaceSchema } from "~/db/schema/tables/Workspace";
 import { useGetWorkspace } from "../../hooks/use-get-workspace";
-import type {
-  WorkspaceUpdateName} from "../../hooks/use-workspace-update-name";
-import {
-  useWorkspaceUpdateName
-} from "../../hooks/use-workspace-update-name";
+import { useWorkspaceUpdateName } from "../../hooks/use-workspace-update-name";
 
 interface EditorWorkspaceNameInputProps {
-  initialWorkspace: RouterOutputs["workspace"]["get"];
+  initialWorkspace: RouterOutputs["tenant"]["workspace"]["get"];
 }
 
 export const EditorWorkspaceNameInput = ({

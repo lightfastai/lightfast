@@ -5,10 +5,9 @@ import type {
   MaterialType,
   NodeType,
   TextureType,
-  Txt2ImgType} from "@dahlia/db/tenant/schema";
-import {
-  $NodeType
-} from "@dahlia/db/tenant/schema";
+  Txt2ImgType,
+} from "~/db/schema/types";
+import { $NodeType } from "~/db/schema/types";
 
 interface SelectionState {
   selection: {

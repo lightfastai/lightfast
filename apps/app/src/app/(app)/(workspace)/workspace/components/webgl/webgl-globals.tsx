@@ -7,8 +7,7 @@ import {
   Vector3,
 } from "three";
 
-import { $GeometryType } from "@dahlia/db/tenant/schema";
-
+import { $GeometryType } from "~/db/schema/types";
 import {
   CENTER_OF_WORLD,
   WORLD_CAMERA_POSITION_CLOSE,

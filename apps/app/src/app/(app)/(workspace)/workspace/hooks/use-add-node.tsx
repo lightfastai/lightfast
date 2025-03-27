@@ -1,5 +1,8 @@
 import { useReactFlow } from "@xyflow/react";
 
+import { nanoid } from "@repo/lib";
+
+import type { BaseNode } from "../types/node";
 import type {
   Geometry,
   GeometryType,
@@ -8,7 +11,7 @@ import type {
   Texture,
   TextureType,
   Txt2ImgType,
-} from "@dahlia/db/tenant/schema";
+} from "~/db/schema/types";
 import {
   $GeometryType,
   $MaterialType,
@@ -18,10 +21,7 @@ import {
   createDefaultMaterial,
   createDefaultTexture,
   createDefaultTxt2Img,
-} from "@dahlia/db/tenant/schema";
-import { nanoid } from "@repo/lib";
-
-import type { BaseNode } from "../types/node";
+} from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useNodeStore } from "../providers/node-store-provider";
 import { useSelectionStore } from "../providers/selection-store-provider";

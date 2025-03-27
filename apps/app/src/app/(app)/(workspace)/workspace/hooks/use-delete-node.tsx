@@ -1,5 +1,4 @@
-import { $NodeType } from "@dahlia/db/tenant/schema";
-
+import { $NodeType } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 

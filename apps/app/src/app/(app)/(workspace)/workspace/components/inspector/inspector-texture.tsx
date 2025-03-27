@@ -4,12 +4,12 @@ import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import type { Texture, TextureUniforms } from "@dahlia/db/tenant/schema";
 import type { Value } from "@repo/webgl";
-import { $TextureUniforms } from "@dahlia/db/tenant/schema";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 
+import type { Texture, TextureUniforms } from "~/db/schema/types";
+import { $TextureUniforms } from "~/db/schema/types";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";

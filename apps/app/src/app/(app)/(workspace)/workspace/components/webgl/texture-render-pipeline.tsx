@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
 import type * as THREE from "three";
+import { useEffect, useMemo, useRef } from "react";
 
-import { $GeometryType } from "@dahlia/db/tenant/schema";
-
+import { $GeometryType } from "~/db/schema/types";
 import { useRenderTargetPipeline } from "../../hooks/use-texture-render-pipeline";
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
 import { useUpdateTextureNoise } from "../../hooks/use-update-texture-noise";

@@ -1,8 +1,6 @@
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
-import type { RouterInputs, RouterOutputs } from "@dahlia/trpc";
-import { $NodeType } from "@dahlia/db/tenant/schema";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,6 +8,7 @@ import {
   BreadcrumbSeparator,
 } from "@repo/ui/components/ui/breadcrumb";
 
+import { $NodeType } from "~/db/schema/types";
 import { api, HydrateClient } from "~/trpc/client/server";
 import { EditorCommandDialog } from "../components/app/editor-command-dialog";
 import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";

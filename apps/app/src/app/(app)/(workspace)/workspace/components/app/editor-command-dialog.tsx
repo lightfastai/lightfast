@@ -3,17 +3,6 @@
 import { useEffect } from "react";
 import { Circle, Square, Triangle } from "lucide-react";
 
-import type {
-  GeometryType,
-  MaterialType,
-  TextureType,
-  Txt2ImgType} from "@dahlia/db/tenant/schema";
-import {
-  $GeometryType,
-  $MaterialType,
-  $TextureTypes,
-  $Txt2ImgType
-} from "@dahlia/db/tenant/schema";
 import {
   Command,
   CommandDialog,
@@ -25,6 +14,18 @@ import {
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
 
+import type {
+  GeometryType,
+  MaterialType,
+  TextureType,
+  Txt2ImgType,
+} from "~/db/schema/types";
+import {
+  $GeometryType,
+  $MaterialType,
+  $TextureTypes,
+  $Txt2ImgType,
+} from "~/db/schema/types";
 import { useEditorStore } from "../../providers/editor-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 

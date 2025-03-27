@@ -1,6 +1,8 @@
 import "@repo/ui/globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
@@ -19,7 +21,14 @@ export default function RootLayout({ children }: RootLayoutProperties) {
       <html lang="en" suppressHydrationWarning>
         <head />
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <body className={cn("dark min-h-screen bg-background", fonts)}>
+        <body
+          className={cn(
+            "dark min-h-screen bg-background font-sans antialiased",
+            GeistSans.variable,
+            GeistMono.variable,
+            fonts,
+          )}
+        >
           <TRPCReactProvider>{children}</TRPCReactProvider>
           <Toaster />
         </body>

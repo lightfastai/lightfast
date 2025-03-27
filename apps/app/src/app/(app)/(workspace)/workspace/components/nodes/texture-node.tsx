@@ -3,8 +3,6 @@ import { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
-import type { Texture } from "@dahlia/db/tenant/schema";
-import { $GeometryType } from "@dahlia/db/tenant/schema";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -14,6 +12,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
+import { $GeometryType } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
