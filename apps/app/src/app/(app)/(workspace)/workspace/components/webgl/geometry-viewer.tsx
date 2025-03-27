@@ -5,8 +5,8 @@ import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
 
 import type { Vec3 } from "@repo/webgl";
-import type { Geometry } from "@dahlia/db/tenant/schema";
 
+import type { Geometry } from "~/db/schema/types";
 import { GeometryRenderer } from "./geometry-renderer";
 import { OrbitControls, PerspectiveCamera } from "./webgl-primitives";
 

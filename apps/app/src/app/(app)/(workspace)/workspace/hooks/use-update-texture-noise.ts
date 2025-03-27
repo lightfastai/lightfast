@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
-import {
-  perlinNoise3DFragmentShader,
-  perlinNoise3DVertexShader,
-} from "@repo/webgl/shaders/pnoise/pnoise.glsl";
+import { baseVertexShader } from "@repo/webgl/shaders/base-vert-shader";
+import { perlinNoise3DFragmentShader } from "@repo/webgl/shaders/pnoise";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
@@ -63,7 +61,7 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
         };
 
         const shader = new THREE.ShaderMaterial({
-          vertexShader: perlinNoise3DVertexShader,
+          vertexShader: baseVertexShader,
           fragmentShader: perlinNoise3DFragmentShader,
           uniforms: { ...uniforms },
         });

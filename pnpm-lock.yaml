@@ -825,9 +825,6 @@ importers:
       react:
         specifier: ^18
         version: 18.3.1
-      webpack-glsl-loader:
-        specifier: ^1.0.1
-        version: 1.0.1
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -5742,9 +5739,6 @@ packages:
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
-  fs@0.0.2:
-    resolution: {integrity: sha512-YAiVokMCrSIFZiroB1oz51hPiPRVcUtSa4x2U5RYXyhS9VAPdiFigKbPTnOSq7XY8wd3FIVPYmXpo5lMzFmxgg==}
-
   fsevents@2.3.2:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -7034,9 +7028,6 @@ packages:
   path-type@4.0.0:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
-
-  path@0.11.14:
-    resolution: {integrity: sha512-CzEXTDgcEfa0yqMe+DJCSbEB5YCv4JZoic5xulBNFF2ifIMjNrTWbNSPNhgKfSo0MjneGIx9RLy4pCFuZPaMSQ==}
 
   periscopic@3.1.0:
     resolution: {integrity: sha512-vKiQ8RRtkl9P+r/+oefh25C3fhybptkHKCZSPlcXiJux2tJF55GnEj3BVn4A5gKfq9NWWXXrxkHBwVPUfH0opw==}
@@ -8467,9 +8458,6 @@ packages:
     resolution: {integrity: sha512-s3P7pgexgT/HTUSYgxJyn28A+99mmLq4HsJepMPzu0R8ImJc52QNqaFYW1Z2z2uIb1/J3eYgaAWVpaC+v/1aAQ==}
     engines: {node: '>= 10.13.0'}
     hasBin: true
-
-  webpack-glsl-loader@1.0.1:
-    resolution: {integrity: sha512-bFtjj+sOGECMKQ+o8V4Y0TdrIxiua6ykVAncj5ccws8ezZBhhz+9wdrQqSgawm2IS3SPjoVaF7yxSAS8naNirg==}
 
   webpack-sources@3.2.3:
     resolution: {integrity: sha512-/DyMEOrDgLKKIG0fmvtz+4dUX/3Ghozwgm6iPp8KRhvn+eQf9+Q7GWxVNMk3+uCPWfdXYC4ExGBckIXdFEfH1w==}
@@ -14321,8 +14309,6 @@ snapshots:
 
   fs.realpath@1.0.0: {}
 
-  fs@0.0.2: {}
-
   fsevents@2.3.2:
     optional: true
 
@@ -16017,8 +16003,6 @@ snapshots:
 
   path-type@4.0.0: {}
 
-  path@0.11.14: {}
-
   periscopic@3.1.0:
     dependencies:
       '@types/estree': 1.0.7
@@ -17602,11 +17586,6 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-
-  webpack-glsl-loader@1.0.1:
-    dependencies:
-      fs: 0.0.2
-      path: 0.11.14
 
   webpack-sources@3.2.3: {}
 

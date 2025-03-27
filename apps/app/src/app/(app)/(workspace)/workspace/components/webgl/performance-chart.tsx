@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { usePerf } from "r3f-perf";
 
-import type { DataPoint} from "@repo/ui/components/info-chart";
+import type { DataPoint } from "@repo/ui/components/info-chart";
 import { InfoChart } from "@repo/ui/components/info-chart";
 
 interface PerfDataPoint extends DataPoint {

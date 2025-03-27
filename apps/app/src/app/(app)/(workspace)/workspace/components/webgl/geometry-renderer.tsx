@@ -5,8 +5,7 @@ import { memo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
-import type { Geometry } from "@dahlia/db/tenant/schema";
-
+import type { Geometry } from "~/db/schema/types";
 import { GeometryMap } from "./webgl-globals";
 
 export const GeometryRenderer = memo(({ geometry }: { geometry: Geometry }) => {

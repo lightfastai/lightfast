@@ -12,17 +12,13 @@
       "types": "./dist/shaders/pnoise/pnoise.d.ts",
       "default": "./src/shaders/pnoise/pnoise.ts"
     },
-    "./shaders/pnoise/pnoise.glsl": {
-      "types": "./dist/shaders/pnoise/pnoise.glsl.d.ts",
-      "default": "./src/shaders/pnoise/pnoise.glsl.ts"
-    },
     "./shaders/limit": {
       "types": "./dist/shaders/limit/limit.d.ts",
       "default": "./src/shaders/limit/limit.ts"
     },
-    "./shaders/limit/limit.glsl": {
-      "types": "./dist/shaders/limit/limit.glsl.d.ts",
-      "default": "./src/shaders/limit/limit.glsl.ts"
+    "./shaders/base-vert-shader": {
+      "types": "./dist/shaders/base-vert-shader.d.ts",
+      "default": "./src/shaders/base-vert-shader.ts"
     },
     "./schema/vec3": {
       "types": "./dist/schema/vec3.d.ts",

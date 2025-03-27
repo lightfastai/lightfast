@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 
-import {
-  limitFragmentShader,
-  limitVertexShader,
-} from "@repo/webgl/shaders/limit/limit.glsl";
+import { baseVertexShader } from "@repo/webgl/shaders/base-vert-shader";
+import { limitFragmentShader } from "@repo/webgl/shaders/limit";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
@@ -49,7 +47,7 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
         };
 
         const shader = new THREE.ShaderMaterial({
-          vertexShader: limitVertexShader,
+          vertexShader: baseVertexShader,
           fragmentShader: limitFragmentShader,
           uniforms: { ...uniforms },
         });
