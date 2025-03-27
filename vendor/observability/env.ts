@@ -6,7 +6,7 @@ export const env = createEnv({
   extends: [vercel()],
   shared: {},
   server: {
-    LOGTAIL_SOURCE_TOKEN: z.string().min(1),
+    LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
   },
   client: {},
   experimental__runtimeEnv: {},

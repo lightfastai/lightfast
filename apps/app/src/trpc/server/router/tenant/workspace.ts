@@ -5,7 +5,8 @@ import { z } from "zod";
 import { desc, eq, sql } from "@vendor/db";
 import { protectedProcedure } from "@vendor/trpc";
 
-import { UpdateNameWorkspaceSchema, Workspace } from "~/db/schema";
+import { Workspace } from "~/db/schema";
+import { UpdateNameWorkspaceSchema } from "~/db/schema/tables/Workspace";
 
 export const workspaceRouter = {
   create: protectedProcedure.mutation(async ({ ctx }) => {

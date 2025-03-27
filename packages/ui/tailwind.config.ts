@@ -5,7 +5,7 @@ import { noScrollbar } from "./src/plugins/no-scrollbar";
 
 const config = {
   darkMode: ["class"],
-  content: ["./src/**/*.{ts,tsx}", "../../../packages/ui/src/**/*.{ts,tsx}"],
+  content: ["./src/**/*.{ts,tsx}", "../../packages/ui/src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {

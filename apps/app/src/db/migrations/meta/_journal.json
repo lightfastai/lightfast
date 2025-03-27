@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1732844898369,
-      "tag": "0000_narrow_aqueduct",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1732844912212,
-      "tag": "0001_right_king_bedlam",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1732951231489,
-      "tag": "0002_faithful_lily_hollister",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1732952025981,
-      "tag": "0003_daily_puff_adder",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1732964470847,
-      "tag": "0004_gigantic_umar",
+      "when": 1743067509321,
+      "tag": "0000_narrow_zarek",
       "breakpoints": true
     }
   ]

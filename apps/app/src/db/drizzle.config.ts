@@ -5,6 +5,6 @@ import { env } from "~/env";
 export default createDrizzleConfig({
   uri: env.DATABASE_URL_UNPOOLED,
   isPoolingUrl: false,
-  schema: "src/app/schema.ts",
-  out: "src/app/migrations",
+  schema: "src/db/schema.ts",
+  out: "src/db/migrations",
 });
