@@ -1,11 +1,7 @@
 import { fileURLToPath } from "url";
 import createJiti from "jiti";
 
-import {
-  config as nextConfig,
-  withAnalyzer,
-  withSentry,
-} from "@vendor/next/index.mjs";
+import { config as nextConfig, withAnalyzer } from "@vendor/next/index.mjs";
 
 // Import env files to validate at build time. Use jiti so we can load .ts files in here.
 createJiti(fileURLToPath(import.meta.url))("./src/env");
@@ -34,9 +30,9 @@ let config = {
   ...nextConfig,
 };
 
-if (process.env.VERCEL) {
-  config = withSentry(config);
-}
+// if (process.env.VERCEL) {
+//   config = withSentry(config);
+// }
 
 if (process.env.ANALYZE === "true") {
   config = withAnalyzer(config);

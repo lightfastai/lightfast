@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { SentryIdentifier } from "~/hooks/use-sentry-identifier";
 import { api } from "~/trpc/client/server";
 import { EditorHeaderMenu } from "./components/app/editor-header-file";
 
@@ -18,7 +17,6 @@ export default async function WorkspaceLayout({
   return (
     <>
       <EditorHeaderMenu />
-      <SentryIdentifier userId={session.user.id} />
       {children}
     </>
   );

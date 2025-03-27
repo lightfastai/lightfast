@@ -1,6 +1,12 @@
-import { clerkMiddleware } from "@vendor/clerk/server";
+import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
 
-export default clerkMiddleware();
+const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-out(.*)"]);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
+});
 
 export const config = {
   matcher: [
