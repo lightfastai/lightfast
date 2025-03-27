@@ -1,12 +1,10 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { vercel } from "@t3-oss/env-nextjs/presets";
 import { z } from "zod";
 
 export const env = createEnv({
-  extends: [vercel()],
-  shared: {},
   server: {
-    LOGTAIL_SOURCE_TOKEN: z.string().min(1),
+    BLOB_READ_WRITE_TOKEN: z.string().min(1),
+    BLOB_BASE_URI: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {},

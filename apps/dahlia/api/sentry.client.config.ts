@@ -7,7 +7,8 @@ import * as Sentry from "@sentry/nextjs";
 import { env } from "~/env";
 
 Sentry.init({
-  environment: env.APP_ENV === "prod" ? "production" : "development",
+  environment:
+    env.NEXT_PUBLIC_APP_ENV === "prod" ? "production" : "development",
 
   dsn: env.NEXT_PUBLIC_SENTRY_DSN,
 

@@ -55,10 +55,24 @@ export const config = withVercelToolbar()({
 
     config.ignoreWarnings = [{ module: /@opentelemetry\/instrumentation/ }];
 
+    // Add support for GLSL shaders @note used by dahlia. requires rework...
     config.module.rules.push({
       test: /\.(vert|frag)$/,
       use: "webpack-glsl-loader",
     });
+
+    // Add fallbacks for node modules. @note this is required for tree-sitter. requires rework...
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+    };
+
+    // Add WASM support. @note this is required for tree-sitter. requires rework...
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+    };
 
     return config;
   },

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/ai",
+  "name": "@vendor/storage",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,37 +8,28 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./fal-env": "./fal-env.ts",
-    "./llm-env": "./llm-env.ts",
-    "./schema": {
-      "types": "./dist/src/schema/index.d.ts",
-      "default": "./src/schema/index.ts"
-    },
-    "./fal": "./src/fal/client.ts",
-    "./fal/server": "./src/fal/nextjs-server-proxy.ts"
+    "./env": "./env.ts"
   },
   "license": "MIT",
   "scripts": {
-    "eval": "pnpm with-env braintrust eval ./src/index.eval.ts",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "with-env": "dotenv -e ../../.env --"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fal-ai/client": "^1.2.0",
-    "@fal-ai/server-proxy": "^1.1.1",
     "@t3-oss/env-nextjs": "^0.11.1",
-    "autoevals": "^0.0.103",
-    "braintrust": "^0.0.168",
-    "voyage-ai-provider": "^1.0.0",
-    "zod": "^3.23.8"
+    "@vendor/observability": "workspace:*",
+    "@vercel/blob": "^0.22.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

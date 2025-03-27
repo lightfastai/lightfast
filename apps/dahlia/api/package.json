@@ -19,7 +19,7 @@
     "@next/bundle-analyzer": "^15.0.3",
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@sentry/nextjs": "^8.41.0",
+    "@sentry/nextjs": "^8.45.0",
     "@t3-oss/env-nextjs": "^0.11.1",
     "@vendor/clerk": "workspace:*",
     "@vendor/db": "workspace:*",
@@ -41,7 +41,7 @@
     "@types/react-dom": "catalog:react18",
     "dotenv-cli": "^7.4.2",
     "eslint": "catalog:",
-    "jiti": "^2.3.3",
+    "jiti": "^1.21.6",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

@@ -3,9 +3,9 @@
   "private": true,
   "engines": {
     "node": ">=20.16.0",
-    "pnpm": "^9.6.0"
+    "pnpm": "10.5.2"
   },
-  "packageManager": "pnpm@9.14.2",
+  "packageManager": "pnpm@10.5.2",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
@@ -20,8 +20,6 @@
     "dev:dahlia-api": "turbo watch dev -F @dahlia/api --continue",
     "dev:dahlia-auth": "turbo watch dev -F @dahlia/auth --continue",
     "dev:dahlia-app": "turbo watch dev -F @dahlia/app --continue",
-    "dev:jps0000-www": "turbo watch dev -F @jps0000/www --continue",
-    "dev:jps0000-ai-repo-search": "turbo watch dev -F @jps0000/ai-repo-search --continue",
     "brain": "turbo run eval",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
@@ -36,7 +34,7 @@
   "devDependencies": {
     "@repo/prettier-config": "workspace:*",
     "prettier": "catalog:",
-    "turbo": "^2.3.1",
+    "turbo": "^2.4.4",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
