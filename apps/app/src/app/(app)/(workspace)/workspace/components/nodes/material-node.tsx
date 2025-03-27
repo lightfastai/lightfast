@@ -34,7 +34,7 @@ export const MaterialNode = memo(
               {type} {id}
             </Label>
             <ToggleGroup type="single">
-              <ToggleGroupItem value="renderInNode" variant="outline" size="xs">
+              <ToggleGroupItem value="renderInNode" variant="outline" size="sm">
                 <ArrowRightIcon className="h-3 w-3" />
               </ToggleGroupItem>
             </ToggleGroup>

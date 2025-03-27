@@ -126,7 +126,6 @@ export const EditorWorkspaceNameInput = ({
               <FormControl>
                 <Input
                   {...field}
-                  variant="ghost"
                   onBlur={handleBlur}
                   // Disable the input until the workspace data is loaded
                   disabled={workspace?.name === undefined}

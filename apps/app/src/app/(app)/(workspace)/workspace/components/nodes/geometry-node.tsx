@@ -35,7 +35,7 @@ export const GeometryNode = memo(
               <ToggleGroupItem
                 value="renderInNode"
                 variant="outline"
-                size="xs"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   // if (!data) return;
