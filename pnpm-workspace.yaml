@@ -1,6 +1,5 @@
 packages:
   - "apps/dahlia/*"
-  - "apps/jps0000/*"
   - "packages/*"
   - "internal/*"
   - "vendor/*"
