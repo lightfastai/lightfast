@@ -4,12 +4,14 @@ import { toast } from "@repo/ui/hooks/use-toast";
 
 import type { NodeType } from "~/db/schema/types/Node";
 import { getMaxTargetEdges } from "~/db/schema/types";
+import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
 
 export const useEdgeValidation = () => {
   const { edges } = useEdgeStore((state) => state);
   const { nodes } = useNodeStore((state) => state);
+  const utils = api.useUtils();
 
   const validateSelfConnection = useCallback(
     (source: string, target: string): boolean => {
@@ -90,23 +92,65 @@ export const useEdgeValidation = () => {
       const { allowance = 0 } = opts;
       const targetNode = nodes.find((n) => n.id === target);
       if (!targetNode) return false;
-      const maxEdges = getMaxTargetEdges(
-        targetNode.type as NodeType,
-        targetNode.data,
-      );
+
+      // Handle special cases based on node type
+      if (targetNode.type === "texture") {
+        // For Displace and Add texture nodes, allow 2 connections
+        // Get cached texture type from TRPC cache if available
+        const cachedData = utils.tenant.node.data.get.getData({ id: target });
+
+        if (
+          cachedData &&
+          typeof cachedData === "object" &&
+          "type" in cachedData
+        ) {
+          console.log("Using cached node data:", cachedData);
+
+          if (cachedData.type === "Displace" || cachedData.type === "Add") {
+            // Check if we're exceeding 2 connections
+            const currentEdgeCount = edges.filter(
+              (edge) => edge.target === target,
+            ).length;
+
+            console.log("Texture special case:", {
+              type: cachedData.type,
+              currentEdges: currentEdgeCount,
+              maxAllowed: 2,
+              allowance,
+            });
+
+            if (currentEdgeCount - allowance >= 2) {
+              toast({
+                variant: "destructive",
+                description: `${cachedData.type} texture nodes cannot accept more than 2 incoming connections.`,
+              });
+              return false;
+            }
+            return true; // Allow connection for these special types
+          }
+        }
+      }
+
+      // For all other cases, use the standard implementation
+      const nodeData = targetNode.data ? targetNode.data : undefined;
+      const nodeType = targetNode.type as NodeType;
+
+      const maxEdges = getMaxTargetEdges(nodeType, nodeData);
+
       const currentEdgeCount = edges.filter(
         (edge) => edge.target === target,
       ).length;
+
       if (currentEdgeCount - allowance >= maxEdges) {
         toast({
           variant: "destructive",
-          description: `${targetNode.type} nodes cannot accept more than ${maxEdges} incoming connections.`,
+          description: `${nodeType} nodes cannot accept more than ${maxEdges} incoming connections.`,
         });
         return false;
       }
       return true;
     },
-    [nodes, edges],
+    [nodes, edges, utils.tenant.node.data],
   );
 
   return {

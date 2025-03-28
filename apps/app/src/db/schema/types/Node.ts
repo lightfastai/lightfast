@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { Texture } from "./Texture";
+
 export const $NodeType = z.enum([
   "geometry",
   "material",
@@ -21,13 +23,27 @@ export const $NodeTypeMaxTargetEdges = z.object({
 
 export type NodeTypeMaxTargetEdges = z.infer<typeof $NodeTypeMaxTargetEdges>;
 
+/**
+ * Type for node data with optional type field
+ * Used for more precise typing in getMaxTargetEdges
+ */
+export interface NodeData {
+  type?: string;
+  [key: string]: unknown;
+}
+
 // Helper function to get max edges for a node type
 export const getMaxTargetEdges = (
   nodeType: NodeType,
-  nodeData?: any,
+  nodeData?: NodeData | Texture | null,
 ): number => {
   // Special case for texture nodes that need multiple inputs
-  if (nodeType === "texture" && nodeData?.type) {
+  if (
+    nodeType === "texture" &&
+    nodeData &&
+    typeof nodeData === "object" &&
+    "type" in nodeData
+  ) {
     // Check texture subtypes that need multiple inputs
     switch (nodeData.type) {
       case "Displace":

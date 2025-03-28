@@ -21,6 +21,8 @@ export const Edge = pgTable("edge", (t) => ({
     .varchar({ length: 191 })
     .notNull()
     .references(() => Node.id, { onDelete: "cascade" }),
+  sourceHandle: t.varchar({ length: 191 }),
+  targetHandle: t.varchar({ length: 191 }),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp().defaultNow().notNull(),
 }));
@@ -41,6 +43,8 @@ export const SelectEdgeSchema = createSelectSchema(Edge);
 export const InsertEdgeSchema = z.object({
   source: z.string().min(1).max(191),
   target: z.string().min(1).max(191),
+  sourceHandle: z.string().max(191).optional(),
+  targetHandle: z.string().max(191).optional(),
 });
 
 export type SelectEdge = z.infer<typeof SelectEdgeSchema>;

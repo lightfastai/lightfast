@@ -17,6 +17,8 @@ export const useAddEdge = () => {
         id: newEdge.id,
         source: newEdge.edge.source,
         target: newEdge.edge.target,
+        sourceHandle: newEdge.edge.sourceHandle ?? "",
+        targetHandle: newEdge.edge.targetHandle ?? "",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -45,7 +47,7 @@ export const useAddEdge = () => {
 
   const mutateAsync = useCallback(
     async (connection: Connection) => {
-      const { source, target } = connection;
+      const { source, target, sourceHandle, targetHandle } = connection;
 
       // Perform shared validations
       if (
@@ -64,6 +66,8 @@ export const useAddEdge = () => {
           edge: {
             source: connection.source,
             target: connection.target,
+            sourceHandle: connection.sourceHandle ?? "",
+            targetHandle: connection.targetHandle ?? "",
           },
         });
       } catch (error) {

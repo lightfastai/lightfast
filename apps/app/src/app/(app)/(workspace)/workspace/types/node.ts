@@ -18,7 +18,16 @@ export const convertToBaseNode = (
     data: {},
   }));
 
-export type BaseEdge = Edge & RouterOutputs["tenant"]["edge"]["getAll"][number];
+/**
+ * Override BaseEdge to ensure it includes sourceHandle and targetHandle.
+ * XYFlow's Edge type already includes these fields but we want to make sure they're preserved
+ * when we convert from the router output.
+ */
+export type BaseEdge = Edge &
+  RouterOutputs["tenant"]["edge"]["getAll"][number] & {
+    sourceHandle?: string;
+    targetHandle?: string;
+  };
 
 /**
  * We have to convert the base edge to an edge because the data is not
@@ -27,4 +36,10 @@ export type BaseEdge = Edge & RouterOutputs["tenant"]["edge"]["getAll"][number];
  */
 export const convertToBaseEdge = (
   edges: RouterOutputs["tenant"]["edge"]["getAll"],
-): BaseEdge[] => edges;
+): BaseEdge[] =>
+  edges.map((edge) => ({
+    ...edge,
+    // Ensure sourceHandle and targetHandle are included in the converted edge
+    sourceHandle: edge.sourceHandle || undefined,
+    targetHandle: edge.targetHandle || undefined,
+  }));

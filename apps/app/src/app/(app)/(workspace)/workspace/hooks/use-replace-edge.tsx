@@ -57,7 +57,8 @@ export const useReplaceEdge = () => {
 
   const mutateAsync = useCallback(
     async (oldEdgeId: string, newConnection: Connection) => {
-      const { source, target } = newConnection;
+      const { source, target, sourceHandle, targetHandle } = newConnection;
+
       if (
         !validateSelfConnection(source, target) ||
         !validateSameSource(source, target) ||
@@ -76,6 +77,8 @@ export const useReplaceEdge = () => {
             id: nanoid(),
             source,
             target,
+            sourceHandle,
+            targetHandle,
           },
         });
       } catch (error) {
@@ -88,6 +91,7 @@ export const useReplaceEdge = () => {
       validateTargetExistence,
       validateMaxIncomingEdges,
       validateWindowNode,
+      validateSameSource,
       mutReplace,
     ],
   );
