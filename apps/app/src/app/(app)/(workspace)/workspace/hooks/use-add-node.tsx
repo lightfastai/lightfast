@@ -21,6 +21,7 @@ import {
   createDefaultMaterial,
   createDefaultTexture,
   createDefaultTxt2Img,
+  createDefaultWindow,
 } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useNodeStore } from "../providers/node-store-provider";
@@ -131,6 +132,14 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
         type: $NodeType.enum.flux,
         position,
         data: createDefaultTxt2Img({ type: selection.value as Txt2ImgType }),
+      });
+    } else if (selection.type === $NodeType.enum.window) {
+      create.mutate({
+        id: nanoid(),
+        workspaceId,
+        type: $NodeType.enum.window,
+        position,
+        data: createDefaultWindow(),
       });
     }
 

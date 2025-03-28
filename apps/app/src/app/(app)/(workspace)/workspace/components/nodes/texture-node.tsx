@@ -25,6 +25,7 @@ export const TextureNode = memo(
     const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
     const { targets } = useTextureRenderStore((state) => state);
     const setSelected = useInspectorStore((state) => state.setSelected);
+
     return (
       <BaseNodeComponent
         id={id}

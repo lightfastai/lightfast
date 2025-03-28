@@ -40,6 +40,7 @@ export const useAddEdge = () => {
     validateSelfConnection,
     validateTargetExistence,
     validateMaxIncomingEdges,
+    validateWindowNode,
   } = useEdgeValidation();
 
   const mutateAsync = useCallback(
@@ -50,7 +51,8 @@ export const useAddEdge = () => {
       if (
         !validateSelfConnection(source, target) ||
         !validateTargetExistence(target) ||
-        !validateMaxIncomingEdges(target)
+        !validateMaxIncomingEdges(target) ||
+        !validateWindowNode(target)
       ) {
         return;
       }
@@ -73,6 +75,7 @@ export const useAddEdge = () => {
       validateSelfConnection,
       validateTargetExistence,
       validateMaxIncomingEdges,
+      validateWindowNode,
       mut,
     ],
   );

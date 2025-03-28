@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const $NodeType = z.enum(["geometry", "material", "texture", "flux"]);
+export const $NodeType = z.enum([
+  "geometry",
+  "material",
+  "texture",
+  "flux",
+  "window",
+]);
 
 export type NodeType = z.infer<typeof $NodeType>;
 
@@ -10,6 +16,7 @@ export const $NodeTypeMaxTargetEdges = z.object({
   material: z.literal(0),
   texture: z.literal(1),
   flux: z.literal(0),
+  window: z.literal(1),
 }) satisfies z.ZodType<Record<NodeType, number>>;
 
 export type NodeTypeMaxTargetEdges = z.infer<typeof $NodeTypeMaxTargetEdges>;
@@ -21,5 +28,6 @@ export const getMaxTargetEdges = (nodeType: NodeType): number => {
     material: 0,
     texture: 1,
     flux: 0,
+    window: 1,
   })[nodeType];
 };

@@ -30,6 +30,7 @@ import { FluxNode } from "../nodes/flux-node";
 import { GeometryNode } from "../nodes/geometry-node";
 import { MaterialNode } from "../nodes/material-node";
 import { TextureNode } from "../nodes/texture-node";
+import { WindowNode } from "../nodes/window-node";
 
 interface WorkspacePageProps {
   params: {
@@ -42,7 +43,8 @@ const nodeTypes: NodeTypes = {
   material: MaterialNode,
   texture: TextureNode,
   flux: FluxNode,
-} as const;
+  window: WindowNode,
+};
 
 export const Workspace = ({ params }: WorkspacePageProps) => {
   const { id } = params;

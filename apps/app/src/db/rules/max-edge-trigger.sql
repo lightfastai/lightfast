@@ -19,6 +19,8 @@ BEGIN
     WHEN 'material' THEN 0
     -- Texture nodes can only receive 1 input (e.g., from a transformation)
     WHEN 'texture' THEN 1
+    -- Window nodes cannot receive any inputs
+    WHEN 'window' THEN 0
     -- Default to 0 for safety with unknown node types
     ELSE 0
   END;

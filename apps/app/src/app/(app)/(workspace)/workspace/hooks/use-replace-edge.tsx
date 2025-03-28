@@ -52,6 +52,7 @@ export const useReplaceEdge = () => {
     validateTargetExistence,
     validateMaxIncomingEdges,
     validateSameSource,
+    validateWindowNode,
   } = useEdgeValidation();
 
   const mutateAsync = useCallback(
@@ -61,7 +62,8 @@ export const useReplaceEdge = () => {
         !validateSelfConnection(source, target) ||
         !validateSameSource(source, target) ||
         !validateTargetExistence(target) ||
-        !validateMaxIncomingEdges(target, { allowance: 1 })
+        !validateMaxIncomingEdges(target, { allowance: 1 }) ||
+        !validateWindowNode(target)
       ) {
         return;
       }
@@ -85,6 +87,7 @@ export const useReplaceEdge = () => {
       validateSelfConnection,
       validateTargetExistence,
       validateMaxIncomingEdges,
+      validateWindowNode,
       mutReplace,
     ],
   );

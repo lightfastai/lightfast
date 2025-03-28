@@ -12,7 +12,7 @@ import { $NodeType } from "~/db/schema/types";
 interface SelectionState {
   selection: {
     type: NodeType;
-    value: GeometryType | MaterialType | TextureType | Txt2ImgType;
+    value?: GeometryType | MaterialType | TextureType | Txt2ImgType;
   } | null;
 }
 
@@ -21,6 +21,7 @@ export interface SelectionActions {
   setMaterial: (material: MaterialType) => void;
   setTexture: (texture: TextureType) => void;
   setFlux: (flux: Txt2ImgType) => void;
+  setWindow: () => void;
   clearSelection: () => void;
 }
 
@@ -54,6 +55,10 @@ export const createSelectionStore = (
     setFlux: (flux: Txt2ImgType) =>
       set(() => ({
         selection: { type: $NodeType.Enum.flux, value: flux },
+      })),
+    setWindow: () =>
+      set(() => ({
+        selection: { type: $NodeType.Enum.window },
       })),
     clearSelection: () => set(() => ({ selection: null })),
   }));

@@ -11,6 +11,7 @@ import { $Material } from "../types/Material";
 import { $NodeType } from "../types/Node";
 import { $Texture } from "../types/Texture";
 import { $Txt2Img } from "../types/Txt2Img";
+import { $Window } from "../types/Window";
 import { Edge } from "./Edge";
 import { Workspace } from "./Workspace";
 
@@ -44,7 +45,7 @@ export const SelectNodeSchema = createSelectSchema(Node);
 export const InsertNodeSchema = z.object({
   id: z.string().nanoid().min(1).max(191),
   workspaceId: z.string().nanoid().min(1).max(191),
-  data: $Geometry.or($Material).or($Texture).or($Txt2Img),
+  data: $Geometry.or($Material).or($Texture).or($Txt2Img).or($Window),
   position: z.object({
     x: z.number(),
     y: z.number(),

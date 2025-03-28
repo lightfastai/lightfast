@@ -46,6 +46,30 @@ export const useEdgeValidation = () => {
     [nodes],
   );
 
+  const validateWindowNode = useCallback(
+    (target: string): boolean => {
+      const targetNode = nodes.find((n) => n.id === target);
+      if (!targetNode) return false;
+
+      // For window nodes, allow exactly one connection
+      if (targetNode.type === "window") {
+        const currentEdgeCount = edges.filter(
+          (edge) => edge.target === target,
+        ).length;
+
+        if (currentEdgeCount >= 1) {
+          toast({
+            variant: "destructive",
+            description: "Window nodes can only accept one connection.",
+          });
+          return false;
+        }
+      }
+      return true;
+    },
+    [nodes, edges],
+  );
+
   /**
    * Validates that the target node does not exceed the maximum number of incoming edges.
    *
@@ -86,5 +110,6 @@ export const useEdgeValidation = () => {
     validateTargetExistence,
     validateMaxIncomingEdges,
     validateSameSource,
+    validateWindowNode,
   };
 };

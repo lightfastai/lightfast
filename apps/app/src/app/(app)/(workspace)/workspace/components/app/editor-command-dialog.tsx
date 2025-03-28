@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Circle, Square, Triangle } from "lucide-react";
+import { Circle, Monitor, Square, Triangle } from "lucide-react";
 
 import {
   Command,
@@ -30,8 +30,14 @@ import { useEditorStore } from "../../providers/editor-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 
 export const EditorCommandDialog = () => {
-  const { setGeometry, setMaterial, setTexture, setFlux, clearSelection } =
-    useSelectionStore((state) => state);
+  const {
+    setGeometry,
+    setMaterial,
+    setTexture,
+    setFlux,
+    setWindow,
+    clearSelection,
+  } = useSelectionStore((state) => state);
 
   const { isCommandDialogOpen, setIsCommandDialogOpen } = useEditorStore(
     (state) => state,
@@ -70,6 +76,14 @@ export const EditorCommandDialog = () => {
 
     // Notify parent component of the selected flux
     setFlux(fluxType);
+  };
+
+  const handleWindowSelect = () => {
+    // Close the command dialog first
+    setIsCommandDialogOpen(false);
+
+    // Notify parent component of the selected window type
+    setWindow();
   };
 
   /**
@@ -194,16 +208,15 @@ export const EditorCommandDialog = () => {
               <Label>Flux</Label>
             </CommandItem>
           </CommandGroup>
-          {/* <CommandGroup heading="Utilities">
+          <CommandGroup heading="Window">
             <CommandItem
-              onSelect={() => {
-                // clearSelection();
-              }}
+              onSelect={handleWindowSelect}
               className="flex items-center gap-2"
             >
-              <Label>Clear Canvas</Label>
+              <Monitor className="h-4 w-4" />
+              <Label>External Window</Label>
             </CommandItem>
-          </CommandGroup> */}
+          </CommandGroup>
         </CommandList>
       </Command>
     </CommandDialog>
