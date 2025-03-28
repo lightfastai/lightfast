@@ -9,19 +9,20 @@ interface TextureRenderState {
   targets: Record<string, THREE.WebGLRenderTarget>;
 }
 
-interface TextureRenderActions {
-  addTarget: (id: string) => void;
+export interface TextureRenderStore extends TextureRenderState {
+  addTarget: (
+    id: string,
+    resolution: { width: number; height: number },
+  ) => void;
   removeTarget: (id: string) => void;
 }
-
-export type TextureRenderStore = TextureRenderState & TextureRenderActions;
 
 export const initTextureRenderState = (
   nodes: BaseNode[],
 ): TextureRenderState => ({
   targets: nodes.reduce(
     (acc, node) => {
-      acc[node.id] = new THREE.WebGLRenderTarget(256, 256);
+      acc[node.id] = new THREE.WebGLRenderTarget(1024, 1024);
       return acc;
     },
     {} as Record<string, THREE.WebGLRenderTarget>,
@@ -37,11 +38,14 @@ export const createTextureRenderStore = (
 ) => {
   return createStore<TextureRenderStore>()((set) => ({
     ...initState,
-    addTarget: (id) =>
+    addTarget: (id, resolution) =>
       set((state) => ({
         targets: {
           ...state.targets,
-          [id]: new THREE.WebGLRenderTarget(256, 256),
+          [id]: new THREE.WebGLRenderTarget(
+            resolution.width,
+            resolution.height,
+          ),
         },
       })),
     removeTarget: (id) =>

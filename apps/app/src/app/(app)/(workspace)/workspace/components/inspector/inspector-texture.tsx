@@ -41,6 +41,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       data: {
         type: data.type,
         uniforms: updates,
+        resolution: data.resolution,
       },
     });
   }, 500);

@@ -12,14 +12,23 @@ export const $TextureTypes = z.enum($TextureTypeValues);
 
 export type TextureType = z.infer<typeof $TextureTypes>;
 
+export const $TextureResolution = z.object({
+  width: z.number().min(1).max(2048).default(256),
+  height: z.number().min(1).max(2048).default(256),
+});
+
+export type TextureResolution = z.infer<typeof $TextureResolution>;
+
 export const $Texture = z.discriminatedUnion("type", [
   z.object({
     type: z.literal($TextureTypes.enum.Noise),
     uniforms: $PerlinNoise3D,
+    resolution: $TextureResolution,
   }),
   z.object({
     type: z.literal($TextureTypes.enum.Limit),
     uniforms: $Limit,
+    resolution: $TextureResolution,
   }),
 ]);
 
@@ -37,9 +46,17 @@ export const createDefaultTexture = ({
 }): Texture => {
   switch (type) {
     case $TextureTypes.enum.Noise:
-      return { type, uniforms: createDefaultPerlinNoise3D() };
+      return {
+        type,
+        uniforms: createDefaultPerlinNoise3D(),
+        resolution: { width: 256, height: 256 },
+      };
     case $TextureTypes.enum.Limit:
-      return { type, uniforms: createDefaultLimit() };
+      return {
+        type,
+        uniforms: createDefaultLimit(),
+        resolution: { width: 256, height: 256 },
+      };
     /**
      * @important This should never happen.
      * @todo: Add better error handling.
