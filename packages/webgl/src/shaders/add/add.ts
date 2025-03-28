@@ -2,24 +2,20 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { $Shared } from "../shared/schema";
-
-export const $Add = $Shared.merge(
-  z.object({
-    u_texture1: z.number().nullable().describe("The first input texture (A)"),
-    u_texture2: z.number().nullable().describe("The second input texture (B)"),
-    u_addValue: z
-      .number()
-      .min(-1.0)
-      .max(1.0)
-      .default(0.0)
-      .describe("Constant value to add to the result"),
-    u_enableMirror: z
-      .boolean()
-      .default(false)
-      .describe("Whether to mirror the result vertically"),
-  }),
-);
+export const $Add = z.object({
+  u_texture1: z.number().nullable().describe("The first input texture (A)"),
+  u_texture2: z.number().nullable().describe("The second input texture (B)"),
+  u_addValue: z
+    .number()
+    .min(-1.0)
+    .max(1.0)
+    .default(0.0)
+    .describe("Constant value to add to the result"),
+  u_enableMirror: z
+    .boolean()
+    .default(false)
+    .describe("Whether to mirror the result vertically"),
+});
 
 export type AddParams = z.infer<typeof $Add>;
 
@@ -30,7 +26,6 @@ export const AddDescription =
 
 export const createDefaultAdd = (): AddParams => {
   return $Add.parse({
-    u_texture: null,
     u_texture1: null,
     u_texture2: null,
     u_addValue: 0.0,

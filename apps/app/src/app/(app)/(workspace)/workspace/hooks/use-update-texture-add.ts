@@ -76,7 +76,6 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
             vertexShader: baseVertexShader,
             fragmentShader: addFragmentShader,
             uniforms: {
-              u_texture: { value: null }, // For backward compatibility
               u_texture1: { value: null }, // First input texture (A)
               u_texture2: { value: null }, // Second input texture (B)
               u_addValue: { value: u.u_addValue },

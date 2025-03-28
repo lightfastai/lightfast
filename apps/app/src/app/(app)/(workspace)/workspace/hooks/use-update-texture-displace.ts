@@ -76,7 +76,6 @@ export const useUpdateTextureDisplace = (): TextureRenderNode[] => {
             vertexShader: baseVertexShader,
             fragmentShader: displaceFragmentShader,
             uniforms: {
-              u_texture: { value: null }, // For backward compatibility
               u_texture1: { value: null }, // Source image
               u_texture2: { value: null }, // Displacement map
               u_displaceWeight: { value: u.u_displaceWeight },
@@ -144,12 +143,6 @@ export const useUpdateTextureDisplace = (): TextureRenderNode[] => {
               shader.uniforms.u_texture1.value = sourceId
                 ? targets[sourceId]?.texture
                 : null;
-
-              // Also set the u_texture for backward compatibility
-              if (shader.uniforms.u_texture) {
-                shader.uniforms.u_texture.value =
-                  shader.uniforms.u_texture1.value;
-              }
             }
 
             // Map input-2 to u_texture2 (displacement map)

@@ -3,44 +3,41 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import { createConstrainedVec2 } from "../../schema/vec2";
-import { $Shared } from "../shared/schema";
 
-export const $Displace = $Shared.merge(
-  z.object({
-    u_texture1: z
-      .number()
-      .nullable()
-      .describe("The texture that will be displaced (source image)"),
-    u_texture2: z
-      .number()
-      .nullable()
-      .describe("The texture that contains the displacement values (map)"),
-    u_displaceWeight: z
-      .number()
-      .min(0)
-      .max(2.0)
-      .default(1.0)
-      .describe("The intensity of the displacement effect"),
-    u_displaceMidpoint: createConstrainedVec2({
-      x: { min: 0, max: 1, default: 0.5 },
-      y: { min: 0, max: 1, default: 0.5 },
-    }).describe("The center reference point for displacement"),
-    u_displaceOffset: createConstrainedVec2({
-      x: { min: 0, max: 1, default: 0.5 },
-      y: { min: 0, max: 1, default: 0.5 },
-    }).describe("Additional offset for the displacement"),
-    u_displaceOffsetWeight: z
-      .number()
-      .min(0)
-      .max(2.0)
-      .default(0.0)
-      .describe("The intensity of the offset"),
-    u_displaceUVWeight: createConstrainedVec2({
-      x: { min: 0, max: 2, default: 1.0 },
-      y: { min: 0, max: 2, default: 1.0 },
-    }).describe("UV scaling for the displacement"),
-  }),
-);
+export const $Displace = z.object({
+  u_texture1: z
+    .number()
+    .nullable()
+    .describe("The texture that will be displaced (source image)"),
+  u_texture2: z
+    .number()
+    .nullable()
+    .describe("The texture that contains the displacement values (map)"),
+  u_displaceWeight: z
+    .number()
+    .min(0)
+    .max(2.0)
+    .default(1.0)
+    .describe("The intensity of the displacement effect"),
+  u_displaceMidpoint: createConstrainedVec2({
+    x: { min: 0, max: 1, default: 0.5 },
+    y: { min: 0, max: 1, default: 0.5 },
+  }).describe("The center reference point for displacement"),
+  u_displaceOffset: createConstrainedVec2({
+    x: { min: 0, max: 1, default: 0.5 },
+    y: { min: 0, max: 1, default: 0.5 },
+  }).describe("Additional offset for the displacement"),
+  u_displaceOffsetWeight: z
+    .number()
+    .min(0)
+    .max(2.0)
+    .default(0.0)
+    .describe("The intensity of the offset"),
+  u_displaceUVWeight: createConstrainedVec2({
+    x: { min: 0, max: 2, default: 1.0 },
+    y: { min: 0, max: 2, default: 1.0 },
+  }).describe("UV scaling for the displacement"),
+});
 
 export type DisplaceParams = z.infer<typeof $Displace>;
 
@@ -74,18 +71,15 @@ uniform vec2 u_displaceUVWeight;
 varying vec2 vUv;
 
 // Displace function using hold extension
-vec2 displace(vec2 uv, vec2 midpoint, vec2 offset, float offsetWeight, vec2 uvWeight) {
-  // Get displacement values from the displacement map
-  vec4 displaceMap = texture2D(u_texture2, uv);
-  
+vec2 displace(vec2 uv, vec4 displaceMap, float weight, vec2 midpoint, vec2 offset, float offsetWeight, vec2 uvWeight) {
   // Extract R and G channels for X and Y displacement
   float displaceX = displaceMap.r;
   float displaceY = displaceMap.g;
   
   // Apply displacement with weight
   vec2 displaced = uv * uvWeight;
-  displaced.x += (displaceX - midpoint.x) * u_displaceWeight + offset.x * offsetWeight;
-  displaced.y += (displaceY - midpoint.y) * u_displaceWeight + offset.y * offsetWeight;
+  displaced.x += (displaceX - midpoint.x) * weight + offset.x * offsetWeight;
+  displaced.y += (displaceY - midpoint.y) * weight + offset.y * offsetWeight;
   
   // Hold extension mode (clamp to edge)
   displaced = clamp(displaced, 0.0, 1.0);
@@ -94,8 +88,19 @@ vec2 displace(vec2 uv, vec2 midpoint, vec2 offset, float offsetWeight, vec2 uvWe
 }
 
 void main() {
+  // Get displacement map
+  vec4 displaceMap = texture2D(u_texture2, vUv);
+  
   // Apply displacement
-  vec2 displacedUV = displace(vUv, u_displaceMidpoint, u_displaceOffset, u_displaceOffsetWeight, u_displaceUVWeight);
+  vec2 displacedUV = displace(
+    vUv,
+    displaceMap,
+    u_displaceWeight,
+    u_displaceMidpoint,
+    u_displaceOffset,
+    u_displaceOffsetWeight,
+    u_displaceUVWeight
+  );
   
   // Sample the texture with the displaced coordinates
   vec4 color = texture2D(u_texture1, displacedUV);
