@@ -1,6 +1,6 @@
 import type { RouterInputs } from "~/trpc/server/index";
-import { Workspace } from "../components/workspace/workspace";
-import { WorkspaceProvider } from "../providers/workspace-provider";
+import { Workspace } from "../../components/workspace/workspace";
+import { WorkspaceProvider } from "../../providers/workspace-provider";
 
 interface WorkspacePageProps {
   params: {

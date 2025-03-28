@@ -11,24 +11,24 @@ import {
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
 import { $NodeType } from "~/db/schema/types";
 import { api, HydrateClient } from "~/trpc/client/server";
-import { EditorCommandDialog } from "../components/app/editor-command-dialog";
-import { EditorWorkspaceNameInput } from "../components/app/editor-workspace-name-input";
-import { EditorWorkspaceSelect } from "../components/app/editor-workspace-select";
-import { TextureRenderPipeline } from "../components/webgl/texture-render-pipeline";
-import { EdgeStoreProvider } from "../providers/edge-store-provider";
-import { EditorStoreProvider } from "../providers/editor-store-provider";
-import { InspectorStoreProvider } from "../providers/inspector-store-provider";
-import { NodeStoreProvider } from "../providers/node-store-provider";
-import { SelectionStoreProvider } from "../providers/selection-store-provider";
-import { TextureRenderStoreProvider } from "../providers/texture-render-store-provider";
-import { convertToBaseEdge, convertToBaseNode } from "../types/node";
+import { EditorCommandDialog } from "../../components/app/editor-command-dialog";
+import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";
+import { EditorWorkspaceSelect } from "../../components/app/editor-workspace-select";
+import { TextureRenderPipeline } from "../../components/webgl/texture-render-pipeline";
+import { EdgeStoreProvider } from "../../providers/edge-store-provider";
+import { EditorStoreProvider } from "../../providers/editor-store-provider";
+import { InspectorStoreProvider } from "../../providers/inspector-store-provider";
+import { NodeStoreProvider } from "../../providers/node-store-provider";
+import { SelectionStoreProvider } from "../../providers/selection-store-provider";
+import { TextureRenderStoreProvider } from "../../providers/texture-render-store-provider";
+import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
 
 const WebGLCanvas = dynamic(() =>
-  import("../components/webgl/webgl-canvas").then((mod) => mod.WebGLCanvas),
+  import("../../components/webgl/webgl-canvas").then((mod) => mod.WebGLCanvas),
 );
 
 const Inspector = dynamic(() =>
-  import("../components/inspector/inspector").then((mod) => mod.Inspector),
+  import("../../components/inspector/inspector").then((mod) => mod.Inspector),
 );
 
 interface WorkspaceLayoutProps {

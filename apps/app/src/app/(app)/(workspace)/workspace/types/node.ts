@@ -1,6 +1,6 @@
 import type { Edge, Node } from "@xyflow/react";
 
-import type { RouterOutputs } from "@dahlia/trpc";
+import type { RouterOutputs } from "~/trpc/server/index";
 
 export type BaseNode = Node &
   RouterOutputs["tenant"]["node"]["base"]["getAll"][number];
