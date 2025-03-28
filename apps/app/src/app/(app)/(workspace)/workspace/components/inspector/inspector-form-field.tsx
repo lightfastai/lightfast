@@ -14,7 +14,14 @@ import {
   FormItem,
   FormLabel,
 } from "@repo/ui/components/ui/form";
-import { isColor, isNumber, isString, isVec2, isVec3 } from "@repo/webgl";
+import {
+  isBoolean,
+  isColor,
+  isNumber,
+  isString,
+  isVec2,
+  isVec3,
+} from "@repo/webgl";
 
 import {
   extractUniformName,
@@ -22,6 +29,7 @@ import {
   extractVec2FieldMetadata,
   extractVec3FieldMetadata,
 } from "./utils";
+import { BooleanInput } from "./value/boolean-input";
 import { ColorPickerField } from "./value/color-picker-field";
 import { NumberInput } from "./value/number-input";
 import { StringInput } from "./value/string-input";
@@ -103,6 +111,10 @@ const InspectorFormFieldComponent = <T extends FieldValues>({
 
       if (isString(field.value)) {
         return <StringInput field={field} onValueChange={onValueChange} />;
+      }
+
+      if (isBoolean(field.value)) {
+        return <BooleanInput field={field} onValueChange={onValueChange} />;
       }
     },
     [numberMetadata, vec2Metadata, vec3Metadata, onValueChange],

@@ -20,7 +20,7 @@ import {
 export { $Vec3, createConstrainedVec3, isVec3, type Vec3 } from "./schema/vec3";
 export { $Vec2, createConstrainedVec2, isVec2, type Vec2 } from "./schema/vec2";
 export { $Color, isColor, type Color } from "./schema/color";
-export { type Value, isString, isNumber } from "./schema/value";
+export { type Value, isString, isNumber, isBoolean } from "./schema/value";
 
 /**
  * noise modules
