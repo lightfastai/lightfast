@@ -7,9 +7,8 @@ import { protectedTenantProcedure } from "@vendor/trpc";
 
 import { Node, Workspace } from "~/db/schema";
 import { InsertNodeSchema } from "~/db/schema/tables/Node";
+import { $Txt2Img, $Window } from "~/db/schema/types";
 import { $Texture } from "~/db/schema/types/Texture";
-import { $Txt2Img } from "~/db/schema/types/Txt2Img";
-import { $Window } from "~/db/schema/types/Window";
 
 export const nodeRouter = {
   delete: protectedTenantProcedure
@@ -183,7 +182,7 @@ export const nodeRouter = {
       .input(
         z.object({
           id: z.string(),
-          data: $Texture.or($Txt2Img).or($Window), // Allow any data updates that match the schema
+          data: $Texture.or($Txt2Img).or($Window),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -205,11 +204,17 @@ export const nodeRouter = {
           });
         }
 
+        // Merge the new data with existing data
+        const updatedData = {
+          ...existingNode.data,
+          ...input.data,
+        };
+
         // Update the node with new data
         const [updatedNode] = await ctx.db
           .update(Node)
           .set({
-            data: input.data,
+            data: updatedData,
             updatedAt: sql`now()`,
           })
           .where(eq(Node.id, input.id))

@@ -58,7 +58,10 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
       );
 
       if (newNode.type === $NodeType.Enum.texture) {
-        addTarget(newNode.id);
+        addTarget(newNode.id, {
+          width: 256,
+          height: 256,
+        });
       }
 
       return { optimisticNode };
@@ -74,7 +77,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
     },
     onSettled: (newNode) => {
       if (!newNode) return;
-      utils.tenant.node.data.get.invalidate({ id: newNode.id });
+      void utils.tenant.node.data.get.invalidate({ id: newNode.id });
     },
   });
 

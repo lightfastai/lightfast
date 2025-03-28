@@ -8,7 +8,10 @@ export const InspectorBase = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("w-96 rounded-lg border bg-background shadow-md", className)}
+    className={cn(
+      "z-10 w-96 rounded-md border bg-background shadow-md",
+      className,
+    )}
     {...props}
   />
 ));

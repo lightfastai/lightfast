@@ -129,12 +129,3 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(protectedMiddleware);
-/**
- * Protected tenant procedure
- *
- * If you want a query or mutation to ONLY be accessible to logged in users and a specific tenant, use this.
- * It verifies the session is valid and guarantees `ctx.session.user` is not null.
- */
-export const protectedTenantProcedure = t.procedure
-  .use(timingMiddleware)
-  .use(protectedMiddleware);

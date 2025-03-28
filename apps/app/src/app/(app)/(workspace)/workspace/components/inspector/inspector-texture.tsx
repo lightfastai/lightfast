@@ -7,6 +7,12 @@ import { useForm } from "react-hook-form";
 import type { Value } from "@repo/webgl";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
 
 import type { Texture, TextureUniforms } from "~/db/schema/types";
 import { $TextureUniforms } from "~/db/schema/types";
@@ -63,6 +69,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
         {
           type: data.type,
           uniforms: newUniforms,
+          resolution: data.resolution,
         },
       );
 
@@ -70,45 +77,78 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       debouncedServerUpdate(newUniforms);
     },
     [
-      id,
-      data.type,
       data.uniforms,
+      data.type,
+      data.resolution,
       utils.tenant.node.data.get,
+      id,
       debouncedServerUpdate,
     ],
   );
 
   return (
     <InspectorBase>
-      <div>
-        <div className="flex items-center justify-between p-4">
-          <h2 className="font-mono text-xs font-bold uppercase tracking-widest">
-            Properties
-          </h2>
-          <h3 className="font-mono text-xs font-bold uppercase tracking-widest">
-            {data.type}
-          </h3>
+      <Tabs defaultValue="uniforms" className="flex flex-col">
+        <div className="flex flex-col">
+          <div className="flex items-center justify-end p-1.5">
+            <h3 className="font-mono text-xs font-bold uppercase tracking-widest">
+              {data.type}
+            </h3>
+          </div>
+          <Separator />
+          <TabsList className="grid w-full grid-cols-2 bg-background">
+            <TabsTrigger
+              value="uniforms"
+              className="flex items-center justify-center"
+            >
+              <span className="font-mono text-xs uppercase tracking-widest">
+                Uniforms
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="common"
+              className="flex items-center justify-center"
+            >
+              <span className="font-mono text-xs uppercase tracking-widest">
+                Common
+              </span>
+            </TabsTrigger>
+          </TabsList>
+          <Separator />
+          <TabsContent value="uniforms" className="p-0">
+            <Form {...form}>
+              <form className="flex flex-col gap-1.5 px-1.5 py-1.5">
+                {Object.entries(data.uniforms)
+                  .filter(([property]) => property !== "u_texture")
+                  .map(([property]) => (
+                    <InspectorFormField
+                      key={property}
+                      label={property}
+                      control={form.control}
+                      parentSchema={$TextureUniforms}
+                      name={
+                        property as FieldPath<z.infer<typeof $TextureUniforms>>
+                      }
+                      onValueChange={(value) =>
+                        handleUpdate(property as keyof TextureUniforms, value)
+                      }
+                    />
+                  ))}
+              </form>
+            </Form>
+          </TabsContent>
+
+          <TabsContent value="common">
+            <div className="flex flex-col gap-1.5 px-1.5 py-1.5">
+              <div className="flex items-center justify-between">
+                <h2 className="font-mono text-xs font-bold uppercase tracking-widest">
+                  Resolution
+                </h2>
+              </div>
+            </div>
+          </TabsContent>
         </div>
-        <Separator />
-        <Form {...form}>
-          <form className="flex flex-col space-y-4 py-4">
-            {Object.entries(data.uniforms)
-              .filter(([property]) => property !== "u_texture")
-              .map(([property]) => (
-                <InspectorFormField
-                  key={property}
-                  label={property}
-                  control={form.control}
-                  parentSchema={$TextureUniforms}
-                  name={property as FieldPath<z.infer<typeof $TextureUniforms>>}
-                  onValueChange={(value) =>
-                    handleUpdate(property as keyof TextureUniforms, value)
-                  }
-                />
-              ))}
-          </form>
-        </Form>
-      </div>
+      </Tabs>
     </InspectorBase>
   );
 };

@@ -21,7 +21,7 @@ import { GeometryMap } from "../webgl/webgl-globals";
 import { WebGLView } from "../webgl/webgl-primitives";
 
 export const TextureNode = memo(
-  ({ id, type, selected, isConnectable }: NodeProps<BaseNode>) => {
+  ({ id, type, selected }: NodeProps<BaseNode>) => {
     const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
     const { targets } = useTextureRenderStore((state) => state);
     const setSelected = useInspectorStore((state) => state.setSelected);
@@ -37,7 +37,7 @@ export const TextureNode = memo(
         <div
           key={id}
           className={cn(
-            `relative cursor-pointer flex-col gap-1 border p-1 text-card-foreground shadow-sm`,
+            `relative cursor-pointer flex-col gap-1 p-1 text-card-foreground shadow-sm`,
           )}
         >
           <div className="flex flex-row items-center justify-between">
@@ -83,7 +83,10 @@ export const TextureNode = memo(
                     height: "100%",
                   }}
                 >
-                  <mesh geometry={GeometryMap[$GeometryType.Enum.plane]}>
+                  <mesh
+                    geometry={GeometryMap[$GeometryType.Enum.plane]}
+                    scale={3}
+                  >
                     <meshBasicMaterial map={targets[id].texture} />
                   </mesh>
                 </WebGLView>

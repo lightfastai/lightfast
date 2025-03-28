@@ -3,7 +3,6 @@ import {
   createTRPCContext,
   createTRPCRouter,
   protectedProcedure,
-  protectedTenantProcedure,
   publicProcedure,
 } from "./trpc";
 
@@ -12,6 +11,6 @@ export {
   createTRPCContext,
   createTRPCRouter,
   publicProcedure,
-  protectedProcedure,
-  protectedTenantProcedure,
+  protectedProcedure as protectedProcedure,
+  protectedProcedure as protectedTenantProcedure,
 };

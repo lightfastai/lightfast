@@ -5,7 +5,11 @@ import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
 
+import type { Geometry } from "../types/Geometry";
+import type { Material } from "../types/Material";
 import type { NodePosition } from "../types/NodePosition";
+import type { Texture } from "../types/Texture";
+import type { Txt2Img } from "../types/Txt2Img";
 import { $Geometry } from "../types/Geometry";
 import { $Material } from "../types/Material";
 import { $NodeType } from "../types/Node";
@@ -27,7 +31,10 @@ export const Node = pgTable("node", (t) => ({
     .references(() => Workspace.id, { onDelete: "cascade" }),
   type: t.varchar({ length: 50 }).notNull(),
   position: t.json().notNull().$type<NodePosition>(),
-  data: t.json().notNull(),
+  data: t
+    .json()
+    .notNull()
+    .$type<Geometry | Material | Texture | Txt2Img | Window>(),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp(),
 }));
