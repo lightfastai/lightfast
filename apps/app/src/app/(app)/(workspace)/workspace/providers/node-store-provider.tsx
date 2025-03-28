@@ -5,8 +5,8 @@ import { createContext, useContext, useRef } from "react";
 import { useStore } from "zustand";
 
 import type { NodeStore } from "../stores/node-store";
-import { createNodeStore } from "../stores/node-store";
 import type { BaseNode } from "../types/node";
+import { createNodeStore } from "../stores/node-store";
 
 export type NodeStoreApi = ReturnType<typeof createNodeStore>;
 

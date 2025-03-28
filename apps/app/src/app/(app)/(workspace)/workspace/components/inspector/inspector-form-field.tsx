@@ -4,8 +4,8 @@ import type {
   FieldValues,
   Path,
 } from "react-hook-form";
-import { memo, useCallback, useMemo } from "react";
 import type { z } from "zod";
+import { memo, useCallback, useMemo } from "react";
 
 import type { Value } from "@repo/webgl";
 import {

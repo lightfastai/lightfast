@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { cn } from "@repo/ui/lib/utils";
 import type { NavItemWithChildren } from "@repo/ui/types/nav";
+import { cn } from "@repo/ui/lib/utils";
 
 import type { SiteNav } from "~/config/site";
 
