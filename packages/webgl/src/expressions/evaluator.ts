@@ -54,13 +54,18 @@ export function evaluateUniformValue(
     let current = uniformValue;
 
     // Navigate to the nested property
-    for (let i = 0; i < parts.length - 1; i++) {
-      current = current[parts[i]];
+    for (let i = 0; i < parts.length - 1 && parts[i]; i++) {
+      const part = parts[i];
+      if (part && current) {
+        current = current[part];
+      }
     }
 
     // Update the value
     const lastPart = parts[parts.length - 1];
-    current[lastPart] = result;
+    if (current && lastPart) {
+      current[lastPart] = result;
+    }
   }
 
   return result;

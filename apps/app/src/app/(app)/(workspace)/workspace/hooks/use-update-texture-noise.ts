@@ -16,86 +16,17 @@ import type { TextureRenderNode } from "../types/render";
 import type { NoiseTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
-
-// Helper function to check if a value is a string (expression)
-const isExpression = (value: any): value is string => typeof value === "string";
-
-// Simple expression parser for time-based expressions
-// This is a basic implementation that can be expanded for more complex expressions
-const evaluateTimeExpression = (
-  expression: string | number,
-  context: { time: number; [key: string]: any },
-): number => {
-  // If it's already a number, return it directly
-  if (typeof expression === "number") {
-    return expression;
-  }
-
-  try {
-    // Replace variables with their values from context
-    let evalExpression = expression;
-    Object.entries(context).forEach(([key, value]) => {
-      evalExpression = evalExpression.replace(
-        new RegExp(`\\b${key}\\b`, "g"),
-        value.toString(),
-      );
-    });
-
-    // Use Function constructor to safely evaluate the expression
-    // This avoids using eval() directly
-    const func = new Function("return " + evalExpression);
-    return func();
-  } catch (error) {
-    console.error(
-      "Error evaluating expression:",
-      error,
-      "in expression:",
-      expression,
-    );
-    // Return a default value if evaluation fails
-    return typeof expression === "string" && expression.includes("time")
-      ? context.time * 0.1
-      : 0;
-  }
-};
-
-// Create a time context object with current time values
-const createTimeContext = (
-  elapsedTime: number,
-  deltaTime: number,
-  frameCount = 0,
-  fps = 60,
-) => {
-  // Get current time
-  const now = new Date();
-
-  return {
-    time: elapsedTime,
-    delta: deltaTime,
-
-    me: {
-      time: {
-        now: elapsedTime,
-        delta: deltaTime,
-        elapsed: elapsedTime,
-
-        frame: frameCount,
-        fps: fps,
-
-        seconds: now.getSeconds() + now.getMilliseconds() / 1000,
-        minutes: now.getMinutes(),
-        hours: now.getHours(),
-      },
-    },
-  };
-};
+import {
+  isExpression,
+  useExpressionEvaluator,
+} from "./use-expression-evaluator";
 
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
-  // Track frame count for time context
-  const frameCountRef = useRef<Record<string, number>>({});
   // Cache expressions
   const expressionsRef = useRef<Record<string, Record<string, string>>>({});
+  // Use the shared expression evaluator
+  const { updateShaderUniforms } = useExpressionEvaluator();
 
   const queries = api.useQueries((t) =>
     Object.entries(targets).map(([id, texture]) =>
@@ -126,10 +57,8 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
       .map(([id, texture]) => {
         const { uniforms: u } = texture;
 
-        // Initialize or reset expressions cache for this ID
-        if (!expressionsRef.current[id]) {
-          expressionsRef.current[id] = {};
-        }
+        // Ensure expressions cache exists for this ID
+        expressionsRef.current[id] = expressionsRef.current[id] || {};
 
         // Store all expressions for this node
         const storeExpression = (key: string, value: any) => {
@@ -138,8 +67,6 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
           }
         };
 
-        // Store expressions for all potential expression fields
-        storeExpression("timeExpression", u.timeExpression);
         storeExpression("u_period", u.u_period);
         storeExpression("u_harmonic_gain", u.u_harmonic_gain);
         storeExpression("u_harmonic_spread", u.u_harmonic_spread);
@@ -202,11 +129,6 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
           },
         };
 
-        // Initialize frame count for this node if not exists
-        if (frameCountRef.current[id] === undefined) {
-          frameCountRef.current[id] = 0;
-        }
-
         const shader = new THREE.ShaderMaterial({
           vertexShader: baseVertexShader,
           fragmentShader: perlinNoise3DFragmentShader,
@@ -217,72 +139,23 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
           id,
           shader,
           onEachFrame: (state: WebGLRootState) => {
-            // Increment frame count for this node
-            frameCountRef.current[id] = (frameCountRef.current[id] || 0) + 1;
-
-            // Create time context with all available time data
-            const timeContext = createTimeContext(
-              state.clock.elapsedTime,
-              state.clock.getDelta(),
-              frameCountRef.current[id],
-              state.frameloop === "always" ? 60 : 0, // Basic FPS estimate
-            );
-
-            // Evaluate and update all expressions
+            // Get expressions for this node
             const expressions = expressionsRef.current[id] || {};
 
-            // Helper to evaluate and update a uniform
-            const updateUniform = (
-              uniformName: string,
-              expressionKey: string,
-            ) => {
-              const expr = expressions[expressionKey];
-              if (expr && shader.uniforms[uniformName]) {
-                const value = evaluateTimeExpression(expr, timeContext);
-                shader.uniforms[uniformName].value = value;
-              }
+            // Define mapping for vector uniform components
+            const uniformPathMap = {
+              "u_scale.x": { pathToValue: "u_scale.value.x" },
+              "u_scale.y": { pathToValue: "u_scale.value.y" },
+              "u_translate.x": { pathToValue: "u_translate.value.x" },
+              "u_translate.y": { pathToValue: "u_translate.value.y" },
+              "u_rotation.x": { pathToValue: "u_rotation.value.x" },
+              "u_rotation.y": { pathToValue: "u_rotation.value.y" },
             };
 
-            // Helper to update vector uniform components
-            const updateVectorUniform = (
-              uniformName: string,
-              component: "x" | "y",
-              expressionKey: string,
-            ) => {
-              const expr = expressions[expressionKey];
-              if (expr && shader.uniforms[uniformName]) {
-                const value = evaluateTimeExpression(expr, timeContext);
-                shader.uniforms[uniformName].value[component] = value;
-              }
-            };
-
-            // Update time uniform
-            if (shader.uniforms.time) {
-              // Always evaluate timeExpression
-              const expr = expressions.timeExpression || "time * 0.1";
-              shader.uniforms.time.value = evaluateTimeExpression(
-                expr,
-                timeContext,
-              );
-            }
-
-            // Update scalar uniforms
-            updateUniform("u_period", "u_period");
-            updateUniform("u_harmonic_gain", "u_harmonic_gain");
-            updateUniform("u_harmonic_spread", "u_harmonic_spread");
-            updateUniform("u_amplitude", "u_amplitude");
-            updateUniform("u_offset", "u_offset");
-            updateUniform("u_exponent", "u_exponent");
-
-            // Update vector uniforms
-            updateVectorUniform("u_scale", "x", "u_scale.x");
-            updateVectorUniform("u_scale", "y", "u_scale.y");
-            updateVectorUniform("u_translate", "x", "u_translate.x");
-            updateVectorUniform("u_translate", "y", "u_translate.y");
-            updateVectorUniform("u_rotation", "x", "u_rotation.x");
-            updateVectorUniform("u_rotation", "y", "u_rotation.y");
+            // Use the shared uniform update utility
+            updateShaderUniforms(state, shader, expressions, uniformPathMap);
           },
         };
       });
-  }, [queries, targets]);
+  }, [queries, targets, updateShaderUniforms]);
 };

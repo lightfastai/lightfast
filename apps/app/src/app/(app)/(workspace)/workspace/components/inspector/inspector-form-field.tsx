@@ -23,6 +23,8 @@ import {
   isVec3,
 } from "@repo/webgl";
 
+import { ExpressionInput } from "../ui/expression-input";
+import { ExpressionVector2Input } from "../ui/expression-vector2-input";
 import {
   extractUniformName,
   extractValueFieldMetadata,
@@ -31,9 +33,7 @@ import {
 } from "./utils";
 import { BooleanInput } from "./value/boolean-input";
 import { ColorPickerField } from "./value/color-picker-field";
-import { NumberInput } from "./value/number-input";
 import { StringInput } from "./value/string-input";
-import { Vec2Input } from "./value/vec2-input";
 import { Vec3Input } from "./value/vec3-input";
 
 interface InspectorFormFieldProps<T extends FieldValues> {
@@ -75,22 +75,34 @@ const InspectorFormFieldComponent = <T extends FieldValues>({
 
   const renderField = useCallback(
     (field: ControllerRenderProps<T, Path<T>>) => {
-      if (isNumber(field.value)) {
+      // Handle numeric values - now supports both numbers and string expressions
+      if (isNumber(field.value) || typeof field.value === "string") {
         return (
-          <NumberInput
-            field={field}
-            metadata={numberMetadata}
-            onValueChange={onValueChange}
+          <ExpressionInput
+            value={field.value}
+            onChange={(value) => {
+              field.onChange(value);
+              onValueChange(value);
+            }}
+            min={numberMetadata.min}
+            max={numberMetadata.max}
+            step={numberMetadata.step || 0.01}
           />
         );
       }
 
+      // Handle Vec2 values - now supports expressions in each component
       if (isVec2(field.value)) {
         return (
-          <Vec2Input
-            field={field}
-            metadata={vec2Metadata}
-            onValueChange={onValueChange}
+          <ExpressionVector2Input
+            value={field.value}
+            onChange={(value) => {
+              field.onChange(value);
+              onValueChange(value);
+            }}
+            min={vec2Metadata.min}
+            max={vec2Metadata.max}
+            step={vec2Metadata.step || 0.01}
           />
         );
       }

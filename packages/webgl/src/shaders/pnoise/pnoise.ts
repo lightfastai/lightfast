@@ -46,8 +46,6 @@ export const $NoiseBase = z.object({
   u_exponent: $ExpressionOrNumber
     .default(0.63)
     .describe("The exponent of the noise."),
-  // Keep timeExpression for backward compatibility
-  timeExpression: $TimeExpression,
 });
 
 export const $NoiseTransform = z.object({
