@@ -5,6 +5,14 @@ import zodToJsonSchema from "zod-to-json-schema";
 import { createConstrainedVec2 } from "../../schema/vec2";
 import { $Shared } from "../shared/schema";
 
+// Define the time expression type for animation
+export const $TimeExpression = z
+  .string()
+  .default("time * 0.1")
+  .describe(
+    "Expression for time-based animation. Supports variables like 'time', 'me.time.now', 'me.time.delta'. Example: 'time * 0.1' or 'Math.sin(me.time.now * 0.5) * 0.2'",
+  );
+
 export const $NoiseBase = z.object({
   u_period: z
     .number()
@@ -53,12 +61,8 @@ export const $NoiseBase = z.object({
     .max(3.0)
     .default(0.63)
     .describe("The exponent of the noise."),
-  u_time_scale: z
-    .number()
-    .min(0.0)
-    .max(1.0)
-    .default(0.1)
-    .describe("Scale factor for time animation"),
+  // Replace u_time_scale with timeExpression
+  timeExpression: $TimeExpression,
 });
 
 export const $NoiseTransform = z.object({
@@ -83,7 +87,7 @@ export const u_harmonics = zodToJsonSchema($PerlinNoise3D) as JSONSchema7;
 export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
 
 export const PerlinNoise3DDescription =
-  "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture with time-based animation.";
+  "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture with time-based animation. Use timeExpression to control how time affects the animation.";
 
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return $PerlinNoise3D.parse({
@@ -94,7 +98,7 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_amplitude: 0.84,
     u_offset: 0.412,
     u_exponent: 0.63,
-    u_time_scale: 0.1,
+    timeExpression: "time * 0.1", // Default time expression
     u_scale: { x: 1, y: 1 },
     u_translate: { x: 0, y: 0 },
     u_rotation: { x: 0, y: 0 },
@@ -116,7 +120,7 @@ uniform float u_harmonic_gain;
 uniform float u_exponent;
 uniform float u_amplitude;
 uniform float u_offset;
-uniform float u_time_scale;
+// Removed u_time_scale since we'll compute z-coord dynamically
 
 uniform vec2 u_scale;
 uniform vec2 u_rotation;
@@ -218,8 +222,9 @@ void main() {
     // Initialize result
     float noise = 0.0;
     
-    // Use time for z-coordinate (animation)
-    float zCoord = time * u_time_scale;
+    // Use time directly for z-coordinate
+    // The time expression is evaluated in JavaScript and passed as 'time'
+    float zCoord = time;
     
     // Base noise calculation with time
     vec3 coords = vec3(uv * baseFreq, zCoord);
