@@ -9,6 +9,12 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
@@ -34,11 +40,11 @@ const getTextureInputs = (textureType: string): number => {
 // Get input labels for each texture type and position
 const getInputLabel = (textureType: string, inputIndex: number): string => {
   if (textureType === $TextureTypes.enum.Displace) {
-    return inputIndex === 0 ? "src" : "map";
+    return inputIndex === 0 ? "Source Image" : "Displacement Map";
   } else if (textureType === $TextureTypes.enum.Add) {
-    return inputIndex === 0 ? "A" : "B";
+    return inputIndex === 0 ? "Input A" : "Input B";
   }
-  return `in${inputIndex + 1}`;
+  return `Input ${inputIndex + 1}`;
 };
 
 export const TextureNode = memo(
@@ -107,27 +113,46 @@ export const TextureNode = memo(
                             : "my-auto",
                       )}
                     >
-                      <Handle
-                        id={`input-${index + 1}`}
-                        type="target"
-                        position={Position.Left}
-                        className="h-10 w-3"
-                        style={{ top: `${topPercentage}%` }}
-                      />
-                      <div className="ml-1 text-xs">
-                        {getInputLabel(data.type, index)}
-                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <Handle
+                                id={`input-${index + 1}`}
+                                type="target"
+                                position={Position.Left}
+                                className="h-10 w-3"
+                                style={{ top: `${topPercentage}%` }}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            {getInputLabel(data.type, index)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   );
                 })
               ) : (
                 // For nodes with a single input, center it
-                <Handle
-                  id="input-1"
-                  type="target"
-                  position={Position.Left}
-                  className="h-10 w-3"
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Handle
+                          id="input-1"
+                          type="target"
+                          position={Position.Left}
+                          className="h-10 w-3"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      {getInputLabel(data.type, 0)}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
 
@@ -153,12 +178,21 @@ export const TextureNode = memo(
             </div>
 
             <div className="flex items-center justify-center">
-              <Handle
-                id="output"
-                type="source"
-                position={Position.Right}
-                className="h-10 w-3"
-              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Handle
+                        id="output"
+                        type="source"
+                        position={Position.Right}
+                        className="h-10 w-3"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Output</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         </div>

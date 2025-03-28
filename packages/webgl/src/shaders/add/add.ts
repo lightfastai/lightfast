@@ -6,6 +6,10 @@ import { $Shared } from "../shared/schema";
 
 export const $Add = $Shared.merge(
   z.object({
+    u_texture: z
+      .number()
+      .nullable()
+      .describe("Legacy field for backward compatibility"),
     u_texture1: z.number().nullable().describe("The first input texture (A)"),
     u_texture2: z.number().nullable().describe("The second input texture (B)"),
     u_addValue: z
@@ -30,6 +34,7 @@ export const AddDescription =
 
 export const createDefaultAdd = (): AddParams => {
   return $Add.parse({
+    u_texture: null,
     u_texture1: null,
     u_texture2: null,
     u_addValue: 0.0,
