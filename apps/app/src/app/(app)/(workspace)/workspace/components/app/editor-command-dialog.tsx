@@ -141,6 +141,32 @@ export const EditorCommandDialog = () => {
         <CommandInput placeholder="Search a TOP..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup heading="TOP">
+            <CommandItem
+              onSelect={() => handleTextureSelect($TextureTypes.Enum.Noise)}
+              className="flex items-center gap-2"
+            >
+              <Label>Noise</Label>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleTextureSelect($TextureTypes.Enum.Limit)}
+              className="flex items-center gap-2"
+            >
+              <Label>Limit</Label>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleTextureSelect($TextureTypes.Enum.Displace)}
+              className="flex items-center gap-2"
+            >
+              <Label>Displace</Label>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleTextureSelect($TextureTypes.Enum.Add)}
+              className="flex items-center gap-2"
+            >
+              <Label>Add</Label>
+            </CommandItem>
+          </CommandGroup>
           <CommandGroup heading="WebGL Geometry">
             <CommandItem
               onSelect={() => handleGeometrySelect($GeometryType.Enum.box)}
@@ -186,20 +212,7 @@ export const EditorCommandDialog = () => {
               <Label>Phong</Label>
             </CommandItem>
           </CommandGroup>
-          <CommandGroup heading="TOP">
-            <CommandItem
-              onSelect={() => handleTextureSelect($TextureTypes.Enum.Noise)}
-              className="flex items-center gap-2"
-            >
-              <Label>Noise</Label>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleTextureSelect($TextureTypes.Enum.Limit)}
-              className="flex items-center gap-2"
-            >
-              <Label>Limit</Label>
-            </CommandItem>
-          </CommandGroup>
+
           <CommandGroup heading="AI">
             <CommandItem
               onSelect={() => handleFluxSelect($Txt2ImgType.Enum["flux/dev"])}

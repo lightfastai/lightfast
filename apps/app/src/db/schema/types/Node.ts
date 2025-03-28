@@ -22,7 +22,23 @@ export const $NodeTypeMaxTargetEdges = z.object({
 export type NodeTypeMaxTargetEdges = z.infer<typeof $NodeTypeMaxTargetEdges>;
 
 // Helper function to get max edges for a node type
-export const getMaxTargetEdges = (nodeType: NodeType): number => {
+export const getMaxTargetEdges = (
+  nodeType: NodeType,
+  nodeData?: any,
+): number => {
+  // Special case for texture nodes that need multiple inputs
+  if (nodeType === "texture" && nodeData?.type) {
+    // Check texture subtypes that need multiple inputs
+    switch (nodeData.type) {
+      case "Displace":
+        return 2; // Source image and displacement map
+      case "Add":
+        return 2; // Two input textures to add together
+      default:
+        return 1; // Default for other texture nodes
+    }
+  }
+
   return $NodeTypeMaxTargetEdges.parse({
     geometry: 1,
     material: 0,

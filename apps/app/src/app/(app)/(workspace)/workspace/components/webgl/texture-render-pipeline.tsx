@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef } from "react";
 
 import { $GeometryType } from "~/db/schema/types";
 import { useRenderTargetPipeline } from "../../hooks/use-texture-render-pipeline";
+import { useUpdateTextureAdd } from "../../hooks/use-update-texture-add";
+import { useUpdateTextureDisplace } from "../../hooks/use-update-texture-displace";
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
 import { useUpdateTextureNoise } from "../../hooks/use-update-texture-noise";
 import { GeometryMap } from "./webgl-globals";
@@ -14,12 +16,16 @@ export const TextureRenderPipeline = () => {
   const meshRefs = useRef<Record<string, THREE.Mesh>>({});
   const noiseNodes = useUpdateTextureNoise();
   const limitNodes = useUpdateTextureLimit();
+  const displaceNodes = useUpdateTextureDisplace();
+  const addNodes = useUpdateTextureAdd();
 
   // clean up unused meshes
   useEffect(() => {
     const currentNodeIds = new Set([
       ...noiseNodes.map((node) => node.id),
       ...limitNodes.map((node) => node.id),
+      ...displaceNodes.map((node) => node.id),
+      ...addNodes.map((node) => node.id),
     ]);
 
     Object.keys(meshRefs.current).forEach((id) => {
@@ -27,18 +33,17 @@ export const TextureRenderPipeline = () => {
         delete meshRefs.current[id];
       }
     });
-  }, [noiseNodes, limitNodes]);
+  }, [noiseNodes, limitNodes, displaceNodes, addNodes]);
 
   // update uniforms
   const updates = useMemo(
     () =>
       Object.fromEntries(
-        [...noiseNodes, ...limitNodes].map((node) => [
-          node.id,
-          node.onEachFrame,
-        ]),
+        [...noiseNodes, ...limitNodes, ...displaceNodes, ...addNodes].map(
+          (node) => [node.id, node.onEachFrame],
+        ),
       ),
-    [noiseNodes, limitNodes],
+    [noiseNodes, limitNodes, displaceNodes, addNodes],
   );
 
   const { scene } = useRenderTargetPipeline({
@@ -62,6 +67,28 @@ export const TextureRenderPipeline = () => {
             </mesh>
           ))}
           {limitNodes.map(({ shader, id }) => (
+            <mesh
+              key={id}
+              geometry={GeometryMap[$GeometryType.Enum.plane]}
+              ref={(ref) => {
+                if (ref) meshRefs.current[id] = ref;
+              }}
+            >
+              <primitive object={shader} />
+            </mesh>
+          ))}
+          {displaceNodes.map(({ shader, id }) => (
+            <mesh
+              key={id}
+              geometry={GeometryMap[$GeometryType.Enum.plane]}
+              ref={(ref) => {
+                if (ref) meshRefs.current[id] = ref;
+              }}
+            >
+              <primitive object={shader} />
+            </mesh>
+          ))}
+          {addNodes.map(({ shader, id }) => (
             <mesh
               key={id}
               geometry={GeometryMap[$GeometryType.Enum.plane]}

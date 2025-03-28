@@ -2,6 +2,7 @@ import { useCallback } from "react";
 
 import { toast } from "@repo/ui/hooks/use-toast";
 
+import type { NodeType } from "~/db/schema/types/Node";
 import { getMaxTargetEdges } from "~/db/schema/types";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
@@ -89,11 +90,14 @@ export const useEdgeValidation = () => {
       const { allowance = 0 } = opts;
       const targetNode = nodes.find((n) => n.id === target);
       if (!targetNode) return false;
-      const maxEdges = getMaxTargetEdges(targetNode.type);
+      const maxEdges = getMaxTargetEdges(
+        targetNode.type as NodeType,
+        targetNode.data,
+      );
       const currentEdgeCount = edges.filter(
         (edge) => edge.target === target,
       ).length;
-      if (currentEdgeCount - allowance > maxEdges) {
+      if (currentEdgeCount - allowance >= maxEdges) {
         toast({
           variant: "destructive",
           description: `${targetNode.type} nodes cannot accept more than ${maxEdges} incoming connections.`,

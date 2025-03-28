@@ -84,7 +84,10 @@ export const edgeRouter = {
         const { count } = edgeCount;
 
         // 3. Get max allowed edges for this node type
-        const maxEdges = getMaxTargetEdges(targetNode.type as NodeType);
+        const maxEdges = getMaxTargetEdges(
+          targetNode.type as NodeType,
+          targetNode.data,
+        );
 
         // 4. Validate edge constraint
         if (count >= maxEdges) {
@@ -175,7 +178,10 @@ export const edgeRouter = {
         const { count } = edgeCount;
 
         // 3. Get max allowed edges for this node type
-        const maxEdges = getMaxTargetEdges(targetNode.type as NodeType);
+        const maxEdges = getMaxTargetEdges(
+          targetNode.type as NodeType,
+          targetNode.data,
+        );
 
         // 4. Get the old edge to check if we're targeting the same node
         const [oldEdge] = await tx

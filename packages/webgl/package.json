@@ -27,6 +27,14 @@
     "./schema/color": {
       "types": "./dist/schema/color.d.ts",
       "default": "./src/schema/color.ts"
+    },
+    "./shaders/add": {
+      "types": "./dist/shaders/add/add.d.ts",
+      "default": "./src/shaders/add/add.ts"
+    },
+    "./shaders/displace": {
+      "types": "./dist/shaders/displace/displace.d.ts",
+      "default": "./src/shaders/displace/displace.ts"
     }
   },
   "license": "MIT",

@@ -1,6 +1,12 @@
 import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 
+import { $Add, $AddJsonSchema, AddDescription } from "./shaders/add/add";
+import {
+  $Displace,
+  $DisplaceJsonSchema,
+  DisplaceDescription,
+} from "./shaders/displace/displace";
 import { $Limit } from "./shaders/limit/limit";
 import {
   $PerlinNoise3D,
@@ -39,15 +45,40 @@ export {
 } from "./shaders/limit/limit";
 
 /**
+ * displace modules
+ */
+export type { DisplaceParams } from "./shaders/displace/displace";
+export {
+  $Displace,
+  $DisplaceJsonSchema,
+  createDefaultDisplace,
+  DisplaceDescription,
+} from "./shaders/displace/displace";
+
+/**
+ * add modules
+ */
+export type { AddParams } from "./shaders/add/add";
+export {
+  $Add,
+  $AddJsonSchema,
+  createDefaultAdd,
+  AddDescription,
+} from "./shaders/add/add";
+
+/**
  * Shared texture uniforms type
  */
-export const $TextureUniforms = $PerlinNoise3D.merge($Limit);
+export const $TextureUniforms = $PerlinNoise3D
+  .merge($Limit)
+  .merge($Displace)
+  .merge($Add);
 export type TextureUniforms = z.infer<typeof $TextureUniforms>;
 
 /**
  * Texture type
  */
-export const $TextureType = z.enum(["Noise", "Limit"]);
+export const $TextureType = z.enum(["Noise", "Limit", "Displace", "Add"]);
 export type TextureType = z.infer<typeof $TextureType>;
 
 /** Build JSON Schema for Texture System */
@@ -63,6 +94,20 @@ export const $TextureSystemJsonSchema = {
         uniforms: u_harmonics,
         // vertexShader: perlinNoise3DVertexShader,
         // fragmentShader: perlinNoise3DFragmentShader,
+      },
+    },
+    {
+      title: $TextureType.Values.Displace,
+      description: DisplaceDescription,
+      properties: {
+        uniforms: $DisplaceJsonSchema,
+      },
+    },
+    {
+      title: $TextureType.Values.Add,
+      description: AddDescription,
+      properties: {
+        uniforms: $AddJsonSchema,
       },
     },
     // {

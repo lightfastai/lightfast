@@ -9,9 +9,19 @@
  */
 
 -- Defines the maximum number of incoming edges each node type can receive
-CREATE OR REPLACE FUNCTION get_max_target_edges(node_type TEXT) 
+CREATE OR REPLACE FUNCTION get_max_target_edges(node_type TEXT, node_data JSONB DEFAULT NULL) 
 RETURNS INTEGER AS $$
 BEGIN
+  -- First check for texture subtypes that need multiple inputs
+  IF node_type = 'texture' AND node_data IS NOT NULL THEN
+    IF node_data->>'type' = 'Displace' THEN
+      RETURN 2; -- Displace nodes need 2 inputs
+    ELSIF node_data->>'type' = 'Add' THEN
+      RETURN 2; -- Add nodes need 2 inputs
+    END IF;
+  END IF;
+
+  -- Fall back to basic type rules
   RETURN CASE node_type
     -- Geometry nodes can only receive 1 input (e.g., from another geometry operation)
     WHEN 'geometry' THEN 1
@@ -19,8 +29,10 @@ BEGIN
     WHEN 'material' THEN 0
     -- Texture nodes can only receive 1 input (e.g., from a transformation)
     WHEN 'texture' THEN 1
-    -- Window nodes cannot receive any inputs
-    WHEN 'window' THEN 0
+    -- AI nodes cannot receive inputs
+    WHEN 'flux' THEN 0
+    -- Window nodes can receive one input
+    WHEN 'window' THEN 1
     -- Default to 0 for safety with unknown node types
     ELSE 0
   END;
@@ -35,6 +47,7 @@ DECLARE
   max_edges INTEGER;
   current_edges INTEGER;
   node_type TEXT;
+  node_data JSONB;
   target_id VARCHAR;
 BEGIN
   -- Figure out which node we're connecting to
@@ -44,8 +57,8 @@ BEGIN
     target_id := NEW."target";
   END IF;
 
-  -- Look up the type of node we're connecting to
-  SELECT "type" INTO node_type 
+  -- Look up the type and data of node we're connecting to
+  SELECT "type", "data" INTO node_type, node_data
   FROM "node" 
   WHERE "id" = target_id;
 
@@ -54,8 +67,8 @@ BEGIN
     RAISE EXCEPTION 'Node type not found for target ID %', target_id;
   END IF;
 
-  -- Get the maximum allowed connections for this type
-  SELECT get_max_target_edges(node_type) INTO max_edges;
+  -- Get the maximum allowed connections for this type and data
+  SELECT get_max_target_edges(node_type, node_data) INTO max_edges;
 
   -- Count how many connections this node already has
   SELECT COUNT(*) INTO current_edges 

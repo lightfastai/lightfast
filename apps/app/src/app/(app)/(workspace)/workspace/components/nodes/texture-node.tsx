@@ -13,18 +13,42 @@ import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
 import type { Texture } from "~/db/schema/types";
-import { $GeometryType } from "~/db/schema/types";
+import { $GeometryType, $TextureTypes } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 import { GeometryMap } from "../webgl/webgl-globals";
 import { WebGLView } from "../webgl/webgl-primitives";
 
+// Get number of inputs needed for each texture type
+const getTextureInputs = (textureType: string): number => {
+  switch (textureType) {
+    case $TextureTypes.enum.Displace:
+    case $TextureTypes.enum.Add:
+      return 2;
+    default:
+      return 1;
+  }
+};
+
+// Get input labels for each texture type and position
+const getInputLabel = (textureType: string, inputIndex: number): string => {
+  if (textureType === $TextureTypes.enum.Displace) {
+    return inputIndex === 0 ? "src" : "map";
+  } else if (textureType === $TextureTypes.enum.Add) {
+    return inputIndex === 0 ? "A" : "B";
+  }
+  return `in${inputIndex + 1}`;
+};
+
 export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
     const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
     const { targets } = useTextureRenderStore((state) => state);
     const setSelected = useInspectorStore((state) => state.setSelected);
+
+    // Determine how many inputs this texture node needs
+    const inputCount = getTextureInputs(data.type);
 
     return (
       <BaseNodeComponent
@@ -64,12 +88,47 @@ export const TextureNode = memo(
             </ToggleGroup>
           </div>
           <div className="mt-1 flex flex-row gap-1">
-            <div className="flex items-center justify-center">
-              <Handle
-                type="target"
-                position={Position.Left}
-                className="h-10 w-3"
-              />
+            <div className="flex h-full flex-col items-center justify-center">
+              {inputCount > 1 ? (
+                // For nodes with multiple inputs, create spaced handles
+                Array.from({ length: inputCount }).map((_, index) => {
+                  const topPercentage = (index / (inputCount - 1)) * 100;
+                  const isFirst = index === 0;
+                  const isLast = index === inputCount - 1;
+
+                  return (
+                    <div
+                      key={`input-${index}`}
+                      className={cn(
+                        isFirst
+                          ? "mb-auto mt-2"
+                          : isLast
+                            ? "mb-2 mt-auto"
+                            : "my-auto",
+                      )}
+                    >
+                      <Handle
+                        id={`input-${index + 1}`}
+                        type="target"
+                        position={Position.Left}
+                        className="h-10 w-3"
+                        style={{ top: `${topPercentage}%` }}
+                      />
+                      <div className="ml-1 text-xs">
+                        {getInputLabel(data.type, index)}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                // For nodes with a single input, center it
+                <Handle
+                  id="input-1"
+                  type="target"
+                  position={Position.Left}
+                  className="h-10 w-3"
+                />
+              )}
             </div>
 
             <div className="h-32 w-72 border">
@@ -95,6 +154,7 @@ export const TextureNode = memo(
 
             <div className="flex items-center justify-center">
               <Handle
+                id="output"
                 type="source"
                 position={Position.Right}
                 className="h-10 w-3"
