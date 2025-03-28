@@ -26,7 +26,7 @@ export const BaseInputNumber = React.forwardRef<
       max={max}
       step={step}
       className={cn(
-        "h-auto w-full px-2 py-1 font-mono text-xs tracking-widest",
+        "h-auto w-full px-1.5 py-0.5 text-xs tracking-widest",
         className,
       )}
     />

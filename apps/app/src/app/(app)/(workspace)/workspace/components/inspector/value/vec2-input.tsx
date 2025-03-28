@@ -18,7 +18,7 @@ interface Vec2InputProps {
 export const Vec2Input = memo(
   ({ field, metadata, onValueChange }: Vec2InputProps) => {
     return (
-      <div className="grid w-full grid-cols-2 gap-2">
+      <div className="grid w-full grid-cols-2 gap-1.5">
         {["x", "y"].map((axis) => (
           <BaseInputNumber
             key={axis}

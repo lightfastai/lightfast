@@ -7,10 +7,6 @@ import { $Shared } from "../shared/schema";
 
 export const $Displace = $Shared.merge(
   z.object({
-    u_texture: z
-      .number()
-      .nullable()
-      .describe("Legacy field for backward compatibility"),
     u_texture1: z
       .number()
       .nullable()
@@ -55,7 +51,6 @@ export const DisplaceDescription =
 
 export const createDefaultDisplace = (): DisplaceParams => {
   return $Displace.parse({
-    u_texture: null,
     u_texture1: null,
     u_texture2: null,
     u_displaceWeight: 1.0,
