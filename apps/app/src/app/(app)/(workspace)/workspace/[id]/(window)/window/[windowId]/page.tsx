@@ -8,7 +8,7 @@ import { api } from "~/trpc/client/server";
 import { EdgeStoreProvider } from "../../../../providers/edge-store-provider";
 import { TextureRenderStoreProvider } from "../../../../providers/texture-render-store-provider";
 import { convertToBaseEdge, convertToBaseNode } from "../../../../types/node";
-import { FinalRenderTarget } from "./final-render-target";
+import { RenderChain } from "./render-chain";
 
 interface WindowPageProps {
   params: {
@@ -61,10 +61,7 @@ export default async function WindowPage({ params }: WindowPageProps) {
 
           <div className="h-screen w-screen border">
             <Suspense fallback={<div>Loading...</div>}>
-              <FinalRenderTarget
-                firstNodeId={windowEdge.source}
-                edges={baseEdges}
-              />
+              <RenderChain firstNodeId={windowEdge.source} edges={baseEdges} />
             </Suspense>
           </div>
         </EdgeStoreProvider>

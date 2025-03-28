@@ -8,15 +8,12 @@ import { useTextureRenderStore } from "~/app/(app)/(workspace)/workspace/provide
 import { $GeometryType } from "~/db/schema/types";
 import { GeometryMap } from "../../../../components/webgl/webgl-globals";
 
-interface FinalRenderTargetProps {
+interface RenderChainProps {
   firstNodeId: string;
   edges: BaseEdge[];
 }
 
-export function FinalRenderTarget({
-  firstNodeId,
-  edges,
-}: FinalRenderTargetProps) {
+export function RenderChain({ firstNodeId, edges }: RenderChainProps) {
   const { targets, addTarget } = useTextureRenderStore((state) => state);
 
   // Build the texture chain by walking back from the window node
@@ -58,7 +55,7 @@ export function FinalRenderTarget({
         height: "100%",
       }}
     >
-      <mesh geometry={GeometryMap[$GeometryType.Enum.plane]}>
+      <mesh geometry={GeometryMap[$GeometryType.Enum.plane]} scale={3}>
         <meshBasicMaterial map={renderTarget.texture} />
       </mesh>
     </WebGLView>
