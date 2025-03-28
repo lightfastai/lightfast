@@ -5,11 +5,7 @@ import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
 
-import type { Geometry } from "../types/Geometry";
-import type { Material } from "../types/Material";
 import type { NodePosition } from "../types/NodePosition";
-import type { Texture } from "../types/Texture";
-import type { Txt2Img } from "../types/Txt2Img";
 import { $Geometry } from "../types/Geometry";
 import { $Material } from "../types/Material";
 import { $NodeType } from "../types/Node";
@@ -18,6 +14,13 @@ import { $Txt2Img } from "../types/Txt2Img";
 import { $Window } from "../types/Window";
 import { Edge } from "./Edge";
 import { Workspace } from "./Workspace";
+
+export const $NodeData = $Geometry
+  .or($Material)
+  .or($Texture)
+  .or($Txt2Img)
+  .or($Window);
+export type NodeData = z.infer<typeof $NodeData>;
 
 export const Node = pgTable("node", (t) => ({
   id: t
@@ -31,10 +34,7 @@ export const Node = pgTable("node", (t) => ({
     .references(() => Workspace.id, { onDelete: "cascade" }),
   type: t.varchar({ length: 50 }).notNull(),
   position: t.json().notNull().$type<NodePosition>(),
-  data: t
-    .json()
-    .notNull()
-    .$type<Geometry | Material | Texture | Txt2Img | Window>(),
+  data: t.json().notNull().$type<NodeData>(),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp(),
 }));
@@ -52,7 +52,7 @@ export const SelectNodeSchema = createSelectSchema(Node);
 export const InsertNodeSchema = z.object({
   id: z.string().nanoid().min(1).max(191),
   workspaceId: z.string().nanoid().min(1).max(191),
-  data: $Geometry.or($Material).or($Texture).or($Txt2Img).or($Window),
+  data: $NodeData,
   position: z.object({
     x: z.number(),
     y: z.number(),
