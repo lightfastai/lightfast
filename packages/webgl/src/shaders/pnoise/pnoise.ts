@@ -2,7 +2,10 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { createConstrainedVec2 } from "../../schema/vec2";
+import {
+  $ExpressionOrNumber,
+  createConstrainedExpressionVec2,
+} from "../../expressions/schema";
 import { $Shared } from "../shared/schema";
 
 // Define the time expression type for animation
@@ -14,10 +17,7 @@ export const $TimeExpression = z
   );
 
 export const $NoiseBase = z.object({
-  u_period: z
-    .number()
-    .min(0.01)
-    .max(5.0)
+  u_period: $ExpressionOrNumber
     .default(2.0)
     .describe("1/u_period is the frequency of the input of noise function"),
   u_harmonics: z
@@ -27,54 +27,39 @@ export const $NoiseBase = z.object({
     .max(8)
     .default(1)
     .describe("amount of iterations of noise."),
-  u_harmonic_gain: z
-    .number()
-    .min(0.1)
-    .max(2.0)
+  u_harmonic_gain: $ExpressionOrNumber
     .default(0.66)
     .describe(
       "how much the amplitude changes per iterations (scalar of the amplitude)",
     ),
-  u_harmonic_spread: z
-    .number()
-    .min(0.1)
-    .max(10.0)
+  u_harmonic_spread: $ExpressionOrNumber
     .default(2.0)
     .describe(
       "how much the frequency changes per iteration (scalar of the frequency)",
     ),
-  u_amplitude: z
-    .number()
-    .min(0.0)
-    .max(2.0)
+  u_amplitude: $ExpressionOrNumber
     .default(0.84)
     .describe("The overall amplitude scaling for the noise."),
-  u_offset: z
-    .number()
-    .min(0.0)
-    .max(1.0)
+  u_offset: $ExpressionOrNumber
     .default(0.412)
     .describe("The offset of the noise."),
-  u_exponent: z
-    .number()
-    .min(0.1)
-    .max(3.0)
+  u_exponent: $ExpressionOrNumber
     .default(0.63)
     .describe("The exponent of the noise."),
-  // Replace u_time_scale with timeExpression
+  // Keep timeExpression for backward compatibility
   timeExpression: $TimeExpression,
 });
 
 export const $NoiseTransform = z.object({
-  u_scale: createConstrainedVec2({
+  u_scale: createConstrainedExpressionVec2({
     x: { min: -1000, max: 1000, default: 1 },
     y: { min: -1000, max: 1000, default: 1 },
   }).describe("The scale of the noise."),
-  u_translate: createConstrainedVec2({
+  u_translate: createConstrainedExpressionVec2({
     x: { min: -1000, max: 1000, default: 0 },
     y: { min: -1000, max: 1000, default: 0 },
   }).describe("The offset of the noise."),
-  u_rotation: createConstrainedVec2({
+  u_rotation: createConstrainedExpressionVec2({
     x: { min: -Math.PI, max: Math.PI, default: 0 },
     y: { min: -Math.PI, max: Math.PI, default: 0 },
   }).describe("The rotation of the noise."),
@@ -87,7 +72,7 @@ export const u_harmonics = zodToJsonSchema($PerlinNoise3D) as JSONSchema7;
 export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
 
 export const PerlinNoise3DDescription =
-  "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture with time-based animation. Use timeExpression to control how time affects the animation.";
+  "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture with time-based animation. Use timeExpression to control how time affects the animation. You can also use expressions in any numeric field, like '2 + Math.sin(me.time.now)' for u_translate.x.";
 
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return $PerlinNoise3D.parse({
@@ -120,7 +105,6 @@ uniform float u_harmonic_gain;
 uniform float u_exponent;
 uniform float u_amplitude;
 uniform float u_offset;
-// Removed u_time_scale since we'll compute z-coord dynamically
 
 uniform vec2 u_scale;
 uniform vec2 u_rotation;

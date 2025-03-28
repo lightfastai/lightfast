@@ -14,3 +14,15 @@ export {
 
 // Export types
 export * from "./types";
+
+// Export evaluator functions
+export {
+  isExpression,
+  evaluateValue,
+  evaluateExpression,
+  evaluateUniformValue,
+  sanitizeExpression,
+} from "./evaluator";
+
+// Export schema types
+export * from "./schema";
