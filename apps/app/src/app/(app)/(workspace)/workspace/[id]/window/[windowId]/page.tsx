@@ -9,6 +9,7 @@ import { WebGLView } from "~/app/(app)/(workspace)/workspace/components/webgl/we
 import { useTextureRenderStore } from "~/app/(app)/(workspace)/workspace/providers/texture-render-store-provider";
 import { $GeometryType } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
+import { Inspector } from "../../../components/inspector/inspector";
 import { GeometryMap } from "../../../components/webgl/webgl-globals";
 
 interface WindowPageProps {
@@ -55,15 +56,15 @@ export default function WindowPage({ params }: WindowPageProps) {
         addTarget(nodeId);
       }
     });
-
-    // Add render target for the window node
-    if (!targets[params.windowId]) {
-      addTarget(params.windowId);
-    }
   }, [edges, params.windowId, targets, addTarget]);
 
-  // Get the render target for this window
-  const renderTarget = targets[params.windowId];
+  // Get the render target for the first node in the chain
+  const windowEdge = edges?.find(
+    (edge: BaseEdge) => edge.target === params.windowId,
+  );
+  const firstNodeId = windowEdge?.source;
+  const renderTarget = firstNodeId ? targets[firstNodeId] : null;
+
   if (!renderTarget) {
     return null;
   }
@@ -79,9 +80,9 @@ export default function WindowPage({ params }: WindowPageProps) {
           height: "100%",
           zIndex: 1,
         }}
+        showPerformance={true}
       >
         <TextureRenderPipeline />
-        {/* <OrthographicCamera makeDefault position={[0, 0, 1]} zoom={} /> */}
       </WebGLCanvas>
 
       <div className="h-screen w-screen border">
@@ -98,6 +99,9 @@ export default function WindowPage({ params }: WindowPageProps) {
             <meshBasicMaterial map={renderTarget.texture} />
           </mesh>
         </WebGLView>
+      </div>
+      <div className="absolute right-4 top-4">
+        <Inspector />
       </div>
     </div>
   );
