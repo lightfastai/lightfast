@@ -21,24 +21,24 @@ export {
   // Primitive types
   $Boolean,
   $Number,
+  $Float,
+  $Integer,
   $Expression,
   $String,
   type Boolean,
   type Number,
+  type Float,
+  type Integer,
   type Expression,
   type String,
 
   // Vector types
-  $Vec1,
   $Vec2,
   $Vec3,
-  type Vec1,
   type Vec2,
   type Vec3,
 
   // Vector mode specific schemas
-  $Vec1Number,
-  $Vec1Expression,
   $Vec2Number,
   $Vec2Expression,
   $Vec3Number,
@@ -50,6 +50,8 @@ export {
 
   // Value union type
   type Value,
+  type NumericValue,
+  $NumericValue,
 
   // Mode enum
   VectorMode,
@@ -63,28 +65,26 @@ export {
   // Type guards
   isBoolean,
   isNumber,
+  isFloat,
+  isInteger,
   isExpression,
   isColor,
-  isVec1,
   isVec2,
   isString,
   isVec3,
+  isNumericValue,
 
   // Mode detection
-  getVec1Mode,
   getVec2Mode,
   getVec3Mode,
 
   // Mode-specific type guards
-  isVec1Expression,
   isVec2Expression,
   isVec3Expression,
-  isVec1Number,
   isVec2Number,
   isVec3Number,
 
   // Constraint types and creators
-  createConstrainedVec1,
   createConstrainedVec2,
   createConstrainedVec3,
   type NumericValueConstraints,

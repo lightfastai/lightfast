@@ -3,7 +3,7 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import {
-  createConstrainedVec1,
+  createConstrainedNumericValue,
   createConstrainedVec2,
   VectorMode,
 } from "../../schema/schema";
@@ -18,12 +18,12 @@ export const $TimeExpression = z
   );
 
 export const $NoiseBase = z.object({
-  u_period: createConstrainedVec1({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0.001, max: 100, default: 2.0 },
-    },
-  }).describe("1/u_period is the frequency of the input of noise function"),
+  u_period: createConstrainedNumericValue({
+    min: 0.001,
+    max: 100,
+    default: 2.0,
+    description: "1/u_period is the frequency of the input of noise function",
+  }),
   u_harmonics: z
     .number()
     .int()
@@ -31,40 +31,38 @@ export const $NoiseBase = z.object({
     .max(8)
     .default(1)
     .describe("amount of iterations of noise."),
-  u_harmonic_gain: createConstrainedVec1({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0, max: 1, default: 0.66 },
-    },
-  }).describe(
-    "how much the amplitude changes per iterations (scalar of the amplitude)",
-  ),
-  u_harmonic_spread: createConstrainedVec1({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0, max: 10, default: 2.0 },
-    },
-  }).describe(
-    "how much the frequency changes per iteration (scalar of the frequency)",
-  ),
-  u_amplitude: createConstrainedVec1({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0, max: 10, default: 0.84 },
-    },
-  }).describe("The overall amplitude scaling for the noise."),
-  u_offset: createConstrainedVec1({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: -1, max: 1, default: 0.412 },
-    },
-  }).describe("The offset of the noise."),
-  u_exponent: createConstrainedVec1({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0.1, max: 10, default: 0.63 },
-    },
-  }).describe("The exponent of the noise."),
+  u_harmonic_gain: createConstrainedNumericValue({
+    min: 0,
+    max: 1,
+    default: 0.66,
+    description:
+      "how much the amplitude changes per iterations (scalar of the amplitude)",
+  }),
+  u_harmonic_spread: createConstrainedNumericValue({
+    min: 0,
+    max: 10,
+    default: 2.0,
+    description:
+      "how much the frequency changes per iteration (scalar of the frequency)",
+  }),
+  u_amplitude: createConstrainedNumericValue({
+    min: 0,
+    max: 10,
+    default: 0.84,
+    description: "The overall amplitude scaling for the noise.",
+  }),
+  u_offset: createConstrainedNumericValue({
+    min: -1,
+    max: 1,
+    default: 0.412,
+    description: "The offset of the noise.",
+  }),
+  u_exponent: createConstrainedNumericValue({
+    min: 0.1,
+    max: 10,
+    default: 0.63,
+    description: "The exponent of the noise.",
+  }),
 });
 
 export const $NoiseTransform = z.object({

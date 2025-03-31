@@ -31,6 +31,12 @@ export type String = z.infer<typeof $String>;
 export const $Boolean = z.boolean();
 export type Boolean = z.infer<typeof $Boolean>;
 
+export const $Integer = z.number().int();
+export type Integer = z.infer<typeof $Integer>;
+
+export const $Float = z.number();
+export type Float = z.infer<typeof $Float>;
+
 export const $Number = z.number();
 export type Number = z.infer<typeof $Number>;
 
@@ -42,26 +48,14 @@ export const $Expression = z
   );
 export type Expression = z.infer<typeof $Expression>;
 
-// Vec1 schemas for each mode
-export const $Vec1Number = z.object({
-  x: $Number,
-});
-
-export const $Vec1Expression = z.object({
-  x: $Expression,
-});
-
-export const $Vec1 = z.union([$Vec1Number, $Vec1Expression]);
-export type Vec1 = z.infer<typeof $Vec1>;
-
-// NumericValue is just an alias for Vec1
-export type NumericValue = Vec1;
-export const $NumericValue = $Vec1;
+// NumericValue is either a Float or Expression
+export type NumericValue = Float | Expression;
+export const $NumericValue = z.union([$Float, $Expression]);
 
 // Vec2 schemas for each mode
 export const $Vec2Number = z.object({
-  x: $Number,
-  y: $Number,
+  x: $Float,
+  y: $Float,
 });
 
 export const $Vec2Expression = z.object({
@@ -74,9 +68,9 @@ export type Vec2 = z.infer<typeof $Vec2>;
 
 // Vec3 schemas for each mode
 export const $Vec3Number = z.object({
-  x: $Number,
-  y: $Number,
-  z: $Number,
+  x: $Float,
+  y: $Float,
+  z: $Float,
 });
 
 export const $Vec3Expression = z.object({
@@ -95,12 +89,19 @@ export const $Color = z
 export type Color = z.infer<typeof $Color>;
 
 // Value type union
-// eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
-export type Value = Color | Vec1 | Vec2 | Vec3 | Boolean | String;
+export type Value = Color | NumericValue | Vec2 | Vec3 | Boolean;
 
 // Type guards
 export function isBoolean(value: unknown): value is Boolean {
   return typeof value === "boolean";
+}
+
+export function isInteger(value: unknown): value is Integer {
+  return typeof value === "number" && Number.isInteger(value);
+}
+
+export function isFloat(value: unknown): value is Float {
+  return typeof value === "number";
 }
 
 export function isNumber(value: unknown): value is Number {
@@ -121,14 +122,8 @@ export function isString(value: unknown): value is String {
 }
 
 // Vector type guards
-export function isVec1(value: unknown): value is Vec1 {
-  if (typeof value !== "object" || value === null) return false;
-  const obj = value as Record<string, unknown>;
-  return (
-    "x" in obj &&
-    (isNumber(obj.x) || isExpression(obj.x)) &&
-    !("y" in obj || "z" in obj)
-  );
+export function isNumericValue(value: unknown): value is NumericValue {
+  return isFloat(value) || isExpression(value);
 }
 
 export function isVec2(value: unknown): value is Vec2 {
@@ -138,7 +133,7 @@ export function isVec2(value: unknown): value is Vec2 {
 
   // Both components must be of the same type
   return (
-    (isNumber(obj.x) && isNumber(obj.y)) ||
+    (isFloat(obj.x) && isFloat(obj.y)) ||
     (isExpression(obj.x) && isExpression(obj.y))
   );
 }
@@ -156,10 +151,6 @@ export function isVec3(value: unknown): value is Vec3 {
 }
 
 // Vector mode detection functions
-export function getVec1Mode(vec: Vec1): VectorMode {
-  return isExpression(vec.x) ? VectorMode.Expression : VectorMode.Number;
-}
-
 export function getVec2Mode(vec: Vec2): VectorMode {
   // Since we enforce all components to be the same type, we only need to check one
   return isExpression(vec.x) ? VectorMode.Expression : VectorMode.Number;
@@ -171,20 +162,12 @@ export function getVec3Mode(vec: Vec3): VectorMode {
 }
 
 // Helper functions to check specific modes
-export function isVec1Expression(vec: Vec1): boolean {
-  return getVec1Mode(vec) === VectorMode.Expression;
-}
-
 export function isVec2Expression(vec: Vec2): boolean {
   return getVec2Mode(vec) === VectorMode.Expression;
 }
 
 export function isVec3Expression(vec: Vec3): boolean {
   return getVec3Mode(vec) === VectorMode.Expression;
-}
-
-export function isVec1Number(vec: Vec1): boolean {
-  return getVec1Mode(vec) === VectorMode.Number;
 }
 
 export function isVec2Number(vec: Vec2): boolean {
@@ -197,27 +180,31 @@ export function isVec3Number(vec: Vec3): boolean {
 
 // Constraint types
 interface NumericConstraint {
-  min: number;
-  max: number;
-  default: number | string;
+  min: Float;
+  max: Float;
+  default: Float | string;
 }
 
-interface VectorConstraints<T extends "vec1" | "vec2" | "vec3"> {
+interface VectorConstraints<T extends "vec2" | "vec3"> {
   mode: VectorMode;
-  components: T extends "vec1"
-    ? { x: NumericConstraint }
-    : T extends "vec2"
-      ? { x: NumericConstraint; y: NumericConstraint }
-      : { x: NumericConstraint; y: NumericConstraint; z: NumericConstraint };
+  components: T extends "vec2"
+    ? { x: NumericConstraint; y: NumericConstraint }
+    : { x: NumericConstraint; y: NumericConstraint; z: NumericConstraint };
+}
+
+// Numeric value constraints
+export interface NumericValueConstraints {
+  min: Float;
+  max: Float;
+  default: Float | string;
+  description?: string;
 }
 
 // Helper to validate expression values against constraints
 function validateExpressionValue(
   value: string,
-  constraint: NumericConstraint,
+  constraint: NumericValueConstraints,
 ): string {
-  // We can't validate the exact value at runtime since it's an expression,
-  // but we can add the constraints as metadata in the expression
   return createExpressionString(
     `Math.max(${constraint.min}, Math.min(${constraint.max}, ${extractExpression(value)}))`,
   );
@@ -226,37 +213,29 @@ function validateExpressionValue(
 // Helper to validate numeric values against constraints
 function validateNumericValue(
   value: number,
-  constraint: NumericConstraint,
+  constraint: NumericValueConstraints,
 ): number {
   return Math.max(constraint.min, Math.min(constraint.max, value));
 }
 
-export const createConstrainedVec1 = (
-  constraints: VectorConstraints<"vec1">,
+export const createConstrainedNumericValue = (
+  constraints: NumericValueConstraints,
 ) => {
-  if (constraints.mode === VectorMode.Expression) {
-    return $Vec1Expression.extend({
-      x: $Expression
-        .describe(
-          `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
-        )
-        .transform((val) =>
-          validateExpressionValue(val, constraints.components.x),
-        )
-        .default(
-          createExpressionString(constraints.components.x.default as string),
-        ),
-    });
+  const description =
+    constraints.description ||
+    `Value (min: ${constraints.min}, max: ${constraints.max})`;
+
+  if (typeof constraints.default === "string") {
+    return $Expression
+      .describe(description)
+      .transform((val) => validateExpressionValue(val, constraints))
+      .default(createExpressionString(constraints.default));
   }
 
-  return $Vec1Number.extend({
-    x: $Number
-      .describe(
-        `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
-      )
-      .transform((val) => validateNumericValue(val, constraints.components.x))
-      .default(constraints.components.x.default as number),
-  });
+  return $Float
+    .describe(description)
+    .transform((val) => validateNumericValue(val, constraints))
+    .default(constraints.default);
 };
 
 export const createConstrainedVec2 = (
@@ -288,13 +267,13 @@ export const createConstrainedVec2 = (
   }
 
   return $Vec2Number.extend({
-    x: $Number
+    x: $Float
       .describe(
         `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
       )
       .transform((val) => validateNumericValue(val, constraints.components.x))
       .default(constraints.components.x.default as number),
-    y: $Number
+    y: $Float
       .describe(
         `Y component (min: ${constraints.components.y.min}, max: ${constraints.components.y.max})`,
       )
@@ -342,46 +321,23 @@ export const createConstrainedVec3 = (
   }
 
   return $Vec3Number.extend({
-    x: $Number
+    x: $Float
       .describe(
         `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
       )
       .transform((val) => validateNumericValue(val, constraints.components.x))
       .default(constraints.components.x.default as number),
-    y: $Number
+    y: $Float
       .describe(
         `Y component (min: ${constraints.components.y.min}, max: ${constraints.components.y.max})`,
       )
       .transform((val) => validateNumericValue(val, constraints.components.y))
       .default(constraints.components.y.default as number),
-    z: $Number
+    z: $Float
       .describe(
         `Z component (min: ${constraints.components.z.min}, max: ${constraints.components.z.max})`,
       )
       .transform((val) => validateNumericValue(val, constraints.components.z))
       .default(constraints.components.z.default as number),
-  });
-};
-
-// Numeric value constraints
-export interface NumericValueConstraints {
-  mode: VectorMode;
-  min: number;
-  max: number;
-  default: number | string;
-}
-
-export const createConstrainedNumericValue = (
-  constraints: NumericValueConstraints,
-) => {
-  return createConstrainedVec1({
-    mode: constraints.mode,
-    components: {
-      x: {
-        min: constraints.min,
-        max: constraints.max,
-        default: constraints.default,
-      },
-    },
   });
 };

@@ -3,7 +3,7 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import {
-  createConstrainedVec1,
+  createConstrainedNumericValue,
   createConstrainedVec2,
   VectorMode,
 } from "../../schema/schema";
@@ -17,12 +17,12 @@ export const $Displace = z.object({
     .number()
     .nullable()
     .describe("The texture that contains the displacement values (map)"),
-  u_displaceWeight: createConstrainedVec1({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0, max: 10, default: 1.0 },
-    },
-  }).describe("The intensity of the displacement effect"),
+  u_displaceWeight: createConstrainedNumericValue({
+    min: 0,
+    max: 10,
+    default: 1.0,
+    description: "The intensity of the displacement effect",
+  }),
   u_displaceMidpoint: createConstrainedVec2({
     mode: VectorMode.Number,
     components: {
@@ -37,12 +37,12 @@ export const $Displace = z.object({
       y: { min: 0, max: 1, default: 0.5 },
     },
   }).describe("Additional offset for the displacement"),
-  u_displaceOffsetWeight: createConstrainedVec1({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0, max: 10, default: 0.0 },
-    },
-  }).describe("The intensity of the offset"),
+  u_displaceOffsetWeight: createConstrainedNumericValue({
+    min: 0,
+    max: 10,
+    default: 0.0,
+    description: "The intensity of the offset",
+  }),
   u_displaceUVWeight: createConstrainedVec2({
     mode: VectorMode.Number,
     components: {
