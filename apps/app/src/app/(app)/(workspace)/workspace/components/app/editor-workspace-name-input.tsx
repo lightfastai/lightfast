@@ -36,7 +36,7 @@ export const EditorWorkspaceNameInput = ({
   const form = useForm({
     schema: UpdateNameWorkspaceSchema,
     defaultValues: {
-      name: initialWorkspace.name,
+      workspaceName: initialWorkspace.name,
       id: initialWorkspace.id,
     },
   });
@@ -45,7 +45,7 @@ export const EditorWorkspaceNameInput = ({
   useEffect(() => {
     if (workspace.name !== undefined) {
       form.reset({
-        name: workspace.name,
+        workspaceName: workspace.name,
         id: initialWorkspace.id,
       });
     }
@@ -56,12 +56,12 @@ export const EditorWorkspaceNameInput = ({
     event?: React.BaseSyntheticEvent,
   ) => {
     // If values haven't changed, do nothing
-    if (data.name === workspace.name) {
+    if (data.workspaceName === workspace.name) {
       return;
     }
 
     // Submit the data
-    mutate({ id: initialWorkspace.id, name: data.name });
+    mutate({ id: initialWorkspace.id, workspaceName: data.workspaceName });
 
     // Try to blur the input without using refs
     if (event) {
@@ -71,14 +71,14 @@ export const EditorWorkspaceNameInput = ({
       // Access the input element via the event
       const formElement = event.target as HTMLFormElement;
       const inputElement = formElement.elements.namedItem(
-        "name",
+        "workspaceName",
       ) as HTMLInputElement;
       inputElement.blur();
     }
   };
 
   const onInvalid = (errors: FieldErrors<UpdateNameWorkspace>) => {
-    const nameError = errors.name?.message;
+    const nameError = errors.workspaceName?.message;
     // Show validation errors
     toast({
       title: "Invalid workspace name",
@@ -88,18 +88,18 @@ export const EditorWorkspaceNameInput = ({
   };
 
   const handleBlur = async () => {
-    const isValid = await form.trigger("name");
+    const isValid = await form.trigger("workspaceName");
 
     if (!isValid) {
       // Reset the input to previous value
       form.reset({
-        name: workspace.name ?? "",
+        workspaceName: workspace.name ?? "",
         id: initialWorkspace.id,
       });
       form.clearErrors();
       toast({
         title: "Invalid workspace name",
-        description: form.formState.errors.name?.message,
+        description: form.formState.errors.workspaceName?.message,
       });
       return;
     }
@@ -107,12 +107,12 @@ export const EditorWorkspaceNameInput = ({
     const values = form.getValues();
 
     // If values haven't changed, do nothing
-    if (values.name === workspace.name) {
+    if (values.workspaceName === workspace.name) {
       return;
     }
 
     // Submit the data
-    mutate({ id: initialWorkspace.id, name: values.name });
+    mutate({ id: initialWorkspace.id, workspaceName: values.workspaceName });
   };
 
   return (
@@ -120,15 +120,20 @@ export const EditorWorkspaceNameInput = ({
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
         <FormField
           control={form.control}
-          name="name"
+          name="workspaceName"
           render={({ field }) => (
             <FormItem>
               <FormControl>
                 <Input
-                  {...field}
+                  value={field.value}
+                  onChange={field.onChange}
+                  id="workspace-name"
+                  type="text"
+                  name={field.name}
+                  placeholder="Workspace name"
                   onBlur={handleBlur}
                   // Disable the input until the workspace data is loaded
-                  disabled={workspace.name === undefined}
+                  // disabled={workspace.name === undefined}
                   className="h-7 w-64 md:text-xs"
                 />
               </FormControl>

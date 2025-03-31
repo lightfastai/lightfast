@@ -1,6 +1,6 @@
-import type { RouterInputs } from "@dahlia/trpc";
 import { toast } from "@repo/ui/hooks/use-toast";
 
+import type { RouterInputs } from "~/trpc/server/index";
 import { api } from "~/trpc/client/react";
 
 export type WorkspaceUpdateName =
@@ -9,9 +9,11 @@ export type WorkspaceUpdateName =
 export const useWorkspaceUpdateName = () => {
   const utils = api.useUtils();
   const { mutate } = api.tenant.workspace.updateName.useMutation({
-    onSuccess: (input) => {
-      utils.tenant.workspace.getAll.invalidate();
-      utils.tenant.workspace.get.invalidate({ id: input.id });
+    onSuccess: async (input) => {
+      await Promise.all([
+        utils.tenant.workspace.getAll.invalidate(),
+        utils.tenant.workspace.get.invalidate({ id: input.id }),
+      ]);
       toast({
         title: "Workspace name updated",
       });

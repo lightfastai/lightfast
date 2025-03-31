@@ -30,7 +30,7 @@ export const WorkspaceRelations = relations(Workspace, ({ many }) => ({
 }));
 
 export const UpdateNameWorkspaceSchema = z.object({
-  name: z
+  workspaceName: z
     .string()
     .min(4, { message: "Name must be at least 4 characters long." })
     .max(64, { message: "Name must be at most 64 characters long." }),
