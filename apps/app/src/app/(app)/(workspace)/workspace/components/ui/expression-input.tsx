@@ -3,19 +3,24 @@
 import { useState } from "react";
 
 import { Input } from "@repo/ui/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@repo/ui/components/ui/radio-group";
 import { cn } from "@repo/ui/lib/utils";
+
+import type { ExpressionMode } from "./expression-mode-toggle";
+import { ExpressionModeToggle } from "./expression-mode-toggle";
 
 interface ExpressionInputProps {
   value: number | string;
   onChange: (value: number | string) => void;
-  defaultMode?: "number" | "expression";
+  defaultMode?: ExpressionMode;
   className?: string;
   placeholder?: string;
   min?: number;
   max?: number;
   step?: number;
   disabled?: boolean;
+  showModeToggle?: boolean;
+  mode?: ExpressionMode;
+  onModeChange?: (mode: ExpressionMode) => void;
 }
 
 /**
@@ -33,18 +38,32 @@ export function ExpressionInput({
   max,
   step = 0.01,
   disabled = false,
+  showModeToggle = true,
+  mode: externalMode,
+  onModeChange: externalModeChange,
 }: ExpressionInputProps) {
   // Determine if the current value is a number or an expression
   const isExpressionValue = typeof value === "string";
 
-  // Set initial mode based on value type or default
-  const [mode, setMode] = useState<"number" | "expression">(
+  // Use internal state for mode if not controlled externally
+  const [internalMode, setInternalMode] = useState<ExpressionMode>(
     isExpressionValue ? "expression" : defaultMode,
   );
 
+  // Use either external or internal mode
+  const mode = externalMode !== undefined ? externalMode : internalMode;
+
   // Handle mode change
-  const handleModeChange = (newMode: "number" | "expression") => {
-    setMode(newMode);
+  const handleModeChange = (newMode: ExpressionMode) => {
+    // Update internal state if not controlled
+    if (externalMode === undefined) {
+      setInternalMode(newMode);
+    }
+
+    // Call external handler if provided
+    if (externalModeChange) {
+      externalModeChange(newMode);
+    }
 
     // Convert the value when switching modes
     if (newMode === "number" && typeof value === "string") {
@@ -99,30 +118,19 @@ export function ExpressionInput({
   return (
     <div className="flex flex-col space-y-2">
       <div className="flex items-center space-x-2">
-        <RadioGroup
-          value={mode}
-          onValueChange={handleModeChange as any}
-          className="mr-2 flex items-center gap-1 divide-border"
-        >
-          <RadioGroupItem
-            value="number"
-            id="number-mode"
+        {showModeToggle && (
+          <ExpressionModeToggle
+            mode={mode}
+            onModeChange={handleModeChange}
             disabled={disabled}
-            className="rounded-none bg-sky-500 dark:bg-sky-500"
           />
-          <RadioGroupItem
-            value="expression"
-            id="expression-mode"
-            disabled={disabled}
-            className="rounded-none bg-orange-500 dark:bg-orange-500"
-          />
-        </RadioGroup>
+        )}
 
         <Input
           type={mode === "number" ? "number" : "text"}
           value={displayValue}
           onChange={handleValueChange}
-          className={cn("flex-1", className)}
+          className={cn("h-7 flex-1 text-xs", className)}
           placeholder={
             placeholder ??
             (mode === "expression" ? "e.g., me.time.now * 5" : "")

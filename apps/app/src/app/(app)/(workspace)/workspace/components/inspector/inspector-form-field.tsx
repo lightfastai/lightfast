@@ -93,16 +93,29 @@ const InspectorFormFieldComponent = <T extends FieldValues>({
 
       // Handle Vec2 values - now supports expressions in each component
       if (isVec2(field.value)) {
+        // Calculate a common step value (use smallest step)
+        const stepValue =
+          Math.min(vec2Metadata.x.step, vec2Metadata.y.step) || 0.01;
+
         return (
           <ExpressionVector2Input
             value={field.value}
             onChange={(value) => {
               field.onChange(value);
-              onValueChange(value);
+              // Convert any string expressions to numbers for the Value type
+              const processedValue = {
+                x:
+                  typeof value.x === "string"
+                    ? parseFloat(value.x) || 0
+                    : value.x,
+                y:
+                  typeof value.y === "string"
+                    ? parseFloat(value.y) || 0
+                    : value.y,
+              };
+              onValueChange(processedValue);
             }}
-            min={vec2Metadata.min}
-            max={vec2Metadata.max}
-            step={vec2Metadata.step || 0.01}
+            step={stepValue}
           />
         );
       }

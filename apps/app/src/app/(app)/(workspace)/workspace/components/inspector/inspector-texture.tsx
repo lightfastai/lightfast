@@ -96,12 +96,12 @@ export const InspectorTexture = ({ id }: { id: string }) => {
             </h3>
           </div>
           <Separator />
-          <TabsList className="grid w-full grid-cols-2 bg-background">
+          <TabsList className="flex h-8 w-full rounded-none bg-background">
             <TabsTrigger
               value="uniforms"
               className="flex items-center justify-center"
             >
-              <span className="font-mono text-xs uppercase tracking-widest">
+              <span className="font-mono text-xs tracking-widest">
                 Uniforms
               </span>
             </TabsTrigger>
@@ -109,9 +109,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
               value="common"
               className="flex items-center justify-center"
             >
-              <span className="font-mono text-xs uppercase tracking-widest">
-                Common
-              </span>
+              <span className="font-mono text-xs tracking-widest">Common</span>
             </TabsTrigger>
           </TabsList>
           <Separator />

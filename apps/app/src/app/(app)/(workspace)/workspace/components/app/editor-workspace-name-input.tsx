@@ -134,7 +134,7 @@ export const EditorWorkspaceNameInput = ({
                   onBlur={handleBlur}
                   // Disable the input until the workspace data is loaded
                   disabled={!workspace.name}
-                  className="h-7 w-64 md:text-xs"
+                  className="h-7 w-64 p-1.5 md:text-xs"
                 />
               </FormControl>
             </FormItem>
