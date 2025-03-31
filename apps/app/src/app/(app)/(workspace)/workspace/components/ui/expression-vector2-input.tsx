@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
+import { Input } from "@repo/ui/components/ui/input";
+
 import type { ExpressionMode } from "./expression-mode-toggle";
-import { ExpressionInput } from "./expression-input";
 import { ExpressionModeToggle } from "./expression-mode-toggle";
 
 interface ExpressionVector2Value {
@@ -43,12 +44,40 @@ export function ExpressionVector2Input({
     isExpressionMode ? "expression" : "number",
   );
 
-  const handleXChange = (newX: number | string) => {
-    onChange({ ...value, x: newX });
+  const handleXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    if (mode === "number") {
+      const numValue = parseFloat(inputValue);
+      if (!isNaN(numValue)) {
+        let constrainedValue = numValue;
+        if (min !== undefined)
+          constrainedValue = Math.max(min, constrainedValue);
+        if (max !== undefined)
+          constrainedValue = Math.min(max, constrainedValue);
+        onChange({ ...value, x: constrainedValue });
+      }
+    } else {
+      onChange({ ...value, x: inputValue });
+    }
   };
 
-  const handleYChange = (newY: number | string) => {
-    onChange({ ...value, y: newY });
+  const handleYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    if (mode === "number") {
+      const numValue = parseFloat(inputValue);
+      if (!isNaN(numValue)) {
+        let constrainedValue = numValue;
+        if (min !== undefined)
+          constrainedValue = Math.max(min, constrainedValue);
+        if (max !== undefined)
+          constrainedValue = Math.min(max, constrainedValue);
+        onChange({ ...value, y: constrainedValue });
+      }
+    } else {
+      onChange({ ...value, y: inputValue });
+    }
   };
 
   const handleModeChange = (newMode: ExpressionMode) => {
@@ -72,8 +101,23 @@ export function ExpressionVector2Input({
     onChange({ x: newX, y: newY });
   };
 
+  // Format display values based on mode
+  const displayX =
+    mode === "number" && typeof value.x === "number"
+      ? value.x
+      : mode === "expression" && typeof value.x === "string"
+        ? value.x
+        : "";
+
+  const displayY =
+    mode === "number" && typeof value.y === "number"
+      ? value.y
+      : mode === "expression" && typeof value.y === "string"
+        ? value.y
+        : "";
+
   return (
-    <div className="flex flex-row items-center gap-2">
+    <div className="flex w-full gap-1">
       <div className="mb-1">
         <ExpressionModeToggle
           mode={mode}
@@ -82,30 +126,28 @@ export function ExpressionVector2Input({
         />
       </div>
       <div className="grid grid-cols-2 gap-1">
-        <div>
-          <ExpressionInput
-            value={value.x}
-            onChange={handleXChange}
-            min={min}
-            max={max}
-            step={step}
-            disabled={disabled}
-            showModeToggle={false}
-            mode={mode}
-          />
-        </div>
-        <div>
-          <ExpressionInput
-            value={value.y}
-            onChange={handleYChange}
-            min={min}
-            max={max}
-            step={step}
-            disabled={disabled}
-            showModeToggle={false}
-            mode={mode}
-          />
-        </div>
+        <Input
+          type={mode === "number" ? "number" : "text"}
+          value={displayX}
+          onChange={handleXChange}
+          className="h-7 text-xs"
+          placeholder={mode === "expression" ? "e.g., sin(time)" : ""}
+          min={mode === "number" ? min : undefined}
+          max={mode === "number" ? max : undefined}
+          step={mode === "number" ? step : undefined}
+          disabled={disabled}
+        />
+        <Input
+          type={mode === "number" ? "number" : "text"}
+          value={displayY}
+          onChange={handleYChange}
+          className="h-7 text-xs"
+          placeholder={mode === "expression" ? "e.g., cos(time)" : ""}
+          min={mode === "number" ? min : undefined}
+          max={mode === "number" ? max : undefined}
+          step={mode === "number" ? step : undefined}
+          disabled={disabled}
+        />
       </div>
     </div>
   );

@@ -102,7 +102,8 @@ const InspectorFormFieldComponent = <T extends FieldValues>({
             value={field.value}
             onChange={(value) => {
               field.onChange(value);
-              // Convert any string expressions to numbers for the Value type
+              // Always make sure we convert string expressions to numbers for the Value type
+              // before passing to onValueChange
               const processedValue = {
                 x:
                   typeof value.x === "string"

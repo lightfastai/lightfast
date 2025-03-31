@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
+import { Input } from "@repo/ui/components/ui/input";
+
 import type { ExpressionMode } from "./expression-mode-toggle";
-import { ExpressionInput } from "./expression-input";
 import { ExpressionModeToggle } from "./expression-mode-toggle";
 
 interface ExpressionVector3Value {
@@ -50,9 +51,23 @@ export function ExpressionVector3Input({
 
   const handleValueChange = (
     axis: keyof ExpressionVector3Value,
-    newValue: number | string,
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    onChange({ ...value, [axis]: newValue });
+    const inputValue = e.target.value;
+
+    if (mode === "number") {
+      const numValue = parseFloat(inputValue);
+      if (!isNaN(numValue)) {
+        let constrainedValue = numValue;
+        if (min !== undefined)
+          constrainedValue = Math.max(min, constrainedValue);
+        if (max !== undefined)
+          constrainedValue = Math.min(max, constrainedValue);
+        onChange({ ...value, [axis]: constrainedValue });
+      }
+    } else {
+      onChange({ ...value, [axis]: inputValue });
+    }
   };
 
   const handleModeChange = (newMode: ExpressionMode) => {
@@ -83,8 +98,16 @@ export function ExpressionVector3Input({
     onChange({ x: newX, y: newY, z: newZ });
   };
 
+  // Format display values based on mode
+  const getDisplayValue = (axisValue: number | string) => {
+    if (mode === "number" && typeof axisValue === "number") return axisValue;
+    if (mode === "expression" && typeof axisValue === "string")
+      return axisValue;
+    return "";
+  };
+
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="w-full">
       <div className="mb-1">
         <ExpressionModeToggle
           mode={mode}
@@ -92,20 +115,20 @@ export function ExpressionVector3Input({
           disabled={disabled}
         />
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {(["x", "y", "z"] as const).map((axis) => (
-          <div key={axis}>
-            <ExpressionInput
-              value={value[axis]}
-              onChange={(newValue) => handleValueChange(axis, newValue)}
-              min={min}
-              max={max}
-              step={step}
-              disabled={disabled}
-              showModeToggle={false}
-              mode={mode}
-            />
-          </div>
+          <Input
+            key={axis}
+            type={mode === "number" ? "number" : "text"}
+            value={getDisplayValue(value[axis])}
+            onChange={(e) => handleValueChange(axis, e)}
+            className="h-7 text-xs"
+            placeholder={mode === "expression" ? `e.g., ${axis}` : ""}
+            min={mode === "number" ? min : undefined}
+            max={mode === "number" ? max : undefined}
+            step={mode === "number" ? step : undefined}
+            disabled={disabled}
+          />
         ))}
       </div>
     </div>
