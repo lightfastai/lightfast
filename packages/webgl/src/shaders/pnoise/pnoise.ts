@@ -100,13 +100,13 @@ export const PerlinNoise3DDescription =
 
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return $PerlinNoise3D.parse({
-    u_period: { x: 2.0 },
+    u_period: 2.0,
     u_harmonics: 1,
-    u_harmonic_gain: { x: 0.66 },
-    u_harmonic_spread: { x: 2.0 },
-    u_amplitude: { x: 0.84 },
-    u_offset: { x: 0.412 },
-    u_exponent: { x: 0.63 },
+    u_harmonic_gain: 0.66,
+    u_harmonic_spread: 2.0,
+    u_amplitude: 0.84,
+    u_offset: 0.412,
+    u_exponent: 0.63,
     u_scale: { x: 1, y: 1 },
     u_translate: { x: 0, y: 0 },
     u_rotation: { x: 0, y: 0 },
@@ -224,7 +224,7 @@ void main() {
     uv = rotation(u_rotation) * uv;
     
     // Base frequency
-    float baseFreq = u_period.x > 0.0 ? 1.0 / u_period.x : 1.0;
+    float baseFreq = u_period > 0.0 ? 1.0 / u_period : 1.0;
     
     // Initialize result
     float noise = 0.0;
@@ -244,8 +244,8 @@ void main() {
     for (int i = 0; i < 8; i++) {
         if (i >= u_harmonics) break;
         
-        freq *= u_harmonic_spread.x;
-        amp *= u_harmonic_gain.x;
+        freq *= u_harmonic_spread;
+        amp *= u_harmonic_gain;
         
         // Use different z-offsets for each harmonic to create variation
         vec3 harmonicCoords = vec3(uv * freq, zCoord + float(i) * 0.72);
@@ -253,10 +253,10 @@ void main() {
     }
     
     // Apply exponent for more control over detail distribution
-    noise = sign(noise) * pow(abs(noise), u_exponent.x);
+    noise = sign(noise) * pow(abs(noise), u_exponent);
     
     // Scale by amplitude and add offset
-    noise = noise * u_amplitude.x + u_offset.x;
+    noise = noise * u_amplitude + u_offset;
     
     // Mix with texture if provided
     vec4 textureColor = texture2D(u_texture, vUv);

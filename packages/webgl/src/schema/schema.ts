@@ -150,6 +150,10 @@ export function isVec3(value: unknown): value is Vec3 {
   );
 }
 
+export function getNumericValueMode(value: NumericValue): VectorMode {
+  return isExpression(value) ? VectorMode.Expression : VectorMode.Number;
+}
+
 // Vector mode detection functions
 export function getVec2Mode(vec: Vec2): VectorMode {
   // Since we enforce all components to be the same type, we only need to check one

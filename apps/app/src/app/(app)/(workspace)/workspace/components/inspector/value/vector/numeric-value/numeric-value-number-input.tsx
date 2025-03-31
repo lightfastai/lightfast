@@ -1,25 +1,29 @@
 import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
 import { memo } from "react";
 
-import type { Vec1 } from "@repo/webgl";
+import type { NumericValue } from "@repo/webgl";
 import { Slider } from "@repo/ui/components/ui/slider";
+import { createExpressionString } from "@repo/webgl";
 
 import { BaseInputNumber } from "../../base/base-input";
 
-interface Vec1NumberInputProps<T extends FieldValues, K extends Path<T>> {
+interface NumericValueNumberInputProps<
+  T extends FieldValues,
+  K extends Path<T>,
+> {
   field: ControllerRenderProps<T, K>;
   metadata: {
     x: { min: number; max: number; step: number };
   };
-  onValueChange: (value: Vec1) => void;
+  onValueChange: (value: NumericValue) => void;
 }
 
-export const Vec1NumberInput = memo(
+export const NumericValueNumberInput = memo(
   <T extends FieldValues, K extends Path<T>>({
     field,
     metadata,
     onValueChange,
-  }: Vec1NumberInputProps<T, K>) => {
+  }: NumericValueNumberInputProps<T, K>) => {
     const { min, max, step } = metadata.x;
 
     return (
@@ -33,7 +37,7 @@ export const Vec1NumberInput = memo(
           onValueChange={(values) => {
             const newValue = values[0];
             if (newValue === undefined) return;
-            const updatedValue = { x: newValue };
+            const updatedValue = createExpressionString(newValue.toString());
             field.onChange(updatedValue);
             onValueChange(updatedValue);
           }}
@@ -45,7 +49,7 @@ export const Vec1NumberInput = memo(
           className="w-20"
           onChange={(e) => {
             const newValue = Number(e.target.value);
-            const updatedValue = { x: newValue };
+            const updatedValue = createExpressionString(newValue.toString());
             field.onChange(updatedValue);
             onValueChange(updatedValue);
           }}
@@ -56,4 +60,4 @@ export const Vec1NumberInput = memo(
   },
 );
 
-Vec1NumberInput.displayName = "Vec1NumberInput";
+NumericValueNumberInput.displayName = "NumericValueNumberInput";

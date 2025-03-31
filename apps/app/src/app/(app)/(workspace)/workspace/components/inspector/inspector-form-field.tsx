@@ -15,13 +15,13 @@ import {
   FormLabel,
 } from "@repo/ui/components/ui/form";
 import {
-  getVec1Mode,
+  getNumericValueMode,
   getVec2Mode,
   getVec3Mode,
   isBoolean,
   isColor,
+  isNumericValue,
   isString,
-  isVec1,
   isVec2,
   isVec3,
   VectorMode,
@@ -36,8 +36,8 @@ import {
 import { ColorPickerField } from "./value/color-picker-field";
 import { BooleanInput } from "./value/primitive/boolean-input";
 import { StringInput } from "./value/primitive/string-input";
-import { Vec1ExpressionInput } from "./value/vector/vec1/vec1-expression-input";
-import { Vec1NumberInput } from "./value/vector/vec1/vec1-number-input";
+import { NumericValueExpressionInput } from "./value/vector/numeric-value/numeric-value-expression-input";
+import { NumericValueNumberInput } from "./value/vector/numeric-value/numeric-value-number-input";
 import { Vec2ExpressionInput } from "./value/vector/vec2/vec2-expression-input";
 import { Vec2NumberInput } from "./value/vector/vec2/vec2-number-input";
 import { Vec3ExpressionInput } from "./value/vector/vec3/vec3-expression-input";
@@ -84,16 +84,16 @@ export const InspectorFormField = memo(
     const renderField = useCallback(
       (field: ControllerRenderProps<T, Path<T>>) => {
         // Handle Vec1 values
-        if (isVec1(field.value)) {
-          const mode = getVec1Mode(field.value);
+        if (isNumericValue(field.value)) {
+          const mode = getNumericValueMode(field.value);
           return mode === VectorMode.Number ? (
-            <Vec1NumberInput
+            <NumericValueNumberInput
               field={field}
               metadata={numberMetadata}
               onValueChange={onValueChange}
             />
           ) : (
-            <Vec1ExpressionInput
+            <NumericValueExpressionInput
               field={field}
               metadata={numberMetadata}
               onValueChange={onValueChange}

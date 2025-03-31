@@ -75,6 +75,7 @@ export {
   isNumericValue,
 
   // Mode detection
+  getNumericValueMode,
   getVec2Mode,
   getVec3Mode,
 
