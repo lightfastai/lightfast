@@ -2,19 +2,17 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { createConstrainedNumericValue } from "../../schema/schema";
+import { $Float } from "../../schema/schema";
 
 export const $Limit = z.object({
   u_texture: z
     .number()
     .nullable()
     .describe("The texture to apply the limit to."),
-  u_quantizationSteps: createConstrainedNumericValue({
-    min: 1,
-    max: 256,
-    default: 1.01,
-    description: "The number of steps for the quantization.",
-  }),
+  u_quantizationSteps: $Float
+    .describe("The number of steps for the quantization.")
+    .transform((val) => Math.max(1, Math.min(256, val)))
+    .default(1.01),
 });
 
 export type LimitParams = z.infer<typeof $Limit>;

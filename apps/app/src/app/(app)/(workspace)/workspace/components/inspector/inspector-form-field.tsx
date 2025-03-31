@@ -10,8 +10,12 @@ import { memo, useCallback, useMemo } from "react";
 import type { Value } from "@repo/webgl";
 import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
 import {
+  extractUniformName,
   getNumericValueMode,
+  getValueFieldMetadata,
+  getVec2FieldMetadata,
   getVec2Mode,
+  getVec3FieldMetadata,
   getVec3Mode,
   isBoolean,
   isColor,
@@ -22,12 +26,6 @@ import {
   VectorMode,
 } from "@repo/webgl";
 
-import {
-  extractUniformName,
-  extractValueFieldMetadata,
-  extractVec2FieldMetadata,
-  extractVec3FieldMetadata,
-} from "./utils";
 import { ColorPickerField } from "./value/color-picker-field";
 import { BooleanInput } from "./value/primitive/boolean-input";
 import { StringInput } from "./value/primitive/string-input";
@@ -61,20 +59,13 @@ export const InspectorFormField = memo(
       return null;
     }
 
-    const numberMetadata = useMemo(
-      () => extractValueFieldMetadata(fieldSchema),
-      [fieldSchema],
-    );
+    const numberMetadata = useMemo(() => getValueFieldMetadata(name), [name]);
 
-    const vec2Metadata = useMemo(
-      () => extractVec2FieldMetadata(fieldSchema),
-      [fieldSchema],
-    );
+    const vec2Metadata = useMemo(() => getVec2FieldMetadata(name), [name]);
 
-    const vec3Metadata = useMemo(
-      () => extractVec3FieldMetadata(fieldSchema),
-      [fieldSchema],
-    );
+    const vec3Metadata = useMemo(() => getVec3FieldMetadata(name), [name]);
+
+    const uniformName = useMemo(() => extractUniformName(label), [label]);
 
     const renderField = useCallback(
       (field: ControllerRenderProps<T, Path<T>>) => {
@@ -89,7 +80,7 @@ export const InspectorFormField = memo(
             />
           ) : (
             <NumericValueExpressionInput
-              field={field}
+              field={field as ControllerRenderProps<FieldValues, string>}
               metadata={numberMetadata}
               onValueChange={onValueChange}
             />
@@ -101,13 +92,13 @@ export const InspectorFormField = memo(
           const mode = getVec2Mode(field.value);
           return mode === VectorMode.Number ? (
             <Vec2NumberInput
-              field={field}
+              field={field as ControllerRenderProps<FieldValues, string>}
               metadata={vec2Metadata}
               onValueChange={onValueChange}
             />
           ) : (
             <Vec2ExpressionInput
-              field={field}
+              field={field as ControllerRenderProps<FieldValues, string>}
               metadata={vec2Metadata}
               onValueChange={onValueChange}
             />
@@ -119,13 +110,13 @@ export const InspectorFormField = memo(
           const mode = getVec3Mode(field.value);
           return mode === VectorMode.Number ? (
             <Vec3NumberInput
-              field={field}
+              field={field as ControllerRenderProps<FieldValues, string>}
               metadata={vec3Metadata}
               onValueChange={onValueChange}
             />
           ) : (
             <Vec3ExpressionInput
-              field={field}
+              field={field as ControllerRenderProps<FieldValues, string>}
               metadata={vec3Metadata}
               onValueChange={onValueChange}
             />
@@ -134,7 +125,12 @@ export const InspectorFormField = memo(
 
         // Handle Boolean values
         if (isBoolean(field.value)) {
-          return <BooleanInput field={field} onValueChange={onValueChange} />;
+          return (
+            <BooleanInput
+              field={field as ControllerRenderProps<FieldValues, string>}
+              onValueChange={onValueChange}
+            />
+          );
         }
 
         // Handle Color values
@@ -152,8 +148,6 @@ export const InspectorFormField = memo(
       },
       [numberMetadata, onValueChange, vec2Metadata, vec3Metadata],
     );
-
-    const uniformName = useMemo(() => extractUniformName(label), [label]);
 
     return (
       <FormField

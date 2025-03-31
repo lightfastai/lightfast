@@ -2,11 +2,7 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import {
-  createConstrainedNumericValue,
-  createConstrainedVec2,
-  VectorMode,
-} from "../../schema/schema";
+import { $Float, $Vec2Number } from "../../schema/schema";
 
 export const $Displace = z.object({
   u_texture1: z
@@ -17,39 +13,44 @@ export const $Displace = z.object({
     .number()
     .nullable()
     .describe("The texture that contains the displacement values (map)"),
-  u_displaceWeight: createConstrainedNumericValue({
-    min: 0,
-    max: 10,
-    default: 1.0,
-    description: "The intensity of the displacement effect",
+  u_displaceWeight: $Float
+    .describe("The intensity of the displacement effect")
+    .transform((val) => Math.max(0, Math.min(10, val)))
+    .default(1.0),
+  u_displaceMidpoint: $Vec2Number.extend({
+    x: $Float
+      .describe("X midpoint (min: 0, max: 1)")
+      .transform((val) => Math.max(0, Math.min(1, val)))
+      .default(0.5),
+    y: $Float
+      .describe("Y midpoint (min: 0, max: 1)")
+      .transform((val) => Math.max(0, Math.min(1, val)))
+      .default(0.5),
   }),
-  u_displaceMidpoint: createConstrainedVec2({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0, max: 1, default: 0.5 },
-      y: { min: 0, max: 1, default: 0.5 },
-    },
-  }).describe("The center reference point for displacement"),
-  u_displaceOffset: createConstrainedVec2({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0, max: 1, default: 0.5 },
-      y: { min: 0, max: 1, default: 0.5 },
-    },
-  }).describe("Additional offset for the displacement"),
-  u_displaceOffsetWeight: createConstrainedNumericValue({
-    min: 0,
-    max: 10,
-    default: 0.0,
-    description: "The intensity of the offset",
+  u_displaceOffset: $Vec2Number.extend({
+    x: $Float
+      .describe("X offset (min: 0, max: 1)")
+      .transform((val) => Math.max(0, Math.min(1, val)))
+      .default(0),
+    y: $Float
+      .describe("Y offset (min: 0, max: 1)")
+      .transform((val) => Math.max(0, Math.min(1, val)))
+      .default(0),
   }),
-  u_displaceUVWeight: createConstrainedVec2({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: 0, max: 2, default: 1.0 },
-      y: { min: 0, max: 2, default: 1.0 },
-    },
-  }).describe("UV scaling for the displacement"),
+  u_displaceOffsetWeight: $Float
+    .describe("The intensity of the offset")
+    .transform((val) => Math.max(0, Math.min(10, val)))
+    .default(0.0),
+  u_displaceUVWeight: $Vec2Number.extend({
+    x: $Float
+      .describe("X UV weight (min: 0, max: 2)")
+      .transform((val) => Math.max(0, Math.min(2, val)))
+      .default(1),
+    y: $Float
+      .describe("Y UV weight (min: 0, max: 2)")
+      .transform((val) => Math.max(0, Math.min(2, val)))
+      .default(1),
+  }),
 });
 
 export type DisplaceParams = z.infer<typeof $Displace>;

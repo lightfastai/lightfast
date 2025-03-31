@@ -84,12 +84,6 @@ export {
   isVec3Expression,
   isVec2Number,
   isVec3Number,
-
-  // Constraint types and creators
-  createConstrainedVec2,
-  createConstrainedVec3,
-  type NumericValueConstraints,
-  createConstrainedNumericValue,
 } from "./schema/schema";
 
 /**
@@ -158,3 +152,5 @@ export const $TextureSystemJsonSchema = {
     },
   ],
 } as JSONSchema7;
+
+export * from "./schema/constraints";

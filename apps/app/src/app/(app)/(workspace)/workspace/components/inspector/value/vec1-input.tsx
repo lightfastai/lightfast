@@ -3,7 +3,7 @@ import { memo } from "react";
 import type { Value } from "@repo/webgl";
 import { Slider } from "@repo/ui/components/ui/slider";
 
-import { BaseInputNumber } from "./base-input";
+import { BaseInputNumber } from "./base/base-input";
 
 interface Vec1Metadata {
   x: { min: number; max: number; step: number };

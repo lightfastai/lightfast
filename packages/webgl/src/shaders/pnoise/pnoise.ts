@@ -2,28 +2,14 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import {
-  createConstrainedNumericValue,
-  createConstrainedVec2,
-  VectorMode,
-} from "../../schema/schema";
+import { $Float, $Vec2Number } from "../../schema/schema";
 import { $Shared } from "../shared/schema";
 
-// Define the time expression type for animation
-export const $TimeExpression = z
-  .string()
-  .default("time * 0.1")
-  .describe(
-    "Expression for time-based animation. Supports variables like 'time', 'me.time.now', 'me.time.delta'. Example: 'time * 0.1' or 'Math.sin(me.time.now * 0.5) * 0.2'",
-  );
-
 export const $NoiseBase = z.object({
-  u_period: createConstrainedNumericValue({
-    min: 0.001,
-    max: 100,
-    default: 2.0,
-    description: "1/u_period is the frequency of the input of noise function",
-  }),
+  u_period: $Float
+    .describe("1/u_period is the frequency of the input of noise function")
+    .transform((val) => Math.max(0.001, Math.min(100, val)))
+    .default(2.0),
   u_harmonics: z
     .number()
     .int()
@@ -31,62 +17,63 @@ export const $NoiseBase = z.object({
     .max(8)
     .default(1)
     .describe("amount of iterations of noise."),
-  u_harmonic_gain: createConstrainedNumericValue({
-    min: 0,
-    max: 1,
-    default: 0.66,
-    description:
+  u_harmonic_gain: $Float
+    .describe(
       "how much the amplitude changes per iterations (scalar of the amplitude)",
-  }),
-  u_harmonic_spread: createConstrainedNumericValue({
-    min: 0,
-    max: 10,
-    default: 2.0,
-    description:
+    )
+    .transform((val) => Math.max(0, Math.min(1, val)))
+    .default(0.66),
+  u_harmonic_spread: $Float
+    .describe(
       "how much the frequency changes per iteration (scalar of the frequency)",
-  }),
-  u_amplitude: createConstrainedNumericValue({
-    min: 0,
-    max: 10,
-    default: 0.84,
-    description: "The overall amplitude scaling for the noise.",
-  }),
-  u_offset: createConstrainedNumericValue({
-    min: -1,
-    max: 1,
-    default: 0.412,
-    description: "The offset of the noise.",
-  }),
-  u_exponent: createConstrainedNumericValue({
-    min: 0.1,
-    max: 10,
-    default: 0.63,
-    description: "The exponent of the noise.",
-  }),
+    )
+    .transform((val) => Math.max(0, Math.min(10, val)))
+    .default(2.0),
+  u_amplitude: $Float
+    .describe("The overall amplitude scaling for the noise.")
+    .transform((val) => Math.max(0, Math.min(10, val)))
+    .default(0.84),
+  u_offset: $Float
+    .describe("The offset of the noise.")
+    .transform((val) => Math.max(-1, Math.min(1, val)))
+    .default(0.412),
+  u_exponent: $Float
+    .describe("The exponent of the noise.")
+    .transform((val) => Math.max(0.1, Math.min(10, val)))
+    .default(0.63),
 });
 
 export const $NoiseTransform = z.object({
-  u_scale: createConstrainedVec2({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: -1000, max: 1000, default: 1 },
-      y: { min: -1000, max: 1000, default: 1 },
-    },
-  }).describe("The scale of the noise."),
-  u_translate: createConstrainedVec2({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: -1000, max: 1000, default: 0 },
-      y: { min: -1000, max: 1000, default: 0 },
-    },
-  }).describe("The offset of the noise."),
-  u_rotation: createConstrainedVec2({
-    mode: VectorMode.Number,
-    components: {
-      x: { min: -Math.PI, max: Math.PI, default: 0 },
-      y: { min: -Math.PI, max: Math.PI, default: 0 },
-    },
-  }).describe("The rotation of the noise."),
+  u_scale: $Vec2Number.extend({
+    x: $Float
+      .describe("X scale (min: 0.1, max: 10)")
+      .transform((val) => Math.max(0.1, Math.min(10, val)))
+      .default(1),
+    y: $Float
+      .describe("Y scale (min: 0.1, max: 10)")
+      .transform((val) => Math.max(0.1, Math.min(10, val)))
+      .default(1),
+  }),
+  u_translate: $Vec2Number.extend({
+    x: $Float
+      .describe("X translation (min: -10, max: 10)")
+      .transform((val) => Math.max(-10, Math.min(10, val)))
+      .default(0),
+    y: $Float
+      .describe("Y translation (min: -10, max: 10)")
+      .transform((val) => Math.max(-10, Math.min(10, val)))
+      .default(0),
+  }),
+  u_rotation: $Vec2Number.extend({
+    x: $Float
+      .describe("X rotation (min: -180, max: 180)")
+      .transform((val) => Math.max(-180, Math.min(180, val)))
+      .default(0),
+    y: $Float
+      .describe("Y rotation (min: -180, max: 180)")
+      .transform((val) => Math.max(-180, Math.min(180, val)))
+      .default(0),
+  }),
 });
 
 export const $PerlinNoise3D = $Shared.merge($NoiseTransform).merge($NoiseBase);
