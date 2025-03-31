@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import type { Vec3 } from "@repo/webgl/schema/vec3";
-import { $Vec3 } from "@repo/webgl/schema/vec3";
+import type { Vec3 } from "@repo/webgl";
+import { $Vec3 } from "@repo/webgl";
 
 export const $GeometryType = z.enum([
   "box",
