@@ -3,7 +3,7 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import {
-  $NumericValue,
+  createConstrainedVec1,
   createConstrainedVec2,
   VectorMode,
 } from "../../schema/schema";
@@ -17,9 +17,12 @@ export const $Displace = z.object({
     .number()
     .nullable()
     .describe("The texture that contains the displacement values (map)"),
-  u_displaceWeight: $NumericValue
-    .default(1.0)
-    .describe("The intensity of the displacement effect"),
+  u_displaceWeight: createConstrainedVec1({
+    mode: VectorMode.Number,
+    components: {
+      x: { min: 0, max: 10, default: 1.0 },
+    },
+  }).describe("The intensity of the displacement effect"),
   u_displaceMidpoint: createConstrainedVec2({
     mode: VectorMode.Number,
     components: {
@@ -34,9 +37,12 @@ export const $Displace = z.object({
       y: { min: 0, max: 1, default: 0.5 },
     },
   }).describe("Additional offset for the displacement"),
-  u_displaceOffsetWeight: $NumericValue
-    .default(0.0)
-    .describe("The intensity of the offset"),
+  u_displaceOffsetWeight: createConstrainedVec1({
+    mode: VectorMode.Number,
+    components: {
+      x: { min: 0, max: 10, default: 0.0 },
+    },
+  }).describe("The intensity of the offset"),
   u_displaceUVWeight: createConstrainedVec2({
     mode: VectorMode.Number,
     components: {
@@ -57,10 +63,10 @@ export const createDefaultDisplace = (): DisplaceParams => {
   return $Displace.parse({
     u_texture1: null,
     u_texture2: null,
-    u_displaceWeight: 1.0,
+    u_displaceWeight: { x: 1.0 },
     u_displaceMidpoint: { x: 0.5, y: 0.5 },
     u_displaceOffset: { x: 0.5, y: 0.5 },
-    u_displaceOffsetWeight: 0.0,
+    u_displaceOffsetWeight: { x: 0.0 },
     u_displaceUVWeight: { x: 1.0, y: 1.0 },
   });
 };
@@ -70,10 +76,10 @@ precision highp float;
 
 uniform sampler2D u_texture1; // Source texture to be displaced
 uniform sampler2D u_texture2; // Displacement map
-uniform float u_displaceWeight;
+uniform vec2 u_displaceWeight;
 uniform vec2 u_displaceMidpoint;
 uniform vec2 u_displaceOffset;
-uniform float u_displaceOffsetWeight;
+uniform vec2 u_displaceOffsetWeight;
 uniform vec2 u_displaceUVWeight;
 varying vec2 vUv;
 
@@ -102,10 +108,10 @@ void main() {
   vec2 displacedUV = displace(
     vUv,
     displaceMap,
-    u_displaceWeight,
+    u_displaceWeight.x,
     u_displaceMidpoint,
     u_displaceOffset,
-    u_displaceOffsetWeight,
+    u_displaceOffsetWeight.x,
     u_displaceUVWeight
   );
   

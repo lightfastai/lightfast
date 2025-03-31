@@ -2,14 +2,21 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { $Boolean, $NumericValue } from "../../schema/schema";
+import {
+  $Boolean,
+  createConstrainedVec1,
+  VectorMode,
+} from "../../schema/schema";
 
 export const $Add = z.object({
   u_texture1: z.number().nullable().describe("The first input texture (A)"),
   u_texture2: z.number().nullable().describe("The second input texture (B)"),
-  u_addValue: $NumericValue
-    .default(0.0)
-    .describe("Constant value to add to the result"),
+  u_addValue: createConstrainedVec1({
+    mode: VectorMode.Number,
+    components: {
+      x: { min: -1, max: 1, default: 0.0 },
+    },
+  }).describe("Constant value to add to the result"),
   u_enableMirror: $Boolean
     .default(false)
     .describe("Whether to mirror the result vertically"),
@@ -26,7 +33,7 @@ export const createDefaultAdd = (): AddParams => {
   return $Add.parse({
     u_texture1: null,
     u_texture2: null,
-    u_addValue: 0.0,
+    u_addValue: { x: 0.0 },
     u_enableMirror: false,
   });
 };
@@ -36,7 +43,7 @@ precision highp float;
 
 uniform sampler2D u_texture1; // First input texture (A)
 uniform sampler2D u_texture2; // Second input texture (B)
-uniform float u_addValue;
+uniform vec2 u_addValue;
 uniform bool u_enableMirror;
 varying vec2 vUv;
 
@@ -57,7 +64,7 @@ void main() {
   vec4 result = colorA + colorB;
   
   // Apply add value
-  result += vec4(vec3(u_addValue), 0.0);
+  result += vec4(vec3(u_addValue.x), 0.0);
   
   // Keep alpha intact
   result.a = max(colorA.a, colorB.a);

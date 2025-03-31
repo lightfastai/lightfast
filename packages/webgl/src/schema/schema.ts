@@ -39,10 +39,6 @@ export const $Expression = z
   );
 export type Expression = z.infer<typeof $Expression>;
 
-// Numeric types that can be either a number or an expression
-export const $NumericValue = z.union([$Number, $Expression]);
-export type NumericValue = z.infer<typeof $NumericValue>;
-
 // Vec1 schemas for each mode
 export const $Vec1Number = z.object({
   x: $Number,
@@ -54,6 +50,10 @@ export const $Vec1Expression = z.object({
 
 export const $Vec1 = z.union([$Vec1Number, $Vec1Expression]);
 export type Vec1 = z.infer<typeof $Vec1>;
+
+// NumericValue is just an alias for Vec1
+export type NumericValue = Vec1;
+export const $NumericValue = $Vec1;
 
 // Vec2 schemas for each mode
 export const $Vec2Number = z.object({
@@ -92,7 +92,7 @@ export const $Color = z
 export type Color = z.infer<typeof $Color>;
 
 // Value type union
-export type Value = Color | Vec1 | Vec2 | Vec3 | NumericValue | Boolean;
+export type Value = Color | Vec1 | Vec2 | Vec3 | Boolean;
 
 // Type guards
 export function isBoolean(value: unknown): value is Boolean {
@@ -105,10 +105,6 @@ export function isNumber(value: unknown): value is Number {
 
 export function isExpression(value: unknown): value is Expression {
   return isExpressionString(value);
-}
-
-export function isNumericValue(value: unknown): value is NumericValue {
-  return isNumber(value) || isExpression(value);
 }
 
 export function isColor(value: unknown): value is Color {
@@ -352,5 +348,28 @@ export const createConstrainedVec3 = (
       )
       .transform((val) => validateNumericValue(val, constraints.components.z))
       .default(constraints.components.z.default as number),
+  });
+};
+
+// Numeric value constraints
+export interface NumericValueConstraints {
+  mode: VectorMode;
+  min: number;
+  max: number;
+  default: number | string;
+}
+
+export const createConstrainedNumericValue = (
+  constraints: NumericValueConstraints,
+) => {
+  return createConstrainedVec1({
+    mode: constraints.mode,
+    components: {
+      x: {
+        min: constraints.min,
+        max: constraints.max,
+        default: constraints.default,
+      },
+    },
   });
 };
