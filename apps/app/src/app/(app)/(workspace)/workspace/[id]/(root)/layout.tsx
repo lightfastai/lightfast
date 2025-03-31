@@ -9,10 +9,19 @@ import {
 } from "@repo/ui/components/ui/breadcrumb";
 
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
-import { api } from "~/trpc/client/server";
+import { $NodeType } from "~/db/schema/types";
+import { api, HydrateClient } from "~/trpc/client/server";
+import { EditorCommandDialog } from "../../components/app/editor-command-dialog";
 import { EditorFileMenu } from "../../components/app/editor-file-menu";
 import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";
 import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
+import { TextureRenderPipeline } from "../../components/webgl/texture-render-pipeline";
+import { EdgeStoreProvider } from "../../providers/edge-store-provider";
+import { EditorStoreProvider } from "../../providers/editor-store-provider";
+import { InspectorStoreProvider } from "../../providers/inspector-store-provider";
+import { NodeStoreProvider } from "../../providers/node-store-provider";
+import { SelectionStoreProvider } from "../../providers/selection-store-provider";
+import { TextureRenderStoreProvider } from "../../providers/texture-render-store-provider";
 import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
 
 const WebGLCanvas = dynamic(() =>
@@ -108,7 +117,7 @@ export default async function WorkspaceLayout({
         </Breadcrumb>
       </div>
 
-      {/* <HydrateClient>
+      <HydrateClient>
         <NodeStoreProvider initialNodes={baseNodes}>
           <EdgeStoreProvider initialEdges={baseEdges}>
             <SelectionStoreProvider>
@@ -144,7 +153,7 @@ export default async function WorkspaceLayout({
             </SelectionStoreProvider>
           </EdgeStoreProvider>
         </NodeStoreProvider>
-      </HydrateClient> */}
+      </HydrateClient>
     </div>
   );
 }
