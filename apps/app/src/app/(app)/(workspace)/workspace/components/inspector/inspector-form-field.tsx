@@ -91,6 +91,8 @@ const InspectorFormFieldComponent = <T extends FieldValues>({
         );
       }
 
+      console.log("field.value", field.value);
+
       // Handle Vec2 values - now supports expressions in each component
       if (isVec2(field.value)) {
         // Calculate a common step value (use smallest step)

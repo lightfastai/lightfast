@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { Value } from "./value";
+import { isExpressionString } from "../expressions/schema";
 
 // Base Vec3 schema without constraints
 export const $Vec3 = z.object({
@@ -50,5 +51,24 @@ export const createConstrainedVec3 = (constraints: ConstrainedVec3) => {
 };
 
 export function isVec3(value: Value): value is Vec3 {
-  return $Vec3.safeParse(value).success;
+  if (typeof value !== "object" || value === null) return false;
+
+  const obj = value as Record<string, unknown>;
+  return (
+    "x" in obj &&
+    "y" in obj &&
+    "z" in obj &&
+    (typeof obj.x === "number" || isExpressionString(obj.x)) &&
+    (typeof obj.y === "number" || isExpressionString(obj.y)) &&
+    (typeof obj.z === "number" || isExpressionString(obj.z))
+  );
+}
+
+export function isExpressionVec3(value: Value): boolean {
+  if (!isVec3(value)) return false;
+  return (
+    isExpressionString(value.x) ||
+    isExpressionString(value.y) ||
+    isExpressionString(value.z)
+  );
 }

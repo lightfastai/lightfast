@@ -2,13 +2,12 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
+import { $ExpressionOrNumber } from "../../expressions/schema";
+
 export const $Add = z.object({
   u_texture1: z.number().nullable().describe("The first input texture (A)"),
   u_texture2: z.number().nullable().describe("The second input texture (B)"),
-  u_addValue: z
-    .number()
-    .min(-1.0)
-    .max(1.0)
+  u_addValue: $ExpressionOrNumber
     .default(0.0)
     .describe("Constant value to add to the result"),
   u_enableMirror: z
@@ -22,7 +21,7 @@ export type AddParams = z.infer<typeof $Add>;
 export const $AddJsonSchema = zodToJsonSchema($Add) as JSONSchema7;
 
 export const AddDescription =
-  "A texture operator that adds two textures together with optional mirroring and constant value addition";
+  "A texture operator that adds two textures together with optional mirroring and constant value addition. Supports expressions prefixed with 'e.' for dynamic values.";
 
 export const createDefaultAdd = (): AddParams => {
   return $Add.parse({

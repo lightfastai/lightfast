@@ -70,7 +70,7 @@ export const u_harmonics = zodToJsonSchema($PerlinNoise3D) as JSONSchema7;
 export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
 
 export const PerlinNoise3DDescription =
-  "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture with time-based animation. Use timeExpression to control how time affects the animation. You can also use expressions in any numeric field, like '2 + Math.sin(me.time.now)' for u_translate.x.";
+  "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture with time-based animation. Use expressions prefixed with 'e.' to create dynamic values, like 'e.2 + Math.sin(me.time.now)'.";
 
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return $PerlinNoise3D.parse({
@@ -81,7 +81,6 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_amplitude: 0.84,
     u_offset: 0.412,
     u_exponent: 0.63,
-    timeExpression: "time * 0.1", // Default time expression
     u_scale: { x: 1, y: 1 },
     u_translate: { x: 0, y: 0 },
     u_rotation: { x: 0, y: 0 },

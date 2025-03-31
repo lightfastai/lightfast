@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { Value } from "./value";
+import { isExpressionString } from "../expressions/schema";
 
 export const $Vec2 = z.object({
   x: z.number(),
@@ -38,5 +39,18 @@ export const createConstrainedVec2 = (constraints: ConstrainedVec2) => {
 };
 
 export function isVec2(value: Value): value is Vec2 {
-  return $Vec2.safeParse(value).success;
+  if (typeof value !== "object" || value === null) return false;
+
+  const obj = value as Record<string, unknown>;
+  return (
+    "x" in obj &&
+    "y" in obj &&
+    (typeof obj.x === "number" || isExpressionString(obj.x)) &&
+    (typeof obj.y === "number" || isExpressionString(obj.y))
+  );
+}
+
+export function isExpressionVec2(value: Value): boolean {
+  if (!isVec2(value)) return false;
+  return isExpressionString(value.x) || isExpressionString(value.y);
 }

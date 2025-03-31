@@ -2,7 +2,10 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { createConstrainedVec2 } from "../../schema/vec2";
+import {
+  $ExpressionOrNumber,
+  createConstrainedExpressionVec2,
+} from "../../expressions/schema";
 
 export const $Displace = z.object({
   u_texture1: z
@@ -13,27 +16,21 @@ export const $Displace = z.object({
     .number()
     .nullable()
     .describe("The texture that contains the displacement values (map)"),
-  u_displaceWeight: z
-    .number()
-    .min(0)
-    .max(2.0)
+  u_displaceWeight: $ExpressionOrNumber
     .default(1.0)
     .describe("The intensity of the displacement effect"),
-  u_displaceMidpoint: createConstrainedVec2({
+  u_displaceMidpoint: createConstrainedExpressionVec2({
     x: { min: 0, max: 1, default: 0.5 },
     y: { min: 0, max: 1, default: 0.5 },
   }).describe("The center reference point for displacement"),
-  u_displaceOffset: createConstrainedVec2({
+  u_displaceOffset: createConstrainedExpressionVec2({
     x: { min: 0, max: 1, default: 0.5 },
     y: { min: 0, max: 1, default: 0.5 },
   }).describe("Additional offset for the displacement"),
-  u_displaceOffsetWeight: z
-    .number()
-    .min(0)
-    .max(2.0)
+  u_displaceOffsetWeight: $ExpressionOrNumber
     .default(0.0)
     .describe("The intensity of the offset"),
-  u_displaceUVWeight: createConstrainedVec2({
+  u_displaceUVWeight: createConstrainedExpressionVec2({
     x: { min: 0, max: 2, default: 1.0 },
     y: { min: 0, max: 2, default: 1.0 },
   }).describe("UV scaling for the displacement"),
@@ -44,7 +41,7 @@ export type DisplaceParams = z.infer<typeof $Displace>;
 export const $DisplaceJsonSchema = zodToJsonSchema($Displace) as JSONSchema7;
 
 export const DisplaceDescription =
-  "A texture operator that displaces one texture using another as a displacement map";
+  "A texture operator that displaces one texture using another as a displacement map. Supports expressions prefixed with 'e.' for dynamic values.";
 
 export const createDefaultDisplace = (): DisplaceParams => {
   return $Displace.parse({
