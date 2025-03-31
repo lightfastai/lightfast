@@ -1,12 +1,21 @@
 import { z } from "zod";
 
-import { $Add, createDefaultAdd } from "@repo/webgl/shaders/add";
-import { $Displace, createDefaultDisplace } from "@repo/webgl/shaders/displace";
-import { $Limit, createDefaultLimit } from "@repo/webgl/shaders/limit";
+import {
+  $Add,
+  createDefaultAdd,
+} from "../../../../../../packages/webgl/dist/shaders/add";
+import {
+  $Displace,
+  createDefaultDisplace,
+} from "../../../../../../packages/webgl/dist/shaders/displace";
+import {
+  $Limit,
+  createDefaultLimit,
+} from "../../../../../../packages/webgl/dist/shaders/limit";
 import {
   $PerlinNoise3D,
   createDefaultPerlinNoise3D,
-} from "@repo/webgl/shaders/pnoise";
+} from "../../../../../../packages/webgl/dist/shaders/pnoise";
 
 export const $TextureTypeValues = [
   "Noise",

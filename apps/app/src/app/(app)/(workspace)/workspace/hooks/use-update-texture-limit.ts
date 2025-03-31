@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { baseVertexShader } from "@repo/webgl/shaders/base-vert-shader";
-import { limitFragmentShader } from "@repo/webgl/shaders/limit";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
 import type { LimitTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
+import { limitFragmentShader } from "../../../../../../../../packages/webgl/dist/shaders/limit";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 

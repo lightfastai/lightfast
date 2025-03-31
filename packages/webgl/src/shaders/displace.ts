@@ -2,7 +2,12 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { $Float, $Vec2Number } from "../../schema/schema";
+import type {
+  NumericValueMetadata,
+  UniformConstraint,
+  Vec2FieldMetadata,
+} from "../types/uniform-constraints";
+import { $Float, $Vec2Number } from "../types/schema";
 
 export const $Displace = z.object({
   u_texture1: z
@@ -70,6 +75,80 @@ export const createDefaultDisplace = (): DisplaceParams => {
     u_displaceOffsetWeight: { x: 0.0 },
     u_displaceUVWeight: { x: 1.0, y: 1.0 },
   });
+};
+
+// Lookup table for displace uniform constraints
+export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformConstraint> = {
+  u_displaceWeight: {
+    type: "numeric",
+    metadata: {
+      value: { min: 0, max: 10, step: 0.1 },
+    },
+  },
+  u_displaceMidpoint: {
+    type: "vec2",
+    metadata: {
+      x: { min: 0, max: 1, step: 0.1 },
+      y: { min: 0, max: 1, step: 0.1 },
+    },
+  },
+  u_displaceOffset: {
+    type: "vec2",
+    metadata: {
+      x: { min: 0, max: 1, step: 0.1 },
+      y: { min: 0, max: 1, step: 0.1 },
+    },
+  },
+  u_displaceOffsetWeight: {
+    type: "numeric",
+    metadata: {
+      value: { min: 0, max: 10, step: 0.1 },
+    },
+  },
+  u_displaceUVWeight: {
+    type: "vec2",
+    metadata: {
+      x: { min: 0, max: 2, step: 0.1 },
+      y: { min: 0, max: 2, step: 0.1 },
+    },
+  },
+};
+
+/**
+ * Gets metadata for a numeric value field from the lookup table.
+ * @param name - The name of the uniform.
+ * @returns An object with metadata for the value.
+ */
+export const getDisplaceValueFieldMetadata = (
+  name: string,
+): NumericValueMetadata => {
+  const constraint = DISPLACE_UNIFORM_CONSTRAINTS[name];
+  if (!constraint || constraint.type !== "numeric") {
+    // Default fallback
+    return {
+      value: { min: 0, max: 1, step: 0.1 },
+    };
+  }
+  return constraint.metadata as NumericValueMetadata;
+};
+
+/**
+ * Gets metadata for a Vec2 field from the lookup table.
+ * @param name - The name of the uniform.
+ * @returns An object with metadata for x and y components.
+ */
+export const getDisplaceVec2FieldMetadata = (
+  name: string,
+): Vec2FieldMetadata => {
+  const constraint = DISPLACE_UNIFORM_CONSTRAINTS[name];
+  if (!constraint || constraint.type !== "vec2") {
+    // Default fallback
+    return {
+      x: { min: 0, max: 1, step: 0.1 },
+      y: { min: 0, max: 1, step: 0.1 },
+    };
+  }
+  return constraint.metadata as Vec2FieldMetadata;
 };
 
 export const displaceFragmentShader = `

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { addFragmentShader } from "@repo/webgl/shaders/add";
 import { baseVertexShader } from "@repo/webgl/shaders/base-vert-shader";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
 import type { AddTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
+import { addFragmentShader } from "../../../../../../../../packages/webgl/dist/shaders/add";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 

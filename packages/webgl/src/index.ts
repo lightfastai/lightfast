@@ -1,18 +1,18 @@
 import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 
-import { $Add, $AddJsonSchema, AddDescription } from "./shaders/add/add";
+import { $Add, $AddJsonSchema, AddDescription } from "./shaders/add";
 import {
   $Displace,
   $DisplaceJsonSchema,
   DisplaceDescription,
-} from "./shaders/displace/displace";
-import { $Limit } from "./shaders/limit/limit";
+} from "./shaders/displace";
+import { $Limit } from "./shaders/limit";
 import {
   $PerlinNoise3D,
   PerlinNoise3DDescription,
-  u_harmonics,
-} from "./shaders/pnoise/pnoise";
+  PerlinNoiseJsonSchema,
+} from "./shaders/pnoise";
 
 /**
  * Base types and primitives
@@ -84,30 +84,30 @@ export {
   isVec3Expression,
   isVec2Number,
   isVec3Number,
-} from "./schema/schema";
+} from "./types/schema";
 
 /**
  * Noise modules
  */
-export type { PerlinNoise3DParams } from "./shaders/pnoise/pnoise";
+export type { PerlinNoise3DParams } from "./shaders/pnoise";
 export { $PerlinNoise3D, PerlinNoise3DDescription };
 
 /**
  * Limit modules
  */
-export type { LimitParams } from "./shaders/limit/limit";
+export type { LimitParams } from "./shaders/limit";
 export { $Limit };
 
 /**
  * Displace modules
  */
-export type { DisplaceParams } from "./shaders/displace/displace";
+export type { DisplaceParams } from "./shaders/displace";
 export { $Displace, DisplaceDescription };
 
 /**
  * Add modules
  */
-export type { AddParams } from "./shaders/add/add";
+export type { AddParams } from "./shaders/add";
 export { $Add, AddDescription };
 
 /**
@@ -133,7 +133,7 @@ export const $TextureSystemJsonSchema = {
       title: $TextureType.Values.Noise,
       description: PerlinNoise3DDescription,
       properties: {
-        uniforms: u_harmonics,
+        uniforms: PerlinNoiseJsonSchema,
       },
     },
     {
@@ -153,4 +153,4 @@ export const $TextureSystemJsonSchema = {
   ],
 } as JSONSchema7;
 
-export * from "./schema/constraints";
+export * from "./types/uniform-constraints";

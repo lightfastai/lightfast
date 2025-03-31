@@ -2,10 +2,15 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { $Float, $Vec2Number } from "../../schema/schema";
-import { $Shared } from "../shared/schema";
+import type {
+  NumericValueMetadata,
+  UniformConstraint,
+  Vec2FieldMetadata,
+} from "../types/uniform-constraints";
+import { $Float, $Vec2Number } from "../types/schema";
 
 export const $NoiseBase = z.object({
+  u_texture: z.number().nullable(),
   u_period: $Float
     .describe("1/u_period is the frequency of the input of noise function")
     .transform((val) => Math.max(0.001, Math.min(100, val)))
@@ -76,9 +81,11 @@ export const $NoiseTransform = z.object({
   }),
 });
 
-export const $PerlinNoise3D = $Shared.merge($NoiseTransform).merge($NoiseBase);
+export const $PerlinNoise3D = $NoiseTransform.merge($NoiseBase);
 
-export const u_harmonics = zodToJsonSchema($PerlinNoise3D) as JSONSchema7;
+export const PerlinNoiseJsonSchema = zodToJsonSchema(
+  $PerlinNoise3D,
+) as JSONSchema7;
 
 export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
 
@@ -99,6 +106,94 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_rotation: { x: 0, y: 0 },
     u_texture: null,
   });
+};
+
+// Lookup table for pnoise uniform constraints
+export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformConstraint> = {
+  u_pnoiseScale: {
+    type: "numeric",
+    metadata: {
+      value: { min: 0.1, max: 10, step: 0.1 },
+    },
+  },
+  u_pnoiseOctaves: {
+    type: "numeric",
+    metadata: {
+      value: { min: 1, max: 8, step: 1 },
+    },
+  },
+  u_pnoisePersistence: {
+    type: "numeric",
+    metadata: {
+      value: { min: 0, max: 1, step: 0.1 },
+    },
+  },
+  u_pnoiseLacunarity: {
+    type: "numeric",
+    metadata: {
+      value: { min: 1, max: 4, step: 0.1 },
+    },
+  },
+  u_pnoiseBaseFrequency: {
+    type: "numeric",
+    metadata: {
+      value: { min: 0.1, max: 10, step: 0.1 },
+    },
+  },
+  u_pnoiseOffset: {
+    type: "vec2",
+    metadata: {
+      x: { min: -1, max: 1, step: 0.1 },
+      y: { min: -1, max: 1, step: 0.1 },
+    },
+  },
+  u_pnoiseRotation: {
+    type: "numeric",
+    metadata: {
+      value: { min: 0, max: 360, step: 1 },
+    },
+  },
+  u_pnoiseSeed: {
+    type: "numeric",
+    metadata: {
+      value: { min: 0, max: 1000, step: 1 },
+    },
+  },
+};
+
+/**
+ * Gets metadata for a numeric value field from the lookup table.
+ * @param name - The name of the uniform.
+ * @returns An object with metadata for the value.
+ */
+export const getPNoiseValueFieldMetadata = (
+  name: string,
+): NumericValueMetadata => {
+  const constraint = PNOISE_UNIFORM_CONSTRAINTS[name];
+  if (!constraint || constraint.type !== "numeric") {
+    // Default fallback
+    return {
+      value: { min: 0, max: 1, step: 0.1 },
+    };
+  }
+  return constraint.metadata as NumericValueMetadata;
+};
+
+/**
+ * Gets metadata for a Vec2 field from the lookup table.
+ * @param name - The name of the uniform.
+ * @returns An object with metadata for x and y components.
+ */
+export const getPNoiseVec2FieldMetadata = (name: string): Vec2FieldMetadata => {
+  const constraint = PNOISE_UNIFORM_CONSTRAINTS[name];
+  if (!constraint || constraint.type !== "vec2") {
+    // Default fallback
+    return {
+      x: { min: 0, max: 1, step: 0.1 },
+      y: { min: 0, max: 1, step: 0.1 },
+    };
+  }
+  return constraint.metadata as Vec2FieldMetadata;
 };
 
 export const perlinNoise3DFragmentShader = `

@@ -2,8 +2,6 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { $Add } from "@repo/webgl/shaders/add";
-import { $Displace } from "@repo/webgl/shaders/displace";
 import { and, eq, exists, sql } from "@vendor/db";
 import { protectedTenantProcedure } from "@vendor/trpc";
 
@@ -11,6 +9,8 @@ import { Node, Workspace } from "~/db/schema";
 import { InsertNodeSchema } from "~/db/schema/tables/Node";
 import { $Txt2Img, $Window } from "~/db/schema/types";
 import { $Texture } from "~/db/schema/types/Texture";
+import { $Add } from "../../../../../../../packages/webgl/dist/shaders/add";
+import { $Displace } from "../../../../../../../packages/webgl/dist/shaders/displace";
 
 export const nodeRouter = {
   delete: protectedTenantProcedure

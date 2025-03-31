@@ -1,10 +1,10 @@
 import * as THREE from "three";
 
 import { baseVertexShader } from "@repo/webgl/shaders/base-vert-shader";
-import { displaceFragmentShader } from "@repo/webgl/shaders/displace";
 
 import type { ExpressionFieldConfig } from "./use-expression-texture-renderer";
 import type { DisplaceTexture } from "~/db/schema/types/Texture";
+import { displaceFragmentShader } from "../../../../../../../../packages/webgl/dist/shaders/displace";
 import {
   createExpressionTextureRenderer,
   initializeUniformValue,

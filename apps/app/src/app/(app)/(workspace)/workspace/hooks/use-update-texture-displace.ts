@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { baseVertexShader } from "@repo/webgl/shaders/base-vert-shader";
-import { displaceFragmentShader } from "@repo/webgl/shaders/displace";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
 import type { DisplaceTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
+import { displaceFragmentShader } from "../../../../../../../../packages/webgl/dist/shaders/displace";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
