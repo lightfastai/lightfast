@@ -3,7 +3,6 @@ import { memo } from "react";
 
 import type { NumericValue } from "@repo/webgl";
 import { Slider } from "@repo/ui/components/ui/slider";
-import { createExpressionString } from "@repo/webgl";
 
 import { BaseInputNumber } from "../../base/base-input";
 
@@ -25,7 +24,6 @@ export const NumericValueNumberInput = memo(
     onValueChange,
   }: NumericValueNumberInputProps<T, K>) => {
     const { min, max, step } = metadata.x;
-
     return (
       <div className="flex items-center gap-2">
         <Slider
@@ -33,13 +31,12 @@ export const NumericValueNumberInput = memo(
           min={min}
           max={max}
           step={step}
-          value={[field.value.x]}
+          value={[field.value]}
           onValueChange={(values) => {
             const newValue = values[0];
             if (newValue === undefined) return;
-            const updatedValue = createExpressionString(newValue.toString());
-            field.onChange(updatedValue);
-            onValueChange(updatedValue);
+            field.onChange(newValue);
+            onValueChange(newValue);
           }}
         />
         <BaseInputNumber
@@ -49,11 +46,10 @@ export const NumericValueNumberInput = memo(
           className="w-20"
           onChange={(e) => {
             const newValue = Number(e.target.value);
-            const updatedValue = createExpressionString(newValue.toString());
-            field.onChange(updatedValue);
-            onValueChange(updatedValue);
+            field.onChange(newValue);
+            onValueChange(newValue);
           }}
-          value={field.value.x}
+          value={field.value}
         />
       </div>
     );

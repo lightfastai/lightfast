@@ -24,7 +24,7 @@ export const BaseInputNumber = forwardRef<HTMLInputElement, BaseInputProps>(
         max={max}
         step={step}
         className={cn(
-          "h-auto w-full px-1.5 py-0.5 text-xs tracking-widest",
+          "h-7 w-full px-1.5 py-0.5 text-xs tracking-widest",
           className,
         )}
       />

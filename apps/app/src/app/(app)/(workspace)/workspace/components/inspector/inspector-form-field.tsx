@@ -8,12 +8,7 @@ import type { z } from "zod";
 import { memo, useCallback, useMemo } from "react";
 
 import type { Value } from "@repo/webgl";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@repo/ui/components/ui/form";
+import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
 import {
   getNumericValueMode,
   getVec2Mode,
@@ -88,7 +83,7 @@ export const InspectorFormField = memo(
           const mode = getNumericValueMode(field.value);
           return mode === VectorMode.Number ? (
             <NumericValueNumberInput
-              field={field}
+              field={field as ControllerRenderProps<FieldValues, string>}
               metadata={numberMetadata}
               onValueChange={onValueChange}
             />
@@ -104,7 +99,6 @@ export const InspectorFormField = memo(
         // Handle Vec2 values
         if (isVec2(field.value)) {
           const mode = getVec2Mode(field.value);
-          console.log("mode", mode);
           return mode === VectorMode.Number ? (
             <Vec2NumberInput
               field={field}
@@ -156,7 +150,7 @@ export const InspectorFormField = memo(
 
         return null;
       },
-      [name, parentSchema, onValueChange],
+      [numberMetadata, onValueChange, vec2Metadata, vec3Metadata],
     );
 
     const uniformName = useMemo(() => extractUniformName(label), [label]);
@@ -170,9 +164,7 @@ export const InspectorFormField = memo(
             <FormLabel className="col-span-3 flex items-start justify-end text-xs">
               {uniformName.charAt(0).toUpperCase() + uniformName.slice(1)}
             </FormLabel>
-            <FormControl className="col-span-5">
-              {renderField(field)}
-            </FormControl>
+            <div className="col-span-5 w-full">{renderField(field)}</div>
           </FormItem>
         )}
       />
