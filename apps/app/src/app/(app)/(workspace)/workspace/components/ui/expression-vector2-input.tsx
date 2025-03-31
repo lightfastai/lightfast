@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Input } from "@repo/ui/components/ui/input";
 
 import type { ExpressionMode } from "./expression-mode-toggle";
+import { evaluateExpression } from "../../hooks/use-expression-evaluator";
 import { ExpressionModeToggle } from "./expression-mode-toggle";
 
 interface ExpressionVector2Value {
@@ -43,6 +44,84 @@ export function ExpressionVector2Input({
   const [mode, setMode] = useState<ExpressionMode>(
     isExpressionMode ? "expression" : "number",
   );
+
+  // Track focus state for each input
+  const [focusedInput, setFocusedInput] = useState<"x" | "y" | null>(null);
+
+  // Store calculated values for display in expression mode
+  const [calculatedValues, setCalculatedValues] = useState({
+    x: typeof value.x === "number" ? value.x : 0,
+    y: typeof value.y === "number" ? value.y : 0,
+  });
+
+  // Basic time context for expression evaluation
+  const [timeContext, setTimeContext] = useState(() => ({
+    time: 0,
+    delta: 0,
+    me: {
+      time: {
+        now: 0,
+        delta: 0,
+        elapsed: 0,
+        frame: 0,
+        fps: 60,
+        seconds: 0,
+        minutes: 0,
+        hours: 0,
+      },
+    },
+  }));
+
+  // Update time context periodically for evaluations
+  useEffect(() => {
+    if (mode !== "expression") return;
+
+    // Update time context every frame when in expression mode
+    const updateInterval = setInterval(() => {
+      const now = new Date();
+      const currentTime = performance.now() / 1000;
+
+      setTimeContext((prev) => {
+        const delta = currentTime - prev.time;
+        return {
+          time: currentTime,
+          delta,
+          me: {
+            time: {
+              now: currentTime,
+              delta,
+              elapsed: currentTime,
+              frame: prev.me.time.frame + 1,
+              fps: 60,
+              seconds: now.getSeconds() + now.getMilliseconds() / 1000,
+              minutes: now.getMinutes(),
+              hours: now.getHours(),
+            },
+          },
+        };
+      });
+    }, 16); // ~60fps
+
+    return () => clearInterval(updateInterval);
+  }, [mode]);
+
+  // Evaluate expressions when time context changes or expressions change
+  useEffect(() => {
+    if (mode !== "expression") return;
+
+    // Evaluate both x and y expressions
+    const newX =
+      typeof value.x === "string"
+        ? evaluateExpression(value.x, timeContext)
+        : value.x;
+
+    const newY =
+      typeof value.y === "string"
+        ? evaluateExpression(value.y, timeContext)
+        : value.y;
+
+    setCalculatedValues({ x: newX, y: newY });
+  }, [timeContext, value.x, value.y, mode]);
 
   const handleXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -101,19 +180,31 @@ export function ExpressionVector2Input({
     onChange({ x: newX, y: newY });
   };
 
-  // Format display values based on mode
+  // Format display values based on mode and focus state
   const displayX =
-    mode === "number" && typeof value.x === "number"
-      ? value.x
-      : mode === "expression" && typeof value.x === "string"
+    mode === "number"
+      ? typeof value.x === "number"
         ? value.x
+        : 0
+      : mode === "expression" && typeof value.x === "string"
+        ? focusedInput === "x"
+          ? value.x // Show the expression when focused
+          : calculatedValues.x !== undefined && calculatedValues.x !== null
+            ? calculatedValues.x.toFixed(4) // Show calculated value when not focused
+            : "0.0000"
         : "";
 
   const displayY =
-    mode === "number" && typeof value.y === "number"
-      ? value.y
-      : mode === "expression" && typeof value.y === "string"
+    mode === "number"
+      ? typeof value.y === "number"
         ? value.y
+        : 0
+      : mode === "expression" && typeof value.y === "string"
+        ? focusedInput === "y"
+          ? value.y // Show the expression when focused
+          : calculatedValues.y !== undefined && calculatedValues.y !== null
+            ? calculatedValues.y.toFixed(4) // Show calculated value when not focused
+            : "0.0000"
         : "";
 
   return (
@@ -126,28 +217,60 @@ export function ExpressionVector2Input({
         />
       </div>
       <div className="grid grid-cols-2 gap-1">
-        <Input
-          type={mode === "number" ? "number" : "text"}
-          value={displayX}
-          onChange={handleXChange}
-          className="h-7 text-xs"
-          placeholder={mode === "expression" ? "e.g., sin(time)" : ""}
-          min={mode === "number" ? min : undefined}
-          max={mode === "number" ? max : undefined}
-          step={mode === "number" ? step : undefined}
-          disabled={disabled}
-        />
-        <Input
-          type={mode === "number" ? "number" : "text"}
-          value={displayY}
-          onChange={handleYChange}
-          className="h-7 text-xs"
-          placeholder={mode === "expression" ? "e.g., cos(time)" : ""}
-          min={mode === "number" ? min : undefined}
-          max={mode === "number" ? max : undefined}
-          step={mode === "number" ? step : undefined}
-          disabled={disabled}
-        />
+        <div className="relative">
+          <Input
+            type={
+              mode === "number" ||
+              (mode === "expression" && focusedInput !== "x")
+                ? "number"
+                : "text"
+            }
+            value={displayX}
+            onChange={handleXChange}
+            onFocus={() => setFocusedInput("x")}
+            onBlur={() => setFocusedInput(null)}
+            className={`h-7 text-xs ${mode === "expression" && focusedInput !== "x" ? "opacity-70" : ""}`}
+            placeholder={mode === "expression" ? "e.g., sin(time)" : ""}
+            min={mode === "number" ? min : undefined}
+            max={mode === "number" ? max : undefined}
+            step={mode === "number" ? step : undefined}
+            disabled={disabled}
+          />
+          {mode === "expression" &&
+            focusedInput !== "x" &&
+            typeof value.x === "string" && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                fx
+              </div>
+            )}
+        </div>
+        <div className="relative">
+          <Input
+            type={
+              mode === "number" ||
+              (mode === "expression" && focusedInput !== "y")
+                ? "number"
+                : "text"
+            }
+            value={displayY}
+            onChange={handleYChange}
+            onFocus={() => setFocusedInput("y")}
+            onBlur={() => setFocusedInput(null)}
+            className={`h-7 text-xs ${mode === "expression" && focusedInput !== "y" ? "opacity-70" : ""}`}
+            placeholder={mode === "expression" ? "e.g., cos(time)" : ""}
+            min={mode === "number" ? min : undefined}
+            max={mode === "number" ? max : undefined}
+            step={mode === "number" ? step : undefined}
+            disabled={disabled}
+          />
+          {mode === "expression" &&
+            focusedInput !== "y" &&
+            typeof value.y === "string" && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                fx
+              </div>
+            )}
+        </div>
       </div>
     </div>
   );
