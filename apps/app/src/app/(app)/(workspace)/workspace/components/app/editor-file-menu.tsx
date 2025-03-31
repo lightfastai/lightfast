@@ -2,12 +2,12 @@
 
 import { Icons } from "@repo/ui/components/icons";
 
-import { WorkspaceIconButton } from "~/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  ForwardedDropdownMenuTriggerButton,
 } from "~/components/ui/dropdown-menu";
 import { useCreateWorkspace } from "../../hooks/use-create-workspace";
 
@@ -15,10 +15,10 @@ export function EditorFileMenu() {
   const { mutateAsync } = useCreateWorkspace();
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <WorkspaceIconButton variant="outline">
+      <DropdownMenuTrigger asChild>
+        <ForwardedDropdownMenuTriggerButton variant="outline">
           <Icons.logo className="size-3" />
-        </WorkspaceIconButton>
+        </ForwardedDropdownMenuTriggerButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem onClick={() => mutateAsync()}>

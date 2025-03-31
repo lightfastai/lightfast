@@ -11,7 +11,6 @@ import {
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
 import { api } from "~/trpc/client/server";
 import { EditorFileMenu } from "../../components/app/editor-file-menu";
-import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";
 import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
 import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
 
@@ -101,7 +100,7 @@ export default async function WorkspaceLayout({
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <EditorWorkspaceNameInput initialWorkspace={workspace} />
+              {/* <EditorWorkspaceNameInput initialWorkspace={workspace} /> */}
               <EditorWorkspaceListMenu />
             </BreadcrumbItem>
           </BreadcrumbList>

@@ -8,13 +8,13 @@ import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
-import { WorkspaceIconButton } from "~/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  ForwardedDropdownMenuTriggerButton,
 } from "~/components/ui/dropdown-menu";
 import { useGetAllWorkspaces } from "../../hooks/use-get-all-workspace";
 
@@ -23,10 +23,10 @@ export function EditorWorkspaceListMenu() {
   const [search, setSearch] = useState("");
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <WorkspaceIconButton variant="ghost">
+      <DropdownMenuTrigger asChild>
+        <ForwardedDropdownMenuTriggerButton variant="ghost">
           <ChevronsUpDownIcon className="size-3" />
-        </WorkspaceIconButton>
+        </ForwardedDropdownMenuTriggerButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel className="text-xs text-muted-foreground">

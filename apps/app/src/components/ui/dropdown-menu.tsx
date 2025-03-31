@@ -1,7 +1,10 @@
 "use client";
 
+import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 
+import { buttonVariants } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu as BaseDropdownMenu,
   DropdownMenuContent as BaseDropdownMenuContent,
@@ -80,3 +83,44 @@ DropdownMenuSeparator.displayName = "DropdownMenuSeparator";
 
 // Re-export the base DropdownMenu
 export const DropdownMenu = BaseDropdownMenu;
+
+export const DropdownMenuTriggerButton = (
+  {
+    asChild = false,
+    variant = "default",
+    size = "default",
+    children,
+    ...props
+  }: React.ComponentProps<"button"> &
+    VariantProps<typeof buttonVariants> & {
+      asChild?: boolean;
+    },
+  ref: React.ForwardedRef<HTMLButtonElement>,
+) => {
+  const Comp = asChild ? Slot : "button";
+
+  const button = (
+    <Comp
+      ref={ref}
+      data-slot="dropdown-menu-trigger"
+      className={cn(
+        buttonVariants({ variant, size }),
+        "h-7 px-2 py-1 has-[>svg]:px-2",
+        props.className,
+      )}
+      {...props}
+    >
+      {children}
+    </Comp>
+  );
+
+  return button;
+};
+
+// Forward ref using React.forwardRef after function definition
+const ForwardedDropdownMenuTriggerButton = React.forwardRef(
+  DropdownMenuTriggerButton,
+);
+ForwardedDropdownMenuTriggerButton.displayName = "DropdownMenuTriggerButton";
+//Export
+export { ForwardedDropdownMenuTriggerButton };
