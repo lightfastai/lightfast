@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
-
+import { useWorkspaceShortcuts } from "../../hooks/use-workspace-shortcuts";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { FluxInspector } from "./flux-inspector";
 import { InspectorTexture } from "./inspector-texture";
@@ -9,20 +8,8 @@ import { InspectorTexture } from "./inspector-texture";
 export const Inspector = () => {
   const { selected, setIsOpen, isOpen } = useInspectorStore((state) => state);
 
-  const toggleInspector = useCallback(() => {
-    setIsOpen(!isOpen);
-  }, [isOpen, setIsOpen]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "p") {
-        e.preventDefault();
-        toggleInspector();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [toggleInspector]);
+  // Only enable inspector shortcuts, disable command palette shortcuts
+  useWorkspaceShortcuts({ enableCommandPalette: false });
 
   if (!selected || !isOpen) return null;
   if (selected.type === "texture") {

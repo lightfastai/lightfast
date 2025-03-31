@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { Circle, Monitor, Square, Triangle } from "lucide-react";
 
 import {
@@ -31,7 +30,7 @@ import {
   $TextureTypes,
   $Txt2ImgType,
 } from "~/db/schema/types";
-import { useEditorStore } from "../../providers/editor-store-provider";
+import { useCommandDialog } from "../../hooks/use-command-dialog";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 
 export const EditorCommandDialog = () => {
@@ -44,16 +43,14 @@ export const EditorCommandDialog = () => {
     clearSelection,
   } = useSelectionStore((state) => state);
 
-  const { isCommandDialogOpen, setIsCommandDialogOpen } = useEditorStore(
-    (state) => state,
-  );
+  const { isOpen, open, close } = useCommandDialog();
 
   /**
    * Handle geometry selection
    */
   const handleGeometrySelect = (geometryType: GeometryType) => {
     // Close the command dialog first
-    setIsCommandDialogOpen(false);
+    close();
 
     // Notify parent component of the selected geometry
     setGeometry(geometryType);
@@ -61,7 +58,7 @@ export const EditorCommandDialog = () => {
 
   const handleMaterialSelect = (materialType: MaterialType) => {
     // Close the command dialog first
-    setIsCommandDialogOpen(false);
+    close();
 
     // Notify parent component of the selected material
     setMaterial(materialType);
@@ -69,7 +66,7 @@ export const EditorCommandDialog = () => {
 
   const handleTextureSelect = (textureType: TextureType) => {
     // Close the command dialog first
-    setIsCommandDialogOpen(false);
+    close();
 
     // Notify parent component of the selected texture
     setTexture(textureType);
@@ -77,7 +74,7 @@ export const EditorCommandDialog = () => {
 
   const handleFluxSelect = (fluxType: Txt2ImgType) => {
     // Close the command dialog first
-    setIsCommandDialogOpen(false);
+    close();
 
     // Notify parent component of the selected flux
     setFlux(fluxType);
@@ -85,63 +82,14 @@ export const EditorCommandDialog = () => {
 
   const handleWindowSelect = () => {
     // Close the command dialog first
-    setIsCommandDialogOpen(false);
+    close();
 
     // Notify parent component of the selected window type
     setWindow();
   };
 
-  /**
-   * Handle global command dialog toggle
-   * @usage (CMD + K)
-   */
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setIsCommandDialogOpen(true);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      /**
-       * CMD + Z
-       */
-      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
-        e.preventDefault();
-        setIsCommandDialogOpen(true);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      /**
-       * CMD + SHIFT + Y
-       */
-      if ((e.metaKey || e.ctrlKey) && e.key === "y" && e.shiftKey) {
-        e.preventDefault();
-        setIsCommandDialogOpen(true);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
   return (
-    <CommandDialog
-      open={isCommandDialogOpen}
-      onOpenChange={() => setIsCommandDialogOpen(false)}
-    >
+    <CommandDialog open={isOpen} onOpenChange={close}>
       <Command>
         <Tabs defaultValue="texture" className="gap-0">
           <TabsList className="h-8 w-full rounded-none border-b bg-background">

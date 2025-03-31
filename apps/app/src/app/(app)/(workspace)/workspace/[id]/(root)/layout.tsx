@@ -11,13 +11,14 @@ import {
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
 import { $NodeType } from "~/db/schema/types";
 import { api, HydrateClient } from "~/trpc/client/server";
-import { EditorCommandDialog } from "../../components/app/editor-command-dialog";
 import { EditorFileMenu } from "../../components/app/editor-file-menu";
 import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";
 import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
+import { EditorCommandDialog } from "../../components/command-dialog/editor-command-dialog";
 import { TextureRenderPipeline } from "../../components/webgl/texture-render-pipeline";
 import { EdgeStoreProvider } from "../../providers/edge-store-provider";
 import { EditorStoreProvider } from "../../providers/editor-store-provider";
+import { FileMenuViewProvider } from "../../providers/file-menu-view-provider";
 import { InspectorStoreProvider } from "../../providers/inspector-store-provider";
 import { NodeStoreProvider } from "../../providers/node-store-provider";
 import { SelectionStoreProvider } from "../../providers/selection-store-provider";
@@ -103,18 +104,20 @@ export default async function WorkspaceLayout({
   return (
     <div className="relative flex h-screen flex-col">
       <div className="fixed z-50 p-4">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <EditorFileMenu />
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <EditorWorkspaceNameInput initialWorkspace={workspace} />
-              <EditorWorkspaceListMenu />
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <FileMenuViewProvider>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <EditorFileMenu />
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <EditorWorkspaceNameInput initialWorkspace={workspace} />
+                <EditorWorkspaceListMenu />
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </FileMenuViewProvider>
       </div>
 
       <HydrateClient>

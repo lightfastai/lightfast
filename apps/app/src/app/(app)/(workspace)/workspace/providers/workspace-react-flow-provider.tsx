@@ -2,7 +2,7 @@
 
 import { ReactFlowProvider } from "@xyflow/react";
 
-export const WorkspaceProvider = ({
+export const WorkspaceReactFlowProvider = ({
   children,
 }: {
   children: React.ReactNode;

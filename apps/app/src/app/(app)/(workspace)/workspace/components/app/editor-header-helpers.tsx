@@ -16,7 +16,7 @@ import {
 
 import { useSession } from "~/hooks/use-session";
 import { useSignOut } from "~/hooks/use-sign-out";
-import { EditorCommandDialog } from "./editor-command-dialog";
+import { EditorCommandDialog } from "../command-dialog/editor-command-dialog";
 
 export const EditorHeaderHelpers = () => {
   const session = useSession();
