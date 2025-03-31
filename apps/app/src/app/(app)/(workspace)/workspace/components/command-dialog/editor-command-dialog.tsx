@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Circle, Monitor, Square, Triangle } from "lucide-react";
 
 import {
@@ -33,6 +34,8 @@ import {
 import { useCommandDialog } from "../../hooks/use-command-dialog";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 
+const TAB_VALUES = ["texture", "geometry", "material", "comp"] as const;
+
 export const EditorCommandDialog = () => {
   const {
     setGeometry,
@@ -44,6 +47,54 @@ export const EditorCommandDialog = () => {
   } = useSelectionStore((state) => state);
 
   const { isOpen, open, close } = useCommandDialog();
+  const [currentTabIndex, setCurrentTabIndex] = useState(0);
+
+  // Focus search input when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay to ensure the dialog is fully rendered
+      const timer = setTimeout(() => {
+        const searchInput = document.querySelector(
+          'input[data-slot="command-input"]',
+        );
+        if (searchInput instanceof HTMLInputElement) {
+          searchInput.focus();
+        }
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle tab navigation
+      if (e.key === "Tab" && !e.shiftKey) {
+        e.preventDefault();
+        setCurrentTabIndex((prev) => (prev + 1) % TAB_VALUES.length);
+      } else if (e.key === "Tab" && e.shiftKey) {
+        e.preventDefault();
+        setCurrentTabIndex(
+          (prev) => (prev - 1 + TAB_VALUES.length) % TAB_VALUES.length,
+        );
+      }
+      // Handle search focus
+      else if (e.key === "/") {
+        e.preventDefault();
+        const searchInput = document.querySelector(
+          'input[data-slot="command-input"]',
+        );
+        if (searchInput instanceof HTMLInputElement) {
+          searchInput.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   /**
    * Handle geometry selection
@@ -91,7 +142,7 @@ export const EditorCommandDialog = () => {
   return (
     <CommandDialog open={isOpen} onOpenChange={close}>
       <Command>
-        <Tabs defaultValue="texture" className="gap-0">
+        <Tabs value={TAB_VALUES[currentTabIndex]} className="gap-0">
           <TabsList className="h-8 w-full rounded-none border-b bg-background">
             <TabsTrigger value="texture" className="text-xs">
               TOP
