@@ -9,8 +9,6 @@ import { Node, Workspace } from "~/db/schema";
 import { InsertNodeSchema } from "~/db/schema/tables/Node";
 import { $Txt2Img, $Window } from "~/db/schema/types";
 import { $Texture } from "~/db/schema/types/Texture";
-import { $Add } from "../../../../../../../packages/webgl/dist/shaders/add";
-import { $Displace } from "../../../../../../../packages/webgl/dist/shaders/displace";
 
 export const nodeRouter = {
   delete: protectedTenantProcedure
@@ -184,7 +182,7 @@ export const nodeRouter = {
       .input(
         z.object({
           id: z.string(),
-          data: $Texture.or($Txt2Img).or($Window).or($Displace).or($Add),
+          data: $Texture.or($Txt2Img).or($Window),
         }),
       )
       .mutation(async ({ ctx, input }) => {

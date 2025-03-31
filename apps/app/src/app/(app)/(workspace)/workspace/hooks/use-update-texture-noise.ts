@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { baseVertexShader } from "@repo/webgl/shaders/base-vert-shader";
+import { baseVertexShader, pnoiseFragmentShader } from "@repo/webgl";
 
 // TODO: Use proper imports when the module is set up
 // import {
@@ -14,7 +14,6 @@ import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
 import type { NoiseTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
-import { perlinNoise3DFragmentShader } from "../../../../../../../../packages/webgl/dist/shaders/pnoise";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import {
   isExpression,
@@ -131,7 +130,7 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
 
         const shader = new THREE.ShaderMaterial({
           vertexShader: baseVertexShader,
-          fragmentShader: perlinNoise3DFragmentShader,
+          fragmentShader: pnoiseFragmentShader,
           uniforms: { ...uniforms },
         });
 

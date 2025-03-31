@@ -196,7 +196,7 @@ export const getPNoiseVec2FieldMetadata = (name: string): Vec2FieldMetadata => {
   return constraint.metadata as Vec2FieldMetadata;
 };
 
-export const perlinNoise3DFragmentShader = `
+export const pnoiseFragmentShader = `
 precision highp float;
 
 // GLSL textureless classic 3D noise

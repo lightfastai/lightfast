@@ -10,12 +10,8 @@ import { memo, useCallback, useMemo } from "react";
 import type { Value } from "@repo/webgl";
 import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
 import {
-  extractUniformName,
   getNumericValueMode,
-  getValueFieldMetadata,
-  getVec2FieldMetadata,
   getVec2Mode,
-  getVec3FieldMetadata,
   getVec3Mode,
   isBoolean,
   isColor,

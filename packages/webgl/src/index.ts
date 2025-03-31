@@ -153,4 +153,15 @@ export const $TextureSystemJsonSchema = {
   ],
 } as JSONSchema7;
 
+export { addFragmentShader } from "./shaders/add";
+export { displaceFragmentShader } from "./shaders/displace";
+export { limitFragmentShader } from "./shaders/limit";
+export { pnoiseFragmentShader } from "./shaders/pnoise";
+export { baseVertexShader } from "./shaders/base-vert-shader";
+
+export { createDefaultAdd } from "./shaders/add";
+export { createDefaultDisplace } from "./shaders/displace";
+export { createDefaultLimit } from "./shaders/limit";
+export { createDefaultPerlinNoise3D } from "./shaders/pnoise";
+
 export * from "./types/uniform-constraints";
