@@ -2,7 +2,11 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { $NumericValue, createConstrainedVec2 } from "../../schema/schema";
+import {
+  $NumericValue,
+  createConstrainedVec2,
+  VectorMode,
+} from "../../schema/schema";
 
 export const $Displace = z.object({
   u_texture1: z
@@ -17,19 +21,28 @@ export const $Displace = z.object({
     .default(1.0)
     .describe("The intensity of the displacement effect"),
   u_displaceMidpoint: createConstrainedVec2({
-    x: { min: 0, max: 1, default: 0.5 },
-    y: { min: 0, max: 1, default: 0.5 },
+    mode: VectorMode.Number,
+    components: {
+      x: { min: 0, max: 1, default: 0.5 },
+      y: { min: 0, max: 1, default: 0.5 },
+    },
   }).describe("The center reference point for displacement"),
   u_displaceOffset: createConstrainedVec2({
-    x: { min: 0, max: 1, default: 0.5 },
-    y: { min: 0, max: 1, default: 0.5 },
+    mode: VectorMode.Number,
+    components: {
+      x: { min: 0, max: 1, default: 0.5 },
+      y: { min: 0, max: 1, default: 0.5 },
+    },
   }).describe("Additional offset for the displacement"),
   u_displaceOffsetWeight: $NumericValue
     .default(0.0)
     .describe("The intensity of the offset"),
   u_displaceUVWeight: createConstrainedVec2({
-    x: { min: 0, max: 2, default: 1.0 },
-    y: { min: 0, max: 2, default: 1.0 },
+    mode: VectorMode.Number,
+    components: {
+      x: { min: 0, max: 2, default: 1.0 },
+      y: { min: 0, max: 2, default: 1.0 },
+    },
   }).describe("UV scaling for the displacement"),
 });
 

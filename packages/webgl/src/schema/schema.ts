@@ -187,114 +187,170 @@ export function isVec3Number(vec: Vec3): boolean {
   return getVec3Mode(vec) === VectorMode.Number;
 }
 
-// Constrained schema creators
-interface ConstrainedVec1 {
-  x: { min: number; max: number; default: number | string };
+// Constraint types
+interface NumericConstraint {
+  min: number;
+  max: number;
+  default: number | string;
 }
 
-interface ConstrainedVec2 {
-  x: { min: number; max: number; default: number | string };
-  y: { min: number; max: number; default: number | string };
+interface VectorConstraints<T extends "vec1" | "vec2" | "vec3"> {
+  mode: VectorMode;
+  components: T extends "vec1"
+    ? { x: NumericConstraint }
+    : T extends "vec2"
+      ? { x: NumericConstraint; y: NumericConstraint }
+      : { x: NumericConstraint; y: NumericConstraint; z: NumericConstraint };
 }
 
-interface ConstrainedVec3 {
-  x: { min: number; max: number; default: number | string };
-  y: { min: number; max: number; default: number | string };
-  z: { min: number; max: number; default: number | string };
+// Helper to validate expression values against constraints
+function validateExpressionValue(
+  value: string,
+  constraint: NumericConstraint,
+): string {
+  // We can't validate the exact value at runtime since it's an expression,
+  // but we can add the constraints as metadata in the expression
+  return createExpressionString(
+    `Math.max(${constraint.min}, Math.min(${constraint.max}, ${extractExpression(value)}))`,
+  );
 }
 
-export const createConstrainedVec1 = (constraints: ConstrainedVec1) => {
-  const isExpressionMode = typeof constraints.x.default === "string";
+// Helper to validate numeric values against constraints
+function validateNumericValue(
+  value: number,
+  constraint: NumericConstraint,
+): number {
+  return Math.max(constraint.min, Math.min(constraint.max, value));
+}
 
-  if (isExpressionMode) {
+export const createConstrainedVec1 = (
+  constraints: VectorConstraints<"vec1">,
+) => {
+  if (constraints.mode === VectorMode.Expression) {
     return $Vec1Expression.extend({
       x: $Expression
         .describe(
-          `X component (min: ${constraints.x.min}, max: ${constraints.x.max})`,
+          `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
         )
-        .default(createExpressionString(constraints.x.default as string)),
+        .transform((val) =>
+          validateExpressionValue(val, constraints.components.x),
+        )
+        .default(
+          createExpressionString(constraints.components.x.default as string),
+        ),
     });
   }
 
   return $Vec1Number.extend({
     x: $Number
       .describe(
-        `X component (min: ${constraints.x.min}, max: ${constraints.x.max})`,
+        `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
       )
-      .default(constraints.x.default as number),
+      .transform((val) => validateNumericValue(val, constraints.components.x))
+      .default(constraints.components.x.default as number),
   });
 };
 
-export const createConstrainedVec2 = (constraints: ConstrainedVec2) => {
-  const isExpressionMode = typeof constraints.x.default === "string";
-
-  if (isExpressionMode) {
+export const createConstrainedVec2 = (
+  constraints: VectorConstraints<"vec2">,
+) => {
+  if (constraints.mode === VectorMode.Expression) {
     return $Vec2Expression.extend({
       x: $Expression
         .describe(
-          `X component (min: ${constraints.x.min}, max: ${constraints.x.max})`,
+          `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
         )
-        .default(createExpressionString(constraints.x.default as string)),
+        .transform((val) =>
+          validateExpressionValue(val, constraints.components.x),
+        )
+        .default(
+          createExpressionString(constraints.components.x.default as string),
+        ),
       y: $Expression
         .describe(
-          `Y component (min: ${constraints.y.min}, max: ${constraints.y.max})`,
+          `Y component (min: ${constraints.components.y.min}, max: ${constraints.components.y.max})`,
         )
-        .default(createExpressionString(constraints.y.default as string)),
+        .transform((val) =>
+          validateExpressionValue(val, constraints.components.y),
+        )
+        .default(
+          createExpressionString(constraints.components.y.default as string),
+        ),
     });
   }
 
   return $Vec2Number.extend({
     x: $Number
       .describe(
-        `X component (min: ${constraints.x.min}, max: ${constraints.x.max})`,
+        `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
       )
-      .default(constraints.x.default as number),
+      .transform((val) => validateNumericValue(val, constraints.components.x))
+      .default(constraints.components.x.default as number),
     y: $Number
       .describe(
-        `Y component (min: ${constraints.y.min}, max: ${constraints.y.max})`,
+        `Y component (min: ${constraints.components.y.min}, max: ${constraints.components.y.max})`,
       )
-      .default(constraints.y.default as number),
+      .transform((val) => validateNumericValue(val, constraints.components.y))
+      .default(constraints.components.y.default as number),
   });
 };
 
-export const createConstrainedVec3 = (constraints: ConstrainedVec3) => {
-  const isExpressionMode = typeof constraints.x.default === "string";
-
-  if (isExpressionMode) {
+export const createConstrainedVec3 = (
+  constraints: VectorConstraints<"vec3">,
+) => {
+  if (constraints.mode === VectorMode.Expression) {
     return $Vec3Expression.extend({
       x: $Expression
         .describe(
-          `X component (min: ${constraints.x.min}, max: ${constraints.x.max})`,
+          `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
         )
-        .default(createExpressionString(constraints.x.default as string)),
+        .transform((val) =>
+          validateExpressionValue(val, constraints.components.x),
+        )
+        .default(
+          createExpressionString(constraints.components.x.default as string),
+        ),
       y: $Expression
         .describe(
-          `Y component (min: ${constraints.y.min}, max: ${constraints.y.max})`,
+          `Y component (min: ${constraints.components.y.min}, max: ${constraints.components.y.max})`,
         )
-        .default(createExpressionString(constraints.y.default as string)),
+        .transform((val) =>
+          validateExpressionValue(val, constraints.components.y),
+        )
+        .default(
+          createExpressionString(constraints.components.y.default as string),
+        ),
       z: $Expression
         .describe(
-          `Z component (min: ${constraints.z.min}, max: ${constraints.z.max})`,
+          `Z component (min: ${constraints.components.z.min}, max: ${constraints.components.z.max})`,
         )
-        .default(createExpressionString(constraints.z.default as string)),
+        .transform((val) =>
+          validateExpressionValue(val, constraints.components.z),
+        )
+        .default(
+          createExpressionString(constraints.components.z.default as string),
+        ),
     });
   }
 
   return $Vec3Number.extend({
     x: $Number
       .describe(
-        `X component (min: ${constraints.x.min}, max: ${constraints.x.max})`,
+        `X component (min: ${constraints.components.x.min}, max: ${constraints.components.x.max})`,
       )
-      .default(constraints.x.default as number),
+      .transform((val) => validateNumericValue(val, constraints.components.x))
+      .default(constraints.components.x.default as number),
     y: $Number
       .describe(
-        `Y component (min: ${constraints.y.min}, max: ${constraints.y.max})`,
+        `Y component (min: ${constraints.components.y.min}, max: ${constraints.components.y.max})`,
       )
-      .default(constraints.y.default as number),
+      .transform((val) => validateNumericValue(val, constraints.components.y))
+      .default(constraints.components.y.default as number),
     z: $Number
       .describe(
-        `Z component (min: ${constraints.z.min}, max: ${constraints.z.max})`,
+        `Z component (min: ${constraints.components.z.min}, max: ${constraints.components.z.max})`,
       )
-      .default(constraints.z.default as number),
+      .transform((val) => validateNumericValue(val, constraints.components.z))
+      .default(constraints.components.z.default as number),
   });
 };

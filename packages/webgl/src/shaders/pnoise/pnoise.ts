@@ -2,7 +2,11 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { $NumericValue, createConstrainedVec2 } from "../../schema/schema";
+import {
+  $NumericValue,
+  createConstrainedVec2,
+  VectorMode,
+} from "../../schema/schema";
 import { $Shared } from "../shared/schema";
 
 // Define the time expression type for animation
@@ -45,16 +49,25 @@ export const $NoiseBase = z.object({
 
 export const $NoiseTransform = z.object({
   u_scale: createConstrainedVec2({
-    x: { min: -1000, max: 1000, default: 1 },
-    y: { min: -1000, max: 1000, default: 1 },
+    mode: VectorMode.Number,
+    components: {
+      x: { min: -1000, max: 1000, default: 1 },
+      y: { min: -1000, max: 1000, default: 1 },
+    },
   }).describe("The scale of the noise."),
   u_translate: createConstrainedVec2({
-    x: { min: -1000, max: 1000, default: 0 },
-    y: { min: -1000, max: 1000, default: 0 },
+    mode: VectorMode.Number,
+    components: {
+      x: { min: -1000, max: 1000, default: 0 },
+      y: { min: -1000, max: 1000, default: 0 },
+    },
   }).describe("The offset of the noise."),
   u_rotation: createConstrainedVec2({
-    x: { min: -Math.PI, max: Math.PI, default: 0 },
-    y: { min: -Math.PI, max: Math.PI, default: 0 },
+    mode: VectorMode.Number,
+    components: {
+      x: { min: -Math.PI, max: Math.PI, default: 0 },
+      y: { min: -Math.PI, max: Math.PI, default: 0 },
+    },
   }).describe("The rotation of the noise."),
 });
 
