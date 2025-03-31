@@ -7,12 +7,16 @@ import {
   Command,
   CommandDialog,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from "@repo/ui/components/ui/command";
-import { Label } from "@repo/ui/components/ui/label";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
 
 import type {
   GeometryType,
@@ -141,95 +145,139 @@ export const EditorCommandDialog = () => {
         <CommandInput placeholder="Search a TOP..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="TOP">
-            <CommandItem
-              onSelect={() => handleTextureSelect($TextureTypes.Enum.Noise)}
-              className="flex items-center gap-2"
-            >
-              <Label>Noise</Label>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleTextureSelect($TextureTypes.Enum.Limit)}
-              className="flex items-center gap-2"
-            >
-              <Label>Limit</Label>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleTextureSelect($TextureTypes.Enum.Displace)}
-              className="flex items-center gap-2"
-            >
-              <Label>Displace</Label>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleTextureSelect($TextureTypes.Enum.Add)}
-              className="flex items-center gap-2"
-            >
-              <Label>Add</Label>
-            </CommandItem>
-          </CommandGroup>
-          <CommandGroup heading="WebGL Geometry">
-            <CommandItem
-              onSelect={() => handleGeometrySelect($GeometryType.Enum.box)}
-              className="flex items-center gap-2"
-            >
-              <Square className="h-4 w-4" />
-              <Label>Box</Label>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleGeometrySelect($GeometryType.Enum.sphere)}
-              className="flex items-center gap-2"
-            >
-              <Circle className="h-4 w-4" />
-              <Label>Sphere</Label>
-            </CommandItem>
-            <CommandItem
-              onSelect={() =>
-                handleGeometrySelect($GeometryType.Enum.tetrahedron)
-              }
-              className="flex items-center gap-2"
-            >
-              <Triangle className="h-4 w-4" />
-              <Label>Tetrahedron</Label>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleGeometrySelect($GeometryType.Enum.torus)}
-              className="flex items-center gap-2"
-            >
-              <Circle className="h-4 w-4" />
-              <Label>Torus</Label>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleGeometrySelect($GeometryType.Enum.plane)}
-              className="flex items-center gap-2"
-            >
-              <Label>Plane</Label>
-            </CommandItem>
-          </CommandGroup>
-          <CommandGroup heading="Material">
-            <CommandItem
-              onSelect={() => handleMaterialSelect($MaterialType.Enum.phong)}
-            >
-              <Label>Phong</Label>
-            </CommandItem>
-          </CommandGroup>
+          <div className="flex w-full flex-col">
+            <Tabs defaultValue="texture" className="gap-2">
+              <TabsList className="h-8 w-full border-b bg-background">
+                <TabsTrigger value="texture" className="text-xs">
+                  TOP
+                </TabsTrigger>
+                <TabsTrigger value="geometry" className="text-xs">
+                  GEO
+                </TabsTrigger>
+                <TabsTrigger value="material" className="text-xs">
+                  MAT
+                </TabsTrigger>
+                <TabsTrigger value="comp" className="text-xs">
+                  COMP
+                </TabsTrigger>
+              </TabsList>
 
-          <CommandGroup heading="AI">
-            <CommandItem
-              onSelect={() => handleFluxSelect($Txt2ImgType.Enum["flux/dev"])}
-              className="flex items-center gap-2"
-            >
-              <Label>Flux</Label>
-            </CommandItem>
-          </CommandGroup>
-          <CommandGroup heading="Window">
-            <CommandItem
-              onSelect={handleWindowSelect}
-              className="flex items-center gap-2"
-            >
-              <Monitor className="h-4 w-4" />
-              <Label>External Window</Label>
-            </CommandItem>
-          </CommandGroup>
+              <TabsContent
+                value="texture"
+                className="grid grid-cols-4 grid-rows-10 gap-1 px-1"
+              >
+                <CommandItem
+                  onSelect={() => handleTextureSelect($TextureTypes.Enum.Noise)}
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  Noise
+                </CommandItem>
+                <CommandItem
+                  onSelect={() => handleTextureSelect($TextureTypes.Enum.Limit)}
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  Limit
+                </CommandItem>
+                <CommandItem
+                  onSelect={() =>
+                    handleTextureSelect($TextureTypes.Enum.Displace)
+                  }
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  Displace
+                </CommandItem>
+                <CommandItem
+                  onSelect={() => handleTextureSelect($TextureTypes.Enum.Add)}
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  Add
+                </CommandItem>
+              </TabsContent>
+
+              <TabsContent
+                value="geometry"
+                className="grid grid-cols-4 grid-rows-10 gap-1 px-1"
+              >
+                <CommandItem
+                  onSelect={() => handleGeometrySelect($GeometryType.Enum.box)}
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  <Square className="mr-1 h-3 w-3" />
+                  Box
+                </CommandItem>
+                <CommandItem
+                  onSelect={() =>
+                    handleGeometrySelect($GeometryType.Enum.sphere)
+                  }
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  <Circle className="mr-1 h-3 w-3" />
+                  Sphere
+                </CommandItem>
+                <CommandItem
+                  onSelect={() =>
+                    handleGeometrySelect($GeometryType.Enum.tetrahedron)
+                  }
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  <Triangle className="mr-1 h-3 w-3" />
+                  Tetrahedron
+                </CommandItem>
+                <CommandItem
+                  onSelect={() =>
+                    handleGeometrySelect($GeometryType.Enum.torus)
+                  }
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  <Circle className="mr-1 h-3 w-3" />
+                  Torus
+                </CommandItem>
+                <CommandItem
+                  onSelect={() =>
+                    handleGeometrySelect($GeometryType.Enum.plane)
+                  }
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  Plane
+                </CommandItem>
+              </TabsContent>
+
+              <TabsContent
+                value="material"
+                className="grid grid-cols-4 grid-rows-10 gap-1 px-1"
+              >
+                <CommandItem
+                  onSelect={() =>
+                    handleMaterialSelect($MaterialType.Enum.phong)
+                  }
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  Phong
+                </CommandItem>
+              </TabsContent>
+
+              <TabsContent
+                value="comp"
+                className="grid grid-cols-4 grid-rows-10 gap-1 px-1"
+              >
+                <CommandItem
+                  onSelect={handleWindowSelect}
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  <Monitor className="mr-1 h-1 w-1" />
+                  Window
+                </CommandItem>
+                <CommandItem
+                  onSelect={() =>
+                    handleFluxSelect($Txt2ImgType.Enum["flux/dev"])
+                  }
+                  className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                >
+                  Flux
+                </CommandItem>
+              </TabsContent>
+            </Tabs>
+          </div>
         </CommandList>
       </Command>
     </CommandDialog>
