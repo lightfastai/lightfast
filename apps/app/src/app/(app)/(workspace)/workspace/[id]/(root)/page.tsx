@@ -10,7 +10,6 @@ interface WorkspacePageProps {
 
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
-  return null;
   return (
     <>
       <WorkspaceProvider>

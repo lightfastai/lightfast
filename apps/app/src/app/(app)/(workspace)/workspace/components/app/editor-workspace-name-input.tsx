@@ -43,7 +43,7 @@ export const EditorWorkspaceNameInput = ({
 
   // Reset form values when workspace data changes
   useEffect(() => {
-    if (workspace.name !== undefined) {
+    if (workspace.name) {
       form.reset({
         workspaceName: workspace.name,
         id: initialWorkspace.id,
@@ -93,7 +93,7 @@ export const EditorWorkspaceNameInput = ({
     if (!isValid) {
       // Reset the input to previous value
       form.reset({
-        workspaceName: workspace.name ?? "",
+        workspaceName: workspace.name,
         id: initialWorkspace.id,
       });
       form.clearErrors();
@@ -133,7 +133,7 @@ export const EditorWorkspaceNameInput = ({
                   placeholder="Workspace name"
                   onBlur={handleBlur}
                   // Disable the input until the workspace data is loaded
-                  // disabled={workspace.name === undefined}
+                  disabled={!workspace.name}
                   className="h-7 w-64 md:text-xs"
                 />
               </FormControl>
