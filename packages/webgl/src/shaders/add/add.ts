@@ -2,16 +2,15 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { $ExpressionOrNumber } from "../../expressions/schema";
+import { $Boolean, $NumericValue } from "../../schema/schema";
 
 export const $Add = z.object({
   u_texture1: z.number().nullable().describe("The first input texture (A)"),
   u_texture2: z.number().nullable().describe("The second input texture (B)"),
-  u_addValue: $ExpressionOrNumber
+  u_addValue: $NumericValue
     .default(0.0)
     .describe("Constant value to add to the result"),
-  u_enableMirror: z
-    .boolean()
+  u_enableMirror: $Boolean
     .default(false)
     .describe("Whether to mirror the result vertically"),
 });

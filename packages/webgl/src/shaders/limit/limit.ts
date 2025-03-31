@@ -2,14 +2,14 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import { $ExpressionOrNumber } from "../../expressions/schema";
+import { $NumericValue } from "../../schema/schema";
 
 export const $Limit = z.object({
   u_texture: z
     .number()
     .nullable()
     .describe("The texture to apply the limit to."),
-  u_quantizationSteps: $ExpressionOrNumber
+  u_quantizationSteps: $NumericValue
     .default(1.01)
     .describe("The number of steps for the quantization."),
 });

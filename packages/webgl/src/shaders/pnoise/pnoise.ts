@@ -2,10 +2,7 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import {
-  $ExpressionOrNumber,
-  createConstrainedExpressionVec2,
-} from "../../expressions/schema";
+import { $NumericValue, createConstrainedVec2 } from "../../schema/schema";
 import { $Shared } from "../shared/schema";
 
 // Define the time expression type for animation
@@ -17,7 +14,7 @@ export const $TimeExpression = z
   );
 
 export const $NoiseBase = z.object({
-  u_period: $ExpressionOrNumber
+  u_period: $NumericValue
     .default(2.0)
     .describe("1/u_period is the frequency of the input of noise function"),
   u_harmonics: z
@@ -27,37 +24,35 @@ export const $NoiseBase = z.object({
     .max(8)
     .default(1)
     .describe("amount of iterations of noise."),
-  u_harmonic_gain: $ExpressionOrNumber
+  u_harmonic_gain: $NumericValue
     .default(0.66)
     .describe(
       "how much the amplitude changes per iterations (scalar of the amplitude)",
     ),
-  u_harmonic_spread: $ExpressionOrNumber
+  u_harmonic_spread: $NumericValue
     .default(2.0)
     .describe(
       "how much the frequency changes per iteration (scalar of the frequency)",
     ),
-  u_amplitude: $ExpressionOrNumber
+  u_amplitude: $NumericValue
     .default(0.84)
     .describe("The overall amplitude scaling for the noise."),
-  u_offset: $ExpressionOrNumber
-    .default(0.412)
-    .describe("The offset of the noise."),
-  u_exponent: $ExpressionOrNumber
+  u_offset: $NumericValue.default(0.412).describe("The offset of the noise."),
+  u_exponent: $NumericValue
     .default(0.63)
     .describe("The exponent of the noise."),
 });
 
 export const $NoiseTransform = z.object({
-  u_scale: createConstrainedExpressionVec2({
+  u_scale: createConstrainedVec2({
     x: { min: -1000, max: 1000, default: 1 },
     y: { min: -1000, max: 1000, default: 1 },
   }).describe("The scale of the noise."),
-  u_translate: createConstrainedExpressionVec2({
+  u_translate: createConstrainedVec2({
     x: { min: -1000, max: 1000, default: 0 },
     y: { min: -1000, max: 1000, default: 0 },
   }).describe("The offset of the noise."),
-  u_rotation: createConstrainedExpressionVec2({
+  u_rotation: createConstrainedVec2({
     x: { min: -Math.PI, max: Math.PI, default: 0 },
     y: { min: -Math.PI, max: Math.PI, default: 0 },
   }).describe("The rotation of the noise."),
