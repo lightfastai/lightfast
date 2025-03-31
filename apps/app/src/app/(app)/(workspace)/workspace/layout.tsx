@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 
 import { api } from "~/trpc/client/server";
-import { EditorHeaderMenu } from "./components/app/editor-header-file";
 
 export default async function WorkspaceLayout({
   children,
@@ -14,10 +13,5 @@ export default async function WorkspaceLayout({
     notFound();
   }
 
-  return (
-    <>
-      <EditorHeaderMenu />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

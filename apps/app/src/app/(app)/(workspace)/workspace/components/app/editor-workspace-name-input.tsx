@@ -43,20 +43,20 @@ export const EditorWorkspaceNameInput = ({
 
   // Reset form values when workspace data changes
   useEffect(() => {
-    if (workspace?.name !== undefined) {
+    if (workspace.name !== undefined) {
       form.reset({
         name: workspace.name,
         id: initialWorkspace.id,
       });
     }
-  }, [workspace?.name, form, initialWorkspace.id]);
+  }, [workspace.name, form, initialWorkspace.id]);
 
   const onSubmit = async (
     data: WorkspaceUpdateName,
     event?: React.BaseSyntheticEvent,
   ) => {
     // If values haven't changed, do nothing
-    if (data.name === workspace?.name) {
+    if (data.name === workspace.name) {
       return;
     }
 
@@ -93,7 +93,7 @@ export const EditorWorkspaceNameInput = ({
     if (!isValid) {
       // Reset the input to previous value
       form.reset({
-        name: workspace?.name ?? "",
+        name: workspace.name ?? "",
         id: initialWorkspace.id,
       });
       form.clearErrors();
@@ -107,7 +107,7 @@ export const EditorWorkspaceNameInput = ({
     const values = form.getValues();
 
     // If values haven't changed, do nothing
-    if (values.name === workspace?.name) {
+    if (values.name === workspace.name) {
       return;
     }
 
@@ -128,7 +128,8 @@ export const EditorWorkspaceNameInput = ({
                   {...field}
                   onBlur={handleBlur}
                   // Disable the input until the workspace data is loaded
-                  disabled={workspace?.name === undefined}
+                  disabled={workspace.name === undefined}
+                  className="h-7 w-64 md:text-xs"
                 />
               </FormControl>
             </FormItem>

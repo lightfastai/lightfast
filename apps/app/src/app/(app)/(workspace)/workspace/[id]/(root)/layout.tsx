@@ -9,18 +9,10 @@ import {
 } from "@repo/ui/components/ui/breadcrumb";
 
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
-import { $NodeType } from "~/db/schema/types";
-import { api, HydrateClient } from "~/trpc/client/server";
-import { EditorCommandDialog } from "../../components/app/editor-command-dialog";
+import { api } from "~/trpc/client/server";
+import { EditorFileMenu } from "../../components/app/editor-file-menu";
 import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";
-import { EditorWorkspaceSelect } from "../../components/app/editor-workspace-select";
-import { TextureRenderPipeline } from "../../components/webgl/texture-render-pipeline";
-import { EdgeStoreProvider } from "../../providers/edge-store-provider";
-import { EditorStoreProvider } from "../../providers/editor-store-provider";
-import { InspectorStoreProvider } from "../../providers/inspector-store-provider";
-import { NodeStoreProvider } from "../../providers/node-store-provider";
-import { SelectionStoreProvider } from "../../providers/selection-store-provider";
-import { TextureRenderStoreProvider } from "../../providers/texture-render-store-provider";
+import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
 import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
 
 const WebGLCanvas = dynamic(() =>
@@ -101,21 +93,22 @@ export default async function WorkspaceLayout({
 
   return (
     <div className="relative flex h-screen flex-col">
-      <div className="fixed inset-x-20 top-4 z-50 flex w-max items-center">
+      <div className="fixed z-50 p-4">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <EditorWorkspaceSelect />
+              <EditorFileMenu />
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <EditorWorkspaceNameInput initialWorkspace={workspace} />
+              <EditorWorkspaceListMenu />
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
 
-      <HydrateClient>
+      {/* <HydrateClient>
         <NodeStoreProvider initialNodes={baseNodes}>
           <EdgeStoreProvider initialEdges={baseEdges}>
             <SelectionStoreProvider>
@@ -151,7 +144,7 @@ export default async function WorkspaceLayout({
             </SelectionStoreProvider>
           </EdgeStoreProvider>
         </NodeStoreProvider>
-      </HydrateClient>
+      </HydrateClient> */}
     </div>
   );
 }
