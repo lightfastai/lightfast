@@ -24,6 +24,9 @@ export function extractExpression(value: string): string {
   return value.slice(EXPRESSION_PREFIX.length);
 }
 
+export const $String = z.string();
+export type String = z.infer<typeof $String>;
+
 // Base types
 export const $Boolean = z.boolean();
 export type Boolean = z.infer<typeof $Boolean>;
@@ -92,7 +95,8 @@ export const $Color = z
 export type Color = z.infer<typeof $Color>;
 
 // Value type union
-export type Value = Color | Vec1 | Vec2 | Vec3 | Boolean;
+// eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
+export type Value = Color | Vec1 | Vec2 | Vec3 | Boolean | String;
 
 // Type guards
 export function isBoolean(value: unknown): value is Boolean {
@@ -112,11 +116,19 @@ export function isColor(value: unknown): value is Color {
   return /^#[0-9a-f]{6}$/i.test(value);
 }
 
+export function isString(value: unknown): value is String {
+  return typeof value === "string";
+}
+
 // Vector type guards
 export function isVec1(value: unknown): value is Vec1 {
   if (typeof value !== "object" || value === null) return false;
   const obj = value as Record<string, unknown>;
-  return "x" in obj && (isNumber(obj.x) || isExpression(obj.x));
+  return (
+    "x" in obj &&
+    (isNumber(obj.x) || isExpression(obj.x)) &&
+    !("y" in obj || "z" in obj)
+  );
 }
 
 export function isVec2(value: unknown): value is Vec2 {

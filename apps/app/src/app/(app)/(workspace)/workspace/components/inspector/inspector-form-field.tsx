@@ -15,26 +15,33 @@ import {
   FormLabel,
 } from "@repo/ui/components/ui/form";
 import {
+  getVec1Mode,
+  getVec2Mode,
+  getVec3Mode,
   isBoolean,
   isColor,
-  isNumber,
   isString,
+  isVec1,
   isVec2,
   isVec3,
+  VectorMode,
 } from "@repo/webgl";
 
-import { ExpressionInput } from "../ui/expression-input";
-import { ExpressionVector2Input } from "../ui/expression-vector2-input";
 import {
   extractUniformName,
   extractValueFieldMetadata,
   extractVec2FieldMetadata,
   extractVec3FieldMetadata,
 } from "./utils";
-import { BooleanInput } from "./value/boolean-input";
 import { ColorPickerField } from "./value/color-picker-field";
-import { StringInput } from "./value/string-input";
-import { Vec3Input } from "./value/vec3-input";
+import { BooleanInput } from "./value/primitive/boolean-input";
+import { StringInput } from "./value/primitive/string-input";
+import { Vec1ExpressionInput } from "./value/vector/vec1/vec1-expression-input";
+import { Vec1NumberInput } from "./value/vector/vec1/vec1-number-input";
+import { Vec2ExpressionInput } from "./value/vector/vec2/vec2-expression-input";
+import { Vec2NumberInput } from "./value/vector/vec2/vec2-number-input";
+import { Vec3ExpressionInput } from "./value/vector/vec3/vec3-expression-input";
+import { Vec3NumberInput } from "./value/vector/vec3/vec3-number-input";
 
 interface InspectorFormFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -44,130 +51,133 @@ interface InspectorFormFieldProps<T extends FieldValues> {
   parentSchema: z.ZodObject<Record<string, z.ZodTypeAny>>;
 }
 
-const InspectorFormFieldComponent = <T extends FieldValues>({
-  name,
-  label,
-  control,
-  onValueChange,
-  parentSchema,
-}: InspectorFormFieldProps<T>) => {
-  const fieldSchema = parentSchema.shape[name];
-
-  if (!fieldSchema) {
-    console.warn(`Field schema for ${name} is undefined.`);
-    return null;
-  }
-
-  const numberMetadata = useMemo(
-    () => extractValueFieldMetadata(fieldSchema),
-    [fieldSchema],
-  );
-
-  const vec2Metadata = useMemo(
-    () => extractVec2FieldMetadata(fieldSchema),
-    [fieldSchema],
-  );
-
-  const vec3Metadata = useMemo(
-    () => extractVec3FieldMetadata(fieldSchema),
-    [fieldSchema],
-  );
-
-  const renderField = useCallback(
-    (field: ControllerRenderProps<T, Path<T>>) => {
-      // Handle numeric values - now supports both numbers and string expressions
-      if (isNumber(field.value) || typeof field.value === "string") {
-        return (
-          <ExpressionInput
-            value={field.value}
-            onChange={(value) => {
-              field.onChange(value);
-              onValueChange(value);
-            }}
-            min={numberMetadata.min}
-            max={numberMetadata.max}
-            step={numberMetadata.step || 0.01}
-          />
-        );
-      }
-
-      console.log("field.value", field.value);
-
-      // Handle Vec2 values - now supports expressions in each component
-      if (isVec2(field.value)) {
-        // Calculate a common step value (use smallest step)
-        const stepValue =
-          Math.min(vec2Metadata.x.step, vec2Metadata.y.step) || 0.01;
-
-        return (
-          <ExpressionVector2Input
-            value={field.value}
-            onChange={(value) => {
-              field.onChange(value);
-              // Always make sure we convert string expressions to numbers for the Value type
-              // before passing to onValueChange
-              const processedValue = {
-                x:
-                  typeof value.x === "string"
-                    ? parseFloat(value.x) || 0
-                    : value.x,
-                y:
-                  typeof value.y === "string"
-                    ? parseFloat(value.y) || 0
-                    : value.y,
-              };
-              onValueChange(processedValue);
-            }}
-            step={stepValue}
-          />
-        );
-      }
-
-      if (isVec3(field.value)) {
-        return (
-          <Vec3Input
-            field={field}
-            metadata={vec3Metadata}
-            onValueChange={onValueChange}
-          />
-        );
-      }
-
-      if (isColor(field.value)) {
-        return <ColorPickerField field={field} onValueChange={onValueChange} />;
-      }
-
-      if (isString(field.value)) {
-        return <StringInput field={field} onValueChange={onValueChange} />;
-      }
-
-      if (isBoolean(field.value)) {
-        return <BooleanInput field={field} onValueChange={onValueChange} />;
-      }
-    },
-    [numberMetadata, vec2Metadata, vec3Metadata, onValueChange],
-  );
-
-  const uniformName = useMemo(() => extractUniformName(label), [label]);
-
-  return (
-    <FormField
-      name={name}
-      control={control}
-      render={({ field }) => (
-        <FormItem className="grid grid-cols-8 items-center gap-x-4 space-y-0">
-          <FormLabel className="col-span-3 flex items-start justify-end text-xs">
-            {uniformName.charAt(0).toUpperCase() + uniformName.slice(1)}
-          </FormLabel>
-          <FormControl>
-            <div className="col-span-5">{renderField(field)}</div>
-          </FormControl>
-        </FormItem>
-      )}
-    />
-  );
-};
-
 export const InspectorFormField = memo(
-  InspectorFormFieldComponent,
-) as typeof InspectorFormFieldComponent;
+  <T extends FieldValues>({
+    name,
+    label,
+    control,
+    onValueChange,
+    parentSchema,
+  }: InspectorFormFieldProps<T>) => {
+    const fieldSchema = parentSchema.shape[name];
+
+    if (!fieldSchema) {
+      console.warn(`Field schema for ${name} is undefined.`);
+      return null;
+    }
+
+    const numberMetadata = useMemo(
+      () => extractValueFieldMetadata(fieldSchema),
+      [fieldSchema],
+    );
+
+    const vec2Metadata = useMemo(
+      () => extractVec2FieldMetadata(fieldSchema),
+      [fieldSchema],
+    );
+
+    const vec3Metadata = useMemo(
+      () => extractVec3FieldMetadata(fieldSchema),
+      [fieldSchema],
+    );
+
+    const renderField = useCallback(
+      (field: ControllerRenderProps<T, Path<T>>) => {
+        // Handle Vec1 values
+        if (isVec1(field.value)) {
+          const mode = getVec1Mode(field.value);
+          return mode === VectorMode.Number ? (
+            <Vec1NumberInput
+              field={field}
+              metadata={numberMetadata}
+              onValueChange={onValueChange}
+            />
+          ) : (
+            <Vec1ExpressionInput
+              field={field}
+              metadata={numberMetadata}
+              onValueChange={onValueChange}
+            />
+          );
+        }
+
+        // Handle Vec2 values
+        if (isVec2(field.value)) {
+          const mode = getVec2Mode(field.value);
+          console.log("mode", mode);
+          return mode === VectorMode.Number ? (
+            <Vec2NumberInput
+              field={field}
+              metadata={vec2Metadata}
+              onValueChange={onValueChange}
+            />
+          ) : (
+            <Vec2ExpressionInput
+              field={field}
+              metadata={vec2Metadata}
+              onValueChange={onValueChange}
+            />
+          );
+        }
+
+        // Handle Vec3 values
+        if (isVec3(field.value)) {
+          const mode = getVec3Mode(field.value);
+          return mode === VectorMode.Number ? (
+            <Vec3NumberInput
+              field={field}
+              metadata={vec3Metadata}
+              onValueChange={onValueChange}
+            />
+          ) : (
+            <Vec3ExpressionInput
+              field={field}
+              metadata={vec3Metadata}
+              onValueChange={onValueChange}
+            />
+          );
+        }
+
+        // Handle Boolean values
+        if (isBoolean(field.value)) {
+          return <BooleanInput field={field} onValueChange={onValueChange} />;
+        }
+
+        // Handle Color values
+        if (isColor(field.value)) {
+          return (
+            <ColorPickerField field={field} onValueChange={onValueChange} />
+          );
+        }
+
+        if (isString(field.value)) {
+          return <StringInput field={field} onValueChange={onValueChange} />;
+        }
+
+        return null;
+      },
+      [name, parentSchema, onValueChange],
+    );
+
+    const uniformName = useMemo(() => extractUniformName(label), [label]);
+
+    return (
+      <FormField
+        name={name}
+        control={control}
+        render={({ field }) => (
+          <FormItem className="grid grid-cols-8 items-center gap-x-4 space-y-0">
+            <FormLabel className="col-span-3 flex items-start justify-end text-xs">
+              {uniformName.charAt(0).toUpperCase() + uniformName.slice(1)}
+            </FormLabel>
+            <FormControl className="col-span-5">
+              {renderField(field)}
+            </FormControl>
+          </FormItem>
+        )}
+      />
+    );
+  },
+);
+
+InspectorFormField.displayName = "InspectorFormField";

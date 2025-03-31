@@ -15,49 +15,102 @@ import {
 } from "./shaders/pnoise/pnoise";
 
 /**
- * base modules
+ * Base types and primitives
  */
 export {
+  // Primitive types
+  $Boolean,
+  $Number,
+  $Expression,
+  $String,
+  type Boolean,
+  type Number,
+  type Expression,
+  type String,
+
+  // Vector types
+  $Vec1,
   $Vec2,
   $Vec3,
+  type Vec1,
+  type Vec2,
+  type Vec3,
+
+  // Vector mode specific schemas
+  $Vec1Number,
+  $Vec1Expression,
+  $Vec2Number,
+  $Vec2Expression,
+  $Vec3Number,
+  $Vec3Expression,
+
+  // Color type
   $Color,
-  $ExpressionOrNumber,
-  $ExpressionVec2,
-  $ExpressionVec3,
-  createConstrainedExpressionVec2,
-  createConstrainedExpressionVec3,
-  isVec2,
-  isVec3,
-  isColor,
+  type Color,
+
+  // Value union type
+  type Value,
+
+  // Mode enum
+  VectorMode,
+
+  // Expression utilities
+  EXPRESSION_PREFIX,
   isExpressionString,
   createExpressionString,
   extractExpression,
-  type Vec2,
-  type Vec3,
-  type Color,
-  type Value,
+
+  // Type guards
+  isBoolean,
+  isNumber,
+  isExpression,
+  isColor,
+  isVec1,
+  isVec2,
+  isString,
+  isVec3,
+
+  // Mode detection
+  getVec1Mode,
+  getVec2Mode,
+  getVec3Mode,
+
+  // Mode-specific type guards
+  isVec1Expression,
+  isVec2Expression,
+  isVec3Expression,
+  isVec1Number,
+  isVec2Number,
+  isVec3Number,
+
+  // Constraint types and creators
+  createConstrainedVec1,
+  createConstrainedVec2,
+  createConstrainedVec3,
+  type NumericValueConstraints,
+  createConstrainedNumericValue,
 } from "./schema/schema";
 
 /**
- * noise modules
+ * Noise modules
  */
 export type { PerlinNoise3DParams } from "./shaders/pnoise/pnoise";
 export { $PerlinNoise3D, PerlinNoise3DDescription };
 
 /**
- * limit modules
+ * Limit modules
  */
 export type { LimitParams } from "./shaders/limit/limit";
 export { $Limit };
 
 /**
- * displace modules
+ * Displace modules
  */
 export type { DisplaceParams } from "./shaders/displace/displace";
 export { $Displace, DisplaceDescription };
 
 /**
- * add modules
+ * Add modules
  */
 export type { AddParams } from "./shaders/add/add";
 export { $Add, AddDescription };

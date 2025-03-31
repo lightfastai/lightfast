@@ -1,17 +1,27 @@
+import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
 import { memo } from "react";
 
+import type { Number } from "@repo/webgl";
 import { Slider } from "@repo/ui/components/ui/slider";
 
-import { BaseInputNumber } from "./base-input";
+import { BaseInputNumber } from "../base/base-input";
 
-interface NumberInputProps {
-  field: any;
-  metadata: { min: number; max: number; step: number };
-  onValueChange: (value: number) => void;
+interface NumberInputProps<T extends FieldValues, K extends Path<T>> {
+  field: ControllerRenderProps<T, K>;
+  metadata: {
+    min: number;
+    max: number;
+    step: number;
+  };
+  onValueChange: (value: Number) => void;
 }
 
 export const NumberInput = memo(
-  ({ field, metadata, onValueChange }: NumberInputProps) => {
+  <T extends FieldValues, K extends Path<T>>({
+    field,
+    metadata,
+    onValueChange,
+  }: NumberInputProps<T, K>) => {
     const { min, max, step } = metadata;
 
     return (
@@ -40,7 +50,7 @@ export const NumberInput = memo(
             field.onChange(newValue);
             onValueChange(newValue);
           }}
-          value={field.value as number}
+          value={field.value}
         />
       </div>
     );

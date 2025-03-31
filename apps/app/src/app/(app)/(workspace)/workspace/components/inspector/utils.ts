@@ -14,6 +14,10 @@ interface ValueFieldMetadata {
   step: number;
 }
 
+interface Vec1FieldMetadata {
+  x: ValueFieldMetadata;
+}
+
 interface Vec2FieldMetadata {
   x: ValueFieldMetadata;
   y: ValueFieldMetadata;
@@ -26,13 +30,13 @@ interface Vec3FieldMetadata {
 }
 
 /**
- * Extracts the min and max values from a zod schema.
- * @param schema - The zod schema to extract the min and max values from.
- * @returns An object with min and max values.
+ * Extracts metadata for Vec1 fields from a zod schema.
+ * @param schema - The zod schema to extract the Vec1 metadata from.
+ * @returns An object with metadata for x component.
  */
 export const extractValueFieldMetadata = (
   schema: z.ZodTypeAny,
-): ValueFieldMetadata => {
+): Vec1FieldMetadata => {
   // Recursively unwrap default, optional, and nullable schemas
   while (
     schema instanceof z.ZodDefault ||
@@ -42,17 +46,34 @@ export const extractValueFieldMetadata = (
     schema = schema._def.innerType as z.ZodTypeAny;
   }
 
-  const metadata: ValueFieldMetadata = initDefaultMetadata();
+  const defaultMetadata = initDefaultMetadata();
+  const metadata: Vec1FieldMetadata = {
+    x: { ...defaultMetadata },
+  };
 
-  if (schema instanceof z.ZodNumber) {
-    const checks = schema._def.checks;
-    for (const check of checks) {
-      if (check.kind === "min") {
-        metadata.min = check.value;
-      } else if (check.kind === "max") {
-        metadata.max = check.value;
-      } else if (check.kind === "int") {
-        metadata.step = 1;
+  if (schema instanceof z.ZodObject) {
+    const shape = schema._def.shape();
+    let componentSchema = shape.x;
+
+    // Unwrap default, optional, and nullable for component schema
+    while (
+      componentSchema instanceof z.ZodDefault ||
+      componentSchema instanceof z.ZodOptional ||
+      componentSchema instanceof z.ZodNullable
+    ) {
+      componentSchema = componentSchema._def.innerType as z.ZodTypeAny;
+    }
+
+    if (componentSchema instanceof z.ZodNumber) {
+      const checks = componentSchema._def.checks;
+      for (const check of checks) {
+        if (check.kind === "min") {
+          metadata.x.min = check.value;
+        } else if (check.kind === "max") {
+          metadata.x.max = check.value;
+        } else if (check.kind === "int") {
+          metadata.x.step = 1;
+        }
       }
     }
   }
