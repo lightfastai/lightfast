@@ -1,15 +1,12 @@
-import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
+import type { ControllerRenderProps, FieldValues } from "react-hook-form";
 import { memo } from "react";
 
 import type { NumericValue } from "@repo/webgl";
 import { Input } from "@repo/ui/components/ui/input";
 import { createExpressionString, extractExpression } from "@repo/webgl";
 
-interface NumericValueExpressionInputProps<
-  T extends FieldValues,
-  K extends Path<T>,
-> {
-  field: ControllerRenderProps<T, K>;
+interface NumericValueExpressionInputProps<T extends FieldValues> {
+  field: ControllerRenderProps<T, keyof T & string>;
   metadata: {
     x: { min: number; max: number; step: number };
   };
@@ -17,11 +14,11 @@ interface NumericValueExpressionInputProps<
 }
 
 export const NumericValueExpressionInput = memo(
-  <T extends FieldValues, K extends Path<T>>({
+  <T extends FieldValues>({
     field,
     metadata,
     onValueChange,
-  }: NumericValueExpressionInputProps<T, K>) => {
+  }: NumericValueExpressionInputProps<T>) => {
     return (
       <Input
         value={extractExpression(field.value.x)}

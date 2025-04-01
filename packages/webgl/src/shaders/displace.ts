@@ -2,59 +2,52 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type {
-  NumericValueMetadata,
-  UniformConstraint,
-  Vec2FieldMetadata,
-} from "../types/uniform-constraints";
-import { $Float, $Vec2Number } from "../types/schema";
+import type { UniformConstraint } from "../types/uniform-constraints";
+import { $Float, $Vec2Number, ValueType } from "../types/schema";
 
 export const $Displace = z.object({
   u_texture1: z
     .number()
     .nullable()
-    .describe("The texture that will be displaced (source image)"),
-  u_texture2: z
-    .number()
-    .nullable()
-    .describe("The texture that contains the displacement values (map)"),
+    .describe("The source texture to be displaced"),
+  u_texture2: z.number().nullable().describe("The displacement map texture"),
   u_displaceWeight: $Float
-    .describe("The intensity of the displacement effect")
+    .describe("Weight of the displacement effect")
     .transform((val) => Math.max(0, Math.min(10, val)))
     .default(1.0),
   u_displaceMidpoint: $Vec2Number.extend({
     x: $Float
-      .describe("X midpoint (min: 0, max: 1)")
+      .describe("X midpoint of displacement (0-1)")
       .transform((val) => Math.max(0, Math.min(1, val)))
       .default(0.5),
     y: $Float
-      .describe("Y midpoint (min: 0, max: 1)")
+      .describe("Y midpoint of displacement (0-1)")
       .transform((val) => Math.max(0, Math.min(1, val)))
       .default(0.5),
   }),
   u_displaceOffset: $Vec2Number.extend({
     x: $Float
-      .describe("X offset (min: 0, max: 1)")
+      .describe("X offset of displacement (0-1)")
       .transform((val) => Math.max(0, Math.min(1, val)))
-      .default(0),
+      .default(0.5),
     y: $Float
-      .describe("Y offset (min: 0, max: 1)")
+      .describe("Y offset of displacement (0-1)")
       .transform((val) => Math.max(0, Math.min(1, val)))
-      .default(0),
+      .default(0.5),
   }),
   u_displaceOffsetWeight: $Float
-    .describe("The intensity of the offset")
+    .describe("Weight of the offset effect")
     .transform((val) => Math.max(0, Math.min(10, val)))
     .default(0.0),
   u_displaceUVWeight: $Vec2Number.extend({
     x: $Float
-      .describe("X UV weight (min: 0, max: 2)")
+      .describe("X UV weight (0-2)")
       .transform((val) => Math.max(0, Math.min(2, val)))
-      .default(1),
+      .default(1.0),
     y: $Float
-      .describe("Y UV weight (min: 0, max: 2)")
+      .describe("Y UV weight (0-2)")
       .transform((val) => Math.max(0, Math.min(2, val)))
-      .default(1),
+      .default(1.0),
   }),
 });
 
@@ -69,10 +62,10 @@ export const createDefaultDisplace = (): DisplaceParams => {
   return $Displace.parse({
     u_texture1: null,
     u_texture2: null,
-    u_displaceWeight: { x: 1.0 },
+    u_displaceWeight: 1.0,
     u_displaceMidpoint: { x: 0.5, y: 0.5 },
     u_displaceOffset: { x: 0.5, y: 0.5 },
-    u_displaceOffsetWeight: { x: 0.0 },
+    u_displaceOffsetWeight: 0.0,
     u_displaceUVWeight: { x: 1.0, y: 1.0 },
   });
 };
@@ -80,75 +73,38 @@ export const createDefaultDisplace = (): DisplaceParams => {
 // Lookup table for displace uniform constraints
 export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformConstraint> = {
   u_displaceWeight: {
-    type: "numeric",
+    type: ValueType.Numeric,
     metadata: {
       value: { min: 0, max: 10, step: 0.1 },
     },
   },
   u_displaceMidpoint: {
-    type: "vec2",
+    type: ValueType.Vec2,
     metadata: {
       x: { min: 0, max: 1, step: 0.1 },
       y: { min: 0, max: 1, step: 0.1 },
     },
   },
   u_displaceOffset: {
-    type: "vec2",
+    type: ValueType.Vec2,
     metadata: {
       x: { min: 0, max: 1, step: 0.1 },
       y: { min: 0, max: 1, step: 0.1 },
     },
   },
   u_displaceOffsetWeight: {
-    type: "numeric",
+    type: ValueType.Numeric,
     metadata: {
       value: { min: 0, max: 10, step: 0.1 },
     },
   },
   u_displaceUVWeight: {
-    type: "vec2",
+    type: ValueType.Vec2,
     metadata: {
       x: { min: 0, max: 2, step: 0.1 },
       y: { min: 0, max: 2, step: 0.1 },
     },
   },
-};
-
-/**
- * Gets metadata for a numeric value field from the lookup table.
- * @param name - The name of the uniform.
- * @returns An object with metadata for the value.
- */
-export const getDisplaceValueFieldMetadata = (
-  name: string,
-): NumericValueMetadata => {
-  const constraint = DISPLACE_UNIFORM_CONSTRAINTS[name];
-  if (!constraint || constraint.type !== "numeric") {
-    // Default fallback
-    return {
-      value: { min: 0, max: 1, step: 0.1 },
-    };
-  }
-  return constraint.metadata as NumericValueMetadata;
-};
-
-/**
- * Gets metadata for a Vec2 field from the lookup table.
- * @param name - The name of the uniform.
- * @returns An object with metadata for x and y components.
- */
-export const getDisplaceVec2FieldMetadata = (
-  name: string,
-): Vec2FieldMetadata => {
-  const constraint = DISPLACE_UNIFORM_CONSTRAINTS[name];
-  if (!constraint || constraint.type !== "vec2") {
-    // Default fallback
-    return {
-      x: { min: 0, max: 1, step: 0.1 },
-      y: { min: 0, max: 1, step: 0.1 },
-    };
-  }
-  return constraint.metadata as Vec2FieldMetadata;
 };
 
 export const displaceFragmentShader = `

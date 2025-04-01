@@ -2,11 +2,8 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type {
-  NumericValueMetadata,
-  UniformConstraint,
-} from "../types/uniform-constraints";
-import { $Boolean, $Float } from "../types/schema";
+import type { UniformConstraint } from "../types/uniform-constraints";
+import { $Boolean, $Float, ValueType } from "../types/schema";
 
 export const $Add = z.object({
   u_texture1: z.number().nullable().describe("The first input texture (A)"),
@@ -39,29 +36,11 @@ export const createDefaultAdd = (): AddParams => {
 // Lookup table for add uniform constraints
 export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformConstraint> = {
   u_addValue: {
-    type: "numeric",
+    type: ValueType.Numeric,
     metadata: {
       value: { min: -1, max: 1, step: 0.1 },
     },
   },
-};
-
-/**
- * Gets metadata for a numeric value field from the lookup table.
- * @param name - The name of the uniform.
- * @returns An object with metadata for the value.
- */
-export const getAddValueFieldMetadata = (
-  name: string,
-): NumericValueMetadata => {
-  const constraint = ADD_UNIFORM_CONSTRAINTS[name];
-  if (!constraint || constraint.type !== "numeric") {
-    // Default fallback
-    return {
-      value: { min: 0, max: 1, step: 0.1 },
-    };
-  }
-  return constraint.metadata as NumericValueMetadata;
 };
 
 export const addFragmentShader = `

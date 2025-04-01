@@ -164,4 +164,6 @@ export { createDefaultDisplace } from "./shaders/displace";
 export { createDefaultLimit } from "./shaders/limit";
 export { createDefaultPerlinNoise3D } from "./shaders/pnoise";
 
+export { getValueFieldMetadata, getVec2FieldMetadata } from "./shaders/utils";
+
 export * from "./types/uniform-constraints";

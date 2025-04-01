@@ -3,6 +3,8 @@
  * These types are used to specify the valid ranges and step sizes for uniform parameters.
  */
 
+import type { ValueType } from "./schema";
+
 export interface ValueFieldMetadata {
   min: number;
   max: number;
@@ -25,6 +27,6 @@ export interface Vec3FieldMetadata {
 }
 
 export interface UniformConstraint {
-  type: "numeric" | "vec2" | "vec3";
+  type: ValueType;
   metadata: NumericValueMetadata | Vec2FieldMetadata | Vec3FieldMetadata;
 }

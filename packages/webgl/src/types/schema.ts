@@ -9,6 +9,13 @@ export enum VectorMode {
   Expression = "expression",
 }
 
+export enum ValueType {
+  Numeric = "numeric",
+  Vec2 = "vec2",
+  Vec3 = "vec3",
+  Boolean = "boolean",
+}
+
 // Helper to check if a value is an expression string
 export function isExpressionString(value: unknown): value is string {
   return typeof value === "string" && value.startsWith(EXPRESSION_PREFIX);
