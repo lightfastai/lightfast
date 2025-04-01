@@ -80,7 +80,7 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
         // Store all expressions for this node
         const storeExpression = (key: string, value: any) => {
           if (isExpression(value)) {
-            expressionsRef.current[id][key] = value;
+            expressionsRef.current[id]![key] = value;
           }
         };
 
@@ -127,6 +127,16 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
             // Get expressions for this node
             const expressions = expressionsRef.current[id] || {};
 
+            // Define mapping for uniform components
+            const uniformPathMap = {
+              u_addValue: {
+                pathToValue: "u_addValue.value",
+              },
+              u_enableMirror: {
+                pathToValue: "u_enableMirror",
+              },
+            };
+
             // Update the texture references according to connections
             const nodeConnections = connectionCache.current[id] || {};
 
@@ -153,7 +163,7 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
             }
 
             // Use the shared uniform update utility
-            updateShaderUniforms(state, shader, expressions);
+            updateShaderUniforms(state, shader, expressions, uniformPathMap);
           },
         };
       });

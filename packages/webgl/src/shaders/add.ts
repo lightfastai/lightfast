@@ -53,7 +53,7 @@ precision highp float;
 
 uniform sampler2D u_texture1; // First input texture (A)
 uniform sampler2D u_texture2; // Second input texture (B)
-uniform vec2 u_addValue;
+uniform float u_addValue;
 uniform bool u_enableMirror;
 varying vec2 vUv;
 
@@ -74,7 +74,7 @@ void main() {
   vec4 result = colorA + colorB;
   
   // Apply add value
-  result += vec4(vec3(u_addValue.x), 0.0);
+  result += vec4(vec3(u_addValue), 0.0);
   
   // Keep alpha intact
   result.a = max(colorA.a, colorB.a);

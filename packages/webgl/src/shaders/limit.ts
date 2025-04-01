@@ -33,7 +33,7 @@ export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     type: ValueType.Numeric,
     label: "Quantization Steps",
     constraint: {
-      value: { min: 1, max: 100, step: 0.1 },
+      value: { min: 1, max: 10, step: 0.1 },
     },
   },
 };
@@ -42,12 +42,12 @@ export const limitFragmentShader = `
 precision highp float;
 
 uniform sampler2D u_texture;
-uniform vec2 u_quantizationSteps;
+uniform float u_quantizationSteps;
 varying vec2 vUv;
 
 void main() {
   vec4 color = texture2D(u_texture, vUv);
-  color.rgb = floor(color.rgb * u_quantizationSteps.x) / u_quantizationSteps.x;
+  color.rgb = floor(color.rgb * u_quantizationSteps) / u_quantizationSteps;
   gl_FragColor = color;
 }
 `;

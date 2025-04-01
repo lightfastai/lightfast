@@ -63,7 +63,7 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
         // Store all expressions for this node
         const storeExpression = (key: string, value: any) => {
           if (isExpression(value)) {
-            expressionsRef.current[id][key] = value;
+            expressionsRef.current[id]![key] = value;
           }
         };
 

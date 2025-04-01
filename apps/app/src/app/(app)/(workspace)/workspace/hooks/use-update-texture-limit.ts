@@ -71,7 +71,7 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
         // Store all expressions for this node
         const storeExpression = (key: string, value: any) => {
           if (isExpression(value)) {
-            expressionsRef.current[id][key] = value;
+            expressionsRef.current[id]![key] = value;
           }
         };
 
@@ -110,6 +110,13 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
             // Get expressions for this node
             const expressions = expressionsRef.current[id] || {};
 
+            // Define mapping for uniform components
+            const uniformPathMap = {
+              u_quantizationSteps: {
+                pathToValue: "u_quantizationSteps.value",
+              },
+            };
+
             // Update the texture reference
             const sourceId = connectionCache.current[id];
             if (shader.uniforms.u_texture) {
@@ -119,7 +126,7 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
             }
 
             // Use the shared uniform update utility
-            updateShaderUniforms(state, shader, expressions);
+            updateShaderUniforms(state, shader, expressions, uniformPathMap);
           },
         };
       });
