@@ -2,7 +2,7 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { UniformConstraint } from "../types/uniform-constraints";
+import type { UniformFieldValue } from "../types/field";
 import { $Float, $Vec2Number, ValueType } from "../types/schema";
 
 export const $Displace = z.object({
@@ -71,36 +71,41 @@ export const createDefaultDisplace = (): DisplaceParams => {
 };
 
 // Lookup table for displace uniform constraints
-export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformConstraint> = {
+export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_displaceWeight: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Displacement Weight",
+    constraint: {
       value: { min: 0, max: 10, step: 0.1 },
     },
   },
   u_displaceMidpoint: {
     type: ValueType.Vec2,
-    metadata: {
+    label: "Displacement Midpoint",
+    constraint: {
       x: { min: 0, max: 1, step: 0.1 },
       y: { min: 0, max: 1, step: 0.1 },
     },
   },
   u_displaceOffset: {
     type: ValueType.Vec2,
-    metadata: {
+    label: "Displacement Offset",
+    constraint: {
       x: { min: 0, max: 1, step: 0.1 },
       y: { min: 0, max: 1, step: 0.1 },
     },
   },
   u_displaceOffsetWeight: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Displacement Offset Weight",
+    constraint: {
       value: { min: 0, max: 10, step: 0.1 },
     },
   },
   u_displaceUVWeight: {
     type: ValueType.Vec2,
-    metadata: {
+    label: "Displacement UV Weight",
+    constraint: {
       x: { min: 0, max: 2, step: 0.1 },
       y: { min: 0, max: 2, step: 0.1 },
     },

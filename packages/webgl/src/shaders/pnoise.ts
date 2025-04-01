@@ -2,7 +2,7 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { UniformConstraint } from "../types/uniform-constraints";
+import type { UniformFieldValue } from "../types/field";
 import { $Float, $Vec2Number, ValueType } from "../types/schema";
 
 export const $NoiseBase = z.object({
@@ -105,54 +105,78 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
 };
 
 // Lookup table for pnoise uniform constraints
-export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformConstraint> = {
+export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
+  u_scale: {
+    type: ValueType.Vec2,
+    label: "Scale",
+    constraint: {
+      x: { min: 0.1, max: 10, step: 0.1 },
+      y: { min: 0.1, max: 10, step: 0.1 },
+    },
+  },
+  u_translate: {
+    type: ValueType.Vec2,
+    label: "Translate",
+    constraint: {
+      x: { min: -10, max: 10, step: 0.1 },
+      y: { min: -10, max: 10, step: 0.1 },
+    },
+  },
+  u_rotation: {
+    type: ValueType.Vec2,
+    label: "Rotation",
+    constraint: {
+      x: { min: -180, max: 180, step: 1 },
+      y: { min: -180, max: 180, step: 1 },
+    },
+  },
   u_period: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Period",
+    constraint: {
       value: { min: 0.1, max: 10, step: 0.1 },
     },
   },
   u_harmonics: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Harmonics",
+    constraint: {
       value: { min: 1, max: 8, step: 1 },
     },
   },
   u_harmonic_gain: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Harmonic Gain",
+    constraint: {
       value: { min: 0, max: 1, step: 0.1 },
     },
   },
   u_harmonic_spread: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Harmonic Spread",
+    constraint: {
       value: { min: 1, max: 4, step: 0.1 },
     },
   },
   u_amplitude: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Amplitude",
+    constraint: {
       value: { min: 0.1, max: 10, step: 0.1 },
     },
   },
   u_offset: {
-    type: ValueType.Vec2,
-    metadata: {
-      x: { min: -1, max: 1, step: 0.1 },
-      y: { min: -1, max: 1, step: 0.1 },
+    type: ValueType.Numeric,
+    label: "Offset",
+    constraint: {
+      value: { min: -1, max: 1, step: 0.1 },
     },
   },
-  u_rotation: {
+  u_exponent: {
     type: ValueType.Numeric,
-    metadata: {
-      value: { min: 0, max: 360, step: 1 },
-    },
-  },
-  u_seed: {
-    type: ValueType.Numeric,
-    metadata: {
-      value: { min: 0, max: 1000, step: 1 },
+    label: "Exponent",
+    constraint: {
+      value: { min: 0, max: 10, step: 0.1 },
     },
   },
 };

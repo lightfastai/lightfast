@@ -55,6 +55,7 @@ export {
 
   // Mode enum
   VectorMode,
+  ValueType,
 
   // Expression utilities
   EXPRESSION_PREFIX,
@@ -164,6 +165,16 @@ export { createDefaultDisplace } from "./shaders/displace";
 export { createDefaultLimit } from "./shaders/limit";
 export { createDefaultPerlinNoise3D } from "./shaders/pnoise";
 
-export { getValueFieldMetadata, getVec2FieldMetadata } from "./shaders/utils";
+export { PNOISE_UNIFORM_CONSTRAINTS } from "./shaders/pnoise";
+export { LIMIT_UNIFORM_CONSTRAINTS } from "./shaders/limit";
+export { DISPLACE_UNIFORM_CONSTRAINTS } from "./shaders/displace";
+export { ADD_UNIFORM_CONSTRAINTS } from "./shaders/add";
 
-export * from "./types/uniform-constraints";
+export {
+  getFieldMetadata as getValueFieldMetadata,
+  getVec2FieldMetadata,
+} from "./shaders/utils";
+
+export * from "./types/field";
+
+export * from "./shaders/utils";

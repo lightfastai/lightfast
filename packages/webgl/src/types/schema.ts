@@ -14,6 +14,8 @@ export enum ValueType {
   Vec2 = "vec2",
   Vec3 = "vec3",
   Boolean = "boolean",
+  Color = "color",
+  String = "string",
 }
 
 // Helper to check if a value is an expression string

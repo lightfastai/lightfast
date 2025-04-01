@@ -1,7 +1,7 @@
 import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
 import { memo } from "react";
 
-import type { NumericValue } from "@repo/webgl";
+import type { NumericValue, NumericValueMetadata } from "@repo/webgl";
 import { Slider } from "@repo/ui/components/ui/slider";
 
 import { BaseInputNumber } from "../../base/base-input";
@@ -11,9 +11,7 @@ interface NumericValueNumberInputProps<
   K extends Path<T>,
 > {
   field: ControllerRenderProps<T, K>;
-  metadata: {
-    x: { min: number; max: number; step: number };
-  };
+  metadata: NumericValueMetadata;
   onValueChange: (value: NumericValue) => void;
 }
 
@@ -23,7 +21,8 @@ export const NumericValueNumberInput = memo(
     metadata,
     onValueChange,
   }: NumericValueNumberInputProps<T, K>) => {
-    const { min, max, step } = metadata.x;
+    const { value } = metadata;
+    const { min, max, step } = value;
     return (
       <div className="flex items-center gap-2">
         <Slider

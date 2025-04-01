@@ -26,7 +26,8 @@ export interface Vec3FieldMetadata {
   z: ValueFieldMetadata;
 }
 
-export interface UniformConstraint {
+export interface UniformFieldValue {
   type: ValueType;
-  metadata: NumericValueMetadata | Vec2FieldMetadata | Vec3FieldMetadata;
+  label: string;
+  constraint?: NumericValueMetadata | Vec2FieldMetadata | Vec3FieldMetadata;
 }

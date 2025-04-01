@@ -2,17 +2,13 @@ import type { ChangeEvent } from "react";
 import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
 import { memo } from "react";
 
-import type { Vec3 } from "@repo/webgl";
+import type { Vec3, Vec3FieldMetadata } from "@repo/webgl";
 
 import { BaseInputNumber } from "../../base/base-input";
 
 interface Vec3NumberInputProps<T extends FieldValues, K extends Path<T>> {
   field: ControllerRenderProps<T, K>;
-  metadata: {
-    x: { min: number; max: number; step: number };
-    y: { min: number; max: number; step: number };
-    z: { min: number; max: number; step: number };
-  };
+  metadata: Vec3FieldMetadata;
   onValueChange: (value: Vec3) => void;
 }
 

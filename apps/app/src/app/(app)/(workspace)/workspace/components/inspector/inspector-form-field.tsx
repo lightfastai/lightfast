@@ -7,123 +7,98 @@ import type {
 import type { z } from "zod";
 import { memo, useCallback } from "react";
 
-import type { Value } from "@repo/webgl";
+import type { UniformFieldValue, Value } from "@repo/webgl";
 import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
-import { getNumericValueMode, isNumericValue, VectorMode } from "@repo/webgl";
+import { getFieldMetadata, ValueType } from "@repo/webgl";
 
-import { NumericValueExpressionInput } from "./value/vector/numeric-value/numeric-value-expression-input";
+import { ColorPickerField } from "./value/color-picker-field";
+import { BooleanInput } from "./value/primitive/boolean-input";
+import { StringInput } from "./value/primitive/string-input";
 import { NumericValueNumberInput } from "./value/vector/numeric-value/numeric-value-number-input";
+import { Vec2NumberInput } from "./value/vector/vec2/vec2-number-input";
+import { Vec3NumberInput } from "./value/vector/vec3/vec3-number-input";
 
 interface InspectorFormFieldProps<T extends FieldValues> {
   name: Path<T>;
-  label: string;
   control: Control<T>;
   onValueChange: (value: Value) => void;
   parentSchema: z.ZodObject<Record<string, z.ZodTypeAny>>;
+  constraints: Record<string, UniformFieldValue>;
 }
 
 export const InspectorFormField = memo(
   <T extends FieldValues>({
     name,
-    label,
     control,
     onValueChange,
-    parentSchema,
+    constraints,
   }: InspectorFormFieldProps<T>) => {
-    const fieldSchema = parentSchema.shape[name];
-
-    if (!fieldSchema) {
-      console.warn(`Field schema for ${name} is undefined.`);
-      return null;
-    }
-
-    // const numberMetadata = useMemo(() => getValueFieldMetadata(name), [name]);
-
-    // const vec2Metadata = useMemo(() => getVec2FieldMetadata(name), [name]);
-
-    // const vec3Metadata = useMemo(() => getVec3FieldMetadata(name), [name]);
+    const fieldMetadata = getFieldMetadata(name as string, constraints);
 
     const renderField = useCallback(
       (field: ControllerRenderProps<T, Path<T>>) => {
-        // Handle Vec1 values
-        if (isNumericValue(field.value)) {
-          const numberMetadata = getValueFieldMetadata(name);
-          const mode = getNumericValueMode(field.value);
-          return mode === VectorMode.Number ? (
-            <NumericValueNumberInput
-              field={field as ControllerRenderProps<FieldValues, string>}
-              metadata={numberMetadata}
-              onValueChange={onValueChange}
-            />
-          ) : (
-            <NumericValueExpressionInput
-              field={field as ControllerRenderProps<FieldValues, string>}
-              metadata={numberMetadata}
-              onValueChange={onValueChange}
-            />
-          );
+        if (!fieldMetadata) {
+          return null;
         }
 
-        // // Handle Vec2 values
-        // if (isVec2(field.value)) {
-        //   const mode = getVec2Mode(field.value);
-        //   return mode === VectorMode.Number ? (
-        //     <Vec2NumberInput
-        //       field={field as ControllerRenderProps<FieldValues, string>}
-        //       metadata={vec2Metadata}
-        //       onValueChange={onValueChange}
-        //     />
-        //   ) : (
-        //     <Vec2ExpressionInput
-        //       field={field as ControllerRenderProps<FieldValues, string>}
-        //       metadata={vec2Metadata}
-        //       onValueChange={onValueChange}
-        //     />
-        //   );
-        // }
+        const { type, constraint } = fieldMetadata;
 
-        // // Handle Vec3 values
-        // if (isVec3(field.value)) {
-        //   const mode = getVec3Mode(field.value);
-        //   return mode === VectorMode.Number ? (
-        //     <Vec3NumberInput
-        //       field={field as ControllerRenderProps<FieldValues, string>}
-        //       metadata={vec3Metadata}
-        //       onValueChange={onValueChange}
-        //     />
-        //   ) : (
-        //     <Vec3ExpressionInput
-        //       field={field as ControllerRenderProps<FieldValues, string>}
-        //       metadata={vec3Metadata}
-        //       onValueChange={onValueChange}
-        //     />
-        //   );
-        // }
+        switch (type) {
+          case ValueType.Numeric:
+            return (
+              <NumericValueNumberInput
+                field={field as ControllerRenderProps<FieldValues, string>}
+                metadata={constraint}
+                onValueChange={onValueChange}
+              />
+            );
 
-        // // Handle Boolean values
-        // if (isBoolean(field.value)) {
-        //   return (
-        //     <BooleanInput
-        //       field={field as ControllerRenderProps<FieldValues, string>}
-        //       onValueChange={onValueChange}
-        //     />
-        //   );
-        // }
+          case ValueType.Vec2:
+            return (
+              <Vec2NumberInput
+                field={field as ControllerRenderProps<FieldValues, string>}
+                metadata={constraint}
+                onValueChange={onValueChange}
+              />
+            );
 
-        // // Handle Color values
-        // if (isColor(field.value)) {
-        //   return (
-        //     <ColorPickerField field={field} onValueChange={onValueChange} />
-        //   );
-        // }
+          case ValueType.Vec3:
+            return (
+              <Vec3NumberInput
+                field={field as ControllerRenderProps<FieldValues, string>}
+                metadata={constraint}
+                onValueChange={onValueChange}
+              />
+            );
 
-        // if (isString(field.value)) {
-        //   return <StringInput field={field} onValueChange={onValueChange} />;
-        // }
+          case ValueType.Boolean:
+            return (
+              <BooleanInput
+                field={field as ControllerRenderProps<FieldValues, string>}
+                onValueChange={onValueChange}
+              />
+            );
 
-        return null;
+          case ValueType.Color:
+            return (
+              <ColorPickerField
+                field={field as ControllerRenderProps<FieldValues, string>}
+                onValueChange={onValueChange}
+              />
+            );
+
+          case ValueType.String:
+            return (
+              <StringInput
+                field={field as ControllerRenderProps<FieldValues, string>}
+                onValueChange={onValueChange}
+              />
+            );
+          default:
+            return null;
+        }
       },
-      [name, onValueChange],
+      [fieldMetadata, onValueChange],
     );
 
     return (
@@ -133,7 +108,7 @@ export const InspectorFormField = memo(
         render={({ field }) => (
           <FormItem className="grid grid-cols-8 items-center gap-x-4 space-y-0">
             <FormLabel className="col-span-3 flex items-start justify-end text-xs">
-              {label.charAt(0).toUpperCase() + label.slice(1)}
+              {fieldMetadata?.label}
             </FormLabel>
             <div className="col-span-5 w-full">{renderField(field)}</div>
           </FormItem>

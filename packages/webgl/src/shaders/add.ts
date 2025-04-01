@@ -2,7 +2,7 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { UniformConstraint } from "../types/uniform-constraints";
+import type { UniformFieldValue } from "../types/field";
 import { $Boolean, $Float, ValueType } from "../types/schema";
 
 export const $Add = z.object({
@@ -34,12 +34,17 @@ export const createDefaultAdd = (): AddParams => {
 };
 
 // Lookup table for add uniform constraints
-export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformConstraint> = {
+export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_addValue: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Add Value",
+    constraint: {
       value: { min: -1, max: 1, step: 0.1 },
     },
+  },
+  u_enableMirror: {
+    type: ValueType.Boolean,
+    label: "Enable Mirror",
   },
 };
 

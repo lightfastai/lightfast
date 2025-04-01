@@ -2,14 +2,14 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { UniformConstraint } from "../types/uniform-constraints";
+import type { UniformFieldValue } from "../types/field";
 import { $Float, ValueType } from "../types/schema";
 
 export const $Limit = z.object({
   u_texture: z.number().nullable().describe("The input texture to be limited"),
   u_quantizationSteps: $Float
     .describe("Number of quantization steps (1-100)")
-    .transform((val) => Math.max(1, Math.min(100, val)))
+    // .transform((val) => Math.max(1, Math.min(100, val)))
     .default(1.01),
 });
 
@@ -28,10 +28,11 @@ export const createDefaultLimit = (): LimitParams => {
 };
 
 // Lookup table for limit uniform constraints
-export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformConstraint> = {
+export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_quantizationSteps: {
     type: ValueType.Numeric,
-    metadata: {
+    label: "Quantization Steps",
+    constraint: {
       value: { min: 1, max: 100, step: 0.1 },
     },
   },
