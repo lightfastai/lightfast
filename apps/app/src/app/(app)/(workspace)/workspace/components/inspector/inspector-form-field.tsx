@@ -51,9 +51,9 @@ export const InspectorFormField = memo(
         }
 
         const { type, constraint } = fieldMetadata;
-        if (type === ValueType.Numeric && fieldMetadata.label === "Period") {
-          console.log(fieldMetadata, field.value);
-        }
+        // if (type === ValueType.Numeric && fieldMetadata.label === "Period") {
+        //   console.log(fieldMetadata, field.value);
+        // }
         switch (type) {
           case ValueType.Numeric:
             return (

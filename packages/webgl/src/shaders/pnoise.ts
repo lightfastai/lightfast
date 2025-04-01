@@ -10,6 +10,7 @@ export const $NoiseBase = z.object({
   u_period: $NumericValue
     .describe("1/u_period is the frequency of the input of noise function")
     .default(2.0),
+  // @todo fix
   u_harmonics: z
     .number()
     .int()

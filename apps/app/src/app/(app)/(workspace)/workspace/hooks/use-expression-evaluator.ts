@@ -1,13 +1,22 @@
 import type { ShaderMaterial } from "three";
 import { useCallback, useRef } from "react";
 
-import { isNumber } from "@repo/webgl";
+import { extractExpression, isNumber } from "@repo/webgl";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 
 // Helper function to check if a value is a string (expression)
 export const isExpression = (value: any): value is string =>
   typeof value === "string" && value !== "";
+
+/**
+ * Gets a value from a nested object using a dot-notation path
+ */
+const getNestedValue = (obj: Record<string, any>, path: string): any => {
+  return path.split(".").reduce((current, part) => {
+    return current && current[part];
+  }, obj);
+};
 
 /**
  * Evaluates a string expression with the provided context
@@ -22,13 +31,25 @@ export const evaluateExpression = (
   }
 
   try {
+    // Extract the actual expression from the prefixed format
+    const extractedExpression = extractExpression(expression);
+
     // Replace variables with their values from context
-    let evalExpression = expression;
-    Object.entries(context).forEach(([key, value]) => {
-      evalExpression = evalExpression.replace(
-        new RegExp(`\\b${key}\\b`, "g"),
-        value.toString(),
-      );
+    let evalExpression = extractedExpression;
+
+    // First, find all potential variable paths in the expression
+    const variableRegex = /\b[a-zA-Z_][a-zA-Z0-9_.]*\b/g;
+    const matches = evalExpression.match(variableRegex) || [];
+
+    // Replace each match with its corresponding value
+    matches.forEach((match) => {
+      const value = getNestedValue(context, match);
+      if (value !== undefined) {
+        evalExpression = evalExpression.replace(
+          new RegExp(`\\b${match}\\b`, "g"),
+          value.toString(),
+        );
+      }
     });
 
     // Use Function constructor to safely evaluate the expression
