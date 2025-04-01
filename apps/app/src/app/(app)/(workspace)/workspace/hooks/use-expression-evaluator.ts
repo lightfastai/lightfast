@@ -1,4 +1,4 @@
-import type { ShaderMaterial } from "three";
+import type { IUniform, ShaderMaterial } from "three";
 import { useCallback, useRef } from "react";
 
 import { extractExpression, isNumber } from "@repo/webgl";
@@ -13,8 +13,8 @@ export const isExpression = (value: any): value is string =>
  * Gets a value from a nested object using a dot-notation path
  */
 const getNestedValue = (obj: Record<string, any>, path: string): any => {
-  return path.split(".").reduce((current, part) => {
-    return current && current[part];
+  return path.split(".").reduce((current: any, part: string) => {
+    return current && typeof current === "object" ? current[part] : undefined;
   }, obj);
 };
 
@@ -22,11 +22,14 @@ const getNestedValue = (obj: Record<string, any>, path: string): any => {
  * Evaluates a string expression with the provided context
  */
 export const evaluateExpression = (
-  expression: string | number,
+  expression: string | number | boolean,
   context: Record<string, any>,
-): number => {
-  // If it's already a number, return it directly
+): number | boolean => {
+  // If it's already a number or boolean, return it directly
   if (isNumber(expression)) {
+    return expression;
+  }
+  if (typeof expression === "boolean") {
     return expression;
   }
 
@@ -54,7 +57,15 @@ export const evaluateExpression = (
 
     // Use Function constructor to safely evaluate the expression
     const func = new Function("return " + evalExpression);
-    return func();
+    const result = func();
+
+    // If the result is a boolean, return it as is
+    if (typeof result === "boolean") {
+      return result;
+    }
+
+    // Otherwise return as number
+    return Number(result);
   } catch (error) {
     console.error(
       "Error evaluating expression:",
@@ -67,6 +78,63 @@ export const evaluateExpression = (
       ? context.time * 0.1
       : 0;
   }
+};
+
+/**
+ * Updates numeric uniforms with expression values
+ */
+const updateNumericUniforms = (
+  shader: ShaderMaterial,
+  expressionMap: Record<string, string | undefined>,
+  timeContext: Record<string, any>,
+) => {
+  Object.entries(expressionMap).forEach(([uniformName, expression]) => {
+    if (!expression) return;
+
+    const uniform = shader.uniforms[uniformName] as
+      | IUniform<number>
+      | undefined;
+    if (!uniform) return;
+
+    const value = evaluateExpression(expression, timeContext);
+    uniform.value = value;
+  });
+};
+
+/**
+ * Updates vector uniforms with expression values
+ */
+const updateVectorUniforms = (
+  shader: ShaderMaterial,
+  expressionMap: Record<string, string | undefined>,
+  uniformMap: Record<string, { pathToValue: string }>,
+  timeContext: Record<string, any>,
+) => {
+  Object.entries(uniformMap).forEach(([expressionKey, config]) => {
+    const expression = expressionMap[expressionKey];
+    if (!expression) return;
+
+    const value = evaluateExpression(expression, timeContext);
+
+    // Navigate to the target property using the path
+    const parts = config.pathToValue.split(".");
+    let current: Record<string, any> = shader.uniforms;
+
+    // Follow the path to the target property
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      if (!current || typeof current !== "object") return;
+      const next = current[part];
+      if (!next || typeof next !== "object") return;
+      current = next;
+    }
+
+    // Set the value at the target property
+    const lastPart = parts[parts.length - 1];
+    if (current?.value && lastPart && typeof current.value === "object") {
+      (current.value as Record<string, number>)[lastPart] = Number(value);
+    }
+  });
 };
 
 /**
@@ -131,7 +199,8 @@ export function useExpressionEvaluator() {
       if (expression === undefined) return defaultValue;
 
       const timeContext = getTimeContext(state);
-      return evaluateExpression(expression, timeContext);
+      const result = evaluateExpression(expression, timeContext);
+      return typeof result === "boolean" ? 0 : result;
     },
     [getTimeContext],
   );
@@ -149,39 +218,12 @@ export function useExpressionEvaluator() {
       incrementFrame();
       const timeContext = getTimeContext(state);
 
-      // Update simple uniforms (direct mapping)
-      Object.entries(expressionMap).forEach(([uniformName, expression]) => {
-        if (!expression || !shader.uniforms[uniformName]) return;
+      // Update numeric uniforms
+      updateNumericUniforms(shader, expressionMap, timeContext);
 
-        const value = evaluateExpression(expression, timeContext);
-        shader.uniforms[uniformName].value = value;
-      });
-
-      // Update complex uniforms with paths (e.g. vector components)
+      // Update vector uniforms if map is provided
       if (uniformMap) {
-        Object.entries(uniformMap).forEach(([expressionKey, config]) => {
-          const expression = expressionMap[expressionKey];
-          if (!expression) return;
-
-          const value = evaluateExpression(expression, timeContext);
-
-          // Navigate to the target property using the path
-          const parts = config.pathToValue.split(".");
-          let current = shader.uniforms;
-
-          // Follow the path to the target property
-          for (let i = 0; i < parts.length - 1; i++) {
-            const part = parts[i];
-            if (!current[part]) return;
-            current = current[part];
-          }
-
-          // Set the value at the target property
-          const lastPart = parts[parts.length - 1];
-          if (current.value && lastPart) {
-            current.value[lastPart] = value;
-          }
-        });
+        updateVectorUniforms(shader, expressionMap, uniformMap, timeContext);
       }
     },
     [incrementFrame, getTimeContext],

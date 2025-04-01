@@ -84,8 +84,8 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
           }
         };
 
+        // Only store numeric expressions
         storeExpression("u_addValue", u.u_addValue);
-        storeExpression("u_enableMirror", u.u_enableMirror);
 
         // Reuse shader if available
         if (!shaderCache.current[id]) {
@@ -99,10 +99,7 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
                 value: typeof u.u_addValue === "number" ? u.u_addValue : 0.0,
               },
               u_enableMirror: {
-                value:
-                  typeof u.u_enableMirror === "boolean"
-                    ? u.u_enableMirror
-                    : false,
+                value: Boolean(u.u_enableMirror),
               },
             },
           });
@@ -113,11 +110,9 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
         if (shader.uniforms.u_addValue && typeof u.u_addValue === "number") {
           shader.uniforms.u_addValue.value = u.u_addValue;
         }
-        if (
-          shader.uniforms.u_enableMirror &&
-          typeof u.u_enableMirror === "boolean"
-        ) {
-          shader.uniforms.u_enableMirror.value = u.u_enableMirror;
+        // Update boolean uniform directly
+        if (shader.uniforms.u_enableMirror) {
+          shader.uniforms.u_enableMirror.value = Boolean(u.u_enableMirror);
         }
 
         return {
@@ -127,13 +122,10 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
             // Get expressions for this node
             const expressions = expressionsRef.current[id] || {};
 
-            // Define mapping for uniform components
+            // Define mapping for uniform components (only numeric uniforms)
             const uniformPathMap = {
               u_addValue: {
                 pathToValue: "u_addValue.value",
-              },
-              u_enableMirror: {
-                pathToValue: "u_enableMirror",
               },
             };
 
@@ -162,7 +154,12 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
                 : null;
             }
 
-            // Use the shared uniform update utility
+            // Update boolean uniform
+            if (shader.uniforms.u_enableMirror) {
+              shader.uniforms.u_enableMirror.value = Boolean(u.u_enableMirror);
+            }
+
+            // Use the shared uniform update utility (only for numeric uniforms)
             updateShaderUniforms(state, shader, expressions, uniformPathMap);
           },
         };

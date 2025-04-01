@@ -77,7 +77,6 @@ export const InspectorTexture = ({ id }: { id: string }) => {
 
   const handleUpdate = useCallback(
     (property: keyof TextureUniforms, value: Value) => {
-      if (!value) return;
       if (property === "u_texture") return;
 
       // @TODO: fix this type
