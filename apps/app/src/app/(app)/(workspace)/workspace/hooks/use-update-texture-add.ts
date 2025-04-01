@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { addFragmentShader, baseVertexShader } from "@repo/webgl";
+import { addFragmentShader, baseVertexShader, isExpression } from "@repo/webgl";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
@@ -9,6 +9,7 @@ import type { AddTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
+import { useExpressionEvaluator } from "./use-expression-evaluator";
 
 export const useUpdateTextureAdd = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
@@ -19,6 +20,10 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
   const connectionCache = useRef<Record<string, Record<string, string | null>>>(
     {},
   );
+  // Cache expressions
+  const expressionsRef = useRef<Record<string, Record<string, string>>>({});
+  // Use the shared expression evaluator
+  const { updateShaderUniforms } = useExpressionEvaluator();
 
   const queries = api.useQueries((t) =>
     Object.entries(targets).map(([id]) =>
@@ -69,6 +74,19 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
       .map(([id, texture]) => {
         const { uniforms: u } = texture;
 
+        // Ensure expressions cache exists for this ID
+        expressionsRef.current[id] = expressionsRef.current[id] || {};
+
+        // Store all expressions for this node
+        const storeExpression = (key: string, value: any) => {
+          if (isExpression(value)) {
+            expressionsRef.current[id][key] = value;
+          }
+        };
+
+        storeExpression("u_addValue", u.u_addValue);
+        storeExpression("u_enableMirror", u.u_enableMirror);
+
         // Reuse shader if available
         if (!shaderCache.current[id]) {
           shaderCache.current[id] = new THREE.ShaderMaterial({
@@ -77,25 +95,38 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
             uniforms: {
               u_texture1: { value: null }, // First input texture (A)
               u_texture2: { value: null }, // Second input texture (B)
-              u_addValue: { value: u.u_addValue },
-              u_enableMirror: { value: u.u_enableMirror },
+              u_addValue: {
+                value: typeof u.u_addValue === "number" ? u.u_addValue : 0.0,
+              },
+              u_enableMirror: {
+                value:
+                  typeof u.u_enableMirror === "boolean"
+                    ? u.u_enableMirror
+                    : false,
+              },
             },
           });
         }
 
         // Update uniform values
         const shader = shaderCache.current[id];
-        if (shader.uniforms.u_addValue) {
+        if (shader.uniforms.u_addValue && typeof u.u_addValue === "number") {
           shader.uniforms.u_addValue.value = u.u_addValue;
         }
-        if (shader.uniforms.u_enableMirror) {
+        if (
+          shader.uniforms.u_enableMirror &&
+          typeof u.u_enableMirror === "boolean"
+        ) {
           shader.uniforms.u_enableMirror.value = u.u_enableMirror;
         }
 
         return {
           id,
           shader,
-          onEachFrame: (_: WebGLRootState) => {
+          onEachFrame: (state: WebGLRootState) => {
+            // Get expressions for this node
+            const expressions = expressionsRef.current[id] || {};
+
             // Update the texture references according to connections
             const nodeConnections = connectionCache.current[id] || {};
 
@@ -120,8 +151,11 @@ export const useUpdateTextureAdd = (): TextureRenderNode[] => {
                 ? targets[sourceId]?.texture
                 : null;
             }
+
+            // Use the shared uniform update utility
+            updateShaderUniforms(state, shader, expressions);
           },
         };
       });
-  }, [textureDataMap, targets]);
+  }, [textureDataMap, targets, updateShaderUniforms]);
 };

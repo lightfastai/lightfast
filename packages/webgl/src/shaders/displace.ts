@@ -12,7 +12,7 @@ export const $Displace = z.object({
     .describe("The source texture to be displaced"),
   u_texture2: z.number().nullable().describe("The displacement map texture"),
   u_displaceWeight: $Float
-    .describe("Weight of the displacement effect")
+    .describe("X weight of displacement (0-10)")
     .transform((val) => Math.max(0, Math.min(10, val)))
     .default(1.0),
   u_displaceMidpoint: $Vec2Number.extend({
@@ -36,7 +36,7 @@ export const $Displace = z.object({
       .default(0.5),
   }),
   u_displaceOffsetWeight: $Float
-    .describe("Weight of the offset effect")
+    .describe("X weight of offset (0-10)")
     .transform((val) => Math.max(0, Math.min(10, val)))
     .default(0.0),
   u_displaceUVWeight: $Vec2Number.extend({
@@ -117,10 +117,10 @@ precision highp float;
 
 uniform sampler2D u_texture1; // Source texture to be displaced
 uniform sampler2D u_texture2; // Displacement map
-uniform vec2 u_displaceWeight;
+uniform float u_displaceWeight;
 uniform vec2 u_displaceMidpoint;
 uniform vec2 u_displaceOffset;
-uniform vec2 u_displaceOffsetWeight;
+uniform float u_displaceOffsetWeight;
 uniform vec2 u_displaceUVWeight;
 varying vec2 vUv;
 
@@ -149,10 +149,10 @@ void main() {
   vec2 displacedUV = displace(
     vUv,
     displaceMap,
-    u_displaceWeight.x,
+    u_displaceWeight,
     u_displaceMidpoint,
     u_displaceOffset,
-    u_displaceOffsetWeight.x,
+    u_displaceOffsetWeight,
     u_displaceUVWeight
   );
   

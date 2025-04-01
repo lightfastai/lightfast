@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { baseVertexShader, displaceFragmentShader } from "@repo/webgl";
+import {
+  baseVertexShader,
+  displaceFragmentShader,
+  isExpression,
+} from "@repo/webgl";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
@@ -9,6 +13,7 @@ import type { DisplaceTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
+import { useExpressionEvaluator } from "./use-expression-evaluator";
 
 export const useUpdateTextureDisplace = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
@@ -19,6 +24,10 @@ export const useUpdateTextureDisplace = (): TextureRenderNode[] => {
   const connectionCache = useRef<Record<string, Record<string, string | null>>>(
     {},
   );
+  // Cache expressions
+  const expressionsRef = useRef<Record<string, Record<string, string>>>({});
+  // Use the shared expression evaluator
+  const { updateShaderUniforms } = useExpressionEvaluator();
 
   const queries = api.useQueries((t) =>
     Object.entries(targets).map(([id]) =>
@@ -69,6 +78,30 @@ export const useUpdateTextureDisplace = (): TextureRenderNode[] => {
       .map(([id, texture]) => {
         const { uniforms: u } = texture;
 
+        // Ensure expressions cache exists for this ID
+        expressionsRef.current[id] = expressionsRef.current[id] || {};
+
+        // Store all expressions for this node
+        const storeExpression = (key: string, value: any) => {
+          if (isExpression(value)) {
+            expressionsRef.current[id][key] = value;
+          }
+        };
+
+        storeExpression("u_displaceWeight", u.u_displaceWeight);
+        storeExpression("u_displaceMidpoint.x", u.u_displaceMidpoint.x);
+        storeExpression("u_displaceMidpoint.y", u.u_displaceMidpoint.y);
+        storeExpression("u_displaceOffset.x", u.u_displaceOffset.x);
+        storeExpression("u_displaceOffset.y", u.u_displaceOffset.y);
+        storeExpression("u_displaceOffsetWeight", u.u_displaceOffsetWeight);
+        storeExpression("u_displaceUVWeight.x", u.u_displaceUVWeight.x);
+        storeExpression("u_displaceUVWeight.y", u.u_displaceUVWeight.y);
+
+        // Create default vector values
+        const defaultMidpoint = new THREE.Vector2(0.5, 0.5);
+        const defaultOffset = new THREE.Vector2(0, 0);
+        const defaultUVWeight = new THREE.Vector2(1.0, 1.0);
+
         // Reuse shader if available
         if (!shaderCache.current[id]) {
           shaderCache.current[id] = new THREE.ShaderMaterial({
@@ -77,62 +110,100 @@ export const useUpdateTextureDisplace = (): TextureRenderNode[] => {
             uniforms: {
               u_texture1: { value: null }, // Source image
               u_texture2: { value: null }, // Displacement map
-              u_displaceWeight: { value: u.u_displaceWeight },
-              u_displaceMidpoint: {
-                value: new THREE.Vector2(
-                  u.u_displaceMidpoint.x,
-                  u.u_displaceMidpoint.y,
-                ),
+              u_displaceWeight: {
+                value:
+                  typeof u.u_displaceWeight === "number"
+                    ? u.u_displaceWeight
+                    : 1.0,
               },
-              u_displaceOffset: {
-                value: new THREE.Vector2(
-                  u.u_displaceOffset.x,
-                  u.u_displaceOffset.y,
-                ),
+              u_displaceMidpoint: { value: defaultMidpoint.clone() },
+              u_displaceOffset: { value: defaultOffset.clone() },
+              u_displaceOffsetWeight: {
+                value:
+                  typeof u.u_displaceOffsetWeight === "number"
+                    ? u.u_displaceOffsetWeight
+                    : 1.0,
               },
-              u_displaceOffsetWeight: { value: u.u_displaceOffsetWeight },
-              u_displaceUVWeight: {
-                value: new THREE.Vector2(
-                  u.u_displaceUVWeight.x,
-                  u.u_displaceUVWeight.y,
-                ),
-              },
+              u_displaceUVWeight: { value: defaultUVWeight.clone() },
             },
           });
         }
 
         // Update uniform values
         const shader = shaderCache.current[id];
-        if (shader.uniforms.u_displaceWeight) {
+        if (
+          shader.uniforms.u_displaceWeight &&
+          typeof u.u_displaceWeight === "number"
+        ) {
           shader.uniforms.u_displaceWeight.value = u.u_displaceWeight;
         }
+
+        // Update vector uniforms
         if (shader.uniforms.u_displaceMidpoint) {
-          shader.uniforms.u_displaceMidpoint.value = new THREE.Vector2(
-            u.u_displaceMidpoint.x,
-            u.u_displaceMidpoint.y,
-          );
+          const x =
+            typeof u.u_displaceMidpoint.x === "number"
+              ? u.u_displaceMidpoint.x
+              : 0.5;
+          const y =
+            typeof u.u_displaceMidpoint.y === "number"
+              ? u.u_displaceMidpoint.y
+              : 0.5;
+          shader.uniforms.u_displaceMidpoint.value.set(x, y);
         }
+
         if (shader.uniforms.u_displaceOffset) {
-          shader.uniforms.u_displaceOffset.value = new THREE.Vector2(
-            u.u_displaceOffset.x,
-            u.u_displaceOffset.y,
-          );
+          const x =
+            typeof u.u_displaceOffset.x === "number" ? u.u_displaceOffset.x : 0;
+          const y =
+            typeof u.u_displaceOffset.y === "number" ? u.u_displaceOffset.y : 0;
+          shader.uniforms.u_displaceOffset.value.set(x, y);
         }
-        if (shader.uniforms.u_displaceOffsetWeight) {
+
+        if (
+          shader.uniforms.u_displaceOffsetWeight &&
+          typeof u.u_displaceOffsetWeight === "number"
+        ) {
           shader.uniforms.u_displaceOffsetWeight.value =
             u.u_displaceOffsetWeight;
         }
+
         if (shader.uniforms.u_displaceUVWeight) {
-          shader.uniforms.u_displaceUVWeight.value = new THREE.Vector2(
-            u.u_displaceUVWeight.x,
-            u.u_displaceUVWeight.y,
-          );
+          const x =
+            typeof u.u_displaceUVWeight.x === "number"
+              ? u.u_displaceUVWeight.x
+              : 1.0;
+          const y =
+            typeof u.u_displaceUVWeight.y === "number"
+              ? u.u_displaceUVWeight.y
+              : 1.0;
+          shader.uniforms.u_displaceUVWeight.value.set(x, y);
         }
 
         return {
           id,
           shader,
-          onEachFrame: (_: WebGLRootState) => {
+          onEachFrame: (state: WebGLRootState) => {
+            // Get expressions for this node
+            const expressions = expressionsRef.current[id] || {};
+
+            // Define mapping for vector uniform components
+            const uniformPathMap = {
+              "u_displaceMidpoint.x": {
+                pathToValue: "u_displaceMidpoint.value",
+              },
+              "u_displaceMidpoint.y": {
+                pathToValue: "u_displaceMidpoint.value.y",
+              },
+              "u_displaceOffset.x": { pathToValue: "u_displaceOffset.value.x" },
+              "u_displaceOffset.y": { pathToValue: "u_displaceOffset.value.y" },
+              "u_displaceUVWeight.x": {
+                pathToValue: "u_displaceUVWeight.value",
+              },
+              "u_displaceUVWeight.y": {
+                pathToValue: "u_displaceUVWeight.value.y",
+              },
+            };
+
             // Update the texture references according to connections
             const nodeConnections = connectionCache.current[id] || {};
 
@@ -151,8 +222,11 @@ export const useUpdateTextureDisplace = (): TextureRenderNode[] => {
                 ? targets[sourceId]?.texture
                 : null;
             }
+
+            // Use the shared uniform update utility
+            updateShaderUniforms(state, shader, expressions, uniformPathMap);
           },
         };
       });
-  }, [textureDataMap, targets]);
+  }, [textureDataMap, targets, updateShaderUniforms]);
 };

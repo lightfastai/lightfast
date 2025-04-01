@@ -32,6 +32,7 @@ import {
   $Txt2ImgType,
 } from "~/db/schema/types";
 import { useCommandDialog } from "../../hooks/use-command-dialog";
+import { useWorkspaceShortcuts } from "../../hooks/use-workspace-shortcuts";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 
 const TAB_VALUES = ["texture", "geometry", "material", "comp"] as const;
@@ -45,6 +46,7 @@ export const EditorCommandDialog = () => {
     setWindow,
     clearSelection,
   } = useSelectionStore((state) => state);
+  useWorkspaceShortcuts();
 
   const { isOpen, open, close } = useCommandDialog();
   const [currentTabIndex, setCurrentTabIndex] = useState(0);
