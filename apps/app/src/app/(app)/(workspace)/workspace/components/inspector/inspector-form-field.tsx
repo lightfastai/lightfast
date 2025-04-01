@@ -18,14 +18,14 @@ import {
   VectorMode,
 } from "@repo/webgl";
 
-import { ColorPickerField } from "./value/color-picker-field";
-import { BooleanInput } from "./value/primitive/boolean-input";
-import { StringInput } from "./value/primitive/string-input";
-import { VecModeToggle } from "./value/vec-mode-toggle";
-import { NumericValueExpressionInput } from "./value/vector/numeric-value/numeric-value-expression-input";
-import { NumericValueNumberInput } from "./value/vector/numeric-value/numeric-value-number-input";
-import { Vec2NumberInput } from "./value/vector/vec2/vec2-number-input";
-import { Vec3NumberInput } from "./value/vector/vec3/vec3-number-input";
+import { BooleanInput } from "./primitives/boolean-input";
+import { ColorPickerField } from "./primitives/color-picker-field";
+import { NumericValueExpressionInput } from "./primitives/numeric-value-expression-input";
+import { NumericValueNumberInput } from "./primitives/numeric-value-number-input";
+import { StringInput } from "./primitives/string-input";
+import { VecModeToggle } from "./primitives/vec-mode-toggle";
+import { Vec2NumberInput } from "./primitives/vec2-number-input";
+import { Vec3NumberInput } from "./primitives/vec3-number-input";
 
 interface InspectorFormFieldProps<T extends FieldValues> {
   name: Path<T>;

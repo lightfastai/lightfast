@@ -4,8 +4,8 @@ import { useState } from "react";
 
 import { Input } from "@repo/ui/components/ui/input";
 
-import type { ExpressionMode } from "../inspector/value/vec-mode-toggle";
-import { VecModeToggle } from "../inspector/value/vec-mode-toggle";
+import type { ExpressionMode } from "../inspector/primitives/vec-mode-toggle";
+import { VecModeToggle } from "../inspector/primitives/vec-mode-toggle";
 
 interface ExpressionVector3Value {
   x: number | string;

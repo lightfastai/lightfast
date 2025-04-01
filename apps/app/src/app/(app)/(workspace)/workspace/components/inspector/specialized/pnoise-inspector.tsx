@@ -4,7 +4,7 @@ import type { NumericValue } from "@repo/webgl";
 import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
 
 import type { TextureUniforms } from "~/db/schema/types";
-import { NumericValueNumberInput } from "../value/vector/numeric-value/numeric-value-number-input";
+import { NumericValueNumberInput } from "../primitives/vector/numeric-value/numeric-value-number-input";
 
 interface PNoiseInspectorProps {
   name: keyof TextureUniforms;

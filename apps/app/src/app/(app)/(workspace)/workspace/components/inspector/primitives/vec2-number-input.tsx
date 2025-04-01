@@ -4,7 +4,7 @@ import { memo } from "react";
 
 import type { Vec2, Vec2FieldMetadata } from "@repo/webgl";
 
-import { BaseInputNumber } from "../../base/base-input";
+import { BaseInputNumber } from "./base-input";
 
 interface Vec2NumberInputProps<T extends FieldValues, K extends Path<T>> {
   field: ControllerRenderProps<T, K>;

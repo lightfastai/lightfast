@@ -1,29 +1,28 @@
 import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
 import { memo } from "react";
 
-import type { Number } from "@repo/webgl";
+import type { NumericValue, NumericValueMetadata } from "@repo/webgl";
 import { Slider } from "@repo/ui/components/ui/slider";
 
-import { BaseInputNumber } from "../base/base-input";
+import { BaseInputNumber } from "./base-input";
 
-interface NumberInputProps<T extends FieldValues, K extends Path<T>> {
+interface NumericValueNumberInputProps<
+  T extends FieldValues,
+  K extends Path<T>,
+> {
   field: ControllerRenderProps<T, K>;
-  metadata: {
-    min: number;
-    max: number;
-    step: number;
-  };
-  onValueChange: (value: Number) => void;
+  metadata: NumericValueMetadata;
+  onValueChange: (value: NumericValue) => void;
 }
 
-export const NumberInput = memo(
+export const NumericValueNumberInput = memo(
   <T extends FieldValues, K extends Path<T>>({
     field,
     metadata,
     onValueChange,
-  }: NumberInputProps<T, K>) => {
-    const { min, max, step } = metadata;
-
+  }: NumericValueNumberInputProps<T, K>) => {
+    const { value } = metadata;
+    const { min, max, step } = value;
     return (
       <div className="flex items-center gap-2">
         <Slider
@@ -40,7 +39,6 @@ export const NumberInput = memo(
           }}
         />
         <BaseInputNumber
-          {...field}
           min={min}
           max={max}
           step={step}
@@ -57,4 +55,4 @@ export const NumberInput = memo(
   },
 );
 
-NumberInput.displayName = "NumberInput";
+NumericValueNumberInput.displayName = "NumericValueNumberInput";
