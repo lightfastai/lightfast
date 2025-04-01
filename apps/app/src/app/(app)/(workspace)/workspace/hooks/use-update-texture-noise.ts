@@ -1,7 +1,11 @@
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { baseVertexShader, pnoiseFragmentShader } from "@repo/webgl";
+import {
+  baseVertexShader,
+  isExpression,
+  pnoiseFragmentShader,
+} from "@repo/webgl";
 
 // TODO: Use proper imports when the module is set up
 // import {
@@ -15,10 +19,7 @@ import type { TextureRenderNode } from "../types/render";
 import type { NoiseTexture, Texture } from "~/db/schema/types/Texture";
 import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
-import {
-  isExpression,
-  useExpressionEvaluator,
-} from "./use-expression-evaluator";
+import { useExpressionEvaluator } from "./use-expression-evaluator";
 
 export const useUpdateTextureNoise = (): TextureRenderNode[] => {
   const { targets } = useTextureRenderStore((state) => state);

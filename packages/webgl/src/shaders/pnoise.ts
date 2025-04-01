@@ -3,13 +3,12 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import type { UniformFieldValue } from "../types/field";
-import { $Float, $Vec2Number, ValueType } from "../types/schema";
+import { $Float, $NumericValue, $Vec2Number, ValueType } from "../types/schema";
 
 export const $NoiseBase = z.object({
   u_texture: z.number().nullable(),
-  u_period: $Float
+  u_period: $NumericValue
     .describe("1/u_period is the frequency of the input of noise function")
-    .transform((val) => Math.max(0.001, Math.min(100, val)))
     .default(2.0),
   u_harmonics: z
     .number()
@@ -18,29 +17,22 @@ export const $NoiseBase = z.object({
     .max(8)
     .default(1)
     .describe("amount of iterations of noise."),
-  u_harmonic_gain: $Float
+  u_harmonic_gain: $NumericValue
     .describe(
       "how much the amplitude changes per iterations (scalar of the amplitude)",
     )
-    .transform((val) => Math.max(0, Math.min(1, val)))
     .default(0.66),
-  u_harmonic_spread: $Float
+  u_harmonic_spread: $NumericValue
     .describe(
       "how much the frequency changes per iteration (scalar of the frequency)",
     )
-    .transform((val) => Math.max(0, Math.min(10, val)))
     .default(2.0),
-  u_amplitude: $Float
+  u_amplitude: $NumericValue
     .describe("The overall amplitude scaling for the noise.")
-    .transform((val) => Math.max(0, Math.min(10, val)))
     .default(0.84),
-  u_offset: $Float
-    .describe("The offset of the noise.")
-    .transform((val) => Math.max(-1, Math.min(1, val)))
-    .default(0.412),
-  u_exponent: $Float
+  u_offset: $NumericValue.describe("The offset of the noise.").default(0.412),
+  u_exponent: $NumericValue
     .describe("The exponent of the noise.")
-    .transform((val) => Math.max(0.1, Math.min(10, val)))
     .default(0.63),
 });
 

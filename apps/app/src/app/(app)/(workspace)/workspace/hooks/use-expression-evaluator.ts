@@ -1,4 +1,7 @@
+import type { ShaderMaterial } from "three";
 import { useCallback, useRef } from "react";
+
+import { isNumber } from "@repo/webgl";
 
 import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 
@@ -14,7 +17,7 @@ export const evaluateExpression = (
   context: Record<string, any>,
 ): number => {
   // If it's already a number, return it directly
-  if (typeof expression === "number") {
+  if (isNumber(expression)) {
     return expression;
   }
 
@@ -118,7 +121,7 @@ export function useExpressionEvaluator() {
   const updateShaderUniforms = useCallback(
     (
       state: WebGLRootState,
-      shader: THREE.ShaderMaterial,
+      shader: ShaderMaterial,
       expressionMap: Record<string, string | undefined>,
       uniformMap?: Record<string, { pathToValue: string }>,
     ) => {

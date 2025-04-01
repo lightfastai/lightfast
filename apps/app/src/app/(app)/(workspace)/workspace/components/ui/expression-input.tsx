@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
 
-import type { ExpressionMode } from "./expression-mode-toggle";
+import type { ExpressionMode } from "../inspector/value/vec-mode-toggle";
 import { evaluateExpression } from "../../hooks/use-expression-evaluator";
-import { ExpressionModeToggle } from "./expression-mode-toggle";
+import { VecModeToggle } from "../inspector/value/vec-mode-toggle";
 
 interface ExpressionInputProps {
   value: number | string;
@@ -194,7 +194,7 @@ export function ExpressionInput({
     <div className="flex flex-col space-y-2">
       <div className="flex items-center space-x-2">
         {showModeToggle && (
-          <ExpressionModeToggle
+          <VecModeToggle
             mode={mode}
             onModeChange={handleModeChange}
             disabled={disabled}

@@ -25,12 +25,20 @@ export function isExpressionString(value: unknown): value is string {
 
 // Helper to create an expression string
 export function createExpressionString(expression: string): string {
-  return `${EXPRESSION_PREFIX}${expression}`;
+  return `${EXPRESSION_PREFIX}{${expression}}`;
+}
+
+// Helper to convert an expression string to a numeric value
+export function expressionToNumericValue(expression: string): NumericValue {
+  return parseFloat(extractExpression(expression));
 }
 
 // Helper to extract expression from prefixed string
 export function extractExpression(value: string): string {
-  return value.slice(EXPRESSION_PREFIX.length);
+  return value
+    .slice(EXPRESSION_PREFIX.length)
+    .replace("}", "")
+    .replace("{", "");
 }
 
 export const $String = z.string();
@@ -118,7 +126,7 @@ export function isNumber(value: unknown): value is Number {
 }
 
 export function isExpression(value: unknown): value is Expression {
-  return isExpressionString(value);
+  return isString(value) && isExpressionString(value);
 }
 
 export function isColor(value: unknown): value is Color {

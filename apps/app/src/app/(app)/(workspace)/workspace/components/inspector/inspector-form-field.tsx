@@ -9,11 +9,20 @@ import { memo, useCallback } from "react";
 
 import type { UniformFieldValue, Value } from "@repo/webgl";
 import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
-import { getFieldMetadata, ValueType } from "@repo/webgl";
+import {
+  createExpressionString,
+  expressionToNumericValue,
+  getFieldMetadata,
+  isExpression,
+  ValueType,
+  VectorMode,
+} from "@repo/webgl";
 
 import { ColorPickerField } from "./value/color-picker-field";
 import { BooleanInput } from "./value/primitive/boolean-input";
 import { StringInput } from "./value/primitive/string-input";
+import { VecModeToggle } from "./value/vec-mode-toggle";
+import { NumericValueExpressionInput } from "./value/vector/numeric-value/numeric-value-expression-input";
 import { NumericValueNumberInput } from "./value/vector/numeric-value/numeric-value-number-input";
 import { Vec2NumberInput } from "./value/vector/vec2/vec2-number-input";
 import { Vec3NumberInput } from "./value/vector/vec3/vec3-number-input";
@@ -42,15 +51,54 @@ export const InspectorFormField = memo(
         }
 
         const { type, constraint } = fieldMetadata;
-
+        if (type === ValueType.Numeric && fieldMetadata.label === "Period") {
+          console.log(fieldMetadata, field.value);
+        }
         switch (type) {
           case ValueType.Numeric:
             return (
-              <NumericValueNumberInput
-                field={field as ControllerRenderProps<FieldValues, string>}
-                metadata={constraint}
-                onValueChange={onValueChange}
-              />
+              <div className="flex flex-row gap-2">
+                <VecModeToggle
+                  key={name}
+                  id={name}
+                  mode={
+                    isExpression(field.value)
+                      ? VectorMode.Expression
+                      : VectorMode.Number
+                  }
+                  onModeChange={(mode) => {
+                    if (mode === VectorMode.Expression) {
+                      onValueChange(createExpressionString(field.value));
+                    }
+
+                    if (mode === VectorMode.Number) {
+                      const numericValue = expressionToNumericValue(
+                        field.value,
+                      );
+                      onValueChange(numericValue);
+                    }
+                  }}
+                />
+                <div className="flex w-full flex-col gap-2">
+                  {isExpression(field.value) ? (
+                    <NumericValueExpressionInput
+                      field={
+                        field as ControllerRenderProps<FieldValues, string>
+                      }
+                      metadata={constraint}
+                      onValueChange={onValueChange}
+                    />
+                  ) : (
+                    <NumericValueNumberInput
+                      field={
+                        field as ControllerRenderProps<FieldValues, string>
+                      }
+                      metadata={constraint}
+                      onValueChange={onValueChange}
+                    />
+                  )}
+                </div>
+              </div>
             );
 
           case ValueType.Vec2:

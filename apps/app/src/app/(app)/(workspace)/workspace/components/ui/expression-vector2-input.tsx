@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 
 import { Input } from "@repo/ui/components/ui/input";
 
-import type { ExpressionMode } from "./expression-mode-toggle";
+import type { ExpressionMode } from "../inspector/value/vec-mode-toggle";
 import { evaluateExpression } from "../../hooks/use-expression-evaluator";
-import { ExpressionModeToggle } from "./expression-mode-toggle";
+import { VecModeToggle } from "../inspector/value/vec-mode-toggle";
 
 interface ExpressionVector2Value {
   x: number | string;
@@ -210,7 +210,7 @@ export function ExpressionVector2Input({
   return (
     <div className="flex w-full gap-1">
       <div className="mb-1">
-        <ExpressionModeToggle
+        <VecModeToggle
           mode={mode}
           onModeChange={handleModeChange}
           disabled={disabled}

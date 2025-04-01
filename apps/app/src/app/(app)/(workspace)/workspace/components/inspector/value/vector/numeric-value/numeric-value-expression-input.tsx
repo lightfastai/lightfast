@@ -21,14 +21,14 @@ export const NumericValueExpressionInput = memo(
   }: NumericValueExpressionInputProps<T>) => {
     return (
       <Input
-        value={extractExpression(field.value.x)}
+        value={extractExpression(field.value)}
         onChange={(e) => {
           const newValue = createExpressionString(e.target.value);
           field.onChange(newValue);
           onValueChange(newValue);
         }}
         placeholder="Enter x expression..."
-        className="font-mono text-xs"
+        className="h-7 font-mono text-xs"
       />
     );
   },

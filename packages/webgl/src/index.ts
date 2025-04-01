@@ -61,6 +61,7 @@ export {
   EXPRESSION_PREFIX,
   isExpressionString,
   createExpressionString,
+  expressionToNumericValue,
   extractExpression,
 
   // Type guards
