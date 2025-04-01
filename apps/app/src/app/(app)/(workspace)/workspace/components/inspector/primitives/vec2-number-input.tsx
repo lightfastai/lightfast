@@ -18,25 +18,28 @@ export const Vec2NumberInput = memo(
     metadata,
     onValueChange,
   }: Vec2NumberInputProps<T, K>) => {
+    // Ensure field.value exists with default values
+    const currentValue = field.value || { x: 0, y: 0 };
+
     return (
       <div className="grid w-full grid-cols-2 gap-1.5">
-        {["x", "y"].map((axis) => (
+        {(["x", "y"] as const).map((axis) => (
           <BaseInputNumber
             key={axis}
-            min={metadata[axis as keyof typeof metadata].min}
-            max={metadata[axis as keyof typeof metadata].max}
-            step={metadata[axis as keyof typeof metadata].step}
+            min={metadata[axis].min}
+            max={metadata[axis].max}
+            step={metadata[axis].step}
             className="w-full"
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
               const newValue = Number(e.target.value);
               const updatedValue = {
-                ...field.value,
+                ...currentValue,
                 [axis]: newValue,
               };
               field.onChange(updatedValue);
               onValueChange(updatedValue);
             }}
-            value={field.value[axis]}
+            value={currentValue[axis]}
           />
         ))}
       </div>
