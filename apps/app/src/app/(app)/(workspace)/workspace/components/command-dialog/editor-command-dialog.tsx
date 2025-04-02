@@ -196,6 +196,22 @@ export const EditorCommandDialog = () => {
                   >
                     Add
                   </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      handleTextureSelect($TextureTypes.Enum.Lookup)
+                    }
+                    className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                  >
+                    Lookup
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() =>
+                      handleTextureSelect($TextureTypes.Enum.ColorRamp)
+                    }
+                    className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                  >
+                    ColorRamp
+                  </CommandItem>
                 </div>
               </CommandGroup>
             </TabsContent>

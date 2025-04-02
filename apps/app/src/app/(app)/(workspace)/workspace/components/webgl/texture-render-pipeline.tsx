@@ -6,8 +6,10 @@ import { useEffect, useMemo, useRef } from "react";
 import { $GeometryType } from "~/db/schema/types";
 import { useRenderTargetPipeline } from "../../hooks/use-texture-render-pipeline";
 import { useUpdateTextureAdd } from "../../hooks/use-update-texture-add";
+import { useUpdateTextureColorRamp } from "../../hooks/use-update-texture-colorramp";
 import { useUpdateTextureDisplace } from "../../hooks/use-update-texture-displace";
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
+import { useUpdateTextureLookup } from "../../hooks/use-update-texture-lookup";
 import { useUpdateTextureNoise } from "../../hooks/use-update-texture-noise";
 import { GeometryMap } from "./webgl-globals";
 import { createWebGLPortal, WebGLView } from "./webgl-primitives";
@@ -18,6 +20,8 @@ export const TextureRenderPipeline = () => {
   const limitNodes = useUpdateTextureLimit();
   const displaceNodes = useUpdateTextureDisplace();
   const addNodes = useUpdateTextureAdd();
+  const lookupNodes = useUpdateTextureLookup();
+  const colorRampNodes = useUpdateTextureColorRamp();
 
   // clean up unused meshes
   useEffect(() => {
@@ -26,6 +30,8 @@ export const TextureRenderPipeline = () => {
       ...limitNodes.map((node) => node.id),
       ...displaceNodes.map((node) => node.id),
       ...addNodes.map((node) => node.id),
+      ...lookupNodes.map((node) => node.id),
+      ...colorRampNodes.map((node) => node.id),
     ]);
 
     Object.keys(meshRefs.current).forEach((id) => {
@@ -33,17 +39,36 @@ export const TextureRenderPipeline = () => {
         delete meshRefs.current[id];
       }
     });
-  }, [noiseNodes, limitNodes, displaceNodes, addNodes]);
+  }, [
+    noiseNodes,
+    limitNodes,
+    displaceNodes,
+    addNodes,
+    lookupNodes,
+    colorRampNodes,
+  ]);
 
   // update uniforms
   const updates = useMemo(
     () =>
       Object.fromEntries(
-        [...noiseNodes, ...limitNodes, ...displaceNodes, ...addNodes].map(
-          (node) => [node.id, node.onEachFrame],
-        ),
+        [
+          ...noiseNodes,
+          ...limitNodes,
+          ...displaceNodes,
+          ...addNodes,
+          ...lookupNodes,
+          ...colorRampNodes,
+        ].map((node) => [node.id, node.onEachFrame]),
       ),
-    [noiseNodes, limitNodes, displaceNodes, addNodes],
+    [
+      noiseNodes,
+      limitNodes,
+      displaceNodes,
+      addNodes,
+      lookupNodes,
+      colorRampNodes,
+    ],
   );
 
   const { scene } = useRenderTargetPipeline({
@@ -89,6 +114,28 @@ export const TextureRenderPipeline = () => {
             </mesh>
           ))}
           {addNodes.map(({ shader, id }) => (
+            <mesh
+              key={id}
+              geometry={GeometryMap[$GeometryType.Enum.plane]}
+              ref={(ref) => {
+                if (ref) meshRefs.current[id] = ref;
+              }}
+            >
+              <primitive object={shader} />
+            </mesh>
+          ))}
+          {lookupNodes.map(({ shader, id }) => (
+            <mesh
+              key={id}
+              geometry={GeometryMap[$GeometryType.Enum.plane]}
+              ref={(ref) => {
+                if (ref) meshRefs.current[id] = ref;
+              }}
+            >
+              <primitive object={shader} />
+            </mesh>
+          ))}
+          {colorRampNodes.map(({ shader, id }) => (
             <mesh
               key={id}
               geometry={GeometryMap[$GeometryType.Enum.plane]}

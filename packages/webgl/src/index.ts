@@ -2,12 +2,14 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 
 import { $Add, $AddJsonSchema, AddDescription } from "./shaders/add";
+import { $ColorRamp, ColorRampDescription } from "./shaders/colorramp";
 import {
   $Displace,
   $DisplaceJsonSchema,
   DisplaceDescription,
 } from "./shaders/displace";
 import { $Limit } from "./shaders/limit";
+import { $Lookup, LookupDescription } from "./shaders/lookup";
 import {
   $PerlinNoise3D,
   PerlinNoise3DDescription,
@@ -113,6 +115,18 @@ export type { AddParams } from "./shaders/add";
 export { $Add, AddDescription };
 
 /**
+ * Lookup modules
+ */
+export type { LookupParams } from "./shaders/lookup";
+export { $Lookup, LookupDescription };
+
+/**
+ * Color ramp modules
+ */
+export type { ColorRampParams } from "./shaders/colorramp";
+export { $ColorRamp, ColorRampDescription };
+
+/**
  * Shared texture uniforms type
  */
 export const $TextureUniforms = $PerlinNoise3D
@@ -179,3 +193,10 @@ export {
 export * from "./types/field";
 
 export * from "./shaders/utils";
+
+export * from "./shaders/pnoise";
+export * from "./shaders/add";
+export * from "./shaders/displace";
+export * from "./shaders/limit";
+export * from "./shaders/lookup";
+export * from "./shaders/colorramp";

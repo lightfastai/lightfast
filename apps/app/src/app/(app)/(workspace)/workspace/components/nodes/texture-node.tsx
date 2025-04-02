@@ -19,33 +19,16 @@ import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
 import type { Texture } from "~/db/schema/types";
-import { $GeometryType, $TextureTypes } from "~/db/schema/types";
+import {
+  $GeometryType,
+  getInputLabel,
+  getTextureInputs,
+} from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 import { GeometryMap } from "../webgl/webgl-globals";
 import { WebGLView } from "../webgl/webgl-primitives";
-
-// Get number of inputs needed for each texture type
-const getTextureInputs = (textureType: string): number => {
-  switch (textureType) {
-    case $TextureTypes.enum.Displace:
-    case $TextureTypes.enum.Add:
-      return 2;
-    default:
-      return 1;
-  }
-};
-
-// Get input labels for each texture type and position
-const getInputLabel = (textureType: string, inputIndex: number): string => {
-  if (textureType === $TextureTypes.enum.Displace) {
-    return inputIndex === 0 ? "Source Image" : "Displacement Map";
-  } else if (textureType === $TextureTypes.enum.Add) {
-    return inputIndex === 0 ? "Input A" : "Input B";
-  }
-  return `Input ${inputIndex + 1}`;
-};
 
 export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {

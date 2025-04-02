@@ -4,7 +4,7 @@ import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import type { UniformFieldValue, Value } from "@repo/webgl";
+import type { Value } from "@repo/webgl";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
@@ -13,36 +13,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import {
-  ADD_UNIFORM_CONSTRAINTS,
-  DISPLACE_UNIFORM_CONSTRAINTS,
-  LIMIT_UNIFORM_CONSTRAINTS,
-  PNOISE_UNIFORM_CONSTRAINTS,
-} from "@repo/webgl";
 
-import type { Texture, TextureType, TextureUniforms } from "~/db/schema/types";
-import { $TextureUniforms } from "~/db/schema/types";
+import type { Texture, TextureUniforms } from "~/db/schema/types";
+import { $TextureUniforms, getUniformConstraints } from "~/db/schema/types";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";
 import { InspectorFormField } from "./inspector-form-field";
-
-export const getUniformConstraints = (
-  shaderType: TextureType,
-): Record<string, UniformFieldValue> => {
-  switch (shaderType) {
-    case "Noise":
-      return PNOISE_UNIFORM_CONSTRAINTS;
-    case "Displace":
-      return DISPLACE_UNIFORM_CONSTRAINTS;
-    case "Limit":
-      return LIMIT_UNIFORM_CONSTRAINTS;
-    case "Add":
-      return ADD_UNIFORM_CONSTRAINTS;
-    default:
-      return {};
-  }
-};
 
 export const InspectorTexture = ({ id }: { id: string }) => {
   const utils = api.useUtils();
