@@ -179,3 +179,10 @@ export {
 export * from "./types/field";
 
 export * from "./shaders/utils";
+
+export type {
+  UniformFieldValue,
+  ValueFieldMetadata,
+  Vec2FieldMetadata,
+  Vec3FieldMetadata,
+} from "./types/field";

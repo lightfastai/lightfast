@@ -3,15 +3,12 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { and, eq, exists, sql } from "@vendor/db";
-import { protectedTenantProcedure } from "@vendor/trpc";
-
-import { Node, Workspace } from "~/db/schema";
-import { InsertNodeSchema } from "~/db/schema/tables/Node";
-import { $Txt2Img, $Window } from "~/db/schema/types";
-import { $Texture } from "~/db/schema/types/Texture";
+import { InsertNodeSchema, Node, Workspace } from "@vendor/db/schema";
+import { $Texture, $Txt2Img, $Window } from "@vendor/db/types";
+import { protectedProcedure } from "@vendor/trpc";
 
 export const nodeRouter = {
-  delete: protectedTenantProcedure
+  delete: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -47,7 +44,7 @@ export const nodeRouter = {
       return deletedNode;
     }),
 
-  create: protectedTenantProcedure
+  create: protectedProcedure
     .input(InsertNodeSchema)
     .mutation(async ({ ctx, input }) => {
       // Verify workspace ownership first
@@ -90,7 +87,7 @@ export const nodeRouter = {
       return node;
     }),
 
-  updatePositions: protectedTenantProcedure
+  updatePositions: protectedProcedure
     .input(
       z.object({
         workspaceId: z.string(),
@@ -141,7 +138,7 @@ export const nodeRouter = {
       return updatedNodes.flat();
     }),
   base: {
-    getAll: protectedTenantProcedure
+    getAll: protectedProcedure
       .input(z.object({ workspaceId: z.string() }))
       .query(async ({ ctx, input }) => {
         const nodes = await ctx.db
@@ -157,7 +154,7 @@ export const nodeRouter = {
       }),
   },
   data: {
-    get: protectedTenantProcedure
+    get: protectedProcedure
       .input(z.object({ id: z.string() }))
       .query(async ({ ctx, input }) => {
         const [node] = await ctx.db
@@ -178,7 +175,7 @@ export const nodeRouter = {
         return node.data;
       }),
 
-    update: protectedTenantProcedure
+    update: protectedProcedure
       .input(
         z.object({
           id: z.string(),

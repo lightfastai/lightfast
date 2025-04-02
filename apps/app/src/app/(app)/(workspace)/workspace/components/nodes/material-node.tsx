@@ -2,6 +2,7 @@ import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
 
+import type { Material } from "@vendor/db/types";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -9,10 +10,9 @@ import {
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
+import { createDefaultGeometry } from "@vendor/db/types";
 
 import type { BaseNode } from "../../types/node";
-import type { Material } from "~/db/schema/types";
-import { createDefaultGeometry } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION } from "../../stores/constants";
 import { GeometryRenderer } from "../webgl/geometry-renderer";

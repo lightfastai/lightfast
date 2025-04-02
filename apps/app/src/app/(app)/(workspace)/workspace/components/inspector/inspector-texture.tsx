@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import type { UniformFieldValue, Value } from "@repo/webgl";
+import type { Texture, TextureType, TextureUniforms } from "@vendor/db/types";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
@@ -19,9 +20,8 @@ import {
   LIMIT_UNIFORM_CONSTRAINTS,
   PNOISE_UNIFORM_CONSTRAINTS,
 } from "@repo/webgl";
+import { $TextureUniforms } from "@vendor/db/types";
 
-import type { Texture, TextureType, TextureUniforms } from "~/db/schema/types";
-import { $TextureUniforms } from "~/db/schema/types";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";

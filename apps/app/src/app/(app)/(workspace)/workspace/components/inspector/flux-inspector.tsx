@@ -5,11 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import type { Value } from "@repo/webgl";
+import type { Txt2Img } from "@vendor/db/types";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
+import { $Txt2Img } from "@vendor/db/types";
 
-import type { Txt2Img } from "~/db/schema/types";
-import { $Txt2Img } from "~/db/schema/types";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";

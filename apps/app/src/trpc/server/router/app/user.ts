@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
 import { eq } from "@vendor/db";
-import { User } from "@vendor/db/app/schema";
+import { User } from "@vendor/db/schema";
 import { protectedProcedure } from "@vendor/trpc";
 
 export const appUserRouter = {

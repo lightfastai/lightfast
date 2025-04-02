@@ -8,9 +8,9 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./pretty-dahlia-name": {
-      "types": "./dist/pretty-dahlia-name.d.ts",
-      "default": "./src/pretty-dahlia-name.ts"
+    "./pretty-react-td-name": {
+      "types": "./dist/pretty-react-td-name.d.ts",
+      "default": "./src/pretty-react-td-name.ts"
     }
   },
   "license": "MIT",

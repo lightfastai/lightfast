@@ -3,7 +3,8 @@
 import type * as THREE from "three";
 import { useEffect, useMemo, useRef } from "react";
 
-import { $GeometryType } from "~/db/schema/types";
+import { $GeometryType } from "@vendor/db/types";
+
 import { useRenderTargetPipeline } from "../../hooks/use-texture-render-pipeline";
 import { useUpdateTextureAdd } from "../../hooks/use-update-texture-add";
 import { useUpdateTextureDisplace } from "../../hooks/use-update-texture-displace";

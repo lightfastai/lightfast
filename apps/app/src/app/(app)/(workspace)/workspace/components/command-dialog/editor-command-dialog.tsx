@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { Circle, Monitor, Square, Triangle } from "lucide-react";
 
+import type {
+  GeometryType,
+  MaterialType,
+  TextureType,
+  Txt2ImgType,
+} from "@vendor/db/types";
 import {
   Command,
   CommandDialog,
@@ -18,19 +24,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-
-import type {
-  GeometryType,
-  MaterialType,
-  TextureType,
-  Txt2ImgType,
-} from "~/db/schema/types";
 import {
   $GeometryType,
   $MaterialType,
   $TextureTypes,
   $Txt2ImgType,
-} from "~/db/schema/types";
+} from "@vendor/db/types";
+
 import { useCommandDialog } from "../../hooks/use-command-dialog";
 import { useWorkspaceShortcuts } from "../../hooks/use-workspace-shortcuts";
 import { useSelectionStore } from "../../providers/selection-store-provider";
