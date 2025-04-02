@@ -106,7 +106,11 @@ export const useEdgeValidation = () => {
         ) {
           console.log("Using cached node data:", cachedData);
 
-          if (cachedData.type === "Displace" || cachedData.type === "Add") {
+          if (
+            cachedData.type === "Displace" ||
+            cachedData.type === "Add" ||
+            cachedData.type === "Lookup"
+          ) {
             // Check if we're exceeding 2 connections
             const currentEdgeCount = edges.filter(
               (edge) => edge.target === target,
