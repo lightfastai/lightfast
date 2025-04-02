@@ -1,9 +1,8 @@
 import type { NodeChange } from "@xyflow/react";
 import { useCallback } from "react";
 
-import type { RouterInputs } from "@dahlia/trpc";
-
 import type { BaseNode } from "../types/node";
+import type { RouterInputs } from "~/trpc/server/index";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { useNodeStore } from "../providers/node-store-provider";
