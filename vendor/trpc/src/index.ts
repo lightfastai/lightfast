@@ -11,6 +11,5 @@ export {
   createTRPCContext,
   createTRPCRouter,
   publicProcedure,
-  protectedProcedure as protectedProcedure,
-  protectedProcedure as protectedTenantProcedure,
+  protectedProcedure,
 };

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { UniformFieldValue } from "@repo/webgl";
 import {
   $Add,
   $ColorRamp,
@@ -19,7 +20,6 @@ import {
   LIMIT_UNIFORM_CONSTRAINTS,
   LOOKUP_UNIFORM_CONSTRAINTS,
   PNOISE_UNIFORM_CONSTRAINTS,
-  UniformFieldValue,
 } from "@repo/webgl";
 
 export const $TextureTypeValues = [
@@ -146,17 +146,17 @@ export const getUniformConstraints = (
   shaderType: TextureType,
 ): Record<string, UniformFieldValue> => {
   switch (shaderType) {
-    case "Noise":
+    case $TextureTypes.enum.Noise:
       return PNOISE_UNIFORM_CONSTRAINTS;
-    case "Displace":
+    case $TextureTypes.enum.Displace:
       return DISPLACE_UNIFORM_CONSTRAINTS;
-    case "Limit":
+    case $TextureTypes.enum.Limit:
       return LIMIT_UNIFORM_CONSTRAINTS;
-    case "Add":
+    case $TextureTypes.enum.Add:
       return ADD_UNIFORM_CONSTRAINTS;
-    case "Lookup":
+    case $TextureTypes.enum.Lookup:
       return LOOKUP_UNIFORM_CONSTRAINTS;
-    case "ColorRamp":
+    case $TextureTypes.enum.ColorRamp:
       return COLORRAMP_UNIFORM_CONSTRAINTS;
     default:
       return {};

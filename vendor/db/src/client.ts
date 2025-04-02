@@ -1,10 +1,12 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
 
-import type { Db } from "../types/db";
+import { env } from "../env";
 
-export const createDbClient = (uri: string): Db => {
+export const createDbClient = (uri: string) => {
   return drizzle({
     connection: uri,
     casing: "snake_case",
   });
 };
+
+export const db = createDbClient(env.DATABASE_URL);

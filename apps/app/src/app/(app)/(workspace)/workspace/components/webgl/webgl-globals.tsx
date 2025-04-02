@@ -7,7 +7,8 @@ import {
   Vector3,
 } from "three";
 
-import { $GeometryType } from "~/db/schema/types";
+import { $GeometryType } from "@vendor/db/types";
+
 import {
   CENTER_OF_WORLD,
   WORLD_CAMERA_POSITION_CLOSE,

@@ -1,8 +1,5 @@
 import { useReactFlow } from "@xyflow/react";
 
-import { nanoid } from "@repo/lib";
-
-import type { BaseNode } from "../types/node";
 import type {
   Geometry,
   GeometryType,
@@ -11,7 +8,8 @@ import type {
   Texture,
   TextureType,
   Txt2ImgType,
-} from "~/db/schema/types";
+} from "@vendor/db/types";
+import { nanoid } from "@repo/lib";
 import {
   $GeometryType,
   $MaterialType,
@@ -22,7 +20,9 @@ import {
   createDefaultTexture,
   createDefaultTxt2Img,
   createDefaultWindow,
-} from "~/db/schema/types";
+} from "@vendor/db/types";
+
+import type { BaseNode } from "../types/node";
 import { api } from "~/trpc/client/react";
 import { useNodeStore } from "../providers/node-store-provider";
 import { useSelectionStore } from "../providers/selection-store-provider";

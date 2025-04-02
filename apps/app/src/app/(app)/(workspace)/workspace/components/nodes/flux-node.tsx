@@ -3,6 +3,7 @@ import { memo, useState } from "react";
 import Image from "next/image";
 import { PlayIcon } from "lucide-react";
 
+import type { Txt2Img } from "@vendor/db/types";
 import { createFalClient } from "@repo/ai/fal";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
@@ -13,7 +14,6 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
-import type { Txt2Img } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 

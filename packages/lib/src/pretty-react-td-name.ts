@@ -175,12 +175,12 @@ const dahliaNames = [
 
 /**
  * Generates a unique database schema name in the format:
- * 'dahlia-<flower-name>-<randomId>'.
+ * 'react-td-<randomId>'.
  *
  * @param length - The length of the random ID to append. Default is 6.
  * @returns A formatted schema name string.
  */
-export const generateDahliaName = (length = 6): string => {
+export const generateReactTdName = (length = 6): string => {
   // Generate a random index to select a Dahlia name from the list
   const randomIndex = Math.floor(Math.random() * dahliaNames.length);
 
@@ -195,6 +195,6 @@ export const generateDahliaName = (length = 6): string => {
   // Generate a unique random ID using nanoid
   const randomId = nanoid(length);
 
-  // Combine the prefix 'dahlia', the formatted flower name, and the random ID
-  return `dahlia-${selectedName}-${randomId}`;
+  // Combine the prefix 'react-td', the formatted flower name, and the random ID
+  return `react-td-${selectedName}-${randomId}`;
 };

@@ -6,8 +6,8 @@ import type {
   NodeType,
   TextureType,
   Txt2ImgType,
-} from "~/db/schema/types";
-import { $NodeType } from "~/db/schema/types";
+} from "@vendor/db/types";
+import { $NodeType } from "@vendor/db/types";
 
 interface SelectionState {
   selection: {

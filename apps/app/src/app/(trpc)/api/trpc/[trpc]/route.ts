@@ -3,7 +3,6 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { auth } from "@vendor/clerk";
 import { createTRPCContext } from "@vendor/trpc";
 
-import { db } from "~/db/client";
 import { appRouter } from "~/trpc/server/root";
 
 export const runtime = "edge";
@@ -36,7 +35,6 @@ const handler = async (req: Request) => {
     createContext: () =>
       createTRPCContext({
         session,
-        db: db,
         headers: req.headers,
       }),
     onError({ error, path }) {

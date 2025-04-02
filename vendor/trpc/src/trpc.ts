@@ -11,8 +11,8 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import type { Session } from "@vendor/clerk/types";
-import type { Db } from "@vendor/db";
 import { auth } from "@vendor/clerk";
+import { db } from "@vendor/db/client";
 import { log } from "@vendor/observability/log";
 
 /**
@@ -30,7 +30,6 @@ import { log } from "@vendor/observability/log";
 export const createTRPCContext = async (opts: {
   headers: Headers;
   session: Session | null;
-  db: Db;
 }) => {
   const session = await auth();
 
@@ -39,7 +38,7 @@ export const createTRPCContext = async (opts: {
 
   return {
     session,
-    db: opts.db,
+    db,
   };
 };
 

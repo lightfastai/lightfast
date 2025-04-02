@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import type { Value } from "@repo/webgl";
+import type { Texture, TextureUniforms } from "@vendor/db/types";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
@@ -13,9 +14,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
+import { $TextureUniforms, getUniformConstraints } from "@vendor/db/types";
 
-import type { Texture, TextureUniforms } from "~/db/schema/types";
-import { $TextureUniforms, getUniformConstraints } from "~/db/schema/types";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";
@@ -54,13 +54,14 @@ export const InspectorTexture = ({ id }: { id: string }) => {
 
   const handleUpdate = useCallback(
     (property: keyof TextureUniforms, value: Value) => {
-      if (property === "u_texture") return;
+      // @todo quick hax; we should instead rework the u_texture-related uniforms to be a webgl object with better constraints
+      if (property.startsWith("u_texture")) return;
 
       // @TODO: fix this type
       const newUniforms = {
         ...data.uniforms,
         [property]: value,
-      } as TextureUniforms;
+      } as TextureUniforms; // @todo fix this type
 
       // Optimistically update the cache
       utils.tenant.node.data.get.setData(

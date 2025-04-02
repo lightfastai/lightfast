@@ -200,3 +200,10 @@ export * from "./shaders/displace";
 export * from "./shaders/limit";
 export * from "./shaders/lookup";
 export * from "./shaders/colorramp";
+
+export type {
+  UniformFieldValue,
+  ValueFieldMetadata,
+  Vec2FieldMetadata,
+  Vec3FieldMetadata,
+} from "./types/field";

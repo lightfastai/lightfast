@@ -6,7 +6,6 @@ import { auth } from "@vendor/clerk";
 import { createTRPCContext } from "@vendor/trpc";
 
 import type { AppRouter } from "../server/root";
-import { db } from "~/db/client";
 import { createCaller } from "../server/index";
 import { createQueryClient } from "./query-client";
 
@@ -20,7 +19,6 @@ const createContext = cache(async () => {
 
   return createTRPCContext({
     session: await auth(),
-    db: db,
     headers: heads,
   });
 });

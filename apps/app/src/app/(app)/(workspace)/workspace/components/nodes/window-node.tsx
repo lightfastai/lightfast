@@ -3,13 +3,13 @@ import { memo } from "react";
 import { Handle, Position, useReactFlow } from "@xyflow/react";
 import { Monitor } from "lucide-react";
 
+import type { Window } from "@vendor/db/types";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Button } from "@repo/ui/components/ui/button";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
-import type { Window } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 

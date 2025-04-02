@@ -3,7 +3,7 @@ import { pgTable } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
-import { generateDahliaName } from "@repo/lib/pretty-dahlia-name";
+import { generateReactTdName } from "@repo/lib/pretty-react-td-name";
 
 import { Node } from "./Node";
 
@@ -16,7 +16,7 @@ export const Workspace = pgTable("workspace", (t) => ({
   name: t
     .varchar({ length: 64 })
     .notNull()
-    .$defaultFn(() => generateDahliaName()),
+    .$defaultFn(() => generateReactTdName()),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t
     .timestamp()

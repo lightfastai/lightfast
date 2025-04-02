@@ -7,9 +7,9 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@repo/ui/components/ui/breadcrumb";
+import { $NodeType } from "@vendor/db/types";
 
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
-import { $NodeType } from "~/db/schema/types";
 import { api, HydrateClient } from "~/trpc/client/server";
 import { EditorFileMenu } from "../../components/app/editor-file-menu";
 import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";

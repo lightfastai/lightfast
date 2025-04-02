@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 
+import type { NodeType } from "@vendor/db/types";
 import { toast } from "@repo/ui/hooks/use-toast";
+import { getMaxTargetEdges } from "@vendor/db/types";
 
-import type { NodeType } from "~/db/schema/types/Node";
-import { getMaxTargetEdges } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
