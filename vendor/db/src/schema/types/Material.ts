@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { $Color } from "@repo/webgl/schema/color";
+import { $Color } from "@repo/webgl";
 
 export const $MaterialType = z.enum(["phong"]);
 

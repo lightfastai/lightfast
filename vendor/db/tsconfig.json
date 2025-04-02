@@ -1,6 +1,6 @@
 {
   "extends": "@repo/typescript-config/internal-package.json",
-  "include": ["src"],
+  "include": ["src", "drizzle.config.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

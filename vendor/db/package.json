@@ -8,8 +8,18 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./app/schema": "./src/app/src/schema.ts",
-    "./config": "./src/config.ts",
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./src/client.ts"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "default": "./src/schema.ts"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./src/types.ts"
+    },
     "./env": "./env.ts"
   },
   "license": "MIT",
@@ -19,10 +29,9 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "migrate:app": "pnpm with-env drizzle-kit migrate --config=./src/app/drizzle.config.ts",
-    "migrate:generate:app": "pnpm with-env drizzle-kit generate --config=./src/app/drizzle.config.ts",
-    "push": "pnpm with-env run-p push:*",
-    "push:app": "pnpm with-env drizzle-kit push --config=./src/app/drizzle.config.ts",
+    "migrate": "pnpm with-env drizzle-kit migrate --config=./drizzle.config.ts",
+    "migrate:generate": "pnpm with-env drizzle-kit generate --config=./drizzle.config.ts",
+    "push": "pnpm with-env drizzle-kit push --config=./drizzle.config.ts",
     "studio": "pnpm with-env drizzle-kit studio",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --"
@@ -31,6 +40,7 @@
     "@neondatabase/api-client": "^1.10.3",
     "@neondatabase/serverless": "^0.10.4",
     "@repo/lib": "workspace:*",
+    "@repo/webgl": "workspace:^",
     "drizzle-orm": "^0.35.1",
     "drizzle-zod": "^0.5.1",
     "postgres": "^3.4.5",

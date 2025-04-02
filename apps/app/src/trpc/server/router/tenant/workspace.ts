@@ -3,10 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { desc, eq, sql } from "@vendor/db";
+import { UpdateNameWorkspaceSchema, Workspace } from "@vendor/db/schema";
 import { protectedProcedure } from "@vendor/trpc";
-
-import { Workspace } from "~/db/schema";
-import { UpdateNameWorkspaceSchema } from "~/db/schema/tables/Workspace";
 
 export const workspaceRouter = {
   create: protectedProcedure.mutation(async ({ ctx }) => {

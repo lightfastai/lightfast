@@ -5,13 +5,15 @@ import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
 
-import type { NodePosition } from "../types/NodePosition";
-import { $Geometry } from "../types/Geometry";
-import { $Material } from "../types/Material";
-import { $NodeType } from "../types/Node";
-import { $Texture } from "../types/Texture";
-import { $Txt2Img } from "../types/Txt2Img";
-import { $Window } from "../types/Window";
+import type { NodePosition } from "~/types";
+import {
+  $Geometry,
+  $Material,
+  $NodeType,
+  $Texture,
+  $Txt2Img,
+  $Window,
+} from "~/types";
 import { Edge } from "./Edge";
 import { Workspace } from "./Workspace";
 

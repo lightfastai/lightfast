@@ -3,11 +3,9 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { Edge, Node, Workspace } from "@vendor/db/schema";
+import { getMaxTargetEdges, NodeType } from "@vendor/db/types";
 import { protectedTenantProcedure } from "@vendor/trpc";
-
-import type { NodeType } from "~/db/schema/types/Node";
-import { Edge, Node, Workspace } from "~/db/schema";
-import { getMaxTargetEdges } from "~/db/schema/types/Node";
 
 export const edgeRouter = {
   getAll: protectedTenantProcedure
