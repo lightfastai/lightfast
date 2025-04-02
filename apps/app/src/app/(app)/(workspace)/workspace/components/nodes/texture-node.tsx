@@ -3,6 +3,7 @@ import { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
+import type { Texture } from "@vendor/db/types";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -16,10 +17,9 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
+import { $GeometryType, $TextureTypes } from "@vendor/db/types";
 
 import type { BaseNode } from "../../types/node";
-import type { Texture } from "~/db/schema/types";
-import { $GeometryType, $TextureTypes } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";

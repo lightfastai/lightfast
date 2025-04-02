@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import type { Value } from "@repo/webgl";
+import type { Texture, TextureUniforms } from "@vendor/db/types";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
@@ -13,9 +14,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
+import { $TextureUniforms } from "@vendor/db/types";
 
-import type { Texture, TextureUniforms } from "~/db/schema/types";
-import { $TextureUniforms } from "~/db/schema/types";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";

@@ -1,6 +1,7 @@
 "use client";
 
 import type { FieldErrors } from "react-hook-form";
+import type { z } from "zod";
 import React, { useEffect } from "react";
 
 import {
@@ -12,11 +13,10 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/hooks/use-toast";
+import { UpdateNameWorkspaceSchema } from "@vendor/db/schema";
 
 import type { WorkspaceUpdateName } from "../../hooks/use-workspace-update-name";
-import type { UpdateNameWorkspace } from "~/db/schema/tables/Workspace";
 import type { RouterOutputs } from "~/trpc/server/index";
-import { UpdateNameWorkspaceSchema } from "~/db/schema/tables/Workspace";
 import { useGetWorkspace } from "../../hooks/use-get-workspace";
 import { useWorkspaceUpdateName } from "../../hooks/use-workspace-update-name";
 
@@ -77,7 +77,9 @@ export const EditorWorkspaceNameInput = ({
     }
   };
 
-  const onInvalid = (errors: FieldErrors<UpdateNameWorkspace>) => {
+  const onInvalid = (
+    errors: FieldErrors<z.infer<typeof UpdateNameWorkspaceSchema>>,
+  ) => {
     const nameError = errors.name?.message;
     // Show validation errors
     toast({

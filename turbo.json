@@ -43,13 +43,7 @@
     "migrate": {
       "cache": false
     },
-    "migrate:generate:app": {
-      "cache": false
-    },
-    "migrate:generate:tenant": {
-      "cache": false
-    },
-    "migrate:generate:custom": {
+    "migrate:generate": {
       "cache": false
     },
     "ui-add": {

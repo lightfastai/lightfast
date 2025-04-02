@@ -3,6 +3,12 @@
 import { useEffect } from "react";
 import { Circle, Monitor, Square, Triangle } from "lucide-react";
 
+import type {
+  GeometryType,
+  MaterialType,
+  TextureType,
+  Txt2ImgType,
+} from "@vendor/db/types";
 import {
   Command,
   CommandDialog,
@@ -13,19 +19,13 @@ import {
   CommandList,
 } from "@repo/ui/components/ui/command";
 import { Label } from "@repo/ui/components/ui/label";
-
-import type {
-  GeometryType,
-  MaterialType,
-  TextureType,
-  Txt2ImgType,
-} from "~/db/schema/types";
 import {
   $GeometryType,
   $MaterialType,
   $TextureTypes,
   $Txt2ImgType,
-} from "~/db/schema/types";
+} from "@vendor/db/types";
+
 import { useEditorStore } from "../../providers/editor-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
 

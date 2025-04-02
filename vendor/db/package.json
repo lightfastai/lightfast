@@ -31,17 +31,16 @@
     "lint": "eslint",
     "migrate": "pnpm with-env drizzle-kit migrate --config=./drizzle.config.ts",
     "migrate:generate": "pnpm with-env drizzle-kit generate --config=./drizzle.config.ts",
-    "push": "pnpm with-env drizzle-kit push --config=./drizzle.config.ts",
     "studio": "pnpm with-env drizzle-kit studio",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@neondatabase/api-client": "^1.10.3",
-    "@neondatabase/serverless": "^0.10.4",
+    "@neondatabase/serverless": "^1.0.0",
+    "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/webgl": "workspace:^",
-    "drizzle-orm": "^0.35.1",
+    "drizzle-orm": "^0.35.3",
     "drizzle-zod": "^0.5.1",
     "postgres": "^3.4.5",
     "zod": "catalog:"

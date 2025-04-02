@@ -12,7 +12,7 @@
     "clean:workspaces": "turbo run clean",
     "db:studio": "turbo -F @vendor/db studio",
     "db:migrate": "turbo -F @vendor/db migrate",
-    "db:migrate:generate": "turbo -F @vendor/db migrate:generate:app",
+    "db:migrate:generate": "turbo -F @vendor/db migrate:generate",
     "dev": "turbo run dev --parallel --filter=@react-td/app --filter=@react-td/www",
     "dev:td-www": "turbo watch dev -F @react-td/www --continue",
     "dev:td-app": "turbo watch dev -F @react-td/app --continue",

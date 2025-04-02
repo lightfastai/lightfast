@@ -5,10 +5,10 @@ import { z } from "zod";
 
 import { Edge, Node, Workspace } from "@vendor/db/schema";
 import { getMaxTargetEdges, NodeType } from "@vendor/db/types";
-import { protectedTenantProcedure } from "@vendor/trpc";
+import { protectedProcedure } from "@vendor/trpc";
 
 export const edgeRouter = {
-  getAll: protectedTenantProcedure
+  getAll: protectedProcedure
     .input(z.object({ workspaceId: z.string() }))
     .query(async ({ input, ctx }) => {
       // First, verify workspace belongs to user
@@ -43,7 +43,7 @@ export const edgeRouter = {
 
       return edges;
     }),
-  create: protectedTenantProcedure
+  create: protectedProcedure
     .input(
       z.object({
         id: z.string().nanoid(),
@@ -144,7 +144,7 @@ export const edgeRouter = {
         return edge;
       });
     }),
-  delete: protectedTenantProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const [edge] = await ctx.db
@@ -161,7 +161,7 @@ export const edgeRouter = {
 
       return edge;
     }),
-  replace: protectedTenantProcedure
+  replace: protectedProcedure
     .input(
       z.object({
         oldEdgeId: z.string(),
