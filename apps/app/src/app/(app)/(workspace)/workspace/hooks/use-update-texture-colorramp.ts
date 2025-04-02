@@ -105,7 +105,7 @@ export const useUpdateTextureColorRamp = (): TextureRenderNode[] => {
             vertexShader: baseVertexShader,
             fragmentShader: colorRampFragmentShader,
             uniforms: {
-              u_texture: { value: null },
+              u_texture1: { value: null },
               u_color1: {
                 value: new THREE.Vector3(
                   typeof u.u_color1.x === "number" ? u.u_color1.x : 0.0,
@@ -182,10 +182,10 @@ export const useUpdateTextureColorRamp = (): TextureRenderNode[] => {
             // Update the texture references according to connections
             const nodeConnections = connectionCache.current[id] || {};
 
-            // Map input-1 to u_texture (source texture)
-            if (shader.uniforms.u_texture) {
+            // Map input-1 to u_texture1 (source texture)
+            if (shader.uniforms.u_texture1) {
               const sourceId = nodeConnections["input-1"];
-              shader.uniforms.u_texture.value = sourceId
+              shader.uniforms.u_texture1.value = sourceId
                 ? targets[sourceId]?.texture
                 : null;
             }

@@ -7,7 +7,7 @@ import type {
 import type { z } from "zod";
 import { memo, useCallback } from "react";
 
-import type { UniformFieldValue, Value } from "@repo/webgl";
+import type { EnumFieldMetadata, UniformFieldValue, Value } from "@repo/webgl";
 import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
 import {
   createExpressionString,
@@ -20,6 +20,7 @@ import {
 
 import { BooleanInput } from "./primitives/boolean-input";
 import { ColorPickerField } from "./primitives/color-picker-field";
+import { EnumSelector } from "./primitives/enum-selector";
 import { NumericValueExpressionInput } from "./primitives/numeric-value-expression-input";
 import { NumericValueNumberInput } from "./primitives/numeric-value-number-input";
 import { StringInput } from "./primitives/string-input";
@@ -122,6 +123,17 @@ export const InspectorFormField = memo(
           case ValueType.Boolean:
             return (
               <BooleanInput
+                field={field as ControllerRenderProps<FieldValues, string>}
+                onValueChange={onValueChange}
+              />
+            );
+
+          case ValueType.Enum:
+            return (
+              <EnumSelector
+                options={
+                  (fieldMetadata.constraint as EnumFieldMetadata).options
+                }
                 field={field as ControllerRenderProps<FieldValues, string>}
                 onValueChange={onValueChange}
               />

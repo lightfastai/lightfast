@@ -3,6 +3,7 @@ import * as THREE from "three";
 
 import {
   baseVertexShader,
+  IndexChannel,
   isExpression,
   lookupFragmentShader,
 } from "@repo/webgl";
@@ -88,11 +89,10 @@ export const useUpdateTextureLookup = (): TextureRenderNode[] => {
           }
         };
 
-        // Store numeric expressions
-        storeExpression("u_redWeight", u.u_redWeight);
-        storeExpression("u_greenWeight", u.u_greenWeight);
-        storeExpression("u_blueWeight", u.u_blueWeight);
-        storeExpression("u_alphaWeight", u.u_alphaWeight);
+        // Store expressions for new parameters
+        storeExpression("u_indexRange", u.u_indexRange);
+        storeExpression("u_darkUV", u.u_darkUV);
+        storeExpression("u_lightUV", u.u_lightUV);
 
         // Reuse shader if available
         if (!shaderCache.current[id]) {
@@ -100,22 +100,35 @@ export const useUpdateTextureLookup = (): TextureRenderNode[] => {
             vertexShader: baseVertexShader,
             fragmentShader: lookupFragmentShader,
             uniforms: {
-              u_texture: { value: null },
-              u_lookupTexture: { value: null },
-              u_redWeight: {
-                value: typeof u.u_redWeight === "number" ? u.u_redWeight : 1.0,
-              },
-              u_greenWeight: {
+              u_texture1: { value: null },
+              u_texture2: { value: null },
+              u_indexRange: {
                 value:
-                  typeof u.u_greenWeight === "number" ? u.u_greenWeight : 1.0,
+                  typeof u.u_indexRange === "object" &&
+                  !isExpression(u.u_indexRange)
+                    ? u.u_indexRange
+                    : { x: 0.0, y: 1.0 },
               },
-              u_blueWeight: {
-                value:
-                  typeof u.u_blueWeight === "number" ? u.u_blueWeight : 1.0,
+              u_indexChannel: {
+                value: u.u_indexChannel || IndexChannel.RGBA_INDEPENDENT,
               },
-              u_alphaWeight: {
+              u_independentAlpha: {
+                value: u.u_independentAlpha || false,
+              },
+              u_darkUV: {
                 value:
-                  typeof u.u_alphaWeight === "number" ? u.u_alphaWeight : 1.0,
+                  typeof u.u_darkUV === "object" && !isExpression(u.u_darkUV)
+                    ? u.u_darkUV
+                    : { x: 0.0, y: 0.0 },
+              },
+              u_lightUV: {
+                value:
+                  typeof u.u_lightUV === "object" && !isExpression(u.u_lightUV)
+                    ? u.u_lightUV
+                    : { x: 1.0, y: 0.0 },
+              },
+              u_displayLookup: {
+                value: u.u_displayLookup || false,
               },
             },
           });
@@ -123,26 +136,37 @@ export const useUpdateTextureLookup = (): TextureRenderNode[] => {
 
         // Update uniform values
         const shader = shaderCache.current[id];
-        if (shader.uniforms.u_redWeight && typeof u.u_redWeight === "number") {
-          shader.uniforms.u_redWeight.value = u.u_redWeight;
+        if (
+          shader.uniforms.u_indexRange &&
+          typeof u.u_indexRange === "object" &&
+          !isExpression(u.u_indexRange)
+        ) {
+          shader.uniforms.u_indexRange.value = u.u_indexRange;
+        }
+        if (shader.uniforms.u_indexChannel) {
+          shader.uniforms.u_indexChannel.value =
+            u.u_indexChannel || IndexChannel.RGBA_INDEPENDENT;
+        }
+        if (shader.uniforms.u_independentAlpha) {
+          shader.uniforms.u_independentAlpha.value =
+            u.u_independentAlpha || false;
         }
         if (
-          shader.uniforms.u_greenWeight &&
-          typeof u.u_greenWeight === "number"
+          shader.uniforms.u_darkUV &&
+          typeof u.u_darkUV === "object" &&
+          !isExpression(u.u_darkUV)
         ) {
-          shader.uniforms.u_greenWeight.value = u.u_greenWeight;
+          shader.uniforms.u_darkUV.value = u.u_darkUV;
         }
         if (
-          shader.uniforms.u_blueWeight &&
-          typeof u.u_blueWeight === "number"
+          shader.uniforms.u_lightUV &&
+          typeof u.u_lightUV === "object" &&
+          !isExpression(u.u_lightUV)
         ) {
-          shader.uniforms.u_blueWeight.value = u.u_blueWeight;
+          shader.uniforms.u_lightUV.value = u.u_lightUV;
         }
-        if (
-          shader.uniforms.u_alphaWeight &&
-          typeof u.u_alphaWeight === "number"
-        ) {
-          shader.uniforms.u_alphaWeight.value = u.u_alphaWeight;
+        if (shader.uniforms.u_displayLookup) {
+          shader.uniforms.u_displayLookup.value = u.u_displayLookup || false;
         }
 
         return {
@@ -154,27 +178,26 @@ export const useUpdateTextureLookup = (): TextureRenderNode[] => {
 
             // Define mapping for uniform components
             const uniformPathMap = {
-              u_redWeight: { pathToValue: "u_redWeight.value" },
-              u_greenWeight: { pathToValue: "u_greenWeight.value" },
-              u_blueWeight: { pathToValue: "u_blueWeight.value" },
-              u_alphaWeight: { pathToValue: "u_alphaWeight.value" },
+              u_indexRange: { pathToValue: "u_indexRange.value" },
+              u_darkUV: { pathToValue: "u_darkUV.value" },
+              u_lightUV: { pathToValue: "u_lightUV.value" },
             };
 
             // Update the texture references according to connections
             const nodeConnections = connectionCache.current[id] || {};
 
-            // Map input-1 to u_texture (source texture)
-            if (shader.uniforms.u_texture) {
+            // Map input-1 to u_texture1 (source texture)
+            if (shader.uniforms.u_texture1) {
               const sourceId = nodeConnections["input-1"];
-              shader.uniforms.u_texture.value = sourceId
+              shader.uniforms.u_texture1.value = sourceId
                 ? targets[sourceId]?.texture
                 : null;
             }
 
-            // Map input-2 to u_lookupTexture (lookup table)
-            if (shader.uniforms.u_lookupTexture) {
+            // Map input-2 to u_texture2 (lookup table)
+            if (shader.uniforms.u_texture2) {
               const sourceId = nodeConnections["input-2"];
-              shader.uniforms.u_lookupTexture.value = sourceId
+              shader.uniforms.u_texture2.value = sourceId
                 ? targets[sourceId]?.texture
                 : null;
             }

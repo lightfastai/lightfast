@@ -16,6 +16,7 @@ export enum ValueType {
   Boolean = "boolean",
   Color = "color",
   String = "string",
+  Enum = "enum",
 }
 
 // Helper to check if a value is an expression string
@@ -106,7 +107,7 @@ export const $Color = z
 export type Color = z.infer<typeof $Color>;
 
 // Value type union
-export type Value = Color | NumericValue | Vec2 | Vec3 | Boolean;
+export type Value = Color | NumericValue | Vec2 | Vec3 | Boolean | string;
 
 // Type guards
 export function isBoolean(value: unknown): value is Boolean {

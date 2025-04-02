@@ -26,8 +26,16 @@ export interface Vec3FieldMetadata {
   z: ValueFieldMetadata;
 }
 
+export interface EnumFieldMetadata {
+  options: { value: string; label: string }[];
+}
+
 export interface UniformFieldValue {
   type: ValueType;
   label: string;
-  constraint?: NumericValueMetadata | Vec2FieldMetadata | Vec3FieldMetadata;
+  constraint?:
+    | NumericValueMetadata
+    | Vec2FieldMetadata
+    | Vec3FieldMetadata
+    | EnumFieldMetadata;
 }

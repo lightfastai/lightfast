@@ -6,7 +6,7 @@ import type { UniformFieldValue } from "../types/field";
 import { $Float, $Vec3Number, ValueType } from "../types/schema";
 
 export const $ColorRamp = z.object({
-  u_texture: z
+  u_texture1: z
     .number()
     .nullable()
     .describe("The input texture to use for the ramp"),
@@ -61,7 +61,7 @@ export const ColorRampDescription =
 
 export const createDefaultColorRamp = (): ColorRampParams => {
   return $ColorRamp.parse({
-    u_texture: null,
+    u_texture1: null,
     u_color1: { x: 0.0, y: 0.0, z: 0.0 },
     u_color2: { x: 1.0, y: 1.0, z: 1.0 },
     u_rampStart: 0.0,
@@ -117,7 +117,7 @@ export const COLORRAMP_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> =
 export const colorRampFragmentShader = `
 precision highp float;
 
-uniform sampler2D u_texture;
+uniform sampler2D u_texture1;
 uniform vec3 u_color1;
 uniform vec3 u_color2;
 uniform float u_rampStart;
