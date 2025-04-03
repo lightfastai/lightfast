@@ -17,35 +17,16 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
+import { getTextureInputsForType } from "@repo/webgl";
 import { WebGLView } from "@repo/webgl/components";
 import { GeometryMap } from "@repo/webgl/globals";
-import { $GeometryType, $TextureTypes } from "@vendor/db/types";
+import { $GeometryType } from "@vendor/db/types";
 
 import type { BaseNode } from "../../types/node";
+import type { TextureInput } from "../../types/texture";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
-
-// Get number of inputs needed for each texture type
-const getTextureInputs = (textureType: string): number => {
-  switch (textureType) {
-    case $TextureTypes.enum.Displace:
-    case $TextureTypes.enum.Add:
-      return 2;
-    default:
-      return 1;
-  }
-};
-
-// Get input labels for each texture type and position
-const getInputLabel = (textureType: string, inputIndex: number): string => {
-  if (textureType === $TextureTypes.enum.Displace) {
-    return inputIndex === 0 ? "Source Image" : "Displacement Map";
-  } else if (textureType === $TextureTypes.enum.Add) {
-    return inputIndex === 0 ? "Input A" : "Input B";
-  }
-  return `Input ${inputIndex + 1}`;
-};
 
 export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
@@ -53,8 +34,8 @@ export const TextureNode = memo(
     const { targets } = useTextureRenderStore((state) => state);
     const setSelected = useInspectorStore((state) => state.setSelected);
 
-    // Determine how many inputs this texture node needs
-    const inputCount = getTextureInputs(data.type);
+    // Get texture inputs metadata from the registry
+    const textureInputs: TextureInput[] = getTextureInputsForType(data.type);
 
     return (
       <BaseNodeComponent
@@ -67,7 +48,7 @@ export const TextureNode = memo(
         <div
           key={id}
           className={cn(
-            `relative cursor-pointer flex-col gap-1 p-1 text-card-foreground shadow-sm`,
+            "relative flex flex-col gap-2 p-2 text-card-foreground",
           )}
         >
           <div className="flex flex-row items-center justify-between">
@@ -93,70 +74,53 @@ export const TextureNode = memo(
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
-          <div className="mt-1 flex flex-row gap-1">
-            <div className="flex h-full flex-col items-center justify-center">
-              {inputCount > 1 ? (
-                // For nodes with multiple inputs, create spaced handles
-                Array.from({ length: inputCount }).map((_, index) => {
-                  const topPercentage = (index / (inputCount - 1)) * 100;
-                  const isFirst = index === 0;
-                  const isLast = index === inputCount - 1;
-
-                  return (
-                    <div
-                      key={`input-${index}`}
-                      className={cn(
-                        isFirst
-                          ? "mb-auto mt-2"
-                          : isLast
-                            ? "mb-2 mt-auto"
-                            : "my-auto",
-                      )}
-                    >
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <Handle
-                                id={`input-${index + 1}`}
-                                type="target"
-                                position={Position.Left}
-                                className="h-10 w-3"
-                                style={{ top: `${topPercentage}%` }}
-                              />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="left">
-                            {getInputLabel(data.type, index)}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  );
-                })
+          <div className="flex flex-row items-center">
+            <div className="flex h-full flex-col items-center justify-evenly gap-3 py-3">
+              {textureInputs.length > 0 ? (
+                // For nodes with inputs, create properly positioned handles
+                textureInputs.map((input: TextureInput) => (
+                  <div
+                    key={input.id}
+                    className="relative flex items-center justify-center"
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <Handle
+                              id={input.id}
+                              type="target"
+                              position={Position.Left}
+                              className={cn(
+                                "h-3 w-3 rounded-full border transition-transform duration-150 hover:scale-125",
+                                input.required
+                                  ? "border-primary bg-primary"
+                                  : "border-muted-foreground bg-muted",
+                              )}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          <span className="font-medium">
+                            {input.description}
+                          </span>
+                          {!input.required && (
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              (optional)
+                            </span>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                ))
               ) : (
-                // For nodes with a single input, center it
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Handle
-                          id="input-1"
-                          type="target"
-                          position={Position.Left}
-                          className="h-10 w-3"
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">
-                      {getInputLabel(data.type, 0)}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                // No input handles for this texture type
+                <></>
               )}
             </div>
 
-            <div className="h-32 w-72 border">
+            <div className="h-32 w-72 overflow-hidden rounded border">
               {targets[id]?.texture && (
                 <WebGLView
                   style={{
@@ -177,7 +141,7 @@ export const TextureNode = memo(
               )}
             </div>
 
-            <div className="flex items-center justify-center">
+            <div className="ml-1 flex items-center justify-center">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -186,7 +150,7 @@ export const TextureNode = memo(
                         id="output"
                         type="source"
                         position={Position.Right}
-                        className="h-10 w-3"
+                        className="h-3 w-3 rounded-full border border-primary bg-primary transition-transform duration-150 hover:scale-125"
                       />
                     </div>
                   </TooltipTrigger>

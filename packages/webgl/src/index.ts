@@ -113,6 +113,12 @@ export type { AddParams } from "./shaders/add";
 export { $Add, AddDescription };
 
 /**
+ * Texture uniforms
+ */
+export type { TextureUniform } from "./types/texture-uniform";
+export { getTextureInputsForType } from "./types/texture-registry";
+
+/**
  * Shared texture uniforms type
  */
 export const $TextureUniforms = $PerlinNoise3D

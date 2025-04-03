@@ -3,7 +3,14 @@ import * as THREE from "three";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/webgl";
 import type { AddTexture, Texture } from "@vendor/db/types";
-import { addFragmentShader, baseVertexShader, isExpression } from "@repo/webgl";
+import {
+  addFragmentShader,
+  baseVertexShader,
+  getTextureInputsForType,
+  isExpression,
+  isTextureUniform,
+  updateTextureUniform,
+} from "@repo/webgl";
 
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
@@ -74,14 +81,20 @@ export const useUpdateTextureAdd = ({
         // Only store numeric expressions
         storeExpression("u_addValue", u.u_addValue);
 
+        // Get texture inputs metadata for initialization
+        const textureInputs = getTextureInputsForType(texture.type);
+        s;
         // Reuse shader if available
         if (!shaderCache.current[id]) {
+          // Initialize the shader material
           shaderCache.current[id] = new THREE.ShaderMaterial({
             vertexShader: baseVertexShader,
             fragmentShader: addFragmentShader,
             uniforms: {
-              u_texture1: { value: null }, // First input texture (A)
-              u_texture2: { value: null }, // Second input texture (B)
+              // Initialize texture uniforms based on metadata
+              u_texture1: { value: null },
+              u_texture2: { value: null },
+              // Regular uniforms
               u_addValue: {
                 value: typeof u.u_addValue === "number" ? u.u_addValue : 0.0,
               },
@@ -92,8 +105,10 @@ export const useUpdateTextureAdd = ({
           });
         }
 
-        // Update uniform values
+        // Get the shader from cache
         const shader = shaderCache.current[id];
+
+        // Update regular uniform values (non-texture)
         if (shader.uniforms.u_addValue && typeof u.u_addValue === "number") {
           shader.uniforms.u_addValue.value = u.u_addValue;
         }
@@ -116,30 +131,37 @@ export const useUpdateTextureAdd = ({
               },
             };
 
-            // Update the texture references according to connections
+            // Get node connections
             const nodeConnections = connectionCache.current[id] || {};
 
-            // Map input-1 to u_texture1 (first input)
-            if (shader.uniforms.u_texture1) {
-              const sourceId = nodeConnections["input-1"];
-              shader.uniforms.u_texture1.value = sourceId
-                ? targets[sourceId]?.texture
-                : null;
+            // Update texture uniforms based on connections
+            textureInputs.forEach((input) => {
+              const { id: handleId, uniformName } = input;
 
-              // Also set the u_texture for backward compatibility
-              if (shader.uniforms.u_texture) {
-                shader.uniforms.u_texture.value =
-                  shader.uniforms.u_texture1.value;
+              // Get the source node ID from the connection cache
+              const sourceId = nodeConnections[handleId] || null;
+              // Get the texture object from the targets
+              const textureObject =
+                sourceId && targets[sourceId]?.texture
+                  ? targets[sourceId].texture
+                  : null;
+
+              // Update the shader uniform
+              if (shader.uniforms[uniformName]) {
+                shader.uniforms[uniformName].value = textureObject;
               }
-            }
 
-            // Map input-2 to u_texture2 (second input)
-            if (shader.uniforms.u_texture2) {
-              const sourceId = nodeConnections["input-2"];
-              shader.uniforms.u_texture2.value = sourceId
-                ? targets[sourceId]?.texture
-                : null;
-            }
+              // Update the texture data structure if it uses the new TextureUniform format
+              if (isTextureUniform(u[uniformName as keyof typeof u])) {
+                (u[uniformName as keyof typeof u] as any) =
+                  updateTextureUniform(
+                    u[uniformName as keyof typeof u] as any,
+                    sourceId,
+                    textureObject,
+                    !!sourceId,
+                  );
+              }
+            });
 
             // Update boolean uniform
             if (shader.uniforms.u_enableMirror) {
