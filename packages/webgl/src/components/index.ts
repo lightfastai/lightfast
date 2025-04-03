@@ -35,3 +35,14 @@ export type { GeometryViewerProps } from "./viewers/geometry-viewer";
 // Texture pipeline
 export { TextureRenderPipeline } from "./renderers/texture-render-pipeline";
 export type { TextureRenderPipelineProps } from "./renderers/texture-render-pipeline";
+
+// Global components
+export { GlobalOrbitControls, GlobalPerspectiveCamera } from "./globals";
+
+// Performance components
+export {
+  GLStatsCard,
+  PerformanceCard,
+  PerformanceChart,
+  SystemCard,
+} from "./performance";

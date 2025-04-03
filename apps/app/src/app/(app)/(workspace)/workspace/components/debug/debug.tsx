@@ -4,12 +4,14 @@ import { Panel } from "@xyflow/react";
 
 import { InfoCard } from "@repo/ui/components/info-card";
 import { Button } from "@repo/ui/components/ui/button";
+import {
+  GLStatsCard,
+  PerformanceCard,
+  SystemCard,
+} from "@repo/webgl/performance";
 
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
-import { WebGLStatsCard } from "../webgl/gl-stats-card";
-import { WebGLPerformance } from "../webgl/performance-card";
-import { SystemCard } from "../webgl/system-card";
 
 interface DebugSection {
   id: string;
@@ -69,7 +71,7 @@ export const Debug = memo(() => {
         title: "Performance",
         content: (
           <ErrorBoundary>
-            <WebGLPerformance />
+            <PerformanceCard />
           </ErrorBoundary>
         ),
       },
@@ -87,7 +89,7 @@ export const Debug = memo(() => {
         title: "WebGL",
         content: (
           <ErrorBoundary>
-            <WebGLStatsCard />
+            <GLStatsCard />
           </ErrorBoundary>
         ),
       },

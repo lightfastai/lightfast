@@ -190,6 +190,9 @@ export type {
 // Export Three.js related components
 export * from "./components";
 
+// Export performance monitoring components
+export * from "./performance";
+
 // Export Three.js related hooks
 export * from "./hooks";
 

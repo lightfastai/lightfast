@@ -5,7 +5,7 @@ import { InfoCard } from "@repo/ui/components/info-card";
 
 import { PerformanceChart } from "./performance-chart";
 
-export const WebGLPerformance = memo(() => {
+export const PerformanceCard = memo(() => {
   const log = usePerf((state) => state.log);
 
   const perfItems = useMemo(
@@ -38,4 +38,4 @@ export const WebGLPerformance = memo(() => {
   );
 });
 
-WebGLPerformance.displayName = "WebGLPerformance";
+PerformanceCard.displayName = "PerformanceCard";

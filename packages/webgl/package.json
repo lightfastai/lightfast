@@ -24,6 +24,14 @@
       "types": "./dist/types/render.d.ts",
       "default": "./src/types/render.ts"
     },
+    "./performance": {
+      "types": "./dist/performance.d.ts",
+      "default": "./src/performance.ts"
+    },
+    "./globals": {
+      "types": "./dist/components/globals/index.d.ts",
+      "default": "./src/components/globals/index.ts"
+    },
     "./shaders/pnoise": {
       "types": "./dist/shaders/pnoise/pnoise.d.ts",
       "default": "./src/shaders/pnoise/pnoise.ts"
@@ -63,6 +71,8 @@
     "@react-three/fiber": "^8.17.10",
     "@repo/ui": "workspace:*",
     "json-schema": "^0.4.0",
+    "r3f-perf": "^7.2.3",
+    "react": "catalog:react18",
     "three": "^0.169.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3"
@@ -71,6 +81,8 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/react": "catalog:react18",
+    "@types/react-dom": "catalog:react18",
     "@types/three": "^0.169.0",
     "eslint": "catalog:",
     "prettier": "catalog:",

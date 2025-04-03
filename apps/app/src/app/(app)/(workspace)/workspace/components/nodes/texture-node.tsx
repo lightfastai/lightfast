@@ -18,13 +18,13 @@ import {
 } from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
 import { WebGLView } from "@repo/webgl/components";
+import { GeometryMap } from "@repo/webgl/globals";
 import { $GeometryType, $TextureTypes } from "@vendor/db/types";
 
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
-import { GeometryMap } from "../webgl/webgl-globals";
 
 // Get number of inputs needed for each texture type
 const getTextureInputs = (textureType: string): number => {

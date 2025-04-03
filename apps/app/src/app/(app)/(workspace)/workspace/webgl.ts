@@ -16,6 +16,25 @@ export {
   GeometryViewer,
 } from "@repo/webgl/components";
 
+// Export performance components
+export {
+  GLStatsCard,
+  PerformanceCard,
+  PerformanceChart,
+  SystemCard,
+} from "@repo/webgl/performance";
+
+// Export global components
+export {
+  GlobalOrbitControls,
+  GlobalPerspectiveCamera,
+  GlobalBoxGeometry,
+  GlobalSphereGeometry,
+  GlobalTetrahedronGeometry,
+  GlobalTorusGeometry,
+  GlobalPlaneGeometry,
+} from "@repo/webgl/globals";
+
 // Export all types from the package
 export type {
   WebGLCanvasProps,
@@ -30,11 +49,6 @@ export type {
 // Export utilities
 export {
   GeometryMap,
-  GlobalBoxGeometry,
-  GlobalSphereGeometry,
-  GlobalTetrahedronGeometry,
-  GlobalTorusGeometry,
-  GlobalPlaneGeometry,
   CENTER_OF_WORLD,
   WORLD_CAMERA_POSITION_CLOSE,
   $GeometryType,

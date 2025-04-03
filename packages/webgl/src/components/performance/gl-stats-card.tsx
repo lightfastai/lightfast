@@ -3,7 +3,7 @@ import { usePerf } from "r3f-perf";
 
 import { InfoCard } from "@repo/ui/components/info-card";
 
-export const WebGLStatsCard = memo(() => {
+export const GLStatsCard = memo(() => {
   const gl = usePerf((state) => state.getReport().gl);
   const glItems = useMemo(
     () => [
@@ -30,4 +30,4 @@ export const WebGLStatsCard = memo(() => {
   return <InfoCard title="GL Stats" items={glItems} />;
 });
 
-WebGLStatsCard.displayName = "GLStatsCard";
+GLStatsCard.displayName = "GLStatsCard";

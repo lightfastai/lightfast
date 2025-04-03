@@ -147,9 +147,6 @@ importers:
       next:
         specifier: 'catalog:'
         version: 14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      r3f-perf:
-        specifier: ^7.2.3
-        version: 7.2.3(@react-three/fiber@8.17.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0))(@types/react@18.3.12)(@types/three@0.169.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0)
       react:
         specifier: catalog:react18
         version: 18.3.1
@@ -678,6 +675,12 @@ importers:
       json-schema:
         specifier: ^0.4.0
         version: 0.4.0
+      r3f-perf:
+        specifier: ^7.2.3
+        version: 7.2.3(@react-three/fiber@8.17.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0))(@types/react@18.3.12)(@types/three@0.169.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.169.0)
+      react:
+        specifier: catalog:react18
+        version: 18.3.1
       three:
         specifier: ^0.169.0
         version: 0.169.0
@@ -697,6 +700,12 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@types/react':
+        specifier: catalog:react18
+        version: 18.3.12
+      '@types/react-dom':
+        specifier: catalog:react18
+        version: 18.3.1
       '@types/three':
         specifier: ^0.169.0
         version: 0.169.0
