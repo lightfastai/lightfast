@@ -1,0 +1,133 @@
+---
+description: 
+globs: **/ui/**/*.tsx,**/components/**/*.tsx
+alwaysApply: false
+---
+# React TD UI Component Standards
+
+## Component Architecture
+- Use shadcn/ui component patterns for consistency
+- Implement accessible components using Radix UI primitives
+- Apply class-variance-authority (cva) for component variants
+- Use the `cn` utility for merging Tailwind classes
+- Keep components modular and composable
+- Follow atomic design principles (atoms, molecules, organisms)
+
+## Component Structure
+- Structure UI components with the following pattern:
+  ```tsx
+  import * as React from "react";
+  import { Slot } from "@radix-ui/react-slot";
+  import { cva } from "class-variance-authority";
+  
+  import { cn } from "@repo/ui/lib/utils";
+  
+  // Define variants
+  const componentVariants = cva(
+    "base-styles-here",
+    { 
+      variants: {
+        // Variant definitions
+      },
+      defaultVariants: {
+        // Default variant values
+      }
+    }
+  );
+  
+  // Component definition with TypeScript props
+  function Component({ className, ...props }) {
+    return (
+      <element 
+        className={cn(componentVariants({ className }))}
+        {...props} 
+      />
+    );
+  }
+  
+  export { Component, componentVariants };
+  ```
+- Export component variants for reuse across the application
+- Implement polymorphic components using Radix Slot when appropriate
+
+## Styling Approach
+- Use Tailwind CSS for all component styling
+- Apply consistent semantic class naming
+- Leverage CSS variables for theming
+- Utilize consistent spacing and sizing scales
+- Follow the design system color palette
+- Use the tailwind.config.ts for extending theme capabilities
+
+## Accessibility Patterns
+- Follow WCAG 2.1 AA standards at minimum
+- Ensure proper contrast ratios for text
+- Implement keyboard navigation support
+- Use appropriate ARIA attributes
+- Test components with screen readers
+- Support reduced motion preferences
+
+## Component Props
+- Define explicit prop interfaces:
+  ```typescript
+  interface ButtonProps extends React.ComponentProps<"button"> {
+    variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+    size?: "default" | "sm" | "lg" | "icon";
+    asChild?: boolean;
+  }
+  ```
+- Use React.ComponentProps for extending HTML element props
+- Provide sensible defaults for optional props
+- Use VariantProps from class-variance-authority for variant types
+- Document props with JSDoc comments
+
+## Component Composition
+- Use composition over inheritance
+- Create compound components when logical (e.g., Card.Header, Card.Content)
+- Implement the provider pattern for complex component state
+- Use context for component communication when appropriate
+- Support slot props for custom element rendering
+
+## Form Component Guidelines
+- Implement consistent form component APIs
+- Use React Hook Form compatibility
+- Support validation states (error, disabled, loading)
+- Create form-specific components in `/ui/form.tsx`
+- Follow established form field patterns:
+  ```tsx
+  <FormField
+    control={form.control}
+    name="fieldName"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Field Label</FormLabel>
+        <FormControl>
+          <Input {...field} />
+        </FormControl>
+        <FormDescription>Helper text</FormDescription>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+  ```
+
+## Performance Optimization
+- Memoize component render functions when beneficial
+- Split large component definitions into smaller pieces
+- Use dynamic imports for complex components
+- Implement proper virtualization for large lists
+- Optimize animation performance
+
+## Custom Hook Usage
+- Create dedicated hooks for complex component logic
+- Follow established hook naming and implementation patterns
+- Keep UI component hooks in the ui package
+- Export hooks from their own files/directories
+- Document hook parameters and return values
+
+## Theming
+- Follow the design token approach from tailwind.config.ts
+- Use CSS variables for theme values
+- Support both light and dark modes
+- Implement consistent color scales
+- Apply proper color contrast for accessibility
+- Use semantic color naming (e.g., 'primary', 'destructive')

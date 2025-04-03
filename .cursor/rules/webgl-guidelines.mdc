@@ -1,24 +1,12 @@
 ---
-description: Three.js and WebGL-specific patterns for the React TD repository
-globs: "**/webgl/**/*.ts,**/webgl/**/*.tsx"
+description: 
+globs: 
 alwaysApply: true
 ---
 
 # React TD WebGL Guidelines
 
 ## Shader Management
-- Follow established shader caching patterns:
-  ```typescript
-  // Cache previously created shaders
-  const shaderCache = useRef<Record<string, THREE.ShaderMaterial>>({});
-  
-  // Reuse shader if available
-  if (!shaderCache.current[id]) {
-    shaderCache.current[id] = new THREE.ShaderMaterial({
-      // Shader configuration
-    });
-  }
-  ```
 - Organize shaders in dedicated files
 - Use consistent naming for shader variables
 - Properly initialize and update uniforms
