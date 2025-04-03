@@ -8,6 +8,7 @@ import {
   pnoiseFragmentShader,
 } from "@repo/webgl";
 
+import type { TextureRenderNode } from "../types/render";
 // TODO: Use proper imports when the module is set up
 // import {
 //   createTimeContext,
@@ -15,8 +16,7 @@ import {
 //   isExpression
 // } from "@repo/webgl/expressions";
 
-import type { WebGLRootState } from "../components/webgl/webgl-primitives";
-import type { TextureRenderNode } from "../types/render";
+import type { WebGLRootState } from "../webgl";
 import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useExpressionEvaluator } from "./use-expression-evaluator";

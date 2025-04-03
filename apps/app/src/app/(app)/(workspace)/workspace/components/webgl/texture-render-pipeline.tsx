@@ -3,6 +3,7 @@
 import type * as THREE from "three";
 import { useMemo, useRef } from "react";
 
+import { createWebGLPortal, WebGLView } from "@repo/webgl/components";
 import { $GeometryType } from "@repo/webgl/utils";
 
 import { useRenderTargetPipeline } from "../../hooks/use-render-target-pipeline-adapter";
@@ -11,7 +12,6 @@ import { useUpdateTextureDisplace } from "../../hooks/use-update-texture-displac
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
 import { useUpdateTextureNoise } from "../../hooks/use-update-texture-noise";
 import { GeometryMap } from "./webgl-globals";
-import { createWebGLPortal, WebGLView } from "./webgl-primitives";
 
 export const TextureRenderPipeline = () => {
   const meshRefs = useRef<Record<string, THREE.Mesh>>({});

@@ -5,14 +5,16 @@ import { memo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
+import type { Vec3 } from "../../types/schema";
 import type { GeometryType } from "../../utils/geometry-map";
+import { createDefaultVec3 } from "../../types/schema";
 import { GeometryMap } from "../../utils/geometry-map";
 
 export interface GeometryRendererProps {
   type: GeometryType;
-  position?: { x: number; y: number; z: number };
-  rotation?: { x: number; y: number; z: number };
-  scale?: { x: number; y: number; z: number };
+  position?: Vec3;
+  rotation?: Vec3;
+  scale?: Vec3;
   wireframe?: boolean;
   animate?: boolean;
 }
@@ -20,9 +22,9 @@ export interface GeometryRendererProps {
 export const GeometryRenderer = memo(
   ({
     type,
-    position = { x: 0, y: 0, z: 0 },
-    rotation = { x: 0, y: 0, z: 0 },
-    scale = { x: 1, y: 1, z: 1 },
+    position = createDefaultVec3(),
+    rotation = createDefaultVec3(),
+    scale = createDefaultVec3(),
     wireframe = false,
     animate = true,
   }: GeometryRendererProps) => {
@@ -31,17 +33,23 @@ export const GeometryRenderer = memo(
     useFrame((state) => {
       if (!meshRef.current || !animate) return;
       meshRef.current.rotation.set(
-        rotation.x * state.clock.elapsedTime * 10,
-        rotation.y * state.clock.elapsedTime * 10,
-        rotation.z * state.clock.elapsedTime * 10,
+        Number(rotation.x) * state.clock.elapsedTime * 10,
+        Number(rotation.y) * state.clock.elapsedTime * 10,
+        Number(rotation.z) * state.clock.elapsedTime * 10,
       );
     });
 
     return (
       <mesh
-        position={new Vector3(position.x, position.y, position.z)}
-        geometry={GeometryMap[type]}
-        scale={new Vector3(scale.x, scale.y, scale.z)}
+        position={
+          new Vector3(
+            Number(position.x),
+            Number(position.y),
+            Number(position.z),
+          )
+        }
+        geometry={GeometryMap[type as keyof typeof GeometryMap]}
+        scale={new Vector3(Number(scale.x), Number(scale.y), Number(scale.z))}
         ref={meshRef}
       >
         <meshBasicMaterial wireframe={wireframe} />

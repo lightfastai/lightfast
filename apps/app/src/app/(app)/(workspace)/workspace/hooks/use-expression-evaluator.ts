@@ -3,7 +3,7 @@ import { useCallback, useRef } from "react";
 
 import { extractExpression, isNumber } from "@repo/webgl";
 
-import type { WebGLRootState } from "../components/webgl/webgl-primitives";
+import type { WebGLRootState } from "../webgl";
 
 // Helper function to check if a value is a string (expression)
 export const isExpression = (value: any): value is string =>

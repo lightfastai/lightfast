@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
+import type { LimitTexture, Texture } from "@vendor/db/types";
 import {
   baseVertexShader,
   isExpression,
   limitFragmentShader,
 } from "@repo/webgl";
 
-import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
-import type { LimitTexture, Texture } from "~/db/schema/types/Texture";
+import type { WebGLRootState } from "../webgl";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";

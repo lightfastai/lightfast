@@ -11,10 +11,10 @@ import {
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
+import { GeometryRenderer } from "@repo/webgl/components";
 
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";
-import { GeometryRenderer } from "../webgl/geometry-renderer";
 import { WebGLViewContext } from "../webgl/webgl-context";
 
 export const GeometryNode = memo(
@@ -48,7 +48,14 @@ export const GeometryNode = memo(
 
           <div className="flex h-32 w-72 items-center justify-center border">
             <WebGLViewContext>
-              <GeometryRenderer geometry={data} />
+              <GeometryRenderer
+                type={data.type}
+                position={data.position}
+                rotation={data.rotation}
+                scale={data.scale}
+                wireframe={data.wireframe}
+                animate={true}
+              />
             </WebGLViewContext>
           </div>
 

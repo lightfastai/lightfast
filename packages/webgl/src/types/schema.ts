@@ -198,3 +198,14 @@ export function isVec2Number(vec: Vec2): boolean {
 export function isVec3Number(vec: Vec3): boolean {
   return getVec3Mode(vec) === VectorMode.Number;
 }
+
+export const createDefaultVec3 = (): Vec3 => ({
+  x: 0,
+  y: 0,
+  z: 0,
+});
+
+export const createDefaultVec2 = (): Vec2 => ({
+  x: 0,
+  y: 0,
+});

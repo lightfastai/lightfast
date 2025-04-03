@@ -1,3 +1,5 @@
+"use client";
+
 import * as THREE from "three";
 
 import type { RenderTargetOptions, TextureRenderStore } from "../types/render";

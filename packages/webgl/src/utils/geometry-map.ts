@@ -1,3 +1,5 @@
+"use client";
+
 import {
   BoxGeometry,
   PlaneGeometry,
@@ -14,6 +16,7 @@ export const $GeometryType = z.enum([
   "tetrahedron",
   "torus",
   "plane",
+  "phong",
 ]);
 
 export type GeometryType = z.infer<typeof $GeometryType>;

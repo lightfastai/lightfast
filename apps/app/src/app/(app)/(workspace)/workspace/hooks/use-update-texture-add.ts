@@ -4,8 +4,8 @@ import * as THREE from "three";
 import type { AddTexture, Texture } from "@vendor/db/types";
 import { addFragmentShader, baseVertexShader, isExpression } from "@repo/webgl";
 
-import type { WebGLRootState } from "../components/webgl/webgl-primitives";
 import type { TextureRenderNode } from "../types/render";
+import type { WebGLRootState } from "../webgl";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";

@@ -10,12 +10,10 @@ import {
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
-import { createDefaultGeometry } from "@vendor/db/types";
+import { GeometryRenderer } from "@repo/webgl/components";
 
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";
-import { DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION } from "../../stores/constants";
-import { GeometryRenderer } from "../webgl/geometry-renderer";
 import { WebGLViewContext } from "../webgl/webgl-context";
 
 export const MaterialNode = memo(
@@ -42,10 +40,9 @@ export const MaterialNode = memo(
           <div className="flex h-32 w-72 items-center justify-center border">
             <WebGLViewContext>
               <GeometryRenderer
-                geometry={createDefaultGeometry({
-                  type: "torus",
-                  rotation: DEFAULT_RENDER_IN_NODE_MATERIAL_ROTATION,
-                })}
+                type={"torus"}
+                wireframe={false}
+                animate={true}
               />
             </WebGLViewContext>
           </div>

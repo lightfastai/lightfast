@@ -25,8 +25,9 @@ import { SelectionStoreProvider } from "../../providers/selection-store-provider
 import { TextureRenderStoreProvider } from "../../providers/texture-render-store-provider";
 import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
 
-const WebGLCanvas = dynamic(() =>
-  import("../../components/webgl/webgl-canvas").then((mod) => mod.WebGLCanvas),
+const WebGLCanvas = dynamic(
+  () => import("../../webgl").then((mod) => mod.WebGLCanvas),
+  { ssr: false },
 );
 
 const Inspector = dynamic(() =>

@@ -3,8 +3,9 @@
 import type * as THREE from "three";
 import { Fragment, useEffect, useMemo, useRef } from "react";
 
+import { createWebGLPortal, WebGLView } from "@repo/webgl/components";
+
 import { $GeometryType, GeometryMap } from "../../utils/geometry-map";
-import { createWebGLPortal, WebGLView } from "../primitives/webgl-primitives";
 
 export interface TextureRenderPipelineProps {
   meshes: Record<string, { id: string; shader: THREE.ShaderMaterial }>;

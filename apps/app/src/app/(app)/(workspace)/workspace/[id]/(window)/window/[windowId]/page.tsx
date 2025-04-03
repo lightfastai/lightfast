@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/node";
-import { WebGLCanvas } from "~/app/(app)/(workspace)/workspace/components/webgl/webgl-canvas";
+import { WebGLCanvas } from "~/app/(app)/(workspace)/workspace/webgl";
 import { api } from "~/trpc/client/server";
 import { EdgeStoreProvider } from "../../../../providers/edge-store-provider";
 import { TextureRenderStoreProvider } from "../../../../providers/texture-render-store-provider";
