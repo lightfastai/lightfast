@@ -2,11 +2,22 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { UniformFieldValue } from "../types/field";
+import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
 import { $Float, $NumericValue, $Vec2Number, ValueType } from "../types/schema";
+import {
+  createTextureUniform,
+  createTextureUniformSchema,
+} from "../types/texture-uniform";
 
+// Define texture uniforms separately
+export const $NoiseTextureUniforms = z.object({
+  u_texture: createTextureUniformSchema("Input texture to combine with noise"),
+});
+
+export type NoiseTextureUniforms = z.infer<typeof $NoiseTextureUniforms>;
+
+// Define regular uniforms
 export const $NoiseBase = z.object({
-  u_texture: z.number().nullable(),
   u_period: $NumericValue
     .describe("1/u_period is the frequency of the input of noise function")
     .default(2.0),
@@ -70,7 +81,15 @@ export const $NoiseTransform = z.object({
   }),
 });
 
-export const $PerlinNoise3D = $NoiseTransform.merge($NoiseBase);
+// Combine all regular uniforms
+export const $NoiseRegularUniforms = $NoiseTransform.merge($NoiseBase);
+
+export type NoiseRegularUniforms = z.infer<typeof $NoiseRegularUniforms>;
+
+// Combine texture and regular uniforms for the full shader definition
+export const $PerlinNoise3D = $NoiseTextureUniforms.merge(
+  $NoiseRegularUniforms,
+);
 
 export const PerlinNoiseJsonSchema = zodToJsonSchema(
   $PerlinNoise3D,
@@ -82,7 +101,10 @@ export const PerlinNoise3DDescription =
   "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture with time-based animation. Use expressions prefixed with 'e.' to create dynamic values, like 'e.2 + Math.sin(me.time.now)'.";
 
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
-  return $PerlinNoise3D.parse({
+  return {
+    // Texture uniform with the new format
+    u_texture: createTextureUniform(null, null),
+    // Regular uniforms
     u_period: 2.0,
     u_harmonics: 1,
     u_harmonic_gain: 0.66,
@@ -93,12 +115,20 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
     u_scale: { x: 1, y: 1 },
     u_translate: { x: 0, y: 0 },
     u_rotation: { x: 0, y: 0 },
-    u_texture: null,
-  });
+  };
 };
 
 // Lookup table for pnoise uniform constraints
 export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
+  u_texture: {
+    type: ValueType.Texture,
+    label: "Blend Texture",
+    constraint: {
+      required: false,
+      description: "Input texture to combine with noise (optional)",
+      uniformName: "u_texture",
+    } as TextureFieldMetadata,
+  },
   u_scale: {
     type: ValueType.Vec2,
     label: "Scale",

@@ -26,8 +26,21 @@ export interface Vec3FieldMetadata {
   z: ValueFieldMetadata;
 }
 
+/**
+ * Metadata for texture input fields
+ */
+export interface TextureFieldMetadata {
+  required: boolean;
+  description: string;
+  uniformName: string;
+}
+
 export interface UniformFieldValue {
   type: ValueType;
   label: string;
-  constraint?: NumericValueMetadata | Vec2FieldMetadata | Vec3FieldMetadata;
+  constraint?:
+    | NumericValueMetadata
+    | Vec2FieldMetadata
+    | Vec3FieldMetadata
+    | TextureFieldMetadata;
 }

@@ -5,6 +5,10 @@ import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
 
+import {
+  getUniformNameFromTextureHandleId,
+  isValidTextureHandleId,
+} from "../types/TextureHandle";
 import { Node } from "./Node";
 
 export const Edge = pgTable("edge", (t) => ({
@@ -43,9 +47,31 @@ export const SelectEdgeSchema = createSelectSchema(Edge);
 export const InsertEdgeSchema = z.object({
   source: z.string().min(1).max(191),
   target: z.string().min(1).max(191),
-  sourceHandle: z.string().max(191).optional(),
-  targetHandle: z.string().max(191).optional(),
+  sourceHandle: z
+    .string()
+    .max(191)
+    .optional()
+    .refine((val) => val === undefined || isValidTextureHandleId(val), {
+      message: "Source handle must follow the 'input-N' format or be undefined",
+    }),
+  targetHandle: z
+    .string()
+    .max(191)
+    .optional()
+    .refine((val) => val === undefined || isValidTextureHandleId(val), {
+      message: "Target handle must follow the 'input-N' format or be undefined",
+    }),
 });
 
 export type SelectEdge = z.infer<typeof SelectEdgeSchema>;
 export type InsertEdge = z.infer<typeof InsertEdgeSchema>;
+
+/**
+ * Helper function to get the corresponding uniform name for a handle
+ */
+export function getUniformForEdge(edge: {
+  targetHandle?: string | null;
+}): string | null {
+  if (!edge.targetHandle) return null;
+  return getUniformNameFromTextureHandleId(edge.targetHandle);
+}

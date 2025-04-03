@@ -2,15 +2,23 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { UniformFieldValue } from "../types/field";
+import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
 import { $Float, $Vec2Number, ValueType } from "../types/schema";
+import {
+  createTextureUniform,
+  createTextureUniformSchema,
+} from "../types/texture-uniform";
 
-export const $Displace = z.object({
-  u_texture1: z
-    .number()
-    .nullable()
-    .describe("The source texture to be displaced"),
-  u_texture2: z.number().nullable().describe("The displacement map texture"),
+// Define texture uniforms separately
+export const $DisplaceTextureUniforms = z.object({
+  u_texture1: createTextureUniformSchema("The source texture to be displaced"),
+  u_texture2: createTextureUniformSchema("The displacement map texture"),
+});
+
+export type DisplaceTextureUniforms = z.infer<typeof $DisplaceTextureUniforms>;
+
+// Define regular uniforms
+export const $DisplaceRegularUniforms = z.object({
   u_displaceWeight: $Float
     .describe("X weight of displacement (0-10)")
     .transform((val) => Math.max(0, Math.min(10, val)))
@@ -51,6 +59,13 @@ export const $Displace = z.object({
   }),
 });
 
+export type DisplaceRegularUniforms = z.infer<typeof $DisplaceRegularUniforms>;
+
+// Combine them for the full shader definition
+export const $Displace = $DisplaceTextureUniforms.merge(
+  $DisplaceRegularUniforms,
+);
+
 export type DisplaceParams = z.infer<typeof $Displace>;
 
 export const $DisplaceJsonSchema = zodToJsonSchema($Displace) as JSONSchema7;
@@ -59,19 +74,39 @@ export const DisplaceDescription =
   "A texture operator that displaces one texture using another as a displacement map. Supports expressions prefixed with 'e.' for dynamic values.";
 
 export const createDefaultDisplace = (): DisplaceParams => {
-  return $Displace.parse({
-    u_texture1: null,
-    u_texture2: null,
+  return {
+    // Texture uniforms with the new format
+    u_texture1: createTextureUniform(null, null),
+    u_texture2: createTextureUniform(null, null),
+    // Regular uniforms remain the same
     u_displaceWeight: 1.0,
     u_displaceMidpoint: { x: 0.5, y: 0.5 },
     u_displaceOffset: { x: 0.5, y: 0.5 },
     u_displaceOffsetWeight: 0.0,
     u_displaceUVWeight: { x: 1.0, y: 1.0 },
-  });
+  };
 };
 
 // Lookup table for displace uniform constraints
 export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
+  u_texture1: {
+    type: ValueType.Texture,
+    label: "Source Texture",
+    constraint: {
+      required: true,
+      description: "The source texture to be displaced",
+      uniformName: "u_texture1",
+    } as TextureFieldMetadata,
+  },
+  u_texture2: {
+    type: ValueType.Texture,
+    label: "Displacement Map",
+    constraint: {
+      required: true,
+      description: "The displacement map texture",
+      uniformName: "u_texture2",
+    } as TextureFieldMetadata,
+  },
   u_displaceWeight: {
     type: ValueType.Numeric,
     label: "Displacement Weight",

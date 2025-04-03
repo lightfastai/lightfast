@@ -177,7 +177,8 @@ export {
 } from "./shaders/utils";
 
 export * from "./types/field";
-
+export * from "./types/texture-uniform";
+export * from "./types/texture-registry";
 export * from "./shaders/utils";
 
 export type {
