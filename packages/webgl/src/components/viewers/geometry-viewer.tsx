@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
 
-import type { GeometryType } from "../../utils/geometry-map";
+import type { GeometryType } from "../../types/geometry";
 import type { GeometryRendererProps } from "../renderers/geometry-renderer";
 import { DefaultCamera, DefaultControls } from "../primitives/camera-controls";
 import { GeometryRenderer } from "../renderers/geometry-renderer";

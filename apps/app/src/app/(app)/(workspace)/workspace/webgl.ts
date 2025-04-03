@@ -38,7 +38,6 @@ export {
 // Export all types from the package
 export type {
   WebGLCanvasProps,
-  WebGLRootState,
   CameraContextType,
   DefaultCameraProps,
   DefaultControlsProps,

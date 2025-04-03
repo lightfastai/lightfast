@@ -11,4 +11,4 @@ export {
   GlobalTetrahedronGeometry,
   GlobalTorusGeometry,
   GlobalPlaneGeometry,
-} from "../../utils/geometry-map";
+} from "../../types/geometry";

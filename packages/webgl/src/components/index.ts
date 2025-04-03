@@ -9,7 +9,6 @@ export {
   OrbitControls,
   PerspectiveCamera,
 } from "./primitives/webgl-primitives";
-export type { WebGLRootState } from "./primitives/webgl-primitives";
 
 // Camera and controls
 export {
@@ -33,8 +32,8 @@ export { GeometryViewer } from "./viewers/geometry-viewer";
 export type { GeometryViewerProps } from "./viewers/geometry-viewer";
 
 // Texture pipeline
-export { TextureRenderPipeline } from "./renderers/texture-render-pipeline";
-export type { TextureRenderPipelineProps } from "./renderers/texture-render-pipeline";
+export { TextureRenderPipeline } from "./renderers/texture-renderer-pipeline";
+export type { TextureRenderPipelineProps } from "./renderers/texture-renderer-pipeline";
 
 // Global components
 export { GlobalOrbitControls, GlobalPerspectiveCamera } from "./globals";

@@ -6,7 +6,7 @@ import { Vector3 } from "three";
 import {
   CENTER_OF_WORLD,
   WORLD_CAMERA_POSITION_CLOSE,
-} from "../../utils/geometry-map";
+} from "../../types/geometry";
 import { OrbitControls, PerspectiveCamera } from "./webgl-primitives";
 
 // Define a context for camera controls

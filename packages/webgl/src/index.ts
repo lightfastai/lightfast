@@ -193,10 +193,10 @@ export * from "./components";
 // Export performance monitoring components
 export * from "./performance";
 
-// Export Three.js related hooks
-export * from "./hooks";
-
 // Export Three.js related utilities
 export * from "./utils";
 
 export { createDefaultVec2, createDefaultVec3 } from "./types/schema";
+
+export * from "./types/render";
+export * from "./types/webgl";

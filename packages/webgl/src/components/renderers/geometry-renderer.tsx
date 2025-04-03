@@ -5,10 +5,10 @@ import { memo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
+import type { GeometryType } from "../../types/geometry";
 import type { Vec3 } from "../../types/schema";
-import type { GeometryType } from "../../utils/geometry-map";
+import { GeometryMap } from "../../types/geometry";
 import { createDefaultVec3 } from "../../types/schema";
-import { GeometryMap } from "../../utils/geometry-map";
 
 export interface GeometryRendererProps {
   type: GeometryType;

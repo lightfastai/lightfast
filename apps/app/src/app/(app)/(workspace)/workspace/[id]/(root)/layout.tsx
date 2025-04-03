@@ -15,8 +15,8 @@ import { EditorFileMenu } from "../../components/app/editor-file-menu";
 import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";
 import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
 import { EditorCommandDialog } from "../../components/command-dialog/editor-command-dialog";
-import { TextureRenderPipeline } from "../../components/webgl/texture-render-pipeline";
 import { Debug } from "../../components/webgl/webgl-debug";
+import { WebGLTextureRenderPipeline } from "../../components/webgl/webgl-texture-render-pipeline";
 import { EdgeStoreProvider } from "../../providers/edge-store-provider";
 import { EditorStoreProvider } from "../../providers/editor-store-provider";
 import { FileMenuViewProvider } from "../../providers/file-menu-view-provider";
@@ -147,7 +147,7 @@ export default async function WorkspaceLayout({
                       }}
                       showPerformance={true}
                     >
-                      <TextureRenderPipeline />
+                      <WebGLTextureRenderPipeline />
                     </WebGLCanvas>
                     <WorkspaceReactFlowProvider>
                       <WorkspaceViewProvider>

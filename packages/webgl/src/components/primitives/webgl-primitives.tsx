@@ -1,6 +1,5 @@
 "use client";
 
-import type { RootState } from "@react-three/fiber";
 import { memo } from "react";
 import {
   OrbitControls as DreiOrbitControls,
@@ -33,8 +32,6 @@ export { WebGLView };
  */
 const createWebGLPortal = createPortal;
 export { createWebGLPortal };
-
-export type { RootState as WebGLRootState };
 
 /**
  * @description A memoized version of the OrbitControls component from drei.

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
+import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/webgl";
 import type { LimitTexture, Texture } from "@vendor/db/types";
 import {
   baseVertexShader,
@@ -8,14 +9,17 @@ import {
   limitFragmentShader,
 } from "@repo/webgl";
 
-import type { TextureRenderNode } from "../types/render";
-import type { WebGLRootState } from "../webgl";
-import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useExpressionEvaluator } from "./use-expression-evaluator";
 
-export const useUpdateTextureLimit = (): TextureRenderNode[] => {
+export interface UpdateTextureLimitProps {
+  textureDataMap: Record<string, Texture>;
+}
+
+export const useUpdateTextureLimit = ({
+  textureDataMap,
+}: UpdateTextureLimitProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { edges } = useEdgeStore((state) => state);
   // Cache of previously created shaders to avoid recreating them
@@ -26,23 +30,6 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
   const expressionsRef = useRef<Record<string, Record<string, string>>>({});
   // Use the shared expression evaluator
   const { updateShaderUniforms } = useExpressionEvaluator();
-
-  const queries = api.useQueries((t) =>
-    Object.entries(targets).map(([id]) =>
-      t.tenant.node.data.get<Texture>({ id }),
-    ),
-  );
-
-  // Extract texture data only when queries change
-  const textureDataMap = useMemo(() => {
-    return Object.entries(targets).reduce<Record<string, Texture | null>>(
-      (acc, [id], index) => {
-        acc[id] = queries[index]?.data || null;
-        return acc;
-      },
-      {},
-    );
-  }, [queries, targets]);
 
   // Update connection cache when edges change
   useEffect(() => {
@@ -60,7 +47,7 @@ export const useUpdateTextureLimit = (): TextureRenderNode[] => {
     return Object.entries(textureDataMap)
       .filter((entry): entry is [string, LimitTexture] => {
         const [_, texture] = entry;
-        return texture?.type === "Limit";
+        return texture.type === "Limit";
       })
       .map(([id, texture]) => {
         const { uniforms: u } = texture;

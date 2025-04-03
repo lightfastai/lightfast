@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
+import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/webgl";
 import type { NoiseTexture, Texture } from "@vendor/db/types";
 import {
   baseVertexShader,
@@ -8,53 +9,29 @@ import {
   pnoiseFragmentShader,
 } from "@repo/webgl";
 
-import type { TextureRenderNode } from "../types/render";
-// TODO: Use proper imports when the module is set up
-// import {
-//   createTimeContext,
-//   evaluateExpression,
-//   isExpression
-// } from "@repo/webgl/expressions";
-
-import type { WebGLRootState } from "../webgl";
-import { api } from "~/trpc/client/react";
-import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useExpressionEvaluator } from "./use-expression-evaluator";
 
-export const useUpdateTextureNoise = (): TextureRenderNode[] => {
-  const { targets } = useTextureRenderStore((state) => state);
+export interface UpdateTextureNoiseProps {
+  textureDataMap: Record<string, Texture>;
+}
+
+export const useUpdateTextureNoise = ({
+  textureDataMap,
+}: UpdateTextureNoiseProps): WebGLRenderTargetNode[] => {
   // Cache expressions
   const expressionsRef = useRef<Record<string, Record<string, string>>>({});
   // Use the shared expression evaluator
   const { updateShaderUniforms } = useExpressionEvaluator();
 
-  const queries = api.useQueries((t) =>
-    Object.entries(targets).map(([id, texture]) =>
-      t.tenant.node.data.get<Texture>({
-        id,
-      }),
-    ),
-  );
-
   return useMemo(() => {
-    // Create a map of query results with their IDs
-    const textureDataMap = Object.entries(targets).reduce<
-      Record<string, Texture>
-    >((acc, [id], index) => {
-      if (queries[index]?.data) {
-        acc[id] = queries[index].data;
-        return acc;
-      } else {
-        return acc;
-      }
-    }, {});
-
     return Object.entries(textureDataMap)
-      .filter((entry): entry is [string, NoiseTexture] => {
-        const [_, texture] = entry;
-        return texture.type === "Noise";
+      .filter(([id]) => {
+        // Make sure we have texture data for this ID and it's a Noise texture
+        return textureDataMap[id] && textureDataMap[id].type === "Noise";
       })
-      .map(([id, texture]) => {
+      .map(([id]) => {
+        // We know this is a NoiseTexture due to the filter above
+        const texture = textureDataMap[id] as NoiseTexture;
         const { uniforms: u } = texture;
 
         // Ensure expressions cache exists for this ID
@@ -157,5 +134,5 @@ export const useUpdateTextureNoise = (): TextureRenderNode[] => {
           },
         };
       });
-  }, [queries, targets, updateShaderUniforms]);
+  }, [textureDataMap, updateShaderUniforms]);
 };
