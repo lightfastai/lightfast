@@ -1,0 +1,72 @@
+---
+description: React component architecture and patterns for the React TD repository
+globs: "**/*.tsx"
+alwaysApply: true
+---
+
+# React TD Component Patterns
+
+## Component Architecture
+- Use functional components exclusively
+- Keep components small and focused on a single responsibility
+- Implement prop validation through TypeScript interfaces
+- Avoid excessive nesting of components
+- Extract reusable logic into custom hooks
+
+## Component Structure
+- Group related components in feature-based directories
+- Split large components into smaller, focused components
+- Follow a consistent component file structure:
+  ```tsx
+  // Imports
+  // Type definitions
+  // Component definition
+  // Helper functions
+  ```
+- Export components as named exports
+- Place helper functions inside the component file if they're only used there
+
+## Props and State
+- Define explicit prop interfaces for all components:
+  ```typescript
+  export interface EditorStoreProviderProps {
+    children: ReactNode;
+  }
+  ```
+- Use destructuring for props
+- Provide default values for optional props
+- Avoid prop drilling - use Context or custom hooks
+- Use explicit return types for components when helpful
+
+## Context API Usage
+- Follow the established provider pattern:
+  ```tsx
+  export const EdgeStoreProvider = ({
+    children,
+    initialEdges,
+  }: EdgeStoreProviderProps) => {
+    // Implementation
+    return (
+      <EdgeStoreContext.Provider value={storeRef.current}>
+        {children}
+      </EdgeStoreContext.Provider>
+    );
+  };
+  ```
+- Provide meaningful error messages when context is used outside provider
+- Keep context values focused on specific domains
+- Export custom hooks to access context values
+
+## Rendering Optimization
+- Use React.memo for components with static props
+- Avoid unnecessary re-renders by properly using dependencies
+- Export primitive components separately from container components
+- Use fragment shorthand `<>...</>` where appropriate
+- Conditionally render components only when needed
+
+## Component Composition
+- Use composition over inheritance
+- Utilize children props for flexible component composition
+- Consider component variants using utility functions like `cva`
+- Follow established component composition patterns from the repository
+- Use utility functions (like `cn`) for classname composition 

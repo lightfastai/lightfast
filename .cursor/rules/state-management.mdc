@@ -1,0 +1,89 @@
+---
+description: State management patterns and store implementation for the React TD repository
+globs: "**/*store*.ts,**/*store*.tsx,**/providers/*.ts,**/providers/*.tsx"
+alwaysApply: true
+---
+
+# React TD State Management
+
+## Store Architecture
+- Implement stores using Zustand
+- Define clear interfaces for store state and actions
+- Separate state from actions in store definitions
+- Organize stores by feature domain
+- Keep stores focused on specific responsibilities
+
+## Store Creation
+- Follow the established store factory pattern:
+  ```typescript
+  export const createEdgeStore = (initState: EdgeState) =>
+    create<EdgeStore>()(
+      // Implementation
+    );
+  ```
+- Initialize state in dedicated functions:
+  ```typescript
+  export const initSelectionState = (): SelectionState => ({
+    selectedNodeIds: [],
+    // Other initial state
+  });
+  ```
+- Use descriptive names for store creation functions
+- Export store types and interfaces for reuse
+
+## Provider Implementation
+- Create stores with createContext and useRef:
+  ```typescript
+  export const EdgeStoreProvider = ({
+    children,
+    initialEdges,
+  }: EdgeStoreProviderProps) => {
+    const storeRef = useRef<EdgeStoreApi>();
+    if (!storeRef.current) {
+      storeRef.current = createEdgeStore({ edges: initialEdges });
+    }
+    
+    return (
+      <EdgeStoreContext.Provider value={storeRef.current}>
+        {children}
+      </EdgeStoreContext.Provider>
+    );
+  };
+  ```
+- Use consistent provider naming: `{Feature}StoreProvider`
+- Initialize store once with useRef
+- Handle initial state loading properly
+
+## Store Access
+- Create custom hooks to access store state:
+  ```typescript
+  export const useEdgeStore = <T,>(selector: (store: EdgeStore) => T): T => {
+    const edgeStoreContext = useContext(EdgeStoreContext);
+    
+    if (!edgeStoreContext) {
+      throw new Error(`useEdgeStore must be used within EdgeStoreProvider`);
+    }
+    
+    return useStore(edgeStoreContext, selector);
+  };
+  ```
+- Use selectors to access only the needed state:
+  ```typescript
+  const { targets } = useTextureRenderStore((state) => state);
+  ```
+- Check for context existence with helpful error messages
+- Follow established naming: `use{Feature}Store`
+
+## State Updates
+- Use immutable update patterns
+- Implement actions as store methods
+- Keep state updates atomic and focused
+- Use middleware for side effects when appropriate
+- Avoid multiple state updates in a single operation
+
+## Best Practices
+- Avoid global state when possible - use component state or context
+- Subscribe only to the state that's needed
+- Use selectors to derive computed state
+- Properly memoize selectors and derived values
+- Follow the repository's established patterns for store implementation 
