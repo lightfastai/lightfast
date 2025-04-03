@@ -52,10 +52,9 @@ export {
   CENTER_OF_WORLD,
   WORLD_CAMERA_POSITION_CLOSE,
   $GeometryType,
-  createGeometryMapAdapter,
 } from "@repo/webgl/utils";
 
 export type { GeometryType } from "@repo/webgl/utils";
 
 // Export the render target pipeline adapter
-export { useRenderTargetPipeline } from "./hooks/use-render-target-pipeline-adapter";
+export { useRenderTargetPipeline } from "./hooks/use-render-target-pipeline";

@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ErrorBoundary } from "@sentry/nextjs";
 import { Panel } from "@xyflow/react";

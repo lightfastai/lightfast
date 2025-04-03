@@ -25,7 +25,6 @@ import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
-import { Debug } from "../debug/debug";
 import { FluxNode } from "../nodes/flux-node";
 import { GeometryNode } from "../nodes/geometry-node";
 import { MaterialNode } from "../nodes/material-node";
@@ -158,7 +157,6 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
       >
         {selection && render()}
         <Background variant={BackgroundVariant.Dots} />
-        <Debug />
       </ReactFlow>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RootState } from "@react-three/fiber";
 import type * as THREE from "three";
 import { useMemo, useRef } from "react";
 
@@ -7,7 +8,7 @@ import { createWebGLPortal, WebGLView } from "@repo/webgl/components";
 import { GeometryMap } from "@repo/webgl/globals";
 import { $GeometryType } from "@repo/webgl/utils";
 
-import { useRenderTargetPipeline } from "../../hooks/use-render-target-pipeline-adapter";
+import { useRenderTargetPipeline } from "../../hooks/use-render-target-pipeline";
 import { useUpdateTextureAdd } from "../../hooks/use-update-texture-add";
 import { useUpdateTextureDisplace } from "../../hooks/use-update-texture-displace";
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
@@ -33,7 +34,7 @@ export const TextureRenderPipeline = () => {
         acc[node.id] = node.onEachFrame;
         return acc;
       },
-      {} as Record<string, (state: any) => void>,
+      {} as Record<string, (state: RootState) => void>,
     );
   }, [allNodes]);
 

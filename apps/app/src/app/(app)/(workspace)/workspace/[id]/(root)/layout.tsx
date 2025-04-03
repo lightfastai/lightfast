@@ -16,6 +16,7 @@ import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-
 import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
 import { EditorCommandDialog } from "../../components/command-dialog/editor-command-dialog";
 import { TextureRenderPipeline } from "../../components/webgl/texture-render-pipeline";
+import { Debug } from "../../components/webgl/webgl-debug";
 import { EdgeStoreProvider } from "../../providers/edge-store-provider";
 import { EditorStoreProvider } from "../../providers/editor-store-provider";
 import { FileMenuViewProvider } from "../../providers/file-menu-view-provider";
@@ -23,6 +24,8 @@ import { InspectorStoreProvider } from "../../providers/inspector-store-provider
 import { NodeStoreProvider } from "../../providers/node-store-provider";
 import { SelectionStoreProvider } from "../../providers/selection-store-provider";
 import { TextureRenderStoreProvider } from "../../providers/texture-render-store-provider";
+import { WorkspaceReactFlowProvider } from "../../providers/workspace-react-flow-provider";
+import { WorkspaceViewProvider } from "../../providers/workspace-view-provider";
 import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
 
 const WebGLCanvas = dynamic(
@@ -146,7 +149,12 @@ export default async function WorkspaceLayout({
                     >
                       <TextureRenderPipeline />
                     </WebGLCanvas>
-                    {children}
+                    <WorkspaceReactFlowProvider>
+                      <WorkspaceViewProvider>
+                        {children}
+                        <Debug />
+                      </WorkspaceViewProvider>
+                    </WorkspaceReactFlowProvider>
                     <div className="absolute right-4 top-4">
                       <Inspector />
                     </div>

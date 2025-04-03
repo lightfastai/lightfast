@@ -15,7 +15,7 @@ import { GeometryRenderer } from "@repo/webgl/components";
 
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";
-import { WebGLViewContext } from "../webgl/webgl-context";
+import { WebGLViewContext } from "../webgl/webgl-view-context";
 
 export const GeometryNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {

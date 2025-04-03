@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
+import type { WebGLRootState } from "../webgl";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
 /**
@@ -15,7 +16,7 @@ export const useRenderTargetPipeline = ({
   onEachFrame,
   meshes,
 }: {
-  onEachFrame: Record<string, (state: any) => void>;
+  onEachFrame: Record<string, (state: WebGLRootState) => void>;
   meshes: Record<string, THREE.Mesh>;
 }) => {
   const { gl } = useThree();

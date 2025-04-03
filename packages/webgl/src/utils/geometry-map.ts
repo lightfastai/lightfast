@@ -62,28 +62,3 @@ export const GeometryMap = {
   [$GeometryType.Enum.torus]: GlobalTorusGeometry,
   [$GeometryType.Enum.plane]: GlobalPlaneGeometry,
 } as const;
-
-// For compatibility with external geometry type enums
-export const createGeometryMapAdapter = <T extends Record<string, string>>(
-  externalEnum: T,
-) => {
-  return Object.fromEntries(
-    Object.entries(externalEnum).map(([key, value]) => {
-      const normalizedValue = value.toLowerCase();
-      const matchedKey = Object.keys($GeometryType.Enum).find(
-        (k) => k.toLowerCase() === normalizedValue,
-      );
-      if (!matchedKey) {
-        throw new Error(
-          `No matching geometry for external enum value: ${value}`,
-        );
-      }
-      return [
-        key,
-        GeometryMap[
-          $GeometryType.Enum[matchedKey as keyof typeof $GeometryType.Enum]
-        ],
-      ];
-    }),
-  );
-};
