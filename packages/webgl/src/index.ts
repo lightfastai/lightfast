@@ -186,3 +186,12 @@ export type {
   Vec2FieldMetadata,
   Vec3FieldMetadata,
 } from "./types/field";
+
+// Export Three.js related components
+export * from "./components";
+
+// Export Three.js related hooks
+export * from "./hooks";
+
+// Export Three.js related utilities
+export * from "./utils";

@@ -8,6 +8,22 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "default": "./src/components/index.ts"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "default": "./src/hooks/index.ts"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "default": "./src/utils/index.ts"
+    },
+    "./types": {
+      "types": "./dist/types/render.d.ts",
+      "default": "./src/types/render.ts"
+    },
     "./shaders/pnoise": {
       "types": "./dist/shaders/pnoise/pnoise.d.ts",
       "default": "./src/shaders/pnoise/pnoise.ts"

@@ -131,7 +131,7 @@ const updateVectorUniforms = (
 
     // Set the value at the target property
     const lastPart = parts[parts.length - 1];
-    if (current?.value && lastPart && typeof current.value === "object") {
+    if (current.value && lastPart && typeof current.value === "object") {
       (current.value as Record<string, number>)[lastPart] = Number(value);
     }
   });

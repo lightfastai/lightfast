@@ -1,5 +1,15 @@
 {
-  "extends": "@repo/typescript-config/internal-package.json",
-  "include": ["src", "src/types/**/*.d.ts"],
-  "exclude": ["node_modules"]
+  "extends": "@repo/typescript-config/react-library.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "jsx": "react-jsx",
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }
