@@ -1,26 +1,27 @@
 "use client";
 
 import type { CanvasProps } from "@react-three/fiber";
-import React, { Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { PerfHeadless } from "r3f-perf";
+import React from "react";
+
+import { WebGLCanvas as WebGLPackageCanvas } from "@repo/webgl/components";
 
 export interface WebGLCanvasProps extends CanvasProps {
   children: React.ReactNode;
   showPerformance?: boolean;
 }
 
+// Re-export the WebGLCanvas component from the webgl package
+// with the same API to maintain compatibility
 const WebGLCanvas = React.forwardRef<HTMLCanvasElement, WebGLCanvasProps>(
   ({ children, showPerformance = false, ...props }, ref) => {
     return (
-      <>
-        <Canvas ref={ref} {...props}>
-          {children}
-          <Suspense fallback={null}>
-            {showPerformance && <PerfHeadless />}
-          </Suspense>
-        </Canvas>
-      </>
+      <WebGLPackageCanvas
+        ref={ref}
+        showPerformance={showPerformance}
+        {...props}
+      >
+        {children}
+      </WebGLPackageCanvas>
     );
   },
 );

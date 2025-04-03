@@ -1,11 +1,11 @@
 "use client";
 
 import type * as THREE from "three";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 
-import { $GeometryType } from "@vendor/db/types";
+import { $GeometryType } from "@repo/webgl/utils";
 
-import { useRenderTargetPipeline } from "../../hooks/use-texture-render-pipeline";
+import { useRenderTargetPipeline } from "../../hooks/use-render-target-pipeline-adapter";
 import { useUpdateTextureAdd } from "../../hooks/use-update-texture-add";
 import { useUpdateTextureDisplace } from "../../hooks/use-update-texture-displace";
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
@@ -20,33 +20,24 @@ export const TextureRenderPipeline = () => {
   const displaceNodes = useUpdateTextureDisplace();
   const addNodes = useUpdateTextureAdd();
 
-  // clean up unused meshes
-  useEffect(() => {
-    const currentNodeIds = new Set([
-      ...noiseNodes.map((node) => node.id),
-      ...limitNodes.map((node) => node.id),
-      ...displaceNodes.map((node) => node.id),
-      ...addNodes.map((node) => node.id),
-    ]);
-
-    Object.keys(meshRefs.current).forEach((id) => {
-      if (!currentNodeIds.has(id)) {
-        delete meshRefs.current[id];
-      }
-    });
-  }, [noiseNodes, limitNodes, displaceNodes, addNodes]);
-
-  // update uniforms
-  const updates = useMemo(
-    () =>
-      Object.fromEntries(
-        [...noiseNodes, ...limitNodes, ...displaceNodes, ...addNodes].map(
-          (node) => [node.id, node.onEachFrame],
-        ),
-      ),
+  // Get all nodes
+  const allNodes = useMemo(
+    () => [...noiseNodes, ...limitNodes, ...displaceNodes, ...addNodes],
     [noiseNodes, limitNodes, displaceNodes, addNodes],
   );
 
+  // Create update handlers
+  const updates = useMemo(() => {
+    return allNodes.reduce(
+      (acc, node) => {
+        acc[node.id] = node.onEachFrame;
+        return acc;
+      },
+      {} as Record<string, (state: any) => void>,
+    );
+  }, [allNodes]);
+
+  // Use our adapter hook to connect to the existing store
   const { scene } = useRenderTargetPipeline({
     onEachFrame: updates,
     meshes: meshRefs.current,

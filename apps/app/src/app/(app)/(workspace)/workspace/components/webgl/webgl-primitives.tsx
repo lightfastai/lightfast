@@ -1,45 +1,11 @@
-import type { RootState } from "@react-three/fiber";
-import { memo } from "react";
+import type { WebGLRootState } from "@repo/webgl/components";
 import {
-  OrbitControls as DreiOrbitControls,
-  PerspectiveCamera as DreiPerspectiveCamera,
-  View,
-} from "@react-three/drei";
-import { createPortal } from "@react-three/fiber";
+  createWebGLPortal,
+  OrbitControls,
+  PerspectiveCamera,
+  WebGLView,
+} from "@repo/webgl/components";
 
-/**
- * @description A wrapper for the View component from react-three/drei.
- * @example
- * <WebGLView>
- *   <mesh>
- *     <boxGeometry />
- *     <meshStandardMaterial />
- *   </mesh>
- * </WebGLView>
- */
-const WebGLView = View;
-export { WebGLView };
+export { WebGLView, createWebGLPortal, OrbitControls, PerspectiveCamera };
 
-/**
- * @description A wrapper for the createPortal function from react-three/fiber.
- * It is used to render content outside the main scene.
- * @param children - The content to render.
- * @param scene - The scene to render the content to.
- * @returns The portal element.
- * @example
- * const portal = createWebGLPortal(<div>Hello, world!</div>, scene);
- */
-const createWebGLPortal = createPortal;
-export { createWebGLPortal };
-
-export type { RootState as WebGLRootState };
-
-/**
- * @description A memoized version of the OrbitControls component from drei.
- */
-export const OrbitControls = memo(DreiOrbitControls);
-
-/**
- * @description A memoized version of the PerspectiveCamera component from drei.
- */
-export const PerspectiveCamera = memo(DreiPerspectiveCamera);
+export type { WebGLRootState };
