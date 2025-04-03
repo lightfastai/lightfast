@@ -1,0 +1,111 @@
+---
+description: General coding practices and principles for the React TD repository
+globs: "**/*"
+alwaysApply: true
+---
+
+# React TD General Coding Standards
+
+## Project Architecture
+- Monorepo using Turborepo and pnpm workspaces
+- Apps defined in `/apps` directory (app, www)
+- Shared packages in `/packages` directory (ai, lib, ui, webgl)
+- Vendor packages in `/vendor` directory
+
+## Code Style and Formatting
+- Use 2-space indentation
+- Prefer single quotes for strings
+- Use semicolons at the end of statements
+- Avoid trailing commas in function parameters
+- Maximum line length should be reasonable (80-100 characters)
+- Use descriptive variable and function names
+
+## Import Structure
+- Follow the established import order:
+  1. React/Next.js imports
+  2. Third-party dependencies 
+  3. Internal shared packages with pattern `@repo/*`, `@vendor/*`
+  4. Relative imports
+- Include empty line between import groups
+- Do not use wildcard imports
+
+## Error Handling
+- Use try/catch blocks for error-prone operations
+- Provide meaningful error messages
+- Avoid silent failures
+- Implement proper cleanup in catch blocks
+
+## Comments and Documentation
+- Add JSDoc comments for public functions and interfaces
+- Include descriptive comments for complex logic
+- Keep comments up-to-date with code changes
+- Use inline comments sparingly and only when necessary
+
+## Best Practices
+- Follow the principle of least privilege
+- Keep functions small and focused on single responsibility
+- Avoid deep nesting of functions and conditionals
+- Use early returns to reduce complexity
+- Avoid magic numbers and strings - use constants
+
+# React TD Repository Coding Standards
+
+## Project Structure
+- Monorepo using Turborepo and pnpm workspaces
+- Apps defined in `/apps` directory (app, www)
+- Shared packages in `/packages` directory (ai, lib, ui, webgl)
+- Vendor packages in `/vendor` directory
+
+## TypeScript Standards
+- Use strict TypeScript typing - avoid `any` types
+- Follow established type patterns in existing files
+- Define explicit interfaces for props and state
+- Use generics for reusable components and hooks
+- Import types separately from implementation
+
+## Component Architecture
+- Use functional components with hooks
+- Create custom hooks for reusable logic (like the existing `use-*` pattern)
+- Follow React's best practices for memoization
+- Keep components small and focused on a single responsibility
+
+## Hooks Best Practices
+- Cache references with `useRef` for values that shouldn't trigger re-renders
+- Use `useMemo` and `useCallback` appropriately to optimize performance
+- Handle cleanup in `useEffect` hooks
+- Follow dependency array best practices
+
+## Three.js and WebGL Guidelines
+- Follow established WebGL patterns in the repository
+- Properly dispose of Three.js resources to prevent memory leaks
+- Use the shader cache pattern for performance
+- Follow the established pattern for uniform updating
+
+## Naming Conventions
+- Hooks: `use{Feature}` (e.g., `useUpdateTextureLimit`, `useExpressionEvaluator`)
+- Components: PascalCase (e.g., `TextureEditor`, `Inspector`)
+- Files: kebab-case (e.g., `use-update-texture-limit.ts`)
+- Types/Interfaces: PascalCase (e.g., `UpdateTextureLimitProps`)
+- Internal variables: camelCase
+
+## File Organization
+- Group related hooks in `/hooks` directories
+- Group providers in `/providers` directories
+- Follow existing naming patterns for new files
+- Keep index files minimal and focused on exports
+
+## State Management
+- Use React context with stores for shared state
+- Follow the established pattern with provider components
+- Use selectors to access only needed state
+
+## Performance Considerations
+- Cache computed values with `useMemo`
+- Cache event handlers with `useCallback`
+- Reference cached values in dependencies
+- Store shared data in refs when appropriate
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to

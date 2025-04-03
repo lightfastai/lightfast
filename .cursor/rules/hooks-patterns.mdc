@@ -1,0 +1,111 @@
+---
+description: React hooks patterns and implementations for the React TD repository
+globs: "**/hooks/**/*.ts,**/hooks/**/*.tsx"
+alwaysApply: true
+---
+
+# React TD Hooks Patterns
+
+## Hook Structure
+- Begin hook names with `use` prefix (e.g., `useExpressionEvaluator`)
+- Use kebab-case for hook file names (e.g., `use-debounce.tsx`)
+- Implement one primary hook per file
+- Group related hooks in `/hooks` directories
+- Export hooks as named exports
+
+## Hooks Implementation
+- Follow the established callback definition pattern:
+  ```typescript
+  const evaluate = useCallback(
+    (expression: string | number | undefined, state: WebGLRootState) => {
+      // Implementation
+    },
+    [dependencies]
+  );
+  ```
+- Return consistent objects for complex hooks:
+  ```typescript
+  return {
+    evaluate,
+    getTimeContext,
+    incrementFrame,
+    updateShaderUniforms,
+  };
+  ```
+- Clearly document hook parameters and return values
+- Add JSDoc comments for public hooks
+
+## State and Refs
+- Use `useState` for values that trigger re-renders
+- Use `useRef` for values that shouldn't trigger re-renders:
+  ```typescript
+  // Cache of previously created shaders
+  const shaderCache = useRef<Record<string, THREE.ShaderMaterial>>({});
+  ```
+- Initialize complex state with factory functions
+- Use TypeScript generics for flexible hooks
+- Follow established patterns for ref initialization
+
+## Side Effects
+- Use `useEffect` for side effects
+- Always clean up resources in the return function:
+  ```typescript
+  useEffect(() => {
+    // Setup
+    return () => {
+      // Cleanup
+    };
+  }, [dependencies]);
+  ```
+- Properly declare dependencies in useEffect
+- Group related effects together
+- Keep effects focused on a single responsibility
+
+## Custom Hooks
+- Extract reusable logic into custom hooks
+- Compose hooks from other hooks
+- Follow established patterns from existing hooks:
+  ```typescript
+  export const useDebounce = <T extends (...args: any[]) => void>(
+    callback: T,
+    delay: number = DEBOUNCE_DELAY,
+  ) => {
+    const timeoutRef = useRef<NodeJS.Timeout>();
+    
+    // Implementation
+    
+    return useCallback(
+      (...args: Parameters<T>) => {
+        // Handler implementation
+      },
+      [callback, delay],
+    );
+  };
+  ```
+- Use generics for flexible hook implementations
+- Provide sensible defaults for optional parameters
+
+## Store Hooks
+- Follow the established store access pattern:
+  ```typescript
+  export const useEdgeStore = <T,>(selector: (store: EdgeStore) => T): T => {
+    const edgeStoreContext = useContext(EdgeStoreContext);
+    
+    if (!edgeStoreContext) {
+      throw new Error(`useEdgeStore must be used within EdgeStoreProvider`);
+    }
+    
+    return useStore(edgeStoreContext, selector);
+  };
+  ```
+- Use selectors to access only needed state
+- Check for context existence with error messages
+- Follow consistent naming conventions
+- Export hook types for reuse
+
+## Performance Considerations
+- Memoize returned values and callbacks
+- Avoid recreating functions in hook body
+- Minimize state updates within hooks
+- Use dependency arrays correctly
+- Cache computed values with useMemo 
