@@ -1,9 +1,11 @@
 import type { Connection } from "@xyflow/react";
 import { useCallback } from "react";
 
-import type { HandleId, InsertEdge } from "@vendor/db/schema";
+import type { InsertEdge } from "@vendor/db/schema";
+import type { HandleId } from "@vendor/db/types";
 import { useToast } from "@repo/ui/hooks/use-toast";
-import { prepareEdgeForInsert, validateEdgeHandles } from "@vendor/db/schema";
+import { prepareEdgeForInsert } from "@vendor/db/schema";
+import { createTextureHandleId, isOutputHandleId } from "@vendor/db/types";
 
 export interface ConnectionValidationResult {
   valid: boolean;
@@ -17,19 +19,30 @@ export const useConnectionValidation = () => {
   const validateConnection = useCallback(
     (connection: Connection): ConnectionValidationResult => {
       try {
+        // Validate source handle is an output handle
+        if (
+          !connection.sourceHandle ||
+          !isOutputHandleId(connection.sourceHandle)
+        ) {
+          throw new Error("Source must be an output handle");
+        }
+
+        // Validate target handle is a texture handle
+        if (!connection.targetHandle) {
+          throw new Error("Target handle is required");
+        }
+
+        const targetHandle = createTextureHandleId(connection.targetHandle);
+        if (!targetHandle) {
+          throw new Error("Target must be a valid texture handle");
+        }
+
         // Try to prepare the edge with validation
         const validatedEdge = prepareEdgeForInsert({
           ...connection,
           sourceHandle: connection.sourceHandle as HandleId,
-          targetHandle: connection.targetHandle as HandleId,
+          targetHandle,
         } as InsertEdge);
-
-        // Additional validation for handle compatibility
-        if (!validateEdgeHandles(validatedEdge)) {
-          throw new Error(
-            "Invalid connection: source must be an output handle and target must be a texture handle",
-          );
-        }
 
         return {
           valid: true,

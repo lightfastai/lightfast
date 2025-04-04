@@ -113,10 +113,10 @@ export type { AddParams } from "./shaders/add";
 export { $Add, AddDescription };
 
 /**
- * Texture uniforms
+ * Texture uniforms and registry
  */
 export type { TextureUniform } from "./types/texture-uniform";
-export { getTextureInputsForType } from "./types/texture-registry";
+export * from "./registry/texture-registry";
 
 /**
  * Shared texture uniforms type
@@ -184,7 +184,7 @@ export {
 
 export * from "./types/field";
 export * from "./types/texture-uniform";
-export * from "./types/texture-registry";
+export * from "./registry/texture-registry";
 export * from "./shaders/utils";
 
 export type {
@@ -207,5 +207,14 @@ export { createDefaultVec2, createDefaultVec3 } from "./types/schema";
 
 export * from "./types/render";
 export * from "./types/webgl";
-
 export * from "./types/handle";
+
+export {
+  getTextureInputsForType,
+  isValidTextureHandleForType,
+  isRequiredTextureHandle,
+  getMaxTextureInputs,
+  getMaxTextureInputsAcrossAllTypes,
+  type TextureRegistry,
+  type TextureRegistryEntry,
+} from "./registry/texture-registry";

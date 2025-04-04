@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import type { TextureHandle } from "@repo/webgl";
-import { getTextureInputsForType } from "@repo/webgl";
 
 /**
  * Branded type for texture handle IDs
@@ -69,7 +68,7 @@ export function getUniformNameFromTextureHandleId(
   if (!isValidTextureHandleId(handleId)) return null;
   const index = getTextureHandleIndex(handleId);
   if (index === null) return null;
-  return `u_texture${index + 1}`;
+  return `u_texture${index}`;
 }
 
 /**
@@ -106,7 +105,7 @@ export function getTextureHandleFromUniformName(
  */
 export const $TextureHandle = z.object({
   id: z.string().refine(isValidTextureHandleId),
-  uniformName: z.string().regex(/^u_texture\d+$/),
+  uniformName: z.string().regex(/^u_.*texture.*$/),
 });
 
 // Update the Zod schema to use custom validation
@@ -165,56 +164,4 @@ export function createOutputHandleId(value: string): OutputHandleId | null {
  */
 export function isOutputHandleId(value: unknown): value is OutputHandleId {
   return typeof value === "string" && isValidOutputHandleId(value);
-}
-
-/**
- * Helper function to generate a handle ID from an index
- */
-export function generateTextureHandleId(index: number): TextureHandleId {
-  const handleId = `input-${index + 1}`;
-  return handleId as TextureHandleId;
-}
-
-/**
- * Get metadata about texture inputs for a specific texture type
- * This now delegates to the registry's getTextureInputsForType function
- */
-export function getTextureInputsMetadata(textureType: string): {
-  id: string;
-  uniformName: string;
-  description: string;
-  required: boolean;
-}[] {
-  // Delegate to the registry function
-  return getTextureInputsForType(textureType);
-}
-
-/**
- * Helper function to generate an output handle ID from a name
- * @param name The base name to use for the output
- * @returns An OutputHandleId or null if the generated ID is invalid
- */
-export function generateOutputHandleId(name: string): OutputHandleId | null {
-  const id = `output-${name}`;
-  return createOutputHandleId(id);
-}
-
-/**
- * Helper for creating multiple texture handles at once
- * @param count The number of texture handles to create
- * @returns An array of TextureHandleId
- */
-export function createTextureHandleIds(count: number): TextureHandleId[] {
-  return Array.from({ length: count }, (_, i) => generateTextureHandleId(i));
-}
-
-/**
- * Helper for creating multiple output handles at once
- * @param names Array of names to create output handles from
- * @returns An array of valid OutputHandleId (invalid ones are filtered out)
- */
-export function createOutputHandleIds(names: string[]): OutputHandleId[] {
-  return names
-    .map((name) => generateOutputHandleId(name))
-    .filter((id): id is OutputHandleId => id !== null);
 }

@@ -31,7 +31,7 @@ export function isTextureHandle(value: unknown): value is TextureHandle {
  * @returns True if the uniform name is valid
  */
 export function isValidUniformName(uniformName: string): boolean {
-  return /^u_texture\d+$/.test(uniformName);
+  return /^u_.*texture.*$/.test(uniformName);
 }
 
 /**
