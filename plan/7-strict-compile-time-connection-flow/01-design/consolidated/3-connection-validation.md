@@ -2,302 +2,323 @@
 
 ## Overview
 
-The connection validation system ensures that connections between nodes have valid handle IDs and follow proper connection rules. It builds on the handle type system to provide compile-time and runtime validation of connections.
+The connection validation system ensures type safety and correctness of node connections through compile-time checks and runtime validation. It integrates with the expression system to support dynamic values and provides comprehensive error handling.
 
-## StrictConnection Type
+## Type Definitions
+
+### Connection Types
 
 ```typescript
-import { Connection as BaseConnection } from "@xyflow/react";
+export interface StrictConnection extends BaseConnection {
+  sourceHandle: HandleId;
+  targetHandle: HandleId;
+}
 
-import { HandleId, OutputHandleId, TextureHandleId } from "@vendor/db/types";
+export interface ConnectionValidationResult {
+  isValid: boolean;
+  error?: string;
+  details?: {
+    sourceType?: string;
+    targetType?: string;
+    incompatibleReason?: string;
+  };
+}
 
-/**
- * A strictly typed connection with guaranteed valid handle IDs
- */
-export interface StrictConnection
-  extends Omit<BaseConnection, "sourceHandle" | "targetHandle"> {
+export interface ConnectionContext {
+  sourceNode: Node;
+  targetNode: Node;
   sourceHandle: HandleId;
   targetHandle: HandleId;
 }
 ```
 
-## Type Hierarchy Diagram
-
-```
-┌───────────────────────────┐
-│                           │
-│       BaseConnection      │
-│   (@xyflow/react type)    │
-│                           │
-│  source: string           │
-│  target: string           │
-│  sourceHandle?: string    │ ◄── Weak typing: any string allowed
-│  targetHandle?: string    │
-│                           │
-└───────────────┬───────────┘
-                │
-                │ extends & strengthens
-                ▼
-┌───────────────────────────┐
-│                           │
-│     StrictConnection      │
-│ (custom type enhancement) │
-│                           │
-│  source: string           │
-│  target: string           │
-│  sourceHandle: HandleId   │ ◄── Strong typing: branded type
-│  targetHandle: HandleId   │ ◄── Required, not optional
-│                           │
-└───────────────────────────┘
-```
-
-## Type Guards and Converters
+### Expression Types
 
 ```typescript
-/**
- * Type guard to check if a connection is a StrictConnection
- */
-export function isStrictConnection(
-  connection: BaseConnection,
-): connection is StrictConnection {
-  return (
-    !!connection.sourceHandle &&
-    !!connection.targetHandle &&
-    (isTextureHandleId(connection.sourceHandle) ||
-      isOutputHandleId(connection.sourceHandle)) &&
-    (isTextureHandleId(connection.targetHandle) ||
-      isOutputHandleId(connection.targetHandle))
-  );
+export interface ExpressionValidationResult {
+  isValid: boolean;
+  error?: string;
+  value?: ExpressionResult;
 }
 
-/**
- * Convert a standard React Flow connection to a strict connection
- * Returns null if the connection is invalid
- */
-export function toStrictConnection(
-  connection: BaseConnection,
-): StrictConnection | null {
-  const { sourceHandle, targetHandle, ...rest } = connection;
-
-  // Validate both handles exist
-  if (!sourceHandle || !targetHandle) {
-    return null;
-  }
-
-  // Try to parse as either input or output handle
-  let typedSourceHandle: HandleId | null = createTextureHandleId(sourceHandle);
-  if (!typedSourceHandle) {
-    typedSourceHandle = createOutputHandleId(sourceHandle);
-  }
-
-  let typedTargetHandle: HandleId | null = createTextureHandleId(targetHandle);
-  if (!typedTargetHandle) {
-    typedTargetHandle = createOutputHandleId(targetHandle);
-  }
-
-  if (!typedSourceHandle || !typedTargetHandle) {
-    return null;
-  }
-
-  return {
-    ...rest,
-    sourceHandle: typedSourceHandle,
-    targetHandle: typedTargetHandle,
-  };
+export interface ExpressionValidationContext extends ExpressionContext {
+  nodeId: string;
+  handleId: HandleId;
 }
 ```
 
-## Detailed Validation Results
+## Validation Functions
+
+### Connection Validation
 
 ```typescript
-/**
- * Result of validating a connection, with detailed error information if invalid
- */
-export type ConnectionValidationResult =
-  | { valid: true; connection: StrictConnection }
-  | { valid: false; reason: ConnectionValidationError; details: string };
-
-/**
- * Possible validation errors for connections
- */
-export enum ConnectionValidationError {
-  MISSING_SOURCE_HANDLE = "missing_source_handle",
-  MISSING_TARGET_HANDLE = "missing_target_handle",
-  INVALID_SOURCE_HANDLE = "invalid_source_handle",
-  INVALID_TARGET_HANDLE = "invalid_target_handle",
-  INVALID_CONNECTION_TYPE = "invalid_connection_type",
-  SELF_CONNECTION = "self_connection",
-  UNSUPPORTED_NODE_TYPES = "unsupported_node_types",
-}
-
-/**
- * Validate a connection with detailed error information
- */
 export function validateConnection(
   connection: BaseConnection,
+  context: ConnectionContext,
 ): ConnectionValidationResult {
-  const { source, target, sourceHandle, targetHandle } = connection;
-
-  // Prevent self connections
-  if (source === target) {
-    return {
-      valid: false,
-      reason: ConnectionValidationError.SELF_CONNECTION,
-      details: "Cannot connect a node to itself",
-    };
-  }
-
-  if (!sourceHandle) {
-    return {
-      valid: false,
-      reason: ConnectionValidationError.MISSING_SOURCE_HANDLE,
-      details: "Source handle is required",
-    };
-  }
-
-  if (!targetHandle) {
-    return {
-      valid: false,
-      reason: ConnectionValidationError.MISSING_TARGET_HANDLE,
-      details: "Target handle is required",
-    };
-  }
-
-  // Try to convert to strict connection
+  // Convert to strict connection
   const strictConnection = toStrictConnection(connection);
   if (!strictConnection) {
-    // Determine which handle is invalid
-    const sourceValid =
-      createTextureHandleId(sourceHandle) !== null ||
-      createOutputHandleId(sourceHandle) !== null;
-
-    const targetValid =
-      createTextureHandleId(targetHandle) !== null ||
-      createOutputHandleId(targetHandle) !== null;
-
-    if (!sourceValid) {
-      return {
-        valid: false,
-        reason: ConnectionValidationError.INVALID_SOURCE_HANDLE,
-        details: `Source handle "${sourceHandle}" is not a valid handle ID`,
-      };
-    }
-
-    if (!targetValid) {
-      return {
-        valid: false,
-        reason: ConnectionValidationError.INVALID_TARGET_HANDLE,
-        details: `Target handle "${targetHandle}" is not a valid handle ID`,
-      };
-    }
-
     return {
-      valid: false,
-      reason: ConnectionValidationError.INVALID_CONNECTION_TYPE,
-      details: "Connection could not be converted to a strict connection",
+      isValid: false,
+      error: "Invalid connection format",
     };
   }
 
+  // Validate handle types
+  if (
+    !isValidHandlePair(
+      strictConnection.sourceHandle,
+      strictConnection.targetHandle,
+    )
+  ) {
+    return {
+      isValid: false,
+      error: "Incompatible handle types",
+      details: {
+        sourceType: getHandleType(strictConnection.sourceHandle),
+        targetType: getHandleType(strictConnection.targetHandle),
+      },
+    };
+  }
+
+  // Validate node compatibility
+  return validateNodeCompatibility(context);
+}
+
+export function isValidHandlePair(
+  sourceHandle: HandleId,
+  targetHandle: HandleId,
+): boolean {
+  // Implementation details...
+}
+
+export function validateNodeCompatibility(
+  context: ConnectionContext,
+): ConnectionValidationResult {
+  // Implementation details...
+}
+```
+
+### Expression Validation
+
+```typescript
+export function validateExpression(
+  expression: Expression,
+  context: ExpressionValidationContext,
+): ExpressionValidationResult {
+  try {
+    const value = evaluateExpression(expression, context);
+    return {
+      isValid: true,
+      value,
+    };
+  } catch (error) {
+    return {
+      isValid: false,
+      error: error.message,
+    };
+  }
+}
+
+export function validateExpressionMap(
+  expressions: ExpressionMap,
+  context: ExpressionContext,
+): Record<string, ExpressionValidationResult> {
+  // Implementation details...
+}
+```
+
+## Integration with React Flow
+
+### Connection Validation Hook
+
+```typescript
+export function useConnectionValidation() {
+  const validateEdge = useCallback((params: Connection | Edge) => {
+    const result = validateConnection(params, getConnectionContext(params));
+    return result.isValid;
+  }, []);
+
   return {
-    valid: true,
-    connection: strictConnection,
+    validateEdge,
+    isValidConnection: validateEdge,
   };
 }
 ```
 
-## Connection Flow
-
-```
-┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│  React Flow    │    │toStrictConnection│    │  API/Database │
-│  Connection    │───►│     function   │───►│   Operation   │
-│  (UI Event)    │    │   (Validator)  │    │  (Data Store) │
-└───────────────┘    └───────────────┘    └───────────────┘
-       │                     │                     │
-       │                     │                     │
-       ▼                     ▼                     ▼
- string handles      HandleId typed          Strongly typed
- (weakly typed)      (strongly typed)         edge record
-```
-
-## React Flow Integration
+### Expression Validation Hook
 
 ```typescript
-// In apps/app/src/app/(app)/(workspace)/workspace/hooks/use-connection-validator.ts
+export function useExpressionValidation() {
+  const validateNodeExpressions = useCallback(
+    (nodeId: string, expressions: ExpressionMap) => {
+      const context = getExpressionContext(nodeId);
+      return validateExpressionMap(expressions, context);
+    },
+    [],
+  );
 
-import { useCallback } from "react";
-import { Connection } from "@xyflow/react";
+  return {
+    validateNodeExpressions,
+  };
+}
+```
 
-import { toast } from "@repo/ui/hooks/use-toast";
+## Error Handling
 
-import { validateConnection } from "../types/connection";
+### Connection Errors
 
-export function useConnectionValidator() {
-  return useCallback((connection: Connection) => {
-    // Validate the connection
-    const result = validateConnection(connection);
-
-    if (!result.valid) {
-      // Show error message
-      toast({
-        title: "Invalid Connection",
-        description: result.details,
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // Connection is valid
-    return true;
-  }, []);
+```typescript
+export interface ConnectionError {
+  code: ConnectionErrorCode;
+  message: string;
+  details?: Record<string, unknown>;
 }
 
-// Usage in Flow component:
-// const isValidConnection = useConnectionValidator();
-// <ReactFlow isValidConnection={isValidConnection} ... />
+export enum ConnectionErrorCode {
+  INVALID_HANDLE_TYPE = "INVALID_HANDLE_TYPE",
+  INCOMPATIBLE_NODES = "INCOMPATIBLE_NODES",
+  INVALID_EXPRESSION = "INVALID_EXPRESSION",
+  // More error codes...
+}
+
+export function createConnectionError(
+  code: ConnectionErrorCode,
+  details?: Record<string, unknown>,
+): ConnectionError {
+  // Implementation details...
+}
 ```
 
-## Error Handling Flow
+### Expression Errors
 
+```typescript
+export interface ExpressionError {
+  code: ExpressionErrorCode;
+  message: string;
+  expression: Expression;
+  context?: Record<string, unknown>;
+}
+
+export enum ExpressionErrorCode {
+  SYNTAX_ERROR = "SYNTAX_ERROR",
+  EVALUATION_ERROR = "EVALUATION_ERROR",
+  CONTEXT_ERROR = "CONTEXT_ERROR",
+  // More error codes...
+}
 ```
-User attempts connection → React Flow generates Connection event
-↓
-validateConnection checks handle validity
-↓
-┌─────────────────────┐     ┌─────────────────────┐
-│ Invalid handles     │     │ Valid handles       │
-└─────────┬───────────┘     └─────────┬───────────┘
-          │                           │
-          ▼                           ▼
- ┌─────────────────┐         ┌─────────────────┐
- │ Show toast      │         │ Process valid   │
- │ Reject connection│         │ connection     │
- └─────────────────┘         └─────────────────┘
+
+## Performance Optimization
+
+### Validation Caching
+
+```typescript
+export interface ValidationCache {
+  connections: Map<string, ConnectionValidationResult>;
+  expressions: Map<string, ExpressionValidationResult>;
+}
+
+export function createValidationCache(): ValidationCache {
+  return {
+    connections: new Map(),
+    expressions: new Map(),
+  };
+}
+
+export function getCachedValidation(
+  cache: ValidationCache,
+  key: string,
+): ValidationResult | undefined {
+  // Implementation details...
+}
 ```
 
-## Benefits of the Approach
+### Batch Validation
 
-1. **Compile-Time Safety**:
+```typescript
+export interface BatchValidationResult {
+  connections: Map<string, ConnectionValidationResult>;
+  expressions: Map<string, ExpressionValidationResult>;
+  errors: Error[];
+}
 
-   - TypeScript can detect and prevent invalid handle usage
-   - IDE autocomplete for valid handle operations only
+export function validateBatch(
+  connections: StrictConnection[],
+  expressions: ExpressionMap,
+): BatchValidationResult {
+  // Implementation details...
+}
+```
 
-2. **Centralized Validation**:
+## UI Integration
 
-   - Single point of validation logic in `validateConnection`
-   - Detailed error messages for different validation failures
+### Error Display
 
-3. **Required Handles**:
+```typescript
+export interface ValidationErrorProps {
+  error: ConnectionError | ExpressionError;
+  onDismiss?: () => void;
+}
 
-   - No more incomplete connections with missing handles
-   - Clear error messages when handles are missing
+export function ValidationErrorDisplay(props: ValidationErrorProps) {
+  // Implementation details...
+}
+```
 
-4. **Runtime Type Guards**:
+### Visual Feedback
 
-   - `isStrictConnection` checks validity at runtime
-   - Can be used in conditional logic to handle edge cases
+```typescript
+export interface ConnectionFeedbackProps {
+  connection: StrictConnection;
+  validationResult: ConnectionValidationResult;
+}
 
-5. **Clean API Boundaries**:
-   - UI components work with generic `Connection` type
-   - Business logic works with validated `StrictConnection` type
-   - Database layer uses `InsertEdge` type with guaranteed valid handles
+export function ConnectionFeedback(props: ConnectionFeedbackProps) {
+  // Implementation details...
+}
+```
+
+## Future Improvements
+
+1. **Enhanced Validation**
+
+   - More detailed type checking
+   - Custom validation rules
+   - Validation plugins
+
+2. **Performance**
+
+   - Improved caching
+   - Parallel validation
+   - Incremental updates
+
+3. **Developer Experience**
+
+   - Better error messages
+   - Debugging tools
+   - Documentation
+
+4. **UI Enhancements**
+   - Real-time feedback
+   - Visual indicators
+   - Error recovery
+
+## Success Metrics
+
+1. **Type Safety**
+
+   - Compile-time errors
+   - Runtime validation
+   - Error prevention
+
+2. **Performance**
+
+   - Fast validation
+   - Efficient caching
+   - Low overhead
+
+3. **User Experience**
+   - Clear feedback
+   - Easy debugging
+   - Good documentation

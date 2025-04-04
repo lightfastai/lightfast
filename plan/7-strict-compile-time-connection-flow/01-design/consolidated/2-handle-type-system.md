@@ -1,193 +1,254 @@
-# Handle Type System
+# Handle Type System Design
 
 ## Overview
 
-The handle type system provides compile-time type safety for texture handles and node connections in React TD. It uses TypeScript branded types to ensure handle IDs follow the required format and provides utilities for validation, conversion, and type checking.
+The handle type system provides compile-time type safety for node connections through branded types and comprehensive validation. It supports both texture input handles and node output handles, along with expression-based dynamic values.
 
-## TextureHandleId Type
+## Type Definitions
+
+### Core Types
 
 ```typescript
-// Branded type for compile-time safety
+// Handle Types
 export type TextureHandleId = string & { readonly __brand: "TextureHandleId" };
-
-// Regular expression for validation
-export const TEXTURE_HANDLE_ID_REGEX = /^input-\d+$/;
-
-// Smart constructor ensures format is valid
-export function createTextureHandleId(value: string): TextureHandleId | null {
-  if (!isValidTextureHandleId(value)) return null;
-  return value as TextureHandleId;
-}
-
-// Type guard for runtime checks
-export function isTextureHandleId(value: unknown): value is TextureHandleId {
-  return typeof value === "string" && isValidTextureHandleId(value as string);
-}
-
-// Validation function
-export function isValidTextureHandleId(id: string): boolean {
-  return TEXTURE_HANDLE_ID_REGEX.test(id);
-}
-
-// Helper to generate handle ID from index
-export function generateTextureHandleId(index: number): TextureHandleId {
-  const handleId = `input-${index + 1}`;
-  return handleId as TextureHandleId;
-}
-```
-
-## OutputHandleId Type
-
-```typescript
-// Branded type for output handles
 export type OutputHandleId = string & { readonly __brand: "OutputHandleId" };
-
-// Regular expression for output handles
-export const OUTPUT_HANDLE_ID_REGEX = /^output-[a-z0-9-]+$/;
-
-// Constructor function
-export function createOutputHandleId(value: string): OutputHandleId | null {
-  if (!isValidOutputHandleId(value)) return null;
-  return value as OutputHandleId;
-}
-
-// Type guard
-export function isOutputHandleId(value: unknown): value is OutputHandleId {
-  return typeof value === "string" && isValidOutputHandleId(value as string);
-}
-
-// Validation function
-export function isValidOutputHandleId(id: string): boolean {
-  return OUTPUT_HANDLE_ID_REGEX.test(id);
-}
-
-// Helper generator
-export function generateOutputHandleId(name: string): OutputHandleId | null {
-  const id = `output-${name}`;
-  return createOutputHandleId(id);
-}
-```
-
-## HandleId Union Type
-
-```typescript
-// Union type for all handle types
 export type HandleId = TextureHandleId | OutputHandleId;
 
-// Type guard for any valid handle
-export function isHandleId(value: unknown): value is HandleId {
-  return isTextureHandleId(value) || isOutputHandleId(value);
+// Expression Types
+export type Expression = string & { readonly __brand: "Expression" };
+export type ExpressionResult = number | boolean;
+
+// Context Types
+export interface ExpressionContext {
+  time: number;
+  delta: number;
+  me: {
+    time: {
+      now: number;
+      delta: number;
+      elapsed: number;
+      frame: number;
+      fps: number;
+      seconds: number;
+      minutes: number;
+      hours: number;
+    };
+  };
+  [key: string]: any;
 }
 ```
 
-## Zod Schema Integration
+### Validation Types
 
 ```typescript
-// Zod schema for TextureHandleId
+// Zod Schemas
 export const $TextureHandleId = z.custom<TextureHandleId>(
   (val) => typeof val === "string" && isValidTextureHandleId(val as string),
   {
-    message:
-      "Handle ID must be in the format 'input-N' where N is a positive integer",
+    message: "Invalid texture handle ID format",
   },
 );
 
-// Zod schema for OutputHandleId
 export const $OutputHandleId = z.custom<OutputHandleId>(
   (val) => typeof val === "string" && isValidOutputHandleId(val as string),
   {
-    message: "Output handle ID must be in the format 'output-name'",
+    message: "Invalid output handle ID format",
   },
 );
 
-// Union schema
-export const $HandleId = z.union([$TextureHandleId, $OutputHandleId]);
+export const $Expression = z.custom<Expression>(
+  (val) => typeof val === "string" && val.startsWith("$"),
+  {
+    message: "Expression must be a string that starts with $",
+  },
+);
+```
+
+## Type Guards
+
+```typescript
+// Handle Type Guards
+export function isTextureHandleId(value: unknown): value is TextureHandleId {
+  return typeof value === "string" && TEXTURE_HANDLE_ID_REGEX.test(value);
+}
+
+export function isOutputHandleId(value: unknown): value is OutputHandleId {
+  return typeof value === "string" && OUTPUT_HANDLE_ID_REGEX.test(value);
+}
+
+// Expression Type Guards
+export function isExpression(value: unknown): value is Expression {
+  return typeof value === "string" && value.startsWith("$");
+}
+
+export function isExpressionResult(value: unknown): value is ExpressionResult {
+  return typeof value === "number" || typeof value === "boolean";
+}
+```
+
+## Constructor Functions
+
+```typescript
+// Handle Constructors
+export function createTextureHandleId(value: string): TextureHandleId | null {
+  return isValidTextureHandleId(value) ? (value as TextureHandleId) : null;
+}
+
+export function createOutputHandleId(value: string): OutputHandleId | null {
+  return isValidOutputHandleId(value) ? (value as OutputHandleId) : null;
+}
+
+// Expression Constructor
+export function createExpression(value: string): Expression | null {
+  return value.startsWith("$") ? (value as Expression) : null;
+}
 ```
 
 ## Utility Functions
 
 ```typescript
-// Create multiple handles at once
-export function createTextureHandleIds(count: number): TextureHandleId[] {
-  return Array.from({ length: count }, (_, i) => generateTextureHandleId(i));
+// Handle Utilities
+export function generateTextureHandleId(index: number): TextureHandleId {
+  return `input-${index}` as TextureHandleId;
 }
 
-// Create multiple output handles
-export function createOutputHandleIds(names: string[]): OutputHandleId[] {
-  return names
-    .map((name) => generateOutputHandleId(name))
-    .filter((id): id is OutputHandleId => id !== null);
+export function generateOutputHandleId(name: string): OutputHandleId {
+  return `output-${name}` as OutputHandleId;
 }
 
-// Get texture handle index
-export function getTextureHandleIndex(handleId: string): number | null {
-  if (!isValidTextureHandleId(handleId)) return null;
-  const match = /^input-(\d+)$/.exec(handleId);
-  if (!match?.[1]) return null;
-  return parseInt(match[1], 10) - 1;
+// Expression Utilities
+export function extractExpression(expression: Expression): string {
+  return expression.slice(1);
 }
 
-// Get uniform name from handle ID
-export function getUniformNameFromTextureHandleId(
-  handleId: string | TextureHandleId,
-): string | null {
-  if (!isValidTextureHandleId(handleId)) return null;
-  const index = getTextureHandleIndex(handleId);
-  if (index === null) return null;
-  return `u_texture${index + 1}`;
-}
-
-// Get handle ID from uniform name
-export function getTextureHandleIdFromUniformName(
-  uniformName: string,
-): TextureHandleId | null {
-  const match = /^u_texture(\d+)$/.exec(uniformName);
-  if (!match?.[1]) return null;
-  const index = parseInt(match[1], 10);
-  return generateTextureHandleId(index - 1);
+export function evaluateExpression(
+  expression: Expression | number | boolean,
+  context: ExpressionContext,
+): ExpressionResult {
+  // Implementation details...
 }
 ```
 
-## Type Safety Benefits
+## Component Integration
 
-1. **Compile-Time Validation**:
+### Handle Props
 
-   - TypeScript errors for invalid handle formats
-   - Distinguishes between input and output handles
-   - Prevents assignment of wrong handle types
+```typescript
+export interface NodeHandleProps {
+  id: HandleId;
+  type: "input" | "output";
+  // Other props...
+}
 
-2. **Runtime Safety**:
-
-   - Type guards for dynamic validation
-   - Consistent validation across the codebase
-   - Clear error messages for invalid handles
-
-3. **Developer Experience**:
-
-   - IDE autocomplete for handle-related functions
-   - Static analysis catches errors early
-   - Better documentation through types
-
-4. **Refactoring Protection**:
-   - Changes to handle format are checked at compile time
-   - Rename operations maintain type safety
-   - Easier to identify affected code
-
-## Type Hierarchy Diagram
-
+export interface TextureNodeProps {
+  inputHandles: TextureHandleId[];
+  outputHandle: OutputHandleId;
+  // Other props...
+}
 ```
-┌───────────────────┐      ┌───────────────────┐
-│                   │      │                   │
-│  TextureHandleId  │      │   OutputHandleId  │
-│                   │      │                   │
-└─────────┬─────────┘      └─────────┬─────────┘
-          │                          │
-          │                          │
-          ▼                          ▼
-    ┌────────────────────────────────────┐
-    │                                    │
-    │            HandleId                │
-    │      (Union of both types)         │
-    │                                    │
-    └────────────────────────────────────┘
+
+### Connection Types
+
+```typescript
+export interface StrictConnection extends BaseConnection {
+  sourceHandle: HandleId;
+  targetHandle: HandleId;
+}
+
+export function toStrictConnection(
+  connection: BaseConnection,
+): StrictConnection | null {
+  // Implementation details...
+}
 ```
+
+## Expression System Integration
+
+### Uniform Configuration
+
+```typescript
+export interface UniformConfig {
+  uniformName: string;
+  pathToValue?: string;
+}
+
+export type ExpressionMap = Record<string, Expression | undefined>;
+
+export interface UniformUpdate {
+  shader: ShaderMaterial;
+  expressions: ExpressionMap;
+  context: ExpressionContext;
+}
+```
+
+### Update Functions
+
+```typescript
+export function updateNumericUniforms(
+  shader: ShaderMaterial,
+  expressionMap: ExpressionMap,
+  context: ExpressionContext,
+): void {
+  // Implementation details...
+}
+
+export function updateVectorUniforms(
+  shader: ShaderMaterial,
+  expressionMap: ExpressionMap,
+  context: ExpressionContext,
+): void {
+  // Implementation details...
+}
+```
+
+## Error Handling
+
+### Compile-Time Errors
+
+- Invalid handle type assignments
+- Incorrect connection types
+- Expression type mismatches
+
+### Runtime Validation
+
+- Handle format validation
+- Connection compatibility
+- Expression evaluation errors
+
+## Performance Considerations
+
+1. **Type System**
+
+   - Zero runtime overhead
+   - Efficient validation
+   - Minimal allocations
+
+2. **Expression Evaluation**
+
+   - Optimized context access
+   - Caching opportunities
+   - Error recovery
+
+3. **Memory Management**
+   - Reuse of handle objects
+   - Expression result caching
+   - Context optimization
+
+## Future Extensions
+
+1. **Type System**
+
+   - Additional handle types
+   - Enhanced type inference
+   - Custom validation rules
+
+2. **Expression System**
+
+   - More expression types
+   - Advanced validation
+   - Performance optimizations
+
+3. **Developer Tools**
+   - Type checking tools
+   - Debugging utilities
+   - Documentation generation

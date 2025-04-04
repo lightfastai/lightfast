@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document reviews the architecture that manages edges in the React TD application, focusing on type safety and data flow between components. The current implementation has potential type safety issues, particularly with `sourceHandle` and `targetHandle` fields that are stored as generic varchar strings in the database but require specific formatting.
+This document reviews the architecture that manages edges in the React TD application, focusing on type safety and data flow between components. The implementation has been enhanced with branded types and strict compile-time type checking, particularly for handle IDs and expressions.
 
 ## Core Components
 
@@ -12,172 +12,129 @@ The database schema for edges is defined in `vendor/db/src/schema/tables/Edge.ts
 
 - Edges are stored with fields: `id`, `source`, `target`, `sourceHandle`, `targetHandle`, `createdAt`, `updatedAt`
 - `source` and `target` reference Node IDs
-- `sourceHandle` and `targetHandle` are stored as varchar(191) with no database-level constraints
-- Validation happens through Zod schemas, particularly `InsertEdgeSchema`
-- Runtime validation using `isValidTextureHandleId` ensures handles follow the "input-N" format
+- `sourceHandle` and `targetHandle` use branded types for compile-time safety
+- Validation happens through Zod schemas with custom type guards
+- Both compile-time and runtime validation ensure handle format correctness
 
-### Texture Handle Types (`TextureHandle.ts`)
+### Handle Types
 
-The `vendor/db/src/schema/types/TextureHandle.ts` file defines the core types and utilities for texture handles:
+The system now supports two distinct handle types:
 
-- `TEXTURE_HANDLE_ID_REGEX` = `/^input-\d+$/` defines the required format
-- `isValidTextureHandleId` function validates strings against this regex
-- Helper functions convert between handle IDs and uniform names
-- `getTextureInputsMetadata` provides metadata about texture inputs
+1. **Texture Handles** (`TextureHandle.ts`):
+
+   - Uses branded type `TextureHandleId`
+   - Follows "input-N" format
+   - Includes validation and type guards
+   - Maps directly to shader uniforms
+
+2. **Output Handles** (`OutputHandle.ts`):
+   - Uses branded type `OutputHandleId`
+   - Follows "output-name" format
+   - Supports multiple outputs per node
+   - Includes validation and type guards
+
+### Expression System
+
+The expression system has been enhanced with strict typing:
+
+- Uses branded type `Expression` for compile-time safety
+- Supports type-safe evaluation context
+- Provides proper typing for expression results
+- Includes validation and error handling
+- Maps cleanly to shader uniforms
 
 ### UI Components
 
 #### NodeHandle (`node-handle.tsx`)
 
-A reusable component in `apps/app/src/app/(app)/(workspace)/workspace/components/common/node-handle.tsx`:
+A reusable component with enhanced type safety:
 
-- Renders connection points for nodes with tooltips
-- Enforces handle ID format at component level:
-  - Input handles must start with "input-"
-  - Output handles must include "output"
-- Uses React Flow's `Handle` component internally
+- Uses branded types for handle IDs
+- Enforces type-safe props
+- Provides compile-time validation
+- Supports both input and output handles
 
 #### TextureNode (`texture-node.tsx`)
 
-The texture node component in `apps/app/src/app/(app)/(workspace)/workspace/components/nodes/texture-node.tsx`:
+The texture node component with improved type safety:
 
-- Renders a node for textures with appropriate input handles
-- Uses `getTextureInputsForType` to determine which input handles to create
-- Creates a `NodeHandle` component for each input and one output
+- Uses type-safe handle creation
+- Enforces proper handle types
+- Supports multiple output handles
+- Integrates with expression system
 
 ### Hooks and Logic
 
+#### useExpressionEvaluator (`use-expression-evaluator.tsx`)
+
+A new hook that provides type-safe expression evaluation:
+
+- Evaluates expressions with proper typing
+- Handles nested context values
+- Provides error handling and fallbacks
+- Updates uniforms safely
+
 #### useAddEdge (`use-add-edge.tsx`)
 
-A hook in `apps/app/src/app/(app)/(workspace)/workspace/hooks/use-add-edge.tsx` that manages edge creation:
+An enhanced hook with type safety:
 
-- Provides methods to create connections between nodes
-- Uses optimistic updates for better UX
-- Includes validation for target handles but doesn't explicitly validate handle ID format
-- Relies on server-side validation through the API
+- Uses branded types for validation
+- Provides compile-time connection checking
+- Includes optimistic updates
+- Maintains backward compatibility
 
-### WebGL Types and Registry
+### WebGL Integration
 
-#### Texture Registry (`texture-registry.ts`)
+The WebGL system has been updated to support:
 
-The `packages/webgl/src/types/texture-registry.ts` file manages texture types:
+- Type-safe uniform updates
+- Expression-based animations
+- Proper cleanup and disposal
+- Performance optimizations
 
-- `getTextureInputsForType` returns input metadata for a texture type
-- Maps between uniform names and handle IDs
-- Determines the maximum number of inputs for texture types
+## Type Safety Improvements
 
-#### Texture Uniform (`texture-uniform.ts`)
+1. **Branded Types:**
 
-The `packages/webgl/src/types/texture-uniform.ts` file defines types for texture uniforms:
+   - `TextureHandleId` for input handles
+   - `OutputHandleId` for output handles
+   - `Expression` for dynamic values
+   - `HandleId` union type
 
-- `TextureReference` interface describes a texture reference in the shader system
-- Zod schema for validation
-- Functions to create and update texture uniforms
+2. **Validation:**
 
-#### Field Types (`field.ts`)
+   - Compile-time type checking
+   - Runtime validation where needed
+   - Clear error messages
+   - Performance optimizations
 
-The `packages/webgl/src/types/field.ts` file defines types for field metadata:
-
-- `TextureFieldMetadata` interface defines metadata for texture input fields
-- Used by the texture registry to define constraints
-
-## Data Flow
-
-1. **Definition Phase:**
-
-   - Texture types define their input requirements via uniform constraints
-   - `getTextureInputsForType` converts these to handle metadata
-
-2. **Node Rendering:**
-
-   - `TextureNode` uses texture input metadata to create `NodeHandle` components
-   - Handle IDs follow the "input-N" pattern
-   - Visual validation occurs in the UI components
-
-3. **Edge Creation:**
-
-   - User connects handles visually
-   - `useAddEdge` hook is called when a connection is made
-   - Handle validates connection at runtime
-   - Edge is added to the database after validation
-
-4. **Validation:**
-   - Client-side: `NodeHandle` component enforces ID format
-   - API/Database: `InsertEdgeSchema` validates handle format using regex
-   - Both use the same pattern but in different places
-
-## Type Safety Issues
-
-1. **Schema Definition:**
-
-   - Database schema allows any varchar(191) for handles
-   - Type safety relies on runtime validation
-
-2. **Handle ID Format:**
-
-   - "input-N" format is enforced in multiple places:
-     - Database schema validation (Zod schema)
-     - UI component validation (NodeHandle)
-     - Utility functions (TextureHandle.ts)
-   - No single source of truth for this pattern
-
-3. **Function Parameters:**
-   - Many functions accept string parameters for handles without type constraints
-   - TypeScript could provide better static type checking
-
-## Recommendations
-
-1. **Enhanced TypeScript Types:**
-   - Create a branded type for TextureHandleId to enforce compile-time safety
-   - Use this type consistently across the codebase
-
-```typescript
-// Example implementation
-export type TextureHandleId = string & { readonly _brand: unique symbol };
-
-export function createTextureHandleId(input: string): TextureHandleId | null {
-  return isValidTextureHandleId(input) ? (input as TextureHandleId) : null;
-}
-```
-
-2. **Centralized Validation:**
-
-   - Move all validation logic to TextureHandle.ts
-   - Create parsing functions that return either valid handles or errors
-   - Use these functions in all places needing validation
-
-3. **Database Schema Enhancement:**
-
-   - Consider using a custom type or check constraint in the database
-   - At minimum, add documentation about the expected format
-
-4. **Consistent Error Handling:**
-
-   - Standardize error messages for invalid handles
-   - Provide better user feedback when invalid handles are detected
-
-5. **Edge Schema Evolution:**
-   - Consider changing the edge schema to store handle numeric indices directly
-   - This would eliminate the need for string parsing/formatting
+3. **Expression System:**
+   - Type-safe evaluation
+   - Proper context typing
+   - Error handling
+   - Performance considerations
 
 ## Future Considerations
 
-- **Strongly Typed Edge System:**
+1. **Performance Optimization:**
 
-  - Define specific edge types based on source and target node types
-  - Create a type registry that knows which connections are valid
-  - Generate UI connection rules from this registry
+   - Cache evaluation results
+   - Optimize uniform updates
+   - Reduce unnecessary validations
 
-- **Validation Caching:**
+2. **Enhanced Type Safety:**
 
-  - Cache validation results to improve performance
-  - Pre-validate handles at UI level before sending to API
+   - Add more specific handle types
+   - Improve error messages
+   - Extend type system coverage
 
-- **Enhanced Visual Feedback:**
+3. **Developer Experience:**
 
-  - Show validation errors directly on handles
-  - Prevent invalid connections visually
+   - Improve error messages
+   - Add development tools
+   - Enhance documentation
 
-- **Database Migration:**
-  - Consider migrating to a more structured representation
-  - Add explicit constraints to the database schema
+4. **Feature Extensions:**
+   - Support more expression types
+   - Add custom handle types
+   - Enhance validation rules

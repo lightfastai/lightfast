@@ -1,165 +1,224 @@
 # Architecture Overview: Strict Compile-Time Connection Flow
 
-## System Purpose
+## System Overview
 
-The Strict Compile-Time Connection Flow architecture introduces compile-time type safety for node connections in React TD. The primary goal is to move validation of handle IDs and connections from runtime to compile-time, creating a single source of truth for connection validation and providing better developer feedback through TypeScript.
+The strict compile-time connection flow system provides type-safe handling of node connections in React TD. It uses branded types and compile-time validation to ensure connection safety while maintaining runtime performance.
 
 ## Core Components
 
-The system consists of these major components:
+### 1. Type System
 
-### 1. Enhanced Type System
+The type system is built on three main branded types:
 
-**Description**: A set of TypeScript branded types and validation utilities for handle IDs.
+```typescript
+// Handle Types
+export type TextureHandleId = string & { readonly __brand: "TextureHandleId" };
+export type OutputHandleId = string & { readonly __brand: "OutputHandleId" };
+export type HandleId = TextureHandleId | OutputHandleId;
 
-**Key Components**:
-
-- `TextureHandleId`: Branded type for texture input handles
-- `OutputHandleId`: Branded type for node output handles
-- `HandleId`: Union type for both handle types
-- Type guards and constructor functions
-
-**Benefits**:
-
-- Compile-time validation of handle ID format
-- Type-level distinction between input and output handles
-- Prevention of incorrect handle assignments
-
-### 2. Connection Validation System
-
-**Description**: Utilities and middleware for validating connections between nodes.
-
-**Key Components**:
-
-- `StrictConnection`: Type-safe connection interface
-- Validation utilities with detailed error reporting
-- Connection validation middleware for React Flow
-
-**Benefits**:
-
-- Centralized validation logic
-- Detailed error messages for invalid connections
-- Real-time validation during connection creation
-
-### 3. WebGL Registry Integration
-
-**Description**: Integration with the WebGL texture registry to validate texture-specific connections.
-
-**Key Components**:
-
-- Typed texture registry with `TextureHandleId`
-- Type-safe uniform name mapping
-- Validation against texture type requirements
-
-**Benefits**:
-
-- Ensure texture connections match shader requirements
-- Type-safe updates to shader uniforms
-- Validation of required vs. optional connections
-
-### 4. UI Feedback System
-
-**Description**: Visual feedback for connection validation in the user interface.
-
-**Key Components**:
-
-- Connection validation visual indicators
-- Error tooltips for invalid connections
-- Toast notifications for validation errors
-
-**Benefits**:
-
-- Clear feedback on why connections are invalid
-- Improved user experience during connection creation
-- Prevention of user errors
-
-## Component Structure
-
+// Expression Type
+export type Expression = string & { readonly __brand: "Expression" };
 ```
-┌─────────────────────────────────┐
-│                                 │
-│     Texture Configuration       │
-│         Registry                │
-│                                 │
-└────────────────┬────────────────┘
-                 │
-                 │ Defines
-                 │
-     ┌───────────▼────────────┐
-     │                        │
-     │  useUpdateTexture      │
-     │  (Unified Hook)        │
-     │                        │
-     └───────────┬────────────┘
-                 │
-                 │ Creates
-                 │
-     ┌───────────▼────────────┐
-     │                        │
-     │  WebGLRenderTargetNodes│
-     │                        │
-     └────────────────────────┘
+
+### 2. Validation System
+
+Multi-layered validation ensures type safety:
+
+1. **Compile-Time Validation**
+
+   - Branded types enforce handle format
+   - TypeScript type checking for connections
+   - Expression type safety
+
+2. **Runtime Validation**
+   - Zod schemas for API validation
+   - Connection validation middleware
+   - Expression evaluation safety
+
+### 3. Expression Evaluation
+
+Type-safe expression system:
+
+```typescript
+export interface ExpressionContext {
+  time: number;
+  delta: number;
+  me: {
+    time: {
+      now: number;
+      delta: number;
+      elapsed: number;
+      frame: number;
+      fps: number;
+      seconds: number;
+      minutes: number;
+      hours: number;
+    };
+  };
+  [key: string]: any;
+}
+
+export type ExpressionResult = number | boolean;
+```
+
+### 4. Connection Management
+
+Enhanced connection handling:
+
+```typescript
+export interface StrictConnection extends BaseConnection {
+  sourceHandle: HandleId;
+  targetHandle: HandleId;
+}
+
+export function toStrictConnection(
+  connection: BaseConnection,
+): StrictConnection | null;
+```
+
+## Implementation Details
+
+### 1. Handle Creation
+
+Handles are created using type-safe constructors:
+
+```typescript
+export function createTextureHandleId(value: string): TextureHandleId | null;
+export function createOutputHandleId(value: string): OutputHandleId | null;
+```
+
+### 2. Expression Management
+
+Expression evaluation with type safety:
+
+```typescript
+export function evaluateExpression(
+  expression: Expression | number | boolean,
+  context: ExpressionContext,
+): ExpressionResult;
+```
+
+### 3. Uniform Updates
+
+Type-safe uniform management:
+
+```typescript
+export interface UniformConfig {
+  uniformName: string;
+  pathToValue?: string;
+}
+
+function updateNumericUniforms(
+  shader: ShaderMaterial,
+  expressionMap: ExpressionMap,
+  context: ExpressionContext,
+): void;
 ```
 
 ## Data Flow
 
-### Handle ID Flow
+1. **Handle Creation**
 
-1. Handle IDs are defined with branded types (`TextureHandleId`, `OutputHandleId`)
-2. Constructor functions ensure IDs have the correct format
-3. Component props enforce the correct handle types
-4. Handle components validate IDs at render time
-5. Connections use type-safe handle IDs
+   - Type-safe handle creation
+   - Validation at creation time
+   - Compile-time type checking
 
-### Connection Flow
+2. **Connection Creation**
 
-1. User initiates a connection in the UI
-2. Connection validation middleware intercepts the connection event
-3. Connection is validated against type system and WebGL registry
-4. If valid, connection is created and stored
-5. If invalid, user receives visual feedback and error message
+   - Handle type validation
+   - Connection compatibility check
+   - Type-safe connection object
 
-### Validation Flow
+3. **Expression Evaluation**
 
-1. Basic handle format validation through TypeScript types
-2. Connection source/target validation through React Flow
-3. Handle type validation (input vs. output) through branded types
-4. Texture-specific validation through WebGL registry
-5. UI feedback based on validation results
+   - Context validation
+   - Type-safe evaluation
+   - Error handling
 
-## Technical Constraints
-
-- Must maintain backward compatibility with existing projects
-- Must not impact performance significantly
-- Must integrate with React Flow's connection system
+4. **Uniform Updates**
+   - Type-safe uniform access
+   - Expression evaluation
+   - Performance optimization
 
 ## Performance Considerations
 
-- Type safety has no runtime cost (TypeScript types are erased)
-- Validation utilities should be optimized for frequent use
-- Connection validation should complete within 10ms
-- Visual feedback should update immediately
+1. **Type System**
 
-## Shader Management System
+   - Zero runtime overhead from types
+   - Efficient validation checks
+   - Minimal memory usage
 
-```
-┌───────────────────┐
-│ Texture Data Map  │
-│                   │
-└─────────┬─────────┘
-          │
-          ▼
-┌─────────────────────┐     ┌─────────────────────┐
-│ Texture Type Config │────►│ Shader Factory      │
-└─────────────────────┘     └──────────┬──────────┘
-                                       │
-                                       ▼
-┌─────────────────────┐     ┌─────────────────────┐
-│ Connection Cache    │────►│ Uniform Assignment  │
-└─────────────────────┘     └──────────┬──────────┘
-                                       │
-                                       ▼
-┌─────────────────────┐     ┌─────────────────────┐
-│ Expression Registry │────►│ Frame Update        │
-└─────────────────────┘     └─────────────────────┘
-```
+2. **Expression Evaluation**
+
+   - Optimized context access
+   - Error handling overhead
+   - Caching opportunities
+
+3. **Connection Management**
+   - Fast validation checks
+   - Efficient type guards
+   - Minimal allocations
+
+## Error Handling
+
+1. **Compile Time**
+
+   - TypeScript errors
+   - Type mismatch detection
+   - Invalid handle detection
+
+2. **Runtime**
+   - Validation errors
+   - Expression errors
+   - Connection errors
+
+## Future Extensions
+
+1. **Type System**
+
+   - Additional handle types
+   - Enhanced type inference
+   - Custom type guards
+
+2. **Performance**
+
+   - Expression caching
+   - Validation optimization
+   - Memory management
+
+3. **Developer Experience**
+   - Enhanced error messages
+   - Development tools
+   - Documentation
+
+## Migration Path
+
+1. **Code Migration**
+
+   - Gradual type adoption
+   - Feature flags
+   - Backward compatibility
+
+2. **Data Migration**
+   - Safe data conversion
+   - Validation checks
+   - Rollback support
+
+## Success Metrics
+
+1. **Type Safety**
+
+   - Compile-time errors
+   - Runtime validation
+   - Error prevention
+
+2. **Performance**
+
+   - Render performance
+   - Connection speed
+   - Memory usage
+
+3. **Developer Experience**
+   - Clear error messages
+   - Easy debugging
+   - Good documentation
