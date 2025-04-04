@@ -192,6 +192,101 @@ const onConnect = useCallback(
 );
 ```
 
+### 5. Add Handle Type Server-Side Validation
+
+To further strengthen the edge validation system, add server-side validation that ensures connections flow properly between handles:
+
+**File**: `apps/app/src/trpc/server/router/tenant/edge.ts`
+
+```typescript
+// In the create mutation handler in edge.ts
+export const edgeRouter = {
+  // ... existing code ...
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().nanoid(),
+        edge: z.object({
+          source: z.string(),
+          target: z.string(),
+          sourceHandle: z.string(),
+          targetHandle: z.string(),
+        }),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.db.transaction(async (tx) => {
+        // 1. Get the target node and validate it exists
+        const [targetNode] = await tx
+          .select()
+          .from(Node)
+          .where(eq(Node.id, input.edge.target))
+          .limit(1);
+
+        if (!targetNode) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Target node not found",
+          });
+        }
+
+        // Add handle type validation - Ensure connections flow from output to input
+        // Check if the source handle is an output and target handle is an input
+        const isOutputSourceHandle =
+          !input.edge.sourceHandle.startsWith("input-");
+        const isInputTargetHandle =
+          input.edge.targetHandle.startsWith("input-");
+
+        if (!isOutputSourceHandle || !isInputTargetHandle) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Invalid connection: Can only connect from output to input handles",
+          });
+        }
+
+        // Continue with existing validation
+        // ... existing code ...
+      });
+    }),
+
+  // Similarly update the replace mutation with the same validation
+  replace: protectedProcedure
+    // ... existing code ...
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.db.transaction(async (tx) => {
+        // ... existing code ...
+
+        // Add handle type validation for replacement
+        const isOutputSourceHandle =
+          !input.newEdge.sourceHandle?.startsWith("input-");
+        const isInputTargetHandle =
+          input.newEdge.targetHandle?.startsWith("input-");
+
+        if (!isOutputSourceHandle || !isInputTargetHandle) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Invalid connection: Can only connect from output to input handles",
+          });
+        }
+
+        // Continue with existing validation
+        // ... existing code ...
+      });
+    }),
+  // ... existing code ...
+};
+```
+
+This server-side validation provides an additional layer of protection against invalid connections by checking that:
+
+1. Source handles should NOT start with "input-" (indicating they are output handles)
+2. Target handles SHOULD start with "input-" (confirming they are input handles)
+
+This complements the existing validation and follows the handle naming conventions in the codebase where input handles use the format "input-N" and output handles have different naming patterns.
+
 ## Testing Strategy
 
 To verify these improvements, test the following scenarios:
@@ -212,6 +307,7 @@ To verify these improvements, test the following scenarios:
    - Test with various node types and handle configurations
    - Verify behavior when network connection is lost during operations
    - Test with very large numbers of nodes and edges
+   - Attempt to bypass client-side validation and ensure server-side validation catches invalid connections
 
 ## Success Criteria
 
@@ -222,6 +318,7 @@ These improvements will be considered successful if:
 - ✅ The UI state remains consistent with server state
 - ✅ Edge operations are properly serialized to prevent race conditions
 - ✅ Error recovery maintains application consistency
+- ✅ Both client and server validation work together to prevent invalid connections
 
 ## Implementation Timeline
 
@@ -230,6 +327,7 @@ This phase should be implemented after the core refactoring (Phases 1-3) is comp
 1. First implement the connection locking mechanism
 2. Then enhance error handling
 3. Add state reconciliation as a fallback mechanism
-4. Finally implement debouncing for rapid connections
+4. Implement debouncing for rapid connections
+5. Finally, add server-side handle type validation
 
 Each step should be tested independently before moving to the next.
