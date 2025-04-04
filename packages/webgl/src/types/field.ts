@@ -3,6 +3,7 @@
  * These types are used to specify the valid ranges and step sizes for uniform parameters.
  */
 
+import type { TextureHandle } from "./handle";
 import type { ValueType } from "./schema";
 
 export interface ValueFieldMetadata {
@@ -30,9 +31,12 @@ export interface Vec3FieldMetadata {
  * Metadata for texture input fields
  */
 export interface TextureFieldMetadata {
+  /** The texture handle for this field */
+  handle: TextureHandle;
+  /** Whether this texture input is required */
   required: boolean;
+  /** Description of what this texture input is used for */
   description: string;
-  uniformName: string;
 }
 
 export interface UniformFieldValue {

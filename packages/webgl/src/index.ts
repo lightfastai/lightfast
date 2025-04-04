@@ -207,3 +207,5 @@ export { createDefaultVec2, createDefaultVec3 } from "./types/schema";
 
 export * from "./types/render";
 export * from "./types/webgl";
+
+export * from "./types/handle";
