@@ -28,9 +28,16 @@ After examining the codebase, I found that edge validation happens at multiple l
    - Manages replacing edges for specific handles which is already handled in `useAddEdge`
 
 5. **Validator Hooks (use-validate-edge.tsx)**:
+
    - All validation functions are bundled in a single hook (`useEdgeValidation`)
    - Components must import the entire validation set even when only using one or two functions
    - Creates unnecessary dependencies and makes code harder to maintain
+
+6. **Server-Side Validation (edge.ts)**:
+   - Robust validation exists in the backend TRPC endpoints
+   - Validates target node existence, handle constraints, and max edges
+   - Provides transactional consistency for edge operations
+   - Acts as a safety net for client-side validation
 
 ## Redundancy Identified
 
@@ -127,173 +134,19 @@ const onConnect = useCallback(
 );
 ```
 
-## Proposed Implementation
+## Implementation Plan - Phased Approach
 
-### 1. Refactor the `use-validate-edge.tsx` file to export individual validators:
+We'll implement the changes in distinct phases to ensure stability and maintain functionality throughout the process.
 
-```tsx
-/**
- * Validates that a node is not connecting to itself
- */
-export const useSelfConnectionValidator = () => {
-  return useCallback((source: string, target: string): boolean => {
-    if (source === target) {
-      toast({
-        variant: "destructive",
-        description: "A node cannot connect to itself.",
-      });
-      return false;
-    }
-    return true;
-  }, []);
-};
-
-/**
- * Validates that the source matches the target (used for same-source validation)
- */
-export const useSameSourceValidator = () => {
-  return useCallback((source: string, target: string): boolean => {
-    return source === target;
-  }, []);
-};
-
-// Other validators refactored similarly...
-
-/**
- * Main hook that provides all edge validation functions
- * Maintained for backward compatibility
- */
-export const useEdgeValidation = () => {
-  const validateSelfConnection = useSelfConnectionValidator();
-  const validateSameSource = useSameSourceValidator();
-  const validateTargetExistence = useTargetExistenceValidator();
-  const validateWindowNode = useWindowNodeValidator();
-  const validateMaxIncomingEdges = useMaxIncomingEdgesValidator();
-
-  return {
-    validateSelfConnection,
-    validateTargetExistence,
-    validateMaxIncomingEdges,
-    validateSameSource,
-    validateWindowNode,
-  };
-};
-```
-
-### 2. Simplify and Generalize the `useAddEdge` hook:
-
-```tsx
-// Simplified and generalized version removing redundant validation and special cases
-export const useAddEdge = () => {
-  // Import only the validator we need
-  const validateSelfConnection = useSelfConnectionValidator();
-
-  // ... existing code
-
-  /**
-   * Generalized function to handle all edge connections
-   */
-  const mutateAsync = useCallback(
-    async (connection: Connection) => {
-      const { source, target, sourceHandle, targetHandle } = connection;
-
-      // Keep only essential validation
-      if (!validateSelfConnection(source, target)) {
-        return;
-      }
-
-      // Find existing edge to the same target handle (if specified)
-      const existingEdge = edges.find(
-        (edge) =>
-          edge.target === target &&
-          ((targetHandle && edge.targetHandle === targetHandle) ||
-            // If no targetHandle specified, match any edge to this target
-            (!targetHandle && !edge.targetHandle)),
-      );
-
-      if (existingEdge) {
-        // Replace the existing edge
-        return await replaceEdgeMutate(existingEdge.id, connection);
-      } else {
-        // Add a new edge
-        return await createRegularConnection(connection);
-      }
-    },
-    [validateSelfConnection, edges, replaceEdgeMutate, createRegularConnection],
-  );
-
-  return { mutateAsync };
-};
-```
-
-### 3. Simplify the `useReplaceEdge` hook:
-
-```tsx
-const useReplaceEdge = () => {
-  // Import only the validators we need
-  const validateSelfConnection = useSelfConnectionValidator();
-  const validateSameSource = useSameSourceValidator();
-
-  // ... existing code
-
-  const mutateAsync = useCallback(
-    async (oldEdgeId: string, newConnection: Connection) => {
-      const { source, target, sourceHandle, targetHandle } = newConnection;
-
-      // Keep only essential validations
-      if (
-        !validateSelfConnection(source, target) ||
-        !validateSameSource(source, target)
-      ) {
-        return;
-      }
-
-      // Perform the replace mutation
-      try {
-        await mutReplace({
-          oldEdgeId,
-          newEdge: {
-            id: nanoid(),
-            source,
-            target,
-            sourceHandle,
-            targetHandle,
-          },
-        });
-      } catch (error) {
-        console.error(error);
-        // Additional error handling if needed
-      }
-    },
-    [validateSelfConnection, validateSameSource, mutReplace],
-  );
-
-  return { mutateAsync };
-};
-```
-
-### 4. Simplify the `onConnect` function in workspace.tsx:
-
-```tsx
-const onConnect = useCallback(
-  async (params: Connection) => {
-    // Let useAddEdge handle all the validation, edge detection AND replacement logic
-    // Edge replacement will still work because useAddEdge.mutateAsync already
-    // checks for existing edges and calls replaceEdgeMutate when needed
-    await addEdgeMutate(params);
-  },
-  [addEdgeMutate],
-);
-```
-
-## Implementation Steps
+### Phase 1: Refactor Validation Functions
 
 1. Refactor `use-validate-edge.tsx`:
-
    - Split each validation function into its own exported hook (useSelfConnectionValidator, etc.)
    - Update each function with proper JSDoc documentation
    - Maintain the original useEdgeValidation for backward compatibility
    - Ensure all necessary dependencies are properly managed in each hook
+
+### Phase 2: Simplify Edge Adding Logic
 
 2. Edit `use-add-edge.tsx`:
 
@@ -304,27 +157,45 @@ const onConnect = useCallback(
    - Remove the special `handleTextureConnection` function completely
    - Keep only the essential `validateSelfConnection` check
    - Update the dependencies array to remove unused dependencies
+   - Add proper error handling for backend validation failures
 
-3. Edit `use-replace-edge.tsx`:
-
-   - Remove the import for the full useEdgeValidation hook
-   - Import only the useSelfConnectionValidator and useSameSourceValidator hooks
-   - Simplify the validation in `mutateAsync` to only include essential checks
-   - Update the dependencies array to remove unused dependencies
-
-4. Edit `workspace.tsx`:
-
+3. Edit `workspace.tsx`:
    - Simplify the `onConnect` function to delegate all logic to `addEdgeMutate`
    - Remove the redundant edge-finding and replacement logic
    - Update the dependency array to only include `addEdgeMutate`
    - Remove the unused import for `replaceEdgeMutate` if it becomes unnecessary
 
-5. Test the changes:
-   - Verify that connections still work correctly for all node types
-   - Ensure multi-handle nodes like texture nodes can still receive connections to their specific inputs
-   - Confirm edge replacement logic still functions properly
-   - Test with different node types to validate the flow
-   - Verify edge replacement functionality continues to work
+### Phase 3: Simplify Edge Replacement Logic
+
+4. Edit `use-replace-edge.tsx`:
+   - Remove the import for the full useEdgeValidation hook
+   - Import only the useSelfConnectionValidator and useSameSourceValidator hooks
+   - Simplify the validation in `mutateAsync` to only include essential checks
+   - Update the dependencies array to remove unused dependencies
+   - Enhance error handling for backend validation responses
+
+### Phase 4: Address Potential Race Conditions and Edge Cases
+
+For handling race conditions, potential edge cases, and improving error handling, see the separate plan document:
+`3-address-race-conditions-edge-cases.md`
+
+## Testing Strategy for Each Phase
+
+After each phase:
+
+- Verify that connections still work correctly for all node types
+- Ensure multi-handle nodes like texture nodes can still receive connections to their specific inputs
+- Confirm edge replacement logic still functions properly
+- Test with different node types to validate the flow
+- Verify edge replacement functionality continues to work
+- Test error scenarios and ensure proper error handling
+
+## Safety Considerations
+
+- **Leverage Backend Validation**: The server already has robust validation that will catch any issues our simplified client validation might miss
+- **Maintain Basic Validation**: Keep the essential validators like self-connection check for immediate UX feedback
+- **Enhance Error Handling**: Improve error handling to ensure users get meaningful feedback when backend validation fails
+- **Use Transactions**: Both client and server operations use proper transactions for ACID compliance
 
 ## Benefits
 
@@ -340,3 +211,5 @@ const onConnect = useCallback(
 - ✅ Future-proof implementation that doesn't require special handling for new node types
 - ✅ Reduced code duplication by eliminating special-case functions
 - ✅ More modular validation functions that can be imported selectively
+- ✅ Robust protection through backend validation
+- ✅ Better error handling and user feedback
