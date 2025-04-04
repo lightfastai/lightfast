@@ -3,15 +3,21 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
+import type { TextureUniform } from "../types/texture-uniform";
+import { createTextureHandle } from "../types/handle";
 import { $Float, $NumericValue, $Vec2Number, ValueType } from "../types/schema";
-import {
-  createTextureUniform,
-  createTextureUniformSchema,
-} from "../types/texture-uniform";
+import { createTextureUniform } from "../types/texture-uniform";
 
-// Define texture uniforms separately
+// Create texture handle for the uniform
+const blendTextureHandle = createTextureHandle("blend", "u_texture");
+
+if (!blendTextureHandle) {
+  throw new Error("Failed to create texture handle for noise shader");
+}
+
+// Define texture uniforms
 export const $NoiseTextureUniforms = z.object({
-  u_texture: createTextureUniformSchema("Input texture to combine with noise"),
+  u_texture: z.custom<TextureUniform>(),
 });
 
 export type NoiseTextureUniforms = z.infer<typeof $NoiseTextureUniforms>;
@@ -103,7 +109,7 @@ export const PerlinNoise3DDescription =
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return {
     // Texture uniform with the new format
-    u_texture: createTextureUniform(null, null),
+    u_texture: createTextureUniform(blendTextureHandle, null),
     // Regular uniforms
     u_period: 2.0,
     u_harmonics: 1,
@@ -124,9 +130,9 @@ export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     type: ValueType.Texture,
     label: "Blend Texture",
     constraint: {
+      handle: blendTextureHandle,
       required: false,
       description: "Input texture to combine with noise (optional)",
-      uniformName: "u_texture",
     } as TextureFieldMetadata,
   },
   u_scale: {

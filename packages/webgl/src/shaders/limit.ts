@@ -3,15 +3,21 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
+import type { TextureUniform } from "../types/texture-uniform";
+import { createTextureHandle } from "../types/handle";
 import { $Float, ValueType } from "../types/schema";
-import {
-  createTextureUniform,
-  createTextureUniformSchema,
-} from "../types/texture-uniform";
+import { createTextureUniform } from "../types/texture-uniform";
 
-// Define texture uniforms separately
+// Create texture handle for the uniform
+const inputTextureHandle = createTextureHandle("input", "u_texture");
+
+if (!inputTextureHandle) {
+  throw new Error("Failed to create texture handle for limit shader");
+}
+
+// Define texture uniforms
 export const $LimitTextureUniforms = z.object({
-  u_texture: createTextureUniformSchema("The input texture to be limited"),
+  u_texture: z.custom<TextureUniform>(),
 });
 
 export type LimitTextureUniforms = z.infer<typeof $LimitTextureUniforms>;
@@ -39,7 +45,7 @@ export const LimitDescription =
 export const createDefaultLimit = (): LimitParams => {
   return {
     // Texture uniforms with the new format
-    u_texture: createTextureUniform(null, null),
+    u_texture: createTextureUniform(inputTextureHandle, null),
     // Regular uniforms remain the same
     u_quantizationSteps: 1.01,
   };
@@ -51,9 +57,9 @@ export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     type: ValueType.Texture,
     label: "Input Texture",
     constraint: {
+      handle: inputTextureHandle,
       required: true,
       description: "The input texture to be limited",
-      uniformName: "u_texture",
     } as TextureFieldMetadata,
   },
   u_quantizationSteps: {

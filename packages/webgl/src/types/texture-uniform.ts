@@ -1,61 +1,23 @@
 import type * as THREE from "three";
-import { z } from "zod";
+
+import type { TextureHandle } from "./handle";
 
 /**
- * Represents a texture reference in the shader system
+ * Represents a texture uniform in the shader system
  */
-export interface TextureReference {
-  id: string | null; // The ID of the source texture node
-  textureObject: THREE.Texture | null; // The actual WebGL/Three.js texture object
-  isConnected: boolean; // Whether this texture input has a connection
-}
-
-/**
- * Zod schema for texture uniforms
- */
-export const $TextureUniform = z
-  .object({
-    id: z.string().nullable(),
-    textureObject: z.any().nullable(), // Can't strongly type THREE.Texture in Zod
-    isConnected: z.boolean().default(false),
-  })
-  .nullable();
-
-export type TextureUniform = z.infer<typeof $TextureUniform>;
-
-/**
- * Factory function to create a texture uniform with description
- */
-export function createTextureUniformSchema(description: string) {
-  return $TextureUniform.describe(description);
-}
-
-/**
- * Check if a value is a TextureUniform
- */
-export function isTextureUniform(value: unknown): value is TextureUniform {
-  // Very simple check - in real implementation you might want to be more thorough
-  return (
-    value !== null &&
-    typeof value === "object" &&
-    "isConnected" in value &&
-    "id" in value
-  );
+export interface TextureUniform {
+  handle: TextureHandle | null;
+  textureObject: THREE.Texture | null;
 }
 
 /**
  * Create a new TextureUniform with default values
  */
 export function createTextureUniform(
-  id: string | null = null,
+  handle: TextureHandle | null = null,
   textureObject: THREE.Texture | null = null,
-  isConnected = false,
 ): TextureUniform {
-  return {
-    id,
-    textureObject,
-    isConnected,
-  };
+  return { handle, textureObject };
 }
 
 /**
@@ -63,18 +25,34 @@ export function createTextureUniform(
  */
 export function updateTextureUniform(
   uniform: TextureUniform,
-  id: string | null,
+  handle: TextureHandle | null,
   textureObject: THREE.Texture | null,
-  isConnected?: boolean,
 ): TextureUniform {
-  if (!uniform) {
-    return createTextureUniform(id, textureObject, isConnected ?? !!id);
-  }
+  return { ...uniform, handle, textureObject };
+}
 
-  return {
-    ...uniform,
-    id,
-    textureObject,
-    isConnected: isConnected ?? !!id,
-  };
+/**
+ * Check if a value is a TextureUniform
+ */
+export function isTextureUniform(value: unknown): value is TextureUniform {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "handle" in value &&
+    "textureObject" in value
+  );
+}
+
+/**
+ * Check if a texture uniform has a connection
+ */
+export function isTextureConnected(uniform: TextureUniform): boolean {
+  return !!uniform.handle;
+}
+
+/**
+ * Get the uniform name from a texture uniform
+ */
+export function getUniformName(uniform: TextureUniform): string | null {
+  return uniform.handle?.uniformName ?? null;
 }

@@ -3,16 +3,23 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
+import type { TextureUniform } from "../types/texture-uniform";
+import { createTextureHandle } from "../types/handle";
 import { $Float, $Vec2Number, ValueType } from "../types/schema";
-import {
-  createTextureUniform,
-  createTextureUniformSchema,
-} from "../types/texture-uniform";
+import { createTextureUniform } from "../types/texture-uniform";
 
-// Define texture uniforms separately
+// Create texture handles for the uniforms
+const sourceTextureHandle = createTextureHandle("source", "u_texture1");
+const displacementMapHandle = createTextureHandle("displacement", "u_texture2");
+
+if (!sourceTextureHandle || !displacementMapHandle) {
+  throw new Error("Failed to create texture handles for displace shader");
+}
+
+// Define texture uniforms
 export const $DisplaceTextureUniforms = z.object({
-  u_texture1: createTextureUniformSchema("The source texture to be displaced"),
-  u_texture2: createTextureUniformSchema("The displacement map texture"),
+  u_texture1: z.custom<TextureUniform>(),
+  u_texture2: z.custom<TextureUniform>(),
 });
 
 export type DisplaceTextureUniforms = z.infer<typeof $DisplaceTextureUniforms>;
@@ -76,8 +83,8 @@ export const DisplaceDescription =
 export const createDefaultDisplace = (): DisplaceParams => {
   return {
     // Texture uniforms with the new format
-    u_texture1: createTextureUniform(null, null),
-    u_texture2: createTextureUniform(null, null),
+    u_texture1: createTextureUniform(sourceTextureHandle, null),
+    u_texture2: createTextureUniform(displacementMapHandle, null),
     // Regular uniforms remain the same
     u_displaceWeight: 1.0,
     u_displaceMidpoint: { x: 0.5, y: 0.5 },
@@ -93,18 +100,18 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     type: ValueType.Texture,
     label: "Source Texture",
     constraint: {
+      handle: sourceTextureHandle,
       required: true,
       description: "The source texture to be displaced",
-      uniformName: "u_texture1",
     } as TextureFieldMetadata,
   },
   u_texture2: {
     type: ValueType.Texture,
     label: "Displacement Map",
     constraint: {
+      handle: displacementMapHandle,
       required: true,
       description: "The displacement map texture",
-      uniformName: "u_texture2",
     } as TextureFieldMetadata,
   },
   u_displaceWeight: {
