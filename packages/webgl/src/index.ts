@@ -213,8 +213,14 @@ export {
   getTextureInputsForType,
   isValidTextureHandleForType,
   isRequiredTextureHandle,
-  getMaxTextureInputs,
-  getMaxTextureInputsAcrossAllTypes,
-  type TextureRegistry,
   type TextureRegistryEntry,
 } from "./registry/texture-registry";
+
+// Export types
+export * from "./types/handle";
+export * from "./types/field";
+export * from "./types/schema";
+export * from "./types/texture-uniform";
+export * from "./types/render";
+export * from "./types/webgl";
+export * from "./types/geometry";
