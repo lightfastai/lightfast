@@ -8,33 +8,42 @@ import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
 
-export const useEdgeValidation = () => {
-  const { edges } = useEdgeStore((state) => state);
+/**
+ * Validates that a node cannot connect to itself.
+ * @returns A function that checks if the source and target nodes are different.
+ */
+export const useSelfConnectionValidator = () => {
+  return useCallback((source: string, target: string): boolean => {
+    if (source === target) {
+      toast({
+        variant: "destructive",
+        description: "A node cannot connect to itself.",
+      });
+      return false;
+    }
+    return true;
+  }, []);
+};
+
+/**
+ * Validates that the source of an edge is the same.
+ * Used primarily for edge replacement validation.
+ * @returns A function that checks if two nodes have the same source.
+ */
+export const useSameSourceValidator = () => {
+  return useCallback((source: string, target: string): boolean => {
+    return source === target;
+  }, []);
+};
+
+/**
+ * Validates that the target node exists in the workspace.
+ * @returns A function that checks if the target node exists.
+ */
+export const useTargetExistenceValidator = () => {
   const { nodes } = useNodeStore((state) => state);
-  const utils = api.useUtils();
 
-  const validateSelfConnection = useCallback(
-    (source: string, target: string): boolean => {
-      if (source === target) {
-        toast({
-          variant: "destructive",
-          description: "A node cannot connect to itself.",
-        });
-        return false;
-      }
-      return true;
-    },
-    [],
-  );
-
-  const validateSameSource = useCallback(
-    (source: string, target: string): boolean => {
-      return source === target;
-    },
-    [],
-  );
-
-  const validateTargetExistence = useCallback(
+  return useCallback(
     (target: string): boolean => {
       const targetNode = nodes.find((n) => n.id === target);
       if (!targetNode) {
@@ -48,8 +57,17 @@ export const useEdgeValidation = () => {
     },
     [nodes],
   );
+};
 
-  const validateWindowNode = useCallback(
+/**
+ * Validates that window nodes only have one incoming connection.
+ * @returns A function that checks if the window node's connection limit is respected.
+ */
+export const useWindowNodeValidator = () => {
+  const { nodes } = useNodeStore((state) => state);
+  const { edges } = useEdgeStore((state) => state);
+
+  return useCallback(
     (target: string): boolean => {
       const targetNode = nodes.find((n) => n.id === target);
       if (!targetNode) return false;
@@ -72,19 +90,18 @@ export const useEdgeValidation = () => {
     },
     [nodes, edges],
   );
+};
 
-  /**
-   * Validates that the target node does not exceed the maximum number of incoming edges.
-   *
-   * @param target - The ID of the target node.
-   * @param opts - Optional parameters for validation.
-   *               - allowance: The number of additional edges allowed (default is 0).
-   *                            Useful in scenarios like replacing an edge, where one edge
-   *                            is being removed and another is being added, effectively
-   *                            allowing the total count to remain the same.
-   * @returns `true` if the validation passes, `false` otherwise.
-   */
-  const validateMaxIncomingEdges = useCallback(
+/**
+ * Validates that the target node does not exceed the maximum number of incoming edges.
+ * @returns A function that checks if the edge count is within limits for the node type.
+ */
+export const useMaxIncomingEdgesValidator = () => {
+  const { nodes } = useNodeStore((state) => state);
+  const { edges } = useEdgeStore((state) => state);
+  const utils = api.useUtils();
+
+  return useCallback(
     (
       target: string,
       opts: { allowance?: number } = { allowance: 0 },
@@ -152,6 +169,19 @@ export const useEdgeValidation = () => {
     },
     [nodes, edges, utils.tenant.node.data],
   );
+};
+
+/**
+ * Original hook that provides all validation functions.
+ * Maintained for backwards compatibility.
+ * @returns An object containing all validation functions.
+ */
+export const useEdgeValidation = () => {
+  const validateSelfConnection = useSelfConnectionValidator();
+  const validateSameSource = useSameSourceValidator();
+  const validateTargetExistence = useTargetExistenceValidator();
+  const validateWindowNode = useWindowNodeValidator();
+  const validateMaxIncomingEdges = useMaxIncomingEdgesValidator();
 
   return {
     validateSelfConnection,

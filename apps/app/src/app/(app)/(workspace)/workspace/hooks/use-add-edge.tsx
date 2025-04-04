@@ -9,12 +9,14 @@ import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useNodeStore } from "../providers/node-store-provider";
 import { useReplaceEdge } from "./use-replace-edge";
-import { useEdgeValidation } from "./use-validate-edge";
+import { useSelfConnectionValidator } from "./use-validate-edge";
 
 export const useAddEdge = () => {
   const { addEdge, deleteEdge, edges } = useEdgeStore((state) => state);
   const { nodes } = useNodeStore((state) => state);
   const { mutateAsync: replaceEdgeMutate } = useReplaceEdge();
+  const validateSelfConnection = useSelfConnectionValidator();
+
   const { mutateAsync: mut } = api.tenant.edge.create.useMutation({
     onMutate: (newEdge) => {
       const optimisticEdge: BaseEdge = {
@@ -37,17 +39,11 @@ export const useAddEdge = () => {
       console.error(err);
       toast({
         title: "Error",
-        description: "Failed to add edge",
+        description: err.message || "Failed to add edge",
+        variant: "destructive",
       });
     },
   });
-
-  const {
-    validateSelfConnection,
-    validateTargetExistence,
-    validateMaxIncomingEdges,
-    validateWindowNode,
-  } = useEdgeValidation();
 
   /**
    * Create a regular edge connection
@@ -64,91 +60,45 @@ export const useAddEdge = () => {
             targetHandle: connection.targetHandle ?? "",
           },
         });
+        return true;
       } catch (error) {
         console.error("Error creating edge:", error);
+        return false;
       }
     },
     [mut],
   );
 
   /**
-   * Handle connection for texture nodes
-   */
-  const handleTextureConnection = useCallback(
-    async (params: Connection) => {
-      // Use the default handle if none specified
-      const targetHandle = params.targetHandle ?? "input-1";
-
-      // Update connection params with the target handle
-      const connectionParams = {
-        ...params,
-        targetHandle,
-      };
-
-      // Check if there's an existing connection to this handle
-      const existingEdge = edges.find(
-        (edge) =>
-          edge.target === params.target && edge.targetHandle === targetHandle,
-      );
-
-      if (existingEdge) {
-        // Replace the existing connection to this handle
-        return await replaceEdgeMutate(existingEdge.id, connectionParams);
-      } else {
-        // Add a new edge
-        return await createRegularConnection(connectionParams);
-      }
-    },
-    [createRegularConnection, edges, replaceEdgeMutate],
-  );
-
-  /**
-   * Main function to handle edge connections with special handling for texture nodes
+   * Main function to handle edge connections with simplified validation
    */
   const mutateAsync = useCallback(
     async (connection: Connection) => {
-      const { source, target } = connection;
+      const { source, target, targetHandle } = connection;
 
-      // Perform shared validations
-      if (
-        !validateSelfConnection(source, target) ||
-        !validateTargetExistence(target) ||
-        !validateMaxIncomingEdges(target) ||
-        !validateWindowNode(target)
-      ) {
-        return;
+      // Only keep the most essential client-side validation
+      // Server will handle the rest of the validation
+      if (!validateSelfConnection(source, target)) {
+        return false;
       }
 
-      // Find the target node to determine its type
-      const targetNode = nodes.find((node) => node.id === target);
-      if (!targetNode) return;
+      // Find if there's an existing edge to the target handle
+      const existingEdge = targetHandle
+        ? edges.find(
+            (edge) =>
+              edge.target === target && edge.targetHandle === targetHandle,
+          )
+        : edges.find((edge) => edge.target === target);
 
-      // Special handling for texture nodes
-      if (targetNode.type === "texture") {
-        return handleTextureConnection(connection);
-      }
-
-      // Handle non-texture node connections
-      const existingEdge = edges.find((edge) => edge.target === target);
       if (existingEdge) {
-        // For non-texture nodes, replace the existing edge (maintains single-input behavior)
+        // Replace the existing edge
         return await replaceEdgeMutate(existingEdge.id, connection);
       } else {
         // Add a new edge
         return await createRegularConnection(connection);
       }
     },
-    [
-      validateSelfConnection,
-      validateTargetExistence,
-      validateMaxIncomingEdges,
-      validateWindowNode,
-      nodes,
-      edges,
-      handleTextureConnection,
-      replaceEdgeMutate,
-      createRegularConnection,
-    ],
+    [validateSelfConnection, edges, replaceEdgeMutate, createRegularConnection],
   );
 
   return { mutateAsync };

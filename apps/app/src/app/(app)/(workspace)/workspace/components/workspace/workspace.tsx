@@ -102,38 +102,10 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
 
   const onConnect = useCallback(
     async (params: Connection) => {
-      // For multi-handle nodes, check if we have a targetHandle specified
-      if (params.targetHandle) {
-        // Find any existing edge that connects TO the same handle of the target node
-        const existingEdge = edges.find(
-          (edge) =>
-            edge.target === params.target &&
-            edge.targetHandle === params.targetHandle,
-        );
-
-        if (existingEdge) {
-          // Replace the existing edge for this specific handle
-          await replaceEdgeMutate(existingEdge.id, params);
-        } else {
-          // Add a new edge to this specific handle
-          await addEdgeMutate(params);
-        }
-      } else {
-        // Default behavior for nodes without specific handles
-        const existingEdge = edges.find(
-          (edge) => edge.target === params.target,
-        );
-
-        if (existingEdge) {
-          // Replace the existing edge (regardless of its source)
-          await replaceEdgeMutate(existingEdge.id, params);
-        } else {
-          // Add a new edge if the target has no incoming edges
-          await addEdgeMutate(params);
-        }
-      }
+      // Delegate connection logic to the useAddEdge hook
+      await addEdgeMutate(params);
     },
-    [replaceEdgeMutate, addEdgeMutate, edges],
+    [addEdgeMutate],
   );
 
   return (

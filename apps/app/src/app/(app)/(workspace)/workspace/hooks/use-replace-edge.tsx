@@ -7,10 +7,15 @@ import { toast } from "@repo/ui/hooks/use-toast";
 import type { BaseEdge } from "../types/node";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
-import { useEdgeValidation } from "./use-validate-edge";
+import {
+  useSameSourceValidator,
+  useSelfConnectionValidator,
+} from "./use-validate-edge";
 
 export const useReplaceEdge = () => {
   const { edges, addEdge, deleteEdge } = useEdgeStore((state) => state);
+  const validateSelfConnection = useSelfConnectionValidator();
+  const validateSameSource = useSameSourceValidator();
 
   const { mutateAsync: mutReplace } = api.tenant.edge.replace.useMutation({
     onMutate: async ({ oldEdgeId, newEdge }) => {
@@ -20,11 +25,12 @@ export const useReplaceEdge = () => {
       deleteEdge(oldEdgeId);
 
       // Optimistically add the new edge
-      const optimisticEdge: BaseEdge = {
+      const optimisticEdge = {
         ...newEdge,
+        // Include required BaseEdge properties
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
+      } as BaseEdge;
 
       addEdge(optimisticEdge);
 
@@ -34,12 +40,12 @@ export const useReplaceEdge = () => {
       if (context?.oldEdge) {
         // Rollback: restore the old edge
         addEdge(context.oldEdge);
-        // Optionally, remove the newly added edge if necessary
       }
       console.error(err);
       toast({
         title: "Error",
-        description: "Failed to replace edge",
+        description: err.message || "Failed to replace edge",
+        variant: "destructive",
       });
     },
     onSettled: () => {
@@ -47,26 +53,17 @@ export const useReplaceEdge = () => {
     },
   });
 
-  const {
-    validateSelfConnection,
-    validateTargetExistence,
-    validateMaxIncomingEdges,
-    validateSameSource,
-    validateWindowNode,
-  } = useEdgeValidation();
-
   const mutateAsync = useCallback(
     async (oldEdgeId: string, newConnection: Connection) => {
-      const { source, target, sourceHandle, targetHandle } = newConnection;
+      const { source, target } = newConnection;
 
+      // Keep only essential client-side validations
+      // Let the server handle the rest
       if (
         !validateSelfConnection(source, target) ||
-        !validateSameSource(source, target) ||
-        !validateTargetExistence(target) ||
-        !validateMaxIncomingEdges(target, { allowance: 1 }) ||
-        !validateWindowNode(target)
+        !validateSameSource(source, target)
       ) {
-        return;
+        return false;
       }
 
       // Perform the replace mutation
@@ -75,25 +72,19 @@ export const useReplaceEdge = () => {
           oldEdgeId,
           newEdge: {
             id: nanoid(),
-            source,
-            target,
-            sourceHandle,
-            targetHandle,
+            source: newConnection.source,
+            target: newConnection.target,
+            sourceHandle: newConnection.sourceHandle || undefined,
+            targetHandle: newConnection.targetHandle || undefined,
           },
         });
+        return true;
       } catch (error) {
-        console.error(error);
-        // Additional error handling if needed
+        console.error("Error replacing edge:", error);
+        return false;
       }
     },
-    [
-      validateSelfConnection,
-      validateTargetExistence,
-      validateMaxIncomingEdges,
-      validateWindowNode,
-      validateSameSource,
-      mutReplace,
-    ],
+    [validateSelfConnection, validateSameSource, mutReplace],
   );
 
   return { mutateAsync };
