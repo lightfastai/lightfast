@@ -18,7 +18,7 @@ export const useReplaceEdge = () => {
   const validateSameSource = useSameSourceValidator();
 
   const { mutateAsync: mutReplace } = api.tenant.edge.replace.useMutation({
-    onMutate: async ({ oldEdgeId, newEdge }) => {
+    onMutate: ({ oldEdgeId, newEdge }) => {
       // Optimistically remove the old edge
       const oldEdge = edges.find((edge) => edge.id === oldEdgeId);
       if (!oldEdge) throw new Error("Old edge not found");

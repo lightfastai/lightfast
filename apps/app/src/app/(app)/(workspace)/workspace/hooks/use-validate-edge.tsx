@@ -32,7 +32,14 @@ export const useSelfConnectionValidator = () => {
  */
 export const useSameSourceValidator = () => {
   return useCallback((source: string, target: string): boolean => {
-    return source === target;
+    if (source === target) {
+      toast({
+        variant: "destructive",
+        description: "A node cannot connect to itself.",
+      });
+      return false;
+    }
+    return true;
   }, []);
 };
 

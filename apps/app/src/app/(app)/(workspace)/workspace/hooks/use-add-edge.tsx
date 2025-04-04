@@ -7,14 +7,10 @@ import { toast } from "@repo/ui/hooks/use-toast";
 import type { BaseEdge } from "../types/node";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
-import { useNodeStore } from "../providers/node-store-provider";
-import { useReplaceEdge } from "./use-replace-edge";
 import { useSelfConnectionValidator } from "./use-validate-edge";
 
 export const useAddEdge = () => {
-  const { addEdge, deleteEdge, edges } = useEdgeStore((state) => state);
-  const { nodes } = useNodeStore((state) => state);
-  const { mutateAsync: replaceEdgeMutate } = useReplaceEdge();
+  const { addEdge, deleteEdge } = useEdgeStore((state) => state);
   const validateSelfConnection = useSelfConnectionValidator();
 
   const { mutateAsync: mut } = api.tenant.edge.create.useMutation({
@@ -70,35 +66,31 @@ export const useAddEdge = () => {
   );
 
   /**
-   * Main function to handle edge connections with simplified validation
+   * Main function to handle edge connections with explicit handle validation
    */
   const mutateAsync = useCallback(
     async (connection: Connection) => {
       const { source, target, targetHandle } = connection;
 
-      // Only keep the most essential client-side validation
-      // Server will handle the rest of the validation
+      // Validate that targetHandle exists
+      if (!targetHandle) {
+        toast({
+          title: "Error",
+          description: "Missing target handle specification",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Only keep essential client-side validation
       if (!validateSelfConnection(source, target)) {
         return false;
       }
 
-      // Find if there's an existing edge to the target handle
-      const existingEdge = targetHandle
-        ? edges.find(
-            (edge) =>
-              edge.target === target && edge.targetHandle === targetHandle,
-          )
-        : edges.find((edge) => edge.target === target);
-
-      if (existingEdge) {
-        // Replace the existing edge
-        return await replaceEdgeMutate(existingEdge.id, connection);
-      } else {
-        // Add a new edge
-        return await createRegularConnection(connection);
-      }
+      // Simply add the new edge - replacement logic is in workspace.tsx
+      return await createRegularConnection(connection);
     },
-    [validateSelfConnection, edges, replaceEdgeMutate, createRegularConnection],
+    [validateSelfConnection, createRegularConnection],
   );
 
   return { mutateAsync };

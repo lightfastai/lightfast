@@ -76,7 +76,12 @@ export const WindowNode = memo(function WindowNode({
             Open Window
           </Button>
         </div>
-        <Handle type="target" position={Position.Left} className="h-10 w-3" />
+        <Handle
+          id="input-default"
+          type="target"
+          position={Position.Left}
+          className="h-10 w-3"
+        />
       </div>
     </BaseNodeComponent>
   );

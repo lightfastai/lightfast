@@ -13,6 +13,8 @@ import "./workspace.css";
 
 import { useCallback } from "react";
 
+import { toast } from "@repo/ui/hooks/use-toast";
+
 import type { BaseEdge, BaseNode } from "../../types/node";
 import type { RouterInputs } from "~/trpc/server/index";
 import { useAddEdge } from "../../hooks/use-add-edge";
@@ -102,10 +104,32 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
 
   const onConnect = useCallback(
     async (params: Connection) => {
-      // Delegate connection logic to the useAddEdge hook
-      await addEdgeMutate(params);
+      // Require explicit targetHandle for all connections
+      if (!params.targetHandle) {
+        toast({
+          title: "Connection Failed",
+          description: "Missing target handle specification",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Find any existing edge that connects TO the same handle of the target node
+      const existingEdge = edges.find(
+        (edge) =>
+          edge.target === params.target &&
+          edge.targetHandle === params.targetHandle,
+      );
+
+      if (existingEdge) {
+        // Replace the existing edge for this specific handle
+        await replaceEdgeMutate(existingEdge.id, params);
+      } else {
+        // Add a new edge to this specific handle
+        await addEdgeMutate(params);
+      }
     },
-    [addEdgeMutate],
+    [replaceEdgeMutate, addEdgeMutate, edges],
   );
 
   return (
