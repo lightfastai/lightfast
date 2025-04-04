@@ -14,7 +14,11 @@ import { cn } from "@repo/ui/lib/utils";
 import { getTextureInputsForType } from "@repo/webgl";
 import { WebGLView } from "@repo/webgl/components";
 import { GeometryMap } from "@repo/webgl/globals";
-import { $GeometryType } from "@vendor/db/types";
+import {
+  $GeometryType,
+  createOutputHandleId,
+  createTextureHandleId,
+} from "@vendor/db/types";
 
 import type { BaseNode } from "../../types/node";
 import type { TextureInput } from "../../types/texture";
@@ -31,6 +35,12 @@ export const TextureNode = memo(
 
     // Get texture inputs metadata from the registry
     const textureInputs: TextureInput[] = getTextureInputsForType(data.type);
+
+    // Create branded handle IDs
+    const outputHandle = createOutputHandleId("output-1");
+    if (!outputHandle) {
+      throw new Error("Failed to create output handle");
+    }
 
     return (
       <BaseNodeComponent
@@ -94,21 +104,27 @@ export const TextureNode = memo(
             <div className="absolute left-0 top-0 flex h-full flex-col items-center justify-evenly gap-3 py-3">
               {textureInputs.length > 0 ? (
                 // For nodes with inputs, create properly positioned handles
-                textureInputs.map((input: TextureInput) => (
-                  <div
-                    key={input.id}
-                    className="relative flex items-center justify-center py-1"
-                  >
-                    <NodeHandle
-                      id={input.id}
-                      type="input"
-                      position={Position.Left}
-                      description={input.description}
-                      isRequired={input.required}
-                      tooltipSide="left"
-                    />
-                  </div>
-                ))
+                textureInputs.map((input: TextureInput) => {
+                  // Convert string ID to branded type
+                  const handleId = createTextureHandleId(input.id);
+                  if (!handleId) {
+                    throw new Error(`Invalid handle ID: ${input.id}`);
+                  }
+                  return (
+                    <div
+                      key={input.id}
+                      className="relative flex items-center justify-center py-1"
+                    >
+                      <NodeHandle
+                        id={handleId}
+                        position={Position.Left}
+                        description={input.description}
+                        isRequired={input.required}
+                        tooltipSide="left"
+                      />
+                    </div>
+                  );
+                })
               ) : (
                 // No input handles for this texture type
                 <></>
@@ -117,8 +133,7 @@ export const TextureNode = memo(
 
             <div className="absolute right-0 top-0 flex h-full items-center justify-center">
               <NodeHandle
-                id="output-1"
-                type="output"
+                id={outputHandle}
                 position={Position.Right}
                 description="Output"
                 isRequired={true}

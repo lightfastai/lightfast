@@ -3,6 +3,7 @@ import { useCallback } from "react";
 
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
+import { createOutputHandleId, createTextureHandleId } from "@vendor/db/types";
 
 import type { BaseEdge } from "../types/node";
 import { api } from "~/trpc/client/react";
@@ -47,13 +48,30 @@ export const useAddEdge = () => {
   const createRegularConnection = useCallback(
     async (connection: Connection) => {
       try {
+        // Convert string handles to branded types
+        const sourceHandle = connection.sourceHandle
+          ? createOutputHandleId(connection.sourceHandle)
+          : null;
+        const targetHandle = connection.targetHandle
+          ? createTextureHandleId(connection.targetHandle)
+          : null;
+
+        if (!sourceHandle || !targetHandle) {
+          toast({
+            title: "Error",
+            description: "Invalid handle IDs",
+            variant: "destructive",
+          });
+          return false;
+        }
+
         await mut({
           id: nanoid(),
           edge: {
             source: connection.source,
             target: connection.target,
-            sourceHandle: connection.sourceHandle ?? "",
-            targetHandle: connection.targetHandle ?? "",
+            sourceHandle,
+            targetHandle,
           },
         });
         return true;
