@@ -1,6 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
 import type { Texture } from "@vendor/db/types";
@@ -10,12 +10,6 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
 import { getTextureInputsForType } from "@repo/webgl";
 import { WebGLView } from "@repo/webgl/components";
@@ -27,6 +21,7 @@ import type { TextureInput } from "../../types/texture";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
+import { NodeHandle } from "../common/node-handle";
 
 export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
@@ -75,51 +70,6 @@ export const TextureNode = memo(
             </ToggleGroup>
           </div>
           <div className="flex flex-row items-center">
-            <div className="flex h-full flex-col items-center justify-evenly gap-3 py-3">
-              {textureInputs.length > 0 ? (
-                // For nodes with inputs, create properly positioned handles
-                textureInputs.map((input: TextureInput) => (
-                  <div
-                    key={input.id}
-                    className="relative flex items-center justify-center"
-                  >
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <Handle
-                              id={input.id}
-                              type="target"
-                              position={Position.Left}
-                              className={cn(
-                                "h-3 w-3 rounded-full border transition-transform duration-150 hover:scale-125",
-                                input.required
-                                  ? "border-primary bg-primary"
-                                  : "border-muted-foreground bg-muted",
-                              )}
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="left">
-                          <span className="font-medium">
-                            {input.description}
-                          </span>
-                          {!input.required && (
-                            <span className="ml-1 text-xs text-muted-foreground">
-                              (optional)
-                            </span>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                ))
-              ) : (
-                // No input handles for this texture type
-                <></>
-              )}
-            </div>
-
             <div className="h-32 w-72 overflow-hidden rounded border">
               {targets[id]?.texture && (
                 <WebGLView
@@ -141,22 +91,39 @@ export const TextureNode = memo(
               )}
             </div>
 
-            <div className="ml-1 flex items-center justify-center">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Handle
-                        id="output"
-                        type="source"
-                        position={Position.Right}
-                        className="h-3 w-3 rounded-full border border-primary bg-primary transition-transform duration-150 hover:scale-125"
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">Output</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="absolute left-0 top-0 flex h-full flex-col items-center justify-evenly gap-3 py-3">
+              {textureInputs.length > 0 ? (
+                // For nodes with inputs, create properly positioned handles
+                textureInputs.map((input: TextureInput) => (
+                  <div
+                    key={input.id}
+                    className="relative flex items-center justify-center py-1"
+                  >
+                    <NodeHandle
+                      id={input.id}
+                      type="input"
+                      position={Position.Left}
+                      description={input.description}
+                      isRequired={input.required}
+                      tooltipSide="left"
+                    />
+                  </div>
+                ))
+              ) : (
+                // No input handles for this texture type
+                <></>
+              )}
+            </div>
+
+            <div className="absolute right-0 top-0 flex h-full items-center justify-center">
+              <NodeHandle
+                id="output"
+                type="output"
+                position={Position.Right}
+                description="Output"
+                isRequired={true}
+                tooltipSide="right"
+              />
             </div>
           </div>
         </div>

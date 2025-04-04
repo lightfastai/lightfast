@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { memo, useState } from "react";
 import Image from "next/image";
+import { Position } from "@xyflow/react";
 import { PlayIcon } from "lucide-react";
 
 import type { Txt2Img } from "@vendor/db/types";
@@ -16,6 +17,7 @@ import { cn } from "@repo/ui/lib/utils";
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
+import { NodeHandle } from "../common/node-handle";
 
 const fal = createFalClient({
   proxyUrl: "/api/fal/proxy",
@@ -67,7 +69,7 @@ export const FluxNode = memo(
         <div
           key={id}
           className={cn(
-            `relative cursor-pointer flex-col space-y-1 p-1 text-card-foreground shadow-sm`,
+            `relative flex flex-col space-y-1 p-1 text-card-foreground shadow-sm`,
           )}
         >
           <div className="flex flex-row items-center justify-between">
@@ -77,6 +79,17 @@ export const FluxNode = memo(
           </div>
 
           <div className="flex flex-row gap-1">
+            <div className="mr-1 flex flex-col justify-center">
+              <NodeHandle
+                id="input-1"
+                type="input"
+                position={Position.Left}
+                description="Prompt Input"
+                isRequired={false}
+                tooltipSide="left"
+              />
+            </div>
+
             <div className="h-32 w-72 overflow-hidden border">
               {result && (
                 <Image
@@ -87,6 +100,17 @@ export const FluxNode = memo(
                   className="object-contain"
                 />
               )}
+            </div>
+
+            <div className="ml-1 flex flex-col justify-center">
+              <NodeHandle
+                id="output"
+                type="output"
+                position={Position.Right}
+                description="Generated Image"
+                isRequired={true}
+                tooltipSide="right"
+              />
             </div>
           </div>
 

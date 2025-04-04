@@ -3,14 +3,12 @@ import { memo } from "react";
 import { Handle, Position, useReactFlow } from "@xyflow/react";
 import { Monitor } from "lucide-react";
 
-import type { Window } from "@vendor/db/types";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Button } from "@repo/ui/components/ui/button";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
-import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 
 export const WindowNode = memo(function WindowNode({
@@ -18,7 +16,6 @@ export const WindowNode = memo(function WindowNode({
   type,
   selected,
 }: NodeProps<BaseNode>) {
-  const [nodeData] = api.tenant.node.data.get.useSuspenseQuery<Window>({ id });
   const { getNode, getEdges } = useReactFlow();
   const { targets } = useTextureRenderStore((state) => state);
 
