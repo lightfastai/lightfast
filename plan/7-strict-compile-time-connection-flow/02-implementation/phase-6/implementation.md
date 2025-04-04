@@ -2,20 +2,40 @@
 
 ## Overview
 
-This phase updates the WebGL registry to work with the new handle type system. The registry provides information about available texture types, their inputs, and their requirements, which is crucial for ensuring valid connections between nodes.
+This phase updates the WebGL registry to work with the new handle type system, implementing a dependency inversion pattern to maintain proper architectural boundaries between WebGL and DB layers.
 
 ## Implementation Details
+
+### Base TextureHandle Interface (WebGL)
+
+```typescript
+// packages/webgl/src/types/handle.ts
+export interface TextureHandle {
+  readonly id: string;
+  readonly uniformName: string;
+}
+
+// Helper functions for WebGL layer
+export function isTextureHandle(value: unknown): value is TextureHandle {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    "uniformName" in value &&
+    typeof value.id === "string" &&
+    typeof value.uniformName === "string"
+  );
+}
+```
 
 ### TextureFieldMetadata Update
 
 ```typescript
 // packages/webgl/src/types/field.ts
-import { TextureHandleId } from "@vendor/db/types";
+import type { TextureHandle } from "./handle";
 
-// Update field metadata to use TextureHandleId
 export interface TextureFieldMetadata {
-  id: TextureHandleId; // Now using branded type
-  uniformName: string;
+  handle: TextureHandle; // Using interface instead of direct ID
   description: string;
   required: boolean;
 }
@@ -25,15 +45,9 @@ export interface TextureFieldMetadata {
 
 ```typescript
 // packages/webgl/src/types/texture-registry.ts
-import {
-  createTextureHandleId,
-  generateTextureHandleId,
-  TextureHandleId,
-} from "@vendor/db/types";
+import type { TextureFieldMetadata } from "./field";
+import type { TextureHandle } from "./handle";
 
-import { TextureFieldMetadata } from "./field";
-
-// Registry that maps texture types to their input definitions
 export interface TextureRegistry {
   [textureType: string]: {
     inputs: TextureFieldMetadata[];
@@ -41,13 +55,15 @@ export interface TextureRegistry {
   };
 }
 
-// Map of texture types to their input metadata
+// Example registry with the new handle structure
 export const textureRegistry: TextureRegistry = {
   noise: {
     inputs: [
       {
-        id: generateTextureHandleId(0), // input-1
-        uniformName: "u_texture1",
+        handle: {
+          id: "input-1",
+          uniformName: "u_texture1",
+        },
         description: "Displacement map",
         required: false,
       },
@@ -57,179 +73,142 @@ export const textureRegistry: TextureRegistry = {
   displace: {
     inputs: [
       {
-        id: generateTextureHandleId(0), // input-1
-        uniformName: "u_texture1",
+        handle: {
+          id: "input-1",
+          uniformName: "u_texture1",
+        },
         description: "Base texture",
         required: true,
       },
       {
-        id: generateTextureHandleId(1), // input-2
-        uniformName: "u_texture2",
+        handle: {
+          id: "input-2",
+          uniformName: "u_texture2",
+        },
         description: "Displacement map",
         required: true,
       },
     ],
     maxInputs: 2,
   },
-  // Other texture types...
 };
 
-/**
- * Get input metadata for a specific texture type
- */
+// Registry utility functions
 export function getTextureInputsForType(
   textureType: string,
 ): TextureFieldMetadata[] {
-  // If the texture type doesn't exist in the registry, return an empty array
-  if (!textureRegistry[textureType]) {
-    return [];
-  }
-
-  return textureRegistry[textureType].inputs;
+  return textureRegistry[textureType]?.inputs ?? [];
 }
 
-/**
- * Get the maximum number of inputs for a texture type
- */
-export function getMaxInputsForType(textureType: string): number {
-  if (!textureRegistry[textureType]) {
-    return 0;
-  }
-
-  return textureRegistry[textureType].maxInputs;
-}
-
-/**
- * Validate that a texture handle is valid for a given texture type
- */
 export function isValidTextureHandleForType(
   textureType: string,
-  handleId: TextureHandleId,
+  handle: TextureHandle,
 ): boolean {
   const inputs = getTextureInputsForType(textureType);
-  return inputs.some((input) => input.id === handleId);
+  return inputs.some(
+    (input) =>
+      input.handle.id === handle.id &&
+      input.handle.uniformName === handle.uniformName,
+  );
 }
 
-/**
- * Check if a handle ID is required for a texture type
- */
 export function isRequiredTextureHandle(
   textureType: string,
-  handleId: TextureHandleId,
+  handle: TextureHandle,
 ): boolean {
   const inputs = getTextureInputsForType(textureType);
-  const input = inputs.find((input) => input.id === handleId);
+  const input = inputs.find(
+    (input) =>
+      input.handle.id === handle.id &&
+      input.handle.uniformName === handle.uniformName,
+  );
   return input?.required ?? false;
 }
 ```
 
-### Validation Integration
+### DB Layer Implementation
 
 ```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/hooks/use-validate-texture-connection.ts
-import { useCallback } from "react";
-import { Connection } from "@xyflow/react";
+// vendor/db/src/schema/types/TextureHandle.ts
+import type { TextureHandle } from '@repo/webgl';
 
-import {
-  isRequiredTextureHandle,
-  isValidTextureHandleForType,
-} from "@repo/webgl";
-import {
-  isOutputHandleId,
-  isTextureHandleId,
-  TextureHandleId,
-} from "@vendor/db/types";
+// Keep existing branded types
+export type TextureHandleId = string & { readonly __brand: "TextureHandleId" };
+export type OutputHandleId = string & { readonly __brand: "OutputHandleId" };
+export type HandleId = TextureHandleId | OutputHandleId;
 
-import { getNodeType, useNodeStore } from "../providers/node-store-provider";
-import {
-  ConnectionValidationResult,
-  validateConnection,
-} from "../types/connection";
+// Implement TextureHandle interface
+export interface TextureHandleImpl implements TextureHandle {
+  readonly id: TextureHandleId;
+  readonly uniformName: string;
+}
 
-/**
- * Hook for validating texture connections
- */
-export const useValidateTextureConnection = () => {
-  const { nodes } = useNodeStore();
+// Update existing functions to work with TextureHandle
+export function createTextureHandle(value: string): TextureHandle | null {
+  const handleId = createTextureHandleId(value);
+  if (!handleId) return null;
 
-  /**
-   * Validate a connection with the texture registry
-   */
-  const validateTextureConnection = useCallback(
-    (connection: Connection): ConnectionValidationResult => {
-      // First validate the connection structure
-      const basicValidation = validateConnection(connection);
-      if (!basicValidation.valid) {
-        return basicValidation;
-      }
-
-      const strictConnection = basicValidation.connection;
-
-      // Check handle types
-      const sourceIsOutput = isOutputHandleId(strictConnection.sourceHandle);
-      const targetIsInput = isTextureHandleId(strictConnection.targetHandle);
-
-      if (!sourceIsOutput || !targetIsInput) {
-        return {
-          valid: false,
-          reason: "invalid_connection_type",
-          details: "Texture connections must be from output to input handles",
-        };
-      }
-
-      // Get node types
-      const sourceNode = nodes.find((n) => n.id === strictConnection.source);
-      const targetNode = nodes.find((n) => n.id === strictConnection.target);
-
-      if (!sourceNode || !targetNode) {
-        return {
-          valid: false,
-          reason: "node_not_found",
-          details: "Source or target node not found",
-        };
-      }
-
-      const sourceType = getNodeType(sourceNode);
-      const targetType = getNodeType(targetNode);
-
-      // Validate target handle with the registry
-      const targetHandle = strictConnection.targetHandle as TextureHandleId;
-
-      if (!isValidTextureHandleForType(targetType, targetHandle)) {
-        return {
-          valid: false,
-          reason: "invalid_texture_handle",
-          details: `Handle ${targetHandle} is not valid for texture type ${targetType}`,
-        };
-      }
-
-      return {
-        valid: true,
-        connection: strictConnection,
-      };
-    },
-    [nodes],
-  );
+  const uniformName = getUniformNameFromTextureHandleId(handleId);
+  if (!uniformName) return null;
 
   return {
-    validateTextureConnection,
+    id: handleId,
+    uniformName,
   };
-};
+}
+
+// Keep existing validation functions
+export function isValidTextureHandleId(id: string): boolean {
+  return TEXTURE_HANDLE_ID_REGEX.test(id);
+}
+
+// Update type guards
+export function isTextureHandleId(value: unknown): value is TextureHandleId {
+  return typeof value === "string" && isValidTextureHandleId(value);
+}
+
+// Update mapping functions
+export function getUniformNameFromTextureHandleId(
+  handleId: string | TextureHandleId,
+): string | null {
+  if (!isValidTextureHandleId(handleId)) return null;
+  const index = getTextureHandleIndex(handleId);
+  if (index === null) return null;
+  return `u_texture${index + 1}`;
+}
+
+export function getTextureHandleFromUniformName(
+  uniformName: string,
+): TextureHandle | null {
+  const match = /^u_texture(\d+)$/.exec(uniformName);
+  if (!match?.[1]) return null;
+  const index = parseInt(match[1], 10);
+  const handleId = generateTextureHandleId(index - 1);
+  return handleId ? createTextureHandle(handleId) : null;
+}
 ```
 
 ## Implementation Notes
 
-1. The `TextureFieldMetadata` interface now uses the branded `TextureHandleId` type for stronger type safety.
+1. **Dependency Inversion**:
 
-2. The texture registry has been updated to use the new type system, with proper typing for all input definitions.
+   - WebGL layer defines `TextureHandle` interface
+   - DB layer implements the interface
+   - No direct dependency on DB types in WebGL
 
-3. Helper functions have been added to work with the registry:
+2. **Handle-Uniform Mapping**:
 
-   - `getTextureInputsForType`: Get input metadata for a texture type
-   - `getMaxInputsForType`: Get maximum inputs allowed for a texture type
-   - `isValidTextureHandleForType`: Validate handle IDs against the registry
-   - `isRequiredTextureHandle`: Check if a handle is required for a texture type
+   - Clear 1:1 mapping between handles and uniforms
+   - `input-N` → `u_textureN` mapping preserved
+   - Mapping logic centralized in DB layer
 
-4. The validation system has been integrated with the registry through the `useValidateTextureConnection` hook, which provides texture-specific validation.
+3. **Type Safety**:
 
-5. All components maintain proper type safety through the use of branded types and validation functions.
+   - Strong typing through interfaces and branded types
+   - Validation at appropriate boundaries
+   - Clear separation of concerns
+
+4. **Registry Updates**:
+   - Registry now works with `TextureHandle` interface
+   - Simplified validation logic
+   - Better encapsulation of WebGL concerns
