@@ -10,13 +10,14 @@ The current implementation of the edge system in React TD lacks compile-time typ
 2. Implement compile-time type checking for handle IDs
 3. Enforce required handle specifications for both source and target
 4. Create a more strictly typed Connection interface
-5. Maintain backward compatibility with existing code
-6. Improve developer experience with better error messages
-7. Minimize runtime validation overhead
+5. Support multiple output handles per node
+6. Maintain backward compatibility with existing code
+7. Improve developer experience with better error messages
+8. Minimize runtime validation overhead
 
 ## Implementation Steps
 
-### Phase 1: Enhanced TextureHandleId Type
+### Phase 1: Enhanced Handle Types
 
 1. **Update TextureHandleId Type in vendor/db/src/schema/types/TextureHandle.ts**
 
@@ -39,7 +40,34 @@ export function isTextureHandleId(value: unknown): value is TextureHandleId {
 }
 ```
 
-2. **Update Zod Schema to Use the New Type**
+2. **Create OutputHandleId Type for Multiple Outputs**
+
+```typescript
+// Define a branded type for output handles
+export type OutputHandleId = string & { readonly __brand: "OutputHandleId" };
+
+// Regular expression for output handles: "output-{name}"
+export const OUTPUT_HANDLE_ID_REGEX = /^output-[a-z0-9-]+$/;
+
+// Create function similar to input handles
+export function createOutputHandleId(value: string): OutputHandleId | null {
+  if (!isValidOutputHandleId(value)) return null;
+  return value as OutputHandleId;
+}
+
+// Validation function
+export function isValidOutputHandleId(id: string): boolean {
+  return OUTPUT_HANDLE_ID_REGEX.test(id);
+}
+
+// Helper function to generate standard output handle IDs
+export function generateOutputHandleId(name: string): OutputHandleId | null {
+  const id = `output-${name}`;
+  return createOutputHandleId(id);
+}
+```
+
+3. **Update Zod Schema to Use the New Types**
 
 ```typescript
 export const $TextureHandleId = z.custom<TextureHandleId>(
@@ -49,9 +77,20 @@ export const $TextureHandleId = z.custom<TextureHandleId>(
       "Handle ID must be in the format 'input-N' where N is a positive integer",
   },
 );
+
+export const $OutputHandleId = z.custom<OutputHandleId>(
+  (val) => typeof val === "string" && isValidOutputHandleId(val as string),
+  {
+    message: "Output handle ID must be in the format 'output-name'",
+  },
+);
+
+// Union type for all handle IDs
+export const $HandleId = z.union([$TextureHandleId, $OutputHandleId]);
+export type HandleId = TextureHandleId | OutputHandleId;
 ```
 
-3. **Utility Function for Creating Arrays of Valid Handles**
+4. **Utility Function for Creating Arrays of Valid Handles**
 
 ```typescript
 export function createTextureHandleIds(count: number): TextureHandleId[] {
@@ -59,6 +98,12 @@ export function createTextureHandleIds(count: number): TextureHandleId[] {
     { length: count },
     (_, i) => generateTextureHandleId(i) as TextureHandleId,
   );
+}
+
+export function createOutputHandleIds(names: string[]): OutputHandleId[] {
+  return names
+    .map((name) => generateOutputHandleId(name))
+    .filter((id): id is OutputHandleId => id !== null);
 }
 ```
 
@@ -71,8 +116,12 @@ export function createTextureHandleIds(count: number): TextureHandleId[] {
 import { Connection as BaseConnection } from "@xyflow/react";
 
 import {
+  createOutputHandleId,
   createTextureHandleId,
+  HandleId,
+  isOutputHandleId,
   isTextureHandleId,
+  OutputHandleId,
   TextureHandleId,
 } from "@vendor/db/types";
 
@@ -81,8 +130,8 @@ import {
  */
 export interface StrictConnection
   extends Omit<BaseConnection, "sourceHandle" | "targetHandle"> {
-  sourceHandle: TextureHandleId;
-  targetHandle: TextureHandleId;
+  sourceHandle: HandleId;
+  targetHandle: HandleId;
 }
 
 /**
@@ -94,8 +143,10 @@ export function isStrictConnection(
   return (
     !!connection.sourceHandle &&
     !!connection.targetHandle &&
-    isTextureHandleId(connection.sourceHandle) &&
-    isTextureHandleId(connection.targetHandle)
+    (isTextureHandleId(connection.sourceHandle) ||
+      isOutputHandleId(connection.sourceHandle)) &&
+    (isTextureHandleId(connection.targetHandle) ||
+      isOutputHandleId(connection.targetHandle))
   );
 }
 
@@ -113,9 +164,16 @@ export function toStrictConnection(
     return null;
   }
 
-  // Validate both handles have correct format
-  const typedSourceHandle = createTextureHandleId(sourceHandle);
-  const typedTargetHandle = createTextureHandleId(targetHandle);
+  // Try to parse as either input or output handle
+  let typedSourceHandle: HandleId | null = createTextureHandleId(sourceHandle);
+  if (!typedSourceHandle) {
+    typedSourceHandle = createOutputHandleId(sourceHandle);
+  }
+
+  let typedTargetHandle: HandleId | null = createTextureHandleId(targetHandle);
+  if (!typedTargetHandle) {
+    typedTargetHandle = createOutputHandleId(targetHandle);
+  }
 
   if (!typedSourceHandle || !typedTargetHandle) {
     return null;
@@ -131,25 +189,25 @@ export function toStrictConnection(
 
 ### Phase 3: Update Edge Schema
 
-1. **Update Edge.ts Schema to Use the TextureHandleId Type and Make Handles Required**
+1. **Update Edge.ts Schema to Use the HandleId Type and Make Handles Required**
 
 ```typescript
 import { z } from "zod";
 
-import { $TextureHandleId, TextureHandleId } from "../types/TextureHandle";
+import { $HandleId, HandleId } from "../types/TextureHandle";
 
 export const InsertEdgeSchema = z.object({
   source: z.string().min(1).max(191),
   target: z.string().min(1).max(191),
-  sourceHandle: $TextureHandleId, // Now required
-  targetHandle: $TextureHandleId, // Now required
+  sourceHandle: $HandleId, // Now required, accepts either type
+  targetHandle: $HandleId, // Now required, accepts either type
 });
 
 export type InsertEdge = {
   source: string;
   target: string;
-  sourceHandle: TextureHandleId; // Required
-  targetHandle: TextureHandleId; // Required
+  sourceHandle: HandleId; // Required
+  targetHandle: HandleId; // Required
 };
 ```
 
@@ -157,9 +215,15 @@ export type InsertEdge = {
 
 ```typescript
 export function getUniformForEdge(edge: {
-  targetHandle: TextureHandleId; // Now required
-}): string {
-  return getUniformNameFromTextureHandleId(edge.targetHandle);
+  targetHandle: HandleId; // Now required
+}): string | null {
+  // For texture handles, return uniform name
+  if (isTextureHandleId(edge.targetHandle)) {
+    return getUniformNameFromTextureHandleId(edge.targetHandle);
+  }
+
+  // For other handle types, return null or handle appropriately
+  return null;
 }
 ```
 
@@ -168,29 +232,52 @@ export function getUniformForEdge(edge: {
 1. **Update NodeHandle Component Props**
 
 ```typescript
-import { TextureHandleId } from "@vendor/db/types";
+import { HandleId, OutputHandleId, TextureHandleId } from "@vendor/db/types";
 
 export interface NodeHandleProps {
   /**
    * Unique identifier for this handle
-   * For input handles, must be a valid TextureHandleId
-   * For output handles, must include "output"
+   * Must be a valid TextureHandleId or OutputHandleId
    */
-  id: string | TextureHandleId;
+  id: HandleId;
+
+  /**
+   * The type of handle
+   */
+  type: "input" | "output";
 
   // Other props...
 }
 ```
 
-2. **Define a Standard Output Handle Format**
+2. **Define a Registry for Output Handles**
 
 ```typescript
-// In TextureHandle.ts
-export const OUTPUT_HANDLE_ID = "output-main";
+// In TextureRegistry.ts
+export interface OutputHandleDefinition {
+  id: string;
+  name: string;
+  description: string;
+}
 
-// Type guard for output handles
-export function isOutputHandleId(id: string): boolean {
-  return id === OUTPUT_HANDLE_ID;
+export function getOutputHandlesForType(
+  textureType: string,
+): OutputHandleDefinition[] {
+  // Implementation based on texture type
+  const outputs: OutputHandleDefinition[] = [
+    { id: "main", name: "Main", description: "Main texture output" },
+  ];
+
+  // Add specialized outputs for certain texture types
+  if (textureType === "composite") {
+    outputs.push({
+      id: "mask",
+      name: "Mask",
+      description: "Alpha mask output",
+    });
+  }
+
+  return outputs;
 }
 ```
 
@@ -200,11 +287,12 @@ export function isOutputHandleId(id: string): boolean {
 // Inside texture-node.tsx
 import {
   createTextureHandleId,
+  createOutputHandleId,
   TextureHandleId,
-  OUTPUT_HANDLE_ID
+  OutputHandleId,
 } from "@vendor/db/types";
 
-// When creating NodeHandle components:
+// For input handles:
 const handleId = createTextureHandleId(input.id);
 if (!handleId) {
   console.error(`Invalid texture handle ID: ${input.id}`);
@@ -224,15 +312,28 @@ return (
   </div>
 );
 
-// For output handles, use the standard output handle ID
-<NodeHandle
-  id={OUTPUT_HANDLE_ID}
-  type="output"
-  position={Position.Right}
-  description="Output"
-  isRequired={true}
-  tooltipSide="right"
-/>
+// For output handles, use the output handle registry
+const outputHandles = getOutputHandlesForType(textureType);
+return (
+  <div className="flex flex-col gap-2">
+    {outputHandles.map(output => {
+      const outputId = createOutputHandleId(`output-${output.id}`);
+      if (!outputId) return null;
+
+      return (
+        <NodeHandle
+          key={output.id}
+          id={outputId}
+          type="output"
+          position={Position.Right}
+          description={output.description}
+          isRequired={true}
+          tooltipSide="right"
+        />
+      );
+    })}
+  </div>
+);
 ```
 
 ### Phase 5: Update Hook Logic
