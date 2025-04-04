@@ -8,6 +8,8 @@ import { nanoid } from "@repo/lib";
 import type { HandleId } from "../types/TextureHandle";
 import {
   $HandleId,
+  createOutputHandleId,
+  createTextureHandleId,
   getUniformNameFromTextureHandleId,
   isOutputHandleId,
   isTextureHandleId,
@@ -106,4 +108,29 @@ export function validateEdgeHandles(edge: {
   return (
     isOutputHandleId(edge.sourceHandle) && isTextureHandleId(edge.targetHandle)
   );
+}
+
+/**
+ * Prepare an edge for insertion by ensuring it has valid handles
+ */
+export function prepareEdgeForInsert(edge: InsertEdge): InsertEdge {
+  // Validate source handle
+  const sourceHandle =
+    createOutputHandleId(edge.sourceHandle) ||
+    createTextureHandleId(edge.sourceHandle);
+
+  // Validate target handle
+  const targetHandle =
+    createTextureHandleId(edge.targetHandle) ||
+    createOutputHandleId(edge.targetHandle);
+
+  if (!sourceHandle || !targetHandle) {
+    throw new Error("Invalid handle IDs in edge");
+  }
+
+  return {
+    ...edge,
+    sourceHandle,
+    targetHandle,
+  };
 }

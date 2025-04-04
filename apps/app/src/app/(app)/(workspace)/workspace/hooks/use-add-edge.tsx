@@ -3,16 +3,15 @@ import { useCallback } from "react";
 
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
-import { createOutputHandleId, createTextureHandleId } from "@vendor/db/types";
 
 import type { BaseEdge } from "../types/node";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
-import { useSelfConnectionValidator } from "./use-validate-edge";
+import { useConnectionValidation } from "./use-connection-validation";
 
 export const useAddEdge = () => {
   const { addEdge, deleteEdge } = useEdgeStore((state) => state);
-  const validateSelfConnection = useSelfConnectionValidator();
+  const { validateConnection } = useConnectionValidation();
 
   const { mutateAsync: mut } = api.tenant.edge.create.useMutation({
     onMutate: (newEdge) => {
@@ -42,36 +41,25 @@ export const useAddEdge = () => {
     },
   });
 
-  /**
-   * Create a regular edge connection
-   */
-  const createRegularConnection = useCallback(
+  const mutateAsync = useCallback(
     async (connection: Connection) => {
+      // Validate connection first
+      const validationResult = validateConnection(connection);
+
+      if (!validationResult.valid || !validationResult.validatedEdge) {
+        return false;
+      }
+
+      const validatedEdge = validationResult.validatedEdge;
+
       try {
-        // Convert string handles to branded types
-        const sourceHandle = connection.sourceHandle
-          ? createOutputHandleId(connection.sourceHandle)
-          : null;
-        const targetHandle = connection.targetHandle
-          ? createTextureHandleId(connection.targetHandle)
-          : null;
-
-        if (!sourceHandle || !targetHandle) {
-          toast({
-            title: "Error",
-            description: "Invalid handle IDs",
-            variant: "destructive",
-          });
-          return false;
-        }
-
         await mut({
           id: nanoid(),
           edge: {
-            source: connection.source,
-            target: connection.target,
-            sourceHandle,
-            targetHandle,
+            source: validatedEdge.source,
+            target: validatedEdge.target,
+            sourceHandle: validatedEdge.sourceHandle,
+            targetHandle: validatedEdge.targetHandle,
           },
         });
         return true;
@@ -80,35 +68,7 @@ export const useAddEdge = () => {
         return false;
       }
     },
-    [mut],
-  );
-
-  /**
-   * Main function to handle edge connections with explicit handle validation
-   */
-  const mutateAsync = useCallback(
-    async (connection: Connection) => {
-      const { source, target, targetHandle } = connection;
-
-      // Validate that targetHandle exists
-      if (!targetHandle) {
-        toast({
-          title: "Error",
-          description: "Missing target handle specification",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      // Only keep essential client-side validation
-      if (!validateSelfConnection(source, target)) {
-        return false;
-      }
-
-      // Simply add the new edge - replacement logic is in workspace.tsx
-      return await createRegularConnection(connection);
-    },
-    [validateSelfConnection, createRegularConnection],
+    [mut, validateConnection],
   );
 
   return { mutateAsync };

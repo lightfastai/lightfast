@@ -2,7 +2,8 @@ import type { OnEdgesChange } from "@xyflow/react";
 import { applyEdgeChanges } from "@xyflow/react";
 import { createStore } from "zustand";
 
-import { validateEdgeHandles } from "@vendor/db/schema";
+import type { InsertEdge } from "@vendor/db/schema";
+import { prepareEdgeForInsert } from "@vendor/db/schema";
 
 import type { BaseEdge } from "../types/node";
 
@@ -31,12 +32,28 @@ export const createEdgeStore = (initState: EdgeState = defaultEdgeState) => {
   return createStore<EdgeStore>()((set) => ({
     ...initState,
     addEdge: (edge) => {
-      // Validate edge handles before adding
-      if (!validateEdgeHandles(edge)) {
-        console.error("Invalid edge handles:", edge);
-        return;
+      try {
+        // Use the new prepareEdgeForInsert for validation
+        const validEdge = prepareEdgeForInsert({
+          source: edge.source,
+          target: edge.target,
+          sourceHandle: edge.sourceHandle,
+          targetHandle: edge.targetHandle,
+        } as InsertEdge) as unknown as BaseEdge;
+
+        set((state) => ({
+          edges: [
+            ...state.edges,
+            {
+              ...edge,
+              sourceHandle: validEdge.sourceHandle,
+              targetHandle: validEdge.targetHandle,
+            },
+          ],
+        }));
+      } catch (error) {
+        console.error("Invalid edge:", error, edge);
       }
-      set((state) => ({ edges: [...state.edges, edge] }));
     },
     deleteEdge: (id) =>
       set((state) => ({
@@ -47,12 +64,26 @@ export const createEdgeStore = (initState: EdgeState = defaultEdgeState) => {
         edges: applyEdgeChanges(changes, state.edges),
       })),
     setEdges: (edges) => {
-      // Validate all edges before setting
-      const validEdges = edges.filter((edge) => validateEdgeHandles(edge));
-      if (validEdges.length !== edges.length) {
-        console.error("Some edges had invalid handles");
+      try {
+        // Validate all edges using prepareEdgeForInsert
+        const validEdges = edges.map((edge) => {
+          const validEdge = prepareEdgeForInsert({
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.sourceHandle,
+            targetHandle: edge.targetHandle,
+          } as InsertEdge) as unknown as BaseEdge;
+
+          return {
+            ...edge,
+            sourceHandle: validEdge.sourceHandle,
+            targetHandle: validEdge.targetHandle,
+          };
+        });
+        set({ edges: validEdges });
+      } catch (error) {
+        console.error("Some edges had invalid handles:", error);
       }
-      set({ edges: validEdges });
     },
   }));
 };
