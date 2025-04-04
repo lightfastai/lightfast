@@ -248,13 +248,13 @@ const TextureNodeBase = ({
         {/* Output handle */}
         <div className="output-handles">
           <div className="output-container">
-            <span className="output-label">Output</span>
             <OutputHandle
               id={outputHandle}
               isConnected={isConnected(outputHandle)}
               isConnectable={true}
               connectionIndicator={true}
             />
+            <span className="output-label">Output</span>
           </div>
         </div>
       </div>
@@ -262,7 +262,6 @@ const TextureNodeBase = ({
   );
 };
 
-// Memoize the component for performance
 export const TextureNode = memo(TextureNodeBase);
 ```
 
@@ -564,131 +563,6 @@ Add the following CSS styles to support the updated components:
     transform: translateY(0);
   }
 }
-```
-
-## Unit Tests
-
-Create unit tests for the updated components:
-
-```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/components/nodes/__tests__/TextureHandle.test.tsx
-import { render, screen } from "@testing-library/react";
-import { TextureHandle } from "../TextureHandle";
-import { generateTextureHandleId } from "@vendor/db/types";
-
-describe("TextureHandle", () => {
-  test("renders with valid handle ID", () => {
-    const handle = generateTextureHandleId(0); // input-1
-
-    render(
-      <TextureHandle id={handle} data-testid="test-handle" />
-    );
-
-    expect(screen.getByTestId("test-handle")).toBeInTheDocument();
-    expect(screen.getByTestId(`handle-${handle}`)).toBeInTheDocument();
-  });
-
-  test("shows connection indicator when connected", () => {
-    const handle = generateTextureHandleId(0);
-
-    render(
-      <TextureHandle
-        id={handle}
-        isConnected={true}
-        connectionIndicator={true}
-      />
-    );
-
-    expect(screen.getByTestId(`handle-${handle}`)).toHaveClass("is-connected");
-    expect(document.querySelector(".connection-indicator")).toBeInTheDocument();
-  });
-
-  test("doesn't render when hideIfConnected is true and isConnected is true", () => {
-    const handle = generateTextureHandleId(0);
-
-    render(
-      <TextureHandle
-        id={handle}
-        isConnected={true}
-        hideIfConnected={true}
-      />
-    );
-
-    expect(screen.queryByTestId(`handle-${handle}`)).not.toBeInTheDocument();
-  });
-});
-```
-
-```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/components/flow/__tests__/ConnectionLine.test.tsx
-import { render, screen } from "@testing-library/react";
-import { ConnectionLine } from "../ConnectionLine";
-
-// Mock the validation hook
-jest.mock("../../hooks/use-validate-connection", () => ({
-  useValidateConnection: () => (connection) => {
-    // Return valid for specific test connections, invalid otherwise
-    const isValid = connection.sourceHandle === "output-main" &&
-                   connection.targetHandle === "input-1";
-
-    return {
-      valid: isValid,
-      ...(isValid
-        ? { connection }
-        : { reason: "invalid_connection", details: "Invalid connection" })
-    };
-  }
-}));
-
-describe("ConnectionLine", () => {
-  test("renders valid connection with correct style", () => {
-    render(
-      <ConnectionLine
-        fromNode="node1"
-        fromHandle="output-main"
-        toNode="node2"
-        toHandle="input-1"
-        fromX={0}
-        fromY={0}
-        toX={100}
-        toY={100}
-      />
-    );
-
-    const path = document.querySelector("path");
-    expect(path).toBeInTheDocument();
-    expect(path).toHaveAttribute("stroke", "#b1b1b7");
-    expect(path).toHaveAttribute("stroke-dasharray", "none");
-
-    // No error marker should be present
-    expect(document.querySelector("circle")).not.toBeInTheDocument();
-  });
-
-  test("renders invalid connection with error style", () => {
-    render(
-      <ConnectionLine
-        fromNode="node1"
-        fromHandle="invalid-handle"
-        toNode="node2"
-        toHandle="input-1"
-        fromX={0}
-        fromY={0}
-        toX={100}
-        toY={100}
-      />
-    );
-
-    const path = document.querySelector("path");
-    expect(path).toBeInTheDocument();
-    expect(path).toHaveAttribute("stroke", "#ff5555");
-    expect(path).toHaveAttribute("stroke-dasharray", "5,5");
-
-    // Error marker should be present
-    const errorMarker = document.querySelector("circle");
-    expect(errorMarker).toBeInTheDocument();
-    expect(errorMarker).toHaveAttribute("fill", "#ff5555");
-  });
-});
 ```
 
 ## Implementation Notes

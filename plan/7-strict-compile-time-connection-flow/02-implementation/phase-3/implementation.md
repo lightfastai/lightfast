@@ -102,71 +102,6 @@ export function getUniformForEdge(edge: {
   }
   return null;
 }
-
-/**
- * Migrates existing edge data to ensure valid handles
- * This is used when loading data from the database that might
- * have missing or invalid handles
- */
-export function migrateEdgeHandles(edge: {
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-}): {
-  sourceHandle: HandleId;
-  targetHandle: HandleId;
-} {
-  let sourceHandle: HandleId;
-  let targetHandle: HandleId;
-
-  // Try to convert existing handles, or use defaults
-  if (edge.sourceHandle) {
-    const parsedSource =
-      createOutputHandleId(edge.sourceHandle) ||
-      createTextureHandleId(edge.sourceHandle);
-    sourceHandle = parsedSource || createOutputHandleId("output-main")!;
-  } else {
-    sourceHandle = createOutputHandleId("output-main")!;
-  }
-
-  if (edge.targetHandle) {
-    const parsedTarget =
-      createTextureHandleId(edge.targetHandle) ||
-      createOutputHandleId(edge.targetHandle);
-    targetHandle = parsedTarget || createTextureHandleId("input-1")!;
-  } else {
-    targetHandle = createTextureHandleId("input-1")!;
-  }
-
-  return {
-    sourceHandle,
-    targetHandle,
-  };
-}
-
-/**
- * Apply migrations to an edge object or create a new one with valid handles
- */
-export function prepareEdgeForInsert(edge: {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-  [key: string]: any;
-}): InsertEdge {
-  const { sourceHandle, targetHandle } = migrateEdgeHandles(edge);
-
-  return {
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    sourceHandle,
-    targetHandle,
-    animated: edge.animated,
-    style: edge.style,
-    label: edge.label,
-  };
-}
 ```
 
 ### Update Edge Store Adapter
@@ -177,126 +112,27 @@ import { eq } from "drizzle-orm";
 
 import { db } from "../db";
 import { edge, InsertEdge } from "../schema/tables/Edge";
-import { prepareEdgeForInsert } from "../utils/edge-utils";
 
 export async function getEdges(): Promise<InsertEdge[]> {
-  const edges = await db.select().from(edge);
-
-  // Apply migration to ensure all edges have valid handles
-  return edges.map((e) => prepareEdgeForInsert(e));
+  return await db.select().from(edge);
 }
 
 export async function addEdge(newEdge: InsertEdge): Promise<InsertEdge> {
-  // Ensure edge has valid handles before inserting
-  const edgeToInsert = prepareEdgeForInsert(newEdge);
-
-  await db.insert(edge).values(edgeToInsert);
-  return edgeToInsert;
+  await db.insert(edge).values(newEdge);
+  return newEdge;
 }
 
 export async function updateEdge(
   edgeToUpdate: InsertEdge,
 ): Promise<InsertEdge> {
-  // Ensure edge has valid handles before updating
-  const edgeWithValidHandles = prepareEdgeForInsert(edgeToUpdate);
+  await db.update(edge).set(edgeToUpdate).where(eq(edge.id, edgeToUpdate.id));
 
-  await db
-    .update(edge)
-    .set(edgeWithValidHandles)
-    .where(eq(edge.id, edgeWithValidHandles.id));
-
-  return edgeWithValidHandles;
+  return edgeToUpdate;
 }
 
 export async function deleteEdge(id: string): Promise<void> {
   await db.delete(edge).where(eq(edge.id, id));
 }
-```
-
-## Unit Tests
-
-Create tests to ensure the migration utility works correctly:
-
-```typescript
-// vendor/db/src/__tests__/edge-utils.test.ts
-import {
-  createOutputHandleId,
-  createTextureHandleId,
-  HandleId,
-  OutputHandleId,
-  TextureHandleId,
-} from "../schema/types/TextureHandle";
-import {
-  getUniformForEdge,
-  migrateEdgeHandles,
-  prepareEdgeForInsert,
-} from "../utils/edge-utils";
-
-describe("Edge Utilities", () => {
-  test("getUniformForEdge returns correct uniform for texture handle", () => {
-    const textureHandle = createTextureHandleId("input-1")!;
-
-    expect(getUniformForEdge({ targetHandle: textureHandle })).toBe(
-      "u_texture1",
-    );
-  });
-
-  test("getUniformForEdge returns null for output handle", () => {
-    const outputHandle = createOutputHandleId("output-main")!;
-
-    expect(getUniformForEdge({ targetHandle: outputHandle })).toBeNull();
-  });
-
-  test("migrateEdgeHandles handles missing source handle", () => {
-    const result = migrateEdgeHandles({
-      sourceHandle: null,
-      targetHandle: "input-1",
-    });
-
-    expect(result.sourceHandle).toBe("output-main");
-    expect(result.targetHandle).toBe("input-1");
-  });
-
-  test("migrateEdgeHandles handles missing target handle", () => {
-    const result = migrateEdgeHandles({
-      sourceHandle: "output-main",
-      targetHandle: null,
-    });
-
-    expect(result.sourceHandle).toBe("output-main");
-    expect(result.targetHandle).toBe("input-1");
-  });
-
-  test("migrateEdgeHandles handles invalid handles", () => {
-    const result = migrateEdgeHandles({
-      sourceHandle: "invalid-source",
-      targetHandle: "invalid-target",
-    });
-
-    expect(result.sourceHandle).toBe("output-main");
-    expect(result.targetHandle).toBe("input-1");
-  });
-
-  test("prepareEdgeForInsert creates a valid edge object", () => {
-    const edge = {
-      id: "edge-1",
-      source: "node-1",
-      target: "node-2",
-      sourceHandle: null,
-      targetHandle: null,
-      animated: true,
-    };
-
-    const result = prepareEdgeForInsert(edge);
-
-    expect(result.id).toBe("edge-1");
-    expect(result.source).toBe("node-1");
-    expect(result.target).toBe("node-2");
-    expect(result.sourceHandle).toBe("output-main");
-    expect(result.targetHandle).toBe("input-1");
-    expect(result.animated).toBe(true);
-  });
-});
 ```
 
 ## Implementation Notes
@@ -311,13 +147,3 @@ describe("Edge Utilities", () => {
 3. We update the Edge store adapter to use the migration utilities when reading from or writing to the database to ensure all edges have valid handles.
 
 4. We add a utility function `getUniformForEdge` that works specifically with texture handles to get uniform names.
-
-## Migration Impact
-
-1. **Database Impact**: No changes to the database schema are required, which means no migrations need to be run.
-
-2. **Application Impact**: The application now enforces stricter validation on edge handles through the Zod schemas.
-
-3. **Backward Compatibility**: The migration utilities ensure that existing data with missing or invalid handles is handled gracefully.
-
-This approach allows us to improve type safety without requiring database migrations, which makes the rollout simpler and less risky.

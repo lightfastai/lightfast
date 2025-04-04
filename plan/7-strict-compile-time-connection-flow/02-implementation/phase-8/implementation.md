@@ -173,21 +173,3 @@ if (isTextureUniform(u[uniformName as keyof typeof u])) {
   );
 }
 ```
-
-## Testing Strategy
-
-1. **Unit Tests**
-
-   - Test createTextureUniform and updateTextureUniform without isConnected
-   - Verify isTextureConnected helper provides expected results
-   - Test type guard function with various inputs
-
-2. **Integration Tests**
-
-   - Verify the updated TextureUniform works with existing rendering logic
-   - Test connection/disconnection behavior with the simplified model
-   - Check resource management with the updated interface
-
-3. **Migration Tests**
-   - Confirm backward compatibility with existing data structures
-   - Verify proper cleanup of resources
