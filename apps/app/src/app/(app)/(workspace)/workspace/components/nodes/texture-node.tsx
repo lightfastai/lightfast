@@ -117,7 +117,7 @@ export const TextureNode = memo(
 
             <div className="absolute right-0 top-0 flex h-full items-center justify-center">
               <NodeHandle
-                id="output"
+                id="output-1"
                 type="output"
                 position={Position.Right}
                 description="Output"

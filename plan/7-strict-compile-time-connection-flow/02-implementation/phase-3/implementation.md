@@ -1,13 +1,17 @@
 # Phase 3: Edge Schema - Implementation
 
-## File Changes
+## Overview
 
-### Update Edge.ts Schema
+This phase updates the Edge database schema to use the enhanced handle ID types created in Phase 1. This ensures that handle IDs are validated at both the database and application levels, establishing a single source of truth for handle ID validation.
+
+## Implementation Details
+
+### Edge Schema Update
 
 ```typescript
 // vendor/db/src/schema/tables/Edge.ts
 import { relations } from "drizzle-orm";
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -19,11 +23,8 @@ export const edge = pgTable("edge", {
   id: text("id").primaryKey().notNull(),
   source: text("source").notNull(),
   target: text("target").notNull(),
-  sourceHandle: text("source_handle"), // DB column remains nullable for backward compatibility
-  targetHandle: text("target_handle"), // DB column remains nullable for backward compatibility
-  animated: boolean("animated").default(false),
-  style: text("style"), // JSON string
-  label: text("label"),
+  sourceHandle: text("source_handle").notNull(),
+  targetHandle: text("target_handle").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -47,9 +48,6 @@ export const BaseEdgeSchema = z.object({
   target: z.string().min(1),
   sourceHandle: $HandleId, // Now required and validated
   targetHandle: $HandleId, // Now required and validated
-  animated: z.boolean().optional(),
-  style: z.string().optional(), // JSON string
-  label: z.string().optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
@@ -75,7 +73,7 @@ export type PartialEdge = Partial<InsertEdge> &
   Pick<InsertEdge, "source" | "target">;
 ```
 
-### Add Edge Utilities
+### Edge Utilities
 
 ```typescript
 // vendor/db/src/utils/edge-utils.ts
@@ -102,9 +100,48 @@ export function getUniformForEdge(edge: {
   }
   return null;
 }
+
+/**
+ * Prepare an edge for insertion by ensuring it has valid handles
+ */
+export function prepareEdgeForInsert(edge: InsertEdge): InsertEdge {
+  // Validate source handle
+  const sourceHandle =
+    createOutputHandleId(edge.sourceHandle) ||
+    createTextureHandleId(edge.sourceHandle);
+
+  // Validate target handle
+  const targetHandle =
+    createTextureHandleId(edge.targetHandle) ||
+    createOutputHandleId(edge.targetHandle);
+
+  if (!sourceHandle || !targetHandle) {
+    throw new Error("Invalid handle IDs in edge");
+  }
+
+  return {
+    ...edge,
+    sourceHandle,
+    targetHandle,
+  };
+}
+
+/**
+ * Validate that an edge's handles are compatible
+ */
+export function validateEdgeHandles(edge: {
+  sourceHandle: HandleId;
+  targetHandle: HandleId;
+}): boolean {
+  // Source must be output handle, target must be texture handle
+  return (
+    isTextureHandleId(edge.targetHandle) &&
+    !isTextureHandleId(edge.sourceHandle)
+  );
+}
 ```
 
-### Update Edge Store Adapter
+### Edge Store Adapter
 
 ```typescript
 // vendor/db/src/adapters/edge-store-adapter.ts
@@ -112,22 +149,25 @@ import { eq } from "drizzle-orm";
 
 import { db } from "../db";
 import { edge, InsertEdge } from "../schema/tables/Edge";
+import { prepareEdgeForInsert } from "../utils/edge-utils";
 
 export async function getEdges(): Promise<InsertEdge[]> {
-  return await db.select().from(edge);
+  const edges = await db.select().from(edge);
+  return edges.map(prepareEdgeForInsert);
 }
 
 export async function addEdge(newEdge: InsertEdge): Promise<InsertEdge> {
-  await db.insert(edge).values(newEdge);
-  return newEdge;
+  const validEdge = prepareEdgeForInsert(newEdge);
+  await db.insert(edge).values(validEdge);
+  return validEdge;
 }
 
 export async function updateEdge(
   edgeToUpdate: InsertEdge,
 ): Promise<InsertEdge> {
-  await db.update(edge).set(edgeToUpdate).where(eq(edge.id, edgeToUpdate.id));
-
-  return edgeToUpdate;
+  const validEdge = prepareEdgeForInsert(edgeToUpdate);
+  await db.update(edge).set(validEdge).where(eq(edge.id, validEdge.id));
+  return validEdge;
 }
 
 export async function deleteEdge(id: string): Promise<void> {
@@ -137,13 +177,25 @@ export async function deleteEdge(id: string): Promise<void> {
 
 ## Implementation Notes
 
-1. The database schema itself doesn't change to maintain backward compatibility. We keep the sourceHandle and targetHandle columns as nullable in the database but enforce the more rigorous types in the application layer through the Zod schemas.
+1. The Edge schema has been updated to use the new `HandleId` type system while maintaining database compatibility:
 
-2. We provide migration utilities to handle existing data that might have missing or invalid handles:
+   - Schema validation enforces proper handle types
+   - Database columns remain unchanged for compatibility
+   - Zod schemas provide runtime validation
 
-   - `migrateEdgeHandles`: Ensures edges have valid handle IDs
-   - `prepareEdgeForInsert`: Prepares an edge for database insertion with valid handles
+2. New utility functions have been added to work with the enhanced types:
 
-3. We update the Edge store adapter to use the migration utilities when reading from or writing to the database to ensure all edges have valid handles.
+   - `getUniformForEdge`: Get uniform name from texture handles
+   - `prepareEdgeForInsert`: Ensure edges have valid handles
+   - `validateEdgeHandles`: Validate handle compatibility
 
-4. We add a utility function `getUniformForEdge` that works specifically with texture handles to get uniform names.
+3. The Edge store adapter has been updated to:
+
+   - Use the new types and validation
+   - Ensure all edges have valid handles
+   - Maintain proper type safety throughout
+
+4. All components maintain proper type safety through:
+   - Use of branded types
+   - Validation functions
+   - Strong typing in database operations

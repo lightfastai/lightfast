@@ -1,8 +1,12 @@
-import { Edge } from "./tables/Edge";
-import { InsertNodeSchema, Node, SelectNodeSchema } from "./tables/Node";
-import { User } from "./tables/User";
-import { UpdateNameWorkspaceSchema, Workspace } from "./tables/Workspace";
+export * from "./tables/Edge";
+export * from "./tables/Node";
+export * from "./tables/User";
+export * from "./tables/Workspace";
 
-export { User, Workspace, Node, Edge };
-
-export { UpdateNameWorkspaceSchema, SelectNodeSchema, InsertNodeSchema };
+export * from "./types/Geometry";
+export * from "./types/Material";
+export * from "./types/TextureHandle";
+export * from "./types/Texture";
+export * from "./types/Txt2Img";
+export * from "./types/Window";
+export * from "./types/NodePosition";

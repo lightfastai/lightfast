@@ -4,7 +4,13 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import type { NodeType } from "@vendor/db/types";
-import { Edge, Node, Workspace } from "@vendor/db/schema";
+import {
+  $HandleId,
+  Edge,
+  Node,
+  validateEdgeHandles,
+  Workspace,
+} from "@vendor/db/schema";
 import { getMaxTargetEdges } from "@vendor/db/types";
 import { protectedProcedure } from "@vendor/trpc";
 
@@ -51,8 +57,8 @@ export const edgeRouter = {
         edge: z.object({
           source: z.string(),
           target: z.string(),
-          sourceHandle: z.string(),
-          targetHandle: z.string(),
+          sourceHandle: $HandleId,
+          targetHandle: $HandleId,
         }),
       }),
     )
@@ -72,67 +78,78 @@ export const edgeRouter = {
           });
         }
 
-        // 2. For multi-input nodes with targetHandle, check if that specific handle already has a connection
-        if (input.edge.targetHandle) {
-          const [existingEdge] = await tx
-            .select()
-            .from(Edge)
-            .where(
-              and(
-                eq(Edge.target, input.edge.target),
-                eq(Edge.targetHandle, input.edge.targetHandle),
-              ),
-            )
-            .limit(1);
-
-          if (existingEdge) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `This input handle already has a connection`,
-            });
-          }
-        } else {
-          // 3. For nodes without targetHandle, validate against max edges
-          // Count existing edges targeting this node
-          const [edgeCount] = await tx
-            .select({ count: sql<number>`count(*)` })
-            .from(Edge)
-            .where(eq(Edge.target, input.edge.target));
-
-          if (!edgeCount) {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Failed to count edges",
-            });
-          }
-
-          const { count } = edgeCount;
-
-          // 4. Get max allowed edges for this node type
-          const maxEdges = getMaxTargetEdges(
-            targetNode.type as NodeType,
-            targetNode.data,
-          );
-
-          // 5. Validate edge constraint
-          if (count >= maxEdges) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Node of type ${targetNode.type} cannot accept more than ${maxEdges} incoming connections`,
-            });
-          }
+        // 2. Validate handle types
+        if (
+          !validateEdgeHandles({
+            sourceHandle: input.edge.sourceHandle,
+            targetHandle: input.edge.targetHandle,
+          })
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Invalid connection: source must be an output handle and target must be a texture handle",
+          });
         }
 
-        // 6. Create the edge
+        // 3. For multi-input nodes with targetHandle, check if that specific handle already has a connection
+        const [existingEdge] = await tx
+          .select()
+          .from(Edge)
+          .where(
+            and(
+              eq(Edge.target, input.edge.target),
+              eq(Edge.targetHandle, input.edge.targetHandle as string),
+            ),
+          )
+          .limit(1);
+
+        if (existingEdge) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `This input handle already has a connection`,
+          });
+        }
+
+        // 4. Count existing edges targeting this node
+        const [edgeCount] = await tx
+          .select({ count: sql<number>`count(*)` })
+          .from(Edge)
+          .where(eq(Edge.target, input.edge.target));
+
+        if (!edgeCount) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to count edges",
+          });
+        }
+
+        const { count } = edgeCount;
+
+        // 5. Get max allowed edges for this node type
+        const maxEdges = getMaxTargetEdges(
+          targetNode.type as NodeType,
+          targetNode.data,
+        );
+
+        // 6. Validate edge constraint
+        if (count >= maxEdges) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Node of type ${targetNode.type} cannot accept more than ${maxEdges} incoming connections`,
+          });
+        }
+
+        // 7. Create the edge
         const [edge] = await tx
           .insert(Edge)
           .values({
             id: input.id,
             source: input.edge.source,
             target: input.edge.target,
-            sourceHandle: input.edge.sourceHandle,
-            targetHandle: input.edge.targetHandle,
-          })
+            sourceHandle: input.edge.sourceHandle as string,
+            targetHandle: input.edge.targetHandle as string,
+          } as typeof Edge.$inferInsert)
           .returning();
 
         if (!edge) {
@@ -170,13 +187,12 @@ export const edgeRouter = {
           id: z.string().nanoid(),
           source: z.string(),
           target: z.string(),
-          sourceHandle: z.string().optional(),
-          targetHandle: z.string().optional(),
+          sourceHandle: $HandleId,
+          targetHandle: $HandleId,
         }),
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      // Use a transaction to ensure atomicity
       return await ctx.db.transaction(async (tx) => {
         // 1. Get the target node and validate it exists
         const [targetNode] = await tx
@@ -192,7 +208,21 @@ export const edgeRouter = {
           });
         }
 
-        // 2. Get the old edge to check if we're targeting the same node
+        // 2. Validate handle types
+        if (
+          !validateEdgeHandles({
+            sourceHandle: input.newEdge.sourceHandle,
+            targetHandle: input.newEdge.targetHandle,
+          })
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Invalid connection: source must be an output handle and target must be a texture handle",
+          });
+        }
+
+        // 3. Get the old edge to check if we're targeting the same node
         const [oldEdge] = await tx
           .select()
           .from(Edge)
@@ -205,72 +235,69 @@ export const edgeRouter = {
           });
         }
 
-        // 3. For multi-input nodes with targetHandle, check if that specific handle already has a connection
+        // 4. For multi-input nodes with targetHandle, check if that specific handle already has a connection
         // that isn't the one being replaced
-        if (input.newEdge.targetHandle) {
-          const [existingEdge] = await tx
-            .select()
-            .from(Edge)
-            .where(
-              and(
-                eq(Edge.target, input.newEdge.target),
-                eq(Edge.targetHandle, input.newEdge.targetHandle),
-                sql`${Edge.id} != ${input.oldEdgeId}`, // Don't count the edge we're replacing
-              ),
-            )
-            .limit(1);
+        const [existingEdge] = await tx
+          .select()
+          .from(Edge)
+          .where(
+            and(
+              eq(Edge.target, input.newEdge.target),
+              eq(Edge.targetHandle, input.newEdge.targetHandle as string),
+              sql`${Edge.id} != ${input.oldEdgeId}`, // Don't count the edge we're replacing
+            ),
+          )
+          .limit(1);
 
-          if (existingEdge) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `This input handle already has a connection`,
-            });
-          }
-        } else {
-          // For nodes without specific handles, count existing edges
-          // 4. Count existing edges targeting this node
-          const [edgeCount] = await tx
-            .select({ count: sql<number>`count(*)` })
-            .from(Edge)
-            .where(eq(Edge.target, input.newEdge.target));
-
-          if (!edgeCount) {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Failed to count edges",
-            });
-          }
-
-          const { count } = edgeCount;
-
-          // 5. Get max allowed edges for this node type
-          const maxEdges = getMaxTargetEdges(
-            targetNode.type as NodeType,
-            targetNode.data,
-          );
-
-          // Only check the limit if we're targeting a different node
-          if (oldEdge.target !== input.newEdge.target && count >= maxEdges) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Node of type ${targetNode.type} cannot accept more than ${maxEdges} incoming connections`,
-            });
-          }
+        if (existingEdge) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `This input handle already has a connection`,
+          });
         }
 
-        // 6. Delete the old edge
+        // 5. For nodes without specific handles, count existing edges
+        const [edgeCount] = await tx
+          .select({ count: sql<number>`count(*)` })
+          .from(Edge)
+          .where(eq(Edge.target, input.newEdge.target));
+
+        if (!edgeCount) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to count edges",
+          });
+        }
+
+        const { count } = edgeCount;
+
+        // 6. Get max allowed edges for this node type
+        const maxEdges = getMaxTargetEdges(
+          targetNode.type as NodeType,
+          targetNode.data,
+        );
+
+        // Only check the limit if we're targeting a different node
+        if (oldEdge.target !== input.newEdge.target && count >= maxEdges) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Node of type ${targetNode.type} cannot accept more than ${maxEdges} incoming connections`,
+          });
+        }
+
+        // 7. Delete the old edge
         await tx.delete(Edge).where(eq(Edge.id, input.oldEdgeId));
 
-        // 7. Create the new edge
+        // 8. Create the new edge
         const [newEdge] = await tx
           .insert(Edge)
           .values({
             id: input.newEdge.id,
             source: input.newEdge.source,
             target: input.newEdge.target,
-            sourceHandle: input.newEdge.sourceHandle,
-            targetHandle: input.newEdge.targetHandle,
-          })
+            sourceHandle: input.newEdge.sourceHandle as string,
+            targetHandle: input.newEdge.targetHandle as string,
+          } as typeof Edge.$inferInsert)
           .returning();
 
         if (!newEdge) {
