@@ -1,4 +1,4 @@
-# Enhanced Edge Type Safety Implementation Plan
+# Enhanced Edge Type Safety Implementation
 
 ## Overview
 
@@ -17,9 +17,7 @@ This project aims to improve the type safety of the edge connection system in Re
         - architecture-overview.md    # High-level architecture
         - handle-type-system.md       # Handle type system design
         - connection-validation.md    # Connection validation design
-        - architecture-diagrams.md    # Visual representations of the architecture
-        - connection-type-diagram.md  # Connection type diagrams
-        - data-flow-diagram.md        # Data flow diagrams
+        /architecture/                # Detailed architecture diagrams and docs
 
     /02-implementation/           # Implementation details by phase
         /phase-1-handle-types/            # Enhanced handle types
@@ -31,26 +29,6 @@ This project aims to improve the type safety of the edge connection system in Re
         /phase-7-validation-middleware/   # Connection validation middleware
         /phase-8-texture-uniform/         # TextureUniform simplification
         /phase-9-unified-texture-update/  # Unified texture update system
-
-    /03-testing/                  # Testing strategies and plans
-        /unit-tests/              # Unit testing plan
-        /integration-tests/       # Integration testing plan
-        /migration-tests/         # Migration testing plan
-
-    /04-deployment/               # Deployment and migration
-        - rollout-plan.md         # Phased rollout strategy
-        - migration-guide.md      # Migration guide for existing code
-        - rollback-procedures.md  # Procedures for rolling back changes
-
-    /05-extensions/               # Future considerations and enhancements
-        /proposals/               # Individual enhancement proposals
-        /research/                # Research on related topics
-        - future-considerations.md  # Long-term vision
-        - enhancement-proposals.md  # Summary of enhancement proposals
-        - enhancement-tracker.md    # Tracking of proposed enhancements
-
-    - README.md                   # This file
-    - IMPLEMENTATION-TIMELINE.md  # Timeline and dependencies between phases
 ```
 
 ## Implementation Phases
@@ -72,19 +50,3 @@ To understand the implementation plan:
 1. Start with the `00-analysis/problem-statement.md` to understand the issues being addressed
 2. Review the architecture in `01-design/architecture-overview.md`
 3. Explore each phase in the `02-implementation/` directory
-4. See the timeline in `IMPLEMENTATION-TIMELINE.md` for the sequence of implementation
-
-## Adding New Features
-
-When adding new features to this implementation plan:
-
-1. Create a proposal in `05-extensions/proposals/proposal-XXX-[feature-name].md`
-2. Update the `enhancement-tracker.md` with the new proposal
-3. If approved, integrate into the appropriate implementation phase
-
-## Development Guidelines
-
-- Each implementation phase contains a `specification.md` describing what should be implemented
-- Implementation details are in `implementation.md` files
-- Follow the dependency chain detailed in the `IMPLEMENTATION-TIMELINE.md`
-- Add tests according to the plans in the `03-testing/` directory
