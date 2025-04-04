@@ -23,6 +23,7 @@ import { useDeleteEdge } from "../../hooks/use-delete-edge";
 import { useDeleteNode } from "../../hooks/use-delete-node";
 import { useReplaceEdge } from "../../hooks/use-replace-edge";
 import { useUpdateNodes } from "../../hooks/use-update-nodes";
+import { useHandleTypeValidator } from "../../hooks/use-validate-edge";
 import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
@@ -63,6 +64,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   const { mutateAsync: deleteNodeMutate } = useDeleteNode();
   const { mutateAsync: addEdgeMutate } = useAddEdge();
   const { mutateAsync: replaceEdgeMutate } = useReplaceEdge();
+  const validateHandleTypes = useHandleTypeValidator();
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
   // we don't want to add a node
@@ -114,6 +116,11 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         return;
       }
 
+      // Validate handle types (outputs must connect to inputs)
+      if (!validateHandleTypes(params.sourceHandle, params.targetHandle)) {
+        return;
+      }
+
       // Find any existing edge that connects TO the same handle of the target node
       const existingEdge = edges.find(
         (edge) =>
@@ -129,7 +136,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         await addEdgeMutate(params);
       }
     },
-    [replaceEdgeMutate, addEdgeMutate, edges],
+    [replaceEdgeMutate, addEdgeMutate, edges, validateHandleTypes],
   );
 
   return (
@@ -144,7 +151,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         nodeTypes={nodeTypes}
         onClick={onClick}
         onMouseMove={onMouseMove}
-        connectionMode={ConnectionMode.Loose}
+        connectionMode={ConnectionMode.Strict}
         selectionOnDrag={false}
         panOnScroll={true}
         zoomOnScroll={false}

@@ -179,6 +179,33 @@ export const useMaxIncomingEdgesValidator = () => {
 };
 
 /**
+ * Validates that connections only flow from output handles to input handles.
+ * @returns A function that checks if the connection is valid based on handle types.
+ */
+export const useHandleTypeValidator = () => {
+  return useCallback(
+    (sourceHandle: string | null, targetHandle: string | null): boolean => {
+      // Source handles should be outputs, target handles should be inputs
+      const isOutputHandle = (handle: string | null) =>
+        handle?.includes("output");
+      const isInputHandle = (handle: string | null) =>
+        handle?.includes("input");
+
+      if (!isOutputHandle(sourceHandle) || !isInputHandle(targetHandle)) {
+        toast({
+          variant: "destructive",
+          description:
+            "Invalid connection: Can only connect from output to input.",
+        });
+        return false;
+      }
+      return true;
+    },
+    [],
+  );
+};
+
+/**
  * Original hook that provides all validation functions.
  * Maintained for backwards compatibility.
  * @returns An object containing all validation functions.
@@ -189,6 +216,7 @@ export const useEdgeValidation = () => {
   const validateTargetExistence = useTargetExistenceValidator();
   const validateWindowNode = useWindowNodeValidator();
   const validateMaxIncomingEdges = useMaxIncomingEdgesValidator();
+  const validateHandleType = useHandleTypeValidator();
 
   return {
     validateSelfConnection,
@@ -196,5 +224,6 @@ export const useEdgeValidation = () => {
     validateMaxIncomingEdges,
     validateSameSource,
     validateWindowNode,
+    validateHandleType,
   };
 };
