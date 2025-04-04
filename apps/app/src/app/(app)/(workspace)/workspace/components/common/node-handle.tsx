@@ -1,5 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 
+import type { HandleId } from "@vendor/db/types";
 import {
   Tooltip,
   TooltipContent,
@@ -7,24 +8,16 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
-
-// Type for handle direction - enforces proper ID prefix
-type HandleType = "input" | "output";
+import { isOutputHandleId, isTextureHandleId } from "@vendor/db/types";
 
 /**
  * Props for the NodeHandle component
  */
 export interface NodeHandleProps {
   /**
-   * Unique identifier for this handle, must be prefixed with "input-" or "output"
-   * depending on the type. For inputs, should follow pattern "input-N"
+   * Strictly typed handle ID - either TextureHandleId or OutputHandleId
    */
-  id: string;
-
-  /**
-   * The type of handle, either "input" or "output"
-   */
-  type: HandleType;
+  id: HandleId;
 
   /**
    * Position of the handle
@@ -53,23 +46,18 @@ export interface NodeHandleProps {
  */
 export function NodeHandle({
   id,
-  type,
   position,
   description,
   isRequired = false,
   tooltipSide = position === Position.Left ? "left" : "right",
 }: NodeHandleProps) {
-  // Validate ID format based on type
-  if (type === "input" && !id.startsWith("input-")) {
-    throw new Error(
-      `Input handle IDs must start with "input-". Received: "${id}"`,
-    );
-  }
+  // Determine handle type from the ID
+  const isInput = isTextureHandleId(id);
+  const isOutput = isOutputHandleId(id);
 
-  if (type === "output" && !id.includes("output")) {
-    throw new Error(
-      `Output handle IDs must include "output". Received: "${id}"`,
-    );
+  if (!isInput && !isOutput) {
+    console.warn(`Invalid handle ID: ${id}`);
+    return null;
   }
 
   return (
@@ -94,7 +82,7 @@ export function NodeHandle({
       {/* Actual handle component */}
       <Handle
         id={id}
-        type={type === "input" ? "target" : "source"}
+        type={isInput ? "target" : "source"}
         position={position}
         className={cn(
           "absolute z-10 h-6 w-3 border transition-opacity duration-150 hover:opacity-80",

@@ -2,243 +2,115 @@
 
 ## Overview
 
-This phase updates the UI components to work with strictly typed handles. The main components that need to be updated are the handle components, connection lines, and edge components in the React Flow implementation.
+This phase focuses on updating the NodeHandle component to use strictly typed handle IDs while maintaining the existing UI patterns and accessibility features.
 
 ## Requirements
 
-1. Update the TextureHandle component to use the branded TextureHandleId type
-2. Update the Node component to use strictly typed handles
-3. Update EdgeLine component to use StrictConnection
-4. Ensure backward compatibility with existing code
+1. Update NodeHandle component to use branded types (TextureHandleId and OutputHandleId)
+2. Maintain existing UI/UX features and accessibility
+3. Ensure type safety while preserving backward compatibility
+4. Keep consistent with shadcn/ui and Radix patterns
 
 ## Technical Design
 
-### TextureHandle Component Update
+### NodeHandle Component Update
 
 ```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/components/nodes/TextureHandle.tsx
-import { DetailedHTMLProps, HTMLAttributes } from "react";
-import { Position } from "@xyflow/react";
+// apps/app/src/app/(app)/(workspace)/workspace/components/common/node-handle.tsx
+import { HandleId, OutputHandleId, TextureHandleId } from "@vendor/db/types";
 
-import {
-  createTextureHandleId,
-  isTextureHandleId,
-  TextureHandleId,
-} from "@vendor/db/types";
+export interface NodeHandleProps {
+  /**
+   * Strictly typed handle ID - either TextureHandleId or OutputHandleId
+   */
+  id: HandleId;
 
-// Updated props with TextureHandleId
-export interface TextureHandleProps
-  extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  id: TextureHandleId;
-  position?: Position;
-  hideIfConnected?: boolean;
-  isConnected?: boolean;
-  isConnectable?: boolean;
-  connectionIndicator?: boolean;
+  /**
+   * Position of the handle
+   */
+  position: Position;
+
+  /**
+   * Description to show in tooltip
+   */
+  description: string;
+
+  /**
+   * Whether this handle is required (affects styling)
+   */
+  isRequired?: boolean;
+
+  /**
+   * Which side the tooltip should appear on
+   */
+  tooltipSide?: "left" | "right" | "top" | "bottom";
 }
 
-export const TextureHandle = ({
-  id,
-  position = Position.Left,
-  hideIfConnected = false,
-  isConnected = false,
-  isConnectable = true,
-  connectionIndicator = true,
-  ...props
-}: TextureHandleProps) => {
-  // Same implementation, but now with type-safety on the id
-
-  // Validation is now done at compile-time through the TextureHandleId type,
-  // but we can still do runtime validation as a fallback
-  if (!isTextureHandleId(id)) {
-    console.warn(`Invalid TextureHandleId: ${id}`);
-    return null;
-  }
-
-  // Rest of component implementation...
-};
+// Component implementation details...
 ```
 
-### OutputHandle Component
+### Type Safety Features
 
-```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/components/nodes/OutputHandle.tsx
-import { DetailedHTMLProps, HTMLAttributes } from "react";
-import { Position } from "@xyflow/react";
+1. **Branded Types**:
 
-import {
-  createOutputHandleId,
-  isOutputHandleId,
-  OutputHandleId,
-} from "@vendor/db/types";
+   - Use `TextureHandleId` for input handles
+   - Use `OutputHandleId` for output handles
+   - Union type `HandleId` for generic handle references
 
-// New component for output handles
-export interface OutputHandleProps
-  extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  id: OutputHandleId;
-  position?: Position;
-  hideIfConnected?: boolean;
-  isConnected?: boolean;
-  isConnectable?: boolean;
-  connectionIndicator?: boolean;
-}
+2. **Type Validation**:
 
-export const OutputHandle = ({
-  id,
-  position = Position.Right,
-  hideIfConnected = false,
-  isConnected = false,
-  isConnectable = true,
-  connectionIndicator = true,
-  ...props
-}: OutputHandleProps) => {
-  // Similar implementation to TextureHandle but for output handles
+   - Compile-time validation through TypeScript
+   - Runtime validation using type guards
+   - Graceful fallback for invalid handles
 
-  if (!isOutputHandleId(id)) {
-    console.warn(`Invalid OutputHandleId: ${id}`);
-    return null;
-  }
-
-  // Implementation...
-};
-```
-
-### Edge Component Update
-
-```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/components/flow/EdgeLine.tsx
-import {
-  BaseEdge,
-  EdgeProps,
-  getStraightPath,
-  useReactFlow,
-} from "@xyflow/react";
-
-import {
-  HandleId,
-  isOutputHandleId,
-  isTextureHandleId,
-} from "@vendor/db/types";
-
-import { StrictConnection, toStrictConnection } from "../../types/connection";
-
-// Updated EdgeLine component with stronger typing
-export const EdgeLine = ({
-  id,
-  source,
-  target,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  sourceHandle,
-  targetHandle,
-  markerEnd,
-  style,
-}: EdgeProps) => {
-  const { findNode } = useReactFlow();
-
-  // Convert to strict connection or use default handles
-  let safeSourceHandle: HandleId;
-  let safeTargetHandle: HandleId;
-
-  // Try to convert to strict connection for type safety
-  const strictConnection = toStrictConnection({
-    source,
-    target,
-    sourceHandle,
-    targetHandle,
-  });
-
-  if (strictConnection) {
-    // Use the validated handles from the strict connection
-    safeSourceHandle = strictConnection.sourceHandle;
-    safeTargetHandle = strictConnection.targetHandle;
-  } else {
-    // Fallback to defaults if conversion fails
-    console.warn(`Invalid connection for edge ${id}, using default handles`);
-
-    // Use types that make sense for the common case
-    // Usually source is an output and target is an input
-    safeSourceHandle = createOutputHandleId("output-main")!;
-    safeTargetHandle = createTextureHandleId("input-1")!;
-  }
-
-  // Rest of component implementation...
-};
-```
-
-### Node Component Update
-
-```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/components/nodes/TextureNode.tsx
-import { NodeProps } from "@xyflow/react";
-
-import {
-  TextureHandleId,
-  createTextureHandleIds,
-  OutputHandleId,
-  createOutputHandleId,
-} from "@vendor/db/types";
-import { TextureHandle } from "./TextureHandle";
-import { OutputHandle } from "./OutputHandle";
-
-export const TextureNode = ({ data, ...props }: NodeProps) => {
-  // Create properly typed handles based on texture type
-  const inputs = data.inputs || [];
-  const textureHandles: TextureHandleId[] = createTextureHandleIds(inputs.length);
-
-  // Create output handle with proper type
-  const outputHandle: OutputHandleId = createOutputHandleId("output-main")!;
-
-  return (
-    <div className="texture-node">
-      {/* Input handles */}
-      {textureHandles.map((handleId, i) => (
-        <TextureHandle
-          key={handleId}
-          id={handleId}
-          isConnectable={true}
-          // Other props...
-        />
-      ))}
-
-      {/* Output handle */}
-      <OutputHandle
-        id={outputHandle}
-        isConnectable={true}
-        // Other props...
-      />
-
-      {/* Rest of component... */}
-    </div>
-  );
-};
-```
+3. **Type Inference**:
+   - Handle type (input/output) inferred from ID
+   - No explicit type prop needed
+   - Automatic position defaults based on handle type
 
 ## Dependencies
 
 1. Phase 1: Enhanced Handle Types - The branded types are used in component props
-2. Phase 2: Connection Types - StrictConnection is used in the EdgeLine component
-3. Phase 3: Edge Schema - The updated Edge schema informs the EdgeLine component
+2. Phase 2: Connection Types - For type validation
+3. Existing UI components and patterns
 
 ## Impact Analysis
 
-| Component     | Changes Required                                     |
-| ------------- | ---------------------------------------------------- |
-| TextureHandle | Update props to use TextureHandleId                  |
-| OutputHandle  | New component for output handles with OutputHandleId |
-| EdgeLine      | Update to use StrictConnection                       |
-| TextureNode   | Update to create properly typed handles              |
-| FlowChart     | No changes yet (handled in Phase 7)                  |
+| Component   | Changes Required                                     |
+| ----------- | ---------------------------------------------------- |
+| NodeHandle  | Update to use branded types, enhance type validation |
+| TextureNode | Update to use new NodeHandle props                   |
+| EdgeLine    | Minor updates to work with strict typing             |
 
 ## Acceptance Criteria
 
-1. ✅ TextureHandle component uses the TextureHandleId type
-2. ✅ OutputHandle component uses the OutputHandleId type
-3. ✅ EdgeLine component handles both valid and invalid connections
-4. ✅ Node components create properly typed handles
-5. ✅ Existing UI continues to work with the updated components
-6. ✅ All tests continue to pass
+1. ✅ NodeHandle uses branded types (TextureHandleId/OutputHandleId)
+2. ✅ Maintains existing UI/UX features and accessibility
+3. ✅ Type safety enforced at compile time
+4. ✅ Backward compatibility maintained
+5. ✅ Consistent with existing UI patterns
+6. ✅ All tests pass
+
+## Migration Guide
+
+1. Update handle IDs to use branded types:
+
+   ```typescript
+   const textureHandles = createTextureHandleIds(inputs.length);
+   const outputHandle = createOutputHandleId("output-main")!;
+   ```
+
+2. Update NodeHandle usage:
+
+   ```typescript
+   <NodeHandle
+     id={handleId}
+     position={Position.Left}
+     description="Input handle"
+     isRequired={true}
+   />
+   ```
+
+3. Remove explicit type props (now inferred from ID)
+
+4. Update any custom handle components to use NodeHandle
