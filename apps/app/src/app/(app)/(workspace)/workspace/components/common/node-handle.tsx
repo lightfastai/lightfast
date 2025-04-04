@@ -55,10 +55,15 @@ export function NodeHandle({
   const isInput = isTextureHandleId(id);
   const isOutput = isOutputHandleId(id);
 
+  // Validate handle type
   if (!isInput && !isOutput) {
-    console.warn(`Invalid handle ID: ${id}`);
-    return null;
+    throw new Error(
+      `Invalid handle ID: ${id}. Must be either a TextureHandleId or OutputHandleId.`,
+    );
   }
+
+  // Determine handle type for React Flow
+  const handleType = isInput ? "target" : "source";
 
   return (
     <div className="relative flex h-3 w-3 items-center justify-center">
@@ -82,7 +87,7 @@ export function NodeHandle({
       {/* Actual handle component */}
       <Handle
         id={id}
-        type={isInput ? "target" : "source"}
+        type={handleType}
         position={position}
         className={cn(
           "absolute z-10 h-6 w-3 border transition-opacity duration-150 hover:opacity-80",
