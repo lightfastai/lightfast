@@ -29,6 +29,7 @@ This project aims to improve the type safety of the edge connection system in Re
         /phase-7-validation-middleware/   # Connection validation middleware
         /phase-8-texture-uniform/         # TextureUniform simplification
         /phase-9-unified-texture-update/  # Unified texture update system
+        /phase-10-expression-evaluator/   # Expression evaluator type safety
 ```
 
 ## Implementation Phases
@@ -42,6 +43,7 @@ This project aims to improve the type safety of the edge connection system in Re
 7. **Validation Middleware**: Implement connection validation middleware for React Flow
 8. **TextureUniform Simplification**: Remove redundant fields from TextureUniform
 9. **Unified Texture Update**: Implement a unified, configuration-driven texture update system
+10. **Expression Evaluator**: Enhance the expression evaluator with type safety and integrate with the new schema
 
 ## Getting Started
 
