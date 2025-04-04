@@ -149,6 +149,47 @@ To support different types of connections beyond textures (Material, Geometry, e
    }
    ```
 
+## Simplifying Data Models
+
+### Redundant Field Removal
+
+The current `TextureUniform` type contains a redundant `isConnected` field that can be inferred from the presence of an ID:
+
+```typescript
+// Current
+interface TextureUniform {
+  id: string | null;
+  textureObject: THREE.Texture | null;
+  isConnected: boolean; // Redundant - can be determined from id !== null
+}
+
+// Proposed
+interface TextureUniform {
+  id: string | null;
+  textureObject: THREE.Texture | null;
+}
+
+// Helper function to check connection status
+function isTextureConnected(uniform: TextureUniform): boolean {
+  return !!uniform?.id;
+}
+```
+
+Benefits of this simplification:
+
+1. **Less State to Maintain**: Reduces the chance of inconsistent state where `id` exists but `isConnected` is false
+2. **Simplified API**: Makes the API surface smaller and more intuitive
+3. **Data Integrity**: Eliminates one source of potential bugs
+4. **Better Type Safety**: Fewer fields mean fewer places for type errors
+
+### Other Redundant State Considerations
+
+Other areas where similar simplifications could be applied:
+
+1. **Edge Connection State**: Connection status can often be derived from existing data rather than stored explicitly
+2. **Node Type Information**: Some node types repeat information that could be derived from a registry
+3. **Handle Metadata**: Separate the static metadata from dynamic connection state
+
 ## Visual Enhancements
 
 1. **Color-Coded Handles**
@@ -172,6 +213,7 @@ To support different types of connections beyond textures (Material, Geometry, e
 3. **Phase 3**: Implement the generalized handle system with type hierarchy
 4. **Phase 4**: Add the connection rules registry
 5. **Phase 5**: Enhance UI with visual indicators and smart connections
+6. **Phase 6**: Simplify data models by removing redundant fields
 
 ## Database Considerations
 

@@ -14,6 +14,7 @@ The current implementation of the edge system in React TD lacks compile-time typ
 6. Maintain backward compatibility with existing code
 7. Improve developer experience with better error messages
 8. Minimize runtime validation overhead
+9. Remove redundant fields in the texture uniform system
 
 ## Implementation Steps
 
@@ -492,6 +493,131 @@ export function useConnectionValidator() {
 // <ReactFlow isValidConnection={isValidConnection} ... />
 ```
 
+### Phase 8: Simplify TextureUniform Type
+
+1. **Update TextureUniform Type to Remove Redundant isConnected Field**
+
+```typescript
+// In packages/webgl/src/types/texture-uniform.ts
+
+/**
+ * Updated interface without redundant isConnected field
+ */
+export interface TextureReference {
+  id: string | null; // The ID of the source texture node
+  textureObject: THREE.Texture | null; // The actual WebGL/Three.js texture object
+}
+
+/**
+ * Updated Zod schema for texture uniforms
+ */
+export const $TextureUniform = z
+  .object({
+    id: z.string().nullable(),
+    textureObject: z.any().nullable(), // Can't strongly type THREE.Texture in Zod
+  })
+  .nullable();
+
+export type TextureUniform = z.infer<typeof $TextureUniform>;
+```
+
+2. **Update Factory Functions**
+
+```typescript
+/**
+ * Update the factory functions to remove isConnected
+ */
+export function createTextureUniform(
+  id: string | null = null,
+  textureObject: THREE.Texture | null = null,
+): TextureUniform {
+  return {
+    id,
+    textureObject,
+  };
+}
+
+/**
+ * Update the existing TextureUniform
+ */
+export function updateTextureUniform(
+  uniform: TextureUniform,
+  id: string | null,
+  textureObject: THREE.Texture | null,
+): TextureUniform {
+  if (!uniform) {
+    return createTextureUniform(id, textureObject);
+  }
+
+  return {
+    ...uniform,
+    id,
+    textureObject,
+  };
+}
+
+/**
+ * Helper function to check if a texture is connected
+ */
+export function isTextureConnected(uniform: TextureUniform): boolean {
+  return !!uniform?.id;
+}
+```
+
+3. **Update Type Guard Function**
+
+```typescript
+/**
+ * Check if a value is a TextureUniform
+ */
+export function isTextureUniform(value: unknown): value is TextureUniform {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "id" in value &&
+    ("textureObject" in value || value.textureObject === null)
+  );
+}
+```
+
+4. **Update Shader Implementations**
+
+```typescript
+// In packages/webgl/src/shaders/add.ts, displace.ts, etc.
+// Update texture uniform initialization
+const defaultUniforms = {
+  u_texture1: createTextureUniform(null, null),
+  u_texture2: createTextureUniform(null, null),
+  // Other uniforms...
+};
+```
+
+5. **Update Hook Implementations**
+
+```typescript
+// In apps/app/src/app/(app)/(workspace)/workspace/hooks/use-update-texture-add.ts
+// Replace isConnected checks with isTextureConnected utility
+
+// Before:
+if (isTextureUniform(u[uniformName as keyof typeof u])) {
+  (u[uniformName as keyof typeof u] as any) = updateTextureUniform(
+    u[uniformName as keyof typeof u] as any,
+    sourceId,
+    textureObject,
+    !!sourceId, // <-- isConnected parameter
+  );
+}
+
+// After:
+if (isTextureUniform(u[uniformName as keyof typeof u])) {
+  (u[uniformName as keyof typeof u] as any) = updateTextureUniform(
+    u[uniformName as keyof typeof u] as any,
+    sourceId,
+    textureObject,
+  );
+}
+```
+
 ## Testing Strategy
 
 1. **Unit Tests**
@@ -517,6 +643,7 @@ export function useConnectionValidator() {
 2. **Phase 3** - Schema updates (requires database compatibility testing)
 3. **Phase 4-6** - UI and logic updates (can be done incrementally)
 4. **Phase 7** - Connection validation middleware (after all other changes)
+5. **Phase 8** - Simplify TextureUniform type (after all other changes)
 
 ## Migration Considerations
 
