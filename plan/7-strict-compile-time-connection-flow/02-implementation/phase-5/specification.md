@@ -1,299 +1,213 @@
-# Phase 5: Hook Logic - Specification
+# Phase 5: Handle Type System and Base Components
 
 ## Overview
 
-This phase refactors the React hooks that manage connections and edges to use the new type system. This includes the hooks for adding, updating, and deleting edges, as well as the hooks that manage connections between nodes.
+This phase establishes the foundation for our handle type system and base components, implementing a clean dependency inversion pattern to avoid cyclical dependencies between WebGL and DB layers.
 
 ## Requirements
 
-1. Update useAddEdge hook to use StrictConnection
-2. Update useEdgeStore to work with strictly typed edges
-3. Update useUpdateTextureConnection hook to use TextureHandleId
-4. Update useDynamicConnections hook to handle different connection types
-5. Ensure backward compatibility with existing code
+### Handle Type System
 
-## Technical Design
+1. **Base Handle Interface**
 
-### useAddEdge Hook Update
+   - Define a base handle interface in the WebGL layer
+   - Support type-safe handle identification
+   - Include uniform name mapping
+   - Provide validation utilities
+
+2. **Handle Type Safety**
+
+   - Implement branded types for handles
+   - Ensure compile-time type checking
+   - Prevent accidental type mixing
+   - Support type inference
+
+3. **Handle Validation**
+   - Validate handle structure
+   - Check handle type compatibility
+   - Verify uniform name mapping
+   - Support custom validation rules
+
+### Base Components
+
+1. **Handle Component**
+
+   - Type-safe handle props
+   - Support for handle validation
+   - Integration with React Flow
+   - Proper event handling
+
+2. **Connection Component**
+   - Type-safe connection props
+   - Support for validation rules
+   - Visual feedback for validity
+   - Performance optimization
+
+### Type Definitions
 
 ```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/hooks/use-add-edge.ts
-import { useCallback } from "react";
-import { Connection } from "@xyflow/react";
-import { nanoid } from "nanoid";
-
-import { InsertEdge } from "@vendor/db/types";
-
-import { useEdgeStore } from "../providers/edge-store-provider";
-import {
-  StrictConnection,
-  toStrictConnection,
-  validateConnection,
-} from "../types/connection";
-
-interface AddEdgeParams {
-  onInvalidConnection?: (reason: string) => void;
+// packages/webgl/src/types/handle.ts
+export interface BaseHandle {
+  id: string;
+  uniformName: string;
 }
 
-export const useAddEdge = ({ onInvalidConnection }: AddEdgeParams = {}) => {
-  const { addEdge } = useEdgeStore();
-
-  const handleAddEdge = useCallback(
-    (connection: Connection) => {
-      // Validate connection with detailed error info
-      const validationResult = validateConnection(connection);
-
-      if (!validationResult.valid) {
-        // Handle invalid connection with better error messaging
-        if (onInvalidConnection) {
-          onInvalidConnection(validationResult.details);
-        }
-        console.warn(
-          `Invalid connection: ${validationResult.details}`,
-          connection,
-        );
-        return false;
-      }
-
-      // We now have a guaranteed valid connection
-      const strictConnection = validationResult.connection;
-
-      // Create edge from strict connection
-      const newEdge: InsertEdge = {
-        id: nanoid(),
-        source: strictConnection.source,
-        target: strictConnection.target,
-        sourceHandle: strictConnection.sourceHandle,
-        targetHandle: strictConnection.targetHandle,
-      };
-
-      addEdge(newEdge);
-      return true;
-    },
-    [addEdge, onInvalidConnection],
-  );
-
-  return handleAddEdge;
-};
-```
-
-### useEdgeStore Update
-
-```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/providers/edge-store-provider.tsx
-import { useCallback, useMemo } from "react";
-import { create } from "zustand";
-
-import { Edge, InsertEdge } from "@vendor/db/types";
-import { prepareEdgeForInsert } from "@vendor/db/utils";
-
-import { useProjectStore } from "./project-store-provider";
-
-// Updated store interface with proper types
-interface EdgeStore {
-  edges: InsertEdge[];
-  addEdge: (edge: InsertEdge) => void;
-  updateEdge: (edge: InsertEdge) => void;
-  deleteEdge: (edgeId: string) => void;
-  setEdges: (edges: InsertEdge[]) => void;
+export interface TextureHandle extends BaseHandle {
+  type: "texture";
+  // Additional texture-specific properties
 }
 
-// Create store with proper validation
-export const useEdgeStoreBase = create<EdgeStore>((set) => ({
-  edges: [],
-  addEdge: (edge) => {
-    // Ensure edge has valid handles before adding
-    const validEdge = prepareEdgeForInsert(edge);
+export interface OutputHandle extends BaseHandle {
+  type: "output";
+  // Additional output-specific properties
+}
 
-    set((state) => ({
-      edges: [...state.edges, validEdge],
-    }));
-  },
-  updateEdge: (edge) => {
-    // Ensure edge has valid handles before updating
-    const validEdge = prepareEdgeForInsert(edge);
-
-    set((state) => ({
-      edges: state.edges.map((e) => (e.id === validEdge.id ? validEdge : e)),
-    }));
-  },
-  deleteEdge: (edgeId) => {
-    set((state) => ({
-      edges: state.edges.filter((e) => e.id !== edgeId),
-    }));
-  },
-  setEdges: (edges) => {
-    // Ensure all edges have valid handles
-    const validEdges = edges.map(prepareEdgeForInsert);
-
-    set(() => ({
-      edges: validEdges,
-    }));
-  },
-}));
-
-// Rest of hook implementation...
+// Type guards and utilities
+export function isTextureHandle(handle: BaseHandle): handle is TextureHandle;
+export function isOutputHandle(handle: BaseHandle): handle is OutputHandle;
 ```
 
-### useUpdateTextureConnection Hook
+### Component Interfaces
 
 ```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/hooks/use-update-texture-connection.ts
-import { useCallback, useEffect, useRef } from "react";
+// packages/webgl/src/components/Handle.tsx
+export interface HandleProps {
+  handle: BaseHandle;
+  position: Position;
+  type: "source" | "target";
+  onConnect?: (connection: Connection) => void;
+  onDisconnect?: (connection: Connection) => void;
+}
 
-import {
-  getUniformNameFromTextureHandleId,
-  isTextureHandleId,
-  TextureHandleId,
-} from "@vendor/db/types";
-
-import { useEdgeStore } from "../providers/edge-store-provider";
-
-/**
- * Hook for managing texture connections
- * Now using TextureHandleId to enforce type safety
- */
-export const useUpdateTextureConnection = (nodeId: string) => {
-  const { edges } = useEdgeStore();
-  const connectionCache = useRef<Record<string, Record<string, string | null>>>(
-    {},
-  );
-
-  // Initialize connection cache for this node
-  if (!connectionCache.current[nodeId]) {
-    connectionCache.current[nodeId] = {};
-  }
-
-  // Find all connections where this node is the target
-  useEffect(() => {
-    // Verify handle IDs at runtime for extra safety
-    edges.forEach((edge) => {
-      if (edge.target === nodeId && isTextureHandleId(edge.targetHandle)) {
-        const handleId = edge.targetHandle as TextureHandleId;
-        connectionCache.current[nodeId][handleId] = edge.source;
-      }
-    });
-  }, [edges, nodeId]);
-
-  /**
-   * Get the connection for a specific handle
-   */
-  const getConnection = useCallback(
-    (handleId: TextureHandleId): string | null => {
-      return connectionCache.current[nodeId]?.[handleId] || null;
-    },
-    [nodeId],
-  );
-
-  /**
-   * Get the uniform name for a handle
-   */
-  const getUniformName = useCallback(
-    (handleId: TextureHandleId): string | null => {
-      return getUniformNameFromTextureHandleId(handleId);
-    },
-    [],
-  );
-
-  return {
-    getConnection,
-    getUniformName,
-  };
-};
+// packages/webgl/src/components/Connection.tsx
+export interface ConnectionProps {
+  connection: Connection;
+  isValid: boolean;
+  sourceHandle: BaseHandle;
+  targetHandle: BaseHandle;
+}
 ```
 
-### useDynamicConnections Hook
+## Validation Rules
 
-```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/hooks/use-dynamic-connections.ts
-import { useCallback, useState } from "react";
+1. **Handle Structure**
 
-import {
-  HandleId,
-  isOutputHandleId,
-  isTextureHandleId,
-  OutputHandleId,
-  TextureHandleId,
-} from "@vendor/db/types";
+   - Valid handle ID format
+   - Valid uniform name format
+   - Required properties present
+   - Type-specific validation
 
-import {
-  ConnectionValidationError,
-  StrictConnection,
-  validateConnection,
-} from "../types/connection";
+2. **Connection Rules**
 
-/**
- * Hook for validating connections between nodes
- * Using the new type system for better type safety
- */
-export const useDynamicConnections = () => {
-  const [lastValidationError, setLastValidationError] = useState<string | null>(
-    null,
-  );
+   - Source must be output handle
+   - Target must be texture handle
+   - Compatible handle types
+   - Valid connection structure
 
-  /**
-   * Check if a connection is valid based on handle types and node types
-   */
-  const isValidConnection = useCallback(
-    (connection: Parameters<typeof validateConnection>[0]) => {
-      // Validate using the new validation system
-      const result = validateConnection(connection);
+3. **Type Safety**
+   - Compile-time type checking
+   - Runtime type validation
+   - Type inference support
+   - Clear error messages
 
-      if (!result.valid) {
-        setLastValidationError(result.details);
-        return false;
-      }
+## Implementation Guidelines
 
-      const strictConnection = result.connection;
+1. **Dependency Management**
 
-      // Additional validation logic for different handle types
-      const sourceIsOutput = isOutputHandleId(strictConnection.sourceHandle);
-      const targetIsInput = isTextureHandleId(strictConnection.targetHandle);
+   - WebGL layer defines interfaces
+   - DB layer implements interfaces
+   - Clean architectural boundaries
+   - No circular dependencies
 
-      // Ensure connections go from outputs to inputs
-      if (!sourceIsOutput || !targetIsInput) {
-        setLastValidationError(
-          "Connections must be from output handles to input handles",
-        );
-        return false;
-      }
+2. **Type Safety**
 
-      // Clear error and return valid
-      setLastValidationError(null);
-      return true;
-    },
-    [],
-  );
+   - Use TypeScript strict mode
+   - Implement proper type guards
+   - Leverage branded types
+   - Maintain type inference
 
-  return {
-    isValidConnection,
-    lastValidationError,
-  };
-};
-```
+3. **Performance**
 
-## Dependencies
+   - Efficient validation
+   - Minimal re-renders
+   - Proper caching
+   - Optimized type checks
 
-1. Phase 1: Enhanced Handle Types - The branded types are used in hook parameters
-2. Phase 2: Connection Types - StrictConnection is used in hook logic
-3. Phase 3: Edge Schema - The updated Edge schema is used in useEdgeStore
-4. Phase 4: UI Components - The updated UI components use these hooks
+4. **Error Handling**
+   - Clear error messages
+   - Proper error types
+   - Validation feedback
+   - Debug information
 
-## Impact Analysis
+## Success Criteria
 
-| Component                  | Changes Required                                             |
-| -------------------------- | ------------------------------------------------------------ |
-| useAddEdge                 | Update to use StrictConnection and provide better error info |
-| useEdgeStore               | Update to validate edges before adding to store              |
-| useUpdateTextureConnection | Update to use TextureHandleId                                |
-| useDynamicConnections      | Update to handle different handle types                      |
-| Flow component             | No changes yet (handled in Phase 7)                          |
+1. **Type Safety**
 
-## Acceptance Criteria
+   - No type errors in codebase
+   - Proper type inference
+   - Clear type boundaries
+   - Comprehensive type coverage
 
-1. ✅ useAddEdge hook validates connections and provides better error messages
-2. ✅ useEdgeStore ensures all edges have valid handles
-3. ✅ useUpdateTextureConnection uses TextureHandleId for type safety
-4. ✅ useDynamicConnections correctly validates different handle types
-5. ✅ Existing code continues to work with the updated hooks
-6. ✅ All tests continue to pass
+2. **Validation**
+
+   - All handles properly validated
+   - Connection rules enforced
+   - Clear validation feedback
+   - Proper error handling
+
+3. **Architecture**
+
+   - Clean dependency structure
+   - No circular dependencies
+   - Clear layer boundaries
+   - Maintainable codebase
+
+4. **Performance**
+   - Fast validation checks
+   - Efficient type checking
+   - Minimal overhead
+   - Proper optimization
+
+## Testing Requirements
+
+1. **Type Tests**
+
+   - Type inference tests
+   - Type guard tests
+   - Type compatibility tests
+   - Type boundary tests
+
+2. **Validation Tests**
+
+   - Handle validation tests
+   - Connection validation tests
+   - Error case tests
+   - Edge case tests
+
+3. **Integration Tests**
+   - Component integration
+   - System integration
+   - Performance tests
+   - Error handling tests
+
+## Documentation Requirements
+
+1. **Type Documentation**
+
+   - Interface documentation
+   - Type guard documentation
+   - Validation rule documentation
+   - Usage examples
+
+2. **Component Documentation**
+
+   - Props documentation
+   - Event documentation
+   - Usage examples
+   - Best practices
+
+3. **Architecture Documentation**
+   - Layer boundaries
+   - Dependency flow
+   - Implementation patterns
+   - Design decisions

@@ -1,250 +1,221 @@
-# Phase 6: WebGL Registry - Specification
+# Phase 6: WebGL Registry and Handle Integration
 
 ## Overview
 
-This phase updates the WebGL registry to work with the new handle type system. The registry provides information about available texture types, their inputs, and their requirements, which is crucial for ensuring valid connections between nodes.
+This phase updates the WebGL registry to work with the new handle type system, implementing proper type safety and validation while maintaining clean architectural boundaries between WebGL and DB layers.
 
 ## Requirements
 
-1. Update texture registry to use TextureHandleId for input definitions
-2. Ensure TextureFieldMetadata uses the new type system
-3. Integrate with the Edge validation system
-4. Maintain backward compatibility with existing code
+### WebGL Registry Updates
 
-## Technical Design
+1. **Registry Structure**
 
-### Update TextureFieldMetadata
+   - Define type-safe registry interface
+   - Support handle-based texture configuration
+   - Implement validation rules
+   - Maintain backward compatibility
+
+2. **Handle Integration**
+
+   - Map handles to uniforms
+   - Support texture validation
+   - Handle type checking
+   - Proper error handling
+
+3. **Uniform Management**
+   - Type-safe uniform configuration
+   - Support for complex uniforms
+   - Expression handling
+   - Resource cleanup
+
+### Type Definitions
 
 ```typescript
-// packages/webgl/src/types/field.ts
-import { TextureHandleId } from "@vendor/db/types";
-
-// Update field metadata to use TextureHandleId
+// packages/webgl/src/types/registry.ts
 export interface TextureFieldMetadata {
-  id: TextureHandleId; // Now using branded type
-  uniformName: string;
-  description: string;
-  required: boolean;
+  handle: TextureHandle;
+  isRequired: boolean;
+  defaultValue: any;
+}
+
+export interface TextureRegistryEntry {
+  fields: Record<string, TextureFieldMetadata>;
+  validateConnection: (handle: TextureHandle, sourceType: string) => boolean;
+  createDefaultUniforms: () => Record<string, TextureUniform>;
+}
+
+export interface TextureRegistry {
+  [textureType: string]: TextureRegistryEntry;
 }
 ```
 
-### Update Texture Registry
+### Registry Implementation
 
 ```typescript
-// packages/webgl/src/types/texture-registry.ts
-import {
-  createTextureHandleId,
-  generateTextureHandleId,
-  TextureHandleId,
-} from "@vendor/db/types";
-
-import { TextureFieldMetadata } from "./field";
-
-// Registry that maps texture types to their input definitions
-export interface TextureRegistry {
-  [textureType: string]: {
-    inputs: TextureFieldMetadata[];
-    maxInputs: number;
-  };
-}
-
-// Map of texture types to their input metadata
-export const textureRegistry: TextureRegistry = {
-  noise: {
-    inputs: [
-      {
-        id: generateTextureHandleId(0), // input-1
-        uniformName: "u_texture1",
-        description: "Displacement map",
-        required: false,
+// packages/webgl/src/registry/texture-registry.ts
+export const TEXTURE_REGISTRY: TextureRegistry = {
+  add: {
+    fields: {
+      input1: {
+        handle: { id: "input1", uniformName: "u_texture1", type: "texture" },
+        isRequired: true,
+        defaultValue: null,
       },
-    ],
-    maxInputs: 1,
-  },
-  displace: {
-    inputs: [
-      {
-        id: generateTextureHandleId(0), // input-1
-        uniformName: "u_texture1",
-        description: "Base texture",
-        required: true,
+      input2: {
+        handle: { id: "input2", uniformName: "u_texture2", type: "texture" },
+        isRequired: true,
+        defaultValue: null,
       },
-      {
-        id: generateTextureHandleId(1), // input-2
-        uniformName: "u_texture2",
-        description: "Displacement map",
-        required: true,
-      },
-    ],
-    maxInputs: 2,
+    },
+    validateConnection: (handle, sourceType) => {
+      // Add-specific validation logic
+      return true;
+    },
+    createDefaultUniforms: () => ({
+      u_texture1: createTextureUniform(null, null),
+      u_texture2: createTextureUniform(null, null),
+    }),
   },
   // Other texture types...
 };
-
-/**
- * Get input metadata for a specific texture type
- */
-export function getTextureInputsForType(
-  textureType: string,
-): TextureFieldMetadata[] {
-  // If the texture type doesn't exist in the registry, return an empty array
-  if (!textureRegistry[textureType]) {
-    return [];
-  }
-
-  return textureRegistry[textureType].inputs;
-}
-
-/**
- * Get the maximum number of inputs for a texture type
- */
-export function getMaxInputsForType(textureType: string): number {
-  if (!textureRegistry[textureType]) {
-    return 0;
-  }
-
-  return textureRegistry[textureType].maxInputs;
-}
-
-/**
- * Validate that a texture handle is valid for a given texture type
- */
-export function isValidTextureHandleForType(
-  textureType: string,
-  handleId: TextureHandleId,
-): boolean {
-  const inputs = getTextureInputsForType(textureType);
-  return inputs.some((input) => input.id === handleId);
-}
-
-/**
- * Check if a handle ID is required for a texture type
- */
-export function isRequiredTextureHandle(
-  textureType: string,
-  handleId: TextureHandleId,
-): boolean {
-  const inputs = getTextureInputsForType(textureType);
-  const input = inputs.find((input) => input.id === handleId);
-  return input?.required ?? false;
-}
 ```
 
-### Integration with Validation System
+### Validation Functions
 
 ```typescript
-// apps/app/src/app/(app)/(workspace)/workspace/hooks/use-validate-texture-connection.ts
-import { useCallback } from "react";
-import { Connection } from "@xyflow/react";
+// packages/webgl/src/validation/texture-validation.ts
+export function validateTextureConnection(
+  handle: TextureHandle,
+  sourceType: string,
+  textureType: string,
+): ValidationResult {
+  const entry = TEXTURE_REGISTRY[textureType];
+  if (!entry) {
+    return {
+      valid: false,
+      error: `Unknown texture type: ${textureType}`,
+    };
+  }
 
-import {
-  isRequiredTextureHandle,
-  isValidTextureHandleForType,
-} from "@repo/webgl";
-import {
-  isOutputHandleId,
-  isTextureHandleId,
-  TextureHandleId,
-} from "@vendor/db/types";
-
-import { getNodeType, useNodeStore } from "../providers/node-store-provider";
-import {
-  ConnectionValidationResult,
-  validateConnection,
-} from "../types/connection";
-
-/**
- * Hook for validating texture connections
- */
-export const useValidateTextureConnection = () => {
-  const { nodes } = useNodeStore();
-
-  /**
-   * Validate a connection with the texture registry
-   */
-  const validateTextureConnection = useCallback(
-    (connection: Connection): ConnectionValidationResult => {
-      // First validate the connection structure
-      const basicValidation = validateConnection(connection);
-      if (!basicValidation.valid) {
-        return basicValidation;
-      }
-
-      const strictConnection = basicValidation.connection;
-
-      // Check handle types
-      const sourceIsOutput = isOutputHandleId(strictConnection.sourceHandle);
-      const targetIsInput = isTextureHandleId(strictConnection.targetHandle);
-
-      if (!sourceIsOutput || !targetIsInput) {
-        return {
-          valid: false,
-          reason: "invalid_connection_type",
-          details: "Texture connections must be from output to input handles",
-        };
-      }
-
-      // Get node types
-      const sourceNode = nodes.find((n) => n.id === strictConnection.source);
-      const targetNode = nodes.find((n) => n.id === strictConnection.target);
-
-      if (!sourceNode || !targetNode) {
-        return {
-          valid: false,
-          reason: "node_not_found",
-          details: "Source or target node not found",
-        };
-      }
-
-      const sourceType = getNodeType(sourceNode);
-      const targetType = getNodeType(targetNode);
-
-      // Validate target handle with the registry
-      const targetHandle = strictConnection.targetHandle as TextureHandleId;
-
-      if (!isValidTextureHandleForType(targetType, targetHandle)) {
-        return {
-          valid: false,
-          reason: "invalid_texture_handle",
-          details: `Handle ${targetHandle} is not valid for texture type ${targetType}`,
-        };
-      }
-
-      return {
-        valid: true,
-        connection: strictConnection,
-      };
-    },
-    [nodes],
+  const field = Object.values(entry.fields).find(
+    (f) => f.handle.id === handle.id,
   );
+  if (!field) {
+    return {
+      valid: false,
+      error: `Unknown handle: ${handle.id}`,
+    };
+  }
 
-  return {
-    validateTextureConnection,
-  };
-};
+  if (!entry.validateConnection(handle, sourceType)) {
+    return {
+      valid: false,
+      error: `Invalid connection for ${textureType}`,
+    };
+  }
+
+  return { valid: true };
+}
 ```
 
-## Dependencies
+## Implementation Guidelines
 
-1. Phase 1: Enhanced Handle Types - The branded types are used in the registry
-2. Phase 2: Connection Types - Integration with the validation system
-3. Phase 3: Edge Schema - Integration with the Edge schema
-4. Phase 5: Hook Logic - Integration with the hook logic
+1. **Type Safety**
 
-## Impact Analysis
+   - Use strict TypeScript typing
+   - Implement proper type guards
+   - Validate at compile time
+   - Runtime type checking
 
-| Component              | Changes Required                         |
-| ---------------------- | ---------------------------------------- |
-| TextureFieldMetadata   | Update to use TextureHandleId            |
-| Texture Registry       | Update to use the new type system        |
-| Validation Integration | New hook for texture-specific validation |
-| WebGL Components       | No changes yet (addressed in Phase 8)    |
+2. **Validation**
 
-## Acceptance Criteria
+   - Clear validation rules
+   - Proper error messages
+   - Type-safe validation
+   - Performance optimization
 
-1. ✅ TextureFieldMetadata uses TextureHandleId
-2. ✅ Texture registry is updated to use the new type system
-3. ✅ Integration with the connection validation system
-4. ✅ New methods for validating texture-specific connections
-5. ✅ Existing code continues to work with the updated registry
-6. ✅ All tests continue to pass
+3. **Resource Management**
+
+   - Proper cleanup
+   - Memory management
+   - Resource pooling
+   - Cache invalidation
+
+4. **Architecture**
+   - Clean boundaries
+   - No circular deps
+   - Clear interfaces
+   - Proper abstraction
+
+## Success Criteria
+
+1. **Registry Updates**
+
+   - Type-safe registry
+   - Handle integration
+   - Validation rules
+   - Clean architecture
+
+2. **Handle System**
+
+   - Type safety
+   - Validation
+   - Error handling
+   - Performance
+
+3. **Uniform Management**
+
+   - Type safety
+   - Resource cleanup
+   - Expression support
+   - Caching
+
+4. **Integration**
+   - Clean boundaries
+   - No circular deps
+   - Clear interfaces
+   - Performance
+
+## Testing Requirements
+
+1. **Registry Tests**
+
+   - Type validation
+   - Handle validation
+   - Uniform creation
+   - Error cases
+
+2. **Integration Tests**
+
+   - Handle system
+   - Validation rules
+   - Resource management
+   - Performance
+
+3. **Edge Cases**
+   - Invalid types
+   - Missing handles
+   - Resource cleanup
+   - Error handling
+
+## Documentation Requirements
+
+1. **Registry Documentation**
+
+   - Type definitions
+   - Validation rules
+   - Usage examples
+   - Best practices
+
+2. **Architecture Documentation**
+
+   - Layer boundaries
+   - Dependencies
+   - Design decisions
+   - Migration guide
+
+3. **API Documentation**
+   - Public interfaces
+   - Type definitions
+   - Validation rules
+   - Error handling
