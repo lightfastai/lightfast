@@ -14,10 +14,15 @@ This project aims to improve the type safety of the edge connection system in Re
         - requirements.md         # Specific requirements
 
     /01-design/                   # Architecture and design documents
-        - architecture-overview.md    # High-level architecture
-        - handle-type-system.md       # Handle type system design
-        - connection-validation.md    # Connection validation design
-        /architecture/                # Detailed architecture diagrams and docs
+        /consolidated/            # Consolidated design documents
+            - 1-architecture-overview.md  # High-level architecture
+            - 2-handle-type-system.md     # Handle type system design
+            - 3-connection-validation.md  # Connection validation design
+            - 4-data-flow.md              # Data flow diagrams
+        /specialized/             # Specialized design documents
+            - unified-texture-update.md   # Texture update system design
+            - rethinking-texture-uniform.md # TextureUniform redesign
+            - future-considerations.md    # Future enhancement ideas
 
     /02-implementation/           # Implementation details by phase
         /phase-1-handle-types/            # Enhanced handle types
@@ -50,5 +55,5 @@ This project aims to improve the type safety of the edge connection system in Re
 To understand the implementation plan:
 
 1. Start with the `00-analysis/problem-statement.md` to understand the issues being addressed
-2. Review the architecture in `01-design/architecture-overview.md`
+2. Review the architecture in `01-design/consolidated/1-architecture-overview.md`
 3. Explore each phase in the `02-implementation/` directory

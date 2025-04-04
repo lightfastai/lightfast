@@ -73,9 +73,33 @@ The system consists of these major components:
 - Improved user experience during connection creation
 - Prevention of user errors
 
-## Architecture Diagrams
+## Component Structure
 
-See the [Architecture Diagrams](./architecture-diagrams.md) document for visual representations of the system architecture.
+```
+┌─────────────────────────────────┐
+│                                 │
+│     Texture Configuration       │
+│         Registry                │
+│                                 │
+└────────────────┬────────────────┘
+                 │
+                 │ Defines
+                 │
+     ┌───────────▼────────────┐
+     │                        │
+     │  useUpdateTexture      │
+     │  (Unified Hook)        │
+     │                        │
+     └───────────┬────────────┘
+                 │
+                 │ Creates
+                 │
+     ┌───────────▼────────────┐
+     │                        │
+     │  WebGLRenderTargetNodes│
+     │                        │
+     └────────────────────────┘
+```
 
 ## Data Flow
 
@@ -106,16 +130,8 @@ See the [Architecture Diagrams](./architecture-diagrams.md) document for visual 
 ## Technical Constraints
 
 - Must maintain backward compatibility with existing projects
-- Must provide migration path for existing code
 - Must not impact performance significantly
 - Must integrate with React Flow's connection system
-- Must support feature flag for gradual rollout
-
-## Security Considerations
-
-- Validation must happen on both client and server
-- Handle IDs must be properly validated before database operations
-- Error messages should be specific but not expose internal details
 
 ## Performance Considerations
 
@@ -124,18 +140,26 @@ See the [Architecture Diagrams](./architecture-diagrams.md) document for visual 
 - Connection validation should complete within 10ms
 - Visual feedback should update immediately
 
-## Migration Strategy
+## Shader Management System
 
-- Phased implementation approach
-- Feature flags for gradual adoption
-- Backward compatibility for existing projects
-- Comprehensive migration guides for developers
-- Automated migration utilities for existing data
-
-## Success Metrics
-
-- Reduction in runtime validation errors
-- Increase in compile-time errors (catching issues earlier)
-- Improved developer experience (measured through surveys)
-- No regression in performance benchmarks
-- Successful migration of existing projects
+```
+┌───────────────────┐
+│ Texture Data Map  │
+│                   │
+└─────────┬─────────┘
+          │
+          ▼
+┌─────────────────────┐     ┌─────────────────────┐
+│ Texture Type Config │────►│ Shader Factory      │
+└─────────────────────┘     └──────────┬──────────┘
+                                       │
+                                       ▼
+┌─────────────────────┐     ┌─────────────────────┐
+│ Connection Cache    │────►│ Uniform Assignment  │
+└─────────────────────┘     └──────────┬──────────┘
+                                       │
+                                       ▼
+┌─────────────────────┐     ┌─────────────────────┐
+│ Expression Registry │────►│ Frame Update        │
+└─────────────────────┘     └─────────────────────┘
+```
