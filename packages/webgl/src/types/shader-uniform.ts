@@ -1,40 +1,40 @@
 import type * as THREE from "three";
 
-import type { TextureHandle } from "./handle";
+import type { ShaderInputTextureUniform } from "./shader-input-texture-handle";
 
 /**
  * Represents a texture uniform in the shader system
  */
-export interface TextureUniform {
-  handle: TextureHandle | null;
+export interface ShaderUniform {
+  handle: ShaderInputTextureUniform | null;
   textureObject: THREE.Texture | null;
 }
 
 /**
  * Create a new TextureUniform with default values
  */
-export function createTextureUniform(
-  handle: TextureHandle | null = null,
+export function createShaderUniform(
+  handle: ShaderInputTextureUniform | null = null,
   textureObject: THREE.Texture | null = null,
-): TextureUniform {
+): ShaderUniform {
   return { handle, textureObject };
 }
 
 /**
  * Update an existing TextureUniform
  */
-export function updateTextureUniform(
-  uniform: TextureUniform,
-  handle: TextureHandle | null,
+export function updateShaderUniform(
+  uniform: ShaderUniform,
+  handle: ShaderInputTextureUniform | null,
   textureObject: THREE.Texture | null,
-): TextureUniform {
+): ShaderUniform {
   return { ...uniform, handle, textureObject };
 }
 
 /**
  * Check if a value is a TextureUniform
  */
-export function isTextureUniform(value: unknown): value is TextureUniform {
+export function isShaderUniform(value: unknown): value is ShaderUniform {
   return (
     value !== null &&
     typeof value === "object" &&
@@ -46,13 +46,13 @@ export function isTextureUniform(value: unknown): value is TextureUniform {
 /**
  * Check if a texture uniform has a connection
  */
-export function isTextureConnected(uniform: TextureUniform): boolean {
+export function isShaderConnected(uniform: ShaderUniform): boolean {
   return !!uniform.handle;
 }
 
 /**
  * Get the uniform name from a texture uniform
  */
-export function getUniformName(uniform: TextureUniform): string | null {
+export function getShaderUniformName(uniform: ShaderUniform): string | null {
   return uniform.handle?.uniformName ?? null;
 }

@@ -95,7 +95,7 @@ export const useUpdateTextureNoise = ({
           u_amplitude: {
             value: typeof u.u_amplitude === "number" ? u.u_amplitude : 0.84,
           },
-          u_texture: {
+          u_texture1: {
             value: null,
           },
           u_offset: {

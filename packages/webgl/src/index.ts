@@ -115,8 +115,8 @@ export { $Add, AddDescription };
 /**
  * Texture uniforms and registry
  */
-export type { TextureUniform } from "./types/texture-uniform";
-export * from "./registry/texture-registry";
+export type { ShaderUniform as TextureUniform } from "./types/shader-uniform";
+export * from "./registry/texture-input-registry";
 
 /**
  * Shared texture uniforms type
@@ -183,8 +183,8 @@ export {
 } from "./shaders/utils";
 
 export * from "./types/field";
-export * from "./types/texture-uniform";
-export * from "./registry/texture-registry";
+export * from "./types/shader-uniform";
+export * from "./registry/texture-input-registry";
 export * from "./shaders/utils";
 
 export type {
@@ -207,20 +207,21 @@ export { createDefaultVec2, createDefaultVec3 } from "./types/schema";
 
 export * from "./types/render";
 export * from "./types/webgl";
-export * from "./types/handle";
+export * from "./types/shader-input-texture-handle";
 
 export {
   getTextureInputsForType,
   isValidTextureHandleForType,
   isRequiredTextureHandle,
-  type TextureRegistryEntry,
-} from "./registry/texture-registry";
+  type TextureInputRegistryEntry,
+} from "./registry/texture-input-registry";
 
 // Export types
-export * from "./types/handle";
+export * from "./types/shader-input-texture-handle";
 export * from "./types/field";
 export * from "./types/schema";
-export * from "./types/texture-uniform";
+export * from "./types/shader-uniform";
 export * from "./types/render";
 export * from "./types/webgl";
 export * from "./types/geometry";
+export * from "./types/shaders";

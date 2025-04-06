@@ -2,22 +2,21 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
-import type { TextureUniform } from "../types/texture-uniform";
-import { createTextureHandle } from "../types/handle";
+import type { HandleMetadata, UniformFieldValue } from "../types/field";
+import type { ShaderUniform } from "../types/shader-uniform";
 import { $Float, ValueType } from "../types/schema";
-import { createTextureUniform } from "../types/texture-uniform";
+import { createShaderInputTextureHandle } from "../types/shader-input-texture-handle";
+import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handle for the uniform
-const inputTextureHandle = createTextureHandle("input", "u_texture");
-
-if (!inputTextureHandle) {
-  throw new Error("Failed to create texture handle for limit shader");
-}
+export const limitInputHandle = createShaderInputTextureHandle(
+  "input-1",
+  "u_texture1",
+);
 
 // Define texture uniforms
 export const $LimitTextureUniforms = z.object({
-  u_texture: z.custom<TextureUniform>(),
+  u_texture1: z.custom<ShaderUniform>(),
 });
 
 export type LimitTextureUniforms = z.infer<typeof $LimitTextureUniforms>;
@@ -26,7 +25,6 @@ export type LimitTextureUniforms = z.infer<typeof $LimitTextureUniforms>;
 export const $LimitRegularUniforms = z.object({
   u_quantizationSteps: $Float
     .describe("Number of quantization steps (1-100)")
-    // .transform((val) => Math.max(1, Math.min(100, val)))
     .default(1.01),
 });
 
@@ -45,7 +43,7 @@ export const LimitDescription =
 export const createDefaultLimit = (): LimitParams => {
   return {
     // Texture uniforms with the new format
-    u_texture: createTextureUniform(inputTextureHandle, null),
+    u_texture1: createShaderUniform(limitInputHandle, null),
     // Regular uniforms remain the same
     u_quantizationSteps: 1.01,
   };
@@ -53,14 +51,14 @@ export const createDefaultLimit = (): LimitParams => {
 
 // Lookup table for limit uniform constraints
 export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
-  u_texture: {
+  u_texture1: {
     type: ValueType.Texture,
     label: "Input Texture",
     constraint: {
-      handle: inputTextureHandle,
+      handle: limitInputHandle,
       required: true,
       description: "The input texture to be limited",
-    } as TextureFieldMetadata,
+    } as HandleMetadata,
   },
   u_quantizationSteps: {
     type: ValueType.Numeric,
@@ -74,12 +72,12 @@ export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
 export const limitFragmentShader = `
 precision highp float;
 
-uniform sampler2D u_texture;
+uniform sampler2D u_texture1;
 uniform float u_quantizationSteps;
 varying vec2 vUv;
 
 void main() {
-  vec4 color = texture2D(u_texture, vUv);
+  vec4 color = texture2D(u_texture1, vUv);
   color.rgb = floor(color.rgb * u_quantizationSteps) / u_quantizationSteps;
   gl_FragColor = color;
 }

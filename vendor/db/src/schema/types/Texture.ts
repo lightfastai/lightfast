@@ -5,22 +5,16 @@ import {
   $Displace,
   $Limit,
   $PerlinNoise3D,
+  $Shaders,
   createDefaultAdd,
   createDefaultDisplace,
   createDefaultLimit,
   createDefaultPerlinNoise3D,
 } from "@repo/webgl";
 
-export const $TextureTypeValues = [
-  "Noise",
-  "Limit",
-  "Displace",
-  "Add",
-] as const;
+export const $TextureTypes = z.enum($Shaders.options);
 
-export const $TextureTypes = z.enum($TextureTypeValues);
-
-export type TextureType = z.infer<typeof $TextureTypes>;
+export type TextureTypes = z.infer<typeof $TextureTypes>;
 
 export const $TextureResolution = z.object({
   width: z.number().min(1).max(2048).default(256),
@@ -31,22 +25,22 @@ export type TextureResolution = z.infer<typeof $TextureResolution>;
 
 export const $Texture = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal($TextureTypes.enum.Noise),
+    type: z.literal($Shaders.enum.Noise),
     uniforms: $PerlinNoise3D,
     resolution: $TextureResolution,
   }),
   z.object({
-    type: z.literal($TextureTypes.enum.Limit),
+    type: z.literal($Shaders.enum.Limit),
     uniforms: $Limit,
     resolution: $TextureResolution,
   }),
   z.object({
-    type: z.literal($TextureTypes.enum.Displace),
+    type: z.literal($Shaders.enum.Displace),
     uniforms: $Displace,
     resolution: $TextureResolution,
   }),
   z.object({
-    type: z.literal($TextureTypes.enum.Add),
+    type: z.literal($Shaders.enum.Add),
     uniforms: $Add,
     resolution: $TextureResolution,
   }),
@@ -67,7 +61,7 @@ export type AddTexture = Extract<Texture, { type: "Add" }>;
 export const createDefaultTexture = ({
   type,
 }: {
-  type: TextureType;
+  type: TextureTypes;
 }): Texture => {
   switch (type) {
     case $TextureTypes.enum.Noise:

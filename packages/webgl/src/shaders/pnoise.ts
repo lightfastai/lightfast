@@ -2,22 +2,21 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
-import type { TextureUniform } from "../types/texture-uniform";
-import { createTextureHandle } from "../types/handle";
+import type { HandleMetadata, UniformFieldValue } from "../types/field";
+import type { ShaderUniform } from "../types/shader-uniform";
 import { $Float, $NumericValue, $Vec2Number, ValueType } from "../types/schema";
-import { createTextureUniform } from "../types/texture-uniform";
+import { createShaderInputTextureHandle } from "../types/shader-input-texture-handle";
+import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handle for the uniform
-const blendTextureHandle = createTextureHandle("blend", "u_texture");
-
-if (!blendTextureHandle) {
-  throw new Error("Failed to create texture handle for noise shader");
-}
+export const noiseBlendHandle = createShaderInputTextureHandle(
+  "input-1",
+  "u_texture1",
+);
 
 // Define texture uniforms
 export const $NoiseTextureUniforms = z.object({
-  u_texture: z.custom<TextureUniform>(),
+  u_texture1: z.custom<ShaderUniform>(),
 });
 
 export type NoiseTextureUniforms = z.infer<typeof $NoiseTextureUniforms>;
@@ -109,7 +108,7 @@ export const PerlinNoise3DDescription =
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return {
     // Texture uniform with the new format
-    u_texture: createTextureUniform(blendTextureHandle, null),
+    u_texture1: createShaderUniform(noiseBlendHandle, null),
     // Regular uniforms
     u_period: 2.0,
     u_harmonics: 1,
@@ -126,14 +125,14 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
 
 // Lookup table for pnoise uniform constraints
 export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
-  u_texture: {
+  u_texture1: {
     type: ValueType.Texture,
     label: "Blend Texture",
     constraint: {
-      handle: blendTextureHandle,
+      handle: noiseBlendHandle,
       required: false,
       description: "Input texture to combine with noise (optional)",
-    } as TextureFieldMetadata,
+    } as HandleMetadata,
   },
   u_scale: {
     type: ValueType.Vec2,
@@ -228,7 +227,7 @@ uniform float u_offset;
 uniform vec2 u_scale;
 uniform vec2 u_rotation;
 uniform vec2 u_translate;
-uniform sampler2D u_texture;
+uniform sampler2D u_texture1;
 
 // Permutation functions
 vec3 permute(vec3 x) {
@@ -355,7 +354,7 @@ void main() {
     noise = noise * u_amplitude + u_offset;
     
     // Mix with texture if provided
-    vec4 textureColor = texture2D(u_texture, vUv);
+    vec4 textureColor = texture2D(u_texture1, vUv);
     vec3 finalColor;
     if (textureColor.a > 0.0) {
         finalColor = mix(textureColor.rgb, vec3(noise), 0.5);

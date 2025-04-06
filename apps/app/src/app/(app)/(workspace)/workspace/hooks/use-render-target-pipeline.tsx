@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-import type { WebGLRootState } from "../webgl";
+import type { WebGLRootState } from "@repo/webgl";
+
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 
 /**

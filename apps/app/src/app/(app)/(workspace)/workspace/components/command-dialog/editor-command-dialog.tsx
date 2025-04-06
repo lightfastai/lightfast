@@ -6,7 +6,7 @@ import { Circle, Monitor, Square, Triangle } from "lucide-react";
 import type {
   GeometryType,
   MaterialType,
-  TextureType,
+  TextureTypes,
   Txt2ImgType,
 } from "@vendor/db/types";
 import {
@@ -117,7 +117,7 @@ export const EditorCommandDialog = () => {
     setMaterial(materialType);
   };
 
-  const handleTextureSelect = (textureType: TextureType) => {
+  const handleTextureSelect = (textureType: TextureTypes) => {
     // Close the command dialog first
     close();
 

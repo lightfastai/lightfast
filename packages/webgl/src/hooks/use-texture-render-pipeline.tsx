@@ -1,7 +1,7 @@
 "use client";
 
-import type { WebGLRootState } from "@/components/primitives/webgl-primitives";
 import type { WebGLRenderTargets } from "@/types/render";
+import type { WebGLRootState } from "@/types/webgl";
 import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";

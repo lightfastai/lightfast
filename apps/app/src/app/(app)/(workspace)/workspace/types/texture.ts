@@ -1,4 +1,4 @@
-import type { TextureFieldMetadata } from "@repo/webgl";
+import type { HandleMetadata } from "@repo/webgl";
 
 /**
  * Type definitions for texture-related components
@@ -7,4 +7,4 @@ import type { TextureFieldMetadata } from "@repo/webgl";
 /**
  * Represents a texture input metadata for nodes
  */
-export type TextureInput = TextureFieldMetadata;
+export type TextureInput = HandleMetadata;

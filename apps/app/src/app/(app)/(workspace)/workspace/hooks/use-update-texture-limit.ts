@@ -70,7 +70,7 @@ export const useUpdateTextureLimit = ({
             vertexShader: baseVertexShader,
             fragmentShader: limitFragmentShader,
             uniforms: {
-              u_texture: { value: null },
+              u_texture1: { value: null },
               u_quantizationSteps: {
                 value:
                   typeof u.u_quantizationSteps === "number"
@@ -106,8 +106,8 @@ export const useUpdateTextureLimit = ({
 
             // Update the texture reference
             const sourceId = connectionCache.current[id];
-            if (shader.uniforms.u_texture) {
-              shader.uniforms.u_texture.value = sourceId
+            if (shader.uniforms.u_texture1) {
+              shader.uniforms.u_texture1.value = sourceId
                 ? targets[sourceId]?.texture
                 : null;
             }

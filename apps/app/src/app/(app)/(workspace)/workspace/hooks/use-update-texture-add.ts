@@ -8,8 +8,6 @@ import {
   baseVertexShader,
   getTextureInputsForType,
   isExpression,
-  isTextureUniform,
-  updateTextureUniform,
 } from "@repo/webgl";
 
 import { useEdgeStore } from "../providers/edge-store-provider";
@@ -83,7 +81,7 @@ export const useUpdateTextureAdd = ({
 
         // Get texture inputs metadata for initialization
         const textureInputs = getTextureInputsForType(texture.type);
-        s;
+
         // Reuse shader if available
         if (!shaderCache.current[id]) {
           // Initialize the shader material
@@ -136,7 +134,9 @@ export const useUpdateTextureAdd = ({
 
             // Update texture uniforms based on connections
             textureInputs.forEach((input) => {
-              const { id: handleId, uniformName } = input;
+              const { handle } = input;
+
+              const { id: handleId, uniformName } = handle;
 
               // Get the source node ID from the connection cache
               const sourceId = nodeConnections[handleId] || null;
@@ -152,15 +152,13 @@ export const useUpdateTextureAdd = ({
               }
 
               // Update the texture data structure if it uses the new TextureUniform format
-              if (isTextureUniform(u[uniformName as keyof typeof u])) {
-                (u[uniformName as keyof typeof u] as any) =
-                  updateTextureUniform(
-                    u[uniformName as keyof typeof u] as any,
-                    sourceId,
-                    textureObject,
-                    !!sourceId,
-                  );
-              }
+              // if (isShaderUniform(u[uniformName as keyof typeof u])) {
+              //   (u[uniformName as keyof typeof u] as any) = updateShaderUniform(
+              //     u[uniformName as keyof typeof u] as any,
+              //     sourceId ? targets[sourceId] : null,
+              //     textureObject,
+              //   );
+              // }
             });
 
             // Update boolean uniform

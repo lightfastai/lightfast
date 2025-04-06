@@ -2,24 +2,26 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
-import type { TextureUniform } from "../types/texture-uniform";
-import { createTextureHandle } from "../types/handle";
+import type { HandleMetadata, UniformFieldValue } from "../types/field";
+import type { ShaderUniform } from "../types/shader-uniform";
 import { $Boolean, $Float, ValueType } from "../types/schema";
-import { createTextureUniform } from "../types/texture-uniform";
+import { createShaderInputTextureHandle } from "../types/shader-input-texture-handle";
+import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handles for the uniforms
-const texture1Handle = createTextureHandle("texture1", "u_texture1");
-const texture2Handle = createTextureHandle("texture2", "u_texture2");
-
-if (!texture1Handle || !texture2Handle) {
-  throw new Error("Failed to create texture handles for add shader");
-}
+export const addInput1Handle = createShaderInputTextureHandle(
+  "input-1",
+  "u_texture1",
+);
+export const addInput2Handle = createShaderInputTextureHandle(
+  "input-2",
+  "u_texture2",
+);
 
 // Define texture uniforms
 export const $AddTextureUniforms = z.object({
-  u_texture1: z.custom<TextureUniform>(),
-  u_texture2: z.custom<TextureUniform>(),
+  u_texture1: z.custom<ShaderUniform>(),
+  u_texture2: z.custom<ShaderUniform>(),
 });
 
 export type AddTextureUniforms = z.infer<typeof $AddTextureUniforms>;
@@ -50,8 +52,8 @@ export const AddDescription =
 export const createDefaultAdd = (): AddParams => {
   return {
     // Texture uniforms with the new format
-    u_texture1: createTextureUniform(texture1Handle, null),
-    u_texture2: createTextureUniform(texture2Handle, null),
+    u_texture1: createShaderUniform(addInput1Handle, null),
+    u_texture2: createShaderUniform(addInput2Handle, null),
     // Regular uniforms remain the same
     u_addValue: 0.0,
     u_enableMirror: false,
@@ -64,19 +66,19 @@ export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     type: ValueType.Texture,
     label: "Input A",
     constraint: {
-      handle: texture1Handle,
+      handle: addInput1Handle,
       required: true,
       description: "The first input texture (A)",
-    } as TextureFieldMetadata,
+    } as HandleMetadata,
   },
   u_texture2: {
     type: ValueType.Texture,
     label: "Input B",
     constraint: {
-      handle: texture2Handle,
+      handle: addInput2Handle,
       required: true,
       description: "The second input texture (B)",
-    } as TextureFieldMetadata,
+    } as HandleMetadata,
   },
   u_addValue: {
     type: ValueType.Numeric,

@@ -2,24 +2,26 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { TextureFieldMetadata, UniformFieldValue } from "../types/field";
-import type { TextureUniform } from "../types/texture-uniform";
-import { createTextureHandle } from "../types/handle";
+import type { HandleMetadata, UniformFieldValue } from "../types/field";
+import type { ShaderUniform } from "../types/shader-uniform";
 import { $Float, $Vec2Number, ValueType } from "../types/schema";
-import { createTextureUniform } from "../types/texture-uniform";
+import { createShaderInputTextureHandle } from "../types/shader-input-texture-handle";
+import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handles for the uniforms
-const sourceTextureHandle = createTextureHandle("source", "u_texture1");
-const displacementMapHandle = createTextureHandle("displacement", "u_texture2");
-
-if (!sourceTextureHandle || !displacementMapHandle) {
-  throw new Error("Failed to create texture handles for displace shader");
-}
+export const displaceSourceHandle = createShaderInputTextureHandle(
+  "input-1",
+  "u_texture1",
+);
+export const displaceMapHandle = createShaderInputTextureHandle(
+  "input-2",
+  "u_texture2",
+);
 
 // Define texture uniforms
 export const $DisplaceTextureUniforms = z.object({
-  u_texture1: z.custom<TextureUniform>(),
-  u_texture2: z.custom<TextureUniform>(),
+  u_texture1: z.custom<ShaderUniform>(),
+  u_texture2: z.custom<ShaderUniform>(),
 });
 
 export type DisplaceTextureUniforms = z.infer<typeof $DisplaceTextureUniforms>;
@@ -83,8 +85,8 @@ export const DisplaceDescription =
 export const createDefaultDisplace = (): DisplaceParams => {
   return {
     // Texture uniforms with the new format
-    u_texture1: createTextureUniform(sourceTextureHandle, null),
-    u_texture2: createTextureUniform(displacementMapHandle, null),
+    u_texture1: createShaderUniform(displaceSourceHandle, null),
+    u_texture2: createShaderUniform(displaceMapHandle, null),
     // Regular uniforms remain the same
     u_displaceWeight: 1.0,
     u_displaceMidpoint: { x: 0.5, y: 0.5 },
@@ -100,19 +102,19 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     type: ValueType.Texture,
     label: "Source Texture",
     constraint: {
-      handle: sourceTextureHandle,
+      handle: displaceSourceHandle,
       required: true,
       description: "The source texture to be displaced",
-    } as TextureFieldMetadata,
+    } as HandleMetadata,
   },
   u_texture2: {
     type: ValueType.Texture,
     label: "Displacement Map",
     constraint: {
-      handle: displacementMapHandle,
+      handle: displaceMapHandle,
       required: true,
       description: "The displacement map texture",
-    } as TextureFieldMetadata,
+    } as HandleMetadata,
   },
   u_displaceWeight: {
     type: ValueType.Numeric,

@@ -3,8 +3,8 @@
  * These types are used to specify the valid ranges and step sizes for uniform parameters.
  */
 
-import type { TextureHandle } from "./handle";
 import type { ValueType } from "./schema";
+import type { ShaderInputTextureUniform } from "./shader-input-texture-handle";
 
 export interface ValueFieldMetadata {
   min: number;
@@ -30,9 +30,9 @@ export interface Vec3FieldMetadata {
 /**
  * Metadata for texture input fields
  */
-export interface TextureFieldMetadata {
+export interface HandleMetadata {
   /** The texture handle for this field */
-  handle: TextureHandle;
+  handle: ShaderInputTextureUniform;
   /** Whether this texture input is required */
   required: boolean;
   /** Description of what this texture input is used for */
@@ -46,5 +46,5 @@ export interface UniformFieldValue {
     | NumericValueMetadata
     | Vec2FieldMetadata
     | Vec3FieldMetadata
-    | TextureFieldMetadata;
+    | HandleMetadata;
 }
