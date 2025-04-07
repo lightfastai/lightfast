@@ -22,7 +22,7 @@ import { ValueType } from "../types/schema";
 /**
  * Registry entry for a texture type
  */
-export interface TextureInputRegistryEntry {
+export interface ShaderSampler2DRegistry {
   /** Available texture handles for this type */
   handles: ShaderSampler2DUniform[];
   /** Default uniforms for this type */
@@ -70,87 +70,86 @@ if (
 /**
  * The main texture registry containing all registered texture types
  */
-export const textureInputRegistry: Record<Shaders, TextureInputRegistryEntry> =
-  {
-    Add: {
-      handles: [addInput1Handle, addInput2Handle],
-      defaultUniforms: {
-        u_texture1: addInput1Handle,
-        u_texture2: addInput2Handle,
-      },
-      inputs: [
-        createTextureFieldMetadata(
-          addInput1Handle,
-          ADD_UNIFORM_CONSTRAINTS.u_texture1,
-        ),
-        createTextureFieldMetadata(
-          addInput2Handle,
-          ADD_UNIFORM_CONSTRAINTS.u_texture2,
-        ),
-      ],
-      validateConnection: () => true, // Add accepts any texture type
+export const textureInputRegistry: Record<Shaders, ShaderSampler2DRegistry> = {
+  Add: {
+    handles: [addInput1Handle, addInput2Handle],
+    defaultUniforms: {
+      u_texture1: addInput1Handle,
+      u_texture2: addInput2Handle,
     },
-    Displace: {
-      handles: [displaceSourceHandle, displaceMapHandle],
-      defaultUniforms: {
-        u_texture1: displaceSourceHandle,
-        u_texture2: displaceMapHandle,
-      },
-      inputs: [
-        createTextureFieldMetadata(
-          displaceSourceHandle,
-          DISPLACE_UNIFORM_CONSTRAINTS.u_texture1,
-        ),
-        createTextureFieldMetadata(
-          displaceMapHandle,
-          DISPLACE_UNIFORM_CONSTRAINTS.u_texture2,
-        ),
-      ],
-      validateConnection: (
-        handle: ShaderSampler2DUniform,
-        sourceType: string,
-      ) => {
-        // Displace requires specific validation based on input
-        if (handle.handleId === "input-1") {
-          // Base texture can be any type
-          return true;
-        }
-        // Displacement map should be a noise or gradient type
-        return ["noise", "gradient"].includes(sourceType);
-      },
+    inputs: [
+      createTextureFieldMetadata(
+        addInput1Handle,
+        ADD_UNIFORM_CONSTRAINTS.u_texture1,
+      ),
+      createTextureFieldMetadata(
+        addInput2Handle,
+        ADD_UNIFORM_CONSTRAINTS.u_texture2,
+      ),
+    ],
+    validateConnection: () => true, // Add accepts any texture type
+  },
+  Displace: {
+    handles: [displaceSourceHandle, displaceMapHandle],
+    defaultUniforms: {
+      u_texture1: displaceSourceHandle,
+      u_texture2: displaceMapHandle,
     },
-    Limit: {
-      handles: [limitInputHandle],
-      defaultUniforms: {
-        u_texture1: limitInputHandle,
-      },
-      inputs: [
-        createTextureFieldMetadata(
-          limitInputHandle,
-          LIMIT_UNIFORM_CONSTRAINTS.u_texture1,
-        ),
-      ],
-      validateConnection: () => true, // Limit accepts any texture type
+    inputs: [
+      createTextureFieldMetadata(
+        displaceSourceHandle,
+        DISPLACE_UNIFORM_CONSTRAINTS.u_texture1,
+      ),
+      createTextureFieldMetadata(
+        displaceMapHandle,
+        DISPLACE_UNIFORM_CONSTRAINTS.u_texture2,
+      ),
+    ],
+    validateConnection: (
+      handle: ShaderSampler2DUniform,
+      sourceType: string,
+    ) => {
+      // Displace requires specific validation based on input
+      if (handle.handleId === "input-1") {
+        // Base texture can be any type
+        return true;
+      }
+      // Displacement map should be a noise or gradient type
+      return ["noise", "gradient"].includes(sourceType);
     },
-    Noise: {
-      handles: [noiseBlendHandle],
-      defaultUniforms: {
-        u_texture1: noiseBlendHandle,
-      },
-      inputs: [
-        createTextureFieldMetadata(
-          noiseBlendHandle,
-          PNOISE_UNIFORM_CONSTRAINTS.u_texture1,
-        ),
-      ],
-      validateConnection: () => true, // Noise accepts any texture for blending
+  },
+  Limit: {
+    handles: [limitInputHandle],
+    defaultUniforms: {
+      u_texture1: limitInputHandle,
     },
-  };
+    inputs: [
+      createTextureFieldMetadata(
+        limitInputHandle,
+        LIMIT_UNIFORM_CONSTRAINTS.u_texture1,
+      ),
+    ],
+    validateConnection: () => true, // Limit accepts any texture type
+  },
+  Noise: {
+    handles: [noiseBlendHandle],
+    defaultUniforms: {
+      u_texture1: noiseBlendHandle,
+    },
+    inputs: [
+      createTextureFieldMetadata(
+        noiseBlendHandle,
+        PNOISE_UNIFORM_CONSTRAINTS.u_texture1,
+      ),
+    ],
+    validateConnection: () => true, // Noise accepts any texture for blending
+  },
+};
 
 /**
  * Get texture field metadata for a specific texture type
  */
-export function getTextureInputsForType(
+export function getShaderSampler2DInputsForType(
   textureType: Shaders,
 ): HandleMetadata[] {
   return textureInputRegistry[textureType].inputs;
@@ -159,7 +158,7 @@ export function getTextureInputsForType(
 /**
  * Check if a handle is valid for a specific texture type
  */
-export function isValidTextureHandleForType(
+export function isValidSampler2DHandleForType(
   textureType: Shaders,
   handle: ShaderSampler2DUniform,
 ): boolean {
@@ -173,7 +172,7 @@ export function isValidTextureHandleForType(
 /**
  * Check if a handle is required for a specific texture type
  */
-export function isRequiredTextureHandle(
+export function isRequiredSampler2DHandleForType(
   textureType: Shaders,
   handle: ShaderSampler2DUniform,
 ): boolean {
@@ -189,7 +188,7 @@ export function isRequiredTextureHandle(
 /**
  * Get the handles for a specific texture type
  */
-export function getTextureHandles(
+export function getSampler2DHandlesForType(
   textureType: Shaders,
 ): ShaderSampler2DUniform[] {
   return textureInputRegistry[textureType].handles;
@@ -198,7 +197,7 @@ export function getTextureHandles(
 /**
  * Get the default uniforms for a specific texture type
  */
-export function getDefaultTextureUniforms(
+export function getDefaultSampler2DHandlesForType(
   textureType: Shaders,
 ): Record<string, ShaderSampler2DUniform> {
   return textureInputRegistry[textureType].defaultUniforms;

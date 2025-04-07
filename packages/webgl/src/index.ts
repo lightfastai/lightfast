@@ -115,7 +115,7 @@ export { $Add, AddDescription };
 /**
  * Texture uniforms and registry
  */
-export * from "./registry/texture-input-registry";
+export * from "./registry/shader-sampler2d-registry";
 
 /**
  * Shared texture uniforms type
@@ -182,7 +182,7 @@ export {
 } from "./shaders/utils";
 
 export * from "./types/field";
-export * from "./registry/texture-input-registry";
+export * from "./registry/shader-sampler2d-registry";
 export * from "./shaders/utils";
 
 export type {
@@ -208,11 +208,11 @@ export * from "./types/webgl";
 export * from "./types/shader-sampler2d-uniform";
 
 export {
-  getTextureInputsForType,
-  isValidTextureHandleForType,
-  isRequiredTextureHandle,
-  type TextureInputRegistryEntry,
-} from "./registry/texture-input-registry";
+  getShaderSampler2DInputsForType,
+  isValidSampler2DHandleForType,
+  isRequiredSampler2DHandleForType,
+  type ShaderSampler2DRegistry,
+} from "./registry/shader-sampler2d-registry";
 
 // Export types
 export * from "./types/shader-sampler2d-uniform";

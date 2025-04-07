@@ -11,7 +11,7 @@ import {
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
-import { getTextureInputsForType } from "@repo/webgl";
+import { getShaderSampler2DInputsForType } from "@repo/webgl";
 import { WebGLView } from "@repo/webgl/components";
 import { GeometryMap } from "@repo/webgl/globals";
 import {
@@ -34,7 +34,9 @@ export const TextureNode = memo(
     const setSelected = useInspectorStore((state) => state.setSelected);
 
     // Get texture inputs metadata from the registry
-    const textureInputs: TextureInput[] = getTextureInputsForType(data.type);
+    const textureInputs: TextureInput[] = getShaderSampler2DInputsForType(
+      data.type,
+    );
 
     // Create branded handle IDs
     const outputHandle = createOutputHandleId("output-1");

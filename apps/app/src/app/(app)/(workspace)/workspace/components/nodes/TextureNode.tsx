@@ -11,7 +11,7 @@ import {
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
-import { getTextureInputsForType, textureRegistry } from "@repo/webgl";
+import { getShaderSampler2DInputsForType, textureRegistry } from "@repo/webgl";
 import { WebGLView } from "@repo/webgl/components";
 import { GeometryMap } from "@repo/webgl/globals";
 import {
@@ -45,7 +45,7 @@ export const TextureNode = memo(
     }
 
     // Get texture inputs metadata
-    const textureInputs = getTextureInputsForType(type);
+    const textureInputs = getShaderSampler2DInputsForType(type);
 
     // Create output handle
     const outputHandle = createOutputHandleId("output-1");

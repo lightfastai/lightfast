@@ -6,7 +6,7 @@ import type { AddTexture, Texture } from "@vendor/db/types";
 import {
   addFragmentShader,
   baseVertexShader,
-  getTextureInputsForType,
+  getShaderSampler2DInputsForType,
   isExpression,
 } from "@repo/webgl";
 
@@ -80,7 +80,7 @@ export const useUpdateTextureAdd = ({
         storeExpression("u_addValue", u.u_addValue);
 
         // Get texture inputs metadata for initialization
-        const textureInputs = getTextureInputsForType(texture.type);
+        const textureInputs = getShaderSampler2DInputsForType(texture.type);
 
         // Reuse shader if available
         if (!shaderCache.current[id]) {
