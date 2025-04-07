@@ -8,3 +8,4 @@ export * from "./performance";
 export * from "./types/render";
 export * from "./types/render";
 export * from "./types/geometry";
+export * from "./hooks/use-noise-shader-material-orchestrator";

@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { WebGLRenderTargetNode } from "@repo/threejs";
 import type { NoiseTexture, Texture } from "@vendor/db/types";
+import { useNoiseShaderMaterialOrchestrator } from "@repo/threejs";
 import {
   isNumericValue,
   isVec2,
-  noiseShaderSingleton,
   PNOISE_UNIFORM_CONSTRAINTS,
   UniformAdapterFactory,
   ValueType,
@@ -65,14 +65,16 @@ const getTextureFromTargets = (
   return sourceId && targets[sourceId] ? targets[sourceId].texture : null;
 };
 
+/**
+ * Hook for processing and rendering perlin noise textures.
+ * Uses a shared shader material managed by the useNoiseShaderSingleton hook.
+ */
 export const useUpdateTextureNoise = ({
   textureDataMap,
 }: UpdateTextureNoiseProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
-
-  // Store the shader material ref to be lazily initialized
-  const shaderMaterialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const { getShader, releaseShader } = useNoiseShaderMaterialOrchestrator();
 
   // Store uniform configurations per texture ID instead of shader instances
   const uniformConfigsRef = useRef<Record<string, Record<string, unknown>>>({});
@@ -84,19 +86,6 @@ export const useUpdateTextureNoise = ({
 
   // Track the set of texture IDs for cleanup
   const activeIdsRef = useRef<Set<string>>(new Set());
-
-  // Keep track of whether we had textures in the previous render
-  const hadTexturesRef = useRef<boolean>(false);
-
-  /**
-   * Gets or creates the shared shader material instance
-   */
-  const getSharedShaderMaterial = useCallback((): THREE.ShaderMaterial => {
-    if (!shaderMaterialRef.current) {
-      shaderMaterialRef.current = noiseShaderSingleton.getInstance();
-    }
-    return shaderMaterialRef.current;
-  }, []);
 
   /**
    * Updates shader uniforms based on constraints
@@ -137,8 +126,8 @@ export const useUpdateTextureNoise = ({
       const uniforms = uniformConfigsRef.current[id];
       if (!uniforms) return;
 
-      // Get the shader material on demand
-      const sharedShaderMaterial = getSharedShaderMaterial();
+      // Get the shared shader material
+      const sharedShaderMaterial = getShader();
 
       // Apply stored uniforms to the shared material
       updateShaderUniforms(sharedShaderMaterial, uniforms);
@@ -146,7 +135,7 @@ export const useUpdateTextureNoise = ({
       // Apply texture connection
       updateTextureConnection(sharedShaderMaterial, id);
     },
-    [getSharedShaderMaterial, updateShaderUniforms, updateTextureConnection],
+    [getShader, updateShaderUniforms, updateTextureConnection],
   );
 
   /**
@@ -175,12 +164,12 @@ export const useUpdateTextureNoise = ({
       // Update texture uniform configuration
       updateSingleTexture(id, texture);
 
-      // Create a new node that uses the shared shader material - get the shader lazily
+      // Create a new node that uses the shared shader material
       const node: WebGLRenderTargetNode = {
         id,
-        // The shader will be retrieved at render time via getter
+        // Use a getter to always retrieve the current shader
         get shader() {
-          return getSharedShaderMaterial();
+          return getShader();
         },
         onEachFrame: () => {
           // Apply this texture's uniforms before rendering
@@ -193,21 +182,17 @@ export const useUpdateTextureNoise = ({
 
       return node;
     },
-    [getSharedShaderMaterial, updateSingleTexture, applyTextureUniforms],
+    [getShader, updateSingleTexture, applyTextureUniforms],
   );
 
   // Update textures and track active IDs whenever texture data changes
   useEffect(() => {
     const hasTextures = Object.keys(textureDataMap).length > 0;
 
-    // If we don't have any textures and previously had some, dispose the shader
-    if (
-      !hasTextures &&
-      hadTexturesRef.current &&
-      noiseShaderSingleton.isInitialized()
-    ) {
-      // Clear the material reference
-      shaderMaterialRef.current = null;
+    // Skip if no textures are present
+    if (!hasTextures) {
+      // Release the shader reference if we no longer have textures
+      releaseShader();
 
       // Clean up all stored uniform configurations
       uniformConfigsRef.current = {};
@@ -215,18 +200,8 @@ export const useUpdateTextureNoise = ({
       // Clean up all render target nodes
       renderTargetNodesRef.current = {};
 
-      // Dispose the shader in the singleon
-      noiseShaderSingleton.dispose();
-    }
-
-    // Skip if no textures are present
-    if (!hasTextures) {
-      hadTexturesRef.current = false;
       return;
     }
-
-    // Update that we have textures
-    hadTexturesRef.current = true;
 
     // Get the new set of active IDs
     const currentIds = new Set(Object.keys(textureDataMap));
@@ -255,18 +230,12 @@ export const useUpdateTextureNoise = ({
 
     // Update active IDs reference
     activeIdsRef.current = currentIds;
-  }, [textureDataMap, updateSingleTexture, getOrCreateRenderTargetNode]);
-
-  // Clean up resources when the component unmounts
-  useEffect(() => {
-    return () => {
-      // If we created a shader material and it's the only reference,
-      // dispose it when the component unmounts
-      if (noiseShaderSingleton.isInitialized()) {
-        noiseShaderSingleton.dispose();
-      }
-    };
-  }, []);
+  }, [
+    textureDataMap,
+    updateSingleTexture,
+    getOrCreateRenderTargetNode,
+    releaseShader,
+  ]);
 
   // Return the render target nodes with stable references
   return useMemo(() => {
