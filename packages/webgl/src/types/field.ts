@@ -4,7 +4,7 @@
  */
 
 import type { ValueType } from "./schema";
-import type { ShaderInputTextureUniform } from "./shader-input-texture-handle";
+import type { ShaderSampler2DUniform } from "./shader-sampler2d-uniform";
 
 export interface ValueFieldMetadata {
   min: number;
@@ -32,7 +32,7 @@ export interface Vec3FieldMetadata {
  */
 export interface HandleMetadata {
   /** The texture handle for this field */
-  handle: ShaderInputTextureUniform;
+  handle: ShaderSampler2DUniform;
   /** Whether this texture input is required */
   required: boolean;
   /** Description of what this texture input is used for */

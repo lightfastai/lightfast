@@ -140,20 +140,24 @@ export function isValidOutputHandleId(id: string): boolean {
 /**
  * Safe constructor function that validates and creates a TextureHandleId
  * @param value The string value to validate and convert
- * @returns A TextureHandleId or null if invalid
+ * @returns A TextureHandleId
+ * @throws Error if the value is not a valid handle ID
  */
-export function createTextureHandleId(value: string): TextureHandleId | null {
-  if (!isValidTextureHandleId(value)) return null;
+export function createTextureHandleId(value: string): TextureHandleId {
+  if (!isValidTextureHandleId(value))
+    throw new Error(`Invalid handle ID: ${value}`);
   return value as TextureHandleId;
 }
 
 /**
  * Safe constructor function that validates and creates an OutputHandleId
  * @param value The string value to validate and convert
- * @returns An OutputHandleId or null if invalid
+ * @returns An OutputHandleId
+ * @throws Error if the value is not a valid handle ID
  */
-export function createOutputHandleId(value: string): OutputHandleId | null {
-  if (!isValidOutputHandleId(value)) return null;
+export function createOutputHandleId(value: string): OutputHandleId {
+  if (!isValidOutputHandleId(value))
+    throw new Error(`Invalid handle ID: ${value}`);
   return value as OutputHandleId;
 }
 

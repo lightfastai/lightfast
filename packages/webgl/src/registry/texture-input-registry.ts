@@ -1,7 +1,7 @@
 import type { Shaders } from "@/types/shaders";
 
 import type { HandleMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderInputTextureUniform } from "../types/shader-input-texture-handle";
+import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import type { ShaderUniform } from "../types/shader-uniform";
 import {
   ADD_UNIFORM_CONSTRAINTS,
@@ -26,14 +26,14 @@ import { createShaderUniform } from "../types/shader-uniform";
  */
 export interface TextureInputRegistryEntry {
   /** Available texture handles for this type */
-  handles: ShaderInputTextureUniform[];
+  handles: ShaderSampler2DUniform[];
   /** Default uniforms for this type */
   defaultUniforms: Record<string, ShaderUniform>;
   /** Metadata for each texture input */
   inputs: HandleMetadata[];
   /** Validates if a source texture type can be connected to a handle */
   validateConnection: (
-    handle: ShaderInputTextureUniform,
+    handle: ShaderSampler2DUniform,
     sourceType: string,
   ) => boolean;
 }
@@ -42,11 +42,11 @@ export interface TextureInputRegistryEntry {
  * Create texture field metadata from uniform constraints
  */
 function createTextureFieldMetadata(
-  handle: ShaderInputTextureUniform,
+  handle: ShaderSampler2DUniform,
   constraint: UniformFieldValue,
 ): HandleMetadata {
   if (constraint.type !== ValueType.Texture) {
-    throw new Error(`Invalid constraint type for handle ${handle.id}`);
+    throw new Error(`Invalid constraint type for handle ${handle.handleId}`);
   }
   const textureConstraint = constraint.constraint as HandleMetadata;
   return {
@@ -109,11 +109,11 @@ export const textureInputRegistry: Record<Shaders, TextureInputRegistryEntry> =
         ),
       ],
       validateConnection: (
-        handle: ShaderInputTextureUniform,
+        handle: ShaderSampler2DUniform,
         sourceType: string,
       ) => {
         // Displace requires specific validation based on input
-        if (handle.id === "input-1") {
+        if (handle.handleId === "input-1") {
           // Base texture can be any type
           return true;
         }
@@ -163,11 +163,12 @@ export function getTextureInputsForType(
  */
 export function isValidTextureHandleForType(
   textureType: Shaders,
-  handle: ShaderInputTextureUniform,
+  handle: ShaderSampler2DUniform,
 ): boolean {
   const entry = textureInputRegistry[textureType];
   return entry.handles.some(
-    (h) => h.id === handle.id && h.uniformName === handle.uniformName,
+    (h) =>
+      h.handleId === handle.handleId && h.uniformName === handle.uniformName,
   );
 }
 
@@ -176,12 +177,12 @@ export function isValidTextureHandleForType(
  */
 export function isRequiredTextureHandle(
   textureType: Shaders,
-  handle: ShaderInputTextureUniform,
+  handle: ShaderSampler2DUniform,
 ): boolean {
   const entry = textureInputRegistry[textureType];
   const input = entry.inputs.find(
     (input) =>
-      input.handle.id === handle.id &&
+      input.handle.handleId === handle.handleId &&
       input.handle.uniformName === handle.uniformName,
   );
   return input?.required ?? false;
@@ -192,7 +193,7 @@ export function isRequiredTextureHandle(
  */
 export function getTextureHandles(
   textureType: Shaders,
-): ShaderInputTextureUniform[] {
+): ShaderSampler2DUniform[] {
   return textureInputRegistry[textureType].handles;
 }
 

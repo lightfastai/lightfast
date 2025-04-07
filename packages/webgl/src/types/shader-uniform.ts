@@ -1,12 +1,12 @@
 import type * as THREE from "three";
 
-import type { ShaderInputTextureUniform } from "./shader-input-texture-handle";
+import type { ShaderSampler2DUniform } from "./shader-sampler2d-uniform";
 
 /**
  * Represents a texture uniform in the shader system
  */
 export interface ShaderUniform {
-  handle: ShaderInputTextureUniform | null;
+  handle: ShaderSampler2DUniform | null;
   textureObject: THREE.Texture | null;
 }
 
@@ -14,7 +14,7 @@ export interface ShaderUniform {
  * Create a new TextureUniform with default values
  */
 export function createShaderUniform(
-  handle: ShaderInputTextureUniform | null = null,
+  handle: ShaderSampler2DUniform | null = null,
   textureObject: THREE.Texture | null = null,
 ): ShaderUniform {
   return { handle, textureObject };
@@ -25,7 +25,7 @@ export function createShaderUniform(
  */
 export function updateShaderUniform(
   uniform: ShaderUniform,
-  handle: ShaderInputTextureUniform | null,
+  handle: ShaderSampler2DUniform | null,
   textureObject: THREE.Texture | null,
 ): ShaderUniform {
   return { ...uniform, handle, textureObject };

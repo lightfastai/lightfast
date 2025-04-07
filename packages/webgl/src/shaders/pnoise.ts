@@ -5,14 +5,11 @@ import zodToJsonSchema from "zod-to-json-schema";
 import type { HandleMetadata, UniformFieldValue } from "../types/field";
 import type { ShaderUniform } from "../types/shader-uniform";
 import { $Float, $NumericValue, $Vec2Number, ValueType } from "../types/schema";
-import { createShaderInputTextureHandle } from "../types/shader-input-texture-handle";
+import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
 import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handle for the uniform
-export const noiseBlendHandle = createShaderInputTextureHandle(
-  "input-1",
-  "u_texture1",
-);
+export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
 
 // Define texture uniforms
 export const $NoiseTextureUniforms = z.object({

@@ -105,13 +105,10 @@ export const TextureNode = memo(
               {textureInputs.length > 0 ? (
                 // For nodes with inputs, create properly positioned handles
                 textureInputs.map((input: TextureInput) => {
-                  const handleId = createTextureHandleId(input.handle.id);
-                  if (!handleId) {
-                    throw new Error(`Invalid handle ID: ${input.handle.id}`);
-                  }
+                  const handleId = createTextureHandleId(input.handle.handleId);
                   return (
                     <div
-                      key={input.handle.id}
+                      key={input.handle.handleId}
                       className="relative flex items-center justify-center py-1"
                     >
                       <NodeHandle

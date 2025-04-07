@@ -136,7 +136,7 @@ export const useUpdateTextureAdd = ({
             textureInputs.forEach((input) => {
               const { handle } = input;
 
-              const { id: handleId, uniformName } = handle;
+              const { id: handleId, name: uniformName } = handle;
 
               // Get the source node ID from the connection cache
               const sourceId = nodeConnections[handleId] || null;

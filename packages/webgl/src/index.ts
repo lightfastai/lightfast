@@ -207,7 +207,7 @@ export { createDefaultVec2, createDefaultVec3 } from "./types/schema";
 
 export * from "./types/render";
 export * from "./types/webgl";
-export * from "./types/shader-input-texture-handle";
+export * from "./types/shader-sampler2d-uniform";
 
 export {
   getTextureInputsForType,
@@ -217,7 +217,7 @@ export {
 } from "./registry/texture-input-registry";
 
 // Export types
-export * from "./types/shader-input-texture-handle";
+export * from "./types/shader-sampler2d-uniform";
 export * from "./types/field";
 export * from "./types/schema";
 export * from "./types/shader-uniform";
