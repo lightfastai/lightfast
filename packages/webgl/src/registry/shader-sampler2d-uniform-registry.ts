@@ -22,7 +22,7 @@ import { ValueType } from "../types/shader-uniform";
 /**
  * Registry entry for a texture type
  */
-export interface ShaderSampler2DRegistry {
+export interface ShaderSampler2DUniformRegistry {
   /** Available texture handles for this type */
   handles: ShaderSampler2DUniform[];
   /** Default uniforms for this type */
@@ -37,9 +37,9 @@ export interface ShaderSampler2DRegistry {
 }
 
 /**
- * Create texture field metadata from uniform constraints
+ * Create sampler2D field metadata from uniform constraints
  */
-export function createTextureFieldMetadata(
+export function createSampler2DFieldMetadata(
   handle: ShaderSampler2DUniform,
   constraint: UniformFieldValue,
 ): Sampler2DMetadata {
@@ -70,7 +70,10 @@ if (
 /**
  * The main texture registry containing all registered texture types
  */
-export const textureInputRegistry: Record<Shaders, ShaderSampler2DRegistry> = {
+export const textureInputRegistry: Record<
+  Shaders,
+  ShaderSampler2DUniformRegistry
+> = {
   Add: {
     handles: [addInput1Handle, addInput2Handle],
     defaultUniforms: {
@@ -78,11 +81,11 @@ export const textureInputRegistry: Record<Shaders, ShaderSampler2DRegistry> = {
       u_texture2: addInput2Handle,
     },
     inputs: [
-      createTextureFieldMetadata(
+      createSampler2DFieldMetadata(
         addInput1Handle,
         ADD_UNIFORM_CONSTRAINTS.u_texture1,
       ),
-      createTextureFieldMetadata(
+      createSampler2DFieldMetadata(
         addInput2Handle,
         ADD_UNIFORM_CONSTRAINTS.u_texture2,
       ),
@@ -96,11 +99,11 @@ export const textureInputRegistry: Record<Shaders, ShaderSampler2DRegistry> = {
       u_texture2: displaceMapHandle,
     },
     inputs: [
-      createTextureFieldMetadata(
+      createSampler2DFieldMetadata(
         displaceSourceHandle,
         DISPLACE_UNIFORM_CONSTRAINTS.u_texture1,
       ),
-      createTextureFieldMetadata(
+      createSampler2DFieldMetadata(
         displaceMapHandle,
         DISPLACE_UNIFORM_CONSTRAINTS.u_texture2,
       ),
@@ -113,7 +116,7 @@ export const textureInputRegistry: Record<Shaders, ShaderSampler2DRegistry> = {
       u_texture1: limitInputHandle,
     },
     inputs: [
-      createTextureFieldMetadata(
+      createSampler2DFieldMetadata(
         limitInputHandle,
         LIMIT_UNIFORM_CONSTRAINTS.u_texture1,
       ),
@@ -126,7 +129,7 @@ export const textureInputRegistry: Record<Shaders, ShaderSampler2DRegistry> = {
       u_texture1: noiseBlendHandle,
     },
     inputs: [
-      createTextureFieldMetadata(
+      createSampler2DFieldMetadata(
         noiseBlendHandle,
         PNOISE_UNIFORM_CONSTRAINTS.u_texture1,
       ),
