@@ -100,6 +100,14 @@ export const useUpdateTextureNoise = ({
   // Create a reference to track shader instances
   const shaderInstancesRef = useRef<Record<string, THREE.ShaderMaterial>>({});
 
+  // Create a reference to track render target nodes
+  const renderTargetNodesRef = useRef<Record<string, WebGLRenderTargetNode>>(
+    {},
+  );
+
+  // Track the set of texture IDs for cleanup
+  const activeIdsRef = useRef<Set<string>>(new Set());
+
   /**
    * Updates shader uniforms based on constraints
    */
@@ -132,6 +140,20 @@ export const useUpdateTextureNoise = ({
   );
 
   /**
+   * Initializes a shader with uniforms and texture connections
+   */
+  const initializeShader = useCallback(
+    (shader: THREE.ShaderMaterial, id: string, texture: NoiseTexture): void => {
+      // Apply uniform values
+      updateShaderUniforms(shader, texture.uniforms);
+
+      // Set texture connection
+      updateTextureConnection(shader, id);
+    },
+    [updateShaderUniforms, updateTextureConnection],
+  );
+
+  /**
    * Creates a new shader and initializes it
    */
   const createAndInitShader = useCallback(
@@ -147,21 +169,7 @@ export const useUpdateTextureNoise = ({
 
       return shader;
     },
-    [createShader],
-  );
-
-  /**
-   * Initializes a shader with uniforms and texture connections
-   */
-  const initializeShader = useCallback(
-    (shader: THREE.ShaderMaterial, id: string, texture: NoiseTexture): void => {
-      // Apply uniform values
-      updateShaderUniforms(shader, texture.uniforms);
-
-      // Set texture connection
-      updateTextureConnection(shader, id);
-    },
-    [updateShaderUniforms, updateTextureConnection],
+    [createShader, initializeShader],
   );
 
   /**
@@ -224,34 +232,71 @@ export const useUpdateTextureNoise = ({
     [getOrCreateShader, updateShaderUniforms, updateTextureConnection],
   );
 
-  // Update uniforms whenever texture data changes
-  useEffect(() => {
-    Object.entries(textureDataMap).forEach(([id, texture]) => {
-      updateSingleTexture(id, texture);
-    });
-  }, [textureDataMap, updateSingleTexture]);
-
   /**
-   * Create WebGLRenderTargetNode for a texture
+   * Create or get a cached WebGLRenderTargetNode for a texture
    */
-  const createRenderTargetNode = useCallback(
+  const getOrCreateRenderTargetNode = useCallback(
     (id: string, texture: Texture): WebGLRenderTargetNode => {
+      // If we already have a node for this id, reuse it
+      if (renderTargetNodesRef.current[id]) {
+        return renderTargetNodesRef.current[id];
+      }
+
+      // Create a new node if needed
       const noiseTexture = texture as NoiseTexture;
       const shader = getOrCreateShader(id, noiseTexture);
 
-      return {
+      const node: WebGLRenderTargetNode = {
         id,
         shader,
         onEachFrame: () => {}, // Empty as requested
       };
+
+      // Cache the node for future reuse
+      renderTargetNodesRef.current[id] = node;
+
+      return node;
     },
     [getOrCreateShader],
   );
 
-  // Return the render target nodes with guaranteed initialized shaders
+  // Update textures and track active IDs whenever texture data changes
+  useEffect(() => {
+    // Get the new set of active IDs
+    const currentIds = new Set(Object.keys(textureDataMap));
+
+    // Update all textures
+    Object.entries(textureDataMap).forEach(([id, texture]) => {
+      updateSingleTexture(id, texture);
+
+      // Ensure we have a render target node for each texture
+      getOrCreateRenderTargetNode(id, texture);
+    });
+
+    // Clean up nodes that are no longer in the texture data map
+    const nodesToRemove: string[] = [];
+    Object.keys(renderTargetNodesRef.current).forEach((id) => {
+      if (!currentIds.has(id)) {
+        nodesToRemove.push(id);
+      }
+    });
+
+    // Remove unused nodes
+    nodesToRemove.forEach((id) => {
+      delete renderTargetNodesRef.current[id];
+    });
+
+    // Update active IDs reference
+    activeIdsRef.current = currentIds;
+  }, [textureDataMap, updateSingleTexture, getOrCreateRenderTargetNode]);
+
+  // Return the render target nodes with stable references
   return useMemo(() => {
-    return Object.entries(textureDataMap).map(([id, texture]) =>
-      createRenderTargetNode(id, texture),
-    );
-  }, [textureDataMap, createRenderTargetNode]);
+    // Create an array of nodes from the current texture data map
+    // This guarantees that we have nodes for all current textures
+    return Object.entries(textureDataMap).map(([id, texture]) => {
+      // Always ensure the node exists in our cache
+      return getOrCreateRenderTargetNode(id, texture);
+    });
+  }, [textureDataMap, getOrCreateRenderTargetNode]);
 };
