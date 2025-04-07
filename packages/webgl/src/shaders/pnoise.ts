@@ -134,7 +134,6 @@ precision highp float;
 // GLSL textureless classic 3D noise
 varying vec2 vUv;
 
-uniform float time;
 uniform float u_period;
 uniform int u_harmonics;
 uniform float u_harmonic_spread;
@@ -245,7 +244,7 @@ void main() {
     
     // Use time directly for z-coordinate
     // The time expression is evaluated in JavaScript and passed as 'time'
-    float zCoord = time;
+    float zCoord = 0.0;
     
     // Base noise calculation with time
     vec3 coords = vec3(uv * baseFreq, zCoord);

@@ -23,6 +23,7 @@ import { FileMenuViewProvider } from "../../providers/file-menu-view-provider";
 import { InspectorStoreProvider } from "../../providers/inspector-store-provider";
 import { NodeStoreProvider } from "../../providers/node-store-provider";
 import { SelectionStoreProvider } from "../../providers/selection-store-provider";
+import { ShaderCacheStoreProvider } from "../../providers/shader-cache-store-provider";
 import { TextureRenderStoreProvider } from "../../providers/texture-render-store-provider";
 import { WorkspaceReactFlowProvider } from "../../providers/workspace-react-flow-provider";
 import { WorkspaceViewProvider } from "../../providers/workspace-view-provider";
@@ -128,40 +129,42 @@ export default async function WorkspaceLayout({
         <NodeStoreProvider initialNodes={baseNodes}>
           <EdgeStoreProvider initialEdges={baseEdges}>
             <SelectionStoreProvider>
-              <EditorStoreProvider>
-                <TextureRenderStoreProvider
-                  initialNodes={baseNodes.filter(
-                    (node) => node.type === $NodeType.Enum.texture,
-                  )}
-                >
-                  <InspectorStoreProvider>
-                    <WebGLCanvas
-                      style={{
-                        position: "absolute",
-                        pointerEvents: "none",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        zIndex: 1,
-                      }}
-                      showPerformance={true}
-                    >
-                      <WebGLTextureRenderPipeline />
-                    </WebGLCanvas>
-                    <WorkspaceReactFlowProvider>
-                      <WorkspaceViewProvider>
-                        {children}
-                        <Debug />
-                      </WorkspaceViewProvider>
-                    </WorkspaceReactFlowProvider>
-                    <div className="absolute right-4 top-4">
-                      <Inspector />
-                    </div>
-                    <EditorCommandDialog />
-                  </InspectorStoreProvider>
-                </TextureRenderStoreProvider>
-              </EditorStoreProvider>
+              <ShaderCacheStoreProvider initialShaders={{}}>
+                <EditorStoreProvider>
+                  <TextureRenderStoreProvider
+                    initialNodes={baseNodes.filter(
+                      (node) => node.type === $NodeType.Enum.texture,
+                    )}
+                  >
+                    <InspectorStoreProvider>
+                      <WebGLCanvas
+                        style={{
+                          position: "absolute",
+                          pointerEvents: "none",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          zIndex: 1,
+                        }}
+                        showPerformance={true}
+                      >
+                        <WebGLTextureRenderPipeline />
+                      </WebGLCanvas>
+                      <WorkspaceReactFlowProvider>
+                        <WorkspaceViewProvider>
+                          {children}
+                          <Debug />
+                        </WorkspaceViewProvider>
+                      </WorkspaceReactFlowProvider>
+                      <div className="absolute right-4 top-4">
+                        <Inspector />
+                      </div>
+                      <EditorCommandDialog />
+                    </InspectorStoreProvider>
+                  </TextureRenderStoreProvider>
+                </EditorStoreProvider>
+              </ShaderCacheStoreProvider>
             </SelectionStoreProvider>
           </EdgeStoreProvider>
         </NodeStoreProvider>
