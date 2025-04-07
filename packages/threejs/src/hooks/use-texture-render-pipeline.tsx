@@ -1,10 +1,10 @@
 "use client";
 
-import type { WebGLRenderTargets } from "@/types/render";
-import type { WebGLRootState } from "@/types/webgl";
 import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+
+import type { WebGLRenderTargets, WebGLRootState } from "../types/render";
 
 /**
  * Custom hook that adapts the existing texture render store to work with the WebGL package.

@@ -3,18 +3,16 @@
 import type { Mesh } from "three";
 import { memo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Vector3 } from "three";
+import * as THREE from "three";
 
 import type { GeometryType } from "../../types/geometry";
-import type { Vec3 } from "../../types/shader-uniform";
 import { GeometryMap } from "../../types/geometry";
-import { createDefaultVec3 } from "../../types/shader-uniform";
 
 export interface GeometryRendererProps {
   type: GeometryType;
-  position?: Vec3;
-  rotation?: Vec3;
-  scale?: Vec3;
+  position?: THREE.Vector3;
+  rotation?: THREE.Vector3;
+  scale?: THREE.Vector3;
   wireframe?: boolean;
   animate?: boolean;
 }
@@ -22,9 +20,9 @@ export interface GeometryRendererProps {
 export const GeometryRenderer = memo(
   ({
     type,
-    position = createDefaultVec3(),
-    rotation = createDefaultVec3(),
-    scale = createDefaultVec3(),
+    position = new THREE.Vector3(),
+    rotation = new THREE.Vector3(),
+    scale = new THREE.Vector3(),
     wireframe = false,
     animate = true,
   }: GeometryRendererProps) => {
@@ -42,14 +40,16 @@ export const GeometryRenderer = memo(
     return (
       <mesh
         position={
-          new Vector3(
+          new THREE.Vector3(
             Number(position.x),
             Number(position.y),
             Number(position.z),
           )
         }
         geometry={GeometryMap[type as keyof typeof GeometryMap]}
-        scale={new Vector3(Number(scale.x), Number(scale.y), Number(scale.z))}
+        scale={
+          new THREE.Vector3(Number(scale.x), Number(scale.y), Number(scale.z))
+        }
         ref={meshRef}
       >
         <meshBasicMaterial wireframe={wireframe} />

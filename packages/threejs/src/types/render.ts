@@ -8,3 +8,5 @@ export interface WebGLRenderTargetNode {
   shader: THREE.ShaderMaterial;
   onEachFrame: (state: RootState) => void;
 }
+
+export type { RootState as WebGLRootState } from "@react-three/fiber";

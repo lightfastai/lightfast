@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
-import { WebGLView } from "@repo/webgl/components";
 import {
   GlobalOrbitControls,
   GlobalPerspectiveCamera,
-} from "@repo/webgl/globals";
+  WebGLView,
+} from "@repo/threejs";
 
 interface WebGLViewContextProps {
   children: ReactNode;

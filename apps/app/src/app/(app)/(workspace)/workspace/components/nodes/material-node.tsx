@@ -3,6 +3,7 @@ import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
 
 import type { Material } from "@vendor/db/types";
+import { GeometryRenderer } from "@repo/threejs";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -10,7 +11,6 @@ import {
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
-import { GeometryRenderer } from "@repo/webgl/components";
 
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";

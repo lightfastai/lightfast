@@ -192,19 +192,8 @@ export type {
   Vec3FieldMetadata,
 } from "./types/field";
 
-// Export Three.js related components
-export * from "./components";
-
-// Export performance monitoring components
-export * from "./performance";
-
-// Export Three.js related utilities
-export * from "./utils";
-
 export { createDefaultVec2, createDefaultVec3 } from "./types/shader-uniform";
 
-export * from "./types/render";
-export * from "./types/webgl";
 export * from "./types/shader-sampler2d-uniform";
 
 export {
@@ -218,7 +207,4 @@ export {
 export * from "./types/shader-sampler2d-uniform";
 export * from "./types/field";
 export * from "./types/shader-uniform";
-export * from "./types/render";
-export * from "./types/webgl";
-export * from "./types/geometry";
 export * from "./types/shaders";

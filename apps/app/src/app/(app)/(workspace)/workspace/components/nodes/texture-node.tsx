@@ -4,6 +4,7 @@ import { Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
 import type { Texture } from "@vendor/db/types";
+import { GeometryMap, WebGLView } from "@repo/threejs";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
 import {
@@ -12,8 +13,6 @@ import {
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
 import { getShaderSampler2DInputsForType } from "@repo/webgl";
-import { WebGLView } from "@repo/webgl/components";
-import { GeometryMap } from "@repo/webgl/globals";
 import {
   $GeometryType,
   createOutputHandleId,

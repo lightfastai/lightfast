@@ -1,8 +1,10 @@
 import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
+import * as THREE from "three";
 
 import type { Geometry } from "@vendor/db/types";
+import { GeometryRenderer } from "@repo/threejs";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
@@ -11,7 +13,6 @@ import {
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
 import { cn } from "@repo/ui/lib/utils";
-import { GeometryRenderer } from "@repo/webgl/components";
 
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";
@@ -50,10 +51,20 @@ export const GeometryNode = memo(
             <WebGLViewContext>
               <GeometryRenderer
                 type={data.type}
-                position={data.position}
-                rotation={data.rotation}
-                scale={data.scale}
-                wireframe={data.wireframe}
+                position={
+                  new THREE.Vector3(
+                    Number(data.position.x),
+                    Number(data.position.y),
+                    Number(data.position.z),
+                  )
+                }
+                rotation={
+                  new THREE.Vector3(
+                    Number(data.rotation.x),
+                    Number(data.rotation.y),
+                    Number(data.rotation.z),
+                  )
+                }
                 animate={true}
               />
             </WebGLViewContext>
@@ -62,7 +73,7 @@ export const GeometryNode = memo(
           <div className="flex items-center justify-end">
             <Checkbox
               id={`wireframe-${id}`}
-              checked={data.wireframe ?? false}
+              checked={data.wireframe}
               // onCheckedChange={() => {}}
             />
           </div>

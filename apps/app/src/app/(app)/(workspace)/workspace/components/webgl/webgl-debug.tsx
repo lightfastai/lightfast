@@ -4,13 +4,9 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ErrorBoundary } from "@sentry/nextjs";
 import { Panel } from "@xyflow/react";
 
+import { GLStatsCard, PerformanceCard, SystemCard } from "@repo/threejs";
 import { InfoCard } from "@repo/ui/components/info-card";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  GLStatsCard,
-  PerformanceCard,
-  SystemCard,
-} from "@repo/webgl/performance";
 
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";

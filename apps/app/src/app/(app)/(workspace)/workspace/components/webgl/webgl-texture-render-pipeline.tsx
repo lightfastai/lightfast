@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import type { Texture } from "@vendor/db/types";
-import { TextureRenderPipeline } from "@repo/webgl";
+import { TextureRenderPipeline } from "@repo/threejs";
 
 import { api } from "~/trpc/client/react";
 import { useUpdateTextureAdd } from "../../hooks/use-update-texture-add";

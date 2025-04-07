@@ -29,7 +29,7 @@ import { WorkspaceViewProvider } from "../../providers/workspace-view-provider";
 import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
 
 const WebGLCanvas = dynamic(
-  () => import("../../webgl").then((mod) => mod.WebGLCanvas),
+  () => import("@repo/threejs").then((mod) => mod.WebGLCanvas),
   { ssr: false },
 );
 

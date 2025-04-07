@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/webgl";
+import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { LimitTexture, Texture } from "@vendor/db/types";
 import {
   baseVertexShader,

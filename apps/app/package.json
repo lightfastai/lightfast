@@ -24,6 +24,7 @@
     "@react-three/fiber": "^8.17.10",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@repo/threejs": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/webgl": "workspace:*",
     "@sentry/nextjs": "^8.45.0",
