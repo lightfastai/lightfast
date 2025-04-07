@@ -1,18 +1,7 @@
-import type { JSONSchema7 } from "json-schema";
-import { z } from "zod";
-
-import { $Add, $AddJsonSchema, AddDescription } from "./shaders/add";
-import {
-  $Displace,
-  $DisplaceJsonSchema,
-  DisplaceDescription,
-} from "./shaders/displace";
+import { $Add } from "./shaders/add";
+import { $Displace } from "./shaders/displace";
 import { $Limit } from "./shaders/limit";
-import {
-  $PerlinNoise3D,
-  PerlinNoise3DDescription,
-  PerlinNoiseJsonSchema,
-} from "./shaders/pnoise";
+import { $PerlinNoise2D } from "./shaders/pnoise";
 
 /**
  * Base types and primitives
@@ -86,13 +75,13 @@ export {
   isVec3Expression,
   isVec2Number,
   isVec3Number,
-} from "./types/shader-uniform";
+} from "./types/uniforms";
 
 /**
  * Noise modules
  */
-export type { PerlinNoise3DParams } from "./shaders/pnoise";
-export { $PerlinNoise3D, PerlinNoise3DDescription };
+export type { PerlinNoise2DParams } from "./shaders/pnoise";
+export { $PerlinNoise2D };
 
 /**
  * Limit modules
@@ -104,13 +93,13 @@ export { $Limit };
  * Displace modules
  */
 export type { DisplaceParams } from "./shaders/displace";
-export { $Displace, DisplaceDescription };
+export { $Displace };
 
 /**
  * Add modules
  */
 export type { AddParams } from "./shaders/add";
-export { $Add, AddDescription };
+export { $Add };
 
 /**
  * Texture uniforms and registry
@@ -120,45 +109,10 @@ export * from "./registry/shader-sampler2d-uniform-registry";
 /**
  * Shared texture uniforms type
  */
-export const $TextureUniforms = $PerlinNoise3D
+export const $TextureUniforms = $PerlinNoise2D
   .merge($Limit)
   .merge($Displace)
   .merge($Add);
-
-/**
- * Texture type
- */
-export const $TextureType = z.enum(["Noise", "Limit", "Displace", "Add"]);
-
-/** Build JSON Schema for Texture System */
-export const $TextureSystemJsonSchema = {
-  title: "Texture Operator Primitives",
-  description:
-    "A collection of texture operators that can be used to create textures for 3D objects using ThreeJS. A pipelined approach using WebGL render targets are created where each texture operator is a render target and can be used as an input to the next texture operator. The textures are created using GLSL shaders.",
-  textures: [
-    {
-      title: $TextureType.Values.Noise,
-      description: PerlinNoise3DDescription,
-      properties: {
-        uniforms: PerlinNoiseJsonSchema,
-      },
-    },
-    {
-      title: $TextureType.Values.Displace,
-      description: DisplaceDescription,
-      properties: {
-        uniforms: $DisplaceJsonSchema,
-      },
-    },
-    {
-      title: $TextureType.Values.Add,
-      description: AddDescription,
-      properties: {
-        uniforms: $AddJsonSchema,
-      },
-    },
-  ],
-} as JSONSchema7;
 
 export { addFragmentShader } from "./shaders/add";
 export { displaceFragmentShader } from "./shaders/displace";
@@ -169,17 +123,14 @@ export { baseVertexShader } from "./shaders/base-vert-shader";
 export { createDefaultAdd } from "./shaders/add";
 export { createDefaultDisplace } from "./shaders/displace";
 export { createDefaultLimit } from "./shaders/limit";
-export { createDefaultPerlinNoise3D } from "./shaders/pnoise";
+export { createDefaultPerlinNoise2D } from "./shaders/pnoise";
 
 export { PNOISE_UNIFORM_CONSTRAINTS } from "./shaders/pnoise";
 export { LIMIT_UNIFORM_CONSTRAINTS } from "./shaders/limit";
 export { DISPLACE_UNIFORM_CONSTRAINTS } from "./shaders/displace";
 export { ADD_UNIFORM_CONSTRAINTS } from "./shaders/add";
 
-export {
-  getFieldMetadata as getValueFieldMetadata,
-  getVec2FieldMetadata,
-} from "./shaders/utils";
+export { getFieldMetadata as getValueFieldMetadata } from "./shaders/utils";
 
 export * from "./types/field";
 export * from "./registry/shader-sampler2d-uniform-registry";
@@ -192,19 +143,18 @@ export type {
   Vec3FieldMetadata,
 } from "./types/field";
 
-export { createDefaultVec2, createDefaultVec3 } from "./types/shader-uniform";
+export { createDefaultVec2, createDefaultVec3 } from "./types/uniforms";
 
 export * from "./types/shader-sampler2d-uniform";
 
 export {
   getShaderSampler2DInputsForType,
   isValidSampler2DHandleForType,
-  isRequiredSampler2DHandleForType,
   type ShaderSampler2DUniformRegistry as ShaderSampler2DRegistry,
 } from "./registry/shader-sampler2d-uniform-registry";
 
 // Export types
 export * from "./types/shader-sampler2d-uniform";
 export * from "./types/field";
-export * from "./types/shader-uniform";
-export * from "./types/shaders";
+export * from "./types/uniforms";
+export * from "./types/shaders-types";

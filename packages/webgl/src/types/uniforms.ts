@@ -19,6 +19,11 @@ export enum ValueType {
   Sampler2D = "sampler2d",
 }
 
+export const $Sampler2D = z.object({
+  vuvID: z.number().nullable(),
+});
+export type Sampler2D = z.infer<typeof $Sampler2D>;
+
 // Helper to check if a value is an expression string
 export function isExpressionString(value: unknown): value is string {
   return typeof value === "string" && value.startsWith(EXPRESSION_PREFIX);
@@ -77,8 +82,8 @@ export const $Vec2Number = z.object({
 });
 
 export const $Vec2Expression = z.object({
-  x: $Expression,
-  y: $Expression,
+  x: $NumericValue,
+  y: $NumericValue,
 });
 
 export const $Vec2 = z.union([$Vec2Number, $Vec2Expression]);
@@ -92,9 +97,9 @@ export const $Vec3Number = z.object({
 });
 
 export const $Vec3Expression = z.object({
-  x: $Expression,
-  y: $Expression,
-  z: $Expression,
+  x: $NumericValue,
+  y: $NumericValue,
+  z: $NumericValue,
 });
 
 export const $Vec3 = z.union([$Vec3Number, $Vec3Expression]);

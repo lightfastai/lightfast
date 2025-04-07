@@ -1,52 +1,28 @@
-import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
-import zodToJsonSchema from "zod-to-json-schema";
 
 import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { $Boolean, $Float, ValueType } from "../types/shader-uniform";
+import { $Boolean, $Float, $Sampler2D, ValueType } from "../types/uniforms";
 
 // Create texture handles for the uniforms
 export const addInput1Handle = createSampler2DHandle("input-1", "u_texture1");
 export const addInput2Handle = createSampler2DHandle("input-2", "u_texture2");
 
-// Define texture uniforms
-export const $AddTextureUniforms = z.object({
-  u_texture1: z.custom<ShaderSampler2DUniform>(),
-  u_texture2: z.custom<ShaderSampler2DUniform>(),
-});
-
-export type AddTextureUniforms = z.infer<typeof $AddTextureUniforms>;
-
-// Define regular uniforms
-export const $AddRegularUniforms = z.object({
-  u_addValue: $Float
-    .describe("Constant value to add to the result")
-    .transform((val) => Math.max(-1, Math.min(1, val)))
-    .default(0.0),
-  u_enableMirror: $Boolean
-    .default(false)
-    .describe("Whether to mirror the result vertically"),
-});
-
-export type AddRegularUniforms = z.infer<typeof $AddRegularUniforms>;
-
 // Combine them for the full shader definition
-export const $Add = $AddTextureUniforms.merge($AddRegularUniforms);
+export const $Add = z.object({
+  u_texture1: $Sampler2D,
+  u_texture2: $Sampler2D,
+  u_addValue: $Float,
+  u_enableMirror: $Boolean,
+});
 
 export type AddParams = z.infer<typeof $Add>;
-
-export const $AddJsonSchema = zodToJsonSchema($Add) as JSONSchema7;
-
-export const AddDescription =
-  "A texture operator that adds two textures together with optional mirroring and constant value addition. Supports expressions prefixed with 'e.' for dynamic values.";
 
 export const createDefaultAdd = (): AddParams => {
   return {
     // Texture uniforms with the new format
-    u_texture1: addInput1Handle,
-    u_texture2: addInput2Handle,
+    u_texture1: { vuvID: null },
+    u_texture2: { vuvID: null },
     // Regular uniforms remain the same
     u_addValue: 0.0,
     u_enableMirror: false,
@@ -57,20 +33,18 @@ export const createDefaultAdd = (): AddParams => {
 export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
     type: ValueType.Sampler2D,
+    description: "The first input texture (A)",
     label: "Input A",
     constraint: {
       handle: addInput1Handle,
-      required: true,
-      description: "The first input texture (A)",
     } as Sampler2DMetadata,
   },
   u_texture2: {
     type: ValueType.Sampler2D,
+    description: "The second input texture (B)",
     label: "Input B",
     constraint: {
       handle: addInput2Handle,
-      required: true,
-      description: "The second input texture (B)",
     } as Sampler2DMetadata,
   },
   u_addValue: {

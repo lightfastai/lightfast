@@ -4,12 +4,12 @@ import {
   $Add,
   $Displace,
   $Limit,
-  $PerlinNoise3D,
+  $PerlinNoise2D,
   $Shaders,
   createDefaultAdd,
   createDefaultDisplace,
   createDefaultLimit,
-  createDefaultPerlinNoise3D,
+  createDefaultPerlinNoise2D,
 } from "@repo/webgl";
 
 export const $TextureTypes = z.enum($Shaders.options);
@@ -26,7 +26,7 @@ export type TextureResolution = z.infer<typeof $TextureResolution>;
 export const $Texture = z.discriminatedUnion("type", [
   z.object({
     type: z.literal($Shaders.enum.Noise),
-    uniforms: $PerlinNoise3D,
+    uniforms: $PerlinNoise2D,
     resolution: $TextureResolution,
   }),
   z.object({
@@ -46,7 +46,7 @@ export const $Texture = z.discriminatedUnion("type", [
   }),
 ]);
 
-export const $TextureUniforms = $PerlinNoise3D
+export const $TextureUniforms = $PerlinNoise2D
   .merge($Limit)
   .merge($Displace)
   .merge($Add);
@@ -67,7 +67,7 @@ export const createDefaultTexture = ({
     case $TextureTypes.enum.Noise:
       return {
         type,
-        uniforms: createDefaultPerlinNoise3D(),
+        uniforms: createDefaultPerlinNoise2D(),
         resolution: { width: 256, height: 256 },
       };
     case $TextureTypes.enum.Limit:

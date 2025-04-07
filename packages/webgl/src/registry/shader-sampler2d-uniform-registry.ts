@@ -1,4 +1,4 @@
-import type { Shaders } from "@/types/shaders";
+import type { Shaders } from "@/types/shaders-types";
 
 import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
 import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
@@ -17,7 +17,7 @@ import {
   noiseBlendHandle,
   PNOISE_UNIFORM_CONSTRAINTS,
 } from "../shaders/pnoise";
-import { ValueType } from "../types/shader-uniform";
+import { ValueType } from "../types/uniforms";
 
 /**
  * Registry entry for a texture type
@@ -46,11 +46,8 @@ export function createSampler2DFieldMetadata(
   if (constraint.type !== ValueType.Sampler2D) {
     throw new Error(`Invalid constraint type for handle ${handle.handleId}`);
   }
-  const textureConstraint = constraint.constraint as Sampler2DMetadata;
   return {
     handle,
-    description: textureConstraint.description || constraint.label,
-    required: textureConstraint.required || false,
   };
 }
 
@@ -159,22 +156,6 @@ export function isValidSampler2DHandleForType(
     (h) =>
       h.handleId === handle.handleId && h.uniformName === handle.uniformName,
   );
-}
-
-/**
- * Check if a handle is required for a specific texture type
- */
-export function isRequiredSampler2DHandleForType(
-  textureType: Shaders,
-  handle: ShaderSampler2DUniform,
-): boolean {
-  const entry = textureInputRegistry[textureType];
-  const input = entry.inputs.find(
-    (input) =>
-      input.handle.handleId === handle.handleId &&
-      input.handle.uniformName === handle.uniformName,
-  );
-  return input?.required ?? false;
 }
 
 /**

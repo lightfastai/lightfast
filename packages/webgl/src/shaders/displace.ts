@@ -1,11 +1,8 @@
-import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
-import zodToJsonSchema from "zod-to-json-schema";
 
 import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { $Float, $Vec2Number, ValueType } from "../types/shader-uniform";
+import { $Float, $Sampler2D, $Vec2Number, ValueType } from "../types/uniforms";
 
 // Create texture handles for the uniforms
 export const displaceSourceHandle = createSampler2DHandle(
@@ -14,76 +11,23 @@ export const displaceSourceHandle = createSampler2DHandle(
 );
 export const displaceMapHandle = createSampler2DHandle("input-2", "u_texture2");
 
-// Define texture uniforms
-export const $DisplaceTextureUniforms = z.object({
-  u_texture1: z.custom<ShaderSampler2DUniform>(),
-  u_texture2: z.custom<ShaderSampler2DUniform>(),
-});
-
-export type DisplaceTextureUniforms = z.infer<typeof $DisplaceTextureUniforms>;
-
-// Define regular uniforms
-export const $DisplaceRegularUniforms = z.object({
-  u_displaceWeight: $Float
-    .describe("X weight of displacement (0-10)")
-    .transform((val) => Math.max(0, Math.min(10, val)))
-    .default(1.0),
-  u_displaceMidpoint: $Vec2Number.extend({
-    x: $Float
-      .describe("X midpoint of displacement (0-1)")
-      .transform((val) => Math.max(0, Math.min(1, val)))
-      .default(0.5),
-    y: $Float
-      .describe("Y midpoint of displacement (0-1)")
-      .transform((val) => Math.max(0, Math.min(1, val)))
-      .default(0.5),
-  }),
-  u_displaceOffset: $Vec2Number.extend({
-    x: $Float
-      .describe("X offset of displacement (0-1)")
-      .transform((val) => Math.max(0, Math.min(1, val)))
-      .default(0.5),
-    y: $Float
-      .describe("Y offset of displacement (0-1)")
-      .transform((val) => Math.max(0, Math.min(1, val)))
-      .default(0.5),
-  }),
-  u_displaceOffsetWeight: $Float
-    .describe("X weight of offset (0-10)")
-    .transform((val) => Math.max(0, Math.min(10, val)))
-    .default(0.0),
-  u_displaceUVWeight: $Vec2Number.extend({
-    x: $Float
-      .describe("X UV weight (0-2)")
-      .transform((val) => Math.max(0, Math.min(2, val)))
-      .default(1.0),
-    y: $Float
-      .describe("Y UV weight (0-2)")
-      .transform((val) => Math.max(0, Math.min(2, val)))
-      .default(1.0),
-  }),
-});
-
-export type DisplaceRegularUniforms = z.infer<typeof $DisplaceRegularUniforms>;
-
 // Combine them for the full shader definition
-export const $Displace = $DisplaceTextureUniforms.merge(
-  $DisplaceRegularUniforms,
-);
+export const $Displace = z.object({
+  u_texture1: $Sampler2D,
+  u_texture2: $Sampler2D,
+  u_displaceWeight: $Float,
+  u_displaceMidpoint: $Vec2Number,
+  u_displaceOffset: $Vec2Number,
+  u_displaceOffsetWeight: $Float,
+  u_displaceUVWeight: $Vec2Number,
+});
 
 export type DisplaceParams = z.infer<typeof $Displace>;
 
-export const $DisplaceJsonSchema = zodToJsonSchema($Displace) as JSONSchema7;
-
-export const DisplaceDescription =
-  "A texture operator that displaces one texture using another as a displacement map. Supports expressions prefixed with 'e.' for dynamic values.";
-
 export const createDefaultDisplace = (): DisplaceParams => {
   return {
-    // Texture uniforms with the new format
-    u_texture1: displaceSourceHandle,
-    u_texture2: displaceMapHandle,
-    // Regular uniforms remain the same
+    u_texture1: { vuvID: null },
+    u_texture2: { vuvID: null },
     u_displaceWeight: 1.0,
     u_displaceMidpoint: { x: 0.5, y: 0.5 },
     u_displaceOffset: { x: 0.5, y: 0.5 },
@@ -97,19 +41,17 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
     type: ValueType.Sampler2D,
     label: "Source Texture",
+    description: "The source texture to be displaced",
     constraint: {
       handle: displaceSourceHandle,
-      required: true,
-      description: "The source texture to be displaced",
     } as Sampler2DMetadata,
   },
   u_texture2: {
     type: ValueType.Sampler2D,
     label: "Displacement Map",
+    description: "The displacement map texture",
     constraint: {
       handle: displaceMapHandle,
-      required: true,
-      description: "The displacement map texture",
     } as Sampler2DMetadata,
   },
   u_displaceWeight: {

@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import type { TextureHandle } from "@repo/webgl";
-
 /**
  * Branded type for texture handle IDs
  */

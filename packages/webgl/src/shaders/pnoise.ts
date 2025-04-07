@@ -1,116 +1,36 @@
-import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
-import zodToJsonSchema from "zod-to-json-schema";
 
 import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
 import {
-  $Float,
+  $Integer,
   $NumericValue,
-  $Vec2Number,
+  $Sampler2D,
+  $Vec2Expression,
   ValueType,
-} from "../types/shader-uniform";
+} from "../types/uniforms";
 
-// Create texture handle for the uniform
 export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
 
-// Define texture uniforms
-export const $NoiseTextureUniforms = z.object({
-  u_texture1: z.custom<ShaderSampler2DUniform>(),
+export const $PerlinNoise2D = z.object({
+  u_texture1: $Sampler2D,
+  u_period: $NumericValue,
+  u_harmonics: $Integer,
+  u_harmonic_gain: $NumericValue,
+  u_harmonic_spread: $NumericValue,
+  u_amplitude: $NumericValue,
+  u_offset: $NumericValue,
+  u_exponent: $NumericValue,
+  u_scale: $Vec2Expression,
+  u_translate: $Vec2Expression,
+  u_rotation: $Vec2Expression,
 });
 
-export type NoiseTextureUniforms = z.infer<typeof $NoiseTextureUniforms>;
+export type PerlinNoise2DParams = z.infer<typeof $PerlinNoise2D>;
 
-// Define regular uniforms
-export const $NoiseBase = z.object({
-  u_period: $NumericValue
-    .describe("1/u_period is the frequency of the input of noise function")
-    .default(2.0),
-  // @todo fix
-  u_harmonics: z
-    .number()
-    .int()
-    .min(0)
-    .max(8)
-    .default(1)
-    .describe("amount of iterations of noise."),
-  u_harmonic_gain: $NumericValue
-    .describe(
-      "how much the amplitude changes per iterations (scalar of the amplitude)",
-    )
-    .default(0.66),
-  u_harmonic_spread: $NumericValue
-    .describe(
-      "how much the frequency changes per iteration (scalar of the frequency)",
-    )
-    .default(2.0),
-  u_amplitude: $NumericValue
-    .describe("The overall amplitude scaling for the noise.")
-    .default(0.84),
-  u_offset: $NumericValue.describe("The offset of the noise.").default(0.412),
-  u_exponent: $NumericValue
-    .describe("The exponent of the noise.")
-    .default(0.63),
-});
-
-export const $NoiseTransform = z.object({
-  u_scale: $Vec2Number.extend({
-    x: $Float
-      .describe("X scale (min: 0.1, max: 10)")
-      .transform((val) => Math.max(0.1, Math.min(10, val)))
-      .default(1),
-    y: $Float
-      .describe("Y scale (min: 0.1, max: 10)")
-      .transform((val) => Math.max(0.1, Math.min(10, val)))
-      .default(1),
-  }),
-  u_translate: $Vec2Number.extend({
-    x: $Float
-      .describe("X translation (min: -10, max: 10)")
-      .transform((val) => Math.max(-10, Math.min(10, val)))
-      .default(0),
-    y: $Float
-      .describe("Y translation (min: -10, max: 10)")
-      .transform((val) => Math.max(-10, Math.min(10, val)))
-      .default(0),
-  }),
-  u_rotation: $Vec2Number.extend({
-    x: $Float
-      .describe("X rotation (min: -180, max: 180)")
-      .transform((val) => Math.max(-180, Math.min(180, val)))
-      .default(0),
-    y: $Float
-      .describe("Y rotation (min: -180, max: 180)")
-      .transform((val) => Math.max(-180, Math.min(180, val)))
-      .default(0),
-  }),
-});
-
-// Combine all regular uniforms
-export const $NoiseRegularUniforms = $NoiseTransform.merge($NoiseBase);
-
-export type NoiseRegularUniforms = z.infer<typeof $NoiseRegularUniforms>;
-
-// Combine texture and regular uniforms for the full shader definition
-export const $PerlinNoise3D = $NoiseTextureUniforms.merge(
-  $NoiseRegularUniforms,
-);
-
-export const PerlinNoiseJsonSchema = zodToJsonSchema(
-  $PerlinNoise3D,
-) as JSONSchema7;
-
-export type PerlinNoise3DParams = z.infer<typeof $PerlinNoise3D>;
-
-export const PerlinNoise3DDescription =
-  "A type of noise functionality based on perlin noise. Allows you to create a 3D noise texture with time-based animation. Use expressions prefixed with 'e.' to create dynamic values, like 'e.2 + Math.sin(me.time.now)'.";
-
-export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
+export const createDefaultPerlinNoise2D = (): PerlinNoise2DParams => {
   return {
-    // Texture uniform with the new format
-    u_texture1: noiseBlendHandle,
-    // Regular uniforms
+    u_texture1: { vuvID: null },
     u_period: 2.0,
     u_harmonics: 1,
     u_harmonic_gain: 0.66,
@@ -131,8 +51,6 @@ export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     label: "Blend Texture",
     constraint: {
       handle: noiseBlendHandle,
-      required: false,
-      description: "Input texture to combine with noise (optional)",
     } as Sampler2DMetadata,
   },
   u_scale: {

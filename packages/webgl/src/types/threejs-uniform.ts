@@ -1,7 +1,7 @@
 import type { IUniform } from "three";
 import * as THREE from "three";
 
-import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
+import type { ShaderSampler2DUniform } from "./shader-sampler2d-uniform";
 
 /**
  * Interface for shader uniforms

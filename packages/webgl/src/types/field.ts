@@ -4,7 +4,7 @@
  */
 
 import type { ShaderSampler2DUniform } from "./shader-sampler2d-uniform";
-import type { ValueType } from "./shader-uniform";
+import type { ValueType } from "./uniforms";
 
 export interface ValueFieldMetadata {
   min: number;
@@ -33,15 +33,12 @@ export interface Vec3FieldMetadata {
 export interface Sampler2DMetadata {
   /** The texture handle for this field */
   handle: ShaderSampler2DUniform;
-  /** Whether this texture input is required */
-  required: boolean;
-  /** Description of what this texture input is used for */
-  description: string;
 }
 
 export interface UniformFieldValue {
   type: ValueType;
   label: string;
+  description?: string;
   constraint?:
     | NumericValueMetadata
     | Vec2FieldMetadata
