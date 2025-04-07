@@ -85,6 +85,9 @@ export const useUpdateTextureNoise = ({
   // Track the set of texture IDs for cleanup
   const activeIdsRef = useRef<Set<string>>(new Set());
 
+  // Keep track of whether we had textures in the previous render
+  const hadTexturesRef = useRef<boolean>(false);
+
   /**
    * Gets or creates the shared shader material instance
    */
@@ -195,10 +198,35 @@ export const useUpdateTextureNoise = ({
 
   // Update textures and track active IDs whenever texture data changes
   useEffect(() => {
+    const hasTextures = Object.keys(textureDataMap).length > 0;
+
+    // If we don't have any textures and previously had some, dispose the shader
+    if (
+      !hasTextures &&
+      hadTexturesRef.current &&
+      noiseShaderSingleton.isInitialized()
+    ) {
+      // Clear the material reference
+      shaderMaterialRef.current = null;
+
+      // Clean up all stored uniform configurations
+      uniformConfigsRef.current = {};
+
+      // Clean up all render target nodes
+      renderTargetNodesRef.current = {};
+
+      // Dispose the shader in the singleon
+      noiseShaderSingleton.dispose();
+    }
+
     // Skip if no textures are present
-    if (Object.keys(textureDataMap).length === 0) {
+    if (!hasTextures) {
+      hadTexturesRef.current = false;
       return;
     }
+
+    // Update that we have textures
+    hadTexturesRef.current = true;
 
     // Get the new set of active IDs
     const currentIds = new Set(Object.keys(textureDataMap));
@@ -228,6 +256,17 @@ export const useUpdateTextureNoise = ({
     // Update active IDs reference
     activeIdsRef.current = currentIds;
   }, [textureDataMap, updateSingleTexture, getOrCreateRenderTargetNode]);
+
+  // Clean up resources when the component unmounts
+  useEffect(() => {
+    return () => {
+      // If we created a shader material and it's the only reference,
+      // dispose it when the component unmounts
+      if (noiseShaderSingleton.isInitialized()) {
+        noiseShaderSingleton.dispose();
+      }
+    };
+  }, []);
 
   // Return the render target nodes with stable references
   return useMemo(() => {

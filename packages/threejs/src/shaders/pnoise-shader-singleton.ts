@@ -60,5 +60,24 @@ export const noiseShaderSingleton = (() => {
     isInitialized: (): boolean => {
       return instance !== null;
     },
+
+    /**
+     * Disposes the shader material and releases memory
+     * Should be called when no noise nodes are using the shader
+     */
+    dispose: (): void => {
+      if (instance) {
+        // Dispose uniforms that might hold textures or other disposable resources
+        Object.values(instance.uniforms).forEach((uniform) => {
+          if (uniform.value instanceof THREE.Texture) {
+            uniform.value.dispose();
+          }
+        });
+
+        // Dispose the shader material itself
+        instance.dispose();
+        instance = null;
+      }
+    },
   };
 })();
