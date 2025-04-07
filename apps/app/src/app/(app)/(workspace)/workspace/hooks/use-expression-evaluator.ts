@@ -1,9 +1,8 @@
 import type { IUniform, ShaderMaterial } from "three";
 import { useCallback, useRef } from "react";
 
+import type { WebGLRootState } from "@repo/threejs";
 import { extractExpression, isNumber } from "@repo/webgl";
-
-import type { WebGLRootState } from "../webgl";
 
 // Helper function to check if a value is a string (expression)
 export const isExpression = (value: any): value is string =>

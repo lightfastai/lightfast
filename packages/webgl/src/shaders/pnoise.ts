@@ -14,6 +14,9 @@ export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
 
 export const $PerlinNoise2D = z.object({
   u_texture1: $Sampler2D,
+  u_scale: $Vec2Expression,
+  u_translate: $Vec2Expression,
+  u_rotation: $Vec2Expression,
   u_period: $NumericValue,
   u_harmonics: $Integer,
   u_harmonic_gain: $NumericValue,
@@ -21,9 +24,6 @@ export const $PerlinNoise2D = z.object({
   u_amplitude: $NumericValue,
   u_offset: $NumericValue,
   u_exponent: $NumericValue,
-  u_scale: $Vec2Expression,
-  u_translate: $Vec2Expression,
-  u_rotation: $Vec2Expression,
 });
 
 export type PerlinNoise2DParams = z.infer<typeof $PerlinNoise2D>;
