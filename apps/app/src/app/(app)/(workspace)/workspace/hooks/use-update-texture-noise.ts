@@ -60,6 +60,36 @@ const updateTextureUniform = (
   }
 };
 
+/**
+ * Gets a texture from the targets map, with null-safety
+ */
+const getTextureFromTargets = (
+  sourceId: string | null,
+  targets: Record<string, { texture: THREE.Texture }>,
+): THREE.Texture | null => {
+  return sourceId && targets[sourceId] ? targets[sourceId].texture : null;
+};
+
+/**
+ * Create default uniforms for a perlin noise shader
+ */
+const createDefaultNoiseUniforms = () => {
+  const defaultValues = createDefaultPerlinNoise2D();
+  return createUniformsFromSchema(defaultValues, PNOISE_UNIFORM_CONSTRAINTS);
+};
+
+/**
+ * Create a new shader material for noise texture
+ */
+const createNoiseShaderMaterial = () => {
+  const baseUniforms = createDefaultNoiseUniforms();
+  return createShaderMaterial(
+    baseVertexShader,
+    pnoiseFragmentShader,
+    baseUniforms,
+  );
+};
+
 export const useUpdateTextureNoise = ({
   textureDataMap,
 }: UpdateTextureNoiseProps): WebGLRenderTargetNode[] => {
@@ -70,7 +100,9 @@ export const useUpdateTextureNoise = ({
   // Create a reference to track shader instances
   const shaderInstancesRef = useRef<Record<string, THREE.ShaderMaterial>>({});
 
-  // Type-safe uniform updater that matches uniform constraints
+  /**
+   * Updates shader uniforms based on constraints
+   */
   const updateShaderUniforms = useCallback(
     (shader: THREE.ShaderMaterial, uniforms: Record<string, unknown>): void => {
       // Use constraints from PNOISE_UNIFORM_CONSTRAINTS to determine types
@@ -87,9 +119,56 @@ export const useUpdateTextureNoise = ({
     [],
   );
 
-  // Create or get shader and ensure it's initialized with correct uniforms
-  const getOrCreateShader = useCallback(
+  /**
+   * Updates texture connection for a shader
+   */
+  const updateTextureConnection = useCallback(
+    (shader: THREE.ShaderMaterial, id: string): void => {
+      const sourceId = getSourceForTarget(id);
+      const texture = getTextureFromTargets(sourceId, targets);
+      updateTextureUniform(shader, "u_texture1", texture);
+    },
+    [getSourceForTarget, targets],
+  );
+
+  /**
+   * Creates a new shader and initializes it
+   */
+  const createAndInitShader = useCallback(
     (id: string, texture: NoiseTexture): THREE.ShaderMaterial => {
+      // Create new shader
+      const shader = createShader(id, createNoiseShaderMaterial);
+
+      // Store reference to the created shader
+      shaderInstancesRef.current[id] = shader;
+
+      // Initialize shader with uniform values and texture connections
+      initializeShader(shader, id, texture);
+
+      return shader;
+    },
+    [createShader],
+  );
+
+  /**
+   * Initializes a shader with uniforms and texture connections
+   */
+  const initializeShader = useCallback(
+    (shader: THREE.ShaderMaterial, id: string, texture: NoiseTexture): void => {
+      // Apply uniform values
+      updateShaderUniforms(shader, texture.uniforms);
+
+      // Set texture connection
+      updateTextureConnection(shader, id);
+    },
+    [updateShaderUniforms, updateTextureConnection],
+  );
+
+  /**
+   * Get a shader from cache or create a new one
+   */
+  const getExistingShader = useCallback(
+    (id: string): THREE.ShaderMaterial | null => {
       // Check if already created in this component instance
       if (shaderInstancesRef.current[id]) {
         return shaderInstancesRef.current[id];
@@ -104,52 +183,33 @@ export const useUpdateTextureNoise = ({
         }
       }
 
-      // Create new shader
-      const shader = createShader(id, () => {
-        // Create default uniforms from the schema
-        const defaultValues = createDefaultPerlinNoise2D();
-        const baseUniforms = createUniformsFromSchema(
-          defaultValues,
-          PNOISE_UNIFORM_CONSTRAINTS,
-        );
-
-        // Create shader with default uniforms
-        return createShaderMaterial(
-          baseVertexShader,
-          pnoiseFragmentShader,
-          baseUniforms,
-        );
-      });
-
-      // Store reference to the created shader
-      shaderInstancesRef.current[id] = shader;
-
-      // Apply initial uniform values using type-safe updates
-      updateShaderUniforms(shader, texture.uniforms);
-
-      // Set texture connections with null-safe handling
-      const sourceId = getSourceForTarget(id);
-      updateTextureUniform(
-        shader,
-        "u_texture1",
-        sourceId && targets[sourceId] ? targets[sourceId].texture : null,
-      );
-
-      return shader;
+      return null;
     },
-    [
-      createShader,
-      getShader,
-      getSourceForTarget,
-      hasShader,
-      targets,
-      updateShaderUniforms,
-    ],
+    [getShader, hasShader],
   );
 
-  // Update uniforms whenever texture data changes
-  useEffect(() => {
-    Object.entries(textureDataMap).forEach(([id, texture]) => {
+  /**
+   * Create or get shader and ensure it's initialized with correct uniforms
+   */
+  const getOrCreateShader = useCallback(
+    (id: string, texture: NoiseTexture): THREE.ShaderMaterial => {
+      // Try to get existing shader
+      const existingShader = getExistingShader(id);
+      if (existingShader) {
+        return existingShader;
+      }
+
+      // Create new shader if not found
+      return createAndInitShader(id, texture);
+    },
+    [getExistingShader, createAndInitShader],
+  );
+
+  /**
+   * Update a single texture with its current data
+   */
+  const updateSingleTexture = useCallback(
+    (id: string, texture: Texture): void => {
       const noiseTexture = texture as NoiseTexture;
 
       // Get the shader (will create if it doesn't exist)
@@ -158,35 +218,40 @@ export const useUpdateTextureNoise = ({
       // Update uniforms with latest values
       updateShaderUniforms(shader, noiseTexture.uniforms);
 
-      // Update texture connections with null-safe handling
-      const sourceId = getSourceForTarget(id);
-      updateTextureUniform(
-        shader,
-        "u_texture1",
-        sourceId && targets[sourceId] ? targets[sourceId].texture : null,
-      );
+      // Update texture connection
+      updateTextureConnection(shader, id);
+    },
+    [getOrCreateShader, updateShaderUniforms, updateTextureConnection],
+  );
+
+  // Update uniforms whenever texture data changes
+  useEffect(() => {
+    Object.entries(textureDataMap).forEach(([id, texture]) => {
+      updateSingleTexture(id, texture);
     });
-  }, [
-    textureDataMap,
-    getSourceForTarget,
-    targets,
-    getOrCreateShader,
-    updateShaderUniforms,
-  ]);
+  }, [textureDataMap, updateSingleTexture]);
 
-  // Return the render target nodes with guaranteed initialized shaders
-  return useMemo(() => {
-    return Object.entries(textureDataMap).map(([id]) => {
-      const texture = textureDataMap[id] as NoiseTexture;
-
-      // Get or create the shader (guaranteed to be initialized)
-      const shader = getOrCreateShader(id, texture);
+  /**
+   * Create WebGLRenderTargetNode for a texture
+   */
+  const createRenderTargetNode = useCallback(
+    (id: string, texture: Texture): WebGLRenderTargetNode => {
+      const noiseTexture = texture as NoiseTexture;
+      const shader = getOrCreateShader(id, noiseTexture);
 
       return {
         id,
         shader,
         onEachFrame: () => {}, // Empty as requested
       };
-    });
-  }, [getOrCreateShader, textureDataMap]);
+    },
+    [getOrCreateShader],
+  );
+
+  // Return the render target nodes with guaranteed initialized shaders
+  return useMemo(() => {
+    return Object.entries(textureDataMap).map(([id, texture]) =>
+      createRenderTargetNode(id, texture),
+    );
+  }, [textureDataMap, createRenderTargetNode]);
 };
