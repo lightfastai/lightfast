@@ -22,6 +22,7 @@
     "@react-three/drei": "^9.114.5",
     "@react-three/fiber": "^8.17.10",
     "@repo/ui": "workspace:*",
+    "@repo/webgl": "workspace:*",
     "r3f-perf": "^7.2.3",
     "react": "catalog:react18",
     "three": "^0.169.0",

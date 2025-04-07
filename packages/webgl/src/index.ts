@@ -166,6 +166,7 @@ export * from "./shaders/limit";
 export * from "./shaders/pnoise";
 export * from "./shaders/utils";
 export * from "./shaders/base-vert-shader";
+export * from "../../threejs/src/shaders/pnoise-shader-singleton";
 
 // Export types
 export * from "./types/field";

@@ -7,6 +7,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../threejs/src/shaders/pnoise-shader-singleton.ts"],
   "exclude": ["node_modules", "dist"]
 }
