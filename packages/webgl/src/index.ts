@@ -158,3 +158,17 @@ export * from "./types/shader-sampler2d-uniform";
 export * from "./types/field";
 export * from "./types/uniforms";
 export * from "./types/shaders-types";
+
+// Export shaders
+export * from "./shaders/add";
+export * from "./shaders/displace";
+export * from "./shaders/limit";
+export * from "./shaders/pnoise";
+export * from "./shaders/utils";
+export * from "./shaders/base-vert-shader";
+
+// Export types
+export * from "./types/field";
+export * from "./types/shader-sampler2d-uniform";
+export * from "./types/threejs-uniform";
+export * from "./types/uniforms";

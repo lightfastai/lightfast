@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
+import type {
+  NumericValueMetadata,
+  Sampler2DMetadata,
+  UniformFieldValue,
+  Vec2FieldMetadata,
+} from "../types/field";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
 import { $Float, $Sampler2D, $Vec2Number, ValueType } from "../types/uniforms";
 
@@ -59,7 +64,7 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     label: "Displacement Weight",
     constraint: {
       value: { min: 0, max: 10, step: 0.1 },
-    },
+    } as NumericValueMetadata,
   },
   u_displaceMidpoint: {
     type: ValueType.Vec2,
@@ -67,7 +72,7 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     constraint: {
       x: { min: 0, max: 1, step: 0.1 },
       y: { min: 0, max: 1, step: 0.1 },
-    },
+    } as Vec2FieldMetadata,
   },
   u_displaceOffset: {
     type: ValueType.Vec2,
@@ -75,14 +80,14 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     constraint: {
       x: { min: 0, max: 1, step: 0.1 },
       y: { min: 0, max: 1, step: 0.1 },
-    },
+    } as Vec2FieldMetadata,
   },
   u_displaceOffsetWeight: {
     type: ValueType.Numeric,
     label: "Displacement Offset Weight",
     constraint: {
       value: { min: 0, max: 10, step: 0.1 },
-    },
+    } as NumericValueMetadata,
   },
   u_displaceUVWeight: {
     type: ValueType.Vec2,
@@ -90,7 +95,7 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     constraint: {
       x: { min: 0, max: 2, step: 0.1 },
       y: { min: 0, max: 2, step: 0.1 },
-    },
+    } as Vec2FieldMetadata,
   },
 };
 
