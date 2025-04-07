@@ -16,7 +16,7 @@ export enum ValueType {
   Boolean = "boolean",
   Color = "color",
   String = "string",
-  Texture = "texture",
+  Sampler2D = "sampler2d",
 }
 
 // Helper to check if a value is an expression string

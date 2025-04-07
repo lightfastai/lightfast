@@ -3,8 +3,8 @@
  * These types are used to specify the valid ranges and step sizes for uniform parameters.
  */
 
-import type { ValueType } from "./schema";
 import type { ShaderSampler2DUniform } from "./shader-sampler2d-uniform";
+import type { ValueType } from "./shader-uniform";
 
 export interface ValueFieldMetadata {
   min: number;
@@ -30,7 +30,7 @@ export interface Vec3FieldMetadata {
 /**
  * Metadata for texture input fields
  */
-export interface HandleMetadata {
+export interface Sampler2DMetadata {
   /** The texture handle for this field */
   handle: ShaderSampler2DUniform;
   /** Whether this texture input is required */
@@ -46,5 +46,5 @@ export interface UniformFieldValue {
     | NumericValueMetadata
     | Vec2FieldMetadata
     | Vec3FieldMetadata
-    | HandleMetadata;
+    | Sampler2DMetadata;
 }

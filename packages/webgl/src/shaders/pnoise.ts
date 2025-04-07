@@ -2,10 +2,15 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { HandleMetadata, UniformFieldValue } from "../types/field";
+import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
 import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
-import { $Float, $NumericValue, $Vec2Number, ValueType } from "../types/schema";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
+import {
+  $Float,
+  $NumericValue,
+  $Vec2Number,
+  ValueType,
+} from "../types/shader-uniform";
 
 // Create texture handle for the uniform
 export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
@@ -122,13 +127,13 @@ export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
 // Lookup table for pnoise uniform constraints
 export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
-    type: ValueType.Texture,
+    type: ValueType.Sampler2D,
     label: "Blend Texture",
     constraint: {
       handle: noiseBlendHandle,
       required: false,
       description: "Input texture to combine with noise (optional)",
-    } as HandleMetadata,
+    } as Sampler2DMetadata,
   },
   u_scale: {
     type: ValueType.Vec2,

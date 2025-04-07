@@ -2,10 +2,10 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { HandleMetadata, UniformFieldValue } from "../types/field";
+import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
 import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
-import { $Float, ValueType } from "../types/schema";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
+import { $Float, ValueType } from "../types/shader-uniform";
 
 // Create texture handle for the uniform
 export const limitInputHandle = createSampler2DHandle("input-1", "u_texture1");
@@ -49,13 +49,13 @@ export const createDefaultLimit = (): LimitParams => {
 // Lookup table for limit uniform constraints
 export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
-    type: ValueType.Texture,
+    type: ValueType.Sampler2D,
     label: "Input Texture",
     constraint: {
       handle: limitInputHandle,
       required: true,
       description: "The input texture to be limited",
-    } as HandleMetadata,
+    } as Sampler2DMetadata,
   },
   u_quantizationSteps: {
     type: ValueType.Numeric,

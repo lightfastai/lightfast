@@ -6,9 +6,9 @@ import { useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 
 import type { GeometryType } from "../../types/geometry";
-import type { Vec3 } from "../../types/schema";
+import type { Vec3 } from "../../types/shader-uniform";
 import { GeometryMap } from "../../types/geometry";
-import { createDefaultVec3 } from "../../types/schema";
+import { createDefaultVec3 } from "../../types/shader-uniform";
 
 export interface GeometryRendererProps {
   type: GeometryType;

@@ -1,6 +1,6 @@
 import type { Shaders } from "@/types/shaders";
 
-import type { HandleMetadata, UniformFieldValue } from "../types/field";
+import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
 import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import {
   ADD_UNIFORM_CONSTRAINTS,
@@ -17,7 +17,7 @@ import {
   noiseBlendHandle,
   PNOISE_UNIFORM_CONSTRAINTS,
 } from "../shaders/pnoise";
-import { ValueType } from "../types/schema";
+import { ValueType } from "../types/shader-uniform";
 
 /**
  * Registry entry for a texture type
@@ -28,7 +28,7 @@ export interface ShaderSampler2DRegistry {
   /** Default uniforms for this type */
   defaultUniforms: Record<string, ShaderSampler2DUniform>;
   /** Metadata for each texture input */
-  inputs: HandleMetadata[];
+  inputs: Sampler2DMetadata[];
   /** Validates if a source texture type can be connected to a handle */
   validateConnection: (
     handle: ShaderSampler2DUniform,
@@ -39,14 +39,14 @@ export interface ShaderSampler2DRegistry {
 /**
  * Create texture field metadata from uniform constraints
  */
-function createTextureFieldMetadata(
+export function createTextureFieldMetadata(
   handle: ShaderSampler2DUniform,
   constraint: UniformFieldValue,
-): HandleMetadata {
-  if (constraint.type !== ValueType.Texture) {
+): Sampler2DMetadata {
+  if (constraint.type !== ValueType.Sampler2D) {
     throw new Error(`Invalid constraint type for handle ${handle.handleId}`);
   }
-  const textureConstraint = constraint.constraint as HandleMetadata;
+  const textureConstraint = constraint.constraint as Sampler2DMetadata;
   return {
     handle,
     description: textureConstraint.description || constraint.label,
@@ -105,18 +105,7 @@ export const textureInputRegistry: Record<Shaders, ShaderSampler2DRegistry> = {
         DISPLACE_UNIFORM_CONSTRAINTS.u_texture2,
       ),
     ],
-    validateConnection: (
-      handle: ShaderSampler2DUniform,
-      sourceType: string,
-    ) => {
-      // Displace requires specific validation based on input
-      if (handle.handleId === "input-1") {
-        // Base texture can be any type
-        return true;
-      }
-      // Displacement map should be a noise or gradient type
-      return ["noise", "gradient"].includes(sourceType);
-    },
+    validateConnection: () => true, // Displace accepts any texture type
   },
   Limit: {
     handles: [limitInputHandle],
@@ -151,7 +140,7 @@ export const textureInputRegistry: Record<Shaders, ShaderSampler2DRegistry> = {
  */
 export function getShaderSampler2DInputsForType(
   textureType: Shaders,
-): HandleMetadata[] {
+): Sampler2DMetadata[] {
   return textureInputRegistry[textureType].inputs;
 }
 

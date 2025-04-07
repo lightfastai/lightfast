@@ -2,10 +2,10 @@ import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
-import type { HandleMetadata, UniformFieldValue } from "../types/field";
+import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
 import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
-import { $Boolean, $Float, ValueType } from "../types/schema";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
+import { $Boolean, $Float, ValueType } from "../types/shader-uniform";
 
 // Create texture handles for the uniforms
 export const addInput1Handle = createSampler2DHandle("input-1", "u_texture1");
@@ -56,22 +56,22 @@ export const createDefaultAdd = (): AddParams => {
 // Lookup table for add uniform constraints
 export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
-    type: ValueType.Texture,
+    type: ValueType.Sampler2D,
     label: "Input A",
     constraint: {
       handle: addInput1Handle,
       required: true,
       description: "The first input texture (A)",
-    } as HandleMetadata,
+    } as Sampler2DMetadata,
   },
   u_texture2: {
-    type: ValueType.Texture,
+    type: ValueType.Sampler2D,
     label: "Input B",
     constraint: {
       handle: addInput2Handle,
       required: true,
       description: "The second input texture (B)",
-    } as HandleMetadata,
+    } as Sampler2DMetadata,
   },
   u_addValue: {
     type: ValueType.Numeric,

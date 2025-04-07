@@ -1,5 +1,5 @@
 import type { UniformFieldValue, Vec2FieldMetadata } from "../types/field";
-import { ValueType } from "../types/schema";
+import { ValueType } from "../types/shader-uniform";
 
 /**
  * Gets metadata for a numeric value field from a uniform constraints record.
