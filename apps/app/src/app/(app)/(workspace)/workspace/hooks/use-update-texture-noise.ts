@@ -71,11 +71,8 @@ export const useUpdateTextureNoise = ({
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
 
-  // Get the shared shader material from singleton
-  const sharedShaderMaterial = useMemo(
-    () => noiseShaderSingleton.getInstance(),
-    [],
-  );
+  // Store the shader material ref to be lazily initialized
+  const shaderMaterialRef = useRef<THREE.ShaderMaterial | null>(null);
 
   // Store uniform configurations per texture ID instead of shader instances
   const uniformConfigsRef = useRef<Record<string, Record<string, unknown>>>({});
@@ -87,6 +84,16 @@ export const useUpdateTextureNoise = ({
 
   // Track the set of texture IDs for cleanup
   const activeIdsRef = useRef<Set<string>>(new Set());
+
+  /**
+   * Gets or creates the shared shader material instance
+   */
+  const getSharedShaderMaterial = useCallback((): THREE.ShaderMaterial => {
+    if (!shaderMaterialRef.current) {
+      shaderMaterialRef.current = noiseShaderSingleton.getInstance();
+    }
+    return shaderMaterialRef.current;
+  }, []);
 
   /**
    * Updates shader uniforms based on constraints
@@ -127,13 +134,16 @@ export const useUpdateTextureNoise = ({
       const uniforms = uniformConfigsRef.current[id];
       if (!uniforms) return;
 
+      // Get the shader material on demand
+      const sharedShaderMaterial = getSharedShaderMaterial();
+
       // Apply stored uniforms to the shared material
       updateShaderUniforms(sharedShaderMaterial, uniforms);
 
       // Apply texture connection
       updateTextureConnection(sharedShaderMaterial, id);
     },
-    [sharedShaderMaterial, updateShaderUniforms, updateTextureConnection],
+    [getSharedShaderMaterial, updateShaderUniforms, updateTextureConnection],
   );
 
   /**
@@ -162,10 +172,13 @@ export const useUpdateTextureNoise = ({
       // Update texture uniform configuration
       updateSingleTexture(id, texture);
 
-      // Create a new node that uses the shared shader material
+      // Create a new node that uses the shared shader material - get the shader lazily
       const node: WebGLRenderTargetNode = {
         id,
-        shader: sharedShaderMaterial,
+        // The shader will be retrieved at render time via getter
+        get shader() {
+          return getSharedShaderMaterial();
+        },
         onEachFrame: () => {
           // Apply this texture's uniforms before rendering
           applyTextureUniforms(id);
@@ -177,11 +190,16 @@ export const useUpdateTextureNoise = ({
 
       return node;
     },
-    [sharedShaderMaterial, updateSingleTexture, applyTextureUniforms],
+    [getSharedShaderMaterial, updateSingleTexture, applyTextureUniforms],
   );
 
   // Update textures and track active IDs whenever texture data changes
   useEffect(() => {
+    // Skip if no textures are present
+    if (Object.keys(textureDataMap).length === 0) {
+      return;
+    }
+
     // Get the new set of active IDs
     const currentIds = new Set(Object.keys(textureDataMap));
 
@@ -213,6 +231,11 @@ export const useUpdateTextureNoise = ({
 
   // Return the render target nodes with stable references
   return useMemo(() => {
+    // If no textures exist, return an empty array
+    if (Object.keys(textureDataMap).length === 0) {
+      return [];
+    }
+
     // Create an array of nodes from the current texture data map
     // This guarantees that we have nodes for all current textures
     return Object.entries(textureDataMap).map(([id, texture]) => {

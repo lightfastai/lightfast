@@ -21,6 +21,7 @@ const createDefaultNoiseUniforms = (): ShaderUniforms => {
  * Singleton for noise shader material
  * This ensures we only create a single instance of the noise shader material
  * that can be reused across all noise textures, just changing the uniforms.
+ * The shader material is lazily initialized only when first requested.
  */
 export const noiseShaderSingleton = (() => {
   let instance: THREE.ShaderMaterial | null = null;
@@ -28,6 +29,7 @@ export const noiseShaderSingleton = (() => {
   return {
     /**
      * Get the shared noise shader material instance
+     * Lazily initializes the material on first request
      */
     getInstance: (): THREE.ShaderMaterial => {
       if (!instance) {
@@ -44,11 +46,19 @@ export const noiseShaderSingleton = (() => {
     /**
      * Reset the uniforms to default values
      * Useful after rendering to ensure a clean state
+     * Does nothing if the instance hasn't been created yet
      */
     resetToDefaults: (): void => {
       if (instance) {
         instance.uniforms = createDefaultNoiseUniforms();
       }
+    },
+
+    /**
+     * Check if the shader material has been initialized
+     */
+    isInitialized: (): boolean => {
+      return instance !== null;
     },
   };
 })();
