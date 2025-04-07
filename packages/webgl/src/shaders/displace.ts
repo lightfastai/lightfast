@@ -3,10 +3,9 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import type { HandleMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderUniform } from "../types/shader-uniform";
+import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import { $Float, $Vec2Number, ValueType } from "../types/schema";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handles for the uniforms
 export const displaceSourceHandle = createSampler2DHandle(
@@ -17,8 +16,8 @@ export const displaceMapHandle = createSampler2DHandle("input-2", "u_texture2");
 
 // Define texture uniforms
 export const $DisplaceTextureUniforms = z.object({
-  u_texture1: z.custom<ShaderUniform>(),
-  u_texture2: z.custom<ShaderUniform>(),
+  u_texture1: z.custom<ShaderSampler2DUniform>(),
+  u_texture2: z.custom<ShaderSampler2DUniform>(),
 });
 
 export type DisplaceTextureUniforms = z.infer<typeof $DisplaceTextureUniforms>;
@@ -82,8 +81,8 @@ export const DisplaceDescription =
 export const createDefaultDisplace = (): DisplaceParams => {
   return {
     // Texture uniforms with the new format
-    u_texture1: createShaderUniform(displaceSourceHandle, null),
-    u_texture2: createShaderUniform(displaceMapHandle, null),
+    u_texture1: displaceSourceHandle,
+    u_texture2: displaceMapHandle,
     // Regular uniforms remain the same
     u_displaceWeight: 1.0,
     u_displaceMidpoint: { x: 0.5, y: 0.5 },

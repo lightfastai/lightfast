@@ -3,10 +3,9 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import type { HandleMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderUniform } from "../types/shader-uniform";
+import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import { $Boolean, $Float, ValueType } from "../types/schema";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handles for the uniforms
 export const addInput1Handle = createSampler2DHandle("input-1", "u_texture1");
@@ -14,8 +13,8 @@ export const addInput2Handle = createSampler2DHandle("input-2", "u_texture2");
 
 // Define texture uniforms
 export const $AddTextureUniforms = z.object({
-  u_texture1: z.custom<ShaderUniform>(),
-  u_texture2: z.custom<ShaderUniform>(),
+  u_texture1: z.custom<ShaderSampler2DUniform>(),
+  u_texture2: z.custom<ShaderSampler2DUniform>(),
 });
 
 export type AddTextureUniforms = z.infer<typeof $AddTextureUniforms>;
@@ -46,8 +45,8 @@ export const AddDescription =
 export const createDefaultAdd = (): AddParams => {
   return {
     // Texture uniforms with the new format
-    u_texture1: createShaderUniform(addInput1Handle, null),
-    u_texture2: createShaderUniform(addInput2Handle, null),
+    u_texture1: addInput1Handle,
+    u_texture2: addInput2Handle,
     // Regular uniforms remain the same
     u_addValue: 0.0,
     u_enableMirror: false,

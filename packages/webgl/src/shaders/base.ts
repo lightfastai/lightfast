@@ -2,8 +2,6 @@ import type { IUniform } from "three";
 import * as THREE from "three";
 
 import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
-import type { ShaderUniform } from "../types/shader-uniform";
-import { isShaderUniform } from "../types/shader-uniform";
 
 /**
  * Interface for shader uniforms
@@ -11,7 +9,7 @@ import { isShaderUniform } from "../types/shader-uniform";
 export type ShaderUniforms = Record<
   string,
   IUniform<
-    | ShaderUniform
+    | ShaderSampler2DUniform
     | number
     | THREE.Vector2
     | THREE.Vector3
@@ -30,10 +28,7 @@ export function createDefaultUniforms(
 
   handles.forEach((handle) => {
     uniforms[handle.uniformName] = {
-      value: {
-        handle: null,
-        textureObject: null,
-      },
+      value: handle,
     };
   });
 
@@ -51,8 +46,8 @@ export function updateShaderUniforms(
   handles.forEach((handle) => {
     const uniformName = handle.uniformName;
     const uniform = uniforms[uniformName]?.value;
-    if (isShaderUniform(uniform) && shader.uniforms[uniformName]) {
-      shader.uniforms[uniformName].value = uniform.textureObject;
+    if (uniform && shader.uniforms[uniformName]) {
+      shader.uniforms[uniformName].value = uniform;
     }
   });
 }

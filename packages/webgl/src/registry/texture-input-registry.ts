@@ -2,7 +2,6 @@ import type { Shaders } from "@/types/shaders";
 
 import type { HandleMetadata, UniformFieldValue } from "../types/field";
 import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
-import type { ShaderUniform } from "../types/shader-uniform";
 import {
   ADD_UNIFORM_CONSTRAINTS,
   addInput1Handle,
@@ -19,7 +18,6 @@ import {
   PNOISE_UNIFORM_CONSTRAINTS,
 } from "../shaders/pnoise";
 import { ValueType } from "../types/schema";
-import { createShaderUniform } from "../types/shader-uniform";
 
 /**
  * Registry entry for a texture type
@@ -28,7 +26,7 @@ export interface TextureInputRegistryEntry {
   /** Available texture handles for this type */
   handles: ShaderSampler2DUniform[];
   /** Default uniforms for this type */
-  defaultUniforms: Record<string, ShaderUniform>;
+  defaultUniforms: Record<string, ShaderSampler2DUniform>;
   /** Metadata for each texture input */
   inputs: HandleMetadata[];
   /** Validates if a source texture type can be connected to a handle */
@@ -77,8 +75,8 @@ export const textureInputRegistry: Record<Shaders, TextureInputRegistryEntry> =
     Add: {
       handles: [addInput1Handle, addInput2Handle],
       defaultUniforms: {
-        u_texture1: createShaderUniform(addInput1Handle, null),
-        u_texture2: createShaderUniform(addInput2Handle, null),
+        u_texture1: addInput1Handle,
+        u_texture2: addInput2Handle,
       },
       inputs: [
         createTextureFieldMetadata(
@@ -95,8 +93,8 @@ export const textureInputRegistry: Record<Shaders, TextureInputRegistryEntry> =
     Displace: {
       handles: [displaceSourceHandle, displaceMapHandle],
       defaultUniforms: {
-        u_texture1: createShaderUniform(displaceSourceHandle, null),
-        u_texture2: createShaderUniform(displaceMapHandle, null),
+        u_texture1: displaceSourceHandle,
+        u_texture2: displaceMapHandle,
       },
       inputs: [
         createTextureFieldMetadata(
@@ -124,7 +122,7 @@ export const textureInputRegistry: Record<Shaders, TextureInputRegistryEntry> =
     Limit: {
       handles: [limitInputHandle],
       defaultUniforms: {
-        u_texture1: createShaderUniform(limitInputHandle, null),
+        u_texture1: limitInputHandle,
       },
       inputs: [
         createTextureFieldMetadata(
@@ -137,7 +135,7 @@ export const textureInputRegistry: Record<Shaders, TextureInputRegistryEntry> =
     Noise: {
       handles: [noiseBlendHandle],
       defaultUniforms: {
-        u_texture1: createShaderUniform(noiseBlendHandle, null),
+        u_texture1: noiseBlendHandle,
       },
       inputs: [
         createTextureFieldMetadata(
@@ -202,6 +200,6 @@ export function getTextureHandles(
  */
 export function getDefaultTextureUniforms(
   textureType: Shaders,
-): Record<string, ShaderUniform> {
+): Record<string, ShaderSampler2DUniform> {
   return textureInputRegistry[textureType].defaultUniforms;
 }

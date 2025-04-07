@@ -3,17 +3,17 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import type { HandleMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderUniform } from "../types/shader-uniform";
+import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import { $Float, ValueType } from "../types/schema";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handle for the uniform
 export const limitInputHandle = createSampler2DHandle("input-1", "u_texture1");
 
 // Define texture uniforms
 export const $LimitTextureUniforms = z.object({
-  u_texture1: z.custom<ShaderUniform>(),
+  u_texture1: z.custom<ShaderSampler2DUniform>(),
+  u_quantizationSteps: z.number(),
 });
 
 export type LimitTextureUniforms = z.infer<typeof $LimitTextureUniforms>;
@@ -40,7 +40,7 @@ export const LimitDescription =
 export const createDefaultLimit = (): LimitParams => {
   return {
     // Texture uniforms with the new format
-    u_texture1: createShaderUniform(limitInputHandle, null),
+    u_texture1: limitInputHandle,
     // Regular uniforms remain the same
     u_quantizationSteps: 1.01,
   };

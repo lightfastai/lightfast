@@ -3,17 +3,16 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import type { HandleMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderUniform } from "../types/shader-uniform";
+import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
 import { $Float, $NumericValue, $Vec2Number, ValueType } from "../types/schema";
 import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { createShaderUniform } from "../types/shader-uniform";
 
 // Create texture handle for the uniform
 export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
 
 // Define texture uniforms
 export const $NoiseTextureUniforms = z.object({
-  u_texture1: z.custom<ShaderUniform>(),
+  u_texture1: z.custom<ShaderSampler2DUniform>(),
 });
 
 export type NoiseTextureUniforms = z.infer<typeof $NoiseTextureUniforms>;
@@ -105,7 +104,7 @@ export const PerlinNoise3DDescription =
 export const createDefaultPerlinNoise3D = (): PerlinNoise3DParams => {
   return {
     // Texture uniform with the new format
-    u_texture1: createShaderUniform(noiseBlendHandle, null),
+    u_texture1: noiseBlendHandle,
     // Regular uniforms
     u_period: 2.0,
     u_harmonics: 1,

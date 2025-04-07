@@ -115,7 +115,6 @@ export { $Add, AddDescription };
 /**
  * Texture uniforms and registry
  */
-export type { ShaderUniform as TextureUniform } from "./types/shader-uniform";
 export * from "./registry/texture-input-registry";
 
 /**
@@ -183,7 +182,6 @@ export {
 } from "./shaders/utils";
 
 export * from "./types/field";
-export * from "./types/shader-uniform";
 export * from "./registry/texture-input-registry";
 export * from "./shaders/utils";
 
@@ -220,7 +218,6 @@ export {
 export * from "./types/shader-sampler2d-uniform";
 export * from "./types/field";
 export * from "./types/schema";
-export * from "./types/shader-uniform";
 export * from "./types/render";
 export * from "./types/webgl";
 export * from "./types/geometry";

@@ -59,7 +59,6 @@ export const useUpdateTextureNoise = ({
 
         // Initialize uniforms with either numeric values or placeholders for expressions
         const uniforms = {
-          time: { value: 0 },
           u_period: {
             value: typeof u.u_period === "number" ? u.u_period : 2.0,
           },
