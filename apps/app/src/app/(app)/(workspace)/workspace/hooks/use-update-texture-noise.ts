@@ -1,27 +1,64 @@
 import type * as THREE from "three";
-import { useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
-import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
+import type { WebGLRenderTargetNode } from "@repo/threejs";
 import type { NoiseTexture, Texture } from "@vendor/db/types";
 import {
   baseVertexShader,
   createDefaultPerlinNoise2D,
   createShaderMaterial,
   createUniformsFromSchema,
-  isExpression,
+  isNumericValue,
+  isVec2,
   PNOISE_UNIFORM_CONSTRAINTS,
   pnoiseFragmentShader,
-  updateUniforms,
+  UniformAdapterFactory,
+  ValueType,
 } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useConnectionCache } from "./use-connection-cache";
-import { useExpressionEvaluator } from "./use-expression-evaluator";
 import { useShaderCache } from "./use-shader-cache";
 
 export interface UpdateTextureNoiseProps {
   textureDataMap: Record<string, Texture>;
 }
+
+/**
+ * Use the adapter factory to update a specific uniform
+ */
+const updateUniform = (
+  shader: THREE.ShaderMaterial,
+  key: string,
+  value: unknown,
+  uniformType: ValueType,
+): void => {
+  if (!shader.uniforms[key]) return;
+
+  const adapter = UniformAdapterFactory.getAdapter(uniformType);
+  if (adapter) {
+    // Only update if value type matches expected type
+    if (
+      (uniformType === ValueType.Numeric && isNumericValue(value)) ||
+      (uniformType === ValueType.Vec2 && isVec2(value))
+    ) {
+      shader.uniforms[key] = adapter.toThreeUniform(value);
+    }
+  }
+};
+
+/**
+ * Update texture uniform with null-safe handling
+ */
+const updateTextureUniform = (
+  shader: THREE.ShaderMaterial,
+  key: string,
+  texture: THREE.Texture | null,
+): void => {
+  if (shader.uniforms[key]) {
+    shader.uniforms[key].value = texture;
+  }
+};
 
 export const useUpdateTextureNoise = ({
   textureDataMap,
@@ -29,90 +66,127 @@ export const useUpdateTextureNoise = ({
   const { targets } = useTextureRenderStore((state) => state);
   const { createShader, getShader, hasShader } = useShaderCache();
   const { getSourceForTarget } = useConnectionCache();
-  const expressionsRef = useRef<Record<string, Record<string, string>>>({});
-  const { updateShaderUniforms } = useExpressionEvaluator();
 
-  return useMemo(() => {
-    return Object.entries(textureDataMap).map(([id]) => {
-      // We know this is a NoiseTexture due to the filter above
-      const texture = textureDataMap[id] as NoiseTexture;
-      const { uniforms: u } = texture;
+  // Create a reference to track shader instances
+  const shaderInstancesRef = useRef<Record<string, THREE.ShaderMaterial>>({});
 
-      // Ensure expressions cache exists for this ID
-      expressionsRef.current[id] = expressionsRef.current[id] || {};
+  // Type-safe uniform updater that matches uniform constraints
+  const updateShaderUniforms = useCallback(
+    (shader: THREE.ShaderMaterial, uniforms: Record<string, unknown>): void => {
+      // Use constraints from PNOISE_UNIFORM_CONSTRAINTS to determine types
+      Object.entries(uniforms).forEach(([key, value]) => {
+        if (!shader.uniforms[key]) return;
 
-      // Store all expressions for this node
-      Object.entries(u).forEach(([key, value]) => {
-        if (typeof value === "object") {
-          // Handle vec2 values
-          if ("x" in value && "y" in value) {
-            if (isExpression(value.x))
-              expressionsRef.current[id]![`${key}.x`] = value.x;
-            if (isExpression(value.y))
-              expressionsRef.current[id]![`${key}.y`] = value.y;
-          }
-        } else if (isExpression(value)) {
-          expressionsRef.current[id]![key] = value;
+        const constraint = PNOISE_UNIFORM_CONSTRAINTS[key];
+        if (!constraint) return;
+
+        // Update based on the uniform's ValueType
+        updateUniform(shader, key, value, constraint.type);
+      });
+    },
+    [],
+  );
+
+  // Create or get shader and ensure it's initialized with correct uniforms
+  const getOrCreateShader = useCallback(
+    (id: string, texture: NoiseTexture): THREE.ShaderMaterial => {
+      // Check if already created in this component instance
+      if (shaderInstancesRef.current[id]) {
+        return shaderInstancesRef.current[id];
+      }
+
+      // Check if exists in shader cache
+      if (hasShader(id)) {
+        const shader = getShader(id);
+        if (shader) {
+          shaderInstancesRef.current[id] = shader;
+          return shader;
         }
+      }
+
+      // Create new shader
+      const shader = createShader(id, () => {
+        // Create default uniforms from the schema
+        const defaultValues = createDefaultPerlinNoise2D();
+        const baseUniforms = createUniformsFromSchema(
+          defaultValues,
+          PNOISE_UNIFORM_CONSTRAINTS,
+        );
+
+        // Create shader with default uniforms
+        return createShaderMaterial(
+          baseVertexShader,
+          pnoiseFragmentShader,
+          baseUniforms,
+        );
       });
 
-      let shader: THREE.ShaderMaterial;
+      // Store reference to the created shader
+      shaderInstancesRef.current[id] = shader;
 
-      // Check if shader exists in cache
-      if (hasShader(id)) {
-        // Get existing shader from cache
-        shader = getShader(id)!;
-      } else {
-        // Create a new shader and add to cache
-        shader = createShader(id, () => {
-          // First create default uniforms from the schema with default values
-          const defaultValues = createDefaultPerlinNoise2D();
-          const baseUniforms = createUniformsFromSchema(
-            defaultValues,
-            PNOISE_UNIFORM_CONSTRAINTS,
-          );
+      // Apply initial uniform values using type-safe updates
+      updateShaderUniforms(shader, texture.uniforms);
 
-          // Create the shader with initial uniforms
-          const material = createShaderMaterial(
-            baseVertexShader,
-            pnoiseFragmentShader,
-            baseUniforms,
-          );
+      // Set texture connections with null-safe handling
+      const sourceId = getSourceForTarget(id);
+      updateTextureUniform(
+        shader,
+        "u_texture1",
+        sourceId && targets[sourceId] ? targets[sourceId].texture : null,
+      );
 
-          // Apply actual values from the texture data
-          // This ensures the shader starts with the right values
-          updateUniforms(material, u, PNOISE_UNIFORM_CONSTRAINTS);
+      return shader;
+    },
+    [
+      createShader,
+      getShader,
+      getSourceForTarget,
+      hasShader,
+      targets,
+      updateShaderUniforms,
+    ],
+  );
 
-          return material;
-        });
-      }
+  // Update uniforms whenever texture data changes
+  useEffect(() => {
+    Object.entries(textureDataMap).forEach(([id, texture]) => {
+      const noiseTexture = texture as NoiseTexture;
+
+      // Get the shader (will create if it doesn't exist)
+      const shader = getOrCreateShader(id, noiseTexture);
+
+      // Update uniforms with latest values
+      updateShaderUniforms(shader, noiseTexture.uniforms);
+
+      // Update texture connections with null-safe handling
+      const sourceId = getSourceForTarget(id);
+      updateTextureUniform(
+        shader,
+        "u_texture1",
+        sourceId && targets[sourceId] ? targets[sourceId].texture : null,
+      );
+    });
+  }, [
+    textureDataMap,
+    getSourceForTarget,
+    targets,
+    getOrCreateShader,
+    updateShaderUniforms,
+  ]);
+
+  // Return the render target nodes with guaranteed initialized shaders
+  return useMemo(() => {
+    return Object.entries(textureDataMap).map(([id]) => {
+      const texture = textureDataMap[id] as NoiseTexture;
+
+      // Get or create the shader (guaranteed to be initialized)
+      const shader = getOrCreateShader(id, texture);
 
       return {
         id,
         shader,
-        onEachFrame: (state: WebGLRootState) => {
-          // // Get expressions for this node
-          // const expressions = expressionsRef.current[id] || {};
-          // // Update textures from connections
-          // const sourceId = getSourceForTarget(id);
-          // if (shader.uniforms.u_texture1) {
-          //   shader.uniforms.u_texture1.value = sourceId
-          //     ? targets[sourceId]?.texture
-          //     : null;
-          // }
-          // // Update uniforms using the Zod schema
-          // updateUniforms(shader, u, PNOISE_UNIFORM_CONSTRAINTS);
-          // // Use the shared uniform update utility for expressions
-          // updateShaderUniforms(state, shader, expressions, {
-          //   "u_scale.x": { pathToValue: "u_scale.value.x" },
-          //   "u_scale.y": { pathToValue: "u_scale.value.y" },
-          //   "u_translate.x": { pathToValue: "u_translate.value.x" },
-          //   "u_translate.y": { pathToValue: "u_translate.value.y" },
-          //   "u_rotation.x": { pathToValue: "u_rotation.value.x" },
-          //   "u_rotation.y": { pathToValue: "u_rotation.value.y" },
-          // });
-        },
+        onEachFrame: () => {}, // Empty as requested
       };
     });
-  }, [textureDataMap, createShader, getShader, hasShader]);
+  }, [getOrCreateShader, textureDataMap]);
 };
