@@ -170,36 +170,6 @@ export function updateSamplerUniforms(
 }
 
 /**
- * Create default uniforms from texture handles
- * @param handles Array of texture handles
- * @returns Object with default uniforms initialized to null
- */
-export function createDefaultUniforms(
-  handles: ShaderSampler2DUniform[],
-): R3FShaderUniforms {
-  const uniforms: R3FShaderUniforms = {};
-
-  handles.forEach((handle) => {
-    uniforms[handle.uniformName] = {
-      value: null,
-    };
-  });
-
-  return uniforms;
-}
-
-/**
- * Create a texture uniform with a systematic naming convention
- * @param textureNumber The texture number (1-based index)
- * @returns A uniform object with null value
- */
-export function createTextureUniform(
-  textureNumber: number,
-): IUniform<THREE.Texture | null> {
-  return { value: null };
-}
-
-/**
  * Check if a uniform name is a texture uniform (follows the u_textureN pattern)
  * @param uniformName The uniform name to check
  * @returns True if it's a texture uniform

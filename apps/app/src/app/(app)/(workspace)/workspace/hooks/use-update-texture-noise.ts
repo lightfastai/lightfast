@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { WebGLRenderTargetNode } from "@repo/threejs";
 import type { NoiseTexture, Texture } from "@vendor/db/types";
 import {
-  updateR3FShaderUniform,
   updateSamplerUniforms,
+  updateUniforms,
   useShaderOrchestrator,
 } from "@repo/threejs";
 import { $Shaders, PNOISE_UNIFORM_CONSTRAINTS } from "@repo/webgl";
@@ -56,25 +56,6 @@ export const useUpdateTextureNoise = ({
   const activeIdsRef = useRef<Set<string>>(new Set());
 
   /**
-   * Updates shader uniforms based on constraints
-   */
-  const updateShaderUniforms = useCallback(
-    (shader: THREE.ShaderMaterial, uniforms: Record<string, unknown>): void => {
-      // Use constraints from PNOISE_UNIFORM_CONSTRAINTS to determine types
-      Object.entries(uniforms).forEach(([key, value]) => {
-        if (!shader.uniforms[key]) return;
-
-        const constraint = PNOISE_UNIFORM_CONSTRAINTS[key];
-        if (!constraint) return;
-
-        // Update based on the uniform's ValueType
-        updateR3FShaderUniform(shader, key, value, constraint.type);
-      });
-    },
-    [],
-  );
-
-  /**
    * Updates texture connection for a shader
    */
   const updateTextureConnection = useCallback(
@@ -98,12 +79,16 @@ export const useUpdateTextureNoise = ({
       const sharedShaderMaterial = getShader();
 
       // Apply stored uniforms to the shared material
-      updateShaderUniforms(sharedShaderMaterial, uniforms);
+      updateUniforms(
+        sharedShaderMaterial,
+        uniforms,
+        PNOISE_UNIFORM_CONSTRAINTS,
+      );
 
       // Apply texture connection
       updateTextureConnection(sharedShaderMaterial, id);
     },
-    [getShader, updateShaderUniforms, updateTextureConnection],
+    [getShader, updateTextureConnection],
   );
 
   /**
