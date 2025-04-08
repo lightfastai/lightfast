@@ -12,6 +12,7 @@ import {
   $Vec2Expression,
 } from "../uniforms";
 
+export const SHADER_NAME = "Pnoise";
 export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
 
 export const $PerlinNoise2D = z.object({
@@ -287,7 +288,7 @@ void main() {
 `;
 
 export const pnoiseShaderDefinition = createShaderDefinition({
-  type: "Pnoise",
+  type: SHADER_NAME,
   vertexShader: baseVertexShader,
   fragmentShader: pnoiseFragmentShader,
   schema: $PerlinNoise2D,

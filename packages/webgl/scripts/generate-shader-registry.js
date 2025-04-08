@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import * as fs from "fs";
+import { watch } from "fs/promises";
 import { createRequire } from "module";
 import * as path from "path";
 import { fileURLToPath } from "url";
@@ -12,6 +13,11 @@ const __dirname = path.dirname(__filename);
 // Require for dynamic imports if needed
 const require = createRequire(import.meta.url);
 
+// Parse command line arguments
+const args = process.argv.slice(2);
+const watchMode = args.includes("--watch");
+const verbose = args.includes("--verbose");
+
 // Configuration
 const SOURCE_DIR = path.resolve(__dirname, "../src");
 const IMPL_DIR = path.join(SOURCE_DIR, "shaders/impl");
@@ -20,6 +26,7 @@ const OUTPUT_FILE = path.join(
   "generated/shader-registry.generated.ts",
 );
 const ENUM_FILE = path.join(SOURCE_DIR, "generated/shader-enum.generated.ts");
+const HASH_FILE = path.join(SOURCE_DIR, "generated/.shader-registry-hash.json");
 
 // Ensure the output directory exists
 const outputDir = path.dirname(OUTPUT_FILE);
@@ -28,15 +35,103 @@ if (!fs.existsSync(outputDir)) {
   console.log(`Created output directory: ${outputDir}`);
 }
 
+// Logging helper - only logs when not in quiet mode
+function log(message) {
+  if (verbose) {
+    console.log(message);
+  }
+}
+
+/**
+ * Calculate a simple content hash for determining if files have changed
+ */
+function calculateFilesHash(files) {
+  try {
+    // Get last modified timestamps for all shader files
+    const fileStats = files.map((file) => {
+      try {
+        const stats = fs.statSync(file);
+        return {
+          file: path.relative(IMPL_DIR, file),
+          mtime: stats.mtimeMs,
+        };
+      } catch {
+        return { file: path.relative(IMPL_DIR, file), mtime: 0 };
+      }
+    });
+
+    // Sort by filename to ensure consistent order
+    fileStats.sort((a, b) => a.file.localeCompare(b.file));
+
+    // Return hash data
+    return {
+      files: fileStats,
+      timestamp: Date.now(),
+    };
+  } catch (error) {
+    console.error(`Error calculating files hash: ${error.message}`);
+    return { files: [], timestamp: Date.now() };
+  }
+}
+
+/**
+ * Check if shader files have changed since last generation
+ */
+function haveFilesChanged(currentFiles) {
+  try {
+    // Try to read previous hash
+    if (!fs.existsSync(HASH_FILE)) {
+      return true; // No hash file, so assume changed
+    }
+
+    const previousHashData = JSON.parse(fs.readFileSync(HASH_FILE, "utf-8"));
+    const currentHashData = calculateFilesHash(currentFiles);
+
+    // Check if file list is different
+    if (previousHashData.files.length !== currentHashData.files.length) {
+      return true;
+    }
+
+    // Check if any file has changed timestamp
+    for (let i = 0; i < currentHashData.files.length; i++) {
+      const current = currentHashData.files[i];
+      const previous = previousHashData.files.find(
+        (f) => f.file === current.file,
+      );
+
+      if (!previous || previous.mtime !== current.mtime) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch (error) {
+    console.error(`Error checking file changes: ${error.message}`);
+    return true; // On error, assume changed to be safe
+  }
+}
+
+/**
+ * Update the hash file with current files state
+ */
+function updateFilesHash(files) {
+  try {
+    const hashData = calculateFilesHash(files);
+    fs.writeFileSync(HASH_FILE, JSON.stringify(hashData, null, 2));
+  } catch (error) {
+    console.error(`Error updating hash file: ${error.message}`);
+  }
+}
+
 /**
  * Discover shader definitions in the impl directory
  */
 function discoverShaders() {
-  console.log(`Scanning for shaders in: ${IMPL_DIR}`);
+  log(`Scanning for shaders in: ${IMPL_DIR}`);
 
   if (!fs.existsSync(IMPL_DIR)) {
     console.error(`ERROR: Implementation directory not found: ${IMPL_DIR}`);
-    return [];
+    return { shaders: [], files: [] };
   }
 
   try {
@@ -47,11 +142,11 @@ function discoverShaders() {
       ignore: "**/*.test.ts", // Ignore test files
     });
 
-    console.log(`Found ${implFiles.length} potential shader files.`);
+    log(`Found ${implFiles.length} potential shader files.`);
 
     if (implFiles.length === 0) {
       console.warn(`WARNING: No shader files found in ${IMPL_DIR}.`);
-      return [];
+      return { shaders: [], files: implFiles };
     }
 
     const results = [];
@@ -101,7 +196,7 @@ function discoverShaders() {
             importPath: relativePath,
           });
 
-          console.log(
+          log(
             `Discovered shader: ${name} (${exportName}) from ${path.basename(file)}`,
           );
         } else {
@@ -128,12 +223,12 @@ function discoverShaders() {
       );
     }
 
-    return results;
+    return { shaders: results, files: implFiles };
   } catch (error) {
     console.error(
       `ERROR: Failed to scan for shader files: ${error instanceof Error ? error.message : String(error)}`,
     );
-    return [];
+    return { shaders: [], files: [] };
   }
 }
 
@@ -146,7 +241,7 @@ function generateEnumFile(shaders) {
     return false;
   }
 
-  console.log(`Generating enum file with ${shaders.length} shader types...`);
+  log(`Generating enum file with ${shaders.length} shader types...`);
 
   try {
     const enumContent = `
@@ -166,7 +261,7 @@ export type Shaders = z.infer<typeof $Shaders>;
 `;
 
     fs.writeFileSync(ENUM_FILE, enumContent.trim());
-    console.log(`Generated enum file: ${ENUM_FILE}`);
+    log(`Generated enum file: ${ENUM_FILE}`);
     return true;
   } catch (error) {
     console.error(
@@ -185,7 +280,7 @@ function generateRegistryFile(shaders) {
     return false;
   }
 
-  console.log(
+  log(
     `Generating registry file with ${shaders.length} shader registrations...`,
   );
 
@@ -224,7 +319,7 @@ registerGeneratedShaders();
 `;
 
     fs.writeFileSync(OUTPUT_FILE, content.trim());
-    console.log(`Generated registry file: ${OUTPUT_FILE}`);
+    log(`Generated registry file: ${OUTPUT_FILE}`);
     return true;
   } catch (error) {
     console.error(
@@ -234,33 +329,96 @@ registerGeneratedShaders();
   }
 }
 
-// Main execution
-try {
-  console.log("======== Shader Registry Generator ========");
-  console.log("Discovering shaders...");
-  const shaders = discoverShaders();
+/**
+ * Run the generator once
+ */
+async function runGenerator() {
+  try {
+    console.log("======== Shader Registry Generator ========");
+    console.log("Discovering shaders...");
+    const { shaders, files } = discoverShaders();
 
-  if (shaders.length === 0) {
-    console.error("ERROR: No shader definitions found. Generation aborted.");
-    process.exit(1);
-  } else {
-    console.log(`\nFound ${shaders.length} shader definitions.`);
-
-    // Generate files
-    const enumSuccess = generateEnumFile(shaders);
-    const registrySuccess = generateRegistryFile(shaders);
-
-    if (enumSuccess && registrySuccess) {
-      console.log("\nShader registry generation complete!");
-      process.exit(0);
-    } else {
-      console.error("\nERROR: Shader registry generation failed.");
-      process.exit(1);
+    // Check if files have changed
+    if (!haveFilesChanged(files)) {
+      console.log("No shader files have changed. Skipping generation.");
+      return true;
     }
+
+    if (shaders.length === 0) {
+      console.error("ERROR: No shader definitions found. Generation aborted.");
+      return false;
+    } else {
+      console.log(`\nFound ${shaders.length} shader definitions.`);
+
+      // Generate files
+      const enumSuccess = generateEnumFile(shaders);
+      const registrySuccess = generateRegistryFile(shaders);
+
+      if (enumSuccess && registrySuccess) {
+        console.log("\nShader registry generation complete!");
+        // Update hash after successful generation
+        updateFilesHash(files);
+        return true;
+      } else {
+        console.error("\nERROR: Shader registry generation failed.");
+        return false;
+      }
+    }
+  } catch (error) {
+    console.error(
+      `\nFATAL ERROR: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return false;
   }
-} catch (error) {
-  console.error(
-    `\nFATAL ERROR: ${error instanceof Error ? error.message : String(error)}`,
-  );
-  process.exit(1);
+}
+
+/**
+ * Watch for changes to shader files and regenerate
+ */
+async function watchForChanges() {
+  console.log(`Watching for changes in ${IMPL_DIR}...`);
+  console.log("Press Ctrl+C to stop watching");
+
+  // Initial generation
+  await runGenerator();
+
+  try {
+    // Start watching the directory
+    const watcher = watch(IMPL_DIR, { recursive: true });
+
+    for await (const event of watcher) {
+      if (event.filename && event.filename.endsWith(".ts")) {
+        console.log(`\nFile change detected: ${event.filename}`);
+        // Wait a moment for the write to complete
+        setTimeout(async () => {
+          await runGenerator();
+        }, 100);
+      }
+    }
+  } catch (error) {
+    console.error(`Watch error: ${error.message}`);
+    // Fall back to non-watch mode
+    process.exit(1);
+  }
+}
+
+// Main execution
+if (watchMode) {
+  watchForChanges().catch((error) => {
+    console.error(
+      `\nFATAL ERROR: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    process.exit(1);
+  });
+} else {
+  runGenerator()
+    .then((success) => {
+      process.exit(success ? 0 : 1);
+    })
+    .catch((error) => {
+      console.error(
+        `\nFATAL ERROR: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      process.exit(1);
+    });
 }

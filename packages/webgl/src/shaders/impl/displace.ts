@@ -8,10 +8,11 @@ import type {
 } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
-import { $Shaders } from "../enums/shaders";
 import { $ValueType } from "../enums/values";
 import { createShaderDefinition } from "../interfaces/shader-impl";
 import { $Float, $Sampler2D, $Vec2Number } from "../uniforms";
+
+export const SHADER_NAME = "Displace";
 
 // Create texture handles for the uniforms
 export const displaceSourceHandle = createSampler2DHandle(
@@ -155,7 +156,7 @@ void main() {
 `;
 
 export const displaceShaderDefinition = createShaderDefinition({
-  type: $Shaders.enum.Displace,
+  type: SHADER_NAME,
   vertexShader: baseVertexShader,
   fragmentShader: displaceFragmentShader,
   schema: $Displace,

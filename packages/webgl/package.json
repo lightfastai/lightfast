@@ -61,13 +61,13 @@
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist",
-    "dev": "tsup --watch",
+    "dev": "concurrently \"npm run watch-shaders\" \"tsup --watch\"",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "generate-shaders": "node scripts/generate-shader-registry.js",
-    "prebuild": "npm run generate-shaders",
-    "predev": "npm run generate-shaders"
+    "watch-shaders": "node scripts/generate-shader-registry.js --watch",
+    "prebuild": "npm run generate-shaders"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.5",
@@ -87,6 +87,7 @@
     "@types/react": "catalog:react18",
     "@types/react-dom": "catalog:react18",
     "@types/three": "^0.169.0",
+    "concurrently": "^9.1.0",
     "eslint": "catalog:",
     "glob": "^10.4.5",
     "prettier": "catalog:",
