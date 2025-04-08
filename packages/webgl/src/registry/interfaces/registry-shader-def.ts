@@ -2,6 +2,7 @@ import type { Shaders } from "../../generated/shader-enum.generated";
 import type {
   BaseShaderDefinition,
   ShaderSchema,
+  ShaderTextureHandles,
 } from "../../shaders/interfaces/shader-def";
 
 /**
@@ -12,6 +13,8 @@ export interface ShaderDefinition<TSchema extends ShaderSchema = ShaderSchema>
   extends Omit<BaseShaderDefinition<TSchema>, "type"> {
   /** The shader type from the registry enum */
   type: Shaders;
+  /** Texture handles information (inherited from BaseShaderDefinition) */
+  textureHandles?: ShaderTextureHandles;
 }
 
 /**

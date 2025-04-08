@@ -7,6 +7,8 @@ export interface Sampler2DHandle {
   readonly handleId: string;
   /** Corresponding uniform name in the shader */
   readonly uniformName: string;
+  /** Description of the texture handle */
+  readonly description: string;
 }
 
 /**
@@ -22,12 +24,14 @@ export function isValidSampler2DUniformName(uniformName: string): boolean {
  * Creates a Sampler2DHandle with validation
  * @param handleId The handle ID
  * @param uniformName The uniform name
+ * @param description The description of the texture handle
  * @returns A Sampler2DHandle object or null if validation fails
  * @todo the error should be a custom error type for return
  */
 export function createSampler2DHandle(
   handleId: string,
   uniformName: string,
+  description?: string,
 ): Sampler2DHandle {
   if (!isValidSampler2DUniformName(uniformName)) {
     throw new Error(
@@ -38,5 +42,6 @@ export function createSampler2DHandle(
   return {
     handleId,
     uniformName,
+    description: description ?? "",
   };
 }

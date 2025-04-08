@@ -33,11 +33,7 @@ export const TextureNode = memo(
     const setSelected = useInspectorStore((state) => state.setSelected);
 
     // Get texture inputs metadata from the registry
-    const textureInputs: TextureInput[] = getShaderSampler2DInputsForType(
-      data.type,
-    );
-
-    console.log("textureInputs", textureInputs);
+    const textureInputs = getShaderSampler2DInputsForType(data.type);
 
     // Create branded handle IDs
     const outputHandle = createOutputHandleId("output-1");
@@ -117,9 +113,8 @@ export const TextureNode = memo(
                       <NodeHandle
                         id={handleId}
                         position={Position.Left}
-                        // description={input.description || ""}
-                        // isRequired={input?.handle.required || false}
                         tooltipSide="left"
+                        description={input.handle.description}
                       />
                     </div>
                   );
@@ -134,8 +129,7 @@ export const TextureNode = memo(
               <NodeHandle
                 id={outputHandle}
                 position={Position.Right}
-                description="Output"
-                isRequired={true}
+                description={"Output"}
                 tooltipSide="right"
               />
             </div>

@@ -135,15 +135,19 @@ export type {
 
 export * from "./uniforms/handle";
 
-export { getShaderSampler2DInputsForType } from "./registry/sampler2d-registry";
-export { type ShaderSampler2DUniformRegistry as ShaderSampler2DRegistry } from "./registry/interfaces/sampler2d-registry-def";
-
-// Export registry functions
+/**
+ * Registry functions and texture handling
+ */
 export {
   getShaderDefinition,
   isShaderRegistered,
   getAllShaderTypes,
+  textureInputRegistry,
+  getShaderSampler2DInputsForType,
+  createSampler2DFieldMetadata,
 } from "./registry";
+
+export { type ShaderSampler2DUniformRegistry } from "./registry/interfaces/sampler2d-registry-def";
 
 // Export shader enums
 export * from "./shaders/enums/shaders";

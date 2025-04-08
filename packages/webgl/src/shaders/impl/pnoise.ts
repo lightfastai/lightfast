@@ -294,4 +294,11 @@ export const pnoiseShaderDefinition = createBaseShaderDefinition({
   schema: $PerlinNoise2D,
   constraints: PNOISE_UNIFORM_CONSTRAINTS,
   createDefaultValues: createDefaultPerlinNoise2D,
+  textureHandles: {
+    handles: [noiseBlendHandle],
+    defaultUniformMapping: {
+      u_texture1: noiseBlendHandle,
+    },
+    validateConnection: () => true, // Noise accepts any texture type
+  },
 });

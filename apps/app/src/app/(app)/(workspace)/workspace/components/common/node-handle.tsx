@@ -30,11 +30,6 @@ export interface NodeHandleProps {
   description: string;
 
   /**
-   * Whether this handle is required (affects styling)
-   */
-  isRequired?: boolean;
-
-  /**
    * Which side the tooltip should appear on
    */
   tooltipSide?: "left" | "right" | "top" | "bottom";
@@ -48,7 +43,6 @@ export function NodeHandle({
   id,
   position,
   description,
-  isRequired = false,
   tooltipSide = position === Position.Left ? "left" : "right",
 }: NodeHandleProps) {
   // Determine handle type from the ID
@@ -75,11 +69,6 @@ export function NodeHandle({
           </TooltipTrigger>
           <TooltipContent side={tooltipSide} className="z-50">
             <span className="font-medium">{description}</span>
-            {!isRequired && (
-              <span className="ml-1 text-xs text-muted-foreground">
-                (optional)
-              </span>
-            )}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -91,7 +80,7 @@ export function NodeHandle({
         position={position}
         className={cn(
           "absolute z-10 h-6 w-3 border transition-opacity duration-150 hover:opacity-80",
-          isRequired ? "border-primary" : "border-muted",
+          "border-muted",
         )}
       />
 

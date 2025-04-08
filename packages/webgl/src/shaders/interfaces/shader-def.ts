@@ -1,11 +1,24 @@
 import type { z } from "zod";
 
+import type { Sampler2DHandle } from "../../uniforms/handle";
 import type { UniformFieldValue } from "../field";
 
 /**
  * Generic type for Zod shader schema
  */
 export type ShaderSchema = z.ZodObject<z.ZodRawShape>;
+
+/**
+ * Texture handles information for a shader
+ */
+export interface ShaderTextureHandles {
+  /** Available texture handles for this type */
+  handles: Sampler2DHandle[];
+  /** Default uniform mapping to handles */
+  defaultUniformMapping: Record<string, Sampler2DHandle>;
+  /** Function to validate if a source texture type can be connected to a handle */
+  validateConnection?: (handle: Sampler2DHandle, sourceType: string) => boolean;
+}
 
 /**
  * Basic shader interface that doesn't depend on registry types
@@ -26,6 +39,8 @@ export interface BaseShaderDefinition<
   constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>;
   /** Function to create default values for this shader */
   createDefaultValues: () => z.infer<TSchema>;
+  /** Texture handles information for the shader (optional) */
+  textureHandles?: ShaderTextureHandles;
 }
 
 /**
@@ -36,6 +51,7 @@ export interface BaseShaderDefinition<
  * @param schema - Zod schema for validating shader uniforms
  * @param constraints - Uniform constraints for validation
  * @param createDefaultValues - Function to create default values for this shader
+ * @param textureHandles - Texture handles information (optional)
  * @returns A type-safe shader definition
  */
 export function createBaseShaderDefinition<TSchema extends ShaderSchema>({
@@ -45,6 +61,7 @@ export function createBaseShaderDefinition<TSchema extends ShaderSchema>({
   schema,
   constraints,
   createDefaultValues,
+  textureHandles,
 }: {
   type: string;
   vertexShader: string;
@@ -52,6 +69,7 @@ export function createBaseShaderDefinition<TSchema extends ShaderSchema>({
   schema: TSchema;
   constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>;
   createDefaultValues: () => z.infer<TSchema>;
+  textureHandles?: ShaderTextureHandles;
 }): BaseShaderDefinition<TSchema> {
   return {
     type,
@@ -60,6 +78,7 @@ export function createBaseShaderDefinition<TSchema extends ShaderSchema>({
     schema,
     constraints,
     createDefaultValues,
+    textureHandles,
   };
 }
 

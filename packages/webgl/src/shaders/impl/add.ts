@@ -109,4 +109,12 @@ export const addShaderDefinition = createBaseShaderDefinition({
   schema: $Add,
   constraints: ADD_UNIFORM_CONSTRAINTS,
   createDefaultValues: createDefaultAdd,
+  textureHandles: {
+    handles: [addInput1Handle, addInput2Handle],
+    defaultUniformMapping: {
+      u_texture1: addInput1Handle,
+      u_texture2: addInput2Handle,
+    },
+    validateConnection: () => true, // Add accepts any texture type
+  },
 });

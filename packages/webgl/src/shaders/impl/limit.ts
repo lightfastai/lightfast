@@ -65,4 +65,11 @@ export const limitShaderDefinition = createBaseShaderDefinition({
   schema: $Limit,
   constraints: LIMIT_UNIFORM_CONSTRAINTS,
   createDefaultValues: createDefaultLimit,
+  textureHandles: {
+    handles: [limitInputHandle],
+    defaultUniformMapping: {
+      u_texture1: limitInputHandle,
+    },
+    validateConnection: () => true, // Limit accepts any texture type
+  },
 });

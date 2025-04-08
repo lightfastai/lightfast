@@ -162,4 +162,12 @@ export const displaceShaderDefinition = createBaseShaderDefinition({
   schema: $Displace,
   constraints: DISPLACE_UNIFORM_CONSTRAINTS,
   createDefaultValues: createDefaultDisplace,
+  textureHandles: {
+    handles: [displaceSourceHandle, displaceMapHandle],
+    defaultUniformMapping: {
+      u_texture1: displaceSourceHandle,
+      u_texture2: displaceMapHandle,
+    },
+    validateConnection: () => true, // Displace accepts any texture type
+  },
 });
