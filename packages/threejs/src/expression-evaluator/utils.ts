@@ -1,6 +1,7 @@
-"use client";
-
-import { useCallback, useRef } from "react";
+import type {
+  ExpressionResult,
+  ExpressionTimeContext,
+} from "@/expression-evaluator/types";
 
 import {
   extractExpression,
@@ -10,28 +11,12 @@ import {
 } from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
-import { getNestedValue } from "./utils";
-
-/**
- * Type of the result from expression evaluation
- */
-export type ExpressionResult = number | boolean;
-
-/**
- * Typesafe context for expressions
- */
-export interface ExpressionTimeContext {
-  time: number;
-  delta: number;
-  elapsed: number;
-  frame: number;
-  fps: number;
-  [key: string]: unknown;
-}
+import { getNestedValue } from "../hooks/utils";
 
 /**
  * Evaluates a string expression with the provided context
  */
+
 export const evaluateExpression = (
   expression: string | number | boolean,
   context: ExpressionTimeContext,
@@ -92,10 +77,10 @@ export const evaluateExpression = (
       : 0;
   }
 };
-
 /**
  * Creates a time context object with current time values from Three.js
  */
+
 export const createTimeContext = (
   state: WebGLRootState,
   frameCount = 0,
@@ -112,39 +97,3 @@ export const createTimeContext = (
     fps: fps,
   };
 };
-
-/**
- * Hook for expression evaluation in Three.js context
- */
-export function useExpressionEvaluator() {
-  // Track frame count for time context
-  const frameCountRef = useRef<number>(0);
-
-  // Get the current time context based on Three.js state
-  const getTimeContext = useCallback(
-    (state: WebGLRootState): ExpressionTimeContext => {
-      return createTimeContext(state, frameCountRef.current);
-    },
-    [],
-  );
-
-  // Evaluate an expression with the current time context
-  const evaluate = useCallback(
-    (
-      expression: string | number | undefined,
-      state: WebGLRootState,
-      defaultValue = 0,
-    ): number => {
-      if (expression === undefined) return defaultValue;
-
-      const timeContext = getTimeContext(state);
-      const result = evaluateExpression(expression, timeContext);
-      return isBoolean(result) ? (result ? 1 : 0) : result;
-    },
-    [getTimeContext],
-  );
-
-  return {
-    evaluate,
-  };
-}

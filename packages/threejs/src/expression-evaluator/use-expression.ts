@@ -1,29 +1,57 @@
 "use client";
 
 import type { ShaderMaterial } from "three";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 
 import type { NumericValue, UniformFieldValue, Vec2, Vec3 } from "@repo/webgl";
-import { isNumericValue, isVec2, isVec3, ValueType } from "@repo/webgl";
+import {
+  isBoolean,
+  isNumericValue,
+  isVec2,
+  isVec3,
+  ValueType,
+} from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
-import { ExpressionAdapterFactory } from "../types/expression-adapters";
-import { useExpressionEvaluator } from "./use-expression-evaluator";
+import type { ExpressionTimeContext, UniformWithExpressions } from "./types";
+import { ExpressionAdapterFactory } from "./expression-adapters";
+import { createTimeContext, evaluateExpression } from "./utils";
 
 /**
- * Interface for uniform with possible expressions
+ * Combined hook for expression evaluation and uniform updates
  */
-export interface UniformWithExpressions<T> {
-  uniformName: string;
-  value: T;
-  type: ValueType;
-}
+export function useExpression() {
+  // Track frame count for time context
+  const frameCountRef = useRef<number>(0);
 
-/**
- * Hook for handling uniform expressions using the expression adapters
- */
-export function useExpressionUniform() {
-  const { evaluate } = useExpressionEvaluator();
+  // Get the current time context based on Three.js state
+  const getTimeContext = useCallback(
+    (state: WebGLRootState): ExpressionTimeContext => {
+      return createTimeContext(state, frameCountRef.current);
+    },
+    [],
+  );
+
+  // Evaluate an expression with the current time context
+  const evaluate = useCallback(
+    (
+      expression: string | number | undefined,
+      state: WebGLRootState,
+      defaultValue = 0,
+    ): number => {
+      if (expression === undefined) return defaultValue;
+
+      const timeContext = getTimeContext(state);
+      const result = evaluateExpression(expression, timeContext);
+      return isBoolean(result) ? (result ? 1 : 0) : result;
+    },
+    [getTimeContext],
+  );
+
+  // Increment frame counter
+  const incrementFrame = useCallback(() => {
+    frameCountRef.current += 1;
+  }, []);
 
   /**
    * Updates a NumericValue uniform that may contain an expression
@@ -241,11 +269,31 @@ export function useExpressionUniform() {
     [updateNumericUniform, updateVec2Uniform, updateVec3Uniform],
   );
 
+  // Update shader uniforms using expressions
+  const updateShaderUniforms = useCallback(
+    (
+      state: WebGLRootState,
+      shader: ShaderMaterial,
+      uniformsWithExpressions: (
+        | UniformWithExpressions<NumericValue>
+        | UniformWithExpressions<Vec2>
+        | UniformWithExpressions<Vec3>
+      )[],
+    ) => {
+      updateUniformsWithExpressions(state, shader, uniformsWithExpressions);
+    },
+    [updateUniformsWithExpressions],
+  );
+
   return {
+    evaluate,
+    getTimeContext,
+    incrementFrame,
     updateNumericUniform,
     updateVec2Uniform,
     updateVec3Uniform,
     updateUniformsWithExpressions,
     updateUniformsFromConstraints,
+    updateShaderUniforms,
   };
 }

@@ -7,7 +7,7 @@ import type { LimitTexture, Texture } from "@vendor/db/types";
 import {
   updateSamplerUniforms,
   updateUniforms,
-  useExpressionUniform,
+  useExpression,
   useShaderOrchestrator,
 } from "@repo/threejs";
 import { $Shaders, LIMIT_UNIFORM_CONSTRAINTS } from "@repo/webgl";
@@ -34,7 +34,7 @@ export const useUpdateTextureLimit = ({
 }: UpdateTextureLimitProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
-  const { updateUniformsFromConstraints } = useExpressionUniform();
+  const { updateUniformsFromConstraints } = useExpression();
   const { getShader, releaseShader } = useShaderOrchestrator(
     $Shaders.enum.Limit,
   );

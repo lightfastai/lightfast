@@ -6,7 +6,7 @@ import * as THREE from "three";
 import type { NumericValue, Vec2, Vec3 } from "@repo/webgl";
 import { isExpression, ValueType } from "@repo/webgl";
 
-import type { R3FShaderUniformValue } from "./shader-uniforms";
+import type { R3FShaderUniformValue } from "../types/shader-uniforms";
 
 /**
  * Interface for adapters that convert between expressions and shader uniform values
