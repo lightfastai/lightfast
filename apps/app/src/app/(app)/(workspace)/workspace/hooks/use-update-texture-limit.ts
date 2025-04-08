@@ -67,10 +67,7 @@ export const useUpdateTextureLimit = ({
       const limitTexture = texture as LimitTexture;
 
       // Store the uniform configuration for this texture - properly typed as LimitParams
-      uniformConfigsRef.current[id] = {
-        u_texture1: { vuvID: null }, // This will be handled by texture resolver
-        u_quantizationSteps: limitTexture.uniforms.u_quantizationSteps,
-      };
+      uniformConfigsRef.current[id] = limitTexture.uniforms;
     },
     [],
   );

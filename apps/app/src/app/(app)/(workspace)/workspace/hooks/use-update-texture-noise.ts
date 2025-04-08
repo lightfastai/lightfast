@@ -1,13 +1,10 @@
 import type * as THREE from "three";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
-import type { WebGLRenderTargetNode } from "@repo/threejs";
+import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
+import type { PerlinNoise2DParams } from "@repo/webgl";
 import type { NoiseTexture, Texture } from "@vendor/db/types";
-import {
-  updateSamplerUniforms,
-  updateUniforms,
-  useShaderOrchestrator,
-} from "@repo/threejs";
+import { useShaderOrchestrator, useUnifiedUniforms } from "@repo/threejs";
 import { $Shaders, PNOISE_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
@@ -19,15 +16,11 @@ export interface UpdateTextureNoiseProps {
 
 /**
  * Gets a texture from the targets map, with null-safety
- * @param sourceId Source node ID
- * @param targets Map of target textures
- * @returns THREE.Texture or null if not found
  */
-const getSampler2DFromTargets = (
+const getTextureFromTargets = (
   sourceId: string | null,
   targets: Record<string, { texture: THREE.Texture }>,
 ): THREE.Texture | null => {
-  // Null-safe lookup of texture from targets
   return sourceId && targets[sourceId] ? targets[sourceId].texture : null;
 };
 
@@ -40,12 +33,13 @@ export const useUpdateTextureNoise = ({
 }: UpdateTextureNoiseProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
+  const { updateAllUniforms } = useUnifiedUniforms();
   const { getShader, releaseShader } = useShaderOrchestrator(
     $Shaders.enum.Noise,
   );
 
   // Store uniform configurations per texture ID instead of shader instances
-  const uniformConfigsRef = useRef<Record<string, Record<string, unknown>>>({});
+  const uniformConfigsRef = useRef<Record<string, PerlinNoise2DParams>>({});
 
   // Create a reference to track render target nodes
   const renderTargetNodesRef = useRef<Record<string, WebGLRenderTargetNode>>(
@@ -56,39 +50,17 @@ export const useUpdateTextureNoise = ({
   const activeIdsRef = useRef<Set<string>>(new Set());
 
   /**
-   * Updates texture connection for a shader
+   * Creates a texture resolver function for a specific node ID
    */
-  const updateSampler2DConnection = useCallback(
-    (shader: THREE.ShaderMaterial, id: string): void => {
-      const sourceId = getSourceForTarget(id);
-      const texture = getSampler2DFromTargets(sourceId, targets);
-      updateSamplerUniforms(shader, { u_texture1: texture });
+  const createTextureResolver = useCallback(
+    (nodeId: string) => {
+      // Return a function that resolves textures from samplers
+      return (_sampler: Record<string, unknown>): THREE.Texture | null => {
+        const sourceId = getSourceForTarget(nodeId);
+        return getTextureFromTargets(sourceId, targets);
+      };
     },
     [getSourceForTarget, targets],
-  );
-
-  /**
-   * Apply uniforms for a specific texture ID to the shared shader
-   */
-  const applyTextureUniforms = useCallback(
-    (id: string): void => {
-      const uniforms = uniformConfigsRef.current[id];
-      if (!uniforms) return;
-
-      // Get the shared shader material
-      const sharedShaderMaterial = getShader();
-
-      // Apply stored uniforms to the shared material
-      updateUniforms(
-        sharedShaderMaterial,
-        uniforms,
-        PNOISE_UNIFORM_CONSTRAINTS,
-      );
-
-      // Apply texture connection
-      updateSampler2DConnection(sharedShaderMaterial, id);
-    },
-    [getShader, updateSampler2DConnection],
   );
 
   /**
@@ -117,16 +89,31 @@ export const useUpdateTextureNoise = ({
       // Update texture uniform configuration
       updateSingleTexture(id, texture);
 
-      // Create a new node that uses the shared shader material
       const node: WebGLRenderTargetNode = {
         id,
-        // Use a getter to always retrieve the current shader
         get shader() {
           return getShader();
         },
-        onEachFrame: () => {
-          // Apply this texture's uniforms before rendering
-          applyTextureUniforms(id);
+        onEachFrame: (state: WebGLRootState) => {
+          // Get the uniform values for this node
+          const uniforms = uniformConfigsRef.current[id];
+          if (!uniforms) return;
+
+          // Get the shader material
+          const shader = getShader();
+
+          // Create a texture resolver for this specific node
+          const textureResolver = createTextureResolver(id);
+
+          // Use the unified approach to update all uniforms in one pass
+          // This now handles texture connections through the texture resolver
+          updateAllUniforms(
+            state,
+            shader,
+            uniforms,
+            PNOISE_UNIFORM_CONSTRAINTS,
+            textureResolver,
+          );
         },
       };
 
@@ -135,7 +122,7 @@ export const useUpdateTextureNoise = ({
 
       return node;
     },
-    [getShader, updateSingleTexture, applyTextureUniforms],
+    [updateSingleTexture, getShader, createTextureResolver, updateAllUniforms],
   );
 
   // Update textures and track active IDs whenever texture data changes
