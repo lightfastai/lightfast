@@ -58,7 +58,7 @@ export const useUpdateTextureNoise = ({
   /**
    * Updates texture connection for a shader
    */
-  const updateTextureConnection = useCallback(
+  const updateSampler2DConnection = useCallback(
     (shader: THREE.ShaderMaterial, id: string): void => {
       const sourceId = getSourceForTarget(id);
       const texture = getSampler2DFromTargets(sourceId, targets);
@@ -86,9 +86,9 @@ export const useUpdateTextureNoise = ({
       );
 
       // Apply texture connection
-      updateTextureConnection(sharedShaderMaterial, id);
+      updateSampler2DConnection(sharedShaderMaterial, id);
     },
-    [getShader, updateTextureConnection],
+    [getShader, updateSampler2DConnection],
   );
 
   /**

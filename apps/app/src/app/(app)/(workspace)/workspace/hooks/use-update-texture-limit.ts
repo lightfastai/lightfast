@@ -55,7 +55,7 @@ export const useUpdateTextureLimit = ({
   /**
    * Updates texture connection for a shader
    */
-  const updateTextureConnection = useCallback(
+  const updateSampler2DConnection = useCallback(
     (shader: THREE.ShaderMaterial, id: string): void => {
       const sourceId = getSourceForTarget(id);
       const texture = getTextureFromTargets(sourceId, targets);
@@ -97,9 +97,9 @@ export const useUpdateTextureLimit = ({
       updateUniforms(sharedShaderMaterial, uniforms, LIMIT_UNIFORM_CONSTRAINTS);
 
       // Apply texture connection
-      updateTextureConnection(sharedShaderMaterial, id);
+      updateSampler2DConnection(sharedShaderMaterial, id);
     },
-    [getShader, updateTextureConnection],
+    [getShader, updateSampler2DConnection],
   );
 
   /**
