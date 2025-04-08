@@ -1,9 +1,6 @@
 import * as THREE from "three";
 
-import { isNumericValue, isVec2, isVec3, ValueType } from "@repo/webgl";
-
 import type { R3FShaderUniforms } from "../types/shader-uniforms";
-import { R3FUniformAdapterFactory } from "../types/shader-uniforms";
 
 export function createR3FShaderMaterial(
   vertexShader: string,
@@ -16,28 +13,3 @@ export function createR3FShaderMaterial(
     fragmentShader,
   });
 }
-
-/**
- * Use the adapter factory to update a specific uniform
- * @todo Handle uniformType === ValueType.Sampler2D
- * @todo Handle case where the uniform is not found; right now it throws an error
- * @todo Possible to use Generics to add type safety surrouding key & value!?
- */
-export const updateR3FShaderUniform = (
-  shader: THREE.ShaderMaterial,
-  key: string,
-  value: unknown,
-  uniformType: ValueType,
-): void => {
-  if (!shader.uniforms[key]) {
-    throw new Error(`Uniform ${key} not found`);
-  }
-  const adapter = R3FUniformAdapterFactory.getAdapter(uniformType);
-  if (
-    (uniformType === ValueType.Numeric && isNumericValue(value)) ||
-    (uniformType === ValueType.Vec2 && isVec2(value)) ||
-    (uniformType === ValueType.Vec3 && isVec3(value))
-  ) {
-    shader.uniforms[key] = adapter.toThreeUniform(value);
-  }
-};
