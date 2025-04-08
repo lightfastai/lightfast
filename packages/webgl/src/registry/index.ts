@@ -3,25 +3,14 @@ import type {
   ShaderSchema,
 } from "@/shaders/interfaces/shader-impl";
 
-import type { Shaders } from "../shaders/enums/shaders";
+import type { Shaders } from "../generated/shader-enum.generated";
+import { generatedShaderRegistry } from "../generated/shader-registry.generated";
 
 /**
  * Registry of shader definitions
+ * Populated from the generated registry
  */
-export const shaderRegistry = new Map<
-  Shaders,
-  ShaderDefinition<ShaderSchema>
->();
-
-/**
- * Register a shader definition
- * @param definition - The shader definition to register
- */
-export function registerShader<TSchema extends ShaderSchema>(
-  definition: ShaderDefinition<TSchema>,
-): void {
-  shaderRegistry.set(definition.type, definition);
-}
+export const shaderRegistry = generatedShaderRegistry;
 
 /**
  * Get a shader definition

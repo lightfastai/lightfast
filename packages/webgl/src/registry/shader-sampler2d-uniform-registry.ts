@@ -119,7 +119,7 @@ export const textureInputRegistry: Record<
     ],
     validateConnection: () => true, // Limit accepts any texture type
   },
-  Noise: {
+  Pnoise: {
     handles: [noiseBlendHandle],
     defaultUniforms: {
       u_texture1: noiseBlendHandle,
@@ -130,7 +130,13 @@ export const textureInputRegistry: Record<
         PNOISE_UNIFORM_CONSTRAINTS.u_texture1,
       ),
     ],
-    validateConnection: () => true, // Noise accepts any texture for blending
+    validateConnection: () => true, // Pnoise accepts any texture for blending
+  },
+  Migrated: {
+    handles: [],
+    defaultUniforms: {},
+    inputs: [],
+    validateConnection: () => true, // Migrated example
   },
 };
 

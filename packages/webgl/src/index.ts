@@ -2,10 +2,6 @@ import type { ValueType } from "./shaders/enums/values";
 import type { VectorMode } from "./shaders/enums/vector-mode";
 import { $ValueType } from "./shaders/enums/values";
 import { $VectorMode } from "./shaders/enums/vector-mode";
-import { $Add } from "./shaders/impl/add";
-import { $Displace } from "./shaders/impl/displace";
-import { $Limit } from "./shaders/impl/limit";
-import { $PerlinNoise2D } from "./shaders/impl/pnoise";
 
 /**
  * Base types and primitives
@@ -75,99 +71,82 @@ export {
   isVec3Expression,
   isVec2Number,
   isVec3Number,
+
+  // Default values
+  createDefaultVec2,
+  createDefaultVec3,
 } from "./shaders/uniforms";
 
 export { $VectorMode, $ValueType, type VectorMode, type ValueType };
 
 /**
- * Noise modules
+ * Shader definitions and implementations
  */
-export type { PerlinNoise2DParams } from "./shaders/impl/pnoise";
-export { $PerlinNoise2D };
+export {
+  addShaderDefinition,
+  addFragmentShader,
+  ADD_UNIFORM_CONSTRAINTS,
+  createDefaultAdd,
+  $Add,
+  type AddParams,
+} from "./shaders/impl/add";
 
-/**
- * Limit modules
- */
-export type { LimitParams } from "./shaders/impl/limit";
-export { $Limit };
+export {
+  displaceShaderDefinition,
+  displaceFragmentShader,
+  DISPLACE_UNIFORM_CONSTRAINTS,
+  createDefaultDisplace,
+  $Displace,
+  type DisplaceParams,
+} from "./shaders/impl/displace";
 
-/**
- * Displace modules
- */
-export type { DisplaceParams } from "./shaders/impl/displace";
-export { $Displace };
+export {
+  limitShaderDefinition,
+  limitFragmentShader,
+  LIMIT_UNIFORM_CONSTRAINTS,
+  createDefaultLimit,
+  $Limit,
+  type LimitParams,
+} from "./shaders/impl/limit";
 
-/**
- * Add modules
- */
-export type { AddParams } from "./shaders/impl/add";
-export { $Add };
+export {
+  pnoiseShaderDefinition,
+  pnoiseFragmentShader,
+  PNOISE_UNIFORM_CONSTRAINTS,
+  createDefaultPerlinNoise2D,
+  $PerlinNoise2D,
+  type PerlinNoise2DParams,
+} from "./shaders/impl/pnoise";
 
-/**
- * Texture uniforms and registry
- */
-export * from "./registry/shader-sampler2d-uniform-registry";
-
-/**
- * Shared texture uniforms type
- */
-export const $TextureUniforms = $PerlinNoise2D
-  .merge($Limit)
-  .merge($Displace)
-  .merge($Add);
-
-export { addFragmentShader } from "./shaders/impl/add";
-export { displaceFragmentShader } from "./shaders/impl/displace";
-export { limitFragmentShader } from "./shaders/impl/limit";
-export { pnoiseFragmentShader } from "./shaders/impl/pnoise";
 export { baseVertexShader } from "./shaders/base-vert-shader";
 
-export { createDefaultAdd } from "./shaders/impl/add";
-export { createDefaultDisplace as createDefaultDisplace } from "./shaders/impl/displace";
-export { createDefaultLimit } from "./shaders/impl/limit";
-export { createDefaultPerlinNoise2D } from "./shaders/impl/pnoise";
-
-export { PNOISE_UNIFORM_CONSTRAINTS } from "./shaders/impl/pnoise";
-export { LIMIT_UNIFORM_CONSTRAINTS } from "./shaders/impl/limit";
-export { DISPLACE_UNIFORM_CONSTRAINTS } from "./shaders/impl/displace";
-export { ADD_UNIFORM_CONSTRAINTS } from "./shaders/impl/add";
-
-export * from "./shaders/field";
-export * from "./registry/shader-sampler2d-uniform-registry";
-
+/**
+ * Uniform fields and types
+ */
 export type {
   UniformFieldValue,
   ValueFieldMetadata,
   Vec2FieldMetadata,
   Vec3FieldMetadata,
+  Sampler2DMetadata,
 } from "./shaders/field";
-
-export { createDefaultVec2, createDefaultVec3 } from "./shaders/uniforms";
 
 export * from "./uniforms/handle";
 
 export {
   getShaderSampler2DInputsForType,
   isValidSampler2DHandleForType,
+  getSampler2DHandlesForType,
+  getDefaultSampler2DHandlesForType,
   type ShaderSampler2DUniformRegistry as ShaderSampler2DRegistry,
 } from "./registry/shader-sampler2d-uniform-registry";
 
-// Export types
-export * from "./uniforms/handle";
-export * from "./shaders/field";
-export * from "./shaders/uniforms";
+// Export registry functions
+export {
+  getShaderDefinition,
+  isShaderRegistered,
+  getAllShaderTypes,
+} from "./registry";
+
+// Export shader enums
 export * from "./shaders/enums/shaders";
-
-// Export shaders
-export * from "./shaders/impl/add";
-export * from "./shaders/impl/displace";
-export * from "./shaders/impl/limit";
-export * from "./shaders/impl/pnoise";
-export * from "./shaders/base-vert-shader";
-
-// Export types
-export * from "./shaders/field";
-export * from "./uniforms/handle";
-export * from "./shaders/uniforms";
-
-export * from "./registry";

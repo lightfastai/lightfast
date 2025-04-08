@@ -371,7 +371,7 @@ function generateRegistryFile(shaders) {
 
   log(
     format.info(
-      `Generating registry file with ${shaders.length} shader registrations...`,
+      `Generating registry file with ${shaders.length} shader definitions...`,
     ),
   );
 
@@ -384,9 +384,10 @@ function generateRegistryFile(shaders) {
       )
       .join("\n");
 
-    const registrations = shaders
-      .map((shader) => `  registerShader(${shader.importAlias});`)
-      .join("\n");
+    // Create map entries directly using string keys instead of enum values
+    const mapEntries = shaders
+      .map((shader) => `  ["${shader.name}", ${shader.importAlias}]`)
+      .join(",\n");
 
     const content = `
 /**
@@ -395,19 +396,17 @@ function generateRegistryFile(shaders) {
  * Generated on: ${new Date().toISOString()}
  */
 
-import { registerShader } from "../registry";
+import type { ShaderDefinition, ShaderSchema } from "@/shaders/interfaces/shader-impl";
+import type { Shaders } from "./shader-enum.generated";
 ${imports}
 
 /**
- * Register all discovered shaders
- * This function is automatically generated during build
+ * Pre-populated shader registry map
+ * This is automatically generated during build
  */
-export function registerGeneratedShaders(): void {
-${registrations}
-}
-
-// Register shaders when this module is imported
-registerGeneratedShaders();
+export const generatedShaderRegistry = new Map<Shaders, ShaderDefinition<ShaderSchema>>([
+${mapEntries}
+] as [Shaders, ShaderDefinition<ShaderSchema>][]);
 `;
 
     fs.writeFileSync(OUTPUT_FILE, content.trim());
