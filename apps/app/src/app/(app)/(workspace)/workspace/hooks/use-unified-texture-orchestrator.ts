@@ -118,7 +118,7 @@ export const useUnifiedTextureOrchestrator = ({
 
       // Get the appropriate shader orchestrator for this texture type
       // Type safety is ensured by updateSingleTexture validating the type
-      const shaderType = texture.type as Shaders;
+      const shaderType = texture.type;
       const orchestrator = orchestrators[shaderType];
 
       // Get the shader definition to access the constraints

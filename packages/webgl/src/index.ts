@@ -2,6 +2,7 @@ import type { ValueType } from "./shaders/enums/values";
 import type { VectorMode } from "./shaders/enums/vector-mode";
 import { $ValueType } from "./shaders/enums/values";
 import { $VectorMode } from "./shaders/enums/vector-mode";
+import { getFieldMetadata } from "./shaders/field";
 
 /**
  * Base types and primitives
@@ -58,6 +59,7 @@ export {
   isColor,
   isVec2,
   isString,
+  isSampler2D,
   isVec3,
   isNumericValue,
 
@@ -150,3 +152,5 @@ export {
 
 // Export shader enums
 export * from "./shaders/enums/shaders";
+
+export { getFieldMetadata };

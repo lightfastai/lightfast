@@ -119,7 +119,7 @@ export const textureInputRegistry: Record<
     ],
     validateConnection: () => true, // Limit accepts any texture type
   },
-  Pnoise: {
+  Noise: {
     handles: [noiseBlendHandle],
     defaultUniforms: {
       u_texture1: noiseBlendHandle,

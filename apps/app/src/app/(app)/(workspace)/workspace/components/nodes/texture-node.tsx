@@ -37,6 +37,8 @@ export const TextureNode = memo(
       data.type,
     );
 
+    console.log("textureInputs", textureInputs);
+
     // Create branded handle IDs
     const outputHandle = createOutputHandleId("output-1");
     if (!outputHandle) {
@@ -115,8 +117,8 @@ export const TextureNode = memo(
                       <NodeHandle
                         id={handleId}
                         position={Position.Left}
-                        description={input.description}
-                        isRequired={input.required}
+                        // description={input.description || ""}
+                        // isRequired={input?.handle.required || false}
                         tooltipSide="left"
                       />
                     </div>

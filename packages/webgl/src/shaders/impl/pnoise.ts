@@ -12,7 +12,7 @@ import {
   $Vec2Expression,
 } from "../uniforms";
 
-export const SHADER_NAME = "Pnoise";
+export const SHADER_NAME = "Noise";
 export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
 
 export const $PerlinNoise2D = z.object({
