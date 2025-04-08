@@ -401,8 +401,8 @@ function generateRegistryFile(shaders) {
  */
 
 import type { ShaderSchema } from "../shaders/interfaces/shader-def";
-import type { ShaderDefinition } from "../registry/registry-shader-def";
-import { adaptToRegistryDefinition } from "../registry/registry-shader-def";
+import type { ShaderDefinition } from "../registry/interfaces/registry-shader-def";
+import { adaptToRegistryDefinition } from "../registry/interfaces/registry-shader-def";
 import type { Shaders } from "./shader-enum.generated";
 ${baseImports}
 

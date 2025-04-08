@@ -1,4 +1,4 @@
-import type { ShaderDefinition } from "@/registry/intefaces/registry-shader-def";
+import type { ShaderDefinition } from "@/registry/interfaces/registry-shader-def";
 import type { ShaderSchema } from "@/shaders/interfaces/shader-def";
 
 import type { Shaders } from "../generated/shader-enum.generated";
