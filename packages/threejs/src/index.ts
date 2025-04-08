@@ -13,3 +13,4 @@ export * from "./shaders/utils";
 export * from "./hooks/use-shader-material-orchestrator";
 export * from "./hooks/use-texture-render-pipeline";
 export * from "./hooks/use-shader-orchestrator";
+export * from "./types/shader-uniforms";

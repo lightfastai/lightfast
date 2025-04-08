@@ -170,5 +170,4 @@ export * from "./shaders/base-vert-shader";
 // Export types
 export * from "./types/field";
 export * from "./types/shader-sampler2d-uniform";
-export * from "./types/threejs-uniform";
 export * from "./types/uniforms";

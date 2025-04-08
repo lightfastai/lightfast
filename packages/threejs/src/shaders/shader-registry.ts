@@ -1,4 +1,4 @@
-import type { R3FShaderUniforms, Shaders } from "@repo/webgl";
+import type { Shaders } from "@repo/webgl";
 import {
   $Shaders,
   ADD_UNIFORM_CONSTRAINTS,
@@ -8,7 +8,6 @@ import {
   createDefaultDisplace,
   createDefaultLimit,
   createDefaultPerlinNoise2D,
-  createUniformsFromSchema,
   DISPLACE_UNIFORM_CONSTRAINTS,
   displaceFragmentShader,
   LIMIT_UNIFORM_CONSTRAINTS,
@@ -17,7 +16,9 @@ import {
   pnoiseFragmentShader,
 } from "@repo/webgl";
 
+import type { R3FShaderUniforms } from "../types/shader-uniforms";
 import type { ShaderSingleton } from "./shader-singleton-factory";
+import { createUniformsFromSchema } from "../types/shader-uniforms";
 import { createShaderSingleton } from "./shader-singleton-factory";
 
 /**

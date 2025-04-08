@@ -1,6 +1,7 @@
-import type { R3FShaderUniforms, Shaders } from "@repo/webgl";
+import type { Shaders } from "@repo/webgl";
 import { baseVertexShader } from "@repo/webgl";
 
+import type { R3FShaderUniforms } from "../types/shader-uniforms";
 import type { ShaderSingleton } from "./shader-singleton-factory";
 import { ShaderSingletonRegistry } from "./shader-registry";
 import { createShaderSingleton } from "./shader-singleton-factory";

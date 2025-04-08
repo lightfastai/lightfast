@@ -2,10 +2,15 @@ import type { IUniform } from "three";
 import type { z } from "zod";
 import * as THREE from "three";
 
-import type { UniformFieldValue } from "./field";
-import type { ShaderSampler2DUniform } from "./shader-sampler2d-uniform";
-import type { NumericValue, Sampler2D, Vec2, Vec3 } from "./uniforms";
-import { ValueType } from "./uniforms";
+import type {
+  NumericValue,
+  Sampler2D,
+  ShaderSampler2DUniform,
+  UniformFieldValue,
+  Vec2,
+  Vec3,
+} from "@repo/webgl";
+import { ValueType } from "@repo/webgl";
 
 export type R3FShaderUniformValue =
   | number

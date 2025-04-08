@@ -1,7 +1,6 @@
 import type * as THREE from "three";
 
-import type { R3FShaderUniforms } from "@repo/webgl";
-
+import type { R3FShaderUniforms } from "../types/shader-uniforms";
 import { createR3FShaderMaterial } from "./utils";
 
 /**

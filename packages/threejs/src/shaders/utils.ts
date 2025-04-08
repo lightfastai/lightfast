@@ -1,13 +1,9 @@
 import * as THREE from "three";
 
-import type { R3FShaderUniforms } from "@repo/webgl";
-import {
-  isNumericValue,
-  isVec2,
-  isVec3,
-  R3FUniformAdapterFactory,
-  ValueType,
-} from "@repo/webgl";
+import { isNumericValue, isVec2, isVec3, ValueType } from "@repo/webgl";
+
+import type { R3FShaderUniforms } from "../types/shader-uniforms";
+import { R3FUniformAdapterFactory } from "../types/shader-uniforms";
 
 export function createR3FShaderMaterial(
   vertexShader: string,
