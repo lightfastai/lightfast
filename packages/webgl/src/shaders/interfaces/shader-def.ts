@@ -1,6 +1,5 @@
 import type { z } from "zod";
 
-import type { Shaders } from "../../generated/shader-enum.generated";
 import type { UniformFieldValue } from "../field";
 
 /**
@@ -9,11 +8,14 @@ import type { UniformFieldValue } from "../field";
 export type ShaderSchema = z.ZodObject<z.ZodRawShape>;
 
 /**
- * Interface that defines all the necessary components for a shader
+ * Basic shader interface that doesn't depend on registry types
+ * This represents the core shader information created in impl files
  */
-export interface ShaderDefinition<TSchema extends ShaderSchema = ShaderSchema> {
-  /** The shader type */
-  type: string | Shaders;
+export interface BaseShaderDefinition<
+  TSchema extends ShaderSchema = ShaderSchema,
+> {
+  /** The shader type name */
+  type: string;
   /** The vertex shader code */
   vertexShader: string;
   /** The fragment shader code */
@@ -28,7 +30,7 @@ export interface ShaderDefinition<TSchema extends ShaderSchema = ShaderSchema> {
 
 /**
  * Helper function to create a type-safe shader definition
- * @param type - Shader type
+ * @param type - Shader type name
  * @param vertexShader - Vertex shader code
  * @param fragmentShader - Fragment shader code
  * @param schema - Zod schema for validating shader uniforms
@@ -36,7 +38,7 @@ export interface ShaderDefinition<TSchema extends ShaderSchema = ShaderSchema> {
  * @param createDefaultValues - Function to create default values for this shader
  * @returns A type-safe shader definition
  */
-export function createShaderDefinition<TSchema extends ShaderSchema>({
+export function createBaseShaderDefinition<TSchema extends ShaderSchema>({
   type,
   vertexShader,
   fragmentShader,
@@ -44,13 +46,13 @@ export function createShaderDefinition<TSchema extends ShaderSchema>({
   constraints,
   createDefaultValues,
 }: {
-  type: string | Shaders;
+  type: string;
   vertexShader: string;
   fragmentShader: string;
   schema: TSchema;
   constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>;
   createDefaultValues: () => z.infer<TSchema>;
-}): ShaderDefinition<TSchema> {
+}): BaseShaderDefinition<TSchema> {
   return {
     type,
     vertexShader,
@@ -62,13 +64,13 @@ export function createShaderDefinition<TSchema extends ShaderSchema>({
 }
 
 /**
- * Helper function to check if a value is a ShaderDefinition
+ * Helper function to check if a value is a BaseShaderDefinition
  * @param value - The value to check
- * @returns True if the value is a ShaderDefinition, false otherwise
+ * @returns True if the value is a BaseShaderDefinition, false otherwise
  */
-export const isShaderDefinition = (
+export const isBaseShaderDefinition = (
   value: unknown,
-): value is ShaderDefinition<ShaderSchema> => {
+): value is BaseShaderDefinition<ShaderSchema> => {
   return (
     typeof value === "object" &&
     value !== null &&

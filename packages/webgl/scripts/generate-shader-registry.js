@@ -376,7 +376,8 @@ function generateRegistryFile(shaders) {
   );
 
   try {
-    const imports = shaders
+    // Import the base definitions from shader files
+    const baseImports = shaders
       .map((shader) =>
         shader.importAlias === shader.exportName
           ? `import { ${shader.exportName} } from "${shader.importPath}";`
@@ -384,9 +385,12 @@ function generateRegistryFile(shaders) {
       )
       .join("\n");
 
-    // Create map entries directly using string keys instead of enum values
+    // Create map entries that adapt base definitions to registry definitions
     const mapEntries = shaders
-      .map((shader) => `  ["${shader.name}", ${shader.importAlias}]`)
+      .map(
+        (shader) =>
+          `  ["${shader.name}", adaptToRegistryDefinition(${shader.importAlias}, "${shader.name}")]`,
+      )
       .join(",\n");
 
     const content = `
@@ -396,9 +400,11 @@ function generateRegistryFile(shaders) {
  * Generated on: ${new Date().toISOString()}
  */
 
-import type { ShaderDefinition, ShaderSchema } from "@/shaders/interfaces/shader-impl";
+import type { ShaderSchema } from "../shaders/interfaces/shader-def";
+import type { ShaderDefinition } from "../registry/registry-shader-def";
+import { adaptToRegistryDefinition } from "../registry/registry-shader-def";
 import type { Shaders } from "./shader-enum.generated";
-${imports}
+${baseImports}
 
 /**
  * Pre-populated shader registry map

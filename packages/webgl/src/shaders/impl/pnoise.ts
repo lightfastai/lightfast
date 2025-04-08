@@ -4,7 +4,7 @@ import type { Sampler2DMetadata, UniformFieldValue } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
 import { $ValueType } from "../enums/values";
-import { createShaderDefinition } from "../interfaces/shader-impl";
+import { createBaseShaderDefinition } from "../interfaces/shader-def";
 import {
   $Integer,
   $NumericValue,
@@ -287,7 +287,7 @@ void main() {
 }
 `;
 
-export const pnoiseShaderDefinition = createShaderDefinition({
+export const pnoiseShaderDefinition = createBaseShaderDefinition({
   type: SHADER_NAME,
   vertexShader: baseVertexShader,
   fragmentShader: pnoiseFragmentShader,

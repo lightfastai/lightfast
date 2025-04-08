@@ -9,7 +9,7 @@ import type {
 import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
 import { $ValueType } from "../enums/values";
-import { createShaderDefinition } from "../interfaces/shader-impl";
+import { createBaseShaderDefinition } from "../interfaces/shader-def";
 import { $Float, $Sampler2D, $Vec2Number } from "../uniforms";
 
 export const SHADER_NAME = "Displace";
@@ -155,7 +155,7 @@ void main() {
 }
 `;
 
-export const displaceShaderDefinition = createShaderDefinition({
+export const displaceShaderDefinition = createBaseShaderDefinition({
   type: SHADER_NAME,
   vertexShader: baseVertexShader,
   fragmentShader: displaceFragmentShader,

@@ -4,6 +4,7 @@ import type { Sampler2DMetadata, UniformFieldValue } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
 import { $ValueType } from "../enums/values";
+import { createBaseShaderDefinition } from "../interfaces/shader-def";
 import { $Boolean, $Float, $Sampler2D } from "../uniforms";
 
 /**
@@ -85,11 +86,11 @@ void main() {
  * Create the shader definition
  * This export will be picked up by the code generation script
  */
-export const exampleShaderDefinition = {
+export const exampleShaderDefinition = createBaseShaderDefinition({
   type: SHADER_NAME, // Will be replaced by enum value during code generation
   vertexShader: baseVertexShader,
   fragmentShader: exampleFragmentShader,
   schema: $Example,
   constraints: EXAMPLE_UNIFORM_CONSTRAINTS,
   createDefaultValues: createDefaultExample,
-};
+});

@@ -4,7 +4,7 @@ import type { Sampler2DMetadata, UniformFieldValue } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
 import { $ValueType } from "../enums/values";
-import { createShaderDefinition } from "../interfaces/shader-impl";
+import { createBaseShaderDefinition } from "../interfaces/shader-def";
 import { $Float, $Sampler2D } from "../uniforms";
 
 export const SHADER_NAME = "Limit";
@@ -58,7 +58,7 @@ void main() {
 }
 `;
 
-export const limitShaderDefinition = createShaderDefinition({
+export const limitShaderDefinition = createBaseShaderDefinition({
   type: SHADER_NAME,
   vertexShader: baseVertexShader,
   fragmentShader: limitFragmentShader,

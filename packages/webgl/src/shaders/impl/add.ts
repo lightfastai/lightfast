@@ -4,6 +4,7 @@ import type { Sampler2DMetadata, UniformFieldValue } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
 import { $ValueType } from "../enums/values";
+import { createBaseShaderDefinition } from "../interfaces/shader-def";
 import { $Boolean, $Float, $Sampler2D } from "../uniforms";
 
 // Define the shader name for code generation
@@ -101,11 +102,11 @@ void main() {
 `;
 
 // Create the shader definition - will be picked up by code generation
-export const addShaderDefinition = {
+export const addShaderDefinition = createBaseShaderDefinition({
   type: SHADER_NAME,
   vertexShader: baseVertexShader,
   fragmentShader: addFragmentShader,
   schema: $Add,
   constraints: ADD_UNIFORM_CONSTRAINTS,
   createDefaultValues: createDefaultAdd,
-};
+});
