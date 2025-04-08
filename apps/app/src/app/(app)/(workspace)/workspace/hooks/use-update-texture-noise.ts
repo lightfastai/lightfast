@@ -3,7 +3,11 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { WebGLRenderTargetNode } from "@repo/threejs";
 import type { NoiseTexture, Texture } from "@vendor/db/types";
-import { updateR3FShaderUniform, useShaderOrchestrator } from "@repo/threejs";
+import {
+  updateR3FShaderUniform,
+  updateSamplerUniforms,
+  useShaderOrchestrator,
+} from "@repo/threejs";
 import { $Shaders, PNOISE_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
@@ -14,25 +18,16 @@ export interface UpdateTextureNoiseProps {
 }
 
 /**
- * Update texture uniform with null-safe handling
- */
-const updateTextureUniform = (
-  shader: THREE.ShaderMaterial,
-  key: string,
-  texture: THREE.Texture | null,
-): void => {
-  if (shader.uniforms[key]) {
-    shader.uniforms[key].value = texture;
-  }
-};
-
-/**
  * Gets a texture from the targets map, with null-safety
+ * @param sourceId Source node ID
+ * @param targets Map of target textures
+ * @returns THREE.Texture or null if not found
  */
-const getTextureFromTargets = (
+const getSampler2DFromTargets = (
   sourceId: string | null,
   targets: Record<string, { texture: THREE.Texture }>,
 ): THREE.Texture | null => {
+  // Null-safe lookup of texture from targets
   return sourceId && targets[sourceId] ? targets[sourceId].texture : null;
 };
 
@@ -85,8 +80,8 @@ export const useUpdateTextureNoise = ({
   const updateTextureConnection = useCallback(
     (shader: THREE.ShaderMaterial, id: string): void => {
       const sourceId = getSourceForTarget(id);
-      const texture = getTextureFromTargets(sourceId, targets);
-      updateTextureUniform(shader, "u_texture1", texture);
+      const texture = getSampler2DFromTargets(sourceId, targets);
+      updateSamplerUniforms(shader, { u_texture1: texture });
     },
     [getSourceForTarget, targets],
   );
