@@ -1,8 +1,8 @@
 "use client";
 
 import type { ShaderMaterial } from "three";
+import type * as THREE from "three";
 import { useCallback } from "react";
-import * as THREE from "three";
 
 import type { UniformFieldValue } from "@repo/webgl";
 import {
@@ -17,7 +17,8 @@ import {
 } from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
-import { useExpression } from "./use-expression";
+import { useExpression } from "../expression-evaluator/use-expression";
+import { useSampler2D } from "./use-sampler2d";
 
 /**
  * Unified hook for updating all types of shader uniforms with expression support
@@ -27,44 +28,7 @@ export function useUnifiedUniforms() {
   // Get expression evaluation functions from useExpression
   const { updateNumericUniform, updateVec2Uniform, updateVec3Uniform } =
     useExpression();
-
-  /**
-   * Updates a Sampler2D uniform with a texture
-   * @param shader The shader material to update
-   * @param uniformName The name of the uniform
-   * @param value The Sampler2D object or texture
-   * @param textureResolver Function to resolve a texture from a Sampler2D object
-   */
-  const updateSampler2DUniform = useCallback(
-    (
-      shader: ShaderMaterial,
-      uniformName: string,
-      value: unknown,
-      textureResolver?: (
-        sampler: Record<string, unknown>,
-      ) => THREE.Texture | null,
-    ) => {
-      // Skip if the uniform doesn't exist
-      if (!shader.uniforms[uniformName]) return;
-
-      // If it's a texture, assign it directly
-      if (value instanceof THREE.Texture || value === null) {
-        shader.uniforms[uniformName].value = value;
-        return;
-      }
-
-      // If it's a placeholder object with vuvID
-      if (value && typeof value === "object" && "vuvID" in value) {
-        // If we have a resolver function, use it to get the actual texture
-        if (textureResolver) {
-          const texture = textureResolver(value as Record<string, unknown>);
-          shader.uniforms[uniformName].value = texture;
-        }
-        // Otherwise leave it as is (likely null)
-      }
-    },
-    [],
-  );
+  const { updateSampler2DUniform } = useSampler2D();
 
   /**
    * Determines the ValueType of a given uniform value

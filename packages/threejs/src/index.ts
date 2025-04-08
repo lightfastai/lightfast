@@ -16,8 +16,6 @@ export * from "./hooks/use-shader-orchestrator";
 export * from "./types/shader-uniforms";
 
 /**
- * Expression evaluator
+ * Uniform resolver
  */
-export * from "./expression-evaluator/use-expression";
-export * from "./expression-evaluator/expression-adapters";
-export * from "./expression-evaluator/use-unified-uniforms";
+export * from "./uniform-resolver/use-unified-uniforms";
