@@ -1,9 +1,12 @@
 "use client";
 
 import type * as THREE from "three";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
-import type { ShaderSingleton } from "../shaders/shader-singleton-factory";
+import type { Shaders } from "@repo/webgl";
+import { getAllShaderTypes } from "@repo/webgl";
+
+import { ShaderSingletonRegistry } from "./shader-registry";
 
 /**
  * Interface for shader material orchestrator
@@ -28,6 +31,8 @@ export interface ShaderMaterialOrchestrator {
   isInitialized: () => boolean;
 }
 
+export type ShaderOrchestratorMap = Record<Shaders, ShaderMaterialOrchestrator>;
+
 /**
  * Global map to track reference counts for different shader singletons
  * Keys are unique identifiers for each shader type
@@ -35,20 +40,16 @@ export interface ShaderMaterialOrchestrator {
 const globalShaderRefCounts = new Map<string, number>();
 
 /**
- * Hook to manage the lifecycle of any shader singleton.
- * Provides methods to acquire and release the shader with automatic cleanup.
- * Uses reference counting to ensure proper disposal when no longer needed.
- *
- * @param shaderKey - A unique identifier for this shader type
- * @param shaderSingleton - The shader singleton instance to manage
- * @returns An orchestrator for managing the shader
+ * Hook to get a shader orchestrator for a specific shader type
+ * @param shaderKey The shader type
+ * @returns The shader orchestrator for the given type
  */
-export function useShaderMaterialOrchestrator(
-  shaderKey: string,
-  shaderSingleton: ShaderSingleton,
-): ShaderMaterialOrchestrator {
+export const useShaderOrchestrator = (
+  shaderKey: Shaders,
+): ShaderMaterialOrchestrator => {
   // Reference to track if this hook instance has acquired the shader
   const hasReference = useRef<boolean>(false);
+  const shaderSingleton = ShaderSingletonRegistry.getSingleton(shaderKey);
 
   /**
    * Gets the shader and increases the reference count
@@ -109,4 +110,28 @@ export function useShaderMaterialOrchestrator(
     releaseShader,
     isInitialized,
   };
-}
+};
+
+/**
+ * Hook to get a map of shader orchestrators for all available shader types
+ * This centralizes shader orchestrator creation and ensures proper React Hooks usage
+ * @returns A map of shader orchestrators, with shader types as keys
+ */
+export const useShaderOrchestratorMap = (): ShaderOrchestratorMap => {
+  // Get all available shader types
+  const shaderTypes = useMemo(() => getAllShaderTypes(), []);
+
+  // Create an orchestrator for each shader type using a reducer
+  const orchestrators = shaderTypes.reduce<
+    Record<string, ShaderMaterialOrchestrator>
+  >((acc, shaderType) => {
+    // Use the existing useShaderOrchestrator hook for each type
+    acc[shaderType] = useShaderOrchestrator(shaderType);
+    return acc;
+  }, {});
+
+  // Return the map, memoized to prevent unnecessary rerenders
+  return useMemo(() => {
+    return orchestrators as ShaderOrchestratorMap;
+  }, [orchestrators]);
+};

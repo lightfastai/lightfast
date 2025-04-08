@@ -25,6 +25,14 @@ const getTextureFromTargets = (
 };
 
 /**
+ * Type definition for the uniform configuration stored per texture
+ */
+interface UniformConfig {
+  type: Shaders;
+  uniforms: Record<string, unknown>; // @todo: Enforce typesafety instead of using unknown....
+}
+
+/**
  * Unified hook for managing multiple texture types with their shader orchestration
  * Handles shader creation, uniform updates, and memory management for all texture types
  */
@@ -41,8 +49,18 @@ export const useUnifiedTextureOrchestrator = ({
   // Get the map of shader orchestrators
   const orchestrators = useShaderOrchestratorMap();
 
+  /**
+   * Type guard to check if a value is a valid Shaders type using the actual shader types
+   */
+  const isValidShaderType = useCallback(
+    (type: string): type is Shaders => {
+      return shaderTypes.includes(type as Shaders);
+    },
+    [shaderTypes],
+  );
+
   // Store uniform configurations per texture ID
-  const uniformConfigsRef = useRef<Record<string, Record<string, any>>>({});
+  const uniformConfigsRef = useRef<Record<string, UniformConfig>>({});
 
   // Create a reference to track render target nodes
   const renderTargetNodesRef = useRef<Record<string, WebGLRenderTargetNode>>(
@@ -71,13 +89,18 @@ export const useUnifiedTextureOrchestrator = ({
    */
   const updateSingleTexture = useCallback(
     (id: string, texture: Texture): void => {
+      // Validate that the texture type is a valid shader type
+      if (!isValidShaderType(texture.type)) {
+        throw new Error(`Invalid texture type: ${texture.type}`);
+      }
+
       // Store the uniform configuration for this texture based on its type
       uniformConfigsRef.current[id] = {
         type: texture.type,
         uniforms: texture.uniforms,
       };
     },
-    [],
+    [isValidShaderType],
   );
 
   /**
@@ -94,12 +117,9 @@ export const useUnifiedTextureOrchestrator = ({
       updateSingleTexture(id, texture);
 
       // Get the appropriate shader orchestrator for this texture type
+      // Type safety is ensured by updateSingleTexture validating the type
       const shaderType = texture.type as Shaders;
       const orchestrator = orchestrators[shaderType];
-
-      if (!orchestrator) {
-        throw new Error(`No shader orchestrator found for type: ${shaderType}`);
-      }
 
       // Get the shader definition to access the constraints
       const shaderDefinition = getShaderDefinition(shaderType);

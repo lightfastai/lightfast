@@ -9,13 +9,15 @@ export * from "./types/render";
 export * from "./types/render";
 export * from "./types/geometry";
 export * from "./shaders/utils";
-
-export * from "./hooks/use-shader-material-orchestrator";
 export * from "./hooks/use-texture-render-pipeline";
-export * from "./hooks/use-shader-orchestrator";
 export * from "./types/shader-uniforms";
 
 /**
  * Uniform resolvers for different uniform types with expression support
  */
 export * from "./uniform-resolver/use-unified-uniforms";
+
+/**
+ * Shader Orchestrator
+ */
+export * from "./shaders/use-shader-orchestrator";
