@@ -3,19 +3,9 @@
 import type { IUniform, ShaderMaterial } from "three";
 import { useCallback, useRef } from "react";
 
+import { extractExpression, isExpression, isNumber } from "@repo/webgl";
+
 import type { WebGLRootState } from "../types/render";
-
-/**
- * Type guard for checking if a value is a number
- */
-export const isNumber = (value: unknown): value is number =>
-  typeof value === "number" && !isNaN(value);
-
-/**
- * Type guard for checking if a value is a string expression
- */
-export const isExpression = (value: unknown): value is string =>
-  typeof value === "string" && value !== "";
 
 /**
  * Type of the result from expression evaluation
@@ -44,14 +34,6 @@ const getNestedValue = (obj: Record<string, any>, path: string): any => {
 };
 
 /**
- * Extracts an expression from the prefixed format
- * Handles expressions like "$time * 0.5" by removing the $ prefix
- */
-export const extractExpression = (expression: string): string => {
-  return expression.startsWith("$") ? expression.slice(1) : expression;
-};
-
-/**
  * Evaluates a string expression with the provided context
  */
 export const evaluateExpression = (
@@ -67,6 +49,13 @@ export const evaluateExpression = (
   }
 
   try {
+    // Only evaluate if it's an expression string (starts with e.)
+    if (!isExpression(expression)) {
+      // For non-expression strings, try to convert to number
+      const num = Number(expression);
+      return isNaN(num) ? 0 : num;
+    }
+
     // Extract the actual expression from the prefixed format
     const extractedExpression = extractExpression(expression);
 

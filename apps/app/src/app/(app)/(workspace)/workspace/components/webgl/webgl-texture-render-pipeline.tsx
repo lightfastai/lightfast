@@ -6,8 +6,6 @@ import type { Texture } from "@vendor/db/types";
 import { TextureRenderPipeline } from "@repo/threejs";
 
 import { api } from "~/trpc/client/react";
-import { useUpdateTextureAdd } from "../../hooks/use-update-texture-add";
-import { useUpdateTextureDisplace } from "../../hooks/use-update-texture-displace";
 import { useUpdateTextureLimit } from "../../hooks/use-update-texture-limit";
 import { useUpdateTextureNoise } from "../../hooks/use-update-texture-noise";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
@@ -54,26 +52,26 @@ export const WebGLTextureRenderPipeline = () => {
     ),
   });
 
-  const displaceNodes = useUpdateTextureDisplace({
-    textureDataMap: Object.fromEntries(
-      Object.entries(textureDataMap).filter(
-        ([_, texture]) => texture.type === "Displace",
-      ),
-    ),
-  });
+  // const displaceNodes = useUpdateTextureDisplace({
+  //   textureDataMap: Object.fromEntries(
+  //     Object.entries(textureDataMap).filter(
+  //       ([_, texture]) => texture.type === "Displace",
+  //     ),
+  //   ),
+  // });
 
-  const addNodes = useUpdateTextureAdd({
-    textureDataMap: Object.fromEntries(
-      Object.entries(textureDataMap).filter(
-        ([_, texture]) => texture.type === "Add",
-      ),
-    ),
-  });
+  // const addNodes = useUpdateTextureAdd({
+  //   textureDataMap: Object.fromEntries(
+  //     Object.entries(textureDataMap).filter(
+  //       ([_, texture]) => texture.type === "Add",
+  //     ),
+  //   ),
+  // });
 
   // Get all nodes (can add more types here later)
   const allNodes = useMemo(
-    () => [...noiseNodes, ...limitNodes, ...displaceNodes, ...addNodes],
-    [noiseNodes, limitNodes, displaceNodes, addNodes],
+    () => [...noiseNodes, ...limitNodes],
+    [noiseNodes, limitNodes],
   );
 
   return <TextureRenderPipeline targets={targets} nodes={allNodes} />;

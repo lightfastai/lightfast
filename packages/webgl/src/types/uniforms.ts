@@ -39,13 +39,22 @@ export function expressionToNumericValue(expression: string): NumericValue {
   return parseFloat(extractExpression(expression));
 }
 
-// Helper to extract expression from prefixed string
-export function extractExpression(value: string): string {
-  return value
-    .slice(EXPRESSION_PREFIX.length)
-    .replace("}", "")
-    .replace("{", "");
-}
+/**
+ * Extracts an expression from the prefixed format
+ * Handles expressions like "e.{time * 0.5}" by removing the prefix and braces
+ */
+export const extractExpression = (expression: string): string => {
+  if (!expression.startsWith(EXPRESSION_PREFIX)) {
+    return expression;
+  }
+
+  // Remove the "e." prefix and any braces
+  let result = expression.slice(EXPRESSION_PREFIX.length);
+  if (result.startsWith("{") && result.endsWith("}")) {
+    result = result.slice(1, -1);
+  }
+  return result;
+};
 
 export const $String = z.string();
 export type String = z.infer<typeof $String>;
@@ -128,7 +137,7 @@ export function isFloat(value: unknown): value is Float {
 }
 
 export function isNumber(value: unknown): value is Number {
-  return typeof value === "number";
+  return typeof value === "number" && !isNaN(value);
 }
 
 export function isExpression(value: unknown): value is Expression {
