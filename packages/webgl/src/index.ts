@@ -135,13 +135,8 @@ export type {
 
 export * from "./uniforms/handle";
 
-export {
-  getShaderSampler2DInputsForType,
-  isValidSampler2DHandleForType,
-  getSampler2DHandlesForType,
-  getDefaultSampler2DHandlesForType,
-  type ShaderSampler2DUniformRegistry as ShaderSampler2DRegistry,
-} from "./registry/shader-sampler2d-uniform-registry";
+export { getShaderSampler2DInputsForType } from "./registry/sampler2d-registry";
+export { type ShaderSampler2DUniformRegistry as ShaderSampler2DRegistry } from "./registry/interfaces/sampler2d-registry-def";
 
 // Export registry functions
 export {
