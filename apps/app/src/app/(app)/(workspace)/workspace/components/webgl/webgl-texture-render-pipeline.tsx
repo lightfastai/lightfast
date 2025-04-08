@@ -39,19 +39,35 @@ export const WebGLTextureRenderPipeline = () => {
 
   // Get noise nodes using the grouped noise targets and texture data
   const noiseNodes = useUpdateTextureNoise({
-    textureDataMap,
+    textureDataMap: Object.fromEntries(
+      Object.entries(textureDataMap).filter(
+        ([_, texture]) => texture.type === "Noise",
+      ),
+    ),
   });
 
   const limitNodes = useUpdateTextureLimit({
-    textureDataMap,
+    textureDataMap: Object.fromEntries(
+      Object.entries(textureDataMap).filter(
+        ([_, texture]) => texture.type === "Limit",
+      ),
+    ),
   });
 
   const displaceNodes = useUpdateTextureDisplace({
-    textureDataMap,
+    textureDataMap: Object.fromEntries(
+      Object.entries(textureDataMap).filter(
+        ([_, texture]) => texture.type === "Displace",
+      ),
+    ),
   });
 
   const addNodes = useUpdateTextureAdd({
-    textureDataMap,
+    textureDataMap: Object.fromEntries(
+      Object.entries(textureDataMap).filter(
+        ([_, texture]) => texture.type === "Add",
+      ),
+    ),
   });
 
   // Get all nodes (can add more types here later)

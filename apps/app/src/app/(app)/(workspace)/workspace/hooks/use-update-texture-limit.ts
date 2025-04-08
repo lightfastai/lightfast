@@ -1,18 +1,18 @@
+import type * as THREE from "three";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import * as THREE from "three";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { LimitTexture, Texture } from "@vendor/db/types";
 import {
-  baseVertexShader,
-  isExpression,
-  limitFragmentShader,
-} from "@repo/webgl";
+  updateSamplerUniforms,
+  updateUniforms,
+  useShaderOrchestrator,
+} from "@repo/threejs";
+import { $Shaders, isExpression, LIMIT_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useConnectionCache } from "./use-connection-cache";
 import { useExpressionEvaluator } from "./use-expression-evaluator";
-import { useShaderCache } from "./use-shader-cache";
 
 export interface UpdateTextureLimitProps {
   textureDataMap: Record<string, Texture>;
@@ -28,30 +28,18 @@ const getTextureFromTargets = (
   return sourceId && targets[sourceId] ? targets[sourceId].texture : null;
 };
 
-/**
- * Create a new shader material for limit texture
- */
-const createLimitShaderMaterial = (quantizationSteps = 8) => {
-  return new THREE.ShaderMaterial({
-    vertexShader: baseVertexShader,
-    fragmentShader: limitFragmentShader,
-    uniforms: {
-      u_texture1: { value: null },
-      u_quantizationSteps: { value: quantizationSteps },
-    },
-  });
-};
-
 export const useUpdateTextureLimit = ({
   textureDataMap,
 }: UpdateTextureLimitProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
-  const { createShader, getShader, hasShader } = useShaderCache();
   const { updateShaderUniforms } = useExpressionEvaluator();
+  const { getShader, releaseShader } = useShaderOrchestrator(
+    $Shaders.enum.Limit,
+  );
 
-  // Create a reference to track shader instances
-  const shaderInstancesRef = useRef<Record<string, THREE.ShaderMaterial>>({});
+  // Store uniform configurations per texture ID
+  const uniformConfigsRef = useRef<Record<string, Record<string, unknown>>>({});
 
   // Create a reference to track render target nodes
   const renderTargetNodesRef = useRef<Record<string, WebGLRenderTargetNode>>(
@@ -71,10 +59,7 @@ export const useUpdateTextureLimit = ({
     (shader: THREE.ShaderMaterial, id: string): void => {
       const sourceId = getSourceForTarget(id);
       const texture = getTextureFromTargets(sourceId, targets);
-
-      if (shader.uniforms.u_texture1) {
-        shader.uniforms.u_texture1.value = texture;
-      }
+      updateSamplerUniforms(shader, { u_texture1: texture });
     },
     [getSourceForTarget, targets],
   );
@@ -98,154 +83,65 @@ export const useUpdateTextureLimit = ({
   );
 
   /**
-   * Update numeric uniforms for a shader
+   * Apply uniforms for a specific texture ID to its shader
    */
-  const updateNumericUniforms = useCallback(
-    (shader: THREE.ShaderMaterial, texture: LimitTexture): void => {
-      const { uniforms: u } = texture;
+  const applyTextureUniforms = useCallback(
+    (id: string): void => {
+      const uniforms = uniformConfigsRef.current[id];
+      if (!uniforms) return;
 
-      if (
-        shader.uniforms.u_quantizationSteps &&
-        typeof u.u_quantizationSteps === "number"
-      ) {
-        shader.uniforms.u_quantizationSteps.value = u.u_quantizationSteps;
-      }
+      // Get the shader
+      const sharedShaderMaterial = getShader();
+
+      // Apply stored uniforms to the material
+      updateUniforms(sharedShaderMaterial, uniforms, LIMIT_UNIFORM_CONSTRAINTS);
+
+      // Apply texture connection
+      updateTextureConnection(sharedShaderMaterial, id);
     },
-    [],
-  );
-
-  /**
-   * Initializes a shader with uniforms and texture connections
-   */
-  const initializeShader = useCallback(
-    (shader: THREE.ShaderMaterial, id: string, texture: LimitTexture): void => {
-      // Update numeric uniforms
-      updateNumericUniforms(shader, texture);
-
-      // Set texture connection
-      updateTextureConnection(shader, id);
-
-      // Store expressions for this texture
-      storeExpressions(id, texture);
-    },
-    [updateNumericUniforms, updateTextureConnection, storeExpressions],
-  );
-
-  /**
-   * Get a shader from cache or create a new one
-   */
-  const getExistingShader = useCallback(
-    (id: string): THREE.ShaderMaterial | null => {
-      // Check if already created in this component instance
-      if (shaderInstancesRef.current[id]) {
-        return shaderInstancesRef.current[id];
-      }
-
-      // Check if exists in shader cache
-      if (hasShader(id)) {
-        const shader = getShader(id);
-        if (shader) {
-          shaderInstancesRef.current[id] = shader;
-          return shader;
-        }
-      }
-
-      return null;
-    },
-    [getShader, hasShader],
-  );
-
-  /**
-   * Creates a new shader and initializes it
-   */
-  const createAndInitShader = useCallback(
-    (id: string, texture: LimitTexture): THREE.ShaderMaterial => {
-      const { uniforms: u } = texture;
-
-      // Use numeric value or default
-      const quantizationSteps =
-        typeof u.u_quantizationSteps === "number" ? u.u_quantizationSteps : 8;
-
-      // Create new shader
-      const shader = createShader(id, () =>
-        createLimitShaderMaterial(quantizationSteps),
-      );
-
-      // Store reference to the created shader
-      shaderInstancesRef.current[id] = shader;
-
-      // Initialize shader with uniform values and texture connections
-      initializeShader(shader, id, texture);
-
-      return shader;
-    },
-    [createShader, initializeShader],
-  );
-
-  /**
-   * Create or get shader and ensure it's initialized with correct uniforms
-   */
-  const getOrCreateShader = useCallback(
-    (id: string, texture: LimitTexture): THREE.ShaderMaterial => {
-      // Try to get existing shader
-      const existingShader = getExistingShader(id);
-      if (existingShader) {
-        return existingShader;
-      }
-
-      // Create new shader if not found
-      return createAndInitShader(id, texture);
-    },
-    [getExistingShader, createAndInitShader],
+    [getShader, updateTextureConnection],
   );
 
   /**
    * Update a single texture with its current data
    */
   const updateSingleTexture = useCallback(
-    (id: string, texture: LimitTexture): void => {
-      // Get the shader (will create if it doesn't exist)
-      const shader = getOrCreateShader(id, texture);
+    (id: string, texture: Texture): void => {
+      const limitTexture = texture as LimitTexture;
 
-      // Update uniforms with latest values
-      updateNumericUniforms(shader, texture);
+      // Store the uniform configuration for this texture
+      uniformConfigsRef.current[id] = limitTexture.uniforms;
 
-      // Update texture connection
-      updateTextureConnection(shader, id);
-
-      // Store expressions
-      storeExpressions(id, texture);
+      // Store expressions for this texture
+      storeExpressions(id, limitTexture);
     },
-    [
-      getOrCreateShader,
-      updateNumericUniforms,
-      updateTextureConnection,
-      storeExpressions,
-    ],
+    [storeExpressions],
   );
 
   /**
    * Create or get a cached WebGLRenderTargetNode for a texture
    */
   const getOrCreateRenderTargetNode = useCallback(
-    (id: string, texture: LimitTexture): WebGLRenderTargetNode => {
+    (id: string, texture: Texture): WebGLRenderTargetNode => {
       // If we already have a node for this id, reuse it
       if (renderTargetNodesRef.current[id]) {
         return renderTargetNodesRef.current[id];
       }
 
-      // Get or create the shader
-      const shader = getOrCreateShader(id, texture);
+      // Update texture uniform configuration
+      updateSingleTexture(id, texture);
 
       const node: WebGLRenderTargetNode = {
         id,
-        shader,
+        get shader() {
+          return getShader();
+        },
         onEachFrame: (state: WebGLRootState) => {
           // Get expressions for this node
           const expressions = expressionsRef.current[id] || {};
 
-          // Update the texture reference
-          updateTextureConnection(shader, id);
+          // Apply this texture's uniforms before rendering
+          applyTextureUniforms(id);
 
           // Define mapping for uniform components
           const uniformPathMap = {
@@ -255,7 +151,7 @@ export const useUpdateTextureLimit = ({
           };
 
           // Use the shared uniform update utility
-          updateShaderUniforms(state, shader, expressions, uniformPathMap);
+          updateShaderUniforms(state, getShader(), expressions, uniformPathMap);
         },
       };
 
@@ -264,11 +160,32 @@ export const useUpdateTextureLimit = ({
 
       return node;
     },
-    [getOrCreateShader, updateTextureConnection, updateShaderUniforms],
+    [
+      updateSingleTexture,
+      getShader,
+      applyTextureUniforms,
+      updateShaderUniforms,
+    ],
   );
 
   // Update textures and track active IDs whenever texture data changes
   useEffect(() => {
+    const hasTextures = Object.keys(textureDataMap).length > 0;
+
+    // Skip if no textures are present
+    if (!hasTextures) {
+      // Release the shader reference if we no longer have textures
+      releaseShader();
+
+      // Clean up all stored uniform configurations
+      uniformConfigsRef.current = {};
+
+      // Clean up all render target nodes
+      renderTargetNodesRef.current = {};
+
+      return;
+    }
+
     // Get the new set of active IDs
     const currentIds = new Set(
       Object.entries(textureDataMap)
@@ -303,23 +220,31 @@ export const useUpdateTextureLimit = ({
     // Remove unused nodes
     nodesToRemove.forEach((id) => {
       delete renderTargetNodesRef.current[id];
+      delete uniformConfigsRef.current[id];
+      delete expressionsRef.current[id];
     });
 
     // Update active IDs reference
     activeIdsRef.current = currentIds;
-  }, [textureDataMap, updateSingleTexture, getOrCreateRenderTargetNode]);
+  }, [
+    textureDataMap,
+    updateSingleTexture,
+    getOrCreateRenderTargetNode,
+    releaseShader,
+  ]);
 
   // Return the render target nodes with stable references
   return useMemo(() => {
-    // Filter the texture data map to only include Limit textures
-    return Object.entries(textureDataMap)
-      .filter((entry): entry is [string, LimitTexture] => {
-        const [_, texture] = entry;
-        return texture.type === "Limit";
-      })
-      .map(([id, texture]) => {
-        // Always ensure the node exists in our cache
-        return getOrCreateRenderTargetNode(id, texture);
-      });
+    // If no textures exist, return an empty array
+    if (Object.keys(textureDataMap).length === 0) {
+      return [];
+    }
+
+    // Create an array of nodes from the current texture data map
+    // This guarantees that we have nodes for all current textures
+    return Object.entries(textureDataMap).map(([id, texture]) => {
+      // Always ensure the node exists in our cache
+      return getOrCreateRenderTargetNode(id, texture);
+    });
   }, [textureDataMap, getOrCreateRenderTargetNode]);
 };
