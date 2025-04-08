@@ -4,7 +4,7 @@ import type { ShaderMaterial } from "three";
 import { useCallback } from "react";
 
 import type { Vec2 } from "@repo/webgl";
-import { ValueType } from "@repo/webgl";
+import { $ValueType } from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
 import { ExpressionAdapterFactory } from "./expression-evaluator/expression-adapters";
@@ -28,7 +28,7 @@ export function useVec2Uniform() {
       value: Vec2,
     ) => {
       // Get the adapter for Vec2 values
-      const adapter = ExpressionAdapterFactory.getAdapter(ValueType.Vec2);
+      const adapter = ExpressionAdapterFactory.getAdapter($ValueType.enum.Vec2);
 
       // Skip if the uniform doesn't exist
       if (!shader.uniforms[uniformName]) return;

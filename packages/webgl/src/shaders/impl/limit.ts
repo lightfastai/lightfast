@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
-import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { $Float, $Sampler2D, ValueType } from "../types/uniforms";
+import type { Sampler2DMetadata, UniformFieldValue } from "../field";
+import { createSampler2DHandle } from "../../uniforms/handle";
+import { $ValueType } from "../enums/values";
+import { $Float, $Sampler2D } from "../uniforms";
 
 export const limitInputHandle = createSampler2DHandle("input-1", "u_texture1");
 
@@ -23,7 +24,7 @@ export const createDefaultLimit = (): LimitParams => {
 // Lookup table for limit uniform constraints
 export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
-    type: ValueType.Sampler2D,
+    type: $ValueType.enum.Sampler2D,
     label: "Input Texture",
     description: "The input texture to be limited",
     constraint: {
@@ -31,7 +32,7 @@ export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     } as Sampler2DMetadata,
   },
   u_quantizationSteps: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Quantization Steps",
     constraint: {
       value: { min: 1, max: 10, step: 0.1 },

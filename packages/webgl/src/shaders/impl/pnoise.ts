@@ -1,14 +1,14 @@
 import { z } from "zod";
 
-import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
-import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
+import type { Sampler2DMetadata, UniformFieldValue } from "../field";
+import { createSampler2DHandle } from "../../uniforms/handle";
+import { $ValueType } from "../enums/values";
 import {
   $Integer,
   $NumericValue,
   $Sampler2D,
   $Vec2Expression,
-  ValueType,
-} from "../types/uniforms";
+} from "../uniforms";
 
 export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
 
@@ -47,14 +47,14 @@ export const createDefaultPerlinNoise2D = (): PerlinNoise2DParams => {
 // Lookup table for pnoise uniform constraints
 export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
-    type: ValueType.Sampler2D,
+    type: $ValueType.enum.Sampler2D,
     label: "Blend Texture",
     constraint: {
       handle: noiseBlendHandle,
     } as Sampler2DMetadata,
   },
   u_scale: {
-    type: ValueType.Vec2,
+    type: $ValueType.enum.Vec2,
     label: "Scale",
     constraint: {
       x: { min: 0.1, max: 10, step: 0.1 },
@@ -62,7 +62,7 @@ export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     },
   },
   u_translate: {
-    type: ValueType.Vec2,
+    type: $ValueType.enum.Vec2,
     label: "Translate",
     constraint: {
       x: { min: -10, max: 10, step: 0.1 },
@@ -70,7 +70,7 @@ export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     },
   },
   u_rotation: {
-    type: ValueType.Vec2,
+    type: $ValueType.enum.Vec2,
     label: "Rotation",
     constraint: {
       x: { min: -180, max: 180, step: 1 },
@@ -78,49 +78,49 @@ export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     },
   },
   u_period: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Period",
     constraint: {
       value: { min: 0.1, max: 10, step: 0.1 },
     },
   },
   u_harmonics: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Harmonics",
     constraint: {
       value: { min: 1, max: 8, step: 1 },
     },
   },
   u_harmonic_gain: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Harmonic Gain",
     constraint: {
       value: { min: 0, max: 1, step: 0.1 },
     },
   },
   u_harmonic_spread: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Harmonic Spread",
     constraint: {
       value: { min: 1, max: 4, step: 0.1 },
     },
   },
   u_amplitude: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Amplitude",
     constraint: {
       value: { min: 0.1, max: 10, step: 0.1 },
     },
   },
   u_offset: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Offset",
     constraint: {
       value: { min: -1, max: 1, step: 0.1 },
     },
   },
   u_exponent: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Exponent",
     constraint: {
       value: { min: 0, max: 10, step: 0.1 },

@@ -5,9 +5,10 @@ import type {
   Sampler2DMetadata,
   UniformFieldValue,
   Vec2FieldMetadata,
-} from "../types/field";
-import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { $Float, $Sampler2D, $Vec2Number, ValueType } from "../types/uniforms";
+} from "../field";
+import { createSampler2DHandle } from "../../uniforms/handle";
+import { $ValueType } from "../enums/values";
+import { $Float, $Sampler2D, $Vec2Number } from "../uniforms";
 
 // Create texture handles for the uniforms
 export const displaceSourceHandle = createSampler2DHandle(
@@ -44,7 +45,7 @@ export const createDefaultDisplace = (): DisplaceParams => {
 // Lookup table for displace uniform constraints
 export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
-    type: ValueType.Sampler2D,
+    type: $ValueType.enum.Sampler2D,
     label: "Source Texture",
     description: "The source texture to be displaced",
     constraint: {
@@ -52,7 +53,7 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     } as Sampler2DMetadata,
   },
   u_texture2: {
-    type: ValueType.Sampler2D,
+    type: $ValueType.enum.Sampler2D,
     label: "Displacement Map",
     description: "The displacement map texture",
     constraint: {
@@ -60,14 +61,14 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     } as Sampler2DMetadata,
   },
   u_displaceWeight: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Displacement Weight",
     constraint: {
       value: { min: 0, max: 10, step: 0.1 },
     } as NumericValueMetadata,
   },
   u_displaceMidpoint: {
-    type: ValueType.Vec2,
+    type: $ValueType.enum.Vec2,
     label: "Displacement Midpoint",
     constraint: {
       x: { min: 0, max: 1, step: 0.1 },
@@ -75,7 +76,7 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     } as Vec2FieldMetadata,
   },
   u_displaceOffset: {
-    type: ValueType.Vec2,
+    type: $ValueType.enum.Vec2,
     label: "Displacement Offset",
     constraint: {
       x: { min: 0, max: 1, step: 0.1 },
@@ -83,14 +84,14 @@ export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     } as Vec2FieldMetadata,
   },
   u_displaceOffsetWeight: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Displacement Offset Weight",
     constraint: {
       value: { min: 0, max: 10, step: 0.1 },
     } as NumericValueMetadata,
   },
   u_displaceUVWeight: {
-    type: ValueType.Vec2,
+    type: $ValueType.enum.Vec2,
     label: "Displacement UV Weight",
     constraint: {
       x: { min: 0, max: 2, step: 0.1 },

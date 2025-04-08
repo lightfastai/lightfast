@@ -4,7 +4,7 @@ import type { ShaderMaterial } from "three";
 import { useCallback } from "react";
 
 import type { NumericValue } from "@repo/webgl";
-import { ValueType } from "@repo/webgl";
+import { $ValueType } from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
 import { ExpressionAdapterFactory } from "./expression-evaluator/expression-adapters";
@@ -28,7 +28,9 @@ export function useNumericUniform() {
       value: NumericValue,
     ) => {
       // Get the adapter for numeric values
-      const adapter = ExpressionAdapterFactory.getAdapter(ValueType.Numeric);
+      const adapter = ExpressionAdapterFactory.getAdapter(
+        $ValueType.enum.Numeric,
+      );
 
       // Skip if the uniform doesn't exist
       if (!shader.uniforms[uniformName]) return;

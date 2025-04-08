@@ -1,35 +1,29 @@
+import { baseVertexShader } from "../shaders/base-vert-shader";
+import { $Shaders } from "../shaders/enums/shaders";
 import {
   $Add,
   ADD_UNIFORM_CONSTRAINTS,
   addFragmentShader,
   createDefaultAdd,
-} from "../shaders/add";
-import { baseVertexShader } from "../shaders/base-vert-shader";
-import {
-  $Blur,
-  BLUR_UNIFORM_CONSTRAINTS,
-  blurFragmentShader,
-  createDefaultBlur,
-} from "../shaders/blur";
+} from "../shaders/impl/add";
 import {
   $Displace,
   createDefaultDisplace,
   DISPLACE_UNIFORM_CONSTRAINTS,
   displaceFragmentShader,
-} from "../shaders/displace";
+} from "../shaders/impl/displace";
 import {
   $Limit,
   createDefaultLimit,
   LIMIT_UNIFORM_CONSTRAINTS,
   limitFragmentShader,
-} from "../shaders/limit";
+} from "../shaders/impl/limit";
 import {
   $PerlinNoise2D,
   createDefaultPerlinNoise2D,
   PNOISE_UNIFORM_CONSTRAINTS,
   pnoiseFragmentShader,
-} from "../shaders/pnoise";
-import { $Shaders } from "../types/shaders-types";
+} from "../shaders/impl/pnoise";
 import { createShaderDefinition, registerShader } from "./shader-registry";
 
 /**
@@ -81,18 +75,6 @@ export function registerBuiltInShaders(): void {
       $PerlinNoise2D,
       PNOISE_UNIFORM_CONSTRAINTS,
       createDefaultPerlinNoise2D,
-    ),
-  );
-
-  // Register Blur shader
-  registerShader(
-    createShaderDefinition(
-      $Shaders.enum.Blur,
-      baseVertexShader,
-      blurFragmentShader,
-      $Blur,
-      BLUR_UNIFORM_CONSTRAINTS,
-      createDefaultBlur,
     ),
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
+import type { VectorMode } from "@repo/webgl";
 import { Label } from "@repo/ui/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@repo/ui/components/ui/radio-group";
 import { cn } from "@repo/ui/lib/utils";
-import { VectorMode } from "@repo/webgl";
+import { $VectorMode } from "@repo/webgl";
 
 interface VecModeToggleProps {
   mode: VectorMode;
@@ -37,13 +38,13 @@ export function VecModeToggle({
             htmlFor={`${id}-number-mode`}
             className={cn(
               "flex cursor-pointer items-center justify-center rounded-sm px-2 py-0.5 text-xs font-medium",
-              mode === VectorMode.Number
+              mode === $VectorMode.enum.Number
                 ? "bg-sky-500 text-white"
                 : "text-muted-foreground",
             )}
           >
             <RadioGroupItem
-              value={VectorMode.Number}
+              value={$VectorMode.enum.Number}
               id={`${id}-number-mode`}
               disabled={disabled}
               className="sr-only"
@@ -54,13 +55,13 @@ export function VecModeToggle({
             htmlFor={`${id}-expression-mode`}
             className={cn(
               "flex cursor-pointer items-center justify-center rounded-sm px-2 py-0.5 text-xs font-medium",
-              mode === VectorMode.Expression
+              mode === $VectorMode.enum.Expression
                 ? "bg-orange-500 text-white"
                 : "text-muted-foreground",
             )}
           >
             <RadioGroupItem
-              value={VectorMode.Expression}
+              value={$VectorMode.enum.Expression}
               id={`${id}-expression-mode`}
               disabled={disabled}
               className="sr-only"

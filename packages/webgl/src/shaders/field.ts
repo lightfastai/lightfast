@@ -3,7 +3,7 @@
  * These types are used to specify the valid ranges and step sizes for uniform parameters.
  */
 
-import type { ShaderSampler2DUniform } from "./shader-sampler2d-uniform";
+import type { Sampler2DHandle } from "../uniforms/handle";
 import type { ValueType } from "./uniforms";
 
 export interface ValueFieldMetadata {
@@ -32,7 +32,7 @@ export interface Vec3FieldMetadata {
  */
 export interface Sampler2DMetadata {
   /** The texture handle for this field */
-  handle: ShaderSampler2DUniform;
+  handle: Sampler2DHandle;
 }
 
 export interface UniformFieldValue {
@@ -45,3 +45,28 @@ export interface UniformFieldValue {
     | Vec3FieldMetadata
     | Sampler2DMetadata;
 }
+
+/**
+ * Gets metadata for a numeric value field from a uniform constraints record.
+ * @param name - The name of the uniform.
+ * @param constraints - The record of uniform constraints.
+ * @returns An object with metadata for the value.
+ */
+export const getFieldMetadata = (
+  name: string,
+  constraints: Record<string, UniformFieldValue>,
+): UniformFieldValue | null => {
+  const constraint = constraints[name];
+
+  if (!constraint) {
+    // If the constraint is not found, return null
+    // Default fallback
+    return null;
+  }
+
+  return {
+    type: constraint.type,
+    label: constraint.label,
+    constraint: constraint.constraint,
+  };
+};

@@ -10,12 +10,12 @@ import { memo, useCallback } from "react";
 import type { UniformFieldValue, Value } from "@repo/webgl";
 import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
 import {
+  $ValueType,
+  $VectorMode,
   createExpressionString,
   expressionToNumericValue,
   getFieldMetadata,
   isExpression,
-  ValueType,
-  VectorMode,
 } from "@repo/webgl";
 
 import { BooleanInput } from "./primitives/boolean-input";
@@ -55,7 +55,7 @@ export const InspectorFormField = memo(
         //   console.log(fieldMetadata, field.value);
         // }
         switch (type) {
-          case ValueType.Numeric:
+          case $ValueType.enum.Numeric:
             return (
               <div className="flex flex-row gap-2">
                 <VecModeToggle
@@ -63,15 +63,14 @@ export const InspectorFormField = memo(
                   id={name}
                   mode={
                     isExpression(field.value)
-                      ? VectorMode.Expression
-                      : VectorMode.Number
+                      ? $VectorMode.enum.Expression
+                      : $VectorMode.enum.Number
                   }
                   onModeChange={(mode) => {
-                    if (mode === VectorMode.Expression) {
+                    if (mode === $VectorMode.enum.Expression) {
                       onValueChange(createExpressionString(field.value));
                     }
-
-                    if (mode === VectorMode.Number) {
+                    if (mode === $VectorMode.enum.Number) {
                       const numericValue = expressionToNumericValue(
                         field.value,
                       );
@@ -101,7 +100,7 @@ export const InspectorFormField = memo(
               </div>
             );
 
-          case ValueType.Vec2:
+          case $ValueType.enum.Vec2:
             return (
               <Vec2NumberInput
                 field={field as ControllerRenderProps<FieldValues, string>}
@@ -110,7 +109,7 @@ export const InspectorFormField = memo(
               />
             );
 
-          case ValueType.Vec3:
+          case $ValueType.enum.Vec3:
             return (
               <Vec3NumberInput
                 field={field as ControllerRenderProps<FieldValues, string>}
@@ -119,7 +118,7 @@ export const InspectorFormField = memo(
               />
             );
 
-          case ValueType.Boolean:
+          case $ValueType.enum.Boolean:
             return (
               <BooleanInput
                 field={field as ControllerRenderProps<FieldValues, string>}
@@ -127,7 +126,7 @@ export const InspectorFormField = memo(
               />
             );
 
-          case ValueType.Color:
+          case $ValueType.enum.Color:
             return (
               <ColorPickerField
                 field={field as ControllerRenderProps<FieldValues, string>}
@@ -135,7 +134,7 @@ export const InspectorFormField = memo(
               />
             );
 
-          case ValueType.String:
+          case $ValueType.enum.String:
             return (
               <StringInput
                 field={field as ControllerRenderProps<FieldValues, string>}
@@ -146,7 +145,7 @@ export const InspectorFormField = memo(
             return null;
         }
       },
-      [fieldMetadata, onValueChange],
+      [fieldMetadata, name, onValueChange],
     );
 
     return (

@@ -6,10 +6,11 @@ import type {
   NumericValue,
   Sampler2D,
   UniformFieldValue,
+  ValueType,
   Vec2,
   Vec3,
 } from "@repo/webgl";
-import { ValueType } from "@repo/webgl";
+import { $ValueType } from "@repo/webgl";
 
 export type R3FShaderUniformValue =
   | number
@@ -28,10 +29,10 @@ export interface UniformMetadata<T> {
 
 // Map ValueType enum to TypeScript types
 export interface UniformTypeMap {
-  [ValueType.Numeric]: NumericValue;
-  [ValueType.Vec2]: Vec2;
-  [ValueType.Vec3]: Vec3;
-  [ValueType.Sampler2D]: Sampler2D;
+  [$ValueType.enum.Numeric]: NumericValue;
+  [$ValueType.enum.Vec2]: Vec2;
+  [$ValueType.enum.Vec3]: Vec3;
+  [$ValueType.enum.Sampler2D]: Sampler2D;
 }
 
 export interface UniformAdapter<T, U extends R3FShaderUniformValue> {
@@ -98,13 +99,13 @@ export class R3FUniformAdapterFactory {
     uniformType: ValueType,
   ): UniformAdapter<unknown, R3FShaderUniformValue> {
     switch (uniformType) {
-      case ValueType.Numeric:
+      case $ValueType.enum.Numeric:
         return this.numericAdapter;
-      case ValueType.Vec2:
+      case $ValueType.enum.Vec2:
         return this.vec2Adapter;
-      case ValueType.Vec3:
+      case $ValueType.enum.Vec3:
         return this.vec3Adapter;
-      case ValueType.Sampler2D:
+      case $ValueType.enum.Sampler2D:
         return {
           toThreeUniform: (value) => ({ value: null }),
           fromThreeUniform: (uniform) => uniform.value,

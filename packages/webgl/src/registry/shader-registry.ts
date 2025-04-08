@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
-import type { UniformFieldValue } from "../types/field";
-import type { Shaders } from "../types/shaders-types";
+import type { Shaders } from "../shaders/enums/shaders";
+import type { UniformFieldValue } from "../shaders/field";
 
 /**
  * Generic type for Zod shader schema

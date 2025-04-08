@@ -1,49 +1,48 @@
-import type { Shaders } from "@/types/shaders-types";
-
-import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
-import type { ShaderSampler2DUniform } from "../types/shader-sampler2d-uniform";
+import type { Shaders } from "../shaders/enums/shaders";
+import type { Sampler2DMetadata, UniformFieldValue } from "../shaders/field";
+import type { Sampler2DHandle } from "../uniforms/handle";
+import { $ValueType } from "../shaders/enums/values";
 import {
   ADD_UNIFORM_CONSTRAINTS,
   addInput1Handle,
   addInput2Handle,
-} from "../shaders/add";
+} from "../shaders/impl/add";
 import {
   DISPLACE_UNIFORM_CONSTRAINTS,
   displaceMapHandle,
   displaceSourceHandle,
-} from "../shaders/displace";
-import { LIMIT_UNIFORM_CONSTRAINTS, limitInputHandle } from "../shaders/limit";
+} from "../shaders/impl/displace";
+import {
+  LIMIT_UNIFORM_CONSTRAINTS,
+  limitInputHandle,
+} from "../shaders/impl/limit";
 import {
   noiseBlendHandle,
   PNOISE_UNIFORM_CONSTRAINTS,
-} from "../shaders/pnoise";
-import { ValueType } from "../types/uniforms";
+} from "../shaders/impl/pnoise";
 
 /**
  * Registry entry for a texture type
  */
 export interface ShaderSampler2DUniformRegistry {
   /** Available texture handles for this type */
-  handles: ShaderSampler2DUniform[];
+  handles: Sampler2DHandle[];
   /** Default uniforms for this type */
-  defaultUniforms: Record<string, ShaderSampler2DUniform>;
+  defaultUniforms: Record<string, Sampler2DHandle>;
   /** Metadata for each texture input */
   inputs: Sampler2DMetadata[];
   /** Validates if a source texture type can be connected to a handle */
-  validateConnection: (
-    handle: ShaderSampler2DUniform,
-    sourceType: string,
-  ) => boolean;
+  validateConnection: (handle: Sampler2DHandle, sourceType: string) => boolean;
 }
 
 /**
  * Create sampler2D field metadata from uniform constraints
  */
 export function createSampler2DFieldMetadata(
-  handle: ShaderSampler2DUniform,
+  handle: Sampler2DHandle,
   constraint: UniformFieldValue,
 ): Sampler2DMetadata {
-  if (constraint.type !== ValueType.Sampler2D) {
+  if (constraint.type !== $ValueType.enum.Sampler2D) {
     throw new Error(`Invalid constraint type for handle ${handle.handleId}`);
   }
   return {
@@ -149,7 +148,7 @@ export function getShaderSampler2DInputsForType(
  */
 export function isValidSampler2DHandleForType(
   textureType: Shaders,
-  handle: ShaderSampler2DUniform,
+  handle: Sampler2DHandle,
 ): boolean {
   const entry = textureInputRegistry[textureType];
   return entry.handles.some(
@@ -163,7 +162,7 @@ export function isValidSampler2DHandleForType(
  */
 export function getSampler2DHandlesForType(
   textureType: Shaders,
-): ShaderSampler2DUniform[] {
+): Sampler2DHandle[] {
   return textureInputRegistry[textureType].handles;
 }
 
@@ -172,6 +171,6 @@ export function getSampler2DHandlesForType(
  */
 export function getDefaultSampler2DHandlesForType(
   textureType: Shaders,
-): Record<string, ShaderSampler2DUniform> {
+): Record<string, Sampler2DHandle> {
   return textureInputRegistry[textureType].defaultUniforms;
 }

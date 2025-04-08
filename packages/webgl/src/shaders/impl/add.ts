@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-import type { Sampler2DMetadata, UniformFieldValue } from "../types/field";
-import { createSampler2DHandle } from "../types/shader-sampler2d-uniform";
-import { $Boolean, $Float, $Sampler2D, ValueType } from "../types/uniforms";
+import type { Sampler2DMetadata, UniformFieldValue } from "../field";
+import { createSampler2DHandle } from "../../uniforms/handle";
+import { $ValueType } from "../enums/values";
+import { $Boolean, $Float, $Sampler2D } from "../uniforms";
 
 // Create texture handles for the uniforms
 export const addInput1Handle = createSampler2DHandle("input-1", "u_texture1");
@@ -32,7 +33,7 @@ export const createDefaultAdd = (): AddParams => {
 // Lookup table for add uniform constraints
 export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture1: {
-    type: ValueType.Sampler2D,
+    type: $ValueType.enum.Sampler2D,
     description: "The first input texture (A)",
     label: "Input A",
     constraint: {
@@ -40,7 +41,7 @@ export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     } as Sampler2DMetadata,
   },
   u_texture2: {
-    type: ValueType.Sampler2D,
+    type: $ValueType.enum.Sampler2D,
     description: "The second input texture (B)",
     label: "Input B",
     constraint: {
@@ -48,14 +49,14 @@ export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
     } as Sampler2DMetadata,
   },
   u_addValue: {
-    type: ValueType.Numeric,
+    type: $ValueType.enum.Numeric,
     label: "Add Value",
     constraint: {
       value: { min: -1, max: 1, step: 0.1 },
     },
   },
   u_enableMirror: {
-    type: ValueType.Boolean,
+    type: $ValueType.enum.Boolean,
     label: "Enable Mirror",
   },
 };

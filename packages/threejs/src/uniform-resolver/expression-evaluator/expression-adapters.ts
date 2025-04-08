@@ -3,8 +3,8 @@
 import type { IUniform } from "three";
 import * as THREE from "three";
 
-import type { NumericValue, Vec2, Vec3 } from "@repo/webgl";
-import { isExpression, ValueType } from "@repo/webgl";
+import type { NumericValue, ValueType, Vec2, Vec3 } from "@repo/webgl";
+import { $ValueType, isExpression } from "@repo/webgl";
 
 import type { R3FShaderUniformValue } from "../../types/shader-uniforms";
 
@@ -148,11 +148,11 @@ export class ExpressionAdapterFactory {
     uniformType: ValueType,
   ): ExpressionAdapter<unknown, R3FShaderUniformValue> {
     switch (uniformType) {
-      case ValueType.Numeric:
+      case $ValueType.enum.Numeric:
         return this.numericAdapter;
-      case ValueType.Vec2:
+      case $ValueType.enum.Vec2:
         return this.vec2Adapter;
-      case ValueType.Vec3:
+      case $ValueType.enum.Vec3:
         return this.vec3Adapter;
       default:
         throw new Error(

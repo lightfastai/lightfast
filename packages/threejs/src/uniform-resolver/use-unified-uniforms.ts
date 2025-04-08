@@ -4,8 +4,9 @@ import type { ShaderMaterial } from "three";
 import type * as THREE from "three";
 import { useCallback } from "react";
 
-import type { UniformFieldValue } from "@repo/webgl";
+import type { UniformFieldValue, ValueType } from "@repo/webgl";
 import {
+  $ValueType,
   isBoolean,
   isColor,
   isNumericValue,
@@ -13,7 +14,6 @@ import {
   isString,
   isVec2,
   isVec3,
-  ValueType,
 } from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
@@ -37,16 +37,16 @@ export function useUnifiedUniforms() {
    * Determines the ValueType of a given uniform value
    */
   const determineValueType = useCallback((value: unknown): ValueType => {
-    if (isNumericValue(value)) return ValueType.Numeric;
-    if (isVec2(value)) return ValueType.Vec2;
-    if (isVec3(value)) return ValueType.Vec3;
-    if (isBoolean(value)) return ValueType.Boolean;
-    if (isColor(value)) return ValueType.Color;
-    if (isString(value)) return ValueType.String;
-    if (isSampler2D(value)) return ValueType.Sampler2D;
+    if (isNumericValue(value)) return $ValueType.enum.Numeric;
+    if (isVec2(value)) return $ValueType.enum.Vec2;
+    if (isVec3(value)) return $ValueType.enum.Vec3;
+    if (isBoolean(value)) return $ValueType.enum.Boolean;
+    if (isColor(value)) return $ValueType.enum.Color;
+    if (isString(value)) return $ValueType.enum.String;
+    if (isSampler2D(value)) return $ValueType.enum.Sampler2D;
 
     // Default fallback
-    return ValueType.String;
+    return $ValueType.enum.String;
   }, []);
 
   /**
@@ -77,25 +77,25 @@ export function useUnifiedUniforms() {
 
         // Update based on value type
         switch (valueType) {
-          case ValueType.Numeric:
+          case $ValueType.enum.Numeric:
             if (isNumericValue(value)) {
               updateNumericUniform(state, shader, uniformName, value);
             }
             break;
 
-          case ValueType.Vec2:
+          case $ValueType.enum.Vec2:
             if (isVec2(value)) {
               updateVec2Uniform(state, shader, uniformName, value);
             }
             break;
 
-          case ValueType.Vec3:
+          case $ValueType.enum.Vec3:
             if (isVec3(value)) {
               updateVec3Uniform(state, shader, uniformName, value);
             }
             break;
 
-          case ValueType.Sampler2D:
+          case $ValueType.enum.Sampler2D:
             // Use the dedicated function for Sampler2D uniforms
             if (isSampler2D(value)) {
               updateSampler2DUniform(
@@ -107,9 +107,9 @@ export function useUnifiedUniforms() {
             }
             break;
 
-          case ValueType.Boolean:
-          case ValueType.Color:
-          case ValueType.String:
+          case $ValueType.enum.Boolean:
+          case $ValueType.enum.Color:
+          case $ValueType.enum.String:
             // Direct assignment for types without expressions
             shader.uniforms[uniformName].value = value;
             break;

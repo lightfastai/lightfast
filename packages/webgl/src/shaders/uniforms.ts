@@ -1,23 +1,10 @@
 import { z } from "zod";
 
+import type { VectorMode } from "./enums/vector-mode";
+import { $VectorMode } from "./enums/vector-mode";
+
 // Expression prefix for serialization
 export const EXPRESSION_PREFIX = "e.";
-
-// Vector mode enum
-export enum VectorMode {
-  Number = "number",
-  Expression = "expression",
-}
-
-export enum ValueType {
-  Numeric = "numeric",
-  Vec2 = "vec2",
-  Vec3 = "vec3",
-  Boolean = "boolean",
-  Color = "color",
-  String = "string",
-  Sampler2D = "sampler2d",
-}
 
 export const $Sampler2D = z.object({
   vuvID: z.number().nullable(),
@@ -188,35 +175,41 @@ export function isVec3(value: unknown): value is Vec3 {
 }
 
 export function getNumericValueMode(value: NumericValue): VectorMode {
-  return isExpression(value) ? VectorMode.Expression : VectorMode.Number;
+  return isExpression(value)
+    ? $VectorMode.enum.Expression
+    : $VectorMode.enum.Number;
 }
 
 // Vector mode detection functions
 export function getVec2Mode(vec: Vec2): VectorMode {
   // Since we enforce all components to be the same type, we only need to check one
-  return isExpression(vec.x) ? VectorMode.Expression : VectorMode.Number;
+  return isExpression(vec.x)
+    ? $VectorMode.enum.Expression
+    : $VectorMode.enum.Number;
 }
 
 export function getVec3Mode(vec: Vec3): VectorMode {
   // Since we enforce all components to be the same type, we only need to check one
-  return isExpression(vec.x) ? VectorMode.Expression : VectorMode.Number;
+  return isExpression(vec.x)
+    ? $VectorMode.enum.Expression
+    : $VectorMode.enum.Number;
 }
 
 // Helper functions to check specific modes
 export function isVec2Expression(vec: Vec2): boolean {
-  return getVec2Mode(vec) === VectorMode.Expression;
+  return getVec2Mode(vec) === $VectorMode.enum.Expression;
 }
 
 export function isVec3Expression(vec: Vec3): boolean {
-  return getVec3Mode(vec) === VectorMode.Expression;
+  return getVec3Mode(vec) === $VectorMode.enum.Expression;
 }
 
 export function isVec2Number(vec: Vec2): boolean {
-  return getVec2Mode(vec) === VectorMode.Number;
+  return getVec2Mode(vec) === $VectorMode.enum.Number;
 }
 
 export function isVec3Number(vec: Vec3): boolean {
-  return getVec3Mode(vec) === VectorMode.Number;
+  return getVec3Mode(vec) === $VectorMode.enum.Number;
 }
 
 export const createDefaultVec3 = (): Vec3 => ({
