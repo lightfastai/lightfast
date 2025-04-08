@@ -1,4 +1,4 @@
-import type { ShaderDefinition, Shaders } from "@repo/webgl";
+import type { ShaderDefinition, Shaders, ShaderSchema } from "@repo/webgl";
 import { getAllShaderTypes, getShaderDefinition } from "@repo/webgl";
 
 import type { R3FShaderUniforms } from "../types/shader-uniforms";
@@ -11,15 +11,18 @@ import { createShaderSingleton } from "./shader-singleton-factory";
  * @param definition - The shader definition
  * @returns The default uniforms
  */
-const createDefaultUniformsFromDefinition = (
-  definition: ShaderDefinition<any>,
+const createDefaultUniformsFromDefinition = <TSchema extends ShaderSchema>(
+  definition: ShaderDefinition<TSchema>,
 ): R3FShaderUniforms => {
   const defaultValues = definition.createDefaultValues();
   return createUniformsFromSchema(defaultValues, definition.constraints);
 };
 
 // Map of all registered shader singletons
-const shaderRegistry: Record<string, ShaderSingleton> = {};
+const shaderRegistry: Record<Shaders, ShaderSingleton> = {} as Record<
+  Shaders,
+  ShaderSingleton
+>;
 
 // Dynamically build the shader registry from the webgl shader registry
 getAllShaderTypes().forEach((shaderType) => {
@@ -53,11 +56,6 @@ export const ShaderSingletonRegistry = {
    */
   getSingleton(type: Shaders): ShaderSingleton {
     const singleton = shaderRegistry[type];
-
-    if (!singleton) {
-      throw new Error(`Shader singleton not registered for type: ${type}`);
-    }
-
     return singleton;
   },
 
@@ -66,7 +64,7 @@ export const ShaderSingletonRegistry = {
    * @param type - The shader type
    * @param singleton - The singleton to register
    */
-  registerSingleton(type: string, singleton: ShaderSingleton): void {
+  registerSingleton(type: Shaders, singleton: ShaderSingleton): void {
     shaderRegistry[type] = singleton;
   },
 
@@ -75,7 +73,7 @@ export const ShaderSingletonRegistry = {
    * @param type - The shader type
    * @returns True if registered, false otherwise
    */
-  isRegistered(type: string): boolean {
+  isRegistered(type: Shaders): boolean {
     return type in shaderRegistry;
   },
 };
