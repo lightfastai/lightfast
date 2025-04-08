@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 import * as fs from "fs";
 import { watch } from "fs/promises";
 import { createRequire } from "module";
@@ -151,6 +152,8 @@ function discoverShaders() {
 
     const results = [];
     const processingErrors = [];
+    const foundShaderNames = new Set();
+    const foundExportNames = new Set();
 
     for (const file of implFiles) {
       try {
@@ -158,20 +161,19 @@ function discoverShaders() {
         const content = fs.readFileSync(file, "utf-8");
 
         // Extract the shader name from SHADER_NAME constant
-        const nameConstMatch = content.match(
-          /const\s+SHADER_NAME\s*=\s*["'](\w+)["']/,
+        const nameConstMatch = /const\s+SHADER_NAME\s*=\s*["'](\w+)["']/.exec(
+          content,
         );
 
         // Look for shader definition pattern
-        const shaderDefMatch = content.match(
-          /export\s+const\s+(\w+(?:ShaderDefinition))\s*=/,
-        );
+        const shaderDefMatch =
+          /export\s+const\s+(\w+(?:ShaderDefinition))\s*=/.exec(content);
 
-        if (shaderDefMatch && shaderDefMatch[1]) {
+        if (shaderDefMatch?.[1]) {
           const exportName = shaderDefMatch[1];
           let name;
 
-          if (nameConstMatch && nameConstMatch[1]) {
+          if (nameConstMatch?.[1]) {
             name = nameConstMatch[1];
           } else {
             // Extract from definition name
@@ -184,15 +186,42 @@ function discoverShaders() {
             );
           }
 
+          // Check for duplicate shader names
+          if (foundShaderNames.has(name)) {
+            console.error(
+              `ERROR: Duplicate shader name '${name}' found in ${path.basename(file)}`,
+            );
+            console.error(
+              `Each shader must have a unique SHADER_NAME constant.`,
+            );
+            processingErrors.push(`Duplicate shader name: ${name}`);
+            continue;
+          }
+          foundShaderNames.add(name);
+
           // Create relative import path
           const relativePath = path
             .relative(outputDir, file)
             .replace(/\\/g, "/") // Normalize Windows paths
             .replace(/\.tsx?$/, ""); // Remove extension
 
+          // Create a unique import alias if the export name is a duplicate
+          let importAlias = exportName;
+          if (foundExportNames.has(exportName)) {
+            const fileSafeName = path
+              .basename(file, ".ts")
+              .replace(/[^a-zA-Z0-9]/g, "_"); // Replace non-alphanumeric with underscore
+            importAlias = `${exportName}_${fileSafeName}`;
+            console.warn(
+              `WARNING: Duplicate export name '${exportName}' found. Creating alias: ${importAlias}`,
+            );
+          }
+          foundExportNames.add(exportName);
+
           results.push({
             name,
             exportName,
+            importAlias,
             importPath: relativePath,
           });
 
@@ -286,14 +315,15 @@ function generateRegistryFile(shaders) {
 
   try {
     const imports = shaders
-      .map(
-        (shader) =>
-          `import { ${shader.exportName} } from "${shader.importPath}";`,
+      .map((shader) =>
+        shader.importAlias === shader.exportName
+          ? `import { ${shader.exportName} } from "${shader.importPath}";`
+          : `import { ${shader.exportName} as ${shader.importAlias} } from "${shader.importPath}";`,
       )
       .join("\n");
 
     const registrations = shaders
-      .map((shader) => `  registerShader(${shader.exportName});`)
+      .map((shader) => `  registerShader(${shader.importAlias});`)
       .join("\n");
 
     const content = `
