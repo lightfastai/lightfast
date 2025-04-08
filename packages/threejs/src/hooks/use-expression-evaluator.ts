@@ -1,12 +1,38 @@
+"use client";
+
 import type { IUniform, ShaderMaterial } from "three";
 import { useCallback, useRef } from "react";
 
-import type { WebGLRootState } from "@repo/threejs";
-import { extractExpression, isNumber } from "@repo/webgl";
+import type { WebGLRootState } from "../types/render";
 
-// Helper function to check if a value is a string (expression)
-export const isExpression = (value: any): value is string =>
+/**
+ * Type guard for checking if a value is a number
+ */
+export const isNumber = (value: unknown): value is number =>
+  typeof value === "number" && !isNaN(value);
+
+/**
+ * Type guard for checking if a value is a string expression
+ */
+export const isExpression = (value: unknown): value is string =>
   typeof value === "string" && value !== "";
+
+/**
+ * Type of the result from expression evaluation
+ */
+export type ExpressionResult = number | boolean;
+
+/**
+ * Typesafe context for expressions
+ */
+export interface ExpressionContext {
+  time: number;
+  delta: number;
+  elapsed: number;
+  frame: number;
+  fps: number;
+  [key: string]: any;
+}
 
 /**
  * Gets a value from a nested object using a dot-notation path
@@ -18,12 +44,20 @@ const getNestedValue = (obj: Record<string, any>, path: string): any => {
 };
 
 /**
+ * Extracts an expression from the prefixed format
+ * Handles expressions like "$time * 0.5" by removing the $ prefix
+ */
+export const extractExpression = (expression: string): string => {
+  return expression.startsWith("$") ? expression.slice(1) : expression;
+};
+
+/**
  * Evaluates a string expression with the provided context
  */
 export const evaluateExpression = (
   expression: string | number | boolean,
-  context: Record<string, any>,
-): number | boolean => {
+  context: ExpressionContext,
+): ExpressionResult => {
   // If it's already a number or boolean, return it directly
   if (isNumber(expression)) {
     return expression;
@@ -39,7 +73,7 @@ export const evaluateExpression = (
     // Replace variables with their values from context
     let evalExpression = extractedExpression;
 
-    // First, find all potential variable paths in the expression
+    // Find all potential variable paths in the expression
     const variableRegex = /\b[a-zA-Z_][a-zA-Z0-9_.]*\b/g;
     const matches = evalExpression.match(variableRegex) || [];
 
@@ -58,13 +92,8 @@ export const evaluateExpression = (
     const func = new Function("return " + evalExpression);
     const result = func();
 
-    // If the result is a boolean, return it as is
-    if (typeof result === "boolean") {
-      return result;
-    }
-
-    // Otherwise return as number
-    return Number(result);
+    // Return result with appropriate type
+    return typeof result === "boolean" ? result : Number(result);
   } catch (error) {
     console.error(
       "Error evaluating expression:",
@@ -80,12 +109,32 @@ export const evaluateExpression = (
 };
 
 /**
+ * Creates a time context object with current time values from Three.js
+ */
+export const createTimeContext = (
+  state: WebGLRootState,
+  frameCount = 0,
+): ExpressionContext => {
+  const elapsedTime = state.clock.elapsedTime;
+  const deltaTime = state.clock.getDelta();
+  const fps = state.frameloop === "always" ? 60 : 0; // Basic FPS estimate
+
+  return {
+    time: elapsedTime,
+    delta: deltaTime,
+    elapsed: elapsedTime,
+    frame: frameCount,
+    fps: fps,
+  };
+};
+
+/**
  * Updates numeric uniforms with expression values
  */
 const updateNumericUniforms = (
   shader: ShaderMaterial,
   expressionMap: Record<string, string | undefined>,
-  timeContext: Record<string, any>,
+  context: ExpressionContext,
 ) => {
   Object.entries(expressionMap).forEach(([uniformName, expression]) => {
     if (!expression) return;
@@ -95,8 +144,8 @@ const updateNumericUniforms = (
       | undefined;
     if (!uniform) return;
 
-    const value = evaluateExpression(expression, timeContext);
-    uniform.value = value;
+    const value = evaluateExpression(expression, context);
+    uniform.value = typeof value === "boolean" ? (value ? 1 : 0) : value;
   });
 };
 
@@ -107,13 +156,14 @@ const updateVectorUniforms = (
   shader: ShaderMaterial,
   expressionMap: Record<string, string | undefined>,
   uniformMap: Record<string, { pathToValue: string }>,
-  timeContext: Record<string, any>,
+  context: ExpressionContext,
 ) => {
   Object.entries(uniformMap).forEach(([expressionKey, config]) => {
     const expression = expressionMap[expressionKey];
     if (!expression) return;
 
-    const value = evaluateExpression(expression, timeContext);
+    const value = evaluateExpression(expression, context);
+    const numericValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
 
     // Navigate to the target property using the path
     const parts = config.pathToValue.split(".");
@@ -123,6 +173,8 @@ const updateVectorUniforms = (
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
       if (!current || typeof current !== "object") return;
+      // Make sure part is a valid key
+      if (!part || !(part in current)) return;
       const next = current[part];
       if (!next || typeof next !== "object") return;
       current = next;
@@ -131,48 +183,13 @@ const updateVectorUniforms = (
     // Set the value at the target property
     const lastPart = parts[parts.length - 1];
     if (current.value && lastPart && typeof current.value === "object") {
-      (current.value as Record<string, number>)[lastPart] = Number(value);
+      (current.value as Record<string, number>)[lastPart] = numericValue;
     }
   });
 };
 
 /**
- * Creates a time context object with current time values
- */
-export const createTimeContext = (
-  state: WebGLRootState,
-  frameCount = 0,
-): Record<string, any> => {
-  const elapsedTime = state.clock.elapsedTime;
-  const deltaTime = state.clock.getDelta();
-  const fps = state.frameloop === "always" ? 60 : 0; // Basic FPS estimate
-
-  // Get current time
-  const now = new Date();
-
-  return {
-    time: elapsedTime,
-    delta: deltaTime,
-
-    me: {
-      time: {
-        now: elapsedTime,
-        delta: deltaTime,
-        elapsed: elapsedTime,
-
-        frame: frameCount,
-        fps: fps,
-
-        seconds: now.getSeconds() + now.getMilliseconds() / 1000,
-        minutes: now.getMinutes(),
-        hours: now.getHours(),
-      },
-    },
-  };
-};
-
-/**
- * Hook to handle expression evaluation for any texture type
+ * Hook for expression evaluation in Three.js context
  */
 export function useExpressionEvaluator() {
   // Track frame count for time context
@@ -183,10 +200,13 @@ export function useExpressionEvaluator() {
     frameCountRef.current += 1;
   }, []);
 
-  // Get the current time context
-  const getTimeContext = useCallback((state: WebGLRootState) => {
-    return createTimeContext(state, frameCountRef.current);
-  }, []);
+  // Get the current time context based on Three.js state
+  const getTimeContext = useCallback(
+    (state: WebGLRootState): ExpressionContext => {
+      return createTimeContext(state, frameCountRef.current);
+    },
+    [],
+  );
 
   // Evaluate an expression with the current time context
   const evaluate = useCallback(
@@ -199,7 +219,7 @@ export function useExpressionEvaluator() {
 
       const timeContext = getTimeContext(state);
       const result = evaluateExpression(expression, timeContext);
-      return typeof result === "boolean" ? 0 : result;
+      return typeof result === "boolean" ? (result ? 1 : 0) : result;
     },
     [getTimeContext],
   );

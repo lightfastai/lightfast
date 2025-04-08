@@ -3,6 +3,7 @@ import * as THREE from "three";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { AddTexture, Texture } from "@vendor/db/types";
+import { useExpressionEvaluator } from "@repo/threejs";
 import {
   addFragmentShader,
   baseVertexShader,
@@ -12,7 +13,6 @@ import {
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useConnectionCache } from "./use-connection-cache";
-import { useExpressionEvaluator } from "./use-expression-evaluator";
 import { useShaderCache } from "./use-shader-cache";
 
 export interface UpdateTextureAddProps {

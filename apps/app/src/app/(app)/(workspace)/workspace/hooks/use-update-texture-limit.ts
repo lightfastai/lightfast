@@ -4,15 +4,16 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { LimitTexture, Texture } from "@vendor/db/types";
 import {
+  isExpression,
   updateSamplerUniforms,
   updateUniforms,
+  useExpressionEvaluator,
   useShaderOrchestrator,
 } from "@repo/threejs";
-import { $Shaders, isExpression, LIMIT_UNIFORM_CONSTRAINTS } from "@repo/webgl";
+import { $Shaders, LIMIT_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useConnectionCache } from "./use-connection-cache";
-import { useExpressionEvaluator } from "./use-expression-evaluator";
 
 export interface UpdateTextureLimitProps {
   textureDataMap: Record<string, Texture>;
