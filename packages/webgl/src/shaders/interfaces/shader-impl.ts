@@ -1,6 +1,5 @@
 import type { z } from "zod";
 
-import type { Shaders } from "../enums/shaders";
 import type { UniformFieldValue } from "../field";
 
 /**
@@ -13,7 +12,7 @@ export type ShaderSchema = z.ZodObject<z.ZodRawShape>;
  */
 export interface ShaderDefinition<TSchema extends ShaderSchema = ShaderSchema> {
   /** The shader type */
-  type: Shaders;
+  type: string;
   /** The vertex shader code */
   vertexShader: string;
   /** The fragment shader code */
@@ -44,7 +43,7 @@ export function createShaderDefinition<TSchema extends ShaderSchema>({
   constraints,
   createDefaultValues,
 }: {
-  type: Shaders;
+  type: string;
   vertexShader: string;
   fragmentShader: string;
   schema: TSchema;

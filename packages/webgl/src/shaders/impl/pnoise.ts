@@ -3,7 +3,6 @@ import { z } from "zod";
 import type { Sampler2DMetadata, UniformFieldValue } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
-import { $Shaders } from "../enums/shaders";
 import { $ValueType } from "../enums/values";
 import { createShaderDefinition } from "../interfaces/shader-impl";
 import {
@@ -288,7 +287,7 @@ void main() {
 `;
 
 export const pnoiseShaderDefinition = createShaderDefinition({
-  type: $Shaders.enum.Noise,
+  type: "Pnoise",
   vertexShader: baseVertexShader,
   fragmentShader: pnoiseFragmentShader,
   schema: $PerlinNoise2D,

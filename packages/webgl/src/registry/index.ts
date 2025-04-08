@@ -2,10 +2,8 @@ import type {
   ShaderDefinition,
   ShaderSchema,
 } from "@/shaders/interfaces/shader-impl";
-import type { z } from "zod";
 
 import type { Shaders } from "../shaders/enums/shaders";
-import type { UniformFieldValue } from "../shaders/field";
 
 /**
  * Registry of shader definitions
@@ -14,34 +12,6 @@ export const shaderRegistry = new Map<
   Shaders,
   ShaderDefinition<ShaderSchema>
 >();
-
-/**
- * Helper function to create a type-safe shader definition
- * @param type - Shader type
- * @param vertexShader - Vertex shader code
- * @param fragmentShader - Fragment shader code
- * @param schema - Zod schema for validating shader uniforms
- * @param constraints - Uniform constraints for validation
- * @param createDefaultValues - Function to create default values for this shader
- * @returns A type-safe shader definition
- */
-export function createShaderDefinition<TSchema extends ShaderSchema>(
-  type: Shaders,
-  vertexShader: string,
-  fragmentShader: string,
-  schema: TSchema,
-  constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>,
-  createDefaultValues: () => z.infer<TSchema>,
-): ShaderDefinition<TSchema> {
-  return {
-    type,
-    vertexShader,
-    fragmentShader,
-    schema,
-    constraints,
-    createDefaultValues,
-  };
-}
 
 /**
  * Register a shader definition

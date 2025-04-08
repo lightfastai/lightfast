@@ -3,10 +3,11 @@ import { z } from "zod";
 import type { Sampler2DMetadata, UniformFieldValue } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
-import { $Shaders } from "../enums/shaders";
 import { $ValueType } from "../enums/values";
-import { createShaderDefinition } from "../interfaces/shader-impl";
 import { $Boolean, $Float, $Sampler2D } from "../uniforms";
+
+// Define the shader name for code generation
+const SHADER_NAME = "Add";
 
 // Create texture handles for the uniforms
 export const addInput1Handle = createSampler2DHandle("input-1", "u_texture1");
@@ -99,11 +100,12 @@ void main() {
 }
 `;
 
-export const addShaderDefinition = createShaderDefinition({
-  type: $Shaders.enum.Add,
+// Create the shader definition - will be picked up by code generation
+export const addShaderDefinition = {
+  type: SHADER_NAME,
   vertexShader: baseVertexShader,
   fragmentShader: addFragmentShader,
   schema: $Add,
   constraints: ADD_UNIFORM_CONSTRAINTS,
   createDefaultValues: createDefaultAdd,
-});
+};

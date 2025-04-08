@@ -1,7 +1,9 @@
-import { z } from "zod";
+// This file is kept for backwards compatibility
+// The actual enum values are generated at build time in generated/shader-enum.generated.ts
 
-export const $ShaderValues = ["Noise", "Limit", "Displace", "Add"] as const;
-
-export const $Shaders = z.enum($ShaderValues);
-
-export type Shaders = z.infer<typeof $Shaders>;
+// Re-export from generated file to maintain compatibility
+export {
+  $ShaderValues,
+  $Shaders,
+  type Shaders,
+} from "../../generated/shader-enum.generated";
