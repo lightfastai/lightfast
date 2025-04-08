@@ -20,3 +20,4 @@ export * from "./types/shader-uniforms";
  */
 export * from "./expression-evaluator/use-expression";
 export * from "./expression-evaluator/expression-adapters";
+export * from "./expression-evaluator/use-unified-uniforms";

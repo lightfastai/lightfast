@@ -6,9 +6,8 @@ import type { LimitParams } from "@repo/webgl";
 import type { LimitTexture, Texture } from "@vendor/db/types";
 import {
   updateSamplerUniforms,
-  updateUniforms,
-  useExpression,
   useShaderOrchestrator,
+  useUnifiedUniforms,
 } from "@repo/threejs";
 import { $Shaders, LIMIT_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
@@ -34,7 +33,8 @@ export const useUpdateTextureLimit = ({
 }: UpdateTextureLimitProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
-  const { updateUniformsFromConstraints } = useExpression();
+  // Use the new unified uniforms hook
+  const { updateAllUniforms } = useUnifiedUniforms();
   const { getShader, releaseShader } = useShaderOrchestrator(
     $Shaders.enum.Limit,
   );
@@ -60,26 +60,6 @@ export const useUpdateTextureLimit = ({
       updateSamplerUniforms(shader, { u_texture1: texture });
     },
     [getSourceForTarget, targets],
-  );
-
-  /**
-   * Apply uniforms for a specific texture ID to its shader
-   */
-  const applyTextureUniforms = useCallback(
-    (id: string): void => {
-      const uniforms = uniformConfigsRef.current[id];
-      if (!uniforms) return;
-
-      // Get the shader
-      const sharedShaderMaterial = getShader();
-
-      // Apply stored uniforms to the material
-      updateUniforms(sharedShaderMaterial, uniforms, LIMIT_UNIFORM_CONSTRAINTS);
-
-      // Apply texture connection
-      updateSampler2DConnection(sharedShaderMaterial, id);
-    },
-    [getShader, updateSampler2DConnection],
   );
 
   /**
@@ -121,18 +101,15 @@ export const useUpdateTextureLimit = ({
           const uniforms = uniformConfigsRef.current[id];
           if (!uniforms) return;
 
-          // Apply this texture's uniforms before rendering
-          applyTextureUniforms(id);
+          // Get the shader material
+          const shader = getShader();
 
-          // Use the new uniform update utility with automatic expression handling
-          // Only pass the numeric uniforms that can have expressions
-          updateUniformsFromConstraints(
-            state,
-            getShader(),
-            LIMIT_UNIFORM_CONSTRAINTS,
-            // Extract only the numeric values that can contain expressions
-            { u_quantizationSteps: uniforms.u_quantizationSteps },
-          );
+          // Apply texture connection
+          updateSampler2DConnection(shader, id);
+
+          // Use the unified approach to update all uniforms in one pass
+          // This handles both basic values and expressions
+          updateAllUniforms(state, shader, uniforms, LIMIT_UNIFORM_CONSTRAINTS);
         },
       };
 
@@ -144,8 +121,8 @@ export const useUpdateTextureLimit = ({
     [
       updateSingleTexture,
       getShader,
-      applyTextureUniforms,
-      updateUniformsFromConstraints,
+      updateSampler2DConnection,
+      updateAllUniforms,
     ],
   );
 
