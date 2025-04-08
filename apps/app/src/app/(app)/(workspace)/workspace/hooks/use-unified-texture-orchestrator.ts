@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { Shaders } from "@repo/webgl";
 import type { Texture } from "@vendor/db/types";
-import { useShaderOrchestrator, useUnifiedUniforms } from "@repo/threejs";
+import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, getShaderDefinition } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
@@ -35,34 +35,11 @@ export const useUnifiedTextureOrchestrator = ({
   const { getSourceForTarget } = useConnectionCache();
   const { updateAllUniforms } = useUnifiedUniforms();
 
-  // Initialize orchestrators for all shader types at the top level
   // Get all available shader types
   const shaderTypes = useMemo(() => getAllShaderTypes(), []);
 
-  // Create an orchestrator for each shader type
-  const noiseOrchestrator = useShaderOrchestrator("Noise");
-  const limitOrchestrator = useShaderOrchestrator("Limit");
-  const addOrchestrator = useShaderOrchestrator("Add");
-  const displaceOrchestrator = useShaderOrchestrator("Displace");
-  const blurOrchestrator = useShaderOrchestrator("Blur");
-
-  // Map the orchestrators to their respective shader types
-  const orchestrators = useMemo(() => {
-    const map: Record<string, ReturnType<typeof useShaderOrchestrator>> = {};
-    map.Noise = noiseOrchestrator;
-    map.Limit = limitOrchestrator;
-    map.Add = addOrchestrator;
-    map.Displace = displaceOrchestrator;
-    map.Blur = blurOrchestrator;
-
-    return map;
-  }, [
-    noiseOrchestrator,
-    limitOrchestrator,
-    addOrchestrator,
-    displaceOrchestrator,
-    blurOrchestrator,
-  ]);
+  // Get the map of shader orchestrators
+  const orchestrators = useShaderOrchestratorMap();
 
   // Store uniform configurations per texture ID
   const uniformConfigsRef = useRef<Record<string, Record<string, any>>>({});
@@ -173,8 +150,6 @@ export const useUnifiedTextureOrchestrator = ({
 
     // Skip if no textures are present
     if (!hasTextures) {
-      // No need to release shader references here - React will handle unmounting
-
       // Clean up all stored uniform configurations
       uniformConfigsRef.current = {};
 
@@ -186,19 +161,6 @@ export const useUnifiedTextureOrchestrator = ({
 
     // Get the new set of active IDs
     const currentIds = new Set(Object.keys(textureDataMap));
-
-    // Group textures by type for efficient processing
-    const texturesByType = Object.entries(textureDataMap).reduce(
-      (acc, [id, texture]) => {
-        const type = texture.type as Shaders;
-        if (!acc[type]) {
-          acc[type] = {};
-        }
-        acc[type][id] = texture;
-        return acc;
-      },
-      {} as Record<Shaders, Record<string, Texture>>,
-    );
 
     // Update all textures
     Object.entries(textureDataMap).forEach(([id, texture]) => {
