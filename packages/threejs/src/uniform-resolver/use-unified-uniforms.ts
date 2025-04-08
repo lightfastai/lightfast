@@ -17,17 +17,20 @@ import {
 } from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
-import { useExpression } from "../expression-evaluator/use-expression";
+import { useNumericUniform } from "./use-numeric-uniform";
 import { useSampler2D } from "./use-sampler2d";
+import { useVec2Uniform } from "./use-vec2-uniform";
+import { useVec3Uniform } from "./use-vec3-uniform";
 
 /**
  * Unified hook for updating all types of shader uniforms with expression support
  * Handles different uniform types and only updates each uniform once
  */
 export function useUnifiedUniforms() {
-  // Get expression evaluation functions from useExpression
-  const { updateNumericUniform, updateVec2Uniform, updateVec3Uniform } =
-    useExpression();
+  // Get specialized uniform update functions from dedicated hooks
+  const { updateNumericUniform } = useNumericUniform();
+  const { updateVec2Uniform } = useVec2Uniform();
+  const { updateVec3Uniform } = useVec3Uniform();
   const { updateSampler2DUniform } = useSampler2D();
 
   /**
@@ -40,8 +43,7 @@ export function useUnifiedUniforms() {
     if (isBoolean(value)) return ValueType.Boolean;
     if (isColor(value)) return ValueType.Color;
     if (isString(value)) return ValueType.String;
-    if (value && typeof value === "object" && "vuvID" in value)
-      return ValueType.Sampler2D;
+    if (isSampler2D(value)) return ValueType.Sampler2D;
 
     // Default fallback
     return ValueType.String;

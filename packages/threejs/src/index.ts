@@ -16,6 +16,6 @@ export * from "./hooks/use-shader-orchestrator";
 export * from "./types/shader-uniforms";
 
 /**
- * Uniform resolver
+ * Uniform resolvers for different uniform types with expression support
  */
 export * from "./uniform-resolver/use-unified-uniforms";

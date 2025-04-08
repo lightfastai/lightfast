@@ -1,7 +1,7 @@
 import type {
   ExpressionResult,
   ExpressionTimeContext,
-} from "@/expression-evaluator/types";
+} from "@/uniform-resolver/expression-evaluator/types";
 
 import {
   extractExpression,
@@ -10,8 +10,8 @@ import {
   isNumber,
 } from "@repo/webgl";
 
-import type { WebGLRootState } from "../types/render";
-import { getNestedValue } from "../hooks/utils";
+import type { WebGLRootState } from "../../types/render";
+import { getNestedValue } from "../../hooks/utils";
 
 /**
  * Evaluates a string expression with the provided context

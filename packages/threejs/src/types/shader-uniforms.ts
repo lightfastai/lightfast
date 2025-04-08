@@ -5,7 +5,6 @@ import * as THREE from "three";
 import type {
   NumericValue,
   Sampler2D,
-  ShaderSampler2DUniform,
   UniformFieldValue,
   Vec2,
   Vec3,
@@ -167,54 +166,4 @@ export function updateSamplerUniforms(
       shader.uniforms[key].value = texture;
     }
   }
-}
-
-/**
- * Check if a uniform name is a texture uniform (follows the u_textureN pattern)
- * @param uniformName The uniform name to check
- * @returns True if it's a texture uniform
- */
-export function isTextureUniform(uniformName: string): boolean {
-  return /^u_texture\d+$/.test(uniformName);
-}
-
-/**
- * Update shader uniforms with texture uniforms
- * @param shader The shader material to update
- * @param uniforms The uniforms object containing texture values
- * @param handles Array of texture handles defining the mapping
- */
-export function updateShaderUniforms(
-  shader: THREE.ShaderMaterial,
-  uniforms: R3FShaderUniforms,
-  handles: ShaderSampler2DUniform[],
-): void {
-  handles.forEach((handle) => {
-    const uniformName = handle.uniformName;
-    const uniform = uniforms[uniformName]?.value;
-    if (uniform && shader.uniforms[uniformName]) {
-      shader.uniforms[uniformName].value = uniform;
-    }
-  });
-}
-
-/**
- * Update shader texture uniforms directly from a map of handle IDs to textures
- * @param shader The shader material to update
- * @param textureMap Map of handle IDs to textures
- * @param handles Array of texture handles defining the mapping
- */
-export function updateShaderTextureUniforms(
-  shader: THREE.ShaderMaterial,
-  textureMap: Record<string, THREE.Texture | null>,
-  handles: ShaderSampler2DUniform[],
-): void {
-  handles.forEach((handle) => {
-    const { handleId, uniformName } = handle;
-    const texture = textureMap[handleId];
-
-    if (shader.uniforms[uniformName]) {
-      shader.uniforms[uniformName].value = texture;
-    }
-  });
 }
