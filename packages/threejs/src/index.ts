@@ -9,3 +9,4 @@ export * from "./types/render";
 export * from "./types/render";
 export * from "./types/geometry";
 export * from "./hooks/use-noise-shader-material-orchestrator";
+export * from "./shaders/utils";

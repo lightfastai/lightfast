@@ -1,6 +1,6 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
-import type { ShaderUniforms } from "@repo/webgl";
+import type { R3FShaderUniforms } from "@repo/webgl";
 import {
   baseVertexShader,
   createDefaultPerlinNoise2D,
@@ -9,10 +9,14 @@ import {
   pnoiseFragmentShader,
 } from "@repo/webgl";
 
+import { createR3FShaderMaterial } from "./utils";
+
+let instance: THREE.ShaderMaterial | null = null;
+
 /**
  * Create default uniforms for a perlin noise shader
  */
-const createDefaultNoiseUniforms = (): ShaderUniforms => {
+const createDefaultNoiseUniforms = (): R3FShaderUniforms => {
   const defaultValues = createDefaultPerlinNoise2D();
   return createUniformsFromSchema(defaultValues, PNOISE_UNIFORM_CONSTRAINTS);
 };
@@ -24,8 +28,6 @@ const createDefaultNoiseUniforms = (): ShaderUniforms => {
  * The shader material is lazily initialized only when first requested.
  */
 export const noiseShaderSingleton = (() => {
-  let instance: THREE.ShaderMaterial | null = null;
-
   return {
     /**
      * Get the shared noise shader material instance
@@ -34,11 +36,11 @@ export const noiseShaderSingleton = (() => {
     getInstance: (): THREE.ShaderMaterial => {
       if (!instance) {
         const baseUniforms = createDefaultNoiseUniforms();
-        instance = new THREE.ShaderMaterial({
-          vertexShader: baseVertexShader,
-          fragmentShader: pnoiseFragmentShader,
-          uniforms: baseUniforms,
-        });
+        instance = createR3FShaderMaterial(
+          baseVertexShader,
+          pnoiseFragmentShader,
+          baseUniforms,
+        );
       }
       return instance;
     },
@@ -69,9 +71,10 @@ export const noiseShaderSingleton = (() => {
       if (instance) {
         // Dispose uniforms that might hold textures or other disposable resources
         Object.values(instance.uniforms).forEach((uniform) => {
-          if (uniform.value instanceof THREE.Texture) {
-            uniform.value.dispose();
-          }
+          // @NOTE: This Texture is not meant to be disposed, as it's owned by the leading node
+          // if (uniform.value instanceof THREE.Texture) {
+          //   uniform.value.dispose();
+          // }
         });
 
         // Dispose the shader material itself

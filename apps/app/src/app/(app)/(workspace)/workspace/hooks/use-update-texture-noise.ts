@@ -3,14 +3,11 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { WebGLRenderTargetNode } from "@repo/threejs";
 import type { NoiseTexture, Texture } from "@vendor/db/types";
-import { useNoiseShaderMaterialOrchestrator } from "@repo/threejs";
 import {
-  isNumericValue,
-  isVec2,
-  PNOISE_UNIFORM_CONSTRAINTS,
-  UniformAdapterFactory,
-  ValueType,
-} from "@repo/webgl";
+  updateR3FShaderUniform,
+  useNoiseShaderMaterialOrchestrator,
+} from "@repo/threejs";
+import { PNOISE_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useConnectionCache } from "./use-connection-cache";
@@ -18,29 +15,6 @@ import { useConnectionCache } from "./use-connection-cache";
 export interface UpdateTextureNoiseProps {
   textureDataMap: Record<string, Texture>;
 }
-
-/**
- * Use the adapter factory to update a specific uniform
- */
-const updateUniform = (
-  shader: THREE.ShaderMaterial,
-  key: string,
-  value: unknown,
-  uniformType: ValueType,
-): void => {
-  if (!shader.uniforms[key]) return;
-
-  const adapter = UniformAdapterFactory.getAdapter(uniformType);
-  if (adapter) {
-    // Only update if value type matches expected type
-    if (
-      (uniformType === ValueType.Numeric && isNumericValue(value)) ||
-      (uniformType === ValueType.Vec2 && isVec2(value))
-    ) {
-      shader.uniforms[key] = adapter.toThreeUniform(value);
-    }
-  }
-};
 
 /**
  * Update texture uniform with null-safe handling
@@ -100,7 +74,7 @@ export const useUpdateTextureNoise = ({
         if (!constraint) return;
 
         // Update based on the uniform's ValueType
-        updateUniform(shader, key, value, constraint.type);
+        updateR3FShaderUniform(shader, key, value, constraint.type);
       });
     },
     [],

@@ -47,3 +47,4 @@ We have three layers of abstraction:
 3. R3FUniformUpdateOrchestrator
 
    - manages the update of the uniforms of the ShaderMaterial
+   - handles Expression conversion to the correct uniform value

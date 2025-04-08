@@ -4,17 +4,17 @@ import * as THREE from "three";
 
 import type { UniformFieldValue } from "./field";
 import type { ShaderSampler2DUniform } from "./shader-sampler2d-uniform";
-import type { NumericValue, Vec2, Vec3 } from "./uniforms";
+import type { NumericValue, Sampler2D, Vec2, Vec3 } from "./uniforms";
 import { ValueType } from "./uniforms";
 
-export type UniformValue =
+export type R3FShaderUniformValue =
   | number
   | THREE.Vector2
   | THREE.Vector3
   | THREE.Texture
   | null;
 
-export type ShaderUniforms = Record<string, IUniform<UniformValue>>;
+export type R3FShaderUniforms = Record<string, IUniform<R3FShaderUniformValue>>;
 
 // Type-safe metadata for uniforms
 export interface UniformMetadata<T> {
@@ -27,10 +27,10 @@ export interface UniformTypeMap {
   [ValueType.Numeric]: NumericValue;
   [ValueType.Vec2]: Vec2;
   [ValueType.Vec3]: Vec3;
-  [ValueType.Sampler2D]: THREE.Texture | null;
+  [ValueType.Sampler2D]: Sampler2D;
 }
 
-export interface UniformAdapter<T, U extends UniformValue> {
+export interface UniformAdapter<T, U extends R3FShaderUniformValue> {
   toThreeUniform(value: T): IUniform<U>;
   fromThreeUniform(uniform: IUniform<U>): T;
 }
@@ -43,7 +43,7 @@ export class NumericUniformAdapter
   }
 
   fromThreeUniform(uniform: IUniform<number>): NumericValue {
-    return uniform.value;
+    return Number(uniform.value);
   }
 }
 
@@ -59,8 +59,8 @@ export class Vec2UniformAdapter implements UniformAdapter<Vec2, THREE.Vector2> {
 
   fromThreeUniform(uniform: IUniform<THREE.Vector2>): Vec2 {
     return {
-      x: uniform.value.x,
-      y: uniform.value.y,
+      x: Number(uniform.value.x),
+      y: Number(uniform.value.y),
     };
   }
 }
@@ -78,19 +78,21 @@ export class Vec3UniformAdapter implements UniformAdapter<Vec3, THREE.Vector3> {
 
   fromThreeUniform(uniform: IUniform<THREE.Vector3>): Vec3 {
     return {
-      x: uniform.value.x,
-      y: uniform.value.y,
-      z: uniform.value.z,
+      x: Number(uniform.value.x),
+      y: Number(uniform.value.y),
+      z: Number(uniform.value.z),
     };
   }
 }
 
-export class UniformAdapterFactory {
+export class R3FUniformAdapterFactory {
   private static numericAdapter = new NumericUniformAdapter();
   private static vec2Adapter = new Vec2UniformAdapter();
   private static vec3Adapter = new Vec3UniformAdapter();
 
-  static getAdapter(uniformType: ValueType): UniformAdapter<any, UniformValue> {
+  static getAdapter(
+    uniformType: ValueType,
+  ): UniformAdapter<unknown, R3FShaderUniformValue> {
     switch (uniformType) {
       case ValueType.Numeric:
         return this.numericAdapter;
@@ -118,12 +120,12 @@ export function getUniformType(constraint: UniformFieldValue): ValueType {
 export function createUniformsFromSchema<T extends z.ZodType>(
   values: z.infer<T>,
   constraints: Record<string, UniformFieldValue>,
-): ShaderUniforms {
-  const uniforms: ShaderUniforms = {};
+): R3FShaderUniforms {
+  const uniforms: R3FShaderUniforms = {};
   for (const [key, value] of Object.entries(values)) {
     const constraint = constraints[key];
     if (constraint) {
-      const adapter = UniformAdapterFactory.getAdapter(
+      const adapter = R3FUniformAdapterFactory.getAdapter(
         getUniformType(constraint),
       );
       uniforms[key] = adapter.toThreeUniform(value);
@@ -142,7 +144,7 @@ export function updateUniforms<T extends z.ZodType>(
   for (const [key, value] of Object.entries(values)) {
     const constraint = constraints[key];
     if (shader.uniforms[key] && constraint) {
-      const adapter = UniformAdapterFactory.getAdapter(
+      const adapter = R3FUniformAdapterFactory.getAdapter(
         getUniformType(constraint),
       );
       shader.uniforms[key] = adapter.toThreeUniform(value);
@@ -169,8 +171,8 @@ export function updateSamplerUniforms(
  */
 export function createDefaultUniforms(
   handles: ShaderSampler2DUniform[],
-): ShaderUniforms {
-  const uniforms: ShaderUniforms = {};
+): R3FShaderUniforms {
+  const uniforms: R3FShaderUniforms = {};
 
   handles.forEach((handle) => {
     uniforms[handle.uniformName] = {
@@ -209,7 +211,7 @@ export function isTextureUniform(uniformName: string): boolean {
  */
 export function updateShaderUniforms(
   shader: THREE.ShaderMaterial,
-  uniforms: ShaderUniforms,
+  uniforms: R3FShaderUniforms,
   handles: ShaderSampler2DUniform[],
 ): void {
   handles.forEach((handle) => {
@@ -239,18 +241,5 @@ export function updateShaderTextureUniforms(
     if (shader.uniforms[uniformName]) {
       shader.uniforms[uniformName].value = texture;
     }
-  });
-}
-
-// Type-safe shader material creation
-export function createShaderMaterial(
-  vertexShader: string,
-  fragmentShader: string,
-  uniforms: ShaderUniforms,
-): THREE.ShaderMaterial {
-  return new THREE.ShaderMaterial({
-    uniforms,
-    vertexShader,
-    fragmentShader,
   });
 }
