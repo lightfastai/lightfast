@@ -6,9 +6,9 @@ import type {
   UniformFieldValue,
   Vec2FieldMetadata,
 } from "../field";
-import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
 import { $ValueType } from "../enums/values";
+import { createSampler2DHandle } from "../interfaces/sampler2d-handle";
 import { createBaseShaderDefinition } from "../interfaces/shader-def";
 import { $Float, $Sampler2D, $Vec2Number } from "../uniforms";
 

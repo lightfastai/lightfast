@@ -1,6 +1,6 @@
 import type { Sampler2DMetadata, UniformFieldValue } from "../../shaders/field";
+import type { Sampler2DHandle } from "../../shaders/interfaces/sampler2d-handle";
 import type { ShaderSchema } from "../../shaders/interfaces/shader-def";
-import type { Sampler2DHandle } from "../../uniforms/handle";
 import type { ShaderDefinition } from "../interfaces/registry-shader-def";
 import type { ShaderSampler2DUniformRegistry } from "../interfaces/sampler2d-registry-def";
 import { $ValueType } from "../../shaders/enums/values";

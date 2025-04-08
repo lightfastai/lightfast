@@ -3,8 +3,8 @@
  * These types are used to specify the valid ranges and step sizes for uniform parameters.
  */
 
-import type { Sampler2DHandle } from "../uniforms/handle";
 import type { ValueType } from "./enums/values";
+import type { Sampler2DHandle } from "./interfaces/sampler2d-handle";
 
 export interface ValueFieldMetadata {
   min: number;

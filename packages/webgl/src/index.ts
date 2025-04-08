@@ -133,7 +133,7 @@ export type {
   Sampler2DMetadata,
 } from "./shaders/field";
 
-export * from "./uniforms/handle";
+export * from "./shaders/interfaces/sampler2d-handle";
 
 /**
  * Registry functions and texture handling
@@ -146,8 +146,6 @@ export {
   getShaderSampler2DInputsForType,
   createSampler2DFieldMetadata,
 } from "./registry";
-
-export { type ShaderSampler2DUniformRegistry } from "./registry/interfaces/sampler2d-registry-def";
 
 // Export shader enums
 export * from "./shaders/enums/shaders";

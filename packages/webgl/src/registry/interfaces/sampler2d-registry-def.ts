@@ -1,5 +1,5 @@
 import type { Sampler2DMetadata } from "@/shaders/field";
-import type { Sampler2DHandle } from "@/uniforms/handle";
+import type { Sampler2DHandle } from "@/shaders/interfaces/sampler2d-handle";
 
 /**
  * Registry entry for a texture type

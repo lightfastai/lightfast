@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import type { Sampler2DMetadata, UniformFieldValue } from "../field";
-import { createSampler2DHandle } from "../../uniforms/handle";
 import { baseVertexShader } from "../base-vert-shader";
 import { $ValueType } from "../enums/values";
+import { createSampler2DHandle } from "../interfaces/sampler2d-handle";
 import { createBaseShaderDefinition } from "../interfaces/shader-def";
 import { $Float, $Sampler2D } from "../uniforms";
 

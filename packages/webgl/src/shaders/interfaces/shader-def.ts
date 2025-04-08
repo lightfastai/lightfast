@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
-import type { Sampler2DHandle } from "../../uniforms/handle";
 import type { UniformFieldValue } from "../field";
+import type { Sampler2DHandle } from "./sampler2d-handle";
 
 /**
  * Generic type for Zod shader schema
