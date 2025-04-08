@@ -1,4 +1,5 @@
 import { $Add } from "./shaders/add";
+import { $Blur } from "./shaders/blur";
 import { $Displace } from "./shaders/displace";
 import { $Limit } from "./shaders/limit";
 import { $PerlinNoise2D } from "./shaders/pnoise";
@@ -102,6 +103,12 @@ export type { AddParams } from "./shaders/add";
 export { $Add };
 
 /**
+ * Blur modules
+ */
+export type { BlurParams } from "./shaders/blur";
+export { $Blur };
+
+/**
  * Texture uniforms and registry
  */
 export * from "./registry/shader-sampler2d-uniform-registry";
@@ -118,17 +125,20 @@ export { addFragmentShader } from "./shaders/add";
 export { displaceFragmentShader } from "./shaders/displace";
 export { limitFragmentShader } from "./shaders/limit";
 export { pnoiseFragmentShader } from "./shaders/pnoise";
+export { blurFragmentShader } from "./shaders/blur";
 export { baseVertexShader } from "./shaders/base-vert-shader";
 
 export { createDefaultAdd } from "./shaders/add";
 export { createDefaultDisplace as createDefaultDisplace } from "./shaders/displace";
 export { createDefaultLimit } from "./shaders/limit";
 export { createDefaultPerlinNoise2D } from "./shaders/pnoise";
+export { createDefaultBlur } from "./shaders/blur";
 
 export { PNOISE_UNIFORM_CONSTRAINTS } from "./shaders/pnoise";
 export { LIMIT_UNIFORM_CONSTRAINTS } from "./shaders/limit";
 export { DISPLACE_UNIFORM_CONSTRAINTS } from "./shaders/displace";
 export { ADD_UNIFORM_CONSTRAINTS } from "./shaders/add";
+export { BLUR_UNIFORM_CONSTRAINTS } from "./shaders/blur";
 
 export { getFieldMetadata as getValueFieldMetadata } from "./shaders/utils";
 
@@ -164,6 +174,7 @@ export * from "./shaders/add";
 export * from "./shaders/displace";
 export * from "./shaders/limit";
 export * from "./shaders/pnoise";
+export * from "./shaders/blur";
 export * from "./shaders/utils";
 export * from "./shaders/base-vert-shader";
 
@@ -171,3 +182,6 @@ export * from "./shaders/base-vert-shader";
 export * from "./types/field";
 export * from "./types/shader-sampler2d-uniform";
 export * from "./types/uniforms";
+
+export * from "./registry/shader-registry";
+export * from "./registry/shader-registrations";

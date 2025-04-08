@@ -1,20 +1,5 @@
-import type { Shaders } from "@repo/webgl";
-import {
-  $Shaders,
-  ADD_UNIFORM_CONSTRAINTS,
-  addFragmentShader,
-  baseVertexShader,
-  createDefaultAdd,
-  createDefaultDisplace,
-  createDefaultLimit,
-  createDefaultPerlinNoise2D,
-  DISPLACE_UNIFORM_CONSTRAINTS,
-  displaceFragmentShader,
-  LIMIT_UNIFORM_CONSTRAINTS,
-  limitFragmentShader,
-  PNOISE_UNIFORM_CONSTRAINTS,
-  pnoiseFragmentShader,
-} from "@repo/webgl";
+import type { ShaderDefinition, Shaders } from "@repo/webgl";
+import { getAllShaderTypes, getShaderDefinition } from "@repo/webgl";
 
 import type { R3FShaderUniforms } from "../types/shader-uniforms";
 import type { ShaderSingleton } from "./shader-singleton-factory";
@@ -22,66 +7,38 @@ import { createUniformsFromSchema } from "../types/shader-uniforms";
 import { createShaderSingleton } from "./shader-singleton-factory";
 
 /**
- * Create default uniforms for a perlin noise shader
+ * Create default uniforms for a shader from its definition
+ * @param definition - The shader definition
+ * @returns The default uniforms
  */
-const createDefaultNoiseUniforms = (): R3FShaderUniforms => {
-  const defaultValues = createDefaultPerlinNoise2D();
-  return createUniformsFromSchema(defaultValues, PNOISE_UNIFORM_CONSTRAINTS);
+const createDefaultUniformsFromDefinition = (
+  definition: ShaderDefinition<any>,
+): R3FShaderUniforms => {
+  const defaultValues = definition.createDefaultValues();
+  return createUniformsFromSchema(defaultValues, definition.constraints);
 };
-
-const createDefaultLimitUniforms = (): R3FShaderUniforms => {
-  const defaultValues = createDefaultLimit();
-  return createUniformsFromSchema(defaultValues, LIMIT_UNIFORM_CONSTRAINTS);
-};
-
-const createDefaultDisplaceUniforms = (): R3FShaderUniforms => {
-  const defaultValues = createDefaultDisplace();
-  return createUniformsFromSchema(defaultValues, DISPLACE_UNIFORM_CONSTRAINTS);
-};
-
-const createDefaultAddUniforms = (): R3FShaderUniforms => {
-  const defaultValues = createDefaultAdd();
-  return createUniformsFromSchema(defaultValues, ADD_UNIFORM_CONSTRAINTS);
-};
-
-// Initialize singleton instances for each shader type
-// Each will be lazily created only when first requested
-
-// Noise shader singleton
-const noiseShaderSingleton = createShaderSingleton(
-  baseVertexShader,
-  pnoiseFragmentShader,
-  createDefaultNoiseUniforms,
-);
-
-// Limit shader singleton
-const limitShaderSingleton = createShaderSingleton(
-  baseVertexShader,
-  limitFragmentShader,
-  createDefaultLimitUniforms,
-);
-
-// Displace shader singleton
-const displaceShaderSingleton = createShaderSingleton(
-  baseVertexShader,
-  displaceFragmentShader,
-  createDefaultDisplaceUniforms,
-);
-
-// Add shader singleton
-const addShaderSingleton = createShaderSingleton(
-  baseVertexShader,
-  addFragmentShader,
-  createDefaultAddUniforms,
-);
 
 // Map of all registered shader singletons
-const shaderRegistry: Record<string, ShaderSingleton> = {
-  [$Shaders.enum.Noise]: noiseShaderSingleton,
-  [$Shaders.enum.Limit]: limitShaderSingleton,
-  [$Shaders.enum.Displace]: displaceShaderSingleton,
-  [$Shaders.enum.Add]: addShaderSingleton,
-};
+const shaderRegistry: Record<string, ShaderSingleton> = {};
+
+// Dynamically build the shader registry from the webgl shader registry
+getAllShaderTypes().forEach((shaderType) => {
+  const definition = getShaderDefinition(shaderType);
+
+  // Create a function to generate default uniforms for this shader type
+  const createDefaultUniformsForType = () => {
+    return createDefaultUniformsFromDefinition(definition);
+  };
+
+  // Create and register the shader singleton
+  const shaderSingleton = createShaderSingleton(
+    definition.vertexShader,
+    definition.fragmentShader,
+    createDefaultUniformsForType,
+  );
+
+  shaderRegistry[shaderType] = shaderSingleton;
+});
 
 /**
  * Registry of shader singletons

@@ -166,36 +166,15 @@ export const EditorCommandDialog = () => {
             <TabsContent value="texture" className="p-0">
               <CommandGroup heading="Texture Operations">
                 <div className="grid grid-cols-4 grid-rows-10 gap-1">
-                  <CommandItem
-                    onSelect={() =>
-                      handleTextureSelect($TextureTypes.Enum.Noise)
-                    }
-                    className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
-                  >
-                    Noise
-                  </CommandItem>
-                  <CommandItem
-                    onSelect={() =>
-                      handleTextureSelect($TextureTypes.Enum.Limit)
-                    }
-                    className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
-                  >
-                    Limit
-                  </CommandItem>
-                  <CommandItem
-                    onSelect={() =>
-                      handleTextureSelect($TextureTypes.Enum.Displace)
-                    }
-                    className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
-                  >
-                    Displace
-                  </CommandItem>
-                  <CommandItem
-                    onSelect={() => handleTextureSelect($TextureTypes.Enum.Add)}
-                    className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
-                  >
-                    Add
-                  </CommandItem>
+                  {Object.values($TextureTypes.Enum).map((textureType) => (
+                    <CommandItem
+                      key={textureType}
+                      onSelect={() => handleTextureSelect(textureType)}
+                      className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
+                    >
+                      {textureType}
+                    </CommandItem>
+                  ))}
                 </div>
               </CommandGroup>
             </TabsContent>
