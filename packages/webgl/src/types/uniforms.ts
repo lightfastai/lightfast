@@ -123,6 +123,11 @@ export type Color = z.infer<typeof $Color>;
 // Value type union
 export type Value = Color | NumericValue | Vec2 | Vec3 | Boolean;
 
+// Sampler2D type guard
+export function isSampler2D(value: unknown): value is Sampler2D {
+  return typeof value === "object" && value !== null && "vuvID" in value;
+}
+
 // Type guards
 export function isBoolean(value: unknown): value is Boolean {
   return typeof value === "boolean";

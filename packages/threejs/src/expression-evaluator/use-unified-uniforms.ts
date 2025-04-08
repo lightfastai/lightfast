@@ -2,12 +2,14 @@
 
 import type { ShaderMaterial } from "three";
 import { useCallback } from "react";
+import * as THREE from "three";
 
 import type { UniformFieldValue } from "@repo/webgl";
 import {
   isBoolean,
   isColor,
   isNumericValue,
+  isSampler2D,
   isString,
   isVec2,
   isVec3,
@@ -25,6 +27,44 @@ export function useUnifiedUniforms() {
   // Get expression evaluation functions from useExpression
   const { updateNumericUniform, updateVec2Uniform, updateVec3Uniform } =
     useExpression();
+
+  /**
+   * Updates a Sampler2D uniform with a texture
+   * @param shader The shader material to update
+   * @param uniformName The name of the uniform
+   * @param value The Sampler2D object or texture
+   * @param textureResolver Function to resolve a texture from a Sampler2D object
+   */
+  const updateSampler2DUniform = useCallback(
+    (
+      shader: ShaderMaterial,
+      uniformName: string,
+      value: unknown,
+      textureResolver?: (
+        sampler: Record<string, unknown>,
+      ) => THREE.Texture | null,
+    ) => {
+      // Skip if the uniform doesn't exist
+      if (!shader.uniforms[uniformName]) return;
+
+      // If it's a texture, assign it directly
+      if (value instanceof THREE.Texture || value === null) {
+        shader.uniforms[uniformName].value = value;
+        return;
+      }
+
+      // If it's a placeholder object with vuvID
+      if (value && typeof value === "object" && "vuvID" in value) {
+        // If we have a resolver function, use it to get the actual texture
+        if (textureResolver) {
+          const texture = textureResolver(value as Record<string, unknown>);
+          shader.uniforms[uniformName].value = texture;
+        }
+        // Otherwise leave it as is (likely null)
+      }
+    },
+    [],
+  );
 
   /**
    * Determines the ValueType of a given uniform value
@@ -49,6 +89,7 @@ export function useUnifiedUniforms() {
    * @param shader The shader material to update
    * @param uniforms The uniform values to apply
    * @param constraints Optional constraints/metadata about the uniforms
+   * @param textureResolver Optional function to resolve textures from Sampler2D objects
    */
   const updateAllUniforms = useCallback(
     (
@@ -56,6 +97,9 @@ export function useUnifiedUniforms() {
       shader: ShaderMaterial,
       uniforms: Record<string, unknown>,
       constraints?: Record<string, UniformFieldValue>,
+      textureResolver?: (
+        sampler: Record<string, unknown>,
+      ) => THREE.Texture | null,
     ) => {
       for (const [uniformName, value] of Object.entries(uniforms)) {
         // Skip if the uniform doesn't exist in the shader
@@ -86,9 +130,15 @@ export function useUnifiedUniforms() {
             break;
 
           case ValueType.Sampler2D:
-            // For sampler2D, we just set the texture directly
-            // This assumes value is a texture object or null
-            shader.uniforms[uniformName].value = value;
+            // Use the dedicated function for Sampler2D uniforms
+            if (isSampler2D(value)) {
+              updateSampler2DUniform(
+                shader,
+                uniformName,
+                value,
+                textureResolver,
+              );
+            }
             break;
 
           case ValueType.Boolean:
@@ -108,6 +158,7 @@ export function useUnifiedUniforms() {
       updateNumericUniform,
       updateVec2Uniform,
       updateVec3Uniform,
+      updateSampler2DUniform,
       determineValueType,
     ],
   );
@@ -131,6 +182,7 @@ export function useUnifiedUniforms() {
   return {
     updateAllUniforms,
     updateTextureUniforms,
+    updateSampler2DUniform,
     determineValueType,
   };
 }

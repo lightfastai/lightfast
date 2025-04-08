@@ -4,11 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { LimitParams } from "@repo/webgl";
 import type { LimitTexture, Texture } from "@vendor/db/types";
-import {
-  updateSamplerUniforms,
-  useShaderOrchestrator,
-  useUnifiedUniforms,
-} from "@repo/threejs";
+import { useShaderOrchestrator, useUnifiedUniforms } from "@repo/threejs";
 import { $Shaders, LIMIT_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
@@ -33,7 +29,6 @@ export const useUpdateTextureLimit = ({
 }: UpdateTextureLimitProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
-  // Use the new unified uniforms hook
   const { updateAllUniforms } = useUnifiedUniforms();
   const { getShader, releaseShader } = useShaderOrchestrator(
     $Shaders.enum.Limit,
@@ -51,13 +46,15 @@ export const useUpdateTextureLimit = ({
   const activeIdsRef = useRef<Set<string>>(new Set());
 
   /**
-   * Updates texture connection for a shader
+   * Creates a texture resolver function for a specific node ID
    */
-  const updateSampler2DConnection = useCallback(
-    (shader: THREE.ShaderMaterial, id: string): void => {
-      const sourceId = getSourceForTarget(id);
-      const texture = getTextureFromTargets(sourceId, targets);
-      updateSamplerUniforms(shader, { u_texture1: texture });
+  const createTextureResolver = useCallback(
+    (nodeId: string) => {
+      // Return a function that resolves textures from samplers
+      return (_sampler: Record<string, unknown>): THREE.Texture | null => {
+        const sourceId = getSourceForTarget(nodeId);
+        return getTextureFromTargets(sourceId, targets);
+      };
     },
     [getSourceForTarget, targets],
   );
@@ -71,7 +68,7 @@ export const useUpdateTextureLimit = ({
 
       // Store the uniform configuration for this texture - properly typed as LimitParams
       uniformConfigsRef.current[id] = {
-        u_texture1: { vuvID: null }, // This will be handled by updateSampler2DConnection
+        u_texture1: { vuvID: null }, // This will be handled by texture resolver
         u_quantizationSteps: limitTexture.uniforms.u_quantizationSteps,
       };
     },
@@ -104,12 +101,18 @@ export const useUpdateTextureLimit = ({
           // Get the shader material
           const shader = getShader();
 
-          // Apply texture connection
-          updateSampler2DConnection(shader, id);
+          // Create a texture resolver for this specific node
+          const textureResolver = createTextureResolver(id);
 
           // Use the unified approach to update all uniforms in one pass
-          // This handles both basic values and expressions
-          updateAllUniforms(state, shader, uniforms, LIMIT_UNIFORM_CONSTRAINTS);
+          // This now handles texture connections through the texture resolver
+          updateAllUniforms(
+            state,
+            shader,
+            uniforms,
+            LIMIT_UNIFORM_CONSTRAINTS,
+            textureResolver,
+          );
         },
       };
 
@@ -118,12 +121,7 @@ export const useUpdateTextureLimit = ({
 
       return node;
     },
-    [
-      updateSingleTexture,
-      getShader,
-      updateSampler2DConnection,
-      updateAllUniforms,
-    ],
+    [updateSingleTexture, getShader, createTextureResolver, updateAllUniforms],
   );
 
   // Update textures and track active IDs whenever texture data changes
