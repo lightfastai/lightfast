@@ -1,3 +1,4 @@
+import { createShaderDefinition, registerShader } from ".";
 import { baseVertexShader } from "../shaders/base-vert-shader";
 import { $Shaders } from "../shaders/enums/shaders";
 import {
@@ -24,7 +25,6 @@ import {
   PNOISE_UNIFORM_CONSTRAINTS,
   pnoiseFragmentShader,
 } from "../shaders/impl/pnoise";
-import { createShaderDefinition, registerShader } from "./shader-registry";
 
 /**
  * Register all built-in shaders

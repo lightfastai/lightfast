@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import type { Sampler2DMetadata, UniformFieldValue } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
+import { baseVertexShader } from "../base-vert-shader";
+import { $Shaders } from "../enums/shaders";
 import { $ValueType } from "../enums/values";
+import { createShaderDefinition } from "../interfaces/shader-impl";
 import {
   $Integer,
   $NumericValue,
@@ -283,3 +286,12 @@ void main() {
     gl_FragColor = vec4(finalColor, 1.0);
 }
 `;
+
+export const pnoiseShaderDefinition = createShaderDefinition({
+  type: $Shaders.enum.Noise,
+  vertexShader: baseVertexShader,
+  fragmentShader: pnoiseFragmentShader,
+  schema: $PerlinNoise2D,
+  constraints: PNOISE_UNIFORM_CONSTRAINTS,
+  createDefaultValues: createDefaultPerlinNoise2D,
+});

@@ -7,7 +7,10 @@ import type {
   Vec2FieldMetadata,
 } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
+import { baseVertexShader } from "../base-vert-shader";
+import { $Shaders } from "../enums/shaders";
 import { $ValueType } from "../enums/values";
+import { createShaderDefinition } from "../interfaces/shader-impl";
 import { $Float, $Sampler2D, $Vec2Number } from "../uniforms";
 
 // Create texture handles for the uniforms
@@ -150,3 +153,12 @@ void main() {
   gl_FragColor = color;
 }
 `;
+
+export const displaceShaderDefinition = createShaderDefinition({
+  type: $Shaders.enum.Displace,
+  vertexShader: baseVertexShader,
+  fragmentShader: displaceFragmentShader,
+  schema: $Displace,
+  constraints: DISPLACE_UNIFORM_CONSTRAINTS,
+  createDefaultValues: createDefaultDisplace,
+});

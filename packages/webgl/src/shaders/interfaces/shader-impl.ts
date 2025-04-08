@@ -1,0 +1,82 @@
+import type { z } from "zod";
+
+import type { Shaders } from "../enums/shaders";
+import type { UniformFieldValue } from "../field";
+
+/**
+ * Generic type for Zod shader schema
+ */
+export type ShaderSchema = z.ZodObject<z.ZodRawShape>;
+
+/**
+ * Interface that defines all the necessary components for a shader
+ */
+export interface ShaderDefinition<TSchema extends ShaderSchema = ShaderSchema> {
+  /** The shader type */
+  type: Shaders;
+  /** The vertex shader code */
+  vertexShader: string;
+  /** The fragment shader code */
+  fragmentShader: string;
+  /** Zod schema for validating shader uniforms */
+  schema: TSchema;
+  /** Uniform constraints for validation */
+  constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>;
+  /** Function to create default values for this shader */
+  createDefaultValues: () => z.infer<TSchema>;
+}
+
+/**
+ * Helper function to create a type-safe shader definition
+ * @param type - Shader type
+ * @param vertexShader - Vertex shader code
+ * @param fragmentShader - Fragment shader code
+ * @param schema - Zod schema for validating shader uniforms
+ * @param constraints - Uniform constraints for validation
+ * @param createDefaultValues - Function to create default values for this shader
+ * @returns A type-safe shader definition
+ */
+export function createShaderDefinition<TSchema extends ShaderSchema>({
+  type,
+  vertexShader,
+  fragmentShader,
+  schema,
+  constraints,
+  createDefaultValues,
+}: {
+  type: Shaders;
+  vertexShader: string;
+  fragmentShader: string;
+  schema: TSchema;
+  constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>;
+  createDefaultValues: () => z.infer<TSchema>;
+}): ShaderDefinition<TSchema> {
+  return {
+    type,
+    vertexShader,
+    fragmentShader,
+    schema,
+    constraints,
+    createDefaultValues,
+  };
+}
+
+/**
+ * Helper function to check if a value is a ShaderDefinition
+ * @param value - The value to check
+ * @returns True if the value is a ShaderDefinition, false otherwise
+ */
+export const isShaderDefinition = (
+  value: unknown,
+): value is ShaderDefinition<ShaderSchema> => {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    "vertexShader" in value &&
+    "fragmentShader" in value &&
+    "schema" in value &&
+    "constraints" in value &&
+    "createDefaultValues" in value
+  );
+};

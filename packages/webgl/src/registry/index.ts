@@ -1,30 +1,11 @@
+import type {
+  ShaderDefinition,
+  ShaderSchema,
+} from "@/shaders/interfaces/shader-impl";
 import type { z } from "zod";
 
 import type { Shaders } from "../shaders/enums/shaders";
 import type { UniformFieldValue } from "../shaders/field";
-
-/**
- * Generic type for Zod shader schema
- */
-export type ShaderSchema = z.ZodObject<z.ZodRawShape>;
-
-/**
- * Interface that defines all the necessary components for a shader
- */
-export interface ShaderDefinition<TSchema extends ShaderSchema = ShaderSchema> {
-  /** The shader type */
-  type: Shaders;
-  /** The vertex shader code */
-  vertexShader: string;
-  /** The fragment shader code */
-  fragmentShader: string;
-  /** Zod schema for validating shader uniforms */
-  schema: TSchema;
-  /** Uniform constraints for validation */
-  constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>;
-  /** Function to create default values for this shader */
-  createDefaultValues: () => z.infer<TSchema>;
-}
 
 /**
  * Registry of shader definitions

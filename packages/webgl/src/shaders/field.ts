@@ -4,7 +4,7 @@
  */
 
 import type { Sampler2DHandle } from "../uniforms/handle";
-import type { ValueType } from "./uniforms";
+import type { ValueType } from "./enums/values";
 
 export interface ValueFieldMetadata {
   min: number;

@@ -170,7 +170,7 @@ export * from "./shaders/field";
 export * from "./uniforms/handle";
 export * from "./shaders/uniforms";
 
-export * from "./registry/shader-registry";
+export * from "./registry";
 export * from "./registry/shader-registrations";
 
 export { $ShaderValues, $Shaders, type Shaders } from "./shaders/enums/shaders";

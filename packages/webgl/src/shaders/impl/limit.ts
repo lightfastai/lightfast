@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import type { Sampler2DMetadata, UniformFieldValue } from "../field";
 import { createSampler2DHandle } from "../../uniforms/handle";
+import { baseVertexShader } from "../base-vert-shader";
+import { $Shaders } from "../enums/shaders";
 import { $ValueType } from "../enums/values";
+import { createShaderDefinition } from "../interfaces/shader-impl";
 import { $Float, $Sampler2D } from "../uniforms";
 
 export const limitInputHandle = createSampler2DHandle("input-1", "u_texture1");
@@ -53,3 +56,12 @@ void main() {
   gl_FragColor = color;
 }
 `;
+
+export const limitShaderDefinition = createShaderDefinition({
+  type: $Shaders.enum.Limit,
+  vertexShader: baseVertexShader,
+  fragmentShader: limitFragmentShader,
+  schema: $Limit,
+  constraints: LIMIT_UNIFORM_CONSTRAINTS,
+  createDefaultValues: createDefaultLimit,
+});
