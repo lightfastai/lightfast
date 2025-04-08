@@ -2,18 +2,15 @@ import type * as THREE from "three";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
+import type { LimitParams } from "@repo/webgl";
 import type { LimitTexture, Texture } from "@vendor/db/types";
 import {
   updateSamplerUniforms,
   updateUniforms,
-  useExpressionEvaluator,
+  useExpressionUniform,
   useShaderOrchestrator,
 } from "@repo/threejs";
-import {
-  $Shaders,
-  isExpressionString,
-  LIMIT_UNIFORM_CONSTRAINTS,
-} from "@repo/webgl";
+import { $Shaders, LIMIT_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useConnectionCache } from "./use-connection-cache";
@@ -37,21 +34,18 @@ export const useUpdateTextureLimit = ({
 }: UpdateTextureLimitProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
-  const { updateShaderUniforms } = useExpressionEvaluator();
+  const { updateUniformsFromConstraints } = useExpressionUniform();
   const { getShader, releaseShader } = useShaderOrchestrator(
     $Shaders.enum.Limit,
   );
 
   // Store uniform configurations per texture ID
-  const uniformConfigsRef = useRef<Record<string, Record<string, unknown>>>({});
+  const uniformConfigsRef = useRef<Record<string, LimitParams>>({});
 
   // Create a reference to track render target nodes
   const renderTargetNodesRef = useRef<Record<string, WebGLRenderTargetNode>>(
     {},
   );
-
-  // Cache expressions
-  const expressionsRef = useRef<Record<string, Record<string, string>>>({});
 
   // Track the set of texture IDs for cleanup
   const activeIdsRef = useRef<Set<string>>(new Set());
@@ -66,24 +60,6 @@ export const useUpdateTextureLimit = ({
       updateSamplerUniforms(shader, { u_texture1: texture });
     },
     [getSourceForTarget, targets],
-  );
-
-  /**
-   * Store expressions for a texture
-   */
-  const storeExpressions = useCallback(
-    (id: string, texture: LimitTexture): void => {
-      // Ensure expressions cache exists for this ID
-      expressionsRef.current[id] = expressionsRef.current[id] || {};
-
-      const { uniforms: u } = texture;
-
-      // Store expressions
-      if (isExpressionString(u.u_quantizationSteps)) {
-        expressionsRef.current[id].u_quantizationSteps = u.u_quantizationSteps;
-      }
-    },
-    [],
   );
 
   /**
@@ -113,13 +89,13 @@ export const useUpdateTextureLimit = ({
     (id: string, texture: Texture): void => {
       const limitTexture = texture as LimitTexture;
 
-      // Store the uniform configuration for this texture
-      uniformConfigsRef.current[id] = limitTexture.uniforms;
-
-      // Store expressions for this texture
-      storeExpressions(id, limitTexture);
+      // Store the uniform configuration for this texture - properly typed as LimitParams
+      uniformConfigsRef.current[id] = {
+        u_texture1: { vuvID: null }, // This will be handled by updateSampler2DConnection
+        u_quantizationSteps: limitTexture.uniforms.u_quantizationSteps,
+      };
     },
-    [storeExpressions],
+    [],
   );
 
   /**
@@ -141,21 +117,22 @@ export const useUpdateTextureLimit = ({
           return getShader();
         },
         onEachFrame: (state: WebGLRootState) => {
-          // Get expressions for this node
-          const expressions = expressionsRef.current[id] || {};
+          // Get the uniform values for this node
+          const uniforms = uniformConfigsRef.current[id];
+          if (!uniforms) return;
 
           // Apply this texture's uniforms before rendering
           applyTextureUniforms(id);
 
-          // Define mapping for uniform components
-          const uniformPathMap = {
-            u_quantizationSteps: {
-              pathToValue: "u_quantizationSteps.value",
-            },
-          };
-
-          // Use the shared uniform update utility
-          updateShaderUniforms(state, getShader(), expressions, uniformPathMap);
+          // Use the new uniform update utility with automatic expression handling
+          // Only pass the numeric uniforms that can have expressions
+          updateUniformsFromConstraints(
+            state,
+            getShader(),
+            LIMIT_UNIFORM_CONSTRAINTS,
+            // Extract only the numeric values that can contain expressions
+            { u_quantizationSteps: uniforms.u_quantizationSteps },
+          );
         },
       };
 
@@ -168,7 +145,7 @@ export const useUpdateTextureLimit = ({
       updateSingleTexture,
       getShader,
       applyTextureUniforms,
-      updateShaderUniforms,
+      updateUniformsFromConstraints,
     ],
   );
 
@@ -225,7 +202,6 @@ export const useUpdateTextureLimit = ({
     nodesToRemove.forEach((id) => {
       delete renderTargetNodesRef.current[id];
       delete uniformConfigsRef.current[id];
-      delete expressionsRef.current[id];
     });
 
     // Update active IDs reference

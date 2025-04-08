@@ -1,11 +1,16 @@
 "use client";
 
-import type { IUniform, ShaderMaterial } from "three";
 import { useCallback, useRef } from "react";
 
-import { extractExpression, isExpression, isNumber } from "@repo/webgl";
+import {
+  extractExpression,
+  isBoolean,
+  isExpression,
+  isNumber,
+} from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
+import { getNestedValue } from "./utils";
 
 /**
  * Type of the result from expression evaluation
@@ -15,36 +20,27 @@ export type ExpressionResult = number | boolean;
 /**
  * Typesafe context for expressions
  */
-export interface ExpressionContext {
+export interface ExpressionTimeContext {
   time: number;
   delta: number;
   elapsed: number;
   frame: number;
   fps: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
-
-/**
- * Gets a value from a nested object using a dot-notation path
- */
-const getNestedValue = (obj: Record<string, any>, path: string): any => {
-  return path.split(".").reduce((current: any, part: string) => {
-    return current && typeof current === "object" ? current[part] : undefined;
-  }, obj);
-};
 
 /**
  * Evaluates a string expression with the provided context
  */
 export const evaluateExpression = (
   expression: string | number | boolean,
-  context: ExpressionContext,
+  context: ExpressionTimeContext,
 ): ExpressionResult => {
   // If it's already a number or boolean, return it directly
   if (isNumber(expression)) {
     return expression;
   }
-  if (typeof expression === "boolean") {
+  if (isBoolean(expression)) {
     return expression;
   }
 
@@ -69,10 +65,10 @@ export const evaluateExpression = (
     // Replace each match with its corresponding value
     matches.forEach((match) => {
       const value = getNestedValue(context, match);
-      if (value !== undefined) {
+      if (value !== undefined && value !== null) {
         evalExpression = evalExpression.replace(
           new RegExp(`\\b${match}\\b`, "g"),
-          value.toString(),
+          String(value),
         );
       }
     });
@@ -103,7 +99,7 @@ export const evaluateExpression = (
 export const createTimeContext = (
   state: WebGLRootState,
   frameCount = 0,
-): ExpressionContext => {
+): ExpressionTimeContext => {
   const elapsedTime = state.clock.elapsedTime;
   const deltaTime = state.clock.getDelta();
   const fps = state.frameloop === "always" ? 60 : 0; // Basic FPS estimate
@@ -118,80 +114,15 @@ export const createTimeContext = (
 };
 
 /**
- * Updates numeric uniforms with expression values
- */
-const updateNumericUniforms = (
-  shader: ShaderMaterial,
-  expressionMap: Record<string, string | undefined>,
-  context: ExpressionContext,
-) => {
-  Object.entries(expressionMap).forEach(([uniformName, expression]) => {
-    if (!expression) return;
-
-    const uniform = shader.uniforms[uniformName] as
-      | IUniform<number>
-      | undefined;
-    if (!uniform) return;
-
-    const value = evaluateExpression(expression, context);
-    uniform.value = typeof value === "boolean" ? (value ? 1 : 0) : value;
-  });
-};
-
-/**
- * Updates vector uniforms with expression values
- */
-const updateVectorUniforms = (
-  shader: ShaderMaterial,
-  expressionMap: Record<string, string | undefined>,
-  uniformMap: Record<string, { pathToValue: string }>,
-  context: ExpressionContext,
-) => {
-  Object.entries(uniformMap).forEach(([expressionKey, config]) => {
-    const expression = expressionMap[expressionKey];
-    if (!expression) return;
-
-    const value = evaluateExpression(expression, context);
-    const numericValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
-
-    // Navigate to the target property using the path
-    const parts = config.pathToValue.split(".");
-    let current: Record<string, any> = shader.uniforms;
-
-    // Follow the path to the target property
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i];
-      if (!current || typeof current !== "object") return;
-      // Make sure part is a valid key
-      if (!part || !(part in current)) return;
-      const next = current[part];
-      if (!next || typeof next !== "object") return;
-      current = next;
-    }
-
-    // Set the value at the target property
-    const lastPart = parts[parts.length - 1];
-    if (current.value && lastPart && typeof current.value === "object") {
-      (current.value as Record<string, number>)[lastPart] = numericValue;
-    }
-  });
-};
-
-/**
  * Hook for expression evaluation in Three.js context
  */
 export function useExpressionEvaluator() {
   // Track frame count for time context
   const frameCountRef = useRef<number>(0);
 
-  // Increment frame count
-  const incrementFrame = useCallback(() => {
-    frameCountRef.current += 1;
-  }, []);
-
   // Get the current time context based on Three.js state
   const getTimeContext = useCallback(
-    (state: WebGLRootState): ExpressionContext => {
+    (state: WebGLRootState): ExpressionTimeContext => {
       return createTimeContext(state, frameCountRef.current);
     },
     [],
@@ -208,39 +139,12 @@ export function useExpressionEvaluator() {
 
       const timeContext = getTimeContext(state);
       const result = evaluateExpression(expression, timeContext);
-      return typeof result === "boolean" ? (result ? 1 : 0) : result;
+      return isBoolean(result) ? (result ? 1 : 0) : result;
     },
     [getTimeContext],
   );
 
-  /**
-   * Utility to help update shader uniforms with expression values
-   */
-  const updateShaderUniforms = useCallback(
-    (
-      state: WebGLRootState,
-      shader: ShaderMaterial,
-      expressionMap: Record<string, string | undefined>,
-      uniformMap?: Record<string, { pathToValue: string }>,
-    ) => {
-      incrementFrame();
-      const timeContext = getTimeContext(state);
-
-      // Update numeric uniforms
-      updateNumericUniforms(shader, expressionMap, timeContext);
-
-      // Update vector uniforms if map is provided
-      if (uniformMap) {
-        updateVectorUniforms(shader, expressionMap, uniformMap, timeContext);
-      }
-    },
-    [incrementFrame, getTimeContext],
-  );
-
   return {
     evaluate,
-    getTimeContext,
-    incrementFrame,
-    updateShaderUniforms,
   };
 }

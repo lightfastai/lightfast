@@ -14,4 +14,6 @@ export * from "./hooks/use-shader-material-orchestrator";
 export * from "./hooks/use-texture-render-pipeline";
 export * from "./hooks/use-shader-orchestrator";
 export * from "./hooks/use-expression-evaluator";
+export * from "./hooks/use-expression-uniform";
 export * from "./types/shader-uniforms";
+export * from "./types/expression-adapters";
