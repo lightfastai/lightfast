@@ -121,7 +121,7 @@ export { pnoiseFragmentShader } from "./shaders/pnoise";
 export { baseVertexShader } from "./shaders/base-vert-shader";
 
 export { createDefaultAdd } from "./shaders/add";
-export { createDefaultDisplace } from "./shaders/displace";
+export { createDefaultDisplace as createDefaultDisplace } from "./shaders/displace";
 export { createDefaultLimit } from "./shaders/limit";
 export { createDefaultPerlinNoise2D } from "./shaders/pnoise";
 
@@ -166,7 +166,6 @@ export * from "./shaders/limit";
 export * from "./shaders/pnoise";
 export * from "./shaders/utils";
 export * from "./shaders/base-vert-shader";
-export * from "../../threejs/src/shaders/pnoise-shader-singleton";
 
 // Export types
 export * from "./types/field";

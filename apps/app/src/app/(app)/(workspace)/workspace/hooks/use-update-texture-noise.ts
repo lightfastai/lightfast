@@ -3,11 +3,8 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { WebGLRenderTargetNode } from "@repo/threejs";
 import type { NoiseTexture, Texture } from "@vendor/db/types";
-import {
-  updateR3FShaderUniform,
-  useNoiseShaderMaterialOrchestrator,
-} from "@repo/threejs";
-import { PNOISE_UNIFORM_CONSTRAINTS } from "@repo/webgl";
+import { updateR3FShaderUniform, useShaderOrchestrator } from "@repo/threejs";
+import { $Shaders, PNOISE_UNIFORM_CONSTRAINTS } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useConnectionCache } from "./use-connection-cache";
@@ -48,7 +45,9 @@ export const useUpdateTextureNoise = ({
 }: UpdateTextureNoiseProps): WebGLRenderTargetNode[] => {
   const { targets } = useTextureRenderStore((state) => state);
   const { getSourceForTarget } = useConnectionCache();
-  const { getShader, releaseShader } = useNoiseShaderMaterialOrchestrator();
+  const { getShader, releaseShader } = useShaderOrchestrator(
+    $Shaders.enum.Noise,
+  );
 
   // Store uniform configurations per texture ID instead of shader instances
   const uniformConfigsRef = useRef<Record<string, Record<string, unknown>>>({});
