@@ -1,13 +1,13 @@
 import type { Connection } from "@xyflow/react";
 import { useCallback } from "react";
 
-import type { HandleId } from "@vendor/db/types";
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
 
 import type { BaseEdge } from "../types/node";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
+import { convertToStrictConnection } from "../types/connection";
 import {
   useSameSourceValidator,
   useSelfConnectionValidator,
@@ -58,12 +58,22 @@ export const useReplaceEdge = () => {
     async (oldEdgeId: string, newConnection: Connection) => {
       const { source, target } = newConnection;
 
-      // Keep only essential client-side validations
-      // Let the server handle the rest
+      // Validate it's not a self connection
       if (
         !validateSelfConnection(source, target) ||
         !validateSameSource(source, target)
       ) {
+        return false;
+      }
+
+      // Convert to strict connection to validate handles
+      const strictConnection = convertToStrictConnection(newConnection);
+      if (!strictConnection) {
+        toast({
+          title: "Invalid Connection",
+          description: "The handles specified are not valid",
+          variant: "destructive",
+        });
         return false;
       }
 
@@ -73,10 +83,10 @@ export const useReplaceEdge = () => {
           oldEdgeId,
           newEdge: {
             id: nanoid(),
-            source: newConnection.source,
-            target: newConnection.target,
-            sourceHandle: newConnection.sourceHandle as HandleId,
-            targetHandle: newConnection.targetHandle as HandleId,
+            source: strictConnection.source,
+            target: strictConnection.target,
+            sourceHandle: strictConnection.sourceHandle,
+            targetHandle: strictConnection.targetHandle,
           },
         });
         return true;

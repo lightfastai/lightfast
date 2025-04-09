@@ -2,10 +2,11 @@ import type { Connection } from "@xyflow/react";
 import { useCallback } from "react";
 
 import type { InsertEdge } from "@vendor/db/schema";
-import type { HandleId } from "@vendor/db/types";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { prepareEdgeForInsert } from "@vendor/db/schema";
-import { createTextureHandleId, isOutputHandleId } from "@vendor/db/types";
+import { isOutputHandleId } from "@vendor/db/types";
+
+import { convertToStrictConnection } from "../types/connection";
 
 export interface ConnectionValidationResult {
   valid: boolean;
@@ -19,29 +20,29 @@ export const useConnectionValidation = () => {
   const validateConnection = useCallback(
     (connection: Connection): ConnectionValidationResult => {
       try {
+        // First, try to convert to a strict connection
+        const strictConnection = convertToStrictConnection(connection);
+        if (!strictConnection) {
+          throw new Error("Invalid source or target handle");
+        }
+
         // Validate source handle is an output handle
-        if (
-          !connection.sourceHandle ||
-          !isOutputHandleId(connection.sourceHandle)
-        ) {
+        if (!isOutputHandleId(strictConnection.sourceHandle)) {
           throw new Error("Source must be an output handle");
         }
 
         // Validate target handle is a texture handle
-        if (!connection.targetHandle) {
-          throw new Error("Target handle is required");
-        }
-
-        const targetHandle = createTextureHandleId(connection.targetHandle);
-        if (!targetHandle) {
+        const isTextureHandle =
+          strictConnection.targetHandle.startsWith("input");
+        if (!isTextureHandle) {
           throw new Error("Target must be a valid texture handle");
         }
 
         // Try to prepare the edge with validation
         const validatedEdge = prepareEdgeForInsert({
           ...connection,
-          sourceHandle: connection.sourceHandle as HandleId,
-          targetHandle,
+          sourceHandle: strictConnection.sourceHandle,
+          targetHandle: strictConnection.targetHandle,
         } as InsertEdge);
 
         return {

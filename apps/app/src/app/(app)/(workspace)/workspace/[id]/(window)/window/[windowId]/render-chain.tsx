@@ -2,13 +2,10 @@
 
 import { useEffect } from "react";
 
+import { $GeometryType, GeometryMap, WebGLView } from "@repo/threejs";
+
 import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/node";
 import { useTextureRenderStore } from "~/app/(app)/(workspace)/workspace/providers/texture-render-store-provider";
-import {
-  $GeometryType,
-  GeometryMap,
-  WebGLView,
-} from "~/app/(app)/(workspace)/workspace/webgl";
 import { api } from "~/trpc/client/react";
 
 interface RenderChainProps {

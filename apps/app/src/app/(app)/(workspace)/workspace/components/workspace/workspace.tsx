@@ -23,7 +23,10 @@ import { useDeleteEdge } from "../../hooks/use-delete-edge";
 import { useDeleteNode } from "../../hooks/use-delete-node";
 import { useReplaceEdge } from "../../hooks/use-replace-edge";
 import { useUpdateNodes } from "../../hooks/use-update-nodes";
-import { useHandleTypeValidator } from "../../hooks/use-validate-edge";
+import {
+  useHandleTypeValidator,
+  useSelfConnectionValidator,
+} from "../../hooks/use-validate-edge";
 import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
@@ -109,11 +112,16 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
 
   const onConnect = useCallback(
     async (params: Connection) => {
-      // Require explicit targetHandle for all connections
-      if (!params.targetHandle) {
+      // First, check basic requirements
+      if (
+        !params.source ||
+        !params.target ||
+        !params.sourceHandle ||
+        !params.targetHandle
+      ) {
         toast({
           title: "Connection Failed",
-          description: "Missing target handle specification",
+          description: "Missing connection parameters",
           variant: "destructive",
         });
         return;
@@ -139,7 +147,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         await addEdgeMutate(params);
       }
     },
-    [replaceEdgeMutate, addEdgeMutate, edges, validateHandleTypes],
+    [validateHandleTypes, edges, replaceEdgeMutate, addEdgeMutate],
   );
 
   return (

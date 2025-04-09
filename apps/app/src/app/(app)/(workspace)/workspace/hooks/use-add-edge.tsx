@@ -7,11 +7,12 @@ import { toast } from "@repo/ui/hooks/use-toast";
 import type { BaseEdge } from "../types/node";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
-import { useConnectionValidation } from "./use-connection-validation";
+import { convertToStrictConnection } from "../types/connection";
+import { useSelfConnectionValidator } from "./use-validate-edge";
 
 export const useAddEdge = () => {
   const { addEdge, deleteEdge } = useEdgeStore((state) => state);
-  const { validateConnection } = useConnectionValidation();
+  const validateSelfConnection = useSelfConnectionValidator();
 
   const { mutateAsync: mut } = api.tenant.edge.create.useMutation({
     onMutate: (newEdge) => {
@@ -43,23 +44,32 @@ export const useAddEdge = () => {
 
   const mutateAsync = useCallback(
     async (connection: Connection) => {
-      // Validate connection first
-      const validationResult = validateConnection(connection);
+      const { source, target } = connection;
 
-      if (!validationResult.valid || !validationResult.validatedEdge) {
+      // Validate it's not a self connection
+      if (!validateSelfConnection(source, target)) {
         return false;
       }
 
-      const validatedEdge = validationResult.validatedEdge;
+      // Convert to strict connection to validate handles
+      const strictConnection = convertToStrictConnection(connection);
+      if (!strictConnection) {
+        toast({
+          title: "Invalid Connection",
+          description: "The handles specified are not valid",
+          variant: "destructive",
+        });
+        return false;
+      }
 
       try {
         await mut({
           id: nanoid(),
           edge: {
-            source: validatedEdge.source,
-            target: validatedEdge.target,
-            sourceHandle: validatedEdge.sourceHandle,
-            targetHandle: validatedEdge.targetHandle,
+            source: strictConnection.source,
+            target: strictConnection.target,
+            sourceHandle: strictConnection.sourceHandle,
+            targetHandle: strictConnection.targetHandle,
           },
         });
         return true;
@@ -68,7 +78,7 @@ export const useAddEdge = () => {
         return false;
       }
     },
-    [mut, validateConnection],
+    [mut, validateSelfConnection],
   );
 
   return { mutateAsync };
