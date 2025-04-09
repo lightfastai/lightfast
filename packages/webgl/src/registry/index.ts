@@ -1,6 +1,4 @@
-import type { ShaderDefinition } from "@/registry/interfaces/registry-shader-def";
 import type { Sampler2DMetadata } from "@/shaders/field";
-import type { ShaderSchema } from "@/shaders/interfaces/shader-def";
 
 import type { Shaders } from "../generated/shader-enum.generated";
 import type { ShaderSampler2DUniformRegistry } from "./interfaces/sampler2d-registry-def";
@@ -15,24 +13,6 @@ import {
  * Populated from the generated registry
  */
 export const shaderRegistry = generatedShaderRegistry;
-
-/**
- * Get a shader definition
- * @param type - The shader type
- * @returns The shader definition
- * @throws Error if shader type is not registered
- */
-export function getShaderDefinition(
-  type: Shaders,
-): ShaderDefinition<ShaderSchema> {
-  const definition = shaderRegistry.get(type);
-
-  if (!definition) {
-    throw new Error(`Shader definition not registered for type: ${type}`);
-  }
-
-  return definition;
-}
 
 /**
  * Check if a shader type is registered
@@ -60,7 +40,10 @@ export const textureInputRegistry: Record<
   ShaderSampler2DUniformRegistry
 > = Object.fromEntries(
   getAllShaderTypes().map((type) => {
-    const definition = getShaderDefinition(type);
+    const definition = shaderRegistry.get(type);
+    if (!definition) {
+      throw new Error(`Shader definition not registered for type: ${type}`);
+    }
     return [type, extractShaderSampler2DRegistry(definition)];
   }),
 ) as Record<Shaders, ShaderSampler2DUniformRegistry>;

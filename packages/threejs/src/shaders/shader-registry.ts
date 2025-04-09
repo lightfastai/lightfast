@@ -1,36 +1,25 @@
-import type { ShaderDefinition, Shaders, ShaderSchema } from "@repo/webgl";
-import { getAllShaderTypes, getShaderDefinition } from "@repo/webgl";
+import type { Shaders } from "@repo/webgl";
+import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
 
-import type { R3FShaderUniforms } from "../types/shader-uniforms";
 import type { ShaderSingleton } from "./shader-singleton-factory";
-import { createUniformsFromSchema } from "../types/shader-uniforms";
 import { createShaderSingleton } from "./shader-singleton-factory";
 
-/**
- * Create default uniforms for a shader from its definition
- * @param definition - The shader definition
- * @returns The default uniforms
- */
-const createDefaultUniformsFromDefinition = <TSchema extends ShaderSchema>(
-  definition: ShaderDefinition<TSchema>,
-): R3FShaderUniforms => {
-  const defaultValues = definition.createDefaultValues();
-  return createUniformsFromSchema(defaultValues, definition.constraints);
-};
-
 // Map of all registered shader singletons
-const shaderRegistry: Record<Shaders, ShaderSingleton> = {} as Record<
+const r3fShaderRegistry: Record<Shaders, ShaderSingleton> = {} as Record<
   Shaders,
   ShaderSingleton
 >;
 
 // Dynamically build the shader registry from the webgl shader registry
 getAllShaderTypes().forEach((shaderType) => {
-  const definition = getShaderDefinition(shaderType);
+  const definition = shaderRegistry.get(shaderType);
+  if (!definition) {
+    throw new Error(`Shader definition not registered for type: ${shaderType}`);
+  }
 
   // Create a function to generate default uniforms for this shader type
   const createDefaultUniformsForType = () => {
-    return createDefaultUniformsFromDefinition(definition);
+    return definition.createDefaultValues();
   };
 
   // Create and register the shader singleton
@@ -40,7 +29,7 @@ getAllShaderTypes().forEach((shaderType) => {
     createDefaultUniformsForType,
   );
 
-  shaderRegistry[shaderType] = shaderSingleton;
+  r3fShaderRegistry[shaderType] = shaderSingleton;
 });
 
 /**
@@ -55,7 +44,7 @@ export const ShaderSingletonRegistry = {
    * @throws Error if shader type is not registered
    */
   getSingleton(type: Shaders): ShaderSingleton {
-    const singleton = shaderRegistry[type];
+    const singleton = r3fShaderRegistry[type];
     return singleton;
   },
 
@@ -65,7 +54,7 @@ export const ShaderSingletonRegistry = {
    * @param singleton - The singleton to register
    */
   registerSingleton(type: Shaders, singleton: ShaderSingleton): void {
-    shaderRegistry[type] = singleton;
+    r3fShaderRegistry[type] = singleton;
   },
 
   /**
@@ -74,6 +63,6 @@ export const ShaderSingletonRegistry = {
    * @returns True if registered, false otherwise
    */
   isRegistered(type: Shaders): boolean {
-    return type in shaderRegistry;
+    return type in r3fShaderRegistry;
   },
 };

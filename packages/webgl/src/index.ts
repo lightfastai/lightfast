@@ -134,17 +134,18 @@ export type {
 } from "./shaders/field";
 
 export * from "./shaders/interfaces/sampler2d-handle";
+export * from "./shaders/interfaces/shader-def";
 
 /**
  * Registry functions and texture handling
  */
 export {
-  getShaderDefinition,
   isShaderRegistered,
   getAllShaderTypes,
   textureInputRegistry,
   getShaderSampler2DInputsForType,
   createSampler2DFieldMetadata,
+  shaderRegistry,
 } from "./registry";
 
 // Export shader enums

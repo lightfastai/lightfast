@@ -5,7 +5,7 @@ import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { Shaders } from "@repo/webgl";
 import type { Texture } from "@vendor/db/types";
 import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
-import { getAllShaderTypes, getShaderDefinition } from "@repo/webgl";
+import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
 
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 import { useConnectionCache } from "./use-connection-cache";
@@ -122,7 +122,13 @@ export const useUnifiedTextureOrchestrator = ({
       const orchestrator = orchestrators[shaderType];
 
       // Get the shader definition to access the constraints
-      const shaderDefinition = getShaderDefinition(shaderType);
+      // @TODO: This is a bit of a hack, we should probably move this to the orchestrator, also could crash if the shader is not registered
+      const shaderDefinition = shaderRegistry.get(shaderType);
+      if (!shaderDefinition) {
+        throw new Error(
+          `Shader definition not registered for type: ${shaderType}`,
+        );
+      }
 
       const node: WebGLRenderTargetNode = {
         id,

@@ -4,8 +4,8 @@ import type { Shaders } from "@repo/webgl";
 import {
   $Shaders,
   $ShaderValues,
-  getShaderDefinition,
   isShaderRegistered,
+  shaderRegistry,
 } from "@repo/webgl";
 
 export const $TextureTypes = $Shaders;
@@ -40,9 +40,14 @@ const textureTypeObjects = $ShaderValues.map((shaderType) => {
     );
   }
 
+  const schema = shaderRegistry.get(type)?.schema;
+  if (!schema) {
+    throw new Error(`Shader definition not registered for type: ${type}`);
+  }
+
   return z.object({
     type: z.literal(type),
-    uniforms: getShaderDefinition(type).schema,
+    uniforms: schema,
     resolution: $TextureResolution,
   });
 }) as unknown as [TextureSchemaObject, ...TextureSchemaObject[]];
@@ -60,10 +65,13 @@ export const $TextureUniforms = $ShaderValues
     const type = shaderType;
     if (isShaderRegistered(type)) {
       try {
+        const shaderDef = shaderRegistry.get(type);
+        if (!shaderDef) {
+          throw new Error(`Shader definition not registered for type: ${type}`);
+        }
         // Only merge if the schema is a ZodObject that can be merged
-        const shaderSchema = getShaderDefinition(type).schema;
         if (typeof schema.merge === "function") {
-          return schema.merge(shaderSchema);
+          return schema.merge(schema);
         }
       } catch (error) {
         // If merging fails, just return the current schema
@@ -78,17 +86,6 @@ export const $TextureUniforms = $ShaderValues
 export type TextureUniforms = z.infer<typeof $TextureUniforms>;
 export type Texture = z.infer<typeof $Texture>;
 
-// Create type helpers for each texture type
-// These will be generated dynamically to avoid maintenance issues
-type TextureTypeMap = {
-  [K in Shaders]: Extract<Texture, { type: K }>;
-};
-
-export type PnoiseTexture = TextureTypeMap["Pnoise"];
-export type LimitTexture = TextureTypeMap["Limit"];
-export type DisplaceTexture = TextureTypeMap["Displace"];
-export type AddTexture = TextureTypeMap["Add"];
-
 export const createDefaultTexture = ({
   type,
 }: {
@@ -96,7 +93,10 @@ export const createDefaultTexture = ({
 }): Texture => {
   // Get the shader definition from the registry, which contains createDefaultValues
   try {
-    const shaderDef = getShaderDefinition(type);
+    const shaderDef = shaderRegistry.get(type);
+    if (!shaderDef) {
+      throw new Error(`Shader definition not registered for type: ${type}`);
+    }
     const defaultValues = shaderDef.createDefaultValues();
 
     return {
