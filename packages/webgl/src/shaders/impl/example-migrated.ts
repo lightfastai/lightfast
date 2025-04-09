@@ -17,7 +17,10 @@ import { $Boolean, $Float, $Sampler2D } from "../uniforms";
 const SHADER_NAME = "Migrated";
 
 // Existing code below this line
-export const migratedInputHandle = createSampler2DHandle("input", "u_texture");
+export const migratedInputHandle = createSampler2DHandle(
+  "input-1",
+  "u_texture1",
+);
 
 export const $Migrated = z.object({
   u_texture: $Sampler2D,

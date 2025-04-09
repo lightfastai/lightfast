@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isValidSampler2DHandleId } from "@repo/webgl";
+
 /**
  * Branded type for texture handle IDs
  */
@@ -14,11 +16,6 @@ export type OutputHandleId = string & { readonly __brand: "OutputHandleId" };
  * Union type for all handle IDs
  */
 export type HandleId = TextureHandleId | OutputHandleId;
-
-/**
- * Regular expression for validating texture handle IDs in the format "input-N"
- */
-export const TEXTURE_HANDLE_ID_REGEX = /^input-\d+$/;
 
 /**
  * Regular expression for validating output handle IDs in the format "output-name"
@@ -37,7 +34,7 @@ export interface TextureHandleImpl {
  * Check if a string is a valid texture handle ID
  */
 export function isValidTextureHandleId(id: string): boolean {
-  return TEXTURE_HANDLE_ID_REGEX.test(id);
+  return isValidSampler2DHandleId(id);
 }
 
 /**
@@ -68,43 +65,6 @@ export function getUniformNameFromTextureHandleId(
   if (index === null) return null;
   return `u_texture${index}`;
 }
-
-/**
- * Create a TextureHandle with validation
- */
-export function createTextureHandle(value: string): TextureHandle | null {
-  const handleId = value as TextureHandleId;
-  if (!isValidTextureHandleId(handleId)) return null;
-
-  const uniformName = getUniformNameFromTextureHandleId(handleId);
-  if (!uniformName) return null;
-
-  return {
-    id: handleId,
-    uniformName,
-  };
-}
-
-/**
- * Map a uniform name to its corresponding texture handle ID
- */
-export function getTextureHandleFromUniformName(
-  uniformName: string,
-): TextureHandle | null {
-  const match = /^u_texture(\d+)$/.exec(uniformName);
-  if (!match?.[1]) return null;
-  const index = parseInt(match[1], 10);
-  const handleId = `input-${index}` as TextureHandleId;
-  return createTextureHandle(handleId);
-}
-
-/**
- * Zod schema for texture handles
- */
-export const $TextureHandle = z.object({
-  id: z.string().refine(isValidTextureHandleId),
-  uniformName: z.string().regex(/^u_.*texture.*$/),
-});
 
 // Update the Zod schema to use custom validation
 export const $TextureHandleId = z.custom<TextureHandleId>(

@@ -158,7 +158,7 @@ export {
   createSampler2DFieldMetadata,
   shaderRegistry,
 } from "./registry";
-
+export * from "./shaders/interfaces/sampler2d-handle";
 // Export shader enums
 export * from "./shaders/enums/shaders";
 

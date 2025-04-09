@@ -20,6 +20,10 @@ export function isValidSampler2DUniformName(uniformName: string): boolean {
   return /^u_.*texture.*$/.test(uniformName) && uniformName.length > 2;
 }
 
+export function isValidSampler2DHandleId(handleId: string): boolean {
+  return /^input-\d+$/.test(handleId);
+}
+
 /**
  * Creates a Sampler2DHandle with validation
  * @param handleId The handle ID
@@ -37,6 +41,10 @@ export function createSampler2DHandle(
     throw new Error(
       `Invalid uniform name: ${uniformName} for handleId: ${handleId}`,
     );
+  }
+
+  if (!isValidSampler2DHandleId(handleId)) {
+    throw new Error(`Invalid handleId: ${handleId}`);
   }
 
   return {
