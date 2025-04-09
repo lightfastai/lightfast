@@ -1,7 +1,7 @@
 "use client";
 
 import type * as THREE from "three";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { Shaders } from "@repo/webgl";
@@ -9,8 +9,9 @@ import type { Texture } from "@vendor/db/types";
 import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
 
+import type { BaseEdge } from "../types/node";
+import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
-import { useConnectionCache } from "./use-connection-cache";
 
 export interface UnifiedTextureOrchestratorProps {
   textureDataMap: Record<string, Texture>;
@@ -27,24 +28,45 @@ const getTextureFromTargets = (
 };
 
 /**
+ * Gets the source node ID connected to a target node
+ */
+const getSourceForTarget = (
+  edges: BaseEdge[],
+  targetId: string,
+): string | null => {
+  const edge = edges.find((edge) => edge.target === targetId);
+  return edge?.source || null;
+};
+
+/**
  * Unified hook for managing multiple texture types with their shader orchestration
- * Handles shader creation, uniform updates, and memory management for all texture types
  */
 export const useUnifiedTextureOrchestrator = ({
   textureDataMap,
 }: UnifiedTextureOrchestratorProps): WebGLRenderTargetNode[] => {
+  // External state
   const { targets } = useTextureRenderStore((state) => state);
-  const { getSourceForTarget } = useConnectionCache();
+  const { edges } = useEdgeStore((state) => state);
   const { updateAllUniforms } = useUnifiedUniforms();
 
-  // Get all available shader types
-  const shaderTypes = useMemo(() => getAllShaderTypes(), []);
+  // Local state for tracking when we need to rebuild
+  const [rebuildCounter, setRebuildCounter] = useState(0);
 
-  // Get the map of shader orchestrators
+  // Get shader tools
+  const shaderTypes = useMemo(() => getAllShaderTypes(), []);
   const orchestrators = useShaderOrchestratorMap();
 
+  // Refs for storage
+  const nodesRef = useRef<Record<string, WebGLRenderTargetNode>>({});
+  const textureConfigsRef = useRef<Record<string, Texture>>({});
+
+  // Previous state refs for comparison
+  const prevEdgesRef = useRef(edges);
+  const prevTargetsRef = useRef(targets);
+  const prevTextureDataMapRef = useRef(textureDataMap);
+
   /**
-   * Type guard to check if a value is a valid Shaders type using the actual shader types
+   * Type guard for shader types
    */
   const isValidShaderType = useCallback(
     (type: string): type is Shaders => {
@@ -53,169 +75,154 @@ export const useUnifiedTextureOrchestrator = ({
     [shaderTypes],
   );
 
-  // Store uniform configurations per texture ID
-  const uniformConfigsRef = useRef<Record<string, Texture>>({});
-
-  // Create a reference to track render target nodes
-  const renderTargetNodesRef = useRef<Record<string, WebGLRenderTargetNode>>(
-    {},
-  );
-
-  // Track the set of texture IDs for cleanup
-  const activeIdsRef = useRef<Set<string>>(new Set());
-
   /**
-   * Creates a texture resolver function for a specific node ID
+   * Create a texture resolver function for a specific node ID
+   * This needs to be recreated when edges or targets change
    */
   const createTextureResolver = useCallback(
     (nodeId: string) => {
-      // Return a function that resolves textures from samplers
       return (_sampler: Record<string, unknown>): THREE.Texture | null => {
-        const sourceId = getSourceForTarget(nodeId);
+        const sourceId = getSourceForTarget(edges, nodeId);
         return getTextureFromTargets(sourceId, targets);
       };
     },
-    [getSourceForTarget, targets],
+    [edges, targets],
   );
 
   /**
-   * Update a single texture with its current data
+   * Clear all nodes and configs
    */
-  const updateSingleTexture = useCallback(
-    (id: string, texture: Texture): void => {
-      // Validate that the texture type is a valid shader type
+  const clearAll = useCallback(() => {
+    nodesRef.current = {};
+    textureConfigsRef.current = {};
+  }, []);
+
+  /**
+   * Create a node for a texture
+   */
+  const createNode = useCallback(
+    (id: string, texture: Texture): WebGLRenderTargetNode | null => {
+      // Validate texture type
       if (!isValidShaderType(texture.type)) {
-        throw new Error(`Invalid texture type: ${texture.type}`);
+        console.error(`Invalid texture type: ${texture.type}`);
+        return null;
       }
 
-      // Store the uniform configuration for this texture based on its type
-      uniformConfigsRef.current[id] = texture;
-    },
-    [isValidShaderType],
-  );
+      // Store texture config
+      textureConfigsRef.current[id] = texture;
 
-  /**
-   * Create or get a cached WebGLRenderTargetNode for a texture
-   */
-  const getOrCreateRenderTargetNode = useCallback(
-    (id: string, texture: Texture): WebGLRenderTargetNode => {
-      // If we already have a node for this id, reuse it
-      if (renderTargetNodesRef.current[id]) {
-        return renderTargetNodesRef.current[id];
-      }
-
-      // Update texture uniform configuration
-      updateSingleTexture(id, texture);
-
-      // Get the appropriate shader orchestrator for this texture type
-      // Type safety is ensured by updateSingleTexture validating the type
+      // Get orchestrator for this texture type
       const shaderType = texture.type;
       const orchestrator = orchestrators[shaderType];
 
-      // Get the shader definition to access the constraints
-      // @TODO: This is a bit of a hack, we should probably move this to the orchestrator, also could crash if the shader is not registered
+      // Get shader definition
       const shaderDefinition = shaderRegistry.get(shaderType);
       if (!shaderDefinition) {
-        throw new Error(
-          `Shader definition not registered for type: ${shaderType}`,
-        );
+        console.error(`Shader definition not found for type: ${shaderType}`);
+        return null;
       }
 
+      // Create frame update handler
+      const onEachFrame = (state: WebGLRootState) => {
+        const config = textureConfigsRef.current[id];
+        if (!config) return;
+
+        const shader = orchestrator.getShader();
+        const textureResolver = createTextureResolver(id);
+
+        updateAllUniforms(
+          state,
+          shader,
+          config.uniforms,
+          shaderDefinition.constraints,
+          textureResolver,
+        );
+      };
+
+      // Create the node
       const node: WebGLRenderTargetNode = {
         id,
         get shader() {
           return orchestrator.getShader();
         },
-        onEachFrame: (state: WebGLRootState) => {
-          // Get the uniform values and type for this node
-          const config = uniformConfigsRef.current[id];
-          if (!config) return;
-
-          // Get the shader material
-          const shader = orchestrator.getShader();
-
-          // Create a texture resolver for this specific node
-          const textureResolver = createTextureResolver(id);
-
-          // Use the unified approach to update all uniforms in one pass
-          updateAllUniforms(
-            state,
-            shader,
-            config.uniforms,
-            shaderDefinition.constraints,
-            textureResolver,
-          );
-        },
+        onEachFrame,
       };
 
-      // Cache the node for future reuse
-      renderTargetNodesRef.current[id] = node;
+      // Store the node
+      nodesRef.current[id] = node;
 
       return node;
     },
     [
-      updateSingleTexture,
       createTextureResolver,
-      updateAllUniforms,
       orchestrators,
+      isValidShaderType,
+      updateAllUniforms,
     ],
   );
 
-  // Update textures and track active IDs whenever texture data changes
-  useEffect(() => {
-    const hasTextures = Object.keys(textureDataMap).length > 0;
+  /**
+   * Force a rebuild of all nodes
+   */
+  const rebuildAllNodes = useCallback(() => {
+    // Clear existing nodes
+    clearAll();
 
-    // Skip if no textures are present
-    if (!hasTextures) {
-      // Clean up all stored uniform configurations
-      uniformConfigsRef.current = {};
-
-      // Clean up all render target nodes
-      renderTargetNodesRef.current = {};
-
-      return;
-    }
-
-    // Get the new set of active IDs
-    const currentIds = new Set(Object.keys(textureDataMap));
-
-    // Update all textures
+    // Create new nodes for each texture
     Object.entries(textureDataMap).forEach(([id, texture]) => {
-      updateSingleTexture(id, texture);
-
-      // Ensure we have a render target node for each texture
-      getOrCreateRenderTargetNode(id, texture);
+      createNode(id, texture);
     });
 
-    // Clean up nodes that are no longer in the texture data map
-    const nodesToRemove: string[] = [];
-    Object.keys(renderTargetNodesRef.current).forEach((id) => {
-      if (!currentIds.has(id)) {
-        nodesToRemove.push(id);
-      }
-    });
+    // Update previous state refs
+    prevEdgesRef.current = edges;
+    prevTargetsRef.current = targets;
+    prevTextureDataMapRef.current = textureDataMap;
+  }, [textureDataMap, edges, targets, clearAll, createNode]);
 
-    // Remove unused nodes
-    nodesToRemove.forEach((id) => {
-      delete renderTargetNodesRef.current[id];
-      delete uniformConfigsRef.current[id];
-    });
+  // Check for changes in dependencies that should trigger a rebuild
+  useEffect(() => {
+    const edgesChanged = prevEdgesRef.current !== edges;
+    const targetsChanged = prevTargetsRef.current !== targets;
+    const texturesChanged = prevTextureDataMapRef.current !== textureDataMap;
 
-    // Update active IDs reference
-    activeIdsRef.current = currentIds;
-  }, [textureDataMap, updateSingleTexture, getOrCreateRenderTargetNode]);
+    if (edgesChanged || targetsChanged || texturesChanged) {
+      // Force a rebuild by incrementing counter
+      setRebuildCounter((count) => count + 1);
+    }
+  }, [edges, targets, textureDataMap]);
 
-  // Return the render target nodes with stable references
+  // Rebuild nodes when necessary
+  useEffect(() => {
+    rebuildAllNodes();
+  }, [rebuildCounter, rebuildAllNodes]);
+
+  // Return current nodes
   return useMemo(() => {
-    // If no textures exist, return an empty array
-    if (Object.keys(textureDataMap).length === 0) {
+    // Get all texture IDs
+    const textureIds = Object.keys(textureDataMap);
+
+    // Return empty array if no textures
+    if (textureIds.length === 0) {
       return [];
     }
 
-    // Create an array of nodes from the current texture data map
-    return Object.entries(textureDataMap).map(([id, texture]) => {
-      // Always ensure the node exists in our cache
-      return getOrCreateRenderTargetNode(id, texture);
-    });
-  }, [textureDataMap, getOrCreateRenderTargetNode]);
+    // Map textures to nodes, creating any that don't exist
+    return textureIds
+      .map((id) => {
+        // Check if node already exists
+        if (nodesRef.current[id]) {
+          return nodesRef.current[id];
+        }
+
+        // Create node if it doesn't exist
+        const texture = textureDataMap[id];
+        if (!texture) {
+          // @TODO: Handle this better
+          return null;
+        }
+
+        return createNode(id, texture);
+      })
+      .filter((node): node is WebGLRenderTargetNode => node !== null);
+  }, [textureDataMap, createNode]);
 };

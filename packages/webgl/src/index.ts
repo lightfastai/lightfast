@@ -15,12 +15,14 @@ export {
   $Integer,
   $Expression,
   $String,
+  $Sampler2D,
   type Boolean,
   type Number,
   type Float,
   type Integer,
   type Expression,
   type String,
+  type Sampler2D,
 
   // Vector types
   $Vec2,
