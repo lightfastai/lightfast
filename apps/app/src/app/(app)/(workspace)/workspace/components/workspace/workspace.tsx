@@ -81,10 +81,13 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   };
 
   // Combined onDelete handler handling both node and edge deletions
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const onDelete: OnDelete<BaseNode, BaseEdge> = useCallback(
     async ({ nodes: nodesToDelete, edges: edgesToDelete }) => {
       // If there are no nodes or edges to delete, do nothing
-      if (nodesToDelete.length === 0 && edgesToDelete.length === 0) return;
+      if (nodesToDelete.length === 0 && edgesToDelete.length === 0) {
+        return;
+      }
 
       // Handle Edge Deletions if there are no nodes to delete
       if (nodesToDelete.length === 0 && edgesToDelete.length > 0) {
@@ -101,7 +104,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         );
       }
     },
-    [deleteEdgeMutate, deleteNodeMutate, addEdgeMutate],
+    [deleteEdgeMutate, deleteNodeMutate],
   );
 
   const onConnect = useCallback(

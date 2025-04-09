@@ -1,6 +1,7 @@
 import type { Connection } from "@xyflow/react";
 import { useCallback } from "react";
 
+import type { HandleId } from "@vendor/db/types";
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
 
@@ -74,8 +75,8 @@ export const useReplaceEdge = () => {
             id: nanoid(),
             source: newConnection.source,
             target: newConnection.target,
-            sourceHandle: newConnection.sourceHandle || undefined,
-            targetHandle: newConnection.targetHandle || undefined,
+            sourceHandle: newConnection.sourceHandle as HandleId,
+            targetHandle: newConnection.targetHandle as HandleId,
           },
         });
         return true;
