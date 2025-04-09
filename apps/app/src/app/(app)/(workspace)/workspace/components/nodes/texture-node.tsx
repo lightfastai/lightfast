@@ -31,8 +31,12 @@ export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
     const trpc = useTRPC();
     const { data } = useSuspenseQuery(
-      trpc.tenant.node.data.get.queryOptions<Texture>({ id }),
+      trpc.tenant.node.data.get.queryOptions<Texture>(
+        { id },
+        { enabled: !!id },
+      ),
     );
+    console.log("data", id, data);
     const { targets } = useTextureRenderStore((state) => state);
     const setSelected = useInspectorStore((state) => state.setSelected);
 

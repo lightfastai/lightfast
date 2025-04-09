@@ -21,6 +21,7 @@ import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-
 import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
 import { EditorCommandDialog } from "../../components/command-dialog/editor-command-dialog";
 import { Debug } from "../../components/webgl/webgl-debug";
+import { WebGLTextureRenderPipeline } from "../../components/webgl/webgl-texture-render-pipeline";
 import { EdgeStoreProvider } from "../../providers/edge-store-provider";
 import { EditorStoreProvider } from "../../providers/editor-store-provider";
 import { FileMenuViewProvider } from "../../providers/file-menu-view-provider";
@@ -109,7 +110,7 @@ export default async function WorkspaceLayout(props: WorkspaceLayoutProps) {
   ]);
 
   if (!workspace) {
-    notFound();
+    return notFound();
   }
 
   /** Prefetch node data using <HydrateClient> (tRPC SSR) & useSuspenseQuery (Tanstack Query) */
@@ -151,7 +152,7 @@ export default async function WorkspaceLayout(props: WorkspaceLayoutProps) {
                     )}
                   >
                     <InspectorStoreProvider>
-                      {/* <WebGLCanvas
+                      <WebGLCanvas
                         style={{
                           position: "absolute",
                           pointerEvents: "none",
@@ -164,7 +165,7 @@ export default async function WorkspaceLayout(props: WorkspaceLayoutProps) {
                         showPerformance={true}
                       >
                         <WebGLTextureRenderPipeline />
-                      </WebGLCanvas> */}
+                      </WebGLCanvas>
                       <WorkspaceReactFlowProvider>
                         <WorkspaceViewProvider>
                           {children}

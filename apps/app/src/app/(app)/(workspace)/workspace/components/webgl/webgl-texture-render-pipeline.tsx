@@ -17,7 +17,7 @@ export const WebGLTextureRenderPipeline = () => {
   // Get all texture nodes
   const queries = useQueries({
     queries: Object.entries(targets).map(([id]) =>
-      trpc.tenant.node.data.get.queryOptions({ id }),
+      trpc.tenant.node.data.get.queryOptions<Texture>({ id }),
     ),
   });
 

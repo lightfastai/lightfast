@@ -12,8 +12,10 @@ export default async function WorkspaceLayout({
     api.app.auth.getSession.queryOptions(),
   );
   if (!session?.user.clerkId) {
-    notFound();
+    return notFound();
   }
+
+  // @todo add checker that user owns the workspace....
 
   return <>{children}</>;
 }

@@ -39,27 +39,23 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { addNode, deleteNode } = useNodeStore((state) => state);
-  const { addTarget } = useTextureRenderStore((state) => state);
+  const { addTarget, targets } = useTextureRenderStore((state) => state);
   const { selection, clearSelection } = useSelectionStore((state) => state);
   const { screenToFlowPosition } = useReactFlow();
+
   const create = useMutation(
     trpc.tenant.node.create.mutationOptions({
       onMutate: async (newNode) => {
-        // Cancel any outgoing refetches
-        await queryClient.cancelQueries(
-          trpc.tenant.node.data.get.queryFilter({ id: newNode.id }),
-        );
-
         const optimisticNode: BaseNode = {
           id: newNode.id,
           type: newNode.type,
           position: newNode.position,
-          data: {},
+          data: newNode.data,
         };
 
-        addNode(optimisticNode);
+        console.log("newNode", newNode);
 
-        queryClient.setQueryData(
+        await queryClient.setQueryData(
           [trpc.tenant.node.data.get.queryFilter({ id: newNode.id })],
           newNode.data as Geometry | Material | Texture,
         );
@@ -70,6 +66,8 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
             height: 256,
           });
         }
+
+        addNode(optimisticNode);
 
         return { optimisticNode };
       },
@@ -85,12 +83,12 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
           undefined,
         );
       },
-      onSettled: async (newNode) => {
-        if (!newNode) return;
-        await queryClient.invalidateQueries(
-          trpc.tenant.node.data.get.queryFilter({ id: newNode.id }),
-        );
-      },
+      // onSettled: async (newNode) => {
+      //   if (!newNode) return;
+      //   await queryClient.invalidateQueries(
+      //     trpc.tenant.node.data.get.queryFilter({ id: newNode.id }),
+      //   );
+      // },
     }),
   );
 

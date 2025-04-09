@@ -206,16 +206,16 @@ export const useUnifiedTextureOrchestrator = ({
   }, [textureDataMap, edges, targets, clearAll, createNode]);
 
   // Check for changes in dependencies that should trigger a rebuild
-  useEffect(() => {
-    const edgesChanged = prevEdgesRef.current !== edges;
-    const targetsChanged = prevTargetsRef.current !== targets;
-    const texturesChanged = prevTextureDataMapRef.current !== textureDataMap;
+  // useEffect(() => {
+  //   const edgesChanged = prevEdgesRef.current !== edges;
+  //   const targetsChanged = prevTargetsRef.current !== targets;
+  //   const texturesChanged = prevTextureDataMapRef.current !== textureDataMap;
 
-    if (edgesChanged || targetsChanged || texturesChanged) {
-      // Force a rebuild by incrementing counter
-      setRebuildCounter((count) => count + 1);
-    }
-  }, [edges, targets, textureDataMap]);
+  //   if (edgesChanged || targetsChanged || texturesChanged) {
+  //     // Force a rebuild by incrementing counter
+  //     setRebuildCounter((count) => count + 1);
+  //   }
+  // }, [edges, targets, textureDataMap]);
 
   // Rebuild nodes when necessary
   useEffect(() => {

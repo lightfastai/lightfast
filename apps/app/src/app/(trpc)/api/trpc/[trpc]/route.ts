@@ -5,7 +5,7 @@ import { createTRPCContext } from "@vendor/trpc";
 
 import { appRouter } from "~/trpc/server/root";
 
-export const runtime = "edge";
+// export const runtime = "edge";
 
 /**
  * Configure basic CORS headers

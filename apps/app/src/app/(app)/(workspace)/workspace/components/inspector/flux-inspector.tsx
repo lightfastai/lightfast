@@ -2,6 +2,11 @@ import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
 import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
 import type { Value } from "@repo/webgl";
@@ -11,25 +16,33 @@ import { Separator } from "@repo/ui/components/ui/separator";
 import { $Txt2Img } from "@vendor/db/types";
 
 import { useDebounce } from "~/hooks/use-debounce";
-import { api } from "~/trpc/client/react";
+import { useTRPC } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";
 import { InspectorFormField } from "./inspector-form-field";
 
 export const FluxInspector = ({ id }: { id: string }) => {
-  const utils = api.useUtils();
-  const [data] = api.tenant.node.data.get.useSuspenseQuery<Txt2Img>({ id });
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { data } = useSuspenseQuery(
+    trpc.tenant.node.data.get.queryOptions<Txt2Img>({ id }),
+  );
 
   const form = useForm<Txt2Img>({
     resolver: zodResolver($Txt2Img),
     defaultValues: data,
   });
 
-  const { mutate: updateData } = api.tenant.node.data.update.useMutation({
-    onError: () => {
-      // On error, revert the optimistic update
-      utils.tenant.node.data.get.setData({ id }, data);
-    },
-  });
+  const { mutate: updateData } = useMutation(
+    trpc.tenant.node.data.update.mutationOptions({
+      onError: (error) => {
+        // On error, revert the optimistic update
+        queryClient.setQueryData(
+          trpc.tenant.node.data.get.queryKey({ id }),
+          data,
+        );
+      },
+    }),
+  );
 
   useEffect(() => {
     form.reset(data);
@@ -53,18 +66,15 @@ export const FluxInspector = ({ id }: { id: string }) => {
       } as Txt2Img;
 
       // Optimistically update the cache
-      utils.tenant.node.data.get.setData(
-        { id },
-        {
-          type: data.type,
-          prompt: newUniforms.prompt,
-        },
-      );
+      queryClient.setQueryData(trpc.tenant.node.data.get.queryKey({ id }), {
+        type: data.type,
+        prompt: newUniforms.prompt,
+      });
 
       // Debounce the actual server update
       debouncedServerUpdate(newUniforms);
     },
-    [id, data, utils.tenant.node.data.get, debouncedServerUpdate],
+    [data, queryClient, trpc.tenant.node.data.get, id, debouncedServerUpdate],
   );
 
   return (
