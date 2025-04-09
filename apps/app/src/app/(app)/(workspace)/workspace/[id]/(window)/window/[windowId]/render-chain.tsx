@@ -2,23 +2,26 @@
 
 import { useEffect } from "react";
 
-import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/node";
-import type { Texture } from "~/db/schema/types/Texture";
-import { WebGLView } from "~/app/(app)/(workspace)/workspace/components/webgl/webgl-primitives";
+import { $GeometryType, GeometryMap, WebGLView } from "@repo/threejs";
+
+import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/edge";
 import { useTextureRenderStore } from "~/app/(app)/(workspace)/workspace/providers/texture-render-store-provider";
-import { $GeometryType } from "~/db/schema/types";
 import { api } from "~/trpc/client/react";
-import { GeometryMap } from "../../../../components/webgl/webgl-globals";
 
 interface RenderChainProps {
   firstNodeId: string;
   edges: BaseEdge[];
 }
 
+interface TextureData {
+  resolution: { width: number; height: number };
+  [key: string]: any;
+}
+
 export function RenderChain({ firstNodeId, edges }: RenderChainProps) {
   const { targets, addTarget } = useTextureRenderStore((state) => state);
   const queries = api.useQueries((t) =>
-    edges.map((edge) => t.tenant.node.data.get<Texture>({ id: edge.source })),
+    edges.map((edge) => t.tenant.node.data.get({ id: edge.source })),
   );
 
   // Build the texture chain by walking back from the window node
@@ -43,8 +46,10 @@ export function RenderChain({ firstNodeId, edges }: RenderChainProps) {
         const edge = edges.find((e) => e.source === nodeId);
         if (edge) {
           const edgeIndex = edges.findIndex((e) => e.source === nodeId);
-          const textureData = queries[edgeIndex]?.data;
-          if (textureData) {
+          const textureData = queries[edgeIndex]?.data as
+            | TextureData
+            | undefined;
+          if (textureData?.resolution) {
             addTarget(nodeId, textureData.resolution);
           }
         }

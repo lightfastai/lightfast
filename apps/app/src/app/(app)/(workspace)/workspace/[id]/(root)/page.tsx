@@ -1,6 +1,5 @@
 import type { RouterInputs } from "~/trpc/server/index";
 import { Workspace } from "../../components/workspace/workspace";
-import { WorkspaceProvider } from "../../providers/workspace-provider";
 
 interface WorkspacePageProps {
   params: {
@@ -10,11 +9,5 @@ interface WorkspacePageProps {
 
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
-  return (
-    <>
-      <WorkspaceProvider>
-        <Workspace params={{ id }} />
-      </WorkspaceProvider>
-    </>
-  );
+  return <Workspace params={{ id }} />;
 }

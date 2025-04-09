@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "file": "add.ts",
+      "mtime": 1744177436471.8308
+    },
+    {
+      "file": "displace.ts",
+      "mtime": 1744176722288.7996
+    },
+    {
+      "file": "example-migrated.ts",
+      "mtime": 1744169043169.2249
+    },
+    {
+      "file": "limit.ts",
+      "mtime": 1744160907672.0444
+    },
+    {
+      "file": "pnoise.ts",
+      "mtime": 1744169022769.674
+    }
+  ],
+  "timestamp": 1744177436531
+}

@@ -1,0 +1,175 @@
+# Simplifying Edge Creation Validation
+
+## Current Implementation Analysis
+
+After analyzing the codebase, I've identified that there are indeed two layers of validation happening during edge creation:
+
+1. **Handle-level validation in texture-node.tsx**:
+   - The `texture-node.tsx` component creates handles with specific IDs (like `input-1`, `input-2`) based on the texture inputs metadata from `getTextureInputsForType(data.type)`.
+   - Each handle has an ID that corresponds to a specific input for that texture type.
+   - These handles are already properly positioned and styled in the UI.
+
+2. **Edge creation validation in use-add-edge.tsx**:
+   - The `use-add-edge.tsx` hook performs general validations (self-connection, target existence, max edges, window node).
+   - It has special handling for texture nodes with `handleTextureConnection`.
+   - Inside `handleTextureConnection`, it re-validates the target handle against the texture inputs metadata.
+
+3. **Connection handling in workspace.tsx**:
+   - The `workspace.tsx` component has its own edge connection logic in the `onConnect` function.
+   - It checks for existing edges to the same target handle and replaces them if needed.
+
+## Redundancy Analysis
+
+There appears to be redundancy in the validation process:
+
+1. If a handle exists in the UI (created by `texture-node.tsx`), it's already valid for that texture type.
+2. The connection system in React Flow should only allow connections to existing handles.
+3. The `use-add-edge` hook re-validates these handles against the same metadata.
+4. The workspace component also has its own logic for handling connections to specific handles.
+
+## Simplification Plan
+
+### 1. Simplify `use-add-edge.tsx`
+
+The main simplification should be in the `use-add-edge.tsx` hook:
+
+```typescript
+// Current implementation
+const handleTextureConnection = useCallback(
+  async (params: Connection, targetNode: { id: string; type: NodeType }) => {
+    // Use the default handle if none specified
+    const targetHandle = params.targetHandle ?? "input-1";
+
+    // Get texture inputs metadata
+    const textureInputs = getTextureInputsMetadata(
+      targetNode.id,
+      targetNode.type,
+    );
+
+    console.log(
+      "textureInputs",
+      textureInputs,
+      targetNode.id,
+      targetNode.type,
+    );
+
+    if (!textureInputs) {
+      // Fallback to regular connection if metadata can't be fetched
+      return createRegularConnection(params);
+    }
+
+    // Find the specific input metadata for this handle
+    const inputMetadata = textureInputs.find(
+      (input) => input.id === targetHandle,
+    );
+    if (!inputMetadata) {
+      // Invalid handle for this texture type
+      return;
+    }
+
+    // Update connection params with the target handle
+    const connectionParams = {
+      ...params,
+      targetHandle,
+    };
+
+    // Check if there's an existing connection to this handle
+    const existingEdge = edges.find(
+      (edge) =>
+        edge.target === params.target && edge.targetHandle === targetHandle,
+    );
+
+    if (existingEdge) {
+      // For required inputs or to maintain consistency, replace the existing connection
+      return await replaceEdgeMutate(existingEdge.id, connectionParams);
+    } else {
+      // Add a new edge
+      return await createRegularConnection(connectionParams);
+    }
+  },
+  [
+    createRegularConnection,
+    edges,
+    getTextureInputsMetadata,
+    replaceEdgeMutate,
+  ],
+);
+```
+
+```typescript
+// Simplified implementation
+const handleTextureConnection = useCallback(
+  async (params: Connection) => {
+    // Use the default handle if none specified
+    const targetHandle = params.targetHandle ?? "input-1";
+
+    // Update connection params with the target handle
+    const connectionParams = {
+      ...params,
+      targetHandle,
+    };
+
+    // Check if there's an existing connection to this handle
+    const existingEdge = edges.find(
+      (edge) =>
+        edge.target === params.target && edge.targetHandle === targetHandle,
+    );
+
+    if (existingEdge) {
+      // Replace the existing connection to this handle
+      return await replaceEdgeMutate(existingEdge.id, connectionParams);
+    } else {
+      // Add a new edge
+      return await createRegularConnection(connectionParams);
+    }
+  },
+  [createRegularConnection, edges, replaceEdgeMutate],
+);
+```
+
+### 2. Update the Main Function Call
+
+```typescript
+// Current implementation
+if (targetNode.type === "texture") {
+  return handleTextureConnection(connection, targetNode);
+}
+```
+
+```typescript
+// Simplified implementation
+if (targetNode.type === "texture") {
+  return handleTextureConnection(connection);
+}
+```
+
+### 3. Remove Unnecessary Imports and Functions
+
+- Remove the import for `getTextureInputsForType`
+- Remove the `getTextureInputsMetadata` function
+- Remove the import for `TextureInput` type if it's no longer used
+
+## Rationale
+
+1. **Trust the UI**: If a handle exists in the UI, it's already valid for that texture type. The texture node component already ensures this.
+
+2. **React Flow's Built-in Validation**: React Flow's connection system only allows connections to existing handles, so we don't need to re-validate that a handle exists.
+
+3. **Simplified Logic**: By removing the redundant validation, we make the code more maintainable and easier to understand.
+
+4. **Performance**: Removing unnecessary function calls and validations can improve performance slightly.
+
+## Implementation Steps
+
+1. Remove the `getTextureInputsMetadata` function from `use-add-edge.tsx`
+2. Simplify the `handleTextureConnection` function to focus only on edge replacement logic
+3. Update the call to `handleTextureConnection` in the main function
+4. Remove unnecessary imports
+5. Test the changes to ensure everything still works correctly
+
+## Testing Plan
+
+1. Test creating connections to texture nodes with different handle types
+2. Test replacing existing connections to texture nodes
+3. Test edge cases like connecting to a handle that doesn't exist in the UI (should not be possible)
+4. Verify that all validations still work correctly (self-connection, max edges, etc.)

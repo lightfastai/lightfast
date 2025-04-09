@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +14,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
+import { DropdownTriggerButton } from "~/components/ui/button";
 import { useGetAllWorkspaces } from "../../hooks/use-get-all-workspace";
 import { EditorWorkspaceSearch } from "./editor-workspace-search";
 
@@ -25,9 +25,9 @@ export const EditorWorkspaceSelect = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Button variant="outline" className="text-xs">
+        <DropdownTriggerButton variant="outline">
           Workspace
-        </Button>
+        </DropdownTriggerButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 p-0">
         <DropdownMenuItem className="w-full p-0">

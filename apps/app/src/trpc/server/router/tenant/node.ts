@@ -2,8 +2,6 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { $Add } from "@repo/webgl/shaders/add";
-import { $Displace } from "@repo/webgl/shaders/displace";
 import { and, eq, exists, sql } from "@vendor/db";
 import { InsertNodeSchema, Node, Workspace } from "@vendor/db/schema";
 import { $Texture, $Txt2Img, $Window } from "@vendor/db/types";
@@ -181,7 +179,7 @@ export const nodeRouter = {
       .input(
         z.object({
           id: z.string(),
-          data: $Texture.or($Txt2Img).or($Window).or($Displace).or($Add),
+          data: $Texture.or($Txt2Img).or($Window),
         }),
       )
       .mutation(async ({ ctx, input }) => {

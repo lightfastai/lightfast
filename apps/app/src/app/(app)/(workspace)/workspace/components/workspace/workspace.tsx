@@ -13,7 +13,10 @@ import "./workspace.css";
 
 import { useCallback } from "react";
 
-import type { BaseEdge, BaseNode } from "../../types/node";
+import { toast } from "@repo/ui/hooks/use-toast";
+
+import type { BaseEdge } from "../../types/edge";
+import type { BaseNode } from "../../types/node";
 import type { RouterInputs } from "~/trpc/server/index";
 import { useAddEdge } from "../../hooks/use-add-edge";
 import { useAddNode } from "../../hooks/use-add-node";
@@ -21,11 +24,11 @@ import { useDeleteEdge } from "../../hooks/use-delete-edge";
 import { useDeleteNode } from "../../hooks/use-delete-node";
 import { useReplaceEdge } from "../../hooks/use-replace-edge";
 import { useUpdateNodes } from "../../hooks/use-update-nodes";
+import { useHandleTypeValidator } from "../../hooks/use-validate-edge";
 import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";
 import { useSelectionStore } from "../../providers/selection-store-provider";
-import { Debug } from "../debug/debug";
 import { FluxNode } from "../nodes/flux-node";
 import { GeometryNode } from "../nodes/geometry-node";
 import { MaterialNode } from "../nodes/material-node";
@@ -62,6 +65,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   const { mutateAsync: deleteNodeMutate } = useDeleteNode();
   const { mutateAsync: addEdgeMutate } = useAddEdge();
   const { mutateAsync: replaceEdgeMutate } = useReplaceEdge();
+  const validateHandleTypes = useHandleTypeValidator();
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
   // we don't want to add a node
@@ -78,10 +82,13 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   };
 
   // Combined onDelete handler handling both node and edge deletions
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const onDelete: OnDelete<BaseNode, BaseEdge> = useCallback(
     async ({ nodes: nodesToDelete, edges: edgesToDelete }) => {
       // If there are no nodes or edges to delete, do nothing
-      if (nodesToDelete.length === 0 && edgesToDelete.length === 0) return;
+      if (nodesToDelete.length === 0 && edgesToDelete.length === 0) {
+        return;
+      }
 
       // Handle Edge Deletions if there are no nodes to delete
       if (nodesToDelete.length === 0 && edgesToDelete.length > 0) {
@@ -98,43 +105,47 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         );
       }
     },
-    [deleteEdgeMutate, deleteNodeMutate, addEdgeMutate],
+    [deleteEdgeMutate, deleteNodeMutate],
   );
 
   const onConnect = useCallback(
     async (params: Connection) => {
-      // For multi-handle nodes, check if we have a targetHandle specified
-      if (params.targetHandle) {
-        // Find any existing edge that connects TO the same handle of the target node
-        const existingEdge = edges.find(
-          (edge) =>
-            edge.target === params.target &&
-            edge.targetHandle === params.targetHandle,
-        );
+      // First, check basic requirements
+      if (
+        !params.source ||
+        !params.target ||
+        !params.sourceHandle ||
+        !params.targetHandle
+      ) {
+        toast({
+          title: "Connection Failed",
+          description: "Missing connection parameters",
+          variant: "destructive",
+        });
+        return;
+      }
 
-        if (existingEdge) {
-          // Replace the existing edge for this specific handle
-          await replaceEdgeMutate(existingEdge.id, params);
-        } else {
-          // Add a new edge to this specific handle
-          await addEdgeMutate(params);
-        }
+      // Validate handle types (outputs must connect to inputs)
+      if (!validateHandleTypes(params.sourceHandle, params.targetHandle)) {
+        return;
+      }
+
+      // Find any existing edge that connects TO the same handle of the target node
+      const existingEdge = edges.find(
+        (edge) =>
+          edge.target === params.target &&
+          edge.targetHandle === params.targetHandle,
+      );
+
+      if (existingEdge) {
+        // Replace the existing edge for this specific handle
+        await replaceEdgeMutate(existingEdge.id, params);
       } else {
-        // Default behavior for nodes without specific handles
-        const existingEdge = edges.find(
-          (edge) => edge.target === params.target,
-        );
-
-        if (existingEdge) {
-          // Replace the existing edge (regardless of its source)
-          await replaceEdgeMutate(existingEdge.id, params);
-        } else {
-          // Add a new edge if the target has no incoming edges
-          await addEdgeMutate(params);
-        }
+        // Add a new edge to this specific handle
+        await addEdgeMutate(params);
       }
     },
-    [replaceEdgeMutate, addEdgeMutate, edges],
+    [validateHandleTypes, edges, replaceEdgeMutate, addEdgeMutate],
   );
 
   return (
@@ -149,7 +160,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
         nodeTypes={nodeTypes}
         onClick={onClick}
         onMouseMove={onMouseMove}
-        connectionMode={ConnectionMode.Loose}
+        connectionMode={ConnectionMode.Strict}
         selectionOnDrag={false}
         panOnScroll={true}
         zoomOnScroll={false}
@@ -158,7 +169,6 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
       >
         {selection && render()}
         <Background variant={BackgroundVariant.Dots} />
-        <Debug />
       </ReactFlow>
     </div>
   );

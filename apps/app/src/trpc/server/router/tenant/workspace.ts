@@ -77,7 +77,7 @@ export const workspaceRouter = {
           message: "Workspace ID is required",
         });
       }
-      const { id, name } = input;
+      const { id, workspaceName: name } = input;
       const [workspace] = await ctx.db
         .update(Workspace)
         .set({ name, updatedAt: sql`now()` })
