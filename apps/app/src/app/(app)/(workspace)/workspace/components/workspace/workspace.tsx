@@ -15,7 +15,8 @@ import { useCallback } from "react";
 
 import { toast } from "@repo/ui/hooks/use-toast";
 
-import type { BaseEdge, BaseNode } from "../../types/node";
+import type { BaseEdge } from "../../types/edge";
+import type { BaseNode } from "../../types/node";
 import type { RouterInputs } from "~/trpc/server/index";
 import { useAddEdge } from "../../hooks/use-add-edge";
 import { useAddNode } from "../../hooks/use-add-node";
@@ -23,10 +24,7 @@ import { useDeleteEdge } from "../../hooks/use-delete-edge";
 import { useDeleteNode } from "../../hooks/use-delete-node";
 import { useReplaceEdge } from "../../hooks/use-replace-edge";
 import { useUpdateNodes } from "../../hooks/use-update-nodes";
-import {
-  useHandleTypeValidator,
-  useSelfConnectionValidator,
-} from "../../hooks/use-validate-edge";
+import { useHandleTypeValidator } from "../../hooks/use-validate-edge";
 import { useWorkspaceNodeSelectionPreview } from "../../hooks/use-workspace-node-selection-preview";
 import { useEdgeStore } from "../../providers/edge-store-provider";
 import { useNodeStore } from "../../providers/node-store-provider";

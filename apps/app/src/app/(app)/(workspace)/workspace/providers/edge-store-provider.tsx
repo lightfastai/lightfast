@@ -5,7 +5,7 @@ import { createContext, useContext, useRef } from "react";
 import { useStore } from "zustand";
 
 import type { EdgeStore } from "../stores/edge-store";
-import type { BaseEdge } from "../types/node";
+import type { BaseEdge } from "../types/edge";
 import { createEdgeStore } from "../stores/edge-store";
 
 export type EdgeStoreApi = ReturnType<typeof createEdgeStore>;

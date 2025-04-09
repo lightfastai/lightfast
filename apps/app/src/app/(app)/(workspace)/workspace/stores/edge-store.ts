@@ -5,7 +5,7 @@ import { createStore } from "zustand";
 import type { InsertEdge } from "@vendor/db/schema";
 import { prepareEdgeForInsert } from "@vendor/db/schema";
 
-import type { BaseEdge } from "../types/node";
+import type { BaseEdge } from "../types/edge";
 import { convertToStrictConnection } from "../types/connection";
 
 interface EdgeState {

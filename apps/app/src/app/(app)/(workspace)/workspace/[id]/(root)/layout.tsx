@@ -27,7 +27,8 @@ import { ShaderCacheStoreProvider } from "../../providers/shader-cache-store-pro
 import { TextureRenderStoreProvider } from "../../providers/texture-render-store-provider";
 import { WorkspaceReactFlowProvider } from "../../providers/workspace-react-flow-provider";
 import { WorkspaceViewProvider } from "../../providers/workspace-view-provider";
-import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
+import { convertToBaseEdge } from "../../types/edge";
+import { convertToBaseNode } from "../../types/node";
 
 const WebGLCanvas = dynamic(
   () => import("@repo/threejs").then((mod) => mod.WebGLCanvas),

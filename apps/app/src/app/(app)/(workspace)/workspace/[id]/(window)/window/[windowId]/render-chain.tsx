@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { $GeometryType, GeometryMap, WebGLView } from "@repo/threejs";
 
-import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/node";
+import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/edge";
 import { useTextureRenderStore } from "~/app/(app)/(workspace)/workspace/providers/texture-render-store-provider";
 import { api } from "~/trpc/client/react";
 

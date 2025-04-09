@@ -3,6 +3,7 @@ import { memo } from "react";
 import { Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
+import type { Sampler2DMetadata } from "@repo/webgl";
 import type { Texture } from "@vendor/db/types";
 import { GeometryMap, WebGLView } from "@repo/threejs";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
@@ -20,7 +21,6 @@ import {
 } from "@vendor/db/types";
 
 import type { BaseNode } from "../../types/node";
-import type { TextureInput } from "../../types/texture";
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
@@ -103,7 +103,7 @@ export const TextureNode = memo(
             <div className="absolute left-0 top-0 flex h-full flex-col items-center justify-evenly gap-3 py-3">
               {textureInputs.length > 0 ? (
                 // For nodes with inputs, create properly positioned handles
-                textureInputs.map((input: TextureInput) => {
+                textureInputs.map((input: Sampler2DMetadata) => {
                   const handleId = createTextureHandleId(input.handle.handleId);
                   return (
                     <div

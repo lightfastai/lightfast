@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
 
-import type { BaseEdge } from "../types/node";
+import type { BaseEdge } from "../types/edge";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { convertToStrictConnection } from "../types/connection";

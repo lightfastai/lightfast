@@ -10,7 +10,7 @@ import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
 import { getUniformForEdge } from "@vendor/db/schema";
 
-import type { BaseEdge } from "../types/node";
+import type { BaseEdge } from "../types/edge";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";
 

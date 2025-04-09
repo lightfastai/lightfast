@@ -1,12 +1,14 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
-import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/node";
-import { WebGLCanvas } from "~/app/(app)/(workspace)/workspace/webgl";
+import { WebGLCanvas } from "@repo/threejs";
+
+import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/edge";
 import { api } from "~/trpc/client/server";
 import { EdgeStoreProvider } from "../../../../providers/edge-store-provider";
 import { TextureRenderStoreProvider } from "../../../../providers/texture-render-store-provider";
-import { convertToBaseEdge, convertToBaseNode } from "../../../../types/node";
+import { convertToBaseEdge } from "../../../../types/edge";
+import { convertToBaseNode } from "../../../../types/node";
 import { RenderChain } from "./render-chain";
 
 interface WindowPageProps {
