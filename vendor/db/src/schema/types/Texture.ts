@@ -4,11 +4,13 @@ import {
   $Add,
   $Displace,
   $Limit,
+  $Migrated,
   $PerlinNoise2D,
   $Shaders,
   createDefaultAdd,
   createDefaultDisplace,
   createDefaultLimit,
+  createDefaultMigrated,
   createDefaultPerlinNoise2D,
 } from "@repo/webgl";
 
@@ -44,19 +46,21 @@ export const $Texture = z.discriminatedUnion("type", [
     uniforms: $Add,
     resolution: $TextureResolution,
   }),
+  z.object({
+    type: z.literal($Shaders.enum.Migrated),
+    uniforms: $Migrated,
+    resolution: $TextureResolution,
+  }),
 ]);
 
 export const $TextureUniforms = $PerlinNoise2D
   .merge($Limit)
   .merge($Displace)
-  .merge($Add);
+  .merge($Add)
+  .merge($Migrated);
 
 export type TextureUniforms = z.infer<typeof $TextureUniforms>;
 export type Texture = z.infer<typeof $Texture>;
-export type NoiseTexture = Extract<Texture, { type: "Noise" }>;
-export type LimitTexture = Extract<Texture, { type: "Limit" }>;
-export type DisplaceTexture = Extract<Texture, { type: "Displace" }>;
-export type AddTexture = Extract<Texture, { type: "Add" }>;
 
 export const createDefaultTexture = ({
   type,
@@ -86,6 +90,12 @@ export const createDefaultTexture = ({
       return {
         type,
         uniforms: createDefaultAdd(),
+        resolution: { width: 256, height: 256 },
+      };
+    case $TextureTypes.enum.Migrated:
+      return {
+        type,
+        uniforms: createDefaultMigrated(),
         resolution: { width: 256, height: 256 },
       };
     /**

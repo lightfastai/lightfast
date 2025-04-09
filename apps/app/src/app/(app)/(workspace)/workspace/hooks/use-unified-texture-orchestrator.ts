@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { Shaders } from "@repo/webgl";
-import type { Texture, TextureUniforms } from "@vendor/db/types";
+import type { Texture } from "@vendor/db/types";
 import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
 
@@ -23,14 +23,6 @@ const getTextureFromTargets = (
 ): THREE.Texture | null => {
   return sourceId && targets[sourceId] ? targets[sourceId].texture : null;
 };
-
-/**
- * Type definition for the uniform configuration stored per texture
- */
-interface UniformConfig {
-  type: Shaders;
-  uniforms: TextureUniforms;
-}
 
 /**
  * Unified hook for managing multiple texture types with their shader orchestration
@@ -60,7 +52,7 @@ export const useUnifiedTextureOrchestrator = ({
   );
 
   // Store uniform configurations per texture ID
-  const uniformConfigsRef = useRef<Record<string, UniformConfig>>({});
+  const uniformConfigsRef = useRef<Record<string, Texture>>({});
 
   // Create a reference to track render target nodes
   const renderTargetNodesRef = useRef<Record<string, WebGLRenderTargetNode>>(
@@ -95,10 +87,7 @@ export const useUnifiedTextureOrchestrator = ({
       }
 
       // Store the uniform configuration for this texture based on its type
-      uniformConfigsRef.current[id] = {
-        type: texture.type,
-        uniforms: texture.uniforms,
-      };
+      uniformConfigsRef.current[id] = texture;
     },
     [isValidShaderType],
   );

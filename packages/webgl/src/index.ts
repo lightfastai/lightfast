@@ -161,3 +161,7 @@ export {
 export * from "./shaders/enums/shaders";
 
 export { getFieldMetadata };
+
+export * from "./generated/shader-enum.generated";
+export * from "./generated/shader-registry.generated";
+export * from "./registry/interfaces/registry-shader-def";
