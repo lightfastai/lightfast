@@ -16,8 +16,8 @@ import { cn } from "@repo/ui/lib/utils";
 import { getShaderSampler2DInputsForType } from "@repo/webgl";
 import {
   $GeometryType,
+  createInputHandleId,
   createOutputHandleId,
-  createTextureHandleId,
 } from "@vendor/db/types";
 
 import type { BaseNode } from "../../types/node";
@@ -104,7 +104,7 @@ export const TextureNode = memo(
               {textureInputs.length > 0 ? (
                 // For nodes with inputs, create properly positioned handles
                 textureInputs.map((input: Sampler2DMetadata) => {
-                  const handleId = createTextureHandleId(input.handle.handleId);
+                  const handleId = createInputHandleId(input.handle.handleId);
                   return (
                     <div
                       key={input.handle.handleId}

@@ -10,7 +10,7 @@ import type { TextureTypes } from "./Texture";
 /**
  * Branded type for texture handle IDs
  */
-export type TextureHandleId = string & { readonly __brand: "TextureHandleId" };
+export type InputHandleId = string & { readonly __brand: "InputHandleId" };
 
 /**
  * Branded type for output handle IDs
@@ -18,75 +18,48 @@ export type TextureHandleId = string & { readonly __brand: "TextureHandleId" };
 export type OutputHandleId = string & { readonly __brand: "OutputHandleId" };
 
 /**
- * Union type for all handle IDs
- */
-export type HandleId = TextureHandleId | OutputHandleId;
-
-/**
  * Regular expression for validating output handle IDs in the format "output-name"
  */
 export const OUTPUT_HANDLE_ID_REGEX = /^output-[a-z0-9-]+$/;
 
 /**
- * DB layer implementation of the TextureHandle interface
- */
-export interface TextureHandleImpl {
-  readonly id: TextureHandleId;
-  readonly uniformName: string;
-}
-
-/**
  * Check if a string is a valid texture handle ID
  */
-export function isValidTextureHandleId(id: string): boolean {
+export function isValidInputHandleId(id: string): boolean {
   return isValidSampler2DHandleId(id);
 }
 
 /**
  * Type guard for TextureHandleId
  */
-export function isTextureHandleId(value: unknown): value is TextureHandleId {
-  return typeof value === "string" && isValidTextureHandleId(value);
-}
-
-/**
- * Get the numeric index from a texture handle ID
- */
-export function getTextureHandleIndex(handleId: string): number | null {
-  if (!isValidTextureHandleId(handleId)) return null;
-  const match = /^input-(\d+)$/.exec(handleId);
-  if (!match?.[1]) return null;
-  return parseInt(match[1], 10);
+export function isInputHandleId(value: unknown): value is InputHandleId {
+  return typeof value === "string" && isValidInputHandleId(value);
 }
 
 /**
  * Map a texture handle ID to its corresponding uniform name
- *
- * @deprecated Consider using getUniformNameForHandleId from @repo/webgl instead
- * which can optionally use the shader registry for more accurate mapping
  *
  * @param handleId The texture handle ID
  * @param shaderType Optional shader type to look up in the registry (not used in this implementation)
  * @returns The corresponding uniform name or null if not found
  */
 export function getUniformNameFromTextureHandleId(
-  handleId: string | TextureHandleId,
+  handleId: InputHandleId,
   textureType: TextureTypes,
 ): string | null {
-  if (!isValidTextureHandleId(handleId)) return null;
+  if (!isValidInputHandleId(handleId)) return null;
 
   // Note: In a future update, we could delegate to the WebGL utility
   // if we updated the architecture to allow for this dependency
   const uniformName = findUniformNameForHandleId(handleId, textureType);
   if (uniformName) return uniformName;
 
-  // @todo: Remove this once we have a proper way to handle this
-  throw new Error(`Could not find uniform name for handle ID: ${handleId}`);
+  return null;
 }
 
 // Update the Zod schema to use custom validation
-export const $TextureHandleId = z.custom<TextureHandleId>(
-  (val) => typeof val === "string" && isValidTextureHandleId(val),
+export const $InputHandleId = z.custom<InputHandleId>(
+  (val) => typeof val === "string" && isValidInputHandleId(val),
   {
     message:
       "Handle ID must be in the format 'input-N' where N is a positive integer",
@@ -102,35 +75,18 @@ export const $OutputHandleId = z.custom<OutputHandleId>(
 );
 
 /**
- * Union type Zod schema for all handle ID types
- */
-export const $HandleId = z.union([$TextureHandleId, $OutputHandleId]);
-
-/**
  * Check if a string is a valid output handle ID
  */
 export function isValidOutputHandleId(id: string): boolean {
   return OUTPUT_HANDLE_ID_REGEX.test(id);
 }
 
-/**
- * Safe constructor function that validates and creates a TextureHandleId
- * @param value The string value to validate and convert
- * @returns A TextureHandleId
- * @throws Error if the value is not a valid handle ID
- */
-export function createTextureHandleId(value: string): TextureHandleId {
-  if (!isValidTextureHandleId(value))
+export function createInputHandleId(value: string): InputHandleId {
+  if (!isValidInputHandleId(value))
     throw new Error(`Invalid handle ID: ${value}`);
-  return value as TextureHandleId;
+  return value as InputHandleId;
 }
 
-/**
- * Safe constructor function that validates and creates an OutputHandleId
- * @param value The string value to validate and convert
- * @returns An OutputHandleId
- * @throws Error if the value is not a valid handle ID
- */
 export function createOutputHandleId(value: string): OutputHandleId {
   if (!isValidOutputHandleId(value))
     throw new Error(`Invalid handle ID: ${value}`);

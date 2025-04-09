@@ -4,14 +4,12 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import type { NodeType } from "@vendor/db/types";
+import { Edge, Node, validateEdgeHandles, Workspace } from "@vendor/db/schema";
 import {
-  $HandleId,
-  Edge,
-  Node,
-  validateEdgeHandles,
-  Workspace,
-} from "@vendor/db/schema";
-import { getMaxTargetEdges } from "@vendor/db/types";
+  $InputHandleId,
+  $OutputHandleId,
+  getMaxTargetEdges,
+} from "@vendor/db/types";
 import { protectedProcedure } from "@vendor/trpc";
 
 export const edgeRouter = {
@@ -57,8 +55,8 @@ export const edgeRouter = {
         edge: z.object({
           source: z.string(),
           target: z.string(),
-          sourceHandle: $HandleId,
-          targetHandle: $HandleId,
+          sourceHandle: $OutputHandleId,
+          targetHandle: $InputHandleId,
         }),
       }),
     )
@@ -99,7 +97,7 @@ export const edgeRouter = {
           .where(
             and(
               eq(Edge.target, input.edge.target),
-              eq(Edge.targetHandle, input.edge.targetHandle as string),
+              eq(Edge.targetHandle, input.edge.targetHandle),
             ),
           )
           .limit(1);
@@ -187,8 +185,8 @@ export const edgeRouter = {
           id: z.string().nanoid(),
           source: z.string(),
           target: z.string(),
-          sourceHandle: $HandleId,
-          targetHandle: $HandleId,
+          sourceHandle: $OutputHandleId,
+          targetHandle: $InputHandleId,
         }),
       }),
     )
@@ -243,7 +241,7 @@ export const edgeRouter = {
           .where(
             and(
               eq(Edge.target, input.newEdge.target),
-              eq(Edge.targetHandle, input.newEdge.targetHandle as string),
+              eq(Edge.targetHandle, input.newEdge.targetHandle),
               sql`${Edge.id} != ${input.oldEdgeId}`, // Don't count the edge we're replacing
             ),
           )

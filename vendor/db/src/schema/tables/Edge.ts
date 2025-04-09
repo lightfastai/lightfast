@@ -4,16 +4,17 @@ import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
-import { findUniformNameForHandleId } from "@repo/webgl";
 
 import type { TextureTypes } from "../types/Texture";
-import type { HandleId } from "../types/TextureHandle";
+import type { InputHandleId, OutputHandleId } from "../types/TextureHandle";
 import {
-  $HandleId,
+  $InputHandleId,
+  $OutputHandleId,
+  createInputHandleId,
   createOutputHandleId,
-  createTextureHandleId,
+  getUniformNameFromTextureHandleId,
+  isInputHandleId,
   isOutputHandleId,
-  isTextureHandleId,
 } from "../types/TextureHandle";
 import { Node } from "./Node";
 
@@ -31,8 +32,8 @@ export const Edge = pgTable("edge", (t) => ({
     .varchar({ length: 191 })
     .notNull()
     .references(() => Node.id, { onDelete: "cascade" }),
-  sourceHandle: t.varchar({ length: 191 }).notNull(),
-  targetHandle: t.varchar({ length: 191 }).notNull(),
+  sourceHandle: t.varchar({ length: 191 }).notNull().$type<OutputHandleId>(),
+  targetHandle: t.varchar({ length: 191 }).notNull().$type<InputHandleId>(),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp().defaultNow().notNull(),
 }));
@@ -53,31 +54,31 @@ export const BaseEdgeSchema = z.object({
   id: z.string(),
   source: z.string().min(1),
   target: z.string().min(1),
-  sourceHandle: $HandleId,
-  targetHandle: $HandleId,
+  sourceHandle: $OutputHandleId,
+  targetHandle: $InputHandleId,
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
 
 // Zod schemas for type-safe operations
 export const SelectEdgeSchema = createSelectSchema(Edge).extend({
-  sourceHandle: $HandleId,
-  targetHandle: $HandleId,
+  sourceHandle: $OutputHandleId,
+  targetHandle: $InputHandleId,
 });
 
 export const InsertEdgeSchema = z
   .object({
     source: z.string().min(1).max(191),
     target: z.string().min(1).max(191),
-    sourceHandle: $HandleId,
-    targetHandle: $HandleId,
+    sourceHandle: $OutputHandleId,
+    targetHandle: $InputHandleId,
   })
   .refine(
     (data) => {
       // Source must be output handle, target must be texture handle
       return (
         isOutputHandleId(data.sourceHandle) &&
-        isTextureHandleId(data.targetHandle)
+        isInputHandleId(data.targetHandle)
       );
     },
     {
@@ -91,24 +92,31 @@ export type InsertEdge = z.infer<typeof InsertEdgeSchema>;
 
 /**
  * Helper function to get the corresponding uniform name for a handle
+ * @todo: Remove throw Error once we have a proper way to handle this
  */
 export function getUniformForEdge(edge: {
-  targetHandle: HandleId;
+  targetHandle: InputHandleId;
   targetNodeType: TextureTypes;
-}): string | null {
-  if (!isTextureHandleId(edge.targetHandle)) return null;
-  return findUniformNameForHandleId(edge.targetHandle, edge.targetNodeType);
+}): string {
+  const uniformName = getUniformNameFromTextureHandleId(
+    edge.targetHandle,
+    edge.targetNodeType,
+  );
+  if (!uniformName) {
+    throw new Error("Invalid handle ID in edge");
+  }
+  return uniformName;
 }
 
 /**
  * Validate that an edge's handles are compatible
  */
 export function validateEdgeHandles(edge: {
-  sourceHandle: HandleId;
-  targetHandle: HandleId;
+  sourceHandle: OutputHandleId;
+  targetHandle: InputHandleId;
 }): boolean {
   return (
-    isOutputHandleId(edge.sourceHandle) && isTextureHandleId(edge.targetHandle)
+    isOutputHandleId(edge.sourceHandle) && isInputHandleId(edge.targetHandle)
   );
 }
 
@@ -117,14 +125,10 @@ export function validateEdgeHandles(edge: {
  */
 export function prepareEdgeForInsert(edge: InsertEdge): InsertEdge {
   // Validate source handle
-  const sourceHandle =
-    createOutputHandleId(edge.sourceHandle) ||
-    createTextureHandleId(edge.sourceHandle);
+  const sourceHandle = createOutputHandleId(edge.sourceHandle);
 
   // Validate target handle
-  const targetHandle =
-    createTextureHandleId(edge.targetHandle) ||
-    createOutputHandleId(edge.targetHandle);
+  const targetHandle = createInputHandleId(edge.targetHandle);
 
   if (!sourceHandle || !targetHandle) {
     throw new Error("Invalid handle IDs in edge");

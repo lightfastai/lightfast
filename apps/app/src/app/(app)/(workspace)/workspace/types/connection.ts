@@ -1,11 +1,11 @@
 import type { Connection as BaseConnection } from "@xyflow/react";
 
-import type { HandleId } from "@vendor/db/types";
+import type { InputHandleId, OutputHandleId } from "@vendor/db/types";
 import {
+  createInputHandleId,
   createOutputHandleId,
-  createTextureHandleId,
+  isInputHandleId,
   isOutputHandleId,
-  isTextureHandleId,
 } from "@vendor/db/types";
 
 /**
@@ -13,8 +13,8 @@ import {
  */
 export interface StrictConnection
   extends Omit<BaseConnection, "sourceHandle" | "targetHandle"> {
-  sourceHandle: HandleId;
-  targetHandle: HandleId;
+  sourceHandle: OutputHandleId;
+  targetHandle: InputHandleId;
 }
 
 /**
@@ -26,9 +26,9 @@ export function isStrictConnection(
   return (
     !!connection.sourceHandle &&
     !!connection.targetHandle &&
-    (isTextureHandleId(connection.sourceHandle) ||
+    (isInputHandleId(connection.sourceHandle) ||
       isOutputHandleId(connection.sourceHandle)) &&
-    (isTextureHandleId(connection.targetHandle) ||
+    (isInputHandleId(connection.targetHandle) ||
       isOutputHandleId(connection.targetHandle))
   );
 }
@@ -48,23 +48,16 @@ export function convertToStrictConnection(
   }
 
   // Try to parse as either input or output handle
-  let typedSourceHandle: HandleId | null = createTextureHandleId(sourceHandle);
-  if (!typedSourceHandle) {
-    typedSourceHandle = createOutputHandleId(sourceHandle);
-  }
+  const _outputHandle = createOutputHandleId(sourceHandle);
+  const _inputHandle = createInputHandleId(targetHandle);
 
-  let typedTargetHandle: HandleId | null = createTextureHandleId(targetHandle);
-  if (!typedTargetHandle) {
-    typedTargetHandle = createOutputHandleId(targetHandle);
-  }
-
-  if (!typedSourceHandle || !typedTargetHandle) {
+  if (!_outputHandle || !_inputHandle) {
     return null;
   }
 
   return {
     ...rest,
-    sourceHandle: typedSourceHandle,
-    targetHandle: typedTargetHandle,
+    sourceHandle: _outputHandle,
+    targetHandle: _inputHandle,
   };
 }

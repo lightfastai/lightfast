@@ -1,6 +1,6 @@
 import type { Edge } from "@xyflow/react";
 
-import type { HandleId } from "@vendor/db/schema";
+import type { InputHandleId, OutputHandleId } from "@vendor/db/types";
 
 import type { RouterOutputs } from "~/trpc/server/index";
 
@@ -11,8 +11,8 @@ import type { RouterOutputs } from "~/trpc/server/index";
  */
 export type BaseEdge = Omit<Edge, "sourceHandle" | "targetHandle"> &
   RouterOutputs["tenant"]["edge"]["getAll"][number] & {
-    sourceHandle: HandleId;
-    targetHandle: HandleId;
+    sourceHandle: OutputHandleId;
+    targetHandle: InputHandleId;
   };
 
 /**
@@ -24,6 +24,6 @@ export const convertToBaseEdge = (
   edges.map((edge) => ({
     ...edge,
     // Ensure sourceHandle and targetHandle are properly typed
-    sourceHandle: edge.sourceHandle as HandleId,
-    targetHandle: edge.targetHandle as HandleId,
+    sourceHandle: edge.sourceHandle as OutputHandleId,
+    targetHandle: edge.targetHandle as InputHandleId,
   }));

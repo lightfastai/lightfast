@@ -1,6 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 
-import type { HandleId } from "@vendor/db/types";
+import type { InputHandleId, OutputHandleId } from "@vendor/db/types";
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
-import { isOutputHandleId, isTextureHandleId } from "@vendor/db/types";
+import { isInputHandleId, isOutputHandleId } from "@vendor/db/types";
 
 /**
  * Props for the NodeHandle component
@@ -17,7 +17,7 @@ export interface NodeHandleProps {
   /**
    * Strictly typed handle ID - either TextureHandleId or OutputHandleId
    */
-  id: HandleId;
+  id: InputHandleId | OutputHandleId;
 
   /**
    * Position of the handle
@@ -46,7 +46,7 @@ export function NodeHandle({
   tooltipSide = position === Position.Left ? "left" : "right",
 }: NodeHandleProps) {
   // Determine handle type from the ID
-  const isInput = isTextureHandleId(id);
+  const isInput = isInputHandleId(id);
   const isOutput = isOutputHandleId(id);
 
   // Validate handle type
