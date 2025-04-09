@@ -18,14 +18,16 @@ export const Vec3NumberInput = memo(
     metadata,
     onValueChange,
   }: Vec3NumberInputProps<T, K>) => {
+    const currentValue = field.value || { x: 0, y: 0, z: 0 };
+
     return (
       <div className="grid w-full grid-cols-3 gap-1.5">
-        {["x", "y", "z"].map((axis) => (
+        {(["x", "y", "z"] as const).map((axis) => (
           <BaseInputNumber
             key={axis}
-            min={metadata[axis as keyof typeof metadata].min}
-            max={metadata[axis as keyof typeof metadata].max}
-            step={metadata[axis as keyof typeof metadata].step}
+            min={metadata[axis].min}
+            max={metadata[axis].max}
+            step={metadata[axis].step}
             className="w-full"
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
               const newValue = Number(e.target.value);
@@ -36,7 +38,7 @@ export const Vec3NumberInput = memo(
               field.onChange(updatedValue);
               onValueChange(updatedValue);
             }}
-            value={field.value[axis]}
+            value={currentValue[axis]}
           />
         ))}
       </div>

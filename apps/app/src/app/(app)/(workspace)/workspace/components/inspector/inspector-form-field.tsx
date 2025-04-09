@@ -7,7 +7,13 @@ import type {
 import type { z } from "zod";
 import { memo, useCallback } from "react";
 
-import type { UniformFieldValue, Value } from "@repo/webgl";
+import type {
+  NumericValueMetadata,
+  UniformFieldValue,
+  Value,
+  Vec2FieldMetadata,
+  Vec3FieldMetadata,
+} from "@repo/webgl";
 import { FormField, FormItem, FormLabel } from "@repo/ui/components/ui/form";
 import {
   $ValueType,
@@ -51,9 +57,7 @@ export const InspectorFormField = memo(
         }
 
         const { type, constraint } = fieldMetadata;
-        // if (type === ValueType.Numeric && fieldMetadata.label === "Period") {
-        //   console.log(fieldMetadata, field.value);
-        // }
+
         switch (type) {
           case $ValueType.enum.Numeric:
             return (
@@ -84,7 +88,7 @@ export const InspectorFormField = memo(
                       field={
                         field as ControllerRenderProps<FieldValues, string>
                       }
-                      metadata={constraint}
+                      metadata={constraint as Vec3FieldMetadata}
                       onValueChange={onValueChange}
                     />
                   ) : (
@@ -92,7 +96,7 @@ export const InspectorFormField = memo(
                       field={
                         field as ControllerRenderProps<FieldValues, string>
                       }
-                      metadata={constraint}
+                      metadata={constraint as NumericValueMetadata}
                       onValueChange={onValueChange}
                     />
                   )}
@@ -104,7 +108,7 @@ export const InspectorFormField = memo(
             return (
               <Vec2NumberInput
                 field={field as ControllerRenderProps<FieldValues, string>}
-                metadata={constraint}
+                metadata={constraint as Vec2FieldMetadata}
                 onValueChange={onValueChange}
               />
             );
@@ -113,7 +117,7 @@ export const InspectorFormField = memo(
             return (
               <Vec3NumberInput
                 field={field as ControllerRenderProps<FieldValues, string>}
-                metadata={constraint}
+                metadata={constraint as Vec3FieldMetadata}
                 onValueChange={onValueChange}
               />
             );

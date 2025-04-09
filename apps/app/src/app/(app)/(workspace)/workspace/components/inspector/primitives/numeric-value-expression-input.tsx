@@ -1,15 +1,13 @@
 import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
 import { memo, useState } from "react";
 
-import type { NumericValue } from "@repo/webgl";
+import type { NumericValue, Vec3FieldMetadata } from "@repo/webgl";
 import { Input } from "@repo/ui/components/ui/input";
 import { createExpressionString, extractExpression } from "@repo/webgl";
 
 interface NumericValueExpressionInputProps<T extends FieldValues> {
   field: ControllerRenderProps<T, Path<T>>;
-  metadata: {
-    x: { min: number; max: number; step: number };
-  };
+  metadata: Vec3FieldMetadata;
   onValueChange: (value: NumericValue) => void;
 }
 

@@ -142,6 +142,7 @@ export type {
   Vec2FieldMetadata,
   Vec3FieldMetadata,
   Sampler2DMetadata,
+  NumericValueMetadata,
 } from "./shaders/field";
 
 export * from "./shaders/interfaces/sampler2d-handle";
@@ -159,6 +160,7 @@ export {
   shaderRegistry,
 } from "./registry";
 export * from "./shaders/interfaces/sampler2d-handle";
+
 // Export shader enums
 export * from "./shaders/enums/shaders";
 export * from "./registry/utils/sampler2d-utils";
