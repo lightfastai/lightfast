@@ -120,6 +120,15 @@ export {
   type PerlinNoise2DParams,
 } from "./shaders/impl/pnoise";
 
+export {
+  migratedShaderDefinition,
+  migratedFragmentShader,
+  MIGRATED_UNIFORM_CONSTRAINTS,
+  createDefaultMigrated,
+  $Migrated,
+  type MigratedParams,
+} from "./shaders/impl/example-migrated";
+
 export { baseVertexShader } from "./shaders/base-vert-shader";
 
 /**

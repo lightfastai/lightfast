@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { Shaders } from "@repo/webgl";
-import type { Texture } from "@vendor/db/types";
+import type { Texture, TextureUniforms } from "@vendor/db/types";
 import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
 
@@ -29,7 +29,7 @@ const getTextureFromTargets = (
  */
 interface UniformConfig {
   type: Shaders;
-  uniforms: Record<string, unknown>; // @todo: Enforce typesafety instead of using unknown....
+  uniforms: TextureUniforms;
 }
 
 /**
