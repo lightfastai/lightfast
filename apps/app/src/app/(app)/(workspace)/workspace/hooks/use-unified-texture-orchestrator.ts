@@ -1,3 +1,5 @@
+"use client";
+
 import type * as THREE from "three";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
