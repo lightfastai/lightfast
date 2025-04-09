@@ -1,6 +1,5 @@
-import type { Sampler2DMetadata } from "@/shaders/field";
-
-import type { Shaders } from "../generated/shader-enum.generated";
+import type { Shaders } from "../shaders/enums/shaders";
+import type { Sampler2DMetadata } from "../shaders/field";
 import type { ShaderSampler2DUniformRegistry } from "./interfaces/sampler2d-registry-def";
 import { generatedShaderRegistry } from "../generated/shader-registry.generated";
 import {

@@ -1,5 +1,4 @@
-import type { Shaders } from "@/shaders/enums/shaders";
-
+import type { Shaders } from "../../shaders/enums/shaders";
 import type { Sampler2DMetadata, UniformFieldValue } from "../../shaders/field";
 import type { Sampler2DHandle } from "../../shaders/interfaces/sampler2d-handle";
 import type { ShaderSchema } from "../../shaders/interfaces/shader-def";
