@@ -54,7 +54,7 @@ export function getTextureHandleIndex(handleId: string): number | null {
   if (!isValidTextureHandleId(handleId)) return null;
   const match = /^input-(\d+)$/.exec(handleId);
   if (!match?.[1]) return null;
-  return parseInt(match[1], 10) - 1; // Convert to zero-based index
+  return parseInt(match[1], 10);
 }
 
 /**

@@ -8,6 +8,7 @@ import type { Shaders } from "@repo/webgl";
 import type { Texture } from "@vendor/db/types";
 import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
+import { getUniformNameFromTextureHandleId } from "@vendor/db/types";
 
 import type { BaseEdge } from "../types/node";
 import { useEdgeStore } from "../providers/edge-store-provider";
@@ -28,14 +29,30 @@ const getTextureFromTargets = (
 };
 
 /**
- * Gets the source node ID connected to a target node
+ * Gets the source node ID connected to a target node for a specific uniform
  */
-const getSourceForTarget = (
+const getSourceForTargetUniform = (
   edges: BaseEdge[],
   targetId: string,
+  uniformName: string,
 ): string | null => {
-  const edge = edges.find((edge) => edge.target === targetId);
-  return edge?.source || null;
+  // Find edges that connect to this target
+  const targetEdges = edges.filter((edge) => edge.target === targetId);
+
+  // For each edge, check if it maps to the requested uniform
+  for (const edge of targetEdges) {
+    // Get the uniform name for this target handle
+    const edgeUniformName = getUniformNameFromTextureHandleId(
+      edge.targetHandle,
+    );
+
+    // If this edge's handle maps to the requested uniform, return its source
+    if (edgeUniformName === uniformName) {
+      return edge.source;
+    }
+  }
+
+  return null;
 };
 
 /**
@@ -81,8 +98,9 @@ export const useUnifiedTextureOrchestrator = ({
    */
   const createTextureResolver = useCallback(
     (nodeId: string) => {
-      return (_sampler: Record<string, unknown>): THREE.Texture | null => {
-        const sourceId = getSourceForTarget(edges, nodeId);
+      return (uniformName: string): THREE.Texture | null => {
+        // If we know which uniform this is for, use that to find the right source
+        const sourceId = getSourceForTargetUniform(edges, nodeId, uniformName);
         return getTextureFromTargets(sourceId, targets);
       };
     },

@@ -13,11 +13,12 @@ export interface Sampler2DAdapter {
   /**
    * Convert a Sampler2D object to a THREE.js uniform
    * @param value The Sampler2D value to convert
-   * @param textureResolver Optional function to resolve a texture from a Sampler2D object
+   * @param textureResolver Function to resolve a texture from a Sampler2D object
    */
   toThreeUniform(
     value: Sampler2D,
-    textureResolver?: (sampler: Sampler2D) => THREE.Texture | null,
+    uniformName: string,
+    textureResolver: (uniformName: string) => THREE.Texture | null,
   ): IUniform<THREE.Texture | null>;
 
   /**
@@ -33,15 +34,11 @@ export interface Sampler2DAdapter {
 export class Sampler2DUniformAdapter implements Sampler2DAdapter {
   toThreeUniform(
     value: Sampler2D,
-    textureResolver?: (sampler: Sampler2D) => THREE.Texture | null,
+    uniformName: string,
+    textureResolver: (uniformName: string) => THREE.Texture | null,
   ): IUniform<THREE.Texture | null> {
     // If a texture resolver is provided, use it to get the actual texture
-    if (textureResolver) {
-      return { value: textureResolver(value) };
-    }
-
-    // Otherwise, return null texture
-    return { value: null };
+    return { value: textureResolver(uniformName) };
   }
 
   fromThreeUniform(uniform: IUniform<THREE.Texture | null>): Sampler2D {

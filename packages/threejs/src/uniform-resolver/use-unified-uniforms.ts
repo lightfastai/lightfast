@@ -63,9 +63,7 @@ export function useUnifiedUniforms() {
       shader: ShaderMaterial,
       uniforms: Record<string, unknown>,
       constraints?: Record<string, UniformFieldValue>,
-      textureResolver?: (
-        sampler: Record<string, unknown>,
-      ) => THREE.Texture | null,
+      textureResolver?: (uniformName: string) => THREE.Texture | null,
     ) => {
       for (const [uniformName, value] of Object.entries(uniforms)) {
         // Skip if the uniform doesn't exist in the shader
@@ -97,7 +95,8 @@ export function useUnifiedUniforms() {
 
           case $ValueType.enum.Sampler2D:
             // Use the dedicated function for Sampler2D uniforms
-            if (isSampler2D(value)) {
+            if (isSampler2D(value) && textureResolver) {
+              // Pass the uniform name to the texture resolver
               updateSampler2DUniform(
                 shader,
                 uniformName,
