@@ -161,7 +161,7 @@ export {
 export * from "./shaders/interfaces/sampler2d-handle";
 // Export shader enums
 export * from "./shaders/enums/shaders";
-
+export * from "./registry/utils/sampler2d-utils";
 export { getFieldMetadata };
 
 export * from "./generated/shader-enum.generated";

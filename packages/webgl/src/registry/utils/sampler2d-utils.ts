@@ -1,8 +1,11 @@
+import type { Shaders } from "@/shaders/enums/shaders";
+
 import type { Sampler2DMetadata, UniformFieldValue } from "../../shaders/field";
 import type { Sampler2DHandle } from "../../shaders/interfaces/sampler2d-handle";
 import type { ShaderSchema } from "../../shaders/interfaces/shader-def";
 import type { ShaderDefinition } from "../interfaces/registry-shader-def";
 import type { ShaderSampler2DUniformRegistry } from "../interfaces/sampler2d-registry-def";
+import { textureInputRegistry } from "..";
 import { $ValueType } from "../../shaders/enums/values";
 
 /**
@@ -77,4 +80,27 @@ export function extractShaderSampler2DRegistry(
     inputs,
     validateConnection: () => true, // Default to accepting any texture type
   };
+}
+
+/**
+ * Find the uniform name for a handle ID in the registry
+ * @param handleId The handle ID to find
+ * @param shaderType The shader type to look in
+ * @returns The uniform name or null if not found
+ */
+export function findUniformNameForHandleId(
+  handleId: string,
+  shaderType: Shaders,
+): string | null {
+  // Get the registry for this shader type
+  const registry = textureInputRegistry[shaderType];
+
+  // Look for a handle matching this ID
+  const handle = registry.handles.find(
+    (h: Sampler2DHandle) => h.handleId === handleId,
+  );
+  if (!handle) return null;
+
+  // Return the uniform name from the handle
+  return handle.uniformName;
 }

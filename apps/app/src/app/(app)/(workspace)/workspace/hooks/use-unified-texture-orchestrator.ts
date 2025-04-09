@@ -5,10 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { Shaders } from "@repo/webgl";
-import type { Texture } from "@vendor/db/types";
+import type { Texture, TextureTypes } from "@vendor/db/types";
 import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
-import { getUniformNameFromTextureHandleId } from "@vendor/db/types";
+import { getUniformForEdge } from "@vendor/db/schema";
 
 import type { BaseEdge } from "../types/node";
 import { useEdgeStore } from "../providers/edge-store-provider";
@@ -35,6 +35,7 @@ const getSourceForTargetUniform = (
   edges: BaseEdge[],
   targetId: string,
   uniformName: string,
+  targetNodeType: TextureTypes,
 ): string | null => {
   // Find edges that connect to this target
   const targetEdges = edges.filter((edge) => edge.target === targetId);
@@ -42,9 +43,11 @@ const getSourceForTargetUniform = (
   // For each edge, check if it maps to the requested uniform
   for (const edge of targetEdges) {
     // Get the uniform name for this target handle
-    const edgeUniformName = getUniformNameFromTextureHandleId(
-      edge.targetHandle,
-    );
+    // Use the WebGL utility which can leverage the registry when shader type is provided
+    const edgeUniformName = getUniformForEdge({
+      targetHandle: edge.targetHandle,
+      targetNodeType: targetNodeType,
+    });
 
     // If this edge's handle maps to the requested uniform, return its source
     if (edgeUniformName === uniformName) {
@@ -97,10 +100,15 @@ export const useUnifiedTextureOrchestrator = ({
    * This needs to be recreated when edges or targets change
    */
   const createTextureResolver = useCallback(
-    (nodeId: string) => {
+    (nodeId: string, textureType: TextureTypes) => {
       return (uniformName: string): THREE.Texture | null => {
         // If we know which uniform this is for, use that to find the right source
-        const sourceId = getSourceForTargetUniform(edges, nodeId, uniformName);
+        const sourceId = getSourceForTargetUniform(
+          edges,
+          nodeId,
+          uniformName,
+          textureType,
+        );
         return getTextureFromTargets(sourceId, targets);
       };
     },
@@ -146,7 +154,7 @@ export const useUnifiedTextureOrchestrator = ({
         if (!config) return;
 
         const shader = orchestrator.getShader();
-        const textureResolver = createTextureResolver(id);
+        const textureResolver = createTextureResolver(id, config.type);
 
         updateAllUniforms(
           state,

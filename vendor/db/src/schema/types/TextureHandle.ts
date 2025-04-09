@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { isValidSampler2DHandleId } from "@repo/webgl";
+import {
+  findUniformNameForHandleId,
+  isValidSampler2DHandleId,
+} from "@repo/webgl";
+
+import type { TextureTypes } from "./Texture";
 
 /**
  * Branded type for texture handle IDs
@@ -56,14 +61,27 @@ export function getTextureHandleIndex(handleId: string): number | null {
 
 /**
  * Map a texture handle ID to its corresponding uniform name
+ *
+ * @deprecated Consider using getUniformNameForHandleId from @repo/webgl instead
+ * which can optionally use the shader registry for more accurate mapping
+ *
+ * @param handleId The texture handle ID
+ * @param shaderType Optional shader type to look up in the registry (not used in this implementation)
+ * @returns The corresponding uniform name or null if not found
  */
 export function getUniformNameFromTextureHandleId(
   handleId: string | TextureHandleId,
+  textureType: TextureTypes,
 ): string | null {
   if (!isValidTextureHandleId(handleId)) return null;
-  const index = getTextureHandleIndex(handleId);
-  if (index === null) return null;
-  return `u_texture${index}`;
+
+  // Note: In a future update, we could delegate to the WebGL utility
+  // if we updated the architecture to allow for this dependency
+  const uniformName = findUniformNameForHandleId(handleId, textureType);
+  if (uniformName) return uniformName;
+
+  // @todo: Remove this once we have a proper way to handle this
+  throw new Error(`Could not find uniform name for handle ID: ${handleId}`);
 }
 
 // Update the Zod schema to use custom validation

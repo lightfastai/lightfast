@@ -4,13 +4,14 @@ import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
+import { findUniformNameForHandleId } from "@repo/webgl";
 
+import type { TextureTypes } from "../types/Texture";
 import type { HandleId } from "../types/TextureHandle";
 import {
   $HandleId,
   createOutputHandleId,
   createTextureHandleId,
-  getUniformNameFromTextureHandleId,
   isOutputHandleId,
   isTextureHandleId,
 } from "../types/TextureHandle";
@@ -93,9 +94,10 @@ export type InsertEdge = z.infer<typeof InsertEdgeSchema>;
  */
 export function getUniformForEdge(edge: {
   targetHandle: HandleId;
+  targetNodeType: TextureTypes;
 }): string | null {
   if (!isTextureHandleId(edge.targetHandle)) return null;
-  return getUniformNameFromTextureHandleId(edge.targetHandle);
+  return findUniformNameForHandleId(edge.targetHandle, edge.targetNodeType);
 }
 
 /**
