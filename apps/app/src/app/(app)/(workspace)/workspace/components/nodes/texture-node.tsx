@@ -1,5 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
@@ -21,14 +22,17 @@ import {
 } from "@vendor/db/types";
 
 import type { BaseNode } from "../../types/node";
-import { api } from "~/trpc/client/react";
+import { useTRPC } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { useTextureRenderStore } from "../../providers/texture-render-store-provider";
 import { NodeHandle } from "../common/node-handle";
 
 export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
-    const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
+    const trpc = useTRPC();
+    const { data } = useSuspenseQuery(
+      trpc.tenant.node.data.get.queryOptions<Texture>({ id }),
+    );
     const { targets } = useTextureRenderStore((state) => state);
     const setSelected = useInspectorStore((state) => state.setSelected);
 

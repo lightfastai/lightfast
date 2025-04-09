@@ -1,11 +1,12 @@
 import type { Connection } from "@xyflow/react";
 import { useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
 
 import type { BaseEdge } from "../types/edge";
-import { api } from "~/trpc/client/react";
+import { useTRPC } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
 import { convertToStrictConnection } from "../types/connection";
 import {
@@ -18,41 +19,45 @@ export const useReplaceEdge = () => {
   const validateSelfConnection = useSelfConnectionValidator();
   const validateSameSource = useSameSourceValidator();
 
-  const { mutateAsync: mutReplace } = api.tenant.edge.replace.useMutation({
-    onMutate: ({ oldEdgeId, newEdge }) => {
-      // Optimistically remove the old edge
-      const oldEdge = edges.find((edge) => edge.id === oldEdgeId);
-      if (!oldEdge) throw new Error("Old edge not found");
-      deleteEdge(oldEdgeId);
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { mutateAsync: mutReplace } = useMutation(
+    trpc.tenant.edge.replace.mutationOptions({
+      onMutate: ({ oldEdgeId, newEdge }) => {
+        // Optimistically remove the old edge
+        const oldEdge = edges.find((edge) => edge.id === oldEdgeId);
+        if (!oldEdge) throw new Error("Old edge not found");
+        deleteEdge(oldEdgeId);
 
-      // Optimistically add the new edge
-      const optimisticEdge = {
-        ...newEdge,
-        // Include required BaseEdge properties
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as BaseEdge;
+        // Optimistically add the new edge
+        const optimisticEdge = {
+          ...newEdge,
+          // Include required BaseEdge properties
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as BaseEdge;
 
-      addEdge(optimisticEdge);
+        addEdge(optimisticEdge);
 
-      return { oldEdge };
-    },
-    onError: (err, variables, context) => {
-      if (context?.oldEdge) {
-        // Rollback: restore the old edge
-        addEdge(context.oldEdge);
-      }
-      console.error(err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to replace edge",
-        variant: "destructive",
-      });
-    },
-    onSettled: () => {
-      // Optionally invalidate queries or perform additional actions
-    },
-  });
+        return { oldEdge };
+      },
+      onError: (err, variables, context) => {
+        if (context?.oldEdge) {
+          // Rollback: restore the old edge
+          addEdge(context.oldEdge);
+        }
+        console.error(err);
+        toast({
+          title: "Error",
+          description: err.message || "Failed to replace edge",
+          variant: "destructive",
+        });
+      },
+      onSettled: () => {
+        // Optionally invalidate queries or perform additional actions
+      },
+    }),
+  );
 
   const mutateAsync = useCallback(
     async (oldEdgeId: string, newConnection: Connection) => {

@@ -1,6 +1,9 @@
-import { api } from "~/trpc/client/react";
+import { useQuery } from "@tanstack/react-query";
+
+import { useTRPC } from "~/trpc/client/react";
 
 export const useGetAllWorkspaces = () => {
-  const { data } = api.tenant.workspace.getAll.useQuery();
+  const trpc = useTRPC();
+  const { data } = useQuery(trpc.tenant.workspace.getAll.queryOptions());
   return data;
 };

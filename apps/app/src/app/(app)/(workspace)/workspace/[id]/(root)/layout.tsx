@@ -10,13 +10,17 @@ import {
 import { $NodeType } from "@vendor/db/types";
 
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
-import { api, HydrateClient } from "~/trpc/client/server";
+import {
+  api,
+  getQueryClient,
+  HydrateClient,
+  prefetch,
+} from "~/trpc/client/server";
 import { EditorFileMenu } from "../../components/app/editor-file-menu";
 import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";
 import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
 import { EditorCommandDialog } from "../../components/command-dialog/editor-command-dialog";
 import { Debug } from "../../components/webgl/webgl-debug";
-import { WebGLTextureRenderPipeline } from "../../components/webgl/webgl-texture-render-pipeline";
 import { EdgeStoreProvider } from "../../providers/edge-store-provider";
 import { EditorStoreProvider } from "../../providers/editor-store-provider";
 import { FileMenuViewProvider } from "../../providers/file-menu-view-provider";
@@ -30,9 +34,8 @@ import { WorkspaceViewProvider } from "../../providers/workspace-view-provider";
 import { convertToBaseEdge } from "../../types/edge";
 import { convertToBaseNode } from "../../types/node";
 
-const WebGLCanvas = dynamic(
-  () => import("@repo/threejs").then((mod) => mod.WebGLCanvas),
-  { ssr: false },
+const WebGLCanvas = dynamic(() =>
+  import("@repo/threejs").then((mod) => mod.WebGLCanvas),
 );
 
 const Inspector = dynamic(() =>
@@ -41,9 +44,9 @@ const Inspector = dynamic(() =>
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -55,7 +58,10 @@ const getWorkspace = async ({
 }: RouterInputs["tenant"]["workspace"]["get"]): Promise<
   RouterOutputs["tenant"]["workspace"]["get"] | null
 > => {
-  const workspace = await api.tenant.workspace.get({ id });
+  const queryClient = getQueryClient();
+  const workspace = await queryClient.fetchQuery(
+    api.tenant.workspace.get.queryOptions({ id }),
+  );
   return workspace;
 };
 
@@ -68,7 +74,10 @@ const getWorkspaceNodeBaseAll = async ({
 }: RouterInputs["tenant"]["node"]["base"]["getAll"]): Promise<
   RouterOutputs["tenant"]["node"]["base"]["getAll"]
 > => {
-  const nodes = await api.tenant.node.base.getAll({ workspaceId });
+  const queryClient = getQueryClient();
+  const nodes = await queryClient.fetchQuery(
+    api.tenant.node.base.getAll.queryOptions({ workspaceId }),
+  );
   return nodes;
 };
 
@@ -80,14 +89,18 @@ const getWorkspaceEdgeAll = async ({
 }: RouterInputs["tenant"]["edge"]["getAll"]): Promise<
   RouterOutputs["tenant"]["edge"]["getAll"]
 > => {
-  const edges = await api.tenant.edge.getAll({ workspaceId });
+  const queryClient = getQueryClient();
+  const edges = await queryClient.fetchQuery(
+    api.tenant.edge.getAll.queryOptions({ workspaceId }),
+  );
   return edges;
 };
 
-export default async function WorkspaceLayout({
-  children,
-  params,
-}: WorkspaceLayoutProps) {
+export default async function WorkspaceLayout(props: WorkspaceLayoutProps) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const { id } = params;
   const [workspace, nodes, edges] = await Promise.all([
     getWorkspace({ id }),
@@ -101,7 +114,7 @@ export default async function WorkspaceLayout({
 
   /** Prefetch node data using <HydrateClient> (tRPC SSR) & useSuspenseQuery (Tanstack Query) */
   nodes.forEach((node) => {
-    void api.tenant.node.data.get.prefetch({ id: node.id });
+    prefetch(api.tenant.node.data.get.queryOptions({ id: node.id }));
   });
 
   const baseNodes = convertToBaseNode(nodes);
@@ -138,7 +151,7 @@ export default async function WorkspaceLayout({
                     )}
                   >
                     <InspectorStoreProvider>
-                      <WebGLCanvas
+                      {/* <WebGLCanvas
                         style={{
                           position: "absolute",
                           pointerEvents: "none",
@@ -151,7 +164,7 @@ export default async function WorkspaceLayout({
                         showPerformance={true}
                       >
                         <WebGLTextureRenderPipeline />
-                      </WebGLCanvas>
+                      </WebGLCanvas> */}
                       <WorkspaceReactFlowProvider>
                         <WorkspaceViewProvider>
                           {children}

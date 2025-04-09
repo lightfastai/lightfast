@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { memo, useState } from "react";
 import Image from "next/image";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Position } from "@xyflow/react";
 import { PlayIcon } from "lucide-react";
 
@@ -15,7 +16,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
-import { api } from "~/trpc/client/react";
+import { useTRPC } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { NodeHandle } from "../common/node-handle";
 
@@ -25,7 +26,10 @@ const fal = createFalClient({
 
 export const FluxNode = memo(
   ({ id, type, selected, isConnectable }: NodeProps<BaseNode>) => {
-    const [data] = api.tenant.node.data.get.useSuspenseQuery<Txt2Img>({ id });
+    const trpc = useTRPC();
+    const { data } = useSuspenseQuery(
+      trpc.tenant.node.data.get.queryOptions<Txt2Img>({ id }),
+    );
     const setSelected = useInspectorStore((state) => state.setSelected);
     const [result, setResult] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);

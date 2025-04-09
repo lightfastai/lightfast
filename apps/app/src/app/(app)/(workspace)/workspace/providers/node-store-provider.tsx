@@ -23,7 +23,7 @@ export const NodeStoreProvider = ({
   children,
   initialNodes,
 }: NodeStoreProviderProps) => {
-  const storeRef = useRef<NodeStoreApi>();
+  const storeRef = useRef<NodeStoreApi>(undefined);
   if (!storeRef.current) {
     storeRef.current = createNodeStore({ nodes: initialNodes });
   }

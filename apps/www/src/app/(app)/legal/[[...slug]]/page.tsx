@@ -7,9 +7,9 @@ import { cn } from "@repo/ui/lib/utils";
 import { Mdx } from "~/components/mdx-components";
 
 interface LegalPageProps {
-  params: {
+  params: Promise<{
     slug: string[];
-  };
+  }>;
 }
 
 function getLegalFromParams({ params }: LegalPageProps) {
@@ -29,7 +29,8 @@ export function generateStaticParams(): LegalPageProps["params"][] {
   }));
 }
 
-export default function LegalPage({ params }: LegalPageProps) {
+export default async function LegalPage(props: LegalPageProps) {
+  const params = await props.params;
   const legal = getLegalFromParams({ params });
 
   if (!legal) {

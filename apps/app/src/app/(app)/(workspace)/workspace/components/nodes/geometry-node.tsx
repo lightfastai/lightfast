@@ -1,5 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRightIcon } from "lucide-react";
 import * as THREE from "three";
 
@@ -15,12 +16,15 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
-import { api } from "~/trpc/client/react";
+import { useTRPC } from "~/trpc/client/react";
 import { WebGLViewContext } from "../webgl/webgl-view-context";
 
 export const GeometryNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
-    const [data] = api.tenant.node.data.get.useSuspenseQuery<Geometry>({ id });
+    const trpc = useTRPC();
+    const { data } = useSuspenseQuery(
+      trpc.tenant.node.data.get.queryOptions<Geometry>({ id }),
+    );
     return (
       <BaseNodeComponent selected={selected}>
         <div

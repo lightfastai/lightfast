@@ -23,7 +23,7 @@ export const ShaderCacheStoreProvider = ({
   children,
   initialShaders,
 }: ShaderCacheStoreProviderProps) => {
-  const storeRef = useRef<ShaderCacheStoreApi>();
+  const storeRef = useRef<ShaderCacheStoreApi>(undefined);
   if (!storeRef.current) {
     storeRef.current = createShaderCacheStore({
       shaders: initialShaders,

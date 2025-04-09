@@ -2,6 +2,11 @@ import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
 import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
 import type { UniformFieldValue, Value } from "@repo/webgl";
@@ -23,7 +28,7 @@ import {
 import { $TextureUniforms } from "@vendor/db/types";
 
 import { useDebounce } from "~/hooks/use-debounce";
-import { api } from "~/trpc/client/react";
+import { useTRPC } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";
 import { InspectorFormField } from "./inspector-form-field";
 
@@ -45,20 +50,28 @@ export const getUniformConstraints = (
 };
 
 export const InspectorTexture = ({ id }: { id: string }) => {
-  const utils = api.useUtils();
-  const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { data } = useSuspenseQuery(
+    trpc.tenant.node.data.get.queryOptions<Texture>({ id }),
+  );
 
   const form = useForm<TextureUniforms>({
     resolver: zodResolver($TextureUniforms),
     defaultValues: data.uniforms,
   });
 
-  const { mutate: updateData } = api.tenant.node.data.update.useMutation({
-    onError: () => {
-      // On error, revert the optimistic update
-      utils.tenant.node.data.get.setData({ id }, data);
-    },
-  });
+  const { mutate: updateData } = useMutation(
+    trpc.tenant.node.data.update.mutationOptions({
+      onError: () => {
+        // On error, revert the optimistic update
+        queryClient.setQueryData(
+          trpc.tenant.node.data.get.queryKey({ id }),
+          data,
+        );
+      },
+    }),
+  );
 
   useEffect(() => {
     form.reset(data.uniforms);
@@ -86,14 +99,11 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       } as TextureUniforms;
 
       // Optimistically update the cache
-      utils.tenant.node.data.get.setData(
-        { id },
-        {
-          type: data.type,
-          uniforms: newUniforms,
-          resolution: data.resolution,
-        },
-      );
+      queryClient.setQueryData(trpc.tenant.node.data.get.queryKey({ id }), {
+        type: data.type,
+        uniforms: newUniforms,
+        resolution: data.resolution,
+      });
 
       // Debounce the actual server update
       debouncedServerUpdate(newUniforms);
@@ -102,7 +112,8 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       data.uniforms,
       data.type,
       data.resolution,
-      utils.tenant.node.data.get,
+      queryClient,
+      trpc.tenant.node.data.get,
       id,
       debouncedServerUpdate,
     ],

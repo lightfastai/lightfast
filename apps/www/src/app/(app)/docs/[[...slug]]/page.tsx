@@ -22,9 +22,9 @@ import { getTableOfContents } from "~/lib/toc";
  * - /docs -> undefined hence needs `slugs?`
  */
 interface DocPageProps {
-  params: {
+  params: Promise<{
     slug?: string[];
-  };
+  }>;
 }
 
 function getDocFromParams({ params }: DocPageProps) {
@@ -44,7 +44,8 @@ export function generateStaticParams(): DocPageProps["params"][] {
   }));
 }
 
-export default async function DocPage({ params }: DocPageProps) {
+export default async function DocPage(props: DocPageProps) {
+  const params = await props.params;
   const doc = getDocFromParams({ params });
 
   if (!doc) {

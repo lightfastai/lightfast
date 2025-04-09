@@ -23,7 +23,7 @@ export const EdgeStoreProvider = ({
   children,
   initialEdges,
 }: EdgeStoreProviderProps) => {
-  const storeRef = useRef<EdgeStoreApi>();
+  const storeRef = useRef<EdgeStoreApi>(undefined);
   if (!storeRef.current) {
     storeRef.current = createEdgeStore({ edges: initialEdges });
   }

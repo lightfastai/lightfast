@@ -26,7 +26,7 @@ export const TextureRenderStoreProvider = ({
   children,
   initialNodes,
 }: TextureRenderStoreProviderProps) => {
-  const storeRef = useRef<TextureRenderStoreApi>();
+  const storeRef = useRef<TextureRenderStoreApi>(undefined);
   if (!storeRef.current) {
     storeRef.current = createTextureRenderStore(
       initTextureRenderState(initialNodes),

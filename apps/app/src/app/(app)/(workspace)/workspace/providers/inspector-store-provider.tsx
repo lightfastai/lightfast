@@ -23,7 +23,7 @@ export interface InspectorStoreProviderProps {
 export const InspectorStoreProvider = ({
   children,
 }: InspectorStoreProviderProps) => {
-  const storeRef = useRef<InspectorStoreApi>();
+  const storeRef = useRef<InspectorStoreApi>(undefined);
   if (!storeRef.current) {
     storeRef.current = createInspectorStore(initInspectorState());
   }

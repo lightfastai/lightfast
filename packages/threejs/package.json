@@ -19,8 +19,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@react-three/drei": "^9.114.5",
-    "@react-three/fiber": "^8.17.10",
+    "@react-three/drei": "^10.0.6",
+    "@react-three/fiber": "^9.1.2",
     "@repo/ui": "workspace:*",
     "@repo/webgl": "workspace:*",
     "r3f-perf": "^7.2.3",

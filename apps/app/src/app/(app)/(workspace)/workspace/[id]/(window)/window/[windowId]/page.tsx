@@ -12,13 +12,14 @@ import { convertToBaseNode } from "../../../../types/node";
 import { RenderChain } from "./render-chain";
 
 interface WindowPageProps {
-  params: {
+  params: Promise<{
     id: string;
     windowId: string;
-  };
+  }>;
 }
 
-export default async function WindowPage({ params }: WindowPageProps) {
+export default async function WindowPage(props: WindowPageProps) {
+  const params = await props.params;
   // Fetch nodes and edges on the server
   const [nodes, edges] = await Promise.all([
     api.tenant.node.base.getAll({

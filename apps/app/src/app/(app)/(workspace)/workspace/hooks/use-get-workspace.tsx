@@ -1,6 +1,7 @@
-import type { RouterOutputs } from "@dahlia/trpc";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
-import { api } from "~/trpc/client/react";
+import type { RouterOutputs } from "~/trpc/server";
+import { useTRPC } from "~/trpc/client/react";
 
 interface UseGetWorkspaceProps {
   id: RouterOutputs["tenant"]["workspace"]["get"]["id"];
@@ -8,6 +9,9 @@ interface UseGetWorkspaceProps {
 }
 
 export const useGetWorkspace = ({ id, initialData }: UseGetWorkspaceProps) => {
-  const { data } = api.tenant.workspace.get.useQuery({ id }, { initialData });
+  const trpc = useTRPC();
+  const { data } = useSuspenseQuery(
+    trpc.tenant.workspace.get.queryOptions({ id }, { initialData }),
+  );
   return { data };
 };

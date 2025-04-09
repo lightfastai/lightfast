@@ -23,7 +23,7 @@ export interface SelectionStoreProviderProps {
 export const SelectionStoreProvider = ({
   children,
 }: SelectionStoreProviderProps) => {
-  const storeRef = useRef<SelectionStoreApi>();
+  const storeRef = useRef<SelectionStoreApi>(undefined);
   if (!storeRef.current) {
     storeRef.current = createSelectionStore(initSelectionState());
   }

@@ -1,14 +1,16 @@
 import { notFound } from "next/navigation";
 
-import { api } from "~/trpc/client/server";
+import { api, getQueryClient } from "~/trpc/client/server";
 
 export default async function WorkspaceLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await api.app.auth.getSession();
-
+  const queryClient = getQueryClient();
+  const session = await queryClient.fetchQuery(
+    api.app.auth.getSession.queryOptions(),
+  );
   if (!session?.user.clerkId) {
     notFound();
   }

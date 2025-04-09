@@ -1,5 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRightIcon } from "lucide-react";
 
 import type { Material } from "@vendor/db/types";
@@ -13,12 +14,15 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
-import { api } from "~/trpc/client/react";
+import { useTRPC } from "~/trpc/client/react";
 import { WebGLViewContext } from "../webgl/webgl-view-context";
 
 export const MaterialNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
-    const [data] = api.tenant.node.data.get.useSuspenseQuery<Material>({ id });
+    const trpc = useTRPC();
+    const { data } = useSuspenseQuery(
+      trpc.tenant.node.data.get.queryOptions<Material>({ id }),
+    );
     return (
       <BaseNodeComponent selected={selected}>
         <div

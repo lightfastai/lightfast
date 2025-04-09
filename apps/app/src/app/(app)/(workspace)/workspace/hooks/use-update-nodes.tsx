@@ -1,10 +1,11 @@
 import type { NodeChange } from "@xyflow/react";
 import { useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 import type { BaseNode } from "../types/node";
 import type { RouterInputs } from "~/trpc/server/index";
 import { useDebounce } from "~/hooks/use-debounce";
-import { api } from "~/trpc/client/react";
+import { useTRPC } from "~/trpc/client/react";
 import { useNodeStore } from "../providers/node-store-provider";
 
 interface UseGetWorkspaceNodesProps {
@@ -13,7 +14,10 @@ interface UseGetWorkspaceNodesProps {
 
 export const useUpdateNodes = ({ workspaceId }: UseGetWorkspaceNodesProps) => {
   const { nodes, onNodesChange } = useNodeStore((state) => state);
-  const updateNodePositions = api.tenant.node.updatePositions.useMutation();
+  const trpc = useTRPC();
+  const updateNodePositions = useMutation(
+    trpc.tenant.node.updatePositions.mutationOptions(),
+  );
 
   const updatePositions = useCallback(
     (nodes: BaseNode[]) => {
