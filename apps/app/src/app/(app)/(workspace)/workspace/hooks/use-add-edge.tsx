@@ -1,6 +1,6 @@
 import type { Connection } from "@xyflow/react";
 import { useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
@@ -16,7 +16,6 @@ export const useAddEdge = () => {
   const validateSelfConnection = useSelfConnectionValidator();
 
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const { mutateAsync: mut } = useMutation(
     trpc.tenant.edge.create.mutationOptions({
       onMutate: (newEdge) => {

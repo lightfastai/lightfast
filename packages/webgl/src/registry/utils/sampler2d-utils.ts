@@ -103,3 +103,8 @@ export function findUniformNameForHandleId(
   // Return the uniform name from the handle
   return handle.uniformName;
 }
+
+export function getMaxTargetEdgesForShaderType(shaderType: Shaders): number {
+  const registry = textureInputRegistry[shaderType];
+  return registry.handles.length;
+}

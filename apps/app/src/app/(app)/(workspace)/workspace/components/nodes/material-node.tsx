@@ -18,10 +18,13 @@ import { useTRPC } from "~/trpc/client/react";
 import { WebGLViewContext } from "../webgl/webgl-view-context";
 
 export const MaterialNode = memo(
-  ({ id, type, selected }: NodeProps<BaseNode>) => {
+  ({ id, type, selected, data: initialData }: NodeProps<BaseNode>) => {
     const trpc = useTRPC();
     const { data } = useSuspenseQuery(
-      trpc.tenant.node.data.get.queryOptions<Material>({ id }),
+      trpc.tenant.node.data.get.queryOptions<Material>(
+        { id },
+        { initialData: initialData as Material },
+      ),
     );
     return (
       <BaseNodeComponent selected={selected}>

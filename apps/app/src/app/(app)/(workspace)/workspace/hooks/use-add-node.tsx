@@ -53,8 +53,6 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
           data: newNode.data,
         };
 
-        console.log("newNode", newNode);
-
         await queryClient.setQueryData(
           [trpc.tenant.node.data.get.queryFilter({ id: newNode.id })],
           newNode.data as Geometry | Material | Texture,
@@ -83,12 +81,12 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
           undefined,
         );
       },
-      // onSettled: async (newNode) => {
-      //   if (!newNode) return;
-      //   await queryClient.invalidateQueries(
-      //     trpc.tenant.node.data.get.queryFilter({ id: newNode.id }),
-      //   );
-      // },
+      onSettled: async (newNode) => {
+        if (!newNode) return;
+        await queryClient.invalidateQueries(
+          trpc.tenant.node.data.get.queryFilter({ id: newNode.id }),
+        );
+      },
     }),
   );
 
