@@ -16,7 +16,7 @@ catalog:
   typescript: ^5.6.3
   "@types/node": ^20.16.11
   "@types/eslint": ^8
-  zod: ^3.23.8
+  zod: 4.0.0-beta.20250411T005215
   next: 14.2.15
 
 catalogs:

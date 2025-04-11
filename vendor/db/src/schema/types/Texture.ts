@@ -7,11 +7,6 @@ import {
   $Migrated,
   $PerlinNoise2D,
   $Shaders,
-  createDefaultAdd,
-  createDefaultDisplace,
-  createDefaultLimit,
-  createDefaultMigrated,
-  createDefaultPerlinNoise2D,
 } from "@repo/webgl";
 
 export const $TextureTypes = z.enum($Shaders.options);
@@ -71,31 +66,31 @@ export const createDefaultTexture = ({
     case $TextureTypes.enum.Noise:
       return {
         type,
-        uniforms: createDefaultPerlinNoise2D(),
+        uniforms: $PerlinNoise2D.parse(undefined),
         resolution: { width: 256, height: 256 },
       };
     case $TextureTypes.enum.Limit:
       return {
         type,
-        uniforms: createDefaultLimit(),
+        uniforms: $Limit.parse(undefined),
         resolution: { width: 256, height: 256 },
       };
     case $TextureTypes.enum.Displace:
       return {
         type,
-        uniforms: createDefaultDisplace(),
+        uniforms: $Displace.parse(undefined),
         resolution: { width: 256, height: 256 },
       };
     case $TextureTypes.enum.Add:
       return {
         type,
-        uniforms: createDefaultAdd(),
+        uniforms: $Add.parse(undefined),
         resolution: { width: 256, height: 256 },
       };
     case $TextureTypes.enum.Migrated:
       return {
         type,
-        uniforms: createDefaultMigrated(),
+        uniforms: $Migrated.parse(undefined),
         resolution: { width: 256, height: 256 },
       };
     /**

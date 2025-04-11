@@ -23,20 +23,12 @@ export const migratedInputHandle = createSampler2DHandle(
 );
 
 export const $Migrated = z.object({
-  u_texture: $Sampler2D,
-  u_value: $Float,
-  u_toggle: $Boolean,
+  u_texture: $Sampler2D.default({ vuvID: null }),
+  u_value: $Float.default(0.5),
+  u_toggle: $Boolean.default(true),
 });
 
 export type MigratedParams = z.infer<typeof $Migrated>;
-
-export const createDefaultMigrated = (): MigratedParams => {
-  return {
-    u_texture: { vuvID: null },
-    u_value: 0.5,
-    u_toggle: true,
-  };
-};
 
 export const MIGRATED_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
   u_texture: {
@@ -86,5 +78,4 @@ export const migratedShaderDefinition = {
   fragmentShader: migratedFragmentShader,
   schema: $Migrated,
   constraints: MIGRATED_UNIFORM_CONSTRAINTS,
-  createDefaultValues: createDefaultMigrated,
 };

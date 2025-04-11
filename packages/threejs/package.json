@@ -26,7 +26,7 @@
     "r3f-perf": "^7.2.3",
     "react": "catalog:react18",
     "three": "^0.169.0",
-    "zod": "^3.23.8"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
