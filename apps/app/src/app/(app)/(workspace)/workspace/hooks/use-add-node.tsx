@@ -6,6 +6,7 @@ import type {
   Material,
   MaterialType,
   Texture,
+  TextureType,
   Txt2ImgType,
 } from "@vendor/db/types";
 import { nanoid } from "@repo/lib";
@@ -123,7 +124,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
         type: $NodeType.enum.texture,
         position,
         data: createDefaultTexture({
-          type: selection.value!,
+          type: selection.value as TextureType,
         }),
       });
     } else if (selection.type === $NodeType.enum.flux) {
