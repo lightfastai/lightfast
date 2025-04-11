@@ -87,13 +87,6 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
       x: event.clientX,
       y: event.clientY,
     });
-    console.log(
-      "selection",
-      selection,
-      createDefaultTexture({
-        type: selection.value!,
-      }),
-    );
     if (
       selection.type === $NodeType.enum.geometry &&
       $GeometryType.safeParse(selection.value).success
