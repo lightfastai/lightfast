@@ -5,7 +5,16 @@ import type * as THREE from "three";
 import { useCallback } from "react";
 
 import type { UniformFieldValue, ValueType } from "@repo/webgl";
-import { $ValueType, isNumericValue } from "@repo/webgl";
+import {
+  $ValueType,
+  isBoolean,
+  isColor,
+  isNumericValue,
+  isSampler2D,
+  isString,
+  isVec2,
+  isVec3,
+} from "@repo/webgl";
 
 import type { WebGLRootState } from "../types/render";
 import { useNumericUniform } from "./use-numeric-uniform";
@@ -29,12 +38,12 @@ export function useUnifiedUniforms() {
    */
   const determineValueType = useCallback((value: unknown): ValueType => {
     if (isNumericValue(value)) return $ValueType.enum.Numeric;
-    // if (isVec2(value)) return $ValueType.enum.Vec2;
-    // if (isVec3(value)) return $ValueType.enum.Vec3;
-    // if (isBoolean(value)) return $ValueType.enum.Boolean;
-    // if (isColor(value)) return $ValueType.enum.Color;
-    // if (isString(value)) return $ValueType.enum.String;
-    // if (isSampler2D(value)) return $ValueType.enum.Sampler2D;
+    if (isVec2(value)) return $ValueType.enum.Vec2;
+    if (isVec3(value)) return $ValueType.enum.Vec3;
+    if (isBoolean(value)) return $ValueType.enum.Boolean;
+    if (isColor(value)) return $ValueType.enum.Color;
+    if (isString(value)) return $ValueType.enum.String;
+    if (isSampler2D(value)) return $ValueType.enum.Sampler2D;
 
     // Default fallback
     return $ValueType.enum.String;
@@ -67,46 +76,46 @@ export function useUnifiedUniforms() {
         // Update based on value type
         switch (valueType) {
           case $ValueType.enum.Numeric:
-            // if (isNumericValue(value)) {
-            //   updateNumericUniform(state, shader, uniformName, value);
-            // }
+            if (isNumericValue(value)) {
+              updateNumericUniform(state, shader, uniformName, value);
+            }
             break;
 
-          // case $ValueType.enum.Vec2:
-          //   if (isVec2(value)) {
-          //     updateVec2Uniform(state, shader, uniformName, value);
-          //   }
-          //   break;
+          case $ValueType.enum.Vec2:
+            if (isVec2(value)) {
+              updateVec2Uniform(state, shader, uniformName, value);
+            }
+            break;
 
-          // case $ValueType.enum.Vec3:
-          //   if (isVec3(value)) {
-          //     updateVec3Uniform(state, shader, uniformName, value);
-          //   }
-          //   break;
+          case $ValueType.enum.Vec3:
+            if (isVec3(value)) {
+              updateVec3Uniform(state, shader, uniformName, value);
+            }
+            break;
 
-          // case $ValueType.enum.Sampler2D:
-          //   // Use the dedicated function for Sampler2D uniforms
-          //   if (isSampler2D(value) && textureResolver) {
-          //     // Pass the uniform name to the texture resolver
-          //     updateSampler2DUniform(
-          //       shader,
-          //       uniformName,
-          //       value,
-          //       textureResolver,
-          //     );
-          //   }
-          //   break;
+          case $ValueType.enum.Sampler2D:
+            // Use the dedicated function for Sampler2D uniforms
+            if (isSampler2D(value) && textureResolver) {
+              // Pass the uniform name to the texture resolver
+              updateSampler2DUniform(
+                shader,
+                uniformName,
+                value,
+                textureResolver,
+              );
+            }
+            break;
 
-          // case $ValueType.enum.Boolean:
-          // case $ValueType.enum.Color:
-          // case $ValueType.enum.String:
-          //   // Direct assignment for types without expressions
-          //   shader.uniforms[uniformName].value = value;
-          //   break;
+          case $ValueType.enum.Boolean:
+          case $ValueType.enum.Color:
+          case $ValueType.enum.String:
+            // Direct assignment for types without expressions
+            shader.uniforms[uniformName].value = value;
+            break;
 
-          // default:
-          //   // For any unhandled type, assign directly
-          //   shader.uniforms[uniformName].value = value;
+          default:
+            // For any unhandled type, assign directly
+            shader.uniforms[uniformName].value = value;
         }
       }
     },
