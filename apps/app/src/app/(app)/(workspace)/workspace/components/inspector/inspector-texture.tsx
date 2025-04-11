@@ -1,6 +1,6 @@
 import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getUniformConstraintsForType } from "node_modules/@repo/webgl/src/registry";
 import { useForm } from "react-hook-form";
@@ -22,17 +22,20 @@ import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";
 import { InspectorFormField } from "./inspector-form-field";
 
-export const InspectorTexture = ({ id }: { id: string }) => {
+export const InspectorTexture = ({
+  data,
+  id,
+}: {
+  data: Texture;
+  id: string;
+}) => {
   const utils = api.useUtils();
-  const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
 
   const form = useForm<TextureUniforms>({
     resolver: zodResolver($TextureUniforms),
     defaultValues: data.uniforms,
     mode: "onBlur",
   });
-
-  const [isFormReady, setIsFormReady] = useState(false);
 
   const { mutate: updateData } = api.tenant.node.data.update.useMutation({
     onError: () => {
@@ -41,10 +44,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
     },
   });
 
-  useEffect(() => {
-    form.reset(data.uniforms);
-    setIsFormReady(true);
-  }, [data, form.reset, form]);
+  const formKey = useMemo(() => `${id}-${data.type}`, [id, data.type]);
 
   const debouncedServerUpdate = useDebounce((updates: TextureUniforms) => {
     updateData({
@@ -90,9 +90,9 @@ export const InspectorTexture = ({ id }: { id: string }) => {
     ],
   );
 
-  if (!isFormReady) {
-    return null;
-  }
+  useEffect(() => {
+    form.reset(data.uniforms);
+  }, [formKey, data.uniforms, form]);
 
   return (
     <InspectorBase>
@@ -128,7 +128,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
                   .filter(([property]) => !property.startsWith("u_texture"))
                   .map(([property]) => (
                     <InspectorFormField
-                      key={property}
+                      key={`${formKey}-${property}`}
                       control={form.control}
                       parentSchema={$TextureUniforms}
                       name={
@@ -137,8 +137,6 @@ export const InspectorTexture = ({ id }: { id: string }) => {
                       onValueChange={(value) =>
                         handleUpdate(property as keyof TextureUniforms, value)
                       }
-                      // @TODO: fix this. technically it should always be valid but in the definition
-                      // of the getUniformConstraintsForType it can throw error....
                       constraints={getUniformConstraintsForType(data.type)}
                     />
                   ))}
