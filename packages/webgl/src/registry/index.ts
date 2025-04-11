@@ -1,5 +1,5 @@
 import type { Shaders } from "../shaders/enums/shaders";
-import type { Sampler2DMetadata } from "../shaders/field";
+import type { Sampler2DMetadata, UniformFieldValue } from "../shaders/field";
 import type { ShaderSampler2DUniformRegistry } from "./interfaces/sampler2d-registry-def";
 import { generatedShaderRegistry } from "../generated/shader-registry.generated";
 import {
@@ -28,6 +28,21 @@ export function isShaderRegistered(type: Shaders): boolean {
  */
 export function getAllShaderTypes(): Shaders[] {
   return Array.from(shaderRegistry.keys());
+}
+
+/**
+ * Get uniform constraints for a shader type
+ * @param type - The shader type
+ * @returns The uniform constraints
+ */
+export function getUniformConstraintsForType(
+  type: Shaders,
+): Record<string, UniformFieldValue> {
+  const definition = shaderRegistry.get(type);
+  if (!definition) {
+    throw new Error(`Shader definition not registered for type: ${type}`);
+  }
+  return definition.constraints;
 }
 
 /**

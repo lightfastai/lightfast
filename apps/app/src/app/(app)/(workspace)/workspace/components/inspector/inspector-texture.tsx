@@ -1,11 +1,12 @@
 import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getUniformConstraintsForType } from "node_modules/@repo/webgl/src/registry";
 import { useForm } from "react-hook-form";
 
-import type { UniformFieldValue, Value } from "@repo/webgl";
-import type { Texture, TextureType, TextureUniforms } from "@vendor/db/types";
+import type { Value } from "@repo/webgl";
+import type { Texture, TextureUniforms } from "@vendor/db/types";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
@@ -14,35 +15,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import {
-  ADD_UNIFORM_CONSTRAINTS,
-  DISPLACE_UNIFORM_CONSTRAINTS,
-  LIMIT_UNIFORM_CONSTRAINTS,
-  PNOISE_UNIFORM_CONSTRAINTS,
-} from "@repo/webgl";
 import { $TextureUniforms } from "@vendor/db/types";
 
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";
 import { InspectorFormField } from "./inspector-form-field";
-
-export const getUniformConstraints = (
-  shaderType: TextureType,
-): Record<string, UniformFieldValue> => {
-  switch (shaderType) {
-    case "Noise":
-      return PNOISE_UNIFORM_CONSTRAINTS;
-    case "Displace":
-      return DISPLACE_UNIFORM_CONSTRAINTS;
-    case "Limit":
-      return LIMIT_UNIFORM_CONSTRAINTS;
-    case "Add":
-      return ADD_UNIFORM_CONSTRAINTS;
-    default:
-      return {};
-  }
-};
 
 export const InspectorTexture = ({ id }: { id: string }) => {
   const utils = api.useUtils();
@@ -51,7 +29,10 @@ export const InspectorTexture = ({ id }: { id: string }) => {
   const form = useForm<TextureUniforms>({
     resolver: zodResolver($TextureUniforms),
     defaultValues: data.uniforms,
+    mode: "onBlur",
   });
+
+  const [isFormReady, setIsFormReady] = useState(false);
 
   const { mutate: updateData } = api.tenant.node.data.update.useMutation({
     onError: () => {
@@ -62,6 +43,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
 
   useEffect(() => {
     form.reset(data.uniforms);
+    setIsFormReady(true);
   }, [data, form.reset, form]);
 
   const debouncedServerUpdate = useDebounce((updates: TextureUniforms) => {
@@ -108,6 +90,10 @@ export const InspectorTexture = ({ id }: { id: string }) => {
     ],
   );
 
+  if (!isFormReady) {
+    return null;
+  }
+
   return (
     <InspectorBase>
       <Tabs defaultValue="uniforms" className="flex flex-col">
@@ -151,7 +137,9 @@ export const InspectorTexture = ({ id }: { id: string }) => {
                       onValueChange={(value) =>
                         handleUpdate(property as keyof TextureUniforms, value)
                       }
-                      constraints={getUniformConstraints(data.type)}
+                      // @TODO: fix this. technically it should always be valid but in the definition
+                      // of the getUniformConstraintsForType it can throw error....
+                      constraints={getUniformConstraintsForType(data.type)}
                     />
                   ))}
               </form>

@@ -38,7 +38,7 @@ export const Vec3ExpressionInput = memo(
               onValueChange(updatedValue);
             }}
             placeholder={`Enter ${axis} expression...`}
-            className="font-mono text-xs"
+            className="h-7 w-full px-1.5 py-0.5 text-xs tracking-widest"
           />
         ))}
       </div>
