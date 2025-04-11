@@ -21,7 +21,8 @@ getAllShaderTypes().forEach((shaderType) => {
 
   // Create a function to generate default uniforms for this shader type
   const createDefaultUniformsForType = () => {
-    return definition.schema.parse(undefined) as R3FShaderUniforms;
+    const defaultUniforms = definition.schema.parse({}) as R3FShaderUniforms;
+    return defaultUniforms;
   };
 
   // Create and register the shader singleton

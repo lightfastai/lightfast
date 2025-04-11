@@ -1,8 +1,13 @@
+import type { Shaders } from "./shaders/enums/shaders";
 import type { ValueType } from "./shaders/enums/values";
 import type { VectorMode } from "./shaders/enums/vector-mode";
+import { $Shaders } from "./shaders/enums/shaders";
 import { $ValueType } from "./shaders/enums/values";
 import { $VectorMode } from "./shaders/enums/vector-mode";
 import { getFieldMetadata } from "./shaders/field";
+
+export type { Shaders };
+export { $Shaders };
 
 /**
  * Base types and primitives
@@ -161,6 +166,4 @@ export * from "./shaders/enums/shaders";
 export * from "./registry/utils/sampler2d-utils";
 export { getFieldMetadata };
 
-export * from "./generated/shader-enum.generated";
-export * from "./generated/shader-registry.generated";
 export * from "./registry/interfaces/registry-shader-def";

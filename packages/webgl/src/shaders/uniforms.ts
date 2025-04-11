@@ -102,9 +102,7 @@ export const $Vec3 = z.union([$Vec3Number, $Vec3Expression]);
 export type Vec3 = z.infer<typeof $Vec3>;
 
 // Color schema (no expressions supported)
-export const $Color = z
-  .string()
-  .regex(/^#[0-9a-f]{6}$/i, "Must be a valid 6-digit hex color");
+export const $Color = z.string().regex(/^#[0-9a-f]{6}$/i);
 export type Color = z.infer<typeof $Color>;
 
 // Value type union

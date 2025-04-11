@@ -4,24 +4,27 @@
  * Generated on: 2025-04-11T08:51:18.491Z
  */
 
-import type { ShaderSchema } from "../shaders/interfaces/shader-def";
 import type { ShaderDefinition } from "../registry/interfaces/registry-shader-def";
-import { adaptToRegistryDefinition } from "../registry/interfaces/registry-shader-def";
+import type { ShaderSchema } from "../shaders/interfaces/shader-def";
 import type { Shaders } from "./shader-enum.generated";
-import { pnoiseShaderDefinition } from "../shaders/impl/pnoise";
-import { limitShaderDefinition } from "../shaders/impl/limit";
-import { migratedShaderDefinition } from "../shaders/impl/example-migrated";
-import { displaceShaderDefinition } from "../shaders/impl/displace";
+import { adaptToRegistryDefinition } from "../registry/interfaces/registry-shader-def";
 import { addShaderDefinition } from "../shaders/impl/add";
+import { displaceShaderDefinition } from "../shaders/impl/displace";
+import { migratedShaderDefinition } from "../shaders/impl/example-migrated";
+import { limitShaderDefinition } from "../shaders/impl/limit";
+import { pnoiseShaderDefinition } from "../shaders/impl/pnoise";
 
 /**
  * Pre-populated shader registry map
  * This is automatically generated during build
  */
-export const generatedShaderRegistry = new Map<Shaders, ShaderDefinition<ShaderSchema>>([
+export const generatedShaderRegistry = new Map<
+  Shaders,
+  ShaderDefinition<ShaderSchema>
+>([
   ["Noise", adaptToRegistryDefinition(pnoiseShaderDefinition, "Noise")],
   ["Limit", adaptToRegistryDefinition(limitShaderDefinition, "Limit")],
   ["Migrated", adaptToRegistryDefinition(migratedShaderDefinition, "Migrated")],
   ["Displace", adaptToRegistryDefinition(displaceShaderDefinition, "Displace")],
-  ["Add", adaptToRegistryDefinition(addShaderDefinition, "Add")]
+  ["Add", adaptToRegistryDefinition(addShaderDefinition, "Add")],
 ] as [Shaders, ShaderDefinition<ShaderSchema>][]);

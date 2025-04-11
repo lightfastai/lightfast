@@ -89,8 +89,8 @@ export const useUnifiedTextureOrchestrator = ({
    * Type guard for shader types
    */
   const isValidShaderType = useCallback(
-    (type: string): type is Shaders => {
-      return shaderTypes.includes(type as Shaders);
+    (type: Shaders): type is Shaders => {
+      return shaderTypes.includes(type);
     },
     [shaderTypes],
   );

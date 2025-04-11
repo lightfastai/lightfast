@@ -37,7 +37,7 @@ export type ShaderOrchestratorMap = Record<Shaders, ShaderMaterialOrchestrator>;
  * Global map to track reference counts for different shader singletons
  * Keys are unique identifiers for each shader type
  */
-const globalShaderRefCounts = new Map<string, number>();
+const globalShaderRefCounts = new Map<Shaders, number>();
 
 /**
  * Hook to get a shader orchestrator for a specific shader type

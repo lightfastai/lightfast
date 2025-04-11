@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import type { WebGLRenderTargets, WebGLRootState } from "../types/render";
@@ -28,28 +28,28 @@ export const useTextureRenderPipeline = ({
   );
 
   // This directly replicates the original implementation
-  // useFrame((state) => {
-  //   Object.entries(targets).forEach(([key, target]) => {
-  //     const run = onEachFrame[key];
-  //     if (run) {
-  //       run(state);
-  //     }
+  useFrame((state) => {
+    Object.entries(targets).forEach(([key, target]) => {
+      const run = onEachFrame[key];
+      if (run) {
+        run(state);
+      }
 
-  //     // Clear the scene and add only the relevant mesh
-  //     scene.clear();
-  //     const mesh = meshes[key];
-  //     if (mesh) {
-  //       scene.add(mesh);
-  //     }
+      // Clear the scene and add only the relevant mesh
+      scene.clear();
+      const mesh = meshes[key];
+      if (mesh) {
+        scene.add(mesh);
+      }
 
-  //     // Target is already a WebGLRenderTarget
-  //     gl.setRenderTarget(target);
-  //     gl.render(scene, camera);
+      // Target is already a WebGLRenderTarget
+      gl.setRenderTarget(target);
+      gl.render(scene, camera);
 
-  //     // Reset render target
-  //     gl.setRenderTarget(null);
-  //   });
-  // });
+      // Reset render target
+      gl.setRenderTarget(null);
+    });
+  });
 
   return {
     scene,

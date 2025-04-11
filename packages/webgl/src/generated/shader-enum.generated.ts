@@ -6,8 +6,12 @@
 
 import { z } from "zod";
 
-export const $ShaderValues = ["Noise", "Limit", "Migrated", "Displace", "Add"] as const;
-
-export const $Shaders = z.enum($ShaderValues);
+export const $Shaders = z.enum([
+  "Noise",
+  "Limit",
+  "Migrated",
+  "Displace",
+  "Add",
+]);
 
 export type Shaders = z.infer<typeof $Shaders>;
