@@ -40,8 +40,8 @@ catalogs:
       specifier: ^5.6.3
       version: 5.6.3
     zod:
-      specifier: ^3.23.8
-      version: 3.23.8
+      specifier: 4.0.0-beta.20250411T005215
+      version: 4.0.0-beta.20250411T005215
   react18:
     '@types/react':
       specifier: ^18.3.11
@@ -77,10 +77,10 @@ importers:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: ^0.0.53
-        version: 0.0.53(zod@3.23.8)
+        version: 0.0.53(zod@4.0.0-beta.20250411T005215)
       '@ai-sdk/openai':
         specifier: ^0.0.70
-        version: 0.0.70(zod@3.23.8)
+        version: 0.0.70(zod@4.0.0-beta.20250411T005215)
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.9.1(react-hook-form@7.53.1(react@18.3.1))
@@ -110,7 +110,7 @@ importers:
         version: 8.45.0(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.56.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
-        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+        version: 0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.59.16(react@18.3.1)
@@ -140,7 +140,7 @@ importers:
         version: 12.5.1(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       ai:
         specifier: ^3.4.20
-        version: 3.4.23(openai@4.73.1(zod@3.23.8))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@3.23.8)
+        version: 3.4.23(openai@4.73.1(zod@4.0.0-beta.20250411T005215))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@4.0.0-beta.20250411T005215)
       geist:
         specifier: ^1.3.1
         version: 1.3.1(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
@@ -179,7 +179,7 @@ importers:
         version: 0.169.0
       zod:
         specifier: 'catalog:'
-        version: 3.23.8
+        version: 4.0.0-beta.20250411T005215
       zustand:
         specifier: ^5.0.1
         version: 5.0.1(@types/react@18.3.12)(react@18.3.1)(use-sync-external-store@1.2.2(react@18.3.1))
@@ -237,7 +237,7 @@ importers:
         version: link:../../packages/ui
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
-        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+        version: 0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk
@@ -285,7 +285,7 @@ importers:
         version: 6.0.0
       zod:
         specifier: 'catalog:'
-        version: 3.23.8
+        version: 4.0.0-beta.20250411T005215
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -428,19 +428,19 @@ importers:
         version: 1.1.1(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
-        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+        version: 0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)
       autoevals:
         specifier: ^0.0.103
         version: 0.0.103
       braintrust:
         specifier: ^0.0.168
-        version: 0.0.168(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0))(openai@4.73.1(zod@3.23.8))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(zod@3.23.8)
+        version: 0.0.168(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0))(openai@4.73.1(zod@4.0.0-beta.20250411T005215))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(zod@4.0.0-beta.20250411T005215)
       voyage-ai-provider:
         specifier: ^1.0.0
-        version: 1.0.0(zod@3.23.8)
+        version: 1.0.0(zod@4.0.0-beta.20250411T005215)
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: 'catalog:'
+        version: 4.0.0-beta.20250411T005215
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -510,8 +510,8 @@ importers:
         specifier: ^0.169.0
         version: 0.169.0
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: 'catalog:'
+        version: 4.0.0-beta.20250411T005215
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -683,7 +683,7 @@ importers:
         version: 1.1.2(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       zod:
         specifier: 'catalog:'
-        version: 3.23.8
+        version: 4.0.0-beta.20250411T005215
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -743,11 +743,8 @@ importers:
         specifier: ^0.169.0
         version: 0.169.0
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
-      zod-to-json-schema:
-        specifier: ^3.23.3
-        version: 3.23.5(zod@3.23.8)
+        specifier: 'catalog:'
+        version: 4.0.0-beta.20250411T005215
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -796,7 +793,7 @@ importers:
         version: 6.5.1(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
-        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+        version: 0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)
       next:
         specifier: 'catalog:'
         version: 14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -845,13 +842,13 @@ importers:
         version: 0.35.3(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.12)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@18.3.1)
       drizzle-zod:
         specifier: ^0.5.1
-        version: 0.5.1(drizzle-orm@0.35.3(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.12)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@18.3.1))(zod@3.23.8)
+        version: 0.5.1(drizzle-orm@0.35.3(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.12)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@18.3.1))(zod@4.0.0-beta.20250411T005215)
       postgres:
         specifier: ^3.4.5
         version: 3.4.5
       zod:
         specifier: 'catalog:'
-        version: 3.23.8
+        version: 4.0.0-beta.20250411T005215
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -891,7 +888,7 @@ importers:
         version: 8.45.0(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.56.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
-        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+        version: 0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)
       '@vercel/toolbar':
         specifier: ^0.1.28
         version: 0.1.28(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
@@ -934,7 +931,7 @@ importers:
         version: 8.45.0(@opentelemetry/core@1.29.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.56.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.29.0(@opentelemetry/api@1.9.0))(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.96.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
-        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+        version: 0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -962,7 +959,7 @@ importers:
     dependencies:
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
-        version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+        version: 0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)
       '@vendor/observability':
         specifier: workspace:*
         version: link:../observability
@@ -971,7 +968,7 @@ importers:
         version: 0.22.3
       zod:
         specifier: 'catalog:'
-        version: 3.23.8
+        version: 4.0.0-beta.20250411T005215
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -1017,7 +1014,7 @@ importers:
         version: 2.2.1
       zod:
         specifier: 'catalog:'
-        version: 3.23.8
+        version: 4.0.0-beta.20250411T005215
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -4508,6 +4505,9 @@ packages:
 
   '@xyflow/system@0.0.53':
     resolution: {integrity: sha512-QTWieiTtvNYyQAz1fxpzgtUGXNpnhfh6vvZa7dFWpWS2KOz6bEHODo/DTK3s07lDu0Bq0Db5lx/5M5mNjb9VDQ==}
+
+  '@zod/core@0.3.3':
+    resolution: {integrity: sha512-zXp0/K9zynk8ZP5hdUN2i0xePJ6uULX5rvBC/54bWNF4FL9YHxTjQg/zPFNj+WE8g0QTKX+fty7n073bgp6wNw==}
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -8648,6 +8648,9 @@ packages:
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
 
+  zod@4.0.0-beta.20250411T005215:
+    resolution: {integrity: sha512-FgvuS7Gb0kzI9Rsd1ihOulGSFT9LVj0JdejbkvjXIski9F/DheDIBV9uZkbAIiS6bOsthAMWHFtSsM1o+hmhig==}
+
   zustand@3.7.2:
     resolution: {integrity: sha512-PIJDIZKtokhof+9+60cpockVOq05sJzHCriyvaLBmEJixseQ1a5Kdov6fWZfWOu5SK9c+FhH1jU0tntLxRJYMA==}
     engines: {node: '>=12.7.0'}
@@ -8695,35 +8698,35 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/anthropic@0.0.53(zod@3.23.8)':
+  '@ai-sdk/anthropic@0.0.53(zod@4.0.0-beta.20250411T005215)':
     dependencies:
       '@ai-sdk/provider': 0.0.26
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      zod: 3.23.8
+      '@ai-sdk/provider-utils': 1.0.22(zod@4.0.0-beta.20250411T005215)
+      zod: 4.0.0-beta.20250411T005215
 
-  '@ai-sdk/openai@0.0.70(zod@3.23.8)':
+  '@ai-sdk/openai@0.0.70(zod@4.0.0-beta.20250411T005215)':
     dependencies:
       '@ai-sdk/provider': 0.0.26
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      zod: 3.23.8
+      '@ai-sdk/provider-utils': 1.0.22(zod@4.0.0-beta.20250411T005215)
+      zod: 4.0.0-beta.20250411T005215
 
-  '@ai-sdk/provider-utils@1.0.22(zod@3.23.8)':
+  '@ai-sdk/provider-utils@1.0.22(zod@4.0.0-beta.20250411T005215)':
     dependencies:
       '@ai-sdk/provider': 0.0.26
       eventsource-parser: 1.1.2
       nanoid: 3.3.8
       secure-json-parse: 2.7.0
     optionalDependencies:
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
 
-  '@ai-sdk/provider-utils@2.0.4(zod@3.23.8)':
+  '@ai-sdk/provider-utils@2.0.4(zod@4.0.0-beta.20250411T005215)':
     dependencies:
       '@ai-sdk/provider': 1.0.2
       eventsource-parser: 3.0.0
       nanoid: 3.3.8
       secure-json-parse: 2.7.0
     optionalDependencies:
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
 
   '@ai-sdk/provider@0.0.11':
     dependencies:
@@ -8737,46 +8740,46 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@0.0.68(react@18.3.1)(zod@3.23.8)':
+  '@ai-sdk/react@0.0.68(react@18.3.1)(zod@4.0.0-beta.20250411T005215)':
     dependencies:
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.49(zod@3.23.8)
+      '@ai-sdk/provider-utils': 1.0.22(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/ui-utils': 0.0.49(zod@4.0.0-beta.20250411T005215)
       swr: 2.2.5(react@18.3.1)
     optionalDependencies:
       react: 18.3.1
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
 
-  '@ai-sdk/solid@0.0.53(zod@3.23.8)':
+  '@ai-sdk/solid@0.0.53(zod@4.0.0-beta.20250411T005215)':
     dependencies:
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.49(zod@3.23.8)
+      '@ai-sdk/provider-utils': 1.0.22(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/ui-utils': 0.0.49(zod@4.0.0-beta.20250411T005215)
     transitivePeerDependencies:
       - zod
 
-  '@ai-sdk/svelte@0.0.55(svelte@4.2.19)(zod@3.23.8)':
+  '@ai-sdk/svelte@0.0.55(svelte@4.2.19)(zod@4.0.0-beta.20250411T005215)':
     dependencies:
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.49(zod@3.23.8)
+      '@ai-sdk/provider-utils': 1.0.22(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/ui-utils': 0.0.49(zod@4.0.0-beta.20250411T005215)
       sswr: 2.1.0(svelte@4.2.19)
     optionalDependencies:
       svelte: 4.2.19
     transitivePeerDependencies:
       - zod
 
-  '@ai-sdk/ui-utils@0.0.49(zod@3.23.8)':
+  '@ai-sdk/ui-utils@0.0.49(zod@4.0.0-beta.20250411T005215)':
     dependencies:
       '@ai-sdk/provider': 0.0.26
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
+      '@ai-sdk/provider-utils': 1.0.22(zod@4.0.0-beta.20250411T005215)
       json-schema: 0.4.0
       secure-json-parse: 2.7.0
-      zod-to-json-schema: 3.23.5(zod@3.23.8)
+      zod-to-json-schema: 3.23.5(zod@4.0.0-beta.20250411T005215)
     optionalDependencies:
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
 
-  '@ai-sdk/vue@0.0.58(vue@3.5.12(typescript@5.6.3))(zod@3.23.8)':
+  '@ai-sdk/vue@0.0.58(vue@3.5.12(typescript@5.6.3))(zod@4.0.0-beta.20250411T005215)':
     dependencies:
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.49(zod@3.23.8)
+      '@ai-sdk/provider-utils': 1.0.22(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/ui-utils': 0.0.49(zod@4.0.0-beta.20250411T005215)
       swrv: 1.0.4(vue@3.5.12(typescript@5.6.3))
     optionalDependencies:
       vue: 3.5.12(typescript@5.6.3)
@@ -12162,16 +12165,16 @@ snapshots:
       '@swc/counter': 0.1.3
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.11.1(typescript@5.6.3)(zod@3.23.8)':
+  '@t3-oss/env-core@0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)':
     dependencies:
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
     optionalDependencies:
       typescript: 5.6.3
 
-  '@t3-oss/env-nextjs@0.11.1(typescript@5.6.3)(zod@3.23.8)':
+  '@t3-oss/env-nextjs@0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)':
     dependencies:
-      '@t3-oss/env-core': 0.11.1(typescript@5.6.3)(zod@3.23.8)
-      zod: 3.23.8
+      '@t3-oss/env-core': 0.11.1(typescript@5.6.3)(zod@4.0.0-beta.20250411T005215)
+      zod: 4.0.0-beta.20250411T005215
     optionalDependencies:
       typescript: 5.6.3
 
@@ -12831,6 +12834,8 @@ snapshots:
       d3-selection: 3.0.0
       d3-zoom: 3.0.0
 
+  '@zod/core@0.3.3': {}
+
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
@@ -12875,27 +12880,27 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@3.4.23(openai@4.73.1(zod@3.23.8))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@3.23.8):
+  ai@3.4.23(openai@4.73.1(zod@4.0.0-beta.20250411T005215))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@4.0.0-beta.20250411T005215):
     dependencies:
       '@ai-sdk/provider': 0.0.26
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      '@ai-sdk/react': 0.0.68(react@18.3.1)(zod@3.23.8)
-      '@ai-sdk/solid': 0.0.53(zod@3.23.8)
-      '@ai-sdk/svelte': 0.0.55(svelte@4.2.19)(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.49(zod@3.23.8)
-      '@ai-sdk/vue': 0.0.58(vue@3.5.12(typescript@5.6.3))(zod@3.23.8)
+      '@ai-sdk/provider-utils': 1.0.22(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/react': 0.0.68(react@18.3.1)(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/solid': 0.0.53(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/svelte': 0.0.55(svelte@4.2.19)(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/ui-utils': 0.0.49(zod@4.0.0-beta.20250411T005215)
+      '@ai-sdk/vue': 0.0.58(vue@3.5.12(typescript@5.6.3))(zod@4.0.0-beta.20250411T005215)
       '@opentelemetry/api': 1.9.0
       eventsource-parser: 1.1.2
       json-schema: 0.4.0
       jsondiffpatch: 0.6.0
       secure-json-parse: 2.7.0
-      zod-to-json-schema: 3.23.5(zod@3.23.8)
+      zod-to-json-schema: 3.23.5(zod@4.0.0-beta.20250411T005215)
     optionalDependencies:
-      openai: 4.73.1(zod@3.23.8)
+      openai: 4.73.1(zod@4.0.0-beta.20250411T005215)
       react: 18.3.1
       sswr: 2.1.0(svelte@4.2.19)
       svelte: 4.2.19
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
     transitivePeerDependencies:
       - solid-js
       - vue
@@ -13124,13 +13129,13 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
-  braintrust@0.0.168(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0))(openai@4.73.1(zod@3.23.8))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(zod@3.23.8):
+  braintrust@0.0.168(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0))(openai@4.73.1(zod@4.0.0-beta.20250411T005215))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(zod@4.0.0-beta.20250411T005215):
     dependencies:
       '@ai-sdk/provider': 0.0.11
       '@braintrust/core': 0.0.64
       '@next/env': 14.2.15
       '@vercel/functions': 1.5.0(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0))
-      ai: 3.4.23(openai@4.73.1(zod@3.23.8))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@3.23.8)
+      ai: 3.4.23(openai@4.73.1(zod@4.0.0-beta.20250411T005215))(react@18.3.1)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))(zod@4.0.0-beta.20250411T005215)
       argparse: 2.0.1
       chalk: 4.1.2
       cli-progress: 3.12.0
@@ -13145,8 +13150,8 @@ snapshots:
       slugify: 1.6.6
       source-map: 0.7.4
       uuid: 9.0.1
-      zod: 3.23.8
-      zod-to-json-schema: 3.23.5(zod@3.23.8)
+      zod: 4.0.0-beta.20250411T005215
+      zod-to-json-schema: 3.23.5(zod@4.0.0-beta.20250411T005215)
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-web-identity'
       - openai
@@ -13689,10 +13694,10 @@ snapshots:
       postgres: 3.4.5
       react: 18.3.1
 
-  drizzle-zod@0.5.1(drizzle-orm@0.35.3(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.12)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@18.3.1))(zod@3.23.8):
+  drizzle-zod@0.5.1(drizzle-orm@0.35.3(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.12)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@18.3.1))(zod@4.0.0-beta.20250411T005215):
     dependencies:
       drizzle-orm: 0.35.3(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.12)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@18.3.1)
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
 
   duplexer@0.1.2: {}
 
@@ -15902,7 +15907,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  openai@4.73.1(zod@3.23.8):
+  openai@4.73.1(zod@4.0.0-beta.20250411T005215):
     dependencies:
       '@types/node': 18.19.86
       '@types/node-fetch': 2.6.12
@@ -15912,7 +15917,7 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0
     optionalDependencies:
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
     transitivePeerDependencies:
       - encoding
     optional: true
@@ -17588,12 +17593,12 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  voyage-ai-provider@1.0.0(zod@3.23.8):
+  voyage-ai-provider@1.0.0(zod@4.0.0-beta.20250411T005215):
     dependencies:
       '@ai-sdk/provider': 1.0.2
-      '@ai-sdk/provider-utils': 2.0.4(zod@3.23.8)
+      '@ai-sdk/provider-utils': 2.0.4(zod@4.0.0-beta.20250411T005215)
     optionalDependencies:
-      zod: 3.23.8
+      zod: 4.0.0-beta.20250411T005215
 
   vue@3.5.12(typescript@5.6.3):
     dependencies:
@@ -17791,7 +17796,15 @@ snapshots:
     dependencies:
       zod: 3.23.8
 
+  zod-to-json-schema@3.23.5(zod@4.0.0-beta.20250411T005215):
+    dependencies:
+      zod: 4.0.0-beta.20250411T005215
+
   zod@3.23.8: {}
+
+  zod@4.0.0-beta.20250411T005215:
+    dependencies:
+      '@zod/core': 0.3.3
 
   zustand@3.7.2(react@18.3.1):
     optionalDependencies:

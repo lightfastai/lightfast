@@ -1,15 +1,18 @@
 "use client";
 
+import type { Texture } from "@vendor/db/types";
+
+import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { FluxInspector } from "./flux-inspector";
 import { InspectorTexture } from "./inspector-texture";
 
 export const Inspector = () => {
-  const { selected, setIsOpen, isOpen } = useInspectorStore((state) => state);
+  const { selected, isOpen } = useInspectorStore((state) => state);
 
   if (!selected || !isOpen) return null;
   if (selected.type === "texture") {
-    return <InspectorTexture id={selected.id} />;
+    return <InspectorImpl id={selected.id} />;
   }
   if (selected.type === "geometry") {
     return null;
@@ -21,4 +24,9 @@ export const Inspector = () => {
     return <FluxInspector id={selected.id} />;
   }
   return null;
+};
+
+const InspectorImpl = ({ id }: { id: string }) => {
+  const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
+  return <InspectorTexture key={id} data={data} id={id} />;
 };

@@ -1,3 +1,5 @@
+import type { R3FShaderUniforms } from "@/types";
+
 import type { Shaders } from "@repo/webgl";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
 
@@ -19,7 +21,8 @@ getAllShaderTypes().forEach((shaderType) => {
 
   // Create a function to generate default uniforms for this shader type
   const createDefaultUniformsForType = () => {
-    return definition.createDefaultValues();
+    const defaultUniforms = definition.schema.parse({}) as R3FShaderUniforms;
+    return defaultUniforms;
   };
 
   // Create and register the shader singleton
@@ -45,6 +48,9 @@ export const ShaderSingletonRegistry = {
    */
   getSingleton(type: Shaders): ShaderSingleton {
     const singleton = r3fShaderRegistry[type];
+    if (!singleton) {
+      throw new Error(`Shader singleton not registered for type: ${type}`);
+    }
     return singleton;
   },
 

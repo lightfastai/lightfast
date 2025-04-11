@@ -134,7 +134,7 @@ export default async function WorkspaceLayout({
                 <EditorStoreProvider>
                   <TextureRenderStoreProvider
                     initialNodes={baseNodes.filter(
-                      (node) => node.type === $NodeType.Enum.texture,
+                      (node) => node.type === $NodeType.enum.texture,
                     )}
                   >
                     <InspectorStoreProvider>

@@ -12,18 +12,11 @@ export const SHADER_NAME = "Limit";
 export const limitInputHandle = createSampler2DHandle("input-1", "u_texture1");
 
 export const $Limit = z.object({
-  u_texture1: $Sampler2D,
-  u_quantizationSteps: $Float,
+  u_texture1: $Sampler2D.default({ vuvID: null }),
+  u_quantizationSteps: $Float.default(1.01),
 });
 
 export type LimitParams = z.infer<typeof $Limit>;
-
-export const createDefaultLimit = (): LimitParams => {
-  return {
-    u_texture1: { vuvID: null },
-    u_quantizationSteps: 1.01,
-  };
-};
 
 // Lookup table for limit uniform constraints
 export const LIMIT_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
@@ -64,7 +57,6 @@ export const limitShaderDefinition = createBaseShaderDefinition({
   fragmentShader: limitFragmentShader,
   schema: $Limit,
   constraints: LIMIT_UNIFORM_CONSTRAINTS,
-  createDefaultValues: createDefaultLimit,
   textureHandles: {
     handles: [limitInputHandle],
     defaultUniformMapping: {

@@ -54,9 +54,9 @@ export const GlobalPlaneGeometry = new PlaneGeometry(2, 2);
 
 // Create a static lookup map for geometries.
 export const GeometryMap = {
-  [$GeometryType.Enum.box]: GlobalBoxGeometry,
-  [$GeometryType.Enum.sphere]: GlobalSphereGeometry,
-  [$GeometryType.Enum.tetrahedron]: GlobalTetrahedronGeometry,
-  [$GeometryType.Enum.torus]: GlobalTorusGeometry,
-  [$GeometryType.Enum.plane]: GlobalPlaneGeometry,
+  [$GeometryType.enum.box]: GlobalBoxGeometry,
+  [$GeometryType.enum.sphere]: GlobalSphereGeometry,
+  [$GeometryType.enum.tetrahedron]: GlobalTetrahedronGeometry,
+  [$GeometryType.enum.torus]: GlobalTorusGeometry,
+  [$GeometryType.enum.plane]: GlobalPlaneGeometry,
 } as const;

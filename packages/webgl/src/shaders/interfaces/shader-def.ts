@@ -37,8 +37,6 @@ export interface BaseShaderDefinition<
   schema: TSchema;
   /** Uniform constraints for validation */
   constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>;
-  /** Function to create default values for this shader */
-  createDefaultValues: () => z.infer<TSchema>;
   /** Texture handles information for the shader (optional) */
   textureHandles?: ShaderTextureHandles;
 }
@@ -50,7 +48,6 @@ export interface BaseShaderDefinition<
  * @param fragmentShader - Fragment shader code
  * @param schema - Zod schema for validating shader uniforms
  * @param constraints - Uniform constraints for validation
- * @param createDefaultValues - Function to create default values for this shader
  * @param textureHandles - Texture handles information (optional)
  * @returns A type-safe shader definition
  */
@@ -60,7 +57,6 @@ export function createBaseShaderDefinition<TSchema extends ShaderSchema>({
   fragmentShader,
   schema,
   constraints,
-  createDefaultValues,
   textureHandles,
 }: {
   type: string;
@@ -68,7 +64,6 @@ export function createBaseShaderDefinition<TSchema extends ShaderSchema>({
   fragmentShader: string;
   schema: TSchema;
   constraints: Record<keyof z.infer<TSchema> & string, UniformFieldValue>;
-  createDefaultValues: () => z.infer<TSchema>;
   textureHandles?: ShaderTextureHandles;
 }): BaseShaderDefinition<TSchema> {
   return {
@@ -77,7 +72,6 @@ export function createBaseShaderDefinition<TSchema extends ShaderSchema>({
     fragmentShader,
     schema,
     constraints,
-    createDefaultValues,
     textureHandles,
   };
 }
@@ -97,7 +91,6 @@ export const isBaseShaderDefinition = (
     "vertexShader" in value &&
     "fragmentShader" in value &&
     "schema" in value &&
-    "constraints" in value &&
-    "createDefaultValues" in value
+    "constraints" in value
   );
 };

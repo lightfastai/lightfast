@@ -16,24 +16,13 @@ export const addInput2Handle = createSampler2DHandle("input-2", "u_texture2");
 
 // Combine them for the full shader definition
 export const $Add = z.object({
-  u_texture1: $Sampler2D,
-  u_texture2: $Sampler2D,
-  u_addValue: $Float,
-  u_enableMirror: $Boolean,
+  u_texture1: $Sampler2D.default({ vuvID: null }),
+  u_texture2: $Sampler2D.default({ vuvID: null }),
+  u_addValue: $Float.default(0.0),
+  u_enableMirror: $Boolean.default(false),
 });
 
 export type AddParams = z.infer<typeof $Add>;
-
-export const createDefaultAdd = (): AddParams => {
-  return {
-    // Texture uniforms with the new format
-    u_texture1: { vuvID: null },
-    u_texture2: { vuvID: null },
-    // Regular uniforms remain the same
-    u_addValue: 0.0,
-    u_enableMirror: false,
-  };
-};
 
 // Lookup table for add uniform constraints
 export const ADD_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
@@ -108,7 +97,6 @@ export const addShaderDefinition = createBaseShaderDefinition({
   fragmentShader: addFragmentShader,
   schema: $Add,
   constraints: ADD_UNIFORM_CONSTRAINTS,
-  createDefaultValues: createDefaultAdd,
   textureHandles: {
     handles: [addInput1Handle, addInput2Handle],
     defaultUniformMapping: {

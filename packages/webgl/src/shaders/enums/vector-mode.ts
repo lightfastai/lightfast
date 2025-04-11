@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export const $VectorModeValues = ["Number", "Expression"] as const;
-
-export const $VectorMode = z.enum($VectorModeValues);
+export const $VectorMode = z.enum(["Number", "Expression"]);
 
 export type VectorMode = z.infer<typeof $VectorMode>;

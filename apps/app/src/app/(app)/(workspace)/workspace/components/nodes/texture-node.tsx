@@ -1,3 +1,5 @@
+"use client";
+
 import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Position } from "@xyflow/react";
@@ -91,7 +93,7 @@ export const TextureNode = memo(
                   }}
                 >
                   <mesh
-                    geometry={GeometryMap[$GeometryType.Enum.plane]}
+                    geometry={GeometryMap[$GeometryType.enum.plane]}
                     scale={3}
                   >
                     <meshBasicMaterial map={targets[id].texture} />

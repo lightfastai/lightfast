@@ -16,36 +16,20 @@ export const SHADER_NAME = "Noise";
 export const noiseBlendHandle = createSampler2DHandle("input-1", "u_texture1");
 
 export const $PerlinNoise2D = z.object({
-  u_texture1: $Sampler2D,
-  u_scale: $Vec2Expression,
-  u_translate: $Vec2Expression,
-  u_rotation: $Vec2Expression,
-  u_period: $NumericValue,
-  u_harmonics: $Integer,
-  u_harmonic_gain: $NumericValue,
-  u_harmonic_spread: $NumericValue,
-  u_amplitude: $NumericValue,
-  u_offset: $NumericValue,
-  u_exponent: $NumericValue,
+  u_texture1: $Sampler2D.default({ vuvID: null }),
+  u_scale: $Vec2Expression.default({ x: 1, y: 1 }),
+  u_translate: $Vec2Expression.default({ x: 0, y: 0 }),
+  u_rotation: $Vec2Expression.default({ x: 0, y: 0 }),
+  u_period: $NumericValue.default(2.0),
+  u_harmonics: $Integer.default(1),
+  u_harmonic_gain: $NumericValue.default(0.66),
+  u_harmonic_spread: $NumericValue.default(2.0),
+  u_amplitude: $NumericValue.default(0.84),
+  u_offset: $NumericValue.default(0.412),
+  u_exponent: $NumericValue.default(0.63),
 });
 
 export type PerlinNoise2DParams = z.infer<typeof $PerlinNoise2D>;
-
-export const createDefaultPerlinNoise2D = (): PerlinNoise2DParams => {
-  return {
-    u_texture1: { vuvID: null },
-    u_period: 2.0,
-    u_harmonics: 1,
-    u_harmonic_gain: 0.66,
-    u_harmonic_spread: 2.0,
-    u_amplitude: 0.84,
-    u_offset: 0.412,
-    u_exponent: 0.63,
-    u_scale: { x: 1, y: 1 },
-    u_translate: { x: 0, y: 0 },
-    u_rotation: { x: 0, y: 0 },
-  };
-};
 
 // Lookup table for pnoise uniform constraints
 export const PNOISE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
@@ -293,7 +277,6 @@ export const pnoiseShaderDefinition = createBaseShaderDefinition({
   fragmentShader: pnoiseFragmentShader,
   schema: $PerlinNoise2D,
   constraints: PNOISE_UNIFORM_CONSTRAINTS,
-  createDefaultValues: createDefaultPerlinNoise2D,
   textureHandles: {
     handles: [noiseBlendHandle],
     defaultUniformMapping: {

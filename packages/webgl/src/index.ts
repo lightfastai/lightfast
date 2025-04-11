@@ -1,8 +1,13 @@
+import type { Shaders } from "./shaders/enums/shaders";
 import type { ValueType } from "./shaders/enums/values";
 import type { VectorMode } from "./shaders/enums/vector-mode";
+import { $Shaders } from "./shaders/enums/shaders";
 import { $ValueType } from "./shaders/enums/values";
 import { $VectorMode } from "./shaders/enums/vector-mode";
 import { getFieldMetadata } from "./shaders/field";
+
+export type { Shaders };
+export { $Shaders };
 
 /**
  * Base types and primitives
@@ -90,7 +95,6 @@ export {
   addShaderDefinition,
   addFragmentShader,
   ADD_UNIFORM_CONSTRAINTS,
-  createDefaultAdd,
   $Add,
   type AddParams,
 } from "./shaders/impl/add";
@@ -99,7 +103,6 @@ export {
   displaceShaderDefinition,
   displaceFragmentShader,
   DISPLACE_UNIFORM_CONSTRAINTS,
-  createDefaultDisplace,
   $Displace,
   type DisplaceParams,
 } from "./shaders/impl/displace";
@@ -108,7 +111,6 @@ export {
   limitShaderDefinition,
   limitFragmentShader,
   LIMIT_UNIFORM_CONSTRAINTS,
-  createDefaultLimit,
   $Limit,
   type LimitParams,
 } from "./shaders/impl/limit";
@@ -117,7 +119,6 @@ export {
   pnoiseShaderDefinition,
   pnoiseFragmentShader,
   PNOISE_UNIFORM_CONSTRAINTS,
-  createDefaultPerlinNoise2D,
   $PerlinNoise2D,
   type PerlinNoise2DParams,
 } from "./shaders/impl/pnoise";
@@ -126,7 +127,6 @@ export {
   migratedShaderDefinition,
   migratedFragmentShader,
   MIGRATED_UNIFORM_CONSTRAINTS,
-  createDefaultMigrated,
   $Migrated,
   type MigratedParams,
 } from "./shaders/impl/example-migrated";
@@ -166,6 +166,4 @@ export * from "./shaders/enums/shaders";
 export * from "./registry/utils/sampler2d-utils";
 export { getFieldMetadata };
 
-export * from "./generated/shader-enum.generated";
-export * from "./generated/shader-registry.generated";
 export * from "./registry/interfaces/registry-shader-def";

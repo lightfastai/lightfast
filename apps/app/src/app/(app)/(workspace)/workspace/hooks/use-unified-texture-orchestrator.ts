@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { Shaders } from "@repo/webgl";
-import type { Texture, TextureTypes } from "@vendor/db/types";
+import type { Texture, TextureType } from "@vendor/db/types";
 import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
 import { getUniformForEdge } from "@vendor/db/schema";
@@ -35,7 +35,7 @@ const getSourceForTargetUniform = (
   edges: BaseEdge[],
   targetId: string,
   uniformName: string,
-  targetNodeType: TextureTypes,
+  targetNodeType: TextureType,
 ): string | null => {
   // Find edges that connect to this target
   const targetEdges = edges.filter((edge) => edge.target === targetId);
@@ -89,8 +89,8 @@ export const useUnifiedTextureOrchestrator = ({
    * Type guard for shader types
    */
   const isValidShaderType = useCallback(
-    (type: string): type is Shaders => {
-      return shaderTypes.includes(type as Shaders);
+    (type: Shaders): type is Shaders => {
+      return shaderTypes.includes(type);
     },
     [shaderTypes],
   );
@@ -100,7 +100,7 @@ export const useUnifiedTextureOrchestrator = ({
    * This needs to be recreated when edges or targets change
    */
   const createTextureResolver = useCallback(
-    (nodeId: string, textureType: TextureTypes) => {
+    (nodeId: string, textureType: TextureType) => {
       return (uniformName: string): THREE.Texture | null => {
         // If we know which uniform this is for, use that to find the right source
         const sourceId = getSourceForTargetUniform(

@@ -73,7 +73,7 @@ export function RenderChain({ firstNodeId, edges }: RenderChainProps) {
         height: "100%",
       }}
     >
-      <mesh geometry={GeometryMap[$GeometryType.Enum.plane]} scale={3}>
+      <mesh geometry={GeometryMap[$GeometryType.enum.plane]} scale={3}>
         <meshBasicMaterial map={renderTarget.texture} />
       </mesh>
     </WebGLView>

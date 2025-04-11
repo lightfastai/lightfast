@@ -23,28 +23,16 @@ export const displaceMapHandle = createSampler2DHandle("input-2", "u_texture2");
 
 // Combine them for the full shader definition
 export const $Displace = z.object({
-  u_texture1: $Sampler2D,
-  u_texture2: $Sampler2D,
-  u_displaceWeight: $Float,
-  u_displaceMidpoint: $Vec2Number,
-  u_displaceOffset: $Vec2Number,
-  u_displaceOffsetWeight: $Float,
-  u_displaceUVWeight: $Vec2Number,
+  u_texture1: $Sampler2D.default({ vuvID: null }),
+  u_texture2: $Sampler2D.default({ vuvID: null }),
+  u_displaceWeight: $Float.default(1.0),
+  u_displaceMidpoint: $Vec2Number.default({ x: 0.5, y: 0.5 }),
+  u_displaceOffset: $Vec2Number.default({ x: 0.5, y: 0.5 }),
+  u_displaceOffsetWeight: $Float.default(0.0),
+  u_displaceUVWeight: $Vec2Number.default({ x: 1.0, y: 1.0 }),
 });
 
 export type DisplaceParams = z.infer<typeof $Displace>;
-
-export const createDefaultDisplace = (): DisplaceParams => {
-  return {
-    u_texture1: { vuvID: null },
-    u_texture2: { vuvID: null },
-    u_displaceWeight: 1.0,
-    u_displaceMidpoint: { x: 0.5, y: 0.5 },
-    u_displaceOffset: { x: 0.5, y: 0.5 },
-    u_displaceOffsetWeight: 0.0,
-    u_displaceUVWeight: { x: 1.0, y: 1.0 },
-  };
-};
 
 // Lookup table for displace uniform constraints
 export const DISPLACE_UNIFORM_CONSTRAINTS: Record<string, UniformFieldValue> = {
@@ -161,7 +149,6 @@ export const displaceShaderDefinition = createBaseShaderDefinition({
   fragmentShader: displaceFragmentShader,
   schema: $Displace,
   constraints: DISPLACE_UNIFORM_CONSTRAINTS,
-  createDefaultValues: createDefaultDisplace,
   textureHandles: {
     handles: [displaceSourceHandle, displaceMapHandle],
     defaultUniformMapping: {

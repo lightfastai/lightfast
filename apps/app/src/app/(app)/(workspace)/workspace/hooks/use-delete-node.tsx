@@ -9,11 +9,11 @@ export const useDeleteNode = () => {
   const { mutateAsync } = api.tenant.node.delete.useMutation({
     onMutate: async ({ id }) => {
       // invalidate the data
-      utils.tenant.node.data.get.cancel({ id });
+      await utils.tenant.node.data.get.cancel({ id });
     },
     onSuccess: (data, variables) => {
       // Clean up the render target after successful deletion
-      if (data.type === $NodeType.Enum.texture) {
+      if (data.type === $NodeType.enum.texture) {
         removeTarget(variables.id);
       }
 

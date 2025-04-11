@@ -5,7 +5,7 @@ import {
   isValidSampler2DHandleId,
 } from "@repo/webgl";
 
-import type { TextureTypes } from "./Texture";
+import type { TextureType } from "./Texture";
 
 /**
  * Branded type for texture handle IDs
@@ -45,7 +45,7 @@ export function isInputHandleId(value: unknown): value is InputHandleId {
  */
 export function getUniformNameFromTextureHandleId(
   handleId: InputHandleId,
-  textureType: TextureTypes,
+  textureType: TextureType,
 ): string | null {
   if (!isValidInputHandleId(handleId)) return null;
 
