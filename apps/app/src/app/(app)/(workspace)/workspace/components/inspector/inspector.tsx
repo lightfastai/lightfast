@@ -8,7 +8,7 @@ import { FluxInspector } from "./flux-inspector";
 import { InspectorTexture } from "./inspector-texture";
 
 export const Inspector = () => {
-  const { selected, setIsOpen, isOpen } = useInspectorStore((state) => state);
+  const { selected, isOpen } = useInspectorStore((state) => state);
 
   if (!selected || !isOpen) return null;
   if (selected.type === "texture") {

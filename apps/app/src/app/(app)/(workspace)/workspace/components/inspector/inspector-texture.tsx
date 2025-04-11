@@ -59,7 +59,7 @@ export const InspectorTexture = ({
 
   const handleUpdate = useCallback(
     (property: keyof TextureUniforms, value: Value) => {
-      if (property === "u_texture") return;
+      if (property.startsWith("u_texture")) return;
 
       // @TODO: fix this type
       const newUniforms = {
