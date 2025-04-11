@@ -171,9 +171,6 @@ importers:
       svix:
         specifier: ^1.62.0
         version: 1.62.0
-      three:
-        specifier: ^0.169.0
-        version: 0.169.0
       zod:
         specifier: 'catalog:'
         version: 3.23.8
@@ -730,9 +727,6 @@ importers:
       react:
         specifier: catalog:react18
         version: 19.1.0
-      three:
-        specifier: ^0.169.0
-        version: 0.169.0
       zod:
         specifier: ^3.23.8
         version: 3.23.8

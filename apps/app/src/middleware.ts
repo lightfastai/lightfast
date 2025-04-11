@@ -1,12 +1,52 @@
 import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
 
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-out(.*)"]);
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/",
+  "/api/health",
+]);
 
-export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect();
-  }
-});
+// Define workspace routes pattern for specific checks
+const isWorkspaceRoute = createRouteMatcher(["/workspace/:id(.*)"]);
+
+export default clerkMiddleware(
+  async (auth, req) => {
+    // Allow public routes without authentication
+    if (isPublicRoute(req)) {
+      return;
+    }
+
+    // Protect all non-public routes with basic authentication
+    const session = await auth.protect();
+
+    // Additional workspace-specific authorization
+    if (isWorkspaceRoute(req)) {
+      // Ensure user is authenticated
+      if (!session.userId) {
+        return Response.redirect(new URL("/sign-in", req.url));
+      }
+
+      // Extract workspace ID from URL
+      const url = new URL(req.url);
+      const workspaceId = url.pathname.split("/")[2]; // /workspace/:id
+
+      // For workspace routes, we'll let the route handlers do the detailed authorization
+      // This is because the workspace authorization requires database access which is better
+      // handled in the route handlers using tRPC protectedProcedure
+
+      // The actual workspace access check is done in:
+      // 1. workspace layout component
+      // 2. tRPC workspace router procedures
+      // 3. Individual workspace-related API endpoints
+    }
+  },
+  {
+    signInUrl: "/sign-in",
+    signUpUrl: "/sign-up",
+  },
+);
 
 export const config = {
   matcher: [
