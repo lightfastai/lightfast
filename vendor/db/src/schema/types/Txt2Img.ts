@@ -3,8 +3,8 @@ import { z } from "zod";
 import { $Txt2ImgModel } from "@repo/ai/schema";
 
 export const $Txt2ImgType = z.enum([
-  $Txt2ImgModel.Enum["flux/dev"],
-  $Txt2ImgModel.Enum["flux/schnell"],
+  $Txt2ImgModel.enum["flux/dev"],
+  $Txt2ImgModel.enum["flux/schnell"],
 ]);
 
 export type Txt2ImgType = z.infer<typeof $Txt2ImgType>;

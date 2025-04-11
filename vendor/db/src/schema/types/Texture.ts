@@ -9,9 +9,9 @@ import {
   $Shaders,
 } from "@repo/webgl";
 
-export const $TextureTypes = z.enum($Shaders.options);
+export const $TextureType = z.enum($Shaders.options);
 
-export type TextureTypes = z.infer<typeof $TextureTypes>;
+export type TextureType = z.infer<typeof $TextureType>;
 
 export const $TextureResolution = z.object({
   width: z.number().min(1).max(2048).default(256),
@@ -60,37 +60,37 @@ export type Texture = z.infer<typeof $Texture>;
 export const createDefaultTexture = ({
   type,
 }: {
-  type: TextureTypes;
+  type: TextureType;
 }): Texture => {
   switch (type) {
-    case $TextureTypes.enum.Noise:
+    case $TextureType.enum.Noise:
       return {
         type,
-        uniforms: $PerlinNoise2D.parse(undefined),
+        uniforms: $PerlinNoise2D.parse({}),
         resolution: { width: 256, height: 256 },
       };
-    case $TextureTypes.enum.Limit:
+    case $TextureType.enum.Limit:
       return {
         type,
-        uniforms: $Limit.parse(undefined),
+        uniforms: $Limit.parse({}),
         resolution: { width: 256, height: 256 },
       };
-    case $TextureTypes.enum.Displace:
+    case $TextureType.enum.Displace:
       return {
         type,
-        uniforms: $Displace.parse(undefined),
+        uniforms: $Displace.parse({}),
         resolution: { width: 256, height: 256 },
       };
-    case $TextureTypes.enum.Add:
+    case $TextureType.enum.Add:
       return {
         type,
-        uniforms: $Add.parse(undefined),
+        uniforms: $Add.parse({}),
         resolution: { width: 256, height: 256 },
       };
-    case $TextureTypes.enum.Migrated:
+    case $TextureType.enum.Migrated:
       return {
         type,
-        uniforms: $Migrated.parse(undefined),
+        uniforms: $Migrated.parse({}),
         resolution: { width: 256, height: 256 },
       };
     /**

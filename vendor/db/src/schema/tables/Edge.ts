@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
 
-import type { TextureTypes } from "../types/Texture";
+import type { TextureType } from "../types/Texture";
 import type { InputHandleId, OutputHandleId } from "../types/TextureHandle";
 import {
   $InputHandleId,
@@ -96,7 +96,7 @@ export type InsertEdge = z.infer<typeof InsertEdgeSchema>;
  */
 export function getUniformForEdge(edge: {
   targetHandle: InputHandleId;
-  targetNodeType: TextureTypes;
+  targetNodeType: TextureType;
 }): string {
   const uniformName = getUniformNameFromTextureHandleId(
     edge.targetHandle,

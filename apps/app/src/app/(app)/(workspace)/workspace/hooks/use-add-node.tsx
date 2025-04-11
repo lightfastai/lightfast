@@ -6,7 +6,6 @@ import type {
   Material,
   MaterialType,
   Texture,
-  TextureType,
   Txt2ImgType,
 } from "@vendor/db/types";
 import { nanoid } from "@repo/lib";
@@ -14,7 +13,7 @@ import {
   $GeometryType,
   $MaterialType,
   $NodeType,
-  $TextureTypes,
+  $TextureType,
   createDefaultGeometry,
   createDefaultMaterial,
   createDefaultTexture,
@@ -57,7 +56,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
         newNode.data as Geometry | Material | Texture,
       );
 
-      if (newNode.type === $NodeType.Enum.texture) {
+      if (newNode.type === $NodeType.enum.texture) {
         addTarget(newNode.id, {
           width: 256,
           height: 256,
@@ -88,7 +87,13 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
       x: event.clientX,
       y: event.clientY,
     });
-
+    console.log(
+      "selection",
+      selection,
+      createDefaultTexture({
+        type: selection.value!,
+      }),
+    );
     if (
       selection.type === $NodeType.enum.geometry &&
       $GeometryType.safeParse(selection.value).success
@@ -117,7 +122,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
       });
     } else if (
       selection.type === $NodeType.enum.texture &&
-      $TextureTypes.safeParse(selection.value).success
+      $TextureType.safeParse(selection.value).success
     ) {
       create.mutate({
         id: nanoid(),
@@ -125,7 +130,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
         type: $NodeType.enum.texture,
         position,
         data: createDefaultTexture({
-          type: selection.value as TextureType,
+          type: selection.value!,
         }),
       });
     } else if (selection.type === $NodeType.enum.flux) {

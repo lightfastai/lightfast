@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const $ValueTypeValues = [
+export const $ValueType = z.enum([
   "Numeric",
   "Vec2",
   "Vec3",
@@ -8,8 +8,6 @@ export const $ValueTypeValues = [
   "Color",
   "String",
   "Sampler2D",
-] as const;
-
-export const $ValueType = z.enum($ValueTypeValues);
+]);
 
 export type ValueType = z.infer<typeof $ValueType>;

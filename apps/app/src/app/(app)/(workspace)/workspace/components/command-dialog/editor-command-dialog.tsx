@@ -6,7 +6,7 @@ import { Circle, Monitor, Square, Triangle } from "lucide-react";
 import type {
   GeometryType,
   MaterialType,
-  TextureTypes,
+  TextureType,
   Txt2ImgType,
 } from "@vendor/db/types";
 import {
@@ -27,7 +27,7 @@ import {
 import {
   $GeometryType,
   $MaterialType,
-  $TextureTypes,
+  $TextureType,
   $Txt2ImgType,
 } from "@vendor/db/types";
 
@@ -117,7 +117,7 @@ export const EditorCommandDialog = () => {
     setMaterial(materialType);
   };
 
-  const handleTextureSelect = (textureType: TextureTypes) => {
+  const handleTextureSelect = (textureType: TextureType) => {
     // Close the command dialog first
     close();
 
@@ -166,7 +166,7 @@ export const EditorCommandDialog = () => {
             <TabsContent value="texture" className="p-0">
               <CommandGroup heading="Texture Operations">
                 <div className="grid grid-cols-4 grid-rows-10 gap-1">
-                  {Object.values($TextureTypes.Enum).map((textureType) => (
+                  {Object.values($TextureType.enum).map((textureType) => (
                     <CommandItem
                       key={textureType}
                       onSelect={() => handleTextureSelect(textureType)}
@@ -184,7 +184,7 @@ export const EditorCommandDialog = () => {
                 <div className="grid grid-cols-4 grid-rows-10 gap-1">
                   <CommandItem
                     onSelect={() =>
-                      handleGeometrySelect($GeometryType.Enum.box)
+                      handleGeometrySelect($GeometryType.enum.box)
                     }
                     className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
                   >
@@ -193,7 +193,7 @@ export const EditorCommandDialog = () => {
                   </CommandItem>
                   <CommandItem
                     onSelect={() =>
-                      handleGeometrySelect($GeometryType.Enum.sphere)
+                      handleGeometrySelect($GeometryType.enum.sphere)
                     }
                     className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
                   >
@@ -202,7 +202,7 @@ export const EditorCommandDialog = () => {
                   </CommandItem>
                   <CommandItem
                     onSelect={() =>
-                      handleGeometrySelect($GeometryType.Enum.tetrahedron)
+                      handleGeometrySelect($GeometryType.enum.tetrahedron)
                     }
                     className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
                   >
@@ -211,7 +211,7 @@ export const EditorCommandDialog = () => {
                   </CommandItem>
                   <CommandItem
                     onSelect={() =>
-                      handleGeometrySelect($GeometryType.Enum.torus)
+                      handleGeometrySelect($GeometryType.enum.torus)
                     }
                     className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
                   >
@@ -220,7 +220,7 @@ export const EditorCommandDialog = () => {
                   </CommandItem>
                   <CommandItem
                     onSelect={() =>
-                      handleGeometrySelect($GeometryType.Enum.plane)
+                      handleGeometrySelect($GeometryType.enum.plane)
                     }
                     className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
                   >
@@ -235,7 +235,7 @@ export const EditorCommandDialog = () => {
                 <div className="grid grid-cols-4 grid-rows-10 gap-1">
                   <CommandItem
                     onSelect={() =>
-                      handleMaterialSelect($MaterialType.Enum.phong)
+                      handleMaterialSelect($MaterialType.enum.phong)
                     }
                     className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
                   >
@@ -257,7 +257,7 @@ export const EditorCommandDialog = () => {
                   </CommandItem>
                   <CommandItem
                     onSelect={() =>
-                      handleFluxSelect($Txt2ImgType.Enum["flux/dev"])
+                      handleFluxSelect($Txt2ImgType.enum["flux/dev"])
                     }
                     className="col-span-1 row-span-1 flex h-7 w-full cursor-pointer items-center rounded-md border px-0.5 text-xs"
                   >

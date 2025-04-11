@@ -90,7 +90,6 @@ export {
   addShaderDefinition,
   addFragmentShader,
   ADD_UNIFORM_CONSTRAINTS,
-  createDefaultAdd,
   $Add,
   type AddParams,
 } from "./shaders/impl/add";
@@ -99,7 +98,6 @@ export {
   displaceShaderDefinition,
   displaceFragmentShader,
   DISPLACE_UNIFORM_CONSTRAINTS,
-  createDefaultDisplace,
   $Displace,
   type DisplaceParams,
 } from "./shaders/impl/displace";
@@ -108,7 +106,6 @@ export {
   limitShaderDefinition,
   limitFragmentShader,
   LIMIT_UNIFORM_CONSTRAINTS,
-  createDefaultLimit,
   $Limit,
   type LimitParams,
 } from "./shaders/impl/limit";
@@ -117,7 +114,6 @@ export {
   pnoiseShaderDefinition,
   pnoiseFragmentShader,
   PNOISE_UNIFORM_CONSTRAINTS,
-  createDefaultPerlinNoise2D,
   $PerlinNoise2D,
   type PerlinNoise2DParams,
 } from "./shaders/impl/pnoise";
@@ -126,7 +122,6 @@ export {
   migratedShaderDefinition,
   migratedFragmentShader,
   MIGRATED_UNIFORM_CONSTRAINTS,
-  createDefaultMigrated,
   $Migrated,
   type MigratedParams,
 } from "./shaders/impl/example-migrated";

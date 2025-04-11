@@ -1,11 +1,9 @@
 import type { IUniform } from "three";
-import type { z } from "zod";
 import * as THREE from "three";
 
 import type {
   NumericValue,
   Sampler2D,
-  UniformFieldValue,
   ValueType,
   Vec2,
   Vec3,
@@ -112,59 +110,6 @@ export class R3FUniformAdapterFactory {
         };
       default:
         throw new Error(`No adapter found for uniform type: ${uniformType}`);
-    }
-  }
-}
-
-// Helper to extract uniform type from constraints
-export function getUniformType(constraint: UniformFieldValue): ValueType {
-  return constraint.type;
-}
-
-// Type-safe creation of uniforms from Zod schema and constraints
-export function createUniformsFromSchema<T extends z.ZodType>(
-  values: z.infer<T>,
-  constraints: Record<string, UniformFieldValue>,
-): R3FShaderUniforms {
-  const uniforms: R3FShaderUniforms = {};
-  for (const [key, value] of Object.entries(values)) {
-    const constraint = constraints[key];
-    if (constraint) {
-      const adapter = R3FUniformAdapterFactory.getAdapter(
-        getUniformType(constraint),
-      );
-      uniforms[key] = adapter.toThreeUniform(value);
-    }
-  }
-
-  return uniforms;
-}
-
-// Type-safe uniform updates using constraints
-export function updateUniforms<T extends z.ZodType>(
-  shader: THREE.ShaderMaterial,
-  values: z.infer<T>,
-  constraints: Record<string, UniformFieldValue>,
-): void {
-  for (const [key, value] of Object.entries(values)) {
-    const constraint = constraints[key];
-    if (shader.uniforms[key] && constraint) {
-      const adapter = R3FUniformAdapterFactory.getAdapter(
-        getUniformType(constraint),
-      );
-      shader.uniforms[key] = adapter.toThreeUniform(value);
-    }
-  }
-}
-
-// Type-safe sampler uniform updates
-export function updateSamplerUniforms(
-  shader: THREE.ShaderMaterial,
-  textureMap: Record<string, THREE.Texture | null>,
-): void {
-  for (const [key, texture] of Object.entries(textureMap)) {
-    if (shader.uniforms[key]) {
-      shader.uniforms[key].value = texture;
     }
   }
 }

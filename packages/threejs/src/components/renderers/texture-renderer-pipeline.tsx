@@ -6,8 +6,7 @@ import type * as THREE from "three";
 import { useMemo, useRef } from "react";
 
 import { useTextureRenderPipeline } from "../../hooks/use-texture-render-pipeline";
-import { $GeometryType, GeometryMap } from "../../types/geometry";
-import { createWebGLPortal, WebGLView } from "../primitives/webgl-primitives";
+import { WebGLView } from "../primitives/webgl-primitives";
 
 export interface TextureRenderPipelineProps {
   targets: WebGLRenderTargets;
@@ -40,12 +39,12 @@ export const TextureRenderPipeline = ({
 
   return (
     <>
-      {createWebGLPortal(
+      {/* {createWebGLPortal(
         <>
           {nodes.map(({ shader, id }) => (
             <mesh
               key={id}
-              geometry={GeometryMap[$GeometryType.Enum.plane]}
+              geometry={new THREE.PlaneGeometry(2, 2)}
               ref={(ref) => {
                 if (ref) meshRefs.current[id] = ref;
               }}
@@ -55,7 +54,7 @@ export const TextureRenderPipeline = ({
           ))}
         </>,
         scene,
-      )}
+      )} */}
       <WebGLView.Port />
     </>
   );
