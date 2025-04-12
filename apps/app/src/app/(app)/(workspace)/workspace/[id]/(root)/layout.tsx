@@ -51,11 +51,11 @@ interface WorkspaceLayoutProps {
  * @todo - handle unauthorized and not found errors more gracefully
  */
 const getWorkspace = async ({
-  id,
+  workspaceId,
 }: RouterInputs["tenant"]["workspace"]["get"]): Promise<
   RouterOutputs["tenant"]["workspace"]["get"] | null
 > => {
-  const workspace = await api.tenant.workspace.get({ id });
+  const workspace = await api.tenant.workspace.get({ workspaceId });
   return workspace;
 };
 
@@ -90,7 +90,7 @@ export default async function WorkspaceLayout({
 }: WorkspaceLayoutProps) {
   const { id } = params;
   const [workspace, nodes, edges] = await Promise.all([
-    getWorkspace({ id }),
+    getWorkspace({ workspaceId: id }),
     getWorkspaceNodeBaseAll({ workspaceId: id }),
     getWorkspaceEdgeAll({ workspaceId: id }),
   ]);
