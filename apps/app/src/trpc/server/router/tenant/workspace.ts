@@ -3,14 +3,30 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { desc, eq, sql } from "@vendor/db";
-import { UpdateNameWorkspaceSchema, Workspace } from "@vendor/db/schema";
+import { UpdateNameWorkspaceSchema, User, Workspace } from "@vendor/db/schema";
 import { protectedProcedure } from "@vendor/trpc";
 
 export const workspaceRouter = {
   create: protectedProcedure.mutation(async ({ ctx }) => {
+    // First get the user's internal ID
+    const [user] = await ctx.db
+      .select()
+      .from(User)
+      .where(eq(User.clerkId, ctx.session.user.clerkId))
+      .limit(1);
+
+    if (!user) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
     const [workspace] = await ctx.db
       .insert(Workspace)
-      .values({})
+      .values({
+        userId: user.id,
+      })
       .returning({ id: Workspace.id });
 
     if (!workspace) {
@@ -19,6 +35,7 @@ export const workspaceRouter = {
         message: "Failed to create workspace",
       });
     }
+
     return workspace;
   }),
   get: protectedProcedure
