@@ -3,11 +3,11 @@ import { Workspace } from "../../components/workspace/workspace";
 
 interface WorkspacePageProps {
   params: {
-    id: RouterInputs["tenant"]["workspace"]["get"]["id"];
+    id: RouterInputs["tenant"]["workspace"]["get"]["workspaceId"];
   };
 }
 
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { id } = params;
-  return <Workspace params={{ id }} />;
+  return <Workspace params={{ workspaceId: id }} />;
 }

@@ -37,7 +37,7 @@ import { WindowNode } from "../nodes/window-node";
 
 interface WorkspacePageProps {
   params: {
-    id: RouterInputs["tenant"]["workspace"]["get"]["id"];
+    workspaceId: RouterInputs["tenant"]["workspace"]["get"]["workspaceId"];
   };
 }
 
@@ -50,16 +50,16 @@ const nodeTypes: NodeTypes = {
 };
 
 export const Workspace = ({ params }: WorkspacePageProps) => {
-  const { id } = params;
+  const { workspaceId } = params;
   const { nodes } = useNodeStore((state) => state);
   const { selection } = useSelectionStore((state) => state);
   const { edges, onEdgesChange } = useEdgeStore((state) => state);
   const { handleMouseMove, render } = useWorkspaceNodeSelectionPreview();
   const { onNodesChange } = useUpdateNodes({
-    workspaceId: id,
+    workspaceId,
   });
   const { onClick: onWorkspaceClick } = useAddNode({
-    workspaceId: id,
+    workspaceId,
   });
   const { mutateAsync: deleteEdgeMutate } = useDeleteEdge();
   const { mutateAsync: deleteNodeMutate } = useDeleteNode();
@@ -101,7 +101,7 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
       // CASCADE DELETION of all connected edges
       if (nodesToDelete.length > 0) {
         await Promise.all(
-          nodesToDelete.map((node) => deleteNodeMutate({ id: node.id })),
+          nodesToDelete.map((node) => deleteNodeMutate({ nodeId: node.id })),
         );
       }
     },
