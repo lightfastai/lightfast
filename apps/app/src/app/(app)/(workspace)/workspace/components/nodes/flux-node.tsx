@@ -25,7 +25,9 @@ const fal = createFalClient({
 
 export const FluxNode = memo(
   ({ id, type, selected, isConnectable }: NodeProps<BaseNode>) => {
-    const [data] = api.tenant.node.data.get.useSuspenseQuery<Txt2Img>({ id });
+    const [data] = api.tenant.node.data.get.useSuspenseQuery<Txt2Img>({
+      nodeId: id,
+    });
     const setSelected = useInspectorStore((state) => state.setSelected);
     const [result, setResult] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);

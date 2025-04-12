@@ -18,7 +18,9 @@ import { WebGLViewContext } from "../webgl/webgl-view-context";
 
 export const MaterialNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
-    const [data] = api.tenant.node.data.get.useSuspenseQuery<Material>({ id });
+    const [data] = api.tenant.node.data.get.useSuspenseQuery<Material>({
+      nodeId: id,
+    });
     return (
       <BaseNodeComponent selected={selected}>
         <div

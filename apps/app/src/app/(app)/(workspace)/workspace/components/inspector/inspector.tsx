@@ -27,6 +27,8 @@ export const Inspector = () => {
 };
 
 const InspectorImpl = ({ id }: { id: string }) => {
-  const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
+  const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({
+    nodeId: id,
+  });
   return <InspectorTexture key={id} data={data} id={id} />;
 };

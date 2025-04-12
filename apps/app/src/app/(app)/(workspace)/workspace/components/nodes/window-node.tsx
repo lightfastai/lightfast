@@ -1,3 +1,5 @@
+"use client";
+
 import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Handle, Position, useReactFlow } from "@xyflow/react";

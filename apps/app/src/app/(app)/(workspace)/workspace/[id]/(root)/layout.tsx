@@ -101,7 +101,7 @@ export default async function WorkspaceLayout({
 
   /** Prefetch node data using <HydrateClient> (tRPC SSR) & useSuspenseQuery (Tanstack Query) */
   nodes.forEach((node) => {
-    void api.tenant.node.data.get.prefetch({ id: node.id });
+    void api.tenant.node.data.get.prefetch({ nodeId: node.id });
   });
 
   const baseNodes = convertToBaseNode(nodes);

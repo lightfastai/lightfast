@@ -30,7 +30,9 @@ import { NodeHandle } from "../common/node-handle";
 
 export const TextureNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
-    const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
+    const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({
+      nodeId: id,
+    });
     const { targets } = useTextureRenderStore((state) => state);
     const setSelected = useInspectorStore((state) => state.setSelected);
 
