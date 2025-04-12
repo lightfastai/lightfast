@@ -16,7 +16,7 @@ export const WebGLTextureRenderPipeline = () => {
   const queries = api.useQueries((t) =>
     Object.entries(targets).map(([id]) =>
       t.tenant.node.data.get<Texture>({
-        id,
+        nodeId: id,
       }),
     ),
   );

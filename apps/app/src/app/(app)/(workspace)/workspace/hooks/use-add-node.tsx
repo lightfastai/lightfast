@@ -41,7 +41,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
   const create = api.tenant.node.create.useMutation({
     onMutate: async (newNode) => {
       // Cancel any outgoing refetches
-      await utils.tenant.node.data.get.cancel({ id: newNode.id });
+      await utils.tenant.node.data.get.cancel({ nodeId: newNode.id });
 
       const optimisticNode: BaseNode = {
         id: newNode.id,
@@ -53,7 +53,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
       addNode(optimisticNode);
 
       utils.tenant.node.data.get.setData(
-        { id: newNode.id },
+        { nodeId: newNode.id },
         newNode.data as Geometry | Material | Texture,
       );
 
@@ -73,11 +73,11 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
 
       deleteNode(context.optimisticNode.id);
 
-      utils.tenant.node.data.get.setData({ id: newNode.id }, undefined);
+      utils.tenant.node.data.get.setData({ nodeId: newNode.id }, undefined);
     },
     onSettled: (newNode) => {
       if (!newNode) return;
-      void utils.tenant.node.data.get.invalidate({ id: newNode.id });
+      void utils.tenant.node.data.get.invalidate({ nodeId: newNode.id });
     },
   });
 

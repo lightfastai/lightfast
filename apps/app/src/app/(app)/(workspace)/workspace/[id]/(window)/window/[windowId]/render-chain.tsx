@@ -21,7 +21,7 @@ interface TextureData {
 export function RenderChain({ firstNodeId, edges }: RenderChainProps) {
   const { targets, addTarget } = useTextureRenderStore((state) => state);
   const queries = api.useQueries((t) =>
-    edges.map((edge) => t.tenant.node.data.get({ id: edge.source })),
+    edges.map((edge) => t.tenant.node.data.get({ nodeId: edge.source })),
   );
 
   // Build the texture chain by walking back from the window node

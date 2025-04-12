@@ -40,7 +40,7 @@ export const InspectorTexture = ({
   const { mutate: updateData } = api.tenant.node.data.update.useMutation({
     onError: () => {
       // On error, revert the optimistic update
-      utils.tenant.node.data.get.setData({ id }, data);
+      utils.tenant.node.data.get.setData({ nodeId: id }, data);
     },
   });
 
@@ -48,7 +48,7 @@ export const InspectorTexture = ({
 
   const debouncedServerUpdate = useDebounce((updates: TextureUniforms) => {
     updateData({
-      id,
+      nodeId: id,
       data: {
         type: data.type,
         uniforms: updates,
@@ -69,7 +69,7 @@ export const InspectorTexture = ({
 
       // Optimistically update the cache
       utils.tenant.node.data.get.setData(
-        { id },
+        { nodeId: id },
         {
           type: data.type,
           uniforms: newUniforms,
@@ -80,14 +80,7 @@ export const InspectorTexture = ({
       // Debounce the actual server update
       debouncedServerUpdate(newUniforms);
     },
-    [
-      data.uniforms,
-      data.type,
-      data.resolution,
-      utils.tenant.node.data.get,
-      id,
-      debouncedServerUpdate,
-    ],
+    [data.uniforms, data.type, data.resolution, id, debouncedServerUpdate],
   );
 
   useEffect(() => {
