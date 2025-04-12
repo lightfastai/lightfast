@@ -8,8 +8,8 @@ export const useCreateWorkspace = () => {
   const router = useRouter();
   const utils = api.useUtils();
   const { mutateAsync } = api.tenant.workspace.create.useMutation({
-    onSuccess: (data) => {
-      utils.tenant.workspace.getAll.invalidate();
+    onSuccess: async (data) => {
+      await utils.tenant.workspace.getAll.invalidate();
       router.push(`/workspace/${data.id}`);
       toast({
         title: "Workspace created",

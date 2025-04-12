@@ -1,12 +1,10 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
+import { sql } from "@vercel/postgres";
+import { drizzle } from "drizzle-orm/vercel-postgres";
 
-import { env } from "../env";
+import * as schema from "./schema";
 
-export const createDbClient = (uri: string) => {
-  return drizzle({
-    connection: uri,
-    casing: "snake_case",
-  });
-};
-
-export const db = createDbClient(env.DATABASE_URL);
+export const db = drizzle({
+  client: sql,
+  schema,
+  casing: "snake_case",
+});
