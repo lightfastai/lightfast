@@ -12,7 +12,7 @@ export type BaseNode = Node &
  * included in the base node. If data is ever included in the base node
  * we can remove this conversion.
  */
-export const convertToBaseNode = (
+export const convertToBaseNodeArray = (
   nodes: RouterOutputs["tenant"]["node"]["base"]["getAll"],
 ): BaseNode[] =>
   nodes.map((node) => ({

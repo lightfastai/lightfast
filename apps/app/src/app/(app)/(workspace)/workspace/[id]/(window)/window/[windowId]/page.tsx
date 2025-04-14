@@ -8,7 +8,7 @@ import { api } from "~/trpc/client/server";
 import { EdgeStoreProvider } from "../../../../providers/edge-store-provider";
 import { TextureRenderStoreProvider } from "../../../../providers/texture-render-store-provider";
 import { convertToBaseEdge } from "../../../../types/edge";
-import { convertToBaseNode } from "../../../../types/node";
+import { convertToBaseNodeArray } from "../../../../types/node";
 import { RenderChain } from "./render-chain";
 
 interface WindowPageProps {
@@ -30,7 +30,7 @@ export default async function WindowPage({ params }: WindowPageProps) {
   ]);
 
   // Convert to base types
-  const baseNodes = convertToBaseNode(nodes);
+  const baseNodes = convertToBaseNodeArray(nodes);
   const baseEdges = convertToBaseEdge(edges);
 
   // Find the edge connected to this window

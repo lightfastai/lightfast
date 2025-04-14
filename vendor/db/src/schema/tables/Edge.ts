@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { pgTable } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -35,7 +35,9 @@ export const Edge = pgTable("edge", (t) => ({
   sourceHandle: t.varchar({ length: 191 }).notNull().$type<OutputHandleId>(),
   targetHandle: t.varchar({ length: 191 }).notNull().$type<InputHandleId>(),
   createdAt: t.timestamp().defaultNow().notNull(),
-  updatedAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .$onUpdateFn(() => sql`now()`),
 }));
 
 export const EdgeRelations = relations(Edge, ({ one }) => ({

@@ -1,9 +1,9 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { pgTable } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import type { NodePosition } from "@vendor/db/types";
+import type { NodePosition, NodeType } from "@vendor/db/types";
 import { nanoid } from "@repo/lib";
 import {
   $Geometry,
@@ -34,11 +34,13 @@ export const Node = pgTable("node", (t) => ({
     .varchar({ length: 191 })
     .notNull()
     .references(() => Workspace.id, { onDelete: "cascade" }),
-  type: t.varchar({ length: 50 }).notNull(),
+  type: t.varchar({ length: 50 }).notNull().$type<NodeType>(),
   position: t.json().notNull().$type<NodePosition>(),
   data: t.json().notNull().$type<NodeData>(),
   createdAt: t.timestamp().defaultNow().notNull(),
-  updatedAt: t.timestamp(),
+  updatedAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .$onUpdateFn(() => sql`now()`),
 }));
 
 export const NodeRelations = relations(Node, ({ one, many }) => ({

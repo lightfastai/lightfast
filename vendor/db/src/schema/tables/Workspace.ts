@@ -20,7 +20,7 @@ export const Workspace = pgTable("workspace", (t) => ({
     .$defaultFn(() => generateReactTdName()),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t
-    .timestamp()
+    .timestamp({ mode: "date", withTimezone: true })
     .notNull()
     .defaultNow()
     .$onUpdateFn(() => sql`now()`),

@@ -20,6 +20,10 @@
       "types": "./dist/types.d.ts",
       "default": "./src/types.ts"
     },
+    "./supabase-db.types": {
+      "types": "./dist/src/supabase-db.types.d.ts",
+      "default": "./dist/src/supabase-db.types.ts"
+    },
     "./env": "./env.ts"
   },
   "license": "MIT",
@@ -33,13 +37,15 @@
     "migrate:generate": "pnpm with-env drizzle-kit generate --config=./drizzle.config.ts",
     "studio": "pnpm with-env drizzle-kit studio",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e ../../.env --",
+    "generate-types": "npx supabase gen types typescript --project-id '$PROJECT_REF' --schema public > database.types.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/webgl": "workspace:^",
+    "@supabase/supabase-js": "^2.49.4",
     "drizzle-orm": "^0.35.3",
     "drizzle-zod": "^0.5.1",
     "postgres": "^3.4.5",
@@ -53,6 +59,7 @@
     "drizzle-kit": "^0.26.2",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "supabase": "^2.20.12",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

@@ -22,7 +22,7 @@ export const User = pgTable("user", (t) => ({
     .defaultNow()
     .notNull(),
   updatedAt: t
-    .timestamp("updated_at", { withTimezone: true })
+    .timestamp("updated_at", { mode: "date", withTimezone: true })
     .notNull()
     .defaultNow()
     .$onUpdateFn(() => sql`now()`),

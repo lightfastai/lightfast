@@ -22,6 +22,7 @@ import { useAddEdge } from "../../hooks/use-add-edge";
 import { useAddNode } from "../../hooks/use-add-node";
 import { useDeleteEdge } from "../../hooks/use-delete-edge";
 import { useDeleteNode } from "../../hooks/use-delete-node";
+import { useRealtime } from "../../hooks/use-realtime";
 import { useReplaceEdge } from "../../hooks/use-replace-edge";
 import { useUpdateNodes } from "../../hooks/use-update-nodes";
 import { useHandleTypeValidator } from "../../hooks/use-validate-edge";
@@ -66,6 +67,9 @@ export const Workspace = ({ params }: WorkspacePageProps) => {
   const { mutateAsync: addEdgeMutate } = useAddEdge();
   const { mutateAsync: replaceEdgeMutate } = useReplaceEdge();
   const validateHandleTypes = useHandleTypeValidator();
+
+  // Initialize realtime subscriptions
+  useRealtime({ workspaceId });
 
   // A wrapper around onWorkspaceClick for safety where if selection is undefined,
   // we don't want to add a node

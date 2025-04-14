@@ -28,7 +28,7 @@ import { TextureRenderStoreProvider } from "../../providers/texture-render-store
 import { WorkspaceReactFlowProvider } from "../../providers/workspace-react-flow-provider";
 import { WorkspaceViewProvider } from "../../providers/workspace-view-provider";
 import { convertToBaseEdge } from "../../types/edge";
-import { convertToBaseNode } from "../../types/node";
+import { convertToBaseNodeArray } from "../../types/node";
 
 const WebGLCanvas = dynamic(
   () => import("@repo/threejs").then((mod) => mod.WebGLCanvas),
@@ -104,7 +104,7 @@ export default async function WorkspaceLayout({
     void api.tenant.node.data.get.prefetch({ nodeId: node.id });
   });
 
-  const baseNodes = convertToBaseNode(nodes);
+  const baseNodes = convertToBaseNodeArray(nodes);
   const baseEdges = convertToBaseEdge(edges);
 
   return (
