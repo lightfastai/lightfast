@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import type { Edge, EdgePosition, NodePosition } from "../types";
+import { useDragOperation } from "./useDragOperation";
 
 export function useNodeState() {
   const [nodePositions, setNodePositions] = useState<NodePosition[]>([
@@ -10,7 +11,6 @@ export function useNodeState() {
     { x: 0, y: 0 },
   ]);
   const [hoveredNodeIndex, setHoveredNodeIndex] = useState<number | null>(null);
-  const draggedNodeRef = useRef<number | null>(null);
   const nodeRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -21,32 +21,22 @@ export function useNodeState() {
     { from: 2, to: 3 },
   ];
 
-  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
-    draggedNodeRef.current = index;
-    const dragImage = document.createElement("div");
-    dragImage.style.opacity = "0";
-    document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
-    requestAnimationFrame(() => document.body.removeChild(dragImage));
-  }, []);
+  const handlePositionChange = useCallback(
+    (index: number, position: NodePosition) => {
+      setNodePositions((prev) => {
+        const newPositions = [...prev];
+        newPositions[index] = position;
+        return newPositions;
+      });
+    },
+    [],
+  );
 
-  const handleDrag = useCallback((e: React.DragEvent, index: number) => {
-    if (!containerRef.current || !e.clientX || !e.clientY) return;
-
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - containerRect.left - 96;
-    const y = e.clientY - containerRect.top - 64;
-
-    setNodePositions((prev) => {
-      const newPositions = [...prev];
-      newPositions[index] = { x, y };
-      return newPositions;
+  const { draggedNodeRef, handleDragStart, handleDrag, handleDragEnd } =
+    useDragOperation({
+      containerRef,
+      onPositionChange: handlePositionChange,
     });
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    draggedNodeRef.current = null;
-  }, []);
 
   const calculateEdgePositions = useCallback((): EdgePosition[] => {
     if (!containerRef.current) return [];

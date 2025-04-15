@@ -3,6 +3,8 @@ export interface NodePosition {
   y: number;
 }
 
+export type XYPosition = NodePosition;
+
 export interface Edge {
   from: number;
   to: number;
