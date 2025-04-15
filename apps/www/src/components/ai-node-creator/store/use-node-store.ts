@@ -5,10 +5,10 @@ import { useDragOperation } from "../hooks/use-drag-operation";
 
 export function useNodeState() {
   const [nodePositions, setNodePositions] = useState<NodePosition[]>([
-    { x: 100, y: 100 }, // Top-left
-    { x: 300, y: 100 }, // Top-right
-    { x: 100, y: 300 }, // Bottom-left
-    { x: 300, y: 300 }, // Bottom-right
+    { x: 0, y: 0 }, // Top-left
+    { x: 250, y: 0 }, // Top-right
+    { x: 0, y: 250 }, // Bottom-left
+    { x: 250, y: 250 }, // Bottom-right
   ]);
   const [hoveredNodeIndex, setHoveredNodeIndex] = useState<number | null>(null);
   const nodeRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
