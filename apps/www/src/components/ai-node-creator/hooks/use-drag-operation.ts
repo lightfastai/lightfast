@@ -23,14 +23,15 @@ export function useDragOperation({
       draggedNodeRef.current = index;
 
       // Calculate and store the initial offset between cursor and node position
-      const nodeElement = e.currentTarget as HTMLElement;
-      const nodeRect = nodeElement.getBoundingClientRect();
       const containerPosition = screenToContainerPosition(e.clientX, e.clientY);
-
       if (containerPosition) {
+        const nodeElement = e.currentTarget as HTMLElement;
+        const nodeStyle = window.getComputedStyle(nodeElement);
+        const nodeTransform = new WebKitCSSMatrix(nodeStyle.transform);
+
         dragOffsetRef.current = {
-          x: containerPosition.x - nodeRect.left,
-          y: containerPosition.y - nodeRect.top,
+          x: containerPosition.x - nodeTransform.m41,
+          y: containerPosition.y - nodeTransform.m42,
         };
       }
 
