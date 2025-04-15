@@ -82,9 +82,3 @@ export default tseslint.config(
     languageOptions: { parserOptions: { projectService: true } },
   },
 );
-
-export const evalConfig = tseslint.config({
-  rules: {
-    "@typescript-eslint/no-misused-promises": "off",
-  },
-});

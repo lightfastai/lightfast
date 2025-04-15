@@ -1,8 +1,8 @@
 "use client";
 
+import type * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -15,39 +15,50 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
-import { useClerk } from "@vendor/clerk/client";
 
-// Define the form schema using Zod
-const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-});
+import { waitlistFormSchema } from "~/app/validations/valid-email";
 
 export function WaitlistForm() {
-  const clerk = useClerk();
   const { toast } = useToast();
 
   // Initialize the form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof waitlistFormSchema>>({
+    resolver: zodResolver(waitlistFormSchema),
     defaultValues: {
       email: "",
     },
   });
 
   // Handle form submission
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof waitlistFormSchema>) => {
     try {
-      await clerk.joinWaitlist({ emailAddress: values.email });
+      // Call the new API endpoint
+      const response = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: values.email }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Throw an error with the message from the API response if available
+        throw new Error(result.error || `API Error: ${response.statusText}`);
+      }
+
       toast({
         title: "Success!",
         description: "Successfully joined the waitlist!",
       });
       form.reset(); // Reset form on success
     } catch (error) {
-      console.error("Waitlist error:", error);
+      console.error("Waitlist form error:", error);
       let errorMsg = "Failed to join the waitlist. Please try again.";
       if (error instanceof Error) {
-        errorMsg = `Failed to join: ${error.message}`;
+        // Use the error message thrown from the try block or a default
+        errorMsg = error.message || errorMsg;
       }
       toast({
         title: "Error",
