@@ -1,19 +1,20 @@
-"use client";
-
 import Link from "next/link";
-import { Dot, Github, MessageSquare, Twitter } from "lucide-react";
+import { Dot } from "lucide-react";
 
 import { AiNodeCreator } from "~/components/ai-node-creator/ai-node-creator";
+import { siteConfig } from "~/config/site";
 import { EarlyAcessForm } from "../../components/early-access/early-access-form";
+import { Icons } from "../icons";
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center pt-32">
       <div className="flex w-full flex-col items-center justify-center gap-4 py-4">
-        <h1 className="text-center text-5xl font-semibold">
-          The future of Design is here
+        <h1 className="text-center text-3xl font-semibold">
+          {siteConfig.name}{" "}
+          <span className="font-mono text-muted-foreground">Computer</span>
         </h1>
-        <p className="max-w-2xl text-balance text-center text-xl text-muted-foreground">
+        <p className="max-w-lg text-balance text-center text-xs text-muted-foreground">
           Simplifying the way you integrate AI workflows into your day to day
           &#x2014; from design to development
         </p>
@@ -33,13 +34,13 @@ export default function Home() {
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground md:flex-row">
           <div className="flex items-center gap-4">
             <Link href="#" aria-label="GitHub">
-              <Github className="size-4 hover:text-foreground" />
+              <Icons.gitHub className="size-4 hover:text-foreground" />
             </Link>
             <Link href="#" aria-label="Discord">
-              <MessageSquare className="size-4 hover:text-foreground" />
+              <Icons.discord className="size-4 hover:text-foreground" />
             </Link>
             <Link href="#" aria-label="Twitter">
-              <Twitter className="size-4 hover:text-foreground" />
+              <Icons.twitter className="size-3 hover:text-foreground" />
             </Link>
           </div>
 
@@ -58,7 +59,7 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <span className="text-xs">
               {" "}
-              Polychromos Inc. © {new Date().getFullYear()}{" "}
+              {siteConfig.name} Inc. © {new Date().getFullYear()}{" "}
             </span>
           </div>
         </div>

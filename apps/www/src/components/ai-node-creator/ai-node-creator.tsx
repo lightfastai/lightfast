@@ -80,7 +80,7 @@ export function AiNodeCreator() {
 
   return (
     <div
-      className="relative h-[420px] w-full overflow-hidden rounded-md border"
+      className="relative h-[500px] w-full overflow-hidden rounded-md border"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
