@@ -7,6 +7,7 @@ import { Send, X } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
+import { cn } from "@repo/ui/lib/utils";
 
 import { Icons } from "~/app/icons";
 
@@ -20,11 +21,20 @@ export function AiNodeCreator() {
     { time: string; message: string }[]
   >([]);
   const [hoveredNodeIndex, setHoveredNodeIndex] = useState<number | null>(null);
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
   const [edgePositions, setEdgePositions] = useState<any[]>([]);
+  const [nodePositions, setNodePositions] = useState([
+    { x: 0, y: 0 },
+    { x: 0, y: 0 },
+    { x: 0, y: 0 },
+    { x: 0, y: 0 },
+  ]);
+  const draggedNodeRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const generationSteps = [
     "Building context...",
@@ -42,22 +52,43 @@ export function AiNodeCreator() {
     { from: 2, to: 3 }, // Node 3 to Node 4
   ];
 
-  // Function to calculate edge positions
+  const handleDragStart = (index: number) => {
+    draggedNodeRef.current = index;
+  };
+
+  const handleDrag = (e: React.DragEvent, index: number) => {
+    if (!containerRef.current) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - containerRect.left - 96; // Half of w-48
+    const y = e.clientY - containerRect.top - 64; // Half of aspect-[3/2] of w-48
+
+    setNodePositions((prev) => {
+      const newPositions = [...prev];
+      newPositions[index] = { x, y };
+      return newPositions;
+    });
+  };
+
+  const handleDragEnd = () => {
+    draggedNodeRef.current = null;
+  };
+
+  // Update calculateEdgePositions to use node positions
   const calculateEdgePositions = useCallback(() => {
+    if (!containerRef.current) return [];
+
     return edges
       .map((edge) => {
         const fromNode = nodeRefs.current[edge.from];
         const toNode = nodeRefs.current[edge.to];
 
-        if (!fromNode || !toNode) return null;
+        if (!fromNode || !toNode || !containerRef.current) return null;
 
         const fromRect = fromNode.getBoundingClientRect();
         const toRect = toNode.getBoundingClientRect();
-        const containerRect = fromNode.parentElement?.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
 
-        if (!containerRect) return null;
-
-        // Calculate positions relative to the container
         const fromX = fromRect.left + fromRect.width / 2 - containerRect.left;
         const fromY = fromRect.top + fromRect.height / 2 - containerRect.top;
         const toX = toRect.left + toRect.width / 2 - containerRect.left;
@@ -190,6 +221,16 @@ export function AiNodeCreator() {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [generationLogs]);
 
+  // Handle button visibility with a slight delay on hover out
+  useEffect(() => {
+    if (isHovered) {
+      setIsButtonVisible(true);
+    } else {
+      const timer = setTimeout(() => setIsButtonVisible(false), 300); // Match the animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [isHovered]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -230,14 +271,13 @@ export function AiNodeCreator() {
     <>
       <div
         className="relative h-[420px] w-full overflow-hidden rounded-md border"
-        onMouseEnter={() => {
-          setIsHovered(true);
-        }}
-        onMouseLeave={() => {
-          setIsHovered(false);
-        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="relative flex h-full flex-wrap content-center justify-center gap-6 bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] bg-[length:1rem_1rem] p-6 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)]">
+        <div
+          ref={containerRef}
+          className="relative flex h-full flex-wrap content-center justify-center gap-6 bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] bg-[length:1rem_1rem] p-6 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)]"
+        >
           {/* SVG for edges */}
           <svg
             className="pointer-events-none absolute inset-0 h-full w-full"
@@ -270,7 +310,17 @@ export function AiNodeCreator() {
             ref={(el) => {
               nodeRefs.current[0] = el;
             }}
-            className="relative aspect-[3/2] w-48 cursor-pointer overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md hover:shadow-primary/10"
+            className="absolute cursor-move select-none overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm"
+            style={{
+              aspectRatio: "3/2",
+              width: "12rem",
+              transform: `translate(${nodePositions[0]?.x ?? 0}px, ${nodePositions[0]?.y ?? 0}px)`,
+              zIndex: draggedNodeRef.current === 0 ? 10 : 2,
+            }}
+            draggable
+            onDragStart={() => handleDragStart(0)}
+            onDrag={(e) => handleDrag(e, 0)}
+            onDragEnd={handleDragEnd}
             onMouseEnter={() => setHoveredNodeIndex(0)}
             onMouseLeave={() => setHoveredNodeIndex(null)}
           >
@@ -279,7 +329,7 @@ export function AiNodeCreator() {
               alt="Node 1"
               width={300}
               height={200}
-              className={`h-full w-full border border-border/50 object-cover transition-transform duration-500 ${hoveredNodeIndex === 0 ? "scale-110" : "scale-100"}`}
+              className="h-full w-full border border-border/50 object-cover"
             />
           </div>
 
@@ -288,7 +338,17 @@ export function AiNodeCreator() {
             ref={(el) => {
               nodeRefs.current[1] = el;
             }}
-            className="relative aspect-[3/2] w-48 cursor-pointer overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md hover:shadow-primary/10"
+            className="absolute cursor-move select-none overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm"
+            style={{
+              aspectRatio: "3/2",
+              width: "12rem",
+              transform: `translate(${nodePositions[1]?.x ?? 0}px, ${nodePositions[1]?.y ?? 0}px)`,
+              zIndex: draggedNodeRef.current === 1 ? 10 : 2,
+            }}
+            draggable
+            onDragStart={() => handleDragStart(1)}
+            onDrag={(e) => handleDrag(e, 1)}
+            onDragEnd={handleDragEnd}
             onMouseEnter={() => setHoveredNodeIndex(1)}
             onMouseLeave={() => setHoveredNodeIndex(null)}
           >
@@ -297,7 +357,7 @@ export function AiNodeCreator() {
               alt="Node 2"
               width={300}
               height={200}
-              className={`h-full w-full border border-border/50 object-cover transition-transform duration-500 ${hoveredNodeIndex === 1 ? "scale-110" : "scale-100"}`}
+              className="h-full w-full border border-border/50 object-cover"
             />
           </div>
 
@@ -306,7 +366,17 @@ export function AiNodeCreator() {
             ref={(el) => {
               nodeRefs.current[2] = el;
             }}
-            className="relative aspect-[3/2] w-48 cursor-pointer overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md hover:shadow-primary/10"
+            className="absolute cursor-move select-none overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm"
+            style={{
+              aspectRatio: "3/2",
+              width: "12rem",
+              transform: `translate(${nodePositions[2]?.x ?? 0}px, ${nodePositions[2]?.y ?? 0}px)`,
+              zIndex: draggedNodeRef.current === 2 ? 10 : 2,
+            }}
+            draggable
+            onDragStart={() => handleDragStart(2)}
+            onDrag={(e) => handleDrag(e, 2)}
+            onDragEnd={handleDragEnd}
             onMouseEnter={() => setHoveredNodeIndex(2)}
             onMouseLeave={() => setHoveredNodeIndex(null)}
           >
@@ -315,7 +385,7 @@ export function AiNodeCreator() {
               alt="Node 3"
               width={300}
               height={200}
-              className={`h-full w-full border border-border/50 object-cover transition-transform duration-500 ${hoveredNodeIndex === 2 ? "scale-110" : "scale-100"}`}
+              className="h-full w-full border border-border/50 object-cover"
             />
           </div>
 
@@ -324,7 +394,17 @@ export function AiNodeCreator() {
             ref={(el) => {
               nodeRefs.current[3] = el;
             }}
-            className="relative aspect-[3/2] w-48 cursor-pointer overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md hover:shadow-primary/10"
+            className="absolute cursor-move select-none overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm"
+            style={{
+              aspectRatio: "3/2",
+              width: "12rem",
+              transform: `translate(${nodePositions[3]?.x ?? 0}px, ${nodePositions[3]?.y ?? 0}px)`,
+              zIndex: draggedNodeRef.current === 3 ? 10 : 2,
+            }}
+            draggable
+            onDragStart={() => handleDragStart(3)}
+            onDrag={(e) => handleDrag(e, 3)}
+            onDragEnd={handleDragEnd}
             onMouseEnter={() => setHoveredNodeIndex(3)}
             onMouseLeave={() => setHoveredNodeIndex(null)}
           >
@@ -333,16 +413,23 @@ export function AiNodeCreator() {
               alt="Node 4"
               width={300}
               height={200}
-              className={`h-full w-full border border-border/50 object-cover transition-transform duration-500 ${hoveredNodeIndex === 3 ? "scale-110" : "scale-100"}`}
+              className="h-full w-full border border-border/50 object-cover"
             />
           </div>
         </div>
         {isHovered && (
-          <div className="absolute right-4 top-4 z-10">
+          <div
+            className={cn(
+              "absolute right-4 top-4 z-10",
+              isHovered
+                ? "duration-300 ease-in-out animate-in slide-in-from-top"
+                : "duration-300 animate-out fade-out",
+            )}
+          >
             <Button
               variant="outline"
               size="sm"
-              className="text-xs"
+              className="text-xs shadow-sm transition-all hover:shadow-md"
               onClick={() => setOpenCommand(true)}
             >
               Press{" "}
