@@ -17,25 +17,25 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import { waitlistFormSchema } from "~/components/waitlist-form/waitlist-form.validations";
+import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.validations";
 
-export function WaitlistForm() {
+export function EarlyAcessForm() {
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   // Initialize the form
   const form = useForm({
-    schema: waitlistFormSchema,
+    schema: earlyAcessFormSchema,
     defaultValues: {
       email: "",
     },
   });
 
   // Handle form submission
-  const onSubmit = async (values: z.infer<typeof waitlistFormSchema>) => {
+  const onSubmit = async (values: z.infer<typeof earlyAcessFormSchema>) => {
     try {
       // Call the new API endpoint
-      const response = await fetch("/api/waitlist/create", {
+      const response = await fetch("/api/early-access/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,7 +56,7 @@ export function WaitlistForm() {
       });
       setIsSubmitted(true);
     } catch (error) {
-      console.error("Waitlist form error:", error);
+      console.error("Early access form error:", error);
       let errorMsg = "Failed to join the waitlist. Please try again.";
       if (error instanceof Error) {
         // Use the error message thrown from the try block or a default

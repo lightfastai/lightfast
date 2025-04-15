@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Dot, Github, MessageSquare, Twitter } from "lucide-react";
 
-import { WaitlistForm } from "../../components/waitlist-form/waitlist-form";
+import { EarlyAcessForm } from "../../components/early-access/early-access-form";
 
 export default function Home() {
   return (
@@ -20,7 +20,7 @@ export default function Home() {
 
       <div className="flex w-full flex-col items-center justify-center border-b border-t py-4">
         <div className="w-full max-w-lg space-y-4">
-          <WaitlistForm />
+          <EarlyAcessForm />
         </div>
       </div>
 

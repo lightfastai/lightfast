@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { arcjet, protectSignup } from "@vendor/security";
 
-import { waitlistFormSchema } from "~/components/waitlist-form/waitlist-form.validations";
+import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.validations";
 import { env } from "~/env";
 
 export const runtime = "edge";
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
   try {
     const json = await request.json();
-    const parsed = waitlistFormSchema.safeParse(json);
+    const parsed = earlyAcessFormSchema.safeParse(json);
 
     if (!parsed.success) {
       return NextResponse.json(
