@@ -26,7 +26,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <body
           className={cn(
-            "dark min-h-screen bg-background font-sans antialiased",
+            " min-h-screen bg-background font-sans antialiased",
             GeistSans.variable,
             GeistMono.variable,
           )}
