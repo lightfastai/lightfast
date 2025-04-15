@@ -19,7 +19,7 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="flex w-full flex-col items-center justify-center border-b border-t py-4">
+      <div className="flex w-full flex-col items-center justify-center py-4">
         <div className="w-full max-w-lg space-y-4">
           <EarlyAcessForm />
         </div>

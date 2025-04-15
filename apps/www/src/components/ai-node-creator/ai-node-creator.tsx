@@ -156,7 +156,7 @@ export function AiNodeCreator() {
   return (
     <>
       <div
-        className="relative h-full w-full overflow-hidden rounded-xl border"
+        className="relative h-full w-full overflow-hidden rounded-md border"
         onMouseEnter={() => {
           setIsHovered(true);
         }}
@@ -182,7 +182,7 @@ export function AiNodeCreator() {
             <div className="absolute inset-0 bg-background/95" />
             <div
               ref={dialogRef}
-              className="relative z-50 max-w-lg rounded-lg border shadow-lg animate-in fade-in-0 zoom-in-95"
+              className="relative z-50 w-full max-w-lg rounded-lg border shadow-lg animate-in fade-in-0 zoom-in-95"
             >
               <Button
                 onClick={() => setOpenCommand(false)}
@@ -198,7 +198,7 @@ export function AiNodeCreator() {
                 {isGenerating ? (
                   <div className="mb-8 w-full">
                     <ScrollArea className="h-40 w-full">
-                      <div className="p-4 font-mono text-sm">
+                      <div className="gap-1 p-4 font-mono text-sm">
                         {generationLogs.map((log, index) => (
                           <div key={index} className="mb-1 text-left">
                             <span className="text-blue-500">[{log.time}]</span>
@@ -222,29 +222,31 @@ export function AiNodeCreator() {
                 )}
 
                 <div className="w-full">
-                  <div className="flex flex-wrap justify-center gap-2 overflow-x-auto">
-                    <ScrollArea className="w-full whitespace-nowrap rounded-md">
-                      <div className="flex w-max space-x-4 p-1">
-                        {suggestedPrompts.map((prompt) => (
-                          <Button
-                            key={prompt}
-                            variant="outline"
-                            className="rounded-full text-xs"
-                            size="sm"
-                            onClick={() => {
-                              setInputValue(prompt);
-                              if (inputRef.current) {
-                                inputRef.current.focus();
-                              }
-                            }}
-                          >
-                            {prompt}
-                          </Button>
-                        ))}
-                        <ScrollBar orientation="horizontal" />
-                      </div>
-                    </ScrollArea>
-                  </div>
+                  {!isGenerating && (
+                    <div className="flex flex-wrap justify-center gap-2 overflow-x-auto">
+                      <ScrollArea className="w-full whitespace-nowrap rounded-md">
+                        <div className="flex w-max space-x-4 p-1">
+                          {suggestedPrompts.map((prompt) => (
+                            <Button
+                              key={prompt}
+                              variant="outline"
+                              className="rounded-full text-xs"
+                              size="sm"
+                              onClick={() => {
+                                setInputValue(prompt);
+                                if (inputRef.current) {
+                                  inputRef.current.focus();
+                                }
+                              }}
+                            >
+                              {prompt}
+                            </Button>
+                          ))}
+                          <ScrollBar orientation="horizontal" />
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  )}
 
                   <form
                     onSubmit={handleSubmit}
