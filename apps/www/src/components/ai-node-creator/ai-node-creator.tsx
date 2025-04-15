@@ -338,14 +338,19 @@ export function AiNodeCreator() {
           </div>
         </div>
         {isHovered && (
-          <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm">
-            <p className="text-sm text-muted-foreground">
+          <div className="absolute right-4 top-4 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => setOpenCommand(true)}
+            >
               Press{" "}
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              <kbd className="ml-1 mr-1 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                 <span className="text-xs">⌘</span>K
               </kbd>{" "}
               to create
-            </p>
+            </Button>
           </div>
         )}
 
