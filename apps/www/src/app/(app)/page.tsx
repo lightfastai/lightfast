@@ -10,9 +10,12 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center pt-32">
       <div className="flex w-full flex-col items-center justify-center gap-4 py-4">
+        <span className="font-mono text-xs text-muted-foreground">
+          Introducing
+        </span>{" "}
         <h1 className="text-center text-3xl font-semibold">
           {siteConfig.name}{" "}
-          <span className="font-mono text-muted-foreground">Computer</span>
+          <span className="gradient-text font-mono">Computer</span>
         </h1>
         <p className="max-w-lg text-balance text-center text-xs text-muted-foreground">
           Simplifying the way you integrate AI workflows into your day to day
@@ -33,24 +36,44 @@ export default function Home() {
       <footer className="mt-auto w-full px-4 py-12 md:px-6">
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground md:flex-row">
           <div className="flex items-center gap-4">
-            <Link href="#" aria-label="GitHub">
+            <Link
+              target="_blank"
+              href={siteConfig.links.github.href}
+              aria-label="GitHub"
+            >
               <Icons.gitHub className="size-4 hover:text-foreground" />
             </Link>
-            <Link href="#" aria-label="Discord">
+            <Link
+              target="_blank"
+              href={siteConfig.links.discord.href}
+              aria-label="Discord"
+            >
               <Icons.discord className="size-4 hover:text-foreground" />
             </Link>
-            <Link href="#" aria-label="Twitter">
+            <Link
+              target="_blank"
+              href={siteConfig.links.twitter.href}
+              aria-label="Twitter"
+            >
               <Icons.twitter className="size-3 hover:text-foreground" />
             </Link>
           </div>
 
           <div className="flex flex-col items-center gap-2">
             <nav className="flex items-center gap-2 md:gap-4">
-              <Link href="#" className="text-xs hover:text-foreground">
+              <Link
+                target="_blank"
+                href={"/privacy"}
+                className="text-xs hover:text-foreground"
+              >
                 Privacy
               </Link>
               <Dot className="size-2" />
-              <Link href="#" className="text-xs hover:text-foreground">
+              <Link
+                target="_blank"
+                href={"/terms"}
+                className="text-xs hover:text-foreground"
+              >
                 Terms
               </Link>
             </nav>

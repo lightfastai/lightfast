@@ -111,7 +111,7 @@ export function EarlyAcessForm() {
               disabled={form.formState.isSubmitting}
               className="col-span-3 overflow-hidden truncate rounded-lg px-3 text-xs"
             >
-              <span className="text-xs">
+              <span className="gradient-text text-xs">
                 {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
               </span>
             </Button>

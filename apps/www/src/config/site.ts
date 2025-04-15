@@ -1,6 +1,6 @@
 import { SiteConfig } from "@repo/ui/types/site";
 
-type SiteLinks = "twitter" | "github";
+type SiteLinks = "twitter" | "github" | "discord";
 
 export const siteConfig: SiteConfig<SiteLinks> = {
   name: "Lightfast",
@@ -15,6 +15,10 @@ export const siteConfig: SiteConfig<SiteLinks> = {
     github: {
       title: "GitHub",
       href: "https://github.com/lightfast",
+    },
+    discord: {
+      title: "Discord",
+      href: "https://discord.gg/lightfast",
     },
   },
 };
