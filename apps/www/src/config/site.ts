@@ -1,15 +1,21 @@
 import type { NavItem, NavItemWithChildren } from "@repo/ui/types/nav";
 import type { SiteConfig } from "@repo/ui/types/site";
 
-export const siteConfig: SiteConfig = {
+export const siteConfig: SiteConfig<"twitter" | "github"> = {
   name: "Dahlia",
   url: "https://dahlia.art",
   ogImage: "https://dahlia.art/og.jpg",
   description:
     "Beautifully designed components that you can copy and paste into your apps. Accessible. Customizable. Open Source.",
   links: {
-    twitter: "https://twitter.com/dahlia-ai",
-    github: "https://github.com/dahlia-ai",
+    twitter: {
+      title: "Twitter",
+      href: "https://twitter.com/dahlia-ai",
+    },
+    github: {
+      title: "GitHub",
+      href: "https://github.com/dahlia-ai",
+    },
   },
 };
 
@@ -32,6 +38,7 @@ export const siteNav: SiteNav = {
   docsNav: [
     {
       title: "Dahlia SDK",
+      href: "/docs/introduction",
       items: [
         {
           title: "Introduction",
@@ -42,6 +49,7 @@ export const siteNav: SiteNav = {
     },
     {
       title: "Foundations",
+      href: "/docs/foundations/overview",
       items: [
         {
           title: "Overview",

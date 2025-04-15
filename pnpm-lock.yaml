@@ -229,24 +229,12 @@ importers:
 
   apps/www:
     dependencies:
-      '@repo/ai':
-        specifier: workspace:*
-        version: link:../../packages/ai
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
         version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
-      '@vendor/db':
-        specifier: workspace:*
-        version: link:../../vendor/db
-      '@vercel/analytics':
-        specifier: ^1.4.1
-        version: 1.4.1(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))
       contentlayer2:
         specifier: ^0.5.3
         version: 0.5.3(acorn@8.14.1)(esbuild@0.23.1)
@@ -4276,32 +4264,6 @@ packages:
       react: '>=16.8.0'
     peerDependenciesMeta:
       react:
-        optional: true
-
-  '@vercel/analytics@1.4.1':
-    resolution: {integrity: sha512-ekpL4ReX2TH3LnrRZTUKjHHNpNy9S1I7QmS+g/RQXoSUQ8ienzosuX7T9djZ/s8zPhBx1mpHP/Rw5875N+zQIQ==}
-    peerDependencies:
-      '@remix-run/react': ^2
-      '@sveltejs/kit': ^1 || ^2
-      next: '>= 13'
-      react: ^18 || ^19 || ^19.0.0-rc
-      svelte: '>= 4'
-      vue: ^3
-      vue-router: ^4
-    peerDependenciesMeta:
-      '@remix-run/react':
-        optional: true
-      '@sveltejs/kit':
-        optional: true
-      next:
-        optional: true
-      react:
-        optional: true
-      svelte:
-        optional: true
-      vue:
-        optional: true
-      vue-router:
         optional: true
 
   '@vercel/blob@0.22.3':
@@ -12555,13 +12517,6 @@ snapshots:
       eventemitter3: 4.0.7
     optionalDependencies:
       react: 18.3.1
-
-  '@vercel/analytics@1.4.1(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(svelte@4.2.19)(vue@3.5.12(typescript@5.6.3))':
-    optionalDependencies:
-      next: 14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-      svelte: 4.2.19
-      vue: 3.5.12(typescript@5.6.3)
 
   '@vercel/blob@0.22.3':
     dependencies:
