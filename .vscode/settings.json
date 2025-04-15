@@ -28,5 +28,8 @@
   // @note Unkown rule at @tailwind fix: https://github.com/tailwindlabs/tailwindcss/discussions/13881
   "files.associations": {
     "*.css": "tailwindcss"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   }
 }

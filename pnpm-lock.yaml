@@ -347,6 +347,9 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
         version: 0.11.1(typescript@5.6.3)(zod@3.23.8)
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../../vendor/clerk
       geist:
         specifier: ^1.3.1
         version: 1.3.1(next@14.2.15(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))

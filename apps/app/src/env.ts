@@ -3,7 +3,7 @@ import { vercel } from "@t3-oss/env-nextjs/presets";
 import { z } from "zod";
 
 import { falEnv } from "@repo/ai/fal-env";
-import { env as authEnv } from "@vendor/clerk/env";
+import { clerkEnvWithWebhook as authEnv } from "@vendor/clerk/env";
 import { env as dbEnv } from "@vendor/db/env";
 import { env as nextEnv } from "@vendor/next/env";
 
