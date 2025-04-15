@@ -36,7 +36,7 @@ export function GeneratorDialog({
       <div className="absolute inset-0 bg-background/95" />
       <div
         ref={dialogRef}
-        className="relative z-50 w-full max-w-lg rounded-lg border shadow-lg animate-in fade-in-0 zoom-in-95"
+        className="relative z-50 w-full max-w-lg rounded-lg border bg-background shadow-lg animate-in fade-in-0 zoom-in-95"
       >
         <Button
           onClick={onClose}

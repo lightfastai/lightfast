@@ -38,6 +38,10 @@ export function useDragOperation({
       // Set up invisible drag image
       const dragImage = document.createElement("div");
       dragImage.style.opacity = "0";
+      dragImage.style.width = "1px";
+      dragImage.style.height = "1px";
+      dragImage.style.position = "fixed";
+      dragImage.style.top = "-100px";
       document.body.appendChild(dragImage);
       e.dataTransfer.setDragImage(dragImage, 0, 0);
       requestAnimationFrame(() => document.body.removeChild(dragImage));
