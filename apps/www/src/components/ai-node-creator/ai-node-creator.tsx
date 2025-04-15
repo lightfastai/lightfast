@@ -52,16 +52,23 @@ export function AiNodeCreator() {
     { from: 2, to: 3 }, // Node 3 to Node 4
   ];
 
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent, index: number) => {
     draggedNodeRef.current = index;
+    // Create a transparent drag image
+    const dragImage = document.createElement("div");
+    dragImage.style.opacity = "0";
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    // Clean up the temporary element
+    requestAnimationFrame(() => document.body.removeChild(dragImage));
   };
 
   const handleDrag = (e: React.DragEvent, index: number) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !e.clientX || !e.clientY) return;
 
     const containerRect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - containerRect.left - 96; // Half of w-48
-    const y = e.clientY - containerRect.top - 64; // Half of aspect-[3/2] of w-48
+    const x = e.clientX - containerRect.left - 96;
+    const y = e.clientY - containerRect.top - 64;
 
     setNodePositions((prev) => {
       const newPositions = [...prev];
@@ -318,7 +325,7 @@ export function AiNodeCreator() {
               zIndex: draggedNodeRef.current === 0 ? 10 : 2,
             }}
             draggable
-            onDragStart={() => handleDragStart(0)}
+            onDragStart={(e) => handleDragStart(e, 0)}
             onDrag={(e) => handleDrag(e, 0)}
             onDragEnd={handleDragEnd}
             onMouseEnter={() => setHoveredNodeIndex(0)}
@@ -329,7 +336,8 @@ export function AiNodeCreator() {
               alt="Node 1"
               width={300}
               height={200}
-              className="h-full w-full border border-border/50 object-cover"
+              className="pointer-events-none h-full w-full border border-border/50 object-cover"
+              draggable={false}
             />
           </div>
 
@@ -346,7 +354,7 @@ export function AiNodeCreator() {
               zIndex: draggedNodeRef.current === 1 ? 10 : 2,
             }}
             draggable
-            onDragStart={() => handleDragStart(1)}
+            onDragStart={(e) => handleDragStart(e, 1)}
             onDrag={(e) => handleDrag(e, 1)}
             onDragEnd={handleDragEnd}
             onMouseEnter={() => setHoveredNodeIndex(1)}
@@ -357,7 +365,8 @@ export function AiNodeCreator() {
               alt="Node 2"
               width={300}
               height={200}
-              className="h-full w-full border border-border/50 object-cover"
+              className="pointer-events-none h-full w-full border border-border/50 object-cover"
+              draggable={false}
             />
           </div>
 
@@ -374,7 +383,7 @@ export function AiNodeCreator() {
               zIndex: draggedNodeRef.current === 2 ? 10 : 2,
             }}
             draggable
-            onDragStart={() => handleDragStart(2)}
+            onDragStart={(e) => handleDragStart(e, 2)}
             onDrag={(e) => handleDrag(e, 2)}
             onDragEnd={handleDragEnd}
             onMouseEnter={() => setHoveredNodeIndex(2)}
@@ -385,7 +394,8 @@ export function AiNodeCreator() {
               alt="Node 3"
               width={300}
               height={200}
-              className="h-full w-full border border-border/50 object-cover"
+              className="pointer-events-none h-full w-full border border-border/50 object-cover"
+              draggable={false}
             />
           </div>
 
@@ -402,7 +412,7 @@ export function AiNodeCreator() {
               zIndex: draggedNodeRef.current === 3 ? 10 : 2,
             }}
             draggable
-            onDragStart={() => handleDragStart(3)}
+            onDragStart={(e) => handleDragStart(e, 3)}
             onDrag={(e) => handleDrag(e, 3)}
             onDragEnd={handleDragEnd}
             onMouseEnter={() => setHoveredNodeIndex(3)}
@@ -413,7 +423,8 @@ export function AiNodeCreator() {
               alt="Node 4"
               width={300}
               height={200}
-              className="h-full w-full border border-border/50 object-cover"
+              className="pointer-events-none h-full w-full border border-border/50 object-cover"
+              draggable={false}
             />
           </div>
         </div>
