@@ -16,7 +16,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import { waitlistFormSchema } from "~/app/validations/valid-email";
+import { waitlistFormSchema } from "~/components/waitlist-form/waitlist-form.validations";
 
 export function WaitlistForm() {
   const { toast } = useToast();
@@ -33,7 +33,7 @@ export function WaitlistForm() {
   const onSubmit = async (values: z.infer<typeof waitlistFormSchema>) => {
     try {
       // Call the new API endpoint
-      const response = await fetch("/api/waitlist", {
+      const response = await fetch("/api/waitlist/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +50,7 @@ export function WaitlistForm() {
 
       toast({
         title: "Success!",
-        description: "Successfully joined the waitlist!",
+        description: result.message || "Successfully joined the waitlist!",
       });
       form.reset(); // Reset form on success
     } catch (error) {
