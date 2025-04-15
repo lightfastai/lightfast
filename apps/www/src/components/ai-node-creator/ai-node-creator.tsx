@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Send, X } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
@@ -18,9 +19,12 @@ export function AiNodeCreator() {
   const [generationLogs, setGenerationLogs] = useState<
     { time: string; message: string }[]
   >([]);
+  const [hoveredNodeIndex, setHoveredNodeIndex] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
+  const [edgePositions, setEdgePositions] = useState<any[]>([]);
 
   const generationSteps = [
     "Building context...",
@@ -29,6 +33,75 @@ export function AiNodeCreator() {
     "Initializing shaders...",
     "Finalizing output...",
   ];
+
+  // Define the edges between nodes (connections)
+  const edges = [
+    { from: 0, to: 1 }, // Node 1 to Node 2
+    { from: 1, to: 2 }, // Node 2 to Node 3
+    { from: 0, to: 3 }, // Node 1 to Node 4
+    { from: 2, to: 3 }, // Node 3 to Node 4
+  ];
+
+  // Function to calculate edge positions
+  const calculateEdgePositions = useCallback(() => {
+    return edges
+      .map((edge) => {
+        const fromNode = nodeRefs.current[edge.from];
+        const toNode = nodeRefs.current[edge.to];
+
+        if (!fromNode || !toNode) return null;
+
+        const fromRect = fromNode.getBoundingClientRect();
+        const toRect = toNode.getBoundingClientRect();
+        const containerRect = fromNode.parentElement?.getBoundingClientRect();
+
+        if (!containerRect) return null;
+
+        // Calculate positions relative to the container
+        const fromX = fromRect.left + fromRect.width / 2 - containerRect.left;
+        const fromY = fromRect.top + fromRect.height / 2 - containerRect.top;
+        const toX = toRect.left + toRect.width / 2 - containerRect.left;
+        const toY = toRect.top + toRect.height / 2 - containerRect.top;
+
+        return {
+          fromX,
+          fromY,
+          toX,
+          toY,
+          active:
+            hoveredNodeIndex === edge.from || hoveredNodeIndex === edge.to,
+        };
+      })
+      .filter(Boolean);
+  }, [edges, hoveredNodeIndex]);
+
+  // Update edge positions when nodes are hovered or on mount
+  useEffect(() => {
+    // Only calculate if nodes are all rendered
+    if (nodeRefs.current.every((node) => node !== null)) {
+      const positions = calculateEdgePositions();
+      setEdgePositions(positions);
+    }
+  }, [hoveredNodeIndex, calculateEdgePositions]);
+
+  // Recalculate on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (nodeRefs.current.every((node) => node !== null)) {
+        const positions = calculateEdgePositions();
+        setEdgePositions(positions);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Initial calculation
+    handleResize();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [calculateEdgePositions]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -156,7 +229,7 @@ export function AiNodeCreator() {
   return (
     <>
       <div
-        className="relative h-full w-full overflow-hidden rounded-md border"
+        className="relative h-[420px] w-full overflow-hidden rounded-md border"
         onMouseEnter={() => {
           setIsHovered(true);
         }}
@@ -164,7 +237,106 @@ export function AiNodeCreator() {
           setIsHovered(false);
         }}
       >
-        <div className="flex flex-col gap-4 bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] bg-[length:1rem_1rem] p-64 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)]" />
+        <div className="relative flex h-full flex-wrap content-center justify-center gap-6 bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] bg-[length:1rem_1rem] p-6 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)]">
+          {/* SVG for edges */}
+          <svg
+            className="pointer-events-none absolute inset-0 h-full w-full"
+            style={{ zIndex: 1 }}
+          >
+            {edgePositions.map(
+              (edge, index) =>
+                edge && (
+                  <line
+                    key={index}
+                    x1={edge.fromX}
+                    y1={edge.fromY}
+                    x2={edge.toX}
+                    y2={edge.toY}
+                    stroke={
+                      edge.active
+                        ? "var(--sidebar-primary)"
+                        : "var(--sidebar-border)"
+                    }
+                    strokeWidth={edge.active ? 2 : 1}
+                    strokeDasharray={edge.active ? "none" : "4,4"}
+                    strokeLinecap="round"
+                  />
+                ),
+            )}
+          </svg>
+
+          {/* Node 1 */}
+          <div
+            ref={(el) => {
+              nodeRefs.current[0] = el;
+            }}
+            className="relative aspect-[3/2] w-48 cursor-pointer overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md hover:shadow-primary/10"
+            onMouseEnter={() => setHoveredNodeIndex(0)}
+            onMouseLeave={() => setHoveredNodeIndex(null)}
+          >
+            <Image
+              src="/images/placeholder-node-1.jpg"
+              alt="Node 1"
+              width={300}
+              height={200}
+              className={`h-full w-full border border-border/50 object-cover transition-transform duration-500 ${hoveredNodeIndex === 0 ? "scale-110" : "scale-100"}`}
+            />
+          </div>
+
+          {/* Node 2 */}
+          <div
+            ref={(el) => {
+              nodeRefs.current[1] = el;
+            }}
+            className="relative aspect-[3/2] w-48 cursor-pointer overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md hover:shadow-primary/10"
+            onMouseEnter={() => setHoveredNodeIndex(1)}
+            onMouseLeave={() => setHoveredNodeIndex(null)}
+          >
+            <Image
+              src="/images/placeholder-node-2.jpg"
+              alt="Node 2"
+              width={300}
+              height={200}
+              className={`h-full w-full border border-border/50 object-cover transition-transform duration-500 ${hoveredNodeIndex === 1 ? "scale-110" : "scale-100"}`}
+            />
+          </div>
+
+          {/* Node 3 */}
+          <div
+            ref={(el) => {
+              nodeRefs.current[2] = el;
+            }}
+            className="relative aspect-[3/2] w-48 cursor-pointer overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md hover:shadow-primary/10"
+            onMouseEnter={() => setHoveredNodeIndex(2)}
+            onMouseLeave={() => setHoveredNodeIndex(null)}
+          >
+            <Image
+              src="/images/placeholder-node-3.jpg"
+              alt="Node 3"
+              width={300}
+              height={200}
+              className={`h-full w-full border border-border/50 object-cover transition-transform duration-500 ${hoveredNodeIndex === 2 ? "scale-110" : "scale-100"}`}
+            />
+          </div>
+
+          {/* Node 4 */}
+          <div
+            ref={(el) => {
+              nodeRefs.current[3] = el;
+            }}
+            className="relative aspect-[3/2] w-48 cursor-pointer overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md hover:shadow-primary/10"
+            onMouseEnter={() => setHoveredNodeIndex(3)}
+            onMouseLeave={() => setHoveredNodeIndex(null)}
+          >
+            <Image
+              src="/images/placeholder-node-4.jpg"
+              alt="Node 4"
+              width={300}
+              height={200}
+              className={`h-full w-full border border-border/50 object-cover transition-transform duration-500 ${hoveredNodeIndex === 3 ? "scale-110" : "scale-100"}`}
+            />
+          </div>
+        </div>
         {isHovered && (
           <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm">
             <p className="text-sm text-muted-foreground">
