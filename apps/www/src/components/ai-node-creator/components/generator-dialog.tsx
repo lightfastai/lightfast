@@ -8,7 +8,7 @@ import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 import type { CommandDialogProps } from "../types";
 import { Icons } from "~/app/icons";
 
-export function CommandDialog({
+export function GeneratorDialog({
   isOpen,
   onClose,
   onSubmit,

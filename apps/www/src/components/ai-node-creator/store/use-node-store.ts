@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import type { Edge, EdgePosition, NodePosition } from "../types";
-import { useDragOperation } from "./useDragOperation";
+import { useDragOperation } from "../hooks/use-drag-operation";
 
 export function useNodeState() {
   const [nodePositions, setNodePositions] = useState<NodePosition[]>([

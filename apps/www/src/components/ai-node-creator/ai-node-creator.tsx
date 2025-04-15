@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
-import { CommandDialog } from "./components/CommandDialog";
-import { Node } from "./components/Node";
-import { NodesContainer } from "./components/NodesContainer";
-import { useGenerationState } from "./hooks/useGenerationState";
-import { useNodeState } from "./hooks/useNodeState";
+import { GeneratorDialog } from "./components/generator-dialog";
+import { Node } from "./components/node";
+import { NodesContainer } from "./components/nodes-container";
+import { useGenerationState } from "./store/use-generation-store";
+import { useNodeState } from "./store/use-node-store";
 
 const SUGGESTED_PROMPTS = [
   "Create a blur effect node",
@@ -125,7 +125,7 @@ export function AiNodeCreator() {
         </div>
       )}
 
-      <CommandDialog
+      <GeneratorDialog
         isOpen={openCommand}
         onClose={() => setOpenCommand(false)}
         onSubmit={handleSubmit}
