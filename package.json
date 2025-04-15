@@ -15,6 +15,7 @@
     "db:migrate:generate": "turbo -F @vendor/db migrate:generate",
     "dev": "turbo run dev --parallel --filter=@react-td/app --filter=@react-td/www",
     "dev:www": "turbo watch dev -F @react-td/www --continue",
+    "dev:docs": "turbo watch dev -F @react-td/docs --continue",
     "dev:app": "turbo watch dev -F @react-td/app --continue",
     "brain": "turbo run eval",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
