@@ -1,8 +1,8 @@
 "use client";
 
 import type * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import Confetti from "react-confetti";
 
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  useForm,
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
@@ -20,10 +21,11 @@ import { waitlistFormSchema } from "~/components/waitlist-form/waitlist-form.val
 
 export function WaitlistForm() {
   const { toast } = useToast();
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   // Initialize the form
-  const form = useForm<z.infer<typeof waitlistFormSchema>>({
-    resolver: zodResolver(waitlistFormSchema),
+  const form = useForm({
+    schema: waitlistFormSchema,
     defaultValues: {
       email: "",
     },
@@ -52,7 +54,7 @@ export function WaitlistForm() {
         title: "Success!",
         description: result.message || "Successfully joined the waitlist!",
       });
-      form.reset(); // Reset form on success
+      setIsSubmitted(true);
     } catch (error) {
       console.error("Waitlist form error:", error);
       let errorMsg = "Failed to join the waitlist. Please try again.";
@@ -69,39 +71,53 @@ export function WaitlistForm() {
   };
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="grid w-full grid-cols-12 items-start space-x-2"
-      >
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem className="col-span-9">
-              <FormLabel className="sr-only text-xs">Email</FormLabel>
-              <FormControl>
-                <Input
-                  className="text-xs focus-visible:border-none focus-visible:ring-[1px] focus-visible:ring-ring/50 md:text-xs"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage className="text-xs" />
-            </FormItem>
-          )}
-        />
-        <Button
-          type="submit"
-          disabled={form.formState.isSubmitting}
-          className="col-span-3 overflow-hidden truncate rounded-lg px-3 text-xs"
-        >
-          <span className="text-xs">
-            {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
-          </span>
-        </Button>
-      </form>
-    </Form>
+    <>
+      {isSubmitted ? (
+        <div className="flex flex-col items-center justify-center text-center">
+          <Confetti recycle={false} numberOfPieces={400} />
+          <p className="text-sm font-semibold">
+            {form.getValues("email")} is now on the list! 🎉
+          </p>
+          <p className="text-xs text-muted-foreground">
+            We'll notify you when we launch.
+          </p>
+        </div>
+      ) : (
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="grid w-full grid-cols-12 items-start space-x-2"
+          >
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="col-span-9">
+                  <FormLabel className="sr-only text-xs">Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="text-xs focus-visible:border-none focus-visible:ring-[1px] focus-visible:ring-ring/50 md:text-xs"
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              className="col-span-3 overflow-hidden truncate rounded-lg px-3 text-xs"
+            >
+              <span className="text-xs">
+                {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
+              </span>
+            </Button>
+          </form>
+        </Form>
+      )}
+    </>
   );
 }

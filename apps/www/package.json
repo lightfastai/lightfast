@@ -21,6 +21,7 @@
     "lucide-react": "catalog:",
     "next": "catalog:",
     "react": "catalog:react18",
+    "react-confetti": "^6.4.0",
     "react-dom": "catalog:react18"
   },
   "devDependencies": {
