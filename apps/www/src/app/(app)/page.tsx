@@ -25,7 +25,7 @@ export default function Home() {
       </div>
 
       <div className="my-8 w-full max-w-3xl overflow-hidden rounded-xl border">
-        <div className="flex flex-col gap-4 bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] bg-[length:1rem_1rem] p-64" />
+        <div className="flex flex-col gap-4 bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] bg-[length:1rem_1rem] p-64 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)]" />
       </div>
 
       <footer className="mt-auto w-full px-4 py-12 md:px-6">
