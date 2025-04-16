@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 
-import type { NodesContainerProps } from "../types";
+import type { NodesContainerProps } from "./types";
 
 export const NodesContainer = forwardRef<HTMLDivElement, NodesContainerProps>(
   ({ children, edges }, ref) => {

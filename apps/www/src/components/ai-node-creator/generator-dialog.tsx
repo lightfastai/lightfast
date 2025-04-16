@@ -5,17 +5,17 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 
-import type { CommandDialogProps } from "../types";
+import type { CommandDialogProps } from "./types";
 import { Icons } from "~/app/icons";
 
-export function GeneratorDialog({
+export const GeneratorDialog = ({
   isOpen,
   onClose,
   onSubmit,
   suggestedPrompts,
   isGenerating,
   generationLogs,
-}: CommandDialogProps) {
+}: CommandDialogProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -132,4 +132,4 @@ export function GeneratorDialog({
       </div>
     </div>
   );
-}
+};
