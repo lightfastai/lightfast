@@ -1,0 +1,58 @@
+{
+  "name": "@vendor/analytics",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "default": "./src/index.tsx"
+    },
+    "./posthog-server": {
+      "types": "./src/providers/posthog/server.ts",
+      "default": "./src/providers/posthog/server.ts"
+    },
+    "./posthog-client": "./src/providers/posthog/client.tsx",
+    "./logger": {
+      "types": "./src/providers/logger/index.ts",
+      "default": "./src/providers/logger/index.ts"
+    },
+    "./vercel": {
+      "types": "./src/providers/vercel/index.ts",
+      "default": "./src/providers/vercel/index.ts"
+    },
+    "./env": "./env.ts"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "build": "tsc"
+  },
+  "peerDependencies": {
+    "next": "^14",
+    "react": "^18"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/eslint": "^8.56.5",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react18",
+    "@types/react-dom": "catalog:react18",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config",
+  "dependencies": {
+    "@next/third-parties": "^15.3.0",
+    "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
+    "posthog-js": "^1.194.5",
+    "posthog-node": "^4.3.1",
+    "server-only": "^0.0.1"
+  }
+}
