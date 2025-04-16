@@ -8,7 +8,7 @@ import { GeistSans } from "geist/font/sans";
 
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { cn } from "@repo/ui/lib/utils";
-import { VercelAnalytics } from "@vendor/analytics/vercel";
+import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 import { siteConfig } from "~/config/site";
 
@@ -80,6 +80,7 @@ export default function RootLayout({
           </div>
           <Toaster />
           <VercelAnalytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
