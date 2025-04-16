@@ -6,9 +6,9 @@ import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
 import type { EdgePosition } from "./types";
-import { GeneratorDialog } from "./components/generator-dialog";
-import { Node } from "./components/node";
-import { NodesContainer } from "./components/nodes-container";
+import { GeneratorDialog } from "./generator-dialog";
+import { Node } from "./node";
+import { NodesContainer } from "./nodes-container";
 import { useGenerationState } from "./store/use-generation-store";
 import { useNodeState } from "./store/use-node-store";
 

@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import type { NodeProps } from "../types";
+import type { NodeProps } from "./types";
 
 export const Node = ({
   index,
