@@ -25,7 +25,11 @@ export const clerkEnvWithWebhook = createEnv({
   shared: {},
   server: {
     // Add the webhook secret here
-    CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1).startsWith("whsec_"),
+    CLERK_WEBHOOK_SIGNING_SECRET: z
+      .string()
+      .min(1)
+      .startsWith("whsec_")
+      .optional(),
   },
   client: {}, // Client vars are inherited from clerkEnvBase
   experimental__runtimeEnv: {
