@@ -2,7 +2,7 @@ import Image from "next/image";
 
 import type { NodeProps } from "../types";
 
-export function Node({
+export const Node = ({
   index,
   position,
   imageSrc,
@@ -12,7 +12,7 @@ export function Node({
   onMouseEnter,
   onMouseLeave,
   isDragged,
-}: NodeProps) {
+}: NodeProps) => {
   return (
     <div
       className="absolute cursor-move select-none overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm"
@@ -39,4 +39,4 @@ export function Node({
       />
     </div>
   );
-}
+};

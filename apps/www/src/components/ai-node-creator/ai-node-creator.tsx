@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
+import type { EdgePosition } from "./types";
 import { GeneratorDialog } from "./components/generator-dialog";
 import { Node } from "./components/node";
 import { NodesContainer } from "./components/nodes-container";
@@ -36,14 +37,14 @@ export function AiNodeCreator() {
   const { isGenerating, generationLogs, startGeneration } =
     useGenerationState();
 
-  const [edgePositions, setEdgePositions] = useState<any[]>([]);
+  const [edgePositions, setEdgePositions] = useState<EdgePosition[]>([]);
 
   useEffect(() => {
     if (nodeRefs.current.every((node) => node !== null)) {
       const positions = calculateEdgePositions();
       setEdgePositions(positions);
     }
-  }, [hoveredNodeIndex, calculateEdgePositions]);
+  }, [hoveredNodeIndex, calculateEdgePositions, nodeRefs]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -56,7 +57,7 @@ export function AiNodeCreator() {
     window.addEventListener("resize", handleResize);
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
-  }, [calculateEdgePositions]);
+  }, [calculateEdgePositions, nodeRefs]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
