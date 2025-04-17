@@ -7,6 +7,7 @@
     "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "pnpm with-env next dev -p 4101 --turbopack",
+    "dev:email": "email dev --dir ./src/templates -p 4109",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "pnpm with-env next start",
@@ -14,6 +15,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@react-email/components": "^0.0.36",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "0.12.0",
     "@vendor/analytics": "workspace:*",
@@ -39,6 +41,7 @@
     "eslint": "catalog:",
     "jiti": "^1.21.6",
     "postcss": "^8",
+    "react-email": "4.0.7",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },

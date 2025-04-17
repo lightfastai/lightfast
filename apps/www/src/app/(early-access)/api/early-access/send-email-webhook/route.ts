@@ -6,6 +6,7 @@ import type { WaitlistEntryJSON, WebhookEvent } from "@vendor/clerk/server";
 
 import { env } from "~/env";
 import { mail } from "~/lib/email";
+import { EarlyAccessEntryEmail } from "~/templates/early-access-entry-email";
 
 /**
  * Handles the creation of a user in the database. A webhook is sent
@@ -21,8 +22,8 @@ const handleWaitlistEntryCreated = async (data: WaitlistEntryJSON) => {
     const _email = await mail.emails.send({
       from: "noreply@mail.lightfast.ai",
       to: data.email_address,
-      subject: "Welcome to Lightfast",
-      text: "Welcome to Lightfast",
+      subject: "Welcome to Lightfast.ai Early Access",
+      react: EarlyAccessEntryEmail({ email: data.email_address }),
     });
     console.log("Email sent successfully:", _email);
   } catch (error) {

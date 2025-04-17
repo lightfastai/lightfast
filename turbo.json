@@ -43,6 +43,10 @@
     "migrate": {
       "cache": false
     },
+    "dev:email": {
+      "cache": false,
+      "persistent": true
+    },
     "migrate:generate": {
       "cache": false
     },
