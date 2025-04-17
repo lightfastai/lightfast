@@ -75,8 +75,8 @@ export const EarlyAccessEntryEmail = ({
 
             <Section className="mt-[16px] border-t border-gray-700 pt-[24px] text-center">
               <Text className="m-0 mb-[8px] text-[0.6rem] text-gray-500">
-                {new Date().getFullYear()} Lightfast.ai ・ 3141, Melbourne, VIC,
-                Australia
+                {new Date().getFullYear()} {siteConfig.name} ・{" "}
+                {siteConfig.location}
               </Text>
             </Section>
           </Container>

@@ -29,4 +29,5 @@ export const siteConfig: SiteConfig<SiteLinks> = {
       href: "https://lightfast.ai/terms",
     },
   },
+  location: "3141, Melbourne, VIC, Australia",
 };

@@ -29,4 +29,5 @@ export interface SiteConfig<T extends string> {
   ogImage: string;
   description: string;
   links: Record<T, NavItem>;
+  location?: string;
 }
