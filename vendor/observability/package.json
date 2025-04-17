@@ -35,6 +35,6 @@
   "dependencies": {
     "@logtail/next": "^0.1.7",
     "@sentry/nextjs": "^8.45.0",
-    "@t3-oss/env-nextjs": "^0.11.1"
+    "@t3-oss/env-nextjs": "0.12.0"
   }
 }
