@@ -13,7 +13,6 @@ catalog:
   "@types/node": ^20.16.11
   "@types/eslint__js": 8.42.3
   zod: ^3.23.8
-  next: 14.2.15
 
   # Dev tooling
   eslint: ^9.23.0
@@ -21,9 +20,11 @@ catalog:
   tailwindcss: ^3.4.15
   typescript: ^5.8.2
 
+  next: 15.3.0
+
 catalogs:
   react18:
-    react: 18.3.1
-    react-dom: 18.3.1
-    "@types/react": ^18.3.11
-    "@types/react-dom": ^18.3.1
+    react: 19.1.0
+    react-dom: 19.1.0
+    "@types/react": 19.1.2
+    "@types/react-dom": 19.1.2
