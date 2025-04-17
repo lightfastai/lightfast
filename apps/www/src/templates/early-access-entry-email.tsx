@@ -12,6 +12,7 @@ import {
 } from "@react-email/components";
 
 import { Icons } from "~/app/icons";
+import { siteConfig } from "~/config/site";
 
 interface EarlyAccessEntryProps {
   email: string;
@@ -51,11 +52,17 @@ export const EarlyAccessEntryEmail = ({
             </Section>
 
             <Section className="mt-[12px] flex w-full items-center justify-center text-[0.6rem]">
-              <Link href="/privacy" className="text-[0.6rem]">
+              <Link
+                href={siteConfig.links.privacy.href}
+                className="text-[0.6rem]"
+              >
                 Privacy Policy
               </Link>
               ・
-              <Link href="/terms" className="text-[0.6rem]">
+              <Link
+                href={siteConfig.links.terms.href}
+                className="text-[0.6rem]"
+              >
                 Terms & Conditions
               </Link>
             </Section>
