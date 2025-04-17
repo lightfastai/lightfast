@@ -1,81 +1,364 @@
-# apps/brand
+# React TD - Marketing & Early Access Portal
 
-This repository contains a set of custom CSS variables for both light and dark themes. Below are the color palettes for both modes, as well as additional properties like radius.
+## Overview
 
-## Brand
+The `www` package serves as the marketing and early access portal for React TD. Built with Next.js 15.3 and React 19, it implements a modern, secure, and performant architecture for handling early access registrations and user management.
 
-## Primary Colors
+## Key Features
 
-| Variable       | Color Preview                                            | HSL Value   |
-| -------------- | -------------------------------------------------------- | ----------- |
-| `--background` | ![#1b1b1b](https://placehold.co/15x15/000000/000000.png) | `0 0% 0%`   |
-| `--foreground` | ![#ffffff](https://placehold.co/15x15/ffffff/ffffff.png) | `0 0% 100%` |
+- Early Access Registration System
+- Automated Email Communications
+- Secure User Authentication
+- Analytics Integration
+- Rate Limiting and Security Controls
 
-## wwwa
+## Architecture
 
-### Light Mode Colors
+### Tech Stack Updates
 
-| Variable                   | Color Preview                                            | HSL Value        |
-| -------------------------- | -------------------------------------------------------- | ---------------- |
-| `--background`             | ![#ffffff](https://placehold.co/15x15/ffffff/ffffff.png) | `0 0% 100%`      |
-| `--foreground`             | ![#1b1b1b](https://placehold.co/15x15/1b1b1b/1b1b1b.png) | `240 10% 3.9%`   |
-| `--card`                   | ![#ffffff](https://placehold.co/15x15/ffffff/ffffff.png) | `0 0% 100%`      |
-| `--card-foreground`        | ![#1b1b1b](https://placehold.co/15x15/1b1b1b/1b1b1b.png) | `240 10% 3.9%`   |
-| `--popover`                | ![#ffffff](https://placehold.co/15x15/ffffff/ffffff.png) | `0 0% 100%`      |
-| `--popover-foreground`     | ![#1b1b1b](https://placehold.co/15x15/1b1b1b/1b1b1b.png) | `240 10% 3.9%`   |
-| `--primary`                | ![#1a1a1a](https://placehold.co/15x15/1a1a1a/1a1a1a.png) | `240 5.9% 10%`   |
-| `--primary-foreground`     | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--secondary`              | ![#f3f3f3](https://placehold.co/15x15/f3f3f3/f3f3f3.png) | `240 4.8% 95.9%` |
-| `--secondary-foreground`   | ![#1a1a1a](https://placehold.co/15x15/1a1a1a/1a1a1a.png) | `240 5.9% 10%`   |
-| `--muted`                  | ![#f3f3f3](https://placehold.co/15x15/f3f3f3/f3f3f3.png) | `240 4.8% 95.9%` |
-| `--muted-foreground`       | ![#757575](https://placehold.co/15x15/757575/757575.png) | `240 3.8% 46.1%` |
-| `--accent`                 | ![#f3f3f3](https://placehold.co/15x15/f3f3f3/f3f3f3.png) | `240 4.8% 95.9%` |
-| `--accent-foreground`      | ![#1a1a1a](https://placehold.co/15x15/1a1a1a/1a1a1a.png) | `240 5.9% 10%`   |
-| `--destructive`            | ![#d22e2e](https://placehold.co/15x15/d22e2e/d22e2e.png) | `0 84.2% 60.2%`  |
-| `--destructive-foreground` | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--border`                 | ![#e5e5e5](https://placehold.co/15x15/e5e5e5/e5e5e5.png) | `240 5.9% 90%`   |
-| `--input`                  | ![#e5e5e5](https://placehold.co/15x15/e5e5e5/e5e5e5.png) | `240 5.9% 90%`   |
-| `--ring`                   | ![#1a1a1a](https://placehold.co/15x15/1a1a1a/1a1a1a.png) | `240 5.9% 10%`   |
+- Next.js 15.3 with TypeScript configuration
+- React 19 with Server Components
+- Enhanced type safety with Zod 3.24.0
+- Updated environment variable handling with @t3-oss/env-nextjs 0.12.0
 
-### Dark Mode Colors
+### Core Components
 
-| Variable                   | Color Preview                                            | HSL Value        |
-| -------------------------- | -------------------------------------------------------- | ---------------- |
-| `--background`             | ![#1b1b1b](https://placehold.co/15x15/1b1b1b/1b1b1b.png) | `240 10% 3.9%`   |
-| `--foreground`             | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--card`                   | ![#1b1b1b](https://placehold.co/15x15/1b1b1b/1b1b1b.png) | `240 10% 3.9%`   |
-| `--card-foreground`        | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--popover`                | ![#1b1b1b](https://placehold.co/15x15/1b1b1b/1b1b1b.png) | `240 10% 3.9%`   |
-| `--popover-foreground`     | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--primary`                | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--primary-foreground`     | ![#1a1a1a](https://placehold.co/15x15/1a1a1a/1a1a1a.png) | `240 5.9% 10%`   |
-| `--secondary`              | ![#262626](https://placehold.co/15x15/262626/262626.png) | `240 3.7% 15.9%` |
-| `--secondary-foreground`   | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--muted`                  | ![#262626](https://placehold.co/15x15/262626/262626.png) | `240 3.7% 15.9%` |
-| `--muted-foreground`       | ![#a3a3a3](https://placehold.co/15x15/a3a3a3/a3a3a3.png) | `240 5% 64.9%`   |
-| `--accent`                 | ![#262626](https://placehold.co/15x15/262626/262626.png) | `240 3.7% 15.9%` |
-| `--accent-foreground`      | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--destructive`            | ![#993232](https://placehold.co/15x15/993232/993232.png) | `0 62.8% 30.6%`  |
-| `--destructive-foreground` | ![#fafafa](https://placehold.co/15x15/fafafa/fafafa.png) | `0 0% 98%`       |
-| `--border`                 | ![#262626](https://placehold.co/15x15/262626/262626.png) | `240 3.7% 15.9%` |
-| `--input`                  | ![#262626](https://placehold.co/15x15/262626/262626.png) | `240 3.7% 15.9%` |
-| `--ring`                   | ![#d4e2f4](https://placehold.co/15x15/d4e2f4/d4e2f4.png) | `240 4.9% 83.9%` |
+#### Authentication & User Management
 
-### Charts
+- Integration with Clerk for secure authentication
+- Webhook handling for user events
+- Type-safe environment configuration
 
-| Variable    | Color Preview                                            | HSL Value     |
-| ----------- | -------------------------------------------------------- | ------------- |
-| `--chart-1` | ![#f45d9d](https://placehold.co/15x15/f45d9d/f45d9d.png) | `12 76% 61%`  |
-| `--chart-2` | ![#2abf78](https://placehold.co/15x15/2abf78/2abf78.png) | `173 58% 39%` |
-| `--chart-3` | ![#4e96a6](https://placehold.co/15x15/4e96a6/4e96a6.png) | `197 37% 24%` |
-| `--chart-4` | ![#d2ca38](https://placehold.co/15x15/d2ca38/d2ca38.png) | `43 74% 66%`  |
-| `--chart-5` | ![#f7ab4d](https://placehold.co/15x15/f7ab4d/f7ab4d.png) | `27 87% 67%`  |
+#### Email System
 
-### Other Variables
+- Resend email integration for transactional emails
+- Templated communications for:
+  - Early access confirmations
+  - Waitlist updates
+  - Access grant notifications
 
-| Variable   | Value          |
-| ---------- | -------------- |
-| `--border` | `240 5.9% 90%` |
-| `--input`  | `240 5.9% 90%` |
-| `--ring`   | `240 5.9% 10%` |
-| `--radius` | `0rem`         |
+#### Security Layer
+
+- Arcjet integration for:
+  - Rate limiting
+  - Bot protection
+  - Request validation
+- Enhanced security headers
+- CORS configuration
+
+### Implementation Structure
+
+```
+src/
+├── app/
+│   └── (early-access)/
+│       └── api/
+│           └── early-access/
+│               ├── create/           # Early access registration endpoint
+│               └── send-email-webhook/ # Webhook handler for email notifications
+├── lib/
+│   └── email.ts                     # Email client configuration
+├── config/                          # Configuration files
+├── components/                      # React components
+└── env.ts                          # Environment configuration
+```
+
+### System Architecture & Data Flow
+
+```mermaid
+graph TD
+    subgraph Frontend["Frontend Layer"]
+        UI[User Interface]
+        Form[Registration Form]
+        Status[Status Display]
+        UI --> Form
+        UI --> Status
+    end
+
+    subgraph APILayer["API Layer"]
+        Create["/api/early-access/create"]
+        Webhook["/api/early-access/send-email-webhook"]
+        Form --> Create
+        Clerk --> Webhook
+    end
+
+    subgraph SecurityLayer["Security Layer (Arcjet)"]
+        RateLimit[Rate Limiting]
+        BotProtection[Bot Protection]
+        Validation[Request Validation]
+        Create --> RateLimit
+        Create --> BotProtection
+        Create --> Validation
+    end
+
+    subgraph AuthLayer["Authentication Layer (Clerk)"]
+        Clerk[Clerk Service]
+        UserMgmt[User Management]
+        WebhookEvents[Webhook Events]
+        RateLimit --> Clerk
+        Clerk --> UserMgmt
+        UserMgmt --> WebhookEvents
+    end
+
+    subgraph CommunicationLayer["Communication Layer"]
+        EmailService[Resend Email Service]
+        Templates[Email Templates]
+        Queue[Email Queue]
+        WebhookEvents --> EmailService
+        EmailService --> Templates
+        Templates --> Queue
+    end
+
+    subgraph StorageLayer["Storage Layer"]
+        UserRecords[User Records]
+        WaitList[Waitlist Status]
+        AccessControl[Access Control]
+        UserMgmt --> UserRecords
+        UserRecords --> WaitList
+        WaitList --> AccessControl
+    end
+
+    Status --> UserRecords
+```
+
+### Implementation Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as Frontend Client
+    participant API as API Routes
+    participant Security as Arcjet Security
+    participant Auth as Clerk Auth
+    participant Email as Resend Email
+    participant DB as User Records
+
+    Client->>API: POST /api/early-access/create
+    Note over Client,API: Registration request with user data
+
+    API->>Security: Validate Request
+    activate Security
+    Security-->>API: Request Validated
+    deactivate Security
+
+    API->>Auth: Create User Record
+    activate Auth
+    Auth-->>API: User Created
+    Auth->>API: Webhook: User.Created
+    deactivate Auth
+
+    API->>Email: Send Welcome Email
+    activate Email
+    Email-->>API: Email Queued
+    deactivate Email
+
+    API->>DB: Store User Status
+    activate DB
+    DB-->>API: Status Updated
+    deactivate DB
+
+    API-->>Client: Registration Complete
+    Note over Client,API: Response with status
+
+    Auth->>API: Webhook: Status.Updated
+    activate API
+    API->>Email: Send Status Update
+    Email-->>API: Update Email Sent
+    API->>DB: Update Access Status
+    DB-->>API: Status Updated
+    deactivate API
+```
+
+### Core Implementation Details
+
+#### 1. Environment Configuration
+
+```typescript
+// env.ts
+export const env = createEnv({
+  extends: [
+    vercel(),
+    clerkEnvWithWebhook, // Auth with webhook support
+    securityEnv, // Arcjet security
+    emailEnv, // Resend email service
+  ],
+  // ... configuration
+});
+```
+
+#### 2. Registration Flow
+
+- User submits early access request through `/api/early-access/create`
+- Request validation by Arcjet security layer
+- User record creation in Clerk
+- Confirmation email via Resend
+
+#### 3. Webhook Processing
+
+- Webhook events from Clerk to `/api/early-access/send-email-webhook`
+- Email notification triggers
+- Access status updates
+
+#### 4. Security Implementation
+
+- Rate limiting and bot protection via Arcjet
+- Authentication state management through Clerk
+- Type-safe environment variables
+- Protected API routes
+
+#### 5. Communication System
+
+- Email service configuration via Resend
+- Templated communications for:
+  - Registration confirmation
+  - Waitlist status updates
+  - Access grant notifications
+
+### Data Flow
+
+1. **Early Access Registration**
+
+   ```mermaid
+   graph TD
+   A[User Registration] --> B[Arcjet Security Check]
+   B --> C[Clerk Auth Flow]
+   C --> D[Webhook Event]
+   D --> E[Email Notification]
+   D --> F[Analytics Event]
+   ```
+
+2. **Webhook Processing**
+   - Clerk webhook events trigger automated workflows
+   - Event validation and processing
+   - User status updates
+   - Email notifications
+
+## Configuration
+
+### Environment Variables
+
+Updated type-safe environment configuration using @t3-oss/env-nextjs:
+
+```typescript
+// Example env.ts structure
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+export const env = createEnv({
+  server: {
+    CLERK_SECRET_KEY: z.string(),
+    RESEND_API_KEY: z.string(),
+    ARCJET_API_KEY: z.string(),
+  },
+  client: {
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string(),
+  },
+  runtimeEnv: process.env,
+});
+```
+
+### Next.js Configuration
+
+Using TypeScript for Next.js configuration:
+
+```typescript
+// next.config.ts
+const config: NextConfig = {
+  reactStrictMode: true,
+  transpilePackages: [
+    "@repo/ui",
+    "@vendor/security",
+    "@vendor/analytics",
+    "@vendor/email",
+    "@vendor/clerk",
+  ],
+};
+```
+
+## Development
+
+### Prerequisites
+
+- Node.js 20.x
+- pnpm 8.x
+
+### Setup
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run development server
+pnpm dev
+
+# Build for production
+pnpm build
+```
+
+### Environment Setup
+
+Create a `.env` file with the following variables:
+
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+RESEND_API_KEY=re_...
+ARCJET_API_KEY=aj_...
+```
+
+## Testing
+
+The application includes comprehensive testing:
+
+- Unit tests for core functionality
+- Integration tests for API endpoints
+- E2E tests for critical user flows
+
+## Deployment
+
+The application is configured for deployment on Vercel with:
+
+- Edge Runtime support
+- Automated CI/CD pipeline
+- Environment variable validation
+- Build-time type checking
+
+## Security Considerations
+
+- All API routes are protected with Arcjet rate limiting
+- Authentication state is managed securely through Clerk
+- Environment variables are strictly typed and validated
+- Security headers are configured for production
+- CORS is properly configured for API routes
+
+## Monitoring & Analytics
+
+- Integration with analytics for user tracking
+- Error monitoring and reporting
+- Performance metrics collection
+- User engagement tracking
+
+## Dependencies
+
+### Core
+
+- next: ^15.3.0
+- react: ^19.0.0
+- react-dom: ^19.0.0
+- @t3-oss/env-nextjs: ^0.12.0
+- zod: ^3.24.0
+
+### Vendor Packages
+
+- @vendor/clerk: Authentication
+- @vendor/email: Email service (Resend)
+- @vendor/security: Security layer (Arcjet)
+- @vendor/analytics: Analytics integration
+
+## Contributing
+
+Please refer to the main repository's contributing guidelines.
+
+## License
+
+This package is private and part of the React TD monorepo.
