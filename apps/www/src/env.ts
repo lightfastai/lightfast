@@ -31,9 +31,14 @@ export const env = createEnv({
    */
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+
+  /**
+   * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
+   * `SOME_VAR=''` will throw an error.
+   */
+  emptyStringAsUndefined: true,
 });
