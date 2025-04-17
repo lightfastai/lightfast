@@ -1,12 +1,11 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { Webhook } from "svix";
 
-import type { WaitlistEntryJSON } from "@vendor/clerk/server";
-import type { WebhookEvent } from "@vendor/clerk/webhooks";
-import { Webhook } from "@vendor/clerk/webhooks";
-import { sendEmail } from "@vendor/email";
+import type { WaitlistEntryJSON, WebhookEvent } from "@vendor/clerk/server";
 
 import { env } from "~/env";
+import { mail } from "~/lib/email";
 
 /**
  * Handles the creation of a user in the database. A webhook is sent
@@ -19,13 +18,13 @@ import { env } from "~/env";
  */
 const handleWaitlistEntryCreated = async (data: WaitlistEntryJSON) => {
   try {
-    const email = await sendEmail({
+    const _email = await mail.emails.send({
       from: "noreply@mail.lightfast.ai",
       to: data.email_address,
       subject: "Welcome to Lightfast",
       text: "Welcome to Lightfast",
     });
-    console.log("Email sent successfully:", email);
+    console.log("Email sent successfully:", _email);
   } catch (error) {
     console.error("Error: Could not send email:", error);
     throw error;
