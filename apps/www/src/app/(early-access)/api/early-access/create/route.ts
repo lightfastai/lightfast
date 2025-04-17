@@ -1,3 +1,4 @@
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { arcjet, protectSignup } from "@vendor/security";
@@ -36,11 +37,11 @@ const aj = arcjet({
   ],
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const clerkSecretKey = env.CLERK_SECRET_KEY;
 
   try {
-    const json = await request.json();
+    const json = (await request.json()) as { email: string };
     const parsed = earlyAcessFormSchema.safeParse(json);
 
     if (!parsed.success) {
@@ -94,46 +95,26 @@ export async function POST(request: Request) {
         body: JSON.stringify({ email_address: email }), // Use email_address as per Clerk API docs
       });
 
-      const clerkResponse = await response.json();
-
       if (!response.ok) {
-        // Log the detailed error response from Clerk for debugging
-        console.error(
-          `Clerk API Error (${response.status}):`,
-          clerkResponse.errors || clerkResponse,
-        );
-
-        let clientErrorMessage = "Failed to add email to the waitlist.";
-        const clerkError = clerkResponse.errors?.[0];
-
-        // Map specific Clerk errors to generic messages if needed
-        if (clerkError?.code === "duplicate_record") {
-          // Even for duplicates, we might want to return a success-like message
-          // to avoid confirming if an email is already on the list.
-          // Or return a specific but still generic message like:
-          // clientErrorMessage = "This email address is already registered.";
-          // For now, let's treat it as a success to avoid enumeration
-          return NextResponse.json(
-            { success: true, message: "You're already on the list!" }, // Or just { success: true }
-            { status: 200 }, // Return 200 to not indicate an error state for duplicates
-          );
-        } else if (response.status >= 500) {
-          clientErrorMessage =
-            "There was a problem connecting to the waitlist service. Please try again later.";
-        } else if (response.status >= 400) {
-          // Catch-all for other 4xx errors from Clerk
-          clientErrorMessage =
-            "There was an issue processing your request. Please check the email address and try again.";
-        }
-
-        // Return the generic error message to the client
         return NextResponse.json(
-          { error: clientErrorMessage },
-          { status: 500 }, // Use a generic 500 or a more appropriate status based on policy
+          {
+            error: "Failed to add email to the waitlist.",
+            message: await response.text(),
+          },
+          { status: 500 },
         );
       }
 
       // Clerk API responded successfully (e.g., status 200)
+      // @note, in clerk, there is a "status" field that can return "pending"
+      const clerkResponse = (await response.json()) as {
+        id: string;
+        email_address: string;
+        created_at: string;
+        updated_at: string;
+        status: string;
+      };
+
       return NextResponse.json(
         { success: true, entry: clerkResponse },
         { status: 200 },

@@ -90,7 +90,7 @@ export function AiNodeCreator() {
           <Node
             key={index}
             index={index}
-            position={nodePositions[index] || { x: 0, y: 0 }}
+            position={nodePositions[index] ?? { x: 0, y: 0 }}
             imageSrc={`/images/placeholder-node-${index + 1}.jpg`}
             onDragStart={handleDragStart}
             onDrag={handleDrag}
@@ -106,9 +106,7 @@ export function AiNodeCreator() {
         <div
           className={cn(
             "absolute right-4 top-4 z-10",
-            isHovered
-              ? "duration-300 ease-in-out animate-in slide-in-from-top"
-              : "duration-300 animate-out fade-out",
+            "duration-300 ease-in-out animate-in slide-in-from-top",
           )}
         >
           <Button

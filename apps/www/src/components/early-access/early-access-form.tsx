@@ -43,16 +43,31 @@ export function EarlyAcessForm() {
         body: JSON.stringify({ email: values.email }),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
+        const result = (await response.json()) as {
+          error: string;
+          message: string;
+        };
         // Throw an error with the message from the API response if available
-        throw new Error(result.error || `API Error: ${response.statusText}`);
+        throw new Error(`API Error: ${result.error}`);
       }
+
+      const result = (await response.json()) as {
+        success: boolean;
+        entry: {
+          id: string;
+          email_address: string;
+          created_at: string;
+          updated_at: string;
+          status: string;
+        };
+      };
+
+      console.log(result);
 
       toast({
         title: "Success!",
-        description: result.message || "Successfully joined the waitlist!",
+        description: "Successfully joined the waitlist!",
       });
       setIsSubmitted(true);
     } catch (error) {

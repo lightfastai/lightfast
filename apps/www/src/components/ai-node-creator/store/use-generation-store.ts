@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { GenerationLog } from "../types";
 
@@ -7,13 +7,16 @@ export function useGenerationState() {
   const [generationStep, setGenerationStep] = useState(0);
   const [generationLogs, setGenerationLogs] = useState<GenerationLog[]>([]);
 
-  const generationSteps = [
-    "Building context...",
-    "Scaffolding nodes...",
-    "Configuring properties...",
-    "Initializing shaders...",
-    "Finalizing output...",
-  ];
+  const generationSteps = useMemo(
+    () => [
+      "Building context...",
+      "Scaffolding nodes...",
+      "Configuring properties...",
+      "Initializing shaders...",
+      "Finalizing output...",
+    ],
+    [],
+  );
 
   useEffect(() => {
     if (isGenerating) {
@@ -25,7 +28,7 @@ export function useGenerationState() {
               minute: "2-digit",
               second: "2-digit",
             });
-            const nextStep = generationSteps[prev + 1] || "";
+            const nextStep = generationSteps[prev + 1] ?? "";
 
             setGenerationLogs((logs) => {
               const messageExists = logs.some(
@@ -55,7 +58,7 @@ export function useGenerationState() {
       setGenerationStep(0);
       setGenerationLogs([]);
     }
-  }, [isGenerating, generationSteps.length]);
+  }, [isGenerating, generationSteps.length, generationSteps]);
 
   const startGeneration = (prompt: string) => {
     setIsGenerating(true);

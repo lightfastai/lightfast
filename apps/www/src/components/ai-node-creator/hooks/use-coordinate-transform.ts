@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import type { XYPosition } from "../types";
 
 interface UseCoordinateTransformProps {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function useCoordinateTransform({
@@ -19,7 +19,7 @@ export function useCoordinateTransform({
         y: screenY - containerRect.top,
       };
     },
-    [],
+    [containerRef],
   );
 
   const containerToScreenPosition = useCallback(
@@ -32,7 +32,7 @@ export function useCoordinateTransform({
         y: containerY + containerRect.top,
       };
     },
-    [],
+    [containerRef],
   );
 
   return {

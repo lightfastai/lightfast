@@ -4,7 +4,7 @@ import type { NodePosition } from "../types";
 import { useCoordinateTransform } from "./use-coordinate-transform";
 
 interface UseDragOperationProps {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   onPositionChange: (index: number, position: NodePosition) => void;
 }
 

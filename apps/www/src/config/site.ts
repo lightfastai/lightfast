@@ -1,4 +1,4 @@
-import { SiteConfig } from "@repo/ui/types/site";
+import type { SiteConfig } from "@repo/ui/types/site";
 
 type SiteLinks = "twitter" | "github" | "discord";
 

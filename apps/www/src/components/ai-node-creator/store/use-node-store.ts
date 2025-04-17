@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { Edge, EdgePosition, NodePosition } from "../types";
 import { useDragOperation } from "../hooks/use-drag-operation";
@@ -14,12 +14,15 @@ export function useNodeState() {
   const nodeRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const edges: Edge[] = [
-    { from: 0, to: 1 },
-    { from: 1, to: 2 },
-    { from: 0, to: 3 },
-    { from: 2, to: 3 },
-  ];
+  const edges = useMemo<Edge[]>(
+    () => [
+      { from: 0, to: 1 },
+      { from: 1, to: 2 },
+      { from: 0, to: 3 },
+      { from: 2, to: 3 },
+    ],
+    [],
+  );
 
   const handlePositionChange = useCallback(
     (index: number, position: NodePosition) => {
