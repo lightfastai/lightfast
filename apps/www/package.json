@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm with-env next build --turbopack",
+    "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "pnpm with-env next dev -p 4101 --turbopack",
     "format": "prettier --check . --ignore-path ../../.gitignore",
