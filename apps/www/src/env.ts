@@ -2,11 +2,12 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets";
 import { z } from "zod";
 
-import { clerkEnvBase } from "@vendor/clerk/env";
+import { clerkEnvWithWebhook } from "@vendor/clerk/env";
+import { env as emailEnv } from "@vendor/email/env";
 import { env as securityEnv } from "@vendor/security/env";
 
 export const env = createEnv({
-  extends: [vercel(), clerkEnvBase, securityEnv],
+  extends: [vercel(), clerkEnvWithWebhook, securityEnv, emailEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

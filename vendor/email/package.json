@@ -1,16 +1,14 @@
 {
-  "name": "@vendor/clerk",
-  "version": "0.1.0",
+  "name": "@vendor/email",
   "private": true,
+  "version": "0.1.0",
   "type": "module",
   "exports": {
     ".": {
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./env.ts",
-    "./server": "./src/server.ts",
-    "./types": "./src/types.ts",
-    "./client": "./src/client/index.ts"
+    "./env": "./src/env.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -22,12 +20,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/elements": "^0.19.9",
-    "@clerk/nextjs": "^6.15.1",
     "@t3-oss/env-nextjs": "^0.11.1",
-    "next": "catalog:",
-    "react": "catalog:react18",
-    "react-dom": "catalog:react18"
+    "resend": "^4.3.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
