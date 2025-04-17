@@ -12,6 +12,7 @@ const config: NextConfig = {
     "@vendor/security",
     "@vendor/analytics",
     "@vendor/email",
+    "@vendor/clerk",
   ],
 
   /** We already do linting and typechecking as separate tasks in CI */
