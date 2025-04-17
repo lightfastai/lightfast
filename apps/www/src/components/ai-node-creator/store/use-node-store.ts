@@ -67,7 +67,7 @@ export function useNodeState() {
         };
       })
       .filter((edge): edge is EdgePosition => edge !== null);
-  }, [hoveredNodeIndex]);
+  }, [edges, hoveredNodeIndex]);
 
   return {
     nodePositions,

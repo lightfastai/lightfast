@@ -1,7 +1,9 @@
-import type { NextApiRequest } from "next";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
 import type { WaitlistEntryJSON } from "@vendor/clerk/server";
-import { verifyWebhook } from "@vendor/clerk/server";
+import type { WebhookEvent } from "@vendor/clerk/webhooks";
+import { Webhook } from "@vendor/clerk/webhooks";
 import { sendEmail } from "@vendor/email";
 
 import { env } from "~/env";
@@ -30,20 +32,49 @@ const handleWaitlistEntryCreated = async (data: WaitlistEntryJSON) => {
   }
 };
 
-export async function POST(req: NextApiRequest) {
+export async function POST(request: Request) {
   try {
-    const evt = await verifyWebhook(req, {
-      signingSecret: env.CLERK_WEBHOOK_SIGNING_SECRET,
-    });
+    if (!env.CLERK_WEBHOOK_SIGNING_SECRET) {
+      console.error("Error: No webhook secret");
+      return NextResponse.json({ message: "Not configured", ok: false });
+    }
 
-    // Do something with payload
-    // For this guide, log payload to console
-    const { id } = evt.data;
-    const eventType = evt.type;
-    console.log(
-      `Received webhook with ID ${id} and event type of ${eventType}`,
-    );
-    console.log("Webhook payload:", evt.data);
+    // Get the headers
+    const headerPayload = await headers();
+    const svixId = headerPayload.get("svix-id");
+    const svixTimestamp = headerPayload.get("svix-timestamp");
+    const svixSignature = headerPayload.get("svix-signature");
+
+    // If there are no headers, error out
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      console.error("Error: No svix headers");
+      return new Response("Error occured -- no svix headers", {
+        status: 400,
+      });
+    }
+
+    // Get the body
+    const payload = (await request.json()) as object;
+    const body = JSON.stringify(payload);
+
+    // Create a new SVIX instance with your secret.
+    const webhook = new Webhook(env.CLERK_WEBHOOK_SIGNING_SECRET);
+
+    let evt: WebhookEvent | undefined;
+
+    // Verify the payload with the headers
+    try {
+      evt = webhook.verify(body, {
+        "svix-id": svixId,
+        "svix-timestamp": svixTimestamp,
+        "svix-signature": svixSignature,
+      }) as WebhookEvent;
+    } catch (error) {
+      console.error("Error: Could not verify webhook:", error);
+      return new Response("Error occured", {
+        status: 400,
+      });
+    }
 
     if (evt.type === "waitlistEntry.created") {
       await handleWaitlistEntryCreated(evt.data);
