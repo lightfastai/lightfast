@@ -42,7 +42,7 @@ catalogs:
     zod:
       specifier: ^3.24.0
       version: 3.24.3
-  react18:
+  react19:
     '@types/react':
       specifier: 19.1.2
       version: 19.1.2
@@ -151,13 +151,13 @@ importers:
         specifier: ^7.2.3
         version: 7.2.3(@react-three/fiber@8.17.10(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(three@0.169.0))(@types/react@19.1.2)(@types/three@0.169.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(three@0.169.0)
       react:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0
       react-colorful:
         specifier: ^5.6.1
         version: 5.6.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-dom:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0(react@19.1.0)
       react-error-boundary:
         specifier: ^4.1.2
@@ -197,10 +197,10 @@ importers:
         specifier: 'catalog:'
         version: 20.17.2
       '@types/react':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2
       '@types/react-dom':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       '@types/three':
         specifier: ^0.169.0
@@ -251,10 +251,10 @@ importers:
         specifier: ^0.5.3
         version: 0.5.3(acorn@8.14.1)(contentlayer2@0.5.3(acorn@8.14.1)(esbuild@0.23.1))(esbuild@0.23.1)(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0
       react-dom:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0(react@19.1.0)
       react-wrap-balancer:
         specifier: ^1.1.1
@@ -291,10 +291,10 @@ importers:
         specifier: 'catalog:'
         version: 20.17.2
       '@types/react':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2
       '@types/react-dom':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       autoprefixer:
         specifier: ^10.4.20
@@ -369,13 +369,13 @@ importers:
         specifier: 'catalog:'
         version: 15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0
       react-confetti:
         specifier: ^6.4.0
         version: 6.4.0(react@19.1.0)
       react-dom:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0(react@19.1.0)
     devDependencies:
       '@repo/eslint-config':
@@ -391,10 +391,10 @@ importers:
         specifier: 'catalog:'
         version: 20.17.2
       '@types/react':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2
       '@types/react-dom':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       autoprefixer:
         specifier: ^10.4.20
@@ -670,7 +670,7 @@ importers:
         specifier: ^0.4.4
         version: 0.4.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0
       react-day-picker:
         specifier: 8.10.1
@@ -719,10 +719,10 @@ importers:
         specifier: 'catalog:'
         version: 20.17.2
       '@types/react':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2
       '@types/react-dom':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       eslint:
         specifier: 'catalog:'
@@ -823,10 +823,10 @@ importers:
         specifier: 'catalog:'
         version: 20.17.2
       '@types/react':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2
       '@types/react-dom':
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       eslint:
         specifier: 'catalog:'
@@ -853,10 +853,10 @@ importers:
         specifier: 'catalog:'
         version: 15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0
       react-dom:
-        specifier: catalog:react18
+        specifier: catalog:react19
         version: 19.1.0(react@19.1.0)
       svix:
         specifier: ^1.62.0
