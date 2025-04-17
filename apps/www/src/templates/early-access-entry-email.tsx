@@ -1,11 +1,13 @@
 import {
   Body,
+  Column,
   Container,
   Head,
   Heading,
   Html,
   Link,
   Preview,
+  Row,
   Section,
   Tailwind,
   Text,
@@ -29,8 +31,8 @@ export const EarlyAccessEntryEmail = ({
           <Preview>You're in! Welcome to Lightfast.ai Early Access</Preview>
         </Head>
         <Body className="bg-white font-sans">
-          <Container className="max-w-[600px] rounded-[8px] p-[32px]">
-            <Icons.logo className="size-5" />
+          <Container className="max-w-[600px] p-[32px]">
+            <Icons.logo className="w-[20px]" />
 
             <Section className="mt-[24px]">
               <Heading className="m-0 mb-[24px] text-[18px] text-black">
@@ -40,7 +42,7 @@ export const EarlyAccessEntryEmail = ({
                 </span>
               </Heading>
 
-              <Container className="rounded-[2px] border-[1px] border-solid border-gray-300 p-[12px]">
+              <Container className="border-[1px] border-solid border-gray-300 p-[12px]">
                 <Text className="mb-[24px] text-[12px] text-black">
                   Thanks for joining our early access program. You're now part
                   of an exclusive group helping shape the future of
@@ -51,24 +53,28 @@ export const EarlyAccessEntryEmail = ({
               </Container>
             </Section>
 
-            <Section className="mt-[12px] flex w-full items-center justify-center text-[0.6rem]">
-              <Link
-                href={siteConfig.links.privacy.href}
-                className="text-[0.6rem]"
-              >
-                Privacy Policy
-              </Link>
-              ・
-              <Link
-                href={siteConfig.links.terms.href}
-                className="text-[0.6rem]"
-              >
-                Terms & Conditions
-              </Link>
+            <Section className="mt-[12px] text-center">
+              <Row>
+                <Column>
+                  <Link
+                    href={siteConfig.links.privacy.href}
+                    className="text-[0.6rem]"
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Text className="mx-[4px] inline text-[0.6rem]">・</Text>
+                  <Link
+                    href={siteConfig.links.terms.href}
+                    className="text-[0.6rem]"
+                  >
+                    Terms & Conditions
+                  </Link>
+                </Column>
+              </Row>
             </Section>
 
-            <Section className="mt-[16px] flex w-full items-center justify-center border-t border-gray-700 pt-[24px] text-gray-500">
-              <Text className="m-0 mb-[8px] text-[0.6rem]">
+            <Section className="mt-[16px] border-t border-gray-700 pt-[24px] text-center">
+              <Text className="m-0 mb-[8px] text-[0.6rem] text-gray-500">
                 {new Date().getFullYear()} Lightfast.ai ・ 3141, Melbourne, VIC,
                 Australia
               </Text>
