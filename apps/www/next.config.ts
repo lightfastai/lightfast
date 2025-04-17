@@ -1,6 +1,6 @@
 import { NextConfig } from "next";
 
-// @todo import the env.ts file here...
+import "~/env";
 
 /** @type {import("next").NextConfig} */
 const config: NextConfig = {
