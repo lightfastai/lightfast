@@ -66,7 +66,8 @@
     "CLERK_SECRET_KEY",
     "CLERK_WEBHOOK_SIGNING_SECRET",
     "ARCJET_KEY",
-    "RESEND_API_KEY"
+    "RESEND_API_KEY",
+    "NEXT_PUBLIC_API_URL"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",

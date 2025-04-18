@@ -6,6 +6,7 @@ import { Webhook } from "svix";
 import type { WebhookEvent } from "@vendor/clerk/server";
 
 import { env } from "~/env";
+import { getBaseApiUrl } from "~/lib/base-url";
 
 export async function POST(request: Request) {
   if (!env.CLERK_WEBHOOK_SIGNING_SECRET) {
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
   switch (eventType) {
     case "waitlistEntry.created": {
       const response = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/early-access/send-email-confirmation`,
+        `${getBaseApiUrl()}/early-access/send-email-confirmation`,
         {
           headers: {
             "Content-Type": "application/json",
