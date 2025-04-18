@@ -17,7 +17,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.validations";
+import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.schema";
 
 export function EarlyAcessForm() {
   const { toast } = useToast();

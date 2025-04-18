@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { arcjet, protectSignup } from "@vendor/security";
 
-import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.validations";
+import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.schema";
 import { env } from "~/env";
 
 export const runtime = "edge";
