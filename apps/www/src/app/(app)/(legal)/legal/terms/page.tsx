@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
@@ -9,6 +10,11 @@ import {
 
 import { SiteFooter } from "~/components/site-footer";
 import { siteConfig } from "~/config/site";
+
+export const metadata: Metadata = {
+  title: "Terms & Conditions",
+  description: "Terms & Conditions for Lightfast.ai",
+};
 
 export default function TermsPage() {
   return (
