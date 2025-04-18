@@ -1,7 +1,8 @@
-import { err, ok, ResultAsync } from "neverthrow";
+import { ok, ResultAsync } from "neverthrow";
 
 import { createEmailClient } from "@vendor/email";
 
+import { emailConfig } from "~/config/email";
 import { env } from "~/env";
 
 export const mail = createEmailClient(env.RESEND_API_KEY);
@@ -20,53 +21,51 @@ export class UnknownError extends Error {
   }
 }
 
-export const sendResendEmail = async ({
-  from,
+export class EmailError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EmailError";
+  }
+}
+
+const sendResendEmailUnsafe = async ({
+  react,
   to,
   subject,
-  react,
 }: {
-  from: string;
+  react: React.ReactNode;
   to: string;
   subject: string;
-  react: React.ReactNode;
 }) => {
-  const result = await mail.emails.send({
-    from,
+  const response = await mail.emails.send({
+    from: emailConfig.support,
     to,
     subject,
     react,
   });
 
-  if (result.error) {
-    return err(new ResendError(result.error.message));
+  if (response.error) {
+    throw new ResendError(response.error.message);
   }
 
-  return ok(true);
+  return ok(response.data?.id ?? "");
 };
 
-export const sendEmail = ({
-  from,
+export const sendResendEmailSafe = ({
+  react,
   to,
   subject,
-  react,
 }: {
-  from: string;
+  react: React.ReactNode;
   to: string;
   subject: string;
-  react: React.ReactNode;
 }) =>
-  ResultAsync.fromPromise(
-    sendResendEmail({
-      from,
-      to,
-      subject,
-      react,
-    }),
+  ResultAsync.fromThrowable(
+    () => sendResendEmailUnsafe({ react, to, subject }),
     (error) => {
       if (error instanceof ResendError) {
-        return error;
+        return new EmailError(error.message);
       }
-      return new UnknownError(`Failed to send email`);
+      return new UnknownError("Unknown error while sending email");
     },
   );

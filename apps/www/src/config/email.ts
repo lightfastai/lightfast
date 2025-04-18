@@ -3,5 +3,5 @@ export interface EmailConfig {
 }
 
 export const emailConfig: EmailConfig = {
-  support: "noreply@lightfast.ai",
+  support: "Lightfast.ai <noreply@mail.lightfast.ai>",
 };

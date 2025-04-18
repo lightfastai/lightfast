@@ -1,41 +1,11 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { err, ok, safeTry } from "neverthrow";
+import fetch from "node-fetch";
 import { Webhook } from "svix";
 
 import type { WebhookEvent } from "@vendor/clerk/server";
 
-import { validateEmail } from "~/components/early-access/early-access-form.validation";
-import { emailConfig } from "~/config/email";
 import { env } from "~/env";
-import { ResendError, sendEmail, UnknownError } from "~/lib/email";
-import EarlyAccessEntryEmail from "~/templates/early-access-entry-email";
-
-export const sendEmailResult = ({ email }: { email: string }) =>
-  safeTry(async function* () {
-    yield* validateEmail({ email }).mapErr((error) => {
-      console.error("Error: Could not validate email:", error);
-      return err(error);
-    });
-    yield* await sendEmail({
-      from: emailConfig.support,
-      to: email,
-      react: EarlyAccessEntryEmail({ email }),
-      subject: "Welcome to the Lightly Early Access Waitlist",
-    }).mapErr((error) => {
-      console.error("Error: Could not send email:", error);
-      if (error instanceof ResendError) {
-        return err(error);
-      }
-
-      if (error instanceof UnknownError) {
-        return err(error);
-      }
-
-      return error;
-    });
-    return ok(new Response("Email sent", { status: 200 }));
-  });
 
 export async function POST(request: Request) {
   if (!env.CLERK_WEBHOOK_SIGNING_SECRET) {
@@ -90,11 +60,22 @@ export async function POST(request: Request) {
 
   switch (eventType) {
     case "waitlistEntry.created": {
-      sendEmailResult({ email: event.data.email_address }).mapErr((error) => {
-        console.error("Error: Could not send email:", error);
-        return new Response(error.error.message, { status: 400 });
-      });
-      break;
+      const response = await fetch(
+        `${env.NEXT_PUBLIC_API_URL}/early-access/join/send-join-email`,
+        {
+          method: "POST",
+          body: JSON.stringify({ email: event.data.email_address }),
+        },
+      );
+
+      if (!response.ok) {
+        console.error("Error: Could not send email:", response);
+        return new Response("Error occured", {
+          status: 400,
+        });
+      }
+
+      return NextResponse.json({ message: "Email sent", ok: true });
     }
     default: {
       break;

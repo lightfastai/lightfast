@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 
 import { arcjet, protectSignup } from "@vendor/security";
 
-import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.schema";
 import { env } from "~/env";
+import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-parse";
 
 export const runtime = "edge";
 
@@ -37,22 +37,25 @@ const aj = arcjet({
   ],
 });
 
+interface CreateEarlyAccessJoinRequest {
+  email: string;
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const clerkSecretKey = env.CLERK_SECRET_KEY;
+  const res = await safeJsonParse<CreateEarlyAccessJoinRequest>(request);
 
-  try {
-    const json = (await request.json()) as { email: string };
-    const parsed = earlyAcessFormSchema.safeParse(json);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid email address provided." },
-        { status: 400 },
-      );
+  if (res.isErr()) {
+    if (res.error instanceof InvalidJsonError) {
+      return new NextResponse(res.error.message, { status: 500 });
     }
 
-    const { email } = parsed.data;
+    console.error("Unknown error", res.error);
+    return new NextResponse("Unknown error", { status: 500 });
+  }
 
+  const { email } = res.value;
+
+  try {
     const decision = await aj.protect(request, { email });
     console.log("Arcjet decision:", decision);
 
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${clerkSecretKey}`,
+          Authorization: `Bearer ${env.CLERK_SECRET_KEY}`,
         },
         body: JSON.stringify({ email_address: email }), // Use email_address as per Clerk API docs
       });
