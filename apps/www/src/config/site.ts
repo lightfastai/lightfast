@@ -22,12 +22,13 @@ export const siteConfig: SiteConfig<SiteLinks> = {
     },
     privacy: {
       title: "Privacy Policy",
-      href: "https://lightfast.ai/privacy",
+      href: "https://lightfast.ai/legal/privacy",
     },
     terms: {
       title: "Terms & Conditions",
-      href: "https://lightfast.ai/terms",
+      href: "https://lightfast.ai/legal/terms",
     },
   },
   location: "3141, Melbourne, VIC, Australia",
+  contactEmail: "jp@lightfast.ai",
 };

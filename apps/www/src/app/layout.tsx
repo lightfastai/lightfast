@@ -55,7 +55,21 @@ export const metadata: Metadata = {
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
   },
-  manifest: `${siteConfig.url}/site.webmanifest`,
+  themeColor: "#000000",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  applicationName: siteConfig.name,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: siteConfig.name,
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -67,7 +81,6 @@ export default function RootLayout({
     <ClerkProvider waitlistUrl="/">
       <html lang="en" suppressHydrationWarning>
         <head />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
         <body
           className={cn(
             "dark min-h-screen bg-background font-sans antialiased",
