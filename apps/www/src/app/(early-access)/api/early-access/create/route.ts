@@ -1,14 +1,24 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { err, ok } from "neverthrow";
 
 import { arcjet, protectSignup } from "@vendor/security";
 
-import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.validations";
+import type { NextErrorResponse } from "~/components/early-access/aj/errors";
+import {
+  ArcjetEmailError,
+  ArcjetRateLimitError,
+  ArcjetSecurityError,
+} from "~/components/early-access/aj/errors";
+import { createWaitlistEntrySafe } from "~/components/early-access/clerk/create-waitlist-entry";
+import {
+  UnknownError,
+  WaitlistError,
+} from "~/components/early-access/clerk/create-waitlist-entry-errors";
 import { env } from "~/env";
+import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-json-parse";
 
 export const runtime = "edge";
-
-const CLERK_API_URL = "https://api.clerk.com/v1";
 
 const aj = arcjet({
   key: env.ARCJET_KEY, // Get your site key from https://app.arcjet.com
@@ -31,100 +41,148 @@ const aj = arcjet({
         // uses a sliding window rate limit
         mode: "LIVE",
         interval: "10m", // counts requests over a 10 minute sliding window
-        max: 10, // allows 5 submissions within the window
+        max: 20, // allows 5 submissions within the window
       },
     }),
   ],
 });
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  const clerkSecretKey = env.CLERK_SECRET_KEY;
-
+const safeAjProtect = async (request: NextRequest, email: string) => {
   try {
-    const json = (await request.json()) as { email: string };
-    const parsed = earlyAcessFormSchema.safeParse(json);
+    const decision = await aj.protect(request, { email });
+    return ok(decision);
+  } catch (error) {
+    console.error("Arcjet protection error:", error);
+    return err(
+      error instanceof Error ? error : new UnknownError("Unknown error"),
+    );
+  }
+};
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid email address provided." },
+interface CreateEarlyAccessJoinRequest {
+  email: string;
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const res = await safeJsonParse<CreateEarlyAccessJoinRequest>(request);
+
+  if (res.isErr()) {
+    if (res.error instanceof InvalidJsonError) {
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: InvalidJsonError.name,
+          error: "Invalid JSON",
+          message: res.error.message,
+        },
+        { status: 400 },
+      );
+    }
+    console.error("Unknown error", res.error);
+    return NextResponse.json<NextErrorResponse>(
+      {
+        type: UnknownError.name,
+        error: "An unexpected error occurred.",
+        message: "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
+
+  const { email } = res.value;
+
+  const decisionResult = await safeAjProtect(request, email);
+  if (decisionResult.isErr()) {
+    console.error("Arcjet protection error:", decisionResult.error);
+    return NextResponse.json<NextErrorResponse>(
+      {
+        type: UnknownError.name,
+        error: "Arcjet protection error",
+        message: decisionResult.error.message,
+      },
+      { status: 500 },
+    );
+  }
+
+  const decision = decisionResult.value;
+
+  if (decision.isDenied()) {
+    if (decision.reason.isEmail()) {
+      console.error("Invalid email address provided.", decision.reason);
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: ArcjetEmailError.name,
+          error: "Invalid email address provided.",
+          message:
+            "You have provided an invalid email address. Please try again.",
+        },
         { status: 400 },
       );
     }
 
-    const { email } = parsed.data;
-
-    const decision = await aj.protect(request, { email });
-    console.log("Arcjet decision:", decision);
-
-    if (decision.isDenied()) {
-      if (decision.reason.isEmail()) {
-        return NextResponse.json(
-          {
-            error: "Invalid email address provided.",
-            message: decision.reason,
-          },
-          { status: 400 },
-        );
-      }
-
-      if (decision.reason.isRateLimit()) {
-        return NextResponse.json(
-          {
-            error: "Rate limit exceeded. Please try again in 10 minutes.",
-            message: decision.reason,
-          },
-          { status: 429 },
-        );
-      }
-
-      return NextResponse.json(
+    if (decision.reason.isRateLimit()) {
+      console.error("Rate limit exceeded.", decision.reason);
+      return NextResponse.json<NextErrorResponse>(
         {
-          error: "Security check failed. Are you a bot?",
-          message: decision.reason,
+          type: ArcjetRateLimitError.name,
+          error: "Rate limit exceeded. Please try again in 10 minutes.",
+          message:
+            "You have exceeded the rate limit. Please try again in 10 minutes.",
         },
-        { status: 403 },
-      );
-    } else {
-      // Directly call the Clerk Backend API
-      const response = await fetch(`${CLERK_API_URL}/waitlist_entries`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${clerkSecretKey}`,
-        },
-        body: JSON.stringify({ email_address: email }), // Use email_address as per Clerk API docs
-      });
-
-      if (!response.ok) {
-        return NextResponse.json(
-          {
-            error: "Failed to add email to the waitlist.",
-            message: await response.text(),
-          },
-          { status: 500 },
-        );
-      }
-
-      // Clerk API responded successfully (e.g., status 200)
-      // @note, in clerk, there is a "status" field that can return "pending"
-      const clerkResponse = (await response.json()) as {
-        id: string;
-        email_address: string;
-        created_at: string;
-        updated_at: string;
-        status: string;
-      };
-
-      return NextResponse.json(
-        { success: true, entry: clerkResponse },
-        { status: 200 },
+        { status: 429 },
       );
     }
-  } catch (error) {
-    console.error("API Route - Waitlist error:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred." },
+
+    console.error("Security check failed.", decision.reason);
+    return NextResponse.json<NextErrorResponse>(
+      {
+        type: ArcjetSecurityError.name,
+        error: "Security check failed. Are you a bot?",
+        message:
+          "You have been blocked from joining the waitlist. Please try again later.",
+      },
+      { status: 403 },
+    );
+  }
+
+  const result = await createWaitlistEntrySafe({ email })();
+
+  if (result.isErr()) {
+    if (result.error instanceof WaitlistError) {
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: WaitlistError.name,
+          error: "Failed to add email to the waitlist.",
+          message: result.error.message,
+        },
+        { status: 400 },
+      );
+    }
+
+    if (result.error instanceof UnknownError) {
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: UnknownError.name,
+          error: "An unexpected error occurred.",
+          message: result.error.message,
+        },
+        { status: 500 },
+      );
+    }
+
+    console.error("Unknown error", result.error);
+    return NextResponse.json<NextErrorResponse>(
+      {
+        type: UnknownError.name,
+        error: "An unexpected error occurred.",
+        message: "Unknown error",
+      },
       { status: 500 },
     );
   }
+
+  // @todo fix value.value....
+  return NextResponse.json(
+    { success: true, entry: result.value.value },
+    { status: 200 },
+  );
 }
