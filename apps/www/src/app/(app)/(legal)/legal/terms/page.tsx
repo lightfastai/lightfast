@@ -12,13 +12,13 @@ import { SiteFooter } from "~/components/site-footer";
 import { siteConfig } from "~/config/site";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions",
+  title: "Terms",
   description: "Terms & Conditions for Lightfast.ai",
 };
 
 export default function TermsPage() {
   return (
-    <div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="container mx-auto flex h-screen flex-col items-center justify-center px-4">
       <div className="flex h-[calc(100vh-6rem)] max-w-2xl flex-col justify-center">
         <h1 className="mb-4 text-xl font-semibold">Terms & Conditions</h1>
         <Alert>

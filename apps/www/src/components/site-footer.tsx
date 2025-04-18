@@ -35,16 +35,24 @@ export function SiteFooter() {
         <div className="flex flex-col items-center gap-2">
           <nav className="flex items-center gap-2 md:gap-4">
             <Link
-              target="_blank"
-              href={"/legal/privacy"}
+              prefetch={true}
+              href="/"
+              className="text-xs hover:text-foreground"
+            >
+              Home
+            </Link>
+            <Dot className="size-2" />
+            <Link
+              prefetch={true}
+              href="/legal/privacy"
               className="text-xs hover:text-foreground"
             >
               Privacy
             </Link>
             <Dot className="size-2" />
             <Link
-              target="_blank"
-              href={"/legal/terms"}
+              prefetch={true}
+              href="/legal/terms"
               className="text-xs hover:text-foreground"
             >
               Terms
