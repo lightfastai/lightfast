@@ -2,29 +2,13 @@ import { ok, ResultAsync } from "neverthrow";
 
 import type { ClerkWaitlistEntry } from "./types";
 import { env } from "~/env";
+import {
+  ClerkError,
+  UnknownError,
+  WaitlistError,
+} from "./create-waitlist-entry-errors";
 
 const CLERK_API_URL = "https://api.clerk.com/v1";
-
-export class ClerkError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ClerkError";
-  }
-}
-
-export class UnknownError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "UnknownError";
-  }
-}
-
-export class WaitlistError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "WaitlistError";
-  }
-}
 
 const createWaitlistEntryUnsafe = async ({ email }: { email: string }) => {
   const response = await fetch(`${CLERK_API_URL}/waitlist_entries`, {

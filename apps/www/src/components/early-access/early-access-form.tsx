@@ -17,8 +17,8 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import type { ClerkWaitlistEntry } from "~/lib/clerk/types";
-import type { NextErrorResponse } from "~/lib/errors";
+import type { NextErrorResponse } from "~/components/early-access/aj/errors";
+import type { ClerkWaitlistEntry } from "~/components/early-access/clerk/types";
 import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.schema";
 
 export function EarlyAcessForm() {

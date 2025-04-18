@@ -4,19 +4,19 @@ import { err, ok } from "neverthrow";
 
 import { arcjet, protectSignup } from "@vendor/security";
 
-import type { NextErrorResponse } from "~/lib/errors";
-import { env } from "~/env";
-import {
-  createWaitlistEntrySafe,
-  UnknownError,
-  WaitlistError,
-} from "~/lib/clerk/clerk-create-waitlist-entry";
+import type { NextErrorResponse } from "~/components/early-access/aj/errors";
 import {
   ArcjetEmailError,
   ArcjetRateLimitError,
   ArcjetSecurityError,
-} from "~/lib/errors";
-import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-parse";
+} from "~/components/early-access/aj/errors";
+import { createWaitlistEntrySafe } from "~/components/early-access/clerk/create-waitlist-entry";
+import {
+  UnknownError,
+  WaitlistError,
+} from "~/components/early-access/clerk/create-waitlist-entry-errors";
+import { env } from "~/env";
+import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-json-parse";
 
 export const runtime = "edge";
 

@@ -5,7 +5,7 @@ import {
   EmailValidationError,
   validateEmail,
 } from "~/components/early-access/early-access-form.validation";
-import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-parse";
+import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-json-parse";
 import { EmailError, sendResendEmailSafe, UnknownError } from "~/lib/resend";
 import EarlyAccessEntryEmail from "~/templates/early-access-entry-email";
 
