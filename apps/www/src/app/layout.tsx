@@ -55,7 +55,6 @@ export const metadata: Metadata = {
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
   },
-  themeColor: "#000000",
   viewport: {
     width: "device-width",
     initialScale: 1,
