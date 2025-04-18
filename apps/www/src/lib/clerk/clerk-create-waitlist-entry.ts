@@ -1,16 +1,9 @@
 import { ok, ResultAsync } from "neverthrow";
 
+import type { ClerkWaitlistEntry } from "./types";
 import { env } from "~/env";
 
 const CLERK_API_URL = "https://api.clerk.com/v1";
-
-export interface ClerkWaitlistEntry {
-  id: string;
-  email_address: string;
-  created_at: string;
-  updated_at: string;
-  status: string;
-}
 
 export class ClerkError extends Error {
   constructor(message: string) {

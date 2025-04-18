@@ -17,6 +17,8 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
+import type { ClerkWaitlistEntry } from "~/lib/clerk/types";
+import type { NextErrorResponse } from "~/lib/errors";
 import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.schema";
 
 export function EarlyAcessForm() {
@@ -44,23 +46,13 @@ export function EarlyAcessForm() {
       });
 
       if (!response.ok) {
-        const result = (await response.json()) as {
-          error: string;
-          message: string;
-        };
-        // Throw an error with the message from the API response if available
-        throw new Error(`API Error: ${result.error}`);
+        const result = (await response.json()) as NextErrorResponse;
+        throw new Error(result.message);
       }
 
       const result = (await response.json()) as {
         success: boolean;
-        entry: {
-          id: string;
-          email_address: string;
-          created_at: string;
-          updated_at: string;
-          status: string;
-        };
+        entry: ClerkWaitlistEntry;
       };
 
       console.log(result);
@@ -71,7 +63,6 @@ export function EarlyAcessForm() {
       });
       setIsSubmitted(true);
     } catch (error) {
-      console.error("Early access form error:", error);
       let errorMsg = "Failed to join the waitlist. Please try again.";
       if (error instanceof Error) {
         // Use the error message thrown from the try block or a default

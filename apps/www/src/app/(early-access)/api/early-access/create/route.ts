@@ -4,12 +4,18 @@ import { err, ok } from "neverthrow";
 
 import { arcjet, protectSignup } from "@vendor/security";
 
+import type { NextErrorResponse } from "~/lib/errors";
 import { env } from "~/env";
 import {
   createWaitlistEntrySafe,
   UnknownError,
   WaitlistError,
-} from "~/lib/clerk";
+} from "~/lib/clerk/clerk-create-waitlist-entry";
+import {
+  ArcjetEmailError,
+  ArcjetRateLimitError,
+  ArcjetSecurityError,
+} from "~/lib/errors";
 import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-parse";
 
 export const runtime = "edge";
@@ -35,7 +41,7 @@ const aj = arcjet({
         // uses a sliding window rate limit
         mode: "LIVE",
         interval: "10m", // counts requests over a 10 minute sliding window
-        max: 10, // allows 5 submissions within the window
+        max: 20, // allows 5 submissions within the window
       },
     }),
   ],
@@ -47,7 +53,9 @@ const safeAjProtect = async (request: NextRequest, email: string) => {
     return ok(decision);
   } catch (error) {
     console.error("Arcjet protection error:", error);
-    return err(error instanceof Error ? error : new Error("Unknown error"));
+    return err(
+      error instanceof Error ? error : new UnknownError("Unknown error"),
+    );
   }
 };
 
@@ -60,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (res.isErr()) {
     if (res.error instanceof InvalidJsonError) {
-      return NextResponse.json(
+      return NextResponse.json<NextErrorResponse>(
         {
           type: InvalidJsonError.name,
           error: "Invalid JSON",
@@ -70,7 +78,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
     console.error("Unknown error", res.error);
-    return NextResponse.json(
+    return NextResponse.json<NextErrorResponse>(
       {
         type: UnknownError.name,
         error: "An unexpected error occurred.",
@@ -85,9 +93,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const decisionResult = await safeAjProtect(request, email);
   if (decisionResult.isErr()) {
     console.error("Arcjet protection error:", decisionResult.error);
-    return NextResponse.json(
+    return NextResponse.json<NextErrorResponse>(
       {
-        type: "SECURITY_INTERNAL_SEVERER_ERROR",
+        type: UnknownError.name,
         error: "Arcjet protection error",
         message: decisionResult.error.message,
       },
@@ -100,11 +108,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (decision.isDenied()) {
     if (decision.reason.isEmail()) {
       console.error("Invalid email address provided.", decision.reason);
-      return NextResponse.json(
+      return NextResponse.json<NextErrorResponse>(
         {
-          type: "SECURITY_AUDIT_ERROR",
+          type: ArcjetEmailError.name,
           error: "Invalid email address provided.",
-          message: decision.reason,
+          message:
+            "You have provided an invalid email address. Please try again.",
         },
         { status: 400 },
       );
@@ -112,22 +121,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (decision.reason.isRateLimit()) {
       console.error("Rate limit exceeded.", decision.reason);
-      return NextResponse.json(
+      return NextResponse.json<NextErrorResponse>(
         {
-          type: "SECURITY_AUDIT_ERROR",
+          type: ArcjetRateLimitError.name,
           error: "Rate limit exceeded. Please try again in 10 minutes.",
-          message: decision.reason,
+          message:
+            "You have exceeded the rate limit. Please try again in 10 minutes.",
         },
         { status: 429 },
       );
     }
 
     console.error("Security check failed.", decision.reason);
-    return NextResponse.json(
+    return NextResponse.json<NextErrorResponse>(
       {
-        type: "SECURITY_AUDIT_ERROR",
+        type: ArcjetSecurityError.name,
         error: "Security check failed. Are you a bot?",
-        message: decision.reason,
+        message:
+          "You have been blocked from joining the waitlist. Please try again later.",
       },
       { status: 403 },
     );
@@ -137,7 +148,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (result.isErr()) {
     if (result.error instanceof WaitlistError) {
-      return NextResponse.json(
+      return NextResponse.json<NextErrorResponse>(
         {
           type: WaitlistError.name,
           error: "Failed to add email to the waitlist.",
@@ -148,7 +159,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     if (result.error instanceof UnknownError) {
-      return NextResponse.json(
+      return NextResponse.json<NextErrorResponse>(
         {
           type: UnknownError.name,
           error: "An unexpected error occurred.",
@@ -159,7 +170,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     console.error("Unknown error", result.error);
-    return NextResponse.json(
+    return NextResponse.json<NextErrorResponse>(
       {
         type: UnknownError.name,
         error: "An unexpected error occurred.",
@@ -169,8 +180,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  // @todo fix value.value....
   return NextResponse.json(
-    { success: true, entry: result.value },
+    { success: true, entry: result.value.value },
     { status: 200 },
   );
 }
