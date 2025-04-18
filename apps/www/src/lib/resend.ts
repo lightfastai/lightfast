@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { ok, ResultAsync } from "neverthrow";
 
 import { createEmailClient } from "@vendor/email";
@@ -33,7 +34,7 @@ const sendResendEmailUnsafe = async ({
   to,
   subject,
 }: {
-  react: React.ReactNode;
+  react: JSX.Element;
   to: string;
   subject: string;
 }) => {
@@ -56,7 +57,7 @@ export const sendResendEmailSafe = ({
   to,
   subject,
 }: {
-  react: React.ReactNode;
+  react: JSX.Element;
   to: string;
   subject: string;
 }) =>

@@ -56,13 +56,14 @@ export async function POST(request: Request) {
 
   console.log(`Received webhook with ID ${id} and event type of ${eventType}`);
 
-  const response: Response = new Response("", { status: 201 });
-
   switch (eventType) {
     case "waitlistEntry.created": {
       const response = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/early-access/join/send-join-email`,
+        `${env.NEXT_PUBLIC_API_URL}/early-access/send-email-confirmation`,
         {
+          headers: {
+            "Content-Type": "application/json",
+          },
           method: "POST",
           body: JSON.stringify({ email: event.data.email_address }),
         },
@@ -82,5 +83,6 @@ export async function POST(request: Request) {
     }
   }
 
-  return response;
+  // @todo what should we return here?
+  return new Response("", { status: 201 });
 }
