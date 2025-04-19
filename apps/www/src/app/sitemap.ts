@@ -1,21 +1,32 @@
 import type { MetadataRoute } from "next";
 
+import { createBaseUrl } from "~/lib/base-url";
+
+/**
+ * Generates the sitemap for the application.
+ *
+ * Includes:
+ * - Homepage (highest priority, monthly updates)
+ * - Legal pages (terms and privacy, weekly updates)
+ *
+ * @returns {MetadataRoute.Sitemap} Next.js compatible sitemap configuration
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: "https://lightfast.ai",
+      url: createBaseUrl(),
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 1,
     },
     {
-      url: "https://lightfast.ai/legal/terms",
+      url: `${createBaseUrl()}/legal/terms`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
-      url: "https://lightfast.ai/legal/privacy",
+      url: `${createBaseUrl()}/legal/privacy`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
