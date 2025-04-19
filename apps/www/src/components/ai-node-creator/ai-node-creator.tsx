@@ -91,7 +91,7 @@ export function AiNodeCreator() {
             key={index}
             index={index}
             position={nodePositions[index] ?? { x: 0, y: 0 }}
-            imageSrc={`/images/placeholder-node-${index + 1}.jpg`}
+            imageSrc={`/images/playground-placeholder-${index + 1}.webp`}
             onDragStart={handleDragStart}
             onDrag={handleDrag}
             onDragEnd={handleDragEnd}
