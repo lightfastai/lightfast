@@ -30,5 +30,4 @@ export const siteConfig: SiteConfig<SiteLinks> = {
     },
   },
   location: "3141, Melbourne, VIC, Australia",
-  contactEmail: "jp@lightfast.ai",
 };
