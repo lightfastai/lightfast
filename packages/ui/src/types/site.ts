@@ -30,5 +30,4 @@ export interface SiteConfig<T extends string> {
   description: string;
   links: Record<T, NavItem>;
   location?: string;
-  contactEmail?: string;
 }

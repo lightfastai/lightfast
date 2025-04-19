@@ -8,8 +8,7 @@ import {
   AlertTitle,
 } from "@repo/ui/components/ui/alert";
 
-import { SiteFooter } from "~/components/site-footer";
-import { siteConfig } from "~/config/site";
+import { emailConfig } from "~/config/email";
 
 export const metadata: Metadata = {
   title: "Terms",
@@ -18,8 +17,8 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="container mx-auto flex h-screen flex-col items-center justify-center px-4">
-      <div className="flex h-[calc(100vh-6rem)] max-w-2xl flex-col justify-center">
+    <div className="container mx-auto flex h-[calc(100vh-12rem)] flex-col items-center justify-center px-4 py-16">
+      <div className="max-w-2xl">
         <h1 className="mb-4 text-xl font-semibold">Terms & Conditions</h1>
         <Alert>
           <AlertCircle className="size-4" />
@@ -31,10 +30,10 @@ export default function TermsPage() {
               out to{" "}
               <span className="font-medium">
                 <Link
-                  href={`mailto:${siteConfig.contactEmail}`}
+                  href={`mailto:${emailConfig.legal}`}
                   className="underline hover:text-primary"
                 >
-                  {siteConfig.contactEmail}
+                  {emailConfig.legal}
                 </Link>
               </span>
               .
@@ -42,7 +41,6 @@ export default function TermsPage() {
           </AlertDescription>
         </Alert>
       </div>
-      <SiteFooter />
     </div>
   );
 }

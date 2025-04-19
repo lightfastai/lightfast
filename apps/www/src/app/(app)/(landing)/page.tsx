@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
 import { AiNodeCreatorSkeleton } from "~/components/ai-node-creator/ai-node-creator-skeleton";
-import { SiteFooter } from "~/components/site-footer";
 import { siteConfig } from "~/config/site";
 
 const EarlyAccessForm = dynamic(() =>
@@ -17,9 +17,14 @@ const AiNodeCreator = dynamic(() =>
   ),
 );
 
+export const metadata: Metadata = {
+  title: "Home",
+  description: "Join the waitlist to get early access to Lightfast",
+};
+
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 pt-16 sm:pt-24 md:pt-32">
+    <div className="flex flex-col items-center px-4 pt-16 sm:pt-24 md:pt-32">
       <div className="flex w-full flex-col items-center justify-center gap-3 py-4 sm:gap-4">
         <span className="font-mono text-xs text-muted-foreground">
           Introducing
@@ -45,8 +50,6 @@ export default function Home() {
           <AiNodeCreator />
         </Suspense>
       </div>
-
-      <SiteFooter />
     </div>
   );
 }
