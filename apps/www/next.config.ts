@@ -18,6 +18,17 @@ const config: NextConfig = {
   /** We already do linting and typechecking as separate tasks in CI */
   // eslint: { ignoreDuringBuilds: true },
   // typescript: { ignoreBuildErrors: true },
+
+  rewrites: async () => [
+    {
+      source: "/health",
+      destination: "/api/health",
+    },
+    {
+      source: "/healthz",
+      destination: "/api/health",
+    },
+  ],
 };
 
 export default config;
