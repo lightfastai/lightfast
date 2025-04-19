@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Dot } from "lucide-react";
 
-import { Icons } from "~/app/icons";
+import { Icons } from "~/components/icons";
 import { siteConfig } from "~/config/site";
 
 export function SiteFooter() {

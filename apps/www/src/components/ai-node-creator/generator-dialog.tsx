@@ -6,7 +6,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 
 import type { CommandDialogProps } from "./types";
-import { Icons } from "~/app/icons";
+import { Icons } from "~/components/icons";
 
 export const GeneratorDialog = ({
   isOpen,

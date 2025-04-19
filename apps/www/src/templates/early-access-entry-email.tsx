@@ -13,7 +13,7 @@ import {
   Text,
 } from "@react-email/components";
 
-import { Icons } from "~/app/icons";
+import { Icons } from "~/components/icons";
 import { siteConfig } from "~/config/site";
 
 interface EarlyAccessEntryProps {
