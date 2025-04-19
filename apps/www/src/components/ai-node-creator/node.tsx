@@ -33,6 +33,7 @@ export const Node = ({
         src={imageSrc}
         alt={`Node ${index + 1}`}
         width={300}
+        loading="lazy"
         height={200}
         className="pointer-events-none h-full w-full border border-border/50 object-cover"
         draggable={false}

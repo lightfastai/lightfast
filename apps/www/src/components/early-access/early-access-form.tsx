@@ -21,7 +21,7 @@ import type { NextErrorResponse } from "~/components/early-access/aj/errors";
 import type { ClerkWaitlistEntry } from "~/components/early-access/clerk/types";
 import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.schema";
 
-export function EarlyAcessForm() {
+export function EarlyAccessForm() {
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
 
