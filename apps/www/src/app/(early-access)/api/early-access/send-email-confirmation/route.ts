@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import type { SendEmailConfirmationResponse } from "~/components/early-access/send-email-confirmation/email";
 import {
   EmailValidationError,
   validateEmail,
@@ -102,5 +103,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  return NextResponse.json({ message: "Email sent" }, { status: 200 });
+  return NextResponse.json({ success: true } as SendEmailConfirmationResponse, {
+    status: 200,
+  });
 }
