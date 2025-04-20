@@ -1,8 +1,8 @@
 import type { Result } from "neverthrow";
 import { err, ok } from "neverthrow";
 
-import type { EarlyAccessFormSchema } from "./early-acesss-form.schema";
-import { earlyAcessFormSchema } from "./early-acesss-form.schema";
+import type { EarlyAccessFormSchema } from "./early-access-form.schema";
+import { earlyAccessFormSchema } from "./early-access-form.schema";
 
 export class EmailValidationError extends Error {
   constructor(message: string) {
@@ -14,7 +14,7 @@ export class EmailValidationError extends Error {
 export const validateEmail = (
   data: EarlyAccessFormSchema,
 ): Result<boolean, EmailValidationError> => {
-  const result = earlyAcessFormSchema.safeParse({ email: data.email });
+  const result = earlyAccessFormSchema.safeParse({ email: data.email });
   if (!result.success) {
     return err(
       new EmailValidationError(

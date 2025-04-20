@@ -19,7 +19,7 @@ import { useToast } from "@repo/ui/hooks/use-toast";
 
 import type { NextErrorResponse } from "~/components/early-access/aj/errors";
 import type { ClerkWaitlistEntry } from "~/components/early-access/clerk/types";
-import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.schema";
+import { earlyAccessFormSchema } from "~/components/early-access/early-access-form.schema";
 
 export function EarlyAccessForm() {
   const { toast } = useToast();
@@ -27,14 +27,14 @@ export function EarlyAccessForm() {
 
   // Initialize the form
   const form = useForm({
-    schema: earlyAcessFormSchema,
+    schema: earlyAccessFormSchema,
     defaultValues: {
       email: "",
     },
   });
 
   // Handle form submission
-  const onSubmit = async (values: z.infer<typeof earlyAcessFormSchema>) => {
+  const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
     try {
       // Call the new API endpoint
       const response = await fetch("/api/early-access/create", {
