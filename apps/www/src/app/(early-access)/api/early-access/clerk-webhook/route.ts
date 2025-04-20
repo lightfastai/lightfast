@@ -59,31 +59,37 @@ export async function POST(request: Request) {
 
   switch (eventType) {
     case "waitlistEntry.created": {
-      const response = await fetch(
-        `${getBaseApiUrl()}/early-access/send-email-confirmation`,
-        {
-          headers: {
-            "Content-Type": "application/json",
+      try {
+        const response = await fetch(
+          `${getBaseApiUrl()}/early-access/send-email-confirmation`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            method: "POST",
+            body: JSON.stringify({ email: event.data.email_address }),
           },
-          method: "POST",
-          body: JSON.stringify({ email: event.data.email_address }),
-        },
-      );
+        );
 
-      if (!response.ok) {
-        console.error("Error: Could not send email:", response);
-        return new Response("Error occured", {
+        if (!response.ok) {
+          console.error("Error: Could not send email:", response);
+          return new NextResponse("Error occured", {
+            status: 400,
+          });
+        }
+
+        return NextResponse.json({ message: "Email sent", ok: true });
+      } catch (error) {
+        console.error("Error: Could not send email:", error);
+        return new NextResponse("Error occured", {
           status: 400,
         });
       }
-
-      return NextResponse.json({ message: "Email sent", ok: true });
     }
     default: {
       break;
     }
   }
 
-  // @todo what should we return here?
-  return new Response("", { status: 201 });
+  return new NextResponse("Error Occured", { status: 400 });
 }
