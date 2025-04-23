@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     case "waitlistEntry.created": {
       try {
         await inngest.send({
-          name: "early-access/user.created",
+          name: "early-access/contact.create",
           data: {
             email: event.data.email_address,
           },
