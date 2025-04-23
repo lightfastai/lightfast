@@ -1,3 +1,5 @@
+import { nanoid } from "nanoid";
+
 import { NonRetriableError, RetryAfterError } from "@vendor/inngest";
 
 import {
@@ -31,7 +33,8 @@ export const handleJoinEarlyAccess = inngest.createFunction(
   },
   { event: "early-access/join" },
   async ({ event, step }) => {
-    const { email } = event.data;
+    const { email, requestId: originalRequestId } = event.data;
+    const workflowTraceId = nanoid();
 
     const result = await step.run("create-clerk-waitlist-entry", async () => {
       const res = await createWaitlistEntrySafe({ email });
@@ -40,6 +43,13 @@ export const handleJoinEarlyAccess = inngest.createFunction(
         const error = res.error;
 
         if (error instanceof ClerkRateLimitError) {
+          console.error("Clerk rate limit error:", {
+            workflowTraceId,
+            originalRequestId,
+            retryAfter: error.retryAfter,
+            email,
+          });
+
           throw new RetryAfterError(
             "Rate limited by contacts service",
             error.retryAfter ?? "15m",
@@ -50,10 +60,25 @@ export const handleJoinEarlyAccess = inngest.createFunction(
           error instanceof ClerkAuthenticationError ||
           error instanceof ClerkSecurityError
         ) {
+          console.error("Clerk auth/security error:", {
+            workflowTraceId,
+            originalRequestId,
+            errorType: error.name,
+            message: error.message,
+            email,
+          });
+
           throw new NonRetriableError(error.name, {
             cause: error.message,
           });
         }
+
+        console.error("Clerk unknown error:", {
+          workflowTraceId,
+          originalRequestId,
+          error: res.error,
+          email,
+        });
 
         throw new Error("Failed to create waitlist entry", {
           cause: res.error,
@@ -73,6 +98,13 @@ export const handleJoinEarlyAccess = inngest.createFunction(
         const error = res.error;
 
         if (error instanceof ResendRateLimitError) {
+          console.error("Resend rate limit error:", {
+            workflowTraceId,
+            originalRequestId,
+            retryAfter: error.retryAfter,
+            email,
+          });
+
           throw new RetryAfterError(
             "Rate limited by contacts service",
             error.retryAfter ?? "15m",
@@ -80,6 +112,12 @@ export const handleJoinEarlyAccess = inngest.createFunction(
         }
 
         if (error instanceof ResendDailyQuotaError) {
+          console.error("Resend daily quota exceeded:", {
+            workflowTraceId,
+            originalRequestId,
+            email,
+          });
+
           throw new RetryAfterError("Daily contacts quota exceeded", "24h");
         }
 
@@ -88,16 +126,38 @@ export const handleJoinEarlyAccess = inngest.createFunction(
           error instanceof ResendAuthenticationError ||
           error instanceof ResendSecurityError
         ) {
+          console.error("Resend auth/security error:", {
+            workflowTraceId,
+            originalRequestId,
+            errorType: error.name,
+            message: error.message,
+            email,
+          });
+
           throw new NonRetriableError(error.name, {
             cause: error.message,
           });
         }
 
         if (error instanceof UnknownError) {
+          console.error("Resend unknown error:", {
+            workflowTraceId,
+            originalRequestId,
+            error: error.message,
+            email,
+          });
+
           throw new Error("Unknown error", {
             cause: error.message,
           });
         }
+
+        console.error("Resend contact error:", {
+          workflowTraceId,
+          originalRequestId,
+          error: error.message,
+          email,
+        });
 
         throw new Error("Contact error", {
           cause: error.message,
@@ -118,6 +178,13 @@ export const handleJoinEarlyAccess = inngest.createFunction(
         const error = res.error;
 
         if (error instanceof ResendRateLimitError) {
+          console.error("Email rate limit error:", {
+            workflowTraceId,
+            originalRequestId,
+            retryAfter: error.retryAfter,
+            email,
+          });
+
           throw new RetryAfterError(
             "Rate limited by email service",
             error.retryAfter ?? "15m",
@@ -125,6 +192,12 @@ export const handleJoinEarlyAccess = inngest.createFunction(
         }
 
         if (error instanceof ResendDailyQuotaError) {
+          console.error("Email daily quota exceeded:", {
+            workflowTraceId,
+            originalRequestId,
+            email,
+          });
+
           throw new RetryAfterError("Daily email quota exceeded", "24h");
         }
 
@@ -133,16 +206,38 @@ export const handleJoinEarlyAccess = inngest.createFunction(
           error instanceof ResendAuthenticationError ||
           error instanceof ResendSecurityError
         ) {
+          console.error("Email auth/security error:", {
+            workflowTraceId,
+            originalRequestId,
+            errorType: error.name,
+            message: error.message,
+            email,
+          });
+
           throw new NonRetriableError(error.name, {
             cause: error.message,
           });
         }
 
         if (error instanceof UnknownError) {
+          console.error("Email unknown error:", {
+            workflowTraceId,
+            originalRequestId,
+            error: error.message,
+            email,
+          });
+
           throw new Error("Unknown error", {
             cause: error.message,
           });
         }
+
+        console.error("Email error:", {
+          workflowTraceId,
+          originalRequestId,
+          error: error.message,
+          email,
+        });
 
         throw new Error("Email error", {
           cause: error.message,

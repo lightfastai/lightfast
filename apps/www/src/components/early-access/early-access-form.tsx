@@ -17,13 +17,15 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import type {
-  EarlyAccessErrorType,
-  NextErrorResponse,
-} from "~/components/early-access/errors";
+import type { NextErrorResponse } from "~/components/early-access/errors";
 import { earlyAccessFormSchema } from "~/components/early-access/early-access-form.schema";
 import { EarlyAccessFormErrorMap } from "~/components/early-access/errors";
 import { env } from "~/env";
+import {
+  addRequestContext,
+  createRequestContext,
+  REQUEST_ID_HEADER,
+} from "~/lib/next-request-id";
 
 export function EarlyAccessForm() {
   const { toast } = useToast();
@@ -39,14 +41,24 @@ export function EarlyAccessForm() {
 
   // Handle form submission
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
+    const requestContext = createRequestContext();
+
     try {
+      const headers = new Headers({
+        "Content-Type": "application/json",
+      });
+
+      // Create and add request context
+      addRequestContext(headers, requestContext);
+
       const response = await fetch("/api/early-access/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({ email: values.email }),
       });
+
+      // Get the request ID from response headers (might be different in error cases)
+      const responseRequestId = response.headers.get(REQUEST_ID_HEADER);
 
       if (!response.ok) {
         const errorResponse = (await response.json()) as NextErrorResponse;
@@ -54,15 +66,17 @@ export function EarlyAccessForm() {
         // Log error for debugging in development
         if (env.NODE_ENV === "development") {
           console.error("Early access form error:", {
+            requestId: responseRequestId,
             type: errorResponse.type,
             error: errorResponse.error,
             message: errorResponse.message,
+            originalRequestId: requestContext.requestId, // For debugging request flow
           });
         }
 
         // Get user-friendly message based on error type
         const errorMessage =
-          EarlyAccessFormErrorMap[errorResponse.type as EarlyAccessErrorType] ||
+          EarlyAccessFormErrorMap[errorResponse.type] ||
           "Failed to join the waitlist. Please try again.";
 
         toast({
@@ -77,7 +91,10 @@ export function EarlyAccessForm() {
 
       // Log success in development
       if (env.NODE_ENV === "development") {
-        console.log("Early access form success:", successResult);
+        console.log("Early access form success:", {
+          requestId: responseRequestId,
+          ...successResult,
+        });
       }
 
       toast({
@@ -89,7 +106,10 @@ export function EarlyAccessForm() {
     } catch (error) {
       // Log unexpected errors in development
       if (env.NODE_ENV === "development") {
-        console.error("Early access form unexpected error:", error);
+        console.error("Early access form unexpected error:", {
+          error,
+          originalRequestId: requestContext.requestId,
+        });
       }
 
       toast({
