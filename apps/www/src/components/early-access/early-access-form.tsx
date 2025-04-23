@@ -2,6 +2,7 @@
 
 import type * as z from "zod";
 import { useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 import Confetti from "react-confetti";
 
 import { Button } from "@repo/ui/components/ui/button";
@@ -63,6 +64,21 @@ export function EarlyAccessForm() {
       if (!response.ok) {
         const errorResponse = (await response.json()) as NextErrorResponse;
 
+        // Set Sentry context and capture error
+        Sentry.setContext("early_access_form", {
+          email: values.email,
+          requestId: responseRequestId,
+          originalRequestId: requestContext.requestId,
+          errorType: errorResponse.type,
+        });
+
+        Sentry.captureException(new Error(errorResponse.message), {
+          tags: {
+            errorType: errorResponse.type,
+            component: "EarlyAccessForm",
+          },
+        });
+
         // Log error for debugging in development
         if (env.NODE_ENV === "development") {
           console.error("Early access form error:", {
@@ -104,6 +120,19 @@ export function EarlyAccessForm() {
       });
       setIsSubmitted(true);
     } catch (error) {
+      // Set Sentry context and capture unexpected errors
+      Sentry.setContext("early_access_form", {
+        email: values.email,
+        originalRequestId: requestContext.requestId,
+      });
+
+      Sentry.captureException(error, {
+        tags: {
+          errorType: "unexpected_error",
+          component: "EarlyAccessForm",
+        },
+      });
+
       // Log unexpected errors in development
       if (env.NODE_ENV === "development") {
         console.error("Early access form unexpected error:", {
