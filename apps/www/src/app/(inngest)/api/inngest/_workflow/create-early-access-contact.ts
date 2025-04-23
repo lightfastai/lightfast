@@ -26,15 +26,15 @@ export const handleCreateEarlyAccessContact = inngest.createFunction(
     id: "handle-create-early-access-contact",
     // Add throttling to prevent overwhelming contact service
     throttle: {
-      limit: 30,
+      limit: 100,
       period: "1m",
-      burst: 5,
+      burst: 10,
     },
     // Add rate limiting to prevent duplicate contacts
     rateLimit: {
       key: "event.data.email",
-      limit: 1,
-      period: "1h",
+      limit: 3,
+      period: "24h",
     },
     // Configure retries with exponential backoff
     retries: 3,

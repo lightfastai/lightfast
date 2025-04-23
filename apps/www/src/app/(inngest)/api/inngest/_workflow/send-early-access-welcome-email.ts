@@ -23,15 +23,15 @@ export const handleSendEarlyAccessEmail = inngest.createFunction(
     id: "handle-send-early-access-email",
     // Add throttling to prevent overwhelming email service
     throttle: {
-      limit: 30,
+      limit: 50,
       period: "1m",
-      burst: 5,
+      burst: 8,
     },
     // Add rate limiting to prevent duplicate emails
     rateLimit: {
       key: "event.data.email",
-      limit: 1,
-      period: "1h",
+      limit: 3,
+      period: "24h",
     },
     // Configure retries with exponential backoff
     retries: 3,
