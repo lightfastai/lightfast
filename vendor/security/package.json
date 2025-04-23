@@ -29,6 +29,7 @@
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
+    "@arcjet/decorate": "1.0.0-beta.6",
     "@arcjet/next": "1.0.0-beta.5"
   }
 }

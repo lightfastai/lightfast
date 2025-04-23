@@ -110,6 +110,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       if (error.originalError instanceof ArcjetRateLimitError) {
+        const retryAfter = error.originalError.retryAfter;
         return NextResponse.json<NextErrorResponse>(
           {
             type: EarlyAccessErrorType.RATE_LIMIT,
@@ -118,7 +119,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
           {
             status: 429,
-            headers: withRequestId(requestContext.requestId),
+            headers: {
+              ...withRequestId(requestContext.requestId),
+              "Retry-After": retryAfter,
+            },
           },
         );
       }

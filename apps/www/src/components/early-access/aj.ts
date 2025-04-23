@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { ResultAsync } from "neverthrow";
 
-import { arcjet, protectSignup } from "@vendor/security";
+import { arcjet, protectSignup, setRateLimitHeaders } from "@vendor/security";
 
 import { env } from "~/env";
 
@@ -44,6 +44,7 @@ export class ArcjetEmailError extends ArcjetError {
 export class ArcjetRateLimitError extends ArcjetError {
   constructor(
     message = "Rate limit exceeded. Please try again in 10 minutes.",
+    public retryAfter: string,
   ) {
     super(message);
     this.name = "ArcjetRateLimitError";
@@ -91,8 +92,13 @@ const protectSignupUnsafe = async ({ request, email }: ProtectSignupParams) => {
     }
 
     if (reason.isRateLimit()) {
+      // Create headers to store rate limit information
+      const headers = new Headers();
+      setRateLimitHeaders(headers, decision);
+      const retryAfter = headers.get("retry-after");
       throw new ArcjetRateLimitError(
-        "You have exceeded the rate limit. Please try again in 10 minutes.",
+        "You have exceeded the rate limit. Please try again later.",
+        retryAfter ?? "10m",
       );
     }
 
