@@ -1,18 +1,67 @@
 import { ResultAsync } from "neverthrow";
 
-import type { ClerkWaitlistError } from "./create-waitlist-entry-errors";
-import type { ClerkWaitlistEntry } from "./types";
+import type { ClerkWaitlistEntry } from "./clerk/types";
 import { env } from "~/env";
-import {
-  ClerkAuthenticationError,
-  ClerkError,
-  ClerkRateLimitError,
-  ClerkSecurityError,
-  ClerkValidationError,
-  UnknownError,
-} from "./create-waitlist-entry-errors";
 
 const CLERK_API_URL = "https://api.clerk.com/v1";
+
+// Error classes
+export class ClerkError extends Error {
+  constructor(
+    message: string,
+    public statusCode?: number,
+  ) {
+    super(message);
+    this.name = "ClerkError";
+  }
+}
+
+export class ClerkRateLimitError extends ClerkError {
+  constructor(
+    message: string,
+    public retryAfter?: string,
+  ) {
+    super(message);
+    this.name = "ClerkRateLimitError";
+  }
+}
+
+export class ClerkValidationError extends ClerkError {
+  constructor(message: string) {
+    super(message, 400);
+    this.name = "ClerkValidationError";
+  }
+}
+
+export class ClerkAuthenticationError extends ClerkError {
+  constructor(message: string) {
+    super(message, 401);
+    this.name = "ClerkAuthenticationError";
+  }
+}
+
+export class ClerkSecurityError extends ClerkError {
+  constructor(message: string) {
+    super(message, 451);
+    this.name = "ClerkSecurityError";
+  }
+}
+
+export class UnknownError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UnknownError";
+  }
+}
+
+// Union type of all possible Clerk errors
+export type ClerkWaitlistError =
+  | ClerkRateLimitError
+  | ClerkValidationError
+  | ClerkAuthenticationError
+  | ClerkSecurityError
+  | ClerkError
+  | UnknownError;
 
 interface ClerkAPIError {
   code: string;

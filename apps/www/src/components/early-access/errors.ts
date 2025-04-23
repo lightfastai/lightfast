@@ -10,3 +10,9 @@ export interface EarlyAccessError {
   type: EarlyAccessErrorType;
   message: string;
 }
+
+export interface NextErrorResponse {
+  type: string;
+  error: string;
+  message: string;
+}
