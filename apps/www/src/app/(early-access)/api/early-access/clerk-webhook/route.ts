@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       try {
         await inngest.send({
           name: "early-access/contact.create",
+          id: `${id}-${eventType}`,
           data: {
             email: event.data.email_address,
           },

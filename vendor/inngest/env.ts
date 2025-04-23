@@ -9,10 +9,10 @@ export const env = createEnv({
   server: {
     INNGEST_APP_NAME: z.string().min(1).startsWith("lightfast-"),
     // Only require these in Vercel environment
-    // INNGEST_EVENT_KEY: vercelOnlyRequired(z.string().min(1)),
-    // INNGEST_SIGNING_KEY: vercelOnlyRequired(
-    //   z.string().min(1).startsWith("signkey-"),
-    // ),
+    INNGEST_EVENT_KEY: vercelOnlyRequired(z.string().min(1)),
+    INNGEST_SIGNING_KEY: vercelOnlyRequired(
+      z.string().min(1).startsWith("signkey-"),
+    ),
   },
   client: {},
   experimental__runtimeEnv: {},
