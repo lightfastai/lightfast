@@ -17,9 +17,14 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import type { NextErrorResponse } from "~/components/early-access/aj/errors";
 import type { ClerkWaitlistEntry } from "~/components/early-access/clerk/types";
+import type {
+  EarlyAccessErrorType,
+  NextErrorResponse,
+} from "~/components/early-access/errors";
 import { earlyAccessFormSchema } from "~/components/early-access/early-access-form.schema";
+import { EarlyAccessFormErrorMap } from "~/components/early-access/errors";
+import { env } from "~/env";
 
 export function EarlyAccessForm() {
   const { toast } = useToast();
@@ -36,7 +41,6 @@ export function EarlyAccessForm() {
   // Handle form submission
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
     try {
-      // Call the new API endpoint
       const response = await fetch("/api/early-access/create", {
         method: "POST",
         headers: {
@@ -46,31 +50,55 @@ export function EarlyAccessForm() {
       });
 
       if (!response.ok) {
-        const result = (await response.json()) as NextErrorResponse;
-        throw new Error(result.message);
+        const errorResponse = (await response.json()) as NextErrorResponse;
+
+        // Log error for debugging in development
+        if (env.NODE_ENV === "development") {
+          console.error("Early access form error:", {
+            type: errorResponse.type,
+            error: errorResponse.error,
+            message: errorResponse.message,
+          });
+        }
+
+        // Get user-friendly message based on error type
+        const errorMessage =
+          EarlyAccessFormErrorMap[errorResponse.type as EarlyAccessErrorType] ||
+          "Failed to join the waitlist. Please try again.";
+
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
       }
 
-      const result = (await response.json()) as {
+      const successResult = (await response.json()) as {
         success: boolean;
         entry: ClerkWaitlistEntry;
       };
 
-      console.log(result);
+      // Log success in development
+      if (env.NODE_ENV === "development") {
+        console.log("Early access form success:", successResult);
+      }
 
       toast({
-        title: "Success!",
-        description: "Successfully joined the waitlist!",
+        title: "Welcome aboard! 🎉",
+        description:
+          "You've successfully joined the waitlist. We'll notify you when we launch.",
       });
       setIsSubmitted(true);
     } catch (error) {
-      let errorMsg = "Failed to join the waitlist. Please try again.";
-      if (error instanceof Error) {
-        // Use the error message thrown from the try block or a default
-        errorMsg = error.message || errorMsg;
+      // Log unexpected errors in development
+      if (env.NODE_ENV === "development") {
+        console.error("Early access form unexpected error:", error);
       }
+
       toast({
         title: "Error",
-        description: errorMsg,
+        description: "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
     }
@@ -118,7 +146,14 @@ export function EarlyAccessForm() {
               className="col-span-3 overflow-hidden truncate rounded-lg px-3 text-xs"
             >
               <span className="gradient-text text-xs">
-                {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
+                {form.formState.isSubmitting ? (
+                  <>
+                    <span className="animate-pulse">Joining</span>
+                    <span className="animate-[bounce_1s_infinite]">...</span>
+                  </>
+                ) : (
+                  "Join Waitlist"
+                )}
               </span>
             </Button>
           </form>
