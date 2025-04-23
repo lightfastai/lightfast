@@ -1,3 +1,5 @@
+import { NonRetriableError, RetryAfterError } from "inngest";
+
 import { inngest } from "~/app/(inngest)/api/inngest/_client/client";
 import {
   EmailValidationError,
@@ -31,6 +33,8 @@ export const handleSendEmailConfirmation = inngest.createFunction(
       limit: 1,
       period: "1h",
     },
+    // Configure retries with exponential backoff
+    retries: 3, // 3 retries (4 total attempts)
   },
   { event: "early-access/user.created" },
   async ({ event, step }) => {
@@ -40,7 +44,8 @@ export const handleSendEmailConfirmation = inngest.createFunction(
       const res = validateEmail({ email });
       if (res.isErr()) {
         if (res.error instanceof EmailValidationError) {
-          throw new Error("Invalid email", {
+          // Don't retry validation errors as they won't succeed on retry
+          throw new NonRetriableError("Invalid email", {
             cause: res.error.message,
           });
         }
@@ -60,6 +65,12 @@ export const handleSendEmailConfirmation = inngest.createFunction(
 
       if (res2.isErr()) {
         if (res2.error instanceof EmailError) {
+          // If it's a rate limit error, retry after a specific delay
+          // @todo throw RateLimitError from email service...
+          if (res2.error.message.toLowerCase().includes("rate limit")) {
+            throw new RetryAfterError("Rate limited by email service", "15m");
+          }
+
           throw new Error("Failed to send email", {
             cause: res2.error.message,
           });
