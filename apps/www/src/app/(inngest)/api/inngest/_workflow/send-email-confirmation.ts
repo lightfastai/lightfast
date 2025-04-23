@@ -6,6 +6,7 @@ import {
   validateEmail,
 } from "~/components/early-access/early-access-form.validation";
 import {
+  addToWaitlistContactsSafe,
   ResendAuthenticationError,
   ResendDailyQuotaError,
   ResendRateLimitError,
@@ -18,9 +19,10 @@ import EarlyAccessEntryEmail from "~/templates/early-access-entry-email";
 
 interface SendEmailConfirmationResult {
   success: boolean;
-  emailId?: string;
+  sendEmailId: string;
   recipient: string;
   timestamp: string;
+  contactId: string;
   error?: {
     code: string;
     message: string;
@@ -75,7 +77,8 @@ export const handleSendEmailConfirmation = inngest.createFunction(
       }
     });
 
-    const result = await step.run("send-email-confirmation", async () => {
+    // Then send the welcome email
+    const emailResult = await step.run("send-email-confirmation", async () => {
       const res2 = await sendResendEmailSafe({
         react: EarlyAccessEntryEmail({ email }),
         to: email,
@@ -124,9 +127,62 @@ export const handleSendEmailConfirmation = inngest.createFunction(
       return res2.value;
     });
 
+    // First add to waitlist contacts
+    const contactResult = await step.run(
+      "create-early-access-audience-contact",
+      async () => {
+        const res = await addToWaitlistContactsSafe({
+          email,
+          unsubscribed: false,
+        });
+
+        if (res.isErr()) {
+          const error = res.error;
+
+          // Handle specific Resend error types
+          if (error instanceof ResendRateLimitError) {
+            throw new RetryAfterError(
+              "Rate limited by contacts service",
+              error.retryAfter ?? "15m",
+            );
+          }
+
+          if (error instanceof ResendDailyQuotaError) {
+            throw new RetryAfterError("Daily contacts quota exceeded", "24h");
+          }
+
+          // Non-retriable errors
+          if (
+            error instanceof ResendValidationError ||
+            error instanceof ResendAuthenticationError ||
+            error instanceof ResendSecurityError
+          ) {
+            throw new NonRetriableError(error.name, {
+              cause: error.message,
+            });
+          }
+
+          if (error instanceof UnknownError) {
+            // Let Inngest's default retry logic handle unknown errors
+            throw new Error("Unknown error", {
+              cause: error.message,
+            });
+          }
+
+          // For other Resend errors (including 500s), let Inngest retry with backoff
+          throw new Error("Contact error", {
+            cause: error.message,
+          });
+        }
+
+        return res.value;
+      },
+    );
+
     return {
       success: true,
-      emailId: result,
+      contactId: contactResult.id,
+      sendEmailId: emailResult.id,
       recipient: email,
       timestamp: new Date().toISOString(),
     };

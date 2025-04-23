@@ -18,7 +18,9 @@ export const env = createEnv({
    * Specify your server-side environment variables schema here.
    * This way you can ensure the app isn't built with invalid env vars.
    */
-  server: {},
+  server: {
+    RESEND_EARLY_ACCESS_AUDIENCE_ID: z.string().min(1),
+  },
 
   /**
    * Specify your client-side environment variables schema here.
