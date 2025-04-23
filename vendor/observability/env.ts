@@ -27,9 +27,7 @@ export const sentryEnv = createEnv({
   server: {
     SENTRY_ORG: vercelOnlyRequired(z.string().min(1)),
     SENTRY_PROJECT: vercelOnlyRequired(z.string().min(1)),
-    SENTRY_AUTH_TOKEN: vercelOnlyRequired(
-      z.string().min(1).startsWith("sntrys_"),
-    ),
+    SENTRY_AUTH_TOKEN: vercelOnlyRequired(z.string().min(1)),
   },
   client: {
     NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
