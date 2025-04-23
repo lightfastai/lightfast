@@ -4,7 +4,7 @@ import { Webhook } from "svix";
 
 import type { WebhookEvent } from "@vendor/clerk/server";
 
-import { sendEmailConfirmationSafe } from "~/components/early-access/send-email-confirmation/email";
+import { inngest } from "~/app/(inngest)/api/inngest/_client/client";
 import { env } from "~/env";
 
 export async function POST(request: Request) {
@@ -58,18 +58,31 @@ export async function POST(request: Request) {
 
   switch (eventType) {
     case "waitlistEntry.created": {
-      const response = await sendEmailConfirmationSafe({
-        email: event.data.email_address,
-      });
-
-      if (response.isErr()) {
-        console.error("Error: Could not send email:", response.error);
-        return new NextResponse("Error occured", {
-          status: 400,
+      try {
+        await inngest.send({
+          name: "early-access/user.created",
+          data: {
+            email: event.data.email_address,
+          },
         });
+      } catch (error) {
+        console.error("Error: Could not send email:", error);
+        return NextResponse.json(
+          {
+            message: "Error occured while issuing request to send email",
+            ok: false,
+          },
+          { status: 400 },
+        );
       }
 
-      return NextResponse.json({ message: "Email sent", ok: true });
+      return NextResponse.json(
+        {
+          message: "Issued request to send email",
+          ok: true,
+        },
+        { status: 201 },
+      );
     }
     default: {
       break;

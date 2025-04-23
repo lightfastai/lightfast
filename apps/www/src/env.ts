@@ -4,10 +4,11 @@ import { z } from "zod";
 
 import { clerkEnvWithWebhook } from "@vendor/clerk/env";
 import { env as emailEnv } from "@vendor/email/env";
+import { env as inngestEnv } from "@vendor/inngest/env";
 import { env as securityEnv } from "@vendor/security/env";
 
 export const env = createEnv({
-  extends: [vercel(), clerkEnvWithWebhook, securityEnv, emailEnv],
+  extends: [vercel(), clerkEnvWithWebhook, securityEnv, emailEnv, inngestEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
