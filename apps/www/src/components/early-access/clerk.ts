@@ -87,7 +87,8 @@ const createWaitlistEntryUnsafe = async ({
       "Content-Type": "application/json",
       Authorization: `Bearer ${env.CLERK_SECRET_KEY}`,
     },
-    body: JSON.stringify({ email_address: email }),
+    // @IMPORTANT notify is false to avoid clerk sending email to user. we also set this directly in clerk.
+    body: JSON.stringify({ email_address: email, notify: false }),
   });
 
   if (!response.ok) {
@@ -106,6 +107,9 @@ const createWaitlistEntryUnsafe = async ({
 
     // Handle specific error types based on status code and message
     switch (statusCode) {
+      case 422: {
+        throw new ClerkValidationError(long_message);
+      }
       case 429: {
         const retryAfter = response.headers.get("retry-after");
         throw new ClerkRateLimitError(
@@ -113,8 +117,6 @@ const createWaitlistEntryUnsafe = async ({
           retryAfter ? `${retryAfter}s` : "15m",
         );
       }
-      case 400:
-        throw new ClerkValidationError(long_message);
       case 401:
         throw new ClerkAuthenticationError(long_message);
       case 451:
