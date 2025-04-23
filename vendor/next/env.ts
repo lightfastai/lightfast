@@ -15,7 +15,7 @@ export const env = createEnv({
     NEXT_RUNTIME: z.enum(["nodejs", "edge"]).optional(),
     // Added by Sentry
     // SENTRY_ORG: z.enum(["jps0000"]),
-    // SENTRY_PROJECT: z.enum(["react-td-app"]),
+    // SENTRY_PROJECT: z.enum(["lightfast-app"]),
     // SENTRY_AUTH_TOKEN: z.string().min(1).startsWith("sntrys_"),
   },
   client: {

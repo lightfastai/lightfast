@@ -1,5 +1,5 @@
 {
-  "name": "react-td",
+  "name": "lightfast",
   "private": true,
   "engines": {
     "node": ">=20.16.0",
@@ -13,11 +13,11 @@
     "db:studio": "turbo -F @vendor/db studio",
     "db:migrate": "turbo -F @vendor/db migrate",
     "db:migrate:generate": "turbo -F @vendor/db migrate:generate",
-    "dev": "turbo run dev --parallel --filter=@react-td/app --filter=@react-td/www",
-    "dev:www": "turbo watch dev -F @react-td/www --continue",
-    "dev:email": "turbo run dev:email -F @react-td/www",
-    "dev:docs": "turbo watch dev -F @react-td/docs --continue",
-    "dev:app": "turbo watch dev -F @react-td/app --continue",
+    "dev": "turbo run dev --parallel --filter=@lightfast/app --filter=@lightfast/www",
+    "dev:www": "turbo watch dev -F @lightfast/www --continue",
+    "dev:docs": "turbo watch dev -F @lightfast/docs --continue",
+    "dev:app": "turbo watch dev -F @lightfast/app --continue",
+    "dev:email": "turbo run dev:email -F @lightfast/www",
     "brain": "turbo run eval",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
