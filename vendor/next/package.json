@@ -3,14 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "peerDependencies": {
-    "react": "^18"
+  "exports": {
+    "./env": "./env.ts",
+    "./next-config-builder": {
+      "types": "./dist/src/next-config-builder.d.ts",
+      "default": "./src/next-config-builder.ts"
+    }
   },
   "scripts": {
-    "lint": "eslint",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --check . --ignore-path ../../.gitignore"
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -22,10 +28,9 @@
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@logtail/next": "^0.1.7",
     "@next/bundle-analyzer": "^15.0.3",
-    "@sentry/nextjs": "^8.45.0",
     "@t3-oss/env-nextjs": "0.12.0",
+    "@vendor/observability": "workspace:*",
     "@vercel/toolbar": "^0.1.28",
     "next-secure-headers": "^2.2.0"
   },

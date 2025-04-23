@@ -2,8 +2,9 @@ import { NextConfig } from "next";
 
 import "~/env";
 
-/** @type {import("next").NextConfig} */
-const config: NextConfig = {
+import { withSentry } from "@vendor/next/next-config-builder";
+
+let config: NextConfig = {
   reactStrictMode: true,
 
   /** Enables hot reloading for local packages without a build step */
@@ -14,6 +15,8 @@ const config: NextConfig = {
     "@vendor/email",
     "@vendor/clerk",
     "@vendor/inngest",
+    "@vendor/observability",
+    "@vendor/next",
   ],
 
   /** We already do linting and typechecking as separate tasks in CI */
@@ -32,4 +35,6 @@ const config: NextConfig = {
   ],
 };
 
-export default config;
+if (process.env.VERCEL) {
+  config = withSentry(config);
+}
