@@ -17,7 +17,6 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import type { ClerkWaitlistEntry } from "~/components/early-access/clerk/types";
 import type {
   EarlyAccessErrorType,
   NextErrorResponse,
@@ -74,10 +73,7 @@ export function EarlyAccessForm() {
         return;
       }
 
-      const successResult = (await response.json()) as {
-        success: boolean;
-        entry: ClerkWaitlistEntry;
-      };
+      const successResult = (await response.json()) as { success: boolean };
 
       // Log success in development
       if (env.NODE_ENV === "development") {

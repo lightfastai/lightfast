@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import type { NextErrorResponse } from "~/components/early-access/errors";
+import { inngest } from "~/app/(inngest)/api/inngest/_client/client";
 import {
   ArcjetEmailError,
   ArcjetRateLimitError,
@@ -103,10 +104,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // await inngest.send({
-  //   name: "early-access/join",
-  //   data: { email },
-  // });
+  await inngest.send({
+    name: "early-access/join",
+    data: { email },
+  });
 
   return NextResponse.json({ success: true }, { status: 200 });
 }
