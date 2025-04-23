@@ -1,15 +1,16 @@
 {
-  "name": "@vendor/email",
+  "name": "@vendor/inngest",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./src/env.ts",
-    "./types": "./src/types.ts"
+    "./server": "./src/server.ts",
+    "./env": "./env.ts",
+    "./agent-kit": "./src/agent-kit.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -18,20 +19,21 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@t3-oss/env-nextjs": "0.12.0",
-    "resend": "^4.3.0",
-    "zod": "catalog:"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@t3-oss/env-nextjs": "0.12.0",
+    "concurrently": "^9.1.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@repo/prettier-config"
+  "prettier": "@repo/prettier-config",
+  "dependencies": {
+    "@inngest/agent-kit": "^0.0.3",
+    "inngest": "^3.35.1"
+  }
 }
