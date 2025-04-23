@@ -22,6 +22,12 @@ import { inngest } from "../_client/client";
 export const handleJoinEarlyAccess = inngest.createFunction(
   {
     id: "handle-join-early-access",
+    idempotency: `event.data.email`,
+    throttle: {
+      limit: 5,
+      period: "10s",
+      burst: 10,
+    },
   },
   { event: "early-access/join" },
   async ({ event, step }) => {
