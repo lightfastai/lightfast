@@ -5,7 +5,15 @@ import {
   EmailValidationError,
   validateEmail,
 } from "~/components/early-access/early-access-form.validation";
-import { EmailError, sendResendEmailSafe, UnknownError } from "~/lib/resend";
+import {
+  ResendAuthenticationError,
+  ResendDailyQuotaError,
+  ResendRateLimitError,
+  ResendSecurityError,
+  ResendValidationError,
+  sendResendEmailSafe,
+  UnknownError,
+} from "~/lib/resend";
 import EarlyAccessEntryEmail from "~/templates/early-access-entry-email";
 
 /**
@@ -61,29 +69,44 @@ export const handleSendEmailConfirmation = inngest.createFunction(
         react: EarlyAccessEntryEmail({ email }),
         to: email,
         subject: "Welcome to Lightfast.ai Early Access",
-      })();
+      });
 
       if (res2.isErr()) {
-        if (res2.error instanceof EmailError) {
-          // If it's a rate limit error, retry after a specific delay
-          // @todo throw RateLimitError from email service...
-          if (res2.error.message.toLowerCase().includes("rate limit")) {
-            throw new RetryAfterError("Rate limited by email service", "15m");
-          }
+        const error = res2.error;
 
-          throw new Error("Failed to send email", {
-            cause: res2.error.message,
+        // Handle specific Resend error types
+        if (error instanceof ResendRateLimitError) {
+          throw new RetryAfterError(
+            "Rate limited by email service",
+            error.retryAfter ?? "15m",
+          );
+        }
+
+        if (error instanceof ResendDailyQuotaError) {
+          throw new RetryAfterError("Daily email quota exceeded", "24h");
+        }
+
+        // Non-retriable errors
+        if (
+          error instanceof ResendValidationError ||
+          error instanceof ResendAuthenticationError ||
+          error instanceof ResendSecurityError
+        ) {
+          throw new NonRetriableError(error.name, {
+            cause: error.message,
           });
         }
 
-        if (res2.error instanceof UnknownError) {
+        if (error instanceof UnknownError) {
+          // Let Inngest's default retry logic handle unknown errors
           throw new Error("Unknown error", {
-            cause: res2.error.message,
+            cause: error.message,
           });
         }
 
+        // For other Resend errors (including 500s), let Inngest retry with backoff
         throw new Error("Email sending error", {
-          cause: "An unexpected error occurred while sending email",
+          cause: error.message,
         });
       }
     });
