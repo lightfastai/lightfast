@@ -4,11 +4,8 @@ export enum EarlyAccessErrorType {
   ALREADY_REGISTERED = "ALREADY_REGISTERED",
   SECURITY_CHECK = "SECURITY_CHECK",
   SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE",
-}
-
-export interface EarlyAccessError {
-  type: EarlyAccessErrorType;
-  message: string;
+  BAD_REQUEST = "BAD_REQUEST",
+  INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
 }
 
 export interface NextErrorResponse {

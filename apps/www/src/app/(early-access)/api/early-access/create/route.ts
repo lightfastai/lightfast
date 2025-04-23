@@ -15,7 +15,6 @@ import {
   ClerkSecurityError,
   ClerkValidationError,
   createWaitlistEntrySafe,
-  UnknownError,
 } from "~/components/early-access/clerk";
 import { EarlyAccessErrorType } from "~/components/early-access/errors";
 import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-json-parse";
@@ -30,20 +29,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const res = await safeJsonParse<CreateEarlyAccessJoinRequest>(request);
 
   if (res.isErr()) {
+    console.error("Safe JSON parse error:", {
+      type: res.error.name,
+      message: res.error.message,
+    });
+
     if (res.error instanceof InvalidJsonError) {
       return NextResponse.json<NextErrorResponse>(
         {
-          type: InvalidJsonError.name,
+          type: EarlyAccessErrorType.BAD_REQUEST,
           error: "Invalid JSON",
           message: res.error.message,
         },
         { status: 400 },
       );
     }
-    console.error("Unknown error", res.error);
     return NextResponse.json<NextErrorResponse>(
       {
-        type: UnknownError.name,
+        type: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
         error: "An unexpected error occurred.",
         message: "Unknown error",
       },
