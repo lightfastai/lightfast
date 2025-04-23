@@ -16,6 +16,17 @@ import {
 } from "~/lib/resend";
 import EarlyAccessEntryEmail from "~/templates/early-access-entry-email";
 
+interface SendEmailConfirmationResult {
+  success: boolean;
+  emailId?: string;
+  recipient: string;
+  timestamp: string;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
 /**
  * Handles the sending of an email confirmation to the user.
  * Implements throttling to prevent overwhelming the email service
@@ -45,7 +56,7 @@ export const handleSendEmailConfirmation = inngest.createFunction(
     retries: 3, // 3 retries (4 total attempts)
   },
   { event: "early-access/user.created" },
-  async ({ event, step }) => {
+  async ({ event, step }): Promise<SendEmailConfirmationResult> => {
     const { email } = event.data;
 
     await step.run("validate-email", () => {
@@ -64,7 +75,7 @@ export const handleSendEmailConfirmation = inngest.createFunction(
       }
     });
 
-    await step.run("send-email-confirmation", async () => {
+    const result = await step.run("send-email-confirmation", async () => {
       const res2 = await sendResendEmailSafe({
         react: EarlyAccessEntryEmail({ email }),
         to: email,
@@ -109,10 +120,15 @@ export const handleSendEmailConfirmation = inngest.createFunction(
           cause: error.message,
         });
       }
+
+      return res2.value;
     });
 
     return {
       success: true,
+      emailId: result,
+      recipient: email,
+      timestamp: new Date().toISOString(),
     };
   },
 );
