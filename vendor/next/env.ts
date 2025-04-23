@@ -10,9 +10,7 @@ export const env = createEnv({
     // Added by Vercel
   },
   client: {},
-  experimental__runtimeEnv: {
-    NEXT_RUNTIME: process.env.NEXT_RUNTIME,
-  },
+  experimental__runtimeEnv: {},
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });

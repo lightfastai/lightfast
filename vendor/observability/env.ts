@@ -19,11 +19,7 @@ export const logtailEnv = createEnv({
 
 export const sentryEnv = createEnv({
   extends: [],
-  shared: {
-    NODE_ENV: z
-      .enum(["development", "production", "test"])
-      .default("development"),
-  },
+  shared: {},
   server: {
     SENTRY_ORG: vercelOnlyRequired(z.string().min(1)),
     SENTRY_PROJECT: vercelOnlyRequired(z.string().min(1)),
@@ -33,7 +29,6 @@ export const sentryEnv = createEnv({
     NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
   },
   experimental__runtimeEnv: {
-    NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
   skipValidation:
