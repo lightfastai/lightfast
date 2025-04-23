@@ -26,7 +26,6 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "concurrently": "^9.1.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
