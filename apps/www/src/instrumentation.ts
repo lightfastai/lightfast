@@ -7,8 +7,7 @@ const register = () => {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-      environment:
-        env.VERCEL_ENV === "production" ? env.VERCEL_ENV : "development",
+      environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
       tracesSampleRate: 1,
       debug: false,
     });
@@ -18,8 +17,7 @@ const register = () => {
   if (process.env.NEXT_RUNTIME === "edge") {
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-      environment:
-        env.VERCEL_ENV === "production" ? env.VERCEL_ENV : "development",
+      environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
       tracesSampleRate: 1,
       debug: false,
     });

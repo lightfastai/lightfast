@@ -24,8 +24,10 @@ export const sentryEnv = createEnv({
   },
   client: {
     NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT: z.enum(["development", "production"]),
   },
   experimental__runtimeEnv: {
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
   skipValidation:
