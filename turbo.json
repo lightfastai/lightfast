@@ -75,7 +75,8 @@
     "NEXT_PUBLIC_SENTRY_DSN",
     "SENTRY_ORG",
     "SENTRY_PROJECT",
-    "SENTRY_AUTH_TOKEN"
+    "SENTRY_AUTH_TOKEN",
+    "AUTO_REFRESH_EXPIRED_IDS"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",
