@@ -15,6 +15,7 @@ export function useErrorReporter() {
 
   const reportError = useCallback(
     (error: Error, context: ClientErrorContext) => {
+      console.log("reporting error", error, context);
       return reporter.reportError(error, context);
     },
     [reporter],

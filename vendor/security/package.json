@@ -9,9 +9,7 @@
       "default": "./src/index.ts"
     },
     "./env": "./env.ts",
-    "./requests/constants": "./src/requests/constants.ts",
-    "./requests": "./src/requests/index.ts",
-    "./requests/client": "./src/requests/client/index.ts"
+    "./requests/constants": "./src/requests/constants.ts"
   },
   "license": "MIT",
   "scripts": {

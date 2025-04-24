@@ -1,8 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { REQUEST_ID_HEADER } from "@vendor/security/requests/constants";
-
 import type { NextErrorResponse } from "~/components/early-access/errors";
 import { inngest } from "~/app/(inngest)/api/inngest/_client/client";
 import {
@@ -17,6 +15,7 @@ import {
   InvalidJsonError,
   jsonParseSafe,
 } from "~/lib/requests/json-parse-safe";
+import { REQUEST_ID_HEADER } from "~/lib/requests/request-id";
 
 export const runtime = "edge";
 
@@ -30,6 +29,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const requestId = request.headers.get(REQUEST_ID_HEADER)!;
 
+    if (!requestId) {
+      console.error("Error: No request ID found in headers");
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: EarlyAccessErrorType.NO_REQUEST_ID,
+          error: "No request ID found in headers",
+          message: "No request ID found in headers",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
     const res = await jsonParseSafe<CreateEarlyAccessJoinRequest>(request);
 
     if (res.isErr()) {
@@ -39,7 +52,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         message: res.error.message,
       });
 
-      await reportApiError(res.error, {
+      reportApiError(res.error, {
         route: "/api/early-access/create",
         errorType: EarlyAccessErrorType.BAD_REQUEST,
         requestId,
@@ -86,7 +99,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         originalError: error.originalError,
       });
 
-      await reportApiError(error, {
+      reportApiError(error, {
         route: "/api/early-access/create",
         errorType:
           error.originalError instanceof ArcjetEmailError
@@ -188,7 +201,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       error,
     });
 
-    await reportApiError(
+    reportApiError(
       error instanceof Error ? error : new Error("Unknown error"),
       {
         route: "/api/early-access/create",

@@ -1,6 +1,3 @@
-import type { RequestContext } from "@vendor/security/requests";
-import { SecureRequestId } from "@vendor/security/requests";
-
 import type { ApiErrorContext } from "./types";
 import { env } from "~/env";
 import { createSentryReporter } from "./sentry-reporter";
@@ -10,29 +7,10 @@ const reporter = createSentryReporter({
   disableLogger: env.NODE_ENV === "production",
 });
 
-export async function reportApiError(
-  error: Error,
-  context: ApiErrorContext,
-): Promise<void> {
-  // Verify request ID before reporting
-  const requestContext: RequestContext = {
-    method: "unknown",
-    path: context.route,
-    userAgent: undefined,
-  };
-
-  // If request ID is invalid, generate a new one for error tracking
-  const isValid = await SecureRequestId.verify(
-    context.requestId,
-    requestContext,
-  );
-  const requestId = isValid
-    ? context.requestId
-    : await SecureRequestId.generate(requestContext);
-
-  // Report error with verified request ID
+export function reportApiError(error: Error, context: ApiErrorContext): void {
+  // Simply report the error with the provided context
   reporter.reportError(error, {
     ...context,
-    requestId,
+    requestId: context.requestId || "unknown",
   });
 }

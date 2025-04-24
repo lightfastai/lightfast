@@ -1,11 +1,7 @@
 import { ResultAsync } from "neverthrow";
 
-import {
-  addRequestIdToHeaders,
-  updateRequestIdFromResponse,
-} from "@vendor/security/requests/client";
-
 import type { NextErrorResponse } from "./errors";
+import { REQUEST_ID_HEADER } from "~/lib/requests/request-id";
 import { EarlyAccessErrorType, EarlyAccessFormErrorMap } from "./errors";
 
 // Base error class
@@ -38,9 +34,6 @@ const createEarlyAccessUnsafe = async ({
     "Content-Type": "application/json",
   });
 
-  // Add request ID to headers if we have one
-  addRequestIdToHeaders(headers);
-
   const response = await fetch("/api/early-access/create", {
     method: "POST",
     headers,
@@ -48,10 +41,18 @@ const createEarlyAccessUnsafe = async ({
   });
 
   // Update stored request ID from response
-  const responseRequestId = updateRequestIdFromResponse(response);
+  const responseRequestId = response.headers.get(REQUEST_ID_HEADER);
 
   if (!response.ok) {
     const errorData = (await response.json()) as NextErrorResponse;
+    if (!responseRequestId) {
+      throw new EarlyAccessError(
+        EarlyAccessFormErrorMap[EarlyAccessErrorType.NO_REQUEST_ID],
+        EarlyAccessErrorType.NO_REQUEST_ID,
+        "No request ID found in response",
+      );
+    }
+
     throw new EarlyAccessError(
       errorData.message,
       errorData.type,
@@ -60,17 +61,9 @@ const createEarlyAccessUnsafe = async ({
     );
   }
 
-  if (!responseRequestId) {
-    throw new EarlyAccessError(
-      EarlyAccessFormErrorMap[EarlyAccessErrorType.NO_REQUEST_ID],
-      EarlyAccessErrorType.NO_REQUEST_ID,
-      "No request ID found in response",
-    );
-  }
-
   return {
     success: true,
-    requestId: responseRequestId,
+    requestId: responseRequestId ?? "",
   };
 };
 

@@ -62,7 +62,7 @@ export function EarlyAccessForm() {
         reportError(error, {
           component: "EarlyAccessForm",
           errorType: error.type,
-          requestId: error.requestId ?? "",
+          requestId: error.requestId ?? "unknown",
           error: error.error,
           message: error.message,
           metadata: {
