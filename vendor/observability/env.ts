@@ -2,9 +2,6 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
-const vercelOnlyRequired = <T extends z.ZodTypeAny>(schema: T) =>
-  process.env.VERCEL === "1" ? schema : schema.optional();
-
 export const logtailEnv = createEnv({
   extends: [vercel()],
   shared: {},
@@ -21,9 +18,9 @@ export const sentryEnv = createEnv({
   extends: [],
   shared: {},
   server: {
-    SENTRY_ORG: vercelOnlyRequired(z.string().min(1)),
-    SENTRY_PROJECT: vercelOnlyRequired(z.string().min(1)),
-    SENTRY_AUTH_TOKEN: vercelOnlyRequired(z.string().min(1)),
+    SENTRY_ORG: z.string().min(1).optional(),
+    SENTRY_PROJECT: z.string().min(1).optional(),
+    SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),

@@ -1,7 +1,4 @@
-import {
-  RequestContext,
-  SecureRequestId,
-} from "@vendor/security/requests/create-secure-request-id";
+import { RequestContext, SecureRequestId } from "@vendor/security/requests";
 
 import type { ApiErrorContext } from "./types";
 import { env } from "~/env";

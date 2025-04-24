@@ -10,6 +10,7 @@ import { Toaster } from "@repo/ui/components/ui/toaster";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
+import { RequestIdProvider } from "~/components/request-id-refresher";
 import { siteConfig } from "~/config/site";
 
 export const metadata: Metadata = {
@@ -106,6 +107,7 @@ export default function RootLayout({
           <Toaster />
           <VercelAnalytics />
           <SpeedInsights />
+          <RequestIdProvider />
         </body>
       </html>
     </ClerkProvider>

@@ -69,27 +69,68 @@ export async function withRequestId(
       );
     }
 
-    // Validate existing request ID
-    const isValid = await SecureRequestId.verify(
-      existingRequestId,
-      requestContext,
-    );
-    if (!isValid) {
+    // Check if request ID has valid structure before full verification
+    const parsed = SecureRequestId.parse(existingRequestId);
+    if (!parsed) {
+      // Malformed request ID - generate a new one
+      const newRequestId = await SecureRequestId.generate(requestContext);
       return new NextResponse(
         JSON.stringify({
-          type: "INVALID_REQUEST_ID",
-          error: "Invalid request ID",
-          message: "The provided request ID is invalid or has expired",
+          type: "INVALID_REQUEST_ID_FORMAT",
+          error: "Malformed request ID",
+          message: "The provided request ID has an invalid format",
         }),
         {
           status: 400,
           headers: {
             "Content-Type": "application/json",
-            // Generate one anyway to help client fix their request
+            [REQUEST_ID_HEADER]: newRequestId,
+          },
+        },
+      );
+    }
+
+    // Check if request ID is expired
+    const isExpired = Date.now() - parsed.timestamp > SecureRequestId.MAX_AGE;
+
+    // Validate the request ID signature (even if expired)
+    const isValidSignature = await SecureRequestId.verifySignature(
+      existingRequestId,
+      requestContext,
+    );
+
+    if (!isValidSignature) {
+      // Invalid signature - potential tampering
+      return new NextResponse(
+        JSON.stringify({
+          type: "INVALID_REQUEST_ID",
+          error: "Invalid request ID",
+          message: "The provided request ID is invalid",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
             [REQUEST_ID_HEADER]: await SecureRequestId.generate(requestContext),
           },
         },
       );
+    }
+
+    if (isExpired) {
+      // Valid signature but expired - generate a new one and continue
+      // This auto-refresh mechanism prevents users from encountering expired request ID errors
+      // when they stay on the site for longer than the MAX_AGE period (5 minutes)
+      const headers = new Headers(request.headers);
+      const newRequestId = await SecureRequestId.generate(requestContext);
+      headers.set(REQUEST_ID_HEADER, newRequestId);
+
+      return NextResponse.next({
+        request: {
+          ...request,
+          headers,
+        },
+      });
     }
 
     // Valid request ID - proceed with existing headers

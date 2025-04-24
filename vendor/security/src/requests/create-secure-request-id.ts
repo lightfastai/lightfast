@@ -20,7 +20,7 @@ export interface RequestContext {
 
 export class SecureRequestId {
   private static SECRET = secureApiRequestEnv.REQUEST_ID_SECRET;
-  private static MAX_AGE = 5 * 60 * 1000; // 5 minutes
+  public static MAX_AGE = 5 * 60 * 1000; // 5 minutes
   private static encoder = new TextEncoder();
 
   private static async generateHmac(message: string): Promise<string> {
@@ -89,6 +89,51 @@ export class SecureRequestId {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Parse a request ID string into its components
+   * This is useful to check if a request ID has valid structure
+   * before performing full validation
+   */
+  public static parse(requestId: string): ParsedRequestId | null {
+    return this.parseRequestId(requestId);
+  }
+
+  /**
+   * Verify only the signature of a request ID without checking expiration
+   * This is useful for refreshing expired request IDs
+   */
+  public static async verifySignature(
+    requestId: string,
+    context: RequestContext,
+  ): Promise<boolean> {
+    const parsed = this.parseRequestId(requestId);
+    if (!parsed) return false;
+
+    const {
+      version,
+      timestamp,
+      random,
+      context: storedContext,
+      signature,
+    } = parsed;
+
+    // Verify context matches current request
+    const expectedContext = await this.generateContextHash(context);
+    if (storedContext !== expectedContext) {
+      return false;
+    }
+
+    // Verify signature
+    const expectedSignature = await this.generateSignature(
+      version,
+      timestamp,
+      random,
+      storedContext,
+    );
+
+    return signature === expectedSignature;
   }
 
   static async generate(context: RequestContext): Promise<string> {

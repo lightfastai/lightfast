@@ -32,7 +32,8 @@ export const middleware = async (request: NextRequest) => {
     protectedPaths: PROTECTED_PATHS,
   });
 
-  // Set request ID cookie if present in headers
+  // Always set request ID cookie if present in headers
+  // This ensures cookie is refreshed on each request
   const requestId = result.headers.get(REQUEST_ID_HEADER);
   if (requestId) {
     setRequestIdCookie(result, requestId);
