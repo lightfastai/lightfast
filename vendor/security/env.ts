@@ -17,9 +17,15 @@ export const secureApiRequestEnv = createEnv({
   shared: {},
   server: {
     REQUEST_ID_SECRET: z.string().min(1),
+    AUTO_REFRESH_EXPIRED_IDS: z
+      .enum(["true", "false"])
+      .default("true")
+      .transform((val) => val === "true"),
   },
   client: {},
-  experimental__runtimeEnv: {},
+  experimental__runtimeEnv: {
+    AUTO_REFRESH_EXPIRED_IDS: process.env.AUTO_REFRESH_EXPIRED_IDS,
+  },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });

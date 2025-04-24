@@ -101,7 +101,25 @@ export class SecureRequestId {
   }
 
   /**
-   * Verify only the signature of a request ID without checking expiration
+   * Verify only that the context in the request ID matches the current request context
+   * This helps identify if a request ID has been reused in a different context
+   */
+  public static async verifyContext(
+    requestId: string,
+    context: RequestContext,
+  ): Promise<boolean> {
+    const parsed = this.parseRequestId(requestId);
+    if (!parsed) return false;
+
+    const { context: storedContext } = parsed;
+
+    // Verify context matches current request
+    const expectedContext = await this.generateContextHash(context);
+    return storedContext === expectedContext;
+  }
+
+  /**
+   * Verify only the signature of a request ID without checking expiration or context
    * This is useful for refreshing expired request IDs
    */
   public static async verifySignature(
@@ -119,13 +137,7 @@ export class SecureRequestId {
       signature,
     } = parsed;
 
-    // Verify context matches current request
-    const expectedContext = await this.generateContextHash(context);
-    if (storedContext !== expectedContext) {
-      return false;
-    }
-
-    // Verify signature
+    // Only verify the signature matches what we expect for these components
     const expectedSignature = await this.generateSignature(
       version,
       timestamp,
@@ -199,5 +211,17 @@ export class SecureRequestId {
   static extractTimestamp(requestId: string): number | null {
     const parsed = this.parseRequestId(requestId);
     return parsed ? parsed.timestamp : null;
+  }
+
+  /**
+   * Check if a request ID is expired
+   * This is useful for distinguishing between expired IDs and invalid ones
+   */
+  public static isExpired(requestId: string): boolean {
+    const parsed = this.parseRequestId(requestId);
+    if (!parsed) return false; // Not a valid ID format
+
+    const { timestamp } = parsed;
+    return Date.now() - timestamp > this.MAX_AGE;
   }
 }

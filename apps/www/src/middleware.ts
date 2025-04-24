@@ -27,19 +27,25 @@ const PROTECTED_PATHS = [
 
 export const middleware = async (request: NextRequest) => {
   // Get response with request ID handling
-  const result = await withRequestId(request, {
+  const response = await withRequestId(request, {
     publicPaths: PUBLIC_PATHS,
     protectedPaths: PROTECTED_PATHS,
   });
 
-  // Always set request ID cookie if present in headers
-  // This ensures cookie is refreshed on each request
-  const requestId = result.headers.get(REQUEST_ID_HEADER);
-  if (requestId) {
-    setRequestIdCookie(result, requestId);
+  // Check if this is an error response from request ID validation
+  // If status code is 400 or 401, it's an error response from withRequestId
+  if (response.status === 400 || response.status === 401) {
+    // Return the error response directly without modification
+    return response;
   }
 
-  return result;
+  // For successful responses, set the request ID cookie if present
+  const requestId = response.headers.get(REQUEST_ID_HEADER);
+  if (requestId) {
+    setRequestIdCookie(response, requestId);
+  }
+
+  return response;
 };
 
 export const config = {
