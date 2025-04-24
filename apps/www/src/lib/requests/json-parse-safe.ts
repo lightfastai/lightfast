@@ -9,7 +9,7 @@ export class InvalidJsonError extends Error {
   }
 }
 
-export const safeJsonParse = async <T>(
+export const jsonParseSafe = async <T>(
   request: NextRequest,
 ): Promise<Result<T, Error>> => {
   try {

@@ -14,7 +14,15 @@ import {
 } from "~/components/early-access/aj";
 import { EarlyAccessErrorType } from "~/components/early-access/errors";
 import { reportApiError } from "~/lib/error-reporting/api-error-reporter";
-import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-json-parse";
+import {
+  InvalidJsonError,
+  jsonParseSafe,
+} from "~/lib/requests/json-parse-safe";
+import {
+  SecureRequestIdInvalidError,
+  SecureRequestIdMissingError,
+  verifyRequestIdSafe,
+} from "~/lib/requests/verify-request-id-safe";
 
 export const runtime = "edge";
 
@@ -31,44 +39,87 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const requestId = request.headers.get(REQUEST_ID_HEADER);
+    const verificationResult = await verifyRequestIdSafe({
+      requestId,
+      context: requestContext,
+    });
 
-    // Verify request ID (should have been set by middleware)
-    if (
-      !requestId ||
-      !(await SecureRequestId.verify(requestId, requestContext))
-    ) {
-      const error = new Error("Invalid or missing request ID");
-      console.error(error.message);
+    if (verificationResult.isErr()) {
+      const error = verificationResult.error;
+      console.error("Request ID verification error:", {
+        type: error.name,
+        message: error.message,
+      });
 
-      // Generate a new request ID for error tracking
-      const newRequestId = await SecureRequestId.generate(requestContext);
+      if (error instanceof SecureRequestIdMissingError) {
+        const newRequestId = await SecureRequestId.generate(requestContext);
+        await reportApiError(error, {
+          route: "/api/early-access/create",
+          errorType: EarlyAccessErrorType.NO_REQUEST_ID,
+          requestId: newRequestId,
+          error: "Invalid request ID",
+          message: error.message,
+        });
+
+        return NextResponse.json<NextErrorResponse>(
+          {
+            type: EarlyAccessErrorType.NO_REQUEST_ID,
+            error: "Invalid request ID",
+            message: error.message,
+          },
+          {
+            status: 400,
+            headers: {
+              [REQUEST_ID_HEADER]: newRequestId,
+            },
+          },
+        );
+      }
+
+      if (error instanceof SecureRequestIdInvalidError) {
+        await reportApiError(error, {
+          route: "/api/early-access/create",
+          errorType: EarlyAccessErrorType.INVALID_REQUEST_ID,
+          requestId: error.requestId,
+          error: "Invalid request ID",
+          message: error.message,
+        });
+
+        return NextResponse.json<NextErrorResponse>(
+          {
+            type: EarlyAccessErrorType.INVALID_REQUEST_ID,
+            error: "Invalid request ID",
+            message: error.message,
+          },
+          {
+            status: 400,
+            headers: { [REQUEST_ID_HEADER]: error.requestId },
+          },
+        );
+      }
 
       await reportApiError(error, {
         route: "/api/early-access/create",
-        errorType: EarlyAccessErrorType.BAD_REQUEST,
-        requestId: newRequestId,
-        error: "Invalid request ID",
-        message: "Invalid or missing request ID",
+        errorType: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+        requestId:
+          requestId ?? (await SecureRequestId.generate(requestContext)),
+        error: "An unexpected error occurred.",
+        message: "Unknown error",
       });
 
-      return NextResponse.json<NextErrorResponse>(
-        {
-          type: EarlyAccessErrorType.BAD_REQUEST,
-          error: "Invalid request ID",
-          message: "Invalid or missing request ID",
-        },
-        {
-          status: 400,
-          headers: { [REQUEST_ID_HEADER]: newRequestId },
-        },
-      );
+      return NextResponse.json<NextErrorResponse>({
+        type: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+        error: "An unexpected error occurred.",
+        message: "Unknown error",
+      });
     }
 
-    const res = await safeJsonParse<CreateEarlyAccessJoinRequest>(request);
+    const verifiedRequestId = verificationResult.value;
+    const res = await jsonParseSafe<CreateEarlyAccessJoinRequest>(request);
 
     if (res.isErr()) {
       console.error("Safe JSON parse error:", {
-        requestId,
+        requestId: verifiedRequestId,
         type: res.error.name,
         message: res.error.message,
       });
@@ -76,7 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await reportApiError(res.error, {
         route: "/api/early-access/create",
         errorType: EarlyAccessErrorType.BAD_REQUEST,
-        requestId,
+        requestId: verifiedRequestId,
         error: "Invalid JSON",
         message: res.error.message,
       });
@@ -90,7 +141,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
           {
             status: 400,
-            headers: { [REQUEST_ID_HEADER]: requestId },
+            headers: { [REQUEST_ID_HEADER]: verifiedRequestId },
           },
         );
       }
@@ -102,7 +153,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
         {
           status: 500,
-          headers: { [REQUEST_ID_HEADER]: requestId },
+          headers: { [REQUEST_ID_HEADER]: verifiedRequestId },
         },
       );
     }
@@ -114,7 +165,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (protectionResult.isErr()) {
       const error = protectionResult.error;
       console.error("Arcjet protection error:", {
-        requestId,
+        requestId: verifiedRequestId,
         type: error.name,
         message: error.message,
         originalError: error.originalError,
@@ -130,7 +181,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               : error.originalError instanceof ArcjetSecurityError
                 ? EarlyAccessErrorType.SECURITY_CHECK
                 : EarlyAccessErrorType.SERVICE_UNAVAILABLE,
-        requestId,
+        requestId: verifiedRequestId,
         error: error.name,
         message: error.message,
         metadata: {
@@ -148,7 +199,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
           {
             status: 400,
-            headers: { [REQUEST_ID_HEADER]: requestId },
+            headers: { [REQUEST_ID_HEADER]: verifiedRequestId },
           },
         );
       }
@@ -164,7 +215,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           {
             status: 429,
             headers: {
-              [REQUEST_ID_HEADER]: requestId,
+              [REQUEST_ID_HEADER]: verifiedRequestId,
               "Retry-After": retryAfter,
             },
           },
@@ -180,7 +231,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
           {
             status: 403,
-            headers: { [REQUEST_ID_HEADER]: requestId },
+            headers: { [REQUEST_ID_HEADER]: verifiedRequestId },
           },
         );
       }
@@ -194,7 +245,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
         {
           status: 503,
-          headers: { [REQUEST_ID_HEADER]: requestId },
+          headers: { [REQUEST_ID_HEADER]: verifiedRequestId },
         },
       );
     }
@@ -203,7 +254,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       name: "early-access/join",
       data: {
         email,
-        requestId,
+        requestId: verifiedRequestId,
       },
     });
 
@@ -211,7 +262,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { success: true },
       {
         status: 200,
-        headers: { [REQUEST_ID_HEADER]: requestId },
+        headers: { [REQUEST_ID_HEADER]: verifiedRequestId },
       },
     );
   } catch (error) {
