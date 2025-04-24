@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import * as Sentry from "@sentry/nextjs";
 
 import type { EarlyAccessErrorType } from "~/components/early-access/errors";
+import { env } from "~/env";
 
 // Base error context that all errors must include
 interface BaseErrorContext {
@@ -53,14 +54,50 @@ export function useErrorReporter() {
       },
     };
 
-    Sentry.setContext("error_context", enrichedContext);
-    Sentry.captureException(error, {
-      tags: {
-        errorType: enrichedContext.errorType,
-        component: enrichedContext.component,
-        requestId: enrichedContext.requestId,
-      },
-    });
+    // Add debug logging in development
+    if (env.NODE_ENV === "development") {
+      console.log("[Sentry] Reporting error:", {
+        error,
+        context: enrichedContext,
+        dsn: env.NEXT_PUBLIC_SENTRY_DSN,
+      });
+    }
+
+    try {
+      // First set the context
+      Sentry.setContext("error_context", enrichedContext);
+
+      // Then set some useful tags
+      Sentry.setTag("component", enrichedContext.component);
+      Sentry.setTag("errorType", enrichedContext.errorType);
+      Sentry.setTag("requestId", enrichedContext.requestId);
+
+      // Finally capture the exception
+      Sentry.captureException(error, {
+        tags: {
+          errorType: enrichedContext.errorType,
+          component: enrichedContext.component,
+          requestId: enrichedContext.requestId,
+        },
+        extra: enrichedContext,
+      });
+
+      // Log success in development
+      if (env.NODE_ENV === "development") {
+        console.log("[Sentry] Successfully reported error");
+      }
+    } catch (sentryError) {
+      // Log any issues with Sentry reporting
+      console.error("[Sentry] Failed to report error:", sentryError);
+
+      // Log the current Sentry state in development
+      if (env.NODE_ENV === "development") {
+        console.log("[Sentry] Current state:", {
+          initialized: Sentry.getClient() !== undefined,
+          dsn: env.NEXT_PUBLIC_SENTRY_DSN,
+        });
+      }
+    }
   }, []);
 
   return { reportError };

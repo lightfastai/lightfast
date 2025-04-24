@@ -2,7 +2,7 @@ import { captureRequestError, init } from "@sentry/nextjs";
 
 import { env } from "~/env";
 
-export const register = () => {
+const register = () => {
   // eslint-disable-next-line turbo/no-undeclared-env-vars, no-restricted-properties
   if (process.env.NEXT_RUNTIME === "nodejs") {
     init({
@@ -23,5 +23,7 @@ export const register = () => {
     });
   }
 };
+
+register();
 
 export const onRequestError = captureRequestError;
