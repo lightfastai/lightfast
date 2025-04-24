@@ -1,10 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { nanoid } from "nanoid";
 
 import type { NextErrorResponse } from "~/components/early-access/errors";
 import { EarlyAccessErrorType } from "~/components/early-access/errors";
-import { REQUEST_ID_HEADER } from "./lib/requests/request-id";
+import {
+  generateSignedRequestId,
+  REQUEST_ID_HEADER,
+} from "./lib/requests/request-id";
 
 /**
  * Validates if the origin is from the same site as the host
@@ -43,12 +45,12 @@ const isSameOrigin = (origin: string | null, host: string | null): boolean => {
 /**
  * Middleware to handle request ID generation and protected routes
  */
-export const middleware = (request: NextRequest) => {
+export const middleware = async (request: NextRequest) => {
   const response = NextResponse.next();
 
   // Generate a new request ID for all requests if one doesn't exist
   const existingRequestId = request.headers.get(REQUEST_ID_HEADER);
-  const requestId = existingRequestId ?? nanoid();
+  const requestId = existingRequestId ?? (await generateSignedRequestId());
   response.headers.set(REQUEST_ID_HEADER, requestId);
 
   // Protect /api/early-access endpoint with same-site origin check

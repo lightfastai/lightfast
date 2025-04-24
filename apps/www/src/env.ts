@@ -30,6 +30,7 @@ export const env = createEnv({
    */
   server: {
     RESEND_EARLY_ACCESS_AUDIENCE_ID: z.string().min(1),
+    REQUEST_ID_SECRET: z.string().min(1),
   },
 
   /**

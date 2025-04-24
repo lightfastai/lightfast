@@ -25,24 +25,11 @@ interface CreateEarlyAccessJoinRequest {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Get the validated request ID from middleware
+    // Get and validate the request ID
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const requestId = request.headers.get(REQUEST_ID_HEADER)!;
 
-    if (!requestId) {
-      console.error("Error: No request ID found in headers");
-      return NextResponse.json<NextErrorResponse>(
-        {
-          type: EarlyAccessErrorType.NO_REQUEST_ID,
-          error: "No request ID found in headers",
-          message: "No request ID found in headers",
-        },
-        {
-          status: 403,
-        },
-      );
-    }
-
+    // At this point we have a valid request ID
     const res = await jsonParseSafe<CreateEarlyAccessJoinRequest>(request);
 
     if (res.isErr()) {
@@ -194,8 +181,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     );
   } catch (error) {
-    // For unexpected errors, generate a new request ID
-    const newRequestId = request.headers.get(REQUEST_ID_HEADER);
+    // For unexpected errors, use the request ID if available, otherwise "unknown"
+    const newRequestId = request.headers.get(REQUEST_ID_HEADER) ?? "unknown";
     console.error("Unexpected error in early access signup:", {
       requestId: newRequestId,
       error,
@@ -206,7 +193,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       {
         route: "/api/early-access/create",
         errorType: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
-        requestId: newRequestId ?? "unknown",
+        requestId: newRequestId,
         error: "An unexpected error occurred",
         message: "Please try again later",
       },
@@ -220,7 +207,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
       {
         status: 500,
-        headers: { [REQUEST_ID_HEADER]: newRequestId ?? "unknown" },
+        headers: { [REQUEST_ID_HEADER]: newRequestId },
       },
     );
   }
