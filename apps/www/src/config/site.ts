@@ -10,15 +10,15 @@ export const siteConfig: SiteConfig<SiteLinks> = {
   links: {
     twitter: {
       title: "Twitter",
-      href: "https://x.com/lightfast",
+      href: "https://x.com/lightfastai",
     },
     github: {
       title: "GitHub",
-      href: "https://github.com/lightfast",
+      href: "https://github.com/lightfastai",
     },
     discord: {
       title: "Discord",
-      href: "https://discord.gg/lightfast",
+      href: "https://discord.gg/lightfastai",
     },
     privacy: {
       title: "Privacy Policy",
