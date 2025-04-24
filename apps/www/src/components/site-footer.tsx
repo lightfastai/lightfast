@@ -64,7 +64,7 @@ export function SiteFooter() {
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="group relative text-xs">
+          <span className="group relative cursor-default text-xs">
             <span className="relative inline-block transition-all duration-300 group-hover:-translate-y-1 group-hover:text-foreground">
               {siteConfig.name}
             </span>
