@@ -68,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             message: error.message,
           },
           {
-            status: 400,
+            status: 403,
             headers: {
               [REQUEST_ID_HEADER]: newRequestId,
             },
@@ -92,26 +92,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             message: error.message,
           },
           {
-            status: 400,
+            status: 403,
             headers: { [REQUEST_ID_HEADER]: error.requestId },
           },
         );
       }
 
+      const newRequestId =
+        requestId ?? (await SecureRequestId.generate(requestContext));
+
       await reportApiError(error, {
         route: "/api/early-access/create",
         errorType: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
-        requestId:
-          requestId ?? (await SecureRequestId.generate(requestContext)),
+        requestId: newRequestId,
         error: "An unexpected error occurred.",
         message: "Unknown error",
       });
 
-      return NextResponse.json<NextErrorResponse>({
-        type: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
-        error: "An unexpected error occurred.",
-        message: "Unknown error",
-      });
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+          error: "An unexpected error occurred.",
+          message: "Unknown error",
+        },
+        {
+          status: 500,
+          headers: { [REQUEST_ID_HEADER]: newRequestId },
+        },
+      );
     }
 
     const verifiedRequestId = verificationResult.value;
