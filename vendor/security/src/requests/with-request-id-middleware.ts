@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 import type { RequestContext } from "./create-secure-request-id";
 import { secureApiRequestEnv } from "../../env";
