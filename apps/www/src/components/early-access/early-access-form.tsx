@@ -21,8 +21,7 @@ import { createEarlyAccessSafe } from "~/components/early-access/early-access-fo
 import { earlyAccessFormSchema } from "~/components/early-access/early-access-form.schema";
 import { EarlyAccessFormErrorMap } from "~/components/early-access/errors";
 import { env } from "~/env";
-import { useErrorReporter } from "~/hooks/use-error-reporter";
-import { createRequestContext } from "~/lib/next-request-id";
+import { useErrorReporter } from "~/lib/error-reporting/client-error-reporter";
 
 export function EarlyAccessForm() {
   const { toast } = useToast();
@@ -37,11 +36,8 @@ export function EarlyAccessForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
-    const requestContext = createRequestContext();
-
     const result = await createEarlyAccessSafe({
       email: values.email,
-      requestId: requestContext.requestId,
     });
 
     result.match(
@@ -66,12 +62,11 @@ export function EarlyAccessForm() {
         reportError(error, {
           component: "EarlyAccessForm",
           errorType: error.type,
-          requestId: error.requestId ?? requestContext.requestId,
+          requestId: error.requestId ?? "",
           error: error.error,
           message: error.message,
           metadata: {
             email: values.email,
-            originalRequestId: requestContext.requestId,
           },
         });
 
@@ -82,7 +77,6 @@ export function EarlyAccessForm() {
             error: error.error,
             message: error.message,
             requestId: error.requestId,
-            originalRequestId: requestContext.requestId,
           });
         }
 

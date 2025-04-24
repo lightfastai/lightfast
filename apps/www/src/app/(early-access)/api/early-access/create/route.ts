@@ -1,6 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { REQUEST_ID_HEADER } from "@vendor/security/requests/constants";
+import { SecureRequestId } from "@vendor/security/requests/create-secure-request-id";
+
 import type { NextErrorResponse } from "~/components/early-access/errors";
 import { inngest } from "~/app/(inngest)/api/inngest/_client/client";
 import {
@@ -10,11 +13,7 @@ import {
   protectSignupSafe,
 } from "~/components/early-access/aj";
 import { EarlyAccessErrorType } from "~/components/early-access/errors";
-import {
-  createRequestContext,
-  extractRequestContext,
-  withRequestId,
-} from "~/lib/next-request-id";
+import { reportApiError } from "~/lib/error-reporting/api-error-reporter";
 import { InvalidJsonError, safeJsonParse } from "~/lib/next-request-json-parse";
 
 export const runtime = "edge";
@@ -24,24 +23,43 @@ interface CreateEarlyAccessJoinRequest {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  try {
-    const requestContext = extractRequestContext(request.headers);
+  const requestContext = {
+    method: request.method,
+    path: request.nextUrl.pathname,
+    userAgent: request.headers.get("user-agent") ?? undefined,
+  };
 
-    // If no valid request ID provided, return 400
-    if (!requestContext) {
-      // Create a new context just for the error response
-      const errorContext = createRequestContext();
-      console.error("Missing or invalid request ID in headers");
+  try {
+    const requestId = request.headers.get(REQUEST_ID_HEADER);
+
+    // Verify request ID (should have been set by middleware)
+    if (
+      !requestId ||
+      !(await SecureRequestId.verify(requestId, requestContext))
+    ) {
+      const error = new Error("Invalid or missing request ID");
+      console.error(error.message);
+
+      // Generate a new request ID for error tracking
+      const newRequestId = await SecureRequestId.generate(requestContext);
+
+      await reportApiError(error, {
+        route: "/api/early-access/create",
+        errorType: EarlyAccessErrorType.BAD_REQUEST,
+        requestId: newRequestId,
+        error: "Invalid request ID",
+        message: "Invalid or missing request ID",
+      });
 
       return NextResponse.json<NextErrorResponse>(
         {
           type: EarlyAccessErrorType.BAD_REQUEST,
-          error: "Missing request ID",
-          message: "X-Lightfast-Request-Id header is required",
+          error: "Invalid request ID",
+          message: "Invalid or missing request ID",
         },
         {
           status: 400,
-          headers: withRequestId(errorContext.requestId),
+          headers: { [REQUEST_ID_HEADER]: newRequestId },
         },
       );
     }
@@ -50,8 +68,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (res.isErr()) {
       console.error("Safe JSON parse error:", {
-        requestId: requestContext.requestId,
+        requestId,
         type: res.error.name,
+        message: res.error.message,
+      });
+
+      await reportApiError(res.error, {
+        route: "/api/early-access/create",
+        errorType: EarlyAccessErrorType.BAD_REQUEST,
+        requestId,
+        error: "Invalid JSON",
         message: res.error.message,
       });
 
@@ -64,7 +90,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
           {
             status: 400,
-            headers: withRequestId(requestContext.requestId),
+            headers: { [REQUEST_ID_HEADER]: requestId },
           },
         );
       }
@@ -76,7 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
         {
           status: 500,
-          headers: withRequestId(requestContext.requestId),
+          headers: { [REQUEST_ID_HEADER]: requestId },
         },
       );
     }
@@ -88,10 +114,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (protectionResult.isErr()) {
       const error = protectionResult.error;
       console.error("Arcjet protection error:", {
-        requestId: requestContext.requestId,
+        requestId,
         type: error.name,
         message: error.message,
         originalError: error.originalError,
+      });
+
+      await reportApiError(error, {
+        route: "/api/early-access/create",
+        errorType:
+          error.originalError instanceof ArcjetEmailError
+            ? EarlyAccessErrorType.INVALID_EMAIL
+            : error.originalError instanceof ArcjetRateLimitError
+              ? EarlyAccessErrorType.RATE_LIMIT
+              : error.originalError instanceof ArcjetSecurityError
+                ? EarlyAccessErrorType.SECURITY_CHECK
+                : EarlyAccessErrorType.SERVICE_UNAVAILABLE,
+        requestId,
+        error: error.name,
+        message: error.message,
+        metadata: {
+          originalError: error.originalError,
+        },
       });
 
       // Map to domain-specific errors
@@ -104,7 +148,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
           {
             status: 400,
-            headers: withRequestId(requestContext.requestId),
+            headers: { [REQUEST_ID_HEADER]: requestId },
           },
         );
       }
@@ -120,7 +164,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           {
             status: 429,
             headers: {
-              ...withRequestId(requestContext.requestId),
+              [REQUEST_ID_HEADER]: requestId,
               "Retry-After": retryAfter,
             },
           },
@@ -136,7 +180,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
           {
             status: 403,
-            headers: withRequestId(requestContext.requestId),
+            headers: { [REQUEST_ID_HEADER]: requestId },
           },
         );
       }
@@ -150,7 +194,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
         {
           status: 503,
-          headers: withRequestId(requestContext.requestId),
+          headers: { [REQUEST_ID_HEADER]: requestId },
         },
       );
     }
@@ -159,7 +203,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       name: "early-access/join",
       data: {
         email,
-        requestId: requestContext.requestId,
+        requestId,
       },
     });
 
@@ -167,16 +211,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { success: true },
       {
         status: 200,
-        headers: withRequestId(requestContext.requestId),
+        headers: { [REQUEST_ID_HEADER]: requestId },
       },
     );
   } catch (error) {
-    // For unexpected errors, create a new request ID for the error response
-    const errorContext = createRequestContext();
+    // For unexpected errors, generate a new request ID
+    const newRequestId = await SecureRequestId.generate(requestContext);
     console.error("Unexpected error in early access signup:", {
-      requestId: errorContext.requestId,
+      requestId: newRequestId,
       error,
     });
+
+    await reportApiError(
+      error instanceof Error ? error : new Error("Unknown error"),
+      {
+        route: "/api/early-access/create",
+        errorType: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+        requestId: newRequestId,
+        error: "An unexpected error occurred",
+        message: "Please try again later",
+      },
+    );
 
     return NextResponse.json<NextErrorResponse>(
       {
@@ -186,7 +241,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
       {
         status: 500,
-        headers: withRequestId(errorContext.requestId),
+        headers: { [REQUEST_ID_HEADER]: newRequestId },
       },
     );
   }

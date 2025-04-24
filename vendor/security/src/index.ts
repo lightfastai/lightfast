@@ -8,6 +8,7 @@ import arcjet, { detectBot, request, tokenBucket } from "@arcjet/next";
 import { env } from "~/env";
 
 export * from "@arcjet/decorate";
+
 // Re-export the rules to simplify imports inside handlers
 export {
   detectBot,

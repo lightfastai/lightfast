@@ -5,6 +5,6 @@
       "~/env": ["./env.ts"]
     }
   },
-  "include": ["*.ts", "src"],
+  "include": ["*.ts", "src", "../../apps/www/src/lib/api-error-reporter.ts"],
   "exclude": ["node_modules"]
 }

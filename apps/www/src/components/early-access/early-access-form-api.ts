@@ -1,7 +1,8 @@
 import { ResultAsync } from "neverthrow";
 
+import { REQUEST_ID_HEADER } from "@vendor/security/requests/constants";
+
 import type { NextErrorResponse } from "./errors";
-import { extractRequestContext, withRequestId } from "~/lib/next-request-id";
 import { EarlyAccessErrorType, EarlyAccessFormErrorMap } from "./errors";
 
 // Base error class
@@ -25,18 +26,14 @@ export interface EarlyAccessResponse {
 
 interface CreateEarlyAccessParams {
   email: string;
-  requestId: string;
 }
 
 const createEarlyAccessUnsafe = async ({
   email,
-  requestId,
 }: CreateEarlyAccessParams): Promise<EarlyAccessResponse> => {
-  const headers = new Headers(
-    withRequestId(requestId, {
-      "Content-Type": "application/json",
-    }),
-  );
+  const headers = new Headers({
+    "Content-Type": "application/json",
+  });
 
   const response = await fetch("/api/early-access/create", {
     method: "POST",
@@ -46,33 +43,28 @@ const createEarlyAccessUnsafe = async ({
 
   if (!response.ok) {
     const errorData = (await response.json()) as NextErrorResponse;
-    const responseRequestId = extractRequestContext(
-      response.headers,
-    )?.requestId;
-    if (!responseRequestId) {
-      console.error("No request ID found in response", {
-        responseRequestId,
-        errorData,
-      });
-      throw new EarlyAccessError(
-        EarlyAccessFormErrorMap[EarlyAccessErrorType.NO_REQUEST_ID],
-        EarlyAccessErrorType.NO_REQUEST_ID,
-        "No request ID found in response",
-        requestId,
-      );
-    }
+    const responseRequestId = response.headers.get(REQUEST_ID_HEADER);
 
     throw new EarlyAccessError(
       errorData.message,
       errorData.type,
       errorData.error,
-      responseRequestId,
+      responseRequestId ?? undefined, // @todo should handle the case where the request ID is not present
+    );
+  }
+
+  const requestId = response.headers.get(REQUEST_ID_HEADER);
+  if (!requestId) {
+    throw new EarlyAccessError(
+      EarlyAccessFormErrorMap[EarlyAccessErrorType.NO_REQUEST_ID],
+      EarlyAccessErrorType.NO_REQUEST_ID,
+      "No request ID found in response",
     );
   }
 
   return {
     success: true,
-    requestId: response.headers.get("X-Request-Id") ?? requestId,
+    requestId,
   };
 };
 
@@ -87,7 +79,6 @@ export const createEarlyAccessSafe = (params: CreateEarlyAccessParams) =>
         "An unexpected error occurred",
         EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
         error instanceof Error ? error.message : "Unknown error",
-        params.requestId,
       );
     },
   );
