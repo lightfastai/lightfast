@@ -9,10 +9,8 @@
       "default": "./src/index.ts"
     },
     "./env": "./env.ts",
-    "./requests/reporter.server": "./src/requests/reporter.server.ts",
-    "./requests/with-request-id-middleware": "./src/requests/with-request-id-middleware.ts",
-    "./requests/create-secure-request-id": "./src/requests/create-secure-request-id.ts",
-    "./requests/constants": "./src/requests/constants.ts"
+    "./requests/constants": "./src/requests/constants.ts",
+    "./requests": "./src/requests/index.ts"
   },
   "license": "MIT",
   "scripts": {

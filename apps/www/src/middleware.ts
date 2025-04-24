@@ -1,6 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-import { withRequestId } from "@vendor/security/requests/with-request-id-middleware";
+import {
+  REQUEST_ID_HEADER,
+  setRequestIdCookie,
+  withRequestId,
+} from "@vendor/security/requests";
 
 /**
  * Paths that are public and don't require request ID validation
@@ -8,7 +12,8 @@ import { withRequestId } from "@vendor/security/requests/with-request-id-middlew
  */
 const PUBLIC_PATHS = [
   "/api/health", // Health check endpoints
-  "/legal", // Legal pages (terms, privacy, etc)
+  "/legal/terms", // Legal pages (terms, privacy, etc)
+  "/legal/privacy",
   "/",
 ] as const;
 
@@ -21,14 +26,19 @@ const PROTECTED_PATHS = [
 ] as const;
 
 export const middleware = async (request: NextRequest) => {
-  const requestWithId = await withRequestId(request, {
+  // Get response with request ID handling
+  const result = await withRequestId(request, {
     publicPaths: PUBLIC_PATHS,
     protectedPaths: PROTECTED_PATHS,
   });
 
-  return NextResponse.next({
-    request: requestWithId,
-  });
+  // Set request ID cookie if present in headers
+  const requestId = result.headers.get(REQUEST_ID_HEADER);
+  if (requestId) {
+    setRequestIdCookie(result, requestId);
+  }
+
+  return result;
 };
 
 export const config = {

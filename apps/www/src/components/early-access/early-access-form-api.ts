@@ -1,8 +1,10 @@
 import { ResultAsync } from "neverthrow";
 
-import { REQUEST_ID_HEADER } from "@vendor/security/requests/constants";
-
 import type { NextErrorResponse } from "./errors";
+import {
+  addRequestIdToHeaders,
+  updateRequestIdFromResponse,
+} from "~/lib/security/request-id";
 import { EarlyAccessErrorType, EarlyAccessFormErrorMap } from "./errors";
 
 // Base error class
@@ -35,26 +37,29 @@ const createEarlyAccessUnsafe = async ({
     "Content-Type": "application/json",
   });
 
+  // Add request ID to headers if we have one
+  addRequestIdToHeaders(headers);
+
   const response = await fetch("/api/early-access/create", {
     method: "POST",
     headers,
     body: JSON.stringify({ email }),
   });
 
+  // Update stored request ID from response
+  const responseRequestId = updateRequestIdFromResponse(response);
+
   if (!response.ok) {
     const errorData = (await response.json()) as NextErrorResponse;
-    const responseRequestId = response.headers.get(REQUEST_ID_HEADER);
-
     throw new EarlyAccessError(
       errorData.message,
       errorData.type,
       errorData.error,
-      responseRequestId ?? undefined, // @todo should handle the case where the request ID is not present
+      responseRequestId,
     );
   }
 
-  const requestId = response.headers.get(REQUEST_ID_HEADER);
-  if (!requestId) {
+  if (!responseRequestId) {
     throw new EarlyAccessError(
       EarlyAccessFormErrorMap[EarlyAccessErrorType.NO_REQUEST_ID],
       EarlyAccessErrorType.NO_REQUEST_ID,
@@ -64,7 +69,7 @@ const createEarlyAccessUnsafe = async ({
 
   return {
     success: true,
-    requestId,
+    requestId: responseRequestId,
   };
 };
 

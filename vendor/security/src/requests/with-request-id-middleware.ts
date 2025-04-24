@@ -39,7 +39,12 @@ export async function withRequestId(
       );
     }
 
-    return new NextRequest(request.url, { ...request, headers });
+    return NextResponse.next({
+      request: {
+        ...request,
+        headers,
+      },
+    });
   }
 
   // 2. Handle protected paths
@@ -87,9 +92,13 @@ export async function withRequestId(
       );
     }
 
-    // Valid request ID - proceed
+    // Valid request ID - proceed with existing headers
+    const headers = new Headers(request.headers);
     return NextResponse.next({
-      request,
+      request: {
+        ...request,
+        headers,
+      },
     });
   }
 
@@ -100,7 +109,12 @@ export async function withRequestId(
     await SecureRequestId.generate(requestContext),
   );
 
-  return new NextRequest(request.url, { ...request, headers });
+  return NextResponse.next({
+    request: {
+      ...request,
+      headers,
+    },
+  });
 }
 
 /**
