@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import "@repo/ui/globals.css";
 
@@ -54,8 +54,34 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
+    other: [
+      {
+        rel: "icon",
+        url: "/favicon-32x32.png",
+      },
+      {
+        rel: "icon",
+        url: "/android-chrome-192x192.png",
+      },
+      {
+        rel: "icon",
+        url: "/android-chrome-512x512.png",
+      },
+    ],
   },
-  manifest: `${siteConfig.url}/site.webmanifest`,
+  applicationName: siteConfig.name,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: siteConfig.name,
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
@@ -67,7 +93,6 @@ export default function RootLayout({
     <ClerkProvider waitlistUrl="/">
       <html lang="en" suppressHydrationWarning>
         <head />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
         <body
           className={cn(
             "dark min-h-screen bg-background font-sans antialiased",

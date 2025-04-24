@@ -1,130 +1,214 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { arcjet, protectSignup } from "@vendor/security";
-
-import { earlyAcessFormSchema } from "~/components/early-access/early-acesss-form.validations";
-import { env } from "~/env";
+import type { NextErrorResponse } from "~/components/early-access/errors";
+import { inngest } from "~/app/(inngest)/api/inngest/_client/client";
+import {
+  ArcjetEmailError,
+  ArcjetRateLimitError,
+  ArcjetSecurityError,
+  protectSignupSafe,
+} from "~/components/early-access/aj";
+import { EarlyAccessErrorType } from "~/components/early-access/errors";
+import { reportApiError } from "~/lib/error-reporting/api-error-reporter";
+import {
+  InvalidJsonError,
+  jsonParseSafe,
+} from "~/lib/requests/json-parse-safe";
+import { REQUEST_ID_HEADER } from "~/lib/requests/request-id";
 
 export const runtime = "edge";
 
-const CLERK_API_URL = "https://api.clerk.com/v1";
-
-const aj = arcjet({
-  key: env.ARCJET_KEY, // Get your site key from https://app.arcjet.com
-  rules: [
-    protectSignup({
-      email: {
-        mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
-        // Block emails that are disposable, invalid, or have no MX records
-        block: ["DISPOSABLE", "INVALID", "NO_MX_RECORDS"],
-      },
-      bots: {
-        mode: "LIVE",
-        // configured with a list of bots to allow from
-        // https://arcjet.com/bot-list
-        allow: [], // "allow none" will block all detected bots
-      },
-      // It would be unusual for a form to be submitted more than 5 times in 10
-      // minutes from the same IP address
-      rateLimit: {
-        // uses a sliding window rate limit
-        mode: "LIVE",
-        interval: "10m", // counts requests over a 10 minute sliding window
-        max: 10, // allows 5 submissions within the window
-      },
-    }),
-  ],
-});
+interface CreateEarlyAccessJoinRequest {
+  email: string;
+}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const clerkSecretKey = env.CLERK_SECRET_KEY;
-
   try {
-    const json = (await request.json()) as { email: string };
-    const parsed = earlyAcessFormSchema.safeParse(json);
+    // Get and validate the request ID
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const requestId = request.headers.get(REQUEST_ID_HEADER)!;
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid email address provided." },
-        { status: 400 },
-      );
-    }
+    // At this point we have a valid request ID
+    const res = await jsonParseSafe<CreateEarlyAccessJoinRequest>(request);
 
-    const { email } = parsed.data;
-
-    const decision = await aj.protect(request, { email });
-    console.log("Arcjet decision:", decision);
-
-    if (decision.isDenied()) {
-      if (decision.reason.isEmail()) {
-        return NextResponse.json(
-          {
-            error: "Invalid email address provided.",
-            message: decision.reason,
-          },
-          { status: 400 },
-        );
-      }
-
-      if (decision.reason.isRateLimit()) {
-        return NextResponse.json(
-          {
-            error: "Rate limit exceeded. Please try again in 10 minutes.",
-            message: decision.reason,
-          },
-          { status: 429 },
-        );
-      }
-
-      return NextResponse.json(
-        {
-          error: "Security check failed. Are you a bot?",
-          message: decision.reason,
-        },
-        { status: 403 },
-      );
-    } else {
-      // Directly call the Clerk Backend API
-      const response = await fetch(`${CLERK_API_URL}/waitlist_entries`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${clerkSecretKey}`,
-        },
-        body: JSON.stringify({ email_address: email }), // Use email_address as per Clerk API docs
+    if (res.isErr()) {
+      console.error("Safe JSON parse error:", {
+        requestId,
+        type: res.error.name,
+        message: res.error.message,
       });
 
-      if (!response.ok) {
-        return NextResponse.json(
+      reportApiError(res.error, {
+        route: "/api/early-access/create",
+        errorType: EarlyAccessErrorType.BAD_REQUEST,
+        requestId,
+        error: "Invalid JSON",
+        message: res.error.message,
+      });
+
+      if (res.error instanceof InvalidJsonError) {
+        return NextResponse.json<NextErrorResponse>(
           {
-            error: "Failed to add email to the waitlist.",
-            message: await response.text(),
+            type: EarlyAccessErrorType.BAD_REQUEST,
+            error: "Invalid JSON",
+            message: res.error.message,
           },
-          { status: 500 },
+          {
+            status: 400,
+            headers: { [REQUEST_ID_HEADER]: requestId },
+          },
+        );
+      }
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+          error: "An unexpected error occurred.",
+          message: "Unknown error",
+        },
+        {
+          status: 500,
+          headers: { [REQUEST_ID_HEADER]: requestId },
+        },
+      );
+    }
+
+    const { email } = res.value;
+
+    const protectionResult = await protectSignupSafe({ request, email });
+
+    if (protectionResult.isErr()) {
+      const error = protectionResult.error;
+      console.error("Arcjet protection error:", {
+        requestId,
+        type: error.name,
+        message: error.message,
+        originalError: error.originalError,
+      });
+
+      reportApiError(error, {
+        route: "/api/early-access/create",
+        errorType:
+          error.originalError instanceof ArcjetEmailError
+            ? EarlyAccessErrorType.INVALID_EMAIL
+            : error.originalError instanceof ArcjetRateLimitError
+              ? EarlyAccessErrorType.RATE_LIMIT
+              : error.originalError instanceof ArcjetSecurityError
+                ? EarlyAccessErrorType.SECURITY_CHECK
+                : EarlyAccessErrorType.SERVICE_UNAVAILABLE,
+        requestId,
+        error: error.name,
+        message: error.message,
+        metadata: {
+          originalError: error.originalError,
+        },
+      });
+
+      // Map to domain-specific errors
+      if (error.originalError instanceof ArcjetEmailError) {
+        return NextResponse.json<NextErrorResponse>(
+          {
+            type: EarlyAccessErrorType.INVALID_EMAIL,
+            error: "Invalid email",
+            message: error.message,
+          },
+          {
+            status: 400,
+            headers: { [REQUEST_ID_HEADER]: requestId },
+          },
         );
       }
 
-      // Clerk API responded successfully (e.g., status 200)
-      // @note, in clerk, there is a "status" field that can return "pending"
-      const clerkResponse = (await response.json()) as {
-        id: string;
-        email_address: string;
-        created_at: string;
-        updated_at: string;
-        status: string;
-      };
+      if (error.originalError instanceof ArcjetRateLimitError) {
+        const retryAfter = error.originalError.retryAfter;
+        return NextResponse.json<NextErrorResponse>(
+          {
+            type: EarlyAccessErrorType.RATE_LIMIT,
+            error: "Too many attempts",
+            message: error.message,
+          },
+          {
+            status: 429,
+            headers: {
+              [REQUEST_ID_HEADER]: requestId,
+              "Retry-After": retryAfter,
+            },
+          },
+        );
+      }
 
-      return NextResponse.json(
-        { success: true, entry: clerkResponse },
-        { status: 200 },
+      if (error.originalError instanceof ArcjetSecurityError) {
+        return NextResponse.json<NextErrorResponse>(
+          {
+            type: EarlyAccessErrorType.SECURITY_CHECK,
+            error: "Security check failed",
+            message: error.message,
+          },
+          {
+            status: 403,
+            headers: { [REQUEST_ID_HEADER]: requestId },
+          },
+        );
+      }
+
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: EarlyAccessErrorType.SERVICE_UNAVAILABLE,
+          error: "Service unavailable",
+          message:
+            "We're having trouble processing requests right now. Please try again later.",
+        },
+        {
+          status: 503,
+          headers: { [REQUEST_ID_HEADER]: requestId },
+        },
       );
     }
-  } catch (error) {
-    console.error("API Route - Waitlist error:", error);
+
+    await inngest.send({
+      name: "early-access/join",
+      data: {
+        email,
+        requestId,
+      },
+    });
+
     return NextResponse.json(
-      { error: "An unexpected error occurred." },
-      { status: 500 },
+      { success: true },
+      {
+        status: 200,
+        headers: { [REQUEST_ID_HEADER]: requestId },
+      },
+    );
+  } catch (error) {
+    // For unexpected errors, use the request ID if available, otherwise "unknown"
+    const newRequestId = request.headers.get(REQUEST_ID_HEADER) ?? "unknown";
+    console.error("Unexpected error in early access signup:", {
+      requestId: newRequestId,
+      error,
+    });
+
+    reportApiError(
+      error instanceof Error ? error : new Error("Unknown error"),
+      {
+        route: "/api/early-access/create",
+        errorType: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+        requestId: newRequestId,
+        error: "An unexpected error occurred",
+        message: "Please try again later",
+      },
+    );
+
+    return NextResponse.json<NextErrorResponse>(
+      {
+        type: EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+        error: "An unexpected error occurred",
+        message: "Please try again later",
+      },
+      {
+        status: 500,
+        headers: { [REQUEST_ID_HEADER]: newRequestId },
+      },
     );
   }
 }

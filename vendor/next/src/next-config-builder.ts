@@ -1,18 +1,20 @@
+import { NextConfig } from "next";
 import { withLogtail as withLogtailNext } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import { createSecureHeaders } from "next-secure-headers";
 
-/** @type {import("next").NextConfig} */
-export const config = withVercelToolbar()({
+import { env } from "../env";
+
+export const config: NextConfig = withVercelToolbar()({
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "fal.media",
-      },
+      // {
+      //   protocol: "https",
+      //   hostname: "fal.media",
+      // },
     ],
   },
 
@@ -55,25 +57,6 @@ export const config = withVercelToolbar()({
 
     config.ignoreWarnings = [{ module: /@opentelemetry\/instrumentation/ }];
 
-    // Add support for GLSL shaders @note used by dahlia. requires rework...
-    config.module.rules.push({
-      test: /\.(vert|frag)$/,
-      use: "webpack-glsl-loader",
-    });
-
-    // Add fallbacks for node modules. @note this is required for tree-sitter. requires rework...
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      path: false,
-    };
-
-    // Add WASM support. @note this is required for tree-sitter. requires rework...
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-    };
-
     return config;
   },
 
@@ -81,17 +64,16 @@ export const config = withVercelToolbar()({
   skipTrailingSlashRedirect: true,
 });
 
-/** @type {Parameters<typeof withSentryConfig>[1]} */
-export const sentryConfig = {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  authToken: process.env.SENTRY_AUTH_TOKEN,
+export const sentryConfig: Parameters<typeof withSentryConfig>[1] = {
+  org: env.SENTRY_ORG,
+  project: env.SENTRY_PROJECT,
+  authToken: env.SENTRY_AUTH_TOKEN,
 
   // Only print logs for uploading source maps in CI
-  silent: !process.env.CI,
+  silent: !env.CI,
 
   // Only widen client file upload in production on Vercel
-  widenClientFileUpload: process.env.VERCEL_ENV === "production",
+  widenClientFileUpload: env.VERCEL_ENV === "production",
 
   /*
    * For all available options, see:
@@ -111,9 +93,6 @@ export const sentryConfig = {
    */
   tunnelRoute: "/monitoring",
 
-  // Hides source maps from generated client bundles
-  hideSourceMaps: true,
-
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
 
@@ -126,22 +105,22 @@ export const sentryConfig = {
   automaticVercelMonitors: true,
 };
 
-/**
- * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}
- * @returns {import("next").NextConfig}
- */
-export const withSentry = (sourceConfig) =>
-  withSentryConfig(sourceConfig, sentryConfig);
+export const withSentry: (sourceConfig: NextConfig) => NextConfig = (
+  sourceConfig: NextConfig,
+) => withSentryConfig(sourceConfig, sentryConfig);
 
 /**
  * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}
  * @returns {import("next").NextConfig}
  */
-export const withAnalyzer = (sourceConfig) =>
-  withBundleAnalyzer()(sourceConfig);
+export const withAnalyzer: (sourceConfig: NextConfig) => NextConfig = (
+  sourceConfig: NextConfig,
+) => withBundleAnalyzer()(sourceConfig);
 
 /**
  * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}
  * @returns {import("next").NextConfig}
  */
-export const withLogtail = (sourceConfig) => withLogtailNext(sourceConfig);
+export const withLogtail: (sourceConfig: NextConfig) => NextConfig = (
+  sourceConfig: NextConfig,
+) => withLogtailNext(sourceConfig);

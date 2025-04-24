@@ -8,7 +8,8 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./env.ts"
+    "./env": "./env.ts",
+    "./requests/constants": "./src/requests/constants.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -23,12 +24,17 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/js-cookie": "^3.0.6",
+    "@types/react": "^18.2.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@arcjet/next": "1.0.0-beta.5"
+    "@arcjet/decorate": "1.0.0-beta.6",
+    "@arcjet/next": "1.0.0-beta.5",
+    "js-cookie": "^3.0.5",
+    "react": "^18.2.0"
   }
 }
