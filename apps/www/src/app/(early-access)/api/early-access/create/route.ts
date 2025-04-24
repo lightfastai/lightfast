@@ -27,6 +27,7 @@ interface CreateEarlyAccessJoinRequest {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Get the validated request ID from middleware
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const requestId = request.headers.get(REQUEST_ID_HEADER)!;
 
     const res = await jsonParseSafe<CreateEarlyAccessJoinRequest>(request);

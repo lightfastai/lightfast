@@ -37,7 +37,7 @@ function setErrorContext(context: BaseErrorContext): void {
 
 export function createSentryReporter(config: SentryReportingConfig) {
   return {
-    async reportError(error: Error, context: BaseErrorContext): Promise<void> {
+    reportError(error: Error, context: BaseErrorContext): void {
       logDebug(config.disableLogger, "Reporting error:", {
         error,
         context,

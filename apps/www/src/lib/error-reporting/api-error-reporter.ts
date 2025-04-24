@@ -1,4 +1,5 @@
-import { RequestContext, SecureRequestId } from "@vendor/security/requests";
+import type { RequestContext } from "@vendor/security/requests";
+import { SecureRequestId } from "@vendor/security/requests";
 
 import type { ApiErrorContext } from "./types";
 import { env } from "~/env";
@@ -30,7 +31,7 @@ export async function reportApiError(
     : await SecureRequestId.generate(requestContext);
 
   // Report error with verified request ID
-  await reporter.reportError(error, {
+  reporter.reportError(error, {
     ...context,
     requestId,
   });

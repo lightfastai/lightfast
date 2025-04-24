@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { ResultAsync } from "neverthrow";
 
 import type { RequestContext } from "./create-secure-request-id";
 import { secureApiRequestEnv } from "../../env";
@@ -17,15 +18,85 @@ export enum RequestIdErrorType {
   INVALID_SIGNATURE = "INVALID_REQUEST_SIGNATURE",
 }
 
+// Error classes for request ID validation
+export class RequestIdError extends Error {
+  constructor(
+    message: string,
+    public type: RequestIdErrorType,
+    public statusCode = 400,
+  ) {
+    super(message);
+    this.name = "RequestIdError";
+  }
+}
+
+export class MissingRequestIdError extends RequestIdError {
+  constructor(message = "Missing request ID") {
+    super(message, RequestIdErrorType.MISSING, 401);
+    this.name = "MissingRequestIdError";
+  }
+}
+
+export class InvalidFormatRequestIdError extends RequestIdError {
+  constructor(message = "Malformed request ID") {
+    super(message, RequestIdErrorType.INVALID_FORMAT, 400);
+    this.name = "InvalidFormatRequestIdError";
+  }
+}
+
+export class ExpiredRequestIdError extends RequestIdError {
+  constructor(message = "Expired request ID") {
+    super(message, RequestIdErrorType.EXPIRED, 400);
+    this.name = "ExpiredRequestIdError";
+  }
+}
+
+export class InvalidContextRequestIdError extends RequestIdError {
+  constructor(message = "Invalid request context") {
+    super(message, RequestIdErrorType.INVALID_CONTEXT, 400);
+    this.name = "InvalidContextRequestIdError";
+  }
+}
+
+export class InvalidSignatureRequestIdError extends RequestIdError {
+  constructor(message = "Invalid signature") {
+    super(message, RequestIdErrorType.INVALID_SIGNATURE, 400);
+    this.name = "InvalidSignatureRequestIdError";
+  }
+}
+
+export class UnknownRequestIdError extends Error {
+  constructor(message = "Unknown request ID error") {
+    super(message);
+    this.name = "UnknownRequestIdError";
+  }
+}
+
+// Union type of all possible request ID errors
+export type RequestIdValidationError =
+  | MissingRequestIdError
+  | InvalidFormatRequestIdError
+  | ExpiredRequestIdError
+  | InvalidContextRequestIdError
+  | InvalidSignatureRequestIdError
+  | RequestIdError
+  | UnknownRequestIdError;
+
 export interface RequestIdPathConfig {
   publicPaths: readonly string[];
   protectedPaths: readonly string[];
 }
 
-export async function withRequestId(
+export interface RequestIdResponse {
+  response: NextResponse;
+  newRequestId?: string;
+  error?: RequestIdValidationError;
+}
+
+export async function withRequestIdUnsafe(
   request: NextRequest,
   pathConfig: RequestIdPathConfig,
-) {
+): Promise<RequestIdResponse> {
   const requestContext: RequestContext = {
     method: request.method,
     path: request.nextUrl.pathname,
@@ -46,40 +117,60 @@ export async function withRequestId(
     const headers = new Headers(request.headers);
 
     if (!existingRequestId) {
-      headers.set(
-        REQUEST_ID_HEADER,
-        await SecureRequestId.generate(requestContext),
-      );
+      const newRequestId = await SecureRequestId.generate(requestContext);
+      headers.set(REQUEST_ID_HEADER, newRequestId);
+
+      return {
+        response: NextResponse.next({
+          request: {
+            ...request,
+            headers,
+          },
+        }),
+        newRequestId,
+      };
     }
 
-    return NextResponse.next({
-      request: {
-        ...request,
-        headers,
-      },
-    });
+    return {
+      response: NextResponse.next({
+        request: {
+          ...request,
+          headers,
+        },
+      }),
+    };
   }
 
   // 2. Handle protected paths
   if (isProtectedPath) {
     const existingRequestId = request.headers.get(REQUEST_ID_HEADER);
+
     // No request ID for protected path
     if (!existingRequestId) {
-      return new NextResponse(
-        JSON.stringify({
-          type: RequestIdErrorType.MISSING,
-          error: "Missing request ID",
-          message: "This endpoint requires a valid request ID",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-            // Generate one anyway to help client fix their request
-            [REQUEST_ID_HEADER]: await SecureRequestId.generate(requestContext),
-          },
-        },
+      const newRequestId = await SecureRequestId.generate(requestContext);
+      const error = new MissingRequestIdError(
+        "This endpoint requires a valid request ID",
       );
+
+      return {
+        response: new NextResponse(
+          JSON.stringify({
+            type: error.type,
+            error: error.name,
+            message: error.message,
+          }),
+          {
+            status: error.statusCode,
+            headers: {
+              "Content-Type": "application/json",
+              // Generate one anyway to help client fix their request
+              [REQUEST_ID_HEADER]: newRequestId,
+            },
+          },
+        ),
+        newRequestId,
+        error,
+      };
     }
 
     // Check if request ID has valid structure before full verification
@@ -87,20 +178,28 @@ export async function withRequestId(
     if (!parsed) {
       // Malformed request ID - generate a new one
       const newRequestId = await SecureRequestId.generate(requestContext);
-      return new NextResponse(
-        JSON.stringify({
-          type: RequestIdErrorType.INVALID_FORMAT,
-          error: "Malformed request ID",
-          message: "The provided request ID has an invalid format",
-        }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            [REQUEST_ID_HEADER]: newRequestId,
-          },
-        },
+      const error = new InvalidFormatRequestIdError(
+        "The provided request ID has an invalid format",
       );
+
+      return {
+        response: new NextResponse(
+          JSON.stringify({
+            type: error.type,
+            error: error.name,
+            message: error.message,
+          }),
+          {
+            status: error.statusCode,
+            headers: {
+              "Content-Type": "application/json",
+              [REQUEST_ID_HEADER]: newRequestId,
+            },
+          },
+        ),
+        newRequestId,
+        error,
+      };
     }
 
     // Check if request ID is expired
@@ -122,31 +221,41 @@ export async function withRequestId(
         const newRequestId = await SecureRequestId.generate(requestContext);
         headers.set(REQUEST_ID_HEADER, newRequestId);
 
-        return NextResponse.next({
-          request: {
-            ...request,
-            headers,
-          },
-        });
+        return {
+          response: NextResponse.next({
+            request: {
+              ...request,
+              headers,
+            },
+          }),
+          newRequestId,
+        };
       }
     }
 
     // If expired and auto-refresh is disabled, return a clear error
     if (isExpired && !secureApiRequestEnv.AUTO_REFRESH_EXPIRED_IDS) {
-      return new NextResponse(
-        JSON.stringify({
-          type: RequestIdErrorType.EXPIRED,
-          error: "Expired request ID",
-          message: "The request ID has expired",
-        }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            [REQUEST_ID_HEADER]: await SecureRequestId.generate(requestContext),
+      const newRequestId = await SecureRequestId.generate(requestContext);
+      const error = new ExpiredRequestIdError("The request ID has expired");
+
+      return {
+        response: new NextResponse(
+          JSON.stringify({
+            type: error.type,
+            error: error.name,
+            message: error.message,
+          }),
+          {
+            status: error.statusCode,
+            headers: {
+              "Content-Type": "application/json",
+              [REQUEST_ID_HEADER]: newRequestId,
+            },
           },
-        },
-      );
+        ),
+        newRequestId,
+        error,
+      };
     }
 
     // Verify context matches
@@ -157,20 +266,29 @@ export async function withRequestId(
 
     if (!isValidContext) {
       // Context mismatch - likely a replayed request
-      return new NextResponse(
-        JSON.stringify({
-          type: RequestIdErrorType.INVALID_CONTEXT,
-          error: "Invalid request context",
-          message: "The request ID is not valid for this request context",
-        }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            [REQUEST_ID_HEADER]: await SecureRequestId.generate(requestContext),
-          },
-        },
+      const newRequestId = await SecureRequestId.generate(requestContext);
+      const error = new InvalidContextRequestIdError(
+        "The request ID is not valid for this request context",
       );
+
+      return {
+        response: new NextResponse(
+          JSON.stringify({
+            type: error.type,
+            error: error.name,
+            message: error.message,
+          }),
+          {
+            status: error.statusCode,
+            headers: {
+              "Content-Type": "application/json",
+              [REQUEST_ID_HEADER]: newRequestId,
+            },
+          },
+        ),
+        newRequestId,
+        error,
+      };
     }
 
     // Verify signature only
@@ -181,54 +299,124 @@ export async function withRequestId(
 
     if (!isValidSignature) {
       // Invalid signature - potential tampering
-      return new NextResponse(
-        JSON.stringify({
-          type: RequestIdErrorType.INVALID_SIGNATURE,
-          error: "Invalid signature",
-          message: "The request ID signature is invalid",
-        }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            [REQUEST_ID_HEADER]: await SecureRequestId.generate(requestContext),
-          },
-        },
+      const newRequestId = await SecureRequestId.generate(requestContext);
+      const error = new InvalidSignatureRequestIdError(
+        "The request ID signature is invalid",
       );
+
+      return {
+        response: new NextResponse(
+          JSON.stringify({
+            type: error.type,
+            error: error.name,
+            message: error.message,
+          }),
+          {
+            status: error.statusCode,
+            headers: {
+              "Content-Type": "application/json",
+              [REQUEST_ID_HEADER]: newRequestId,
+            },
+          },
+        ),
+        newRequestId,
+        error,
+      };
     }
 
     // Valid request ID - proceed with existing headers
     const headers = new Headers(request.headers);
-    return NextResponse.next({
-      request: {
-        ...request,
-        headers,
-      },
-    });
+    return {
+      response: NextResponse.next({
+        request: {
+          ...request,
+          headers,
+        },
+      }),
+    };
   }
 
   // 3. Handle public paths - always generate new ID
   const headers = new Headers(request.headers);
-  headers.set(
-    REQUEST_ID_HEADER,
-    await SecureRequestId.generate(requestContext),
-  );
+  const newRequestId = await SecureRequestId.generate(requestContext);
+  headers.set(REQUEST_ID_HEADER, newRequestId);
 
-  return NextResponse.next({
-    request: {
-      ...request,
-      headers,
-    },
-  });
+  return {
+    response: NextResponse.next({
+      request: {
+        ...request,
+        headers,
+      },
+    }),
+    newRequestId,
+  };
 }
 
 /**
- * Default matcher configuration for the request ID middleware
- * Excludes static files and includes API routes
+ * Safe wrapper around withRequestId that returns a Result type
  */
-export const defaultRequestIdMatcher = [
-  // Skip Next.js internals and static files
-  "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-  // Always run for API routes
-  "/(api|trpc)(.*)",
-] as const;
+export const withRequestIdSafe = (
+  request: NextRequest,
+  pathConfig: RequestIdPathConfig,
+) => {
+  return ResultAsync.fromPromise(
+    withRequestIdUnsafe(request, pathConfig),
+    (error): RequestIdValidationError => {
+      // If it's already one of our error types, return it
+      if (
+        error instanceof MissingRequestIdError ||
+        error instanceof InvalidFormatRequestIdError ||
+        error instanceof ExpiredRequestIdError ||
+        error instanceof InvalidContextRequestIdError ||
+        error instanceof InvalidSignatureRequestIdError ||
+        error instanceof RequestIdError
+      ) {
+        return error;
+      }
+      // Otherwise wrap in UnknownRequestIdError
+      return new UnknownRequestIdError(
+        error instanceof Error
+          ? error.message
+          : "Unknown error while processing request ID",
+      );
+    },
+  );
+};
+
+/**
+ * Backward compatible implementation of withRequestId
+ * This maintains the original API while using the safe implementation internally
+ */
+export async function withRequestId(
+  request: NextRequest,
+  pathConfig: RequestIdPathConfig,
+): Promise<NextResponse> {
+  const result = await withRequestIdSafe(request, pathConfig);
+  return result.match(
+    // On success, return the response
+    (data) => data.response,
+    // On error, create an error response
+    (error) => {
+      const statusCode =
+        error instanceof RequestIdError ? error.statusCode : 500;
+      const errorType =
+        error instanceof RequestIdError
+          ? error.type
+          : RequestIdErrorType.INVALID_FORMAT;
+
+      return new NextResponse(
+        JSON.stringify({
+          type: errorType,
+          error: error.name,
+          message: error.message,
+        }),
+        {
+          status: statusCode,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    },
+  );
+}
