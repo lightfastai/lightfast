@@ -136,14 +136,7 @@ export function EarlyAccessForm() {
               className="col-span-3 overflow-hidden truncate rounded-lg px-3 text-xs"
             >
               <span className="gradient-text text-xs">
-                {form.formState.isSubmitting ? (
-                  <>
-                    <span className="animate-pulse">Joining</span>
-                    <span className="animate-[bounce_1s_infinite]">...</span>
-                  </>
-                ) : (
-                  "Join Waitlist"
-                )}
+                {form.formState.isSubmitting ? "Joining" : "Join Waitlist"}
               </span>
             </Button>
           </form>

@@ -50,7 +50,7 @@
     "migrate:generate": {
       "cache": false
     },
-    "ui-add": {
+    "ui": {
       "cache": false,
       "interactive": true
     },

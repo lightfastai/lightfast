@@ -8,6 +8,7 @@ import { env as inngestEnv } from "@vendor/inngest/env";
 import { env as nextEnv } from "@vendor/next/env";
 import { sentryEnv } from "@vendor/observability/env";
 import { env as securityEnv } from "@vendor/security/env";
+import { env as upstashEnv } from "@vendor/upstash/env";
 
 export const env = createEnv({
   extends: [
@@ -18,6 +19,7 @@ export const env = createEnv({
     emailEnv,
     inngestEnv,
     nextEnv,
+    upstashEnv,
   ],
   shared: {
     NODE_ENV: z

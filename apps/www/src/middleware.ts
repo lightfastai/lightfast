@@ -54,7 +54,7 @@ export const middleware = async (request: NextRequest) => {
   response.headers.set(REQUEST_ID_HEADER, requestId);
 
   // Protect /api/early-access endpoint with same-site origin check
-  if (request.nextUrl.pathname.startsWith("/api/early-access")) {
+  if (request.nextUrl.pathname.startsWith("/api/early-access/create")) {
     console.log("Debug: Checking early access endpoint");
     const origin = request.headers.get("origin");
     const host = request.headers.get("host");

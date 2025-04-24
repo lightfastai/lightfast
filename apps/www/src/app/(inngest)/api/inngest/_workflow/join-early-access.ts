@@ -10,6 +10,10 @@ import {
   UnknownError,
 } from "~/components/early-access/clerk";
 import {
+  incrementWaitlistCountSafe,
+  UpstashRateLimitError,
+} from "~/components/early-access/upstash";
+import {
   addToWaitlistContactsSafe,
   ResendAuthenticationError,
   ResendDailyQuotaError,
@@ -86,6 +90,40 @@ export const handleJoinEarlyAccess = inngest.createFunction(
       }
 
       return res.value;
+    });
+
+    // Increment waitlist count
+    await step.run("increment-waitlist-count", async () => {
+      const result = await incrementWaitlistCountSafe();
+
+      result.match(
+        () => {
+          // Success, no action needed
+        },
+        (error) => {
+          if (error.originalError instanceof UpstashRateLimitError) {
+            console.error("Redis rate limit error:", {
+              workflowTraceId,
+              originalRequestId,
+              retryAfter: error.originalError.retryAfter,
+              email,
+            });
+
+            throw new RetryAfterError(
+              "Rate limited by Redis",
+              error.originalError.retryAfter ?? "60s",
+            );
+          }
+
+          console.error("Failed to increment waitlist count:", {
+            workflowTraceId,
+            originalRequestId,
+            error,
+            email,
+          });
+          // Don't throw error here as this is not critical for the workflow
+        },
+      );
     });
 
     await step.run("create-early-access-audience-contact", async () => {

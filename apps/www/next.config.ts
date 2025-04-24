@@ -17,6 +17,7 @@ let config: NextConfig = {
     "@vendor/inngest",
     "@vendor/observability",
     "@vendor/next",
+    "@vendor/upstash",
   ],
 
   /** We already do linting and typechecking as separate tasks in CI */

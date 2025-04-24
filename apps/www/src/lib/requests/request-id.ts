@@ -2,7 +2,7 @@ import { ResultAsync } from "neverthrow";
 
 import { env } from "~/env";
 
-export const REQUEST_ID_HEADER = "x-lightfast-request-id";
+export const REQUEST_ID_HEADER = "x-request-id";
 export const REQUEST_ID_PREFIX = "lf_";
 
 // Error classes

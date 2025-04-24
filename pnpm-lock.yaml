@@ -371,6 +371,9 @@ importers:
       '@vendor/security':
         specifier: workspace:*
         version: link:../../vendor/security
+      '@vendor/upstash':
+        specifier: workspace:*
+        version: link:../../vendor/upstash
       geist:
         specifier: ^1.3.1
         version: 1.3.1(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -1206,6 +1209,40 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      eslint:
+        specifier: 'catalog:'
+        version: 9.24.0(jiti@2.3.3)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.5.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
+
+  vendor/upstash:
+    dependencies:
+      '@t3-oss/env-nextjs':
+        specifier: 0.12.0
+        version: 0.12.0(typescript@5.8.3)(zod@3.24.3)
+      '@upstash/redis':
+        specifier: ^1.34.8
+        version: 1.34.8
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/js-cookie':
+        specifier: ^3.0.6
+        version: 3.0.6
+      '@types/react':
+        specifier: ^18.2.0
+        version: 18.3.20
       eslint:
         specifier: 'catalog:'
         version: 9.24.0(jiti@2.3.3)
@@ -5214,6 +5251,9 @@ packages:
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
 
+  '@upstash/redis@1.34.8':
+    resolution: {integrity: sha512-eGJgOKc+2Uq4AdSM0lNx+WvFFhQeyhJ32SGNuSniLPg4lNb6m5h2AQ77qL+TgWiMZO8HCQ82Zsc/RlVBevCWTg==}
+
   '@use-gesture/core@10.3.1':
     resolution: {integrity: sha512-WcINiDt8WjqBdUXye25anHiNxPc0VOrlT8F6LLkU6cycrOGUDyY/yyFmsg3k8i5OLvv25llc0QC45GhR/C8llw==}
 
@@ -6021,6 +6061,9 @@ packages:
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
+
+  crypto-js@4.2.0:
+    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
 
   css-tree@2.3.1:
     resolution: {integrity: sha512-6Fv1DV/TYw//QF5IzQdqsNDjx/wc8TrMBZsqjL9eW01tWb7R7k/mq+/VXfJCl7SoD5emsJop9cOByJZfs8hYIw==}
@@ -14737,6 +14780,10 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
+  '@upstash/redis@1.34.8':
+    dependencies:
+      crypto-js: 4.2.0
+
   '@use-gesture/core@10.3.1': {}
 
   '@use-gesture/react@10.3.1(react@19.1.0)':
@@ -15715,6 +15762,8 @@ snapshots:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  crypto-js@4.2.0: {}
 
   css-tree@2.3.1:
     dependencies:
