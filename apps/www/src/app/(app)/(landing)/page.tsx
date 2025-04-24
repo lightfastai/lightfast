@@ -38,7 +38,6 @@ export default function Home() {
           &#x2014; from design to development
         </p>
       </div>
-
       <div className="flex w-full flex-col items-center justify-center py-4">
         <div className="w-full max-w-lg space-y-4 px-4 sm:px-0">
           <EarlyAccessForm />

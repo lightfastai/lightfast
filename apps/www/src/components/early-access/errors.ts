@@ -5,6 +5,7 @@ export enum EarlyAccessErrorType {
   SECURITY_CHECK = "SECURITY_CHECK",
   SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE",
   INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
+  NO_REQUEST_ID = "NO_REQUEST_ID",
 }
 
 export interface NextErrorResponse {
@@ -25,5 +26,7 @@ export const EarlyAccessFormErrorMap: Record<EarlyAccessErrorType, string> = {
   [EarlyAccessErrorType.SERVICE_UNAVAILABLE]:
     "Service is temporarily unavailable. Please try again later.",
   [EarlyAccessErrorType.INTERNAL_SERVER_ERROR]:
+    "An unexpected error occurred. Please try again later.",
+  [EarlyAccessErrorType.NO_REQUEST_ID]:
     "An unexpected error occurred. Please try again later.",
 };

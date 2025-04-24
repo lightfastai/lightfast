@@ -35,6 +35,6 @@ let config: NextConfig = {
   ],
 };
 
-if (process.env.VERCEL) {
-  config = withSentry(config);
-}
+// if (process.env.VERCEL) {
+config = withSentry(config);
+// }
