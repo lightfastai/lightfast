@@ -1,10 +1,11 @@
 import { ResultAsync } from "neverthrow";
 
-import type { NextErrorResponse } from "./errors";
 import {
   addRequestIdToHeaders,
   updateRequestIdFromResponse,
-} from "~/lib/security/request-id";
+} from "@vendor/security/requests/client";
+
+import type { NextErrorResponse } from "./errors";
 import { EarlyAccessErrorType, EarlyAccessFormErrorMap } from "./errors";
 
 // Base error class
