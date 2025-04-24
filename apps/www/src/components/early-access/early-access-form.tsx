@@ -2,6 +2,7 @@
 
 import type * as z from "zod";
 import { useState } from "react";
+import { useAtom } from "jotai";
 import Confetti from "react-confetti";
 
 import { Button } from "@repo/ui/components/ui/button";
@@ -17,16 +18,18 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import { createEarlyAccessSafe } from "~/components/early-access/early-access-form-api";
+import { createEarlyAccessEntrySafe } from "~/components/early-access/api/create-early-access-entry";
 import { earlyAccessFormSchema } from "~/components/early-access/early-access-form.schema";
 import { EarlyAccessFormErrorMap } from "~/components/early-access/errors";
 import { env } from "~/env";
 import { useErrorReporter } from "~/lib/error-reporting/client-error-reporter";
+import { earlyAccesssCountAtom } from "./jotai/early-access-count-atom";
 
 export function EarlyAccessForm() {
   const { toast } = useToast();
   const { reportError } = useErrorReporter();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [_, setWaitlistCount] = useAtom(earlyAccesssCountAtom);
 
   const form = useForm({
     schema: earlyAccessFormSchema,
@@ -36,7 +39,7 @@ export function EarlyAccessForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
-    const result = await createEarlyAccessSafe({
+    const result = await createEarlyAccessEntrySafe({
       email: values.email,
     });
 
@@ -55,6 +58,10 @@ export function EarlyAccessForm() {
           description:
             "You've successfully joined the waitlist. We'll notify you when we launch.",
         });
+
+        // Update the waitlist count
+        setWaitlistCount((count) => count + 1);
+
         setIsSubmitted(true);
       },
       (error) => {

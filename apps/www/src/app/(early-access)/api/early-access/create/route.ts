@@ -8,7 +8,7 @@ import {
   ArcjetRateLimitError,
   ArcjetSecurityError,
   protectSignupSafe,
-} from "~/components/early-access/aj";
+} from "~/components/early-access/api/protect-aj-signup";
 import { EarlyAccessErrorType } from "~/components/early-access/errors";
 import { reportApiError } from "~/lib/error-reporting/api-error-reporter";
 import {

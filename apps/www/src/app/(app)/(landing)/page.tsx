@@ -2,17 +2,18 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
-import { EarlyAccessSkeleton } from "~/components/early-access/early-access-skeleton";
-import { WaitlistCount } from "~/components/early-access/waitlist-count";
+import { EarlyAccessJotaiProvider } from "~/components/early-access/jotai/early-access-jotai-provider";
 import { siteConfig } from "~/config/site";
-
-// Enable streaming for this route
-export const runtime = "edge";
-export const revalidate = 0;
 
 const EarlyAccessForm = dynamic(() =>
   import("~/components/early-access/early-access-form").then(
     (mod) => mod.EarlyAccessForm,
+  ),
+);
+
+const EarlyAccessCount = dynamic(() =>
+  import("~/components/early-access/early-access-count").then(
+    (mod) => mod.EarlyAccessCount,
   ),
 );
 
@@ -38,15 +39,17 @@ export default function Home() {
             &#x2014; from design to development
           </p>
         </div>
-        <div className="w-full max-w-lg space-y-4">
-          <Suspense fallback={<EarlyAccessSkeleton />}>
-            <EarlyAccessForm />
-          </Suspense>
-        </div>
-        <div className="flex h-8 items-center justify-center">
-          <Suspense>
-            <WaitlistCount />
-          </Suspense>
+        <div className="flex w-full max-w-lg flex-col gap-4">
+          <EarlyAccessJotaiProvider>
+            <Suspense>
+              <EarlyAccessForm />
+            </Suspense>
+            <div className="flex h-5 items-center justify-center">
+              <Suspense>
+                <EarlyAccessCount />
+              </Suspense>
+            </div>
+          </EarlyAccessJotaiProvider>
         </div>
       </div>
     </div>

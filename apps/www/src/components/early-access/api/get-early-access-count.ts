@@ -1,10 +1,9 @@
-import { Redis } from "@upstash/redis";
 import { ResultAsync } from "neverthrow";
 
-import { env } from "~/env";
+import { redis } from "@vendor/upstash";
 
 // Constants
-const WAITLIST_COUNT_KEY = "waitlist:count";
+const EARLY_ACCESS_COUNT_KEY = "early-access:count";
 
 // Error classes
 export class UpstashError extends Error {
@@ -67,16 +66,10 @@ export type UpstashFuncError =
   | UnknownError
   | UpstashEarlyAccessCountError;
 
-// Initialize Redis client
-const redis = new Redis({
-  url: env.KV_REST_API_URL,
-  token: env.KV_REST_API_TOKEN,
-});
-
 // Unsafe operations that can throw
-const incrementWaitlistCountUnsafe = async (): Promise<number> => {
+const incrementEarlyAccessCountUnsafe = async (): Promise<number> => {
   try {
-    const count = await redis.incr(WAITLIST_COUNT_KEY);
+    const count = await redis.incr(EARLY_ACCESS_COUNT_KEY);
     return count;
   } catch (error) {
     if (error instanceof Error) {
@@ -106,9 +99,9 @@ const incrementWaitlistCountUnsafe = async (): Promise<number> => {
   }
 };
 
-const getWaitlistCountUnsafe = async (): Promise<number> => {
+const getEarlyAccessCountUnsafe = async (): Promise<number> => {
   try {
-    const count = await redis.get<number>(WAITLIST_COUNT_KEY);
+    const count = await redis.get<number>(EARLY_ACCESS_COUNT_KEY);
     return count ?? 0;
   } catch (error) {
     if (error instanceof Error) {
@@ -139,9 +132,9 @@ const getWaitlistCountUnsafe = async (): Promise<number> => {
 };
 
 // Safe operations that return Result types
-export const incrementWaitlistCountSafe = () =>
+export const incrementEarlyAccessCountSafe = () =>
   ResultAsync.fromPromise(
-    incrementWaitlistCountUnsafe(),
+    incrementEarlyAccessCountUnsafe(),
     (error): UpstashEarlyAccessCountError => {
       if (
         error instanceof UpstashRateLimitError ||
@@ -158,9 +151,9 @@ export const incrementWaitlistCountSafe = () =>
     },
   );
 
-export const getWaitlistCountSafe = () =>
+export const getEarlyAccessCountSafe = () =>
   ResultAsync.fromPromise(
-    getWaitlistCountUnsafe(),
+    getEarlyAccessCountUnsafe(),
     (error): UpstashEarlyAccessCountError => {
       if (
         error instanceof UpstashRateLimitError ||

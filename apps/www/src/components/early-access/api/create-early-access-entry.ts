@@ -1,8 +1,8 @@
 import { ResultAsync } from "neverthrow";
 
-import type { NextErrorResponse } from "./errors";
+import type { NextErrorResponse } from "../errors";
 import { REQUEST_ID_HEADER } from "~/lib/requests/request-id";
-import { EarlyAccessErrorType, EarlyAccessFormErrorMap } from "./errors";
+import { EarlyAccessErrorType, EarlyAccessFormErrorMap } from "../errors";
 
 // Base error class
 export class EarlyAccessError extends Error {
@@ -27,7 +27,7 @@ interface CreateEarlyAccessParams {
   email: string;
 }
 
-const createEarlyAccessUnsafe = async ({
+const createEarlyAccessEntryUnsafe = async ({
   email,
 }: CreateEarlyAccessParams): Promise<EarlyAccessResponse> => {
   const headers = new Headers({
@@ -67,9 +67,9 @@ const createEarlyAccessUnsafe = async ({
   };
 };
 
-export const createEarlyAccessSafe = (params: CreateEarlyAccessParams) =>
+export const createEarlyAccessEntrySafe = (params: CreateEarlyAccessParams) =>
   ResultAsync.fromPromise(
-    createEarlyAccessUnsafe(params),
+    createEarlyAccessEntryUnsafe(params),
     (error): EarlyAccessError => {
       if (error instanceof EarlyAccessError) {
         return error;

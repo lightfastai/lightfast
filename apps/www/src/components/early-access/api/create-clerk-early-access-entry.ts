@@ -1,6 +1,5 @@
 import { ResultAsync } from "neverthrow";
 
-import type { ClerkWaitlistEntry } from "./clerk/types";
 import { env } from "~/env";
 
 const CLERK_API_URL = "https://api.clerk.com/v1";
@@ -72,11 +71,19 @@ interface ClerkAPIError {
   };
 }
 
+export interface ClerkWaitlistEntry {
+  id: string;
+  email_address: string;
+  created_at: string;
+  updated_at: string;
+  status: string;
+}
+
 interface ClerkErrorResponse {
   errors: ClerkAPIError[];
 }
 
-const createWaitlistEntryUnsafe = async ({
+const createClerkEarlyAccessEntryUnsage = async ({
   email,
 }: {
   email: string;
@@ -140,9 +147,9 @@ const createWaitlistEntryUnsafe = async ({
   return data;
 };
 
-export const createWaitlistEntrySafe = ({ email }: { email: string }) =>
+export const createClerkEarlyAccessEntrySafe = ({ email }: { email: string }) =>
   ResultAsync.fromPromise(
-    createWaitlistEntryUnsafe({ email }),
+    createClerkEarlyAccessEntryUnsage({ email }),
     (error): ClerkWaitlistError => {
       // If it's already one of our error types, return it
       if (

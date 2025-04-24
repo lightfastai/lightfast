@@ -6,13 +6,13 @@ import {
   ClerkAuthenticationError,
   ClerkRateLimitError,
   ClerkSecurityError,
-  createWaitlistEntrySafe,
+  createClerkEarlyAccessEntrySafe,
   UnknownError,
-} from "~/components/early-access/clerk";
+} from "~/components/early-access/api/create-clerk-early-access-entry";
 import {
-  incrementWaitlistCountSafe,
+  incrementEarlyAccessCountSafe,
   UpstashRateLimitError,
-} from "~/components/early-access/upstash";
+} from "~/components/early-access/api/get-early-access-count";
 import {
   addToWaitlistContactsSafe,
   ResendAuthenticationError,
@@ -41,7 +41,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
     const workflowTraceId = nanoid();
 
     const result = await step.run("create-clerk-waitlist-entry", async () => {
-      const res = await createWaitlistEntrySafe({ email });
+      const res = await createClerkEarlyAccessEntrySafe({ email });
 
       if (res.isErr()) {
         const error = res.error;
@@ -94,7 +94,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
 
     // Increment waitlist count
     await step.run("increment-waitlist-count", async () => {
-      const result = await incrementWaitlistCountSafe();
+      const result = await incrementEarlyAccessCountSafe();
 
       result.match(
         () => {
