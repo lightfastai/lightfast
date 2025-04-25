@@ -45,6 +45,10 @@ const createEarlyAccessEntryUnsafe = async ({
 
   if (!response.ok) {
     const errorData = (await response.json()) as NextErrorResponse;
+    console.error("Early access error", {
+      response,
+      errorData,
+    });
     if (!responseRequestId) {
       throw new EarlyAccessError(
         EarlyAccessFormErrorMap[EarlyAccessErrorType.NO_REQUEST_ID],
@@ -61,9 +65,20 @@ const createEarlyAccessEntryUnsafe = async ({
     );
   }
 
+  if (!responseRequestId) {
+    console.error("No request ID found in response", {
+      response,
+    });
+    throw new EarlyAccessError(
+      EarlyAccessFormErrorMap[EarlyAccessErrorType.NO_REQUEST_ID],
+      EarlyAccessErrorType.NO_REQUEST_ID,
+      "No request ID found in response",
+    );
+  }
+
   return {
     success: true,
-    requestId: responseRequestId ?? "",
+    requestId: responseRequestId,
   };
 };
 
