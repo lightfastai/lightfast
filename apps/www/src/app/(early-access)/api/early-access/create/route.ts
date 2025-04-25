@@ -26,8 +26,21 @@ interface CreateEarlyAccessJoinRequest {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Get and validate the request ID
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const requestId = request.headers.get(REQUEST_ID_HEADER)!;
+    const requestId = request.headers.get(REQUEST_ID_HEADER);
+
+    if (!requestId) {
+      return NextResponse.json<NextErrorResponse>(
+        {
+          type: EarlyAccessErrorType.BAD_REQUEST,
+          error: "Invalid request",
+          message: "Request ID is required",
+        },
+        {
+          status: 400,
+          headers: { [REQUEST_ID_HEADER]: "unknown" },
+        },
+      );
+    }
 
     // At this point we have a valid request ID
     const res = await jsonParseSafe<CreateEarlyAccessJoinRequest>(request);
