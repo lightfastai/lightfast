@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { ResultAsync } from "neverthrow";
 
+import type { Logger } from "@vendor/observability/types";
 import { log } from "@vendor/observability/log";
 import { arcjet, protectSignup, setRateLimitHeaders } from "@vendor/security";
 
@@ -78,9 +79,14 @@ export type ArcjetErrorType =
 interface ProtectSignupParams {
   request: NextRequest;
   email: string;
+  logger: Logger;
 }
 
-const protectSignupUnsafe = async ({ request, email }: ProtectSignupParams) => {
+const protectSignupUnsafe = async ({
+  request,
+  email,
+  logger,
+}: ProtectSignupParams) => {
   const decision = await aj.protect(request, { email });
 
   if (decision.isDenied()) {
@@ -112,7 +118,7 @@ const protectSignupUnsafe = async ({ request, email }: ProtectSignupParams) => {
       );
     }
 
-    log.error("Arcjet security error", {
+    logger.error("Arcjet security error", {
       email,
       reason,
     });
@@ -124,9 +130,13 @@ const protectSignupUnsafe = async ({ request, email }: ProtectSignupParams) => {
   return decision;
 };
 
-export const protectSignupSafe = ({ request, email }: ProtectSignupParams) =>
+export const protectSignupSafe = ({
+  request,
+  email,
+  logger,
+}: ProtectSignupParams) =>
   ResultAsync.fromPromise(
-    protectSignupUnsafe({ request, email }),
+    protectSignupUnsafe({ request, email, logger }),
     (error): ArcjetProtectionError => {
       // If it's already one of our error types, wrap it
       if (

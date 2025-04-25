@@ -1,16 +1,17 @@
 import * as Sentry from "@sentry/nextjs";
 
-import { log } from "@vendor/observability/log";
+import type { Logger } from "@vendor/observability/types";
 
 import type { BaseErrorContext, SentryReportingConfig } from "./types";
 
 function logDebug(
   disableLogger: boolean | undefined,
+  logger: Logger,
   message: string,
   data?: unknown,
 ): void {
   if (!disableLogger) {
-    log.info(`[Sentry] ${message}`, { data });
+    logger.info(`[Sentry] ${message}`, { data });
   }
 }
 
@@ -38,9 +39,10 @@ function setErrorContext(context: BaseErrorContext): void {
 }
 
 export function createSentryReporter(config: SentryReportingConfig) {
+  const { disableLogger, logger } = config;
   return {
     reportError(error: Error, context: BaseErrorContext): void {
-      logDebug(config.disableLogger, "Reporting error:", {
+      logDebug(disableLogger, logger, "Reporting error:", {
         error,
         context,
       });
@@ -60,11 +62,11 @@ export function createSentryReporter(config: SentryReportingConfig) {
           },
         });
 
-        logDebug(config.disableLogger, "Successfully reported error");
+        logDebug(disableLogger, logger, "Successfully reported error");
       } catch (sentryError) {
-        log.error("[Sentry] Failed to report error:", { sentryError });
+        logger.error("[Sentry] Failed to report error:", { sentryError });
 
-        logDebug(config.disableLogger, "Current state:", {
+        logDebug(disableLogger, logger, "Current state:", {
           initialized: Sentry.getClient() !== undefined,
         });
       }

@@ -43,6 +43,7 @@ export function EarlyAccessForm() {
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
     const result = await createEarlyAccessEntrySafe({
       email: values.email,
+      logger,
     });
 
     result.match(

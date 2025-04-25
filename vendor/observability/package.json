@@ -9,6 +9,7 @@
       "types": "./dist/src/log.d.ts",
       "default": "./src/log.ts"
     },
+    "./types": "./src/types.ts",
     "./error": "./src/error.ts",
     "./async-executor": "./src/async-executor.ts",
     "./error-formatter": "./src/error-formatter.ts",

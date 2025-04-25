@@ -5,7 +5,7 @@ import { log } from "@vendor/observability/log";
 import { getEarlyAccessCountSafe } from "~/components/early-access/api/get-early-access-count";
 
 export async function GET() {
-  const result = await getEarlyAccessCountSafe();
+  const result = await getEarlyAccessCountSafe({ logger: log });
 
   return result.match(
     (count) => {

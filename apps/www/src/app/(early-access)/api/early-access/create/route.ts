@@ -92,7 +92,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const { email } = res.value;
 
-    const protectionResult = await protectSignupSafe({ request, email });
+    const protectionResult = await protectSignupSafe({
+      request,
+      email,
+      logger: log,
+    });
     log.info("Protection result:", { protectionResult });
 
     if (protectionResult.isErr()) {

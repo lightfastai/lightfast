@@ -1,3 +1,5 @@
+import type { Logger } from "@vendor/observability/types";
+
 import type { EarlyAccessErrorType } from "~/components/early-access/errors";
 
 // Base error context that all errors must include
@@ -33,4 +35,5 @@ export type ErrorContext =
 // Shared configuration for Sentry reporting
 export interface SentryReportingConfig {
   disableLogger: boolean;
+  logger: Logger;
 }

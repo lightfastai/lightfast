@@ -42,7 +42,10 @@ export const handleJoinEarlyAccess = inngest.createFunction(
     const workflowTraceId = nanoid();
 
     const result = await step.run("create-clerk-waitlist-entry", async () => {
-      const res = await createClerkEarlyAccessEntrySafe({ email });
+      const res = await createClerkEarlyAccessEntrySafe({
+        email,
+        logger: log,
+      });
 
       if (res.isErr()) {
         const error = res.error;
@@ -95,7 +98,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
 
     // Increment waitlist count
     await step.run("increment-waitlist-count", async () => {
-      const result = await incrementEarlyAccessCountSafe();
+      const result = await incrementEarlyAccessCountSafe({ logger: log });
 
       result.match(
         () => {

@@ -1,6 +1,6 @@
 import { ResultAsync } from "neverthrow";
 
-import { log } from "@vendor/observability/log";
+import type { Logger } from "@vendor/observability/types";
 
 import type { NextErrorResponse } from "../errors";
 import { REQUEST_ID_HEADER } from "~/lib/requests/request-id";
@@ -27,10 +27,12 @@ export interface EarlyAccessResponse {
 
 interface CreateEarlyAccessParams {
   email: string;
+  logger: Logger;
 }
 
 const createEarlyAccessEntryUnsafe = async ({
   email,
+  logger,
 }: CreateEarlyAccessParams): Promise<EarlyAccessResponse> => {
   const headers = new Headers({
     "Content-Type": "application/json",
@@ -46,7 +48,7 @@ const createEarlyAccessEntryUnsafe = async ({
   const responseRequestId = response.headers.get(REQUEST_ID_HEADER);
 
   if (!responseRequestId) {
-    log.error("No request ID found in response", {
+    logger.error("No request ID found in response", {
       response,
     });
     throw new EarlyAccessError(
@@ -57,7 +59,7 @@ const createEarlyAccessEntryUnsafe = async ({
   }
 
   if (!response.ok) {
-    log.error("Early access error", {
+    logger.error("Early access error", {
       response,
     });
     let errorData: Partial<NextErrorResponse> = {};
@@ -74,7 +76,7 @@ const createEarlyAccessEntryUnsafe = async ({
 
     // If no errors array or it's empty, throw a generic error
     if (!errorData.error) {
-      log.error("Unknown error from early access API", {
+      logger.error("Unknown error from early access API", {
         response,
         errorData,
       });

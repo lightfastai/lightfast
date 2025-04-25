@@ -1,6 +1,6 @@
 import { ResultAsync } from "neverthrow";
 
-import { log } from "@vendor/observability/log";
+import type { Logger } from "@vendor/observability/log";
 import { redis } from "@vendor/upstash";
 
 // Constants
@@ -76,13 +76,17 @@ export type UpstashFuncError =
   | UpstashEarlyAccessCountError;
 
 // Unsafe operations that can throw
-const incrementEarlyAccessCountUnsafe = async (): Promise<number> => {
+const incrementEarlyAccessCountUnsafe = async ({
+  logger,
+}: {
+  logger: Logger;
+}): Promise<number> => {
   try {
     const count = await redis.incr(EARLY_ACCESS_COUNT_KEY);
     return count;
   } catch (error) {
     if (error instanceof Error) {
-      log.error("Error incrementing early access count", { error });
+      logger.error("Error incrementing early access count", { error });
       // Handle specific Redis errors
       if (error.message.includes("READONLY")) {
         throw new UpstashConnectionError("Redis is in read-only mode");
@@ -111,7 +115,11 @@ const incrementEarlyAccessCountUnsafe = async (): Promise<number> => {
   }
 };
 
-const getEarlyAccessCountUnsafe = async (): Promise<number> => {
+const getEarlyAccessCountUnsafe = async ({
+  logger,
+}: {
+  logger: Logger;
+}): Promise<number> => {
   try {
     const raw = await redis.get<string>(EARLY_ACCESS_COUNT_KEY);
     const count = raw ? Number(raw) : 0;
@@ -123,7 +131,7 @@ const getEarlyAccessCountUnsafe = async (): Promise<number> => {
     return count;
   } catch (error) {
     if (error instanceof Error) {
-      log.error("Error getting early access count", { error });
+      logger.error("Error getting early access count", { error });
       // Handle specific Redis errors
       if (error.message.includes("READONLY")) {
         throw new UpstashConnectionError("Redis is in read-only mode");
@@ -146,6 +154,7 @@ const getEarlyAccessCountUnsafe = async (): Promise<number> => {
       }
       throw new UpstashError(error.message);
     }
+    logger.error("Unknown error while getting waitlist count", { error });
     throw new UpstashEarlyAccessUnknownError(
       "Unknown error while getting waitlist count",
     );
@@ -153,9 +162,9 @@ const getEarlyAccessCountUnsafe = async (): Promise<number> => {
 };
 
 // Safe operations that return Result types
-export const incrementEarlyAccessCountSafe = () =>
+export const incrementEarlyAccessCountSafe = ({ logger }: { logger: Logger }) =>
   ResultAsync.fromPromise(
-    incrementEarlyAccessCountUnsafe(),
+    incrementEarlyAccessCountUnsafe({ logger }),
     (error): UpstashEarlyAccessCountError => {
       if (
         error instanceof UpstashRateLimitError ||
@@ -173,9 +182,9 @@ export const incrementEarlyAccessCountSafe = () =>
     },
   );
 
-export const getEarlyAccessCountSafe = () =>
+export const getEarlyAccessCountSafe = ({ logger }: { logger: Logger }) =>
   ResultAsync.fromPromise(
-    getEarlyAccessCountUnsafe(),
+    getEarlyAccessCountUnsafe({ logger }),
     (error): UpstashEarlyAccessCountError => {
       if (
         error instanceof UpstashRateLimitError ||

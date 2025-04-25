@@ -1,6 +1,6 @@
 import { ResultAsync } from "neverthrow";
 
-import { log } from "@vendor/observability/log";
+import type { Logger } from "@vendor/observability/types";
 
 import { env } from "~/env";
 
@@ -87,8 +87,10 @@ interface ClerkErrorResponse {
 
 const createClerkEarlyAccessEntryUnsage = async ({
   email,
+  logger,
 }: {
   email: string;
+  logger: Logger;
 }): Promise<ClerkWaitlistEntry> => {
   const response = await fetch(`${CLERK_API_URL}/waitlist_entries`, {
     method: "POST",
@@ -101,7 +103,7 @@ const createClerkEarlyAccessEntryUnsage = async ({
   });
 
   if (!response.ok) {
-    log.error("Error creating clerk early access entry", { response });
+    logger.error("Error creating clerk early access entry", { response });
     let errorData: Partial<ClerkErrorResponse> = {};
     try {
       errorData = (await response.json()) as Partial<ClerkErrorResponse>;
@@ -114,7 +116,7 @@ const createClerkEarlyAccessEntryUnsage = async ({
 
     // If no errors array or it's empty, throw a generic error
     if (!errorData.errors?.length) {
-      log.error("Unknown error from Clerk API", { response });
+      logger.error("Unknown error from Clerk API", { response });
       throw new ClerkError("Unknown error from Clerk API", response.status);
     }
 
@@ -125,7 +127,7 @@ const createClerkEarlyAccessEntryUnsage = async ({
     const statusCode = response.status;
 
     // Handle specific error types based on status code and message
-    log.error("Clerk error", { error });
+    logger.error("Clerk error", { error });
     switch (statusCode) {
       case 422: {
         throw new ClerkValidationError(long_message);
@@ -160,9 +162,15 @@ const createClerkEarlyAccessEntryUnsage = async ({
   return data;
 };
 
-export const createClerkEarlyAccessEntrySafe = ({ email }: { email: string }) =>
+export const createClerkEarlyAccessEntrySafe = ({
+  email,
+  logger,
+}: {
+  email: string;
+  logger: Logger;
+}) =>
   ResultAsync.fromPromise(
-    createClerkEarlyAccessEntryUnsage({ email }),
+    createClerkEarlyAccessEntryUnsage({ email, logger }),
     (error): ClerkWaitlistError => {
       // If it's already one of our error types, return it
       if (
