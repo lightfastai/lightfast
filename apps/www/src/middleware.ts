@@ -9,40 +9,6 @@ import {
 } from "./lib/requests/request-id";
 
 /**
- * Validates if the origin is from the same site as the host
- */
-const isSameOrigin = (origin: string | null, host: string | null): boolean => {
-  if (!origin || !host) {
-    log.error("Debug: Missing origin or host", { origin, host });
-    return false;
-  }
-
-  try {
-    // Parse the origin into its components
-    const originUrl = new URL(origin);
-
-    // Compare the hostname (this handles subdomains correctly)
-    // We want exact domain match, not partial match
-    const originHostname = originUrl.hostname;
-
-    // Remove port from host if present
-    const hostName = host.split(":")[0];
-
-    log.info("Debug: Origin check", {
-      originHostname,
-      hostName,
-      matches: originHostname === hostName,
-    });
-
-    return originHostname === hostName;
-  } catch (error) {
-    log.error("Debug: URL parsing error", { error, origin });
-    // If URL parsing fails, consider it invalid
-    return false;
-  }
-};
-
-/**
  * Middleware to handle request ID generation and protected routes
  */
 export const middleware = async (request: NextRequest) => {
@@ -50,9 +16,8 @@ export const middleware = async (request: NextRequest) => {
 
   // Generate a new request ID for all requests if one doesn't exist
   const existingRequestId = request.headers.get(REQUEST_ID_HEADER);
-  const requestId = existingRequestId ?? (await generateSignedRequestId());
+  const requestId = existingRequestId ?? (await generateSignedRequestId(log));
   response.headers.set(REQUEST_ID_HEADER, requestId);
-
   log.info("Debug: Request ID", { requestId });
   return response;
 };

@@ -1,5 +1,7 @@
 import { ResultAsync } from "neverthrow";
 
+import type { Logger } from "@vendor/observability/types";
+
 import { env } from "~/env";
 
 export const REQUEST_ID_HEADER = "x-request-id";
@@ -52,46 +54,62 @@ export type RequestIdErrorType =
  * Generates a cryptographically secure request ID using WebCrypto
  * Format: lf_<timestamp>_<random>_<signature>
  */
-export async function generateSignedRequestId(): Promise<string> {
-  // Get current timestamp and random value
-  const timestamp = Date.now().toString(36);
-  const randomBytes = crypto.getRandomValues(new Uint8Array(16));
-  const random = Array.from(randomBytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+export async function generateSignedRequestId(logger: Logger): Promise<string> {
+  try {
+    logger.info("Debug: Starting request ID generation");
 
-  // Create the base request ID
-  const baseId = `${REQUEST_ID_PREFIX}${timestamp}_${random}`;
+    // Get current timestamp and random value
+    const timestamp = Date.now().toString(36);
+    const randomBytes = crypto.getRandomValues(new Uint8Array(16));
+    const random = Array.from(randomBytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
-  // Create signature using HMAC
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(env.REQUEST_ID_SECRET);
+    logger.info("Debug: Generated random components", { timestamp, random });
 
-  // @NOTE: Crypto.subtle might not be available in some environments
-  // @TODO: Remove this once we have a better solution
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
+    // Create the base request ID
+    const baseId = `${REQUEST_ID_PREFIX}${timestamp}_${random}`;
+    logger.info("Debug: Created base ID", { baseId });
 
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(baseId),
-  );
+    // Create signature using HMAC
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(env.REQUEST_ID_SECRET);
+    logger.info("Debug: Encoded key data", { keyLength: keyData.length });
 
-  // Convert signature to base64url
-  const signatureBase64 = Buffer.from(signature)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
+    // @NOTE: Crypto.subtle might not be available in some environments
+    // @TODO: Remove this once we have a better solution
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyData,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    logger.info("Debug: Imported key successfully");
 
-  // Take first 16 chars of signature for brevity
-  return `${baseId}_${signatureBase64.slice(0, 16)}`;
+    const signature = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(baseId),
+    );
+    logger.info("Debug: Generated signature");
+
+    // Convert signature to base64url
+    const signatureBase64 = Buffer.from(signature)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "");
+
+    // Take first 16 chars of signature for brevity
+    const finalId = `${baseId}_${signatureBase64.slice(0, 16)}`;
+    logger.info("Debug: Generated final request ID", { finalId });
+
+    return finalId;
+  } catch (error) {
+    logger.error("Debug: Error generating request ID", { error });
+    throw error;
+  }
 }
 
 /**
@@ -125,7 +143,7 @@ async function validateRequestIdUnsafe(
   }
 
   // Reconstruct base ID for signature verification
-  const baseId = `${prefix}_${timestamp}_${random}`;
+  const baseId = `${prefix}${timestamp}_${random}`;
 
   // Import key and verify signature
   const encoder = new TextEncoder();
@@ -191,7 +209,7 @@ export const validateRequestIdSafe = (requestId: string | null) =>
 export function getRequestIdTimestamp(requestId: string): number | undefined {
   try {
     const [prefix, timestamp] = requestId.split("_");
-    if (!prefix || !timestamp || prefix !== REQUEST_ID_PREFIX) {
+    if (!prefix || !timestamp || !requestId.startsWith(REQUEST_ID_PREFIX)) {
       return undefined;
     }
     return parseInt(timestamp, 36);
