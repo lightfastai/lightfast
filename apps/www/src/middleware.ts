@@ -12,13 +12,25 @@ import {
  * Middleware to handle request ID generation and protected routes
  */
 export const middleware = async (request: NextRequest) => {
-  const response = NextResponse.next();
-
   // Generate a new request ID for all requests if one doesn't exist
   const existingRequestId = request.headers.get(REQUEST_ID_HEADER);
   const requestId = existingRequestId ?? (await generateSignedRequestId(log));
-  response.headers.set(REQUEST_ID_HEADER, requestId);
-  return response;
+
+  // Clone the request headers and set the request ID
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(REQUEST_ID_HEADER, requestId);
+
+  // Return response with both request and response headers set
+  return NextResponse.next({
+    request: {
+      // New request headers
+      headers: requestHeaders,
+    },
+    headers: {
+      // Also set response header for consistency
+      [REQUEST_ID_HEADER]: requestId,
+    },
+  });
 };
 
 export const config = {
