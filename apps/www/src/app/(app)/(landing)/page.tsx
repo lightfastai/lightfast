@@ -5,16 +5,31 @@ import dynamic from "next/dynamic";
 import { EarlyAccessJotaiProvider } from "~/components/early-access/jotai/early-access-jotai-provider";
 import { siteConfig } from "~/config/site";
 
-const EarlyAccessForm = dynamic(() =>
-  import("~/components/early-access/early-access-form").then(
-    (mod) => mod.EarlyAccessForm,
-  ),
+// Preload the dynamic components to avoid navigation delays
+const EarlyAccessForm = dynamic(
+  () =>
+    import("~/components/early-access/early-access-form").then(
+      (mod) => mod.EarlyAccessForm,
+    ),
+  {
+    ssr: true,
+    loading: () => (
+      <div className="h-10 w-full animate-pulse rounded-lg bg-muted/30" />
+    ),
+  },
 );
 
-const EarlyAccessCount = dynamic(() =>
-  import("~/components/early-access/early-access-count").then(
-    (mod) => mod.EarlyAccessCount,
-  ),
+const EarlyAccessCount = dynamic(
+  () =>
+    import("~/components/early-access/early-access-count").then(
+      (mod) => mod.EarlyAccessCount,
+    ),
+  {
+    ssr: true,
+    loading: () => (
+      <div className="mx-auto h-5 w-20 animate-pulse rounded-lg bg-muted/30" />
+    ),
+  },
 );
 
 export const metadata: Metadata = {
@@ -41,11 +56,19 @@ export default function Home() {
         </div>
         <div className="flex w-full max-w-lg flex-col gap-4">
           <EarlyAccessJotaiProvider>
-            <Suspense>
+            <Suspense
+              fallback={
+                <div className="h-10 w-full animate-pulse rounded-lg bg-muted/30" />
+              }
+            >
               <EarlyAccessForm />
             </Suspense>
             <div className="flex h-5 items-center justify-center">
-              <Suspense>
+              <Suspense
+                fallback={
+                  <div className="h-5 w-20 animate-pulse rounded-lg bg-muted/30" />
+                }
+              >
                 <EarlyAccessCount />
               </Suspense>
             </div>

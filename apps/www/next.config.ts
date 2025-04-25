@@ -34,6 +34,26 @@ let config: NextConfig = {
       destination: "/api/health",
     },
   ],
+
+  // Optimize loading strategy
+  optimizeFonts: true,
+
+  // Use SWC minification for better performance
+  swcMinify: true,
+
+  // Add automatic static optimization where possible
+  experimental: {
+    // For Next.js 15.3+
+    optimizeCss: true,
+    optimizePackageImports: [
+      "@repo/ui",
+      "jotai",
+      "lucide-react",
+      "react-confetti",
+    ],
+    // Faster navigation for production
+    ppr: true,
+  },
 };
 
 if (process.env.VERCEL) {
