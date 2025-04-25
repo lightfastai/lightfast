@@ -3,8 +3,6 @@ import { NextResponse } from "next/server";
 
 import { log } from "@vendor/observability/log";
 
-import type { NextErrorResponse } from "~/components/early-access/errors";
-import { EarlyAccessErrorType } from "~/components/early-access/errors";
 import {
   generateSignedRequestId,
   REQUEST_ID_HEADER,
@@ -55,39 +53,7 @@ export const middleware = async (request: NextRequest) => {
   const requestId = existingRequestId ?? (await generateSignedRequestId());
   response.headers.set(REQUEST_ID_HEADER, requestId);
 
-  // Protect /api/early-access endpoint with same-site origin check
-  if (request.nextUrl.pathname.startsWith("/api/early-access/create")) {
-    log.info("Debug: Checking early access endpoint");
-    const origin = request.headers.get("origin");
-    const host = request.headers.get("host");
-
-    log.info("Debug: Request details", {
-      pathname: request.nextUrl.pathname,
-      origin,
-      host,
-    });
-
-    // Check if the request is from the same origin
-    if (!isSameOrigin(origin, host)) {
-      log.info("Debug: Origin check failed");
-      return NextResponse.json<NextErrorResponse>(
-        {
-          type: EarlyAccessErrorType.SECURITY_CHECK,
-          error: "Cross-origin request denied",
-          message: "Security check failed. Please try again.",
-        },
-        {
-          status: 403,
-          headers: {
-            "Content-Type": "application/json",
-            [REQUEST_ID_HEADER]: requestId,
-          },
-        },
-      );
-    }
-    log.info("Debug: Origin check passed");
-  }
-
+  log.info("Debug: Request ID", { requestId });
   return response;
 };
 

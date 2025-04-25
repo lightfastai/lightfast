@@ -6,14 +6,14 @@ import { clerkEnvWithWebhook } from "@vendor/clerk/env";
 import { env as emailEnv } from "@vendor/email/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
 import { env as nextEnv } from "@vendor/next/env";
-import { logtailEnv, sentryEnv } from "@vendor/observability/env";
+import { betterstackEnv, sentryEnv } from "@vendor/observability/env";
 import { env as securityEnv } from "@vendor/security/env";
 import { env as upstashEnv } from "@vendor/upstash/env";
 
 export const env = createEnv({
   extends: [
     vercel(),
-    logtailEnv,
+    betterstackEnv,
     clerkEnvWithWebhook,
     sentryEnv,
     securityEnv,

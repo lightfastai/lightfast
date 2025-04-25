@@ -45,9 +45,11 @@ export default function Home() {
           <span className="font-mono text-xs text-muted-foreground">
             Introducing
           </span>
-          <h1 className="text-2xl font-semibold sm:text-3xl md:text-4xl">
-            {siteConfig.name}{" "}
-            <span className="gradient-text font-mono">Computer</span>
+          <h1 className="group text-2xl font-semibold sm:text-3xl md:text-4xl">
+            <span className="group-hover:text-glitch">{siteConfig.name}</span>{" "}
+            <span className="gradient-text group-hover:text-glitch font-mono group-hover:text-primary">
+              Computer
+            </span>
           </h1>
           <p className="mx-auto max-w-xs text-balance text-center text-xs text-muted-foreground sm:max-w-lg">
             Simplifying the way you integrate AI workflows into your day to day
