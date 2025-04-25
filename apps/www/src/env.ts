@@ -2,7 +2,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
-import { clerkEnvWithWebhook } from "@vendor/clerk/env";
+import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as emailEnv } from "@vendor/email/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
 import { env as nextEnv } from "@vendor/next/env";
@@ -14,7 +14,7 @@ export const env = createEnv({
   extends: [
     vercel(),
     betterstackEnv,
-    clerkEnvWithWebhook,
+    clerkEnvBase,
     sentryEnv,
     securityEnv,
     emailEnv,

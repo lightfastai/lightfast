@@ -18,7 +18,6 @@ export const middleware = async (request: NextRequest) => {
   const existingRequestId = request.headers.get(REQUEST_ID_HEADER);
   const requestId = existingRequestId ?? (await generateSignedRequestId(log));
   response.headers.set(REQUEST_ID_HEADER, requestId);
-  log.info("Debug: Request ID", { requestId });
   return response;
 };
 

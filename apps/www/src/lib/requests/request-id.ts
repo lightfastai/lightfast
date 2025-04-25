@@ -4,7 +4,7 @@ import type { Logger } from "@vendor/observability/types";
 
 import { env } from "~/env";
 
-export const REQUEST_ID_HEADER = "x-request-id";
+export const REQUEST_ID_HEADER = "x-lightfast-request-id";
 export const REQUEST_ID_PREFIX = "lf_";
 
 // Error classes
@@ -55,61 +55,45 @@ export type RequestIdErrorType =
  * Format: lf_<timestamp>_<random>_<signature>
  */
 export async function generateSignedRequestId(logger: Logger): Promise<string> {
-  try {
-    logger.info("Debug: Starting request ID generation");
+  // Get current timestamp and random value
+  const timestamp = Date.now().toString(36);
+  const randomBytes = crypto.getRandomValues(new Uint8Array(16));
+  const random = Array.from(randomBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 
-    // Get current timestamp and random value
-    const timestamp = Date.now().toString(36);
-    const randomBytes = crypto.getRandomValues(new Uint8Array(16));
-    const random = Array.from(randomBytes)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+  // Create the base request ID
+  const baseId = `${REQUEST_ID_PREFIX}${timestamp}_${random}`;
 
-    logger.info("Debug: Generated random components", { timestamp, random });
+  logger.info("Generated request ID", { baseId });
 
-    // Create the base request ID
-    const baseId = `${REQUEST_ID_PREFIX}${timestamp}_${random}`;
-    logger.info("Debug: Created base ID", { baseId });
+  // Create signature using HMAC
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(env.REQUEST_ID_SECRET);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
 
-    // Create signature using HMAC
-    const encoder = new TextEncoder();
-    const keyData = encoder.encode(env.REQUEST_ID_SECRET);
-    logger.info("Debug: Encoded key data", { keyLength: keyData.length });
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(baseId),
+  );
 
-    const key = await crypto.subtle.importKey(
-      "raw",
-      keyData,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
-    );
-    logger.info("Debug: Imported key successfully");
+  // Convert signature to base64url
+  const signatureBase64 = btoa(
+    String.fromCharCode(...new Uint8Array(signature)),
+  )
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
 
-    const signature = await crypto.subtle.sign(
-      "HMAC",
-      key,
-      encoder.encode(baseId),
-    );
-    logger.info("Debug: Generated signature");
-
-    // Convert signature to base64url using Web APIs
-    const signatureArray = new Uint8Array(signature);
-    const signatureBase64 = btoa(
-      String.fromCharCode.apply(null, [...signatureArray]),
-    )
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=/g, "");
-
-    // Take first 16 chars of signature for brevity
-    const finalId = `${baseId}_${signatureBase64.slice(0, 16)}`;
-    logger.info("Debug: Generated final request ID", { finalId });
-
-    return finalId;
-  } catch (error) {
-    logger.error("Debug: Error generating request ID", { error });
-    throw error;
-  }
+  // Take first 16 chars of signature for brevity
+  return `${baseId}_${signatureBase64.slice(0, 16)}`;
 }
 
 /**
