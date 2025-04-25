@@ -17,13 +17,15 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="container mx-auto flex h-[calc(100vh-12rem)] flex-col items-center justify-center px-4 py-16">
-      <div className="max-w-2xl">
-        <h1 className="mb-4 text-xl font-semibold">Privacy Policy</h1>
+    <div className="container mx-auto flex min-h-[calc(100vh-12rem)] items-center justify-center px-4 py-8 sm:py-16">
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mb-4 text-lg font-semibold sm:text-xl">
+          Privacy Policy
+        </h1>
         <Alert>
           <AlertCircle className="size-4" />
-          <AlertTitle>Coming Soon</AlertTitle>
-          <AlertDescription className="flex flex-row text-xs">
+          <AlertTitle className="text-sm sm:text-base">Coming Soon</AlertTitle>
+          <AlertDescription className="text-xs sm:text-sm">
             <span>
               We are currently finalizing our Privacy Policy. Please check back
               soon. If you have any immediate privacy concerns, feel free to

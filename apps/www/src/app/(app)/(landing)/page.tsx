@@ -56,7 +56,7 @@ export default function Home() {
             &#x2014; from design to development
           </p>
         </div>
-        <div className="flex w-full max-w-lg flex-col gap-4">
+        <div className="flex w-full max-w-[320px] flex-col gap-4 sm:max-w-md md:max-w-lg">
           <EarlyAccessJotaiProvider>
             <Suspense
               fallback={
