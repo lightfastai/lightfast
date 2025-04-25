@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 interface LegalLayoutProps {
   children: ReactNode;
-  params: { slug: string };
 }
 
 export default function LegalLayout({ children }: LegalLayoutProps) {
