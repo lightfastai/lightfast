@@ -76,8 +76,6 @@ export async function generateSignedRequestId(logger: Logger): Promise<string> {
     const keyData = encoder.encode(env.REQUEST_ID_SECRET);
     logger.info("Debug: Encoded key data", { keyLength: keyData.length });
 
-    // @NOTE: Crypto.subtle might not be available in some environments
-    // @TODO: Remove this once we have a better solution
     const key = await crypto.subtle.importKey(
       "raw",
       keyData,
@@ -94,9 +92,11 @@ export async function generateSignedRequestId(logger: Logger): Promise<string> {
     );
     logger.info("Debug: Generated signature");
 
-    // Convert signature to base64url
-    const signatureBase64 = Buffer.from(signature)
-      .toString("base64")
+    // Convert signature to base64url using Web APIs
+    const signatureArray = new Uint8Array(signature);
+    const signatureBase64 = btoa(
+      String.fromCharCode.apply(null, [...signatureArray]),
+    )
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
       .replace(/=/g, "");
@@ -162,9 +162,10 @@ async function validateRequestIdUnsafe(
     encoder.encode(baseId),
   );
 
-  // Convert expected signature to base64url
+  // Convert expected signature to base64url using Web APIs
+  const signatureArray = new Uint8Array(expectedSignature);
   const expectedBase64 = btoa(
-    String.fromCharCode(...new Uint8Array(expectedSignature)),
+    String.fromCharCode.apply(null, [...signatureArray]),
   )
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
