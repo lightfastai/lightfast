@@ -10,6 +10,7 @@
     "./env": "./env.ts",
     "./server": "./src/server.ts",
     "./types": "./src/types.ts",
+    "./webhooks": "./src/webhooks.ts",
     "./client": "./src/client/index.ts"
   },
   "license": "MIT",
@@ -23,11 +24,12 @@
   },
   "dependencies": {
     "@clerk/elements": "^0.19.9",
-    "@clerk/nextjs": "^6.5.1",
-    "@t3-oss/env-nextjs": "^0.11.1",
+    "@clerk/nextjs": "^6.15.1",
+    "@t3-oss/env-nextjs": "0.12.0",
     "next": "catalog:",
-    "react": "catalog:react18",
-    "react-dom": "catalog:react18"
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "svix": "^1.62.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

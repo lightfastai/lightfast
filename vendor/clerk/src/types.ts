@@ -4,3 +4,5 @@ export interface Session {
     clerkId: string;
   };
 }
+
+export type { ClerkAPIError } from "@clerk/types";

@@ -84,7 +84,7 @@
     @apply border-border;
   }
   body {
-    @apply overscroll-none bg-background text-foreground;
+    @apply bg-background text-foreground;
     /* font-feature-settings: "rlig" 1, "calt" 1; */
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
@@ -112,6 +112,19 @@
     content: counter(step);
   }
 
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+
   .chunk-container {
     @apply shadow-none;
   }
@@ -128,6 +141,81 @@
 
   ::-webkit-scrollbar-thumb {
     background-color: rgb(39, 39, 42); /* muted-color */
+  }
+
+  .text-shimmer {
+    @apply relative overflow-hidden;
+    background: linear-gradient(
+      to right,
+      theme(colors.slate.900) 0%,
+      theme(colors.slate.100) 50%,
+      theme(colors.slate.900) 100%
+    );
+    background-size: 200% auto;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: shine 6s linear infinite;
+  }
+
+  .text-glitch {
+    @apply relative;
+    text-shadow:
+      0.05em 0 0 theme(colors.red.500/60%),
+      -0.025em -0.05em 0 theme(colors.blue.500/60%),
+      0.025em 0.05em 0 theme(colors.green.500/60%);
+    animation: glitch 500ms infinite;
+  }
+
+  @keyframes shine {
+    to {
+      background-position: 200% center;
+    }
+  }
+
+  @keyframes glitch {
+    0% {
+      text-shadow:
+        0.05em 0 0 theme(colors.red.500/60%),
+        -0.025em -0.05em 0 theme(colors.blue.500/60%),
+        0.025em 0.05em 0 theme(colors.green.500/60%);
+    }
+    14% {
+      text-shadow:
+        0.05em 0 0 theme(colors.red.500/60%),
+        -0.025em -0.05em 0 theme(colors.blue.500/60%),
+        0.025em 0.05em 0 theme(colors.green.500/60%);
+    }
+    15% {
+      text-shadow:
+        -0.05em -0.025em 0 theme(colors.red.500/60%),
+        0.025em 0.025em 0 theme(colors.blue.500/60%),
+        -0.05em -0.05em 0 theme(colors.green.500/60%);
+    }
+    49% {
+      text-shadow:
+        -0.05em -0.025em 0 theme(colors.red.500/60%),
+        0.025em 0.025em 0 theme(colors.blue.500/60%),
+        -0.05em -0.05em 0 theme(colors.green.500/60%);
+    }
+    50% {
+      text-shadow:
+        0.025em 0.05em 0 theme(colors.red.500/60%),
+        0.05em 0 0 theme(colors.blue.500/60%),
+        0 -0.05em 0 theme(colors.green.500/60%);
+    }
+    99% {
+      text-shadow:
+        0.025em 0.05em 0 theme(colors.red.500/60%),
+        0.05em 0 0 theme(colors.blue.500/60%),
+        0 -0.05em 0 theme(colors.green.500/60%);
+    }
+    100% {
+      text-shadow:
+        -0.025em 0 0 theme(colors.red.500/60%),
+        -0.025em -0.025em 0 theme(colors.blue.500/60%),
+        -0.025em -0.05em 0 theme(colors.green.500/60%);
+    }
   }
 }
 

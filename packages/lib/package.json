@@ -8,9 +8,9 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./pretty-react-td-name": {
-      "types": "./dist/pretty-react-td-name.d.ts",
-      "default": "./src/pretty-react-td-name.ts"
+    "./pretty-project-name": {
+      "types": "./dist/pretty-project-name.d.ts",
+      "default": "./src/pretty-project-name.ts"
     }
   },
   "license": "MIT",
