@@ -66,6 +66,9 @@ export async function generateSignedRequestId(): Promise<string> {
   // Create signature using HMAC
   const encoder = new TextEncoder();
   const keyData = encoder.encode(env.REQUEST_ID_SECRET);
+
+  // @NOTE: Crypto.subtle might not be available in some environments
+  // @TODO: Remove this once we have a better solution
   const key = await crypto.subtle.importKey(
     "raw",
     keyData,
@@ -188,7 +191,7 @@ export const validateRequestIdSafe = (requestId: string | null) =>
 export function getRequestIdTimestamp(requestId: string): number | undefined {
   try {
     const [prefix, timestamp] = requestId.split("_");
-    if (!prefix || !timestamp || !requestId.startsWith(REQUEST_ID_PREFIX)) {
+    if (!prefix || !timestamp || prefix !== REQUEST_ID_PREFIX) {
       return undefined;
     }
     return parseInt(timestamp, 36);

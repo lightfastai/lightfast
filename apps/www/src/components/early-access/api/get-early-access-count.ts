@@ -41,10 +41,17 @@ export class UpstashConnectionError extends UpstashError {
   }
 }
 
-export class UnknownError extends Error {
+export class UpstashEarlyAccessUnknownError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "UnknownError";
+    this.name = "UpstashEarlyAccessUnknownError";
+  }
+}
+
+export class UpstashCorruptedDataError extends UpstashError {
+  constructor(message: string) {
+    super(message, 500);
+    this.name = "UpstashCorruptedDataError";
   }
 }
 
@@ -54,7 +61,7 @@ export class UpstashEarlyAccessCountError extends Error {
     public originalError: UpstashError | Error,
   ) {
     super(message);
-    this.name = "UpstashWaitlistError";
+    this.name = "UpstashEarlyAccessCountError";
   }
 }
 
@@ -64,7 +71,8 @@ export type UpstashFuncError =
   | UpstashAuthenticationError
   | UpstashConnectionError
   | UpstashError
-  | UnknownError
+  | UpstashEarlyAccessUnknownError
+  | UpstashCorruptedDataError
   | UpstashEarlyAccessCountError;
 
 // Unsafe operations that can throw
@@ -97,14 +105,22 @@ const incrementEarlyAccessCountUnsafe = async (): Promise<number> => {
       }
       throw new UpstashError(error.message);
     }
-    throw new UnknownError("Unknown error while incrementing waitlist count");
+    throw new UpstashEarlyAccessUnknownError(
+      "Unknown error while incrementing waitlist count",
+    );
   }
 };
 
 const getEarlyAccessCountUnsafe = async (): Promise<number> => {
   try {
-    const count = await redis.get<number>(EARLY_ACCESS_COUNT_KEY);
-    return count ?? 0;
+    const raw = await redis.get<string>(EARLY_ACCESS_COUNT_KEY);
+    const count = raw ? Number(raw) : 0;
+    if (Number.isNaN(count)) {
+      throw new UpstashCorruptedDataError(
+        "Corrupted early-access count in Redis",
+      );
+    }
+    return count;
   } catch (error) {
     if (error instanceof Error) {
       log.error("Error getting early access count", { error });
@@ -130,7 +146,9 @@ const getEarlyAccessCountUnsafe = async (): Promise<number> => {
       }
       throw new UpstashError(error.message);
     }
-    throw new UnknownError("Unknown error while getting waitlist count");
+    throw new UpstashEarlyAccessUnknownError(
+      "Unknown error while getting waitlist count",
+    );
   }
 };
 
@@ -143,7 +161,8 @@ export const incrementEarlyAccessCountSafe = () =>
         error instanceof UpstashRateLimitError ||
         error instanceof UpstashAuthenticationError ||
         error instanceof UpstashConnectionError ||
-        error instanceof UpstashError
+        error instanceof UpstashError ||
+        error instanceof UpstashEarlyAccessUnknownError
       ) {
         return new UpstashEarlyAccessCountError(error.message, error);
       }
@@ -162,7 +181,9 @@ export const getEarlyAccessCountSafe = () =>
         error instanceof UpstashRateLimitError ||
         error instanceof UpstashAuthenticationError ||
         error instanceof UpstashConnectionError ||
-        error instanceof UpstashError
+        error instanceof UpstashError ||
+        error instanceof UpstashEarlyAccessUnknownError ||
+        error instanceof UpstashCorruptedDataError
       ) {
         return new UpstashEarlyAccessCountError(error.message, error);
       }

@@ -45,28 +45,6 @@ const createEarlyAccessEntryUnsafe = async ({
   // Update stored request ID from response
   const responseRequestId = response.headers.get(REQUEST_ID_HEADER);
 
-  if (!response.ok) {
-    const errorData = (await response.json()) as NextErrorResponse;
-    log.error("Early access error", {
-      response,
-      errorData,
-    });
-    if (!responseRequestId) {
-      throw new EarlyAccessError(
-        EarlyAccessFormErrorMap[EarlyAccessErrorType.NO_REQUEST_ID],
-        EarlyAccessErrorType.NO_REQUEST_ID,
-        "No request ID found in response",
-      );
-    }
-
-    throw new EarlyAccessError(
-      errorData.message,
-      errorData.type,
-      errorData.error,
-      responseRequestId,
-    );
-  }
-
   if (!responseRequestId) {
     log.error("No request ID found in response", {
       response,
@@ -76,6 +54,44 @@ const createEarlyAccessEntryUnsafe = async ({
       EarlyAccessErrorType.NO_REQUEST_ID,
       "No request ID found in response",
     );
+  }
+
+  if (!response.ok) {
+    log.error("Early access error", {
+      response,
+    });
+    let errorData: Partial<NextErrorResponse> = {};
+    try {
+      errorData = (await response.json()) as Partial<NextErrorResponse>;
+    } catch {
+      throw new EarlyAccessError(
+        "Failed to parse early access error payload",
+        EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+        "Failed to parse early access error payload",
+        responseRequestId,
+      );
+    }
+
+    // If no errors array or it's empty, throw a generic error
+    if (!errorData.error) {
+      log.error("Unknown error from early access API", {
+        response,
+        errorData,
+      });
+
+      throw new EarlyAccessError(
+        "Unknown error from early access API",
+        EarlyAccessErrorType.INTERNAL_SERVER_ERROR,
+        "Unknown error from early access API",
+        responseRequestId,
+      );
+    }
+
+    const error = errorData.error;
+    const type = errorData.type ?? EarlyAccessErrorType.INTERNAL_SERVER_ERROR;
+    const message = errorData.message ?? "An unexpected error occurred";
+
+    throw new EarlyAccessError(message, type, error, responseRequestId);
   }
 
   return {

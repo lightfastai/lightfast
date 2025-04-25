@@ -3,14 +3,14 @@
 import { useEffect } from "react";
 import { useAtom } from "jotai";
 
-import { earlyAccesssCountAtom } from "./jotai/early-access-count-atom";
+import { earlyAccessCountAtom } from "./jotai/early-access-count-atom";
 
 export function EarlyAccountCountUpdater({
   waitlistCount,
 }: {
   waitlistCount: number;
 }) {
-  const [count, setCount] = useAtom(earlyAccesssCountAtom);
+  const [count, setCount] = useAtom(earlyAccessCountAtom);
 
   useEffect(() => {
     setCount(waitlistCount);

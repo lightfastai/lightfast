@@ -24,13 +24,13 @@ import { earlyAccessFormSchema } from "~/components/early-access/early-access-fo
 import { EarlyAccessFormErrorMap } from "~/components/early-access/errors";
 import { env } from "~/env";
 import { useErrorReporter } from "~/lib/error-reporting/client-error-reporter";
-import { earlyAccesssCountAtom } from "./jotai/early-access-count-atom";
+import { earlyAccessCountAtom } from "./jotai/early-access-count-atom";
 
 export function EarlyAccessForm() {
   const { toast } = useToast();
   const { reportError } = useErrorReporter();
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [_, setWaitlistCount] = useAtom(earlyAccesssCountAtom);
+  const [_, setWaitlistCount] = useAtom(earlyAccessCountAtom);
 
   const form = useForm({
     schema: earlyAccessFormSchema,
