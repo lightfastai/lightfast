@@ -1,5 +1,7 @@
 import { useCallback, useMemo } from "react";
 
+import { log } from "@vendor/observability/log";
+
 import type { ClientErrorContext } from "./types";
 import { env } from "~/env";
 import { createSentryReporter } from "./sentry-reporter";
@@ -15,7 +17,7 @@ export function useErrorReporter() {
 
   const reportError = useCallback(
     (error: Error, context: ClientErrorContext) => {
-      console.log("reporting error", error, context);
+      log.error("reporting error", { error, context });
       return reporter.reportError(error, context);
     },
     [reporter],

@@ -1,5 +1,7 @@
 import { ResultAsync } from "neverthrow";
 
+import { log } from "@vendor/observability/log";
+
 import type { NextErrorResponse } from "../errors";
 import { REQUEST_ID_HEADER } from "~/lib/requests/request-id";
 import { EarlyAccessErrorType, EarlyAccessFormErrorMap } from "../errors";
@@ -45,7 +47,7 @@ const createEarlyAccessEntryUnsafe = async ({
 
   if (!response.ok) {
     const errorData = (await response.json()) as NextErrorResponse;
-    console.error("Early access error", {
+    log.error("Early access error", {
       response,
       errorData,
     });
@@ -66,7 +68,7 @@ const createEarlyAccessEntryUnsafe = async ({
   }
 
   if (!responseRequestId) {
-    console.error("No request ID found in response", {
+    log.error("No request ID found in response", {
       response,
     });
     throw new EarlyAccessError(

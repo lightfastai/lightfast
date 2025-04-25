@@ -1,5 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 
+import { log } from "@vendor/observability/log";
+
 import type { BaseErrorContext, SentryReportingConfig } from "./types";
 
 function logDebug(
@@ -8,7 +10,7 @@ function logDebug(
   data?: unknown,
 ): void {
   if (!disableLogger) {
-    console.log(`[Sentry] ${message}`, data);
+    log.info(`[Sentry] ${message}`, { data });
   }
 }
 
@@ -60,7 +62,7 @@ export function createSentryReporter(config: SentryReportingConfig) {
 
         logDebug(config.disableLogger, "Successfully reported error");
       } catch (sentryError) {
-        console.error("[Sentry] Failed to report error:", sentryError);
+        log.error("[Sentry] Failed to report error:", { sentryError });
 
         logDebug(config.disableLogger, "Current state:", {
           initialized: Sentry.getClient() !== undefined,

@@ -1,5 +1,6 @@
 import { ResultAsync } from "neverthrow";
 
+import { log } from "@vendor/observability/log";
 import { redis } from "@vendor/upstash";
 
 // Constants
@@ -73,6 +74,7 @@ const incrementEarlyAccessCountUnsafe = async (): Promise<number> => {
     return count;
   } catch (error) {
     if (error instanceof Error) {
+      log.error("Error incrementing early access count", { error });
       // Handle specific Redis errors
       if (error.message.includes("READONLY")) {
         throw new UpstashConnectionError("Redis is in read-only mode");
@@ -105,6 +107,7 @@ const getEarlyAccessCountUnsafe = async (): Promise<number> => {
     return count ?? 0;
   } catch (error) {
     if (error instanceof Error) {
+      log.error("Error getting early access count", { error });
       // Handle specific Redis errors
       if (error.message.includes("READONLY")) {
         throw new UpstashConnectionError("Redis is in read-only mode");

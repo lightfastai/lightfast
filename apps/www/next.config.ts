@@ -2,9 +2,11 @@ import { NextConfig } from "next";
 
 import "~/env";
 
-import { withSentry } from "@vendor/next/next-config-builder";
+import { withBetterStack, withSentry } from "@vendor/next/next-config-builder";
 
-let config: NextConfig = {
+import { env } from "~/env";
+
+let config: NextConfig = withBetterStack({
   reactStrictMode: true,
 
   /** Enables hot reloading for local packages without a build step */
@@ -35,12 +37,6 @@ let config: NextConfig = {
     },
   ],
 
-  // Optimize loading strategy
-  optimizeFonts: true,
-
-  // Use SWC minification for better performance
-  swcMinify: true,
-
   // Add automatic static optimization where possible
   experimental: {
     // For Next.js 15.3+
@@ -52,10 +48,12 @@ let config: NextConfig = {
       "react-confetti",
     ],
     // Faster navigation for production
-    ppr: true,
+    // ppr: true,
   },
-};
+});
 
-if (process.env.VERCEL) {
+if (env.VERCEL) {
   config = withSentry(config);
 }
+
+export default config;

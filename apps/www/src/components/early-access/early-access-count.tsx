@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { log } from "@vendor/observability/log";
+
 import { EarlyAccountCountUpdater } from "./early-access-count-updater";
 
 export function EarlyAccessCount() {
@@ -15,12 +17,13 @@ export function EarlyAccessCount() {
           method: "GET",
         });
         if (!response.ok) {
+          log.error("Failed to fetch count", { response });
           throw new Error("Failed to fetch count");
         }
         const data = (await response.json()) as { count: number };
         setCount(data.count);
       } catch (err) {
-        console.error("Error fetching waitlist count:", err);
+        log.error("Error fetching waitlist count:", { err });
         setError(true);
       }
     };

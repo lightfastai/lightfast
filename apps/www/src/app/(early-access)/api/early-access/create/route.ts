@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { log } from "@vendor/observability/log";
+
 import type { NextErrorResponse } from "~/components/early-access/errors";
 import { inngest } from "~/app/(inngest)/api/inngest/_client/client";
 import {
@@ -42,11 +44,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    log.info("Request ID:", { requestId });
+
     // At this point we have a valid request ID
     const res = await jsonParseSafe<CreateEarlyAccessJoinRequest>(request);
 
     if (res.isErr()) {
-      console.error("Safe JSON parse error:", {
+      log.error("Safe JSON parse error:", {
         requestId,
         type: res.error.name,
         message: res.error.message,
@@ -89,10 +93,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { email } = res.value;
 
     const protectionResult = await protectSignupSafe({ request, email });
+    log.info("Protection result:", { protectionResult });
 
     if (protectionResult.isErr()) {
       const error = protectionResult.error;
-      console.error("Arcjet protection error:", {
+      log.error("Arcjet protection error:", {
         requestId,
         type: error.name,
         message: error.message,
@@ -186,6 +191,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     });
 
+    log.info("Early access join sent:", {
+      email,
+      requestId,
+    });
+
     return NextResponse.json(
       { success: true },
       {
@@ -196,7 +206,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     // For unexpected errors, use the request ID if available, otherwise "unknown"
     const newRequestId = request.headers.get(REQUEST_ID_HEADER) ?? "unknown";
-    console.error("Unexpected error in early access signup:", {
+    log.error("Unexpected error in early access signup:", {
       requestId: newRequestId,
       error,
     });

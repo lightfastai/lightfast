@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { log } from "@vendor/observability/log";
+
 import type { NextErrorResponse } from "~/components/early-access/errors";
 import { EarlyAccessErrorType } from "~/components/early-access/errors";
 import {
@@ -13,7 +15,7 @@ import {
  */
 const isSameOrigin = (origin: string | null, host: string | null): boolean => {
   if (!origin || !host) {
-    console.log("Debug: Missing origin or host", { origin, host });
+    log.error("Debug: Missing origin or host", { origin, host });
     return false;
   }
 
@@ -28,7 +30,7 @@ const isSameOrigin = (origin: string | null, host: string | null): boolean => {
     // Remove port from host if present
     const hostName = host.split(":")[0];
 
-    console.log("Debug: Origin check", {
+    log.info("Debug: Origin check", {
       originHostname,
       hostName,
       matches: originHostname === hostName,
@@ -36,7 +38,7 @@ const isSameOrigin = (origin: string | null, host: string | null): boolean => {
 
     return originHostname === hostName;
   } catch (error) {
-    console.log("Debug: URL parsing error", { error, origin });
+    log.error("Debug: URL parsing error", { error, origin });
     // If URL parsing fails, consider it invalid
     return false;
   }
@@ -55,11 +57,11 @@ export const middleware = async (request: NextRequest) => {
 
   // Protect /api/early-access endpoint with same-site origin check
   if (request.nextUrl.pathname.startsWith("/api/early-access/create")) {
-    console.log("Debug: Checking early access endpoint");
+    log.info("Debug: Checking early access endpoint");
     const origin = request.headers.get("origin");
     const host = request.headers.get("host");
 
-    console.log("Debug: Request details", {
+    log.info("Debug: Request details", {
       pathname: request.nextUrl.pathname,
       origin,
       host,
@@ -67,7 +69,7 @@ export const middleware = async (request: NextRequest) => {
 
     // Check if the request is from the same origin
     if (!isSameOrigin(origin, host)) {
-      console.log("Debug: Origin check failed");
+      log.info("Debug: Origin check failed");
       return NextResponse.json<NextErrorResponse>(
         {
           type: EarlyAccessErrorType.SECURITY_CHECK,
@@ -83,7 +85,7 @@ export const middleware = async (request: NextRequest) => {
         },
       );
     }
-    console.log("Debug: Origin check passed");
+    log.info("Debug: Origin check passed");
   }
 
   return response;

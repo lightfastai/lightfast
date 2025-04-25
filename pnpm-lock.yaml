@@ -1074,8 +1074,8 @@ importers:
   vendor/observability:
     dependencies:
       '@logtail/next':
-        specifier: ^0.1.7
-        version: 0.1.7(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+        specifier: ^0.2.0
+        version: 0.2.0(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       '@sentry/nextjs':
         specifier: ^9.14.0
         version: 9.14.0(@opentelemetry/context-async-hooks@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(webpack@5.96.1)
@@ -2668,11 +2668,12 @@ packages:
   '@libsql/core@0.14.0':
     resolution: {integrity: sha512-nhbuXf7GP3PSZgdCY2Ecj8vz187ptHlZQ0VRc751oB2C1W8jQUXKKklvt7t1LJiUTQBVJuadF628eUk+3cRi4Q==}
 
-  '@logtail/next@0.1.7':
-    resolution: {integrity: sha512-1CEBO+C65PGI1THcanwuyLkD8G3w6PLudEgZBY/okCH5cR1FPBJiztkkBkP4wasQfsNJiFkYEmHkFriLM67SfQ==}
-    engines: {node: '>=15'}
+  '@logtail/next@0.2.0':
+    resolution: {integrity: sha512-HkOyUptBXEwomHhUcg6MuMm89NX5BCTKdYvAekOCdqZQiC1wsDPsbdFiZjqT49u0TP1faesOl8hvLPHLn7nJcA==}
+    engines: {node: '>=18'}
     peerDependencies:
-      next: ^12.1.4 || ^13 || ^14 || ^15
+      next: '>=14.0'
+      react: '>=18.0.0'
 
   '@mdx-js/esbuild@3.1.0':
     resolution: {integrity: sha512-Jk42xUb1SEJxh6n2GBAtJjQISFIZccjz8XVEsHVhrlvZJAJziIxR9KyaFF6nTeTB/jCAFQGDgO7+oMRH/ApRsg==}
@@ -9931,6 +9932,11 @@ packages:
       '@types/react':
         optional: true
 
+  use-deep-compare@1.3.0:
+    resolution: {integrity: sha512-94iG+dEdEP/Sl3WWde+w9StIunlV8Dgj+vkt5wTwMoFQLaijiEZSXXy8KtcStpmEDtIptRJiNeD4ACTtVvnIKA==}
+    peerDependencies:
+      react: '>=16.8.0'
+
   use-isomorphic-layout-effect@1.1.2:
     resolution: {integrity: sha512-49L8yCO3iGT/ZF9QttjwLF/ZD9Iwto5LnH5LmEdk/6cFmXddqi2ulF0edxTwjj+7mqvpVVGQWvbXZdn32wRSHA==}
     peerDependencies:
@@ -11875,9 +11881,11 @@ snapshots:
     dependencies:
       js-base64: 3.7.7
 
-  '@logtail/next@0.1.7(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+  '@logtail/next@0.2.0(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)':
     dependencies:
       next: 15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react: 19.1.0
+      use-deep-compare: 1.3.0(react@19.1.0)
       whatwg-fetch: 3.6.20
 
   '@mdx-js/esbuild@3.1.0(acorn@8.14.1)(esbuild@0.25.0)':
@@ -20621,6 +20629,11 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       '@types/react': 19.1.2
+
+  use-deep-compare@1.3.0(react@19.1.0):
+    dependencies:
+      dequal: 2.0.3
+      react: 19.1.0
 
   use-isomorphic-layout-effect@1.1.2(@types/react@19.1.2)(react@19.1.0):
     dependencies:

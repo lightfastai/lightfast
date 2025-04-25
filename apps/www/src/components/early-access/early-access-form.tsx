@@ -17,6 +17,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
+import { log } from "@vendor/observability/log";
 
 import { createEarlyAccessEntrySafe } from "~/components/early-access/api/create-early-access-entry";
 import { earlyAccessFormSchema } from "~/components/early-access/early-access-form.schema";
@@ -47,7 +48,7 @@ export function EarlyAccessForm() {
       (data) => {
         // Log success in development
         if (env.NODE_ENV === "development") {
-          console.log("Early access form success:", {
+          log.info("Early access form success:", {
             requestId: data.requestId,
             success: data.success,
           });
@@ -79,7 +80,7 @@ export function EarlyAccessForm() {
 
         // Log error for debugging in development
         if (env.NODE_ENV === "development") {
-          console.error("Early access form error:", {
+          log.error("Early access form error:", {
             type: error.type,
             error: error.error,
             message: error.message,

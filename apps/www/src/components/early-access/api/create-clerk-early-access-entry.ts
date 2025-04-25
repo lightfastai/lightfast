@@ -1,5 +1,7 @@
 import { ResultAsync } from "neverthrow";
 
+import { log } from "@vendor/observability/log";
+
 import { env } from "~/env";
 
 const CLERK_API_URL = "https://api.clerk.com/v1";
@@ -99,6 +101,7 @@ const createClerkEarlyAccessEntryUnsage = async ({
   });
 
   if (!response.ok) {
+    log.error("Error creating clerk early access entry", { response });
     let errorData: Partial<ClerkErrorResponse> = {};
     try {
       errorData = (await response.json()) as Partial<ClerkErrorResponse>;
@@ -111,6 +114,7 @@ const createClerkEarlyAccessEntryUnsage = async ({
 
     // If no errors array or it's empty, throw a generic error
     if (!errorData.errors?.length) {
+      log.error("Unknown error from Clerk API", { response });
       throw new ClerkError("Unknown error from Clerk API", response.status);
     }
 
@@ -121,6 +125,7 @@ const createClerkEarlyAccessEntryUnsage = async ({
     const statusCode = response.status;
 
     // Handle specific error types based on status code and message
+    log.error("Clerk error", { error });
     switch (statusCode) {
       case 422: {
         throw new ClerkValidationError(long_message);

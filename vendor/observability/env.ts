@@ -7,9 +7,21 @@ export const logtailEnv = createEnv({
   shared: {},
   server: {
     LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
+    LOGTAIL_URL: z.string().min(1).url().optional(),
   },
-  client: {},
-  experimental__runtimeEnv: {},
+  client: {
+    NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN: z.string().min(1).optional(),
+    NEXT_PUBLIC_BETTER_STACK_INGESTING_URL: z.string().min(1).url().optional(),
+    NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
+  },
+  experimental__runtimeEnv: {
+    NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN:
+      process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN,
+    NEXT_PUBLIC_BETTER_STACK_INGESTING_URL:
+      process.env.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL,
+    NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN:
+      process.env.NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN,
+  },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });

@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { ResultAsync } from "neverthrow";
 
+import { log } from "@vendor/observability/log";
 import { arcjet, protectSignup, setRateLimitHeaders } from "@vendor/security";
 
 import { env } from "~/env";
@@ -86,6 +87,10 @@ const protectSignupUnsafe = async ({ request, email }: ProtectSignupParams) => {
     const reason = decision.reason;
 
     if (reason.isEmail()) {
+      log.error("Arcjet email error", {
+        email,
+        reason,
+      });
       throw new ArcjetEmailError(
         "You have provided an invalid email address. Please try again.",
       );
@@ -96,12 +101,21 @@ const protectSignupUnsafe = async ({ request, email }: ProtectSignupParams) => {
       const headers = new Headers();
       setRateLimitHeaders(headers, decision);
       const retryAfter = headers.get("retry-after");
+      log.error("Arcjet rate limit error", {
+        email,
+        reason,
+        retryAfter,
+      });
       throw new ArcjetRateLimitError(
         "You have exceeded the rate limit. Please try again later.",
         retryAfter ?? "10m",
       );
     }
 
+    log.error("Arcjet security error", {
+      email,
+      reason,
+    });
     throw new ArcjetSecurityError(
       "You have been blocked from joining the waitlist. Please try again later.",
     );

@@ -2,6 +2,8 @@ import type { Result } from "neverthrow";
 import type { NextRequest } from "next/server";
 import { err, ok } from "neverthrow";
 
+import { log } from "@vendor/observability/log";
+
 export class InvalidJsonError extends Error {
   constructor(message: string) {
     super(message);
@@ -15,7 +17,7 @@ export const jsonParseSafe = async <T>(
   try {
     return ok((await request.json()) as T);
   } catch (error: unknown) {
-    console.error("Error: Could not parse JSON:", error);
+    log.error("Error: Could not parse JSON:", { error });
     return err(new InvalidJsonError("Invalid JSON"));
   }
 };
