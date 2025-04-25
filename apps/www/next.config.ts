@@ -6,6 +6,8 @@ import { withBetterStack, withSentry } from "@vendor/next/next-config-builder";
 
 import { env } from "~/env";
 
+const otelRegex = /@opentelemetry\/instrumentation/;
+
 let config: NextConfig = withBetterStack({
   reactStrictMode: true,
 
@@ -49,6 +51,11 @@ let config: NextConfig = withBetterStack({
     ],
     // Faster navigation for production
     // ppr: true,
+  },
+
+  webpack(config) {
+    config.ignoreWarnings = [{ module: otelRegex }];
+    return config;
   },
 });
 
