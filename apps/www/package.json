@@ -10,7 +10,7 @@
     "dev:email": "email dev --dir ./src/templates -p 4109",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "start": "pnpm with-env next start",
+    "start": "pnpm with-env next start -p 4101",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
