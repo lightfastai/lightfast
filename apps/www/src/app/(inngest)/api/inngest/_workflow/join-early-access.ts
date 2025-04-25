@@ -7,7 +7,6 @@ import {
   ClerkRateLimitError,
   ClerkSecurityError,
   createClerkEarlyAccessEntrySafe,
-  UnknownError,
 } from "~/components/early-access/api/create-clerk-early-access-entry";
 import {
   incrementEarlyAccessCountSafe,
@@ -19,6 +18,7 @@ import {
   ResendDailyQuotaError,
   ResendRateLimitError,
   ResendSecurityError,
+  ResendUnknownError,
   ResendValidationError,
   sendResendEmailSafe,
 } from "~/lib/resend";
@@ -177,7 +177,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
           });
         }
 
-        if (error instanceof UnknownError) {
+        if (error instanceof ResendUnknownError) {
           console.error("Resend unknown error:", {
             workflowTraceId,
             originalRequestId,
@@ -257,7 +257,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
           });
         }
 
-        if (error instanceof UnknownError) {
+        if (error instanceof ResendUnknownError) {
           console.error("Email unknown error:", {
             workflowTraceId,
             originalRequestId,

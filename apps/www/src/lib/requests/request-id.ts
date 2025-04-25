@@ -81,9 +81,8 @@ export async function generateSignedRequestId(): Promise<string> {
   );
 
   // Convert signature to base64url
-  const signatureBase64 = btoa(
-    String.fromCharCode(...new Uint8Array(signature)),
-  )
+  const signatureBase64 = Buffer.from(signature)
+    .toString("base64")
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=/g, "");
@@ -123,7 +122,7 @@ async function validateRequestIdUnsafe(
   }
 
   // Reconstruct base ID for signature verification
-  const baseId = `${prefix}${timestamp}_${random}`;
+  const baseId = `${prefix}_${timestamp}_${random}`;
 
   // Import key and verify signature
   const encoder = new TextEncoder();

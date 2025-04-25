@@ -46,10 +46,10 @@ export class ClerkSecurityError extends ClerkError {
   }
 }
 
-export class UnknownError extends Error {
+export class ClerkUnknownError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "UnknownError";
+    this.name = "ClerkUnknownError";
   }
 }
 
@@ -60,7 +60,7 @@ export type ClerkWaitlistError =
   | ClerkAuthenticationError
   | ClerkSecurityError
   | ClerkError
-  | UnknownError;
+  | ClerkUnknownError;
 
 interface ClerkAPIError {
   code: string;
@@ -99,10 +99,18 @@ const createClerkEarlyAccessEntryUnsage = async ({
   });
 
   if (!response.ok) {
-    const errorData = (await response.json()) as ClerkErrorResponse;
+    let errorData: Partial<ClerkErrorResponse> = {};
+    try {
+      errorData = (await response.json()) as Partial<ClerkErrorResponse>;
+    } catch {
+      throw new ClerkError(
+        "Failed to parse Clerk error payload",
+        response.status,
+      );
+    }
 
     // If no errors array or it's empty, throw a generic error
-    if (!errorData.errors.length) {
+    if (!errorData.errors?.length) {
       throw new ClerkError("Unknown error from Clerk API", response.status);
     }
 
@@ -162,7 +170,7 @@ export const createClerkEarlyAccessEntrySafe = ({ email }: { email: string }) =>
         return error;
       }
       // Otherwise wrap in UnknownError
-      return new UnknownError(
+      return new ClerkUnknownError(
         error instanceof Error
           ? error.message
           : "Unknown error while creating waitlist entry",

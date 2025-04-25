@@ -79,10 +79,10 @@ export class ResendSecurityError extends ResendError {
   }
 }
 
-export class UnknownError extends Error {
+export class ResendUnknownError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "UnknownError";
+    this.name = "ResendUnknownError";
   }
 }
 
@@ -94,7 +94,7 @@ export type ResendEmailError =
   | ResendAuthenticationError
   | ResendSecurityError
   | ResendError
-  | UnknownError;
+  | ResendUnknownError;
 
 const sendResendEmailUnsafe = async ({
   react,
@@ -160,6 +160,11 @@ const addToWaitlistContactsUnsafe = async (
     // Handle specific error types based on status code and message
     switch (statusCode) {
       case 429: {
+        // Check if it's a daily quota error
+        if (message.toLowerCase().includes("daily quota")) {
+          throw new ResendDailyQuotaError(message);
+        }
+        // Otherwise it's a rate limit error
         const retryAfter = error.headers?.["retry-after"];
         throw new ResendRateLimitError(
           message,
@@ -205,7 +210,7 @@ export const sendResendEmailSafe = ({
         return error;
       }
       // Otherwise wrap in UnknownError
-      return new UnknownError(
+      return new ResendUnknownError(
         error instanceof Error
           ? error.message
           : "Unknown error while sending email",
@@ -229,7 +234,7 @@ export const addToWaitlistContactsSafe = (contact: CreateResendContact) =>
         return error;
       }
       // Otherwise wrap in UnknownError
-      return new UnknownError(
+      return new ResendUnknownError(
         error instanceof Error
           ? error.message
           : "Unknown error while adding contact",
