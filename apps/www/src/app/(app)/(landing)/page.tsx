@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import dynamic from "next/dynamic";
 
+import { EarlyAccessCountFallback } from "~/components/early-access/early-access-count-error";
 import { EarlyAccessJotaiProvider } from "~/components/early-access/jotai/early-access-jotai-provider";
 import { siteConfig } from "~/config/site";
 
@@ -26,9 +28,7 @@ const EarlyAccessCount = dynamic(
     ),
   {
     ssr: true,
-    loading: () => (
-      <div className="mx-auto h-5 w-20 animate-pulse rounded-lg bg-muted/30" />
-    ),
+    loading: () => <EarlyAccessCountFallback />,
   },
 );
 
@@ -64,13 +64,15 @@ export default function Home() {
               <EarlyAccessForm />
             </Suspense>
             <div className="flex h-5 items-center justify-center">
-              <Suspense
-                fallback={
-                  <div className="h-5 w-20 animate-pulse rounded-lg bg-muted/30" />
-                }
-              >
-                <EarlyAccessCount />
-              </Suspense>
+              <ErrorBoundary errorComponent={EarlyAccessCountFallback}>
+                <Suspense
+                  fallback={
+                    <div className="h-5 w-20 animate-pulse rounded-lg bg-muted/30" />
+                  }
+                >
+                  <EarlyAccessCount />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </EarlyAccessJotaiProvider>
         </div>

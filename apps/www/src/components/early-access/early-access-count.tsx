@@ -1,16 +1,44 @@
-import { getEarlyAccessCountSafe } from "./api/get-early-access-count";
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { EarlyAccountCountUpdater } from "./early-access-count-updater";
 
-export async function EarlyAccessCount() {
-  const result = await getEarlyAccessCountSafe();
+export function EarlyAccessCount() {
+  const [count, setCount] = useState<number | null>(null);
+  const [error, setError] = useState<boolean>(false);
 
-  // If there's an error, don't show anything
-  if (result.isErr()) {
-    console.error("Failed to fetch early access count:", result.error);
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const response = await fetch("/api/early-access/count", {
+          method: "GET",
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch count");
+        }
+        const data = (await response.json()) as { count: number };
+        setCount(data.count);
+      } catch (err) {
+        console.error("Error fetching waitlist count:", err);
+        setError(true);
+      }
+    };
+
+    void fetchCount();
+  }, []);
+
+  if (count === null && error) {
     return null;
   }
 
-  const count = result.value;
+  if (error) {
+    return null;
+  }
+
+  if (!count) {
+    return null;
+  }
 
   return (
     <div className="col-span-12 mt-2 text-center duration-500 animate-in fade-in">
