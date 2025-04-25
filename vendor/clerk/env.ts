@@ -18,21 +18,3 @@ export const clerkEnvBase = createEnv({
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
-
-// Extended Clerk environment variables (includes webhook secret)
-export const clerkEnvWithWebhook = createEnv({
-  extends: [clerkEnvBase], // Extend the base configuration
-  shared: {},
-  server: {
-    // Add the webhook secret here
-    CLERK_WEBHOOK_SIGNING_SECRET: z
-      .string()
-      .min(1)
-      .startsWith("whsec_")
-      .optional(),
-  },
-  client: {}, // Client vars are inherited from clerkEnvBase
-  experimental__runtimeEnv: {},
-  skipValidation:
-    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
-});
