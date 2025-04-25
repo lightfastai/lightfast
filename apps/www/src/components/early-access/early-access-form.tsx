@@ -120,13 +120,13 @@ export function EarlyAccessForm() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="grid w-full grid-cols-12 items-start space-x-2"
+            className="grid w-full grid-cols-1 gap-2 sm:grid-cols-12 sm:gap-2"
           >
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem className="col-span-9">
+                <FormItem className="sm:col-span-9">
                   <FormLabel className="sr-only text-xs">Email</FormLabel>
                   <FormControl>
                     <Input
@@ -143,10 +143,10 @@ export function EarlyAccessForm() {
             <Button
               type="submit"
               disabled={form.formState.isSubmitting}
-              className="col-span-3 overflow-hidden truncate rounded-lg px-3 text-xs"
+              className="w-full whitespace-nowrap rounded-lg px-3 text-xs sm:col-span-3"
             >
               <span className="gradient-text text-xs">
-                {form.formState.isSubmitting ? "Joining" : "Join Waitlist"}
+                {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
               </span>
             </Button>
           </form>
