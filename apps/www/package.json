@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "dev": "pnpm with-env next dev -p 4101",
+    "dev": "pnpm with-env next dev -p 4101 --turbopack",
     "dev:email": "email dev --dir ./src/templates -p 4109",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
@@ -27,6 +27,7 @@
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "babel-plugin-react-compiler": "19.1.0-rc.1",
     "geist": "^1.3.1",
     "jotai": "^2.12.3",
     "js-cookie": "^3.0.5",

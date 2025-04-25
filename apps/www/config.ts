@@ -1,14 +1,9 @@
 import { NextConfig } from "next";
+import { otelRegex } from "next.config";
 
-import "~/env";
+import { withBetterStack } from "@vendor/next/next-config-builder";
 
-import { withBetterStack, withSentry } from "@vendor/next/next-config-builder";
-
-import { env } from "~/env";
-
-const otelRegex = /@opentelemetry\/instrumentation/;
-
-let config: NextConfig = withBetterStack({
+export let config: NextConfig = withBetterStack({
   reactStrictMode: true,
 
   /** Enables hot reloading for local packages without a build step */
@@ -27,7 +22,6 @@ let config: NextConfig = withBetterStack({
   /** We already do linting and typechecking as separate tasks in CI */
   // eslint: { ignoreDuringBuilds: true },
   // typescript: { ignoreBuildErrors: true },
-
   rewrites: async () => [
     {
       source: "/health",
@@ -49,9 +43,7 @@ let config: NextConfig = withBetterStack({
       "lucide-react",
       "react-confetti",
     ],
-    ppr: true,
-    useCache: true,
-    reactCompiler: true,
+    // ppr: true,
     // dynamicIO: true,
     // Faster navigation for production
     // ppr: true,
@@ -62,9 +54,3 @@ let config: NextConfig = withBetterStack({
     return config;
   },
 });
-
-if (env.VERCEL) {
-  config = withSentry(config);
-}
-
-export default config;

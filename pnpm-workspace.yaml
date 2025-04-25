@@ -20,7 +20,7 @@ catalog:
   tailwindcss: ^3.4.15
   typescript: ^5.8.2
 
-  next: 15.3.0
+  next: canary
 
 catalogs:
   react19:
