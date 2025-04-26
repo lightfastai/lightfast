@@ -20,6 +20,27 @@ interface EarlyAccessEntryProps {
   email: string;
 }
 
+export function earlyAccessEntryEmailText({
+  email,
+}: EarlyAccessEntryProps): string {
+  return `Welcome to Lightfast.ai Early Access!
+
+${email}, you have joined the early access waitlist!
+
+Thanks for joining our early access program. You're now part of an exclusive group helping shape the future of Lightfast.ai.
+
+Keep an eye out for your early access invitation.
+
+-------------------
+
+Privacy Policy: ${siteConfig.links.privacy.href}
+Terms & Conditions: ${siteConfig.links.terms.href}
+
+-------------------
+
+${new Date().getFullYear()} ${siteConfig.name} • ${siteConfig.location}`;
+}
+
 export const EarlyAccessEntryEmail = ({
   email = "info@lightfast.ai", // @note this is used for preview in react-email dev
 }: EarlyAccessEntryProps) => {

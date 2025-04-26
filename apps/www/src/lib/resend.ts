@@ -27,7 +27,7 @@ interface ResendErrorResponse {
 type CreateResendEmailSuccess = Pick<CreateEmailResponseSuccess, "id">;
 type CreateResendContactSuccess = Pick<CreateContactResponseSuccess, "id">;
 type CreateResendContact = Pick<CreateContactOptions, "email" | "unsubscribed">;
-type CreateResendEmail = Pick<CreateEmailOptions, "to" | "subject"> & {
+type CreateResendEmail = Pick<CreateEmailOptions, "to" | "subject" | "text"> & {
   react: JSX.Element;
 };
 
@@ -100,12 +100,15 @@ const sendResendEmailUnsafe = async ({
   react,
   to,
   subject,
+  text,
 }: CreateResendEmail): Promise<CreateResendEmailSuccess> => {
   const response = await mail.emails.send({
-    from: emailConfig.support,
+    from: emailConfig.welcome,
+    replyTo: emailConfig.supportReployTo,
     to,
     subject,
     react,
+    text,
   });
 
   if (response.error) {
@@ -194,9 +197,10 @@ export const sendResendEmailSafe = ({
   react,
   to,
   subject,
+  text,
 }: CreateResendEmail) =>
   ResultAsync.fromPromise(
-    sendResendEmailUnsafe({ react, to, subject }),
+    sendResendEmailUnsafe({ react, to, subject, text }),
     (error): ResendEmailError => {
       // If it's already one of our error types, return it
       if (

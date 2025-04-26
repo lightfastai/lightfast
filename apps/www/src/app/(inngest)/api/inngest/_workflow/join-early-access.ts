@@ -23,7 +23,10 @@ import {
   ResendValidationError,
   sendResendEmailSafe,
 } from "~/lib/resend";
-import EarlyAccessEntryEmail from "~/templates/early-access-entry-email";
+import {
+  EarlyAccessEntryEmail,
+  earlyAccessEntryEmailText,
+} from "~/templates/early-access-entry-email";
 import { inngest } from "../_client/client";
 
 export const handleJoinEarlyAccess = inngest.createFunction(
@@ -214,6 +217,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
         to: email,
         react: EarlyAccessEntryEmail({ email }),
         subject: "Welcome to Lightfast.ai Early Access",
+        text: earlyAccessEntryEmailText({ email }),
       });
 
       if (res.isErr()) {

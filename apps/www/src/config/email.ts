@@ -1,9 +1,11 @@
 export interface EmailConfig {
-  support: string;
+  welcome: string;
+  supportReployTo: string;
   legal: string;
 }
 
 export const emailConfig: EmailConfig = {
-  support: "Lightfast.ai <noreply@mail.lightfast.ai>",
-  legal: "jp@lightfast.ai",
+  welcome: "Lightfast.ai <welcome@mail.lightfast.ai>",
+  supportReployTo: "Lightfast.ai <support@lightfast.ai>",
+  legal: "legal@lightfast.ai",
 };
