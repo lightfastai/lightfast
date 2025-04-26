@@ -1,6 +1,4 @@
-import { NextConfig } from "next";
-
-import "~/env";
+import type { NextConfig } from "next";
 
 import { withBetterStack, withSentry } from "@vendor/next/next-config-builder";
 
@@ -27,17 +25,18 @@ let config: NextConfig = withBetterStack({
   /** We already do linting and typechecking as separate tasks in CI */
   // eslint: { ignoreDuringBuilds: true },
   // typescript: { ignoreBuildErrors: true },
-
-  rewrites: async () => [
-    {
-      source: "/health",
-      destination: "/api/health",
-    },
-    {
-      source: "/healthz",
-      destination: "/api/health",
-    },
-  ],
+  rewrites: async () => ({
+    beforeFiles: [
+      {
+        source: "/health",
+        destination: "/api/health",
+      },
+      {
+        source: "/healthz",
+        destination: "/api/health",
+      },
+    ],
+  }),
 
   // Add automatic static optimization where possible
   experimental: {
@@ -49,8 +48,9 @@ let config: NextConfig = withBetterStack({
       "lucide-react",
       "react-confetti",
     ],
-    // Faster navigation for production
-    // ppr: true,
+    ppr: true,
+    useCache: true,
+    reactCompiler: true,
   },
 
   webpack(config) {

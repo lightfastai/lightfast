@@ -18,7 +18,9 @@ catalog:
   eslint: ^9.23.0
   prettier: ^3.5.3
   typescript: ^5.8.2
-  next: 15.3.0
+
+  # Next.js
+  next: canary
 
 catalogs:
   react19:
