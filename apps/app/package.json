@@ -65,8 +65,8 @@
     "dotenv-cli": "^7.4.2",
     "eslint": "catalog:",
     "jiti": "^1.21.6",
-    "postcss": "^8",
-    "tailwindcss": "catalog:",
+    "postcss": "catalog:tailwind4",
+    "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
