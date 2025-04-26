@@ -1,6 +1,7 @@
 @import "tailwindcss";
-
 @custom-variant dark (&:is(.dark *));
+
+@plugin "tailwindcss-animate";
 
 @theme {
   --color-border: hsl(var(--border));

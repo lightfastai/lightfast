@@ -112,7 +112,7 @@ export function EarlyAccessForm() {
           <p className="text-sm font-semibold">
             {form.getValues("email")} is now on the list! 🎉
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             We'll notify you when we launch.
           </p>
         </div>
@@ -130,7 +130,7 @@ export function EarlyAccessForm() {
                   <FormLabel className="sr-only text-xs">Email</FormLabel>
                   <FormControl>
                     <Input
-                      className="text-xs focus-visible:border-none focus-visible:ring-[1px] focus-visible:ring-ring/50 md:text-xs"
+                      className="focus-visible:ring-ring/50 text-xs focus-visible:border-none focus-visible:ring-[1px] md:text-xs"
                       placeholder="you@example.com"
                       autoComplete="email"
                       {...field}
@@ -142,8 +142,9 @@ export function EarlyAccessForm() {
             />
             <Button
               type="submit"
+              variant="secondary"
               disabled={form.formState.isSubmitting}
-              className="w-full whitespace-nowrap rounded-lg px-3 text-xs sm:col-span-3"
+              className="w-full rounded-lg px-3 text-xs whitespace-nowrap sm:col-span-3"
             >
               <span className="gradient-text text-xs">
                 {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}

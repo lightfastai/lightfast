@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 
+import { ThemeProvider } from "@repo/ui/components/theme-provider";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
@@ -100,12 +101,19 @@ export default function RootLayout({
             GeistMono.variable,
           )}
         >
-          <div className="bg-background relative flex min-h-screen flex-col">
-            {children}
-          </div>
-          <Toaster />
-          <VercelAnalytics />
-          <SpeedInsights />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <div className="bg-background relative flex min-h-screen flex-col">
+              {children}
+            </div>
+            <Toaster />
+            <VercelAnalytics />
+            <SpeedInsights />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
