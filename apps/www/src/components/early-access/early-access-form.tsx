@@ -126,7 +126,7 @@ export function EarlyAccessForm() {
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem className="sm:col-span-9">
+                <FormItem className="flex flex-col items-start sm:col-span-9">
                   <FormLabel className="sr-only text-xs">Email</FormLabel>
                   <FormControl>
                     <Input
@@ -136,17 +136,21 @@ export function EarlyAccessForm() {
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage className="text-xs" />
+                  {form.formState.errors.email ? (
+                    <FormMessage className="text-xs" />
+                  ) : (
+                    <div className="h-4" />
+                  )}
                 </FormItem>
               )}
             />
             <Button
               type="submit"
-              variant="secondary"
+              variant="outline"
               disabled={form.formState.isSubmitting}
               className="w-full rounded-lg px-3 text-xs whitespace-nowrap sm:col-span-3"
             >
-              <span className="gradient-text text-xs">
+              <span className="bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-400 bg-clip-text text-transparent">
                 {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
               </span>
             </Button>
