@@ -19,14 +19,14 @@ code[data-line-numbers] {
 }
 
 code[data-line-numbers] > [data-line]::before {
-  @apply ml-2 mr-4 inline-block py-1.5 font-mono text-xs text-muted-foreground;
+  @apply text-muted-foreground mr-4 ml-2 inline-block py-1.5 font-mono text-xs;
   counter-increment: line;
   content: counter(line);
   text-align: right;
 }
 
 code[data-line-numbers] > [data-highlighted-line] {
-  @apply relative rounded-md border border-muted bg-muted/50;
+  @apply border-muted bg-muted/50 relative rounded-md border;
 }
 
 .mdx > .steps:first-child > h3:first-child {
@@ -34,5 +34,5 @@ code[data-line-numbers] > [data-highlighted-line] {
 }
 
 .steps > h3 {
-  @apply mb-4 mt-8 text-base font-semibold;
+  @apply mt-8 mb-4 text-base font-semibold;
 }

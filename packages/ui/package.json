@@ -18,7 +18,7 @@
     "react": "^18"
   },
   "scripts": {
-    "ui": "pnpm dlx shadcn@latest",
+    "ui": "pnpm dlx shadcn@canary",
     "lint": "eslint",
     "generate:component": "turbo gen react-component",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -29,13 +29,16 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "catalog:tailwind4",
+    "@tailwindcss/typography": "catalog:tailwind4",
     "@turbo/gen": "^1.12.4",
     "@types/eslint": "^8.56.5",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
     "eslint": "catalog:",
-    "tailwindcss": "catalog:",
+    "postcss": "catalog:tailwind4",
+    "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:"
   },
   "dependencies": {
@@ -86,6 +89,7 @@
     "sonner": "^2.0.2",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
+    "tw-animate-css": "^1.2.8",
     "vaul": "^1.1.2",
     "zod": "catalog:"
   },

@@ -39,7 +39,7 @@ export default function LegalPage({ params }: LegalPageProps) {
   return (
     <main className="relative w-full py-6">
       <div className="w-full min-w-0">
-        <div className="mb-4 flex items-center space-x-1 text-sm leading-none text-muted-foreground">
+        <div className="text-muted-foreground mb-4 flex items-center space-x-1 text-sm leading-none">
           <div className="truncate">Legal</div>
           <ChevronRight className="h-3.5 w-3.5" />
           <div className="text-foreground">{legal.title}</div>
@@ -47,13 +47,13 @@ export default function LegalPage({ params }: LegalPageProps) {
         <div className="space-y-2">
           <h1
             className={cn(
-              "scroll-m-20 text-sm font-bold italic tracking-tight text-muted-foreground",
+              "text-muted-foreground scroll-m-20 text-sm font-bold tracking-tight italic",
             )}
           >
             Last updated on {legal.lastUpdated}
           </h1>
         </div>
-        <div className="pb-12 pt-8">
+        <div className="pt-8 pb-12">
           <Mdx code={legal.body.code} />
         </div>
       </div>

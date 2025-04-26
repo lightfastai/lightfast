@@ -4,7 +4,7 @@ import { SignIn } from "@clerk/nextjs";
 
 export default function Page() {
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-background">
+    <div className="bg-background flex h-screen w-screen items-center justify-center">
       <div className="flex w-full flex-col items-center gap-12 overflow-hidden">
         <SignIn
           forceRedirectUrl="http://localhost:4100"

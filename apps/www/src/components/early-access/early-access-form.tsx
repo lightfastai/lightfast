@@ -112,7 +112,7 @@ export function EarlyAccessForm() {
           <p className="text-sm font-semibold">
             {form.getValues("email")} is now on the list! 🎉
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             We'll notify you when we launch.
           </p>
         </div>
@@ -126,26 +126,31 @@ export function EarlyAccessForm() {
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem className="sm:col-span-9">
+                <FormItem className="flex flex-col items-start sm:col-span-9">
                   <FormLabel className="sr-only text-xs">Email</FormLabel>
                   <FormControl>
                     <Input
-                      className="text-xs focus-visible:border-none focus-visible:ring-[1px] focus-visible:ring-ring/50 md:text-xs"
+                      className="focus-visible:ring-ring/50 text-xs focus-visible:border-none focus-visible:ring-[1px] md:text-xs"
                       placeholder="you@example.com"
                       autoComplete="email"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage className="text-xs" />
+                  {form.formState.errors.email ? (
+                    <FormMessage className="text-xs" />
+                  ) : (
+                    <div className="h-4" />
+                  )}
                 </FormItem>
               )}
             />
             <Button
               type="submit"
+              variant="outline"
               disabled={form.formState.isSubmitting}
-              className="w-full whitespace-nowrap rounded-lg px-3 text-xs sm:col-span-3"
+              className="w-full rounded-lg px-3 text-xs whitespace-nowrap sm:col-span-3"
             >
-              <span className="gradient-text text-xs">
+              <span className="bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-400 bg-clip-text text-transparent">
                 {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
               </span>
             </Button>

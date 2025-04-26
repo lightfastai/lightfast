@@ -36,7 +36,7 @@ export function LegalContent({ type }: LegalContentProps) {
             <span className="font-medium">
               <Link
                 href={`mailto:${emailConfig.legal}`}
-                className="underline hover:text-primary"
+                className="hover:text-primary underline"
               >
                 {emailConfig.legal}
               </Link>

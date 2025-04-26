@@ -21,7 +21,7 @@ export function EditorWorkspaceSearch({ value, onChange }: SearchFormProps) {
         placeholder="Find workspace..."
         className="rounded-none border-none pl-8"
       />
-      <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
+      <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 opacity-50 select-none" />
     </div>
   );
 }

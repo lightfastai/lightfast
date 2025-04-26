@@ -23,8 +23,8 @@ export const EditorHeaderHelpers = () => {
   const { signOut } = useSignOut();
   const router = useRouter();
   return (
-    <div className="fixed right-0 top-0 z-[1] p-4">
-      <div className="flex items-center gap-1 rounded-lg border bg-background">
+    <div className="fixed top-0 right-0 z-[1] p-4">
+      <div className="bg-background flex items-center gap-1 rounded-lg border">
         {session?.user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -55,7 +55,7 @@ export const EditorHeaderHelpers = () => {
           // onClick={() => machineRef.send({ type: "TOGGLE_COMMAND" })}
         >
           Press
-          <kbd className="pointer-events-none inline-flex select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground opacity-100">
+          <kbd className="bg-muted text-muted-foreground pointer-events-none inline-flex items-center gap-1 rounded border px-1.5 font-mono text-xs font-medium opacity-100 select-none">
             <span className="text-xs">⌘</span>K
           </kbd>
         </Button>

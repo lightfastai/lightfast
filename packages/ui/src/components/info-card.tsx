@@ -43,19 +43,19 @@ export const InfoCard: React.FC<InfoCardProps> = ({
 }) => {
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="flex font-mono text-xs uppercase text-muted-foreground">
+      <CardHeader className="text-muted-foreground flex font-mono text-xs uppercase">
         <h3>{title}</h3>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {items.map((item, index) => (
           <div key={index} className="grid grid-cols-7 gap-4">
             <div className="col-span-3 flex">
-              <Label className="font-mono text-xs uppercase text-muted-foreground">
+              <Label className="text-muted-foreground font-mono text-xs uppercase">
                 {item.label}
               </Label>
             </div>
             <div className="col-span-4 flex items-center">
-              <Label className="max-w-full truncate font-mono text-xs text-muted-foreground">
+              <Label className="text-muted-foreground max-w-full truncate font-mono text-xs">
                 <span className="block truncate">{item.value}</span>
               </Label>
             </div>

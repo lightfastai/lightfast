@@ -55,8 +55,8 @@ export default async function DocPage({ params }: DocPageProps) {
 
   return (
     <main className="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
-      <div className="mx-auto w-full min-w-0 max-w-3xl">
-        <div className="mb-4 flex items-center space-x-1 text-sm leading-none text-muted-foreground">
+      <div className="mx-auto w-full max-w-3xl min-w-0">
+        <div className="text-muted-foreground mb-4 flex items-center space-x-1 text-sm leading-none">
           <div className="truncate">Docs</div>
           <ChevronRight className="h-3.5 w-3.5" />
           <div className="text-foreground">{doc.title}</div>
@@ -66,12 +66,12 @@ export default async function DocPage({ params }: DocPageProps) {
             {doc.title}
           </h1>
           {doc.description && (
-            <p className="text-base text-muted-foreground">
+            <p className="text-muted-foreground text-base">
               <Balancer>{doc.description}</Balancer>
             </p>
           )}
         </div>
-        <div className="pb-12 pt-8">
+        <div className="pt-8 pb-12">
           <Mdx code={doc.body.code} />
         </div>
         <DocsPager doc={doc} />

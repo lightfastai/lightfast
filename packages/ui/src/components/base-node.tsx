@@ -9,7 +9,7 @@ export const BaseNodeComponent = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-md border bg-card text-card-foreground",
+      "bg-card text-card-foreground rounded-md border",
       className,
       selected ? "ring-1" : "",
       "hover:ring-1",

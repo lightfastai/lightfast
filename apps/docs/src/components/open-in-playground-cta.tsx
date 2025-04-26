@@ -13,7 +13,7 @@ export function OpenInPlaygroundCta({
         className,
       )}
     >
-      <div className="text-balance text-lg font-semibold leading-tight group-hover:underline">
+      <div className="text-lg leading-tight font-semibold text-balance group-hover:underline">
         Create beautiful art with Dahlia
       </div>
       <div>
