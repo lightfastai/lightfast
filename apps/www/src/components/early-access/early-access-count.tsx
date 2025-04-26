@@ -45,7 +45,7 @@ export function EarlyAccessCount() {
   }
 
   return (
-    <div className="animate-in fade-in col-span-12 mt-2 text-center duration-500">
+    <div className="animate-fade-in col-span-12 mt-2 text-center">
       <p className="text-muted-foreground text-xs">
         Join{" "}
         <span className="font-semibold">
