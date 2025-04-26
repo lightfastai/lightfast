@@ -14,6 +14,7 @@
     "db:migrate": "turbo -F @vendor/db migrate",
     "db:migrate:generate": "turbo -F @vendor/db migrate:generate",
     "dev": "turbo run dev --parallel --filter=@lightfast/app --filter=@lightfast/www",
+    "dev:media-server": "turbo run dev -F @lightfast/media-server --continue",
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
     "dev:docs": "turbo watch dev -F @lightfast/docs --continue",
     "dev:app": "turbo watch dev -F @lightfast/app --continue",
