@@ -7,6 +7,8 @@ import { createSecureHeaders } from "next-secure-headers";
 
 import { env } from "../env";
 
+const otelRegex = /@opentelemetry\/instrumentation/;
+
 export const config: NextConfig = withVercelToolbar()({
   images: {
     formats: ["image/avif", "image/webp"],
@@ -32,6 +34,14 @@ export const config: NextConfig = withVercelToolbar()({
         source: "/ingest/decide",
         destination: "https://us.i.posthog.com/decide",
       },
+      {
+        source: "/health",
+        destination: "/api/health",
+      },
+      {
+        source: "/healthz",
+        destination: "/api/health",
+      },
     ];
   },
 
@@ -55,7 +65,7 @@ export const config: NextConfig = withVercelToolbar()({
       config.plugins = [...config.plugins];
     }
 
-    config.ignoreWarnings = [{ module: /@opentelemetry\/instrumentation/ }];
+    config.ignoreWarnings = [{ module: otelRegex }];
 
     return config;
   },

@@ -8,9 +8,11 @@ import { ThemeProvider } from "@repo/ui/components/theme-provider";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 import { siteConfig } from "~/config/site";
+import { createBaseUrl } from "~/lib/base-url";
 
 export const metadata: Metadata = {
   title: {
@@ -100,12 +102,14 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="bg-background relative flex min-h-screen flex-col">
-              {children}
-            </div>
-            <Toaster />
-            <VercelAnalytics />
-            <SpeedInsights />
+            <PostHogProvider baseUrl={createBaseUrl()}>
+              <div className="bg-background relative flex min-h-screen flex-col">
+                {children}
+              </div>
+              <Toaster />
+              <VercelAnalytics />
+              <SpeedInsights />
+            </PostHogProvider>
           </ThemeProvider>
         </body>
       </html>

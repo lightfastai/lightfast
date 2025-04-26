@@ -2,11 +2,13 @@ import { NextConfig } from "next";
 
 import "~/env";
 
-import { withBetterStack, withSentry } from "@vendor/next/next-config-builder";
+import {
+  config as vendorConfig,
+  withBetterStack,
+  withSentry,
+} from "@vendor/next/next-config-builder";
 
 import { env } from "~/env";
-
-const otelRegex = /@opentelemetry\/instrumentation/;
 
 let config: NextConfig = withBetterStack({
   reactStrictMode: true,
@@ -28,17 +30,6 @@ let config: NextConfig = withBetterStack({
   // eslint: { ignoreDuringBuilds: true },
   // typescript: { ignoreBuildErrors: true },
 
-  rewrites: async () => [
-    {
-      source: "/health",
-      destination: "/api/health",
-    },
-    {
-      source: "/healthz",
-      destination: "/api/health",
-    },
-  ],
-
   // Add automatic static optimization where possible
   experimental: {
     // For Next.js 15.3+
@@ -53,10 +44,7 @@ let config: NextConfig = withBetterStack({
     // ppr: true,
   },
 
-  webpack(config) {
-    config.ignoreWarnings = [{ module: otelRegex }];
-    return config;
-  },
+  ...vendorConfig,
 });
 
 if (env.VERCEL) {
