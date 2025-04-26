@@ -29,5 +29,6 @@ catalogs:
 
   tailwind4:
     tailwindcss: 4.1.4
-    postcss: ^8
+    postcss: 8.5.3
     "@tailwindcss/postcss": ^4.1.4
+    "@tailwindcss/typography": ^0.5.16
