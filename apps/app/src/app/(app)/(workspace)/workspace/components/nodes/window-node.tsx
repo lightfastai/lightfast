@@ -46,11 +46,11 @@ export const WindowNode = memo(function WindowNode({
       <div
         key={id}
         className={cn(
-          "flex cursor-pointer flex-col gap-y-1 p-1 text-card-foreground shadow-sm",
+          "text-card-foreground flex cursor-pointer flex-col gap-y-1 p-1 shadow-sm",
         )}
       >
         <div className="flex flex-row items-center justify-between">
-          <Label className="font-mono text-xs font-bold uppercase tracking-widest">
+          <Label className="font-mono text-xs font-bold tracking-widest uppercase">
             {type} {id}
           </Label>
         </div>
@@ -60,7 +60,7 @@ export const WindowNode = memo(function WindowNode({
             <div
               className={cn(
                 "mt-1 rounded border p-2 text-xs",
-                !hasInput && "border-dashed border-muted-foreground/50",
+                !hasInput && "border-muted-foreground/50 border-dashed",
               )}
             >
               {hasInput ? "Connected" : "Connect an input"}

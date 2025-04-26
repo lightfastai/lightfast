@@ -105,8 +105,8 @@ export function AiNodeCreator() {
       {isHovered && (
         <div
           className={cn(
-            "absolute right-4 top-4 z-10",
-            "duration-300 ease-in-out animate-in slide-in-from-top",
+            "absolute top-4 right-4 z-10",
+            "animate-in slide-in-from-top duration-300 ease-in-out",
           )}
         >
           <Button
@@ -116,7 +116,7 @@ export function AiNodeCreator() {
             onClick={() => setOpenCommand(true)}
           >
             Press{" "}
-            <kbd className="ml-1 mr-1 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <kbd className="bg-muted text-muted-foreground mr-1 ml-1 inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
               <span className="text-xs">⌘</span>K
             </kbd>{" "}
             to create

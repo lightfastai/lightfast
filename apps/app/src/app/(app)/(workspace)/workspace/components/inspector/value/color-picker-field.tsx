@@ -41,7 +41,7 @@ export const ColorPickerField = memo(
         </Popover>
         <Input
           {...field}
-          className="font-mono text-xs uppercase tracking-widest"
+          className="font-mono text-xs tracking-widest uppercase"
           onChange={(e) => {
             field.onChange(e.target.value);
             onValueChange(e.target.value);

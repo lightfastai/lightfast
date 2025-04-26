@@ -30,7 +30,7 @@ export const BooleanInput = <T extends FieldValues, K extends Path<T>>({
       />
       <Label
         htmlFor={field.name}
-        className="cursor-pointer text-xs text-foreground/80"
+        className="text-foreground/80 cursor-pointer text-xs"
       >
         Enable
       </Label>

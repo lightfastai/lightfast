@@ -127,7 +127,7 @@ const InspectorFormFieldComponent = <T extends FieldValues>({
       name={name}
       control={control}
       render={({ field }) => (
-        <FormItem className="grid grid-cols-8 items-center gap-x-4 space-y-0">
+        <FormItem className="grid grid-cols-8 items-center space-y-0 gap-x-4">
           <FormLabel className="col-span-3 flex items-start justify-end text-xs">
             {uniformName.charAt(0).toUpperCase() + uniformName.slice(1)}
           </FormLabel>

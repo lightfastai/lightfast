@@ -33,16 +33,16 @@ export const GeneratorDialog = ({
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-background/95" />
+      <div className="bg-background/95 absolute inset-0" />
       <div
         ref={dialogRef}
-        className="relative z-50 w-full max-w-lg rounded-lg border bg-background shadow-lg animate-in fade-in-0 zoom-in-95"
+        className="bg-background animate-in fade-in-0 zoom-in-95 relative z-50 w-full max-w-lg rounded-lg border shadow-lg"
       >
         <Button
           onClick={onClose}
           variant="ghost"
           size="icon"
-          className="absolute right-4 top-2 z-10 h-8 w-8 rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100"
+          className="ring-offset-background absolute top-2 right-4 z-10 h-8 w-8 rounded-full opacity-70 transition-opacity hover:opacity-100"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
@@ -69,7 +69,7 @@ export const GeneratorDialog = ({
               <div className="mb-8">
                 <Icons.logo className="size-6" />
               </div>
-              <p className="mb-8 max-w-md text-center text-muted-foreground">
+              <p className="text-muted-foreground mb-8 max-w-md text-center">
                 Hi, let's create something amazing together!
               </p>
             </>
@@ -78,7 +78,7 @@ export const GeneratorDialog = ({
           <div className="w-full">
             {!isGenerating && (
               <div className="flex flex-wrap justify-center gap-2 overflow-x-auto">
-                <ScrollArea className="w-full whitespace-nowrap rounded-md">
+                <ScrollArea className="w-full rounded-md whitespace-nowrap">
                   <div className="flex w-max space-x-4 p-1">
                     {suggestedPrompts.map((prompt) => (
                       <Button
@@ -108,11 +108,11 @@ export const GeneratorDialog = ({
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Describe your node..."
-                  className="z-1 w-full border-none border-muted bg-muted/30 pl-4 pr-10 text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="border-muted bg-muted/30 z-1 w-full border-none pr-10 pl-4 text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
               <div className="flex h-9 items-center gap-2 border-t px-4">
-                <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                <p className="text-muted-foreground flex items-center gap-1 text-xs">
                   <Icons.logo className="size-3" />
                 </p>
                 <Button

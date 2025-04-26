@@ -71,10 +71,10 @@ export const FluxInspector = ({ id }: { id: string }) => {
     <InspectorBase>
       <div>
         <div className="flex items-center justify-between p-4">
-          <h2 className="font-mono text-xs font-bold uppercase tracking-widest">
+          <h2 className="font-mono text-xs font-bold tracking-widest uppercase">
             Properties
           </h2>
-          <h3 className="font-mono text-xs font-bold uppercase tracking-widest">
+          <h3 className="font-mono text-xs font-bold tracking-widest uppercase">
             {data.type}
           </h3>
         </div>

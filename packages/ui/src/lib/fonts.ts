@@ -6,5 +6,5 @@ import { cn } from "./utils";
 export const fonts = cn(
   GeistSans.variable,
   GeistMono.variable,
-  "font-sans antialiased",
+  "touch-manipulation font-sans antialiased",
 );

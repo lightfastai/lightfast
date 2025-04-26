@@ -67,11 +67,11 @@ export const TextureNode = memo(
         <div
           key={id}
           className={cn(
-            `relative cursor-pointer flex-col gap-1 p-1 text-card-foreground shadow-sm`,
+            `text-card-foreground relative cursor-pointer flex-col gap-1 p-1 shadow-sm`,
           )}
         >
           <div className="flex flex-row items-center justify-between">
-            <Label className="font-mono text-xs font-bold uppercase tracking-widest">
+            <Label className="font-mono text-xs font-bold tracking-widest uppercase">
               {data.type} {id}
             </Label>
             <ToggleGroup type="single">
@@ -107,9 +107,9 @@ export const TextureNode = memo(
                       key={`input-${index}`}
                       className={cn(
                         isFirst
-                          ? "mb-auto mt-2"
+                          ? "mt-2 mb-auto"
                           : isLast
-                            ? "mb-2 mt-auto"
+                            ? "mt-auto mb-2"
                             : "my-auto",
                       )}
                     >

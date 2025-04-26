@@ -36,7 +36,7 @@ export const EditorWorkspaceSelect = () => {
         <DropdownMenuSeparator className="my-0" />
         <DropdownMenuGroup asChild>
           <ScrollArea className="h-64">
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <DropdownMenuLabel className="text-muted-foreground text-xs">
               Workspaces
             </DropdownMenuLabel>
             {allWorkspaces

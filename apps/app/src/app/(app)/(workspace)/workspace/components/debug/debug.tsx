@@ -129,7 +129,7 @@ export const Debug = memo(() => {
       <div className="flex flex-col-reverse gap-2">
         <div
           ref={buttonContainerRef}
-          className="flex items-center overflow-hidden rounded-md border bg-background/80 backdrop-blur"
+          className="bg-background/80 flex items-center overflow-hidden rounded-md border backdrop-blur"
         >
           {sections.map((section) => (
             <DebugButton
@@ -142,7 +142,7 @@ export const Debug = memo(() => {
           ))}
         </div>
         {activeSection && (
-          <div className="w-[var(--debug-panel-width)] animate-in fade-in slide-in-from-bottom-2">
+          <div className="animate-in fade-in slide-in-from-bottom-2 w-[var(--debug-panel-width)]">
             {activeContent}
           </div>
         )}

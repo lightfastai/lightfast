@@ -45,8 +45,8 @@ export function EarlyAccessCount() {
   }
 
   return (
-    <div className="col-span-12 mt-2 text-center duration-500 animate-in fade-in">
-      <p className="text-xs text-muted-foreground">
+    <div className="animate-in fade-in col-span-12 mt-2 text-center duration-500">
+      <p className="text-muted-foreground text-xs">
         Join{" "}
         <span className="font-semibold">
           <EarlyAccountCountUpdater waitlistCount={count} />
