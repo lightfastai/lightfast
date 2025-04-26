@@ -136,11 +136,7 @@ export function EarlyAccessForm() {
                       {...field}
                     />
                   </FormControl>
-                  {form.formState.errors.email ? (
-                    <FormMessage className="text-xs" />
-                  ) : (
-                    <div className="h-4" />
-                  )}
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
