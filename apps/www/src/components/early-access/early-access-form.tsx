@@ -24,6 +24,7 @@ import { earlyAccessFormSchema } from "~/components/early-access/early-access-fo
 import { EarlyAccessFormErrorMap } from "~/components/early-access/errors";
 import { env } from "~/env";
 import { useErrorReporter } from "~/lib/error-reporting/client-error-reporter";
+import { useEarlyAccessAnalytics } from "./hooks/use-early-access-analytics";
 import { earlyAccessCountAtom } from "./jotai/early-access-count-atom";
 
 export function EarlyAccessForm() {
@@ -32,6 +33,7 @@ export function EarlyAccessForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [_, setWaitlistCount] = useAtom(earlyAccessCountAtom);
   const logger = useLogger();
+  const { trackSignup } = useEarlyAccessAnalytics();
 
   const form = useForm({
     schema: earlyAccessFormSchema,
@@ -55,6 +57,12 @@ export function EarlyAccessForm() {
             success: data.success,
           });
         }
+
+        // Track signup with analytics
+        trackSignup({
+          email: values.email,
+          requestId: data.requestId,
+        });
 
         toast({
           title: "Welcome aboard! 🎉",
