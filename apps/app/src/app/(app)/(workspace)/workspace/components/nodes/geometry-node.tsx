@@ -24,11 +24,11 @@ export const GeometryNode = memo(
       <BaseNodeComponent selected={selected}>
         <div
           className={cn(
-            "flex cursor-pointer flex-col gap-y-1 p-1 text-card-foreground shadow-sm",
+            "text-card-foreground flex cursor-pointer flex-col gap-y-1 p-1 shadow-sm",
           )}
         >
           <div className="flex flex-row items-center justify-between">
-            <Label className="font-mono text-xs font-bold uppercase tracking-widest">
+            <Label className="font-mono text-xs font-bold tracking-widest uppercase">
               {type} {id}
             </Label>
             <ToggleGroup type="single">

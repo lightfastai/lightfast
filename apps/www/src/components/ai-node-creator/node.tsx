@@ -21,7 +21,7 @@ export const Node = ({
 
   return (
     <div
-      className="absolute cursor-move select-none overflow-hidden rounded-md border border-border/50 bg-background/80 p-2 shadow-sm"
+      className="border-border/50 bg-background/80 absolute cursor-move overflow-hidden rounded-md border p-2 shadow-sm select-none"
       style={{
         aspectRatio: "3/2",
         width: "12rem",
@@ -42,7 +42,7 @@ export const Node = ({
           sizes="(max-width: 640px) 132px, (max-width: 768px) 160px, 256px"
           quality={75}
           fill
-          className="pointer-events-none border border-border/50 object-cover"
+          className="border-border/50 pointer-events-none border object-cover"
           draggable={false}
           loading={isPriority ? "eager" : "lazy"}
           priority={isPriority}

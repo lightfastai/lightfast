@@ -91,17 +91,17 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       <Tabs defaultValue="uniforms" className="flex flex-col">
         <div className="flex flex-col">
           <div className="flex items-center justify-end p-1.5">
-            <h3 className="font-mono text-xs font-bold uppercase tracking-widest">
+            <h3 className="font-mono text-xs font-bold tracking-widest uppercase">
               {data.type}
             </h3>
           </div>
           <Separator />
-          <TabsList className="grid w-full grid-cols-2 bg-background">
+          <TabsList className="bg-background grid w-full grid-cols-2">
             <TabsTrigger
               value="uniforms"
               className="flex items-center justify-center"
             >
-              <span className="font-mono text-xs uppercase tracking-widest">
+              <span className="font-mono text-xs tracking-widest uppercase">
                 Uniforms
               </span>
             </TabsTrigger>
@@ -109,7 +109,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
               value="common"
               className="flex items-center justify-center"
             >
-              <span className="font-mono text-xs uppercase tracking-widest">
+              <span className="font-mono text-xs tracking-widest uppercase">
                 Common
               </span>
             </TabsTrigger>
@@ -141,7 +141,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
           <TabsContent value="common">
             <div className="flex flex-col gap-1.5 px-1.5 py-1.5">
               <div className="flex items-center justify-between">
-                <h2 className="font-mono text-xs font-bold uppercase tracking-widest">
+                <h2 className="font-mono text-xs font-bold tracking-widest uppercase">
                   Resolution
                 </h2>
               </div>

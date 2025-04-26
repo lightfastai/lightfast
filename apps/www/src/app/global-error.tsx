@@ -28,24 +28,24 @@ const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
       <head />
       <body
         className={cn(
-          "dark min-h-screen bg-background font-sans antialiased",
+          "dark bg-background min-h-screen font-sans antialiased",
           GeistSans.variable,
           GeistMono.variable,
         )}
       >
-        <div className="relative flex min-h-screen flex-col bg-background">
+        <div className="bg-background relative flex min-h-screen flex-col">
           <div className="relative flex min-h-screen flex-col">
             <SiteHeader />
             <main className="flex h-full flex-1 flex-col items-center justify-center gap-4">
               <div className="space-y-2">
-                <h1 className="text-4xl font-bold tracking-tighter text-foreground">
+                <h1 className="text-foreground text-4xl font-bold tracking-tighter">
                   Oops, something went wrong
                 </h1>
-                <p className="text-lg text-muted-foreground">
+                <p className="text-muted-foreground text-lg">
                   We've been notified and are working to fix the issue.
                 </p>
                 {error.digest && (
-                  <p className="text-sm text-muted-foreground/60">
+                  <p className="text-muted-foreground/60 text-sm">
                     Error ID: {error.digest}
                   </p>
                 )}

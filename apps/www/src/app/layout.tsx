@@ -3,11 +3,10 @@ import type { Metadata, Viewport } from "next";
 import "@repo/ui/globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
 
 import { ThemeProvider } from "@repo/ui/components/theme-provider";
 import { Toaster } from "@repo/ui/components/ui/toaster";
+import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
@@ -94,13 +93,7 @@ export default function RootLayout({
     <ClerkProvider waitlistUrl="/">
       <html lang="en" suppressHydrationWarning>
         <head />
-        <body
-          className={cn(
-            "bg-background min-h-screen font-sans antialiased",
-            GeistSans.variable,
-            GeistMono.variable,
-          )}
-        >
+        <body className={cn("bg-background min-h-screen", fonts)}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

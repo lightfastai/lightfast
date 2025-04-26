@@ -186,7 +186,7 @@ const components = {
       <>
         <pre
           className={cn(
-            "mb-4 mt-6 max-h-[650px] overflow-x-auto rounded-lg border bg-zinc-900 px-4 py-4 dark:bg-zinc-900",
+            "mt-6 mb-4 max-h-[650px] overflow-x-auto rounded-lg border bg-zinc-900 px-4 py-4 dark:bg-zinc-900",
             className,
           )}
           {...props}
@@ -196,7 +196,7 @@ const components = {
             value={__rawString__}
             src={__src__}
             event={__event__}
-            className={cn("absolute right-4 top-4", __withMeta__ && "top-16")}
+            className={cn("absolute top-4 right-4", __withMeta__ && "top-16")}
           />
         )}
         {__npmCommand__ &&
@@ -210,7 +210,7 @@ const components = {
                 __pnpmCommand__,
                 __bunCommand__,
               }}
-              className={cn("absolute right-4 top-4", __withMeta__ && "top-16")}
+              className={cn("absolute top-4 right-4", __withMeta__ && "top-16")}
             />
           )}
       </>
@@ -264,7 +264,7 @@ const components = {
   }: React.ComponentProps<typeof TabsTrigger>) => (
     <TabsTrigger
       className={cn(
-        "relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none",
+        "text-muted-foreground data-[state=active]:border-b-primary data-[state=active]:text-foreground relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pt-2 pb-3 font-semibold shadow-none transition-none data-[state=active]:shadow-none",
         className,
       )}
       {...props}
@@ -291,7 +291,7 @@ const components = {
   LinkedCard: ({ className, ...props }: React.ComponentProps<typeof Link>) => (
     <Link
       className={cn(
-        "flex w-full flex-col items-center rounded-xl border bg-card p-6 text-card-foreground shadow transition-colors hover:bg-muted/50 sm:p-10",
+        "bg-card text-card-foreground hover:bg-muted/50 flex w-full flex-col items-center rounded-xl border p-6 shadow transition-colors sm:p-10",
         className,
       )}
       {...props}
