@@ -546,9 +546,6 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.5.3
-      tsx:
-        specifier: ^4.19.3
-        version: 4.19.3
       typescript:
         specifier: 'catalog:'
         version: 5.8.3
@@ -568,18 +565,11 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript
-      tsx:
-        specifier: ^4.19.3
-        version: 4.19.3
       typescript:
         specifier: 'catalog:'
         version: 5.8.3
 
-  internal/typescript:
-    devDependencies:
-      tsx:
-        specifier: ^4.19.3
-        version: 4.19.3
+  internal/typescript: {}
 
   packages/ai:
     dependencies:

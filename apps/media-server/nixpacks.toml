@@ -8,8 +8,8 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "pnpm build"
+  "pnpm --filter @lightfast/media-server... build"
 ]
 
 [start]
-cmd = "node dist/server.js" 
+cmd = "node dist/server.js"
