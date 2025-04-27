@@ -3,18 +3,21 @@ import type { Context } from "hono";
 import { generateImageWithFal } from "@repo/ai";
 
 import type { CreateResourceSpecificInput } from "../schema/index.js";
+import { createImageSuccessWebhookUrl } from "../../../lib/create-base-url.js";
 
 export async function handleImageResource(c: Context) {
   const body = await c.req.json<CreateResourceSpecificInput>();
   try {
+    console.log(
+      "Generating image with fal with webhook url",
+      createImageSuccessWebhookUrl(),
+    );
     const result = await generateImageWithFal({
       prompt: body.prompt,
-      // Optionally, you can add width/height/model here if needed
+      webhookUrl: createImageSuccessWebhookUrl(),
     });
     return c.json({
-      id: body.id,
-      imageUrl: result.imageUrl,
-      seed: result.seed,
+      requestId: result.request_id,
     });
   } catch (error) {
     console.error(error);

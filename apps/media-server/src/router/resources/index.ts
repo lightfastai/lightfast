@@ -33,8 +33,6 @@ resourcesRouter.post(
       schema: generateResourceSchema,
     });
 
-    console.log(object);
-
     // we send the prompt to a resource-specific router for generation. this means each resource type can handle it differently.
     // for example, an image might use a different prompt than a video.
     // we return the resource to the client which can download it.
@@ -53,10 +51,25 @@ resourcesRouter.post(
       return c.json({ error: "Failed to generate resource" }, 500);
     }
 
+    // we received the requestId from the resource-specific router.
+    const { requestId } = (await resource.json()) as { requestId: string };
+
+    // update db with requestId
+
     // return the resource to the client which can download it.
-    return c.json({ resource });
+    return c.json({ id, requestId });
   },
 );
+
+// POST /api/resource/generate/image/success - A webhook that is called when a resource is generated
+resourcesRouter.post("/generate/image/success", async (c) => {
+  const body = await c.req.json();
+  console.log("Image generated successfully", body);
+
+  // update db with the updated image url
+
+  return c.json({});
+});
 
 // POST /api/resources/generate - Generate a new resource
 resourcesRouter.post(

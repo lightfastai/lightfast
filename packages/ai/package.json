@@ -4,10 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    },
+    ".": "./src/index.ts",
     "./fal-env": "./src/env/fal-env.ts",
     "./openai-env": "./src/env/openai-env.ts",
     "./anthropic-env": "./src/env/anthropic-env.ts",

@@ -5,17 +5,37 @@ import { z } from "zod";
 import { falEnv } from "@repo/ai/fal-env";
 import { openAiEnv } from "@repo/ai/openai-env";
 
-export const env = createEnv({
-  extends: [render(), openAiEnv, falEnv],
+const r2Env = createEnv({
+  extends: [],
+  server: {
+    R2_ACCESS_KEY_ID: z.string(),
+    R2_SECRET_ACCESS_KEY: z.string(),
+    R2_ACCOUNT_ID: z.string(),
+    R2_BUCKET_NAME: z.string().default("lightfast-media"),
+  },
+  runtimeEnv: process.env,
+  emptyStringAsUndefined: true,
+});
+
+export const baseEnv = createEnv({
+  extends: [],
   server: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
-    R2_ACCESS_KEY_ID: z.string().default("test-key"),
-    R2_SECRET_ACCESS_KEY: z.string().default("test-secret"),
-    R2_ACCOUNT_ID: z.string().default("test-account"),
     PORT: z.coerce.number().default(4104),
-    BUCKET_NAME: z.string().default("lightfast-media"),
+    BASE_URL: z.string().optional(),
+  },
+  runtimeEnv: process.env,
+  emptyStringAsUndefined: true,
+});
+
+export const env = createEnv({
+  extends: [render(), openAiEnv, falEnv, r2Env, baseEnv],
+  server: {
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

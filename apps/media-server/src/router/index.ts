@@ -15,6 +15,6 @@ router.route("/healthz", healthRouter);
 router.route("/resources", resourcesRouter);
 
 // Mount the fal-proxy router
-router.route("/api/fal/proxy", falProxy);
+router.route("/fal/proxy", falProxy);
 
 export default router;
