@@ -3,6 +3,10 @@ import { Hono } from "hono";
 
 import { generateObject, nanoid, openai } from "@repo/ai/ai";
 
+import { handleAudioResource } from "./handler/audio.js";
+import { handleImageResource } from "./handler/image.js";
+import { handleTextResource } from "./handler/text.js";
+import { handleVideoResource } from "./handler/video.js";
 import {
   createResourceSchema,
   createResourceSpecificSchema,
@@ -58,76 +62,28 @@ resourcesRouter.post(
 resourcesRouter.post(
   "/generate/image",
   zValidator("json", createResourceSpecificSchema),
-  async (c) => {
-    const body = c.req.valid("json");
-
-    // we send the prompt to a image-specific router for generation.
-    // we return the resource to the client which can download it.
-
-    return c.json(
-      { message: "Resource generate disabled" },
-      {
-        status: 500,
-      },
-    );
-  },
+  handleImageResource,
 );
 
 // POST /api/resources/generate/video - Generate a new video resource
 resourcesRouter.post(
   "/generate/video",
   zValidator("json", createResourceSpecificSchema),
-  async (c) => {
-    const body = c.req.valid("json");
-
-    // we send the prompt to a video-specific router for generation.
-    // we return the resource to the client which can download it.
-
-    return c.json(
-      { message: "Resource generate disabled" },
-      {
-        status: 500,
-      },
-    );
-  },
+  handleVideoResource,
 );
 
 // POST /api/resources/generate/audio - Generate a new audio resource
 resourcesRouter.post(
   "/generate/audio",
   zValidator("json", createResourceSpecificSchema),
-  async (c) => {
-    const body = c.req.valid("json");
-
-    // we send the prompt to a audio-specific router for generation.
-    // we return the resource to the client which can download it.
-
-    return c.json(
-      { message: "Resource generate disabled" },
-      {
-        status: 500,
-      },
-    );
-  },
+  handleAudioResource,
 );
 
 // POST /api/resources/generate/text - Generate a new text resource
 resourcesRouter.post(
   "/generate/text",
   zValidator("json", createResourceSpecificSchema),
-  async (c) => {
-    const body = c.req.valid("json");
-
-    // we send the prompt to a text-specific router for generation.
-    // we return the resource to the client which can download it.
-
-    return c.json(
-      { message: "Resource generate disabled" },
-      {
-        status: 500,
-      },
-    );
-  },
+  handleTextResource,
 );
 
 export default resourcesRouter;
