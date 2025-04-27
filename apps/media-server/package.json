@@ -11,10 +11,7 @@
     "format": "prettier --check .",
     "lint": "eslint",
     "with-env": "dotenv -e ./.internal/.env.development.local --",
-    "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts",
-    "migrate:generate": "pnpm with-env drizzle-kit generate --config=./drizzle.config.ts",
-    "migrate": "pnpm with-env drizzle-kit migrate --config=./drizzle.config.ts",
-    "studio": "pnpm with-env drizzle-kit studio --config=./drizzle.config.ts"
+    "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.1",

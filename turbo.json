@@ -2,9 +2,6 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
-    "topo": {
-      "dependsOn": ["^topo"]
-    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".cache/tsbuildinfo.json", "dist/**"]
@@ -19,36 +16,39 @@
       "outputLogs": "new-only"
     },
     "lint": {
-      "dependsOn": ["^topo", "^build"],
+      "dependsOn": ["^build"],
       "outputs": [".cache/.eslintcache"]
     },
     "typecheck": {
-      "dependsOn": ["^topo", "^build"],
+      "dependsOn": ["^build"],
       "outputs": [".cache/tsbuildinfo.json"]
     },
     "clean": {
       "cache": false
     },
-    "//#clean": {
+    "lightfast:migrate": {
       "cache": false
     },
-    "push": {
-      "cache": false,
-      "interactive": true
+    "lightfast:migrate:generate": {
+      "cache": false
     },
-    "studio": {
+    "lightfast:studio": {
       "cache": false,
       "persistent": true
     },
-    "migrate": {
+    "media-server:migrate": {
       "cache": false
+    },
+    "media-server:migrate:generate": {
+      "cache": false
+    },
+    "media-server:studio": {
+      "cache": false,
+      "persistent": true
     },
     "dev:email": {
       "cache": false,
       "persistent": true
-    },
-    "migrate:generate": {
-      "cache": false
     },
     "ui": {
       "cache": false,

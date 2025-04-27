@@ -8,17 +8,21 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./client": {
-      "types": "./dist/client.d.ts",
-      "default": "./src/client.ts"
+    "./lightfast/schema": {
+      "types": "./dist/lightfast/schema.d.ts",
+      "default": "./src/lightfast/schema/index.ts"
     },
-    "./schema": {
-      "types": "./dist/schema.d.ts",
-      "default": "./src/schema.ts"
+    "./media-server/schema": {
+      "types": "./dist/media-server/schema.d.ts",
+      "default": "./src/media-server/schema/index.ts"
     },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "default": "./src/types.ts"
+    "./lightfast/types": {
+      "types": "./dist/lightfast/types.d.ts",
+      "default": "./src/lightfast/types.ts"
+    },
+    "./media-server/types": {
+      "types": "./dist/media-server/types.d.ts",
+      "default": "./src/media-server/types.ts"
     },
     "./env": "./env.ts",
     "./create-drizzle-config": "./src/utils/create-drizzle-config.ts"
@@ -30,11 +34,16 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "migrate": "pnpm with-env drizzle-kit migrate --config=./drizzle.config.ts",
-    "migrate:generate": "pnpm with-env drizzle-kit generate --config=./drizzle.config.ts",
-    "studio": "pnpm with-env drizzle-kit studio",
+    "lightfast:migrate": "pnpm with-env drizzle-kit migrate --config=./src/lightfast/drizzle.config.ts",
+    "lightfast:migrate:generate": "pnpm with-env drizzle-kit generate --config=./src/lightfast/drizzle.config.ts",
+    "lightfast:studio": "pnpm with-env drizzle-kit studio --config=./src/lightfast/drizzle.config.ts",
+    "media-server:migrate": "pnpm with-env-media-server drizzle-kit migrate --config=./src/media-server/drizzle.config.ts",
+    "media-server:migrate:generate": "pnpm with-env-media-server drizzle-kit generate --config=./src/media-server/drizzle.config.ts",
+    "media-server:studio": "pnpm with-env-media-server drizzle-kit studio --config=./src/media-server/drizzle.config.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e ../../.env --",
+    "with-env-lightfast": "dotenv -e ../../.env.lightfast --",
+    "with-env-media-server": "dotenv -e ../../apps/media-server/.internal/.env.development.local --"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",

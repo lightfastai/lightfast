@@ -1,0 +1,5 @@
+CREATE SCHEMA IF NOT EXISTS "media_server";
+
+CREATE TABLE IF NOT EXISTS "resource" (
+	"id" varchar(191) PRIMARY KEY NOT NULL
+);
