@@ -4,9 +4,17 @@ services:
     env: node
     plan: free
     buildCommand: pnpm install && pnpm --filter @lightfast/media-server build
-    startCommand: pnpm --filter @lightfast/media-server start
+    startCommand: cd apps/media-server && node dist/server.js
     rootDir: .
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
       # Add your required environment variables here, or set them in the Render dashboard
