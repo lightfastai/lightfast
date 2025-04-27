@@ -3,9 +3,9 @@ services:
     name: lightfast-media-server
     env: node
     plan: free
-    buildCommand: pnpm --filter @lightfast/media-server build
+    buildCommand: pnpm install && pnpm --filter @lightfast/media-server build
     startCommand: pnpm --filter @lightfast/media-server start
-    rootDir: apps/media-server
+    rootDir: .
     envVars:
       - key: NODE_ENV
         value: production
