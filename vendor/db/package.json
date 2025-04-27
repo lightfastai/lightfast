@@ -20,7 +20,8 @@
       "types": "./dist/types.d.ts",
       "default": "./src/types.ts"
     },
-    "./env": "./env.ts"
+    "./env": "./env.ts",
+    "./create-drizzle-config": "./src/utils/create-drizzle-config.ts"
   },
   "license": "MIT",
   "scripts": {
