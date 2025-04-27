@@ -3,8 +3,10 @@ import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
 
+import { DEFAULT_MEDIA_SERVER_SCHEMA } from "../constants";
+
 // Define the schema
-export const mediaServerSchema = pgSchema("media_server");
+export const mediaServerSchema = pgSchema(DEFAULT_MEDIA_SERVER_SCHEMA);
 
 export const $MediaServerJobStatus = z.enum([
   "PROCESSING",

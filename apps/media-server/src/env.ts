@@ -31,21 +31,19 @@ export const baseEnv = createEnv({
   emptyStringAsUndefined: true,
 });
 
-// const supabaseEnv = createEnv({
-//   extends: [],
-//   server: {
-//     SUPABASE_URL: z.string(),
-//     SUPABASE_ANON_KEY: z.string(),
-//     SUPABASE_SERVICE_ROLE_KEY: z.string(),
-//     SUPABASE_SCHEMA: z.string().default("media_manager"),
-//     SUPABASE_PROJECT_ID: z.string(),
-//   },
-//   runtimeEnv: process.env,
-//   emptyStringAsUndefined: true,
-// });
+const supabaseEnv = createEnv({
+  extends: [],
+  server: {
+    SUPABASE_URL: z.string(),
+    SUPABASE_ANON_KEY: z.string(),
+    SUPABASE_PROJECT_ID: z.string(),
+  },
+  runtimeEnv: process.env,
+  emptyStringAsUndefined: true,
+});
 
 export const env = createEnv({
-  extends: [render(), openAiEnv, falEnv, r2Env, baseEnv, dbEnv],
+  extends: [render(), openAiEnv, falEnv, r2Env, baseEnv, dbEnv, supabaseEnv],
   server: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

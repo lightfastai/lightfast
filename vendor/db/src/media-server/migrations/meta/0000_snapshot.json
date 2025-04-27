@@ -1,9 +1,32 @@
 {
-  "id": "0cadb57b-b9a9-47c5-af60-88dcc6cddca2",
+  "id": "55f2c0c0-4566-4f19-81f1-8604e2d6aa51",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "media_server.job": {
+      "name": "job",
+      "schema": "media_server",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "media_server.resource": {
       "name": "resource",
       "schema": "media_server",
@@ -12,6 +35,18 @@
           "name": "id",
           "type": "varchar(191)",
           "primaryKey": true,
+          "notNull": true
+        },
+        "engine": {
+          "name": "engine",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "primaryKey": false,
           "notNull": true
         }
       },

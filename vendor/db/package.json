@@ -50,8 +50,8 @@
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/webgl": "workspace:^",
-    "drizzle-orm": "^0.35.3",
-    "drizzle-zod": "^0.5.1",
+    "drizzle-orm": "^0.43.1",
+    "drizzle-zod": "^0.7.1",
     "postgres": "^3.4.5",
     "zod": "catalog:"
   },
@@ -60,7 +60,7 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "dotenv-cli": "^7.4.2",
-    "drizzle-kit": "^0.26.2",
+    "drizzle-kit": "^0.31.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
