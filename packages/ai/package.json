@@ -17,6 +17,7 @@
     },
     "./fal": "./src/fal/client.ts",
     "./fal/server": "./src/fal/nextjs-server-proxy.ts",
+    "./fal/hono-server": "./src/fal/hono-server-proxy.ts",
     "./ai": "./src/ai/index.ts"
   },
   "license": "MIT",

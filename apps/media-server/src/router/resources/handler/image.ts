@@ -1,16 +1,26 @@
 import type { Context } from "hono";
 
+import { generateImageWithFal } from "@repo/ai";
+
 import type { CreateResourceSpecificInput } from "../schema/index.js";
 
 export async function handleImageResource(c: Context) {
   const body = await c.req.json<CreateResourceSpecificInput>();
-  // body is now fully typed!
-  // we send the prompt to a image-specific router for generation.
-  // we return the resource to the client which can download it.
-  return c.json(
-    { message: "Resource generate disabled" },
-    {
-      status: 500,
-    },
-  );
+  try {
+    const result = await generateImageWithFal({
+      prompt: body.prompt,
+      // Optionally, you can add width/height/model here if needed
+    });
+    return c.json({
+      id: body.id,
+      imageUrl: result.imageUrl,
+      seed: result.seed,
+    });
+  } catch (error) {
+    console.error(error);
+    return c.json(
+      { error: (error as Error).message || "Failed to generate image" },
+      { status: 500 },
+    );
+  }
 }
