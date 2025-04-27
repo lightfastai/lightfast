@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "pnpm with-env tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "pnpm with-env node dist/server.js",
     "format": "prettier --check .",
     "lint": "eslint",
     "with-env": "dotenv -e ./.internal/.env.development.local --"
