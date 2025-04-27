@@ -1,12 +1,12 @@
 {
-  "id": "e4747fbb-ff8a-48c3-996e-639b325be989",
+  "id": "0cadb57b-b9a9-47c5-af60-88dcc6cddca2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.resource": {
+    "media_server.resource": {
       "name": "resource",
-      "schema": "",
+      "schema": "media_server",
       "columns": {
         "id": {
           "name": "id",
@@ -23,7 +23,9 @@
     }
   },
   "enums": {},
-  "schemas": {},
+  "schemas": {
+    "media_server": "media_server"
+  },
   "sequences": {},
   "views": {},
   "_meta": {
