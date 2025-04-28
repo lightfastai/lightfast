@@ -16,8 +16,8 @@ export async function handleImageResource(c: Context) {
     .insert({
       id,
       data: { prompt },
-      engine: "fal-ai/fast-sdxl",
-      type: "image",
+      engine: "fal-ai/kling-video/v2/master/text-to-video",
+      type: "video",
       status: "init",
     })
     .select()

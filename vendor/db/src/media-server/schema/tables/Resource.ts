@@ -21,6 +21,7 @@ export const $MediaServerJobStatus = z.enum(MediaServerJobStatus);
 export const MediaServerProcessorEngine = [
   "fal-ai/fast-sdxl",
   "fal-ai/fast-sdxl-turbo",
+  "fal-ai/kling-video/v2/master/text-to-video",
   "openai/gpt-4o-mini",
 ] as const;
 

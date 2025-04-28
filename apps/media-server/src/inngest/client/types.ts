@@ -14,6 +14,16 @@ export type ResourceImageSuccessData = {
   url: string;
 };
 
+export type HandleCreateVideoData = {
+  id: string;
+  prompt: string;
+};
+
+export type ResourceVideoSuccessData = {
+  id: string;
+  url: string;
+};
+
 export type Events = {
   "media-server/example": {
     data: ExampleData;
@@ -23,5 +33,11 @@ export type Events = {
   };
   "media-server/resource-image-success": {
     data: ResourceImageSuccessData;
+  };
+  "media-server/handle-create-video": {
+    data: HandleCreateVideoData;
+  };
+  "media-server/resource-video-success": {
+    data: ResourceVideoSuccessData;
   };
 };

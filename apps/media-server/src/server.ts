@@ -7,6 +7,8 @@ import { serve } from "@vendor/inngest/hono";
 import { inngest } from "./inngest/client/client";
 import { handleCreateImage } from "./inngest/workflow/handle-create-image";
 import { handleResourceImageSuccess } from "./inngest/workflow/handle-create-image-success";
+import { handleCreateVideo } from "./inngest/workflow/handle-create-video";
+import { handleResourceVideoSuccess } from "./inngest/workflow/handle-create-video-success";
 import apiRouter from "./router/index";
 
 // Create Hono app
@@ -30,7 +32,12 @@ app.on(
   "/api/inngest",
   serve({
     client: inngest,
-    functions: [handleCreateImage, handleResourceImageSuccess],
+    functions: [
+      handleCreateImage,
+      handleResourceImageSuccess,
+      handleCreateVideo,
+      handleResourceVideoSuccess,
+    ],
   }),
 );
 

@@ -15,3 +15,11 @@ export const createImageSuccessWebhookUrl = (
   const baseUrl = createBaseUrl(env);
   return `${baseUrl}/api/resources/generate/image/success?id=${id}`;
 };
+
+export const createVideoSuccessWebhookUrl = (
+  env: Env,
+  { id }: { id: string },
+): string => {
+  const baseUrl = createBaseUrl(env);
+  return `${baseUrl}/api/resources/generate/video/success?id=${id}`;
+};

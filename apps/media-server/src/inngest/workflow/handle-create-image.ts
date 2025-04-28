@@ -25,7 +25,6 @@ export const handleCreateImage = inngest.createFunction(
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = env;
       // Generate image with Fal
       const webhookUrl = createImageSuccessWebhookUrl(env, { id });
-      console.log("webhookUrl", webhookUrl);
       await generateImageWithFal({
         prompt,
         webhookUrl,
