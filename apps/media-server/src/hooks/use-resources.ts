@@ -1,17 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect } from "react";
 
-import type { Database } from "../types/supabase.types";
+import type { Resource } from "~/stores/resources";
+import { useResourcesStore } from "~/providers/resources-provider";
 import { createClient } from "../lib/supabase-client";
 import { useRealtime } from "./use-realtime";
 
-export type Resource = Database["media_server"]["Tables"]["resource"]["Row"];
-
-export const useResources = () => {
-  const [resources, setResources] = useState<Resource[]>([]);
-  const [loading, setLoading] = useState(true);
-  const initialized = useRef(false);
+export function useResources() {
+  const setResources = useResourcesStore((state) => state.setResources);
+  const setLoading = useResourcesStore((state) => state.setLoading);
+  const resources = useResourcesStore((state) => state.resources);
+  const loading = useResourcesStore((state) => state.loading);
 
   // Fetch all resources on mount
   useEffect(() => {
@@ -34,25 +34,28 @@ export const useResources = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [setLoading, setResources]);
 
   // Handle realtime updates
+  const addResource = useResourcesStore((state) => state.addResource);
+  const updateResource = useResourcesStore((state) => state.updateResource);
+  const removeResource = useResourcesStore((state) => state.removeResource);
+
   const handleRealtime = useCallback(
     (payload: { eventType: string; new: Resource; old: Resource }) => {
-      setResources((prev) => {
-        switch (payload.eventType) {
-          case "INSERT":
-            return [payload.new, ...prev];
-          case "UPDATE":
-            return prev.map((r) => (r.id === payload.new.id ? payload.new : r));
-          case "DELETE":
-            return prev.filter((r) => r.id !== payload.old.id);
-          default:
-            return prev;
-        }
-      });
+      switch (payload.eventType) {
+        case "INSERT":
+          addResource(payload.new);
+          break;
+        case "UPDATE":
+          updateResource(payload.new.id, payload.new);
+          break;
+        case "DELETE":
+          removeResource(payload.old.id);
+          break;
+      }
     },
-    [],
+    [addResource, updateResource, removeResource],
   );
 
   useRealtime({
@@ -68,4 +71,4 @@ export const useResources = () => {
   });
 
   return { resources, loading };
-};
+}
