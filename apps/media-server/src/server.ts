@@ -5,7 +5,8 @@ import { serve } from "@vendor/inngest/hono";
 
 // Inngest imports
 import { inngest } from "./inngest/client/client";
-import exampleFunction from "./inngest/workflow/example-function";
+import { handleCreateImage } from "./inngest/workflow/handle-create-image";
+import { handleResourceImageSuccess } from "./inngest/workflow/handle-create-image-success";
 import apiRouter from "./router/index";
 
 // Create Hono app
@@ -21,7 +22,7 @@ app.onError((err, c) => {
 });
 
 // Mount API router
-app.route("/", apiRouter);
+app.route("/api", apiRouter);
 
 // Mount Inngest handler at /api/inngest
 app.on(
@@ -29,7 +30,7 @@ app.on(
   "/api/inngest",
   serve({
     client: inngest,
-    functions: [exampleFunction],
+    functions: [handleCreateImage, handleResourceImageSuccess],
   }),
 );
 

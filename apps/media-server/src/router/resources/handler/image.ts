@@ -1,25 +1,34 @@
 import type { Context } from "hono";
 
-import { generateImageWithFal } from "@repo/ai";
-
 import type { CreateResourceSpecificInput } from "../schema/index.js";
-import { createImageSuccessWebhookUrl } from "../../../lib/create-base-url.js";
+import { inngest } from "~/inngest/client.js";
+import { supabase } from "~/lib/supabase-client.js";
 
 export async function handleImageResource(c: Context) {
   const body = await c.req.json<CreateResourceSpecificInput>();
-  try {
-    const result = await generateImageWithFal({
-      prompt: body.prompt,
-      webhookUrl: createImageSuccessWebhookUrl(c, { id: body.id }),
-    });
-    return c.json({
-      requestId: result.request_id,
-    });
-  } catch (error) {
-    console.error(error);
-    return c.json(
-      { error: (error as Error).message || "Failed to generate image" },
-      { status: 500 },
-    );
+  const { id, prompt } = body;
+  // Insert resource with status 'pending'
+  const { data, error } = await supabase({
+    supabaseUrl: c.env.SUPABASE_URL,
+    supabaseAnonKey: c.env.SUPABASE_ANON_KEY,
+  })
+    .from("resource")
+    .insert({
+      id,
+      data: { prompt, status: "init" },
+      engine: "fal-ai/fast-sdxl",
+      type: "image",
+    })
+    .select()
+    .single();
+  if (error) {
+    return c.json({ error: error.message }, 500);
   }
+  // Trigger Inngest workflow
+  await inngest.send({
+    name: "media-server/handle-create-image",
+    data: { id, prompt },
+  });
+
+  return c.json({ id, status: "pending" });
 }

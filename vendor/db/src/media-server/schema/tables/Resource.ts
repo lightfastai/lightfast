@@ -9,9 +9,11 @@ import { DEFAULT_MEDIA_SERVER_SCHEMA } from "../constants";
 export const mediaServerSchema = pgSchema(DEFAULT_MEDIA_SERVER_SCHEMA);
 
 export const $MediaServerJobStatus = z.enum([
-  "Processing",
-  "Complete",
-  "Failed",
+  "init",
+  "in_queue",
+  "processing",
+  "completed",
+  "failed",
 ]);
 
 export const $MediaServerProcessorEngine = z.enum([
@@ -39,6 +41,7 @@ export const $MediaServerResourceType = z.enum([
 export type MediaServerResourceData = z.infer<typeof $MediaServerResourceData>;
 export type MediaServerResourceType = z.infer<typeof $MediaServerResourceType>;
 // Define the table within the schema
+
 export const MediaServerResource = mediaServerSchema.table("resource", {
   id: varchar("id", { length: 191 })
     .notNull()

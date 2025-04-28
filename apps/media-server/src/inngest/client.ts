@@ -1,5 +1,7 @@
 import { Inngest, InngestMiddleware } from "@vendor/inngest";
 
+import { Env } from "~/env/wrangler-env";
+
 const bindings = new InngestMiddleware({
   name: "Cloudflare Workers bindings",
   init() {
@@ -11,7 +13,7 @@ const bindings = new InngestMiddleware({
             const env = reqArgs[1];
             return {
               ctx: {
-                env,
+                env: env as Env,
               },
             };
           },
