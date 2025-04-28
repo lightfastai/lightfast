@@ -1,5 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import {
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+
 import {
   Table,
   TableBody,
@@ -10,28 +19,47 @@ import {
 } from "@repo/ui/components/ui/table";
 
 import { useResources } from "~/hooks/use-resources";
+import { columns } from "./columns";
 
 export function RunsTable() {
   const { resources, loading } = useResources();
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  const table = useReactTable({
+    data: resources,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      sorting,
+    },
+  });
 
   return (
     <div className="bg-card rounded-lg border">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Status</TableHead>
-            <TableHead>Run ID</TableHead>
-            <TableHead>Engine</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Queued at</TableHead>
-            <TableHead>Resource</TableHead>
-          </TableRow>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
         </TableHeader>
         <TableBody>
           {loading ? (
             <TableRow>
               <TableCell
-                colSpan={6}
+                colSpan={columns.length}
                 className="text-muted-foreground text-center"
               >
                 Loading...
@@ -40,47 +68,20 @@ export function RunsTable() {
           ) : resources.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={6}
+                colSpan={columns.length}
                 className="text-muted-foreground text-center"
               >
                 No runs found.
               </TableCell>
             </TableRow>
           ) : (
-            resources.map((resource) => (
-              <TableRow key={resource.id}>
-                <TableCell>{resource.status}</TableCell>
-                <TableCell className="font-mono text-xs">
-                  {resource.id}
-                </TableCell>
-                <TableCell>{resource.engine}</TableCell>
-                <TableCell>{resource.type}</TableCell>
-                <TableCell>
-                  {resource.external_request_id ?? (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {resource.type === "image" && resource.url ? (
-                    <img
-                      src={resource.url}
-                      alt="Resource"
-                      className="h-12 rounded shadow"
-                    />
-                  ) : resource.type === "video" && resource.url ? (
-                    <video
-                      src={resource.url}
-                      className="h-12 rounded shadow"
-                      controls
-                    />
-                  ) : resource.type === "text" && resource.data ? (
-                    <span className="whitespace-pre-wrap">
-                      {String(resource.data)}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
+            table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
               </TableRow>
             ))
           )}

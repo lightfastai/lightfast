@@ -24,6 +24,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@t3-oss/env-core": "^0.12.0",
+    "@tanstack/react-table": "^8.21.3",
     "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "immer": "^10.1.1",

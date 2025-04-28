@@ -20,7 +20,7 @@ export function ResourcesProvider({
   children,
   initialState = initResourcesState(),
 }: ResourcesProviderProps) {
-  const storeRef = useRef<ResourcesStoreApi>();
+  const storeRef = useRef<ResourcesStoreApi>(null);
   if (!storeRef.current) {
     storeRef.current = createResourcesStore(initialState);
   }
