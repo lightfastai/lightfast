@@ -1,6 +1,6 @@
 # name is set dynamically in wrangler.branch.toml by the CI workflow
-# name = 'lightfast-media-server'
-main = "src/server.ts"
+name = 'lightfast-media-server'
+main = "src/server.tsx"
 compatibility_date = "2025-04-28"
 compatibility_flags = ["nodejs_compat"]
 

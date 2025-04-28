@@ -6,13 +6,13 @@
   "main": "dist/server.js",
   "scripts": {
     "clean": "rm -rf dist .turbo .wrangler node_modules .cache",
-    "dev": "wrangler dev src/server.ts --port 4104",
-    "build": "tsc",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "$npm_execpath run build && wrangler dev dist/index.js",
     "deploy": "./deploy.sh",
     "deploy:dev": "ENVIRONMENT=dev ./deploy.sh",
     "deploy:prod": "ENVIRONMENT=prod ./deploy.sh",
     "deploy:direct": "npx wrangler deploy src/server.ts --no-minify",
-    "preview": "wrangler preview src/server.ts",
     "setup": "./setup-env.sh",
     "format": "prettier --check .",
     "lint": "eslint",
@@ -20,7 +20,9 @@
     "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts"
   },
   "dependencies": {
+    "@hono/react-renderer": "^1.0.1",
     "@hono/zod-validator": "^0.4.3",
+    "@lightfast/media-server": "workspace:^",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
     "@supabase/supabase-js": "^2.49.4",
@@ -30,6 +32,9 @@
     "aws-sdk": "^2.1481.0",
     "dotenv": "^16.3.1",
     "hono": "^4.7.7",
+    "hono-vite-react-stack": "^0.1.4",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
     "wrangler": "^4.13.2",
     "zod": "^3.23.8"
   },
@@ -39,7 +44,8 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "tsx": "^4.19.3",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "^6.3.3"
   },
   "prettier": "@repo/prettier-config",
   "engines": {
