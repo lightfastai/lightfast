@@ -10,11 +10,9 @@ export const handleResourceImageSuccess = inngest.createFunction(
   async ({ event, env, step }) => {
     return step.run("update-resource-success", async () => {
       const { id, url } = event.data;
-
-      const { SUPABASE_URL, SUPABASE_ANON_KEY } = env;
       await supabase({
-        supabaseUrl: SUPABASE_URL,
-        supabaseAnonKey: SUPABASE_ANON_KEY,
+        supabaseUrl: env.SUPABASE_URL,
+        supabaseAnonKey: env.SUPABASE_ANON_KEY,
       })
         .from("resource")
         .update({ data: { url, status: "completed" } })

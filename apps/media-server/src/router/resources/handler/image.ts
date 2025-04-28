@@ -15,9 +15,10 @@ export async function handleImageResource(c: Context) {
     .from("resource")
     .insert({
       id,
-      data: { prompt, status: "init" },
+      data: { prompt },
       engine: "fal-ai/fast-sdxl",
       type: "image",
+      status: "init",
     })
     .select()
     .single();

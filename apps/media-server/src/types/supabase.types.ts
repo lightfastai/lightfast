@@ -12,26 +12,38 @@ export type Database = {
       resource: {
         Row: {
           data: Json;
-          engine: string;
+          engine:
+            | "fal-ai/fast-sdxl"
+            | "fal-ai/fast-sdxl-turbo"
+            | "openai/gpt-4o-mini";
           external_request_id: string | null;
           id: string;
-          type: string;
+          status: "init" | "in_queue" | "processing" | "completed" | "failed";
+          type: "image" | "video" | "audio" | "text";
           url: string | null;
         };
         Insert: {
           data: Json;
-          engine: string;
+          engine:
+            | "fal-ai/fast-sdxl"
+            | "fal-ai/fast-sdxl-turbo"
+            | "openai/gpt-4o-mini";
           external_request_id?: string | null;
           id: string;
-          type: string;
+          status: "init" | "in_queue" | "processing" | "completed" | "failed";
+          type: "image" | "video" | "audio" | "text";
           url?: string | null;
         };
         Update: {
           data?: Json;
-          engine?: string;
+          engine?:
+            | "fal-ai/fast-sdxl"
+            | "fal-ai/fast-sdxl-turbo"
+            | "openai/gpt-4o-mini";
           external_request_id?: string | null;
           id?: string;
-          type?: string;
+          status?: "init" | "in_queue" | "processing" | "completed" | "failed";
+          type?: "image" | "video" | "audio" | "text";
           url?: string | null;
         };
         Relationships: [];

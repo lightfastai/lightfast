@@ -1,10 +1,7 @@
-import { Context } from "hono";
+import { Env } from "../env/wrangler-env";
 
-import { Env, getEnv } from "../env/wrangler-env";
-
-export const createBaseUrl = (c: Context): string => {
+export const createBaseUrl = (env: Env): string => {
   // Use BASE_URL for Cloudflare Workers (set in wrangler.toml)
-  const env = getEnv(c);
   if (env.BASE_URL) {
     return env.BASE_URL;
   }
@@ -12,18 +9,9 @@ export const createBaseUrl = (c: Context): string => {
 };
 
 export const createImageSuccessWebhookUrl = (
-  c: Context,
-  { id }: { id: string },
-): string => {
-  return `${createBaseUrl(c)}/api/resources/generate/image/success?id=${id}`;
-};
-
-export const createImageSuccessWebhookUrlFromEnv = (
   env: Env,
   { id }: { id: string },
 ): string => {
-  const baseUrl = env.BASE_URL
-    ? env.BASE_URL
-    : `http://localhost:${env.PORT ?? 8787}`;
+  const baseUrl = createBaseUrl(env);
   return `${baseUrl}/api/resources/generate/image/success?id=${id}`;
 };

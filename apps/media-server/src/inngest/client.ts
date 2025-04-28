@@ -1,19 +1,24 @@
+import { Context } from "hono";
+
 import { Inngest, InngestMiddleware } from "@vendor/inngest";
 
 import { Env } from "~/env/wrangler-env";
 
 const bindings = new InngestMiddleware({
-  name: "Cloudflare Workers bindings",
-  init() {
+  name: "Hono bindings",
+  init({ client, fn }) {
     return {
-      onFunctionRun({ reqArgs }) {
+      onFunctionRun({ ctx, fn, steps, reqArgs }) {
         return {
-          transformInput() {
-            // reqArgs[1] is the env object from fetch(request, env, ctx)
-            const env = reqArgs[1];
+          transformInput({ ctx, fn, steps }) {
+            // reqArgs is the array of arguments passed to a Hono handler
+            // We cast the argument to the correct Hono Context type with our
+            // environment variable bindings
+            const [honoCtx] = reqArgs as [Context<{ Bindings: Env }>];
             return {
               ctx: {
-                env: env as Env,
+                // Return the context's env object to the function handler's input args
+                env: honoCtx.env,
               },
             };
           },
