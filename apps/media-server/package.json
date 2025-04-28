@@ -8,7 +8,7 @@
     "clean": "rm -rf dist .turbo .wrangler node_modules .cache",
     "dev": "wrangler dev src/server.ts --port 4104",
     "build": "tsc",
-    "deploy": "wrangler deploy src/server.ts",
+    "deploy": "wrangler deploy src/server.ts --no-minify",
     "preview": "wrangler preview src/server.ts",
     "format": "prettier --check .",
     "lint": "eslint",
@@ -35,5 +35,8 @@
     "@repo/typescript-config": "workspace:*",
     "typescript": "catalog:"
   },
-  "prettier": "@repo/prettier-config"
+  "prettier": "@repo/prettier-config",
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

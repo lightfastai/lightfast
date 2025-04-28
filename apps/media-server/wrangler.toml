@@ -3,6 +3,11 @@ main = "src/server.ts"
 compatibility_date = "2025-04-28"
 compatibility_flags = ["nodejs_compat"]
 
+# Add resource limits section
+[limits]
+cpu_ms = 200  # Default is usually 50ms
+memory_mb = 512  # Default is usually 128MB
+
 [vars]
 # Fill these in with your actual secrets or use Wrangler secrets for sensitive values
 R2_ACCESS_KEY_ID = "your-access-key-id"
