@@ -1,19 +1,16 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "types": ["@cloudflare/workers-types", "vite/client"],
-    "jsx": "react-jsx",
-    "skipLibCheck": true,
+    "lib": ["ES2022", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     },
-    "jsxImportSource": "react"
+    "types": ["@cloudflare/workers-types/2023-07-01"],
+    "plugins": [{ "name": "next" }],
+    "module": "esnext"
   },
-  "include": ["src/**/*", "**/*.ts", "**/*.tsx"],
+  "include": [".", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

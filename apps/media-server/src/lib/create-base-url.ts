@@ -1,25 +1,25 @@
-import { Env } from "../env/wrangler-env";
+import { getCloudflareContext } from "@opennextjs/cloudflare/cloudflare-context";
 
-export const createBaseUrl = (env: Env): string => {
+export const createBaseUrl = (): string => {
   // Use BASE_URL for Cloudflare Workers (set in wrangler.toml)
-  if (env.BASE_URL) {
-    return env.BASE_URL;
+  if (getCloudflareContext().env.BASE_URL) {
+    return getCloudflareContext().env.BASE_URL;
   }
-  return `http://localhost:${env.PORT}`;
+  return `http://localhost:${getCloudflareContext().env.PORT}`;
 };
 
-export const createImageSuccessWebhookUrl = (
-  env: Env,
-  { id }: { id: string },
-): string => {
-  const baseUrl = createBaseUrl(env);
-  return `${baseUrl}/api/resources/generate/image/success?id=${id}`;
+export const createImageSuccessWebhookUrl = ({
+  id,
+}: {
+  id: string;
+}): string => {
+  return `${createBaseUrl()}/api/resources/generate/image/success?id=${id}`;
 };
 
-export const createVideoSuccessWebhookUrl = (
-  env: Env,
-  { id }: { id: string },
-): string => {
-  const baseUrl = createBaseUrl(env);
-  return `${baseUrl}/api/resources/generate/video/success?id=${id}`;
+export const createVideoSuccessWebhookUrl = ({
+  id,
+}: {
+  id: string;
+}): string => {
+  return `${createBaseUrl()}/api/resources/generate/video/success?id=${id}`;
 };
