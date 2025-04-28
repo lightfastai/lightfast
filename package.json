@@ -17,6 +17,7 @@
     "media-server:migrate": "turbo -F @vendor/db media-server:migrate",
     "media-server:migrate:generate": "turbo -F @vendor/db media-server:migrate:generate",
     "media-server:studio": "turbo -F @vendor/db media-server:studio",
+    "media-server:deploy": "turbo run deploy -F @lightfast/media-server",
     "dev": "turbo run dev --parallel --filter=@lightfast/app --filter=@lightfast/www",
     "dev:media-server": "turbo run dev -F @lightfast/media-server --continue",
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
