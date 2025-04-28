@@ -30,11 +30,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250428.0",
-    "@lightfast/media-server": "workspace:^",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^20.4.2",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
