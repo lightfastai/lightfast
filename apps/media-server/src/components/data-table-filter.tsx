@@ -31,7 +31,7 @@ export function DataTableFilter<TData>({ table }: DataTableFilterProps<TData>) {
     <div className="flex items-center gap-2">
       {filters.map((filter) => {
         const column = table.getColumn(filter.id);
-        const meta = column?.columnDef?.meta as ColumnMeta<TData>;
+        const meta = column?.columnDef?.meta as ColumnMeta<TData, unknown>;
         if (!meta) return null;
 
         return (
@@ -69,11 +69,17 @@ export function DataTableFilter<TData>({ table }: DataTableFilterProps<TData>) {
                   .getAllColumns()
                   .filter((column): column is Column<TData, unknown> => {
                     if (!column || !column.getCanFilter()) return false;
-                    const meta = column.columnDef.meta as ColumnMeta<TData>;
+                    const meta = column.columnDef.meta as ColumnMeta<
+                      TData,
+                      unknown
+                    >;
                     return !!meta;
                   })
                   .map((column) => {
-                    const meta = column.columnDef.meta as ColumnMeta<TData>;
+                    const meta = column.columnDef.meta as ColumnMeta<
+                      TData,
+                      unknown
+                    >;
                     const isFiltered = filters.some(
                       (filter) => filter.id === column.id,
                     );
@@ -83,17 +89,14 @@ export function DataTableFilter<TData>({ table }: DataTableFilterProps<TData>) {
                         key={column.id}
                         onSelect={() => {
                           if (isFiltered) {
-                            (column as Column<TData, unknown>).setFilterValue(
-                              undefined,
-                            );
-                          } else if (meta.type === "option" && meta.options) {
-                            (column as Column<TData, unknown>).setFilterValue(
-                              meta.options[0].value,
-                            );
+                            column.setFilterValue(undefined);
+                          } else if (
+                            meta.type === "option" &&
+                            meta.options?.[0]
+                          ) {
+                            column.setFilterValue(meta.options[0].value);
                           } else {
-                            (column as Column<TData, unknown>).setFilterValue(
-                              "",
-                            );
+                            column.setFilterValue("");
                           }
                         }}
                       >
