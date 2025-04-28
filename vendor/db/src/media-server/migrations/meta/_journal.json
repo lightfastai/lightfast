@@ -15,6 +15,13 @@
       "when": 1745819058960,
       "tag": "0001_magenta_champions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1745819593589,
+      "tag": "0002_unknown_charles_xavier",
+      "breakpoints": true
     }
   ]
 }
