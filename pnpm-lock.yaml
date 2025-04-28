@@ -390,11 +390,17 @@ importers:
         version: 4.7.7
       wrangler:
         specifier: ^4.13.2
-        version: 4.13.2(bufferutil@4.0.9)
+        version: 4.13.2(@cloudflare/workers-types@4.20250428.0)(bufferutil@4.0.9)
       zod:
         specifier: ^3.23.8
         version: 3.24.3
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20250428.0
+        version: 4.20250428.0
+      '@lightfast/media-server':
+        specifier: workspace:^
+        version: 'link:'
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../internal/eslint
@@ -1032,10 +1038,10 @@ importers:
         version: link:../../packages/webgl
       drizzle-orm:
         specifier: ^0.43.1
-        version: 0.43.1(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5)
+        version: 0.43.1(@cloudflare/workers-types@4.20250428.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5)
       drizzle-zod:
         specifier: ^0.7.1
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5))(zod@3.24.3)
+        version: 0.7.1(drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250428.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5))(zod@3.24.3)
       postgres:
         specifier: ^3.4.5
         version: 3.4.5
@@ -1855,6 +1861,9 @@ packages:
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
+
+  '@cloudflare/workers-types@4.20250428.0':
+    resolution: {integrity: sha512-r/K1xuR+lW6SeGKRloVdR+BnK+9shBQci717070EBB2VLbcrZCCh0eo6NweLFa1rD8use5rE5JTVDZ/mXqMeNg==}
 
   '@connectrpc/connect-node@1.6.1':
     resolution: {integrity: sha512-DxcD1wsF/aX9GegjAtl7VbpiZNjVJozy87VbaFoN6AF0Ln1Q757r5dgV59Gz0wmlk5f17txUsrEr1f2inlnnAg==}
@@ -11889,6 +11898,8 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20250424.0':
     optional: true
 
+  '@cloudflare/workers-types@4.20250428.0': {}
+
   '@connectrpc/connect-node@1.6.1(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))':
     dependencies:
       '@bufbuild/protobuf': 1.10.0
@@ -17138,8 +17149,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.43.1(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5):
+  drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250428.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5):
     optionalDependencies:
+      '@cloudflare/workers-types': 4.20250428.0
       '@libsql/client-wasm': 0.14.0
       '@neondatabase/serverless': 1.0.0
       '@opentelemetry/api': 1.9.0
@@ -17147,9 +17159,9 @@ snapshots:
       '@vercel/postgres': 0.10.0
       postgres: 3.4.5
 
-  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5))(zod@3.24.3):
+  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250428.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5))(zod@3.24.3):
     dependencies:
-      drizzle-orm: 0.43.1(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5)
+      drizzle-orm: 0.43.1(@cloudflare/workers-types@4.20250428.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(postgres@3.4.5)
       zod: 3.24.3
 
   dunder-proto@1.0.1:
@@ -22243,7 +22255,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20250424.0
       '@cloudflare/workerd-windows-64': 1.20250424.0
 
-  wrangler@4.13.2(bufferutil@4.0.9):
+  wrangler@4.13.2(@cloudflare/workers-types@4.20250428.0)(bufferutil@4.0.9):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.0
       '@cloudflare/unenv-preset': 2.3.1(unenv@2.0.0-rc.15)(workerd@1.20250424.0)
@@ -22254,6 +22266,7 @@ snapshots:
       unenv: 2.0.0-rc.15
       workerd: 1.20250424.0
     optionalDependencies:
+      '@cloudflare/workers-types': 4.20250428.0
       fsevents: 2.3.3
       sharp: 0.33.5
     transitivePeerDependencies:
