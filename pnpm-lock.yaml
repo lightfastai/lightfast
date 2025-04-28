@@ -373,6 +373,9 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
+      '@vendor/inngest':
+        specifier: workspace:*
+        version: link:../../vendor/inngest
       aws-sdk:
         specifier: ^2.1481.0
         version: 2.1692.0
