@@ -361,9 +361,6 @@ importers:
       '@hono/zod-validator':
         specifier: ^0.4.3
         version: 0.4.3(hono@4.7.7)(zod@3.24.3)
-      '@lightfast/media-server':
-        specifier: workspace:^
-        version: 'link:'
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
