@@ -1,7 +1,15 @@
 "use client";
 
 import { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronsUpDown,
+  CircleDotDashed,
+  FileText,
+  Image,
+  Video,
+} from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -63,6 +71,20 @@ function DataTableColumnHeader<TData, TValue>({
   );
 }
 
+const RESOURCE_STATUS_OPTIONS = [
+  { label: "Init", value: "init" },
+  { label: "In Queue", value: "in_queue" },
+  { label: "Processing", value: "processing" },
+  { label: "Completed", value: "completed" },
+  { label: "Failed", value: "failed" },
+];
+
+const RESOURCE_TYPE_OPTIONS = [
+  { label: "Image", value: "image", icon: Image },
+  { label: "Video", value: "video", icon: Video },
+  { label: "Text", value: "text", icon: FileText },
+];
+
 export const columns: ColumnDef<Resource>[] = [
   {
     accessorKey: "status",
@@ -70,6 +92,12 @@ export const columns: ColumnDef<Resource>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     enableSorting: true,
+    meta: {
+      type: "option",
+      displayName: "Status",
+      icon: CircleDotDashed,
+      options: RESOURCE_STATUS_OPTIONS,
+    },
   },
   {
     accessorKey: "id",
@@ -80,6 +108,11 @@ export const columns: ColumnDef<Resource>[] = [
       <div className="font-mono text-xs">{row.getValue("id")}</div>
     ),
     enableSorting: true,
+    meta: {
+      type: "text",
+      displayName: "Run ID",
+      icon: FileText,
+    },
   },
   {
     accessorKey: "engine",
@@ -87,6 +120,11 @@ export const columns: ColumnDef<Resource>[] = [
       <DataTableColumnHeader column={column} title="Engine" />
     ),
     enableSorting: true,
+    meta: {
+      type: "text",
+      displayName: "Engine",
+      icon: FileText,
+    },
   },
   {
     accessorKey: "type",
@@ -94,6 +132,12 @@ export const columns: ColumnDef<Resource>[] = [
       <DataTableColumnHeader column={column} title="Type" />
     ),
     enableSorting: true,
+    meta: {
+      type: "option",
+      displayName: "Type",
+      icon: FileText,
+      options: RESOURCE_TYPE_OPTIONS,
+    },
   },
   {
     accessorKey: "external_request_id",
@@ -105,6 +149,11 @@ export const columns: ColumnDef<Resource>[] = [
       return value ?? <span className="text-muted-foreground">—</span>;
     },
     enableSorting: true,
+    meta: {
+      type: "text",
+      displayName: "Queued at",
+      icon: FileText,
+    },
   },
   {
     id: "resource",

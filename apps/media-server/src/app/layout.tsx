@@ -1,5 +1,7 @@
 import "@repo/ui/globals.css";
 
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
@@ -18,20 +20,22 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body className={cn("dark bg-background", fonts)}>
-        <ResourcesProvider>
-          <div className="flex h-screen">
-            <SidebarProvider defaultOpen>
-              <AppSidebar />
-              <SidebarInset>
-                <div className="flex h-full flex-col">
-                  <SiteHeader />
-                  <div className="flex-1">{children}</div>
-                </div>
-              </SidebarInset>
-            </SidebarProvider>
-          </div>
-          <Toaster />
-        </ResourcesProvider>
+        <NuqsAdapter>
+          <ResourcesProvider>
+            <div className="flex h-screen">
+              <SidebarProvider defaultOpen>
+                <AppSidebar />
+                <SidebarInset>
+                  <div className="flex h-full flex-col">
+                    <SiteHeader />
+                    <div className="flex-1">{children}</div>
+                  </div>
+                </SidebarInset>
+              </SidebarProvider>
+            </div>
+            <Toaster />
+          </ResourcesProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );
