@@ -5,9 +5,11 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "pnpm with-env tsx watch src/server.ts",
+    "clean": "rm -rf dist .turbo .wrangler node_modules .cache",
+    "dev": "wrangler dev src/server.ts --port 4104",
     "build": "tsc",
-    "start": "pnpm with-env node dist/server.js",
+    "deploy": "wrangler deploy src/server.ts",
+    "preview": "wrangler preview src/server.ts",
     "format": "prettier --check .",
     "lint": "eslint",
     "with-env": "dotenv -e ./.internal/.env.development.local --",
@@ -25,6 +27,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "hono": "^4.7.7",
+    "wrangler": "^4.13.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {

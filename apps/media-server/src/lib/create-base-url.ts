@@ -1,18 +1,19 @@
-import { env } from "../env.js";
+import { Context } from "hono";
 
-export const createBaseUrl = () => {
-  // @todo: this is a hack to get the base url for render
-  if (env.RENDER) {
-    return `https://${env.RENDER_SERVICE_NAME}.onrender.com`;
-  }
+import { getEnv } from "../env/wrangler-env";
 
+export const createBaseUrl = (c: Context): string => {
+  // Use BASE_URL for Cloudflare Workers (set in wrangler.toml)
+  const env = getEnv(c);
   if (env.BASE_URL) {
     return env.BASE_URL;
   }
-
   return `http://localhost:${env.PORT}`;
 };
 
-export const createImageSuccessWebhookUrl = () => {
-  return `${createBaseUrl()}/api/resources/generate/image/success`;
+export const createImageSuccessWebhookUrl = (
+  c: Context,
+  { id }: { id: string },
+): string => {
+  return `${createBaseUrl(c)}/api/resources/generate/image/success?id=${id}`;
 };

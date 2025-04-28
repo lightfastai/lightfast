@@ -8,13 +8,9 @@ import { createImageSuccessWebhookUrl } from "../../../lib/create-base-url.js";
 export async function handleImageResource(c: Context) {
   const body = await c.req.json<CreateResourceSpecificInput>();
   try {
-    console.log(
-      "Generating image with fal with webhook url",
-      createImageSuccessWebhookUrl(),
-    );
     const result = await generateImageWithFal({
       prompt: body.prompt,
-      webhookUrl: createImageSuccessWebhookUrl(),
+      webhookUrl: createImageSuccessWebhookUrl(c, { id: body.id }),
     });
     return c.json({
       requestId: result.request_id,

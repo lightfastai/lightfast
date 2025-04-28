@@ -1,0 +1,27 @@
+name = "media-server"
+main = "src/server.ts"
+compatibility_date = "2024-06-09"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Fill these in with your actual secrets or use Wrangler secrets for sensitive values
+R2_ACCESS_KEY_ID = "your-access-key-id"
+R2_SECRET_ACCESS_KEY = "your-secret-access-key"
+R2_ACCOUNT_ID = "your-account-id"
+R2_BUCKET_NAME = "lightfast-media"
+SUPABASE_URL = "your-supabase-url"
+SUPABASE_ANON_KEY = "your-supabase-anon-key"
+SUPABASE_PROJECT_ID = "your-supabase-project-id"
+OPENAI_API_KEY = "your-openai-api-key"
+FAL_KEY = "your-fal-key"
+BASE_URL = "https://your-worker-url.workers.dev"
+NODE_ENV = "production"
+
+[[r2_buckets]]
+binding = "MY_MEDIA_BUCKET" # This is the variable name you'll use in your Worker
+bucket_name = "lightfast-media"
+preview_bucket_name = "lightfast-media"
+
+# Uncomment and edit if you want to use a custom domain
+# [triggers]
+# routes = ["media.yourdomain.com/*"]

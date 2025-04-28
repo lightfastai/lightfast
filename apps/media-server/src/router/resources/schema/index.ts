@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const resourceTypeSchema = z.enum(["image", "video", "audio", "text"]);
-export const createResourceSchema = z.object({
+export const createTextResourceSchema = z.object({
   prompt: z.string(),
 });
 

@@ -2,27 +2,26 @@ import { Hono } from "hono";
 
 import * as falProxy from "@repo/ai/fal/hono-server";
 
-import { env } from "../../env.js";
+import { getEnv } from "~/env/wrangler-env";
 
 // Create a Hono app that uses the Fal proxy
 const falProxyApp = new Hono();
 
 // Re-export the GET, POST handlers from the official Fal proxy
-falProxyApp.get(
-  `*`,
-  falProxy.createRouteHandler({
+falProxyApp.get(`*`, (c) => {
+  return falProxy.createRouteHandler({
     resolveApiKey() {
-      return Promise.resolve(env.FAL_KEY);
+      return Promise.resolve(getEnv(c).FAL_KEY);
     },
-  }),
-);
-falProxyApp.post(
-  `*`,
-  falProxy.createRouteHandler({
+  })(c);
+});
+
+falProxyApp.post(`*`, (c) => {
+  return falProxy.createRouteHandler({
     resolveApiKey() {
-      return Promise.resolve(env.FAL_KEY);
+      return Promise.resolve(getEnv(c).FAL_KEY);
     },
-  }),
-);
+  })(c);
+});
 
 export default falProxyApp;

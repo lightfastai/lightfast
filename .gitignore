@@ -53,3 +53,7 @@ dist/
 
 # internal
 .internal
+
+# wrangler
+.wrangler
+.dev.vars

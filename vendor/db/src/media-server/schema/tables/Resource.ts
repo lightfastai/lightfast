@@ -9,12 +9,16 @@ import { DEFAULT_MEDIA_SERVER_SCHEMA } from "../constants";
 export const mediaServerSchema = pgSchema(DEFAULT_MEDIA_SERVER_SCHEMA);
 
 export const $MediaServerJobStatus = z.enum([
-  "PROCESSING",
-  "COMPLETED",
-  "FAILED",
+  "Processing",
+  "Complete",
+  "Failed",
 ]);
 
-export const $MediaServerProcessorEngine = z.enum(["fal-ai/fast-sdxl"]);
+export const $MediaServerProcessorEngine = z.enum([
+  "fal-ai/fast-sdxl",
+  "fal-ai/fast-sdxl-turbo",
+  "openai/gpt-4o-mini",
+]);
 
 export type MediaServerJobStatus = z.infer<typeof $MediaServerJobStatus>;
 export type MediaServerProcessorEngine = z.infer<
@@ -25,8 +29,15 @@ export const $MediaServerResourceData = z.object({
   prompt: z.string(),
 });
 
-export type MediaServerResourceData = z.infer<typeof $MediaServerResourceData>;
+export const $MediaServerResourceType = z.enum([
+  "image",
+  "video",
+  "audio",
+  "text",
+]);
 
+export type MediaServerResourceData = z.infer<typeof $MediaServerResourceData>;
+export type MediaServerResourceType = z.infer<typeof $MediaServerResourceType>;
 // Define the table within the schema
 export const MediaServerResource = mediaServerSchema.table("resource", {
   id: varchar("id", { length: 191 })
@@ -36,15 +47,10 @@ export const MediaServerResource = mediaServerSchema.table("resource", {
   engine: varchar("engine", { length: 255 })
     .notNull()
     .$type<MediaServerProcessorEngine>(),
+  type: varchar("type", { length: 255 })
+    .notNull()
+    .$type<MediaServerResourceType>(),
   data: jsonb("data").notNull().$type<typeof $MediaServerResourceData>(),
-});
-
-export const MediaServerJob = mediaServerSchema.table("job", {
-  id: varchar("id", { length: 191 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
-  status: varchar("status", { length: 255 })
-    .notNull()
-    .$type<MediaServerJobStatus>(),
+  url: varchar("url", { length: 255 }),
+  externalRequestId: varchar("external_request_id", { length: 191 }),
 });
