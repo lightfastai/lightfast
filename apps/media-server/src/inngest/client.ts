@@ -21,13 +21,8 @@ const bindings = new InngestMiddleware({
   },
 });
 
-const inngestEnv =
-  typeof globalThis !== "undefined" && (globalThis as any).env?.INNGEST_ENV
-    ? (globalThis as any).env.INNGEST_ENV
-    : undefined;
-
 export const inngest = new Inngest({
   id: "lightfast-media-server",
-  env: inngestEnv,
+  env: "dev",
   middleware: [bindings],
 });
