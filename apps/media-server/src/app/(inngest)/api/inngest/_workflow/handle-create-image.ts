@@ -1,9 +1,7 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare/cloudflare-context";
-
 import { generateImageWithFal } from "@repo/ai";
 
 import { createImageSuccessWebhookUrl } from "~/lib/create-base-url";
-import { supabase } from "~/lib/supabase-client";
+import { createClient } from "~/lib/supabase-client";
 import { inngest } from "../_client/client";
 
 export const handleCreateImage = inngest.createFunction(
@@ -13,10 +11,7 @@ export const handleCreateImage = inngest.createFunction(
     const { id, prompt } = event.data;
 
     await step.run("update-resource-status-to-processing", async () => {
-      await supabase({
-        supabaseUrl: getCloudflareContext().env.SUPABASE_URL,
-        supabaseAnonKey: getCloudflareContext().env.SUPABASE_ANON_KEY,
-      })
+      await createClient()
         .from("resource")
         .update({ data: { prompt, status: "in_queue" } })
         .eq("id", id);
@@ -32,10 +27,7 @@ export const handleCreateImage = inngest.createFunction(
         // Optionally pass FAL_KEY if needed by generateImageWithFal
       });
       // Update resource status to 'processing'
-      await supabase({
-        supabaseUrl: getCloudflareContext().env.SUPABASE_URL,
-        supabaseAnonKey: getCloudflareContext().env.SUPABASE_ANON_KEY,
-      })
+      await createClient()
         .from("resource")
         .update({ data: { prompt, status: "processing" } })
         .eq("id", id);

@@ -1,9 +1,7 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-
 import { generateVideoWithFal } from "@repo/ai";
 
 import { createVideoSuccessWebhookUrl } from "~/lib/create-base-url";
-import { supabase } from "~/lib/supabase-client";
+import { createClient } from "~/lib/supabase-client";
 import { inngest } from "../_client/client";
 
 export const handleCreateVideo = inngest.createFunction(
@@ -13,10 +11,7 @@ export const handleCreateVideo = inngest.createFunction(
     const { id, prompt } = event.data;
 
     await step.run("update-resource-status-to-in-queue", async () => {
-      await supabase({
-        supabaseUrl: getCloudflareContext().env.SUPABASE_URL,
-        supabaseAnonKey: getCloudflareContext().env.SUPABASE_ANON_KEY,
-      })
+      await createClient()
         .from("resource")
         .update({ data: { prompt, status: "in_queue" } })
         .eq("id", id);
@@ -25,10 +20,7 @@ export const handleCreateVideo = inngest.createFunction(
     await step.run("generate-video-with-fal", async () => {
       const webhookUrl = createVideoSuccessWebhookUrl({ id });
       await generateVideoWithFal({ prompt, webhookUrl });
-      await supabase({
-        supabaseUrl: getCloudflareContext().env.SUPABASE_URL,
-        supabaseAnonKey: getCloudflareContext().env.SUPABASE_ANON_KEY,
-      })
+      await createClient()
         .from("resource")
         .update({ data: { prompt, status: "processing" } })
         .eq("id", id);

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist .turbo .wrangler node_modules .cache",
-    "dev": "next dev --turbopack --port 4104",
-    "build": "next build",
+    "dev": "pnpm with-env next dev -p 4104",
+    "build": "pnpm with-env next build",
     "start": "next start",
     "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
@@ -14,17 +14,18 @@
     "setup": "./setup-env.sh",
     "format": "prettier --check .",
     "lint": "eslint",
+    "with-env": "dotenv -e ./.internal/.env.development.local --",
     "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts"
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@t3-oss/env-core": "^0.12.0",
     "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:*",
-    "dotenv": "^16.3.1",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "zod": "^3.23.8"
@@ -36,6 +37,7 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "autoprefixer": "^10.4.20",
+    "dotenv-cli": "^7.4.2",
     "postcss": "catalog:tailwind4",
     "tailwindcss": "catalog:tailwind4",
     "tsx": "^4.19.3",
