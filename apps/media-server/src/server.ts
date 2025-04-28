@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import { serve } from "inngest/hono";
+
+import { serve } from "@vendor/inngest/hono";
 
 // Inngest imports
-import { inngest } from "./inngest/client";
-import exampleFunction from "./inngest/functions/example-function";
+import { inngest } from "./inngest/client/client";
+import exampleFunction from "./inngest/workflow/example-function";
 import apiRouter from "./router/index";
 
 // Create Hono app

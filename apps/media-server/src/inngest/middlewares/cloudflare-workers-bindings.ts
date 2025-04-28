@@ -1,7 +1,7 @@
-import { Inngest, InngestMiddleware } from "@vendor/inngest";
+import { InngestMiddleware } from "@vendor/inngest";
 
-const bindings = new InngestMiddleware({
-  name: "Cloudflare Workers bindings",
+export const bindings = new InngestMiddleware({
+  name: "cloudflare-workers-bindings",
   init() {
     return {
       onFunctionRun({ reqArgs }) {
@@ -19,9 +19,4 @@ const bindings = new InngestMiddleware({
       },
     };
   },
-});
-
-export const inngest = new Inngest({
-  id: "lightfast-media-server",
-  middleware: [bindings],
 });
