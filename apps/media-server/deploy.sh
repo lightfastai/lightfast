@@ -12,6 +12,25 @@ else
   ulimit -n 4096 || echo "Could not increase file descriptor limit. Proceeding anyway."
 fi
 
+# Set environment-specific variables
+ENVIRONMENT=${ENVIRONMENT:-"dev"}
+if [ "$ENVIRONMENT" = "prod" ]; then
+  BUCKET_NAME="lightfast-media"
+  echo "Deploying to PRODUCTION environment..."
+else
+  BUCKET_NAME="lightfast-media-server-dev"
+  echo "Deploying to DEVELOPMENT environment..."
+fi
+
+# Update the wrangler.toml with the correct bucket name
+sed -i.bak "s/R2_BUCKET_NAME = \".*\"/R2_BUCKET_NAME = \"$BUCKET_NAME\"/" wrangler.toml
+sed -i.bak "s/bucket_name = \".*\"/bucket_name = \"$BUCKET_NAME\"/" wrangler.toml
+sed -i.bak "s/preview_bucket_name = \".*\"/preview_bucket_name = \"$BUCKET_NAME\"/" wrangler.toml
+# Remove backup files on macOS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  rm -f wrangler.toml.bak
+fi
+
 echo "Building media server..."
 pnpm build
 

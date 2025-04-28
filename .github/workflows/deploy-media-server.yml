@@ -1,4 +1,4 @@
-name: Deploy Media Server
+# name: Deploy Media Server
 # on:
 #   push:
 #     branches:

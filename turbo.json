@@ -10,6 +10,18 @@
       "dependsOn": ["build"],
       "cache": false
     },
+    "deploy:dev": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "deploy:prod": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "setup": {
+      "cache": false,
+      "interactive": true
+    },
     "dev": {
       "dependsOn": ["^dev"],
       "cache": false,
@@ -92,6 +104,7 @@
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
-    "npm_lifecycle_event"
+    "npm_lifecycle_event",
+    "ENVIRONMENT"
   ]
 }
