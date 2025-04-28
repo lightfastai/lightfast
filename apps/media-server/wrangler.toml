@@ -1,4 +1,5 @@
-name = 'lightfast-media-server'
+# name is set dynamically in wrangler.branch.toml by the CI workflow
+# name = 'lightfast-media-server'
 main = "src/server.ts"
 compatibility_date = "2025-04-28"
 compatibility_flags = ["nodejs_compat"]
@@ -23,6 +24,7 @@ BASE_URL = "https://your-worker-url.workers.dev"
 NODE_ENV = "production"
 INNGEST_EVENT_KEY = "your-inngest-event-key"
 INNGEST_SIGNING_KEY = "your-inngest-signing-key"
+# INNGEST_ENV is set dynamically in wrangler.branch.toml by the CI workflow
 
 [[r2_buckets]]
 binding = "MY_MEDIA_BUCKET" # This is the variable name you'll use in your Worker

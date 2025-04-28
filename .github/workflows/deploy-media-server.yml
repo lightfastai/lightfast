@@ -1,8 +1,9 @@
 # name: Deploy Media Server
+
 # on:
 #   push:
 #     branches:
-#       - main
+#       - "**" # Deploy on every branch
 #     paths:
 #       - "apps/media-server/**"
 #       - "packages/ai/**"
@@ -68,8 +69,21 @@
 #           echo "BASE_URL = \"${{ secrets.WORKER_BASE_URL }}\"" >> .dev.vars
 #           echo "NODE_ENV = \"production\"" >> .dev.vars
 
+#       - name: Set Branch Name and INNGEST_ENV
+#         id: branch
+#         run: |
+#           BRANCH_NAME=$(echo "${GITHUB_REF##*/}" | tr '/' '-')
+#           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+#           echo "INNGEST_ENV=$BRANCH_NAME" >> $GITHUB_ENV
+
+#       - name: Generate branch-specific wrangler config
+#         run: |
+#           cp apps/media-server/wrangler.toml apps/media-server/wrangler.branch.toml
+#           echo "name = 'lightfast-media-server-${BRANCH_NAME}'" >> apps/media-server/wrangler.branch.toml
+#           echo "INNGEST_ENV = '$BRANCH_NAME'" >> apps/media-server/wrangler.branch.toml
+
 #       - name: Deploy
 #         run: |
 #           cd apps/media-server
 #           chmod +x deploy.sh
-#           ./deploy.sh
+#           wrangler deploy --config wrangler.branch.toml
