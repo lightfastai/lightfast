@@ -1,7 +1,7 @@
 import { generateImageWithFal } from "@repo/ai";
 
-import { createImageSuccessWebhookUrl } from "~/lib/create-base-url";
-import { supabase } from "~/lib/supabase-client";
+import { createImageSuccessWebhookUrl } from "../../../../lib/create-base-url";
+import { supabase } from "../../../../lib/supabase-client";
 import { inngest } from "../client";
 
 export const handleCreateImage = inngest.createFunction(

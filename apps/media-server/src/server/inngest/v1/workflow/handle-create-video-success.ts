@@ -1,4 +1,4 @@
-import { supabase } from "~/lib/supabase-client";
+import { supabase } from "../../../../lib/supabase-client";
 import { inngest } from "../client";
 
 export const handleResourceVideoSuccess = inngest.createFunction(

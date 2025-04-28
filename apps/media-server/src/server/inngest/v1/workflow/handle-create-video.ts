@@ -1,7 +1,7 @@
 import { generateVideoWithFal } from "@repo/ai";
 
-import { createVideoSuccessWebhookUrl } from "~/lib/create-base-url";
-import { supabase } from "~/lib/supabase-client";
+import { createVideoSuccessWebhookUrl } from "../../../../lib/create-base-url";
+import { supabase } from "../../../../lib/supabase-client";
 import { inngest } from "../client";
 
 export const handleCreateVideo = inngest.createFunction(

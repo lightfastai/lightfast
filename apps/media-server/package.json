@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "dist/server.js",
   "scripts": {
     "clean": "rm -rf dist .turbo .wrangler node_modules .cache",
     "dev": "vite",
@@ -22,33 +21,29 @@
   "dependencies": {
     "@hono/react-renderer": "^1.0.1",
     "@hono/zod-validator": "^0.4.3",
-    "@lightfast/media-server": "workspace:^",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
     "@supabase/supabase-js": "^2.49.4",
     "@t3-oss/env-core": "^0.12.0",
     "@vendor/db": "workspace:*",
-    "@vendor/inngest": "workspace:*",
     "aws-sdk": "^2.1481.0",
     "dotenv": "^16.3.1",
-    "hono": "^4.7.7",
-    "hono-vite-react-stack": "^0.1.4",
+    "hono": "^4.7.6",
+    "inngest": "^3.35.1",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
-    "wrangler": "^4.13.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250428.0",
+    "@cloudflare/workers-types": "^4.20250414.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "hono-vite-react-stack": "^0.1.3",
     "tsx": "^4.19.3",
     "typescript": "catalog:",
-    "vite": "^6.3.3"
+    "vite": "^6.2.6",
+    "wrangler": "^4.10.0"
   },
-  "prettier": "@repo/prettier-config",
-  "engines": {
-    "node": ">=18.0.0"
-  }
+  "prettier": "@repo/prettier-config"
 }

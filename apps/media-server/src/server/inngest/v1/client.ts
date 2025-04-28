@@ -2,7 +2,7 @@ import { Context } from "hono";
 
 import { Inngest, InngestMiddleware } from "@vendor/inngest";
 
-import { Env } from "~/env/wrangler-env";
+import { Env } from "../../../env/wrangler-env";
 
 const bindings = new InngestMiddleware({
   name: "Hono bindings",

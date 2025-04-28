@@ -1,1 +1,1 @@
-export * from "inngest/hono";
+export { serve } from "inngest/hono";
