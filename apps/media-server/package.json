@@ -3,46 +3,48 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "dist/server.js",
   "scripts": {
     "clean": "rm -rf dist .turbo .wrangler node_modules .cache",
-    "dev": "wrangler dev src/server.ts --port 4104",
-    "build": "tsc",
-    "deploy": "./deploy.sh",
-    "deploy:dev": "ENVIRONMENT=dev ./deploy.sh",
-    "deploy:prod": "ENVIRONMENT=prod ./deploy.sh",
-    "deploy:direct": "npx wrangler deploy src/server.ts --no-minify",
-    "preview": "wrangler preview src/server.ts",
+    "dev": "next dev --turbopack --port 4104",
+    "build": "next build",
+    "start": "next start",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "setup": "./setup-env.sh",
     "format": "prettier --check .",
     "lint": "eslint",
-    "with-env": "dotenv -e ./.internal/.env.development.local --",
     "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts"
   },
   "dependencies": {
+    "@hono/react-renderer": "^1.0.1",
     "@hono/zod-validator": "^0.4.3",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@repo/ui": "workspace:*",
     "@supabase/supabase-js": "^2.49.4",
     "@t3-oss/env-core": "^0.12.0",
     "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "aws-sdk": "^2.1481.0",
     "dotenv": "^16.3.1",
-    "hono": "^4.7.7",
-    "wrangler": "^4.13.2",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250428.0",
+    "@opennextjs/cloudflare": "~1.0.0-beta.0 || ^1.0.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "autoprefixer": "^10.4.20",
+    "hono-vite-react-stack": "^0.1.3",
+    "postcss": "catalog:tailwind4",
+    "tailwindcss": "catalog:tailwind4",
     "tsx": "^4.19.3",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "^4.13.2"
   },
-  "prettier": "@repo/prettier-config",
-  "engines": {
-    "node": ">=18.0.0"
-  }
+  "prettier": "@repo/prettier-config"
 }
