@@ -14,12 +14,20 @@ interface PaginationState {
   pageSize: number;
 }
 
+interface SortingState {
+  id: string;
+  desc: boolean;
+}
+
 interface ResourcesResponse {
   data: Resource[];
   count: number;
 }
 
-export function useResources(pagination: PaginationState) {
+export function useResources(
+  pagination: PaginationState,
+  sorting?: SortingState,
+) {
   const setResources = useResourcesStore((state) => state.setResources);
   const setLoading = useResourcesStore((state) => state.setLoading);
   const resources = useResourcesStore((state) => state.resources);
@@ -49,11 +57,17 @@ export function useResources(pagination: PaginationState) {
         const from = pagination.pageIndex * pagination.pageSize;
         const to = from + pagination.pageSize - 1;
 
-        const { data, error } = await client
-          .from("resource")
-          .select("*")
-          .order("id", { ascending: false })
-          .range(from, to);
+        let query = client.from("resource").select("*");
+
+        // Apply sorting if provided
+        if (sorting) {
+          query = query.order(sorting.id, { ascending: !sorting.desc });
+        } else {
+          // Default sort by created_at desc
+          query = query.order("created_at", { ascending: false });
+        }
+
+        const { data, error } = await query.range(from, to);
 
         if (!isMounted) return;
 
@@ -88,7 +102,13 @@ export function useResources(pagination: PaginationState) {
     return () => {
       isMounted = false;
     };
-  }, [pagination.pageIndex, pagination.pageSize, setLoading, setResources]);
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    sorting,
+    setLoading,
+    setResources,
+  ]);
 
   // Handle realtime updates
   const addResource = useResourcesStore((state) => state.addResource);

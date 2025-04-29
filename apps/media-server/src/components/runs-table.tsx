@@ -116,10 +116,13 @@ export function RunsTable() {
   const [pageSize, setPageSize] = useState<number>(50);
   const [pageIndex, setPageIndex] = useState<number>(0);
 
-  const { resources, loading, totalCount } = useResources({
-    pageIndex,
-    pageSize,
-  });
+  const { resources, loading, totalCount } = useResources(
+    {
+      pageIndex,
+      pageSize,
+    },
+    sorting.length > 0 ? sorting[0] : undefined,
+  );
 
   const table = useReactTable({
     data: resources,
