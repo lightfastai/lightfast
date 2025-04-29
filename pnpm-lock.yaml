@@ -382,9 +382,6 @@ importers:
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
-      immer:
-        specifier: ^10.1.1
-        version: 10.1.1
       nuqs:
         specifier: ^2.4.3
         version: 2.4.3(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
@@ -20340,7 +20337,8 @@ snapshots:
 
   immediate@3.0.6: {}
 
-  immer@10.1.1: {}
+  immer@10.1.1:
+    optional: true
 
   import-fresh@3.3.0:
     dependencies:

@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { immer } from "zustand/middleware/immer";
 
 import type { Database } from "~/types/supabase.types";
 
@@ -31,33 +30,22 @@ export const initResourcesState = (): ResourcesState => ({
 export const createResourcesStore = (
   initState: ResourcesState = initResourcesState(),
 ) =>
-  create<ResourcesStore>()(
-    immer((set) => ({
-      ...initState,
-      setResources: (resources) =>
-        set((state) => {
-          state.resources = resources;
-        }),
-      setLoading: (loading) =>
-        set((state) => {
-          state.loading = loading;
-        }),
-      addResource: (resource) =>
-        set((state) => {
-          state.resources.push(resource);
-        }),
-      updateResource: (id, updates) =>
-        set((state) => {
-          const resource = state.resources.find((r: Resource) => r.id === id);
-          if (resource) {
-            Object.assign(resource, updates);
-          }
-        }),
-      removeResource: (id) =>
-        set((state) => {
-          state.resources = state.resources.filter(
-            (r: Resource) => r.id !== id,
-          );
-        }),
-    })),
-  );
+  create<ResourcesStore>()((set) => ({
+    ...initState,
+    setResources: (resources) => set({ resources }),
+    setLoading: (loading) => set({ loading }),
+    addResource: (resource) =>
+      set((state) => ({
+        resources: [...state.resources, resource],
+      })),
+    updateResource: (id, updates) =>
+      set((state) => ({
+        resources: state.resources.map((r) =>
+          r.id === id ? { ...r, ...updates } : r,
+        ),
+      })),
+    removeResource: (id) =>
+      set((state) => ({
+        resources: state.resources.filter((r) => r.id !== id),
+      })),
+  }));

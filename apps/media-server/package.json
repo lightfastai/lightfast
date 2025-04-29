@@ -27,7 +27,6 @@
     "@tanstack/react-table": "^8.21.3",
     "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:*",
-    "immer": "^10.1.1",
     "nuqs": "^2.4.3",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
