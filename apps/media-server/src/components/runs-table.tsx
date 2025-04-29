@@ -6,6 +6,7 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   SortingState,
   useReactTable,
@@ -13,6 +14,15 @@ import {
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { parseAsJson, useQueryState } from "nuqs";
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@repo/ui/components/ui/pagination";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import {
   Table,
@@ -97,6 +107,7 @@ export function RunsTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() =>
     initializeFiltersFromQuery(queryFilters, columns),
   );
+  const [pageSize, setPageSize] = useState(10);
 
   const table = useReactTable({
     data: resources,
@@ -106,9 +117,14 @@ export function RunsTable() {
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     state: {
       sorting,
       columnFilters,
+      pagination: {
+        pageSize,
+        pageIndex: 0,
+      },
     },
   });
 
@@ -134,7 +150,7 @@ export function RunsTable() {
       {/* <div className="px-8 py-4">
         <DataTableFilter table={table} />
       </div> */}
-      <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="w-full">
           <Table className="w-full table-fixed">
             <TableHeader className="bg-background sticky top-0 z-10">
@@ -160,7 +176,7 @@ export function RunsTable() {
             </TableHeader>
           </Table>
         </div>
-        <ScrollArea className="h-full">
+        <ScrollArea className="flex-1">
           <div className="w-full">
             <Table className="w-full table-fixed">
               <TableBody>
@@ -173,7 +189,7 @@ export function RunsTable() {
                       Loading...
                     </TableCell>
                   </TableRow>
-                ) : resources.length === 0 ? (
+                ) : table.getRowModel().rows.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={columns.length + 1}
@@ -233,6 +249,49 @@ export function RunsTable() {
             </Table>
           </div>
         </ScrollArea>
+        <div className="flex items-center border-t px-8 py-2">
+          <div className="text-muted-foreground text-xs">
+            {table.getFilteredRowModel().rows.length} total runs
+          </div>
+          <div className="ml-auto">
+            <Pagination className="p-0">
+              <PaginationContent className="p-0">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      table.previousPage();
+                    }}
+                    aria-disabled={!table.getCanPreviousPage()}
+                  />
+                </PaginationItem>
+                {table.getPageCount() > 0 && (
+                  <PaginationItem>
+                    <PaginationLink href="#" isActive>
+                      {table.getState().pagination.pageIndex + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+                {table.getPageCount() > 1 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      table.nextPage();
+                    }}
+                    aria-disabled={!table.getCanNextPage()}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
       </div>
     </div>
   );
