@@ -99,7 +99,6 @@ function ExpandedContent({ resource }: { resource: Resource }) {
 }
 
 export function RunsTable() {
-  const { resources, loading } = useResources();
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [sorting, setSorting] = useState<SortingState>([
     {
@@ -117,6 +116,11 @@ export function RunsTable() {
   const [pageSize, setPageSize] = useState<number>(50);
   const [pageIndex, setPageIndex] = useState<number>(0);
 
+  const { resources, loading, totalCount } = useResources({
+    pageIndex,
+    pageSize,
+  });
+
   const table = useReactTable({
     data: resources,
     columns,
@@ -126,6 +130,8 @@ export function RunsTable() {
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: Math.ceil(totalCount / pageSize),
     onPaginationChange: (updater) => {
       if (typeof updater === "function") {
         const newState = updater({
@@ -312,7 +318,7 @@ export function RunsTable() {
         <div className="bg-background flex items-center justify-between border-t px-8 py-2">
           <div className="flex items-center gap-4">
             <div className="text-muted-foreground text-xs">
-              {table.getFilteredRowModel().rows.length} total runs
+              {totalCount} total runs
             </div>
             <Select
               value={pageSize.toString()}

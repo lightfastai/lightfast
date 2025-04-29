@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { toast } from "@repo/ui/hooks/use-toast";
 
@@ -9,34 +9,86 @@ import { useResourcesStore } from "~/providers/resources-provider";
 import { createClient } from "../lib/supabase-client";
 import { useRealtime } from "./use-realtime";
 
-export function useResources() {
+interface PaginationState {
+  pageIndex: number;
+  pageSize: number;
+}
+
+interface ResourcesResponse {
+  data: Resource[];
+  count: number;
+}
+
+export function useResources(pagination: PaginationState) {
   const setResources = useResourcesStore((state) => state.setResources);
   const setLoading = useResourcesStore((state) => state.setLoading);
   const resources = useResourcesStore((state) => state.resources);
   const loading = useResourcesStore((state) => state.loading);
+  const [totalCount, setTotalCount] = useState<number>(0);
 
-  // Fetch all resources on mount
+  // Fetch paginated resources
   useEffect(() => {
     let isMounted = true;
     const fetchResources = async () => {
       setLoading(true);
       const client = createClient();
-      const { data, error } = await client
-        .from("resource")
-        .select("*")
-        .order("id", { ascending: false });
-      if (isMounted) {
-        if (!error && data) {
+
+      try {
+        // First, get the total count
+        const { count } = await client
+          .from("resource")
+          .select("*", { count: "exact", head: true });
+
+        if (!isMounted) return;
+
+        if (count !== null) {
+          setTotalCount(count);
+        }
+
+        // Then fetch the paginated data
+        const from = pagination.pageIndex * pagination.pageSize;
+        const to = from + pagination.pageSize - 1;
+
+        const { data, error } = await client
+          .from("resource")
+          .select("*")
+          .order("id", { ascending: false })
+          .range(from, to);
+
+        if (!isMounted) return;
+
+        if (error) {
+          console.error("Error fetching resources:", error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch resources",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data) {
           setResources(data as Resource[]);
         }
-        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching resources:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch resources",
+          variant: "destructive",
+        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
+
     fetchResources();
     return () => {
       isMounted = false;
     };
-  }, [setLoading, setResources]);
+  }, [pagination.pageIndex, pagination.pageSize, setLoading, setResources]);
 
   // Handle realtime updates
   const addResource = useResourcesStore((state) => state.addResource);
@@ -48,6 +100,7 @@ export function useResources() {
       switch (payload.eventType) {
         case "INSERT":
           addResource(payload.new);
+          setTotalCount((prev) => prev + 1);
           toast({
             title: "New Resource Added",
             description: `${payload.new.type} resource created using ${payload.new.engine} engine.`,
@@ -60,6 +113,7 @@ export function useResources() {
           break;
         case "DELETE":
           removeResource(payload.old.id);
+          setTotalCount((prev) => Math.max(0, prev - 1));
           break;
       }
     },
@@ -79,5 +133,5 @@ export function useResources() {
     },
   });
 
-  return { resources, loading };
+  return { resources, loading, totalCount };
 }
