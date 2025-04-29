@@ -10,8 +10,11 @@ import { createClient } from "../lib/supabase-client";
 import { useRealtime } from "./use-realtime";
 
 interface PaginationState {
-  pageIndex: number;
   pageSize: number;
+  cursor?: {
+    created_at: string;
+    id: string;
+  };
 }
 
 interface SortingState {
@@ -53,21 +56,41 @@ export function useResources(
           setTotalCount(count);
         }
 
-        // Then fetch the paginated data
-        const from = pagination.pageIndex * pagination.pageSize;
-        const to = from + pagination.pageSize - 1;
-
+        // Build the query
         let query = client.from("resource").select("*");
 
-        // Apply sorting if provided
-        if (sorting) {
-          query = query.order(sorting.id, { ascending: !sorting.desc });
+        // Apply sorting and cursor-based pagination
+        const sortField = sorting?.id || "created_at";
+        const sortAscending = sorting ? !sorting.desc : false;
+
+        if (pagination.cursor) {
+          // If we have a cursor, use it to fetch the next page
+          if (sortAscending) {
+            query = query
+              .or(
+                `created_at.gt.${pagination.cursor.created_at},and(created_at.eq.${pagination.cursor.created_at},id.gt.${pagination.cursor.id})`,
+              )
+              .order(sortField, { ascending: true })
+              .order("id", { ascending: true });
+          } else {
+            query = query
+              .or(
+                `created_at.lt.${pagination.cursor.created_at},and(created_at.eq.${pagination.cursor.created_at},id.lt.${pagination.cursor.id})`,
+              )
+              .order(sortField, { ascending: false })
+              .order("id", { ascending: false });
+          }
         } else {
-          // Default sort by created_at desc
-          query = query.order("created_at", { ascending: false });
+          // First page, just sort
+          query = query
+            .order(sortField, { ascending: sortAscending })
+            .order("id", { ascending: sortAscending });
         }
 
-        const { data, error } = await query.range(from, to);
+        // Limit the number of records
+        query = query.limit(pagination.pageSize);
+
+        const { data, error } = await query;
 
         if (!isMounted) return;
 
@@ -103,7 +126,7 @@ export function useResources(
       isMounted = false;
     };
   }, [
-    pagination.pageIndex,
+    pagination.cursor,
     pagination.pageSize,
     sorting,
     setLoading,

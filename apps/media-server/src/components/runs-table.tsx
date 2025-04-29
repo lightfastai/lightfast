@@ -114,15 +114,39 @@ export function RunsTable() {
     initializeFiltersFromQuery(queryFilters, columns),
   );
   const [pageSize, setPageSize] = useState<number>(50);
-  const [pageIndex, setPageIndex] = useState<number>(0);
+  const [cursors, setCursors] = useState<
+    Array<{ created_at: string; id: string }>
+  >([]);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const { resources, loading, totalCount } = useResources(
     {
-      pageIndex,
       pageSize,
+      cursor: currentPage > 0 ? cursors[currentPage - 1] : undefined,
     },
     sorting.length > 0 ? sorting[0] : undefined,
   );
+
+  // Update cursors when new data is received
+  useEffect(() => {
+    if (resources.length > 0) {
+      const lastItem = resources[resources.length - 1];
+      // Only update cursor if we're on the current page and we have created_at and id
+      if (
+        currentPage === cursors.length &&
+        lastItem?.created_at &&
+        lastItem?.id
+      ) {
+        setCursors((prev) => [
+          ...prev,
+          {
+            created_at: lastItem.created_at,
+            id: lastItem.id,
+          },
+        ]);
+      }
+    }
+  }, [resources, currentPage, cursors.length]);
 
   const table = useReactTable({
     data: resources,
@@ -138,13 +162,13 @@ export function RunsTable() {
     onPaginationChange: (updater) => {
       if (typeof updater === "function") {
         const newState = updater({
-          pageIndex,
+          pageIndex: currentPage,
           pageSize,
         });
-        setPageIndex(newState.pageIndex);
+        setCurrentPage(newState.pageIndex);
         setPageSize(newState.pageSize);
       } else {
-        setPageIndex(updater.pageIndex);
+        setCurrentPage(updater.pageIndex);
         setPageSize(updater.pageSize);
       }
     },
@@ -153,10 +177,16 @@ export function RunsTable() {
       columnFilters,
       pagination: {
         pageSize,
-        pageIndex,
+        pageIndex: currentPage,
       },
     },
   });
+
+  // Reset cursors when sorting or page size changes
+  useEffect(() => {
+    setCursors([]);
+    setCurrentPage(0);
+  }, [sorting, pageSize]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -167,11 +197,6 @@ export function RunsTable() {
       })),
     );
   }, [columnFilters, setQueryFilters]);
-
-  // Reset page index when page size changes
-  useEffect(() => {
-    setPageIndex(0);
-  }, [pageSize]);
 
   const toggleRow = (rowId: string) => {
     setExpandedRows((prev) => ({
@@ -368,7 +393,7 @@ export function RunsTable() {
                           e.preventDefault();
                           table.setPageIndex(Number(page) - 1);
                         }}
-                        isActive={pageIndex === Number(page) - 1}
+                        isActive={currentPage === Number(page) - 1}
                       >
                         {page}
                       </PaginationLink>
