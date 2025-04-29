@@ -75,7 +75,7 @@ export function RunsTable() {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="px-8">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -92,7 +92,7 @@ export function RunsTable() {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-muted-foreground text-center"
+                  className="text-muted-foreground px-8 text-center"
                 >
                   Loading...
                 </TableCell>
@@ -101,7 +101,7 @@ export function RunsTable() {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-muted-foreground text-center"
+                  className="text-muted-foreground px-8 text-center"
                 >
                   No runs found.
                 </TableCell>
@@ -110,7 +110,7 @@ export function RunsTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="px-8">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
