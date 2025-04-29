@@ -8,12 +8,9 @@
     "dev": "pnpm with-env next dev -p 4104",
     "build": "pnpm with-env next build",
     "start": "next start",
-    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "setup": "./setup-env.sh",
-    "format": "prettier --check .",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.internal/.env.development.local --",
     "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts"
   },
@@ -34,8 +31,6 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250428.0",
-    "@opennextjs/cloudflare": "~1.0.0-beta.0 || ^1.0.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
@@ -44,8 +39,7 @@
     "postcss": "catalog:tailwind4",
     "tailwindcss": "catalog:tailwind4",
     "tsx": "^4.19.3",
-    "typescript": "catalog:",
-    "wrangler": "^4.13.2"
+    "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
 }

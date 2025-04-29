@@ -2,8 +2,10 @@ import { vercel } from "@t3-oss/env-core/presets-zod";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+import { env as inngestEnv } from "@vendor/inngest/env";
+
 export const env = createEnv({
-  extends: [vercel()],
+  extends: [vercel(), inngestEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -11,7 +13,6 @@ export const env = createEnv({
     FORCE_BASE_URL: z.string().optional(),
   },
   server: {
-    INNGEST_APP_NAME: z.string().min(1).startsWith("lightfast-"),
     SUPABASE_PROJECT_ID: z.string().min(1),
   },
   client: {
