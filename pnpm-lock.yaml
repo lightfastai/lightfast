@@ -1021,9 +1021,6 @@ importers:
 
   vendor/db:
     dependencies:
-      '@neondatabase/serverless':
-        specifier: ^1.0.0
-        version: 1.0.0
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -12267,6 +12264,7 @@ snapshots:
     dependencies:
       '@types/node': 22.15.2
       '@types/pg': 8.11.6
+    optional: true
 
   '@next/bundle-analyzer@15.0.3(bufferutil@4.0.9)':
     dependencies:

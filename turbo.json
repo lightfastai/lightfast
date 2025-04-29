@@ -6,22 +6,6 @@
       "dependsOn": ["^build"],
       "outputs": [".cache/tsbuildinfo.json", "dist/**"]
     },
-    "deploy": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "deploy:dev": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "deploy:prod": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "setup": {
-      "cache": false,
-      "interactive": true
-    },
     "dev": {
       "dependsOn": ["^dev"],
       "cache": false,
@@ -42,23 +26,13 @@
     "clean": {
       "cache": false
     },
-    "lightfast:migrate": {
+    "migrate": {
       "cache": false
     },
-    "lightfast:migrate:generate": {
+    "migrate:generate": {
       "cache": false
     },
-    "lightfast:studio": {
-      "cache": false,
-      "persistent": true
-    },
-    "media-server:migrate": {
-      "cache": false
-    },
-    "media-server:migrate:generate": {
-      "cache": false
-    },
-    "media-server:studio": {
+    "studio": {
       "cache": false,
       "persistent": true
     },

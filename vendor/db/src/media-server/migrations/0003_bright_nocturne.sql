@@ -1,1 +1,0 @@
-ALTER TYPE "public"."media_server_processor_engine" ADD VALUE 'fal-ai/kling-video/v2/master/text-to-video' BEFORE 'openai/gpt-4o-mini';
