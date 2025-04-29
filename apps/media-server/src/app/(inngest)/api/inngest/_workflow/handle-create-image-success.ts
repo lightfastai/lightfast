@@ -8,13 +8,41 @@ export const handleResourceImageSuccess = inngest.createFunction(
   },
   { event: "media-server/resource-image-success" },
   async ({ event, step }) => {
-    return step.run("update-resource-success", async () => {
-      const { id, url } = event.data;
-      await createClient()
+    const { id, data } = event.data;
+
+    const request = await step.run("get-resource", async () => {
+      const { data, error } = await createClient()
         .from("resource")
-        .update({ data: { url, status: "completed" } })
-        .eq("id", id);
-      return { id, status: "success", url };
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    });
+
+    return step.run("update-resource-success", async () => {
+      const { id } = event.data;
+      const response = await createClient()
+        .from("resource")
+        .update({
+          data: {
+            url: data.payload.images[0]?.url!,
+          },
+          status: "completed",
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      return { id, status: "success" };
     });
   },
 );

@@ -8,6 +8,23 @@ export interface FalGenerateImageOptions {
   model: string;
 }
 
+export interface FalGenerateImageSuccessPayload {
+  request_id: string;
+  gateway_request_id: string;
+  status: string;
+  error: unknown;
+  payload: {
+    prompt: string;
+    images: {
+      url: string;
+      content_type: string;
+      width: number;
+      height: number;
+    }[];
+    seed: number;
+  };
+}
+
 export interface FalGenerateImageResult extends InQueueQueueStatus {}
 
 /**

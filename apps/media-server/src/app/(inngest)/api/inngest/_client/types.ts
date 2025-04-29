@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
+
+import { FalGenerateImageSuccessPayload } from "@repo/ai";
+
 // Initial context for repository identification
 export interface ExampleData {
   requestId: string;
@@ -11,7 +14,7 @@ export type HandleCreateImageData = {
 
 export type ResourceImageSuccessData = {
   id: string;
-  url: string;
+  data: Pick<FalGenerateImageSuccessPayload, "payload">;
 };
 
 export type HandleCreateVideoData = {

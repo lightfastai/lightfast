@@ -4,7 +4,12 @@ import { z } from "zod";
 
 export const env = createEnv({
   extends: [vercel()],
-  shared: {},
+  shared: {
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
+    FORCE_BASE_URL: z.string().optional(),
+  },
   server: {
     INNGEST_APP_NAME: z.string().min(1).startsWith("lightfast-"),
     SUPABASE_PROJECT_ID: z.string().min(1),
@@ -16,6 +21,8 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NODE_ENV: process.env.NODE_ENV,
+    FORCE_BASE_URL: process.env.FORCE_BASE_URL,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

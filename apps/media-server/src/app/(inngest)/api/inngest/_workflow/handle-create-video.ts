@@ -1,6 +1,6 @@
 import { generateVideoWithFal } from "@repo/ai";
 
-import { createVideoSuccessWebhookUrl } from "~/lib/create-base-url";
+import { createVideoSuccessWebhookUrl } from "~/lib/base-url";
 import { createClient } from "~/lib/supabase-client";
 import { inngest } from "../_client/client";
 

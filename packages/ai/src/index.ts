@@ -21,3 +21,4 @@ export { generateText } from "ai";
 
 export { generateImageWithFal } from "./fal/generate-text-to-image";
 export { generateVideoWithFal } from "./fal/generate-text-to-video";
+export type { FalGenerateImageSuccessPayload } from "./fal/generate-text-to-image";

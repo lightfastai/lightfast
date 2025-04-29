@@ -1,6 +1,6 @@
 import { generateImageWithFal } from "@repo/ai";
 
-import { createImageSuccessWebhookUrl } from "~/lib/create-base-url";
+import { createImageSuccessWebhookUrl } from "~/lib/base-url";
 import { createClient } from "~/lib/supabase-client";
 import { inngest } from "../_client/client";
 
@@ -25,17 +25,26 @@ export const handleCreateImage = inngest.createFunction(
     });
 
     await step.run("update-resource-status-to-processing", async () => {
-      await createClient()
+      const { data, error } = await createClient()
         .from("resource")
-        .update({ data: { prompt, status: "in_queue" } })
-        .eq("id", id);
+        .update({ data: { prompt }, status: "in_queue" })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
     });
 
     await step.run("generate-image-with-fal", async () => {
       const { id, prompt } = event.data;
       // Generate image with Fal
       const webhookUrl = createImageSuccessWebhookUrl({ id });
-      await generateImageWithFal({
+      console.log("webhookUrl", webhookUrl);
+      const result = await generateImageWithFal({
         prompt,
         webhookUrl,
         model: resource.engine,
@@ -43,11 +52,15 @@ export const handleCreateImage = inngest.createFunction(
         height: 1024,
         // Optionally pass FAL_KEY if needed by generateImageWithFal
       });
+
+      const { request_id } = result;
+
       // Update resource status to 'processing'
       await createClient()
         .from("resource")
-        .update({ data: { prompt, status: "processing" } })
+        .update({ data: { prompt, request_id }, status: "processing" })
         .eq("id", id);
+
       return { id, status: "processing" };
     });
   },
