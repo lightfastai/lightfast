@@ -12,6 +12,21 @@ prompts=(
     "A magical greenhouse filled with impossible plants"
     "A desert oasis with geometric patterns in the sand"
     "A winter wonderland with northern lights and ice castles"
+    "An ancient temple overgrown with luminous vines"
+    "A futuristic metropolis with flying vehicles and holographic billboards"
+    "A dragon's lair filled with glittering treasures and ancient artifacts"
+    "A candy kingdom with chocolate rivers and lollipop trees"
+    "An enchanted garden with musical flowers and butterfly lanterns"
+    "A space station observatory with panoramic views of distant galaxies"
+    "A lost city in the clouds with rainbow bridges"
+    "A volcanic landscape with crystal formations and aurora skies"
+    "A time-traveling train station with portals to different eras"
+    "A mechanical forest with clockwork animals and gear-driven trees"
+    "An underwater volcanic vent with prismatic sea creatures"
+    "A floating market in the sky with merchant airships"
+    "A bioluminescent coral reef city at twilight"
+    "A quantum laboratory with impossible geometry and energy fields"
+    "A celestial observatory with constellation creatures coming to life"
 )
 
 # Send requests in parallel
