@@ -50,3 +50,7 @@ dist/
 
 # turbo
 .turbo
+
+.dev.vars
+.internal
+.internal/.env.development.local
