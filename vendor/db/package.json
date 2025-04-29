@@ -8,14 +8,8 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./lightfast/schema": {
-      "types": "./dist/lightfast/schema.d.ts",
-      "default": "./src/lightfast/schema/index.ts"
-    },
-    "./lightfast/types": {
-      "types": "./dist/lightfast/types.d.ts",
-      "default": "./src/lightfast/types.ts"
-    },
+    "./lightfast/schema": "./src/lightfast/schema/index.ts",
+    "./lightfast/types": "./src/lightfast/types.ts",
     "./client": "./src/client.ts",
     "./env": "./env.ts"
   },

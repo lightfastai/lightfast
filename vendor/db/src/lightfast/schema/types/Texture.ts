@@ -22,7 +22,7 @@ export type TextureResolution = z.infer<typeof $TextureResolution>;
 
 export const $Texture = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal($Shaders.enum.Noise),
+    type: z.literal($Shaders.Enum.Noise),
     uniforms: $PerlinNoise2D,
     resolution: $TextureResolution,
   }),

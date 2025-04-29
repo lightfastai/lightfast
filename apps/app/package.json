@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm with-env next build",
-    "clean": "git clean -xdf .cache .next .turbo node_modules .env.sentry-build-plugin",
+    "clean": "git clean -xdf .cache .next .turbo node_modules .env.sentry-build-plugin .vercel .clerk",
     "dev": "pnpm with-env next dev -p 4100",
     "analyze": "ANALYZE=true pnpm with-env next build",
     "format": "prettier --check . --ignore-path ../../../.gitignore",

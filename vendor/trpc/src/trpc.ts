@@ -30,7 +30,10 @@ import { log } from "@vendor/observability/log";
 export const createTRPCContext = async (opts: {
   headers: Headers;
   session: Session | null;
-}) => {
+}): Promise<{
+  session: Session | null;
+  db: typeof db;
+}> => {
   const session = await auth();
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";

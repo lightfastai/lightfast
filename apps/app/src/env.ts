@@ -2,10 +2,11 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
+import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as dbEnv } from "@vendor/db/env";
 
 export const env = createEnv({
-  extends: [vercel(), dbEnv],
+  extends: [vercel(), dbEnv, clerkEnvBase],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -15,7 +16,9 @@ export const env = createEnv({
    * Specify your server-side environment variables schema here.
    * This way you can ensure the app isn't built with invalid env vars.
    */
-  server: {},
+  server: {
+    CLERK_WEBHOOK_SECRET: z.string(),
+  },
 
   /**
    * Specify your client-side environment variables schema here.

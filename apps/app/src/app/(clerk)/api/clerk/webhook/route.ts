@@ -1,7 +1,9 @@
+import type { NextRequest } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 
 import type { UserJSON } from "@vendor/clerk/server";
 
+import { env } from "~/env";
 import { api } from "~/trpc/client/server";
 
 /**
@@ -39,9 +41,11 @@ const handleUserCreated = async (data: UserJSON) => {
   }
 };
 
-export const POST = async (request: Request): Promise<Response> => {
+export const POST = async (request: NextRequest): Promise<Response> => {
   try {
-    const evt = await verifyWebhook(request);
+    const evt = await verifyWebhook(request, {
+      signingSecret: env.CLERK_WEBHOOK_SECRET,
+    });
 
     // Get the ID and type
     const { id } = evt.data;
