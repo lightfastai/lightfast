@@ -2,9 +2,6 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
-    "topo": {
-      "dependsOn": ["^topo"]
-    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".cache/tsbuildinfo.json", "dist/**"]
@@ -19,36 +16,29 @@
       "outputLogs": "new-only"
     },
     "lint": {
-      "dependsOn": ["^topo", "^build"],
+      "dependsOn": ["^build"],
       "outputs": [".cache/.eslintcache"]
     },
     "typecheck": {
-      "dependsOn": ["^topo", "^build"],
+      "dependsOn": ["^build"],
       "outputs": [".cache/tsbuildinfo.json"]
     },
     "clean": {
       "cache": false
     },
-    "//#clean": {
+    "migrate": {
       "cache": false
     },
-    "push": {
-      "cache": false,
-      "interactive": true
+    "migrate:generate": {
+      "cache": false
     },
     "studio": {
       "cache": false,
       "persistent": true
     },
-    "migrate": {
-      "cache": false
-    },
     "dev:email": {
       "cache": false,
       "persistent": true
-    },
-    "migrate:generate": {
-      "cache": false
     },
     "ui": {
       "cache": false,
@@ -88,6 +78,7 @@
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
-    "npm_lifecycle_event"
+    "npm_lifecycle_event",
+    "ENVIRONMENT"
   ]
 }

@@ -10,7 +10,8 @@
     },
     "./server": "./src/server.ts",
     "./env": "./env.ts",
-    "./agent-kit": "./src/agent-kit.ts"
+    "./agent-kit": "./src/agent-kit.ts",
+    "./hono": "./src/hono.ts"
   },
   "license": "MIT",
   "scripts": {

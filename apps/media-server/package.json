@@ -1,0 +1,45 @@
+{
+  "name": "@lightfast/media-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf dist .turbo node_modules .cache",
+    "dev": "pnpm with-env next dev -p 4104",
+    "build": "pnpm with-env next build",
+    "start": "next start",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --"
+  },
+  "dependencies": {
+    "@repo/ai": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.4",
+    "@t3-oss/env-core": "^0.12.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@vendor/db": "workspace:*",
+    "@vendor/inngest": "workspace:*",
+    "nuqs": "^2.4.3",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "zod": "^3.24.3",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "autoprefixer": "^10.4.20",
+    "dotenv-cli": "^7.4.2",
+    "postcss": "catalog:tailwind4",
+    "tailwindcss": "catalog:tailwind4",
+    "tsx": "^4.19.3",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

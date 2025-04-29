@@ -5,7 +5,6 @@ export const env = createEnv({
   shared: {},
   server: {
     DATABASE_URL: z.string().min(1).url(),
-    DATABASE_URL_UNPOOLED: z.string().min(1).url(),
   },
   client: {},
   experimental__runtimeEnv: {},
