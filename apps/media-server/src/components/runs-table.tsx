@@ -115,6 +115,7 @@ export function RunsTable() {
     initializeFiltersFromQuery(queryFilters, columns),
   );
   const [pageSize, setPageSize] = useState<number>(50);
+  const [pageIndex, setPageIndex] = useState<number>(0);
 
   const table = useReactTable({
     data: resources,
@@ -125,12 +126,25 @@ export function RunsTable() {
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: (updater) => {
+      if (typeof updater === "function") {
+        const newState = updater({
+          pageIndex,
+          pageSize,
+        });
+        setPageIndex(newState.pageIndex);
+        setPageSize(newState.pageSize);
+      } else {
+        setPageIndex(updater.pageIndex);
+        setPageSize(updater.pageSize);
+      }
+    },
     state: {
       sorting,
       columnFilters,
       pagination: {
         pageSize,
-        pageIndex: 0,
+        pageIndex,
       },
     },
   });
@@ -144,6 +158,11 @@ export function RunsTable() {
       })),
     );
   }, [columnFilters, setQueryFilters]);
+
+  // Reset page index when page size changes
+  useEffect(() => {
+    setPageIndex(0);
+  }, [pageSize]);
 
   const toggleRow = (rowId: string) => {
     setExpandedRows((prev) => ({
@@ -297,7 +316,10 @@ export function RunsTable() {
             </div>
             <Select
               value={pageSize.toString()}
-              onValueChange={(value) => setPageSize(Number(value))}
+              onValueChange={(value) => {
+                const newSize = Number(value);
+                table.setPageSize(newSize);
+              }}
             >
               <SelectTrigger className="h-8 w-[100px]">
                 <SelectValue />
@@ -319,7 +341,9 @@ export function RunsTable() {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      table.previousPage();
+                      if (table.getCanPreviousPage()) {
+                        table.previousPage();
+                      }
                     }}
                     aria-disabled={!table.getCanPreviousPage()}
                   />
@@ -335,10 +359,7 @@ export function RunsTable() {
                           e.preventDefault();
                           table.setPageIndex(Number(page) - 1);
                         }}
-                        isActive={
-                          table.getState().pagination.pageIndex ===
-                          Number(page) - 1
-                        }
+                        isActive={pageIndex === Number(page) - 1}
                       >
                         {page}
                       </PaginationLink>
@@ -350,7 +371,9 @@ export function RunsTable() {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      table.nextPage();
+                      if (table.getCanNextPage()) {
+                        table.nextPage();
+                      }
                     }}
                     aria-disabled={!table.getCanNextPage()}
                   />
