@@ -110,6 +110,18 @@ const RESOURCE_TYPE_OPTIONS = [
 
 export const columns: ColumnDef<Resource>[] = [
   {
+    accessorKey: "id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="ID" />
+    ),
+    enableSorting: false,
+    meta: {
+      type: "text",
+      displayName: "ID",
+      icon: FileText,
+    },
+  },
+  {
     accessorKey: "status",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />

@@ -33,15 +33,14 @@ import { columns } from "./columns";
 import { DataTableFilter } from "./data-table-filter";
 
 function ExpandedContent({ resource }: { resource: Resource }) {
+  const data = resource.data as Record<string, string>;
+
   return (
     <div className="bg-muted/50 px-8 py-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <h4 className="font-medium">Details</h4>
           <div className="mt-2 space-y-2">
-            <div>
-              <span className="text-muted-foreground">ID:</span> {resource.id}
-            </div>
             <div>
               <span className="text-muted-foreground">Engine:</span>{" "}
               {resource.engine}
@@ -58,9 +57,22 @@ function ExpandedContent({ resource }: { resource: Resource }) {
         </div>
         <div>
           <h4 className="font-medium">Data</h4>
-          <div className="mt-2">
-            <pre className="text-muted-foreground text-sm whitespace-pre-wrap">
-              {JSON.stringify(resource.data, null, 2)}
+          <div className="bg-card mt-2 rounded-md border p-4">
+            <pre className="text-sm whitespace-pre-wrap">
+              <code className="text-[#292D3E]">
+                <span className="text-[#89DDFF]">{"{"}</span>
+                {Object.entries(data).map(([key, value], i, arr) => (
+                  <div key={key} className="ml-4">
+                    <span className="text-[#C792EA]">"{key}"</span>
+                    <span className="text-[#89DDFF]">: </span>
+                    <span className="text-[#C3E88D]">"{String(value)}"</span>
+                    <span className="text-[#89DDFF]">
+                      {i === arr.length - 1 ? "" : ","}
+                    </span>
+                  </div>
+                ))}
+                <span className="text-[#89DDFF]">{"}"}</span>
+              </code>
             </pre>
           </div>
         </div>
@@ -189,7 +201,7 @@ export function RunsTable() {
                     ))}
                   </TableRow>
                   {expandedRows[row.id] && (
-                    <TableRow className="bg-muted/50">
+                    <TableRow>
                       <TableCell colSpan={columns.length + 1} className="p-0">
                         <ExpandedContent resource={row.original as Resource} />
                       </TableCell>
