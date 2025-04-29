@@ -15,7 +15,8 @@
     "./lightfast/types": {
       "types": "./dist/lightfast/types.d.ts",
       "default": "./src/lightfast/types.ts"
-    }
+    },
+    "./env": "./env.ts"
   },
   "license": "MIT",
   "scripts": {
