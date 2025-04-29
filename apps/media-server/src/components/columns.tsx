@@ -142,7 +142,7 @@ export const columns: ColumnDef<Resource>[] = [
   {
     accessorKey: "external_request_id",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Queued at" />
+      <DataTableColumnHeader column={column} title="Created at" />
     ),
     cell: ({ row }) => {
       const value = row.getValue("external_request_id");
@@ -151,7 +151,7 @@ export const columns: ColumnDef<Resource>[] = [
     enableSorting: true,
     meta: {
       type: "text",
-      displayName: "Queued at",
+      displayName: "Created at",
       icon: FileText,
     },
   },

@@ -1,4 +1,11 @@
-import { jsonb, pgEnum, pgSchema, varchar } from "drizzle-orm/pg-core";
+import {
+  jsonb,
+  pgEnum,
+  pgSchema,
+  timestamp,
+  varchar,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm/sql";
 import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
@@ -75,4 +82,6 @@ export const MediaServerResource = mediaServerSchema.table("resource", {
   data: jsonb("data").notNull().$type<typeof $MediaServerResourceData>(),
   url: varchar("url", { length: 255 }),
   externalRequestId: varchar("external_request_id", { length: 191 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").$onUpdateFn(() => sql`now()`),
 });

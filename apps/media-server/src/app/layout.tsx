@@ -7,8 +7,8 @@ import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 
+import { ContentLayout } from "~/components/content-layout";
 import { AppSidebar } from "~/components/sidebar";
-import { SiteHeader } from "~/components/site-header";
 import { ResourcesProvider } from "~/providers/resources-provider";
 
 export default function RootLayout({
@@ -27,8 +27,9 @@ export default function RootLayout({
                 <AppSidebar />
                 <SidebarInset>
                   <div className="flex h-full flex-col">
-                    <SiteHeader />
-                    <div className="flex-1">{children}</div>
+                    <div className="flex-1">
+                      <ContentLayout>{children}</ContentLayout>
+                    </div>
                   </div>
                 </SidebarInset>
               </SidebarProvider>

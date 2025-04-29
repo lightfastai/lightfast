@@ -65,9 +65,11 @@ export function RunsTable() {
   }, [columnFilters, setQueryFilters]);
 
   return (
-    <div className="space-y-4">
-      <DataTableFilter table={table} />
-      <div className="bg-card rounded-lg border">
+    <div className="divide-border divide-y">
+      <div className="px-8 py-4">
+        <DataTableFilter table={table} />
+      </div>
+      <div className="h-full">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
