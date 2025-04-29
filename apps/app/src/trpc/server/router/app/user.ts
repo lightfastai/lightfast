@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { eq } from "@vendor/db";
-import { User } from "@vendor/db/schema";
+import { User } from "@vendor/db/lightfast/schema";
 import { protectedProcedure, publicProcedure } from "@vendor/trpc";
 
 export const appUserRouter = {

@@ -5,10 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { WebGLRenderTargetNode, WebGLRootState } from "@repo/threejs";
 import type { Shaders } from "@repo/webgl";
-import type { Texture, TextureType } from "@vendor/db/types";
+import type { Texture, TextureType } from "@vendor/db/lightfast/types";
 import { useShaderOrchestratorMap, useUnifiedUniforms } from "@repo/threejs";
 import { getAllShaderTypes, shaderRegistry } from "@repo/webgl";
-import { getUniformForEdge } from "@vendor/db/schema";
+import { getUniformForEdge } from "@vendor/db/lightfast/schema";
 
 import type { BaseEdge } from "../types/edge";
 import { useEdgeStore } from "../providers/edge-store-provider";

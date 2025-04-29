@@ -1,12 +1,17 @@
-import { MainNav } from "./main-nav";
+import Link from "next/link";
 
-export const SiteHeader = () => {
+import { Icons } from "~/components/icons";
+
+export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full py-6 backdrop-blur">
-      <div className="container flex items-center">
-        <MainNav />
-        {/* <MobileNav /> */}
+    <header className="w-full px-4 py-6 md:px-6">
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center space-x-2">
+            <Icons.logo className="size-4" />
+          </Link>
+        </div>
       </div>
     </header>
   );
-};
+}

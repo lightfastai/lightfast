@@ -4,18 +4,18 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    },
-    "./fal-env": "./fal-env.ts",
-    "./llm-env": "./llm-env.ts",
+    ".": "./src/index.ts",
+    "./fal-env": "./src/env/fal-env.ts",
+    "./openai-env": "./src/env/openai-env.ts",
+    "./anthropic-env": "./src/env/anthropic-env.ts",
     "./schema": {
       "types": "./dist/src/schema/index.d.ts",
       "default": "./src/schema/index.ts"
     },
     "./fal": "./src/fal/client.ts",
-    "./fal/server": "./src/fal/nextjs-server-proxy.ts"
+    "./fal/server": "./src/fal/nextjs-server-proxy.ts",
+    "./fal/hono-server": "./src/fal/hono-server-proxy.ts",
+    "./ai": "./src/ai/index.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -29,7 +29,8 @@
   "dependencies": {
     "@fal-ai/client": "^1.2.0",
     "@fal-ai/server-proxy": "^1.1.1",
-    "@t3-oss/env-nextjs": "^0.11.1",
+    "@t3-oss/env-nextjs": "0.12.0",
+    "ai": "catalog:ai",
     "autoevals": "^0.0.103",
     "braintrust": "^0.0.168",
     "voyage-ai-provider": "^1.0.0",

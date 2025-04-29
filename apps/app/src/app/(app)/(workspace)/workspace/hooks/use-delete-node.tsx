@@ -1,6 +1,6 @@
 "use client";
 
-import { $NodeType } from "@vendor/db/types";
+import { $NodeType } from "@vendor/db/lightfast/types";
 
 import { api } from "~/trpc/client/react";
 import { useTextureRenderStore } from "../providers/texture-render-store-provider";

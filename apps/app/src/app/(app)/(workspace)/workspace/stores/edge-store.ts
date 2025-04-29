@@ -2,8 +2,8 @@ import type { OnEdgesChange } from "@xyflow/react";
 import { applyEdgeChanges } from "@xyflow/react";
 import { createStore } from "zustand";
 
-import type { InsertEdge } from "@vendor/db/schema";
-import { prepareEdgeForInsert } from "@vendor/db/schema";
+import type { InsertEdge } from "@vendor/db/lightfast/schema";
+import { prepareEdgeForInsert } from "@vendor/db/lightfast/schema";
 
 import type { BaseEdge } from "../types/edge";
 import { convertToStrictConnection } from "../types/connection";

@@ -3,8 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { and, eq, sql } from "@vendor/db";
-import { InsertNodeSchema, Node, Workspace } from "@vendor/db/schema";
-import { $Texture, $Txt2Img, $Window } from "@vendor/db/types";
+import { InsertNodeSchema, Node, Workspace } from "@vendor/db/lightfast/schema";
+import { $Texture, $Txt2Img, $Window } from "@vendor/db/lightfast/types";
 import { protectedProcedure } from "@vendor/trpc";
 
 import { verifyNodeOwnership } from "../middleware/verify-node-ownership";

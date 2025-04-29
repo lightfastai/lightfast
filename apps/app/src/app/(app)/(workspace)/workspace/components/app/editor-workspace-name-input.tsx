@@ -13,7 +13,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/hooks/use-toast";
-import { UpdateNameWorkspaceSchema } from "@vendor/db/schema";
+import { UpdateNameWorkspaceSchema } from "@vendor/db/lightfast/schema";
 
 import type { WorkspaceUpdateName } from "../../hooks/use-workspace-update-name";
 import type { RouterOutputs } from "~/trpc/server/index";

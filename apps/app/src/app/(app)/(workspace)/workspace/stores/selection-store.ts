@@ -6,8 +6,8 @@ import type {
   NodeType,
   TextureType,
   Txt2ImgType,
-} from "@vendor/db/types";
-import { $NodeType } from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
+import { $NodeType } from "@vendor/db/lightfast/types";
 
 interface SelectionState {
   selection: {

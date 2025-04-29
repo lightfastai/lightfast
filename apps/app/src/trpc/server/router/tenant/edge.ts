@@ -3,13 +3,18 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import type { NodeType } from "@vendor/db/types";
-import { Edge, Node, validateEdgeHandles, Workspace } from "@vendor/db/schema";
+import type { NodeType } from "@vendor/db/lightfast/types";
+import {
+  Edge,
+  Node,
+  validateEdgeHandles,
+  Workspace,
+} from "@vendor/db/lightfast/schema";
 import {
   $InputHandleId,
   $OutputHandleId,
   getMaxTargetEdges,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 import { protectedProcedure } from "@vendor/trpc";
 
 export const edgeRouter = {

@@ -1,6 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 
-import type { InputHandleId, OutputHandleId } from "@vendor/db/types";
+import type { InputHandleId, OutputHandleId } from "@vendor/db/lightfast/types";
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
-import { isInputHandleId, isOutputHandleId } from "@vendor/db/types";
+import { isInputHandleId, isOutputHandleId } from "@vendor/db/lightfast/types";
 
 /**
  * Props for the NodeHandle component
@@ -65,7 +65,7 @@ export function NodeHandle({
       <TooltipProvider>
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
-            <div className="absolute -left-4 -top-4 z-10 h-8 w-8 cursor-pointer rounded-full opacity-0" />
+            <div className="absolute -top-4 -left-4 z-10 h-8 w-8 cursor-pointer rounded-full opacity-0" />
           </TooltipTrigger>
           <TooltipContent side={tooltipSide} className="z-50">
             <span className="font-medium">{description}</span>

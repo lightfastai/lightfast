@@ -11,7 +11,9 @@
   "eslint.runtime": "node",
   "eslint.workingDirectories": [
     { "pattern": "apps/*/" },
-    { "pattern": "packages/*/" }
+    { "pattern": "internal/*/" },
+    { "pattern": "packages/*/" },
+    { "pattern": "vendor/*/" }
   ],
   "prettier.ignorePath": ".gitignore",
   "tailwindCSS.experimental.classRegex": [

@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { and, eq } from "@vendor/db";
-import { Node, Workspace } from "@vendor/db/schema";
+import { Node, Workspace } from "@vendor/db/lightfast/schema";
 import { protectedProcedure } from "@vendor/trpc";
 
 export const verifyNodeOwnership = protectedProcedure

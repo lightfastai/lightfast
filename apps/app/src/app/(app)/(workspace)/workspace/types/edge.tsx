@@ -1,6 +1,6 @@
 import type { Edge } from "@xyflow/react";
 
-import type { InputHandleId, OutputHandleId } from "@vendor/db/types";
+import type { InputHandleId, OutputHandleId } from "@vendor/db/lightfast/types";
 
 import type { RouterOutputs } from "~/trpc/server/index";
 

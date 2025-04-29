@@ -9,9 +9,11 @@
       "types": "./dist/src/log.d.ts",
       "default": "./src/log.ts"
     },
+    "./types": "./src/types.ts",
     "./error": "./src/error.ts",
     "./async-executor": "./src/async-executor.ts",
-    "./error-formatter": "./src/error-formatter.ts"
+    "./error-formatter": "./src/error-formatter.ts",
+    "./use-logger": "./src/use-logger.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -26,15 +28,14 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "concurrently": "^9.1.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@logtail/next": "^0.1.7",
-    "@sentry/nextjs": "^8.45.0",
-    "@t3-oss/env-nextjs": "^0.11.1"
+    "@logtail/next": "^0.2.0",
+    "@sentry/nextjs": "^9.14.0",
+    "@t3-oss/env-nextjs": "0.12.0"
   }
 }

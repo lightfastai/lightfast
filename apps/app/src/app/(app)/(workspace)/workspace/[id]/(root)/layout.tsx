@@ -7,7 +7,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@repo/ui/components/ui/breadcrumb";
-import { $NodeType } from "@vendor/db/types";
+import { $NodeType } from "@vendor/db/lightfast/types";
 
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
 import { api, HydrateClient } from "~/trpc/client/server";
@@ -158,7 +158,7 @@ export default async function WorkspaceLayout({
                           <Debug />
                         </WorkspaceViewProvider>
                       </WorkspaceReactFlowProvider>
-                      <div className="absolute right-4 top-4">
+                      <div className="absolute top-4 right-4">
                         <Inspector />
                       </div>
                       <EditorCommandDialog />

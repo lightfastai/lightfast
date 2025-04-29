@@ -1,13 +1,29 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { vercel } from "@t3-oss/env-nextjs/presets";
+import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
-import { llmEnv } from "@repo/ai/llm-env";
-import { env as authEnv } from "@vendor/clerk/env";
-import { env as dbEnv } from "@vendor/db/env";
+import { posthogEnv } from "@vendor/analytics/env";
+import { clerkEnvBase } from "@vendor/clerk/env";
+import { env as emailEnv } from "@vendor/email/env";
+import { env as inngestEnv } from "@vendor/inngest/env";
+import { env as nextEnv } from "@vendor/next/env";
+import { betterstackEnv, sentryEnv } from "@vendor/observability/env";
+import { env as securityEnv } from "@vendor/security/env";
+import { env as upstashEnv } from "@vendor/upstash/env";
 
 export const env = createEnv({
-  extends: [authEnv, dbEnv, llmEnv, vercel()],
+  extends: [
+    vercel(),
+    betterstackEnv,
+    clerkEnvBase,
+    sentryEnv,
+    securityEnv,
+    emailEnv,
+    inngestEnv,
+    posthogEnv,
+    nextEnv,
+    upstashEnv,
+  ],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -17,7 +33,10 @@ export const env = createEnv({
    * Specify your server-side environment variables schema here.
    * This way you can ensure the app isn't built with invalid env vars.
    */
-  server: {},
+  server: {
+    RESEND_EARLY_ACCESS_AUDIENCE_ID: z.string().min(1),
+    REQUEST_ID_SECRET: z.string().min(1),
+  },
 
   /**
    * Specify your client-side environment variables schema here.
@@ -31,9 +50,13 @@ export const env = createEnv({
    */
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+
+  /**
+   * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
+   * `SOME_VAR=''` will throw an error.
+   */
+  emptyStringAsUndefined: true,
 });

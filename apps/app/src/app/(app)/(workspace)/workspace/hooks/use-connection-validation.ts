@@ -1,10 +1,10 @@
 import type { Connection } from "@xyflow/react";
 import { useCallback } from "react";
 
-import type { InsertEdge } from "@vendor/db/schema";
+import type { InsertEdge } from "@vendor/db/lightfast/schema";
 import { useToast } from "@repo/ui/hooks/use-toast";
-import { prepareEdgeForInsert } from "@vendor/db/schema";
-import { isOutputHandleId } from "@vendor/db/types";
+import { prepareEdgeForInsert } from "@vendor/db/lightfast/schema";
+import { isOutputHandleId } from "@vendor/db/lightfast/types";
 
 import { convertToStrictConnection } from "../types/connection";
 

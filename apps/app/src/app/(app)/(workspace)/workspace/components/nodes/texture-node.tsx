@@ -6,7 +6,7 @@ import { Position } from "@xyflow/react";
 import { ArrowRightIcon } from "lucide-react";
 
 import type { Sampler2DMetadata } from "@repo/webgl";
-import type { Texture } from "@vendor/db/types";
+import type { Texture } from "@vendor/db/lightfast/types";
 import { GeometryMap, WebGLView } from "@repo/threejs";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
@@ -20,7 +20,7 @@ import {
   $GeometryType,
   createInputHandleId,
   createOutputHandleId,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";
@@ -56,11 +56,15 @@ export const TextureNode = memo(
         <div
           key={id}
           className={cn(
+<<<<<<< HEAD
+            `text-card-foreground relative cursor-pointer flex-col gap-1 p-1 shadow-sm`,
+=======
             "relative flex flex-col gap-2 p-2 text-card-foreground",
+>>>>>>> staging
           )}
         >
           <div className="flex flex-row items-center justify-between">
-            <Label className="font-mono text-xs font-bold uppercase tracking-widest">
+            <Label className="font-mono text-xs font-bold tracking-widest uppercase">
               {data.type} {id}
             </Label>
             <ToggleGroup type="single">
@@ -82,8 +86,75 @@ export const TextureNode = memo(
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
+<<<<<<< HEAD
+          <div className="mt-1 flex flex-row gap-1">
+            <div className="flex h-full flex-col items-center justify-center">
+              {inputCount > 1 ? (
+                // For nodes with multiple inputs, create spaced handles
+                Array.from({ length: inputCount }).map((_, index) => {
+                  const topPercentage = (index / (inputCount - 1)) * 100;
+                  const isFirst = index === 0;
+                  const isLast = index === inputCount - 1;
+
+                  return (
+                    <div
+                      key={`input-${index}`}
+                      className={cn(
+                        isFirst
+                          ? "mt-2 mb-auto"
+                          : isLast
+                            ? "mt-auto mb-2"
+                            : "my-auto",
+                      )}
+                    >
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <Handle
+                                id={`input-${index + 1}`}
+                                type="target"
+                                position={Position.Left}
+                                className="h-10 w-3"
+                                style={{ top: `${topPercentage}%` }}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            {getInputLabel(data.type, index)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  );
+                })
+              ) : (
+                // For nodes with a single input, center it
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Handle
+                          id="input-1"
+                          type="target"
+                          position={Position.Left}
+                          className="h-10 w-3"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      {getInputLabel(data.type, 0)}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+
+            <div className="h-32 w-72 border">
+=======
           <div className="flex flex-row items-center">
             <div className="h-32 w-72 overflow-hidden rounded border">
+>>>>>>> staging
               {targets[id]?.texture && (
                 <WebGLView
                   style={{

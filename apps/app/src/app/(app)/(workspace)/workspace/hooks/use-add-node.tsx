@@ -8,7 +8,7 @@ import type {
   Texture,
   TextureType,
   Txt2ImgType,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 import { nanoid } from "@repo/lib";
 import {
   $GeometryType,
@@ -20,7 +20,7 @@ import {
   createDefaultTexture,
   createDefaultTxt2Img,
   createDefaultWindow,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 
 import type { BaseNode } from "../types/node";
 import { api } from "~/trpc/client/react";

@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "cloudflare": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://observability.mcp.cloudflare.com/sse"]
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "envmcp",
+        "-e",
+        "./.env.development.local",
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "$SUPABASE_ACCESS_TOKEN"
+      ]
+    }
+  }
+}

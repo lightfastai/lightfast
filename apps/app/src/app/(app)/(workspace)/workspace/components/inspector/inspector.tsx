@@ -1,6 +1,6 @@
 "use client";
 
-import type { Texture } from "@vendor/db/types";
+import type { Texture } from "@vendor/db/lightfast/types";
 
 import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";

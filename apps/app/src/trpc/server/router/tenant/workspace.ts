@@ -2,7 +2,11 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
 import { desc, eq, sql } from "@vendor/db";
-import { UpdateNameWorkspaceSchema, User, Workspace } from "@vendor/db/schema";
+import {
+  UpdateNameWorkspaceSchema,
+  User,
+  Workspace,
+} from "@vendor/db/lightfast/schema";
 import { protectedProcedure } from "@vendor/trpc";
 
 import { verifyWorkspaceOwnership } from "../middleware/verify-workspace-ownership";

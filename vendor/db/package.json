@@ -8,18 +8,15 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./client": {
-      "types": "./dist/client.d.ts",
-      "default": "./src/client.ts"
+    "./lightfast/schema": {
+      "types": "./dist/lightfast/schema.d.ts",
+      "default": "./src/lightfast/schema/index.ts"
     },
-    "./schema": {
-      "types": "./dist/schema.d.ts",
-      "default": "./src/schema.ts"
+    "./lightfast/types": {
+      "types": "./dist/lightfast/types.d.ts",
+      "default": "./src/lightfast/types.ts"
     },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "default": "./src/types.ts"
-    },
+    "./client": "./src/client.ts",
     "./env": "./env.ts"
   },
   "license": "MIT",
@@ -29,19 +26,20 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "migrate": "pnpm with-env drizzle-kit migrate --config=./drizzle.config.ts",
-    "migrate:generate": "pnpm with-env drizzle-kit generate --config=./drizzle.config.ts",
-    "studio": "pnpm with-env drizzle-kit studio",
+    "migrate": "pnpm with-env-lightfast drizzle-kit migrate --config=./src/lightfast/drizzle.config.ts",
+    "migrate:generate": "pnpm with-env-lightfast drizzle-kit generate --config=./src/lightfast/drizzle.config.ts",
+    "studio": "pnpm with-env-lightfast drizzle-kit studio --config=./src/lightfast/drizzle.config.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e ../../.env --",
+    "with-env-lightfast": "dotenv -e ../../apps/media-server/.internal/.env.development.local --"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.0",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@repo/webgl": "workspace:^",
-    "drizzle-orm": "^0.35.3",
-    "drizzle-zod": "^0.5.1",
+    "@repo/webgl": "workspace:*",
+    "@vercel/postgres": "^0.10.0",
+    "drizzle-orm": "^0.43.1",
+    "drizzle-zod": "^0.7.1",
     "postgres": "^3.4.5",
     "zod": "catalog:"
   },
@@ -50,7 +48,7 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "dotenv-cli": "^7.4.2",
-    "drizzle-kit": "^0.26.2",
+    "drizzle-kit": "^0.31.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

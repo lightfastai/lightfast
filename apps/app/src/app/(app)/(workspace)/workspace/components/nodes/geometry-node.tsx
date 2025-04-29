@@ -3,7 +3,7 @@ import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
 import * as THREE from "three";
 
-import type { Geometry } from "@vendor/db/types";
+import type { Geometry } from "@vendor/db/lightfast/types";
 import { GeometryRenderer } from "@repo/threejs";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
@@ -27,11 +27,11 @@ export const GeometryNode = memo(
       <BaseNodeComponent selected={selected}>
         <div
           className={cn(
-            "flex cursor-pointer flex-col gap-y-1 p-1 text-card-foreground shadow-sm",
+            "text-card-foreground flex cursor-pointer flex-col gap-y-1 p-1 shadow-sm",
           )}
         >
           <div className="flex flex-row items-center justify-between">
-            <Label className="font-mono text-xs font-bold uppercase tracking-widest">
+            <Label className="font-mono text-xs font-bold tracking-widest uppercase">
               {type} {id}
             </Label>
             <ToggleGroup type="single">

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Position } from "@xyflow/react";
 import { PlayIcon } from "lucide-react";
 
-import type { Txt2Img } from "@vendor/db/types";
+import type { Txt2Img } from "@vendor/db/lightfast/types";
 import { createFalClient } from "@repo/ai/fal";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
@@ -71,11 +71,15 @@ export const FluxNode = memo(
         <div
           key={id}
           className={cn(
+<<<<<<< HEAD
+            `text-card-foreground relative cursor-pointer flex-col space-y-1 p-1 shadow-sm`,
+=======
             `relative flex flex-col space-y-1 p-1 text-card-foreground shadow-sm`,
+>>>>>>> staging
           )}
         >
           <div className="flex flex-row items-center justify-between">
-            <Label className="font-mono text-xs font-bold uppercase tracking-widest">
+            <Label className="font-mono text-xs font-bold tracking-widest uppercase">
               {data.type}
             </Label>
           </div>

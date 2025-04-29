@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import type { Texture } from "@vendor/db/types";
+import type { Texture } from "@vendor/db/lightfast/types";
 import { TextureRenderPipeline } from "@repo/threejs";
 
 import { api } from "~/trpc/client/react";

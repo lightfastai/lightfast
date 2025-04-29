@@ -1,5 +1,5 @@
 {
-  "name": "react-td",
+  "name": "lightfast",
   "private": true,
   "engines": {
     "node": ">=20.16.0",
@@ -10,12 +10,15 @@
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
-    "db:studio": "turbo -F @vendor/db studio",
     "db:migrate": "turbo -F @vendor/db migrate",
-    "db:migrate:generate": "turbo -F @vendor/db migrate:generate",
-    "dev": "turbo run dev --parallel --filter=@react-td/app --filter=@react-td/www",
-    "dev:td-www": "turbo watch dev -F @react-td/www --continue",
-    "dev:td-app": "turbo watch dev -F @react-td/app --continue",
+    "db:migrate:generate": "turbo -F @vendor/db lightfast:migrate:generate",
+    "db:studio": "turbo -F @vendor/db lightfast:studio",
+    "dev": "turbo run dev --parallel --filter=@lightfast/app --filter=@lightfast/www",
+    "dev:media-server": "turbo run dev -F @lightfast/media-server --continue",
+    "dev:www": "turbo watch dev -F @lightfast/www --continue",
+    "dev:docs": "turbo watch dev -F @lightfast/docs --continue",
+    "dev:app": "turbo watch dev -F @lightfast/app --continue",
+    "dev:email": "turbo run dev:email -F @lightfast/www",
     "brain": "turbo run eval",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
@@ -29,6 +32,7 @@
   },
   "devDependencies": {
     "@repo/prettier-config": "workspace:*",
+    "envmcp": "^0.2.0",
     "prettier": "catalog:",
     "turbo": "^2.4.4",
     "typescript": "catalog:"

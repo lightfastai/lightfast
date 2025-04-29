@@ -8,7 +8,7 @@ import type {
   MaterialType,
   TextureType,
   Txt2ImgType,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 import {
   Command,
   CommandDialog,
@@ -29,7 +29,7 @@ import {
   $MaterialType,
   $TextureType,
   $Txt2ImgType,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 
 import { useCommandDialog } from "../../hooks/use-command-dialog";
 import { useWorkspaceShortcuts } from "../../hooks/use-workspace-shortcuts";
@@ -145,7 +145,7 @@ export const EditorCommandDialog = () => {
     <CommandDialog open={isOpen} onOpenChange={close}>
       <Command>
         <Tabs value={TAB_VALUES[currentTabIndex]} className="gap-0">
-          <TabsList className="h-8 w-full rounded-none border-b bg-background">
+          <TabsList className="bg-background h-8 w-full rounded-none border-b">
             <TabsTrigger value="texture" className="text-xs">
               TOP
             </TabsTrigger>

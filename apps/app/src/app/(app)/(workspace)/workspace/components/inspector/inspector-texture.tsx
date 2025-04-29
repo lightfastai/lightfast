@@ -6,7 +6,7 @@ import { getUniformConstraintsForType } from "node_modules/@repo/webgl/src/regis
 import { useForm } from "react-hook-form";
 
 import type { Value } from "@repo/webgl";
-import type { Texture, TextureUniforms } from "@vendor/db/types";
+import type { Texture, TextureUniforms } from "@vendor/db/lightfast/types";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
@@ -15,7 +15,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import { $TextureUniforms } from "@vendor/db/types";
+import { $TextureUniforms } from "@vendor/db/lightfast/types";
 
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
@@ -92,17 +92,25 @@ export const InspectorTexture = ({
       <Tabs defaultValue="uniforms" className="flex flex-col">
         <div className="flex flex-col">
           <div className="flex items-center justify-end p-1.5">
-            <h3 className="font-mono text-xs font-bold uppercase tracking-widest">
+            <h3 className="font-mono text-xs font-bold tracking-widest uppercase">
               {data.type}
             </h3>
           </div>
           <Separator />
+<<<<<<< HEAD
+          <TabsList className="bg-background grid w-full grid-cols-2">
+=======
           <TabsList className="flex h-8 w-full rounded-none bg-background">
+>>>>>>> staging
             <TabsTrigger
               value="uniforms"
               className="flex items-center justify-center"
             >
+<<<<<<< HEAD
+              <span className="font-mono text-xs tracking-widest uppercase">
+=======
               <span className="font-mono text-xs tracking-widest">
+>>>>>>> staging
                 Uniforms
               </span>
             </TabsTrigger>
@@ -110,7 +118,13 @@ export const InspectorTexture = ({
               value="common"
               className="flex items-center justify-center"
             >
+<<<<<<< HEAD
+              <span className="font-mono text-xs tracking-widest uppercase">
+                Common
+              </span>
+=======
               <span className="font-mono text-xs tracking-widest">Common</span>
+>>>>>>> staging
             </TabsTrigger>
           </TabsList>
           <Separator />
@@ -140,7 +154,7 @@ export const InspectorTexture = ({
           <TabsContent value="common">
             <div className="flex flex-col gap-1.5 px-1.5 py-1.5">
               <div className="flex items-center justify-between">
-                <h2 className="font-mono text-xs font-bold uppercase tracking-widest">
+                <h2 className="font-mono text-xs font-bold tracking-widest uppercase">
                   Resolution
                 </h2>
               </div>

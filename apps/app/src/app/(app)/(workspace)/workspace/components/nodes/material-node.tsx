@@ -2,7 +2,7 @@ import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
 
-import type { Material } from "@vendor/db/types";
+import type { Material } from "@vendor/db/lightfast/types";
 import { GeometryRenderer } from "@repo/threejs";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Label } from "@repo/ui/components/ui/label";
@@ -26,11 +26,11 @@ export const MaterialNode = memo(
         <div
           key={id}
           className={cn(
-            "flex cursor-pointer flex-col gap-y-1 p-1 text-card-foreground shadow-sm",
+            "text-card-foreground flex cursor-pointer flex-col gap-y-1 p-1 shadow-sm",
           )}
         >
           <div className="flex flex-row items-center justify-between">
-            <Label className="font-mono text-xs font-bold uppercase tracking-widest">
+            <Label className="font-mono text-xs font-bold tracking-widest uppercase">
               {type} {id}
             </Label>
             <ToggleGroup type="single">

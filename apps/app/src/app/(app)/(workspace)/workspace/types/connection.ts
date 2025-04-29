@@ -1,12 +1,12 @@
 import type { Connection as BaseConnection } from "@xyflow/react";
 
-import type { InputHandleId, OutputHandleId } from "@vendor/db/types";
+import type { InputHandleId, OutputHandleId } from "@vendor/db/lightfast/types";
 import {
   createInputHandleId,
   createOutputHandleId,
   isInputHandleId,
   isOutputHandleId,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 
 /**
  * A strictly typed connection with guaranteed valid handle IDs
