@@ -13,7 +13,6 @@ import {
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { parseAsJson, useQueryState } from "nuqs";
 
-import { Button } from "@repo/ui/components/ui/button";
 import {
   Table,
   TableBody,
@@ -166,23 +165,19 @@ export function RunsTable() {
                 <React.Fragment key={row.id}>
                   <TableRow
                     className={cn(
-                      "transition-colors",
+                      "hover:bg-muted/50 cursor-pointer transition-colors",
                       expandedRows[row.id] && "bg-muted/50",
                     )}
+                    onClick={() => toggleRow(row.id)}
                   >
                     <TableCell className="w-[40px] px-8">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-6 p-0 hover:bg-transparent"
-                        onClick={() => toggleRow(row.id)}
-                      >
+                      <div className="flex size-6 items-center justify-center">
                         {expandedRows[row.id] ? (
                           <ChevronDown className="size-4" />
                         ) : (
                           <ChevronRight className="size-4" />
                         )}
-                      </Button>
+                      </div>
                     </TableCell>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="px-8">
