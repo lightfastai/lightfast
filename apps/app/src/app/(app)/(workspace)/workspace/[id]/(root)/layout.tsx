@@ -32,11 +32,13 @@ import { convertToBaseNode } from "../../types/node";
 
 const WebGLCanvas = dynamic(
   () => import("@repo/threejs").then((mod) => mod.WebGLCanvas),
-  { ssr: false },
+  { ssr: true },
 );
 
-const Inspector = dynamic(() =>
-  import("../../components/inspector/inspector").then((mod) => mod.Inspector),
+const Inspector = dynamic(
+  () =>
+    import("../../components/inspector/inspector").then((mod) => mod.Inspector),
+  { ssr: true },
 );
 
 interface WorkspaceLayoutProps {

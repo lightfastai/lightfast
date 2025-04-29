@@ -80,7 +80,14 @@ export const InspectorTexture = ({
       // Debounce the actual server update
       debouncedServerUpdate(newUniforms);
     },
-    [data.uniforms, data.type, data.resolution, id, debouncedServerUpdate],
+    [
+      data.uniforms,
+      data.type,
+      data.resolution,
+      utils.tenant.node.data.get,
+      id,
+      debouncedServerUpdate,
+    ],
   );
 
   useEffect(() => {
@@ -97,20 +104,12 @@ export const InspectorTexture = ({
             </h3>
           </div>
           <Separator />
-<<<<<<< HEAD
-          <TabsList className="bg-background grid w-full grid-cols-2">
-=======
-          <TabsList className="flex h-8 w-full rounded-none bg-background">
->>>>>>> staging
+          <TabsList className="bg-background flex h-8 w-full rounded-none">
             <TabsTrigger
               value="uniforms"
               className="flex items-center justify-center"
             >
-<<<<<<< HEAD
-              <span className="font-mono text-xs tracking-widest uppercase">
-=======
               <span className="font-mono text-xs tracking-widest">
->>>>>>> staging
                 Uniforms
               </span>
             </TabsTrigger>
@@ -118,13 +117,7 @@ export const InspectorTexture = ({
               value="common"
               className="flex items-center justify-center"
             >
-<<<<<<< HEAD
-              <span className="font-mono text-xs tracking-widest uppercase">
-                Common
-              </span>
-=======
               <span className="font-mono text-xs tracking-widest">Common</span>
->>>>>>> staging
             </TabsTrigger>
           </TabsList>
           <Separator />
