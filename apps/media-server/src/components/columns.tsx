@@ -114,6 +114,7 @@ export const columns: ColumnDef<Resource>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
+    enableSorting: false,
     cell: ({ row }) => {
       const status = row.getValue(
         "status",
@@ -140,7 +141,6 @@ export const columns: ColumnDef<Resource>[] = [
         </TooltipProvider>
       );
     },
-    enableSorting: true,
     meta: {
       type: "option",
       displayName: "Status",
@@ -191,9 +191,7 @@ export const columns: ColumnDef<Resource>[] = [
   },
   {
     accessorKey: "url",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="URL" />
-    ),
+    header: "URL",
     cell: ({ row }) => {
       const url = row.getValue("url");
       if (!url) return <span className="text-muted-foreground">—</span>;
@@ -210,7 +208,6 @@ export const columns: ColumnDef<Resource>[] = [
         </a>
       );
     },
-    enableSorting: true,
     meta: {
       type: "text",
       displayName: "URL",
