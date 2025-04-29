@@ -25,7 +25,7 @@
     "studio": "pnpm with-env-lightfast drizzle-kit studio --config=./src/lightfast/drizzle.config.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --",
-    "with-env-lightfast": "dotenv -e ../../apps/media-server/.internal/.env.development.local --"
+    "with-env-lightfast": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@repo/ai": "workspace:*",

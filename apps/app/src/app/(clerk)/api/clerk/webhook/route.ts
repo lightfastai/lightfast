@@ -27,6 +27,7 @@ const handleUserCreated = async (data: UserJSON) => {
 
   try {
     console.log("Creating user in Clerk", data);
+    // @important This is a blocking call. If it doesn't return fast, the webhook will fail.
     await api.app.user.create({
       clerkId: data.id,
       emailAddress,

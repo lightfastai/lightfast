@@ -1,10 +1,13 @@
-import { sql } from "@vercel/postgres";
-import { drizzle } from "drizzle-orm/vercel-postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
+import { env } from "../env";
 import * as schema from "./lightfast/schema";
 
+const client = postgres(env.POSTGRES_URL);
+
 export const db = drizzle({
-  client: sql,
+  client,
   schema,
   casing: "snake_case",
 });

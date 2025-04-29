@@ -31,18 +31,29 @@ export const appUserRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [user] = await ctx.db
-        .insert(User)
-        .values({ clerkId: input.clerkId, emailAddress: input.emailAddress })
-        .returning();
+      console.log("Creating user", input);
+      try {
+        const [user] = await ctx.db
+          .insert(User)
+          .values({ clerkId: input.clerkId, emailAddress: input.emailAddress })
+          .returning();
 
-      if (!user) {
+        if (!user) {
+          console.error("User not created", input);
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User not found",
+          });
+        }
+
+        console.log("User created", user);
+        return user;
+      } catch (error) {
+        console.error("Error creating user", error);
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Error creating user",
         });
       }
-
-      return user;
     }),
 } satisfies TRPCRouterRecord;
