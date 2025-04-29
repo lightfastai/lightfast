@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { env } from "~/env/node-env";
+import { env } from "~/env";
 
 /**
  * Schema for validating URL suffixes.

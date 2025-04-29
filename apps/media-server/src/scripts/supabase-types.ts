@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import { join } from "path";
 
-import { env } from "../env/node-env";
+import { env } from "../env";
 
 try {
   // Generate types using Supabase CLI

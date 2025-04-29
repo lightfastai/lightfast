@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-import { env } from "~/env/node-env";
+import { env } from "~/env";
 
 export const createClient = (request: NextRequest) => {
   // Create an unmodified response
