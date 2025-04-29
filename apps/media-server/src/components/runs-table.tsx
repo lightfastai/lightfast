@@ -23,7 +23,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@repo/ui/components/ui/pagination";
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -107,7 +106,6 @@ export function RunsTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() =>
     initializeFiltersFromQuery(queryFilters, columns),
   );
-  const [pageSize, setPageSize] = useState(10);
 
   const table = useReactTable({
     data: resources,
@@ -122,7 +120,7 @@ export function RunsTable() {
       sorting,
       columnFilters,
       pagination: {
-        pageSize,
+        pageSize: 50,
         pageIndex: 0,
       },
     },
@@ -150,10 +148,10 @@ export function RunsTable() {
       {/* <div className="px-8 py-4">
         <DataTableFilter table={table} />
       </div> */}
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="w-full">
           <Table className="w-full table-fixed">
-            <TableHeader className="bg-background sticky top-0 z-10">
+            <TableHeader className="bg-background">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   <TableHead className="w-[40px] px-8" />
@@ -176,80 +174,75 @@ export function RunsTable() {
             </TableHeader>
           </Table>
         </div>
-        <ScrollArea className="flex-1">
-          <div className="w-full">
-            <Table className="w-full table-fixed">
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length + 1}
-                      className="text-muted-foreground px-8 text-center"
-                    >
-                      Loading...
-                    </TableCell>
-                  </TableRow>
-                ) : table.getRowModel().rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length + 1}
-                      className="text-muted-foreground px-8 text-center"
-                    >
-                      No runs found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  table.getRowModel().rows.map((row) => (
-                    <React.Fragment key={row.id}>
-                      <TableRow
-                        className={cn(
-                          "hover:bg-muted/50 cursor-pointer transition-colors",
-                          expandedRows[row.id] && "bg-muted/50",
-                        )}
-                        onClick={() => toggleRow(row.id)}
-                      >
-                        <TableCell className="w-[40px] px-8">
-                          <div className="flex size-6 items-center justify-center">
-                            {expandedRows[row.id] ? (
-                              <ChevronDown className="size-4" />
-                            ) : (
-                              <ChevronRight className="size-4" />
-                            )}
-                          </div>
-                        </TableCell>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            className="px-8 whitespace-nowrap"
-                            style={{ width: cell.column.getSize() }}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                      {expandedRows[row.id] && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={columns.length + 1}
-                            className="p-0"
-                          >
-                            <ExpandedContent
-                              resource={row.original as Resource}
-                            />
-                          </TableCell>
-                        </TableRow>
+        <div className="flex-1 overflow-auto">
+          <Table className="w-full table-fixed">
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length + 1}
+                    className="text-muted-foreground px-8 text-center"
+                  >
+                    Loading...
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length + 1}
+                    className="text-muted-foreground px-8 text-center"
+                  >
+                    No runs found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <React.Fragment key={row.id}>
+                    <TableRow
+                      className={cn(
+                        "hover:bg-muted/50 cursor-pointer transition-colors",
+                        expandedRows[row.id] && "bg-muted/50",
                       )}
-                    </React.Fragment>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </ScrollArea>
-        <div className="flex items-center border-t px-8 py-2">
+                      onClick={() => toggleRow(row.id)}
+                    >
+                      <TableCell className="w-[40px] px-8">
+                        <div className="flex size-6 items-center justify-center">
+                          {expandedRows[row.id] ? (
+                            <ChevronDown className="size-4" />
+                          ) : (
+                            <ChevronRight className="size-4" />
+                          )}
+                        </div>
+                      </TableCell>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          key={cell.id}
+                          className="px-8 whitespace-nowrap"
+                          style={{ width: cell.column.getSize() }}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {expandedRows[row.id] && (
+                      <TableRow>
+                        <TableCell colSpan={columns.length + 1} className="p-0">
+                          <ExpandedContent
+                            resource={row.original as Resource}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="bg-background flex items-center border-t px-8 py-2">
           <div className="text-muted-foreground text-xs">
             {table.getFilteredRowModel().rows.length} total runs
           </div>
