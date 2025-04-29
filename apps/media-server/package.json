@@ -4,15 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "clean": "rm -rf dist .turbo .wrangler node_modules .cache",
+    "clean": "rm -rf dist .turbo node_modules .cache",
     "dev": "pnpm with-env next dev -p 4104",
     "build": "pnpm with-env next build",
     "start": "next start",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ./.internal/.env.development.local --",
-    "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts"
+    "generate:types": "pnpm with-env tsx src/scripts/supabase-types.ts",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
