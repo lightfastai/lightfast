@@ -1,12 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
-import { Context } from "hono";
+import { createBrowserClient } from "@supabase/ssr";
 
-import { DEFAULT_MEDIA_SERVER_SCHEMA } from "@vendor/db/media-server/schema";
-
-import { getEnv } from "../env/wrangler-env";
+import { env } from "~/env";
 import { Database } from "../types/supabase.types";
 
-export const supabase = (c: Context) =>
-  createClient<Database>(getEnv(c).SUPABASE_URL, getEnv(c).SUPABASE_ANON_KEY, {
-    db: { schema: DEFAULT_MEDIA_SERVER_SCHEMA },
-  });
+export const createClient = () => {
+  return createBrowserClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  );
+};
