@@ -6,8 +6,8 @@ import type {
   NodeType,
   TextureType,
   Txt2ImgType,
-} from "@vendor/db/types";
-import { $NodeType } from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
+import { $NodeType } from "@vendor/db/lightfast/types";
 
 interface SelectionState {
   selection: {
@@ -42,23 +42,23 @@ export const createSelectionStore = (
     ...initState,
     setGeometry: (geometry: GeometryType) =>
       set(() => ({
-        selection: { type: $NodeType.Enum.geometry, value: geometry },
+        selection: { type: $NodeType.enum.geometry, value: geometry },
       })),
     setMaterial: (material: MaterialType) =>
       set(() => ({
-        selection: { type: $NodeType.Enum.material, value: material },
+        selection: { type: $NodeType.enum.material, value: material },
       })),
     setTexture: (texture: TextureType) =>
       set(() => ({
-        selection: { type: $NodeType.Enum.texture, value: texture },
+        selection: { type: $NodeType.enum.texture, value: texture },
       })),
     setFlux: (flux: Txt2ImgType) =>
       set(() => ({
-        selection: { type: $NodeType.Enum.flux, value: flux },
+        selection: { type: $NodeType.enum.flux, value: flux },
       })),
     setWindow: () =>
       set(() => ({
-        selection: { type: $NodeType.Enum.window },
+        selection: { type: $NodeType.enum.window },
       })),
     clearSelection: () => set(() => ({ selection: null })),
   }));

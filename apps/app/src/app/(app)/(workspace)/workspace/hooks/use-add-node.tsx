@@ -8,19 +8,19 @@ import type {
   Texture,
   TextureType,
   Txt2ImgType,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 import { nanoid } from "@repo/lib";
 import {
   $GeometryType,
   $MaterialType,
   $NodeType,
-  $TextureTypes,
+  $TextureType,
   createDefaultGeometry,
   createDefaultMaterial,
   createDefaultTexture,
   createDefaultTxt2Img,
   createDefaultWindow,
-} from "@vendor/db/types";
+} from "@vendor/db/lightfast/types";
 
 import type { BaseNode } from "../types/node";
 import { api } from "~/trpc/client/react";
@@ -41,7 +41,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
   const create = api.tenant.node.create.useMutation({
     onMutate: async (newNode) => {
       // Cancel any outgoing refetches
-      await utils.tenant.node.data.get.cancel({ id: newNode.id });
+      await utils.tenant.node.data.get.cancel({ nodeId: newNode.id });
 
       const optimisticNode: BaseNode = {
         id: newNode.id,
@@ -53,11 +53,11 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
       addNode(optimisticNode);
 
       utils.tenant.node.data.get.setData(
-        { id: newNode.id },
+        { nodeId: newNode.id },
         newNode.data as Geometry | Material | Texture,
       );
 
-      if (newNode.type === $NodeType.Enum.texture) {
+      if (newNode.type === $NodeType.enum.texture) {
         addTarget(newNode.id, {
           width: 256,
           height: 256,
@@ -73,11 +73,11 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
 
       deleteNode(context.optimisticNode.id);
 
-      utils.tenant.node.data.get.setData({ id: newNode.id }, undefined);
+      utils.tenant.node.data.get.setData({ nodeId: newNode.id }, undefined);
     },
     onSettled: (newNode) => {
       if (!newNode) return;
-      void utils.tenant.node.data.get.invalidate({ id: newNode.id });
+      void utils.tenant.node.data.get.invalidate({ nodeId: newNode.id });
     },
   });
 
@@ -88,7 +88,6 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
       x: event.clientX,
       y: event.clientY,
     });
-
     if (
       selection.type === $NodeType.enum.geometry &&
       $GeometryType.safeParse(selection.value).success
@@ -117,7 +116,7 @@ export const useAddNode = ({ workspaceId }: UseWorkspaceAddNodeProps) => {
       });
     } else if (
       selection.type === $NodeType.enum.texture &&
-      $TextureTypes.safeParse(selection.value).success
+      $TextureType.safeParse(selection.value).success
     ) {
       create.mutate({
         id: nanoid(),

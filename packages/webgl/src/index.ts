@@ -1,123 +1,169 @@
-import type { JSONSchema7 } from "json-schema";
-import { z } from "zod";
+import type { Shaders } from "./shaders/enums/shaders";
+import type { ValueType } from "./shaders/enums/values";
+import type { VectorMode } from "./shaders/enums/vector-mode";
+import { $Shaders } from "./shaders/enums/shaders";
+import { $ValueType } from "./shaders/enums/values";
+import { $VectorMode } from "./shaders/enums/vector-mode";
+import { getFieldMetadata } from "./shaders/field";
 
-import { $Add, $AddJsonSchema, AddDescription } from "./shaders/add/add";
-import {
-  $Displace,
-  $DisplaceJsonSchema,
-  DisplaceDescription,
-} from "./shaders/displace/displace";
-import { $Limit } from "./shaders/limit/limit";
-import {
-  $PerlinNoise3D,
-  PerlinNoise3DDescription,
-  u_harmonics,
-} from "./shaders/pnoise/pnoise";
+export type { Shaders };
+export { $Shaders };
 
 /**
- * base modules
+ * Base types and primitives
  */
-export { $Vec3, createConstrainedVec3, isVec3, type Vec3 } from "./schema/vec3";
-export { $Vec2, createConstrainedVec2, isVec2, type Vec2 } from "./schema/vec2";
-export { $Color, isColor, type Color } from "./schema/color";
-export { type Value, isString, isNumber, isBoolean } from "./schema/value";
-
-/**
- * noise modules
- */
-export type { PerlinNoise3DParams } from "./shaders/pnoise/pnoise";
-export { $PerlinNoise3D } from "./shaders/pnoise/pnoise";
 export {
-  u_harmonics as $PerlinNoise3DJsonSchema,
-  createDefaultPerlinNoise3D,
-  PerlinNoise3DDescription,
-} from "./shaders/pnoise/pnoise";
+  // Primitive types
+  $Boolean,
+  $Number,
+  $Float,
+  $Integer,
+  $Expression,
+  $String,
+  $Sampler2D,
+  type Boolean,
+  type Number,
+  type Float,
+  type Integer,
+  type Expression,
+  type String,
+  type Sampler2D,
+
+  // Vector types
+  $Vec2,
+  $Vec3,
+  type Vec2,
+  type Vec3,
+
+  // Vector mode specific schemas
+  $Vec2Number,
+  $Vec2Expression,
+  $Vec3Number,
+  $Vec3Expression,
+
+  // Color type
+  $Color,
+  type Color,
+
+  // Value union type
+  type Value,
+  type NumericValue,
+  $NumericValue,
+
+  // Expression utilities
+  EXPRESSION_PREFIX,
+  isExpressionString,
+  createExpressionString,
+  expressionToNumericValue,
+  extractExpression,
+
+  // Type guards
+  isBoolean,
+  isNumber,
+  isFloat,
+  isInteger,
+  isExpression,
+  isColor,
+  isVec2,
+  isString,
+  isSampler2D,
+  isVec3,
+  isNumericValue,
+
+  // Mode detection
+  getNumericValueMode,
+  getVec2Mode,
+  getVec3Mode,
+
+  // Mode-specific type guards
+  isVec2Expression,
+  isVec3Expression,
+  isVec2Number,
+  isVec3Number,
+
+  // Default values
+  createDefaultVec2,
+  createDefaultVec3,
+} from "./shaders/uniforms";
+
+export { $VectorMode, $ValueType, type VectorMode, type ValueType };
 
 /**
- * limit modules
+ * Shader definitions and implementations
  */
-export type { LimitParams } from "./shaders/limit/limit";
 export {
-  $Limit,
-  $LimitJsonSchema,
-  createDefaultLimit,
-  LimitDescription,
-} from "./shaders/limit/limit";
-
-/**
- * displace modules
- */
-export type { DisplaceParams } from "./shaders/displace/displace";
-export {
-  $Displace,
-  $DisplaceJsonSchema,
-  createDefaultDisplace,
-  DisplaceDescription,
-} from "./shaders/displace/displace";
-
-/**
- * add modules
- */
-export type { AddParams } from "./shaders/add/add";
-export {
+  addShaderDefinition,
+  addFragmentShader,
+  ADD_UNIFORM_CONSTRAINTS,
   $Add,
-  $AddJsonSchema,
-  createDefaultAdd,
-  AddDescription,
-} from "./shaders/add/add";
+  type AddParams,
+} from "./shaders/impl/add";
+
+export {
+  displaceShaderDefinition,
+  displaceFragmentShader,
+  DISPLACE_UNIFORM_CONSTRAINTS,
+  $Displace,
+  type DisplaceParams,
+} from "./shaders/impl/displace";
+
+export {
+  limitShaderDefinition,
+  limitFragmentShader,
+  LIMIT_UNIFORM_CONSTRAINTS,
+  $Limit,
+  type LimitParams,
+} from "./shaders/impl/limit";
+
+export {
+  pnoiseShaderDefinition,
+  pnoiseFragmentShader,
+  PNOISE_UNIFORM_CONSTRAINTS,
+  $PerlinNoise2D,
+  type PerlinNoise2DParams,
+} from "./shaders/impl/pnoise";
+
+export {
+  migratedShaderDefinition,
+  migratedFragmentShader,
+  MIGRATED_UNIFORM_CONSTRAINTS,
+  $Migrated,
+  type MigratedParams,
+} from "./shaders/impl/example-migrated";
+
+export { baseVertexShader } from "./shaders/base-vert-shader";
 
 /**
- * Shared texture uniforms type
+ * Uniform fields and types
  */
-export const $TextureUniforms = $PerlinNoise3D
-  .merge($Limit)
-  .merge($Displace)
-  .merge($Add);
-export type TextureUniforms = z.infer<typeof $TextureUniforms>;
+export type {
+  UniformFieldValue,
+  ValueFieldMetadata,
+  Vec2FieldMetadata,
+  Vec3FieldMetadata,
+  Sampler2DMetadata,
+  NumericValueMetadata,
+} from "./shaders/field";
+
+export * from "./shaders/interfaces/sampler2d-handle";
+export * from "./shaders/interfaces/shader-def";
 
 /**
- * Texture type
+ * Registry functions and texture handling
  */
-export const $TextureType = z.enum(["Noise", "Limit", "Displace", "Add"]);
-export type TextureType = z.infer<typeof $TextureType>;
+export {
+  isShaderRegistered,
+  getAllShaderTypes,
+  textureInputRegistry,
+  getShaderSampler2DInputsForType,
+  createSampler2DFieldMetadata,
+  shaderRegistry,
+} from "./registry";
+export * from "./shaders/interfaces/sampler2d-handle";
 
-/** Build JSON Schema for Texture System */
-export const $TextureSystemJsonSchema = {
-  title: "Texture Operator Primitives",
-  description:
-    "A collection of texture operators that can be used to create textures for 3D objects using ThreeJS. A pipelined approach using WebGL render targets are created where each texture operator is a render target and can be used as an input to the next texture operator. The textures are created using GLSL shaders.",
-  textures: [
-    {
-      title: $TextureType.Values.Noise,
-      description: PerlinNoise3DDescription,
-      properties: {
-        uniforms: u_harmonics,
-        // vertexShader: perlinNoise3DVertexShader,
-        // fragmentShader: perlinNoise3DFragmentShader,
-      },
-    },
-    {
-      title: $TextureType.Values.Displace,
-      description: DisplaceDescription,
-      properties: {
-        uniforms: $DisplaceJsonSchema,
-      },
-    },
-    {
-      title: $TextureType.Values.Add,
-      description: AddDescription,
-      properties: {
-        uniforms: $AddJsonSchema,
-      },
-    },
-    // {
-    //   title: $TextureType.Values.Limit,
-    //   description: LimitDescription,
-    //   properties: {
-    //     uniforms: $LimitJsonSchema,
-    //     vertexShader: limitVertexShader,
-    //     fragmentShader: limitFragmentShader,
-    //   },
-    // },
-  ],
-} as JSONSchema7;
+// Export shader enums
+export * from "./shaders/enums/shaders";
+export * from "./registry/utils/sampler2d-utils";
+export { getFieldMetadata };
+
+export * from "./registry/interfaces/registry-shader-def";

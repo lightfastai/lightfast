@@ -1,11 +1,12 @@
 import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getUniformConstraintsForType } from "node_modules/@repo/webgl/src/registry";
 import { useForm } from "react-hook-form";
 
 import type { Value } from "@repo/webgl";
-import type { Texture, TextureUniforms } from "@vendor/db/types";
+import type { Texture, TextureUniforms } from "@vendor/db/lightfast/types";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
@@ -14,36 +15,40 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import { $TextureUniforms } from "@vendor/db/types";
+import { $TextureUniforms } from "@vendor/db/lightfast/types";
 
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
 import { InspectorBase } from "./inspector-base";
 import { InspectorFormField } from "./inspector-form-field";
 
-export const InspectorTexture = ({ id }: { id: string }) => {
+export const InspectorTexture = ({
+  data,
+  id,
+}: {
+  data: Texture;
+  id: string;
+}) => {
   const utils = api.useUtils();
-  const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({ id });
 
   const form = useForm<TextureUniforms>({
     resolver: zodResolver($TextureUniforms),
     defaultValues: data.uniforms,
+    mode: "onBlur",
   });
 
   const { mutate: updateData } = api.tenant.node.data.update.useMutation({
     onError: () => {
       // On error, revert the optimistic update
-      utils.tenant.node.data.get.setData({ id }, data);
+      utils.tenant.node.data.get.setData({ nodeId: id }, data);
     },
   });
 
-  useEffect(() => {
-    form.reset(data.uniforms);
-  }, [data, form.reset, form]);
+  const formKey = useMemo(() => `${id}-${data.type}`, [id, data.type]);
 
   const debouncedServerUpdate = useDebounce((updates: TextureUniforms) => {
     updateData({
-      id,
+      nodeId: id,
       data: {
         type: data.type,
         uniforms: updates,
@@ -54,8 +59,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
 
   const handleUpdate = useCallback(
     (property: keyof TextureUniforms, value: Value) => {
-      if (!value) return;
-      if (property === "u_texture") return;
+      if (property.startsWith("u_texture")) return;
 
       // @TODO: fix this type
       const newUniforms = {
@@ -65,7 +69,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
 
       // Optimistically update the cache
       utils.tenant.node.data.get.setData(
-        { id },
+        { nodeId: id },
         {
           type: data.type,
           uniforms: newUniforms,
@@ -76,15 +80,12 @@ export const InspectorTexture = ({ id }: { id: string }) => {
       // Debounce the actual server update
       debouncedServerUpdate(newUniforms);
     },
-    [
-      data.uniforms,
-      data.type,
-      data.resolution,
-      utils.tenant.node.data.get,
-      id,
-      debouncedServerUpdate,
-    ],
+    [data.uniforms, data.type, data.resolution, id, debouncedServerUpdate],
   );
+
+  useEffect(() => {
+    form.reset(data.uniforms);
+  }, [formKey, data.uniforms, form]);
 
   return (
     <InspectorBase>
@@ -96,12 +97,20 @@ export const InspectorTexture = ({ id }: { id: string }) => {
             </h3>
           </div>
           <Separator />
+<<<<<<< HEAD
           <TabsList className="bg-background grid w-full grid-cols-2">
+=======
+          <TabsList className="flex h-8 w-full rounded-none bg-background">
+>>>>>>> staging
             <TabsTrigger
               value="uniforms"
               className="flex items-center justify-center"
             >
+<<<<<<< HEAD
               <span className="font-mono text-xs tracking-widest uppercase">
+=======
+              <span className="font-mono text-xs tracking-widest">
+>>>>>>> staging
                 Uniforms
               </span>
             </TabsTrigger>
@@ -109,9 +118,13 @@ export const InspectorTexture = ({ id }: { id: string }) => {
               value="common"
               className="flex items-center justify-center"
             >
+<<<<<<< HEAD
               <span className="font-mono text-xs tracking-widest uppercase">
                 Common
               </span>
+=======
+              <span className="font-mono text-xs tracking-widest">Common</span>
+>>>>>>> staging
             </TabsTrigger>
           </TabsList>
           <Separator />
@@ -122,8 +135,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
                   .filter(([property]) => !property.startsWith("u_texture"))
                   .map(([property]) => (
                     <InspectorFormField
-                      key={property}
-                      label={property}
+                      key={`${formKey}-${property}`}
                       control={form.control}
                       parentSchema={$TextureUniforms}
                       name={
@@ -132,6 +144,7 @@ export const InspectorTexture = ({ id }: { id: string }) => {
                       onValueChange={(value) =>
                         handleUpdate(property as keyof TextureUniforms, value)
                       }
+                      constraints={getUniformConstraintsForType(data.type)}
                     />
                   ))}
               </form>

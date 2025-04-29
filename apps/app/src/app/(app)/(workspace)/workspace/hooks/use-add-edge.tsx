@@ -4,21 +4,24 @@ import { useCallback } from "react";
 import { nanoid } from "@repo/lib";
 import { toast } from "@repo/ui/hooks/use-toast";
 
-import type { BaseEdge } from "../types/node";
+import type { BaseEdge } from "../types/edge";
 import { api } from "~/trpc/client/react";
 import { useEdgeStore } from "../providers/edge-store-provider";
-import { useEdgeValidation } from "./use-validate-edge";
+import { convertToStrictConnection } from "../types/connection";
+import { useSelfConnectionValidator } from "./use-validate-edge";
 
 export const useAddEdge = () => {
   const { addEdge, deleteEdge } = useEdgeStore((state) => state);
+  const validateSelfConnection = useSelfConnectionValidator();
+
   const { mutateAsync: mut } = api.tenant.edge.create.useMutation({
-    onMutate: async (newEdge) => {
+    onMutate: (newEdge) => {
       const optimisticEdge: BaseEdge = {
         id: newEdge.id,
         source: newEdge.edge.source,
         target: newEdge.edge.target,
-        sourceHandle: newEdge.edge.sourceHandle ?? "",
-        targetHandle: newEdge.edge.targetHandle ?? "",
+        sourceHandle: newEdge.edge.sourceHandle,
+        targetHandle: newEdge.edge.targetHandle,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -27,61 +30,55 @@ export const useAddEdge = () => {
 
       return { optimisticEdge };
     },
-    onError: (err, newEdge, context) => {
+    onError: (err, _newEdge, context) => {
       if (!context) return;
       deleteEdge(context.optimisticEdge.id);
       console.error(err);
       toast({
         title: "Error",
-        description: "Failed to add edge",
+        description: err.message || "Failed to add edge",
+        variant: "destructive",
       });
     },
   });
 
-  const {
-    validateSelfConnection,
-    validateTargetExistence,
-    validateMaxIncomingEdges,
-    validateWindowNode,
-  } = useEdgeValidation();
-
   const mutateAsync = useCallback(
     async (connection: Connection) => {
-      const { source, target, sourceHandle, targetHandle } = connection;
+      const { source, target } = connection;
 
-      // Perform shared validations
-      if (
-        !validateSelfConnection(source, target) ||
-        !validateTargetExistence(target) ||
-        !validateMaxIncomingEdges(target) ||
-        !validateWindowNode(target)
-      ) {
-        return;
+      // Validate it's not a self connection
+      if (!validateSelfConnection(source, target)) {
+        return false;
       }
 
-      // Directly add a new edge without replacing existing ones
+      // Convert to strict connection to validate handles
+      const strictConnection = convertToStrictConnection(connection);
+      if (!strictConnection) {
+        toast({
+          title: "Invalid Connection",
+          description: "The handles specified are not valid",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       try {
         await mut({
           id: nanoid(),
           edge: {
-            source: connection.source,
-            target: connection.target,
-            sourceHandle: connection.sourceHandle ?? "",
-            targetHandle: connection.targetHandle ?? "",
+            source: strictConnection.source,
+            target: strictConnection.target,
+            sourceHandle: strictConnection.sourceHandle,
+            targetHandle: strictConnection.targetHandle,
           },
         });
+        return true;
       } catch (error) {
-        console.error(error);
-        // Optionally, handle additional error scenarios here
+        console.error("Error creating edge:", error);
+        return false;
       }
     },
-    [
-      validateSelfConnection,
-      validateTargetExistence,
-      validateMaxIncomingEdges,
-      validateWindowNode,
-      mut,
-    ],
+    [mut, validateSelfConnection],
   );
 
   return { mutateAsync };

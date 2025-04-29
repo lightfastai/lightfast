@@ -8,6 +8,30 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "default": "./src/components/index.ts"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "default": "./src/hooks/index.ts"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "default": "./src/utils/index.ts"
+    },
+    "./types": {
+      "types": "./dist/types/render.d.ts",
+      "default": "./src/types/render.ts"
+    },
+    "./performance": {
+      "types": "./dist/performance.d.ts",
+      "default": "./src/performance.ts"
+    },
+    "./globals": {
+      "types": "./dist/components/globals/index.d.ts",
+      "default": "./src/components/globals/index.ts"
+    },
     "./shaders/pnoise": {
       "types": "./dist/shaders/pnoise/pnoise.d.ts",
       "default": "./src/shaders/pnoise/pnoise.ts"
@@ -20,13 +44,9 @@
       "types": "./dist/shaders/base-vert-shader.d.ts",
       "default": "./src/shaders/base-vert-shader.ts"
     },
-    "./schema/vec3": {
-      "types": "./dist/schema/vec3.d.ts",
-      "default": "./src/schema/vec3.ts"
-    },
-    "./schema/color": {
-      "types": "./dist/schema/color.d.ts",
-      "default": "./src/schema/color.ts"
+    "./schema": {
+      "types": "./dist/schema/schema.d.ts",
+      "default": "./src/schema/schema.ts"
     },
     "./shaders/add": {
       "types": "./dist/shaders/add/add.d.ts",
@@ -39,29 +59,38 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
+    "build": "tsup",
+    "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist",
+    "dev": "concurrently \"npm run watch-shaders\" \"tsup --watch\"",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "generate-shaders": "node scripts/generate-shader-registry.js",
+    "watch-shaders": "node scripts/generate-shader-registry.js --watch",
+    "prebuild": "npm run generate-shaders"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.5",
     "@react-three/fiber": "^8.17.10",
     "@repo/ui": "workspace:*",
     "json-schema": "^0.4.0",
+    "r3f-perf": "^7.2.3",
+    "react": "catalog:react19",
     "three": "^0.169.0",
-    "zod": "catalog:",
-    "zod-to-json-schema": "^3.23.3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
     "@types/three": "^0.169.0",
+    "concurrently": "^9.1.0",
     "eslint": "catalog:",
+    "glob": "^10.4.5",
     "prettier": "catalog:",
+    "ts-node": "^10.9.2",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

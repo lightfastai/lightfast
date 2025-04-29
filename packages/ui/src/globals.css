@@ -140,7 +140,7 @@
 /* This layer is added by shadcn/ui */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-none;
   }
   body {
     @apply bg-background text-foreground;

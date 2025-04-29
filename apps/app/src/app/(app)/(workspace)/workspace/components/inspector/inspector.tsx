@@ -1,32 +1,18 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import type { Texture } from "@vendor/db/lightfast/types";
 
+import { api } from "~/trpc/client/react";
 import { useInspectorStore } from "../../providers/inspector-store-provider";
 import { FluxInspector } from "./flux-inspector";
 import { InspectorTexture } from "./inspector-texture";
 
 export const Inspector = () => {
-  const { selected, setIsOpen, isOpen } = useInspectorStore((state) => state);
-
-  const toggleInspector = useCallback(() => {
-    setIsOpen(!isOpen);
-  }, [isOpen, setIsOpen]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "p") {
-        e.preventDefault();
-        toggleInspector();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [toggleInspector]);
+  const { selected, isOpen } = useInspectorStore((state) => state);
 
   if (!selected || !isOpen) return null;
   if (selected.type === "texture") {
-    return <InspectorTexture id={selected.id} />;
+    return <InspectorImpl id={selected.id} />;
   }
   if (selected.type === "geometry") {
     return null;
@@ -38,4 +24,11 @@ export const Inspector = () => {
     return <FluxInspector id={selected.id} />;
   }
   return null;
+};
+
+const InspectorImpl = ({ id }: { id: string }) => {
+  const [data] = api.tenant.node.data.get.useSuspenseQuery<Texture>({
+    nodeId: id,
+  });
+  return <InspectorTexture key={id} data={data} id={id} />;
 };

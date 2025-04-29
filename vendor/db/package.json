@@ -16,6 +16,7 @@
       "types": "./dist/lightfast/types.d.ts",
       "default": "./src/lightfast/types.ts"
     },
+    "./client": "./src/client.ts",
     "./env": "./env.ts"
   },
   "license": "MIT",
@@ -35,7 +36,8 @@
   "dependencies": {
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@repo/webgl": "workspace:^",
+    "@repo/webgl": "workspace:*",
+    "@vercel/postgres": "^0.10.0",
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.7.1",
     "postgres": "^3.4.5",

@@ -2,49 +2,26 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { $Add } from "@repo/webgl/shaders/add";
-import { $Displace } from "@repo/webgl/shaders/displace";
-import { and, eq, exists, sql } from "@vendor/db";
-import { InsertNodeSchema, Node, Workspace } from "@vendor/db/schema";
-import { $Texture, $Txt2Img, $Window } from "@vendor/db/types";
+import { and, eq, sql } from "@vendor/db";
+import { InsertNodeSchema, Node, Workspace } from "@vendor/db/lightfast/schema";
+import { $Texture, $Txt2Img, $Window } from "@vendor/db/lightfast/types";
 import { protectedProcedure } from "@vendor/trpc";
 
+import { verifyNodeOwnership } from "../middleware/verify-node-ownership";
+
 export const nodeRouter = {
-  delete: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Delete the node
-      const [deletedNode] = await ctx.db
-        .delete(Node)
-        .where(
-          and(
-            eq(Node.id, input.id),
-            exists(
-              ctx.db
-                .select()
-                .from(Workspace)
-                .where(and(eq(Workspace.id, Node.workspaceId))),
-            ),
-          ),
-        )
-        .returning({
-          id: Node.id,
-          type: Node.type,
-        });
+  delete: verifyNodeOwnership.mutation(async ({ ctx }) => {
+    // Node ownership is already verified, we can safely delete
+    const [deletedNode] = await ctx.db
+      .delete(Node)
+      .where(eq(Node.id, ctx.node.id))
+      .returning({
+        id: Node.id,
+        type: Node.type,
+      });
 
-      if (!deletedNode) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Node not found",
-        });
-      }
-
-      return deletedNode;
-    }),
+    return deletedNode;
+  }),
 
   create: protectedProcedure
     .input(InsertNodeSchema)
@@ -139,6 +116,7 @@ export const nodeRouter = {
       const updatedNodes = await Promise.all(updates);
       return updatedNodes.flat();
     }),
+
   base: {
     getAll: protectedProcedure
       .input(z.object({ workspaceId: z.string() }))
@@ -155,57 +133,23 @@ export const nodeRouter = {
         return nodes;
       }),
   },
+
   data: {
-    get: protectedProcedure
-      .input(z.object({ id: z.string() }))
-      .query(async ({ ctx, input }) => {
-        const [node] = await ctx.db
-          .select({
-            data: Node.data,
-          })
-          .from(Node)
-          .where(and(eq(Node.id, input.id)))
-          .limit(1);
+    get: verifyNodeOwnership.query(({ ctx }) => {
+      // Node is already verified and available in ctx.node
+      return ctx.node.data;
+    }),
 
-        if (!node) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Node not found",
-          });
-        }
-
-        return node.data;
-      }),
-
-    update: protectedProcedure
+    update: verifyNodeOwnership
       .input(
         z.object({
-          id: z.string(),
-          data: $Texture.or($Txt2Img).or($Window).or($Displace).or($Add),
+          data: $Texture.or($Txt2Img).or($Window),
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        // First get the existing node to verify type and get current data
-        const [existingNode] = await ctx.db
-          .select({
-            data: Node.data,
-            type: Node.type,
-            workspaceId: Node.workspaceId,
-          })
-          .from(Node)
-          .where(and(eq(Node.id, input.id)))
-          .limit(1);
-
-        if (!existingNode) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Node not found",
-          });
-        }
-
-        // Merge the new data with existing data
+        // Node is already verified, merge the new data with existing data
         const updatedData = {
-          ...existingNode.data,
+          ...ctx.node.data,
           ...input.data,
         };
 
@@ -216,7 +160,7 @@ export const nodeRouter = {
             data: updatedData,
             updatedAt: sql`now()`,
           })
-          .where(eq(Node.id, input.id))
+          .where(eq(Node.id, ctx.node.id))
           .returning({
             data: Node.data,
           });

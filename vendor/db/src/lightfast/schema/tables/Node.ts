@@ -3,9 +3,8 @@ import { pgTable } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+import type { NodePosition } from "@vendor/db/lightfast/types";
 import { nanoid } from "@repo/lib";
-
-import type { NodePosition } from "~/lightfast/types";
 import {
   $Geometry,
   $Material,
@@ -13,7 +12,8 @@ import {
   $Texture,
   $Txt2Img,
   $Window,
-} from "~/lightfast/types";
+} from "@vendor/db/lightfast/types";
+
 import { Edge } from "./Edge";
 import { Workspace } from "./Workspace";
 

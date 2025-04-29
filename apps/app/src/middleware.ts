@@ -1,12 +1,23 @@
 import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
 
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-out(.*)"]);
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-out(.*)",
+  "/api/health",
+  "/api/clerk/webhook(.*)",
+]);
 
-export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect();
-  }
-});
+export default clerkMiddleware(
+  async (auth, req) => {
+    if (!isPublicRoute(req)) {
+      await auth.protect();
+    }
+  },
+  {
+    signInUrl: "/sign-in",
+    signUpUrl: "/sign-up",
+  },
+);
 
 export const config = {
   matcher: [

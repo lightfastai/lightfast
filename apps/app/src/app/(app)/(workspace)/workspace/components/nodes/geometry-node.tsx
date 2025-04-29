@@ -1,8 +1,10 @@
 import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { ArrowRightIcon } from "lucide-react";
+import * as THREE from "three";
 
-import type { Geometry } from "@vendor/db/types";
+import type { Geometry } from "@vendor/db/lightfast/types";
+import { GeometryRenderer } from "@repo/threejs";
 import { BaseNodeComponent } from "@repo/ui/components/base-node";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
@@ -14,12 +16,13 @@ import { cn } from "@repo/ui/lib/utils";
 
 import type { BaseNode } from "../../types/node";
 import { api } from "~/trpc/client/react";
-import { GeometryRenderer } from "../webgl/geometry-renderer";
-import { WebGLViewContext } from "../webgl/webgl-context";
+import { WebGLViewContext } from "../webgl/webgl-view-context";
 
 export const GeometryNode = memo(
   ({ id, type, selected }: NodeProps<BaseNode>) => {
-    const [data] = api.tenant.node.data.get.useSuspenseQuery<Geometry>({ id });
+    const [data] = api.tenant.node.data.get.useSuspenseQuery<Geometry>({
+      nodeId: id,
+    });
     return (
       <BaseNodeComponent selected={selected}>
         <div
@@ -48,14 +51,31 @@ export const GeometryNode = memo(
 
           <div className="flex h-32 w-72 items-center justify-center border">
             <WebGLViewContext>
-              <GeometryRenderer geometry={data} />
+              <GeometryRenderer
+                type={data.type}
+                position={
+                  new THREE.Vector3(
+                    Number(data.position.x),
+                    Number(data.position.y),
+                    Number(data.position.z),
+                  )
+                }
+                rotation={
+                  new THREE.Vector3(
+                    Number(data.rotation.x),
+                    Number(data.rotation.y),
+                    Number(data.rotation.z),
+                  )
+                }
+                animate={true}
+              />
             </WebGLViewContext>
           </div>
 
           <div className="flex items-center justify-end">
             <Checkbox
               id={`wireframe-${id}`}
-              checked={data.wireframe ?? false}
+              checked={data.wireframe}
               // onCheckedChange={() => {}}
             />
           </div>

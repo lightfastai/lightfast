@@ -7,24 +7,32 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@repo/ui/components/ui/breadcrumb";
-import { $NodeType } from "@vendor/db/types";
+import { $NodeType } from "@vendor/db/lightfast/types";
 
 import type { RouterInputs, RouterOutputs } from "~/trpc/server/index";
 import { api, HydrateClient } from "~/trpc/client/server";
-import { EditorCommandDialog } from "../../components/app/editor-command-dialog";
+import { EditorFileMenu } from "../../components/app/editor-file-menu";
 import { EditorWorkspaceNameInput } from "../../components/app/editor-workspace-name-input";
-import { EditorWorkspaceSelect } from "../../components/app/editor-workspace-select";
-import { TextureRenderPipeline } from "../../components/webgl/texture-render-pipeline";
+import { EditorWorkspaceListMenu } from "../../components/app/editor-worspace-list-menu";
+import { EditorCommandDialog } from "../../components/command-dialog/editor-command-dialog";
+import { Debug } from "../../components/webgl/webgl-debug";
+import { WebGLTextureRenderPipeline } from "../../components/webgl/webgl-texture-render-pipeline";
 import { EdgeStoreProvider } from "../../providers/edge-store-provider";
 import { EditorStoreProvider } from "../../providers/editor-store-provider";
+import { FileMenuViewProvider } from "../../providers/file-menu-view-provider";
 import { InspectorStoreProvider } from "../../providers/inspector-store-provider";
 import { NodeStoreProvider } from "../../providers/node-store-provider";
 import { SelectionStoreProvider } from "../../providers/selection-store-provider";
+import { ShaderCacheStoreProvider } from "../../providers/shader-cache-store-provider";
 import { TextureRenderStoreProvider } from "../../providers/texture-render-store-provider";
-import { convertToBaseEdge, convertToBaseNode } from "../../types/node";
+import { WorkspaceReactFlowProvider } from "../../providers/workspace-react-flow-provider";
+import { WorkspaceViewProvider } from "../../providers/workspace-view-provider";
+import { convertToBaseEdge } from "../../types/edge";
+import { convertToBaseNode } from "../../types/node";
 
-const WebGLCanvas = dynamic(() =>
-  import("../../components/webgl/webgl-canvas").then((mod) => mod.WebGLCanvas),
+const WebGLCanvas = dynamic(
+  () => import("@repo/threejs").then((mod) => mod.WebGLCanvas),
+  { ssr: false },
 );
 
 const Inspector = dynamic(() =>
@@ -43,11 +51,11 @@ interface WorkspaceLayoutProps {
  * @todo - handle unauthorized and not found errors more gracefully
  */
 const getWorkspace = async ({
-  id,
+  workspaceId,
 }: RouterInputs["tenant"]["workspace"]["get"]): Promise<
   RouterOutputs["tenant"]["workspace"]["get"] | null
 > => {
-  const workspace = await api.tenant.workspace.get({ id });
+  const workspace = await api.tenant.workspace.get({ workspaceId });
   return workspace;
 };
 
@@ -82,7 +90,7 @@ export default async function WorkspaceLayout({
 }: WorkspaceLayoutProps) {
   const { id } = params;
   const [workspace, nodes, edges] = await Promise.all([
-    getWorkspace({ id }),
+    getWorkspace({ workspaceId: id }),
     getWorkspaceNodeBaseAll({ workspaceId: id }),
     getWorkspaceEdgeAll({ workspaceId: id }),
   ]);
@@ -93,7 +101,7 @@ export default async function WorkspaceLayout({
 
   /** Prefetch node data using <HydrateClient> (tRPC SSR) & useSuspenseQuery (Tanstack Query) */
   nodes.forEach((node) => {
-    void api.tenant.node.data.get.prefetch({ id: node.id });
+    void api.tenant.node.data.get.prefetch({ nodeId: node.id });
   });
 
   const baseNodes = convertToBaseNode(nodes);
@@ -101,53 +109,63 @@ export default async function WorkspaceLayout({
 
   return (
     <div className="relative flex h-screen flex-col">
-      <div className="fixed inset-x-20 top-4 z-50 flex w-max items-center">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <EditorWorkspaceSelect />
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <EditorWorkspaceNameInput initialWorkspace={workspace} />
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+      <div className="fixed z-50 p-4">
+        <FileMenuViewProvider>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <EditorFileMenu />
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <EditorWorkspaceNameInput initialWorkspace={workspace} />
+                <EditorWorkspaceListMenu />
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </FileMenuViewProvider>
       </div>
 
       <HydrateClient>
         <NodeStoreProvider initialNodes={baseNodes}>
           <EdgeStoreProvider initialEdges={baseEdges}>
             <SelectionStoreProvider>
-              <EditorStoreProvider>
-                <TextureRenderStoreProvider
-                  initialNodes={baseNodes.filter(
-                    (node) => node.type === $NodeType.Enum.texture,
-                  )}
-                >
-                  <InspectorStoreProvider>
-                    <WebGLCanvas
-                      style={{
-                        position: "absolute",
-                        pointerEvents: "none",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        zIndex: 1,
-                      }}
-                      showPerformance={true}
-                    >
-                      <TextureRenderPipeline />
-                    </WebGLCanvas>
-                    {children}
-                    <div className="absolute top-4 right-4">
-                      <Inspector />
-                    </div>
-                    <EditorCommandDialog />
-                  </InspectorStoreProvider>
-                </TextureRenderStoreProvider>
-              </EditorStoreProvider>
+              <ShaderCacheStoreProvider initialShaders={{}}>
+                <EditorStoreProvider>
+                  <TextureRenderStoreProvider
+                    initialNodes={baseNodes.filter(
+                      (node) => node.type === $NodeType.enum.texture,
+                    )}
+                  >
+                    <InspectorStoreProvider>
+                      <WebGLCanvas
+                        style={{
+                          position: "absolute",
+                          pointerEvents: "none",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          zIndex: 1,
+                        }}
+                        showPerformance={true}
+                      >
+                        <WebGLTextureRenderPipeline />
+                      </WebGLCanvas>
+                      <WorkspaceReactFlowProvider>
+                        <WorkspaceViewProvider>
+                          {children}
+                          <Debug />
+                        </WorkspaceViewProvider>
+                      </WorkspaceReactFlowProvider>
+                      <div className="absolute top-4 right-4">
+                        <Inspector />
+                      </div>
+                      <EditorCommandDialog />
+                    </InspectorStoreProvider>
+                  </TextureRenderStoreProvider>
+                </EditorStoreProvider>
+              </ShaderCacheStoreProvider>
             </SelectionStoreProvider>
           </EdgeStoreProvider>
         </NodeStoreProvider>

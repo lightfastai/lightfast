@@ -1,3 +1,5 @@
+"use client";
+
 import type { FieldPath } from "react-hook-form";
 import type { z } from "zod";
 import { useCallback, useEffect } from "react";
@@ -5,10 +7,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import type { Value } from "@repo/webgl";
-import type { Txt2Img } from "@vendor/db/types";
+import type { Txt2Img } from "@vendor/db/lightfast/types";
 import { Form } from "@repo/ui/components/ui/form";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { $Txt2Img } from "@vendor/db/types";
+import { $Txt2Img } from "@vendor/db/lightfast/types";
 
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/trpc/client/react";
@@ -17,7 +19,9 @@ import { InspectorFormField } from "./inspector-form-field";
 
 export const FluxInspector = ({ id }: { id: string }) => {
   const utils = api.useUtils();
-  const [data] = api.tenant.node.data.get.useSuspenseQuery<Txt2Img>({ id });
+  const [data] = api.tenant.node.data.get.useSuspenseQuery<Txt2Img>({
+    nodeId: id,
+  });
 
   const form = useForm<Txt2Img>({
     resolver: zodResolver($Txt2Img),
@@ -27,7 +31,7 @@ export const FluxInspector = ({ id }: { id: string }) => {
   const { mutate: updateData } = api.tenant.node.data.update.useMutation({
     onError: () => {
       // On error, revert the optimistic update
-      utils.tenant.node.data.get.setData({ id }, data);
+      utils.tenant.node.data.get.setData({ nodeId: id }, data);
     },
   });
 
@@ -37,7 +41,7 @@ export const FluxInspector = ({ id }: { id: string }) => {
 
   const debouncedServerUpdate = useDebounce((updates: Txt2Img) => {
     updateData({
-      id,
+      nodeId: id,
       data: updates,
     });
   }, 500);
@@ -54,7 +58,7 @@ export const FluxInspector = ({ id }: { id: string }) => {
 
       // Optimistically update the cache
       utils.tenant.node.data.get.setData(
-        { id },
+        { nodeId: id },
         {
           type: data.type,
           prompt: newUniforms.prompt,

@@ -8,10 +8,10 @@ let config: NextConfig = {
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
     "@repo/ai",
-    "@dahlia/trpc",
     "@repo/lib",
     "@repo/ui",
     "@repo/webgl",
+    "@repo/threejs",
     "@vendor/clerk",
     "@vendor/db",
     "@vendor/trpc",

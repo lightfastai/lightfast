@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD:vendor/db/src/lightfast/migrations/meta/0002_snapshot.json
   "id": "42d9c7a5-4043-42cf-9e3d-df262799c6b5",
+=======
+  "id": "9a410d94-7b7a-4da6-98b8-bb3d1c2238a3",
+>>>>>>> staging:vendor/db/src/migrations/meta/0002_snapshot.json
   "prevId": "89912642-78d4-4248-b5ac-3d833698203c",
   "version": "7",
   "dialect": "postgresql",
@@ -30,13 +34,21 @@
           "name": "source_handle",
           "type": "varchar(191)",
           "primaryKey": false,
+<<<<<<< HEAD:vendor/db/src/lightfast/migrations/meta/0002_snapshot.json
           "notNull": false
+=======
+          "notNull": true
+>>>>>>> staging:vendor/db/src/migrations/meta/0002_snapshot.json
         },
         "target_handle": {
           "name": "target_handle",
           "type": "varchar(191)",
           "primaryKey": false,
+<<<<<<< HEAD:vendor/db/src/lightfast/migrations/meta/0002_snapshot.json
           "notNull": false
+=======
+          "notNull": true
+>>>>>>> staging:vendor/db/src/migrations/meta/0002_snapshot.json
         },
         "created_at": {
           "name": "created_at",
@@ -84,9 +96,13 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+<<<<<<< HEAD:vendor/db/src/lightfast/migrations/meta/0002_snapshot.json
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+=======
+      "checkConstraints": {}
+>>>>>>> staging:vendor/db/src/migrations/meta/0002_snapshot.json
     },
     "public.node": {
       "name": "node",
@@ -154,6 +170,7 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+<<<<<<< HEAD:vendor/db/src/lightfast/migrations/meta/0002_snapshot.json
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -228,6 +245,9 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+=======
+      "checkConstraints": {}
+>>>>>>> staging:vendor/db/src/migrations/meta/0002_snapshot.json
     },
     "public.user": {
       "name": "user",
@@ -272,9 +292,13 @@
           ]
         }
       },
+<<<<<<< HEAD:vendor/db/src/lightfast/migrations/meta/0002_snapshot.json
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+=======
+      "checkConstraints": {}
+>>>>>>> staging:vendor/db/src/migrations/meta/0002_snapshot.json
     },
     "public.workspace": {
       "name": "workspace",
@@ -311,6 +335,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+<<<<<<< HEAD:vendor/db/src/lightfast/migrations/meta/0002_snapshot.json
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -353,6 +378,14 @@
   "sequences": {},
   "roles": {},
   "policies": {},
+=======
+      "checkConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+>>>>>>> staging:vendor/db/src/migrations/meta/0002_snapshot.json
   "views": {},
   "_meta": {
     "columns": {},

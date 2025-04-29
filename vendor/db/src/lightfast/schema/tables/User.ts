@@ -1,7 +1,9 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { pgTable } from "drizzle-orm/pg-core";
 
 import { nanoid } from "@repo/lib";
+
+import { Workspace } from "./Workspace";
 
 /**
  * User table
@@ -25,4 +27,9 @@ export const User = pgTable("user", (t) => ({
     .defaultNow()
     .$onUpdateFn(() => sql`now()`),
   clerkId: t.varchar({ length: 255 }).notNull().unique(),
+  emailAddress: t.varchar({ length: 255 }).notNull().unique(),
+}));
+
+export const UserRelations = relations(User, ({ many }) => ({
+  workspaces: many(Workspace),
 }));

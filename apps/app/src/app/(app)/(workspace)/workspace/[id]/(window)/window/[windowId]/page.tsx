@@ -1,13 +1,14 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
-import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/node";
-import { TextureRenderPipeline } from "~/app/(app)/(workspace)/workspace/components/webgl/texture-render-pipeline";
-import { WebGLCanvas } from "~/app/(app)/(workspace)/workspace/components/webgl/webgl-canvas";
+import { WebGLCanvas } from "@repo/threejs";
+
+import type { BaseEdge } from "~/app/(app)/(workspace)/workspace/types/edge";
 import { api } from "~/trpc/client/server";
 import { EdgeStoreProvider } from "../../../../providers/edge-store-provider";
 import { TextureRenderStoreProvider } from "../../../../providers/texture-render-store-provider";
-import { convertToBaseEdge, convertToBaseNode } from "../../../../types/node";
+import { convertToBaseEdge } from "../../../../types/edge";
+import { convertToBaseNode } from "../../../../types/node";
 import { RenderChain } from "./render-chain";
 
 interface WindowPageProps {
@@ -56,7 +57,9 @@ export default async function WindowPage({ params }: WindowPageProps) {
             }}
             showPerformance={true}
           >
-            <TextureRenderPipeline />
+            <div className="h-screen w-screen border">
+              {/* <TextureRenderPipeline /> */}
+            </div>
           </WebGLCanvas>
 
           <div className="h-screen w-screen border">

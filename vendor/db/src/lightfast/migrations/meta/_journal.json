@@ -19,8 +19,20 @@
     {
       "idx": 2,
       "version": "7",
+<<<<<<< HEAD:vendor/db/src/lightfast/migrations/meta/_journal.json
       "when": 1745889015113,
       "tag": "0002_strange_whistler",
+=======
+      "when": 1744378810115,
+      "tag": "0002_windy_lilith",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1744417357193,
+      "tag": "0003_last_leader",
+>>>>>>> staging:vendor/db/src/migrations/meta/_journal.json
       "breakpoints": true
     }
   ]
