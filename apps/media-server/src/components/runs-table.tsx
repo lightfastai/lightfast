@@ -136,7 +136,7 @@ export function RunsTable() {
       </div> */}
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="w-full">
-          <Table>
+          <Table className="w-full table-fixed">
             <TableHeader className="bg-background sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -162,7 +162,7 @@ export function RunsTable() {
         </div>
         <ScrollArea className="h-full">
           <div className="w-full">
-            <Table>
+            <Table className="w-full table-fixed">
               <TableBody>
                 {loading ? (
                   <TableRow>

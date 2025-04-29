@@ -109,25 +109,12 @@ const RESOURCE_TYPE_OPTIONS = [
 
 export const columns: ColumnDef<Resource>[] = [
   {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="ID" />
-    ),
-    enableSorting: false,
-    size: 100,
-    meta: {
-      type: "text",
-      displayName: "ID",
-      icon: FileText,
-    },
-  },
-  {
     accessorKey: "status",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
     enableSorting: false,
-    size: 80,
+    size: 40,
     cell: ({ row }) => {
       const status = row.getValue(
         "status",
@@ -162,15 +149,15 @@ export const columns: ColumnDef<Resource>[] = [
     },
   },
   {
-    accessorKey: "engine",
+    accessorKey: "id",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Engine" />
+      <DataTableColumnHeader column={column} title="ID" />
     ),
-    enableSorting: true,
+    enableSorting: false,
     size: 150,
     meta: {
       type: "text",
-      displayName: "Engine",
+      displayName: "ID",
       icon: FileText,
     },
   },
@@ -180,12 +167,25 @@ export const columns: ColumnDef<Resource>[] = [
       <DataTableColumnHeader column={column} title="Type" />
     ),
     enableSorting: true,
-    size: 100,
+    size: 40,
     meta: {
       type: "option",
       displayName: "Type",
       icon: FileText,
       options: RESOURCE_TYPE_OPTIONS,
+    },
+  },
+  {
+    accessorKey: "engine",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Engine" />
+    ),
+    enableSorting: true,
+    size: 100,
+    meta: {
+      type: "text",
+      displayName: "Engine",
+      icon: FileText,
     },
   },
   {
@@ -198,7 +198,7 @@ export const columns: ColumnDef<Resource>[] = [
       return date.toLocaleString();
     },
     enableSorting: true,
-    size: 200,
+    size: 100,
     meta: {
       type: "text",
       displayName: "Created At",
