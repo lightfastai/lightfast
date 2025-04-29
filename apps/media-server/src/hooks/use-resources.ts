@@ -61,6 +61,7 @@ export function useResources() {
   useRealtime({
     channelName: "resource-changes",
     table: "resource",
+    event: "*",
     onEvent: (payload) => {
       handleRealtime({
         eventType: payload.eventType,
