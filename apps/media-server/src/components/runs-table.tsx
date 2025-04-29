@@ -23,6 +23,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@repo/ui/components/ui/pagination";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -174,73 +175,78 @@ export function RunsTable() {
             </TableHeader>
           </Table>
         </div>
-        <div className="flex-1 overflow-auto">
-          <Table className="w-full table-fixed">
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length + 1}
-                    className="text-muted-foreground px-8 text-center"
-                  >
-                    Loading...
-                  </TableCell>
-                </TableRow>
-              ) : table.getRowModel().rows.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length + 1}
-                    className="text-muted-foreground px-8 text-center"
-                  >
-                    No runs found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <React.Fragment key={row.id}>
-                    <TableRow
-                      className={cn(
-                        "hover:bg-muted/50 cursor-pointer transition-colors",
-                        expandedRows[row.id] && "bg-muted/50",
-                      )}
-                      onClick={() => toggleRow(row.id)}
+        <div className="min-h-0 flex-1">
+          <ScrollArea className="h-full">
+            <Table className="w-full table-fixed">
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length + 1}
+                      className="text-muted-foreground px-8 text-center"
                     >
-                      <TableCell className="w-[40px] px-8">
-                        <div className="flex size-6 items-center justify-center">
-                          {expandedRows[row.id] ? (
-                            <ChevronDown className="size-4" />
-                          ) : (
-                            <ChevronRight className="size-4" />
-                          )}
-                        </div>
-                      </TableCell>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className="px-8 whitespace-nowrap"
-                          style={{ width: cell.column.getSize() }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : table.getRowModel().rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length + 1}
+                      className="text-muted-foreground px-8 text-center"
+                    >
+                      No runs found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  table.getRowModel().rows.map((row) => (
+                    <React.Fragment key={row.id}>
+                      <TableRow
+                        className={cn(
+                          "hover:bg-muted/50 cursor-pointer transition-colors",
+                          expandedRows[row.id] && "bg-muted/50",
+                        )}
+                        onClick={() => toggleRow(row.id)}
+                      >
+                        <TableCell className="w-[40px] px-8">
+                          <div className="flex size-6 items-center justify-center">
+                            {expandedRows[row.id] ? (
+                              <ChevronDown className="size-4" />
+                            ) : (
+                              <ChevronRight className="size-4" />
+                            )}
+                          </div>
                         </TableCell>
-                      ))}
-                    </TableRow>
-                    {expandedRows[row.id] && (
-                      <TableRow>
-                        <TableCell colSpan={columns.length + 1} className="p-0">
-                          <ExpandedContent
-                            resource={row.original as Resource}
-                          />
-                        </TableCell>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className="px-8 whitespace-nowrap"
+                            style={{ width: cell.column.getSize() }}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
                       </TableRow>
-                    )}
-                  </React.Fragment>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                      {expandedRows[row.id] && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={columns.length + 1}
+                            className="p-0"
+                          >
+                            <ExpandedContent
+                              resource={row.original as Resource}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         </div>
         <div className="bg-background flex items-center border-t px-8 py-2">
           <div className="text-muted-foreground text-xs">
