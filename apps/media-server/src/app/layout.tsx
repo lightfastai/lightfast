@@ -19,15 +19,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={cn("dark bg-background", fonts)}>
+      <body className={cn("dark bg-sidebar", fonts)}>
         <NuqsAdapter>
           <ResourcesProvider>
-            <div className="flex h-screen">
+            <div className="flex h-screen overflow-hidden">
               <SidebarProvider defaultOpen>
                 <AppSidebar />
                 <SidebarInset>
-                  <div className="flex h-full flex-col">
-                    <div className="flex-1">
+                  <div className="flex h-full flex-col overflow-hidden">
+                    <div className="flex-1 overflow-hidden">
                       <ContentLayout>{children}</ContentLayout>
                     </div>
                   </div>

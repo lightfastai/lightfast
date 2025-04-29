@@ -114,6 +114,7 @@ export const columns: ColumnDef<Resource>[] = [
       <DataTableColumnHeader column={column} title="ID" />
     ),
     enableSorting: false,
+    size: 100,
     meta: {
       type: "text",
       displayName: "ID",
@@ -126,6 +127,7 @@ export const columns: ColumnDef<Resource>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     enableSorting: false,
+    size: 80,
     cell: ({ row }) => {
       const status = row.getValue(
         "status",
@@ -165,6 +167,7 @@ export const columns: ColumnDef<Resource>[] = [
       <DataTableColumnHeader column={column} title="Engine" />
     ),
     enableSorting: true,
+    size: 150,
     meta: {
       type: "text",
       displayName: "Engine",
@@ -177,6 +180,7 @@ export const columns: ColumnDef<Resource>[] = [
       <DataTableColumnHeader column={column} title="Type" />
     ),
     enableSorting: true,
+    size: 100,
     meta: {
       type: "option",
       displayName: "Type",
@@ -194,6 +198,7 @@ export const columns: ColumnDef<Resource>[] = [
       return date.toLocaleString();
     },
     enableSorting: true,
+    size: 200,
     meta: {
       type: "text",
       displayName: "Created At",

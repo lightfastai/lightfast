@@ -1,19 +1,17 @@
-"use client";
-
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
 const RunsTable = dynamic(
   () => import("~/components/runs-table").then((mod) => mod.RunsTable),
   {
-    ssr: false,
+    ssr: true,
   },
 );
 
 export default function RunsPage() {
   return (
-    <div className="divide-border divide-y">
-      <div className="flex items-center justify-between px-8 py-4">
+    <div className="divide-border flex h-full flex-col divide-y">
+      <div className="flex-none px-8 py-4">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Runs</h1>
           <p className="text-muted-foreground">
@@ -21,7 +19,7 @@ export default function RunsPage() {
           </p>
         </div>
       </div>
-      <div className="h-full rounded-lg">
+      <div className="min-h-0 flex-1">
         <Suspense
           fallback={
             <div className="bg-card text-muted-foreground rounded-lg border p-8 text-center">
