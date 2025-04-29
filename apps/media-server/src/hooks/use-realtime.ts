@@ -4,6 +4,8 @@ import type {
 } from "@supabase/supabase-js";
 import { useEffect } from "react";
 
+import { DEFAULT_MEDIA_SERVER_SCHEMA } from "@vendor/db/media-server/schema";
+
 import type { Database } from "~/types/supabase.types";
 import { createClient } from "~/lib/supabase-client";
 
@@ -31,7 +33,7 @@ export function useRealtime<TN extends TableName>({
 
     const filterConfig: RealtimePostgresChangesFilter<"*"> = {
       event: event as "*",
-      schema: "public",
+      schema: DEFAULT_MEDIA_SERVER_SCHEMA,
       table,
       filter,
     };

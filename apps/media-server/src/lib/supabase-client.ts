@@ -5,7 +5,6 @@ import { DEFAULT_MEDIA_SERVER_SCHEMA } from "@vendor/db/media-server/schema";
 import { env } from "~/env/node-env";
 import { Database } from "../types/supabase.types";
 
-// Accepts either a Hono Context or a plain env object
 export const createClient = () => {
   return createBrowserClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,

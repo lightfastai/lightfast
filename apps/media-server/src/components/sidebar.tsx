@@ -16,7 +16,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center justify-between px-4 py-2">
           <span className="font-mono text-xs font-bold tracking-widest uppercase">
-            Codename: Kz
+            Codename: Media Server
           </span>
         </div>
       </SidebarHeader>
