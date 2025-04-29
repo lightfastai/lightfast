@@ -4,11 +4,17 @@ import { Column, ColumnDef } from "@tanstack/react-table";
 import {
   ArrowDown,
   ArrowUp,
+  CheckCircle2,
   ChevronsUpDown,
+  CircleDashed,
   CircleDotDashed,
   FileText,
   Image,
+  Link as LinkIcon,
+  Loader2,
+  TimerIcon,
   Video,
+  XCircle,
 } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
@@ -18,6 +24,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
 
 import type { Resource } from "~/stores/resources";
@@ -71,13 +83,24 @@ function DataTableColumnHeader<TData, TValue>({
   );
 }
 
-const RESOURCE_STATUS_OPTIONS = [
-  { label: "Init", value: "init" },
-  { label: "In Queue", value: "in_queue" },
-  { label: "Processing", value: "processing" },
-  { label: "Completed", value: "completed" },
-  { label: "Failed", value: "failed" },
-];
+const RESOURCE_STATUS_CONFIG = {
+  init: { label: "Init", icon: CircleDashed, color: "text-muted-foreground" },
+  in_queue: { label: "In Queue", icon: TimerIcon, color: "text-yellow-500" },
+  processing: { label: "Processing", icon: Loader2, color: "text-blue-500" },
+  completed: {
+    label: "Completed",
+    icon: CheckCircle2,
+    color: "text-green-500",
+  },
+  failed: { label: "Failed", icon: XCircle, color: "text-red-500" },
+} as const;
+
+const RESOURCE_STATUS_OPTIONS = Object.entries(RESOURCE_STATUS_CONFIG).map(
+  ([value, config]) => ({
+    label: config.label,
+    value,
+  }),
+);
 
 const RESOURCE_TYPE_OPTIONS = [
   { label: "Image", value: "image", icon: Image },
@@ -91,27 +114,38 @@ export const columns: ColumnDef<Resource>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
+    cell: ({ row }) => {
+      const status = row.getValue(
+        "status",
+      ) as keyof typeof RESOURCE_STATUS_CONFIG;
+      const config = RESOURCE_STATUS_CONFIG[status];
+      const Icon = config.icon;
+
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="flex items-center">
+                <Icon
+                  className={cn("h-4 w-4", config.color, {
+                    "animate-spin": status === "processing",
+                  })}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{config.label}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
     enableSorting: true,
     meta: {
       type: "option",
       displayName: "Status",
       icon: CircleDotDashed,
       options: RESOURCE_STATUS_OPTIONS,
-    },
-  },
-  {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Run ID" />
-    ),
-    cell: ({ row }) => (
-      <div className="font-mono text-xs">{row.getValue("id")}</div>
-    ),
-    enableSorting: true,
-    meta: {
-      type: "text",
-      displayName: "Run ID",
-      icon: FileText,
     },
   },
   {
@@ -140,46 +174,47 @@ export const columns: ColumnDef<Resource>[] = [
     },
   },
   {
-    accessorKey: "external_request_id",
+    accessorKey: "created_at",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Created at" />
+      <DataTableColumnHeader column={column} title="Created At" />
     ),
     cell: ({ row }) => {
-      const value = row.getValue("external_request_id");
-      return value ?? <span className="text-muted-foreground">—</span>;
+      const date = new Date(row.getValue("created_at"));
+      return date.toLocaleString();
     },
     enableSorting: true,
     meta: {
       type: "text",
-      displayName: "Created at",
+      displayName: "Created At",
       icon: FileText,
     },
   },
   {
-    id: "resource",
-    header: "Resource",
+    accessorKey: "url",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="URL" />
+    ),
     cell: ({ row }) => {
-      const resource = row.original;
-      if (resource.type === "image" && resource.url) {
-        return (
-          <img
-            src={resource.url}
-            alt="Resource"
-            className="h-12 rounded shadow"
-          />
-        );
-      }
-      if (resource.type === "video" && resource.url) {
-        return (
-          <video src={resource.url} className="h-12 rounded shadow" controls />
-        );
-      }
-      if (resource.type === "text" && resource.data) {
-        return (
-          <span className="whitespace-pre-wrap">{String(resource.data)}</span>
-        );
-      }
-      return <span className="text-muted-foreground">—</span>;
+      const url = row.getValue("url");
+      if (!url) return <span className="text-muted-foreground">—</span>;
+
+      return (
+        <a
+          href={url as string}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:text-primary/80 flex items-center gap-1"
+        >
+          <LinkIcon className="h-4 w-4" />
+          <span>Open</span>
+        </a>
+      );
+    },
+    enableSorting: true,
+    meta: {
+      type: "text",
+      displayName: "URL",
+      icon: LinkIcon,
     },
   },
 ];

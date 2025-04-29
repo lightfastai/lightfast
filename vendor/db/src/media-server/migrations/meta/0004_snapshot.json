@@ -1,0 +1,124 @@
+{
+  "id": "cf5b490b-4f42-4983-970c-b6d74be71c7f",
+  "prevId": "7b8fe858-3254-49d1-99f7-2a097e3174c7",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "media_server.resource": {
+      "name": "resource",
+      "schema": "media_server",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "engine": {
+          "name": "engine",
+          "type": "media_server_processor_engine",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "media_server_resource_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "media_server_job_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "external_request_id": {
+          "name": "external_request_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.media_server_job_status": {
+      "name": "media_server_job_status",
+      "schema": "public",
+      "values": [
+        "init",
+        "in_queue",
+        "processing",
+        "completed",
+        "failed"
+      ]
+    },
+    "public.media_server_processor_engine": {
+      "name": "media_server_processor_engine",
+      "schema": "public",
+      "values": [
+        "fal-ai/fast-sdxl",
+        "fal-ai/fast-sdxl-turbo",
+        "fal-ai/kling-video/v2/master/text-to-video",
+        "openai/gpt-4o-mini"
+      ]
+    },
+    "public.media_server_resource_type": {
+      "name": "media_server_resource_type",
+      "schema": "public",
+      "values": [
+        "image",
+        "video",
+        "audio",
+        "text"
+      ]
+    }
+  },
+  "schemas": {
+    "media_server": "media_server"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
