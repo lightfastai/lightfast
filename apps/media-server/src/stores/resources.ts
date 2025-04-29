@@ -3,7 +3,7 @@ import { immer } from "zustand/middleware/immer";
 
 import type { Database } from "~/types/supabase.types";
 
-export type Resource = Database["media_server"]["Tables"]["resource"]["Row"];
+export type Resource = Database["public"]["Tables"]["resource"]["Row"];
 export type ResourceStatus = Resource["status"];
 export type ResourceType = Resource["type"];
 export type ResourceEngine = Resource["engine"];

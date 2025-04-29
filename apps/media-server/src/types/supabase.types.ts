@@ -7,51 +7,39 @@ export type Json =
   | Json[]
 
 export type Database = {
-  media_server: {
+  public: {
     Tables: {
       resource: {
         Row: {
           created_at: string
           data: Json
-          engine:
-            | "fal-ai/fast-sdxl"
-            | "fal-ai/fast-sdxl-turbo"
-            | "fal-ai/kling-video/v2/master/text-to-video"
-            | "openai/gpt-4o-mini"
+          engine: Database["public"]["Enums"]["resource_processor_engine"]
           external_request_id: string | null
           id: string
-          status: "init" | "in_queue" | "processing" | "completed" | "failed"
-          type: "image" | "video" | "audio" | "text"
+          status: Database["public"]["Enums"]["resource_job_status"]
+          type: Database["public"]["Enums"]["resource_type"]
           updated_at: string | null
           url: string | null
         }
         Insert: {
           created_at?: string
           data: Json
-          engine:
-            | "fal-ai/fast-sdxl"
-            | "fal-ai/fast-sdxl-turbo"
-            | "fal-ai/kling-video/v2/master/text-to-video"
-            | "openai/gpt-4o-mini"
+          engine: Database["public"]["Enums"]["resource_processor_engine"]
           external_request_id?: string | null
           id: string
-          status: "init" | "in_queue" | "processing" | "completed" | "failed"
-          type: "image" | "video" | "audio" | "text"
+          status: Database["public"]["Enums"]["resource_job_status"]
+          type: Database["public"]["Enums"]["resource_type"]
           updated_at?: string | null
           url?: string | null
         }
         Update: {
           created_at?: string
           data?: Json
-          engine?:
-            | "fal-ai/fast-sdxl"
-            | "fal-ai/fast-sdxl-turbo"
-            | "fal-ai/kling-video/v2/master/text-to-video"
-            | "openai/gpt-4o-mini"
+          engine?: Database["public"]["Enums"]["resource_processor_engine"]
           external_request_id?: string | null
           id?: string
-          status?: "init" | "in_queue" | "processing" | "completed" | "failed"
-          type?: "image" | "video" | "audio" | "text"
+          status?: Database["public"]["Enums"]["resource_job_status"]
+          type?: Database["public"]["Enums"]["resource_type"]
           updated_at?: string | null
           url?: string | null
         }
@@ -65,7 +53,30 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      media_server_job_status:
+        | "init"
+        | "in_queue"
+        | "processing"
+        | "completed"
+        | "failed"
+      media_server_processor_engine:
+        | "fal-ai/fast-sdxl"
+        | "fal-ai/fast-sdxl-turbo"
+        | "fal-ai/kling-video/v2/master/text-to-video"
+        | "openai/gpt-4o-mini"
+      media_server_resource_type: "image" | "video" | "audio" | "text"
+      resource_job_status:
+        | "init"
+        | "in_queue"
+        | "processing"
+        | "completed"
+        | "failed"
+      resource_processor_engine:
+        | "fal-ai/fast-sdxl"
+        | "fal-ai/fast-sdxl-turbo"
+        | "fal-ai/kling-video/v2/master/text-to-video"
+        | "openai/gpt-4o-mini"
+      resource_type: "image" | "video" | "audio" | "text"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -179,7 +190,36 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  media_server: {
-    Enums: {},
+  public: {
+    Enums: {
+      media_server_job_status: [
+        "init",
+        "in_queue",
+        "processing",
+        "completed",
+        "failed",
+      ],
+      media_server_processor_engine: [
+        "fal-ai/fast-sdxl",
+        "fal-ai/fast-sdxl-turbo",
+        "fal-ai/kling-video/v2/master/text-to-video",
+        "openai/gpt-4o-mini",
+      ],
+      media_server_resource_type: ["image", "video", "audio", "text"],
+      resource_job_status: [
+        "init",
+        "in_queue",
+        "processing",
+        "completed",
+        "failed",
+      ],
+      resource_processor_engine: [
+        "fal-ai/fast-sdxl",
+        "fal-ai/fast-sdxl-turbo",
+        "fal-ai/kling-video/v2/master/text-to-video",
+        "openai/gpt-4o-mini",
+      ],
+      resource_type: ["image", "video", "audio", "text"],
+    },
   },
 } as const

@@ -62,15 +62,11 @@ export function useResources() {
     channelName: "resource-changes",
     table: "resource",
     onEvent: (payload) => {
-      console.log("payload", payload);
       handleRealtime({
         eventType: payload.eventType,
         new: payload.new as Resource,
         old: payload.old as Resource,
       });
-    },
-    onConnectionStatusChange: (status) => {
-      console.log("status", status);
     },
   });
 
