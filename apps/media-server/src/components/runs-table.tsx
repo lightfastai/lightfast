@@ -25,6 +25,13 @@ import {
 } from "@repo/ui/components/ui/pagination";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -107,6 +114,7 @@ export function RunsTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() =>
     initializeFiltersFromQuery(queryFilters, columns),
   );
+  const [pageSize, setPageSize] = useState<number>(50);
 
   const table = useReactTable({
     data: resources,
@@ -121,7 +129,7 @@ export function RunsTable() {
       sorting,
       columnFilters,
       pagination: {
-        pageSize: 50,
+        pageSize,
         pageIndex: 0,
       },
     },
@@ -142,6 +150,40 @@ export function RunsTable() {
       ...prev,
       [rowId]: !prev[rowId],
     }));
+  };
+
+  const renderPageNumbers = () => {
+    const currentPage = table.getState().pagination.pageIndex + 1;
+    const totalPages = table.getPageCount();
+    const pages: number[] = [];
+
+    // Always show first page
+    pages.push(1);
+
+    // Show pages around current page
+    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+      if (i > 1 && i < totalPages) {
+        pages.push(i);
+      }
+    }
+
+    // Always show last page
+    if (totalPages > 1) {
+      pages.push(totalPages);
+    }
+
+    // Add ellipsis where needed
+    const deduped = Array.from(new Set(pages)).sort((a, b) => a - b);
+    const withEllipsis: (number | "...")[] = [];
+    deduped.forEach((page, i) => {
+      const prevPage = deduped[i - 1];
+      if (i > 0 && prevPage !== undefined && page !== prevPage + 1) {
+        withEllipsis.push("...");
+      }
+      withEllipsis.push(page);
+    });
+
+    return withEllipsis;
   };
 
   return (
@@ -248,9 +290,26 @@ export function RunsTable() {
             </Table>
           </ScrollArea>
         </div>
-        <div className="bg-background flex items-center border-t px-8 py-2">
-          <div className="text-muted-foreground text-xs">
-            {table.getFilteredRowModel().rows.length} total runs
+        <div className="bg-background flex items-center justify-between border-t px-8 py-2">
+          <div className="flex items-center gap-4">
+            <div className="text-muted-foreground text-xs">
+              {table.getFilteredRowModel().rows.length} total runs
+            </div>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => setPageSize(Number(value))}
+            >
+              <SelectTrigger className="h-8 w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 25, 50, 100].map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size} rows
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="ml-auto">
             <Pagination className="p-0">
@@ -265,18 +324,27 @@ export function RunsTable() {
                     aria-disabled={!table.getCanPreviousPage()}
                   />
                 </PaginationItem>
-                {table.getPageCount() > 0 && (
-                  <PaginationItem>
-                    <PaginationLink href="#" isActive>
-                      {table.getState().pagination.pageIndex + 1}
-                    </PaginationLink>
+                {renderPageNumbers().map((page, i) => (
+                  <PaginationItem key={i}>
+                    {page === "..." ? (
+                      <PaginationEllipsis />
+                    ) : (
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          table.setPageIndex(Number(page) - 1);
+                        }}
+                        isActive={
+                          table.getState().pagination.pageIndex ===
+                          Number(page) - 1
+                        }
+                      >
+                        {page}
+                      </PaginationLink>
+                    )}
                   </PaginationItem>
-                )}
-                {table.getPageCount() > 1 && (
-                  <PaginationItem>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                )}
+                ))}
                 <PaginationItem>
                   <PaginationNext
                     href="#"
