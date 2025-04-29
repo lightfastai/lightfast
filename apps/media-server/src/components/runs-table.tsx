@@ -30,7 +30,6 @@ import {
   initializeFiltersFromQuery,
 } from "~/lib/filter";
 import { columns } from "./columns";
-import { DataTableFilter } from "./data-table-filter";
 
 function ExpandedContent({ resource }: { resource: Resource }) {
   const data = resource.data as Record<string, string>;
@@ -131,9 +130,9 @@ export function RunsTable() {
 
   return (
     <div className="divide-border divide-y">
-      <div className="px-8 py-4">
+      {/* <div className="px-8 py-4">
         <DataTableFilter table={table} />
-      </div>
+      </div> */}
       <div className="h-full">
         <Table>
           <TableHeader>

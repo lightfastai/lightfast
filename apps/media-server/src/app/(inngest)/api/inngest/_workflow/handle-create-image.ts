@@ -27,7 +27,13 @@ export const handleCreateImage = inngest.createFunction(
     await step.run("update-resource-status-to-processing", async () => {
       const { data, error } = await createClient()
         .from("resource")
-        .update({ data: { prompt }, status: "in_queue" })
+        .update({
+          data: {
+            prompt,
+            inngestEventId: event.id,
+          },
+          status: "in_queue",
+        })
         .eq("id", id)
         .select()
         .single();
@@ -50,18 +56,24 @@ export const handleCreateImage = inngest.createFunction(
         model: resource.engine,
         width: 1024,
         height: 1024,
-        // Optionally pass FAL_KEY if needed by generateImageWithFal
       });
 
       const { request_id } = result;
 
-      // Update resource status to 'processing'
+      // Update resource status to 'processing' and store request_id
       await createClient()
         .from("resource")
-        .update({ data: { prompt, request_id }, status: "processing" })
+        .update({
+          data: {
+            prompt,
+            fal_request_id: request_id,
+            inngest_event_id: event.id,
+          },
+          status: "processing",
+        })
         .eq("id", id);
 
-      return { id, status: "processing" };
+      return { id, status: "processing", request_id };
     });
   },
 );

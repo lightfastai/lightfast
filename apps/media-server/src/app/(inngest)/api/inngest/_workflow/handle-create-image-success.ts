@@ -30,7 +30,11 @@ export const handleResourceImageSuccess = inngest.createFunction(
         .from("resource")
         .update({
           data: {
+            // @todo fix...
+            // @ts-expect-error
+            ...(request.data as unknown),
             url: data.payload.images[0]?.url!,
+            success_run_id: event.id,
           },
           status: "completed",
         })

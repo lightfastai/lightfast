@@ -36,6 +36,9 @@ export type ResourceProcessorEngine = z.infer<typeof $ResourceProcessorEngine>;
 
 export const $ResourceData = z.object({
   prompt: z.string(),
+  fal_request_id: z.string().optional(),
+  inngest_event_id: z.string().optional(),
+  success_run_id: z.string().optional(),
 });
 
 export const ResourceType = ["image", "video", "audio", "text"] as const;

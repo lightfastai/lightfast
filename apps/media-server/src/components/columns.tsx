@@ -10,7 +10,6 @@ import {
   CircleDotDashed,
   FileText,
   Image,
-  Link as LinkIcon,
   Loader2,
   TimerIcon,
   Video,
@@ -199,31 +198,6 @@ export const columns: ColumnDef<Resource>[] = [
       type: "text",
       displayName: "Created At",
       icon: FileText,
-    },
-  },
-  {
-    accessorKey: "url",
-    header: "URL",
-    cell: ({ row }) => {
-      const url = row.getValue("url");
-      if (!url) return <span className="text-muted-foreground">—</span>;
-
-      return (
-        <a
-          href={url as string}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:text-primary/80 flex items-center gap-1"
-        >
-          <LinkIcon className="h-4 w-4" />
-          <span>Open</span>
-        </a>
-      );
-    },
-    meta: {
-      type: "text",
-      displayName: "URL",
-      icon: LinkIcon,
     },
   },
 ];
