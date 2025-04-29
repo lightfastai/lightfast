@@ -69,6 +69,9 @@ export function useResources() {
         old: payload.old as Resource,
       });
     },
+    onConnectionStatusChange: (status) => {
+      console.log("status", status);
+    },
   });
 
   return { resources, loading };

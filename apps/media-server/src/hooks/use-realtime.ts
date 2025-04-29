@@ -19,6 +19,7 @@ interface UseRealtimeProps<TN extends TableName> {
   table: TN;
   filter?: string;
   onEvent: (payload: RealtimePostgresChangesPayload<Tables[TN]["Row"]>) => void;
+  onConnectionStatusChange?: (status: string) => void;
 }
 
 export function useRealtime<TN extends TableName>({
@@ -27,6 +28,7 @@ export function useRealtime<TN extends TableName>({
   table,
   filter,
   onEvent,
+  onConnectionStatusChange,
 }: UseRealtimeProps<TN>) {
   useEffect(() => {
     const supabase = createClient();
@@ -47,10 +49,13 @@ export function useRealtime<TN extends TableName>({
           onEvent(payload);
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        // Report connection status changes
+        onConnectionStatusChange?.(status);
+      });
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [channelName, event, table, filter, onEvent]);
+  }, [channelName, event, table, filter, onEvent, onConnectionStatusChange]);
 }
