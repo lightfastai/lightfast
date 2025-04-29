@@ -31,7 +31,12 @@ import { DataTableFilter } from "./data-table-filter";
 
 export function RunsTable() {
   const { resources, loading } = useResources();
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: "created_at",
+      desc: true,
+    },
+  ]);
   const [queryFilters, setQueryFilters] = useQueryState(
     "filter",
     parseAsJson(dataTableFilterQuerySchema.parse).withDefault([]),

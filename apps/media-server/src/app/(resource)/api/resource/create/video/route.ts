@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { nanoid } from "@repo/lib";
+
 import { inngest } from "~/app/(inngest)/api/inngest/_client/client";
 import { createClient } from "~/lib/supabase-client";
+import { Database } from "~/types/supabase.types";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { id, prompt } = body as { id: string; prompt: string };
+  const { prompt, engine } = body as {
+    prompt: string;
+    engine: Database["public"]["Tables"]["resource"]["Row"]["engine"];
+  };
   // Insert resource with status 'pending'
   const { data, error } = await createClient()
     .from("resource")
     .insert({
-      id,
+      id: nanoid(),
       data: { prompt },
-      engine: "fal-ai/kling-video/v2/master/text-to-video",
+      engine,
       type: "video",
       status: "init",
     })
@@ -24,8 +30,11 @@ export async function POST(request: NextRequest) {
   // Trigger Inngest workflow
   await inngest.send({
     name: "media-server/handle-create-video",
-    data: { id, prompt },
+    data: { id: data.id, prompt },
   });
 
-  return NextResponse.json({ id, status: "pending" }, { status: 200 });
+  return NextResponse.json(
+    { id: data.id, status: data.status },
+    { status: 200 },
+  );
 }

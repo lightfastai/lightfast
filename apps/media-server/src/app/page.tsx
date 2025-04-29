@@ -3,8 +3,6 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
-import { CreateTestEventDialog } from "~/components/create-test-event-dialog";
-
 const RunsTable = dynamic(
   () => import("~/components/runs-table").then((mod) => mod.RunsTable),
   {
@@ -22,7 +20,6 @@ export default function RunsPage() {
             A view of all the runs that have been made
           </p>
         </div>
-        <CreateTestEventDialog />
       </div>
       <div className="h-full rounded-lg">
         <Suspense

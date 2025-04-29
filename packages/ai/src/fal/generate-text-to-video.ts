@@ -3,8 +3,8 @@ import { fal, InQueueQueueStatus } from "@fal-ai/client";
 export interface FalGenerateVideoOptions {
   prompt: string;
   webhookUrl: string;
-  duration?: number;
-  model?: string;
+  duration: number;
+  model: string;
 }
 
 export interface FalGenerateVideoResult extends InQueueQueueStatus {}
@@ -16,9 +16,9 @@ export interface FalGenerateVideoResult extends InQueueQueueStatus {}
 
 export async function generateVideoWithFal({
   prompt,
-  duration = 1,
+  duration,
   webhookUrl,
-  model = "fal-ai/kling-video/v2/master/text-to-video",
+  model,
 }: FalGenerateVideoOptions): Promise<FalGenerateVideoResult> {
   const result = await fal.queue.submit(model, {
     input: {

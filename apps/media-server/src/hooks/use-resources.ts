@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect } from "react";
 
+import { toast } from "@repo/ui/hooks/use-toast";
+
 import type { Resource } from "~/stores/resources";
 import { useResourcesStore } from "~/providers/resources-provider";
 import { createClient } from "../lib/supabase-client";
@@ -46,6 +48,12 @@ export function useResources() {
       switch (payload.eventType) {
         case "INSERT":
           addResource(payload.new);
+          toast({
+            title: "New Resource Added",
+            description: `${payload.new.type} resource created using ${payload.new.engine} engine.`,
+            variant: "default",
+            duration: 5000,
+          });
           break;
         case "UPDATE":
           updateResource(payload.new.id, payload.new);

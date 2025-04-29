@@ -10,6 +10,20 @@ export const handleCreateImage = inngest.createFunction(
   async ({ event, step }) => {
     const { id, prompt } = event.data;
 
+    const resource = await step.run("get-resource", async () => {
+      const { data, error } = await createClient()
+        .from("resource")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    });
+
     await step.run("update-resource-status-to-processing", async () => {
       await createClient()
         .from("resource")
@@ -24,6 +38,9 @@ export const handleCreateImage = inngest.createFunction(
       await generateImageWithFal({
         prompt,
         webhookUrl,
+        model: resource.engine,
+        width: 1024,
+        height: 1024,
         // Optionally pass FAL_KEY if needed by generateImageWithFal
       });
       // Update resource status to 'processing'

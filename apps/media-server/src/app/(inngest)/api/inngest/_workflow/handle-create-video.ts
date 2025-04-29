@@ -10,6 +10,20 @@ export const handleCreateVideo = inngest.createFunction(
   async ({ event, step }) => {
     const { id, prompt } = event.data;
 
+    const resource = await step.run("get-resource", async () => {
+      const { data, error } = await createClient()
+        .from("resource")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    });
+
     await step.run("update-resource-status-to-in-queue", async () => {
       await createClient()
         .from("resource")
@@ -19,7 +33,12 @@ export const handleCreateVideo = inngest.createFunction(
 
     await step.run("generate-video-with-fal", async () => {
       const webhookUrl = createVideoSuccessWebhookUrl({ id });
-      await generateVideoWithFal({ prompt, webhookUrl });
+      await generateVideoWithFal({
+        prompt,
+        webhookUrl,
+        duration: 1,
+        model: resource.engine,
+      });
       await createClient()
         .from("resource")
         .update({ data: { prompt, status: "processing" } })

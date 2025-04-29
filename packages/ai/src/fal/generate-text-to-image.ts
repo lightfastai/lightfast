@@ -3,9 +3,9 @@ import { fal, InQueueQueueStatus } from "@fal-ai/client";
 export interface FalGenerateImageOptions {
   prompt: string;
   webhookUrl: string;
-  width?: number;
-  height?: number;
-  model?: string;
+  width: number;
+  height: number;
+  model: string;
 }
 
 export interface FalGenerateImageResult extends InQueueQueueStatus {}
@@ -16,10 +16,10 @@ export interface FalGenerateImageResult extends InQueueQueueStatus {}
  */
 export async function generateImageWithFal({
   prompt,
-  width = 1024,
-  height = 1024,
+  width,
+  height,
   webhookUrl,
-  model = "fal-ai/fast-sdxl",
+  model,
 }: FalGenerateImageOptions): Promise<FalGenerateImageResult> {
   const result = await fal.queue.submit(model, {
     input: {
