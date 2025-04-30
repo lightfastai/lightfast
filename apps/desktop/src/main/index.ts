@@ -16,6 +16,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 const DIST_ELECTRON = join(__dirname, "..");
 const DIST = join(DIST_ELECTRON, "../dist");
 const VITE_PUBLIC = app.isPackaged ? DIST : join(DIST_ELECTRON, "../public");
+const inDevelopment = process.env.NODE_ENV === "production";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -24,10 +25,13 @@ const createWindow = async () => {
     width: 1280,
     height: 800,
     webPreferences: {
+      devTools: inDevelopment,
       nodeIntegration: false,
       contextIsolation: true,
+      nodeIntegrationInSubFrames: true,
       preload: join(__dirname, "../preload/index.js"),
     },
+    titleBarStyle: "hidden",
   });
 
   // Load app
@@ -47,6 +51,7 @@ const createWindow = async () => {
 
 app.whenReady().then(createWindow);
 
+//osX only
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
@@ -54,7 +59,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  if (mainWindow === null && app.isReady()) {
+  if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });
