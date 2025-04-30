@@ -3,7 +3,7 @@ import {
   useBlenderStore,
 } from "@/stores/blender-store";
 
-import { cn } from "@repo/ui/lib/utils";
+import { InfoCard } from "@repo/ui/components/info-card";
 
 const getStatusInfo = (
   status: BlenderConnectionStatus,
@@ -43,13 +43,9 @@ export function BlenderStatusIndicator() {
   const { color, title } = getStatusInfo(connectionStatus);
 
   return (
-    <div
-      className="bg-background/80 border-border fixed right-4 bottom-4 z-50 flex items-center justify-center rounded-full border p-2 shadow-md backdrop-blur-sm"
-      title={title} // Simple tooltip
-    >
-      <span className={cn("block h-3 w-3 rounded-full", color)} />
-      {/* Optionally add text label next to the dot */}
-      {/* <span className="ml-2 text-xs text-muted-foreground hidden sm:inline">{title}</span> */}
-    </div>
+    <InfoCard
+      title="Blender Status"
+      items={[{ label: "Status", value: title }]}
+    />
   );
 }

@@ -4,9 +4,8 @@ import { createRoot } from "react-dom/client";
 
 import { router } from "./routes/router";
 
-import "@repo/ui/globals.css";
+import "./styles.css";
 
-import { BlenderStatusIndicator } from "./components/blender-status-indicator";
 import { useBlenderStore } from "./stores/blender-store";
 
 export default function App() {
@@ -23,7 +22,6 @@ export default function App() {
     <div className="dark bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
       <div className="relative flex-1 overflow-auto">
         <RouterProvider router={router} />
-        <BlenderStatusIndicator />
       </div>
     </div>
   );

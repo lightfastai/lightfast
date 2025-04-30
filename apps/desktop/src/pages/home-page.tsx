@@ -1,3 +1,9 @@
+import { RootLayout } from "@/components/root-layout";
+
 export default function HomePage() {
-  return <div>Hello</div>;
+  return (
+    <RootLayout>
+      <div>Hello</div>
+    </RootLayout>
+  );
 }

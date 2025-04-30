@@ -1,7 +1,6 @@
 import { createRoute } from "@tanstack/react-router";
 
 import HomePage from "../pages/home-page";
-import SecondPage from "../pages/second-page";
 import { RootRoute } from "./__root";
 
 // TODO: Steps to add a new route:
@@ -29,10 +28,4 @@ export const HomeRoute = createRoute({
   component: HomePage,
 });
 
-export const SecondPageRoute = createRoute({
-  getParentRoute: () => RootRoute,
-  path: "/second-page",
-  component: SecondPage,
-});
-
-export const rootTree = RootRoute.addChildren([HomeRoute, SecondPageRoute]);
+export const rootTree = RootRoute.addChildren([HomeRoute]);

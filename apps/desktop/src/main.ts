@@ -1,6 +1,8 @@
 import { join } from "path";
 import { app, BrowserWindow, ipcMain } from "electron";
 
+import { startBlenderSocketServer } from "./main/blender-connection";
+
 // import { startBlenderSocketServer } from "./main/blender-connection";
 
 // import { autoUpdater } from "electron-updater";
@@ -27,7 +29,7 @@ const createWindow = async () => {
     width: 1280,
     height: 800,
     webPreferences: {
-      devTools: true,
+      devTools: false,
       nodeIntegration: false,
       contextIsolation: true,
       nodeIntegrationInSubFrames: true,
@@ -57,9 +59,9 @@ const createWindow = async () => {
 
 app.whenReady().then(() => {
   createWindow();
-  // if (mainWindow) {
-  //   startBlenderSocketServer(mainWindow.webContents);
-  // }
+  if (mainWindow) {
+    startBlenderSocketServer(mainWindow.webContents);
+  }
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) {
