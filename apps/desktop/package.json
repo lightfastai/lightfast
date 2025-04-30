@@ -13,8 +13,10 @@
   "scripts": {
     "clean": "rm -rf dist dist-electron node_modules .cache",
     "dev": "vite --mode development",
+    "dev:debug": "VSCODE_DEBUG=true vite --mode development",
     "start": "electron .",
-    "build": "rm -rf dist dist-electron .cache && tsc && vite build && vite build -c electron.vite.config.ts && electron-builder",
+    "build": "rm -rf dist dist-electron .cache && tsc && vite build && electron-builder",
+    "build:dir": "rm -rf dist dist-electron .cache && tsc && vite build && electron-builder --dir",
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",
     "e2e": "playwright test",
