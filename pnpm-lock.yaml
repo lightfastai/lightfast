@@ -255,6 +255,9 @@ importers:
       react-dom:
         specifier: catalog:react19
         version: 19.1.0(react@19.1.0)
+      zustand:
+        specifier: ^5.0.1
+        version: 5.0.1(@types/react@19.1.2)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
     devDependencies:
       '@playwright/test':
         specifier: ^1.41.1
@@ -280,6 +283,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.1.2(@types/react@19.1.2)
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@vitejs/plugin-react':
         specifier: ^4.2.1
         version: 4.4.1(vite@6.3.3(@types/node@20.17.2)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)(tsx@4.19.4)(yaml@2.6.0))
@@ -313,6 +319,9 @@ importers:
       vite-plugin-electron-renderer:
         specifier: ^0.14.6
         version: 0.14.6
+      ws:
+        specifier: ^8.18.1
+        version: 8.18.1(bufferutil@4.0.9)
 
   apps/docs:
     dependencies:

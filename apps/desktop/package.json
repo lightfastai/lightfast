@@ -26,7 +26,8 @@
   "dependencies": {
     "@repo/ui": "workspace:*",
     "react": "catalog:react19",
-    "react-dom": "catalog:react19"
+    "react-dom": "catalog:react19",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.41.1",
@@ -37,6 +38,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.20",
     "electron": "36.0.0",
@@ -47,7 +49,8 @@
     "typescript": "catalog:",
     "vite": "^6.3.3",
     "vite-plugin-electron": "^0.29.0",
-    "vite-plugin-electron-renderer": "^0.14.6"
+    "vite-plugin-electron-renderer": "^0.14.6",
+    "ws": "^8.18.1"
   },
   "prettier": "@repo/prettier-config"
 }

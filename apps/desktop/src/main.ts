@@ -3,6 +3,12 @@ import { app, BrowserWindow, ipcMain } from "electron";
 
 // import { autoUpdater } from "electron-updater";
 
+import {
+  sendToBlender,
+  startBlenderSocketServer,
+  stopBlenderSocketServer,
+} from "./main/blender-connection";
+
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -25,7 +31,7 @@ const createWindow = async () => {
     width: 1280,
     height: 800,
     webPreferences: {
-      devTools: inDevelopment,
+      // devTools: inDevelopment,
       nodeIntegration: false,
       contextIsolation: true,
       nodeIntegrationInSubFrames: true,
@@ -49,18 +55,23 @@ const createWindow = async () => {
   }
 };
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  if (mainWindow) {
+    startBlenderSocketServer(mainWindow.webContents);
+  }
+
+  app.on("activate", function () {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
 
 //osX only
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
-  }
-});
-
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
   }
 });
 
@@ -74,3 +85,13 @@ app.on("activate", () => {
 
 // Example IPC handler
 ipcMain.handle("ping", () => "pong");
+
+// Example IPC handler to send messages to Blender from the renderer
+ipcMain.handle("send-to-blender", async (_event, message) => {
+  sendToBlender(message);
+});
+
+// Stop the server when the app quits
+app.on("will-quit", () => {
+  stopBlenderSocketServer();
+});
