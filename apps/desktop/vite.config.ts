@@ -18,13 +18,8 @@ export default defineConfig(({ command }) => {
           // Main process entry
           entry: "src/main.ts",
           onstart({ startup }) {
-            console.log("[onstart] Main process hook triggered.");
-            // Always call startup regardless of VSCODE_DEBUG
+            // Simply call startup without extra logs
             startup();
-            console.log("[onstart] startup() called.");
-            if (process.env.VSCODE_DEBUG) {
-              console.log("[startup] Electron App (Debug Mode)");
-            }
           },
           vite: {
             build: {

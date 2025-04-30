@@ -1,13 +1,9 @@
 import { join } from "path";
 import { app, BrowserWindow, ipcMain } from "electron";
 
-// import { autoUpdater } from "electron-updater";
+// import { startBlenderSocketServer } from "./main/blender-connection";
 
-import {
-  sendToBlender,
-  startBlenderSocketServer,
-  stopBlenderSocketServer,
-} from "./main/blender-connection";
+// import { autoUpdater } from "electron-updater";
 
 // The built directory structure
 //
@@ -31,11 +27,11 @@ const createWindow = async () => {
     width: 1280,
     height: 800,
     webPreferences: {
-      // devTools: inDevelopment,
+      devTools: true,
       nodeIntegration: false,
       contextIsolation: true,
       nodeIntegrationInSubFrames: true,
-      preload: join(__dirname, "../preload.js"),
+      preload: join(__dirname, "../preload/preload.js"),
     },
     titleBarStyle: "hidden",
   });
@@ -47,19 +43,23 @@ const createWindow = async () => {
     if (!devServerUrl) {
       throw new Error("VITE_DEV_SERVER_URL is undefined");
     }
+    console.log("Loading URL:", devServerUrl);
     await mainWindow.loadURL(devServerUrl);
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools(); // We'll open it unconditionally below
   } else {
     // Production - load the built HTML file
     mainWindow.loadFile(join(DIST, "index.html"));
   }
+
+  // Always open DevTools after loading content
+  mainWindow.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {
   createWindow();
-  if (mainWindow) {
-    startBlenderSocketServer(mainWindow.webContents);
-  }
+  // if (mainWindow) {
+  //   startBlenderSocketServer(mainWindow.webContents);
+  // }
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -86,12 +86,14 @@ app.on("window-all-closed", () => {
 // Example IPC handler
 ipcMain.handle("ping", () => "pong");
 
-// Example IPC handler to send messages to Blender from the renderer
-ipcMain.handle("send-to-blender", async (_event, message) => {
-  sendToBlender(message);
-});
+// // Example IPC handler to send messages to Blender from the renderer
+// ipcMain.handle("send-to-blender", async (_event, message) => {
+//   sendToBlender(message);
+// });
 
-// Stop the server when the app quits
-app.on("will-quit", () => {
-  stopBlenderSocketServer();
-});
+// Stop the server and unregister shortcuts when the app quits
+// app.on("will-quit", () => {
+//   stopBlenderSocketServer();
+//   // Unregister all shortcuts.
+//   globalShortcut.unregisterAll();
+// });

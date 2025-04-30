@@ -246,6 +246,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@lightfast/desktop':
+        specifier: workspace:^
+        version: 'link:'
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui

@@ -4,7 +4,7 @@
   "private": true,
   "author": "lightfastai <support@lightfast.ai>",
   "description": "Lightfast Desktop",
-  "main": "dist-electron/main/index.js",
+  "main": "dist-electron/main/main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/lightfastai/lightfast.git"
@@ -24,6 +24,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@lightfast/desktop": "workspace:^",
     "@repo/ui": "workspace:*",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
