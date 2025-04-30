@@ -44,28 +44,28 @@ export default function ToggleTheme() {
       className="border-border overflow-hidden rounded-full border"
     >
       <ToggleGroupItem
-        size="sm"
+        size="xs"
         value="system"
         aria-label="System theme"
         className="border-border rounded-full"
       >
-        <Monitor className="h-3 w-3" />
+        <Monitor className="size-3" />
       </ToggleGroupItem>
       <ToggleGroupItem
-        size="sm"
+        size="xs"
         value="light"
         aria-label="Light theme"
         className="border-border rounded-full"
       >
-        <Sun className="h-3 w-3" />
+        <Sun className="size-3" />
       </ToggleGroupItem>
       <ToggleGroupItem
-        size="sm"
+        size="xs"
         value="dark"
         aria-label="Dark theme"
         className="border-border rounded-full"
       >
-        <Moon className="h-3 w-3" />
+        <Moon className="size-3" />
       </ToggleGroupItem>
     </ToggleGroup>
   );

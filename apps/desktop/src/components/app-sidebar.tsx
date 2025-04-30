@@ -58,12 +58,7 @@ function UserDropdown() {
           </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="w-56"
-        align="end"
-        side="right"
-        sideOffset={8}
-      >
+      <DropdownMenuContent className="w-56" align="start" side="top">
         <DropdownMenuLabel className="flex items-center gap-2">
           <Avatar className="h-5 w-5">
             <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
