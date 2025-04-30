@@ -1,0 +1,48 @@
+{
+  "name": "@lightfast/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "author": "lightfastai <support@lightfast.ai>",
+  "description": "Lightfast Desktop",
+  "main": "dist-electron/main/index.js",
+  "scripts": {
+    "clean": "rm -rf dist dist-electron node_modules .cache",
+    "dev": "vite --mode development",
+    "start": "electron .",
+    "build": "tsc && vite build && electron-builder",
+    "preview": "vite preview",
+    "pree2e": "vite build --mode=test",
+    "e2e": "playwright test",
+    "format": "prettier --check . --ignore-path ../../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/ui": "workspace:*",
+    "electron-updater": "^6.6.2",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.41.1",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.20",
+    "electron": "36.0.0",
+    "electron-builder": "26.0.12",
+    "eslint": "catalog:",
+    "postcss": "catalog:tailwind4",
+    "tailwindcss": "catalog:tailwind4",
+    "typescript": "catalog:",
+    "vite": "^6.3.3",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  },
+  "prettier": "@repo/prettier-config"
+}
