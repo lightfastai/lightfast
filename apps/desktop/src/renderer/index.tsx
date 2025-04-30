@@ -1,27 +1,22 @@
 import React from "react";
+import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
 
-import { App } from "./App";
+import { router } from "../routes/router";
 
 import "@repo/ui/globals.css";
 
-import { cn } from "@repo/ui/lib/utils";
-
-const container = document.getElementById("root");
-if (!container) {
-  throw new Error("Root element not found");
+export default function App() {
+  return (
+    <div className="dark bg-background text-foreground h-screen w-screen overflow-hidden">
+      <RouterProvider router={router} />
+    </div>
+  );
 }
 
-const root = createRoot(container);
+const root = createRoot(document.getElementById("root")!);
 root.render(
   <React.StrictMode>
-    <div
-      className={cn(
-        "dark bg-background text-foreground min-h-screen",
-        "touch-manipulation font-sans antialiased",
-      )}
-    >
-      <App />
-    </div>
+    <App />
   </React.StrictMode>,
 );

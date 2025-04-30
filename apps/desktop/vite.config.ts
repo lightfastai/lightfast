@@ -87,4 +87,4 @@ export default defineConfig(({ command }) => {
       },
     },
   };
-}); 
+});
