@@ -8,8 +8,10 @@ import "@repo/ui/globals.css";
 
 export default function App() {
   return (
-    <div className="dark bg-background text-foreground h-screen w-screen overflow-hidden">
-      <RouterProvider router={router} />
+    <div className="dark bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
+      <div className="flex-1 overflow-auto">
+        <RouterProvider router={router} />
+      </div>
     </div>
   );
 }
