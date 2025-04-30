@@ -42,7 +42,7 @@ export const InfoCard: React.FC<InfoCardProps> = ({
   className,
 }) => {
   return (
-    <Card className={cn("w-full rounded-md", className)}>
+    <Card className={cn("w-full rounded-lg", className)}>
       <CardHeader className="text-muted-foreground flex font-mono text-xs uppercase">
         <h3>{title}</h3>
       </CardHeader>

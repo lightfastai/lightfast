@@ -12,6 +12,8 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 
+import { BlenderStatusIndicator } from "./blender-status-indicator";
+
 export function AppSidebar() {
   return (
     <Sidebar variant="inset" className="p-0">
@@ -22,10 +24,13 @@ export function AppSidebar() {
           </span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="px-4">
-        <SidebarGroup className="p-0 py-2">
+      <SidebarContent className="divide-y">
+        <SidebarGroup className="p-4">
+          <BlenderStatusIndicator />
+        </SidebarGroup>
+        <SidebarGroup className="p-4">
           <SidebarGroupLabel>
-            <span>Overview</span>
+            <span>Recents</span>
           </SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>

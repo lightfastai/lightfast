@@ -3,7 +3,7 @@ import {
   useBlenderStore,
 } from "@/stores/blender-store";
 
-import { InfoCard } from "@repo/ui/components/info-card";
+import { cn } from "@repo/ui/lib/utils";
 
 const getStatusInfo = (
   status: BlenderConnectionStatus,
@@ -43,9 +43,9 @@ export function BlenderStatusIndicator() {
   const { color, title } = getStatusInfo(connectionStatus);
 
   return (
-    <InfoCard
-      title="Blender Status"
-      items={[{ label: "Status", value: title }]}
-    />
+    <div className="flex items-center gap-2" title={title}>
+      <div className={cn("h-2 w-2 rounded-full", color)} />
+      <span className="text-xs">Blender</span>
+    </div>
   );
 }

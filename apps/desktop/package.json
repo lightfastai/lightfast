@@ -26,6 +26,7 @@
   "dependencies": {
     "@lightfast/desktop": "workspace:^",
     "@repo/ui": "workspace:*",
+    "@t3-oss/env-core": "^0.12.0",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "zustand": "^5.0.1"
