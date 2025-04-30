@@ -15,12 +15,26 @@ declare global {
   }
 }
 
+// Custom event name for sidebar toggle
+export const SIDEBAR_TOGGLE_EVENT = "app:sidebar:toggle";
+
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
   const cleanupFuncs = useRef<(() => void)[]>([]);
 
   // Use the sidebar context to get the toggle function
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, open } = useSidebar();
+
+  // Enhanced toggle sidebar function
+  const handleToggleSidebar = () => {
+    toggleSidebar();
+    // Dispatch a custom event that other components can listen for
+    window.dispatchEvent(
+      new CustomEvent(SIDEBAR_TOGGLE_EVENT, {
+        detail: { isOpen: !open },
+      }),
+    );
+  };
 
   useEffect(() => {
     const handleMaximized = () => setIsMaximized(true);
@@ -49,6 +63,23 @@ export function TitleBar() {
       cleanupFuncs.current = [];
     };
   }, []);
+
+  // Add keyboard shortcut for toggling sidebar (Cmd+S)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Cmd+S (macOS) or Ctrl+S (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
+        event.preventDefault(); // Prevent default save action
+        handleToggleSidebar();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [toggleSidebar, open]);
 
   const handleMinimize = () => {
     window.electronAPI?.send("minimize-window");
@@ -92,10 +123,11 @@ export function TitleBar() {
 
         {/* Sidebar Trigger Button */}
         <button
-          onClick={toggleSidebar}
+          onClick={handleToggleSidebar}
           className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-6 w-6 items-center justify-center rounded-md focus:outline-none"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
           aria-label="Toggle Sidebar"
+          title="Toggle Sidebar (⌘S)"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

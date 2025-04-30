@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Settings } from "lucide-react";
 
@@ -32,19 +33,40 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { BlenderStatusIndicator } from "./blender-status-indicator";
+import { SIDEBAR_TOGGLE_EVENT } from "./title-bar";
 import ToggleTheme from "./toggle-theme";
 
 function UserDropdown() {
   // const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const [isOpen, setIsOpen] = useState(false);
+
   const user = {
     email: "test@test.com",
   };
 
+  // Close dropdown when sidebar is toggled
+  useEffect(() => {
+    const handleSidebarToggle = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      // Close dropdown when sidebar is toggled
+      if (isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    // Listen for the sidebar toggle event
+    window.addEventListener(SIDEBAR_TOGGLE_EVENT, handleSidebarToggle);
+
+    return () => {
+      window.removeEventListener(SIDEBAR_TOGGLE_EVENT, handleSidebarToggle);
+    };
+  }, [isOpen]);
+
   if (!user) return null;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="w-full justify-start gap-2">
           <Avatar className="h-5 w-5">
