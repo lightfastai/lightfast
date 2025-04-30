@@ -1,21 +1,2 @@
 @import "tailwindcss";
 @import "@repo/ui/globals.css";
-@theme {
-  --font-sans: Geist, sans-serif;
-  --font-mono: Geist Mono, monospace;
-  --font-tomorrow: Tomorrow, sans-serif;
-}
-
-@layer base {
-  @font-face {
-    font-family: "Geist";
-
-    src: url("./assets/fonts/geist/geist.ttf") format("truetype");
-  }
-  @font-face {
-    font-family: "Geist Mono";
-    font-display: swap;
-
-    src: url("./assets/fonts/geist-mono/geist-mono.ttf") format("truetype");
-  }
-}

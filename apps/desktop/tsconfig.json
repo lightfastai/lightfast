@@ -1,23 +1,25 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
   "compilerOptions": {
+    "jsx": "preserve",
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "lib": ["dom", "ESNext"],
+    "experimentalDecorators": true,
     "composite": true,
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": false,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
-    "types": ["node", "electron", "vite/client"],
-    "allowJs": true,
-    "esModuleInterop": true,
-    "jsx": "preserve",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "strict": true
+    "outDir": "dist",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
+  "include": ["src/**/*", "./package.json", "./forge.config.ts"]
 }

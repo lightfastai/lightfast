@@ -39,35 +39,3 @@ contextBridge.exposeInMainWorld("blenderConnection", {
 });
 
 exposeContexts();
-
-interface ThemeModeContext {
-  toggle: () => Promise<boolean>;
-  dark: () => Promise<void>;
-  light: () => Promise<void>;
-  system: () => Promise<boolean>;
-}
-interface ElectronWindow {
-  minimize: () => Promise<void>;
-  maximize: () => Promise<void>;
-  close: () => Promise<void>;
-}
-
-interface BlenderConnectionAPI {
-  onStatusUpdate: (
-    callback: (status: BlenderConnectionStatus) => void,
-  ) => () => void;
-  sendToBlender: (message: object) => Promise<void>;
-}
-
-declare global {
-  interface Window {
-    // Existing electron API if defined here or elsewhere
-    electron?: {
-      ping: () => Promise<string>;
-      // Add other methods if exposed under 'electron'
-    };
-    electronWindow?: ElectronWindow;
-    // Our new API
-    blenderConnection: BlenderConnectionAPI;
-  }
-}
