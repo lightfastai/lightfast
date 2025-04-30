@@ -17,11 +17,14 @@ export default defineConfig(({ command }) => {
         {
           // Main process entry
           entry: "src/main/index.ts",
+          command: command,
           onstart({ startup }) {
+            console.log("[onstart] Main process hook triggered.");
+            // Always call startup regardless of VSCODE_DEBUG
+            startup();
+            console.log("[onstart] startup() called.");
             if (process.env.VSCODE_DEBUG) {
-              console.log("[startup] Electron App");
-            } else {
-              startup();
+              console.log("[startup] Electron App (Debug Mode)");
             }
           },
           vite: {
@@ -33,15 +36,12 @@ export default defineConfig(({ command }) => {
                 external: ["electron"],
               },
             },
-            plugins: [
-              // Enables hot reload for main process
-              isServe && electron([{ entry: ["src/main/index.ts"] }]),
-            ],
           },
         },
         {
           // Preload scripts entry
           entry: "src/preload/index.ts",
+          command: command,
           onstart(args) {
             // Notify the Renderer process to reload the page when the Preload scripts build is complete,
             // instead of restarting the entire Electron App.
