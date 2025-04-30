@@ -16,7 +16,7 @@ export default defineConfig(({ command }) => {
       electron([
         {
           // Main process entry
-          entry: "src/main/index.ts",
+          entry: "src/main.ts",
           onstart({ startup }) {
             console.log("[onstart] Main process hook triggered.");
             // Always call startup regardless of VSCODE_DEBUG
@@ -39,7 +39,7 @@ export default defineConfig(({ command }) => {
         },
         {
           // Preload scripts entry
-          entry: "src/preload/index.ts",
+          entry: "src/preload.ts",
           onstart(args) {
             // Notify the Renderer process to reload the page when the Preload scripts build is complete,
             // instead of restarting the entire Electron App.

@@ -29,7 +29,7 @@ const createWindow = async () => {
       nodeIntegration: false,
       contextIsolation: true,
       nodeIntegrationInSubFrames: true,
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(__dirname, "../preload.js"),
     },
     titleBarStyle: "hidden",
   });

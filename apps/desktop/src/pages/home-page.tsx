@@ -1,4 +1,4 @@
-import { App } from "@/renderer/App";
+import { App } from "../components/test-comp";
 
 export default function HomePage() {
   return (

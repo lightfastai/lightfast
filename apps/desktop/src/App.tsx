@@ -2,7 +2,7 @@ import React from "react";
 import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
 
-import { router } from "../routes/router";
+import { router } from "./routes/router";
 
 import "@repo/ui/globals.css";
 
