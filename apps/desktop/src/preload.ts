@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
 import exposeContexts from "./helpers/ipc/context-exposer";
 
@@ -14,8 +14,44 @@ export type BlenderConnectionStatus =
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
-contextBridge.exposeInMainWorld("electron", {
+contextBridge.exposeInMainWorld("electronAPI", {
   ping: () => ipcRenderer.invoke("ping"),
+
+  // --- Title Bar IPC ---
+  send: (channel: string, ...args: any[]) => {
+    // Whitelist channels to prevent sending arbitrary messages
+    const validChannels = [
+      "minimize-window",
+      "maximize-window",
+      "close-window",
+    ];
+    if (validChannels.includes(channel)) {
+      ipcRenderer.send(channel, ...args);
+    }
+  },
+  on: (channel: string, listener: (...args: any[]) => void) => {
+    // Whitelist channels
+    const validChannels = ["window-maximized", "window-unmaximized"];
+    if (validChannels.includes(channel)) {
+      // Deliberately strip event argument to prevent renderer manipulating it
+      const subscription = (_event: IpcRendererEvent, ...args: any[]) =>
+        listener(...args);
+      ipcRenderer.on(channel, subscription);
+
+      // Return a cleanup function
+      return () => {
+        ipcRenderer.removeListener(channel, subscription);
+      };
+    } else {
+      // Return a dummy cleanup function or throw an error for invalid channels
+      return () => {};
+    }
+  },
+  // Note: While exposing removeListener directly is possible, it's often safer
+  // to handle listener cleanup via the return function of `on`, as shown above.
+  // If direct removal is needed, ensure proper security checks.
+  // --- End Title Bar IPC ---
+
   // Add more IPC methods as needed
 });
 

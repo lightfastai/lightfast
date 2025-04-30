@@ -1,7 +1,7 @@
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import {
   installExtension,
   REACT_DEVELOPER_TOOLS,
@@ -16,6 +16,7 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
+    frame: false,
     webPreferences: {
       devTools: inDevelopment,
       contextIsolation: true,
@@ -24,9 +25,32 @@ function createWindow() {
 
       preload: preload,
     },
-    titleBarStyle: "hidden",
   });
   registerListeners(mainWindow);
+
+  ipcMain.on("minimize-window", () => {
+    mainWindow?.minimize();
+  });
+
+  ipcMain.on("maximize-window", () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+
+  ipcMain.on("close-window", () => {
+    mainWindow?.close();
+  });
+
+  mainWindow.on("maximize", () => {
+    mainWindow.webContents.send("window-maximized");
+  });
+
+  mainWindow.on("unmaximize", () => {
+    mainWindow.webContents.send("window-unmaximized");
+  });
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);

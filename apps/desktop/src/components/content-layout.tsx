@@ -1,11 +1,15 @@
+import React from "react";
+
+import { SidebarInset } from "@repo/ui/components/ui/sidebar";
+
 interface ContentLayoutProps {
   children: React.ReactNode;
 }
 
 export function ContentLayout({ children }: ContentLayoutProps) {
   return (
-    <div className="border-border bg-muted/20 flex h-full w-full flex-col overflow-hidden rounded-lg border">
+    <SidebarInset className="bg-background border-border flex h-full w-full flex-col overflow-hidden rounded-lg border">
       {children}
-    </div>
+    </SidebarInset>
   );
 }

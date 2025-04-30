@@ -110,16 +110,21 @@ function UserDropdown() {
 export function AppSidebar() {
   return (
     <Sidebar variant="inset" className="p-0">
-      <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between px-6 pt-12 pb-12">
-          <span className="font-mono text-xs font-bold tracking-widest uppercase">
-            Lightfast Computer
-          </span>
-        </div>
+      <SidebarHeader className="border-b pt-12">
+        {/* Empty header for spacing */}
       </SidebarHeader>
       <SidebarContent className="divide-y">
         <SidebarGroup className="p-4">
-          <BlenderStatusIndicator />
+          <SidebarGroupLabel>
+            <span>Connections</span>
+          </SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton>
+                <BlenderStatusIndicator />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup className="p-4">
           <SidebarGroupLabel>

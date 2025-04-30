@@ -11,14 +11,8 @@ export default function App() {
   }, []);
 
   return (
-    <div
-      className={
-        "bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden"
-      }
-    >
-      <div className="relative flex-1 overflow-auto">
-        <RouterProvider router={router} />
-      </div>
+    <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
+      <RouterProvider router={router} />
     </div>
   );
 }
