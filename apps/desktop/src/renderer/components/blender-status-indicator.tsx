@@ -1,7 +1,7 @@
 import {
   BlenderConnectionStatus,
   useBlenderStore,
-} from "@/stores/blender-store";
+} from "@/renderer/stores/blender-store";
 
 import { cn } from "@repo/ui/lib/utils";
 

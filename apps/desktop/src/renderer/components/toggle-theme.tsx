@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { setTheme } from "@/helpers/theme_helpers";
+import { setTheme } from "@/renderer/helpers/theme_helpers";
 import { ThemeMode } from "@/types/theme-mode";
 import { Monitor, Moon, Sun } from "lucide-react";
 

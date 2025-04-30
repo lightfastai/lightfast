@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import WorkspaceDialog from "@/components/workspace-dialog";
+import WorkspaceDialog from "@/renderer/components/workspace-dialog";
 
 import { Button } from "@repo/ui/components/ui/button";
 import { Command, CommandInput } from "@repo/ui/components/ui/command";

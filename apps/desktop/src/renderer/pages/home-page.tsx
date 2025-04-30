@@ -1,4 +1,4 @@
-import { RootLayout } from "@/components/root-layout";
+import { RootLayout } from "@/renderer/components/root-layout";
 import { Sparkles } from "lucide-react";
 
 import { Input } from "@repo/ui/components/ui/input";

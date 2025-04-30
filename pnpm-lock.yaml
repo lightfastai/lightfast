@@ -246,6 +246,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@electron-toolkit/utils':
+        specifier: ^4.0.0
+        version: 4.0.0(electron@35.2.1)
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -343,6 +346,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.5.3)
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       electron:
         specifier: ^35.2.1
         version: 35.2.1
@@ -2267,6 +2273,11 @@ packages:
   '@electron-forge/web-multi-logger@7.8.0':
     resolution: {integrity: sha512-2nUP7O9auXDsoa185AsZPlIbpargj1lNFweNH1Lch1MCwLlJOI9ZJHiCTAB4qviS4usRs00WeebWg/uN/zOWvA==}
     engines: {node: '>= 16.4.0'}
+
+  '@electron-toolkit/utils@4.0.0':
+    resolution: {integrity: sha512-qXSntwEzluSzKl4z5yFNBknmPGjPa3zFhE4mp9+h0cgokY5ornAeP+CJQDBhKsL1S58aOQfcwkD3NwLZCl+64g==}
+    peerDependencies:
+      electron: '>=13.0.0'
 
   '@electron/asar@3.4.1':
     resolution: {integrity: sha512-i4/rNPRS84t0vSRa2HorerGRXWyF4vThfHesw0dmcWHp+cspK743UanA0suA5Q5y8kzY2y6YKrvbIUn69BCAiA==}
@@ -13552,6 +13563,10 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
+
+  '@electron-toolkit/utils@4.0.0(electron@35.2.1)':
+    dependencies:
+      electron: 35.2.1
 
   '@electron/asar@3.4.1':
     dependencies:

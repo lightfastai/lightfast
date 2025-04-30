@@ -1,0 +1,42 @@
+import { PropsWithChildren } from "react";
+import { getClerkInstance } from "@/renderer/lib/clerk";
+import { router } from "@/renderer/routes/router";
+import {
+  ClerkProp,
+  ClerkProvider,
+  ClerkProviderProps,
+} from "@clerk/clerk-react";
+
+export const HubClerkProvider = ({ children }: PropsWithChildren) => {
+  const clerkProps: Partial<ClerkProviderProps> = {
+    publishableKey: `${import.meta.env.VITE_CLERK_PUBLIC_KEY}`,
+    signInUrl: "/signin",
+    signUpUrl: "/signup",
+    afterSignOutUrl: "/signout",
+    routerPush: (to: string) => router.navigate({ to }),
+    routerReplace: (to: string) => router.navigate({ to }),
+    allowedRedirectOrigins: ["clerk://local.hub.electron.vite"],
+    appearance: {
+      layout: {
+        socialButtonsPlacement: "bottom",
+        socialButtonsVariant: "iconButton",
+        helpPageUrl: "https://support.example.com",
+      },
+      variables: {
+        borderRadius: "0",
+      },
+    },
+  };
+
+  if (import.meta.env.VITE_CLERK_PUBLIC_KEY.match("http")) {
+    clerkProps.Clerk = getClerkInstance({
+      publishableKey: import.meta.env.VITE_CLERK_PUBLIC_KEY,
+    }) as unknown as ClerkProp;
+  }
+
+  return (
+    <ClerkProvider {...(clerkProps as ClerkProviderProps)}>
+      {children}
+    </ClerkProvider>
+  );
+};
