@@ -33,6 +33,7 @@ export function App() {
         <Button variant="outline" onClick={() => setOpen(true)}>
           Click me
         </Button>
+        <Button>Click me</Button>
         <WorkspaceDialog open={open} onOpenChange={setOpen}>
           <Command>
             <CommandInput placeholder="Search..." />
