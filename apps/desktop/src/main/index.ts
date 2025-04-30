@@ -1,6 +1,7 @@
 import { join } from "path";
 import { app, BrowserWindow, ipcMain } from "electron";
-import { autoUpdater } from "electron-updater";
+
+// import { autoUpdater } from "electron-updater";
 
 // The built directory structure
 //
@@ -59,12 +60,12 @@ app.on("activate", () => {
 });
 
 // Auto-updates
-if (!process.env.VITE_DEV_SERVER_URL) {
-  app
-    .whenReady()
-    .then(() => autoUpdater.checkForUpdatesAndNotify())
-    .catch(console.error);
-}
+// if (!process.env.VITE_DEV_SERVER_URL) {
+//   app
+//     .whenReady()
+//     .then(() => autoUpdater.checkForUpdatesAndNotify())
+//     .catch(console.error);
+// }
 
 // Example IPC handler
 ipcMain.handle("ping", () => "pong");
