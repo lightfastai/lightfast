@@ -18,7 +18,7 @@ function createWindow() {
     height: 720,
     frame: false,
     webPreferences: {
-      devTools: inDevelopment,
+      devTools: true,
       contextIsolation: true,
       nodeIntegration: true,
       nodeIntegrationInSubFrames: false,
@@ -52,6 +52,8 @@ function createWindow() {
     mainWindow.webContents.send("window-unmaximized");
   });
 
+  // setupAuthSession();
+
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
@@ -59,7 +61,33 @@ function createWindow() {
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
     );
   }
+
+  console.log(MAIN_WINDOW_VITE_DEV_SERVER_URL);
 }
+
+// function setupAuthSession() {
+//   ipcMain.on("auth:save-token", (_, { token, expiry }) => {
+//     const domain = ".clerk.accounts.dev";
+
+//     session.defaultSession.cookies.set({
+//       url: "https://accounts.clerk.dev",
+//       name: "__session",
+//       value: token,
+//       domain,
+//       path: "/",
+//       secure: true,
+//       httpOnly: true,
+//       expirationDate: expiry,
+//     });
+//   });
+
+//   ipcMain.on("auth:clear", () => {
+//     session.defaultSession.clearStorageData({
+//       storages: ["cookies", "localstorage"],
+//       quotas: ["temporary"],
+//     });
+//   });
+// }
 
 async function installExtensions() {
   try {

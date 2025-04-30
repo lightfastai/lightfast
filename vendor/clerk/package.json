@@ -11,7 +11,9 @@
     "./server": "./src/server.ts",
     "./types": "./src/types.ts",
     "./webhooks": "./src/webhooks.ts",
-    "./client": "./src/client/index.ts"
+    "./client": "./src/client/index.ts",
+    "./react": "./src/react.ts",
+    "./js": "./src/js.tsx"
   },
   "license": "MIT",
   "scripts": {
@@ -23,6 +25,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/clerk-js": "^5.63.1",
+    "@clerk/clerk-react": "^4.30.3",
     "@clerk/elements": "^0.23.18",
     "@clerk/nextjs": "^6.18.0",
     "@t3-oss/env-nextjs": "0.12.0",

@@ -1,4 +1,4 @@
-import { BlenderConnectionStatus } from "./preload";
+import { BlenderConnectionStatus } from "../preload";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
 declare const MAIN_WINDOW_VITE_NAME: string;
@@ -22,6 +22,12 @@ interface BlenderConnectionAPI {
   sendToBlender: (message: object) => Promise<void>;
 }
 
+// Auth API interface
+interface AuthAPI {
+  saveToken: (token: string, expiry: number) => void;
+  clearAuth: () => void;
+}
+
 declare global {
   interface Window {
     // Existing electron API if defined here or elsewhere
@@ -31,5 +37,6 @@ declare global {
     electronWindow?: ElectronWindow;
     blenderConnection: BlenderConnectionAPI;
     themeMode: ThemeModeContext;
+    authAPI: AuthAPI;
   }
 }

@@ -74,4 +74,14 @@ contextBridge.exposeInMainWorld("blenderConnection", {
     ipcRenderer.invoke("send-to-blender", message),
 });
 
+// Expose authentication API
+contextBridge.exposeInMainWorld("authAPI", {
+  saveToken: (token: string, expiry: number) => {
+    ipcRenderer.send("auth:save-token", { token, expiry });
+  },
+  clearAuth: () => {
+    ipcRenderer.send("auth:clear");
+  },
+});
+
 exposeContexts();

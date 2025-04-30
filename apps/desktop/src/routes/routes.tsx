@@ -22,10 +22,29 @@ import { RootRoute } from "./__root";
 // 4. Add to routeTree: RootRoute.addChildren([HomeRoute, NewRoute, ...])
 // 5. Add Link: <Link to="/new">New Page</Link>
 
+// Auth protection helper
+// const authProtect = () => {
+//   const { isSignedIn } = useAuth();
+//   if (!isSignedIn) {
+//     throw redirect({
+//       to: "/login",
+//     });
+//   }
+// };
+
 export const HomeRoute = createRoute({
   getParentRoute: () => RootRoute,
   path: "/",
   component: HomePage,
+  // beforeLoad: () => {
+  //   authProtect();
+  // },
 });
+
+// export const LoginRoute = createRoute({
+//   getParentRoute: () => RootRoute,
+//   path: "/login",
+//   component: LoginPage,
+// });
 
 export const rootTree = RootRoute.addChildren([HomeRoute]);

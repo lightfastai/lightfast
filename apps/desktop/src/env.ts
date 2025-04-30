@@ -1,4 +1,5 @@
 import { createEnv } from "@t3-oss/env-core";
+import { z } from "zod";
 
 export const env = createEnv({
   /**
@@ -15,6 +16,7 @@ export const env = createEnv({
   clientPrefix: "VITE_PUBLIC_",
   client: {
     // VITE_PUBLIC_CLIENTVAR: z.string(),
+    VITE_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
   },
 
   /**
@@ -26,6 +28,8 @@ export const env = createEnv({
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     // VITE_PUBLIC_CLIENTVAR: process.env.VITE_PUBLIC_CLIENTVAR,
+    VITE_PUBLIC_CLERK_PUBLISHABLE_KEY:
+      process.env.VITE_PUBLIC_CLERK_PUBLISHABLE_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

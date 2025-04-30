@@ -10,7 +10,7 @@
     "url": "https://github.com/lightfastai/lightfast.git"
   },
   "scripts": {
-    "start": "tsx ../../node_modules/@electron-forge/cli/src/electron-forge-start",
+    "start": "pnpm with-env tsx ../../node_modules/@electron-forge/cli/src/electron-forge-start",
     "package": "tsx ../../node_modules/@electron-forge/cli/src/electron-forge-package",
     "make": "tsx ../../node_modules/@electron-forge/cli/src/electron-forge-make",
     "publish": "tsx ../../node_modules/@electron-forge/cli/src/electron-forge-publish",
@@ -24,12 +24,14 @@
     "e2e": "playwright test",
     "format": "prettier --check . --ignore-path ../../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env.development.local --"
   },
   "dependencies": {
     "@repo/ui": "workspace:*",
     "@t3-oss/env-core": "^0.12.0",
     "@tailwindcss/vite": "^4.1.4",
+    "@vendor/clerk": "workspace:*",
     "babel-plugin-react-compiler": "^19.0.0-beta-e993439-20250328",
     "electron-squirrel-startup": "^1.0.1",
     "react": "catalog:react19",

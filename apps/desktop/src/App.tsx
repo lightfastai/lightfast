@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
-import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
 
 import { syncThemeWithLocal } from "./helpers/theme_helpers";
-import { router } from "./routes/router";
+import { HubClerkProvider } from "./providers/clerk-provider";
 
 export default function App() {
   useEffect(() => {
@@ -11,9 +10,12 @@ export default function App() {
   }, []);
 
   return (
-    <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
-      <RouterProvider router={router} />
-    </div>
+    <HubClerkProvider>
+      <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
+        {/* <RouterProvider router={router} /> */}
+        Yo
+      </div>
+    </HubClerkProvider>
   );
 }
 

@@ -17,6 +17,8 @@ export default function HomePage() {
         <div className="mb-6 w-full max-w-xl">
           <Input />
         </div>
+
+        <div className="mt-8">{/* <AuthStatus /> */}</div>
       </div>
     </RootLayout>
   );
