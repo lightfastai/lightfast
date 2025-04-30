@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Settings } from "lucide-react";
 
+import { Icons } from "@repo/ui/components/icons";
 import { useTheme } from "@repo/ui/components/theme-provider";
 import {
   Avatar,
@@ -31,6 +32,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { BlenderStatusIndicator } from "./blender-status-indicator";
+import ToggleTheme from "./toggle-theme";
 
 function UserDropdown() {
   // const { user, signOut } = useAuth();
@@ -85,10 +87,20 @@ function UserDropdown() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {/* <Icons.discord className="mr-2 h-4 w-4" /> */}
+              <Icons.discord className="mr-2 h-4 w-4" />
               <span>Discord</span>
             </a>
           </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
+            Preferences
+          </DropdownMenuLabel>
+          <div className="flex w-full items-center justify-between gap-2">
+            <DropdownMenuLabel>Theme</DropdownMenuLabel>
+            <ToggleTheme />
+          </div>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive">

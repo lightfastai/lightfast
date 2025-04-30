@@ -1,12 +1,72 @@
-import { toggleTheme } from "@/helpers/theme_helpers";
-import { Moon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { setTheme } from "@/helpers/theme_helpers";
+import { ThemeMode } from "@/types/theme-mode";
+import { Monitor, Moon, Sun } from "lucide-react";
 
-import { Button } from "@repo/ui/components/ui/button";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@repo/ui/components/ui/toggle-group";
+
+const THEME_KEY = "theme";
 
 export default function ToggleTheme() {
+  // Initialize state from localStorage or default to 'system'
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(() => {
+    return (localStorage.getItem(THEME_KEY) as ThemeMode | null) ?? "system";
+  });
+
+  // Effect to apply the theme when the component mounts or state changes
+  // Note: This duplicates logic in syncThemeWithLocal, consider refactoring
+  // if theme is managed globally (e.g., context/store)
+  useEffect(() => {
+    setTheme(currentTheme);
+  }, [currentTheme]);
+
+  const handleThemeChange = (value: string) => {
+    if (
+      value &&
+      (value === "system" || value === "light" || value === "dark")
+    ) {
+      const newTheme = value as ThemeMode;
+      setCurrentTheme(newTheme);
+      // No need to call setTheme here, useEffect handles it
+    }
+  };
+
   return (
-    <Button onClick={toggleTheme} size="icon">
-      <Moon size={16} />
-    </Button>
+    <ToggleGroup
+      type="single"
+      size="sm"
+      value={currentTheme}
+      onValueChange={handleThemeChange}
+      aria-label="Theme selection"
+      className="border-border overflow-hidden rounded-full border"
+    >
+      <ToggleGroupItem
+        size="sm"
+        value="system"
+        aria-label="System theme"
+        className="border-border rounded-full"
+      >
+        <Monitor className="h-3 w-3" />
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        size="sm"
+        value="light"
+        aria-label="Light theme"
+        className="border-border rounded-full"
+      >
+        <Sun className="h-3 w-3" />
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        size="sm"
+        value="dark"
+        aria-label="Dark theme"
+        className="border-border rounded-full"
+      >
+        <Moon className="h-3 w-3" />
+      </ToggleGroupItem>
+    </ToggleGroup>
   );
 }
