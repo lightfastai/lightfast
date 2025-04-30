@@ -60,9 +60,7 @@ export default defineConfig(({ command }) => {
         },
       ]),
       // Enable HMR in renderer process
-      renderer({
-        nodeIntegration: true,
-      }),
+      renderer(),
     ],
     resolve: {
       alias: {
