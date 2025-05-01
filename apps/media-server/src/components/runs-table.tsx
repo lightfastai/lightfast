@@ -41,7 +41,7 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { cn } from "@repo/ui/lib/utils";
-import { trpc } from "@vendor/trpc/client/server";
+import { useTRPC } from "@vendor/trpc/client/react";
 
 import type { Resource } from "~/stores/resources";
 import { useResources } from "~/hooks/use-resources";
@@ -53,10 +53,11 @@ import { columns } from "./columns";
 
 function ExpandedContent({ resource }: { resource: Resource }) {
   const data = resource.data as Record<string, string>;
+  const trpc = useTRPC();
   const { data: runData } = useQuery(trpc.app.health.health.queryOptions());
 
   useEffect(() => {
-    console.log(runData);
+    console.log("runData", runData);
   }, [runData]);
 
   return (

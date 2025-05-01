@@ -12,7 +12,7 @@ export default async function Page() {
   const data = await queryClient.fetchQuery(
     trpc.app.auth.randomSecret.queryOptions(),
   );
-  console.log("client data", data);
+  console.log("server data", data);
   return (
     <main className="relative flex-1 overflow-hidden">
       <pre>{data}</pre>
