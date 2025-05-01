@@ -5,7 +5,7 @@ import { z } from "zod";
 import { nanoid } from "@repo/lib";
 import { generatePrettyProjectName } from "@repo/lib/pretty-project-name";
 
-import { Node } from "./Node";
+import { Session } from "./Session";
 
 export const Workspace = pgTable("workspace", (t) => ({
   id: t
@@ -26,7 +26,7 @@ export const Workspace = pgTable("workspace", (t) => ({
 }));
 
 export const WorkspaceRelations = relations(Workspace, ({ many }) => ({
-  nodes: many(Node),
+  sessions: many(Session),
 }));
 
 export const UpdateNameWorkspaceSchema = z.object({

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Settings } from "lucide-react";
+import { trpc } from "@/trpc";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Plus, Settings } from "lucide-react";
 
+import { queryClient } from "@repo/trpc-client/trpc-react-proxy-provider";
 import { Icons } from "@repo/ui/components/icons";
 import { useTheme } from "@repo/ui/components/theme-provider";
 import {
@@ -29,6 +32,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 
@@ -130,42 +134,91 @@ function UserDropdown() {
   );
 }
 
+interface Workspace {
+  id: string;
+  name: string;
+  updatedAt: Date;
+}
+
+export const useCreateWorkspaceMutation = () => {
+  const navigate = useNavigate();
+  const { toggleSidebar } = useSidebar();
+  return useMutation(
+    trpc.tenant.workspace.create.mutationOptions({
+      async onSuccess(data) {
+        await queryClient.invalidateQueries(
+          trpc.tenant.workspace.getAll.queryFilter(),
+        );
+        // Navigate to the new workspace
+        navigate({
+          to: "/workspace/$workspaceId",
+          params: { workspaceId: data.id },
+        });
+        // Close the sidebar by dispatching the toggle event
+        toggleSidebar();
+      },
+    }),
+  );
+};
+
 export function AppSidebar() {
+  const navigate = useNavigate();
+  const { data: workspaces } = useQuery(
+    trpc.tenant.workspace.getAll.queryOptions(),
+  );
+  const { toggleSidebar } = useSidebar();
+  const { mutate, error } = useCreateWorkspaceMutation();
+
   return (
     <Sidebar variant="inset" className="p-0">
-      <SidebarHeader className="border-b pt-12">
-        {/* Empty header for spacing */}
+      <SidebarHeader className="border-b pt-16">
+        <SidebarGroupLabel>
+          <span>Connections</span>
+        </SidebarGroupLabel>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton>
+              <BlenderStatusIndicator />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton>
+              <ApiStatusIndicator />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="divide-y">
         <SidebarGroup className="p-4">
-          <SidebarGroupLabel>
-            <span>Connections</span>
-          </SidebarGroupLabel>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-xs hover:border hover:border-orange-500 dark:hover:border-orange-500 dark:hover:bg-orange-500/10"
+            onClick={() => mutate()}
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500">
+              <Plus className="h-4 w-4 text-white" />
+            </div>
+            <span>New Workspace</span>
+          </Button>
+          <div className="flex items-center justify-between">
+            <SidebarGroupLabel>
+              <span>Workspaces</span>
+            </SidebarGroupLabel>
+          </div>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton>
-                <BlenderStatusIndicator />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton>
-                <ApiStatusIndicator />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        <SidebarGroup className="p-4">
-          <SidebarGroupLabel>
-            <span>Recents</span>
-          </SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link to="/" className={cn("flex items-center gap-2")}>
-                  <span>Runs</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {workspaces?.map((workspace: Workspace) => (
+              <SidebarMenuItem key={workspace.id}>
+                <SidebarMenuButton asChild>
+                  <Link
+                    to="/workspace/$workspaceId"
+                    params={{ workspaceId: workspace.id }}
+                    className={cn("flex items-center gap-2")}
+                  >
+                    <span>{workspace.name}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

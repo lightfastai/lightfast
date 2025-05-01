@@ -1,6 +1,7 @@
 import { createRoute } from "@tanstack/react-router";
 
 import HomePage from "../pages/home-page";
+import WorkspacePage from "../pages/workspace-page";
 import { RootRoute } from "./__root";
 
 // TODO: Steps to add a new route:
@@ -28,4 +29,10 @@ export const HomeRoute = createRoute({
   component: HomePage,
 });
 
-export const rootTree = RootRoute.addChildren([HomeRoute]);
+export const WorkspaceRoute = createRoute({
+  getParentRoute: () => RootRoute,
+  path: "/workspace/$workspaceId",
+  component: WorkspacePage,
+});
+
+export const rootTree = RootRoute.addChildren([HomeRoute, WorkspaceRoute]);

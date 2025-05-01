@@ -8,6 +8,20 @@
       "when": 1745921529131,
       "tag": "0000_unique_proteus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1746107801984,
+      "tag": "0001_tranquil_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1746107850510,
+      "tag": "0002_condemned_jigsaw",
+      "breakpoints": true
     }
   ]
 }

@@ -1,36 +1,21 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
-import { desc, eq, sql } from "@vendor/db";
+import { desc, eq } from "@vendor/db";
 import {
   UpdateNameWorkspaceSchema,
-  User,
   Workspace,
 } from "@vendor/db/lightfast/schema";
 
-import { protectedProcedure } from "../../trpc";
-import { verifyWorkspaceOwnership } from "../middleware/verify-workspace-ownership";
+import { publicProcedure } from "../../trpc";
 
 export const workspaceRouter = {
-  create: protectedProcedure.mutation(async ({ ctx }) => {
-    // First get the user's internal ID
-    const [user] = await ctx.db
-      .select()
-      .from(User)
-      .where(eq(User.clerkId, ctx.session.user.clerkId))
-      .limit(1);
-
-    if (!user) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
-      });
-    }
-
+  create: publicProcedure.mutation(async ({ ctx }) => {
     const [workspace] = await ctx.db
       .insert(Workspace)
       .values({})
-      .returning({ id: Workspace.id });
+      .returning({ id: Workspace.id, name: Workspace.name });
 
     if (!workspace) {
       throw new TRPCError({
@@ -42,52 +27,46 @@ export const workspaceRouter = {
     return workspace;
   }),
 
-  get: verifyWorkspaceOwnership.query(({ ctx }) => {
-    // Workspace details are already verified and available in ctx.workspace
-    return {
-      id: ctx.workspace.id,
-      name: ctx.workspace.name,
-      createdAt: ctx.workspace.createdAt,
-      updatedAt: ctx.workspace.updatedAt,
-    };
-  }),
+  get: publicProcedure
+    .input(z.object({ workspaceId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const [workspace] = await ctx.db
+        .select()
+        .from(Workspace)
+        .where(eq(Workspace.id, input.workspaceId))
+        .limit(1);
 
-  getAll: protectedProcedure.query(async ({ ctx }) => {
-    const [user] = await ctx.db
-      .select()
-      .from(User)
-      .where(eq(User.clerkId, ctx.session.user.clerkId))
-      .limit(1);
+      if (!workspace) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+      }
 
-    if (!user) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
-      });
-    }
+      return workspace;
+    }),
 
+  getAll: publicProcedure.query(async ({ ctx }) => {
     const workspaces = await ctx.db
       .select({
         id: Workspace.id,
         name: Workspace.name,
+        updatedAt: Workspace.updatedAt,
       })
       .from(Workspace)
-      .orderBy(desc(Workspace.createdAt));
+      .orderBy(desc(Workspace.updatedAt));
 
     return workspaces;
   }),
 
-  updateName: verifyWorkspaceOwnership
+  updateName: publicProcedure
     .input(UpdateNameWorkspaceSchema)
     .mutation(async ({ ctx, input }) => {
       const [workspace] = await ctx.db
         .update(Workspace)
-        .set({ name: input.workspaceName, updatedAt: sql`now()` })
+        .set({ name: input.workspaceName })
         .where(eq(Workspace.id, input.id))
-        .returning({
-          id: Workspace.id,
-          name: Workspace.name,
-        });
+        .returning({ id: Workspace.id, name: Workspace.name });
 
       if (!workspace) {
         throw new TRPCError({
