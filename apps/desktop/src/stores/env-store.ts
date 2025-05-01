@@ -16,7 +16,7 @@ export type EnvStore = EnvState & EnvActions;
 
 const envStoreInitializer: StateCreator<EnvStore> = (set) => ({
   env: null,
-  loading: true,
+  loading: false,
   error: null,
   fetchEnv: async () => {
     set({ loading: true, error: null });
