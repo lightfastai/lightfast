@@ -1,5 +1,4 @@
 import { ClerkLoaded } from "@clerk/clerk-react";
-import { createRoot } from "react-dom/client";
 
 import { Toaster } from "@repo/ui/components/ui/sonner";
 
@@ -17,9 +16,3 @@ export const Root = () => {
     </HubClerkProvider>
   );
 };
-
-const el = document.getElementById("root");
-
-if (el) {
-  createRoot(el).render(<Root />);
-}

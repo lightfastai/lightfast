@@ -1,9 +1,15 @@
 import { NotFound } from "@/renderer/pages/nomatch";
-import { routeTree } from "@/renderer/routes/route-tree";
+import { routeTree } from "@/renderer/routes/routes";
 import {
   createHashHistory,
   createRouter as createTanstackRouter,
 } from "@tanstack/react-router";
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: ReturnType<typeof createRouter>;
+  }
+}
 
 const hashHistory = createHashHistory();
 
@@ -17,14 +23,7 @@ export const createRouter = () =>
     defaultNotFoundComponent: () => <NotFound />,
     context: {
       session: undefined!,
-      queryClient: undefined!,
     },
   });
-
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: ReturnType<typeof createRouter>;
-  }
-}
 
 export const router = createRouter();

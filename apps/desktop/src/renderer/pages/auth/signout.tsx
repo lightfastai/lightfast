@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { signinRoute } from "@/renderer/routes/route-tree";
 import { router } from "@/renderer/routes/router";
+import { signinRoute } from "@/renderer/routes/routes";
 import { useAuth, useClerk, useSession } from "@clerk/clerk-react";
 import { Navigate } from "@tanstack/react-router";
 
