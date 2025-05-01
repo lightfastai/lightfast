@@ -5,10 +5,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { api } from "@vendor/trpc/client/server";
+import { getQueryClient, trpc } from "@vendor/trpc/client/server";
 
-export default function Page() {
-  const data = api.app.auth.randomSecret();
+export default async function Page() {
+  const queryClient = getQueryClient();
+  const data = await queryClient.fetchQuery(
+    trpc.app.auth.randomSecret.queryOptions(),
+  );
+  console.log("client data", data);
   return (
     <main className="relative flex-1 overflow-hidden">
       <pre>{data}</pre>

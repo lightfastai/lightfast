@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ColumnFiltersState,
   flexRender,
@@ -40,6 +41,7 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { cn } from "@repo/ui/lib/utils";
+import { trpc } from "@vendor/trpc/client/server";
 
 import type { Resource } from "~/stores/resources";
 import { useResources } from "~/hooks/use-resources";
@@ -51,6 +53,11 @@ import { columns } from "./columns";
 
 function ExpandedContent({ resource }: { resource: Resource }) {
   const data = resource.data as Record<string, string>;
+  const { data: runData } = useQuery(trpc.app.health.health.queryOptions());
+
+  useEffect(() => {
+    console.log(runData);
+  }, [runData]);
 
   return (
     <div className="bg-muted/50 px-8 py-4">

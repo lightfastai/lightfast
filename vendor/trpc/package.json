@@ -5,9 +5,9 @@
   "type": "module",
   "exports": {
     "./env": "./src/env.ts",
-    "./client/query-client": "./src/client/query-client.ts",
     "./client/react": "./src/client/react.tsx",
-    "./client/server": "./src/client/server.ts",
+    "./client/query-client": "./src/client/query-client.ts",
+    "./client/server": "./src/client/server.tsx",
     "./server": "./src/server/index.ts"
   },
   "license": "MIT",
@@ -20,10 +20,15 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@tanstack/react-query": "catalog:",
+    "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
+    "@trpc/tanstack-react-query": "catalog:",
     "@vendor/clerk": "workspace:*",
     "@vendor/db": "workspace:*",
+    "@vendor/observability": "workspace:*",
     "bcrypt-ts": "^5.0.2",
+    "react": "catalog:react19",
     "superjson": "2.2.1",
     "zod": "catalog:"
   },

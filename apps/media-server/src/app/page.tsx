@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
+import { prefetch, trpc } from "@vendor/trpc/client/server";
+
 const RunsTable = dynamic(
   () => import("~/components/runs-table").then((mod) => mod.RunsTable),
   {
@@ -9,6 +11,7 @@ const RunsTable = dynamic(
 );
 
 export default function RunsPage() {
+  prefetch(trpc.app.health.health.queryOptions());
   return (
     <div className="divide-border flex h-full flex-col divide-y">
       <div className="flex-none px-8 py-4">
