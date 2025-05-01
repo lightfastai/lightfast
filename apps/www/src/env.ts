@@ -7,7 +7,8 @@ import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as emailEnv } from "@vendor/email/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
 import { env as nextEnv } from "@vendor/next/env";
-import { betterstackEnv, sentryEnv } from "@vendor/observability/env";
+import { betterstackEnv } from "@vendor/observability/betterstack-env";
+import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as securityEnv } from "@vendor/security/env";
 import { env as upstashEnv } from "@vendor/upstash/env";
 

@@ -7,6 +7,7 @@ export const authRouter = {
     return ctx.session;
   }),
   randomSecret: publicProcedure.query(() => {
+    console.log("randomSecret");
     return "secret";
   }),
 } satisfies TRPCRouterRecord;

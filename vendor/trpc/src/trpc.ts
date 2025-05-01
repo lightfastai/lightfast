@@ -13,7 +13,6 @@ import { ZodError } from "zod";
 import type { Session } from "@vendor/clerk/types";
 import { auth } from "@vendor/clerk";
 import { db } from "@vendor/db/client";
-import { log } from "@vendor/observability/log";
 
 /**
  * 1. CONTEXT
@@ -37,7 +36,7 @@ export const createTRPCContext = async (opts: {
   const session = await auth();
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
-  log.info(`>>> tRPC Request from ${source} by ${session?.user.id}`);
+  console.info(`>>> tRPC Request from ${source} by ${session?.user.id}`);
 
   return {
     session,
@@ -99,7 +98,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
   const result = await next();
 
   const end = Date.now();
-  log.info(`[TRPC] ${path} took ${end - start}ms to execute`);
+  console.info(`[TRPC] ${path} took ${end - start}ms to execute`);
 
   return result;
 });

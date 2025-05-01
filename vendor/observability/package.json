@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    "./env": "./env.ts",
+    "./sentry-env": "./src/env/sentry-env.ts",
+    "./betterstack-env": "./src/env/betterstack-env.ts",
     "./log": {
       "types": "./dist/src/log.d.ts",
       "default": "./src/log.ts"

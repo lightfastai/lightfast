@@ -2,10 +2,12 @@ import { vercel } from "@t3-oss/env-core/presets-zod";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
+import { env as trpcEnv } from "@vendor/trpc/env";
 
 export const env = createEnv({
-  extends: [vercel(), inngestEnv],
+  extends: [vercel(), inngestEnv, trpcEnv, clerkEnvBase],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

@@ -23,7 +23,6 @@
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",
     "@vendor/db": "workspace:*",
-    "@vendor/observability": "workspace:*",
     "bcrypt-ts": "^5.0.2",
     "superjson": "2.2.1",
     "zod": "catalog:"

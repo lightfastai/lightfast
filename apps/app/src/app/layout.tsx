@@ -20,7 +20,9 @@ export default function RootLayout({ children }: RootLayoutProperties) {
         <head />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <body className={cn("dark bg-background min-h-screen", fonts)}>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
+          <TRPCReactProvider baseUrl={env.NEXT_PUBLIC_LIGHTFAST_API_URL}>
+            {children}
+          </TRPCReactProvider>
           <Toaster />
         </body>
       </html>

@@ -509,12 +509,18 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
+      '@vendor/trpc':
+        specifier: workspace:*
+        version: link:../../vendor/trpc
       nuqs:
         specifier: ^2.4.3
         version: 2.4.3(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
@@ -1501,9 +1507,6 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../db
-      '@vendor/observability':
-        specifier: workspace:*
-        version: link:../observability
       bcrypt-ts:
         specifier: ^5.0.2
         version: 5.0.2
