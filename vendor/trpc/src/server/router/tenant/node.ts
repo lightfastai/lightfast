@@ -6,7 +6,7 @@ import { and, eq, sql } from "@vendor/db";
 import { InsertNodeSchema, Node, Workspace } from "@vendor/db/lightfast/schema";
 import { $Texture, $Txt2Img, $Window } from "@vendor/db/lightfast/types";
 
-import { protectedProcedure } from "../../../trpc";
+import { protectedProcedure } from "../../trpc";
 import { verifyNodeOwnership } from "../middleware/verify-node-ownership";
 
 export const nodeRouter = {

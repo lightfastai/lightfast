@@ -12,8 +12,7 @@ import { ZodError } from "zod";
 
 import type { Session } from "@vendor/clerk/types";
 import { auth } from "@vendor/clerk";
-
-// import { db } from "@vendor/db/client";
+import { db } from "@vendor/db/client";
 
 /**
  * 1. CONTEXT
@@ -32,7 +31,7 @@ export const createTRPCContext = async (opts: {
   session: Session | null;
 }): Promise<{
   session: Session | null;
-  // db: typeof db;
+  db: typeof db;
 }> => {
   const session = await auth();
 
@@ -41,7 +40,7 @@ export const createTRPCContext = async (opts: {
 
   return {
     session: opts.session,
-    // db,
+    db,
   };
 };
 
