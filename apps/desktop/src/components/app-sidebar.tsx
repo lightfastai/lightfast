@@ -32,8 +32,8 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 
-import { ApiStatusIndicator } from "./api-status-indicator";
-import { BlenderStatusIndicator } from "./blender-status-indicator";
+import { ApiStatusIndicator } from "./connection-indicators/api-status-indicator";
+import { BlenderStatusIndicator } from "./connection-indicators/blender-status-indicator";
 import { SIDEBAR_TOGGLE_EVENT } from "./title-bar";
 import ToggleTheme from "./toggle-theme";
 

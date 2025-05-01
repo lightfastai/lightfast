@@ -6,7 +6,7 @@ import {
 } from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
 
-import { useApiHealth } from "../hooks/use-api-health";
+import { useApiHealth } from "../../hooks/use-api-health";
 
 const statusConfig = {
   loading: {
@@ -48,7 +48,7 @@ export function ApiStatusIndicator() {
               )}
               aria-hidden="true"
             />
-            <span>API</span>
+            <span className="text-xs font-medium">Lightfast API</span>
           </div>
         </TooltipTrigger>
         <TooltipContent side="right">
