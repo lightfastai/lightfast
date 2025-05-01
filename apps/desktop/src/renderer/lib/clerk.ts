@@ -2,11 +2,10 @@ import type {
   FapiRequestInit,
   FapiResponse,
 } from "@clerk/clerk-js/dist/types/core/fapiClient";
-
-import { Clerk } from "@vendor/clerk/js";
+import { BuildClerkOptions } from "@/renderer/types/clerk";
+import { Clerk } from "@clerk/clerk-js/headless";
 
 import { sendToken } from "../helpers/ipc/clerk-actions";
-import { BuildClerkOptions } from "../types/clerk";
 
 const KEY = "__clerk_client_jwt";
 

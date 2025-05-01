@@ -34,7 +34,6 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { BlenderStatusIndicator } from "./blender-status-indicator";
 import { SIDEBAR_TOGGLE_EVENT } from "./title-bar";
-import ToggleTheme from "./toggle-theme";
 
 function UserDropdown() {
   // const { user, signOut } = useAuth();
@@ -116,7 +115,7 @@ function UserDropdown() {
           </DropdownMenuLabel>
           <div className="flex w-full items-center justify-between gap-2">
             <DropdownMenuLabel>Theme</DropdownMenuLabel>
-            <ToggleTheme />
+            {/* <ToggleTheme /> */}
           </div>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

@@ -1,14 +1,30 @@
-import { createMemoryHistory, createRouter } from "@tanstack/react-router";
+import { NotFound } from "@/renderer/pages/nomatch";
+import { routeTree } from "@/renderer/routes/route-tree";
+import {
+  createHashHistory,
+  createRouter as createTanstackRouter,
+} from "@tanstack/react-router";
 
-import { rootTree } from "./routes";
+const hashHistory = createHashHistory();
+
+export const createRouter = () =>
+  createTanstackRouter({
+    routeTree,
+    history: hashHistory,
+    defaultPreload: "intent",
+    defaultPreloadStaleTime: 0,
+    // defaultErrorComponent: DefaultCatchBoundary,
+    defaultNotFoundComponent: () => <NotFound />,
+    context: {
+      session: undefined!,
+      queryClient: undefined!,
+    },
+  });
 
 declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router;
+    router: ReturnType<typeof createRouter>;
   }
 }
 
-const history = createMemoryHistory({
-  initialEntries: ["/"],
-});
-export const router = createRouter({ routeTree: rootTree, history: history });
+export const router = createRouter();

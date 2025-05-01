@@ -1,19 +1,19 @@
-import React, { useEffect } from "react";
+import React from "react";
+import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
 
-import { syncThemeWithLocal } from "./helpers/theme_helpers";
 import { HubClerkProvider } from "./providers/clerk-provider";
+import { router } from "./routes/router";
 
 export default function App() {
-  useEffect(() => {
-    syncThemeWithLocal();
-  }, []);
+  // useEffect(() => {
+  //   syncThemeWithLocal();
+  // }, []);
 
   return (
     <HubClerkProvider>
       <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
-        {/* <RouterProvider router={router} /> */}
-        Yo
+        <RouterProvider router={router} />
       </div>
     </HubClerkProvider>
   );
