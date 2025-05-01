@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { useTRPC } from "@vendor/trpc/client/react";
+import { useTRPC } from "@repo/trpc-client/trpc-react-provider";
 
 export function FetchSecretTest() {
   const trpc = useTRPC();

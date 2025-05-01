@@ -1,3 +1,7 @@
+import {
+  getQueryClient,
+  trpc,
+} from "@repo/trpc-client/trpc-react-server-provider";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -5,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { getQueryClient, trpc } from "@vendor/trpc/client/server";
 
 import { FetchSecretTest } from "~/components/fetch-secret-test";
 

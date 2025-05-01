@@ -4,6 +4,9 @@ import {
 } from "@tanstack/react-query";
 import SuperJSON from "superjson";
 
+/**
+ * Creates a new QueryClient with default configuration for tRPC
+ */
 export const createQueryClient = () =>
   new QueryClient({
     defaultOptions: {

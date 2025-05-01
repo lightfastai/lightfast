@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { getQueryClient, trpc } from "@vendor/trpc/client/server";
+import {
+  getQueryClient,
+  trpc,
+} from "@repo/trpc-client/trpc-react-server-provider";
 
 export default async function WorkspaceLayout({
   children,
