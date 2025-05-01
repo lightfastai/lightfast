@@ -1,5 +1,6 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
+import { auth } from "@vendor/clerk";
 import { appRouter, createTRPCContext } from "@vendor/trpc/server";
 
 export const runtime = "edge";
@@ -24,14 +25,14 @@ export const OPTIONS = () => {
 };
 
 const handler = async (req: Request) => {
-  // const session = await auth();
+  const session = await auth();
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,
     req,
     createContext: () =>
       createTRPCContext({
-        // session,
+        session,
         headers: req.headers,
       }),
     onError({ error, path }) {

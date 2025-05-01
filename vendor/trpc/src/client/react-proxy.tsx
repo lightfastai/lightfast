@@ -32,29 +32,30 @@ export const queryClient = new QueryClient({
   },
 });
 
-export const trpc = createTRPCOptionsProxy<AppRouter>({
-  client: createTRPCClient({
-    links: [
-      loggerLink({
-        enabled: (opts) =>
-          process.env.NODE_ENV === "development" ||
-          (opts.direction === "down" && opts.result instanceof Error),
-        colorMode: "ansi",
-      }),
-      httpBatchLink({
-        transformer: SuperJSON,
-        url: `${import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL}/api/trpc`,
-        headers() {
-          const headers = new Map<string, string>();
-          headers.set("x-trpc-source", "electron-react");
+export const createTRPCOptionsProxyWrapper = ({ url }: { url: string }) =>
+  createTRPCOptionsProxy<AppRouter>({
+    client: createTRPCClient({
+      links: [
+        loggerLink({
+          enabled: (opts) =>
+            process.env.NODE_ENV === "development" ||
+            (opts.direction === "down" && opts.result instanceof Error),
+          colorMode: "ansi",
+        }),
+        httpBatchLink({
+          transformer: SuperJSON,
+          url: `${url}/api/trpc`,
+          headers() {
+            const headers = new Map<string, string>();
+            headers.set("x-trpc-source", "electron-react");
 
-          //   const token = getToken();
-          //   if (token) headers.set("Authorization", `Bearer ${token}`);
+            //   const token = getToken();
+            //   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-          return Object.fromEntries(headers);
-        },
-      }),
-    ],
-  }),
-  queryClient,
-});
+            return Object.fromEntries(headers);
+          },
+        }),
+      ],
+    }),
+    queryClient,
+  });

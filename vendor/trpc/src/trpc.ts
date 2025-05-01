@@ -6,9 +6,12 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+
+import type { Session } from "@vendor/clerk/types";
+import { auth } from "@vendor/clerk";
 
 // import { db } from "@vendor/db/client";
 
@@ -26,18 +29,18 @@ import { ZodError } from "zod";
  */
 export const createTRPCContext = async (opts: {
   headers: Headers;
-  // session: Session | null;
+  session: Session | null;
 }): Promise<{
-  // session: Session | null;
+  session: Session | null;
   // db: typeof db;
 }> => {
-  // const session = await auth();
+  const session = await auth();
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
-  // console.info(`>>> tRPC Request from ${source} by ${session?.user.id}`);
+  console.info(`>>> tRPC Request from ${source} by ${session?.user.id}`);
 
   return {
-    // session,
+    session: opts.session,
     // db,
   };
 };
@@ -101,12 +104,12 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
   return result;
 });
 
-// const protectedMiddleware = t.middleware(async ({ next, ctx }) => {
-//   if (!ctx.session?.user.clerkId) {
-//     throw new TRPCError({ code: "UNAUTHORIZED" });
-//   }
-//   return next({ ctx: { session: ctx.session } });
-// });
+const protectedMiddleware = t.middleware(async ({ next, ctx }) => {
+  if (!ctx.session?.user.clerkId) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({ ctx: { session: ctx.session } });
+});
 
 /**
  * Public (unauthed) procedure
@@ -125,5 +128,6 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(timingMiddleware);
-// .use(protectedMiddleware);
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(protectedMiddleware);
