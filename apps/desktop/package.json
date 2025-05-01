@@ -26,6 +26,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/trpc-client": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-core": "^0.12.0",
     "@tailwindcss/vite": "^4.1.4",

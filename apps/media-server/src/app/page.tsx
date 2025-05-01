@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
-import { getQueryClient, trpc } from "@vendor/trpc/client/server";
+import {
+  getQueryClient,
+  trpc,
+} from "@repo/trpc-client/trpc-react-server-provider";
 
 const RunsTable = dynamic(
   () => import("~/components/runs-table").then((mod) => mod.RunsTable),

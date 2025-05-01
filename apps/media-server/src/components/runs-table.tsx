@@ -15,6 +15,7 @@ import {
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { parseAsJson, useQueryState } from "nuqs";
 
+import { useTRPC } from "@repo/trpc-client/trpc-react-provider";
 import {
   Pagination,
   PaginationContent,
@@ -41,7 +42,6 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { cn } from "@repo/ui/lib/utils";
-import { useTRPC } from "@vendor/trpc/client/react";
 
 import type { Resource } from "~/stores/resources";
 import { useResources } from "~/hooks/use-resources";

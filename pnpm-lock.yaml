@@ -249,6 +249,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@repo/trpc-client':
+        specifier: workspace:*
+        version: link:../../packages/trpc-client
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -506,6 +509,9 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
+      '@repo/trpc-client':
+        specifier: workspace:*
+        version: link:../../packages/trpc-client
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
