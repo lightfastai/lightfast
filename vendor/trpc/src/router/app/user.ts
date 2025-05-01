@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { User } from "@vendor/db/lightfast/schema";
 
-import { protectedProcedure, publicProcedure } from "../../../trpc";
+import { protectedProcedure, publicProcedure } from "../../trpc";
 
 export const appUserRouter = {
   get: protectedProcedure.query(async ({ ctx }) => {

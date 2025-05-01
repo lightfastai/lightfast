@@ -25,6 +25,7 @@
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/threejs": "workspace:*",
+    "@repo/trpc-client": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/webgl": "workspace:*",
     "@t3-oss/env-nextjs": "0.12.0",

@@ -11,9 +11,10 @@ import {
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
-import type { AppRouter } from "~/server/root";
-import { env } from "~/env";
-import { createQueryClient } from "./query-client";
+import type { AppRouter } from "@vendor/trpc";
+
+import { env } from "../env";
+import { createQueryClient } from "./trpc-react-query-client";
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
@@ -63,10 +64,3 @@ export function TRPCReactProvider(props: {
     </QueryClientProvider>
   );
 }
-
-const getBaseUrl = () => {
-  if (typeof window !== "undefined") return window.location.origin;
-  if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`;
-
-  return `http://localhost:${process.env.PORT ?? 3000}`;
-};

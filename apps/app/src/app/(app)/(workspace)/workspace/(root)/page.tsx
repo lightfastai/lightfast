@@ -1,3 +1,7 @@
+import {
+  getQueryClient,
+  trpc,
+} from "@repo/trpc-client/trpc-react-server-provider";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -5,7 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { getQueryClient, trpc } from "@vendor/trpc/client/server";
+
+import { FetchSecretTest } from "~/components/fetch-secret-test";
 
 export default async function Page() {
   const queryClient = getQueryClient();
@@ -27,7 +32,7 @@ export default async function Page() {
           <DropdownMenuItem>Item 3</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <div className="flex flex-col"></div>
+      <FetchSecretTest />
     </main>
   );
 }

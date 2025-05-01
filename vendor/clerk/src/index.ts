@@ -1,3 +1,5 @@
+"use server";
+
 import { auth as clerkAuth } from "@clerk/nextjs/server";
 
 import type { Session } from "./types";

@@ -2,9 +2,9 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
+import { env as trpcEnv } from "@repo/trpc-client/env";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as dbEnv } from "@vendor/db/env";
-import { env as trpcEnv } from "@vendor/trpc/env";
 
 export const env = createEnv({
   extends: [vercel(), dbEnv, clerkEnvBase, trpcEnv],

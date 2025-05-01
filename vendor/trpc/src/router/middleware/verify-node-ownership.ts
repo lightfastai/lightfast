@@ -4,7 +4,7 @@ import { z } from "zod";
 import { and, eq } from "@vendor/db";
 import { Node, Workspace } from "@vendor/db/lightfast/schema";
 
-import { protectedProcedure } from "../../../trpc";
+import { protectedProcedure } from "../../trpc";
 
 export const verifyNodeOwnership = protectedProcedure
   .input(z.object({ nodeId: z.string() }))

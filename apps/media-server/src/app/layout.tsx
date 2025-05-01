@@ -3,11 +3,11 @@ import "@repo/ui/globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
+import { TRPCReactProvider } from "@repo/trpc-client/trpc-react-provider";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
-import { TRPCReactProvider } from "@vendor/trpc/client/react";
 
 import { ContentLayout } from "~/components/content-layout";
 import { AppSidebar } from "~/components/sidebar";

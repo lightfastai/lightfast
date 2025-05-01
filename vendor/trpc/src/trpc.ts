@@ -39,7 +39,7 @@ export const createTRPCContext = async (opts: {
   console.info(`>>> tRPC Request from ${source} by ${session?.user.id}`);
 
   return {
-    session,
+    session: opts.session,
     db,
   };
 };

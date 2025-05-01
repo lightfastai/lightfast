@@ -8,7 +8,7 @@ import {
   Workspace,
 } from "@vendor/db/lightfast/schema";
 
-import { protectedProcedure } from "../../../trpc";
+import { protectedProcedure } from "../../trpc";
 import { verifyWorkspaceOwnership } from "../middleware/verify-workspace-ownership";
 
 export const workspaceRouter = {
