@@ -15,17 +15,17 @@ export default function App() {
   }, []);
 
   return (
-    <EnvProvider>
-      <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
-        <RouterProvider router={router} />
-      </div>
-    </EnvProvider>
+    <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
+      <RouterProvider router={router} />
+    </div>
   );
 }
 
 const root = createRoot(document.getElementById("app")!);
 root.render(
   <React.StrictMode>
-    <App />
+    <EnvProvider>
+      <App />
+    </EnvProvider>
   </React.StrictMode>,
 );

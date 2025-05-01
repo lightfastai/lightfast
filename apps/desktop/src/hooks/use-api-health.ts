@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { useEnv } from "../providers/env-provider";
+import { useEnvStore } from "../providers/env-provider";
 
 type ApiStatus = "loading" | "connected" | "disconnected" | "error";
 
@@ -13,13 +13,24 @@ const DEFAULT_INTERVAL = 60000; // Check every 1 minute
 export function useApiHealth({
   intervalMs = DEFAULT_INTERVAL,
 }: UseApiHealthOptions = {}): ApiStatus {
-  const { env, loading: envLoading, error: envError } = useEnv();
+  const env = useEnvStore((state) => state.env);
+  const envLoading = useEnvStore((state) => state.loading);
+  const envError = useEnvStore((state) => state.error);
+
   const [status, setStatus] = useState<ApiStatus>("loading");
 
   const checkHealth = useCallback(async () => {
-    if (!env?.VITE_PUBLIC_LIGHTFAST_API_URL) {
-      // If URL is not available yet or permanently, reflect that.
-      setStatus(envLoading ? "loading" : "error");
+    console.log("Checking API health...", envLoading, envError);
+    if (envLoading) {
+      setStatus("loading");
+      return;
+    }
+    if (envError || !env?.VITE_PUBLIC_LIGHTFAST_API_URL) {
+      console.error(
+        "API Health Check Error: Env vars failed to load or API URL is missing.",
+        envError,
+      );
+      setStatus("error");
       return;
     }
 
@@ -34,13 +45,10 @@ export function useApiHealth({
         headers: {
           Accept: "application/json",
         },
-        // Add a timeout to prevent hanging indefinitely
-        signal: AbortSignal.timeout(intervalMs - 500), // Timeout slightly less than interval
+        signal: AbortSignal.timeout(intervalMs - 500),
       });
 
       if (response.ok) {
-        // You could optionally check the response body here if needed
-        // const data = await response.json();
         setStatus("connected");
       } else {
         console.warn(`API health check failed with status: ${response.status}`);
@@ -62,23 +70,15 @@ export function useApiHealth({
       }
       setStatus("disconnected");
     }
-  }, [env, envLoading, intervalMs]);
+  }, [env, envLoading, envError, intervalMs]);
 
   useEffect(() => {
-    if (envLoading || envError) {
-      setStatus(envLoading ? "loading" : "error");
-      return () => {}; // No interval needed if env isn't ready or failed
-    }
-
-    // Initial check
     checkHealth();
 
-    // Set up interval
     const intervalId = setInterval(checkHealth, intervalMs);
 
-    // Cleanup interval on unmount or when dependencies change
     return () => clearInterval(intervalId);
-  }, [checkHealth, intervalMs, envLoading, envError]);
+  }, [checkHealth, intervalMs]);
 
   return status;
 }

@@ -1,54 +1,46 @@
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, ReactNode, useContext, useEffect, useRef } from "react";
+import { useStore } from "zustand";
 
-import type { EnvClient } from "../env/client-types";
+import { createEnvStore, EnvStore } from "../stores/env-store"; // Import from new store file
 
-interface EnvContextType {
-  env: EnvClient | null;
-  loading: boolean;
-  error: Error | null;
-}
+// Define the store API type based on the factory function's return type
+export type EnvStoreApi = ReturnType<typeof createEnvStore>;
 
-const EnvContext = createContext<EnvContextType | undefined>(undefined);
+// Create the context for the store API
+const EnvStoreContext = createContext<EnvStoreApi | undefined>(undefined);
 
 export const EnvProvider = ({ children }: { children: ReactNode }) => {
-  const [env, setEnv] = useState<EnvClient | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
+  // Use useRef to ensure the store is created only once
+  const storeRef = useRef<EnvStoreApi>(null);
+  if (!storeRef.current) {
+    storeRef.current = createEnvStore();
+  }
 
+  // Fetch the environment variables when the provider mounts
   useEffect(() => {
-    const fetchEnv = async () => {
-      try {
-        // Use the Electron IPC mechanism defined in preload.ts
-        const clientEnv = await window.electronAPI.getClientEnv();
-        setEnv(clientEnv);
-      } catch (err) {
-        console.error("Failed to fetch client environment variables:", err);
-        setError(err instanceof Error ? err : new Error("Failed to fetch env"));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEnv();
+    // Check if env has already been fetched or is loading to prevent multiple calls
+    const { env, loading } = storeRef.current!.getState();
+    if (!env && !loading) {
+      storeRef.current!.getState().fetchEnv();
+    }
+    // We only want this effect to run once on mount, so the dependency array is empty.
+    // The fetchEnv action itself handles the loading state internally.
   }, []);
 
   return (
-    <EnvContext.Provider value={{ env, loading, error }}>
+    <EnvStoreContext.Provider value={storeRef.current}>
       {children}
-    </EnvContext.Provider>
+    </EnvStoreContext.Provider>
   );
 };
 
-export const useEnv = (): EnvContextType => {
-  const context = useContext(EnvContext);
-  if (context === undefined) {
-    throw new Error("useEnv must be used within an EnvProvider");
+// Custom hook to access the Env store
+export const useEnvStore = <T,>(selector: (store: EnvStore) => T): T => {
+  const envStoreContext = useContext(EnvStoreContext);
+
+  if (!envStoreContext) {
+    throw new Error(`useEnvStore must be used within EnvProvider`);
   }
-  return context;
+
+  return useStore(envStoreContext, selector);
 };

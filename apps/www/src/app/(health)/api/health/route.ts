@@ -13,6 +13,14 @@ const setCorsHeaders = (res: Response) => {
   res.headers.set("Access-Control-Allow-Headers", "*");
 };
 
+export const OPTIONS = () => {
+  const response = new Response(null, {
+    status: 204,
+  });
+  setCorsHeaders(response);
+  return response;
+};
+
 export function GET() {
   const response = NextResponse.json(
     {
@@ -27,12 +35,3 @@ export function GET() {
   setCorsHeaders(response);
   return response;
 }
-
-// Optional: Add an OPTIONS handler for preflight requests if needed
-export const OPTIONS = () => {
-  const response = new Response(null, {
-    status: 204,
-  });
-  setCorsHeaders(response);
-  return response;
-};
