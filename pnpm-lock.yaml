@@ -340,6 +340,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.5.3)
+      dotenv-cli:
+        specifier: ^7.4.2
+        version: 7.4.2
       electron:
         specifier: ^35.2.1
         version: 35.2.1

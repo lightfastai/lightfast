@@ -7,9 +7,29 @@ import {
   REACT_DEVELOPER_TOOLS,
 } from "electron-devtools-installer";
 
+import type { EnvClient } from "./env/client-types";
+// Import the validated environment variables
+import { env } from "./env/index";
 import registerListeners from "./helpers/ipc/listeners-register";
 
+// Example usage (if you had defined variables in env.ts):
+// console.log("API Key:", env.API_KEY);
+
 const inDevelopment = process.env.NODE_ENV === "development";
+
+// --- IPC Handlers ---
+ipcMain.handle("get-client-env", (): EnvClient => {
+  // Manually construct the client environment object to send
+  // We use the EnvClient type for type safety.
+  // Note: The keys here match the *original* variable names (incl. prefix)
+  // as defined in EnvClient type, which is what the renderer expects.
+  const clientEnv: EnvClient = {
+    VITE_PUBLIC_LIGHTFAST_API_URL: env.VITE_PUBLIC_LIGHTFAST_API_URL,
+    // Add other client variables defined in EnvClient here
+  };
+  return clientEnv;
+});
+// --- End IPC Handlers ---
 
 function createWindow() {
   const preload = path.join(__dirname, "preload.js");

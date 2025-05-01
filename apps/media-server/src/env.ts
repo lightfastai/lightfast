@@ -12,9 +12,7 @@ export const env = createEnv({
       .default("development"),
     FORCE_BASE_URL: z.string().optional(),
   },
-  server: {
-    SUPABASE_PROJECT_ID: z.string().min(1),
-  },
+  server: {},
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string().min(1),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),

@@ -1,7 +1,5 @@
+import type { EnvClient } from "./env/client-types";
 import { BlenderConnectionStatus } from "./preload";
-
-declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
-declare const MAIN_WINDOW_VITE_NAME: string;
 
 interface ThemeModeContext {
   toggle: () => Promise<boolean>;
@@ -22,14 +20,23 @@ interface BlenderConnectionAPI {
   sendToBlender: (message: object) => Promise<void>;
 }
 
+interface ElectronAPI {
+  getClientEnv: () => Promise<EnvClient>;
+  ping: () => Promise<string>;
+  send: (channel: string, ...args: any[]) => void;
+  on: (channel: string, listener: (...args: any[]) => void) => () => void;
+}
+
 declare global {
   interface Window {
-    // Existing electron API if defined here or elsewhere
     electron?: {
       ping: () => Promise<string>;
     };
+    electronAPI: ElectronAPI;
     electronWindow?: ElectronWindow;
     blenderConnection: BlenderConnectionAPI;
     themeMode: ThemeModeContext;
   }
 }
+
+export {};

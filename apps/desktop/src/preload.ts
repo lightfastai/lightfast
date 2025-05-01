@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
+import type { EnvClient } from "./env/client-types"; // Import type from new file
 import exposeContexts from "./helpers/ipc/context-exposer";
+
+console.log("[Preload] Script started");
 
 // Import or redefine types/constants needed from the main process
 export const BLENDER_STATUS_CHANNEL = "blender-status-update";
@@ -15,6 +18,8 @@ export type BlenderConnectionStatus =
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld("electronAPI", {
+  // Function to get the entire client environment object
+  getClientEnv: (): Promise<EnvClient> => ipcRenderer.invoke("get-client-env"),
   ping: () => ipcRenderer.invoke("ping"),
 
   // --- Title Bar IPC ---

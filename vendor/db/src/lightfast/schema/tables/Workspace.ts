@@ -6,7 +6,6 @@ import { nanoid } from "@repo/lib";
 import { generatePrettyProjectName } from "@repo/lib/pretty-project-name";
 
 import { Node } from "./Node";
-import { User } from "./User";
 
 export const Workspace = pgTable("workspace", (t) => ({
   id: t
@@ -24,18 +23,10 @@ export const Workspace = pgTable("workspace", (t) => ({
     .notNull()
     .defaultNow()
     .$onUpdateFn(() => sql`now()`),
-  userId: t
-    .varchar({ length: 191 })
-    .notNull()
-    .references(() => User.id, { onDelete: "cascade" }),
 }));
 
-export const WorkspaceRelations = relations(Workspace, ({ many, one }) => ({
+export const WorkspaceRelations = relations(Workspace, ({ many }) => ({
   nodes: many(Node),
-  user: one(User, {
-    fields: [Workspace.userId],
-    references: [User.id],
-  }),
 }));
 
 export const UpdateNameWorkspaceSchema = z.object({

@@ -10,13 +10,12 @@
     "url": "https://github.com/lightfastai/lightfast.git"
   },
   "scripts": {
-    "start": "tsx ../../node_modules/@electron-forge/cli/src/electron-forge-start",
+    "dev": "dotenv -e ./.internal/.env.development.local -- tsx ../../node_modules/@electron-forge/cli/src/electron-forge-start",
     "package": "tsx ../../node_modules/@electron-forge/cli/src/electron-forge-package",
     "make": "tsx ../../node_modules/@electron-forge/cli/src/electron-forge-make",
     "publish": "tsx ../../node_modules/@electron-forge/cli/src/electron-forge-publish",
     "clean": "rm -rf dist dist-electron node_modules .cache",
-    "dev": "vite --mode development",
-    "dev:debug": "VSCODE_DEBUG=true vite --mode development",
+    "dev:debug": "dotenv -e ./.internal/.env.development.local -- VSCODE_DEBUG=true vite --mode development",
     "build": "rm -rf dist dist-electron .cache && tsc && vite build && electron-builder",
     "build:dir": "rm -rf dist dist-electron .cache && tsc && vite build && electron-builder --dir",
     "preview": "vite preview",
@@ -60,6 +59,7 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.20",
+    "dotenv-cli": "^7.4.2",
     "electron": "^35.2.1",
     "electron-devtools-installer": "^4.0.0",
     "electron-playwright-helpers": "^1.7.1",

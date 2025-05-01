@@ -2,19 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { useSidebar } from "@repo/ui/components/ui/sidebar";
 
-// Type definition for the electron API
-declare global {
-  interface Window {
-    electronAPI?: {
-      send: (channel: string, ...args: any[]) => void;
-      on: (
-        channel: string,
-        listener: (...args: any[]) => void,
-      ) => (() => void) | undefined;
-    };
-  }
-}
-
 // Custom event name for sidebar toggle
 export const SIDEBAR_TOGGLE_EVENT = "app:sidebar:toggle";
 
