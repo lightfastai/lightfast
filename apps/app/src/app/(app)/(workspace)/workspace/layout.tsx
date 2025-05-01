@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { api } from "~/trpc/client/server";
+import { api } from "@vendor/trpc/client/server";
 
 export default async function WorkspaceLayout({
   children,

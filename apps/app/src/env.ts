@@ -4,9 +4,10 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as dbEnv } from "@vendor/db/env";
+import { env as trpcEnv } from "@vendor/trpc/env";
 
 export const env = createEnv({
-  extends: [vercel(), dbEnv, clerkEnvBase],
+  extends: [vercel(), dbEnv, clerkEnvBase, trpcEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

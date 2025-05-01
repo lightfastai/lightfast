@@ -5,10 +5,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import { api } from "@vendor/trpc/client/server";
 
 export default function Page() {
+  const data = api.app.auth.randomSecret();
   return (
     <main className="relative flex-1 overflow-hidden">
+      <pre>{data}</pre>
       {/* <Workspace debug /> */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

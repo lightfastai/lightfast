@@ -3,10 +3,9 @@ import { headers } from "next/headers";
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
 
 import { auth } from "@vendor/clerk";
-import { createTRPCContext } from "@vendor/trpc";
 
 import type { AppRouter } from "../server/root";
-import { createCaller } from "../server/index";
+import { createCaller, createTRPCContext } from "../server/index";
 import { createQueryClient } from "./query-client";
 
 /**

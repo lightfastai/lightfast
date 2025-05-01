@@ -15,7 +15,8 @@ import {
   $OutputHandleId,
   getMaxTargetEdges,
 } from "@vendor/db/lightfast/types";
-import { protectedProcedure } from "@vendor/trpc";
+
+import { protectedProcedure } from "../../../trpc";
 
 export const edgeRouter = {
   getAll: protectedProcedure

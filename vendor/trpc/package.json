@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    }
+    "./env": "./src/env.ts",
+    "./client/query-client": "./src/client/query-client.ts",
+    "./client/react": "./src/client/react.tsx",
+    "./client/server": "./src/client/server.ts",
+    "./server": "./src/server/index.ts"
   },
   "license": "MIT",
   "scripts": {

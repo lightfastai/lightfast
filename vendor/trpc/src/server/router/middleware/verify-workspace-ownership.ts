@@ -3,7 +3,8 @@ import z from "zod";
 
 import { eq } from "@vendor/db";
 import { User, Workspace } from "@vendor/db/lightfast/schema";
-import { protectedProcedure } from "@vendor/trpc";
+
+import { protectedProcedure } from "../../../trpc";
 
 export const verifyWorkspaceOwnership = protectedProcedure
   .input(z.object({ workspaceId: z.string() }))

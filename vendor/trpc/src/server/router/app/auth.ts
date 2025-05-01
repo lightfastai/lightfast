@@ -1,9 +1,12 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
-import { publicProcedure } from "@vendor/trpc";
+import { publicProcedure } from "../../../trpc";
 
 export const authRouter = {
   getSession: publicProcedure.query(({ ctx }) => {
     return ctx.session;
+  }),
+  randomSecret: publicProcedure.query(() => {
+    return "secret";
   }),
 } satisfies TRPCRouterRecord;

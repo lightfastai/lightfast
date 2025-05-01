@@ -7,8 +7,8 @@ import {
   User,
   Workspace,
 } from "@vendor/db/lightfast/schema";
-import { protectedProcedure } from "@vendor/trpc";
 
+import { protectedProcedure } from "../../../trpc";
 import { verifyWorkspaceOwnership } from "../middleware/verify-workspace-ownership";
 
 export const workspaceRouter = {
@@ -29,9 +29,7 @@ export const workspaceRouter = {
 
     const [workspace] = await ctx.db
       .insert(Workspace)
-      .values({
-        userId: user.id,
-      })
+      .values({})
       .returning({ id: Workspace.id });
 
     if (!workspace) {
@@ -74,7 +72,6 @@ export const workspaceRouter = {
         name: Workspace.name,
       })
       .from(Workspace)
-      .where(eq(Workspace.userId, user.id))
       .orderBy(desc(Workspace.createdAt));
 
     return workspaces;

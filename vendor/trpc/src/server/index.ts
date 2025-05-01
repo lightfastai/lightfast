@@ -1,8 +1,7 @@
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
-import { createCallerFactory, createTRPCContext } from "@vendor/trpc";
-
 import type { AppRouter } from "./root";
+import { createCallerFactory, createTRPCContext } from "../trpc";
 import { appRouter } from "./root";
 
 /**

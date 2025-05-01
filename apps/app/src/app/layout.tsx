@@ -5,9 +5,9 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { TRPCReactProvider } from "@vendor/trpc/client/react";
 
 import { env } from "~/env";
-import { TRPCReactProvider } from "../trpc/client/react";
 
 interface RootLayoutProperties {
   readonly children: React.ReactNode;
