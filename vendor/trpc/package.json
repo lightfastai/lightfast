@@ -6,6 +6,7 @@
   "exports": {
     "./env": "./src/env.ts",
     "./client/react": "./src/client/react.tsx",
+    "./client/react-proxy": "./src/client/react-proxy.tsx",
     "./client/query-client": "./src/client/query-client.ts",
     "./client/server": "./src/client/server.tsx",
     "./server": "./src/server/index.ts"

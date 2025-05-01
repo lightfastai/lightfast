@@ -4,13 +4,13 @@ packages:
   - internal/*
   - vendor/*
 catalog:
-  "@tanstack/react-query": "^5.69.0"
-  "@trpc/client": "^11.0.0"
-  "@trpc/tanstack-react-query": "^11.0.0"
-  "@trpc/server": "^11.0.0"
+  '@tanstack/react-query': ^5.69.0
+  '@trpc/client': ^11.0.0
+  '@trpc/tanstack-react-query': ^11.0.0
+  '@trpc/server': ^11.0.0
   lucide-react: ^0.451.0
-  "@types/node": ^20.16.11
-  "@types/eslint__js": 8.42.3
+  '@types/node': ^20.16.11
+  '@types/eslint__js': 8.42.3
   zod: ^3.24.0
   eslint: ^9.23.0
   prettier: ^3.5.3
@@ -20,15 +20,27 @@ catalogs:
   react19:
     react: 19.1.0
     react-dom: 19.1.0
-    "@types/react": 19.1.2
-    "@types/react-dom": 19.1.2
+    '@types/react': 19.1.2
+    '@types/react-dom': 19.1.2
   tailwind4:
     tailwindcss: 4.1.4
     postcss: 8.5.3
-    "@tailwindcss/postcss": ^4.1.4
-    "@tailwindcss/typography": ^0.5.16
+    '@tailwindcss/postcss': ^4.1.4
+    '@tailwindcss/typography': ^0.5.16
   ai:
     ai: ^3.4.20
+ignoredBuiltDependencies:
+  - '@clerk/shared'
+  - '@sentry/cli'
+  - '@vercel/speed-insights'
+  - bufferutil
+  - contentlayer2
+  - core-js
+  - core-js-pure
+  - esbuild
+  - openai-zod-to-json-schema
+  - protobufjs
+  - sharp
 onlyBuiltDependencies:
-  - electron
-  - electron-winstaller
+  - '@clerk/shared'
+  - '@vercel/speed-insights'
