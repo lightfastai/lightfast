@@ -5,21 +5,11 @@ import { useAuth, useSession, useSignIn } from "@clerk/clerk-react";
 import { ClerkAPIError, OAuthStrategy } from "@clerk/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useForm } from "react-hook-form";
+import { FieldPath, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@repo/ui/components/ui/form";
-import { Input } from "@repo/ui/components/ui/input";
-import { Separator } from "@repo/ui/components/ui/separator";
 import { cn } from "@repo/ui/lib/utils";
 
 interface SignInTypes extends HTMLAttributes<HTMLDivElement> {}
@@ -74,18 +64,18 @@ export const SignInForm = ({ className, ...props }: SignInTypes) => {
 
     const errors = err.errors as ClerkAPIError[];
 
-    // const parsedErrors = parseErrors(errors);
+    const parsedErrors = parseErrors(errors);
 
-    // parsedErrors.fieldErrors.forEach((fieldError) => {
-    //   form.setError(
-    //     fieldError.meta?.paramName as FieldPath<authFormValues>,
-    //     fieldError,
-    //   );
-    // });
+    parsedErrors.fieldErrors.forEach((fieldError) => {
+      form.setError(
+        fieldError.meta?.paramName as FieldPath<authFormValues>,
+        fieldError,
+      );
+    });
 
-    // parsedErrors.globalErrors.forEach((globalError) => {
-    //   form.setError("root.globalError", globalError);
-    // });
+    parsedErrors.globalErrors.forEach((globalError) => {
+      form.setError("root.globalError", globalError);
+    });
   }
 
   const trySignIn = async (data: z.infer<typeof FormSchema>) => {
@@ -135,9 +125,12 @@ export const SignInForm = ({ className, ...props }: SignInTypes) => {
   };
 
   const signInWith = (strategy: OAuthStrategy) => {
+    console.log("signInWith", strategy);
     if (signIn) {
+      console.log("signIn", signIn);
       if (strategy === "oauth_github") {
         try {
+          console.log("signInWith", strategy);
           githubOauthFlow({
             redirectUrl: `${import.meta.env.VITE_HTTPS_DOMAIN}/sso-callback`,
           });
@@ -151,7 +144,7 @@ export const SignInForm = ({ className, ...props }: SignInTypes) => {
   return (
     <>
       <div className="mb-6 flex flex-col text-center">
-        <h1 className="text-center text-2xl font-medium">Sign In</h1>
+        <h1 className="text-2xs text-center font-medium">Sign In</h1>
         <p className={`text-md text-muted-foreground`}>
           Don't have an account?{" "}
           <Link
@@ -163,101 +156,19 @@ export const SignInForm = ({ className, ...props }: SignInTypes) => {
         </p>
       </div>
       <div className={cn("grid", className)} {...props}>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 text-left"
-          >
-            {form.formState.errors.root?.globalError && (
-              <p
-                className={
-                  "text-destructive-foreground mt-1 text-sm font-normal"
-                }
-              >
-                {form.formState.errors.root?.globalError.message}
-              </p>
-            )}
-            <FormField
-              control={form.control}
-              name="emailAddress"
-              render={({ field }) => (
-                <FormItem className="space-y-1">
-                  <FormLabel className="text-md font-normal">
-                    Email Address
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      autoCorrect="off"
-                      autoFocus
-                      placeholder="your@email.com"
-                      className="border-muted placeholder:text-muted-foreground/60 h-11 border bg-black/30 font-mono text-sm shadow-inner shadow-black/30 backdrop-blur"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem className="space-y-1">
-                  <FormLabel className="text-md font-normal">
-                    Password
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="off"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      placeholder="Password"
-                      className="border-muted placeholder:text-muted-foreground/60 h-11 border bg-black/30 font-mono text-sm shadow-inner shadow-black/30 backdrop-blur"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid">
-              <Button
-                className="contain ggSmallCaps mt-2 mb-4 w-full gap-2"
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading && <span>Loading...</span>}
-                Sign In
-              </Button>
-            </div>
-            <div className="ggSmallCaps relative grid grid-cols-4 items-center text-xs">
-              <Separator className="col-span-1" />
-              <div className="align-center text-muted-foreground col-span-2 text-center">
-                Or continue with
-              </div>
-              <Separator className="col-span-1 grid" />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                variant="secondary"
-                type="button"
-                disabled={isLoading}
-                onClick={() => signInWith("oauth_github")}
-              >
-                {isLoading ? (
-                  <span>Loading...</span>
-                ) : (
-                  <Icons.gitHub className="mr-2 h-4 w-4" />
-                )}{" "}
-                Github
-              </Button>
-            </div>
-          </form>
-        </Form>
+        <Button
+          variant="secondary"
+          type="button"
+          // disabled={isLoading}
+          onClick={() => signInWith("oauth_github")}
+        >
+          {isLoading ? (
+            <span>Loading...</span>
+          ) : (
+            <Icons.gitHub className="mr-2 h-4 w-4" />
+          )}
+          Github
+        </Button>
       </div>
     </>
   );

@@ -91,12 +91,6 @@ export const signinRoute = createRoute({
   component: SignInForm,
 });
 
-// export const signupRoute = createRoute({
-//   getParentRoute: () => authLayoutRoute,
-//   path: "signup",
-//   component: SignUpForm,
-// });
-
 export const ssoCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "sso-callback",

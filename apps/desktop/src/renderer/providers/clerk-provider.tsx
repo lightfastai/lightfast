@@ -1,4 +1,4 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect } from "react";
 import { getClerkInstance } from "@/renderer/lib/clerk";
 import { router } from "@/renderer/routes/router";
 import {
@@ -27,6 +27,9 @@ export const HubClerkProvider = ({ children }: PropsWithChildren) => {
       },
     },
   };
+  useEffect(() => {
+    console.log("clerkProps", clerkProps);
+  }, [clerkProps]);
 
   if (import.meta.env.VITE_CLERK_PUBLIC_KEY.match("http")) {
     clerkProps.Clerk = getClerkInstance({
