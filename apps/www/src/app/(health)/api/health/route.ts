@@ -24,6 +24,7 @@ export function GET() {
     },
   );
   response.headers.set("Cache-Control", "no-store");
+  setCorsHeaders(response);
   return response;
 }
 
