@@ -1,3 +1,4 @@
+import { queryClient } from "@/renderer/providers/QueryClient";
 import { router } from "@/renderer/routes/router";
 import { useAuth, useClerk, useSession } from "@clerk/clerk-react";
 import { RouterProvider } from "@tanstack/react-router";
@@ -16,5 +17,5 @@ export const InnerApp = () => {
   console.log("useClerk().session", clerk.session);
   console.log("useSession().session", session.session);
 
-  return <RouterProvider router={router} context={{ session }} />;
+  return <RouterProvider router={router} context={{ session, queryClient }} />;
 };

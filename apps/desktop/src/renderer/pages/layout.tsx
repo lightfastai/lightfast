@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { signoutRoute } from "@/renderer/routes/routes";
+import { signoutRoute } from "@/renderer/routes/route-tree";
 import { useAuth } from "@clerk/clerk-react";
 import { ExitIcon, ReloadIcon } from "@radix-ui/react-icons";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";

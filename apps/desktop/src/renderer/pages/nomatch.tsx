@@ -1,4 +1,4 @@
-import { signinRoute } from "@/renderer/routes/routes";
+import { signinRoute } from "@/renderer/routes/route-tree";
 import { useSession } from "@clerk/clerk-react";
 import { Navigate } from "@tanstack/react-router";
 

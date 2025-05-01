@@ -2,10 +2,10 @@ import type {
   FapiRequestInit,
   FapiResponse,
 } from "@clerk/clerk-js/dist/types/core/fapiClient";
-import { BuildClerkOptions } from "@/renderer/types/clerk";
 import { Clerk } from "@clerk/clerk-js/headless";
 
 import { sendToken } from "../helpers/ipc/clerk-actions";
+import { BuildClerkOptions } from "../types/clerk";
 
 const KEY = "__clerk_client_jwt";
 
@@ -26,6 +26,7 @@ let __internal_clerk: Clerk | undefined;
 
 export function createClerkInstance(ClerkClass: typeof Clerk) {
   return (options?: BuildClerkOptions): Clerk => {
+    console.log("options", options);
     const {
       publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
         process.env.CLERK_PUBLISHABLE_KEY ||

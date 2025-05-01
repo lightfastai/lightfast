@@ -5,7 +5,7 @@ import { useAuth, useSession, useSignIn } from "@clerk/clerk-react";
 import { ClerkAPIError, OAuthStrategy } from "@clerk/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { FieldPath, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { Icons } from "@repo/ui/components/icons";
@@ -56,73 +56,6 @@ export const SignInForm = ({ className, ...props }: SignInTypes) => {
       });
     }
   }, [isLoaded, session]);
-
-  function displayFormErrors(err: SignInError) {
-    // This can return an array of errors.
-    // See https://clerk.com/docs/custom-flows/error-handling to learn about error handling
-    setIsLoading(false);
-
-    const errors = err.errors as ClerkAPIError[];
-
-    const parsedErrors = parseErrors(errors);
-
-    parsedErrors.fieldErrors.forEach((fieldError) => {
-      form.setError(
-        fieldError.meta?.paramName as FieldPath<authFormValues>,
-        fieldError,
-      );
-    });
-
-    parsedErrors.globalErrors.forEach((globalError) => {
-      form.setError("root.globalError", globalError);
-    });
-  }
-
-  const trySignIn = async (data: z.infer<typeof FormSchema>) => {
-    const completeSignIn = await signIn?.create({
-      identifier: data.emailAddress,
-      password: data.password,
-    });
-
-    if (completeSignIn?.status !== "complete") {
-      // The status can also be `needs_factor_on', 'needs_factor_two', or 'needs_identifier'
-      // Please see https://clerk.com/docs/references/react/use-sign-in#result-status for  more information
-      setIsLoading(false);
-    }
-
-    if (completeSignIn?.status === "complete") {
-      // If complete, user exists and provided password match -- set session active
-      if (setActive) {
-        await setActive({
-          session: completeSignIn.createdSessionId,
-          redirectUrl: "/signin",
-        });
-      }
-    }
-  };
-
-  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    setIsLoading(true);
-    if (!isLoaded) {
-      return;
-    }
-
-    try {
-      await trySignIn(data);
-    } catch (err: unknown) {
-      const clerkSignInError = err as SignInError;
-      if (clerkSignInError.clerkError) {
-        for (const error of clerkSignInError.errors) {
-          if (error.code === "session_exists") {
-            void signOut();
-            await trySignIn(data);
-          }
-        }
-      }
-
-      displayFormErrors(clerkSignInError);
-    }
-  };
 
   const signInWith = (strategy: OAuthStrategy) => {
     console.log("signInWith", strategy);

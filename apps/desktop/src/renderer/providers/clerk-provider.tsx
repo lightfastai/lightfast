@@ -1,11 +1,12 @@
 import { PropsWithChildren, useEffect } from "react";
 import { getClerkInstance } from "@/renderer/lib/clerk";
-import { router } from "@/renderer/routes/router";
 import {
   ClerkProp,
   ClerkProvider,
   ClerkProviderProps,
 } from "@clerk/clerk-react";
+
+import { router } from "../routes/router";
 
 export const HubClerkProvider = ({ children }: PropsWithChildren) => {
   const clerkProps: Partial<ClerkProviderProps> = {
@@ -20,21 +21,23 @@ export const HubClerkProvider = ({ children }: PropsWithChildren) => {
       layout: {
         socialButtonsPlacement: "bottom",
         socialButtonsVariant: "iconButton",
-        helpPageUrl: "https://support.example.com",
+        helpPageUrl: "https://support.lightfast.com",
       },
       variables: {
         borderRadius: "0",
       },
     },
   };
+
   useEffect(() => {
     console.log("clerkProps", clerkProps);
   }, [clerkProps]);
 
-  if (import.meta.env.VITE_CLERK_PUBLIC_KEY.match("http")) {
+  if (!import.meta.env.VITE_DOMAIN.match("http")) {
     clerkProps.Clerk = getClerkInstance({
       publishableKey: import.meta.env.VITE_CLERK_PUBLIC_KEY,
     }) as unknown as ClerkProp;
+    console.log("clerk", clerkProps.Clerk);
   }
 
   return (

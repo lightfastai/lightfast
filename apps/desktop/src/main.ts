@@ -81,10 +81,9 @@ const createWindow = async () => {
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    width: 900,
+    height: 670,
     show: true,
-    frame: false,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
@@ -114,40 +113,17 @@ const createWindow = async () => {
       urlPath = urlPath.slice(3);
     }
   }
-
-  ipcMain.on("minimize-window", () => {
-    mainWindow?.minimize();
-  });
-
-  ipcMain.on("maximize-window", () => {
-    if (mainWindow?.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow?.maximize();
-    }
-  });
-
-  ipcMain.on("close-window", () => {
-    mainWindow?.close();
-  });
-
-  mainWindow.on("maximize", () => {
-    mainWindow.webContents.send("window-maximized");
-  });
-
-  mainWindow.on("unmaximize", () => {
-    mainWindow.webContents.send("window-unmaximized");
-  });
+  const hostPath = "..";
 
   // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
-  }
-
+  const uiSource = new URL(
+    path.join(urlPath, hostPath, "index.html"),
+    `${import.meta.env.VITE_DOMAIN}`,
+  );
+  void mainWindow.loadURL(
+    // is.dev ? `${process.env.ELECTRON_RENDERER_URL}` : uiSource.toString(),
+    uiSource.toString(),
+  );
   mainWindow.webContents.openDevTools();
   const filter = {
     urls: [
@@ -264,7 +240,6 @@ const createAuthWindow = (authenticationUrl: string) => {
     width: 1000,
     height: 600,
     autoHideMenuBar: true,
-    frame: false,
     webPreferences: {
       nodeIntegration: false,
     },

@@ -2,8 +2,11 @@ import { SignInForm } from "@/renderer/components/SignIn/SignInForm";
 import { SSOCallback } from "@/renderer/components/SSOCallback";
 import { AuthLayout } from "@/renderer/pages/auth/AuthLayout";
 import { Signout } from "@/renderer/pages/auth/signout";
+import Home from "@/renderer/pages/home";
 import { App, PageLayout } from "@/renderer/pages/layout";
 import { NotFound } from "@/renderer/pages/nomatch";
+import { useSession } from "@clerk/clerk-react";
+import { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   createRoute,
@@ -11,15 +14,12 @@ import {
   redirect,
 } from "@tanstack/react-router";
 
-import { useSession } from "@vendor/clerk/react";
-
-import Home from "../pages/home";
-
 interface RouteContext {
   session: ReturnType<typeof useSession>;
+  queryClient: QueryClient;
 }
 
-export const rootRoute = createRootRouteWithContext<RouteContext>()({
+const rootRoute = createRootRouteWithContext<RouteContext>()({
   component: () => (
     <>
       <Outlet />
@@ -91,6 +91,12 @@ export const signinRoute = createRoute({
   component: SignInForm,
 });
 
+export const signupRoute = createRoute({
+  getParentRoute: () => authLayoutRoute,
+  path: "signup",
+  component: SignInForm,
+});
+
 export const ssoCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "sso-callback",
@@ -98,7 +104,7 @@ export const ssoCallbackRoute = createRoute({
 });
 
 export const routeTree = rootRoute.addChildren([
-  authLayoutRoute.addChildren([signinRoute]),
+  authLayoutRoute.addChildren([signinRoute, signupRoute]),
   signoutRoute,
   authenticatedVirtualRoute.addChildren([
     appVirtualRoute.addChildren([
