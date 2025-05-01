@@ -8,7 +8,7 @@ interface UseApiHealthOptions {
   intervalMs?: number;
 }
 
-const DEFAULT_INTERVAL = 5000; // Check every 5 seconds
+const DEFAULT_INTERVAL = 60000; // Check every 1 minute
 
 export function useApiHealth({
   intervalMs = DEFAULT_INTERVAL,
