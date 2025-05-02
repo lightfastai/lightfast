@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -189,38 +190,40 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="divide-y">
-        <SidebarGroup className="p-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-2 text-xs hover:border hover:border-orange-500 dark:hover:border-orange-500 dark:hover:bg-orange-500/10"
-            onClick={() => mutate()}
-          >
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500">
-              <Plus className="h-4 w-4 text-white" />
+        <ScrollArea className="h-full">
+          <SidebarGroup className="p-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-xs hover:border hover:border-orange-500 dark:hover:border-orange-500 dark:hover:bg-orange-500/10"
+              onClick={() => mutate()}
+            >
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500">
+                <Plus className="h-4 w-4 text-white" />
+              </div>
+              <span>New Workspace</span>
+            </Button>
+            <div className="flex items-center justify-between">
+              <SidebarGroupLabel>
+                <span>Workspaces</span>
+              </SidebarGroupLabel>
             </div>
-            <span>New Workspace</span>
-          </Button>
-          <div className="flex items-center justify-between">
-            <SidebarGroupLabel>
-              <span>Workspaces</span>
-            </SidebarGroupLabel>
-          </div>
-          <SidebarMenu>
-            {workspaces?.map((workspace: Workspace) => (
-              <SidebarMenuItem key={workspace.id}>
-                <SidebarMenuButton asChild>
-                  <Link
-                    to="/workspace/$workspaceId"
-                    params={{ workspaceId: workspace.id }}
-                    className={cn("flex items-center gap-2")}
-                  >
-                    <span>{workspace.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+            <SidebarMenu>
+              {workspaces?.map((workspace: Workspace) => (
+                <SidebarMenuItem key={workspace.id}>
+                  <SidebarMenuButton asChild>
+                    <Link
+                      to="/workspace/$workspaceId"
+                      params={{ workspaceId: workspace.id }}
+                      className={cn("flex items-center gap-2")}
+                    >
+                      <span>{workspace.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </ScrollArea>
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
