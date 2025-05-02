@@ -17,7 +17,6 @@ import { ConnectionIndicators } from "./connection-indicators";
 import { SessionsGroup } from "./sessions-group";
 import { useCreateWorkspaceMutation } from "./use-create-workspace";
 import { UserDropdown } from "./user-dropdown";
-import { WorkspacesGroup } from "./workspaces-group";
 
 export function AppSidebar() {
   const { data: workspaces = [] } = useQuery(
@@ -57,20 +56,11 @@ export function AppSidebar() {
             workspaceId={currentWorkspaceId}
             onCreateWorkspace={createWorkspace}
           />
-
-          {/* Workspaces Group - only show when in a workspace */}
-          {currentWorkspaceId && (
-            <WorkspacesGroup
-              workspaces={workspaces}
-              currentWorkspaceId={currentWorkspaceId}
-              onCreateWorkspace={createWorkspace}
-            />
-          )}
         </ScrollArea>
 
         {/* Workspace Switcher at bottom */}
         {workspaces.length > 0 && (
-          <div className="mt-auto border-t pt-4">
+          <div className="mt-auto pt-4">
             <WorkspaceSwitcher
               workspaces={workspacesData}
               currentWorkspaceId={currentWorkspaceId}
