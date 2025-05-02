@@ -1,7 +1,8 @@
 // Import the correct types from the ai package
 import type { Message } from "ai";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { RootLayout } from "@/components/root-layout";
+import { useBlenderStore } from "@/stores/blender-store";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -60,22 +61,16 @@ export default function WorkspacePage() {
     trpc.tenant.workspace.get.queryOptions({ workspaceId }),
   );
 
-  // State for Blender connection status
-  const [blenderStatus, setBlenderStatus] = useState<string>("disconnected");
+  // Get connection status from the shared Blender store
+  const connectionStatus = useBlenderStore((state) => state.connectionStatus);
+  // Local state for test operation results
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
-  // Listen for Blender connection status updates
-  useEffect(() => {
-    // Set up listener for Blender connection status
-    const cleanup = window.blenderConnection?.onStatusUpdate((status) => {
-      setBlenderStatus(status.status);
-      console.log("Blender connection status:", status);
-    });
-
-    // Clean up listener when component unmounts
-    return () => {
-      if (cleanup) cleanup();
-    };
-  }, []);
+  // We don't need to listen for Blender connection status updates here anymore
+  // since the store already handles that
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
     useChat({
@@ -282,26 +277,146 @@ export default function WorkspacePage() {
           <div className="flex items-center gap-2">
             <div
               className={`h-2 w-2 rounded-full ${
-                blenderStatus === "connected"
+                connectionStatus.status === "connected"
                   ? "bg-green-500"
-                  : blenderStatus === "listening"
+                  : connectionStatus.status === "listening"
                     ? "animate-pulse bg-yellow-500"
                     : "bg-red-500"
               }`}
             />
             <span className="text-muted-foreground text-xs">
               Blender:{" "}
-              {blenderStatus === "connected"
+              {connectionStatus.status === "connected"
                 ? "Connected"
-                : blenderStatus === "listening"
+                : connectionStatus.status === "listening"
                   ? "Waiting for connection"
                   : "Disconnected"}
             </span>
+
+            {/* Add Blender test buttons when connected */}
+            {connectionStatus.status === "connected" && (
+              <div className="ml-4 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={async () => {
+                    try {
+                      const result = await window.electronAPI.invoke(
+                        "handle-blender-create-object",
+                        { objectType: "CUBE", location: { x: 0, y: 0, z: 0 } },
+                      );
+                      console.log("Test cube created:", result);
+                      setTestResult({
+                        success: result.success,
+                        message: result.success
+                          ? `Created cube: ${result.objectName}`
+                          : `Error: ${result.error}`,
+                      });
+                    } catch (error) {
+                      console.error("Error creating test cube:", error);
+                      setTestResult({
+                        success: false,
+                        message: `Error: ${error instanceof Error ? error.message : String(error)}`,
+                      });
+                    }
+                  }}
+                >
+                  Test Cube
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={async () => {
+                    try {
+                      const result = await window.electronAPI.invoke(
+                        "handle-blender-create-object",
+                        {
+                          objectType: "SPHERE",
+                          location: { x: 2, y: 0, z: 0 },
+                        },
+                      );
+                      console.log("Test sphere created:", result);
+                      setTestResult({
+                        success: result.success,
+                        message: result.success
+                          ? `Created sphere: ${result.objectName}`
+                          : `Error: ${result.error}`,
+                      });
+                    } catch (error) {
+                      console.error("Error creating test sphere:", error);
+                      setTestResult({
+                        success: false,
+                        message: `Error: ${error instanceof Error ? error.message : String(error)}`,
+                      });
+                    }
+                  }}
+                >
+                  Test Sphere
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={async () => {
+                    try {
+                      const result = await window.electronAPI.invoke(
+                        "handle-blender-create-object",
+                        {
+                          objectType: "MONKEY",
+                          location: { x: -2, y: 0, z: 0 },
+                        },
+                      );
+                      console.log("Test monkey created:", result);
+                      setTestResult({
+                        success: result.success,
+                        message: result.success
+                          ? `Created monkey: ${result.objectName}`
+                          : `Error: ${result.error}`,
+                      });
+                    } catch (error) {
+                      console.error("Error creating test monkey:", error);
+                      setTestResult({
+                        success: false,
+                        message: `Error: ${error instanceof Error ? error.message : String(error)}`,
+                      });
+                    }
+                  }}
+                >
+                  Test Monkey
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-4">
+          {/* Test operation status message */}
+          {testResult && (
+            <div
+              className={`mb-4 rounded-md p-3 text-sm ${
+                testResult.success
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              <div className="flex items-center">
+                <div
+                  className={`mr-2 h-2 w-2 rounded-full ${testResult.success ? "bg-green-500" : "bg-red-500"}`}
+                />
+                <span>{testResult.message}</span>
+                <button
+                  className="ml-auto text-xs opacity-70 hover:opacity-100"
+                  onClick={() => setTestResult(null)}
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             {error && (
               <div className="flex justify-start">
