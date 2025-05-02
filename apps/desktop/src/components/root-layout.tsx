@@ -1,3 +1,5 @@
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+
 import { ThemeProvider, useTheme } from "@repo/ui/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 
@@ -11,6 +13,9 @@ export interface RootLayoutProps {
 
 function RootLayoutContent({ children }: RootLayoutProps) {
   const { theme } = useTheme();
+
+  // Initialize global keyboard shortcuts (Cmd+S, Cmd+B for sidebar toggle)
+  useKeyboardShortcuts();
 
   return (
     <div className="bg-background flex h-screen w-full flex-col">

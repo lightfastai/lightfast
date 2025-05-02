@@ -44,18 +44,7 @@ export function TitleBar() {
     return cleanup;
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "b" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        handleToggleSidebar();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleToggleSidebar]);
+  // Keyboard shortcuts have been moved to useKeyboardShortcuts hook
 
   return (
     <div
