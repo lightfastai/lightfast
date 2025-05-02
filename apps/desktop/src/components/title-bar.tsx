@@ -126,11 +126,6 @@ export function TitleBar() {
             className="size-7"
           />
         </div>
-
-        {/* Center - Title */}
-        <div className="text-muted-foreground flex-grow text-center text-xs font-medium">
-          Lightfast
-        </div>
       </div>
     </div>
   );
