@@ -14,26 +14,30 @@ import "./styles.css";
 import { EnvProvider } from "./providers/env-provider";
 
 export default function App() {
+  // This ref needs to be at the top level of the component, not inside useEffect
+  const hasInitializedBlenderListener = React.useRef(false);
+  const initializeListener = useBlenderStore(
+    (state) => state.initializeListener,
+  );
+
   useEffect(() => {
     syncThemeWithLocal();
   }, []);
 
   // Initialize Blender connection status listener
   useEffect(() => {
-    // Use a ref to track if we've done the initialization in this component instance
-    // This helps prevent issues with React.StrictMode double-mounting
-    const hasInitialized = React.useRef(false);
-
-    if (!hasInitialized.current) {
+    // Don't initialize more than once in development due to StrictMode
+    if (!hasInitializedBlenderListener.current) {
       console.log("Initializing Blender status listener from App component");
-      const cleanup = useBlenderStore.getState().initializeListener();
-      hasInitialized.current = true;
+      const cleanup = initializeListener();
+      hasInitializedBlenderListener.current = true;
 
       // Return cleanup function to remove listener when component unmounts
       return () => {
         console.log("Cleaning up Blender status listener");
         cleanup();
-        hasInitialized.current = false;
+        // Don't reset the ref in the cleanup, as that would allow double-initialization
+        // during React's StrictMode unmount/remount cycle
       };
     }
 
