@@ -311,133 +311,6 @@ export default function WorkspacePage() {
   return (
     <RootLayout>
       <div className="bg-background flex h-screen flex-col">
-        {/* Header */}
-        <div className="border-border flex items-center justify-between border-b px-4 py-2">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600" />
-            <span className="text-foreground text-sm font-medium">
-              {workspace?.name}
-            </span>
-          </div>
-
-          {/* Blender connection status */}
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2 w-2 rounded-full ${
-                connectionStatus.status === "connected"
-                  ? "bg-green-500"
-                  : connectionStatus.status === "listening"
-                    ? "animate-pulse bg-yellow-500"
-                    : "bg-red-500"
-              }`}
-            />
-            <span className="text-muted-foreground text-xs">
-              Blender:{" "}
-              {connectionStatus.status === "connected"
-                ? "Connected"
-                : connectionStatus.status === "listening"
-                  ? "Waiting for connection"
-                  : "Disconnected"}
-            </span>
-
-            {/* Add Blender test buttons when connected */}
-            {connectionStatus.status === "connected" && (
-              <div className="ml-4 flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs"
-                  onClick={async () => {
-                    try {
-                      const result = await window.electronAPI.invoke(
-                        "handle-blender-create-object",
-                        { objectType: "CUBE", location: { x: 0, y: 0, z: 0 } },
-                      );
-                      console.log("Test cube created:", result);
-                      setTestResult({
-                        success: result.success,
-                        message: result.success
-                          ? `Created cube: ${result.objectName}`
-                          : `Error: ${result.error}`,
-                      });
-                    } catch (error) {
-                      console.error("Error creating test cube:", error);
-                      setTestResult({
-                        success: false,
-                        message: `Error: ${error instanceof Error ? error.message : String(error)}`,
-                      });
-                    }
-                  }}
-                >
-                  Test Cube
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs"
-                  onClick={async () => {
-                    try {
-                      const result = await window.electronAPI.invoke(
-                        "handle-blender-create-object",
-                        {
-                          objectType: "SPHERE",
-                          location: { x: 2, y: 0, z: 0 },
-                        },
-                      );
-                      console.log("Test sphere created:", result);
-                      setTestResult({
-                        success: result.success,
-                        message: result.success
-                          ? `Created sphere: ${result.objectName}`
-                          : `Error: ${result.error}`,
-                      });
-                    } catch (error) {
-                      console.error("Error creating test sphere:", error);
-                      setTestResult({
-                        success: false,
-                        message: `Error: ${error instanceof Error ? error.message : String(error)}`,
-                      });
-                    }
-                  }}
-                >
-                  Test Sphere
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs"
-                  onClick={async () => {
-                    try {
-                      const result = await window.electronAPI.invoke(
-                        "handle-blender-create-object",
-                        {
-                          objectType: "MONKEY",
-                          location: { x: -2, y: 0, z: 0 },
-                        },
-                      );
-                      console.log("Test monkey created:", result);
-                      setTestResult({
-                        success: result.success,
-                        message: result.success
-                          ? `Created monkey: ${result.objectName}`
-                          : `Error: ${result.error}`,
-                      });
-                    } catch (error) {
-                      console.error("Error creating test monkey:", error);
-                      setTestResult({
-                        success: false,
-                        message: `Error: ${error instanceof Error ? error.message : String(error)}`,
-                      });
-                    }
-                  }}
-                >
-                  Test Monkey
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Main Content Area */}
         <div className="flex flex-1 overflow-hidden">
           {/* Chat Area */}
@@ -532,7 +405,7 @@ export default function WorkspacePage() {
             </div>
 
             {/* Input Area */}
-            <div className="border-border border-t p-4">
+            <div className="border-border p-4">
               <div className="mx-auto max-w-2xl">
                 <form onSubmit={handleSubmit} className="flex gap-2">
                   <Input
