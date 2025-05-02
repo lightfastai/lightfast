@@ -16,7 +16,8 @@ interface BlenderState {
 }
 
 export const useBlenderStore = create<BlenderState>((set, get) => ({
-  connectionStatus: { status: "stopped" }, // Initial state
+  // Default to disconnected instead of stopped to show a better UI indication
+  connectionStatus: { status: "disconnected" },
   _cleanupListener: null,
 
   initializeListener: () => {
@@ -27,21 +28,54 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
     }
 
     console.log("Initializing Blender status listener...");
-    const cleanup = window.blenderConnection.onStatusUpdate((status) => {
-      console.log("Blender Status Update Received:", status);
-      set({ connectionStatus: status });
-    });
+    try {
+      // Check if the blenderConnection API is available in the window object
+      if (!window.blenderConnection) {
+        console.error("BlenderConnection API not available in window object");
+        set({
+          connectionStatus: { status: "error", error: "API not available" },
+        });
+        return () => {};
+      }
 
-    set({ _cleanupListener: cleanup });
-    return cleanup;
+      // Request the current status via IPC - if possible with your main process code
+      // This could be added as a method to the window.blenderConnection API
+
+      // Set up the status listener
+      const cleanup = window.blenderConnection.onStatusUpdate((status) => {
+        console.log("Blender Status Update Received:", status);
+        set({ connectionStatus: status });
+      });
+
+      set({ _cleanupListener: cleanup });
+      return cleanup;
+    } catch (error) {
+      console.error("Error initializing Blender status listener:", error);
+      set({
+        connectionStatus: {
+          status: "error",
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
+      return () => {};
+    }
   },
 
   sendMessage: async (message: object) => {
     try {
+      if (!window.blenderConnection) {
+        throw new Error("BlenderConnection API not available");
+      }
       await window.blenderConnection.sendToBlender(message);
     } catch (error) {
       console.error("Error sending message to Blender via IPC:", error);
-      // Optionally update state to reflect send error
+      // Update state to reflect send error
+      set({
+        connectionStatus: {
+          status: "error",
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
     }
   },
 }));

@@ -11,8 +11,9 @@ import type { EnvClient } from "./env/client-types";
 // Import the validated environment variables
 import { env } from "./env/index";
 import registerListeners from "./helpers/ipc/listeners-register";
-// Import the blender connection module
+// Import the blender connection module and its variables
 import {
+  getBlenderStatus,
   isBlenderConnected,
   sendToBlender,
   startBlenderSocketServer,
@@ -85,6 +86,12 @@ ipcMain.handle("handle-blender-create-object", async (event, args) => {
       errorCode: "EXECUTION_ERROR",
     };
   }
+});
+
+// Add handler for getting Blender status
+ipcMain.handle("get-blender-status", () => {
+  // Return the current Blender connection status using the imported function
+  return getBlenderStatus();
 });
 // --- End IPC Handlers ---
 

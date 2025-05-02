@@ -64,6 +64,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "get-client-env",
       "ping",
       "handle-blender-create-object", // Add the Blender tool channel
+      "get-blender-status", // Add the status check channel
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
@@ -89,6 +90,8 @@ contextBridge.exposeInMainWorld("blenderConnection", {
       ipcRenderer.removeListener(BLENDER_STATUS_CHANNEL, listener);
     };
   },
+  // Add function to get current Blender status
+  getStatus: () => ipcRenderer.invoke("get-blender-status"),
   // Add function to send messages *to* Blender via main process
   sendToBlender: (message: object) =>
     ipcRenderer.invoke("send-to-blender", message),

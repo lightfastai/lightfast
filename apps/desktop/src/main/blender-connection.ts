@@ -27,6 +27,12 @@ export function startBlenderSocketServer(webContents: WebContents) {
 
   if (wss) {
     console.log("Blender WebSocket server already running.");
+    // Send current status to any new renderer that connects
+    if (blenderClient && blenderClient.readyState === WebSocket.OPEN) {
+      sendStatusUpdate({ status: "connected" });
+    } else {
+      sendStatusUpdate({ status: "listening" });
+    }
     return;
   }
   electronWebContents = webContents;
@@ -35,6 +41,9 @@ export function startBlenderSocketServer(webContents: WebContents) {
     console.log(`Creating WebSocket server on port ${BLENDER_PORT}...`);
     wss = new WebSocketServer({ port: BLENDER_PORT });
     console.log("WebSocket server created successfully");
+
+    // Send initial status immediately after server is created
+    sendStatusUpdate({ status: "listening" });
 
     wss.on("listening", () => {
       console.log(
@@ -131,6 +140,22 @@ export function stopBlenderSocketServer() {
 // Function to check if Blender is currently connected
 export function isBlenderConnected(): boolean {
   return blenderClient !== null && blenderClient.readyState === WebSocket.OPEN;
+}
+
+// Function to get the current Blender connection status
+export function getBlenderStatus(): BlenderConnectionStatus {
+  if (blenderClient !== null && blenderClient.readyState === WebSocket.OPEN) {
+    return { status: "connected" };
+  } else if (wss !== null) {
+    return { status: "listening" };
+  } else {
+    return { status: "disconnected" };
+  }
+}
+
+// Function to get the WebSocketServer instance
+export function getWebSocketServer(): WebSocketServer | null {
+  return wss;
 }
 
 // Function to send messages *to* Blender

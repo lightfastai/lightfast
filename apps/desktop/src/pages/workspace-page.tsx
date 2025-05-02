@@ -410,6 +410,7 @@ declare global {
     blenderConnection: {
       onStatusUpdate: (callback: (status: any) => void) => () => void;
       sendToBlender: (message: object) => Promise<any>;
+      getStatus: () => Promise<{ status: string; error?: string }>;
     };
   }
 }
