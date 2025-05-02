@@ -4,7 +4,6 @@ import { ThemeProvider, useTheme } from "@repo/ui/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 
 import { TitleBar } from "./title-bar";
-import { WorkspaceContainer } from "./workspace-container";
 
 export interface RootLayoutProps {
   children: React.ReactNode;
@@ -19,7 +18,9 @@ function RootLayoutContent({ children }: RootLayoutProps) {
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar />
         <SidebarInset>
-          <WorkspaceContainer>{children}</WorkspaceContainer>
+          {/* <WorkspaceContainer> */}
+          {children}
+          {/* </WorkspaceContainer> */}
         </SidebarInset>
       </div>
     </div>

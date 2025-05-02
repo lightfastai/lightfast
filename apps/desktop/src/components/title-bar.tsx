@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { Maximize, Minus, X } from "lucide-react";
+import { Minus, X } from "lucide-react";
 
-import { useSidebar } from "@repo/ui/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@repo/ui/components/ui/sidebar";
 
 // Custom event name for sidebar toggle
 export const SIDEBAR_TOGGLE_EVENT = "sidebar-toggle";
 
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const { toggleSidebar } = useSidebar();
 
   const sendCommand = useCallback((command: string) => {
@@ -58,84 +59,77 @@ export function TitleBar() {
 
   return (
     <div
-      className="bg-background/80 fixed top-0 right-0 left-0 z-50 backdrop-blur-md select-none"
+      className="absolute top-0 right-0 left-0 z-50 bg-transparent select-none"
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="flex h-10 items-center border-b px-2">
-        {/* Left side - App controls */}
-        <div className="flex items-center">
+      <div className="flex h-10 items-center pt-8 pl-8">
+        {/* Left side - macOS style window controls */}
+        <div className="mr-4 flex items-center gap-2">
           <button
-            className="hover:bg-muted mr-2 flex h-8 w-8 items-center justify-center rounded"
-            onClick={handleToggleSidebar}
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand("close")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect
-                x="1"
-                y="3"
-                width="14"
-                height="1.5"
-                rx="0.75"
-                className="fill-current"
-              />
-              <rect
-                x="1"
-                y="7.25"
-                width="14"
-                height="1.5"
-                rx="0.75"
-                className="fill-current"
-              />
-              <rect
-                x="1"
-                y="11.5"
-                width="14"
-                height="1.5"
-                rx="0.75"
-                className="fill-current"
-              />
-            </svg>
+            {isHovering && <X className="h-2 w-2 text-red-800" />}
           </button>
+          <button
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-yellow-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand("minimize")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
+          >
+            {isHovering && <Minus className="h-2 w-2 text-yellow-800" />}
+          </button>
+          <button
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-green-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand(isMaximized ? "unmaximize" : "maximize")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
+          >
+            {isHovering && (
+              <svg
+                className="h-2 w-2 text-green-800"
+                viewBox="0 0 12 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 1.5h6M3 10.5h6M1.5 3v6M10.5 3v6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* Center - App controls and title */}
+        <div className="flex items-center">
+          <SidebarTrigger
+            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+            className="size-7"
+          />
         </div>
 
         {/* Center - Title */}
-        <div className="text-muted-foreground flex-grow text-center text-xs">
+        <div className="text-muted-foreground flex-grow text-center text-xs font-medium">
           Lightfast
-        </div>
-
-        {/* Right side - Window controls */}
-        <div className="flex items-center">
-          <button
-            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded"
-            onClick={() => sendCommand("minimize")}
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          >
-            <Minus className="h-4 w-4" />
-          </button>
-          <button
-            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded"
-            onClick={() => sendCommand(isMaximized ? "unmaximize" : "maximize")}
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          >
-            {isMaximized ? (
-              <Maximize className="h-4 w-4" />
-            ) : (
-              <Maximize className="h-4 w-4" />
-            )}
-          </button>
-          <button
-            className="hover:bg-destructive hover:text-destructive-foreground flex h-8 w-8 items-center justify-center rounded"
-            onClick={() => sendCommand("close")}
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
       </div>
     </div>
