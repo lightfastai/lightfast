@@ -6,6 +6,7 @@ declare const MAIN_WINDOW_VITE_NAME: string;
 
 interface ImportMetaEnv {
   readonly VITE_PUBLIC_LIGHTFAST_API_URL: string;
+  readonly VITE_OPENAI_API_KEY: string;
 }
 
 interface ImportMeta {

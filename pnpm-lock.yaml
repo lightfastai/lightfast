@@ -245,6 +245,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@repo/trpc-client':
         specifier: workspace:*
         version: link:../../packages/trpc-client
