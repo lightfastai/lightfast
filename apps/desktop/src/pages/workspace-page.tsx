@@ -1,5 +1,4 @@
 import { RootLayout } from "@/components/root-layout";
-import { WorkspaceSettings } from "@/components/workspace-settings";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -15,16 +14,15 @@ export default function WorkspacePage() {
 
   return (
     <RootLayout>
-      <div className="flex min-h-screen flex-col p-4">
-        <div className="flex items-center justify-between">
-          <h1 className="flex items-center font-serif text-4xl text-gray-100">
+      <div className="flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="mb-8 text-center">
+          <h1 className="flex items-center justify-center font-serif text-4xl text-gray-100">
             <Sparkles className="mr-3 size-5 text-orange-500" />
             {workspace?.name}
           </h1>
-          <WorkspaceSettings workspaceId={workspaceId} />
         </div>
 
-        <div className="mt-6 w-full max-w-xl">
+        <div className="mb-6 flex w-full max-w-xl flex-col gap-2">
           <Input />
         </div>
       </div>

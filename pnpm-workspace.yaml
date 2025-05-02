@@ -27,8 +27,6 @@ catalogs:
     postcss: 8.5.3
     "@tailwindcss/postcss": ^4.1.4
     "@tailwindcss/typography": ^0.5.16
-  ai:
-    ai: ^3.4.20
 ignoredBuiltDependencies:
   - "@clerk/shared"
   - "@sentry/cli"

@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/health",
   "/api/clerk/webhook(.*)",
   "/api/trpc(.*)", // @important: this is the tRPC route to enable working with the tRPC client from external sources. but im not really sure or understand why.
+  "/api/inngest(.*)",
 ]);
 
 export default clerkMiddleware(

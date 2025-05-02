@@ -30,7 +30,7 @@
     "@fal-ai/client": "^1.2.0",
     "@fal-ai/server-proxy": "^1.1.1",
     "@t3-oss/env-nextjs": "0.12.0",
-    "ai": "catalog:ai",
+    "ai": "^4.3.13",
     "autoevals": "^0.0.103",
     "braintrust": "^0.0.168",
     "voyage-ai-provider": "^1.0.0",
