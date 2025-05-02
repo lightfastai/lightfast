@@ -1,18 +1,17 @@
 import { authRouter } from "./router/app/auth";
 import { healthRouter } from "./router/app/health";
+import { sessionRouter } from "./router/tenant/session";
 import { workspaceRouter } from "./router/tenant/workspace";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
   app: {
     auth: authRouter,
-    // user: appUserRouter,
     health: healthRouter,
   },
   tenant: {
     workspace: workspaceRouter,
-    //   node: nodeRouter,
-    //   edge: edgeRouter,
+    session: sessionRouter,
   },
 });
 

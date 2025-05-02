@@ -34,7 +34,7 @@
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@inngest/agent-kit": "^0.0.3",
+    "@inngest/agent-kit": "^0.7.3",
     "inngest": "^3.35.1",
     "zod": "catalog:"
   }
