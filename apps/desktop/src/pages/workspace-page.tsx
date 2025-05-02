@@ -64,7 +64,11 @@ export default function WorkspacePage() {
       api: `${import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL}/api/chat`,
 
       // Implement client-side tool execution via onToolCall
-      async onToolCall({ toolCall }) {
+      async onToolCall({
+        toolCall,
+      }: {
+        toolCall: { toolName: string; args: any };
+      }) {
         console.log("Client onToolCall received:", toolCall);
 
         if (toolCall.toolName === "createBlenderObject") {

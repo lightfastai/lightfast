@@ -57,6 +57,21 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // If direct removal is needed, ensure proper security checks.
   // --- End Title Bar IPC ---
 
+  // Add invoke method with whitelist
+  invoke: (channel: string, ...args: any[]) => {
+    // Whitelist channels
+    const validChannels = [
+      "get-client-env",
+      "ping",
+      "handle-blender-create-object", // Add the Blender tool channel
+    ];
+    if (validChannels.includes(channel)) {
+      return ipcRenderer.invoke(channel, ...args);
+    }
+    // Return a rejected promise for invalid channels
+    return Promise.reject(new Error(`Invalid channel: ${channel}`));
+  },
+
   // Add more IPC methods as needed
 });
 
