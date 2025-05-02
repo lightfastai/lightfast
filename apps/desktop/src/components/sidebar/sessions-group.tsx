@@ -14,7 +14,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@repo/ui/components/ui/sidebar";
-import { cn } from "@repo/ui/lib/utils";
 
 interface Session {
   id: string;
@@ -160,14 +159,6 @@ export function SessionsGroup({
         <SidebarGroupLabel>
           <span>Chat Sessions</span>
         </SidebarGroupLabel>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={handleNewSession}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
       </div>
 
       <Button
@@ -204,25 +195,6 @@ export function SessionsGroup({
           </div>
         )}
       </SidebarMenu>
-
-      {/* Session navigation indicators - like dots */}
-      {sessions.length > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-1.5">
-          {sessions.map((session, index) => (
-            <button
-              key={session.id}
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-200",
-                index === currentSessionIndex
-                  ? "w-4 bg-orange-500"
-                  : "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5",
-              )}
-              onClick={() => navigateToSession(session.id)}
-              aria-label={`Switch to session: ${session.title}`}
-            />
-          ))}
-        </div>
-      )}
     </SidebarGroup>
   );
 }

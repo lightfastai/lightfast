@@ -26,6 +26,9 @@ export function WorkspaceSwitcher({
   const navigate = useNavigate();
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [transitioning, setTransitioning] = useState(false);
+  const [focusedWorkspaceId, setFocusedWorkspaceId] = useState<string | null>(
+    null,
+  );
 
   // Get the workspaceId from our custom hook as a backup/fallback
   // This handles router context edge cases and falls back to URL extraction if needed
@@ -40,6 +43,8 @@ export function WorkspaceSwitcher({
   // Update the ref when currentWorkspaceId changes
   useEffect(() => {
     currentWorkspaceIdRef.current = currentWorkspaceId;
+    // When the current workspace changes, set it as the focused workspace
+    setFocusedWorkspaceId(currentWorkspaceId);
   }, [currentWorkspaceId]);
 
   // Find current workspace index based on the most up-to-date ID
@@ -187,20 +192,47 @@ export function WorkspaceSwitcher({
 
         {/* Dots for workspaces */}
         <div className="flex items-center gap-1.5">
-          {workspaces.map((workspace) => (
-            <button
-              key={workspace.id}
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-200",
-                workspace.id === currentWorkspaceId
-                  ? "w-4 bg-orange-500"
-                  : "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5",
-              )}
-              onClick={() => navigateToWorkspace(workspace.id)}
-              disabled={transitioning}
-              aria-label={`Switch to workspace: ${workspace.name}`}
-            />
-          ))}
+          {workspaces.map((workspace) => {
+            const isCurrentWorkspace = workspace.id === currentWorkspaceId;
+            const isFocused = workspace.id === focusedWorkspaceId;
+
+            return (
+              <button
+                key={workspace.id}
+                className={cn(
+                  "relative h-1.5 rounded-full transition-all duration-200",
+                  isCurrentWorkspace
+                    ? "w-4 bg-orange-500"
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5",
+                  // Add focus state
+                  isFocused && !isCurrentWorkspace && "bg-muted-foreground/60",
+                )}
+                onClick={() => navigateToWorkspace(workspace.id)}
+                onFocus={() => setFocusedWorkspaceId(workspace.id)}
+                onBlur={() => setFocusedWorkspaceId(currentWorkspaceId)}
+                onMouseEnter={() => setFocusedWorkspaceId(workspace.id)}
+                onMouseLeave={() => setFocusedWorkspaceId(currentWorkspaceId)}
+                disabled={transitioning}
+                aria-label={`Switch to workspace: ${workspace.name}`}
+                // Add tooltip that shows the workspace name on hover
+                title={workspace.name}
+                // Make each dot keyboard focusable
+                tabIndex={0}
+                // Add keyboard handler for hitting Enter to navigate
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigateToWorkspace(workspace.id);
+                  }
+                }}
+              >
+                {/* Add an accessible visual focus indicator */}
+                {isFocused && !isCurrentWorkspace && (
+                  <span className="absolute -inset-0.5 animate-pulse rounded-full bg-orange-500/20" />
+                )}
+              </button>
+            );
+          })}
         </div>
 
         <Button
