@@ -7,12 +7,11 @@ import { trpc } from "@/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useChat } from "ai/react";
-import { PlusCircle, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 // --- Define Blender Tools Schema (for client-side reference if needed, and backend) ---
 const blenderToolSchemas = {
@@ -441,41 +440,6 @@ export default function WorkspacePage() {
 
         {/* Main Content Area */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Sessions Sidebar */}
-          <div className="border-border w-64 flex-shrink-0 border-r">
-            <div className="flex h-full flex-col">
-              <div className="border-border flex items-center justify-between border-b px-4 py-2">
-                <h3 className="text-sm font-medium">Chat Sessions</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleNewSession}
-                >
-                  <PlusCircle className="h-5 w-5" />
-                </Button>
-              </div>
-              <ScrollArea className="flex-1">
-                <div className="space-y-1 p-2">
-                  {sessions.map((session) => (
-                    <Button
-                      key={session.id}
-                      variant={
-                        activeSessionId === session.id ? "secondary" : "ghost"
-                      }
-                      className="w-full justify-start text-sm"
-                      onClick={() => setActiveSessionId(session.id)}
-                    >
-                      <div className="w-full overflow-hidden text-left text-ellipsis whitespace-nowrap">
-                        {session.title}
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
-
           {/* Chat Area */}
           <div className="flex flex-1 flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto p-4">
@@ -590,7 +554,8 @@ export default function WorkspacePage() {
                 </form>
                 <div className="mt-2 text-center">
                   <span className="text-muted-foreground text-xs">
-                    v0 may make mistakes. Please use with discretion.
+                    Lightfast Computer may make mistakes. Please use with
+                    discretion.
                   </span>
                 </div>
               </div>

@@ -1,3 +1,4 @@
+import { useCurrentWorkspaceId } from "@/hooks/use-current-workspace-id";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
 
@@ -24,11 +25,9 @@ export function AppSidebar() {
   );
   const { mutate: createWorkspace } = useCreateWorkspaceMutation();
 
-  // Get the current workspace ID using router's useParams if possible
-  // But have a fallback when not in a route with workspaceId
-  const currentWorkspaceIdFromPath =
-    window.location.pathname.match(/\/workspace\/([^/]+)/)?.[1] || "";
-  const currentWorkspaceId = currentWorkspaceIdFromPath;
+  // Get the current workspace ID using our custom hook
+  // This handles all the router context edge cases for us
+  const currentWorkspaceId = useCurrentWorkspaceId();
 
   // Get sessions for the current workspace
   const { data: sessions = [] } = useQuery(
