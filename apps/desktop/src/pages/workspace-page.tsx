@@ -1,5 +1,6 @@
 // Import the correct types from the ai package
 import type { Message } from "ai";
+import { useEffect, useState } from "react";
 import { RootLayout } from "@/components/root-layout";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
@@ -58,6 +59,23 @@ export default function WorkspacePage() {
   const { data: workspace } = useQuery(
     trpc.tenant.workspace.get.queryOptions({ workspaceId }),
   );
+
+  // State for Blender connection status
+  const [blenderStatus, setBlenderStatus] = useState<string>("disconnected");
+
+  // Listen for Blender connection status updates
+  useEffect(() => {
+    // Set up listener for Blender connection status
+    const cleanup = window.blenderConnection?.onStatusUpdate((status) => {
+      setBlenderStatus(status.status);
+      console.log("Blender connection status:", status);
+    });
+
+    // Clean up listener when component unmounts
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
     useChat({
@@ -175,17 +193,44 @@ export default function WorkspacePage() {
       }
 
       if (state === "error" || state === "failed") {
+        // Check for specific error codes
+        let errorMessage = String(part.error);
+        let errorClass = "bg-destructive text-destructive-foreground";
+
+        // Convert JSON string error to object if needed
+        let errorObj = part.error;
+        if (typeof part.error === "string") {
+          try {
+            errorObj = JSON.parse(part.error);
+          } catch (e) {
+            // Not JSON, leave as string
+          }
+        }
+
+        // Check for specific error codes
+        if (
+          errorObj &&
+          typeof errorObj === "object" &&
+          "errorCode" in errorObj
+        ) {
+          if (errorObj.errorCode === "BLENDER_NOT_CONNECTED") {
+            errorClass = "bg-amber-600 text-white";
+            errorMessage =
+              "⚠️ Blender is not connected. Please start Blender and connect it to the app.";
+          }
+        }
+
         return (
           <div
             key={`${messageId}-${toolCallId}-error`}
             className="mt-2 mb-2 flex w-full justify-start"
           >
             <div
-              className={`bg-destructive text-destructive-foreground max-w-[80%] rounded-2xl border px-4 py-2.5 text-sm`}
+              className={`${errorClass} max-w-[80%] rounded-2xl border px-4 py-2.5 text-sm`}
             >
               <span className="font-semibold">Tool Error ({toolName}):</span>
               <pre className="mt-1 text-xs break-all whitespace-pre-wrap">
-                {String(part.error)}
+                {errorMessage}
               </pre>
             </div>
           </div>
@@ -230,6 +275,27 @@ export default function WorkspacePage() {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600" />
             <span className="text-foreground text-sm font-medium">
               {workspace?.name}
+            </span>
+          </div>
+
+          {/* Blender connection status */}
+          <div className="flex items-center gap-2">
+            <div
+              className={`h-2 w-2 rounded-full ${
+                blenderStatus === "connected"
+                  ? "bg-green-500"
+                  : blenderStatus === "listening"
+                    ? "animate-pulse bg-yellow-500"
+                    : "bg-red-500"
+              }`}
+            />
+            <span className="text-muted-foreground text-xs">
+              Blender:{" "}
+              {blenderStatus === "connected"
+                ? "Connected"
+                : blenderStatus === "listening"
+                  ? "Waiting for connection"
+                  : "Disconnected"}
             </span>
           </div>
         </div>

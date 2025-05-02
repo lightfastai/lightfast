@@ -51,6 +51,20 @@ ipcMain.handle("handle-blender-create-object", async (event, args) => {
       },
     };
 
+    // Import the function to check if Blender is connected
+    const { isBlenderConnected } = require("./main/blender-connection");
+
+    // Check if Blender is connected before attempting to send the command
+    if (!isBlenderConnected()) {
+      console.warn("Main: Blender is not connected. Cannot execute command.");
+      return {
+        success: false,
+        error:
+          "Blender is not connected. Please check your Blender connection.",
+        errorCode: "BLENDER_NOT_CONNECTED",
+      };
+    }
+
     // Send to Blender via WebSocket
     sendToBlender(command);
 
@@ -66,6 +80,7 @@ ipcMain.handle("handle-blender-create-object", async (event, args) => {
     return {
       success: false,
       error: `Failed to create Blender object: ${error.message}`,
+      errorCode: "EXECUTION_ERROR",
     };
   }
 });

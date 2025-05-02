@@ -113,11 +113,16 @@ export function stopBlenderSocketServer() {
   }
 }
 
+// Function to check if Blender is currently connected
+export function isBlenderConnected(): boolean {
+  return blenderClient !== null && blenderClient.readyState === WebSocket.OPEN;
+}
+
 // Function to send messages *to* Blender
 export function sendToBlender(message: object) {
-  if (blenderClient && blenderClient.readyState === WebSocket.OPEN) {
+  if (isBlenderConnected()) {
     try {
-      blenderClient.send(JSON.stringify(message));
+      blenderClient!.send(JSON.stringify(message));
       console.log("Sent to Blender:", message);
     } catch (error) {
       console.error("Failed to send message to Blender:", error);
