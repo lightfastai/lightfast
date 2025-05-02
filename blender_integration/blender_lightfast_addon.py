@@ -364,12 +364,26 @@ def stop_socket_client():
     if socket_connection is not None:
         try:
             if connected:
-                # Send close frame
+                # Send a proper disconnect message before closing
+                disconnect_message = {
+                    "type": "disconnect",
+                    "client": "blender",
+                    "message": "Disconnecting"
+                }
+                send_message(socket_connection, disconnect_message)
+                
+                # Small delay to allow the message to be sent
+                time.sleep(0.2)
+                
+                # Send close frame with normal closure code
                 close_frame = bytearray([0x88, 0x02, 0x03, 0xE8])  # Close frame with code 1000 (normal closure)
                 socket_connection.sendall(close_frame)
+                
+                # Another small delay before closing the socket
+                time.sleep(0.1)
             socket_connection.close()
-        except:
-            pass
+        except Exception as e:
+            log(f"Error during disconnection: {e}")
         socket_connection = None
     
     connected = False
