@@ -231,7 +231,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar variant="inset" className="p-0">
-      <SidebarHeader className="border-b pt-16">
+      <SidebarHeader className="mt-16 border-t border-b">
         <ConnectionIndicators />
       </SidebarHeader>
       <SidebarContent

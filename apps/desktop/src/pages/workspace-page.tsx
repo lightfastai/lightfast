@@ -2,6 +2,7 @@
 import type { Message } from "ai";
 import { useEffect, useState } from "react";
 import { RootLayout } from "@/components/root-layout";
+import { useActiveSessionId } from "@/hooks/use-active-session-id";
 import { useBlenderStore } from "@/stores/blender-store";
 import { trpc } from "@/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -65,7 +66,7 @@ export default function WorkspacePage() {
   );
 
   // Session management
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useActiveSessionId();
 
   // Get all sessions for this workspace
   const { data: sessions = [], refetch: refetchSessions } = useQuery(

@@ -5,11 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useCurrentWorkspaceId } from "./use-current-workspace-id";
 
 /**
- * Custom hook to get the current active session ID
+ * Custom hook to get the current active session ID and a setter function
  *
- * @returns The active session ID or null if none is found
+ * @returns [activeSessionId, setActiveSessionId]
  */
-export function useActiveSessionId(): string | null {
+export function useActiveSessionId(): [string | null, (id: string) => void] {
   const currentWorkspaceId = useCurrentWorkspaceId();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
@@ -27,5 +27,20 @@ export function useActiveSessionId(): string | null {
     }
   }, [sessions, activeSessionId]);
 
-  return activeSessionId;
+  // Listen for session selection events
+  useEffect(() => {
+    const handleSessionSelected = (event: any) => {
+      if (event.detail && event.detail.sessionId) {
+        setActiveSessionId(event.detail.sessionId);
+      }
+    };
+
+    window.addEventListener("session-selected", handleSessionSelected);
+
+    return () => {
+      window.removeEventListener("session-selected", handleSessionSelected);
+    };
+  }, []);
+
+  return [activeSessionId, setActiveSessionId];
 }

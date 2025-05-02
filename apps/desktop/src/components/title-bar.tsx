@@ -53,7 +53,7 @@ export function TitleBar() {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="flex h-10 items-center pt-8 pl-8">
+      <div className="flex h-10 items-center pt-8 pl-4">
         {/* Left side - macOS style window controls */}
         <div className="mr-4 flex items-center gap-2">
           <button

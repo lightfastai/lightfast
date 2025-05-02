@@ -36,7 +36,7 @@ export function SessionsGroup({
 }: SessionsGroupProps) {
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
-  const activeSessionId = useActiveSessionId();
+  const [activeSessionId, setActiveSessionId] = useActiveSessionId();
 
   // Touch/swipe navigation state
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -69,7 +69,7 @@ export function SessionsGroup({
           });
 
           // Close the sidebar
-          toggleSidebar();
+          // toggleSidebar();
         }
       },
     }),
@@ -96,7 +96,7 @@ export function SessionsGroup({
     setTimeout(() => {
       // In a real implementation, you'd navigate to the specific session
       // For now, we'll just toggle the sidebar
-      toggleSidebar();
+      // toggleSidebar();
 
       // Reset transition after navigation
       setTimeout(() => {
@@ -159,7 +159,7 @@ export function SessionsGroup({
   };
 
   return (
-    <SidebarGroup className="p-4">
+    <SidebarGroup>
       <div className="flex items-center justify-between">
         <SidebarGroupLabel>
           <span>Chat Sessions</span>
@@ -195,7 +195,13 @@ export function SessionsGroup({
               <Link
                 to="/workspace/$workspaceId"
                 params={{ workspaceId }}
-                onClick={() => toggleSidebar()}
+                onClick={() => {
+                  // Update active session ID
+                  setActiveSessionId(session.id);
+
+                  // Close the sidebar
+                  // toggleSidebar();
+                }}
                 className={cn(
                   "flex items-center gap-2",
                   session.id === activeSessionId && "text-orange-500",

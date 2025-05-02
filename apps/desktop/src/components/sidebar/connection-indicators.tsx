@@ -10,7 +10,7 @@ import { BlenderStatusIndicator } from "../connection-indicators/blender-status-
 
 export function ConnectionIndicators() {
   return (
-    <>
+    <div className="flex flex-col justify-between">
       <SidebarGroupLabel>
         <span>Connections</span>
       </SidebarGroupLabel>
@@ -26,6 +26,6 @@ export function ConnectionIndicators() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-    </>
+    </div>
   );
 }
