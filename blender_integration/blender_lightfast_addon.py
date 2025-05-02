@@ -34,6 +34,9 @@ max_reconnect_attempts = 5
 reconnect_delay = 2  # seconds
 addon_enabled = False
 
+# Add a global variable to track active create operations
+_active_create_timer = None
+
 def log(message):
     """Print a log message to the console"""
     print(f"[Lightfast] {message}")
@@ -390,15 +393,27 @@ def stop_socket_client():
 
 def handle_create_object(params):
     """Handle the create_object command"""
+    global _active_create_timer
+    
     try:
         # Extract parameters
         obj_type = params.get("type", "CUBE").upper()
         name = params.get("name", None)
         location = params.get("location", {"x": 0, "y": 0, "z": 0})
         
+        # Kill all timers first to be absolutely sure we don't get repeats
+        kill_all_timers()
+            
         # Create the object in Blender (must be executed in the main thread)
         def create_object_in_blender():
+            global _active_create_timer
+            
             try:
+                log(f"Creating object: {obj_type}")
+                
+                # Clear the timer reference immediately to prevent any chance of repeats
+                _active_create_timer = None
+                
                 # Switch to object mode if in edit mode
                 if bpy.context.mode != 'OBJECT':
                     bpy.ops.object.mode_set(mode='OBJECT')
@@ -446,7 +461,6 @@ def handle_create_object(params):
                     send_message(socket_connection, response)
                 
                 log(f"Created {obj_type} at ({location.get('x', 0)}, {location.get('y', 0)}, {location.get('z', 0)})")
-                return True
             except Exception as e:
                 log(f"Error creating object: {str(e)}")
                 traceback.print_exc()
@@ -459,10 +473,14 @@ def handle_create_object(params):
                         "error": str(e)
                     }
                     send_message(socket_connection, response)
-                return False
+            
+            # Absolutely make sure this doesn't repeat
+            return None
         
-        # Execute in the main Blender thread
-        bpy.app.timers.register(create_object_in_blender, first_interval=0.1)
+        # Execute in the main Blender thread with one-shot timer
+        _active_create_timer = create_object_in_blender
+        bpy.app.timers.register(create_object_in_blender, first_interval=0.1, persistent=False)
+        log(f"Registered one-time timer to create {obj_type}")
         
     except Exception as e:
         log(f"Error handling create_object: {str(e)}")
@@ -533,6 +551,11 @@ class LIGHTFAST_PT_panel(bpy.types.Panel):
         else:
             row.operator("lightfast.connect", text="Connect", icon='URL')
         
+        # Emergency Stop Button
+        row = layout.row()
+        row.alert = True  # Make the button red
+        row.operator("lightfast.emergency_stop", text="EMERGENCY STOP", icon='ERROR')
+        
         # Settings
         box = layout.box()
         box.label(text="Connection Settings:")
@@ -590,6 +613,11 @@ class LIGHTFAST_OT_disconnect(bpy.types.Operator):
     def execute(self, context):
         global addon_enabled
         addon_enabled = False
+        
+        # Kill all timers first
+        kill_all_timers()
+        
+        # Then disconnect
         stop_socket_client()
         self.report({'INFO'}, "Disconnected from Lightfast")
         return {'FINISHED'}
@@ -609,6 +637,42 @@ class LIGHTFAST_OT_test_create_object(bpy.types.Operator):
         self.report({'INFO'}, "Test cube created")
         return {'FINISHED'}
 
+# Add emergency stop functions to clear all timers
+def kill_all_timers():
+    """Emergency function to kill all Blender timers"""
+    global _active_create_timer
+    
+    log("EMERGENCY: Killing all Blender timers!")
+    
+    # Clear our tracked timer
+    _active_create_timer = None
+    
+    # Clear all registered timers in Blender
+    timers_to_clear = []
+    for timer in bpy.app.timers:
+        timers_to_clear.append(timer)
+    
+    for timer in timers_to_clear:
+        try:
+            bpy.app.timers.unregister(timer)
+            log(f"Unregistered timer: {timer.__name__ if hasattr(timer, '__name__') else 'unnamed'}")
+        except Exception as e:
+            log(f"Error while unregistering timer: {e}")
+    
+    log(f"Cleared {len(timers_to_clear)} timers")
+    return None  # Don't repeat this timer
+
+# Add classes for emergency control
+class LIGHTFAST_OT_emergency_stop(bpy.types.Operator):
+    bl_idname = "lightfast.emergency_stop"
+    bl_label = "EMERGENCY STOP"
+    bl_description = "Stop all timers and ongoing operations"
+    
+    def execute(self, context):
+        kill_all_timers()
+        self.report({'INFO'}, "Emergency stop executed: All timers killed")
+        return {'FINISHED'}
+
 # ---------------------- Registration ----------------------
 
 classes = (
@@ -617,6 +681,7 @@ classes = (
     LIGHTFAST_OT_connect,
     LIGHTFAST_OT_disconnect,
     LIGHTFAST_OT_test_create_object,
+    LIGHTFAST_OT_emergency_stop,
 )
 
 def register():
@@ -641,6 +706,12 @@ def register():
     log("Addon registered")
 
 def unregister():
+    # Kill all timers first
+    try:
+        kill_all_timers()
+    except:
+        pass
+        
     # Stop socket client
     global addon_enabled
     addon_enabled = False
