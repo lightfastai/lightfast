@@ -121,15 +121,22 @@ export function SessionsGroup({
 
   // Handle touch events for swipe
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Stop propagation to prevent triggering parent's touch handlers
+    e.stopPropagation();
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    // Stop propagation to prevent triggering parent's touch handlers
+    e.stopPropagation();
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    // Stop propagation to prevent triggering parent's touch handlers
+    e.stopPropagation();
+
     if (!touchStart || !touchEnd) return;
 
     // Minimum swipe distance - 50px
@@ -152,12 +159,7 @@ export function SessionsGroup({
   };
 
   return (
-    <SidebarGroup
-      className="p-4"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
+    <SidebarGroup className="p-4">
       <div className="flex items-center justify-between">
         <SidebarGroupLabel>
           <span>Chat Sessions</span>
@@ -175,7 +177,12 @@ export function SessionsGroup({
         <span>New Session</span>
       </Button>
 
-      <SidebarMenu className="mt-4">
+      <SidebarMenu
+        className="mt-4"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {sessions.map((session: Session) => (
           <SidebarMenuItem key={session.id}>
             <SidebarMenuButton
