@@ -122,6 +122,9 @@ export default function WorkspacePage() {
     if (part.type === "tool-invocation") {
       const { toolCallId, toolName, args, state } = part;
 
+      // Log the actual state for debugging
+      console.log(`Tool part state: ${state}`, part);
+
       // Ensure args is stringifiable before proceeding
       let argsString = "[Non-stringifiable args]";
       try {
@@ -130,7 +133,8 @@ export default function WorkspacePage() {
         console.error("Could not stringify tool args:", args, e);
       }
 
-      if (state === "call") {
+      // Handle all possible tool states
+      if (state === "call" || state === "calling") {
         return (
           <div
             key={`${messageId}-${toolCallId}-call`}
@@ -141,9 +145,8 @@ export default function WorkspacePage() {
         );
       }
 
-      if (state === "result") {
+      if (state === "result" || state === "success") {
         // Attempt to parse the result string for display
-        // Access result directly from part
         let resultDisplay = part.result;
         try {
           if (typeof resultDisplay === "string") {
@@ -171,7 +174,7 @@ export default function WorkspacePage() {
         );
       }
 
-      if (state === "error") {
+      if (state === "error" || state === "failed") {
         return (
           <div
             key={`${messageId}-${toolCallId}-error`}
@@ -189,11 +192,14 @@ export default function WorkspacePage() {
         );
       }
 
-      // Handle unexpected state
+      // Handle any other state
       return (
-        <span key={`${messageId}-${toolCallId}-unknown`}>
-          Unknown tool state
-        </span>
+        <div
+          key={`${messageId}-${toolCallId}-unknown`}
+          className="text-muted-foreground w-full py-2 text-center text-xs italic"
+        >
+          Tool {toolName} is in state: {state}
+        </div>
       );
     }
 
