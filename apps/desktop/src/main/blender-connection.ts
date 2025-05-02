@@ -23,6 +23,8 @@ function sendStatusUpdate(status: BlenderConnectionStatus) {
 }
 
 export function startBlenderSocketServer(webContents: WebContents) {
+  console.log("🚀 Attempting to start Blender WebSocket server...");
+
   if (wss) {
     console.log("Blender WebSocket server already running.");
     return;
@@ -30,15 +32,19 @@ export function startBlenderSocketServer(webContents: WebContents) {
   electronWebContents = webContents;
 
   try {
+    console.log(`Creating WebSocket server on port ${BLENDER_PORT}...`);
     wss = new WebSocketServer({ port: BLENDER_PORT });
+    console.log("WebSocket server created successfully");
 
     wss.on("listening", () => {
-      console.log(`Blender WebSocket server listening on port ${BLENDER_PORT}`);
+      console.log(
+        `✅ Blender WebSocket server listening on port ${BLENDER_PORT}`,
+      );
       sendStatusUpdate({ status: "listening" });
     });
 
     wss.on("connection", (ws: WebSocket) => {
-      console.log("Blender client connected.");
+      console.log("🔌 Blender client connected.");
 
       // For now, assume only one Blender client
       if (blenderClient) {
@@ -77,7 +83,15 @@ export function startBlenderSocketServer(webContents: WebContents) {
     });
 
     wss.on("error", (error: Error) => {
-      console.error("Blender WebSocket server error:", error);
+      console.error("❌ Blender WebSocket server error:", error);
+      if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
+        console.error(
+          `Port ${BLENDER_PORT} is already in use. Try killing any process using this port.`,
+        );
+        console.error(
+          `You can use 'lsof -i :${BLENDER_PORT}' to find processes using this port.`,
+        );
+      }
       const errorMessage =
         (error as NodeJS.ErrnoException).code === "EADDRINUSE"
           ? `Port ${BLENDER_PORT} already in use.`
@@ -86,7 +100,8 @@ export function startBlenderSocketServer(webContents: WebContents) {
       wss = null; // Reset wss if server fails
     });
   } catch (error) {
-    console.error("Failed to start Blender WebSocket server:", error);
+    console.error("❌ Failed to start Blender WebSocket server:", error);
+    console.error(`Stack trace: ${(error as Error).stack}`);
     sendStatusUpdate({ status: "error", error: (error as Error).message });
     wss = null;
   }

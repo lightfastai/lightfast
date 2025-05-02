@@ -38,6 +38,12 @@ def log(message):
     """Print a log message to the console"""
     print(f"[Lightfast] {message}")
 
+def log_error(message, include_traceback=False):
+    """Print an error message with optional traceback"""
+    print(f"[Lightfast ERROR] {message}")
+    if include_traceback:
+        traceback.print_exc()
+
 # ---------------------- Basic WebSocket Implementation ----------------------
 
 def create_websocket_request(host, port):
@@ -61,14 +67,22 @@ def create_websocket_request(host, port):
 def parse_websocket_response(response):
     """Parse the WebSocket handshake response"""
     try:
+        # Log the response for debugging
+        response_str = response.decode('utf-8', errors='replace')
+        log(f"Raw handshake response:\n{response_str}")
+        
         # Check if the response contains the WebSocket acceptance
         if b"HTTP/1.1 101" in response and b"Upgrade: websocket" in response:
+            log("WebSocket handshake response is valid")
             return True
         else:
-            log(f"Invalid WebSocket response: {response}")
+            log_error("Invalid WebSocket response - missing expected headers")
+            if b"HTTP/1.1" in response:
+                status_line = response.split(b"\r\n")[0].decode('utf-8', errors='replace')
+                log_error(f"Status line: {status_line}")
             return False
     except Exception as e:
-        log(f"Error parsing WebSocket response: {e}")
+        log_error(f"Error parsing WebSocket response: {e}", True)
         return False
 
 def encode_websocket_frame(data):
@@ -272,21 +286,42 @@ def start_socket_client():
         log(f"Connecting to {host}:{port}...")
         
         # Create socket
+        log(f"Creating socket...")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)  # 5-second timeout for operations
         
         # Connect to server
-        sock.connect((host, port))
+        log(f"Attempting to connect to {host}:{port}...")
+        try:
+            sock.connect((host, port))
+            log("TCP connection established successfully")
+        except socket.error as e:
+            log_error(f"Failed to establish TCP connection: {e}", True)
+            return False
         
         # Send WebSocket handshake
-        sock.sendall(create_websocket_request(host, port))
+        log("Sending WebSocket handshake request...")
+        handshake_request = create_websocket_request(host, port)
+        sock.sendall(handshake_request)
         
         # Wait for handshake response
-        response = sock.recv(4096)
+        log("Waiting for handshake response...")
+        try:
+            response = sock.recv(4096)
+            log(f"Received {len(response)} bytes in handshake response")
+        except socket.timeout:
+            log_error("Timeout waiting for handshake response", True)
+            sock.close()
+            return False
+        except Exception as e:
+            log_error(f"Error receiving handshake response: {e}", True)
+            sock.close()
+            return False
         
         # Parse handshake response
         if not parse_websocket_response(response):
-            log("WebSocket handshake failed")
+            log_error("WebSocket handshake failed - invalid response", True)
+            log_error(f"Response (first 200 bytes): {response[:200]}")
             sock.close()
             return False
         
@@ -295,24 +330,30 @@ def start_socket_client():
         connected = True
         
         # Create listener thread
+        log("Starting listener thread...")
         socket_thread = threading.Thread(target=socket_listener_thread, args=(sock,))
         socket_thread.daemon = True
         socket_thread.start()
         
         # Send initial handshake message
-        send_message(sock, {
+        log("Sending initial handshake message...")
+        handshake_message = {
             "type": "handshake",
             "client": "blender",
             "version": bl_info["version"],
             "blender_version": bpy.app.version
-        })
+        }
+        success = send_message(sock, handshake_message)
+        if not success:
+            log_error("Failed to send initial handshake message", True)
+            stop_socket_client()
+            return False
         
-        log("Connected to Lightfast")
+        log("Connected to Lightfast successfully")
         return True
     
     except Exception as e:
-        log(f"Connection error: {e}")
-        traceback.print_exc()
+        log_error(f"Connection error: {e}", True)
         connected = False
         return False
 
@@ -499,6 +540,31 @@ class LIGHTFAST_OT_connect(bpy.types.Operator):
     def execute(self, context):
         global addon_enabled
         addon_enabled = True
+        
+        # Test if server is running before attempting connection
+        try:
+            host = bpy.context.preferences.addons[__name__].preferences.host
+            port = bpy.context.preferences.addons[__name__].preferences.port
+            
+            # Create a test socket to see if the server is listening
+            test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_sock.settimeout(2)
+            
+            log(f"Testing if Lightfast server is running at {host}:{port}...")
+            result = test_sock.connect_ex((host, port))
+            test_sock.close()
+            
+            if result != 0:
+                self.report({'ERROR'}, f"Lightfast server not found at {host}:{port}. Is the Lightfast desktop app running?")
+                log_error(f"Server test failed with code {result}. No server is listening at {host}:{port}")
+                return {'CANCELLED'}
+                
+            log(f"Server found at {host}:{port}")
+        except Exception as e:
+            self.report({'ERROR'}, f"Error checking server: {str(e)}")
+            log_error(f"Error testing server connection: {e}", True)
+            return {'CANCELLED'}
+        
         if start_socket_client():
             self.report({'INFO'}, "Connected to Lightfast")
         else:

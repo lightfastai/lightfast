@@ -11,7 +11,12 @@ import type { EnvClient } from "./env/client-types";
 // Import the validated environment variables
 import { env } from "./env/index";
 import registerListeners from "./helpers/ipc/listeners-register";
-import { sendToBlender } from "./main/blender-connection";
+// Import the blender connection module
+import {
+  isBlenderConnected,
+  sendToBlender,
+  startBlenderSocketServer,
+} from "./main/blender-connection";
 
 // Example usage (if you had defined variables in env.ts):
 // console.log("API Key:", env.API_KEY);
@@ -50,9 +55,6 @@ ipcMain.handle("handle-blender-create-object", async (event, args) => {
           `New${objectType.charAt(0)}${objectType.slice(1).toLowerCase()}`,
       },
     };
-
-    // Import the function to check if Blender is connected
-    const { isBlenderConnected } = require("./main/blender-connection");
 
     // Check if Blender is connected before attempting to send the command
     if (!isBlenderConnected()) {
@@ -102,6 +104,10 @@ function createWindow() {
     },
   });
   registerListeners(mainWindow);
+
+  // Initialize Blender WebSocket server
+  startBlenderSocketServer(mainWindow.webContents);
+  console.log("Blender WebSocket server initialized");
 
   ipcMain.on("minimize-window", () => {
     mainWindow?.minimize();
