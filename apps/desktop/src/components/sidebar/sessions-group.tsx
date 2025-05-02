@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useActiveSessionId } from "@/hooks/use-active-session-id";
 import { trpc } from "@/trpc";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -14,6 +15,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@repo/ui/components/ui/sidebar";
+import { cn } from "@repo/ui/lib/utils";
 
 interface Session {
   id: string;
@@ -34,6 +36,7 @@ export function SessionsGroup({
 }: SessionsGroupProps) {
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
+  const activeSessionId = useActiveSessionId();
 
   // Touch/swipe navigation state
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -175,14 +178,26 @@ export function SessionsGroup({
       <SidebarMenu className="mt-4">
         {sessions.map((session: Session) => (
           <SidebarMenuItem key={session.id}>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton
+              asChild
+              className={cn(
+                session.id === activeSessionId &&
+                  "relative bg-orange-500/10 font-medium",
+              )}
+            >
               <Link
                 to="/workspace/$workspaceId"
                 params={{ workspaceId }}
                 onClick={() => toggleSidebar()}
-                className="flex items-center gap-2"
+                className={cn(
+                  "flex items-center gap-2",
+                  session.id === activeSessionId && "text-orange-500",
+                )}
                 preload="intent"
               >
+                {session.id === activeSessionId && (
+                  <span className="absolute top-0 bottom-0 left-0 w-0.5 bg-orange-500" />
+                )}
                 <MessageSquare className="h-4 w-4" />
                 <span>{session.title}</span>
               </Link>
