@@ -1,17 +1,18 @@
 // Import the correct types from the ai package
 import type { Message } from "ai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RootLayout } from "@/components/root-layout";
 import { useBlenderStore } from "@/stores/blender-store";
 import { trpc } from "@/trpc";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useChat } from "ai/react";
-import { Send } from "lucide-react";
+import { PlusCircle, Send } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 // --- Define Blender Tools Schema (for client-side reference if needed, and backend) ---
 const blenderToolSchemas = {
@@ -53,28 +54,77 @@ interface ToolInvocationPart {
   error?: string;
 }
 
-type DisplayMessagePart = TextPart | ToolInvocationPart;
-
 export default function WorkspacePage() {
-  const { workspaceId } = useParams({ from: "/workspace/$workspaceId" });
+  const { workspaceId } = useParams({
+    from: "/workspace/$workspaceId",
+  });
+
+  console.log("Current workspaceId:", workspaceId); // Add logging for debugging
+
   const { data: workspace } = useQuery(
     trpc.tenant.workspace.get.queryOptions({ workspaceId }),
   );
 
+  // Session management
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  // Get all sessions for this workspace
+  const { data: sessions = [], refetch: refetchSessions } = useQuery(
+    trpc.tenant.session.list.queryOptions({
+      workspaceId,
+    }),
+  );
+
+  // Get the active session data (messages)
+  const { data: activeSession, refetch: refetchActiveSession } = useQuery(
+    trpc.tenant.session.get.queryOptions({
+      sessionId: (activeSessionId as string) ?? "",
+    }),
+  );
+
+  // Create session mutation
+  const createSession = useMutation(
+    trpc.tenant.session.create.mutationOptions({
+      onSuccess: (data) => {
+        if (data) {
+          refetchSessions();
+          setActiveSessionId(data.id);
+        }
+      },
+    }),
+  );
+
+  // Set the first session as active if none is selected and sessions exist
+  useEffect(() => {
+    if (!activeSessionId && sessions.length > 0) {
+      setActiveSessionId(sessions[0].id);
+    }
+  }, [sessions, activeSessionId]);
+
   // Get connection status from the shared Blender store
   const connectionStatus = useBlenderStore((state) => state.connectionStatus);
+
   // Local state for test operation results
   const [testResult, setTestResult] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
 
-  // We don't need to listen for Blender connection status updates here anymore
-  // since the store already handles that
+  const handleNewSession = () => {
+    createSession.mutate({
+      workspaceId,
+    });
+  };
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
     useChat({
       api: `${import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL}/api/chat`,
+      id: activeSessionId || undefined,
+      initialMessages: (activeSession?.messages as Message[]) || [],
+      body: {
+        sessionId: activeSessionId,
+        workspaceId,
+      },
 
       // Implement client-side tool execution via onToolCall
       async onToolCall({
@@ -118,8 +168,6 @@ export default function WorkspacePage() {
           error: `Tool '${toolCall.toolName}' not implemented on client.`,
         });
       },
-
-      // Removed onToolCallFinished and experimental_onToolCall as they seem invalid/redundant
     });
 
   if (error) {
@@ -391,119 +439,161 @@ export default function WorkspacePage() {
           </div>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {/* Test operation status message */}
-          {testResult && (
-            <div
-              className={`mb-4 rounded-md p-3 text-sm ${
-                testResult.success
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              <div className="flex items-center">
-                <div
-                  className={`mr-2 h-2 w-2 rounded-full ${testResult.success ? "bg-green-500" : "bg-red-500"}`}
-                />
-                <span>{testResult.message}</span>
-                <button
-                  className="ml-auto text-xs opacity-70 hover:opacity-100"
-                  onClick={() => setTestResult(null)}
+        {/* Main Content Area */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sessions Sidebar */}
+          <div className="border-border w-64 flex-shrink-0 border-r">
+            <div className="flex h-full flex-col">
+              <div className="border-border flex items-center justify-between border-b px-4 py-2">
+                <h3 className="text-sm font-medium">Chat Sessions</h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleNewSession}
                 >
-                  Dismiss
-                </button>
+                  <PlusCircle className="h-5 w-5" />
+                </Button>
               </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {error && (
-              <div className="flex justify-start">
-                <div className="bg-destructive text-destructive-foreground max-w-[80%] rounded-2xl px-4 py-2.5">
-                  Error: {error.message}
+              <ScrollArea className="flex-1">
+                <div className="space-y-1 p-2">
+                  {sessions.map((session) => (
+                    <Button
+                      key={session.id}
+                      variant={
+                        activeSessionId === session.id ? "secondary" : "ghost"
+                      }
+                      className="w-full justify-start text-sm"
+                      onClick={() => setActiveSessionId(session.id)}
+                    >
+                      <div className="w-full overflow-hidden text-left text-ellipsis whitespace-nowrap">
+                        {session.title}
+                      </div>
+                    </Button>
+                  ))}
                 </div>
-              </div>
-            )}
-            {(messages as Message[]).map((message) => {
-              // Display content based on message role and parts
-              return (
-                <div key={message.id}>
-                  {/* Collect all visible text parts */}
-                  {Array.isArray(message.parts) && (
-                    <div>
-                      {/* Text content (if any) */}
-                      {message.parts.some((part) => part.type === "text") && (
-                        <div
-                          className={`mb-2 flex w-full ${
-                            message.role === "user"
-                              ? "justify-end"
-                              : "justify-start"
-                          }`}
-                        >
-                          <div
-                            className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                              message.role === "user"
-                                ? "text-primary-foreground bg-orange-500"
-                                : "bg-muted text-foreground"
-                            }`}
-                          >
-                            {/* Combine all text parts */}
-                            {message.parts
-                              .filter((part) => part.type === "text")
-                              .map((part: any, idx) => (
-                                <span key={idx}>{part.text}</span>
-                              ))}
-                          </div>
+              </ScrollArea>
+            </div>
+          </div>
+
+          {/* Chat Area */}
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* Test operation status message */}
+              {testResult && (
+                <div
+                  className={`mb-4 rounded-md p-3 text-sm ${
+                    testResult.success
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div
+                      className={`mr-2 h-2 w-2 rounded-full ${testResult.success ? "bg-green-500" : "bg-red-500"}`}
+                    />
+                    <span>{testResult.message}</span>
+                    <button
+                      className="ml-auto text-xs opacity-70 hover:opacity-100"
+                      onClick={() => setTestResult(null)}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {error && (
+                  <div className="flex justify-start">
+                    <div className="bg-destructive text-destructive-foreground max-w-[80%] rounded-2xl px-4 py-2.5">
+                      Error: {error.message}
+                    </div>
+                  </div>
+                )}
+                {(messages as Message[]).map((message) => {
+                  // Display content based on message role and parts
+                  return (
+                    <div key={message.id}>
+                      {/* Collect all visible text parts */}
+                      {Array.isArray(message.parts) && (
+                        <div>
+                          {/* Text content (if any) */}
+                          {message.parts.some(
+                            (part) => part.type === "text",
+                          ) && (
+                            <div
+                              className={`mb-2 flex w-full ${
+                                message.role === "user"
+                                  ? "justify-end"
+                                  : "justify-start"
+                              }`}
+                            >
+                              <div
+                                className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                                  message.role === "user"
+                                    ? "text-primary-foreground bg-orange-500"
+                                    : "bg-muted text-foreground"
+                                }`}
+                              >
+                                {/* Combine all text parts */}
+                                {message.parts
+                                  .filter((part) => part.type === "text")
+                                  .map((part: any, idx) => (
+                                    <span key={idx}>{part.text}</span>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Tool invocation parts */}
+                          {message.parts
+                            .filter((part) => part.type === "tool-invocation")
+                            .map((part: any, idx) =>
+                              renderMessagePart(part, message.id + "-" + idx),
+                            )}
                         </div>
                       )}
-
-                      {/* Tool invocation parts */}
-                      {message.parts
-                        .filter((part) => part.type === "tool-invocation")
-                        .map((part: any, idx) =>
-                          renderMessagePart(part, message.id + "-" + idx),
-                        )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-            {/* Loading Indicator */}
-            {isLoading && (
-              <div className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
-                <div className="bg-muted-foreground h-2 w-2 animate-pulse rounded-full" />
-                Thinking...
+                  );
+                })}
+                {/* Loading Indicator */}
+                {isLoading && (
+                  <div className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
+                    <div className="bg-muted-foreground h-2 w-2 animate-pulse rounded-full" />
+                    Thinking...
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Input Area */}
-        <div className="border-border border-t p-4">
-          <div className="mx-auto max-w-2xl">
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <Input
-                value={input}
-                onChange={handleInputChange}
-                placeholder="Ask me to do something in Blender..."
-                disabled={isLoading}
-                className="bg-background border-border text-foreground placeholder:text-muted-foreground flex-1"
-              />
-              <Button
-                type="submit"
-                disabled={isLoading}
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <Send className="size-4" />
-              </Button>
-            </form>
-            <div className="mt-2 text-center">
-              <span className="text-muted-foreground text-xs">
-                v0 may make mistakes. Please use with discretion.
-              </span>
+            {/* Input Area */}
+            <div className="border-border border-t p-4">
+              <div className="mx-auto max-w-2xl">
+                <form onSubmit={handleSubmit} className="flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder="Ask me to do something in Blender..."
+                    disabled={isLoading}
+                    className="bg-background border-border text-foreground placeholder:text-muted-foreground flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <Send className="size-4" />
+                  </Button>
+                </form>
+                <div className="mt-2 text-center">
+                  <span className="text-muted-foreground text-xs">
+                    v0 may make mistakes. Please use with discretion.
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

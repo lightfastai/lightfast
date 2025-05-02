@@ -51,7 +51,7 @@ export default function App() {
         publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       > */}
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <RouterProvider router={router} defaultPreload="intent" />
       </QueryClientProvider>
       {/* </ClerkProvider> */}
     </div>

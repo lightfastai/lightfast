@@ -22,6 +22,13 @@
       "when": 1746107850510,
       "tag": "0002_condemned_jigsaw",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1746159320084,
+      "tag": "0003_slim_cargill",
+      "breakpoints": true
     }
   ]
 }

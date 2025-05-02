@@ -1,28 +1,42 @@
+import { AppSidebar } from "@/components/app-sidebar";
+
+import { ThemeProvider, useTheme } from "@repo/ui/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 
-import { AppSidebar } from "./app-sidebar";
-import { ContentLayout } from "./content-layout";
-import TitleBar from "./title-bar";
+import { TitleBar } from "./title-bar";
+import { WorkspaceContainer } from "./workspace-container";
 
-export function RootLayout({ children }: { children: React.ReactNode }) {
+export interface RootLayoutProps {
+  children: React.ReactNode;
+}
+
+function RootLayoutContent({ children }: RootLayoutProps) {
+  const { theme } = useTheme();
+
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden">
-      <SidebarProvider defaultOpen>
-        {/* Title Bar floats on top via absolute positioning */}
-        <TitleBar />
-
-        {/* Main content takes full height and width with no offsets */}
-        <div className="flex h-full w-full flex-1">
-          <AppSidebar />
-          <SidebarInset>
-            <div className="flex h-full flex-col overflow-hidden">
-              <div className="flex-1 overflow-hidden">
-                <ContentLayout>{children}</ContentLayout>
-              </div>
-            </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
+    <div className="bg-background flex h-screen flex-col">
+      <TitleBar />
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar />
+        <SidebarInset>
+          <WorkspaceContainer>{children}</WorkspaceContainer>
+        </SidebarInset>
+      </div>
     </div>
+  );
+}
+
+export function RootLayout({ children }: RootLayoutProps) {
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <SidebarProvider defaultOpen>
+        <RootLayoutContent>{children}</RootLayoutContent>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

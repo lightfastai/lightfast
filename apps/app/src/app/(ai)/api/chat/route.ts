@@ -1,6 +1,10 @@
 import type { Message, ToolSet } from "ai";
-import { streamText } from "ai";
+import { appendResponseMessages, streamText } from "ai";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
+
+import { db } from "@vendor/db/client";
+import { Session } from "@vendor/db/lightfast/schema";
 
 import { registry } from "~/providers/ai-provider";
 
@@ -43,7 +47,11 @@ export function OPTIONS() {
 }
 
 export async function POST(request: Request) {
-  const { messages } = (await request.json()) as { messages: Message[] };
+  const { messages, sessionId, workspaceId } = (await request.json()) as {
+    messages: Message[];
+    sessionId?: string;
+    workspaceId?: string;
+  };
 
   const result = streamText({
     model: registry.languageModel("openai:gpt-4-turbo-preview"),
@@ -51,6 +59,38 @@ export async function POST(request: Request) {
     maxTokens: 1000,
     temperature: 0.7,
     tools: blenderTools,
+    async onFinish({ response }) {
+      try {
+        // Save the chat messages to the database if sessionId is provided
+        if (sessionId) {
+          // Update existing session
+          await db
+            .update(Session)
+            .set({
+              messages: appendResponseMessages({
+                messages,
+                responseMessages: response.messages,
+              }),
+              updatedAt: new Date(),
+            })
+            .where(eq(Session.id, sessionId));
+        } else if (workspaceId) {
+          // Create a new session with these messages
+          const title = messages[0]?.content.slice(0, 100) ?? "New Chat";
+
+          await db.insert(Session).values({
+            workspaceId,
+            title,
+            messages: appendResponseMessages({
+              messages,
+              responseMessages: response.messages,
+            }),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to save chat session:", error);
+      }
+    },
   });
 
   const response = result.toDataStreamResponse();

@@ -71,6 +71,8 @@
     "electron-devtools-installer": "^4.0.0",
     "electron-playwright-helpers": "^1.7.1",
     "eslint": "catalog:",
+    "postcss": "^8.5.3",
+    "postcss-import": "^16.1.0",
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",
     "vite": "^6.3.3",

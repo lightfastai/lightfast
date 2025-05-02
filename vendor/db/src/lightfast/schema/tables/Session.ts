@@ -16,6 +16,8 @@ export const Session = pgTable("session", (t) => ({
     .varchar({ length: 191 })
     .notNull()
     .references(() => Workspace.id, { onDelete: "cascade" }),
+  title: t.varchar({ length: 191 }).notNull().default("New Chat"),
+  messages: t.json().default([]),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t
     .timestamp()

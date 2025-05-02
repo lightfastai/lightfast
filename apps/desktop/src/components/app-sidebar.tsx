@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { trpc } from "@/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, Settings } from "lucide-react";
+import { MessageSquare, Plus, Settings } from "lucide-react";
 
 import { queryClient } from "@repo/trpc-client/trpc-react-proxy-provider";
 import { Icons } from "@repo/ui/components/icons";
@@ -41,6 +41,7 @@ import { ApiStatusIndicator } from "./connection-indicators/api-status-indicator
 import { BlenderStatusIndicator } from "./connection-indicators/blender-status-indicator";
 import { SIDEBAR_TOGGLE_EVENT } from "./title-bar";
 import ToggleTheme from "./toggle-theme";
+import { WorkspaceSwitcher } from "./workspace-switcher";
 
 function UserDropdown() {
   // const { user, signOut } = useAuth();
@@ -141,6 +142,12 @@ interface Workspace {
   updatedAt: Date;
 }
 
+interface Session {
+  id: string;
+  title: string;
+  updatedAt: Date;
+}
+
 export const useCreateWorkspaceMutation = () => {
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
@@ -150,10 +157,14 @@ export const useCreateWorkspaceMutation = () => {
         await queryClient.invalidateQueries(
           trpc.tenant.workspace.getAll.queryFilter(),
         );
-        // Navigate to the new workspace
+        // Navigate to the new workspace with correct route param format
         navigate({
           to: "/workspace/$workspaceId",
           params: { workspaceId: data.id },
+          // Force TanStack Router to clear any potential cached matches
+          replace: true,
+          // Make sure the router does fresh matching
+          startTransition: true,
         });
         // Close the sidebar by dispatching the toggle event
         toggleSidebar();
@@ -164,11 +175,60 @@ export const useCreateWorkspaceMutation = () => {
 
 export function AppSidebar() {
   const navigate = useNavigate();
-  const { data: workspaces } = useQuery(
+  const { data: workspaces = [] } = useQuery(
     trpc.tenant.workspace.getAll.queryOptions(),
   );
   const { toggleSidebar } = useSidebar();
   const { mutate, error } = useCreateWorkspaceMutation();
+
+  // Get the current workspace ID using router's useParams if possible
+  // But have a fallback when not in a route with workspaceId
+  const currentWorkspaceIdFromPath =
+    window.location.pathname.match(/\/workspace\/([^/]+)/)?.[1] || "";
+  const currentWorkspaceId = currentWorkspaceIdFromPath;
+
+  // Get sessions for the current workspace
+  const { data: sessions = [] } = useQuery(
+    trpc.tenant.session.list.queryOptions({
+      workspaceId: currentWorkspaceId ?? "",
+    }),
+  );
+
+  // Create session mutation
+  const createSession = useMutation(
+    trpc.tenant.session.create.mutationOptions({
+      onSuccess: (data) => {
+        if (data && currentWorkspaceId) {
+          // Navigate to the workspace with the new session
+          navigate({
+            to: "/workspace/$workspaceId",
+            params: { workspaceId: currentWorkspaceId },
+            // Force TanStack Router to clear any potential cached matches
+            replace: true,
+            // Make sure the router does fresh matching
+            startTransition: true,
+          });
+
+          // Close the sidebar
+          toggleSidebar();
+        }
+      },
+    }),
+  );
+
+  const handleNewSession = () => {
+    if (currentWorkspaceId) {
+      createSession.mutate({
+        workspaceId: currentWorkspaceId,
+      });
+    }
+  };
+
+  // Simplified workspace data for the workspace switcher
+  const workspacesData = workspaces.map((workspace) => ({
+    id: workspace.id,
+    name: workspace.name,
+  }));
 
   return (
     <Sidebar variant="inset" className="p-0">
@@ -189,8 +249,8 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className="divide-y">
-        <ScrollArea className="h-full">
+      <SidebarContent className="flex flex-1 flex-col divide-y overflow-hidden">
+        <ScrollArea className="flex-1">
           <SidebarGroup className="p-4">
             <Button
               variant="ghost"
@@ -202,29 +262,93 @@ export function AppSidebar() {
               </div>
               <span>New Workspace</span>
             </Button>
-            <div className="flex items-center justify-between">
-              <SidebarGroupLabel>
-                <span>Workspaces</span>
-              </SidebarGroupLabel>
-            </div>
-            <SidebarMenu>
-              {workspaces?.map((workspace: Workspace) => (
-                <SidebarMenuItem key={workspace.id}>
-                  <SidebarMenuButton asChild>
-                    <Link
-                      to="/workspace/$workspaceId"
-                      params={{ workspaceId: workspace.id }}
-                      className={cn("flex items-center gap-2")}
-                    >
-                      <span>{workspace.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+
+            {currentWorkspaceId && (
+              <div className="mt-4 flex items-center justify-between">
+                <SidebarGroupLabel>
+                  <span>Current Workspace</span>
+                </SidebarGroupLabel>
+              </div>
+            )}
+
+            {currentWorkspaceId && (
+              <SidebarMenu>
+                {workspaces
+                  .filter((workspace) => workspace.id === currentWorkspaceId)
+                  .map((workspace) => (
+                    <SidebarMenuItem key={workspace.id}>
+                      <SidebarMenuButton asChild>
+                        <Link
+                          to="/workspace/$workspaceId"
+                          params={{ workspaceId: workspace.id }}
+                          className={cn(
+                            "flex items-center gap-2 font-medium text-orange-500",
+                          )}
+                          preload="intent"
+                        >
+                          <span>{workspace.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+              </SidebarMenu>
+            )}
           </SidebarGroup>
+
+          {/* Sessions Group - only show when in a workspace */}
+          {currentWorkspaceId && (
+            <SidebarGroup className="p-4">
+              <div className="flex items-center justify-between">
+                <SidebarGroupLabel>
+                  <span>Chat Sessions</span>
+                </SidebarGroupLabel>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={handleNewSession}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <SidebarMenu>
+                {sessions.map((session: Session) => (
+                  <SidebarMenuItem key={session.id}>
+                    <SidebarMenuButton asChild>
+                      <Link
+                        to="/workspace/$workspaceId"
+                        params={{ workspaceId: currentWorkspaceId }}
+                        onClick={() => toggleSidebar()}
+                        className="flex items-center gap-2"
+                        preload="intent"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        <span>{session.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                {sessions.length === 0 && (
+                  <div className="text-muted-foreground px-3 py-2 text-xs">
+                    No chat sessions yet. Create a new one to get started.
+                  </div>
+                )}
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
         </ScrollArea>
+
+        {/* Workspace Switcher */}
+        {workspaces.length > 0 && (
+          <div className="mt-auto border-t pt-4">
+            <WorkspaceSwitcher
+              workspaces={workspacesData}
+              currentWorkspaceId={currentWorkspaceId}
+            />
+          </div>
+        )}
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
