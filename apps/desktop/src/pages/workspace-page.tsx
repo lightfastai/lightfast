@@ -1,12 +1,57 @@
+// Import the correct types from the ai package
+import type { Message } from "ai";
 import { RootLayout } from "@/components/root-layout";
 import { trpc } from "@/trpc";
-import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
+import { useChat } from "ai/react";
 import { Send } from "lucide-react";
+import { z } from "zod";
 
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+
+// --- Define Blender Tools Schema (for client-side reference if needed, and backend) ---
+const blenderToolSchemas = {
+  createBlenderObject: {
+    description:
+      "Creates a new object (e.g., Cube, Sphere, Suzanne) in the Blender scene.",
+    parameters: z.object({
+      objectType: z
+        .enum(["CUBE", "SPHERE", "MONKEY"])
+        .describe("The type of object to create."),
+      location: z
+        .object({
+          x: z.number().optional().default(0).describe("X coordinate"),
+          y: z.number().optional().default(0).describe("Y coordinate"),
+          z: z.number().optional().default(0).describe("Z coordinate"),
+        })
+        .optional()
+        .describe("Position to create the object."),
+      name: z.string().optional().describe("Optional name for the new object."),
+    }),
+  },
+  // --- Add more tool schemas here ---
+};
+// --- End Blender Tools Definition ---
+
+// Define custom part types for our UI
+interface TextPart {
+  type: "text";
+  text: string;
+}
+
+interface ToolInvocationPart {
+  type: "tool-invocation";
+  toolCallId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  state: "call" | "result" | "error";
+  result?: string;
+  error?: string;
+}
+
+type DisplayMessagePart = TextPart | ToolInvocationPart;
 
 export default function WorkspacePage() {
   const { workspaceId } = useParams({ from: "/workspace/$workspaceId" });
@@ -14,10 +59,157 @@ export default function WorkspacePage() {
     trpc.tenant.workspace.get.queryOptions({ workspaceId }),
   );
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
     useChat({
       api: `${import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL}/api/chat`,
+
+      // Implement client-side tool execution via onToolCall
+      async onToolCall({ toolCall }) {
+        console.log("Client onToolCall received:", toolCall);
+
+        if (toolCall.toolName === "createBlenderObject") {
+          try {
+            // Invoke the main process handler via IPC
+            const result = await window.electronAPI.invoke(
+              "handle-blender-create-object",
+              toolCall.args,
+            );
+            console.log(
+              "Renderer: Received result from main for tool call:",
+              result,
+            );
+            // Return the result (must be serializable, string is safest)
+            return JSON.stringify(result);
+          } catch (error: any) {
+            console.error(
+              "Renderer: Error executing createBlenderObject via IPC:",
+              error,
+            );
+            // Return error information (as a string)
+            return JSON.stringify({
+              success: false,
+              error: `IPC Error: ${error.message}`,
+            });
+          }
+        }
+
+        // Handle other potential client-side tools here if needed
+
+        console.warn(`Tool '${toolCall.toolName}' not handled on client.`);
+        return JSON.stringify({
+          success: false,
+          error: `Tool '${toolCall.toolName}' not implemented on client.`,
+        });
+      },
+
+      // Removed onToolCallFinished and experimental_onToolCall as they seem invalid/redundant
     });
+
+  if (error) {
+    console.error("Chat Error:", error);
+  }
+
+  // Helper function to render message parts
+  const renderMessagePart = (part: any, messageId: string) => {
+    if (part.type === "text") {
+      return part.text;
+    }
+
+    if (part.type === "tool-invocation") {
+      const { toolCallId, toolName, args, state } = part;
+
+      // Ensure args is stringifiable before proceeding
+      let argsString = "[Non-stringifiable args]";
+      try {
+        argsString = JSON.stringify(args);
+      } catch (e) {
+        console.error("Could not stringify tool args:", args, e);
+      }
+
+      if (state === "call") {
+        return (
+          <div
+            key={`${messageId}-${toolCallId}-call`}
+            className="text-muted-foreground w-full py-2 text-center text-xs italic"
+          >
+            Calling tool: {toolName}({argsString})...
+          </div>
+        );
+      }
+
+      if (state === "result") {
+        // Attempt to parse the result string for display
+        // Access result directly from part
+        let resultDisplay = part.result;
+        try {
+          if (typeof resultDisplay === "string") {
+            resultDisplay = JSON.stringify(JSON.parse(resultDisplay), null, 2);
+          }
+        } catch (e) {
+          /* Ignore parsing error, display as is */
+        }
+        return (
+          <div
+            key={`${messageId}-${toolCallId}-result`}
+            className="mt-2 mb-2 flex w-full justify-start"
+          >
+            <div
+              className={`bg-muted text-foreground max-w-[80%] rounded-2xl border px-4 py-2.5 text-sm`}
+            >
+              <span className="font-semibold">Tool Result ({toolName}):</span>
+              <pre className="mt-1 text-xs break-all whitespace-pre-wrap">
+                {typeof resultDisplay === "string"
+                  ? resultDisplay
+                  : JSON.stringify(resultDisplay)}
+              </pre>
+            </div>
+          </div>
+        );
+      }
+
+      if (state === "error") {
+        return (
+          <div
+            key={`${messageId}-${toolCallId}-error`}
+            className="mt-2 mb-2 flex w-full justify-start"
+          >
+            <div
+              className={`bg-destructive text-destructive-foreground max-w-[80%] rounded-2xl border px-4 py-2.5 text-sm`}
+            >
+              <span className="font-semibold">Tool Error ({toolName}):</span>
+              <pre className="mt-1 text-xs break-all whitespace-pre-wrap">
+                {String(part.error)}
+              </pre>
+            </div>
+          </div>
+        );
+      }
+
+      // Handle unexpected state
+      return (
+        <span key={`${messageId}-${toolCallId}-unknown`}>
+          Unknown tool state
+        </span>
+      );
+    }
+
+    // Handle other part types if they exist
+    return null;
+  };
+
+  // Define custom type guards for message parts
+  function isTextPart(part: any): boolean {
+    return part?.type === "text" && typeof part.text === "string";
+  }
+
+  function isToolInvocationPart(part: any): boolean {
+    return (
+      part?.type === "tool-invocation" &&
+      typeof part.toolCallId === "string" &&
+      typeof part.toolName === "string" &&
+      typeof part.state === "string"
+    );
+  }
 
   return (
     <RootLayout>
@@ -34,29 +226,63 @@ export default function WorkspacePage() {
 
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-6">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                    message.role === "user"
-                      ? "text-primary-foreground bg-orange-500"
-                      : "bg-muted text-foreground"
-                  }`}
-                >
-                  {message.content}
+          <div className="space-y-2">
+            {error && (
+              <div className="flex justify-start">
+                <div className="bg-destructive text-destructive-foreground max-w-[80%] rounded-2xl px-4 py-2.5">
+                  Error: {error.message}
                 </div>
               </div>
-            ))}
+            )}
+            {(messages as Message[]).map((message) => {
+              // Display content based on message role and parts
+              return (
+                <div key={message.id}>
+                  {/* Collect all visible text parts */}
+                  {Array.isArray(message.parts) && (
+                    <div>
+                      {/* Text content (if any) */}
+                      {message.parts.some((part) => part.type === "text") && (
+                        <div
+                          className={`mb-2 flex w-full ${
+                            message.role === "user"
+                              ? "justify-end"
+                              : "justify-start"
+                          }`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                              message.role === "user"
+                                ? "text-primary-foreground bg-orange-500"
+                                : "bg-muted text-foreground"
+                            }`}
+                          >
+                            {/* Combine all text parts */}
+                            {message.parts
+                              .filter((part) => part.type === "text")
+                              .map((part: any, idx) => (
+                                <span key={idx}>{part.text}</span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tool invocation parts */}
+                      {message.parts
+                        .filter((part) => part.type === "tool-invocation")
+                        .map((part: any, idx) =>
+                          renderMessagePart(part, message.id + "-" + idx),
+                        )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {/* Loading Indicator */}
             {isLoading && (
-              <div className="text-muted-foreground flex items-center gap-2 text-sm">
+              <div className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
                 <div className="bg-muted-foreground h-2 w-2 animate-pulse rounded-full" />
-                is thinking...
+                Thinking...
               </div>
             )}
           </div>
@@ -69,7 +295,7 @@ export default function WorkspacePage() {
               <Input
                 value={input}
                 onChange={handleInputChange}
-                placeholder="Ask a follow up..."
+                placeholder="Ask me to do something in Blender..."
                 disabled={isLoading}
                 className="bg-background border-border text-foreground placeholder:text-muted-foreground flex-1"
               />
@@ -77,6 +303,7 @@ export default function WorkspacePage() {
                 type="submit"
                 disabled={isLoading}
                 variant="ghost"
+                size="icon"
                 className="text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <Send className="size-4" />
@@ -92,4 +319,21 @@ export default function WorkspacePage() {
       </div>
     </RootLayout>
   );
+}
+
+// Define window interface for TypeScript
+declare global {
+  interface Window {
+    electronAPI: {
+      getClientEnv: () => Promise<any>;
+      ping: () => Promise<any>;
+      send: (channel: string, ...args: any[]) => void;
+      on: (channel: string, listener: (...args: any[]) => void) => () => void;
+      invoke: (channel: string, ...args: any[]) => Promise<any>;
+    };
+    blenderConnection: {
+      onStatusUpdate: (callback: (status: any) => void) => () => void;
+      sendToBlender: (message: object) => Promise<any>;
+    };
+  }
 }
