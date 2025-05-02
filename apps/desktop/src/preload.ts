@@ -57,6 +57,22 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // If direct removal is needed, ensure proper security checks.
   // --- End Title Bar IPC ---
 
+  // Add invoke method with whitelist
+  invoke: (channel: string, ...args: any[]) => {
+    // Whitelist channels
+    const validChannels = [
+      "get-client-env",
+      "ping",
+      "handle-blender-create-object", // Add the Blender tool channel
+      "get-blender-status", // Add the status check channel
+    ];
+    if (validChannels.includes(channel)) {
+      return ipcRenderer.invoke(channel, ...args);
+    }
+    // Return a rejected promise for invalid channels
+    return Promise.reject(new Error(`Invalid channel: ${channel}`));
+  },
+
   // Add more IPC methods as needed
 });
 
@@ -74,6 +90,8 @@ contextBridge.exposeInMainWorld("blenderConnection", {
       ipcRenderer.removeListener(BLENDER_STATUS_CHANNEL, listener);
     };
   },
+  // Add function to get current Blender status
+  getStatus: () => ipcRenderer.invoke("get-blender-status"),
   // Add function to send messages *to* Blender via main process
   sendToBlender: (message: object) =>
     ipcRenderer.invoke("send-to-blender", message),

@@ -34,11 +34,13 @@
     "@vendor/clerk": "workspace:*",
     "@vendor/trpc": "workspace:*",
     "babel-plugin-react-compiler": "^19.0.0-beta-e993439-20250328",
+    "bufferutil": "^4.0.9",
     "electron-squirrel-startup": "^1.0.1",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "react-icons": "^5.5.0",
     "superjson": "2.2.1",
+    "utf-8-validate": "^6.0.5",
     "zustand": "^5.0.1"
   },
   "devDependencies": {

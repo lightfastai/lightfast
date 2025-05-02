@@ -11,10 +11,12 @@ export type BlenderConnectionStatus =
   | { status: "stopped" };
 
 const BLENDER_PORT = 8765; // Or choose another port
+const HEARTBEAT_INTERVAL = 5000; // Check connection every 5 seconds
 
 let wss: WebSocketServer | null = null;
 let blenderClient: WebSocket | null = null;
 let electronWebContents: WebContents | null = null;
+let heartbeatInterval: NodeJS.Timeout | null = null;
 
 function sendStatusUpdate(status: BlenderConnectionStatus) {
   if (electronWebContents && !electronWebContents.isDestroyed()) {
@@ -23,22 +25,37 @@ function sendStatusUpdate(status: BlenderConnectionStatus) {
 }
 
 export function startBlenderSocketServer(webContents: WebContents) {
+  console.log("🚀 Attempting to start Blender WebSocket server...");
+
   if (wss) {
     console.log("Blender WebSocket server already running.");
+    // Send current status to any new renderer that connects
+    if (blenderClient && blenderClient.readyState === WebSocket.OPEN) {
+      sendStatusUpdate({ status: "connected" });
+    } else {
+      sendStatusUpdate({ status: "listening" });
+    }
     return;
   }
   electronWebContents = webContents;
 
   try {
+    console.log(`Creating WebSocket server on port ${BLENDER_PORT}...`);
     wss = new WebSocketServer({ port: BLENDER_PORT });
+    console.log("WebSocket server created successfully");
+
+    // Send initial status immediately after server is created
+    sendStatusUpdate({ status: "listening" });
 
     wss.on("listening", () => {
-      console.log(`Blender WebSocket server listening on port ${BLENDER_PORT}`);
+      console.log(
+        `✅ Blender WebSocket server listening on port ${BLENDER_PORT}`,
+      );
       sendStatusUpdate({ status: "listening" });
     });
 
     wss.on("connection", (ws: WebSocket) => {
-      console.log("Blender client connected.");
+      console.log("🔌 Blender client connected.");
 
       // For now, assume only one Blender client
       if (blenderClient) {
@@ -48,11 +65,94 @@ export function startBlenderSocketServer(webContents: WebContents) {
       blenderClient = ws;
       sendStatusUpdate({ status: "connected" });
 
+      // Start heartbeat to check connection status
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+      }
+      heartbeatInterval = setInterval(() => {
+        if (
+          ws.readyState === WebSocket.CLOSED ||
+          ws.readyState === WebSocket.CLOSING
+        ) {
+          console.log("Heartbeat detected disconnected client");
+          if (blenderClient === ws) {
+            blenderClient = null;
+            sendStatusUpdate({ status: "disconnected" });
+          }
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+          }
+        } else {
+          // Send ping to check if client is still alive
+          try {
+            ws.ping();
+          } catch (error) {
+            console.error("Error sending ping:", error);
+          }
+        }
+      }, HEARTBEAT_INTERVAL);
+
       ws.on("message", (message: Buffer) => {
         console.log("Received from Blender:", message.toString());
-        // TODO: Handle incoming messages (parse JSON, use IPC to send to renderer)
-        // Potentially send specific messages to renderer?
-        // electronWebContents?.send('blender-message', parsedMessage);
+
+        try {
+          // Parse the message as JSON
+          const parsedMessage = JSON.parse(message.toString());
+
+          // Check if this is the handshake message from Blender
+          if (
+            parsedMessage.type === "handshake" &&
+            parsedMessage.client === "blender"
+          ) {
+            console.log("✅ Received handshake from Blender", parsedMessage);
+
+            // Ensure the connection status is updated to "connected"
+            sendStatusUpdate({ status: "connected" });
+
+            // Send acknowledgment back to Blender
+            ws.send(
+              JSON.stringify({
+                type: "handshake_response",
+                status: "connected",
+                message: "Connection established with Lightfast",
+              }),
+            );
+          }
+
+          // Check for disconnect message from Blender
+          if (
+            parsedMessage.type === "disconnect" &&
+            parsedMessage.client === "blender"
+          ) {
+            console.log(
+              "Received disconnect request from Blender",
+              parsedMessage,
+            );
+
+            // Update status immediately
+            if (blenderClient === ws) {
+              sendStatusUpdate({ status: "disconnected" });
+            }
+
+            // Send acknowledgment
+            try {
+              ws.send(
+                JSON.stringify({
+                  type: "disconnect_ack",
+                  status: "disconnecting",
+                  message: "Disconnection acknowledged",
+                }),
+              );
+            } catch (error) {
+              console.error("Error sending disconnect acknowledgment:", error);
+            }
+          }
+
+          // Handle other message types as needed
+        } catch (error) {
+          console.error("Error processing message from Blender:", error);
+        }
       });
 
       ws.on("close", () => {
@@ -64,11 +164,24 @@ export function startBlenderSocketServer(webContents: WebContents) {
       });
 
       ws.on("error", (error: Error) => {
-        console.error("Blender client WebSocket error:", error);
-        if (blenderClient === ws) {
-          blenderClient = null;
-          // Send error status only if this was the active client
-          sendStatusUpdate({ status: "error", error: error.message });
+        // Check if this is a protocol error during closing (can be ignored)
+        if (
+          error.message.includes("Invalid WebSocket frame") ||
+          error.message.includes("MASK") ||
+          error.message.includes("WebSocket is not open")
+        ) {
+          console.log(
+            "WebSocket protocol error during close (expected):",
+            error.message,
+          );
+        } else {
+          // Log other errors
+          console.error("Blender client WebSocket error:", error);
+          if (blenderClient === ws) {
+            blenderClient = null;
+            // Send error status only if this was the active client
+            sendStatusUpdate({ status: "error", error: error.message });
+          }
         }
       });
 
@@ -77,7 +190,15 @@ export function startBlenderSocketServer(webContents: WebContents) {
     });
 
     wss.on("error", (error: Error) => {
-      console.error("Blender WebSocket server error:", error);
+      console.error("❌ Blender WebSocket server error:", error);
+      if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
+        console.error(
+          `Port ${BLENDER_PORT} is already in use. Try killing any process using this port.`,
+        );
+        console.error(
+          `You can use 'lsof -i :${BLENDER_PORT}' to find processes using this port.`,
+        );
+      }
       const errorMessage =
         (error as NodeJS.ErrnoException).code === "EADDRINUSE"
           ? `Port ${BLENDER_PORT} already in use.`
@@ -86,13 +207,19 @@ export function startBlenderSocketServer(webContents: WebContents) {
       wss = null; // Reset wss if server fails
     });
   } catch (error) {
-    console.error("Failed to start Blender WebSocket server:", error);
+    console.error("❌ Failed to start Blender WebSocket server:", error);
+    console.error(`Stack trace: ${(error as Error).stack}`);
     sendStatusUpdate({ status: "error", error: (error as Error).message });
     wss = null;
   }
 }
 
 export function stopBlenderSocketServer() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+
   if (blenderClient) {
     blenderClient.close();
     blenderClient = null;
@@ -113,11 +240,32 @@ export function stopBlenderSocketServer() {
   }
 }
 
+// Function to check if Blender is currently connected
+export function isBlenderConnected(): boolean {
+  return blenderClient !== null && blenderClient.readyState === WebSocket.OPEN;
+}
+
+// Function to get the current Blender connection status
+export function getBlenderStatus(): BlenderConnectionStatus {
+  if (blenderClient !== null && blenderClient.readyState === WebSocket.OPEN) {
+    return { status: "connected" };
+  } else if (wss !== null) {
+    return { status: "listening" };
+  } else {
+    return { status: "disconnected" };
+  }
+}
+
+// Function to get the WebSocketServer instance
+export function getWebSocketServer(): WebSocketServer | null {
+  return wss;
+}
+
 // Function to send messages *to* Blender
 export function sendToBlender(message: object) {
-  if (blenderClient && blenderClient.readyState === WebSocket.OPEN) {
+  if (isBlenderConnected()) {
     try {
-      blenderClient.send(JSON.stringify(message));
+      blenderClient!.send(JSON.stringify(message));
       console.log("Sent to Blender:", message);
     } catch (error) {
       console.error("Failed to send message to Blender:", error);

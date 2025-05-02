@@ -1,7 +1,31 @@
-import type { Message } from "ai";
+import type { Message, ToolSet } from "ai";
 import { streamText } from "ai";
+import { z } from "zod";
 
 import { registry } from "~/providers/ai-provider";
+
+// Define Blender Tools Schema for the backend
+const blenderTools: ToolSet = {
+  createBlenderObject: {
+    description:
+      "Creates a new object (e.g., Cube, Sphere, Suzanne) in the Blender scene.",
+    parameters: z.object({
+      objectType: z
+        .enum(["CUBE", "SPHERE", "MONKEY"])
+        .describe("The type of object to create."),
+      location: z
+        .object({
+          x: z.number().optional().default(0).describe("X coordinate"),
+          y: z.number().optional().default(0).describe("Y coordinate"),
+          z: z.number().optional().default(0).describe("Z coordinate"),
+        })
+        .optional()
+        .describe("Position to create the object."),
+      name: z.string().optional().describe("Optional name for the new object."),
+    }),
+  },
+  // Additional tools can be added here
+};
 
 // CORS headers for the desktop app
 const corsHeaders = {
@@ -26,6 +50,7 @@ export async function POST(request: Request) {
     messages,
     maxTokens: 1000,
     temperature: 0.7,
+    tools: blenderTools,
   });
 
   const response = result.toDataStreamResponse();
