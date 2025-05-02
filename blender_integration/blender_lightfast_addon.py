@@ -375,12 +375,9 @@ def stop_socket_client():
                 # Small delay to allow the message to be sent
                 time.sleep(0.2)
                 
-                # Send close frame with normal closure code
-                close_frame = bytearray([0x88, 0x02, 0x03, 0xE8])  # Close frame with code 1000 (normal closure)
-                socket_connection.sendall(close_frame)
+                # Instead of manually crafting a close frame, we'll just close the socket
+                # The WebSocket protocol implementation on the server side will handle this correctly
                 
-                # Another small delay before closing the socket
-                time.sleep(0.1)
             socket_connection.close()
         except Exception as e:
             log(f"Error during disconnection: {e}")

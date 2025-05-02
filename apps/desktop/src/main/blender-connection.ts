@@ -164,11 +164,24 @@ export function startBlenderSocketServer(webContents: WebContents) {
       });
 
       ws.on("error", (error: Error) => {
-        console.error("Blender client WebSocket error:", error);
-        if (blenderClient === ws) {
-          blenderClient = null;
-          // Send error status only if this was the active client
-          sendStatusUpdate({ status: "error", error: error.message });
+        // Check if this is a protocol error during closing (can be ignored)
+        if (
+          error.message.includes("Invalid WebSocket frame") ||
+          error.message.includes("MASK") ||
+          error.message.includes("WebSocket is not open")
+        ) {
+          console.log(
+            "WebSocket protocol error during close (expected):",
+            error.message,
+          );
+        } else {
+          // Log other errors
+          console.error("Blender client WebSocket error:", error);
+          if (blenderClient === ws) {
+            blenderClient = null;
+            // Send error status only if this was the active client
+            sendStatusUpdate({ status: "error", error: error.message });
+          }
         }
       });
 
