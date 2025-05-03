@@ -1,8 +1,10 @@
 // Import the correct types from the ai package
 import type { Message } from "ai";
+import { useEffect } from "react";
 import { SessionManager, WorkspaceChat } from "@/components/chat";
 import { RootLayout } from "@/components/root-layout";
 import { trpc } from "@/trpc";
+import { prefetchWorkspaceData } from "@/utils/prefetch-utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 
@@ -11,9 +13,18 @@ export default function WorkspacePage() {
     from: "/workspace/$workspaceId",
   });
 
-  const { data: workspace } = useQuery(
+  // Get workspace data with eager prefetching
+  const { data: workspace, isLoading: isWorkspaceLoading } = useQuery(
     trpc.tenant.workspace.get.queryOptions({ workspaceId }),
   );
+
+  // Prefetch sessions for this workspace for improved loading experience
+  useEffect(() => {
+    if (workspaceId) {
+      // Prefetch all related workspace data
+      prefetchWorkspaceData(workspaceId);
+    }
+  }, [workspaceId]);
 
   return (
     <RootLayout>
