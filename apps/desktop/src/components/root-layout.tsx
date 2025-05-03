@@ -1,6 +1,5 @@
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
-import { ThemeProvider, useTheme } from "@repo/ui/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 
 import { ContentLayout } from "./content-layout";
@@ -13,8 +12,6 @@ export interface RootLayoutProps {
 }
 
 function RootLayoutContent({ children }: RootLayoutProps) {
-  const { theme } = useTheme();
-
   // Initialize global keyboard shortcuts (Cmd+S, Cmd+B for sidebar toggle)
   useKeyboardShortcuts();
 
@@ -35,15 +32,8 @@ function RootLayoutContent({ children }: RootLayoutProps) {
 
 export function RootLayout({ children }: RootLayoutProps) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <SidebarProvider defaultOpen>
-        <RootLayoutContent>{children}</RootLayoutContent>
-      </SidebarProvider>
-    </ThemeProvider>
+    <SidebarProvider defaultOpen>
+      <RootLayoutContent>{children}</RootLayoutContent>
+    </SidebarProvider>
   );
 }
