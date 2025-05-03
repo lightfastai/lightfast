@@ -82,6 +82,17 @@ export function useWorkspaceChat({
               throw new Error(`Blender execution error: ${result.error}`);
             }
 
+            // Set a temporary test result to show feedback in the UI
+            setTestResult({
+              success: true,
+              message: "Code executed in Blender successfully",
+            });
+
+            // Clear the test result after 3 seconds
+            setTimeout(() => {
+              setTestResult(null);
+            }, 3000);
+
             // Return success message with more details
             return JSON.stringify({
               success: true,
@@ -94,6 +105,18 @@ export function useWorkspaceChat({
             });
           } catch (error: any) {
             console.error("Renderer: Error executing code in Blender:", error);
+
+            // Set a temporary test result to show feedback in the UI
+            setTestResult({
+              success: false,
+              message: `Error: ${error.message}`,
+            });
+
+            // Clear the test result after 5 seconds
+            setTimeout(() => {
+              setTestResult(null);
+            }, 5000);
+
             // Return detailed error information
             return JSON.stringify({
               success: false,

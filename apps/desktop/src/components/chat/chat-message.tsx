@@ -1,121 +1,56 @@
 import type { Message } from "ai";
 
+import { ToolExecutionCard } from "./tool-execution-card";
+
 interface ChatMessageProps {
   message: Message;
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
+  // Log the message object to better understand its structure
+  console.log("Message object:", JSON.stringify(message, null, 2));
+
   // Helper function to render message parts
   const renderMessagePart = (part: any, partIndex: number) => {
+    // Log each part to understand its structure
+    console.log("Part:", partIndex, JSON.stringify(part, null, 2));
+
     if (part.type === "text") {
       return part.text;
     }
 
     if (part.type === "tool-invocation") {
-      const { toolCallId, toolName, args, state } = part;
+      // The data structure varies between different versions of the AI SDK
+      // Try to extract the tool information regardless of the structure
 
-      // Ensure args is stringifiable before proceeding
-      let argsString = "[Non-stringifiable args]";
-      try {
-        argsString = JSON.stringify(args);
-      } catch (e) {
-        console.error("Could not stringify tool args:", args, e);
-      }
+      // First, find the toolInvocation object, which could be directly in the part
+      // or nested in a 'toolInvocation' property
+      const toolInvocation = part.toolInvocation || part;
 
-      // Handle all possible tool states
-      if (state === "call" || state === "calling") {
-        return (
-          <div
-            key={`${message.id}-${toolCallId}-call-${partIndex}`}
-            className="text-muted-foreground w-full py-2 text-center text-xs italic"
-          >
-            Calling tool: {toolName}({argsString})...
-          </div>
-        );
-      }
+      // Extract properties from the toolInvocation
+      const toolCallId = toolInvocation.toolCallId;
+      const toolName = toolInvocation.toolName;
+      const state = toolInvocation.state;
 
-      if (state === "result" || state === "success") {
-        // Attempt to parse the result string for display
-        let resultDisplay = part.result;
-        try {
-          if (typeof resultDisplay === "string") {
-            resultDisplay = JSON.stringify(JSON.parse(resultDisplay), null, 2);
-          }
-        } catch (e) {
-          /* Ignore parsing error, display as is */
-        }
-        return (
-          <div
-            key={`${message.id}-${toolCallId}-result-${partIndex}`}
-            className="mt-2 mb-2 flex w-full justify-start"
-          >
-            <div
-              className={`bg-muted text-foreground max-w-[80%] rounded-2xl border px-4 py-2.5 text-sm`}
-            >
-              <span className="font-semibold">Tool Result ({toolName}):</span>
-              <pre className="mt-1 text-xs break-all whitespace-pre-wrap">
-                {typeof resultDisplay === "string"
-                  ? resultDisplay
-                  : JSON.stringify(resultDisplay)}
-              </pre>
-            </div>
-          </div>
-        );
-      }
+      // Args could be directly in toolInvocation or in a nested structure
+      // For example in { "args": { "code": "..." } } or { "toolInvocation": { "args": { "code": "..." } } }
+      const args = toolInvocation.args || {};
 
-      if (state === "error" || state === "failed") {
-        // Check for specific error codes
-        let errorMessage = String(part.error);
-        let errorClass = "bg-destructive text-destructive-foreground";
+      const result = toolInvocation.result;
+      const error = toolInvocation.error;
 
-        // Convert JSON string error to object if needed
-        let errorObj = part.error;
-        if (typeof part.error === "string") {
-          try {
-            errorObj = JSON.parse(part.error);
-          } catch (e) {
-            // Not JSON, leave as string
-          }
-        }
-
-        // Check for specific error codes
-        if (
-          errorObj &&
-          typeof errorObj === "object" &&
-          "errorCode" in errorObj
-        ) {
-          if (errorObj.errorCode === "BLENDER_NOT_CONNECTED") {
-            errorClass = "bg-amber-600 text-white";
-            errorMessage =
-              "⚠️ Blender is not connected. Please start Blender and connect it to the app.";
-          }
-        }
-
-        return (
-          <div
-            key={`${message.id}-${toolCallId}-error-${partIndex}`}
-            className="mt-2 mb-2 flex w-full justify-start"
-          >
-            <div
-              className={`${errorClass} max-w-[80%] rounded-2xl border px-4 py-2.5 text-sm`}
-            >
-              <span className="font-semibold">Tool Error ({toolName}):</span>
-              <pre className="mt-1 text-xs break-all whitespace-pre-wrap">
-                {errorMessage}
-              </pre>
-            </div>
-          </div>
-        );
-      }
-
-      // Handle any other state
+      // Use the new ToolExecutionCard component for better UX
       return (
-        <div
-          key={`${message.id}-${toolCallId}-unknown-${partIndex}`}
-          className="text-muted-foreground w-full py-2 text-center text-xs italic"
-        >
-          Tool {toolName} is in state: {state}
-        </div>
+        <ToolExecutionCard
+          key={`${message.id}-${toolCallId}-${partIndex}`}
+          toolName={toolName}
+          toolState={state}
+          args={args}
+          result={result}
+          error={error}
+          messageId={message.id || "message"}
+          toolCallId={toolCallId || `tool-${partIndex}`}
+        />
       );
     }
 
