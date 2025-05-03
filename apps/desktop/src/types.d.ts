@@ -18,6 +18,8 @@ interface BlenderConnectionAPI {
     callback: (status: BlenderConnectionStatus) => void,
   ) => () => void;
   sendToBlender: (message: object) => Promise<void>;
+  getStatus: () => Promise<BlenderConnectionStatus>;
+  executeCode: (code: string) => Promise<void>;
 }
 
 interface ElectronAPI {

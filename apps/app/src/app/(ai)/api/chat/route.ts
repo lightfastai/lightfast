@@ -10,22 +10,15 @@ import { registry } from "~/providers/ai-provider";
 
 // Define Blender Tools Schema for the backend
 const blenderTools: ToolSet = {
-  createBlenderObject: {
+  executeBlenderCode: {
     description:
-      "Creates a new object (e.g., Cube, Sphere, Suzanne) in the Blender scene.",
+      "Executes Python code directly in Blender. This is the main way to interact with Blender - use Blender's Python API to create and manipulate objects, materials, and scenes.",
     parameters: z.object({
-      objectType: z
-        .enum(["CUBE", "SPHERE", "MONKEY"])
-        .describe("The type of object to create."),
-      location: z
-        .object({
-          x: z.number().optional().default(0).describe("X coordinate"),
-          y: z.number().optional().default(0).describe("Y coordinate"),
-          z: z.number().optional().default(0).describe("Z coordinate"),
-        })
-        .optional()
-        .describe("Position to create the object."),
-      name: z.string().optional().describe("Optional name for the new object."),
+      code: z
+        .string()
+        .describe(
+          "Python code to execute in Blender. Must be valid Blender Python API code.",
+        ),
     }),
   },
   // Additional tools can be added here

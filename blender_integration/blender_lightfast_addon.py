@@ -243,6 +243,8 @@ def handle_message(message):
         if isinstance(message, dict) and "action" in message:
             if message["action"] == "create_object":
                 handle_create_object(message["params"])
+            elif message["action"] == "execute_code":
+                handle_execute_code(message["params"])
             else:
                 log(f"Unknown action: {message['action']}")
     
@@ -495,6 +497,173 @@ def handle_create_object(params):
             }
             send_message(socket_connection, response)
 
+# Add a new handler for execute_code
+def handle_execute_code(params):
+    """Handle executing arbitrary Python code in Blender"""
+    global _active_execute_timer
+    
+    try:
+        code = params.get("code", "")
+        if not code:
+            log("Received empty code to execute")
+            # Send error response
+            if socket_connection and connected:
+                response = {
+                    "type": "code_executed",
+                    "success": False,
+                    "error": "Empty code received"
+                }
+                send_message(socket_connection, response)
+            return
+            
+        log(f"Preparing to execute code of length {len(code)}")
+        
+        # Kill all timers first to avoid potential conflicts
+        kill_all_timers()
+            
+        # Execute the code in Blender's main thread
+        def execute_code_in_blender():
+            global _active_execute_timer
+            
+            try:
+                log("Executing code in Blender")
+                
+                # Clear the timer reference immediately
+                _active_execute_timer = None
+                
+                # Import modules in a try block to handle potential import errors gracefully
+                try:
+                    import mathutils
+                    import bmesh
+                    import math
+                    import random
+                    import os
+                    from io import StringIO
+                    import sys
+                    import json
+
+                    # Basic namespace with commonly used modules for Blender scripting
+                    namespace = {
+                        "bpy": bpy,
+                        "mathutils": mathutils,
+                        "bmesh": bmesh,
+                        "math": math,
+                        "random": random,
+                        "os": os,
+                        "Vector": mathutils.Vector,
+                        "Matrix": mathutils.Matrix,
+                        "Euler": mathutils.Euler,
+                        "Quaternion": mathutils.Quaternion,
+                        "json": json
+                    }
+                except ImportError as e:
+                    log(f"Import error: {str(e)}")
+                    if socket_connection and connected:
+                        response = {
+                            "type": "code_executed",
+                            "success": False,
+                            "error": f"Import error: {str(e)}"
+                        }
+                        send_message(socket_connection, response)
+                    return None
+                
+                # Capture stdout for response
+                old_stdout = sys.stdout
+                captured_output = StringIO()
+                sys.stdout = captured_output
+                
+                try:
+                    # Execute the code
+                    exec(code, namespace)
+                    output = captured_output.getvalue()
+                except Exception as e:
+                    # Detailed error reporting
+                    error_msg = f"Error executing code: {str(e)}"
+                    error_type = type(e).__name__
+                    
+                    # Get traceback information
+                    import traceback
+                    tb_str = traceback.format_exc()
+                    
+                    log(f"{error_msg}\n{tb_str}")
+                    
+                    # Send detailed error response
+                    if socket_connection and connected:
+                        response = {
+                            "type": "code_executed",
+                            "success": False,
+                            "error": error_msg,
+                            "error_type": error_type,
+                            "traceback": tb_str,
+                            "partial_output": captured_output.getvalue()  # Include any output before error
+                        }
+                        send_message(socket_connection, response)
+                    
+                    # Don't forget to restore stdout!
+                    sys.stdout = old_stdout
+                    return None
+                finally:
+                    # Restore stdout (do this in finally to ensure it happens)
+                    sys.stdout = old_stdout
+                
+                # Send success response
+                if socket_connection and connected:
+                    response = {
+                        "type": "code_executed",
+                        "success": True,
+                        "output": output
+                    }
+                    send_message(socket_connection, response)
+                
+                log(f"Code executed successfully, output length: {len(output)}")
+            except Exception as e:
+                log(f"Unexpected error in execute_code_in_blender: {str(e)}")
+                traceback.print_exc()
+                
+                # Send error response
+                if socket_connection and connected:
+                    response = {
+                        "type": "code_executed",
+                        "success": False,
+                        "error": f"Unexpected error: {str(e)}"
+                    }
+                    send_message(socket_connection, response)
+            
+            # Make sure this doesn't repeat
+            return None
+        
+        # Use a try-except block when registering the timer
+        try:
+            # Execute in the main Blender thread
+            _active_execute_timer = execute_code_in_blender
+            bpy.app.timers.register(execute_code_in_blender, first_interval=0.1, persistent=False)
+            log(f"Registered one-time timer to execute code")
+        except Exception as e:
+            log(f"Error registering timer for code execution: {str(e)}")
+            traceback.print_exc()
+            
+            # Try to execute directly as a fallback
+            if socket_connection and connected:
+                response = {
+                    "type": "code_executed",
+                    "success": False,
+                    "error": f"Could not register timer for code execution: {str(e)}"
+                }
+                send_message(socket_connection, response)
+        
+    except Exception as e:
+        log(f"Error handling execute_code: {str(e)}")
+        traceback.print_exc()
+        
+        # Send error response
+        if socket_connection and connected:
+            response = {
+                "type": "code_executed",
+                "success": False,
+                "error": str(e)
+            }
+            send_message(socket_connection, response)
+
 # ---------------------- Blender UI Classes ----------------------
 
 class LightfastAddonPreferences(bpy.types.AddonPreferences):
@@ -640,26 +809,61 @@ class LIGHTFAST_OT_test_create_object(bpy.types.Operator):
 # Add emergency stop functions to clear all timers
 def kill_all_timers():
     """Emergency function to kill all Blender timers"""
-    global _active_create_timer
+    global _active_create_timer, _active_execute_timer
     
     log("EMERGENCY: Killing all Blender timers!")
     
-    # Clear our tracked timer
+    # Clear our tracked timers
     _active_create_timer = None
+    _active_execute_timer = None
     
     # Clear all registered timers in Blender
-    timers_to_clear = []
-    for timer in bpy.app.timers:
-        timers_to_clear.append(timer)
+    # Note: bpy.app.timers is not directly iterable in some Blender versions
+    # We need to get a list of timer functions through a different approach
+    try:
+        # Get the timer list in a safe way
+        timers_to_clear = []
+        if hasattr(bpy.app.timers, "get_list"):
+            # For newer Blender versions that have get_list() method
+            timers_to_clear = bpy.app.timers.get_list()
+        else:
+            # For older Blender versions, we need to try a different approach
+            # This is a safer version that doesn't assume bpy.app.timers is iterable
+            from functools import partial
+            
+            # Check if there are any registered timers by trying to unregister a dummy function
+            def dummy_timer():
+                return None
+                
+            try:
+                # If we can register and unregister a timer, timers are working
+                bpy.app.timers.register(dummy_timer)
+                bpy.app.timers.unregister(dummy_timer)
+                
+                # Try to get registered timers through introspection
+                # This is a bit of a hack but safer than direct iteration
+                import gc
+                for obj in gc.get_objects():
+                    if callable(obj) and hasattr(obj, "__name__") and obj.__name__ != "dummy_timer":
+                        if bpy.app.timers.is_registered(obj):
+                            timers_to_clear.append(obj)
+            except Exception as e:
+                log(f"Could not enumerate timers: {e}")
     
-    for timer in timers_to_clear:
-        try:
-            bpy.app.timers.unregister(timer)
-            log(f"Unregistered timer: {timer.__name__ if hasattr(timer, '__name__') else 'unnamed'}")
-        except Exception as e:
-            log(f"Error while unregistering timer: {e}")
+        # Now unregister all identified timers
+        for timer in timers_to_clear:
+            try:
+                if bpy.app.timers.is_registered(timer):
+                    bpy.app.timers.unregister(timer)
+                    log(f"Unregistered timer: {timer.__name__ if hasattr(timer, '__name__') else 'unnamed'}")
+            except Exception as e:
+                log(f"Error while unregistering timer: {e}")
+        
+        log(f"Cleared {len(timers_to_clear)} timers")
+    except Exception as e:
+        log(f"Error while clearing timers: {e}")
+        traceback.print_exc()
     
-    log(f"Cleared {len(timers_to_clear)} timers")
     return None  # Don't repeat this timer
 
 # Add classes for emergency control

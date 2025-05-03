@@ -12,6 +12,7 @@ interface BlenderState {
   connectionStatus: BlenderConnectionStatus;
   initializeListener: () => () => void; // Returns the cleanup function
   sendMessage: (message: object) => Promise<void>;
+  executeCode: (code: string) => Promise<void>;
   _cleanupListener: (() => void) | null;
 }
 
@@ -70,6 +71,24 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
     } catch (error) {
       console.error("Error sending message to Blender via IPC:", error);
       // Update state to reflect send error
+      set({
+        connectionStatus: {
+          status: "error",
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
+  },
+
+  executeCode: async (code: string) => {
+    try {
+      if (!window.blenderConnection) {
+        throw new Error("BlenderConnection API not available");
+      }
+      await window.blenderConnection.executeCode(code);
+    } catch (error) {
+      console.error("Error executing code in Blender via IPC:", error);
+      // Update state to reflect execute error
       set({
         connectionStatus: {
           status: "error",

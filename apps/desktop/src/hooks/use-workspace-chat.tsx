@@ -36,28 +36,69 @@ export function useWorkspaceChat({
       }) {
         console.log("Client onToolCall received:", toolCall);
 
-        if (toolCall.toolName === "createBlenderObject") {
+        // Handle executeBlenderCode tool
+        if (toolCall.toolName === "executeBlenderCode") {
           try {
-            // Invoke the main process handler via IPC
-            const result = await window.electronAPI.invoke(
-              "handle-blender-create-object",
-              toolCall.args,
-            );
+            // Check if we have a connection to Blender
+            if (!window.blenderConnection) {
+              throw new Error(
+                "Blender connection not available. Make sure Blender is running with the Lightfast addon enabled.",
+              );
+            }
+
+            // Get the code to execute
+            const { code } = toolCall.args;
+            if (!code || typeof code !== "string") {
+              throw new Error("No code provided or invalid code format");
+            }
+
+            // Add safety checks for code
+            if (code.length > 50000) {
+              throw new Error("Code too large to execute safely (>50KB)");
+            }
+
             console.log(
-              "Renderer: Received result from main for tool call:",
-              result,
+              "Executing Blender code:",
+              code.substring(0, 100) + (code.length > 100 ? "..." : ""),
             );
-            // Return the result (must be serializable, string is safest)
-            return JSON.stringify(result);
+
+            // Execute the code in Blender with a timeout
+            const result = await Promise.race([
+              window.electronAPI.invoke("handle-blender-execute-code", {
+                code,
+              }),
+              new Promise((_, reject) =>
+                setTimeout(
+                  () => reject(new Error("Timeout executing code in Blender")),
+                  30000,
+                ),
+              ),
+            ]);
+
+            console.log("Renderer: Blender code execution result:", result);
+
+            // Check for errors in the result
+            if (result && typeof result === "object" && "error" in result) {
+              throw new Error(`Blender execution error: ${result.error}`);
+            }
+
+            // Return success message with more details
+            return JSON.stringify({
+              success: true,
+              message: "Code execution completed in Blender",
+              details:
+                result && typeof result === "object"
+                  ? result
+                  : { output: "No output" },
+              code: code.substring(0, 100) + (code.length > 100 ? "..." : ""), // Include truncated code for reference
+            });
           } catch (error: any) {
-            console.error(
-              "Renderer: Error executing createBlenderObject via IPC:",
-              error,
-            );
-            // Return error information (as a string)
+            console.error("Renderer: Error executing code in Blender:", error);
+            // Return detailed error information
             return JSON.stringify({
               success: false,
-              error: `IPC Error: ${error.message}`,
+              error: `Blender Code Execution Error: ${error.message}`,
+              details: error.stack ? error.stack : "No stack trace available",
             });
           }
         }

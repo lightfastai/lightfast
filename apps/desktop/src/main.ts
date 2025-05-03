@@ -93,6 +93,93 @@ ipcMain.handle("get-blender-status", () => {
   // Return the current Blender connection status using the imported function
   return getBlenderStatus();
 });
+
+// Add handler for sending messages to Blender
+ipcMain.handle("send-to-blender", async (event, message) => {
+  try {
+    console.log("Main: Sending message to Blender:", message);
+
+    // Check if Blender is connected
+    if (!isBlenderConnected()) {
+      console.warn("Main: Blender is not connected. Cannot send message.");
+      return {
+        success: false,
+        error:
+          "Blender is not connected. Please check your Blender connection.",
+        errorCode: "BLENDER_NOT_CONNECTED",
+      };
+    }
+
+    // Send the message to Blender
+    sendToBlender(message);
+
+    return {
+      success: true,
+      message: "Message sent to Blender",
+    };
+  } catch (error: any) {
+    console.error("Main: Error sending message to Blender:", error);
+    return {
+      success: false,
+      error: `Failed to send message to Blender: ${error.message}`,
+      errorCode: "EXECUTION_ERROR",
+    };
+  }
+});
+
+// Add Blender execute code handler
+ipcMain.handle("handle-blender-execute-code", async (event, args) => {
+  try {
+    console.log("Main: Received request to execute code in Blender");
+
+    // Extract code from args
+    const { code } = args;
+
+    if (!code) {
+      console.warn("Main: No code provided for execution");
+      return {
+        success: false,
+        error: "No code provided for execution",
+        errorCode: "INVALID_CODE",
+      };
+    }
+
+    // Check if Blender is connected before attempting to send the command
+    if (!isBlenderConnected()) {
+      console.warn("Main: Blender is not connected. Cannot execute code.");
+      return {
+        success: false,
+        error:
+          "Blender is not connected. Please check your Blender connection.",
+        errorCode: "BLENDER_NOT_CONNECTED",
+      };
+    }
+
+    // Send to Blender via WebSocket
+    const command = {
+      action: "execute_code",
+      params: {
+        code,
+      },
+    };
+
+    sendToBlender(command);
+
+    // For now, return a success message - in a more advanced implementation,
+    // we would wait for a response from Blender with the execution results
+    return {
+      success: true,
+      message: "Code has been sent to Blender for execution",
+    };
+  } catch (error: any) {
+    console.error("Main: Error handling Blender code execution:", error);
+    return {
+      success: false,
+      error: `Failed to execute code in Blender: ${error.message}`,
+      errorCode: "EXECUTION_ERROR",
+    };
+  }
+});
 // --- End IPC Handlers ---
 
 function createWindow() {

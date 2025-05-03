@@ -65,6 +65,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "ping",
       "handle-blender-create-object", // Add the Blender tool channel
       "get-blender-status", // Add the status check channel
+      "handle-blender-execute-code", // Add the Blender execute code channel
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
@@ -95,6 +96,9 @@ contextBridge.exposeInMainWorld("blenderConnection", {
   // Add function to send messages *to* Blender via main process
   sendToBlender: (message: object) =>
     ipcRenderer.invoke("send-to-blender", message),
+  // Add function to execute code in Blender
+  executeCode: (code: string) =>
+    ipcRenderer.invoke("handle-blender-execute-code", { code }),
 });
 
 exposeContexts();
