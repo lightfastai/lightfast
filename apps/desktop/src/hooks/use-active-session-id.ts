@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useActiveSessionStore } from "@/store/active-session-store";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
 
@@ -11,7 +12,7 @@ import { useCurrentWorkspaceId } from "./use-current-workspace-id";
  */
 export function useActiveSessionId(): [string | null, (id: string) => void] {
   const currentWorkspaceId = useCurrentWorkspaceId();
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const { activeSessionId, setActiveSessionId } = useActiveSessionStore();
 
   // Get all sessions for the current workspace
   const { data: sessions = [] } = useQuery(
@@ -25,7 +26,7 @@ export function useActiveSessionId(): [string | null, (id: string) => void] {
     if (!activeSessionId && sessions.length > 0) {
       setActiveSessionId(sessions[0].id);
     }
-  }, [sessions, activeSessionId]);
+  }, [sessions, activeSessionId, setActiveSessionId]);
 
   // Listen for session selection events
   useEffect(() => {
@@ -40,7 +41,7 @@ export function useActiveSessionId(): [string | null, (id: string) => void] {
     return () => {
       window.removeEventListener("session-selected", handleSessionSelected);
     };
-  }, []);
+  }, [setActiveSessionId]);
 
   return [activeSessionId, setActiveSessionId];
 }
