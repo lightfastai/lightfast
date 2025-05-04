@@ -1,4 +1,5 @@
 import type { Message } from "ai";
+import { cn } from "@/lib/utils";
 
 import { ToolExecutionCard } from "./tool-execution-card";
 
@@ -7,14 +8,8 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
-  // Log the message object to better understand its structure
-  console.log("Message object:", JSON.stringify(message, null, 2));
-
   // Helper function to render message parts
   const renderMessagePart = (part: any, partIndex: number) => {
-    // Log each part to understand its structure
-    console.log("Part:", partIndex, JSON.stringify(part, null, 2));
-
     if (part.type === "text") {
       return part.text;
     }
@@ -33,7 +28,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
       const state = toolInvocation.state;
 
       // Args could be directly in toolInvocation or in a nested structure
-      // For example in { "args": { "code": "..." } } or { "toolInvocation": { "args": { "code": "..." } } }
       const args = toolInvocation.args || {};
 
       const result = toolInvocation.result;
@@ -58,38 +52,65 @@ export function ChatMessage({ message }: ChatMessageProps) {
     return null;
   };
 
+  // Determine if this is a user or assistant message
+  const isUser = message.role === "user";
+
   return (
-    <div>
-      {Array.isArray(message.parts) && (
-        <div>
-          {/* Text content (if any) */}
-          {message.parts.some((part) => part.type === "text") && (
-            <div
-              className={`mb-2 flex w-full ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                  message.role === "user"
-                    ? "text-primary-foreground bg-orange-500"
-                    : "bg-muted text-foreground"
-                }`}
-              >
-                {/* Combine all text parts */}
+    <div
+      className={cn(
+        "group relative mb-4 flex items-start",
+        isUser ? "justify-end" : "justify-start",
+      )}
+    >
+      {/* Avatar/icon for the message sender */}
+      {!isUser && (
+        <div className="bg-background mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border shadow select-none">
+          <span className="text-muted-foreground text-xs font-semibold">
+            AI
+          </span>
+        </div>
+      )}
+
+      {/* Message content */}
+      <div
+        className={cn(
+          "flex max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+          isUser
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground",
+        )}
+      >
+        {Array.isArray(message.parts) ? (
+          <>
+            {/* Text content (if any) */}
+            {message.parts.some((part) => part.type === "text") && (
+              <div className="break-words whitespace-pre-wrap">
                 {message.parts
                   .filter((part) => part.type === "text")
                   .map((part: any, idx) => (
                     <span key={idx}>{part.text}</span>
                   ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Tool invocation parts */}
-          {message.parts
-            .filter((part) => part.type === "tool-invocation")
-            .map((part: any, idx) => renderMessagePart(part, idx))}
+            {/* Tool invocation parts */}
+            {message.parts
+              .filter((part) => part.type === "tool-invocation")
+              .map((part: any, idx) => renderMessagePart(part, idx))}
+          </>
+        ) : (
+          <div className="break-words whitespace-pre-wrap">
+            {message.content}
+          </div>
+        )}
+      </div>
+
+      {/* Avatar/icon for user */}
+      {isUser && (
+        <div className="bg-background ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border shadow select-none">
+          <span className="text-muted-foreground text-xs font-semibold">
+            You
+          </span>
         </div>
       )}
     </div>

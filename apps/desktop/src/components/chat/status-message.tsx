@@ -1,3 +1,6 @@
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
+
 interface StatusMessageProps {
   testResult: {
     success: boolean;
@@ -11,22 +14,27 @@ export function StatusMessage({ testResult, onDismiss }: StatusMessageProps) {
 
   return (
     <div
-      className={`mb-4 rounded-md p-3 text-sm ${
+      className={cn(
+        "mb-4 rounded-lg border p-4 text-sm",
         testResult.success
-          ? "bg-green-100 text-green-800"
-          : "bg-red-100 text-red-800"
-      }`}
+          ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900 dark:bg-green-950/50 dark:text-green-400"
+          : "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400",
+      )}
     >
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         <div
-          className={`mr-2 h-2 w-2 rounded-full ${testResult.success ? "bg-green-500" : "bg-red-500"}`}
+          className={cn(
+            "h-2 w-2 rounded-full",
+            testResult.success ? "bg-green-500" : "bg-red-500",
+          )}
         />
-        <span>{testResult.message}</span>
+        <span className="flex-1">{testResult.message}</span>
         <button
-          className="ml-auto text-xs opacity-70 hover:opacity-100"
+          className="ring-offset-background focus:ring-ring ml-auto rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none"
           onClick={onDismiss}
         >
-          Dismiss
+          <X className="h-4 w-4" />
+          <span className="sr-only">Dismiss</span>
         </button>
       </div>
     </div>
