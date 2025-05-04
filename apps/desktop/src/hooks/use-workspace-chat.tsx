@@ -1,6 +1,6 @@
 import type { Message } from "ai";
 import { useState } from "react";
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
 
 interface UseWorkspaceChatProps {
   workspaceId: string;
@@ -26,6 +26,7 @@ export function useWorkspaceChat({
     handleInputChange: baseHandleInputChange,
     handleSubmit,
     isLoading,
+    status,
     error,
   } = useChat({
     api: `${import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL}/api/chat`,
@@ -164,6 +165,7 @@ export function useWorkspaceChat({
     handleInputChange,
     handleSubmit,
     isLoading,
+    status,
     error,
     testResult,
     setTestResult,

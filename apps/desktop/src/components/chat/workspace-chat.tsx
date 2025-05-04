@@ -23,7 +23,7 @@ export function WorkspaceChat({
     input,
     handleInputChange,
     handleSubmit,
-    isLoading,
+    status,
     error,
     testResult,
     handleDismissTestResult,
@@ -41,7 +41,7 @@ export function WorkspaceChat({
         <ChatWindow
           messages={messages}
           testResult={testResult}
-          isLoading={isLoading}
+          isLoading={status === "streaming"}
           error={error}
           onDismissTestResult={handleDismissTestResult}
         />
@@ -49,7 +49,7 @@ export function WorkspaceChat({
       <div className="border-t px-4 py-3">
         <ChatInput
           input={input}
-          isLoading={isLoading}
+          isLoading={status === "streaming"}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
         />
