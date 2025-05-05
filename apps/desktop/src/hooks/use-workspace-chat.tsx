@@ -27,9 +27,8 @@ export function useWorkspaceChat({
   const {
     messages,
     input,
-    handleInputChange: baseHandleInputChange,
+    setInput,
     handleSubmit,
-    isLoading,
     status,
     error,
     experimental_resume,
@@ -171,13 +170,6 @@ export function useWorkspaceChat({
     console.error("Chat Error:", error);
   }
 
-  // Create a custom handleInputChange that works with both HTMLInputElement and HTMLTextAreaElement
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    baseHandleInputChange(e as React.ChangeEvent<HTMLInputElement>);
-  };
-
   const handleDismissTestResult = () => {
     setTestResult(null);
   };
@@ -185,9 +177,8 @@ export function useWorkspaceChat({
   return {
     messages,
     input,
-    handleInputChange,
+    setInput,
     handleSubmit,
-    isLoading,
     status,
     error,
     testResult,

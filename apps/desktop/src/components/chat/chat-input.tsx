@@ -1,87 +1,174 @@
-import { FormEvent, useEffect, useRef } from "react";
+"use client";
+
+import { memo, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Send } from "lucide-react";
+import { Send, StopCircle } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@repo/ui/components/ui/button";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 
 interface ChatInputProps {
+  chatId?: string;
   input: string;
-  isLoading: boolean;
-  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  setInput: (input: string) => void;
+  status?: "ready" | "submitted" | "error" | "streaming";
+  stop?: () => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   className?: string;
+  setMessages?: (messages: any) => void;
 }
 
-export function ChatInput({
+const PureChatInput = ({
+  chatId,
   input,
-  isLoading,
-  handleInputChange,
+  setInput,
+  status = "ready",
+  stop,
   handleSubmit,
   className,
-}: ChatInputProps) {
+  setMessages,
+}: ChatInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea height based on content
   useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "0";
-      const scrollHeight = textarea.scrollHeight;
-      textarea.style.height = scrollHeight + "px";
+    if (textareaRef.current) {
+      adjustHeight();
     }
-  }, [input]);
+  }, []);
 
-  // Handle Ctrl+Enter to submit
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !isLoading) {
-      e.preventDefault();
-      if (input.trim()) {
-        const form = e.currentTarget.form;
-        if (form)
-          form.dispatchEvent(
-            new Event("submit", { cancelable: true, bubbles: true }),
-          );
-      }
+  const adjustHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
     }
   };
 
+  const resetHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = "140px";
+    }
+  };
+
+  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(event.target.value);
+    adjustHeight();
+  };
+
+  const submitForm = useCallback(() => {
+    if (chatId) {
+      window.history.replaceState({}, "", `/chat/${chatId}`);
+    }
+
+    handleSubmit(
+      new Event("submit", { cancelable: true, bubbles: true }) as any,
+    );
+    resetHeight();
+
+    textareaRef.current?.focus();
+  }, [handleSubmit, chatId]);
+
   return (
-    <div className={cn("w-full", className)}>
-      <form
-        onSubmit={handleSubmit}
-        className="relative flex flex-col space-y-2"
-      >
-        <div className="bg-background focus-within:ring-ring relative flex w-full grow items-center overflow-hidden rounded-lg border focus-within:ring-1">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Message Lightfast..."
-            disabled={isLoading}
-            rows={1}
-            className="placeholder:text-muted-foreground min-h-10 w-full resize-none border-0 bg-transparent px-3 py-2 pr-10 focus-visible:ring-0"
-          />
-          <div className="absolute top-1 right-1">
-            <Button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              size="icon"
-              variant="ghost"
-              className="bg-primary text-primary-foreground h-8 w-8 rounded-full opacity-90 hover:opacity-100 disabled:opacity-50"
-            >
-              <Send className="h-4 w-4" />
-              <span className="sr-only">Send</span>
-            </Button>
-          </div>
-        </div>
-        <div className="text-muted-foreground text-center text-xs">
-          <span>Lightfast may produce inaccurate information. </span>
-          <kbd className="bg-muted rounded px-1 text-xs uppercase">⌘ Enter</kbd>
-          <span> to send</span>
-        </div>
-      </form>
+    <div className="relative flex w-full flex-col gap-4">
+      <Textarea
+        ref={textareaRef}
+        placeholder="Send a message..."
+        value={input}
+        onChange={handleInput}
+        className={cn(
+          "bg-muted dark:border-border max-h-[calc(75dvh)] min-h-[48px] resize-none overflow-hidden rounded-md pb-10 !text-sm",
+          className,
+        )}
+        rows={4}
+        autoFocus
+        onKeyDown={(event) => {
+          if (
+            event.key === "Enter" &&
+            !event.shiftKey &&
+            !event.nativeEvent.isComposing
+          ) {
+            event.preventDefault();
+
+            if (status !== "ready") {
+              toast.error("Please wait for the model to finish its response!");
+            } else {
+              submitForm();
+            }
+          }
+        }}
+      />
+
+      <div className="absolute right-0 bottom-0 flex w-fit flex-row justify-end p-2">
+        {status === "submitted" ? (
+          <StopButton stop={stop} setMessages={setMessages} />
+        ) : (
+          <SendButton input={input} submitForm={submitForm} />
+        )}
+      </div>
     </div>
   );
+};
+
+export const ChatInput = memo(PureChatInput, (prevProps, nextProps) => {
+  if (prevProps.input !== nextProps.input) return false;
+  if (prevProps.status !== nextProps.status) return false;
+  return true;
+});
+
+function PureStopButton({
+  stop,
+  setMessages,
+}: {
+  stop?: () => void;
+  setMessages?: (messages: any) => void;
+}) {
+  return (
+    <Button
+      data-testid="stop-button"
+      className="h-fit rounded-lg border p-1.5 dark:border-zinc-600"
+      onClick={(event) => {
+        event.preventDefault();
+        if (stop) {
+          stop();
+        }
+        if (setMessages) {
+          setMessages((messages: any) => messages);
+        }
+      }}
+    >
+      <StopCircle className="h-3 w-3" />
+    </Button>
+  );
 }
+
+const StopButton = memo(PureStopButton);
+
+function PureSendButton({
+  submitForm,
+  input,
+}: {
+  submitForm: () => void;
+  input: string;
+}) {
+  return (
+    <Button
+      data-testid="send-button"
+      variant="default"
+      size="icon"
+      className="rounded-lg"
+      onClick={(event) => {
+        event.preventDefault();
+        submitForm();
+      }}
+      disabled={input.length === 0}
+    >
+      <Send className="h-3 w-3" />
+    </Button>
+  );
+}
+
+const SendButton = memo(PureSendButton, (prevProps, nextProps) => {
+  if (prevProps.input !== nextProps.input) return false;
+  return true;
+});

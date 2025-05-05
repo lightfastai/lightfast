@@ -86,12 +86,6 @@ export function ChatMessage({ message, status = "ready" }: ChatMessageProps) {
     // Check for text in content
     (typeof message.content === "string" && message.content.trim().length > 0);
 
-  // Determine if we're in a thinking state
-  const isThinking =
-    !isUser &&
-    (status === "submitted" || status === "streaming") &&
-    !hasTextContent;
-
   // Render text content properly handling both content string and text parts
   const renderTextContent = () => {
     if (hasParts && textParts.length > 0) {
@@ -138,9 +132,9 @@ export function ChatMessage({ message, status = "ready" }: ChatMessageProps) {
               </AvatarFallback>
             </Avatar>
             {/* Thinking state or thought duration */}
-            {isThinking ? (
+            {status === "submitted" ? (
               <span className="text-muted-foreground flex items-center gap-2 text-xs">
-                thinking .....
+                Thinking .....
               </span>
             ) : hasTextContent && duration !== null ? (
               <span className="text-muted-foreground text-xs">
