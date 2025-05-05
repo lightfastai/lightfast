@@ -1,17 +1,19 @@
 import type { Message } from "ai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 
 interface UseWorkspaceChatProps {
   workspaceId: string;
   sessionId: string | null;
   initialMessages?: Message[];
+  autoResume?: boolean;
 }
 
 export function useWorkspaceChat({
   workspaceId,
   sessionId,
   initialMessages = [],
+  autoResume = false,
 }: UseWorkspaceChatProps) {
   // Local state for test operation results
   const [testResult, setTestResult] = useState<{
@@ -28,10 +30,12 @@ export function useWorkspaceChat({
     isLoading,
     status,
     error,
+    experimental_resume,
   } = useChat({
     api: `${import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL}/api/chat`,
     id: sessionId || undefined,
     initialMessages,
+    sendExtraMessageFields: true,
     body: {
       sessionId,
       workspaceId,
@@ -142,7 +146,20 @@ export function useWorkspaceChat({
         error: `Tool '${toolCall.toolName}' not implemented on client.`,
       });
     },
+    onError: (err) => {
+      console.error("Chat Error:", err);
+      // Potentially set an error state here if needed for UI feedback
+    },
   });
+
+  // Effect to potentially resume stream
+  useEffect(() => {
+    if (autoResume && sessionId && experimental_resume) {
+      console.log(`Attempting to resume chat for session: ${sessionId}`);
+      experimental_resume();
+    }
+    // Run only once on mount or when resume capability/props change
+  }, [autoResume, sessionId, experimental_resume]);
 
   if (error) {
     console.error("Chat Error:", error);
@@ -170,5 +187,6 @@ export function useWorkspaceChat({
     testResult,
     setTestResult,
     handleDismissTestResult,
+    experimental_resume,
   };
 }

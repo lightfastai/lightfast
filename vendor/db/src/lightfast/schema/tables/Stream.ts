@@ -12,15 +12,12 @@ import { nanoid } from "@repo/lib";
 import { Session } from "./Session";
 
 export const Stream = pgTable(
-  "Stream",
+  "stream",
   {
     id: varchar("id", { length: 191 })
       .notNull()
-      .primaryKey()
       .$defaultFn(() => nanoid()),
-    sessionId: varchar("sessionId", { length: 191 })
-      .notNull()
-      .references(() => Session.id, { onDelete: "cascade" }),
+    sessionId: varchar("sessionId", { length: 191 }).notNull(),
     createdAt: timestamp("createdAt").notNull(),
   },
   (table) => [

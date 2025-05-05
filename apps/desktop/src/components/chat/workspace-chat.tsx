@@ -10,6 +10,7 @@ interface WorkspaceChatProps {
   sessionId: string | null;
   initialMessages: Message[];
   className?: string;
+  autoResume?: boolean;
 }
 
 export function WorkspaceChat({
@@ -17,6 +18,7 @@ export function WorkspaceChat({
   sessionId,
   initialMessages,
   className,
+  autoResume = false,
 }: WorkspaceChatProps) {
   const {
     messages,
@@ -31,7 +33,10 @@ export function WorkspaceChat({
     workspaceId,
     sessionId,
     initialMessages,
+    autoResume,
   });
+
+  const isLoading = status === "submitted" || status === "streaming";
 
   return (
     <div
@@ -41,7 +46,7 @@ export function WorkspaceChat({
         <ChatWindow
           messages={messages}
           testResult={testResult}
-          isLoading={status === "streaming"}
+          isLoading={isLoading}
           error={error}
           onDismissTestResult={handleDismissTestResult}
         />
@@ -49,7 +54,7 @@ export function WorkspaceChat({
       <div className="border-t px-4 py-3">
         <ChatInput
           input={input}
-          isLoading={status === "streaming"}
+          isLoading={isLoading}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
         />
