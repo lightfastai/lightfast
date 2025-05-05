@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Send, StopCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -31,29 +31,8 @@ const PureChatInput = ({
 }: ChatInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      adjustHeight();
-    }
-  }, []);
-
-  const adjustHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
-    }
-  };
-
-  const resetHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = "140px";
-    }
-  };
-
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
-    adjustHeight();
   };
 
   const submitForm = useCallback(() => {
@@ -64,7 +43,6 @@ const PureChatInput = ({
     handleSubmit(
       new Event("submit", { cancelable: true, bubbles: true }) as any,
     );
-    resetHeight();
 
     textareaRef.current?.focus();
   }, [handleSubmit, chatId]);
@@ -77,7 +55,7 @@ const PureChatInput = ({
         value={input}
         onChange={handleInput}
         className={cn(
-          "bg-muted dark:border-border max-h-[calc(75dvh)] min-h-[48px] resize-none overflow-hidden rounded-md pb-10 !text-sm",
+          "bg-muted dark:border-border resize-none rounded-md pb-10 !text-sm",
           className,
         )}
         rows={4}
@@ -110,11 +88,7 @@ const PureChatInput = ({
   );
 };
 
-export const ChatInput = memo(PureChatInput, (prevProps, nextProps) => {
-  if (prevProps.input !== nextProps.input) return false;
-  if (prevProps.status !== nextProps.status) return false;
-  return true;
-});
+export const ChatInput = memo(PureChatInput);
 
 function PureStopButton({
   stop,
@@ -168,7 +142,4 @@ function PureSendButton({
   );
 }
 
-const SendButton = memo(PureSendButton, (prevProps, nextProps) => {
-  if (prevProps.input !== nextProps.input) return false;
-  return true;
-});
+const SendButton = memo(PureSendButton);
