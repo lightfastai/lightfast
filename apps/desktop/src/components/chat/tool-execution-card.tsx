@@ -61,10 +61,41 @@ export function ToolExecutionCard({
     toolName === "executeBlenderCode" &&
     (safeArgs.code || (safeArgs.args && safeArgs.args.code));
 
-  // Determine success/failure state
-  const isSuccess = toolState === "result" || toolState === "success";
-  const isError = toolState === "error" || toolState === "failed";
-  const isPending = toolState === "call" || toolState === "calling";
+  // --- Enhanced error/success/pending detection ---
+  let isError = false;
+  let isSuccess = false;
+  let isPending = false;
+  let errorMessage = "";
+  let errorCode = "";
+
+  if (toolState === "error" || toolState === "failed") {
+    isError = true;
+    errorMessage = error?.error || error?.message || String(error);
+    errorCode = error?.errorCode;
+  } else if (toolState === "result") {
+    if (resultDisplay && typeof resultDisplay === "object") {
+      if (resultDisplay.success === false) {
+        isError = true;
+        errorMessage =
+          resultDisplay.error ||
+          resultDisplay.message ||
+          JSON.stringify(resultDisplay);
+        errorCode = resultDisplay.errorCode;
+      } else if (resultDisplay.error) {
+        isError = true;
+        errorMessage = resultDisplay.error;
+        errorCode = resultDisplay.errorCode;
+      } else {
+        isSuccess = true;
+      }
+    } else {
+      isSuccess = true;
+    }
+  } else if (toolState === "success") {
+    isSuccess = true;
+  } else if (toolState === "call" || toolState === "calling") {
+    isPending = true;
+  }
 
   // Create unique ID for accordion
   const accordionId = `${messageId}-${toolCallId}`;
@@ -97,6 +128,7 @@ export function ToolExecutionCard({
         <button
           className="text-muted-foreground hover:text-foreground rounded p-1"
           onClick={() => setIsExpanded(!isExpanded)}
+          aria-label={isExpanded ? "Collapse details" : "Expand details"}
         >
           <ChevronDown
             className={cn(
@@ -143,30 +175,51 @@ export function ToolExecutionCard({
               </AccordionContent>
             </AccordionItem>
 
-            {(isSuccess || isError) && (
+            {isSuccess && (
               <AccordionItem
                 value={`${accordionId}-result`}
                 className="border-b-0"
               >
                 <AccordionTrigger className="py-2">
                   <div className="flex items-center gap-2">
-                    {isSuccess ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                    )}
-                    <span>{isSuccess ? "Result" : "Error"}</span>
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Result</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <pre
-                    className={cn(
-                      "overflow-auto rounded p-2 text-xs",
-                      isSuccess ? "bg-muted" : "bg-red-100 dark:bg-red-900",
-                    )}
-                  >
-                    {isSuccess ? resultString : formatJsonDisplay(error)}
+                  <pre className="bg-muted overflow-auto rounded p-2 text-xs">
+                    {resultString}
                   </pre>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {isError && (
+              <AccordionItem
+                value={`${accordionId}-error`}
+                className="border-b-0"
+              >
+                <AccordionTrigger className="py-2">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                    <span>Error</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="overflow-auto rounded bg-red-100 p-2 text-xs text-red-700 dark:bg-red-900 dark:text-red-200">
+                    {errorMessage}
+                    {errorCode && (
+                      <div className="mt-1 text-red-400">
+                        Error code: {errorCode}
+                      </div>
+                    )}
+                    {errorCode === "BLENDER_NOT_CONNECTED" && (
+                      <div className="mt-2 text-xs text-red-500 dark:text-red-300">
+                        Blender is not connected. Please open Blender and ensure
+                        the connection is active.
+                      </div>
+                    )}
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             )}
