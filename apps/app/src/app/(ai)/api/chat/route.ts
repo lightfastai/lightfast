@@ -187,7 +187,9 @@ export async function POST(request: Request) {
         messages,
         maxSteps: 5,
         tools: blenderTools,
-        experimental_transform: smoothStream({ chunking: "word" }),
+        experimental_transform: smoothStream({
+          chunking: "word", // Stream word by word for smooth experience
+        }),
         onFinish: async ({ response }) => {
           try {
             const assistantId = getTrailingMessageId({
@@ -229,7 +231,7 @@ export async function POST(request: Request) {
         },
       });
 
-      await result.consumeStream();
+      result.consumeStream();
 
       result.mergeIntoDataStream(dataStream, {
         sendReasoning: true,

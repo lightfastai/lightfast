@@ -57,6 +57,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
   const createdAt = message.createdAt;
 
+  // Handle streaming message parts properly
+  const textParts = Array.isArray(message.parts)
+    ? message.parts.filter((part) => part.type === "text")
+    : [];
+
   const toolParts = Array.isArray(message.parts)
     ? message.parts.filter((part) => part.type === "tool-invocation")
     : [];
@@ -66,6 +71,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
     !hasParts && message.content && message.content.trim().length > 0;
   const hasToolParts = toolParts.length > 0;
   const hasVisibleOutput = hasParts || hasContent || hasToolParts;
+
+  // Render text content properly handling both content string and text parts
+  const renderTextContent = () => {
+    if (hasParts && textParts.length > 0) {
+      return textParts.map((part, index) => (
+        <span key={`text-${index}`}>{part.text}</span>
+      ));
+    }
+    return message.content;
+  };
 
   useEffect(() => {
     if (!isUser && hasVisibleOutput && createdAt && duration === null) {
@@ -89,11 +104,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
               </AvatarFallback>
             </Avatar>
             <div className="flex-grow text-sm font-normal break-words whitespace-pre-wrap">
-              {hasParts
-                ? message.parts
-                    ?.filter((part) => part.type === "text")
-                    .map((part, index) => <span key={index}>{part.text}</span>)
-                : message.content}
+              {renderTextContent()}
             </div>
           </>
         ) : (
@@ -116,11 +127,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         <div className={cn("pr-3", isUser ? "pl-10" : "pl-10")}>
           {!isUser && (
             <div className="text-sm font-normal break-words whitespace-pre-wrap">
-              {hasParts
-                ? message.parts
-                    ?.filter((part) => part.type === "text")
-                    .map((part, index) => <span key={index}>{part.text}</span>)
-                : message.content}
+              {renderTextContent()}
             </div>
           )}
           {toolParts.map(renderMessagePart)}

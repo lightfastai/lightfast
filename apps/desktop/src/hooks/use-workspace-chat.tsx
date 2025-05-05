@@ -39,6 +39,8 @@ export function useWorkspaceChat({
     initialMessages,
     generateId: () => nanoid(),
     sendExtraMessageFields: true,
+    // Add streaming mode for proper word-by-word streaming
+    experimental_streamMode: "words",
     experimental_prepareRequestBody: (body) => ({
       message: body.messages.at(-1),
       workspaceId,
