@@ -8,7 +8,7 @@ export const textPartSchema = z.object({
 // Zod schema for the Vercel AI SDK Message type
 // Aligned with the database schema (parts, attachments)
 export const messageSchema = z.object({
-  id: z.string(),
+  id: z.string().nanoid(),
   role: z.enum(["user"]),
   createdAt: z.coerce.date(),
   content: z.string().min(1).max(2000),

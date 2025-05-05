@@ -1,11 +1,13 @@
-import type { Message } from "ai";
 import { useEffect, useState } from "react";
 import { useChat } from "@ai-sdk/react";
+
+import { nanoid } from "@repo/lib";
+import { RouterOutputs } from "@vendor/trpc";
 
 interface UseWorkspaceChatProps {
   workspaceId: string;
   sessionId: string | null;
-  initialMessages?: Message[];
+  initialMessages?: RouterOutputs["tenant"]["session"]["get"]["messages"];
   autoResume?: boolean;
 }
 
@@ -33,13 +35,15 @@ export function useWorkspaceChat({
     experimental_resume,
   } = useChat({
     api: `${import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL}/api/chat`,
-    id: sessionId || undefined,
+    // @ts-expect-error todo fix conversion
     initialMessages,
+    generateId: () => nanoid(),
     sendExtraMessageFields: true,
-    body: {
-      sessionId,
+    experimental_prepareRequestBody: (body) => ({
+      message: body.messages.at(-1),
       workspaceId,
-    },
+      sessionId,
+    }),
     // Implement client-side tool execution via onToolCall
     async onToolCall({
       toolCall,

@@ -260,6 +260,9 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@repo/lib':
+        specifier: workspace:^
+        version: link:../../packages/lib
       '@repo/trpc-client':
         specifier: workspace:*
         version: link:../../packages/trpc-client

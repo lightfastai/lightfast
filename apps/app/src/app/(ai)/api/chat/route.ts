@@ -91,7 +91,8 @@ export async function POST(request: Request) {
   try {
     requestBody = (await request.json()) as PostRequestBody;
     requestBody = postRequestBodySchema.parse(requestBody);
-  } catch (_) {
+  } catch (error) {
+    console.error("Failed to parse request body", error);
     return new Response("Invalid JSON", { status: 400 });
   }
 

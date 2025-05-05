@@ -36,9 +36,7 @@ export const Message = pgTable(
     attachments: json("attachments").notNull().default([]),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => ({
-    sessionIdx: index("message_session_idx").on(table.sessionId),
-  }),
+  (table) => [index("message_session_idx").on(table.sessionId)],
 );
 
 export const MessageRelations = relations(Message, ({ one }) => ({

@@ -1,10 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { eq } from "@vendor/db";
-import { Session } from "@vendor/db/lightfast/schema";
+import { desc, eq } from "@vendor/db";
+import { Message, Session } from "@vendor/db/lightfast/schema";
 
-import { inngest } from "../../inngest/client/client";
 import { publicProcedure } from "../../trpc";
 
 export const sessionRouter = {
@@ -15,18 +14,24 @@ export const sessionRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      const session = await ctx.db.query.Session.findFirst({
-        where: (table, { eq }) => eq(table.id, input.sessionId),
+      // Use leftJoin to fetch session and related messages
+      const [results] = await ctx.db.query.Session.findMany({
+        with: {
+          messages: true,
+        },
+        where: eq(Session.id, input.sessionId),
+        orderBy: [desc(Message.createdAt)],
       });
 
-      if (!session) {
+      if (!results) {
+        // No session found at all
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Session not found",
         });
       }
 
-      return session;
+      return results;
     }),
 
   list: publicProcedure
@@ -37,8 +42,11 @@ export const sessionRouter = {
     )
     .query(async ({ ctx, input }) => {
       const sessions = await ctx.db.query.Session.findMany({
-        where: (table, { eq }) => eq(table.workspaceId, input.workspaceId),
-        orderBy: (table, { desc }) => [desc(table.updatedAt)],
+        with: {
+          messages: true,
+        },
+        where: eq(Session.workspaceId, input.workspaceId),
+        orderBy: [desc(Session.updatedAt)],
       });
 
       return sessions;
@@ -55,7 +63,6 @@ export const sessionRouter = {
         .insert(Session)
         .values({
           workspaceId: input.workspaceId,
-          messages: [],
         })
         .returning({ id: Session.id, title: Session.title });
 
@@ -95,14 +102,4 @@ export const sessionRouter = {
 
       return updatedSession;
     }),
-
-  blenderAgent: publicProcedure.mutation(async ({ ctx }) => {
-    await inngest.send({
-      name: "blender-agent/run",
-      data: {
-        input:
-          "Hello, I would like to create a new Blender project. Tell me what I need to do.",
-      },
-    });
-  }),
 };

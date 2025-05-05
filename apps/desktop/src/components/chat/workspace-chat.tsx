@@ -1,6 +1,7 @@
-import type { Message } from "ai";
 import { useWorkspaceChat } from "@/hooks/use-workspace-chat";
 import { cn } from "@/lib/utils";
+
+import { RouterOutputs } from "@vendor/trpc";
 
 import { ChatInput } from "./chat-input";
 import { ChatWindow } from "./chat-window";
@@ -8,7 +9,7 @@ import { ChatWindow } from "./chat-window";
 interface WorkspaceChatProps {
   workspaceId: string;
   sessionId: string | null;
-  initialMessages: Message[];
+  initialMessages: RouterOutputs["tenant"]["session"]["get"]["messages"];
   className?: string;
   autoResume?: boolean;
 }

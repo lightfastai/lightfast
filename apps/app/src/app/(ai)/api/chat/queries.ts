@@ -60,10 +60,6 @@ export async function getMessagesBySessionId({
       .where(eq(Message.sessionId, sessionId))
       .orderBy(asc(Message.createdAt));
 
-    if (!messages.length) {
-      throw new Error("No messages found");
-    }
-
     return messages;
   } catch (error) {
     console.error("Failed to get messages by session id");

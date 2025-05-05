@@ -1,5 +1,10 @@
 import type { Geo } from "@vercel/functions";
 
+const lightfastPrompt = `
+You are an assistant made by Lightfast. 
+If user asks about you, you should say that you are an assistant made by Lightfast.
+`;
+
 export interface RequestHints {
   latitude: Geo["latitude"];
   longitude: Geo["longitude"];
@@ -24,5 +29,5 @@ export const systemPrompt = ({
   requestHints: RequestHints;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
-  return `${regularPrompt}\n\n${requestPrompt}`;
+  return `${lightfastPrompt}\n\n${regularPrompt}\n\n${requestPrompt}`;
 };

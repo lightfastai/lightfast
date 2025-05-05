@@ -3,11 +3,13 @@ import { useActiveSessionId } from "@/hooks/use-active-session-id";
 import { trpc } from "@/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
+import { RouterOutputs } from "@vendor/trpc";
+
 interface SessionManagerProps {
   workspaceId: string;
   children: (props: {
     activeSessionId: string | null;
-    activeSession: any;
+    activeSession: RouterOutputs["tenant"]["session"]["get"] | null;
     refetchActiveSession: () => void;
   }) => React.ReactNode;
 }
@@ -53,7 +55,7 @@ export function SessionManager({ workspaceId, children }: SessionManagerProps) {
     <>
       {children({
         activeSessionId,
-        activeSession,
+        activeSession: activeSession ?? null,
         refetchActiveSession,
       })}
     </>

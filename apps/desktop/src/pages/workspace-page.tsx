@@ -1,5 +1,4 @@
 // Import the correct types from the ai package
-import type { Message } from "ai";
 import { useEffect } from "react";
 import { SessionManager, WorkspaceChat } from "@/components/chat";
 import { RootLayout } from "@/components/root-layout";
@@ -38,7 +37,7 @@ export default function WorkspacePage() {
                 <WorkspaceChat
                   workspaceId={workspaceId}
                   sessionId={activeSessionId}
-                  initialMessages={(activeSession?.messages as Message[]) || []}
+                  initialMessages={activeSession?.messages || []}
                 />
               )}
             </SessionManager>

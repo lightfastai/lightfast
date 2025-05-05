@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
+    "@repo/lib": "workspace:^",
     "@repo/trpc-client": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-core": "^0.12.0",
