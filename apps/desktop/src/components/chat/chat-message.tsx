@@ -12,9 +12,10 @@ import { ToolExecutionCard } from "./tool-execution-card";
 
 interface ChatMessageProps {
   message: VercelMessage;
+  status?: "submitted" | "streaming" | "ready" | "error";
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, status = "ready" }: ChatMessageProps) {
   const [duration, setDuration] = useState<number | null>(null);
 
   const renderMessagePart = (part: any, partIndex: number) => {
@@ -72,6 +73,25 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const hasToolParts = toolParts.length > 0;
   const hasVisibleOutput = hasParts || hasContent || hasToolParts;
 
+  // More robust text content detection
+  const hasTextContent =
+    // Check for text in parts
+    (Array.isArray(message.parts) &&
+      message.parts.some(
+        (part) =>
+          part.type === "text" &&
+          typeof part.text === "string" &&
+          part.text.trim().length > 0,
+      )) ||
+    // Check for text in content
+    (typeof message.content === "string" && message.content.trim().length > 0);
+
+  // Determine if we're in a thinking state
+  const isThinking =
+    !isUser &&
+    (status === "submitted" || status === "streaming") &&
+    !hasTextContent;
+
   // Render text content properly handling both content string and text parts
   const renderTextContent = () => {
     if (hasParts && textParts.length > 0) {
@@ -85,53 +105,65 @@ export function ChatMessage({ message }: ChatMessageProps) {
   useEffect(() => {
     if (!isUser && hasVisibleOutput && createdAt && duration === null) {
       const now = new Date();
-      // const diffInSeconds = Math.round(
-      //   (now.getTime() - createdAt.getTime()) / 1000,
-      // );
-      setDuration(Math.max(0, 1)); // Keep simple duration logic for now
+      const diffInSeconds = Math.round(
+        (now.getTime() - createdAt.getTime()) / 1000,
+      );
+      setDuration(Math.max(0, diffInSeconds));
     }
   }, [isUser, hasVisibleOutput, createdAt, duration]);
 
   return (
     <div className={cn("group relative mb-4 flex flex-col")}>
-      <div className="flex items-center space-x-2 px-3 py-1">
-        {isUser ? (
-          <>
-            <Avatar className="bg-background flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow select-none">
-              <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
-              <AvatarFallback>
-                {user.email?.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-grow text-sm font-normal break-words whitespace-pre-wrap">
-              {renderTextContent()}
-            </div>
-          </>
-        ) : (
-          <>
+      {/* User message */}
+      {isUser ? (
+        <div className="flex items-center space-x-2 px-3 py-1">
+          <Avatar className="bg-background flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow select-none">
+            <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
+            <AvatarFallback>
+              {user.email?.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-grow text-sm font-normal break-words whitespace-pre-wrap">
+            {renderTextContent()}
+          </div>
+        </div>
+      ) : (
+        /* Assistant message */
+        <>
+          <div className="flex items-center space-x-2 px-3 py-1">
             <Avatar className="bg-background flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow select-none">
               <AvatarImage src={`https://avatar.vercel.sh/${assistant.name}`} />
               <AvatarFallback>
                 {assistant.name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-muted-foreground text-xs">
-              {duration !== null ? `Thought for ${duration}s` : "Thinking..."}
-            </span>
-          </>
-        )}
-      </div>
+            {/* Thinking state or thought duration */}
+            {isThinking ? (
+              <span className="text-muted-foreground flex items-center gap-2 text-xs">
+                thinking .....
+              </span>
+            ) : hasTextContent && duration !== null ? (
+              <span className="text-muted-foreground text-xs">
+                Thought for {duration} seconds
+              </span>
+            ) : null}
+          </div>
 
-      {/* Render tool parts for both user and assistant messages */}
-      {(isUser ? hasToolParts : hasParts || hasContent || hasToolParts) && (
-        <div className={cn("pr-3", isUser ? "pl-10" : "pl-10")}>
-          {!isUser && (
-            <div className="text-sm font-normal break-words whitespace-pre-wrap">
-              {renderTextContent()}
+          {/* Only render content if we have text or tool parts */}
+          {(hasTextContent || hasToolParts) && (
+            <div className="pr-3 pl-10">
+              <div className="text-sm font-normal break-words whitespace-pre-wrap">
+                {renderTextContent()}
+              </div>
+              {toolParts.map(renderMessagePart)}
             </div>
           )}
-          {toolParts.map(renderMessagePart)}
-        </div>
+        </>
+      )}
+
+      {/* Render tool parts for user messages */}
+      {isUser && hasToolParts && (
+        <div className="pr-3 pl-10">{toolParts.map(renderMessagePart)}</div>
       )}
     </div>
   );

@@ -37,8 +37,6 @@ export function WorkspaceChat({
     autoResume,
   });
 
-  const isLoading = status === "submitted" || status === "streaming";
-
   return (
     <div
       className={cn("flex h-full w-full flex-col overflow-hidden", className)}
@@ -47,7 +45,7 @@ export function WorkspaceChat({
         <ChatWindow
           messages={messages}
           testResult={testResult}
-          isLoading={isLoading}
+          status={status}
           error={error}
           onDismissTestResult={handleDismissTestResult}
         />
@@ -55,7 +53,7 @@ export function WorkspaceChat({
       <div className="border-t px-4 py-3">
         <ChatInput
           input={input}
-          isLoading={isLoading}
+          isLoading={status === "submitted" || status === "streaming"}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
         />

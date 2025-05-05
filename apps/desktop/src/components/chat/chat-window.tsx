@@ -10,7 +10,7 @@ interface ChatWindowProps {
     success: boolean;
     message: string;
   } | null;
-  isLoading: boolean;
+  status: "submitted" | "streaming" | "ready" | "error";
   error: Error | null | undefined;
   onDismissTestResult: () => void;
 }
@@ -18,7 +18,7 @@ interface ChatWindowProps {
 export function ChatWindow({
   messages,
   testResult,
-  isLoading,
+  status,
   error,
   onDismissTestResult,
 }: ChatWindowProps) {
@@ -29,7 +29,7 @@ export function ChatWindow({
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isLoading]);
+  }, [messages, status]);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto px-4 py-4">
@@ -63,30 +63,17 @@ export function ChatWindow({
           )}
 
           {/* Display messages */}
-          {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
+          {messages.map((message, index) => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              status={
+                index === messages.length - 1 && message.role === "assistant"
+                  ? status
+                  : "ready"
+              }
+            />
           ))}
-
-          {/* Loading Indicator */}
-          {isLoading && (
-            <div className="text-muted-foreground flex items-center gap-2 text-xs">
-              <div className="flex gap-1">
-                <div
-                  className="bg-muted-foreground/70 h-1 w-1 animate-bounce rounded-full"
-                  style={{ animationDelay: "0ms" }}
-                />
-                <div
-                  className="bg-muted-foreground/70 h-1 w-1 animate-bounce rounded-full"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <div
-                  className="bg-muted-foreground/70 h-1 w-1 animate-bounce rounded-full"
-                  style={{ animationDelay: "300ms" }}
-                />
-              </div>
-              <span>Thinking...</span>
-            </div>
-          )}
 
           {/* Reference to scroll to the bottom */}
           <div ref={messagesEndRef} />
