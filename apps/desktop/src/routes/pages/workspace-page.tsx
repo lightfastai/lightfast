@@ -1,8 +1,8 @@
 // Import the correct types from the ai package
 import { useEffect } from "react";
 import { SessionManager } from "@/components/chat/session-manager";
-import { WorkspaceChat } from "@/components/chat/workspace-chat";
 import { RootLayout } from "@/components/root-layout";
+import { SessionOrchestrator } from "@/components/session/session-orchestrator";
 import { trpc } from "@/trpc";
 import { prefetchWorkspaceData } from "@/utils/prefetch-utils";
 import { useQuery } from "@tanstack/react-query";
@@ -35,7 +35,7 @@ export default function WorkspacePage() {
           <div className="flex flex-1 flex-col overflow-hidden">
             <SessionManager workspaceId={workspaceId}>
               {({ activeSessionId, activeSession }) => (
-                <WorkspaceChat
+                <SessionOrchestrator
                   workspaceId={workspaceId}
                   sessionId={activeSessionId}
                   initialMessages={activeSession?.messages || []}
@@ -47,22 +47,4 @@ export default function WorkspacePage() {
       </div>
     </RootLayout>
   );
-}
-
-// Define window interface for TypeScript
-declare global {
-  interface Window {
-    electronAPI: {
-      getClientEnv: () => Promise<any>;
-      ping: () => Promise<any>;
-      send: (channel: string, ...args: any[]) => void;
-      on: (channel: string, listener: (...args: any[]) => void) => () => void;
-      invoke: (channel: string, ...args: any[]) => Promise<any>;
-    };
-    blenderConnection: {
-      onStatusUpdate: (callback: (status: any) => void) => () => void;
-      sendToBlender: (message: object) => Promise<any>;
-      getStatus: () => Promise<{ status: string; error?: string }>;
-    };
-  }
 }

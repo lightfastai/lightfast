@@ -1,11 +1,11 @@
-import type { Message } from "@ai-sdk/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SessionChatV1Message } from "@/types/internal";
 
 // Flexible regex to match Python code blocks (with or without 'python' after the backticks)
 const pythonCodeBlockRegex = /```(?:python)?\n([\s\S]*?)\n```/i;
 
 interface UseBlenderCodeExecutorArgs {
-  message: Message | null | undefined;
+  message: SessionChatV1Message | null | undefined;
 }
 
 // Export the type

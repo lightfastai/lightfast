@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useActiveSessionId } from "@/hooks/use-active-session-id";
 import { trpc } from "@/trpc";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { RouterOutputs } from "@vendor/trpc";
 
@@ -29,18 +29,6 @@ export function SessionManager({ workspaceId, children }: SessionManagerProps) {
   const { data: activeSession, refetch: refetchActiveSession } = useQuery(
     trpc.tenant.session.get.queryOptions({
       sessionId: (activeSessionId as string) ?? "",
-    }),
-  );
-
-  // Create session mutation
-  const createSession = useMutation(
-    trpc.tenant.session.create.mutationOptions({
-      onSuccess: (data) => {
-        if (data) {
-          refetchSessions();
-          setActiveSessionId(data.id);
-        }
-      },
     }),
   );
 

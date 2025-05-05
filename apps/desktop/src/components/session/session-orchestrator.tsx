@@ -1,20 +1,19 @@
-import { useWorkspaceChat } from "@/hooks/use-workspace-chat";
+import { useSessionChatV1 } from "@/hooks/use-session-chat-v1";
 import { cn } from "@/lib/utils";
+import { DBMessage } from "@/types/internal";
 
-import { RouterOutputs } from "@vendor/trpc";
-
-import { ChatInput } from "./chat-input";
-import { ChatWindow } from "./chat-window";
+import { ChatInput } from "../chat/chat-input";
+import { ChatWindow } from "../chat/chat-window";
 
 interface WorkspaceChatProps {
   workspaceId: string;
   sessionId: string | null;
-  initialMessages: RouterOutputs["tenant"]["session"]["get"]["messages"];
+  initialMessages?: DBMessage[];
   className?: string;
   autoResume?: boolean;
 }
 
-export function WorkspaceChat({
+export function SessionOrchestrator({
   workspaceId,
   sessionId,
   initialMessages,
@@ -31,7 +30,7 @@ export function WorkspaceChat({
     testResult,
     handleDismissTestResult,
     addToolResult,
-  } = useWorkspaceChat({
+  } = useSessionChatV1({
     workspaceId,
     sessionId,
     initialMessages,
