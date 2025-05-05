@@ -69,18 +69,18 @@ export function ChatWindow({
 
           {/* Loading Indicator */}
           {isLoading && (
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <div className="text-muted-foreground flex items-center gap-2 text-xs">
               <div className="flex gap-1">
                 <div
-                  className="bg-muted-foreground/70 h-2 w-2 animate-bounce rounded-full"
+                  className="bg-muted-foreground/70 h-1 w-1 animate-bounce rounded-full"
                   style={{ animationDelay: "0ms" }}
                 />
                 <div
-                  className="bg-muted-foreground/70 h-2 w-2 animate-bounce rounded-full"
+                  className="bg-muted-foreground/70 h-1 w-1 animate-bounce rounded-full"
                   style={{ animationDelay: "150ms" }}
                 />
                 <div
-                  className="bg-muted-foreground/70 h-2 w-2 animate-bounce rounded-full"
+                  className="bg-muted-foreground/70 h-1 w-1 animate-bounce rounded-full"
                   style={{ animationDelay: "300ms" }}
                 />
               </div>

@@ -246,8 +246,9 @@ export async function POST(request: Request) {
   if (streamContext) {
     return new Response(
       await streamContext.resumableStream(streamId, () => stream),
+      { headers: corsHeaders },
     );
   } else {
-    return new Response(stream);
+    return new Response(stream, { headers: corsHeaders });
   }
 }

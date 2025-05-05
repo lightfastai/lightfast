@@ -25,7 +25,7 @@ export const Stream = pgTable(
     foreignKey({
       columns: [table.sessionId],
       foreignColumns: [Session.id],
-    }),
+    }).onDelete("cascade"),
   ],
 );
 
