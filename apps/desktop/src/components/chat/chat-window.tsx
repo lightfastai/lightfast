@@ -1,6 +1,7 @@
 import type { Message } from "ai";
 import { useEffect, useRef } from "react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
+import { cn } from "@/lib/utils";
 import { ArrowDown } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
@@ -52,7 +53,7 @@ export function ChatWindow({
   const chatMessageStatus = status === "idle" ? "ready" : status;
 
   return (
-    <div className="relative flex h-full flex-col">
+    <div className={cn("relative flex h-full flex-col", className)}>
       <ScrollArea className="h-full">
         <div
           ref={scrollAreaRef}

@@ -59,7 +59,7 @@ const PureChatInput = ({
   }, [handleSubmit, chatId]);
 
   return (
-    <div className="relative flex w-full flex-col gap-4">
+    <div className={cn("relative flex w-full flex-col gap-4", className)}>
       <Textarea
         ref={textareaRef}
         placeholder="Send a message..."
@@ -67,7 +67,6 @@ const PureChatInput = ({
         onChange={handleInput}
         className={cn(
           "bg-muted dark:border-border max-h-[calc(75vh)] min-h-[24px] resize-none overflow-hidden rounded-2xl pb-10 !text-sm",
-          className,
         )}
         rows={1}
         autoFocus
