@@ -1,4 +1,5 @@
-import type { Message } from "ai";
+import type { Message as VercelMessage } from "ai";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 import {
@@ -10,11 +11,12 @@ import {
 import { ToolExecutionCard } from "./tool-execution-card";
 
 interface ChatMessageProps {
-  message: Message;
+  message: VercelMessage;
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
-  // Helper function to render message parts (primarily for assistant body)
+  const [duration, setDuration] = useState<number | null>(null);
+
   const renderMessagePart = (part: any, partIndex: number) => {
     if (part.type === "text") {
       return part.text;
@@ -53,8 +55,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
   };
 
   const isUser = message.role === "user";
+  const createdAt = message.createdAt;
 
-  // Extract text content for user header or assistant body
   const textContent = Array.isArray(message.parts)
     ? message.parts
         .filter((part) => part.type === "text")
@@ -62,14 +64,25 @@ export function ChatMessage({ message }: ChatMessageProps) {
         .join("")
     : message.content;
 
-  // Filter tool invocation parts for assistant body
   const toolParts = Array.isArray(message.parts)
     ? message.parts.filter((part) => part.type === "tool-invocation")
     : [];
 
+  const hasContent = textContent.trim().length > 0 || toolParts.length > 0;
+
+  useEffect(() => {
+    if (!isUser && hasContent && createdAt && duration === null) {
+      const now = new Date();
+      console.log(now, message.createdAt);
+      // const diffInSeconds = Math.round(
+      //   (now.getTime() - createdAt.getTime()) / 1000,
+      // );
+      setDuration(Math.max(0, 1));
+    }
+  }, [isUser, hasContent, createdAt, duration]);
+
   return (
     <div className={cn("group relative mb-4 flex flex-col")}>
-      {/* Message Header */}
       <div className="flex items-center space-x-2 px-3 py-1">
         {isUser ? (
           <>
@@ -86,36 +99,28 @@ export function ChatMessage({ message }: ChatMessageProps) {
         ) : (
           <>
             <Avatar className="bg-background flex h-5 w-5 shrink-0 items-center justify-center rounded-md border shadow select-none">
-              {/* Placeholder for Assistant Avatar if different */}
               <AvatarImage src={`https://avatar.vercel.sh/${assistant.name}`} />
               <AvatarFallback>
                 {assistant.name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <span className="text-muted-foreground text-xs">
-              {/* Placeholder for "thought for x seconds" */}
-              Thinking...
+              {duration !== null ? `Thought for ${duration}s` : "Thinking..."}
             </span>
           </>
         )}
       </div>
 
-      {/* Message Body */}
       <div className="px-3 py-2">
         {isUser ? (
-          <>
-            {/* Body content for user messages (e.g., images) can go here */}
-            {/* For now, it's empty as per the request */}
-          </>
+          <></>
         ) : (
           <div className="flex flex-col gap-2 text-sm">
-            {/* Assistant Body Content */}
             {textContent && (
               <div className="break-words whitespace-pre-wrap">
                 {textContent}
               </div>
             )}
-            {/* Render Tool Parts */}
             {toolParts.length > 0 && (
               <div className="mt-2 flex flex-col gap-2">
                 {toolParts.map((part, idx) => renderMessagePart(part, idx))}
