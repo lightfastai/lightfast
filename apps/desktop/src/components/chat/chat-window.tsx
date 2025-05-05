@@ -1,5 +1,5 @@
 import type { Message } from "ai";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import { cn } from "@/lib/utils";
 import { ArrowDown } from "lucide-react";
@@ -30,35 +30,72 @@ export function ChatWindow({
   onDismissTestResult,
   className,
 }: ChatWindowProps) {
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  // Find the ScrollArea's scrollable viewport
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
-  const { isAtBottom, scrollToBottom, containerRef } = useScrollToBottom();
+  const { isAtBottom, scrollToBottom, containerRef, checkIfAtBottom } =
+    useScrollToBottom();
 
-  // Set the scrollAreaRef as the container for the scroll-to-bottom hook
+  // Find the actual scrollable element within ScrollArea
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      containerRef(scrollAreaRef.current);
+    // ScrollArea creates a [data-radix-scroll-area-viewport] element
+    const scrollViewport = document.querySelector(
+      "[data-radix-scroll-area-viewport]",
+    );
+    if (scrollViewport instanceof HTMLDivElement) {
+      containerRef(scrollViewport);
+      console.log("Found scroll viewport:", scrollViewport);
+    } else {
+      console.warn("Could not find scroll viewport element");
     }
   }, [containerRef]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (messagesEndRef.current && messages.length > 0) {
       scrollToBottom();
     }
-  }, [messages, status, scrollToBottom]);
+  }, [messages.length, status, scrollToBottom]);
+
+  // Check scroll position when messages change
+  useEffect(() => {
+    // Small delay to allow rendering to complete
+    const timer = setTimeout(() => {
+      checkIfAtBottom();
+      setShowScrollButton(!isAtBottom && messages.length > 0);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [messages.length, isAtBottom, checkIfAtBottom, messages]);
 
   // Map the status to one that ChatMessage component accepts
   const chatMessageStatus = status === "idle" ? "ready" : status;
 
+  // Manual scroll handler to update button visibility
+  const handleScroll = () => {
+    checkIfAtBottom();
+    setShowScrollButton(!isAtBottom && messages.length > 0);
+  };
+
+  // Add scroll listener to the viewport
+  useEffect(() => {
+    const scrollViewport = document.querySelector(
+      "[data-radix-scroll-area-viewport]",
+    );
+    if (scrollViewport) {
+      scrollViewport.addEventListener("scroll", handleScroll);
+      return () => {
+        scrollViewport.removeEventListener("scroll", handleScroll);
+      };
+    }
+  }, [isAtBottom, messages.length]);
+
   return (
     <div className={cn("relative flex h-full flex-col", className)}>
-      <ScrollArea className="h-full">
-        <div
-          ref={scrollAreaRef}
-          className="flex flex-col overflow-y-auto px-4 py-4"
-        >
+      <ScrollArea className="h-full" ref={scrollViewportRef}>
+        <div className="flex flex-col overflow-y-auto px-4 py-4">
           {messages.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center space-y-4 pb-20">
               <div className="bg-background rounded-lg border p-8 shadow-sm">
@@ -108,9 +145,9 @@ export function ChatWindow({
       </ScrollArea>
 
       {/* Scroll to bottom button, shown only when not at bottom */}
-      {!isAtBottom && messages.length > 0 && (
+      {showScrollButton && (
         <Button
-          className="absolute right-4 bottom-4 rounded-full p-2 shadow-lg"
+          className="absolute right-4 bottom-4 z-10 rounded-full p-2 shadow-lg"
           size="icon"
           onClick={scrollToBottom}
         >
