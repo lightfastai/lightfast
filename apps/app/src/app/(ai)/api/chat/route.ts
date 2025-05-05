@@ -227,6 +227,12 @@ export async function POST(request: Request) {
             }),
             // No execute function: client-side tool
           },
+          reconnectBlender: {
+            description:
+              "Reconnect to Blender if the connection is lost or not established.",
+            parameters: z.object({}),
+            // No execute function: client-side tool
+          },
           // ...other tools can be added here
         },
         maxSteps: 5, // Enable multi-step tool calls

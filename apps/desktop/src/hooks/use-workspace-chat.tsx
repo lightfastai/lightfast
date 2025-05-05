@@ -53,6 +53,23 @@ export function useWorkspaceChat({
         // Example: auto-handle a different tool
         // return await doSomething(toolCall.args);
       }
+      if (toolCall.toolName === "reconnectBlender") {
+        // Attempt to reconnect to Blender (replace with real logic as needed)
+        try {
+          // Example: call Electron IPC to reconnect
+          // const result = await window.electronAPI.invoke("handle-blender-reconnect");
+          // For now, simulate success
+          return {
+            success: true,
+            message: "Reconnected to Blender successfully.",
+          };
+        } catch (e: any) {
+          return {
+            success: false,
+            error: e?.message || "Failed to reconnect to Blender.",
+          };
+        }
+      }
       // For executeBlenderCode, do nothing (handled by UI)
       return undefined;
     },

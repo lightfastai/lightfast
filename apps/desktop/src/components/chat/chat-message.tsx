@@ -52,6 +52,10 @@ export function ChatMessage({
   const [duration, setDuration] = useState<number | null>(null);
   const [executing, setExecuting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reconnectExecuting, setReconnectExecuting] = useState<string | null>(
+    null,
+  );
+  const [reconnectError, setReconnectError] = useState<string | null>(null);
 
   // Keep tool invocation rendering for other potential tools
   const renderToolPart = (part: any, partIndex: number) => {
@@ -63,6 +67,55 @@ export function ChatMessage({
       const args = toolInvocation.args || {};
       const result = toolInvocation.result;
       const toolError = toolInvocation.error;
+
+      // Interactive UI for reconnectBlender tool
+      if (
+        toolName === "reconnectBlender" &&
+        state === "call" &&
+        addToolResult
+      ) {
+        return (
+          <div
+            key={toolCallId}
+            className="bg-muted my-2 flex flex-col gap-2 rounded border p-3"
+          >
+            <div className="mb-1 text-xs font-semibold">Blender Connection</div>
+            <div className="mb-2 text-xs">
+              Blender is not connected. Press the button below to attempt
+              reconnection.
+            </div>
+            {reconnectError && (
+              <div className="mb-2 text-xs text-red-600">{reconnectError}</div>
+            )}
+            <div className="flex gap-2">
+              <button
+                className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
+                disabled={!!reconnectExecuting}
+                onClick={async () => {
+                  setReconnectExecuting(toolCallId);
+                  setReconnectError(null);
+                  try {
+                    const result = await window.electronAPI.invoke(
+                      "handle-blender-reconnect",
+                    );
+                    addToolResult({ toolCallId, result });
+                  } catch (e: any) {
+                    setReconnectError(
+                      e?.message || "Failed to reconnect to Blender",
+                    );
+                  } finally {
+                    setReconnectExecuting(null);
+                  }
+                }}
+              >
+                {reconnectExecuting === toolCallId
+                  ? "Reconnecting..."
+                  : "Reconnect Blender"}
+              </button>
+            </div>
+          </div>
+        );
+      }
 
       // Interactive UI for executeBlenderCode tool
       if (
