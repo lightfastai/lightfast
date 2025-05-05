@@ -1,13 +1,8 @@
 import { relations } from "drizzle-orm";
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  varchar,
-} from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm/sql";
+
+import { nanoid } from "@repo/lib";
 
 import { Message } from "./Message";
 import { Workspace } from "./Workspace";
@@ -16,7 +11,10 @@ import { Workspace } from "./Workspace";
 export const Session = pgTable(
   "session", // Keep table name as 'session' or change to 'chat' if preferred?
   {
-    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    id: varchar("id", { length: 191 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
     workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
       .references(() => Workspace.id, { onDelete: "cascade" }), // Keep link to Workspace
@@ -31,9 +29,9 @@ export const Session = pgTable(
       .notNull()
       .$onUpdateFn(() => sql`now()`),
   },
-  (table) => ({
-    workspaceIdx: index("session_workspace_idx").on(table.workspaceId), // Updated index name
-  }),
+  (table) => [
+    index("session_workspace_idx").on(table.workspaceId), // Updated index name
+  ],
 );
 
 // Renaming ChatRelations to SessionRelations
@@ -44,3 +42,5 @@ export const SessionRelations = relations(Session, ({ one, many }) => ({
   }),
   messages: many(Message), // A session (chat) can have multiple messages
 }));
+
+export type Session = typeof Session.$inferSelect;

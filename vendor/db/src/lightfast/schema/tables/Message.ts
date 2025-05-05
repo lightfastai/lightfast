@@ -5,8 +5,10 @@ import {
   pgEnum,
   pgTable,
   timestamp,
-  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
+
+import { nanoid } from "@repo/lib";
 
 import { Session } from "./Session";
 
@@ -14,14 +16,17 @@ export const messageRoleEnum = pgEnum("message_role", [
   "user",
   "assistant",
   "system",
-  "tool",
+  "data",
 ]);
 
 export const Message = pgTable(
   "message",
   {
-    id: uuid("id").primaryKey().notNull().defaultRandom(),
-    sessionId: uuid("session_id")
+    id: varchar("id", { length: 191 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    sessionId: varchar("session_id", { length: 191 })
       .notNull()
       .references(() => Session.id, { onDelete: "cascade" }), // Link to Session
     role: messageRoleEnum("role").notNull(),
@@ -42,3 +47,5 @@ export const MessageRelations = relations(Message, ({ one }) => ({
     references: [Session.id],
   }),
 }));
+
+export type Message = typeof Message.$inferSelect;
