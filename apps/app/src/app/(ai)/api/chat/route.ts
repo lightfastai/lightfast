@@ -11,6 +11,7 @@ import {
 } from "ai";
 import { eq } from "drizzle-orm";
 import { createResumableStreamContext } from "resumable-stream";
+import { z } from "zod";
 
 import type { Session, Stream } from "@vendor/db/lightfast/schema";
 import { db } from "@vendor/db/client";
@@ -215,6 +216,20 @@ export async function POST(request: Request) {
         experimental_telemetry: {
           functionId: "stream-text",
         },
+        tools: {
+          executeBlenderCode: {
+            description:
+              "Execute a Python code block in Blender after user confirmation.",
+            parameters: z.object({
+              code: z
+                .string()
+                .describe("The Python code to execute in Blender"),
+            }),
+            // No execute function: client-side tool
+          },
+          // ...other tools can be added here
+        },
+        maxSteps: 5, // Enable multi-step tool calls
       });
 
       void result.consumeStream();

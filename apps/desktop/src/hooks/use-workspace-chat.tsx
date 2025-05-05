@@ -30,6 +30,7 @@ export function useWorkspaceChat({
     error,
     experimental_resume,
     append,
+    addToolResult,
   } = useChat({
     api: `${import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL}/api/chat`,
     // @ts-expect-error todo fix conversion
@@ -45,6 +46,15 @@ export function useWorkspaceChat({
     onError: (err) => {
       console.error("Chat Error:", err);
       // Resetting execution state is now handled within useBlenderCodeExecutor
+    },
+    // Optionally auto-handle other tools here. For executeBlenderCode, let the UI handle it for user confirmation.
+    onToolCall: async ({ toolCall }) => {
+      if (toolCall.toolName === "someOtherTool") {
+        // Example: auto-handle a different tool
+        // return await doSomething(toolCall.args);
+      }
+      // For executeBlenderCode, do nothing (handled by UI)
+      return undefined;
     },
     // onFinish is no longer needed here to trigger execution,
     // as the new hook uses useEffect based on the latest message.
@@ -91,5 +101,6 @@ export function useWorkspaceChat({
     executingCode: isExecuting,
     experimental_resume,
     append,
+    addToolResult,
   };
 }

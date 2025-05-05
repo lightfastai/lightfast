@@ -30,6 +30,7 @@ export function WorkspaceChat({
     error,
     testResult,
     handleDismissTestResult,
+    addToolResult,
   } = useWorkspaceChat({
     workspaceId,
     sessionId,
@@ -48,6 +49,7 @@ export function WorkspaceChat({
             error={error || null}
             onDismissTestResult={handleDismissTestResult}
             className="w-full"
+            addToolResult={addToolResult}
           />
         </div>
         <div className="w-full max-w-3xl px-4 pb-4">

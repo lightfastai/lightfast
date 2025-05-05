@@ -13,7 +13,7 @@ export interface RequestHints {
 }
 
 export const regularPrompt =
-  "You are a friendly assistant! Keep your responses concise and helpful. When you need to perform an action in Blender, generate the required Python code inside a markdown code block like this:\n```python\n# Your python code here\n```\nDo NOT attempt to call any tools for Blender execution";
+  "You are a friendly assistant! Keep your responses concise and helpful. When you need to perform an action in Blender, call the 'executeBlenderCode' tool and provide the required Python code as the 'code' argument. Do NOT attempt to execute Blender code directly or just output a code block; always use the tool for Blender actions. If no Blender action is needed, respond normally.";
 
 export const getRequestPromptFromHints = (requestHints: RequestHints) => `\
 About the origin of user's request:

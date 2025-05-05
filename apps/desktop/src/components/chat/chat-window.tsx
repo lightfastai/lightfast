@@ -20,6 +20,7 @@ interface ChatWindowProps {
   testResult: BlenderExecutionResult | null;
   onDismissTestResult: () => void;
   className?: string;
+  addToolResult?: (args: { toolCallId: string; result: any }) => void;
 }
 
 export function ChatWindow({
@@ -29,6 +30,7 @@ export function ChatWindow({
   testResult,
   onDismissTestResult,
   className,
+  addToolResult,
 }: ChatWindowProps) {
   const { containerRef } = useScrollToBottom();
 
@@ -44,6 +46,7 @@ export function ChatWindow({
               key={message.id ?? `message-${index}`}
               message={message}
               status={status}
+              addToolResult={addToolResult}
             />
           ))}
           {isStreamingOrSubmitted &&
