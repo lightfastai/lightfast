@@ -1,5 +1,3 @@
-"use client";
-
 import { memo, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Send, StopCircle } from "lucide-react";

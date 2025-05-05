@@ -1,6 +1,7 @@
 // Import the correct types from the ai package
 import { useEffect } from "react";
-import { SessionManager, WorkspaceChat } from "@/components/chat";
+import { SessionManager } from "@/components/chat/session-manager";
+import { WorkspaceChat } from "@/components/chat/workspace-chat";
 import { RootLayout } from "@/components/root-layout";
 import { trpc } from "@/trpc";
 import { prefetchWorkspaceData } from "@/utils/prefetch-utils";
