@@ -66,7 +66,7 @@ const PureChatInput = ({
         value={input}
         onChange={handleInput}
         className={cn(
-          "bg-muted dark:border-border max-h-[calc(75vh)] min-h-[24px] resize-none overflow-hidden rounded-2xl pb-10 !text-sm",
+          "bg-muted dark:border-border max-h-[calc(75vh)] min-h-[24px] resize-none overflow-hidden rounded-md pb-10 !text-xs",
         )}
         rows={1}
         autoFocus
@@ -110,7 +110,7 @@ function PureStopButton({
   return (
     <Button
       data-testid="stop-button"
-      className="h-fit rounded-full border p-1.5 dark:border-zinc-600"
+      className="h-fit rounded-md border p-1.5 dark:border-zinc-600"
       onClick={(event) => {
         event.preventDefault();
         if (stop) {
@@ -140,7 +140,7 @@ function PureSendButton({
       data-testid="send-button"
       variant="default"
       size="icon"
-      className="h-fit rounded-full p-1.5"
+      className="h-fit rounded-md p-1.5"
       onClick={(event) => {
         event.preventDefault();
         submitForm();
