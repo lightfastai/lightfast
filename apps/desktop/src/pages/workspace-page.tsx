@@ -27,7 +27,7 @@ export default function WorkspacePage() {
 
   return (
     <RootLayout>
-      <div className="bg-background flex h-screen flex-col">
+      <div className="bg-background flex h-full flex-col">
         {/* Main Content Area */}
         <div className="flex flex-1 overflow-hidden">
           {/* Chat Area */}

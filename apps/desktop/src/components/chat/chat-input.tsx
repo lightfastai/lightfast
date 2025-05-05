@@ -12,7 +12,7 @@ interface ChatInputProps {
   chatId?: string;
   input: string;
   setInput: (input: string) => void;
-  status?: "ready" | "submitted" | "error" | "streaming";
+  status?: "idle" | "ready" | "submitted" | "error" | "streaming";
   stop?: () => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   className?: string;
@@ -33,6 +33,12 @@ const PureChatInput = ({
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
+
+    // Auto-resize the textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
+    }
   };
 
   const submitForm = useCallback(() => {
@@ -43,6 +49,11 @@ const PureChatInput = ({
     handleSubmit(
       new Event("submit", { cancelable: true, bubbles: true }) as any,
     );
+
+    // Reset the textarea height after submission
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
 
     textareaRef.current?.focus();
   }, [handleSubmit, chatId]);
@@ -55,10 +66,10 @@ const PureChatInput = ({
         value={input}
         onChange={handleInput}
         className={cn(
-          "bg-muted dark:border-border resize-none rounded-md pb-10 !text-sm",
+          "bg-muted dark:border-border max-h-[calc(75vh)] min-h-[24px] resize-none overflow-hidden rounded-2xl pb-10 !text-sm",
           className,
         )}
-        rows={4}
+        rows={1}
         autoFocus
         onKeyDown={(event) => {
           if (
@@ -78,7 +89,7 @@ const PureChatInput = ({
       />
 
       <div className="absolute right-0 bottom-0 flex w-fit flex-row justify-end p-2">
-        {status === "submitted" ? (
+        {status === "submitted" || status === "streaming" ? (
           <StopButton stop={stop} setMessages={setMessages} />
         ) : (
           <SendButton input={input} submitForm={submitForm} />
@@ -100,7 +111,7 @@ function PureStopButton({
   return (
     <Button
       data-testid="stop-button"
-      className="h-fit rounded-lg border p-1.5 dark:border-zinc-600"
+      className="h-fit rounded-full border p-1.5 dark:border-zinc-600"
       onClick={(event) => {
         event.preventDefault();
         if (stop) {
@@ -130,7 +141,7 @@ function PureSendButton({
       data-testid="send-button"
       variant="default"
       size="icon"
-      className="rounded-lg"
+      className="h-fit rounded-full p-1.5"
       onClick={(event) => {
         event.preventDefault();
         submitForm();

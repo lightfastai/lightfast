@@ -38,23 +38,18 @@ export function WorkspaceChat({
   });
 
   return (
-    <div
-      className={cn(
-        "flex h-full w-full items-center justify-center overflow-hidden",
-        className,
-      )}
-    >
-      <div className="max-w-2xl">
+    <div className={cn("bg-background flex h-full w-full flex-col", className)}>
+      <div className="flex h-full w-full flex-col overflow-hidden">
         <div className="flex-1 overflow-hidden">
           <ChatWindow
             messages={messages}
             testResult={testResult}
             status={status}
-            error={error}
+            error={error || null}
             onDismissTestResult={handleDismissTestResult}
           />
         </div>
-        <div className="px-4 pb-3">
+        <div className="px-4 pb-4">
           <ChatInput
             input={input}
             status={status}
