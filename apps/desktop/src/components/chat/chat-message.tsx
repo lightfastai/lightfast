@@ -133,7 +133,7 @@ export function ChatMessage({ message, status = "ready" }: ChatMessageProps) {
   }, [isUser, hasVisibleOutput, createdAt, duration]);
 
   return (
-    <div className={cn("group relative mb-4 flex flex-col")}>
+    <div className={cn("group relative mb-8 flex flex-col")}>
       {/* User message */}
       {isUser ? (
         <div className="flex items-start space-x-2 px-3 py-1">
@@ -173,7 +173,7 @@ export function ChatMessage({ message, status = "ready" }: ChatMessageProps) {
 
           {/* Render parsed content (text/code) and tool parts */}
           {hasVisibleOutput && (
-            <div className="pr-3 pl-10">
+            <div className="pt-3 pr-3 pl-10">
               <div className="text-sm font-normal break-words whitespace-pre-wrap">
                 {contentParts.map((part, index) => {
                   if (part.type === "text") {
@@ -183,9 +183,11 @@ export function ChatMessage({ message, status = "ready" }: ChatMessageProps) {
                     return (
                       <pre
                         key={`content-${index}`}
-                        className="bg-muted my-2 overflow-x-auto rounded-md p-2 font-mono text-xs dark:bg-zinc-800"
+                        className="bg-muted dark:bg-muted/50 border-border my-2 overflow-x-auto rounded-md border p-2 font-mono text-xs"
                       >
-                        <code>{part.value}</code>
+                        <code className="text-foreground w-fit whitespace-pre-wrap">
+                          {part.value}
+                        </code>
                       </pre>
                     );
                   }
