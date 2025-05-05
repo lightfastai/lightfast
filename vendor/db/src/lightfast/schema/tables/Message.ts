@@ -35,6 +35,7 @@ export const Message = pgTable(
     // Keeping attachments field as in the example for future use
     attachments: json("attachments").notNull().default([]),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [index("message_session_idx").on(table.sessionId)],
 );

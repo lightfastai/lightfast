@@ -161,6 +161,7 @@ export async function POST(request: Request) {
           // attachments: message.experimental_attachments ?? [],
           attachments: [],
           createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ],
     });
@@ -178,9 +179,10 @@ export async function POST(request: Request) {
   }
 
   const streamId = dbStream.id;
+  const startThinking = new Date();
 
   const stream = createDataStream({
-    execute: async (dataStream) => {
+    execute: (dataStream) => {
       const result = streamText({
         model: aiTextProviders.languageModel("chat-model"),
         system: systemPrompt({ requestHints }),
@@ -218,7 +220,8 @@ export async function POST(request: Request) {
                   role: assistantMessage.role,
                   parts: assistantMessage.parts,
                   attachments: assistantMessage.experimental_attachments ?? [],
-                  createdAt: new Date(),
+                  createdAt: startThinking,
+                  updatedAt: new Date(),
                 },
               ],
             });

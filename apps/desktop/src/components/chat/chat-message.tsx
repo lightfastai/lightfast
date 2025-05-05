@@ -1,4 +1,4 @@
-import type { Message as VercelMessage } from "ai";
+import type { UIMessage } from "ai";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ import {
 import { ToolExecutionCard } from "./tool-execution-card";
 
 interface ChatMessageProps {
-  message: VercelMessage;
+  message: UIMessage;
   status?: "submitted" | "streaming" | "ready" | "error";
 }
 
@@ -98,11 +98,10 @@ export function ChatMessage({ message, status = "ready" }: ChatMessageProps) {
 
   useEffect(() => {
     if (!isUser && hasVisibleOutput && createdAt && duration === null) {
-      const now = new Date();
-      const diffInSeconds = Math.round(
-        (now.getTime() - createdAt.getTime()) / 1000,
-      );
-      setDuration(Math.max(0, diffInSeconds));
+      // const diffInSeconds = Math.round(
+      //   (new Date().getTime() - createdAt.getTime()) / 1000,
+      // );
+      setDuration(Math.max(0, 0));
     }
   }, [isUser, hasVisibleOutput, createdAt, duration]);
 

@@ -1,4 +1,4 @@
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { ChatMessage } from "./chat-message";
 import { StatusMessage } from "./status-message";
 
 interface ChatWindowProps {
-  messages: Message[];
+  messages: UIMessage[];
   testResult: {
     success: boolean;
     message: string;
