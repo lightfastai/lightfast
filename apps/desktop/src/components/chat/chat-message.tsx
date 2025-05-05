@@ -8,7 +8,7 @@ import {
   AvatarImage,
 } from "@repo/ui/components/ui/avatar";
 
-import { ToolExecutionCard } from "./tool-execution-card";
+import { ToolSection } from "./tool-section";
 
 interface ChatMessageProps {
   message: UIMessage;
@@ -50,161 +50,6 @@ export function ChatMessage({
   addToolResult,
 }: ChatMessageProps) {
   const [duration, setDuration] = useState<number | null>(null);
-  const [executing, setExecuting] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [reconnectExecuting, setReconnectExecuting] = useState<string | null>(
-    null,
-  );
-  const [reconnectError, setReconnectError] = useState<string | null>(null);
-
-  // Helper to always send a valid tool result
-  const handleToolResult = (toolCallId: string, result: any) => {
-    if (addToolResult) {
-      addToolResult({
-        toolCallId,
-        result,
-      });
-    }
-  };
-
-  // Keep tool invocation rendering for other potential tools
-  const renderToolPart = (part: any, partIndex: number) => {
-    if (part.type === "tool-invocation") {
-      const toolInvocation = part.toolInvocation || part;
-      const toolCallId = toolInvocation.toolCallId;
-      const toolName = toolInvocation.toolName;
-      const state = toolInvocation.state;
-      const args = toolInvocation.args || {};
-      const result = toolInvocation.result;
-      const toolError = toolInvocation.error;
-
-      // Interactive UI for reconnectBlender tool
-      if (
-        toolName === "reconnectBlender" &&
-        state === "call" &&
-        addToolResult
-      ) {
-        return (
-          <div
-            key={toolCallId}
-            className="bg-muted my-2 flex flex-col gap-2 rounded border p-3"
-          >
-            <div className="mb-1 text-xs font-semibold">Blender Connection</div>
-            <div className="mb-2 text-xs">
-              Blender is not connected. Press the button below to attempt
-              reconnection.
-            </div>
-            {reconnectError && (
-              <div className="mb-2 text-xs text-red-600">{reconnectError}</div>
-            )}
-            <div className="flex gap-2">
-              <button
-                className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
-                disabled={!!reconnectExecuting}
-                onClick={async () => {
-                  setReconnectExecuting(toolCallId);
-                  setReconnectError(null);
-                  try {
-                    const result = await window.electronAPI.invoke(
-                      "handle-blender-reconnect",
-                    );
-                    console.log("reconnect result", result);
-                    handleToolResult(toolCallId, result);
-                  } catch (e: any) {
-                    handleToolResult(toolCallId, {
-                      error: e?.message || "Failed to reconnect to Blender",
-                    });
-                  } finally {
-                    setReconnectExecuting(null);
-                  }
-                }}
-              >
-                {reconnectExecuting === toolCallId
-                  ? "Reconnecting..."
-                  : "Reconnect Blender"}
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      // Interactive UI for executeBlenderCode tool
-      if (
-        toolName === "executeBlenderCode" &&
-        state === "call" &&
-        addToolResult
-      ) {
-        return (
-          <div
-            key={toolCallId}
-            className="bg-muted my-2 flex flex-col gap-2 rounded border p-3"
-          >
-            <div className="mb-1 text-xs font-semibold">
-              Blender Code Execution Request
-            </div>
-            <pre className="bg-background mb-2 overflow-x-auto rounded border p-2 text-xs">
-              {args.code}
-            </pre>
-            {error && <div className="mb-2 text-xs text-red-600">{error}</div>}
-            <div className="flex gap-2">
-              <button
-                className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
-                disabled={!!executing}
-                onClick={async () => {
-                  setExecuting(toolCallId);
-                  setError(null);
-                  try {
-                    // Electron IPC call
-                    const result = await window.electronAPI.invoke(
-                      "handle-blender-execute-code",
-                      { code: args.code },
-                    );
-                    console.log("execute code result", result);
-                    handleToolResult(toolCallId, result);
-                  } catch (e: any) {
-                    handleToolResult(toolCallId, {
-                      error: e?.message || "Failed to execute code",
-                    });
-                  } finally {
-                    setExecuting(null);
-                  }
-                }}
-              >
-                {executing === toolCallId ? "Running..." : "Run in Blender"}
-              </button>
-              <button
-                className="rounded border px-3 py-1 text-xs hover:bg-gray-100"
-                disabled={!!executing}
-                onClick={() => {
-                  handleToolResult(toolCallId, {
-                    error: "User denied execution",
-                  });
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      // Fallback: show the default tool execution card
-      return (
-        <ToolExecutionCard
-          key={`${message.id}-${toolCallId || partIndex}-${partIndex}`}
-          toolName={toolName}
-          toolState={state}
-          args={args}
-          result={result}
-          error={toolError}
-          messageId={message.id || "message"}
-          toolCallId={toolCallId || `tool-${partIndex}`}
-        />
-      );
-    }
-    return null;
-  };
-
   const user = { email: "test@test.com" };
   const assistant = { name: "Assistant" };
   const isUser = message.role === "user";
@@ -327,7 +172,14 @@ export function ChatMessage({
                 })}
               </div>
               {/* Render separate tool invocation parts if they exist */}
-              {hasToolParts && toolParts.map(renderToolPart)}
+              {hasToolParts &&
+                toolParts.map((part, idx) => (
+                  <ToolSection
+                    key={part.toolInvocation?.toolCallId || idx}
+                    toolInvocation={part.toolInvocation || part}
+                    addToolResult={addToolResult}
+                  />
+                ))}
             </div>
           )}
         </>
@@ -335,7 +187,15 @@ export function ChatMessage({
 
       {/* Tool parts can also appear in user messages if needed, keep rendering logic */}
       {isUser && hasToolParts && (
-        <div className="pr-3 pl-10">{toolParts.map(renderToolPart)}</div>
+        <div className="pr-3 pl-10">
+          {toolParts.map((part, idx) => (
+            <ToolSection
+              key={part.toolInvocation?.toolCallId || idx}
+              toolInvocation={part.toolInvocation || part}
+              addToolResult={addToolResult}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

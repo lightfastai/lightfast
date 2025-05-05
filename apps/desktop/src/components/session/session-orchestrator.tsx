@@ -1,4 +1,4 @@
-import { useSessionChatV1 } from "@/hooks/use-session-chat-v1";
+import { useSessionChatV1 } from "@/hooks/use-session-chat";
 import { cn } from "@/lib/utils";
 import { DBMessage } from "@/types/internal";
 
@@ -27,8 +27,6 @@ export function SessionOrchestrator({
     handleSubmit,
     status,
     error,
-    testResult,
-    handleDismissTestResult,
     addToolResult,
   } = useSessionChatV1({
     workspaceId,
@@ -43,10 +41,8 @@ export function SessionOrchestrator({
         <div className="w-full max-w-3xl flex-1 overflow-hidden">
           <ChatWindow
             messages={messages}
-            testResult={testResult}
             status={status}
             error={error || null}
-            onDismissTestResult={handleDismissTestResult}
             className="w-full"
             addToolResult={addToolResult}
           />

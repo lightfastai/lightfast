@@ -8,8 +8,6 @@ import { useChat } from "@ai-sdk/react";
 
 import { nanoid } from "@repo/lib";
 
-import { useBlenderCodeExecutor } from "./use-blender-code-executor";
-import { useLatestAssistantMessage } from "./use-latest-assistant-message";
 import { useSessionResumable } from "./use-session-resumable";
 
 interface UseSessionChatV1Props {
@@ -60,11 +58,11 @@ export function useSessionChatV1({
   });
 
   // Find the latest assistant message to pass to the executor hook
-  const latestAssistantMessage = useLatestAssistantMessage(messages);
+  // const latestAssistantMessage = useLatestAssistantMessage(messages);
 
-  // Use the new hook, passing the latest assistant message
-  const { isExecuting, executionResult, dismissExecutionResult } =
-    useBlenderCodeExecutor({ message: latestAssistantMessage });
+  // // Use the new hook, passing the latest assistant message
+  // const { isExecuting, executionResult, dismissExecutionResult } =
+  //   useBlenderCodeExecutor({ message: latestAssistantMessage });
 
   // Use the new resumable hook
   useSessionResumable({ autoResume, sessionId, experimental_resume });
@@ -76,10 +74,11 @@ export function useSessionChatV1({
     handleSubmit,
     status, // Overall chat status
     error, // Chat error
+    isLoading: status === "submitted" || status === "streaming",
     // Use the state returned from the new hook
-    testResult: executionResult,
-    handleDismissTestResult: dismissExecutionResult,
-    executingCode: isExecuting,
+    // testResult: executionResult,
+    // handleDismissTestResult: dismissExecutionResult,
+    // executingCode: isExecuting,
     experimental_resume,
     append,
     addToolResult,
