@@ -11,7 +11,6 @@ import {
 } from "ai";
 import { eq } from "drizzle-orm";
 import { createResumableStreamContext } from "resumable-stream";
-import { z } from "zod";
 
 import type { Session, Stream } from "@vendor/db/lightfast/schema";
 import { db } from "@vendor/db/client";
@@ -31,22 +30,6 @@ import {
   saveSession,
 } from "./queries";
 import { postRequestBodySchema } from "./schema";
-
-// Define Blender Tools Schema for the backend
-const blenderTools = {
-  executeBlenderCode: {
-    description:
-      "Executes Python code directly in Blender. This is the main way to interact with Blender - use Blender's Python API to create and manipulate objects, materials, and scenes.",
-    parameters: z.object({
-      code: z
-        .string()
-        .describe(
-          "Python code to execute in Blender. Must be valid Blender Python API code.",
-        ),
-    }),
-  },
-  // Additional tools can be added here
-};
 
 // CORS headers for the desktop app
 const corsHeaders = {
@@ -185,12 +168,12 @@ export async function POST(request: Request) {
     execute: (dataStream) => {
       const result = streamText({
         model: aiTextProviders.languageModel("chat-model"),
-        system: systemPrompt({ requestHints }),
-        messages,
-        maxSteps: 5,
-        tools: blenderTools,
+        system: systemPrompt({
+          requestHints,
+        }),
+        messages: messages,
         experimental_transform: smoothStream({
-          chunking: "word", // Stream word by word for smooth experience
+          chunking: "word",
         }),
         onFinish: async ({ response }) => {
           try {
@@ -237,7 +220,7 @@ export async function POST(request: Request) {
       void result.consumeStream();
 
       result.mergeIntoDataStream(dataStream, {
-        sendReasoning: true,
+        sendReasoning: false,
       });
     },
     onError: (error) => {

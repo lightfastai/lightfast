@@ -21,6 +21,18 @@ export function WorkspaceChat({
   className,
   autoResume = false,
 }: WorkspaceChatProps) {
+  // --- Debugging Logs ---
+  console.log("WorkspaceChat: Checking props for useWorkspaceChat");
+  console.log("WorkspaceChat: workspaceId =", workspaceId);
+  console.log("WorkspaceChat: sessionId =", sessionId);
+  console.log("WorkspaceChat: initialMessages (prop) =", initialMessages);
+  console.log(
+    "WorkspaceChat: Number of initial messages =",
+    initialMessages?.length ?? "N/A",
+  );
+  console.log("WorkspaceChat: autoResume =", autoResume);
+  // --- End Debugging Logs ---
+
   const {
     messages,
     input,
@@ -36,6 +48,9 @@ export function WorkspaceChat({
     initialMessages,
     autoResume,
   });
+
+  // Log the messages array *after* the hook is called
+  console.log("WorkspaceChat: Messages from useChat hook =", messages);
 
   return (
     <div className={cn("bg-background flex h-full w-full flex-col", className)}>
