@@ -57,6 +57,16 @@ export function ChatMessage({
   );
   const [reconnectError, setReconnectError] = useState<string | null>(null);
 
+  // Helper to always send a valid tool result
+  const handleToolResult = (toolCallId: string, result: any) => {
+    if (addToolResult) {
+      addToolResult({
+        toolCallId,
+        result,
+      });
+    }
+  };
+
   // Keep tool invocation rendering for other potential tools
   const renderToolPart = (part: any, partIndex: number) => {
     if (part.type === "tool-invocation") {
@@ -98,11 +108,12 @@ export function ChatMessage({
                     const result = await window.electronAPI.invoke(
                       "handle-blender-reconnect",
                     );
-                    addToolResult({ toolCallId, result });
+                    console.log("reconnect result", result);
+                    handleToolResult(toolCallId, result);
                   } catch (e: any) {
-                    setReconnectError(
-                      e?.message || "Failed to reconnect to Blender",
-                    );
+                    handleToolResult(toolCallId, {
+                      error: e?.message || "Failed to reconnect to Blender",
+                    });
                   } finally {
                     setReconnectExecuting(null);
                   }
@@ -148,9 +159,12 @@ export function ChatMessage({
                       "handle-blender-execute-code",
                       { code: args.code },
                     );
-                    addToolResult({ toolCallId, result });
+                    console.log("execute code result", result);
+                    handleToolResult(toolCallId, result);
                   } catch (e: any) {
-                    setError(e?.message || "Failed to execute code");
+                    handleToolResult(toolCallId, {
+                      error: e?.message || "Failed to execute code",
+                    });
                   } finally {
                     setExecuting(null);
                   }
@@ -162,9 +176,8 @@ export function ChatMessage({
                 className="rounded border px-3 py-1 text-xs hover:bg-gray-100"
                 disabled={!!executing}
                 onClick={() => {
-                  addToolResult({
-                    toolCallId,
-                    result: { error: "User denied execution" },
+                  handleToolResult(toolCallId, {
+                    error: "User denied execution",
                   });
                 }}
               >
