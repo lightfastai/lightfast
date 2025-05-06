@@ -1,6 +1,4 @@
 import type { UIMessage } from "ai";
-import { useMemo } from "react";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import { SessionChatV1Status } from "@/types/internal";
 import { Terminal } from "lucide-react";
 
@@ -12,7 +10,7 @@ import {
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 
-import { ChatMessage } from "../chat/chat-message";
+import { MessagePartsRenderer } from "./message-parts-renderer";
 
 interface SessionViewProps {
   messages: UIMessage[];
@@ -29,25 +27,19 @@ export function SessionView({
   className,
   addToolResult,
 }: SessionViewProps) {
-  const { containerRef } = useScrollToBottom();
-
-  const isStreamingOrSubmitted = useMemo(() => {
-    return status === "streaming" || status === "submitted";
-  }, [status]);
-
   return (
     <div className={cn("flex h-full flex-col overflow-y-auto p-4", className)}>
-      <ScrollArea className="h-full" ref={containerRef}>
+      <ScrollArea className="h-full">
         <div className="flex-1 space-y-4">
           {messages.map((message, index) => (
-            <ChatMessage
+            <MessagePartsRenderer
               key={message.id ?? `message-${index}`}
               message={message}
               status={status}
               addToolResult={addToolResult}
             />
           ))}
-          {isStreamingOrSubmitted &&
+          {/* {isStreamingOrSubmitted &&
             messages.length > 0 &&
             messages[messages.length - 1].role === "user" && (
               <ChatMessage
@@ -60,8 +52,8 @@ export function SessionView({
                 }}
                 status={status}
               />
-            )}
-          <div ref={containerRef} />
+            )} */}
+          {/* <div ref={containerRef} /> */}
         </div>
 
         {error && (

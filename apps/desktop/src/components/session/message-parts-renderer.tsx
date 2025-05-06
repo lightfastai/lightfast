@@ -8,9 +8,9 @@ import {
 } from "@repo/ui/components/ui/avatar";
 import { cn } from "@repo/ui/lib/utils";
 
-import { ToolSection } from "./tool-section";
+import { ToolSection } from "../chat/tool-section";
 
-interface ChatMessageProps {
+interface MessagePartsRendererProps {
   message: UIMessage;
   status?: "submitted" | "streaming" | "ready" | "error";
   addToolResult?: (args: { toolCallId: string; result: any }) => void;
@@ -44,11 +44,11 @@ const parseMessageContent = (content: string) => {
   return parts;
 };
 
-export function ChatMessage({
+export function MessagePartsRenderer({
   message,
   status = "ready",
   addToolResult,
-}: ChatMessageProps) {
+}: MessagePartsRendererProps) {
   const [duration, setDuration] = useState<number | null>(null);
   const user = { email: "test@test.com" };
   const assistant = { name: "Assistant" };
