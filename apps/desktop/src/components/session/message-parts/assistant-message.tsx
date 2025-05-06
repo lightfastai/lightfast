@@ -13,7 +13,7 @@ import { ToolSection } from "../../chat/tool-section";
 interface AssistantMessageProps {
   message: UIMessage;
   status?: "submitted" | "streaming" | "ready" | "error";
-  addToolResult?: (args: { toolCallId: string; result: any }) => void;
+  addToolResult: (args: { toolCallId: string; result: any }) => void;
 }
 
 export function AssistantMessage({
@@ -61,15 +61,15 @@ export function AssistantMessage({
           {parts.length > 0 ? (
             parts.map((part, idx) => {
               // Type guard for tool-call (not in TS type but may be present in runtime data)
-              if ((part as any).type === "tool-call") {
-                return (
-                  <ToolSection
-                    key={(part as any).toolCallId || idx}
-                    part={{ type: "tool-call", ...(part as any) }}
-                    addToolResult={addToolResult}
-                  />
-                );
-              }
+              // if ((part as any).type === "tool-call") {
+              //   return (
+              //     <ToolSection
+              //       key={(part as any).toolCallId || idx}
+              //       part={{ type: "tool-call", ...(part as any) }}
+              //       addToolResult={addToolResult}
+              //     />
+              //   );
+              // }
               switch (part.type) {
                 case "text":
                   return <span key={idx}>{(part as any).text}</span>;

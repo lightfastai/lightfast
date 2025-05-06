@@ -17,7 +17,7 @@ interface SessionViewProps {
   status: SessionChatV1Status;
   error?: Error | null;
   className?: string;
-  addToolResult?: (params: { toolCallId: string; result: any }) => void;
+  addToolResult: (params: { toolCallId: string; result: any }) => void;
 }
 
 export function SessionView({

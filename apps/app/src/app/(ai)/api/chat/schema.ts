@@ -11,7 +11,6 @@ export interface PostRequestBody {
 export const $BaseStreamConfig = z.object({
   workspaceId: z.string().nanoid(),
   sessionId: z.string().nanoid(),
-  userMessageId: z.string().nanoid(),
 });
 
 export type BaseStreamConfig = z.infer<typeof $BaseStreamConfig> & {

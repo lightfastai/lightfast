@@ -125,7 +125,6 @@ export async function POST(request: Request) {
     messages,
     sessionId: session.id,
     workspaceId,
-    userMessageId,
     userMessage: message,
   });
 

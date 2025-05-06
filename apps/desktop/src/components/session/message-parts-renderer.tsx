@@ -7,7 +7,7 @@ import { UserMessage } from "./message-parts/user-message";
 interface MessagePartsRendererProps {
   message: UIMessage;
   status: SessionChatV1Status;
-  addToolResult?: (args: { toolCallId: string; result: any }) => void;
+  addToolResult: (args: { toolCallId: string; result: any }) => void;
 }
 
 export function MessagePartsRenderer({

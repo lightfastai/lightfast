@@ -3,13 +3,6 @@ import { PencilIcon } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
 
-interface ToolCall {
-  type: "tool-call";
-  toolCallId: string;
-  toolName: string;
-  args?: any;
-}
-
 interface ToolInvocation {
   type: "tool-invocation";
   toolInvocation: {
@@ -22,38 +15,35 @@ interface ToolInvocation {
   };
 }
 
-type ToolSectionPart = ToolCall | ToolInvocation;
-
 interface ToolSectionProps {
-  part: ToolSectionPart;
-  addToolResult?: (params: { toolCallId: string; result: any }) => void;
+  part: ToolInvocation;
+  addToolResult: (params: { toolCallId: string; result: any }) => void;
 }
 
 export function ToolSection({ part, addToolResult }: ToolSectionProps) {
-  if (part.type === "tool-call") {
-    return <ToolCallRequest part={part} addToolResult={addToolResult} />;
+  const { toolInvocation } = part;
+  if (toolInvocation.state === "call") {
+    return <ToolInvocationRequest part={part} addToolResult={addToolResult} />;
   }
-  if (part.type === "tool-invocation") {
-    return <ToolInvocationResult part={part} />;
-  }
-  return null;
+  return <ToolInvocationResult part={part} />;
 }
 
-function ToolCallRequest({
+function ToolInvocationRequest({
   part,
   addToolResult,
 }: {
-  part: ToolCall;
-  addToolResult?: (params: { toolCallId: string; result: any }) => void;
+  part: ToolInvocation;
+  addToolResult: (params: { toolCallId: string; result: any }) => void;
 }) {
+  const { toolInvocation } = part;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const code = part.args?.code || "";
+  const code = toolInvocation.args?.code || "";
 
   return (
     <div className="bg-muted/20 border-border my-2 flex flex-col gap-2 rounded border p-4">
       <div className="mb-1 text-xs font-semibold">
-        Tool Request: {part.toolName}
+        Tool Request: {toolInvocation.toolName}
       </div>
       {code && (
         <pre className="bg-background mb-2 overflow-x-auto rounded border p-2 text-xs whitespace-pre-wrap">
@@ -77,9 +67,8 @@ function ToolCallRequest({
                 setPending(true);
                 setError(null);
                 try {
-                  // Accept: send result back
-                  addToolResult?.({
-                    toolCallId: part.toolCallId,
+                  addToolResult({
+                    toolCallId: toolInvocation.toolCallId,
                     result: {
                       type: "manual-tool-invocation",
                       result: {
@@ -105,7 +94,7 @@ function ToolCallRequest({
               disabled={pending}
               onClick={() => {
                 addToolResult?.({
-                  toolCallId: part.toolCallId,
+                  toolCallId: toolInvocation.toolCallId,
                   result: { error: "User declined tool invocation" },
                 });
               }}
