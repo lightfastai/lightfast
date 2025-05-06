@@ -14,7 +14,7 @@ import { MessagePartsRenderer } from "./message-parts-renderer";
 
 interface SessionViewProps {
   messages: UIMessage[];
-  status?: SessionChatV1Status;
+  status: SessionChatV1Status;
   error?: Error | null;
   className?: string;
   addToolResult?: (params: { toolCallId: string; result: any }) => void;
