@@ -24,13 +24,14 @@ export async function POST(request: Request) {
   // parse request body
   try {
     requestBody = (await request.json()) as PostRequestBody;
-    requestBody = postRequestBodySchema.parse(requestBody);
   } catch (error) {
     console.error("Failed to parse request body", error);
     return new Response("Invalid JSON", { status: 400 });
   }
 
   const { message, sessionId, workspaceId } = requestBody;
+
+  console.log("chat request", { message, sessionId, workspaceId });
 
   // ensure workspaceId exists
   try {

@@ -1,4 +1,4 @@
-import type { UIMessage } from "ai";
+import type { Message } from "ai";
 import { generateText } from "ai";
 
 import { modelProviders } from "~/app/(ai)/api/chat/providers/models";
@@ -6,7 +6,7 @@ import { modelProviders } from "~/app/(ai)/api/chat/providers/models";
 export async function generateTitleFromUserMessage({
   message,
 }: {
-  message: UIMessage;
+  message: Message;
 }) {
   const { text: title } = await generateText({
     model: modelProviders.languageModel("title-model"),
