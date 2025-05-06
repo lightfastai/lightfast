@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
+
+import { cn } from "@repo/ui/lib/utils";
 
 interface StatusMessageProps {
   testResult: {

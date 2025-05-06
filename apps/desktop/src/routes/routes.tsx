@@ -1,8 +1,8 @@
 import { createRoute } from "@tanstack/react-router";
 
-import HomePage from "../pages/home-page";
-import WorkspacePage from "../pages/workspace-page";
 import { RootRoute } from "./__root";
+import HomePage from "./pages/home-page";
+import WorkspacePage from "./pages/workspace-page";
 
 // TODO: Steps to add a new route:
 // 1. Create a new page component in the '../pages/' directory (e.g., NewPage.tsx)

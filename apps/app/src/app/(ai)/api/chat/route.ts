@@ -1,102 +1,140 @@
-import type { Message, ToolSet } from "ai";
-import { appendResponseMessages, streamText } from "ai";
+import type { Message } from "ai";
+import { geolocation } from "@vercel/functions";
+import { appendClientMessage } from "ai";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 
+import type { Session, Stream } from "@vendor/db/lightfast/schema";
 import { db } from "@vendor/db/client";
-import { Session } from "@vendor/db/lightfast/schema";
+import { Workspace } from "@vendor/db/lightfast/schema";
 
-import { registry } from "~/providers/ai-provider";
-
-// Define Blender Tools Schema for the backend
-const blenderTools: ToolSet = {
-  executeBlenderCode: {
-    description:
-      "Executes Python code directly in Blender. This is the main way to interact with Blender - use Blender's Python API to create and manipulate objects, materials, and scenes.",
-    parameters: z.object({
-      code: z
-        .string()
-        .describe(
-          "Python code to execute in Blender. Must be valid Blender Python API code.",
-        ),
-    }),
-  },
-  // Additional tools can be added here
-};
-
-// CORS headers for the desktop app
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
-// Handle CORS preflight requests
-export function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: corsHeaders,
-  });
-}
+import type { RequestHints } from "./prompts";
+import type { PostRequestBody } from "./schema";
+import { createStreamId } from "./actions/create-stream-id";
+import { generateTitleFromUserMessage } from "./actions/generate-title-from-user-message";
+import { getMessagesBySessionId } from "./actions/get-messages-by-session-id";
+import { getSession } from "./actions/get-session";
+import { saveMessages } from "./actions/save-messages";
+import { saveSession } from "./actions/save-session";
+import { createToolCallingStreamResponse } from "./streaming/create-tool-calling-stream";
+import { getStreamContext } from "./utils/get-stream-context";
 
 export async function POST(request: Request) {
-  const { messages, sessionId, workspaceId } = (await request.json()) as {
-    messages: Message[];
-    sessionId?: string;
-    workspaceId?: string;
-  };
+  let requestBody: PostRequestBody;
 
-  const result = streamText({
-    model: registry.languageModel("openai:gpt-4-turbo-preview"),
+  // parse request body
+  try {
+    requestBody = (await request.json()) as PostRequestBody;
+  } catch (error) {
+    console.error("Failed to parse request body", error);
+    return new Response("Invalid JSON", { status: 400 });
+  }
+
+  const { message, sessionId, workspaceId, id: userMessageId } = requestBody;
+
+  console.log("chat request", {
+    message,
+    sessionId,
+    workspaceId,
+    userMessageId,
+  });
+
+  // ensure workspaceId exists
+  try {
+    const workspace = await db.query.Workspace.findFirst({
+      where: eq(Workspace.id, workspaceId),
+    });
+
+    if (!workspace) {
+      return new Response("Workspace not found", { status: 404 });
+    }
+  } catch (_) {
+    return new Response("Workspace not found", { status: 404 });
+  }
+
+  // create session if it doesn't exist
+  let session: Session;
+  try {
+    if (!sessionId) {
+      const title = await generateTitleFromUserMessage({ message });
+
+      session = await saveSession({
+        workspaceId,
+        title,
+      });
+    } else {
+      session = await getSession({ sessionId });
+    }
+  } catch (_) {
+    return new Response("Session not found", { status: 404 });
+  }
+
+  let messages: Message[];
+  let requestHints: RequestHints;
+  try {
+    // previous messages
+    const previousMessages = await getMessagesBySessionId({
+      sessionId: session.id,
+    });
+
+    messages = appendClientMessage({
+      // @ts-expect-error: todo add type conversion from DBMessage[] to UIMessage[]
+      messages: previousMessages,
+      message: message,
+    });
+
+    const { longitude, latitude, city, country } = geolocation(request);
+
+    requestHints = {
+      longitude,
+      latitude,
+      city,
+      country,
+    };
+
+    await saveMessages({
+      messages: [
+        {
+          id: message.id,
+          sessionId: session.id,
+          role: "user",
+          parts: message.parts,
+          // attachments: message.experimental_attachments ?? [],
+          attachments: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          content: message.content,
+        },
+      ],
+    });
+  } catch (error) {
+    console.error("Failed to save messages", error);
+    return new Response("Failed to save messages", { status: 500 });
+  }
+
+  let dbStream: Stream;
+  try {
+    dbStream = await createStreamId({ sessionId: session.id });
+  } catch (error) {
+    console.error("Failed to create stream", error);
+    throw error;
+  }
+
+  const streamId = dbStream.id;
+
+  const stream = createToolCallingStreamResponse({
     messages,
-    maxTokens: 1000,
-    temperature: 0.7,
-    tools: blenderTools,
-    async onFinish({ response }) {
-      try {
-        // Save the chat messages to the database if sessionId is provided
-        if (sessionId) {
-          // Update existing session
-          await db
-            .update(Session)
-            .set({
-              messages: appendResponseMessages({
-                messages,
-                responseMessages: response.messages,
-              }),
-              updatedAt: new Date(),
-            })
-            .where(eq(Session.id, sessionId));
-        } else if (workspaceId) {
-          // Create a new session with these messages
-          const title = messages[0]?.content.slice(0, 100) ?? "New Chat";
-
-          await db.insert(Session).values({
-            workspaceId,
-            title,
-            messages: appendResponseMessages({
-              messages,
-              responseMessages: response.messages,
-            }),
-          });
-        }
-      } catch (error) {
-        console.error("Failed to save chat session:", error);
-      }
-    },
+    sessionId: session.id,
+    workspaceId,
+    userMessage: message,
   });
 
-  const response = result.toDataStreamResponse();
+  const streamContext = getStreamContext();
 
-  // Add CORS headers to the response
-  const headers = new Headers(response.headers);
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    headers.set(key, value);
-  });
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+  if (streamContext) {
+    return new Response(
+      await streamContext.resumableStream(streamId, () => stream),
+    );
+  } else {
+    return new Response(stream);
+  }
 }

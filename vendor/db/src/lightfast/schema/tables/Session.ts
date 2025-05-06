@@ -1,34 +1,46 @@
 import { relations } from "drizzle-orm";
-import { pgTable } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm/sql";
 
 import { nanoid } from "@repo/lib";
 
+import { DBMessage } from "./Message";
 import { Workspace } from "./Workspace";
 
-export const Session = pgTable("session", (t) => ({
-  id: t
-    .varchar({ length: 191 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
-  workspaceId: t
-    .varchar({ length: 191 })
-    .notNull()
-    .references(() => Workspace.id, { onDelete: "cascade" }),
-  title: t.varchar({ length: 191 }).notNull().default("New Chat"),
-  messages: t.json().default([]),
-  createdAt: t.timestamp().defaultNow().notNull(),
-  updatedAt: t
-    .timestamp()
-    .notNull()
-    .defaultNow()
-    .$onUpdateFn(() => sql`now()`),
-}));
+// Renaming Chat to Session as per user preference/file structure
+export const Session = pgTable(
+  "session", // Keep table name as 'session' or change to 'chat' if preferred?
+  {
+    id: varchar("id", { length: 191 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    workspaceId: varchar("workspace_id", { length: 191 })
+      .notNull()
+      .references(() => Workspace.id, { onDelete: "cascade" }), // Keep link to Workspace
+    title: text("title").notNull().default("New Chat"),
+    // Add visibility if needed, like in the example
+    // visibility: varchar("visibility", { enum: ["public", "private"] })
+    //   .notNull()
+    //   .default("private"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdateFn(() => sql`now()`),
+  },
+  (table) => [
+    index("session_workspace_idx").on(table.workspaceId), // Updated index name
+  ],
+);
 
-export const SessionRelations = relations(Session, ({ one }) => ({
+// Renaming ChatRelations to SessionRelations
+export const SessionRelations = relations(Session, ({ one, many }) => ({
   workspace: one(Workspace, {
     fields: [Session.workspaceId],
     references: [Workspace.id],
   }),
+  messages: many(DBMessage), // A session (chat) can have multiple messages
 }));
+
+export type Session = typeof Session.$inferSelect;
