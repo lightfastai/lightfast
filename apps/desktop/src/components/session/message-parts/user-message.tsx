@@ -16,30 +16,7 @@ interface UserMessageProps {
 
 export function UserMessage({ message, addToolResult }: UserMessageProps) {
   const user = { email: "test@test.com" };
-  // Prefer parts for text rendering
-  let textParts: string[] = [];
-  if (Array.isArray(message.parts) && message.parts.length > 0) {
-    textParts = message.parts
-      .filter(
-        (part): part is { type: "text"; text: string } =>
-          part.type === "text" && typeof (part as any).text === "string",
-      )
-      .map((part) => part.text);
-  }
-  const contentParts =
-    textParts.length > 0
-      ? textParts.map((t) => ({ type: "text", value: t }))
-      : [
-          {
-            type: "text",
-            value: typeof message.content === "string" ? message.content : "",
-          },
-        ];
-  // Tool parts
-  const toolParts = Array.isArray(message.parts)
-    ? message.parts.filter((part) => part.type === "tool-invocation")
-    : [];
-  const hasToolParts = toolParts.length > 0;
+  const parts = Array.isArray(message.parts) ? message.parts : [];
 
   return (
     <div className={cn("group relative mb-8 flex flex-col")}>
@@ -51,20 +28,42 @@ export function UserMessage({ message, addToolResult }: UserMessageProps) {
           </AvatarFallback>
         </Avatar>
         <div className="flex-grow pt-0.5 text-sm font-normal break-words whitespace-pre-wrap">
-          {contentParts.map((part, idx) => (
-            <span key={idx}>{part.value}</span>
-          ))}
+          {parts.length > 0 ? (
+            parts.map((part, idx) => {
+              switch (part.type) {
+                case "text":
+                  return <span key={idx}>{(part as any).text}</span>;
+                case "step-start":
+                  return (
+                    <span key={idx} className="text-muted-foreground italic">
+                      [Step started]
+                    </span>
+                  );
+                case "tool-invocation":
+                  return null; // Rendered below
+                default:
+                  return null;
+              }
+            })
+          ) : (
+            <span>
+              {typeof message.content === "string" ? message.content : ""}
+            </span>
+          )}
         </div>
       </div>
-      {hasToolParts && (
+      {/* Tool invocations rendered separately for layout consistency */}
+      {parts.some((part) => part.type === "tool-invocation") && (
         <div className="pr-3 pl-10">
-          {toolParts.map((part, idx) => (
-            <ToolSection
-              key={part.toolInvocation?.toolCallId || idx}
-              toolInvocation={part.toolInvocation || part}
-              addToolResult={addToolResult}
-            />
-          ))}
+          {parts
+            .filter((part) => part.type === "tool-invocation")
+            .map((part, idx) => (
+              <ToolSection
+                key={part.toolInvocation?.toolCallId || idx}
+                toolInvocation={part.toolInvocation || part}
+                addToolResult={addToolResult}
+              />
+            ))}
         </div>
       )}
     </div>
