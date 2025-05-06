@@ -4,7 +4,7 @@ import { convertToCoreMessages, createDataStream, streamText } from "ai";
 import type { BaseStreamConfig } from "../schema";
 import { handleStreamFinish } from "../actions/handle-stream-finish";
 // Function to check if a message contains ask_question tool invocation
-import { blender } from "../agents/blender";
+import { researcher } from "../agents/researcher";
 import { getMaxAllowedTokens, truncateMessages } from "../utils/context-window";
 
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
@@ -25,7 +25,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           getMaxAllowedTokens(),
         );
         const result = streamText({
-          ...blender({
+          ...researcher({
             messages: truncatedMessages,
           }),
           onFinish: async (result) => {

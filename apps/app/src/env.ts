@@ -22,6 +22,7 @@ export const env = createEnv({
   server: {
     CLERK_WEBHOOK_SECRET: z.string(),
     REDIS_URL: z.string().url(),
+    EXA_API_KEY: z.string(),
   },
 
   /**

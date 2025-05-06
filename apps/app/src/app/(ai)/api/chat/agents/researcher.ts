@@ -7,6 +7,7 @@ import {
   createExecuteBlenderCodeTool,
   createReconnectBlenderTool,
 } from "../tools/blender";
+import { createWebSearchTool } from "../tools/web-search";
 
 const blenderPrompt = `
 Instructions:
@@ -20,7 +21,7 @@ Instructions:
 
 type BlenderReturn = Parameters<typeof streamText>[0];
 
-export function blender({
+export function researcher({
   messages,
 }: {
   messages: CoreMessage[];
@@ -29,6 +30,7 @@ export function blender({
     // Create model-specific tools
     const executeBlenderCodeTool = createExecuteBlenderCodeTool();
     const reconnectBlenderTool = createReconnectBlenderTool();
+    const webSearchTool = createWebSearchTool();
 
     return {
       model: modelProviders.languageModel("chat-model"),
@@ -37,8 +39,13 @@ export function blender({
       tools: {
         executeBlenderCode: executeBlenderCodeTool,
         reconnectBlender: reconnectBlenderTool,
+        webSearch: webSearchTool,
       },
-      experimental_activeTools: ["executeBlenderCode", "reconnectBlender"],
+      experimental_activeTools: [
+        "executeBlenderCode",
+        "reconnectBlender",
+        "webSearch",
+      ],
       maxSteps: 5,
       experimental_transform: smoothStream({
         chunking: "word",
