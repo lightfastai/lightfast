@@ -26,9 +26,13 @@ About the origin of user's request:
 
 export const systemPrompt = ({
   requestHints,
+  requestPrompt,
 }: {
-  requestHints: RequestHints;
+  requestHints?: RequestHints;
+  requestPrompt?: string;
 }) => {
-  const requestPrompt = getRequestPromptFromHints(requestHints);
+  if (!requestHints && !requestPrompt) {
+    return `${lightfastPrompt}\n\n${regularPrompt}`;
+  }
   return `${lightfastPrompt}\n\n${regularPrompt}\n\n${requestPrompt}`;
 };

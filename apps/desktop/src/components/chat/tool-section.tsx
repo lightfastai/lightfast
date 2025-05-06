@@ -74,9 +74,13 @@ function ExecuteBlenderCodeSection({
                 "handle-blender-execute-code",
                 { code },
               );
+              console.log("result", toolInvocation.toolCallId, result);
               addToolResult?.({
                 toolCallId: toolInvocation.toolCallId,
-                result,
+                result: {
+                  type: "manual-tool-invocation",
+                  result,
+                },
               });
             } catch (e: any) {
               setError(e?.message || "Failed to execute code");

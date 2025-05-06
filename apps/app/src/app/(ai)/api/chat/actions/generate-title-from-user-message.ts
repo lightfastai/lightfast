@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 import { generateText } from "ai";
 
-import { aiTextProviders } from "~/providers/ai-provider";
+import { modelProviders } from "~/app/(ai)/api/chat/providers/models";
 
 export async function generateTitleFromUserMessage({
   message,
@@ -9,7 +9,7 @@ export async function generateTitleFromUserMessage({
   message: UIMessage;
 }) {
   const { text: title } = await generateText({
-    model: aiTextProviders.languageModel("title-model"),
+    model: modelProviders.languageModel("title-model"),
     system: `\n
       - you will generate a short title based on the first message a user begins a conversation with
       - ensure it is not more than 80 characters long

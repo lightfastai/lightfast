@@ -1,17 +1,7 @@
 import type { Message } from "ai";
-import type { ResumableStreamContext } from "resumable-stream";
-import { after } from "next/server";
 import { geolocation } from "@vercel/functions";
-import {
-  appendClientMessage,
-  appendResponseMessages,
-  createDataStream,
-  smoothStream,
-  streamText,
-} from "ai";
+import { appendClientMessage } from "ai";
 import { eq } from "drizzle-orm";
-import { createResumableStreamContext } from "resumable-stream";
-import { z } from "zod";
 
 import type { Session, Stream } from "@vendor/db/lightfast/schema";
 import { db } from "@vendor/db/client";
@@ -19,54 +9,14 @@ import { Workspace } from "@vendor/db/lightfast/schema";
 
 import type { RequestHints } from "./prompts";
 import type { PostRequestBody } from "./schema";
-import { getTrailingMessageId } from "~/lib/utils";
-import { aiTextProviders } from "~/providers/ai-provider";
-import { generateTitleFromUserMessage } from "./actions";
-import { systemPrompt } from "./prompts";
-import {
-  createStreamId,
-  getMessagesBySessionId,
-  getSession,
-  saveMessages,
-  saveSession,
-} from "./queries";
-import { postRequestBodySchema } from "./schema";
-
-// CORS headers for the desktop app
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
-// Handle CORS preflight requests
-export function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: corsHeaders,
-  });
-}
-let globalStreamContext: ResumableStreamContext | null = null;
-
-function getStreamContext() {
-  if (!globalStreamContext) {
-    try {
-      globalStreamContext = createResumableStreamContext({
-        waitUntil: after,
-      });
-    } catch (error: any) {
-      if (error.message.includes("REDIS_URL")) {
-        console.log(
-          " > Resumable streams are disabled due to missing REDIS_URL",
-        );
-      } else {
-        console.error(error);
-      }
-    }
-  }
-
-  return globalStreamContext;
-}
+import { createStreamId } from "./actions/create-stream-id";
+import { generateTitleFromUserMessage } from "./actions/generate-title-from-user-message";
+import { getMessagesBySessionId } from "./actions/get-messages-by-session-id";
+import { getSession } from "./actions/get-session";
+import { saveMessages } from "./actions/save-messages";
+import { saveSession } from "./actions/save-session";
+import { createToolCallingStreamResponse } from "./streaming/create-tool-calling-stream";
+import { getStreamContext } from "./utils/get-stream-context";
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -163,91 +113,11 @@ export async function POST(request: Request) {
   }
 
   const streamId = dbStream.id;
-  const startThinking = new Date();
 
-  const stream = createDataStream({
-    execute: (dataStream) => {
-      const result = streamText({
-        model: aiTextProviders.languageModel("chat-model"),
-        system: systemPrompt({
-          requestHints,
-        }),
-        messages: messages,
-        experimental_transform: smoothStream({
-          chunking: "word",
-        }),
-        onFinish: async ({ response }) => {
-          try {
-            const assistantId = getTrailingMessageId({
-              messages: response.messages.filter(
-                (message) => message.role === "assistant",
-              ),
-            });
-            if (!assistantId) {
-              throw new Error("No assistant message found");
-            }
-
-            const [, assistantMessage] = appendResponseMessages({
-              messages: [message],
-              responseMessages: response.messages,
-            });
-
-            if (!assistantMessage) {
-              throw new Error("No assistant message found");
-            }
-
-            await saveMessages({
-              messages: [
-                {
-                  id: assistantId,
-                  sessionId: session.id,
-                  role: assistantMessage.role,
-                  parts: assistantMessage.parts,
-                  attachments: assistantMessage.experimental_attachments ?? [],
-                  createdAt: startThinking,
-                  updatedAt: new Date(),
-                },
-              ],
-            });
-          } catch (error) {
-            console.error("Failed to save chat session:", error);
-          }
-        },
-        experimental_telemetry: {
-          functionId: "stream-text",
-        },
-        tools: {
-          executeBlenderCode: {
-            description:
-              "Execute a Python code block in Blender after user confirmation.",
-            parameters: z.object({
-              code: z
-                .string()
-                .describe("The Python code to execute in Blender"),
-            }),
-            // No execute function: client-side tool
-          },
-          reconnectBlender: {
-            description:
-              "Reconnect to Blender if the connection is lost or not established.",
-            parameters: z.object({}),
-            // No execute function: client-side tool
-          },
-          // ...other tools can be added here
-        },
-        maxSteps: 5, // Enable multi-step tool calls
-      });
-
-      void result.consumeStream();
-
-      result.mergeIntoDataStream(dataStream, {
-        sendReasoning: false,
-      });
-    },
-    onError: (error) => {
-      console.error("Failed to stream text:", error);
-      return "Failed to stream text";
-    },
+  const stream = createToolCallingStreamResponse({
+    messages,
+    sessionId: session.id,
+    workspaceId,
   });
 
   const streamContext = getStreamContext();
@@ -255,9 +125,8 @@ export async function POST(request: Request) {
   if (streamContext) {
     return new Response(
       await streamContext.resumableStream(streamId, () => stream),
-      { headers: corsHeaders },
     );
   } else {
-    return new Response(stream, { headers: corsHeaders });
+    return new Response(stream);
   }
 }
