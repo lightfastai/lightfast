@@ -1,6 +1,8 @@
-export * from "./tables/Session";
+export * from "./tables/User";
+export * from "./tables/Message";
 export * from "./tables/Workspace";
-
+export * from "./tables/Session";
+export * from "./tables/Stream";
 export * from "./types/Geometry";
 export * from "./types/Material";
 export * from "./types/TextureHandle";

@@ -1,136 +1,120 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Minus, X } from "lucide-react";
 
-import { useSidebar } from "@repo/ui/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@repo/ui/components/ui/sidebar";
 
 // Custom event name for sidebar toggle
-export const SIDEBAR_TOGGLE_EVENT = "app:sidebar:toggle";
+export const SIDEBAR_TOGGLE_EVENT = "sidebar-toggle";
 
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
-  const cleanupFuncs = useRef<(() => void)[]>([]);
+  const [isHovering, setIsHovering] = useState(false);
+  const { toggleSidebar } = useSidebar();
 
-  // Use the sidebar context to get the toggle function
-  const { toggleSidebar, open } = useSidebar();
-
-  // Enhanced toggle sidebar function
-  const handleToggleSidebar = () => {
-    toggleSidebar();
-    // Dispatch a custom event that other components can listen for
-    window.dispatchEvent(
-      new CustomEvent(SIDEBAR_TOGGLE_EVENT, {
-        detail: { isOpen: !open },
-      }),
-    );
-  };
-
-  useEffect(() => {
-    const handleMaximized = () => setIsMaximized(true);
-    const handleUnmaximized = () => setIsMaximized(false);
-
-    if (window.electronAPI?.on) {
-      const cleanupMaximized = window.electronAPI.on(
-        "window-maximized",
-        handleMaximized,
-      );
-      const cleanupUnmaximized = window.electronAPI.on(
-        "window-unmaximized",
-        handleUnmaximized,
-      );
-
-      if (cleanupMaximized) cleanupFuncs.current.push(cleanupMaximized);
-      if (cleanupUnmaximized) cleanupFuncs.current.push(cleanupUnmaximized);
-    } else {
-      console.warn(
-        "Electron electronAPI not found. Maximize state won't sync.",
-      );
-    }
-
-    return () => {
-      cleanupFuncs.current.forEach((cleanup) => cleanup());
-      cleanupFuncs.current = [];
-    };
+  const sendCommand = useCallback((command: string) => {
+    window.electronAPI.send("window-control", command);
   }, []);
 
-  // Add keyboard shortcut for toggling sidebar (Cmd+S)
+  const handleToggleSidebar = useCallback(() => {
+    toggleSidebar();
+    window.dispatchEvent(new CustomEvent(SIDEBAR_TOGGLE_EVENT));
+  }, [toggleSidebar]);
+
+  // Check if window is maximized
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for Cmd+S (macOS) or Ctrl+S (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
-        event.preventDefault(); // Prevent default save action
-        handleToggleSidebar();
-      }
+    const handleWindowStateChange = (
+      _: unknown,
+      isWindowMaximized: boolean,
+    ) => {
+      setIsMaximized(isWindowMaximized);
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    // Listen for window state changes
+    const cleanup = window.electronAPI.on(
+      "window-state-change",
+      handleWindowStateChange,
+    );
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [toggleSidebar, open]);
+    // Get initial window state
+    window.electronAPI
+      .invoke("is-maximized")
+      .then((maximized) => setIsMaximized(maximized))
+      .catch((err) => console.error("Failed to get window state:", err));
 
-  const handleMinimize = () => {
-    window.electronAPI?.send("minimize-window");
-  };
+    return cleanup;
+  }, []);
 
-  const handleMaximize = () => {
-    window.electronAPI?.send("maximize-window");
-  };
-
-  const handleClose = () => {
-    window.electronAPI?.send("close-window");
-  };
+  // Keyboard shortcuts have been moved to useKeyboardShortcuts hook
 
   return (
     <div
-      className="absolute top-0 right-0 left-0 z-[1000] flex h-8 items-center bg-none pt-8 pl-8"
+      className="absolute top-0 right-0 left-0 z-50 bg-transparent select-none"
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="flex items-center space-x-6 pl-1">
-        {/* macOS Traffic Lights */}
-        <div
-          className="flex space-x-2"
-          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-        >
+      <div className="flex h-10 items-center pt-8 pl-4">
+        {/* Left side - macOS style window controls */}
+        <div className="mr-4 flex items-center gap-2">
           <button
-            onClick={handleClose}
-            className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-600 focus:outline-none active:bg-red-700"
-            aria-label="Close"
-          />
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand("close")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
+          >
+            {isHovering && <X className="h-2 w-2 text-red-800" />}
+          </button>
           <button
-            onClick={handleMinimize}
-            className="h-3 w-3 rounded-full bg-yellow-500 hover:bg-yellow-600 focus:outline-none active:bg-yellow-700"
-            aria-label="Minimize"
-          />
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-yellow-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand("minimize")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
+          >
+            {isHovering && <Minus className="h-2 w-2 text-yellow-800" />}
+          </button>
           <button
-            onClick={handleMaximize}
-            className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-600 focus:outline-none active:bg-green-700"
-            aria-label={isMaximized ? "Restore" : "Maximize"}
-          />
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-green-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand(isMaximized ? "unmaximize" : "maximize")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
+          >
+            {isHovering && (
+              <svg
+                className="h-2 w-2 text-green-800"
+                viewBox="0 0 12 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 1.5h6M3 10.5h6M1.5 3v6M10.5 3v6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
+          </button>
         </div>
 
-        {/* Sidebar Trigger Button */}
-        <button
-          onClick={handleToggleSidebar}
-          className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-6 w-6 items-center justify-center rounded-md focus:outline-none"
-          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          aria-label="Toggle Sidebar"
-          title="Toggle Sidebar (⌘S)"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-            <line x1="9" x2="9" y1="3" y2="21" />
-          </svg>
-        </button>
+        {/* Center - App controls and title */}
+        <div className="flex items-center">
+          <SidebarTrigger
+            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+            className="size-7"
+          />
+        </div>
       </div>
     </div>
   );

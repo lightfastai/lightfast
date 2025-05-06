@@ -18,6 +18,8 @@ interface BlenderConnectionAPI {
     callback: (status: BlenderConnectionStatus) => void,
   ) => () => void;
   sendToBlender: (message: object) => Promise<void>;
+  getStatus: () => Promise<BlenderConnectionStatus>;
+  executeCode: (code: string) => Promise<void>;
 }
 
 interface ElectronAPI {
@@ -25,6 +27,7 @@ interface ElectronAPI {
   ping: () => Promise<string>;
   send: (channel: string, ...args: any[]) => void;
   on: (channel: string, listener: (...args: any[]) => void) => () => void;
+  invoke: (channel: string, ...args: any[]) => Promise<any>;
 }
 
 declare global {

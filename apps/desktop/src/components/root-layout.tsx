@@ -1,28 +1,39 @@
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 
-import { AppSidebar } from "./app-sidebar";
 import { ContentLayout } from "./content-layout";
-import TitleBar from "./title-bar";
+import { AppSidebar } from "./sidebar";
+import { TitleBar } from "./title-bar";
+import { WorkspaceContainer } from "./workspace-container";
 
-export function RootLayout({ children }: { children: React.ReactNode }) {
+export interface RootLayoutProps {
+  children: React.ReactNode;
+}
+
+function RootLayoutContent({ children }: RootLayoutProps) {
+  // Initialize global keyboard shortcuts (Cmd+S, Cmd+B for sidebar toggle)
+  useKeyboardShortcuts();
+
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden">
-      <SidebarProvider defaultOpen>
-        {/* Title Bar floats on top via absolute positioning */}
-        <TitleBar />
-
-        {/* Main content takes full height and width with no offsets */}
-        <div className="flex h-full w-full flex-1">
-          <AppSidebar />
-          <SidebarInset>
-            <div className="flex h-full flex-col overflow-hidden">
-              <div className="flex-1 overflow-hidden">
-                <ContentLayout>{children}</ContentLayout>
-              </div>
-            </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
+    <div className="flex h-screen w-full flex-col">
+      <TitleBar />
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar />
+        <SidebarInset>
+          <WorkspaceContainer>
+            <ContentLayout>{children}</ContentLayout>
+          </WorkspaceContainer>
+        </SidebarInset>
+      </div>
     </div>
+  );
+}
+
+export function RootLayout({ children }: RootLayoutProps) {
+  return (
+    <SidebarProvider defaultOpen>
+      <RootLayoutContent>{children}</RootLayoutContent>
+    </SidebarProvider>
   );
 }
