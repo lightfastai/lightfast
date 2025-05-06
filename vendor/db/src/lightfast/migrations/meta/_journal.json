@@ -57,6 +57,13 @@
       "when": 1746417047951,
       "tag": "0007_grey_greymalkin",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1746493342451,
+      "tag": "0008_omniscient_shooting_star",
+      "breakpoints": true
     }
   ]
 }

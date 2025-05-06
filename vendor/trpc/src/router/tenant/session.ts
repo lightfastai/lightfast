@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { desc, eq } from "@vendor/db";
-import { Message, Session } from "@vendor/db/lightfast/schema";
+import { DBMessage, Session } from "@vendor/db/lightfast/schema";
 
 import { publicProcedure } from "../../trpc";
 
@@ -20,7 +20,7 @@ export const sessionRouter = {
           messages: true,
         },
         where: eq(Session.id, input.sessionId),
-        orderBy: [desc(Message.createdAt)],
+        orderBy: [desc(DBMessage.createdAt)],
       });
 
       if (!results) {

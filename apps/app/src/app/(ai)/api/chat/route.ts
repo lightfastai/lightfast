@@ -97,6 +97,7 @@ export async function POST(request: Request) {
           attachments: [],
           createdAt: new Date(),
           updatedAt: new Date(),
+          content: message.content,
         },
       ],
     });

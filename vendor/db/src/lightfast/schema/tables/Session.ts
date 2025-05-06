@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm/sql";
 
 import { nanoid } from "@repo/lib";
 
-import { Message } from "./Message";
+import { DBMessage } from "./Message";
 import { Workspace } from "./Workspace";
 
 // Renaming Chat to Session as per user preference/file structure
@@ -40,7 +40,7 @@ export const SessionRelations = relations(Session, ({ one, many }) => ({
     fields: [Session.workspaceId],
     references: [Workspace.id],
   }),
-  messages: many(Message), // A session (chat) can have multiple messages
+  messages: many(DBMessage), // A session (chat) can have multiple messages
 }));
 
 export type Session = typeof Session.$inferSelect;
