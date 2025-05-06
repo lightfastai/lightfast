@@ -9,6 +9,7 @@ import {
 import { nanoid } from "@repo/lib";
 
 import type { BaseStreamConfig } from "../schema";
+import { getTrailingMessageId } from "~/lib/utils";
 import { saveMessages } from "../actions/save-messages";
 import { blenderResearcher } from "../agents/blender-researcher";
 import { getMaxAllowedTokens, truncateMessages } from "../utils/context-window";
@@ -44,40 +45,40 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           onFinish: async (result) => {
             const { response } = result;
 
-            // Get all assistant messages from the response
-            const assistantMessages = response.messages.filter(
-              (message) => message.role === "assistant",
-            );
+            const assistantId = getTrailingMessageId({
+              messages: response.messages.filter(
+                (message) => message.role === "assistant",
+              ),
+            });
 
-            console.log("assistantMessages", assistantMessages);
-
-            if (assistantMessages.length === 0) {
-              throw new Error("No assistant messages found");
+            if (!assistantId) {
+              throw new Error("No assistant message found!");
             }
 
-            // Append all response messages to the user message
-            const appendResult = appendResponseMessages({
+            const [, assistantMessage] = appendResponseMessages({
               messages: [userMessage],
               responseMessages: response.messages,
             });
 
-            // Save all assistant messages
-            const messagesToSave = assistantMessages.map((message) => ({
-              id: message.id,
-              sessionId,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              parts: appendResult.find((m) => m.id === message.id)?.parts,
-              attachments: appendResult.find((m) => m.id === message.id)
-                ?.experimental_attachments,
-              role: message.role,
-              content: message.content,
-            }));
+            if (!assistantMessage) {
+              throw new Error("No assistant message found!");
+            }
 
-            console.log("saving assistant messages", messagesToSave);
+            console.log("saving assistant messages", assistantMessage);
 
             await saveMessages({
-              messages: messagesToSave,
+              messages: [
+                {
+                  id: assistantId,
+                  sessionId,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  content: assistantMessage.content,
+                  role: assistantMessage.role,
+                  parts: assistantMessage.parts,
+                  attachments: assistantMessage.experimental_attachments ?? [],
+                },
+              ],
             });
           },
         });
