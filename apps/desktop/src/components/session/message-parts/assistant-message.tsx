@@ -54,43 +54,14 @@ export function AssistantMessage({
   const createdAt = message.createdAt;
 
   // Prefer parts for text rendering
-  let textParts: string[] = [];
-  if (Array.isArray(message.parts) && message.parts.length > 0) {
-    textParts = message.parts
-      .filter(
-        (part): part is { type: "text"; text: string } =>
-          part.type === "text" && typeof (part as any).text === "string",
-      )
-      .map((part) => part.text);
-  }
-  // For assistant, parse code blocks from joined textParts or content
-  let contentParts: { type: string; value: string }[] = [];
-  const assistantText =
-    textParts.length > 0
-      ? textParts.join("\n")
-      : typeof message.content === "string"
-        ? message.content
-        : "";
-  contentParts = parseMessageContent(assistantText);
-
-  // Tool parts
-  const toolParts = Array.isArray(message.parts)
-    ? message.parts.filter((part) => part.type === "tool-invocation")
-    : [];
-  const hasToolParts = toolParts.length > 0;
-
-  // Determine if there's any visible output
-  const hasVisibleOutput =
-    contentParts.some((p) => p.type === "text" && p.value.trim().length > 0) ||
-    contentParts.some((p) => p.type === "code") ||
-    hasToolParts;
+  const parts = Array.isArray(message.parts) ? message.parts : [];
 
   useEffect(() => {
     // Simplified duration logic for now
-    if (hasVisibleOutput && createdAt && duration === null) {
+    if (createdAt && duration === null) {
       setDuration(0); // Set immediately or calculate if needed
     }
-  }, [hasVisibleOutput, createdAt, duration]);
+  }, [createdAt, duration]);
 
   return (
     <div className={cn("group relative mb-8 flex flex-col")}>
@@ -112,43 +83,46 @@ export function AssistantMessage({
           </span>
         ) : null}
       </div>
-      {/* Render parsed content (text/code) and tool parts */}
-      {hasVisibleOutput && (
-        <div className="pt-3 pr-3 pl-10">
-          <div className="text-sm font-normal break-words whitespace-pre-wrap">
-            {contentParts.map((part, index) => {
-              if (part.type === "text") {
-                return <span key={`content-${index}`}>{part.value}</span>;
-              }
-              if (part.type === "code") {
+      {/* Render parsed content (text/code/tool) */}
+      <div className="pt-3 pr-3 pl-10">
+        <div className="text-sm font-normal break-words whitespace-pre-wrap">
+          {parts.length > 0 ? (
+            parts.map((part, idx) => {
+              // Type guard for tool-call (not in TS type but may be present in runtime data)
+              if ((part as any).type === "tool-call") {
                 return (
-                  <pre
-                    key={`content-${index}`}
-                    className="bg-muted dark:bg-muted/50 border-border my-2 overflow-x-auto rounded-md border p-2 font-mono text-xs"
-                  >
-                    <code className="text-foreground w-fit whitespace-pre-wrap">
-                      {part.value}
-                    </code>
-                  </pre>
+                  <ToolSection
+                    key={(part as any).toolCallId || idx}
+                    part={{ type: "tool-call", ...(part as any) }}
+                    addToolResult={addToolResult}
+                  />
                 );
               }
-              return null;
-            })}
-          </div>
-          {/* Render separate tool invocation parts if they exist */}
-          {hasToolParts &&
-            toolParts.map((part, idx) => (
-              <ToolSection
-                key={part.toolInvocation?.toolCallId || idx}
-                part={{
-                  type: "tool-invocation",
-                  toolInvocation: part.toolInvocation || part,
-                }}
-                addToolResult={addToolResult}
-              />
-            ))}
+              switch (part.type) {
+                case "text":
+                  return <span key={idx}>{(part as any).text}</span>;
+                case "tool-invocation":
+                  return (
+                    <ToolSection
+                      key={part.toolInvocation?.toolCallId || idx}
+                      part={{
+                        type: "tool-invocation",
+                        toolInvocation: part.toolInvocation || part,
+                      }}
+                      addToolResult={addToolResult}
+                    />
+                  );
+                default:
+                  return null;
+              }
+            })
+          ) : (
+            <span>
+              {typeof message.content === "string" ? message.content : ""}
+            </span>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
