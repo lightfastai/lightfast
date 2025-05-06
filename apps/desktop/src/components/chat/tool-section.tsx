@@ -40,6 +40,77 @@ function ToolInvocationRequest({
   const [error, setError] = useState<string | null>(null);
   const code = toolInvocation.args?.code || "";
 
+  const handleExecuteBlenderCode = async () => {
+    setPending(true);
+    setError(null);
+    try {
+      // Check if this is a Blender code execution tool
+      if (toolInvocation.toolName === "executeBlenderCode" && code) {
+        // Execute the code using the Electron API
+        const result = await window.electronAPI.invoke(
+          "handle-blender-execute-code",
+          {
+            code,
+          },
+        );
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: true,
+            output: result.output || "Code executed successfully",
+            message: "Blender code executed successfully",
+          },
+        });
+      } else if (toolInvocation.toolName === "reconnectBlender") {
+        // Handle reconnect Blender tool
+        if (!window.blenderConnection) {
+          throw new Error("Blender connection API not available");
+        }
+
+        const status = await window.blenderConnection.getStatus();
+
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: true,
+            status,
+            message: `Blender connection status: ${status.status}`,
+          },
+        });
+      } else {
+        // For other tools, use the default "manual" execution
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            type: "manual-tool-invocation",
+            result: {
+              success: true,
+              message: "Accepted and executed.",
+            },
+          },
+        });
+      }
+    } catch (e: any) {
+      setError(e?.message || "Failed to execute tool");
+
+      // Add error result to the tool call
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: false,
+          error: e?.message || "Failed to execute tool",
+        },
+      });
+    } finally {
+      setPending(false);
+    }
+  };
+
   return (
     <div className="bg-muted/20 border-border my-2 flex flex-col gap-2 rounded border p-4">
       <div className="mb-1 text-xs font-semibold">
@@ -63,26 +134,7 @@ function ToolInvocationRequest({
               variant="default"
               size="sm"
               disabled={pending}
-              onClick={async () => {
-                setPending(true);
-                setError(null);
-                try {
-                  addToolResult({
-                    toolCallId: toolInvocation.toolCallId,
-                    result: {
-                      type: "manual-tool-invocation",
-                      result: {
-                        success: true,
-                        message: "Accepted and executed.",
-                      },
-                    },
-                  });
-                } catch (e: any) {
-                  setError(e?.message || "Failed to execute tool");
-                } finally {
-                  setPending(false);
-                }
-              }}
+              onClick={handleExecuteBlenderCode}
             >
               <span className="flex items-center gap-2 text-xs">
                 Accept & Run
