@@ -185,8 +185,8 @@ ipcMain.handle("handle-blender-execute-code", async (event, args) => {
 function createWindow() {
   const preload = path.join(__dirname, "preload.js");
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    width: 1536,
+    height: 960,
     frame: false,
     webPreferences: {
       devTools: inDevelopment,
