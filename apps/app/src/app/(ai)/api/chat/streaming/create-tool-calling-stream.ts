@@ -9,7 +9,6 @@ import {
 import { nanoid } from "@repo/lib";
 
 import type { BaseStreamConfig } from "../schema";
-import { getTrailingMessageId } from "~/lib/utils";
 import { saveMessages } from "../actions/save-messages";
 import { blenderResearcher } from "../agents/blender-researcher";
 import { getMaxAllowedTokens, truncateMessages } from "../utils/context-window";
@@ -45,94 +44,41 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           onFinish: async (result) => {
             const { response } = result;
 
-            const assistantId = getTrailingMessageId({
-              messages: response.messages.filter(
-                (message) => message.role === "assistant",
-              ),
-            });
+            // Get all assistant messages from the response
+            const assistantMessages = response.messages.filter(
+              (message) => message.role === "assistant",
+            );
 
-            console.log("assistantId", assistantId);
+            console.log("assistantMessages", assistantMessages);
 
-            if (!assistantId) {
-              throw new Error("No assistant message found");
+            if (assistantMessages.length === 0) {
+              throw new Error("No assistant messages found");
             }
 
-            const [, assistantMessage] = appendResponseMessages({
+            // Append all response messages to the user message
+            const appendResult = appendResponseMessages({
               messages: [userMessage],
               responseMessages: response.messages,
             });
 
-            console.log("assistantMessage", assistantMessage);
-
-            if (!assistantMessage) {
-              throw new Error("No assistant message found");
-            }
-
-            console.log("saving assistant message", {
-              id: assistantId,
+            // Save all assistant messages
+            const messagesToSave = assistantMessages.map((message) => ({
+              id: message.id,
               sessionId,
               createdAt: new Date(),
               updatedAt: new Date(),
-              parts: assistantMessage.parts,
-              attachments: assistantMessage.experimental_attachments ?? [],
-              role: assistantMessage.role,
-              content: assistantMessage.content,
-            });
-            assistantMessage.parts?.forEach((part) => {
-              console.log("part", part);
-            });
+              parts: appendResult.find((m) => m.id === message.id)?.parts,
+              attachments: appendResult.find((m) => m.id === message.id)
+                ?.experimental_attachments,
+              role: message.role,
+              content: message.content,
+            }));
+
+            console.log("saving assistant messages", messagesToSave);
 
             await saveMessages({
-              messages: [
-                {
-                  id: assistantId,
-                  sessionId,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                  parts: assistantMessage.parts,
-                  attachments: assistantMessage.experimental_attachments ?? [],
-                  role: assistantMessage.role,
-                  content: assistantMessage.content,
-                },
-              ],
+              messages: messagesToSave,
             });
-
-            // note: there may be many assistant messages, we need to save all of them
-            // await saveMessages({
-            //   messages: appendResult.map((message) => ({
-            //     sessionId,
-            //     createdAt: new Date(),
-            //     updatedAt: new Date(),
-            //   })),
-            // });
-
-            // try {
-            //   // Create the message to save
-            //   const generatedMessages = [
-            //     ...responseMessages.slice(0, -1),
-            //     ...responseMessages.slice(-1),
-            //   ];
-
-            //   // Save chat with complete response and related questions
-            //   await saveMessages({
-            //     messages: generatedMessages.map((message) => ({
-            //       sessionId,
-            //       createdAt: new Date(),
-            //       updatedAt: new Date(),
-            //       id: nanoid(),
-            //       parts: message.content,
-            //       attachments: [],
-            //       role: message.role,
-            //       content: message.content,
-            //     })),
-            //   }).catch((error) => {
-            //     console.error("Failed to save chat:", error);
-            //     throw new Error("Failed to save chat history");
-            //   });
-            // } catch (error) {
-            //   console.error("Error in handleStreamFinish:", error);
-            //   throw error;
-            // }
           },
         });
 
