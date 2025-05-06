@@ -1,7 +1,7 @@
+import { useMemo } from "react";
 import {
   SESSION_CHAT_V1_API_URL,
   SESSION_CHAT_V1_AUTO_RESUME,
-  SESSION_CHAT_V1_ID,
 } from "@/constants/chat";
 import { convertDBMessageToUIMessage, DBMessage } from "@/types/internal";
 import { useChat } from "@ai-sdk/react";
@@ -23,7 +23,8 @@ export function useSessionStreamableAgent({
   initialMessages = [],
   autoResume = SESSION_CHAT_V1_AUTO_RESUME,
 }: UseSessionChatV1Props) {
-  // Get the base chat functionality from useChat
+  const id = useMemo(() => nanoid(), [sessionId, workspaceId]);
+
   const {
     messages,
     input,
@@ -35,7 +36,7 @@ export function useSessionStreamableAgent({
     append,
     addToolResult,
   } = useChat({
-    id: SESSION_CHAT_V1_ID,
+    id,
     api: SESSION_CHAT_V1_API_URL,
     initialMessages: initialMessages.map(convertDBMessageToUIMessage),
     generateId: () => nanoid(),
@@ -43,6 +44,7 @@ export function useSessionStreamableAgent({
     experimental_streamMode: "words",
     experimental_prepareRequestBody: (body) => ({
       message: body.messages.at(-1),
+      id,
       workspaceId,
       sessionId: sessionId ?? body.id, // @IMPORTANT we pass the body.id as inference to create the sesssion if doesn't exists...
     }),
@@ -56,6 +58,8 @@ export function useSessionStreamableAgent({
     },
     experimental_throttle: 100,
   });
+
+  console.log("messages", messages);
 
   // Find the latest assistant message to pass to the executor hook
   // const latestAssistantMessage = useLatestAssistantMessage(messages);

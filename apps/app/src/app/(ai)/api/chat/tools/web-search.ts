@@ -5,6 +5,8 @@ import { z } from "zod";
 
 import { env } from "~/env";
 
+const exa = new Exa(env.EXA_API_KEY);
+
 const webSearchToolSchema = z.object({
   query: z
     .string()
@@ -25,23 +27,29 @@ const webSearchToolSchema = z.object({
 export function createWebSearchTool() {
   return tool({
     description:
-      "Search the web using Exa for relevant information, links, or images.",
+      "Search for web pages. Normally you should call the extract tool after this one to get a spceific data point if search doesn't the exact data you need.",
     parameters: webSearchToolSchema,
     execute: async ({ query, max_results = 10 }) => {
-      const exa = new Exa(env.EXA_API_KEY);
-      const exaResults = await exa.searchAndContents(query, {
-        highlights: true,
-        numResults: max_results,
-      });
-      return {
-        results: exaResults.results.map((result) => ({
-          title: result.title,
-          url: result.url,
-          content: result.highlights,
-        })),
-        query,
-        number_of_results: exaResults.results.length,
-      };
+      try {
+        const exaResults = await exa.searchAndContents(query, {
+          highlights: true,
+          numResults: max_results,
+        });
+        return {
+          results: exaResults.results.map((result) => ({
+            title: result.title,
+            url: result.url,
+            content: result.highlights,
+          })),
+          query,
+          number_of_results: exaResults.results.length,
+        };
+      } catch (error: unknown) {
+        return {
+          error: `Search failed: ${error instanceof Error ? error.message : String(error)}`,
+          success: false,
+        };
+      }
     },
   });
 }

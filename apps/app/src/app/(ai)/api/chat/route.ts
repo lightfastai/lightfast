@@ -29,9 +29,14 @@ export async function POST(request: Request) {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  const { message, sessionId, workspaceId } = requestBody;
+  const { message, sessionId, workspaceId, id: userMessageId } = requestBody;
 
-  console.log("chat request", { message, sessionId, workspaceId });
+  console.log("chat request", {
+    message,
+    sessionId,
+    workspaceId,
+    userMessageId,
+  });
 
   // ensure workspaceId exists
   try {
@@ -120,6 +125,8 @@ export async function POST(request: Request) {
     messages,
     sessionId: session.id,
     workspaceId,
+    userMessageId,
+    userMessage: message,
   });
 
   const streamContext = getStreamContext();

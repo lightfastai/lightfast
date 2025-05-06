@@ -12,6 +12,7 @@ export function createExecuteBlenderCodeTool() {
   return tool({
     description: "Execute Blender code",
     parameters: executeBlenderCodeToolSchema,
+
     // execute function removed to enable frontend confirmation
   });
 }

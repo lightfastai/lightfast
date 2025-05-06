@@ -16,34 +16,6 @@ interface AssistantMessageProps {
   addToolResult?: (args: { toolCallId: string; result: any }) => void;
 }
 
-// Helper function to parse text and code blocks
-const parseMessageContent = (content: string) => {
-  const parts = [];
-  let lastIndex = 0;
-  const regex = /```python\n([\s\S]*?)\n```/g;
-  let match;
-
-  while ((match = regex.exec(content)) !== null) {
-    // Add text before the code block
-    if (match.index > lastIndex) {
-      parts.push({
-        type: "text",
-        value: content.substring(lastIndex, match.index),
-      });
-    }
-    // Add the code block
-    parts.push({ type: "code", language: "python", value: match[1] });
-    lastIndex = regex.lastIndex;
-  }
-
-  // Add any remaining text after the last code block
-  if (lastIndex < content.length) {
-    parts.push({ type: "text", value: content.substring(lastIndex) });
-  }
-
-  return parts;
-};
-
 export function AssistantMessage({
   message,
   status = "ready",
