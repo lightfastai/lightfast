@@ -60,7 +60,10 @@ export function UserMessage({ message, addToolResult }: UserMessageProps) {
             .map((part, idx) => (
               <ToolSection
                 key={part.toolInvocation?.toolCallId || idx}
-                toolInvocation={part.toolInvocation || part}
+                part={{
+                  type: "tool-invocation",
+                  toolInvocation: part.toolInvocation || part,
+                }}
                 addToolResult={addToolResult}
               />
             ))}
