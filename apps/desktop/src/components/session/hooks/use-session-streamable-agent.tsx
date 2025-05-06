@@ -17,7 +17,7 @@ interface UseSessionChatV1Props {
   autoResume?: boolean;
 }
 
-export function useSessionChatV1({
+export function useSessionStreamableAgent({
   workspaceId,
   sessionId,
   initialMessages = [],

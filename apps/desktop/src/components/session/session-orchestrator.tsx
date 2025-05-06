@@ -1,9 +1,10 @@
-import { useSessionChatV1 } from "@/hooks/use-session-chat";
-import { cn } from "@/lib/utils";
 import { DBMessage } from "@/types/internal";
 
-import { ChatInput } from "../chat/chat-input";
-import { ChatWindow } from "../chat/chat-window";
+import { cn } from "@repo/ui/lib/utils";
+
+import { useSessionStreamableAgent } from "./hooks/use-session-streamable-agent";
+import { SessionView } from "./session-chat-view";
+import { SessionInput } from "./session-input-view";
 
 interface WorkspaceChatProps {
   workspaceId: string;
@@ -17,7 +18,6 @@ export function SessionOrchestrator({
   workspaceId,
   sessionId,
   initialMessages,
-  className,
   autoResume = false,
 }: WorkspaceChatProps) {
   const {
@@ -28,7 +28,7 @@ export function SessionOrchestrator({
     status,
     error,
     addToolResult,
-  } = useSessionChatV1({
+  } = useSessionStreamableAgent({
     workspaceId,
     sessionId,
     initialMessages,
@@ -36,10 +36,10 @@ export function SessionOrchestrator({
   });
 
   return (
-    <div className={cn("bg-background flex h-full w-full flex-col", className)}>
+    <div className={cn("bg-background flex h-full w-full flex-col")}>
       <div className="flex h-full w-full flex-col items-center overflow-hidden">
         <div className="w-full max-w-3xl flex-1 overflow-hidden">
-          <ChatWindow
+          <SessionView
             messages={messages}
             status={status}
             error={error || null}
@@ -48,7 +48,7 @@ export function SessionOrchestrator({
           />
         </div>
         <div className="w-full max-w-3xl px-4 pb-4">
-          <ChatInput
+          <SessionInput
             input={input}
             status={status}
             setInput={setInput}

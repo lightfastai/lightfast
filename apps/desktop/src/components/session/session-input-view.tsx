@@ -1,13 +1,13 @@
 import { memo, useCallback, useRef } from "react";
-import { cn } from "@/lib/utils";
 import { Send, StopCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@repo/ui/components/ui/button";
 import { Textarea } from "@repo/ui/components/ui/textarea";
+import { cn } from "@repo/ui/lib/utils";
 
-interface ChatInputProps {
-  chatId?: string;
+interface SessionInputProps {
+  sessionId?: string;
   input: string;
   setInput: (input: string) => void;
   status?: "idle" | "ready" | "submitted" | "error" | "streaming";
@@ -17,8 +17,8 @@ interface ChatInputProps {
   setMessages?: (messages: any) => void;
 }
 
-const PureChatInput = ({
-  chatId,
+const PureSessionInput = ({
+  sessionId,
   input,
   setInput,
   status = "ready",
@@ -26,7 +26,7 @@ const PureChatInput = ({
   handleSubmit,
   className,
   setMessages,
-}: ChatInputProps) => {
+}: SessionInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -40,8 +40,8 @@ const PureChatInput = ({
   };
 
   const submitForm = useCallback(() => {
-    if (chatId) {
-      window.history.replaceState({}, "", `/chat/${chatId}`);
+    if (sessionId) {
+      window.history.replaceState({}, "", `/session/${sessionId}`);
     }
 
     handleSubmit(
@@ -54,7 +54,7 @@ const PureChatInput = ({
     }
 
     textareaRef.current?.focus();
-  }, [handleSubmit, chatId]);
+  }, [handleSubmit, sessionId]);
 
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
@@ -96,7 +96,7 @@ const PureChatInput = ({
   );
 };
 
-export const ChatInput = memo(PureChatInput);
+export const SessionInput = memo(PureSessionInput);
 
 function PureStopButton({
   stop,

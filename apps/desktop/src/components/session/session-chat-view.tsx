@@ -1,7 +1,6 @@
 import type { UIMessage } from "ai";
 import { useMemo } from "react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
-import { cn } from "@/lib/utils";
 import { SessionChatV1Status } from "@/types/internal";
 import { Terminal } from "lucide-react";
 
@@ -11,10 +10,11 @@ import {
   AlertTitle,
 } from "@repo/ui/components/ui/alert";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { cn } from "@repo/ui/lib/utils";
 
-import { ChatMessage } from "./chat-message";
+import { ChatMessage } from "../chat/chat-message";
 
-interface ChatWindowProps {
+interface SessionViewProps {
   messages: UIMessage[];
   status?: SessionChatV1Status;
   error?: Error | null;
@@ -22,13 +22,13 @@ interface ChatWindowProps {
   addToolResult?: (params: { toolCallId: string; result: any }) => void;
 }
 
-export function ChatWindow({
+export function SessionView({
   messages,
   status,
   error,
   className,
   addToolResult,
-}: ChatWindowProps) {
+}: SessionViewProps) {
   const { containerRef } = useScrollToBottom();
 
   const isStreamingOrSubmitted = useMemo(() => {
