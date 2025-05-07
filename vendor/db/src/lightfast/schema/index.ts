@@ -3,6 +3,7 @@ export * from "./tables/Message";
 export * from "./tables/Workspace";
 export * from "./tables/Session";
 export * from "./tables/Stream";
+export * from "./tables/Document";
 export * from "./types/Geometry";
 export * from "./types/Material";
 export * from "./types/TextureHandle";

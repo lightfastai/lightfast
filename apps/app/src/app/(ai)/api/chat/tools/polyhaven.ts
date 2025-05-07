@@ -14,9 +14,18 @@ export function createSearchPolyHavenTool() {
         .optional()
         .describe("Asset type"),
       maxResults: z.number().optional().describe("Maximum number of results"),
+      categories: z
+        .array(z.string())
+        .optional()
+        .describe("Categories to filter assets by"),
     }),
-    execute: async ({ query, type, maxResults = 5 }) => {
-      const url = `https://api.polyhaven.com/assets?${type ? `t=${type}&` : ""}q=${encodeURIComponent(query)}`;
+    execute: async ({ query, type, maxResults = 20, categories }) => {
+      let url = `https://api.polyhaven.com/assets?`;
+      if (type) url += `t=${type}&`;
+      if (categories && categories.length > 0) {
+        url += `categories=${categories.map(encodeURIComponent).join(",")}&`;
+      }
+      url += `q=${encodeURIComponent(query)}`;
       const res = await fetch(url);
       if (!res.ok) return { error: "Failed to fetch Poly Haven assets" };
       const data = await res.json();
@@ -50,6 +59,33 @@ export function createDownloadPolyHavenAssetTool() {
         preview: data.preview,
         success: true,
       };
+    },
+  });
+}
+
+/**
+ * Get categories for a specific asset type from Poly Haven.
+ */
+export function createGetPolyHavenCategoriesTool() {
+  return tool({
+    description: "Get categories for a specific asset type from Poly Haven.",
+    parameters: z.object({
+      assetType: z
+        .enum(["hdri", "texture", "model", "all"])
+        .describe("Asset type: hdri, texture, model, or all"),
+    }),
+    execute: async ({ assetType }) => {
+      try {
+        const url = `https://api.polyhaven.com/categories/${assetType}`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          return { error: `API request failed with status code ${res.status}` };
+        }
+        const categories = await res.json();
+        return { categories };
+      } catch (e) {
+        return { error: (e as Error).message };
+      }
     },
   });
 }

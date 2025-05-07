@@ -83,6 +83,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
 
         const result = streamText({
           ...blenderResearcher({
+            sessionId,
             messages: truncatedMessages,
           }),
           experimental_generateMessageId: () => nanoid(),

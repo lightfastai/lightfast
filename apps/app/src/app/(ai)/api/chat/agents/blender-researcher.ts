@@ -11,8 +11,10 @@ import {
   createExecuteBlenderCodeTool,
   createReconnectBlenderTool,
 } from "../tools/blender";
+import { createDocument, updateDocument } from "../tools/document";
 import {
   createDownloadPolyHavenAssetTool,
+  createGetPolyHavenCategoriesTool,
   createSearchPolyHavenTool,
 } from "../tools/polyhaven";
 import { createWebSearchTool } from "../tools/web-search";
@@ -32,8 +34,10 @@ Instructions:
 type UnifiedResearcherReturn = Parameters<typeof streamText>[0];
 
 export function blenderResearcher({
+  sessionId,
   messages,
 }: {
+  sessionId: string;
   messages: CoreMessage[];
 }): UnifiedResearcherReturn {
   // Tool definitions
@@ -41,9 +45,12 @@ export function blenderResearcher({
   const reconnectBlenderTool = createReconnectBlenderTool();
   const searchPolyHaven = createSearchPolyHavenTool();
   const downloadPolyHavenAsset = createDownloadPolyHavenAssetTool();
+  const getPolyHavenCategories = createGetPolyHavenCategoriesTool();
   const searchAmbientCG = createSearchAmbientCGTool();
   const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
   const webSearch = createWebSearchTool();
+  const createDocumentTool = createDocument({ sessionId });
+  const updateDocumentTool = updateDocument({ sessionId });
 
   return {
     model: modelProviders.languageModel("chat-model"),
@@ -54,18 +61,24 @@ export function blenderResearcher({
       reconnectBlender: reconnectBlenderTool,
       searchPolyHaven,
       downloadPolyHavenAsset,
+      getPolyHavenCategories,
       searchAmbientCG,
       downloadAmbientCGTexture,
       webSearch,
+      createDocument: createDocumentTool,
+      updateDocument: updateDocumentTool,
     },
     experimental_activeTools: [
       "executeBlenderCode",
       "reconnectBlender",
       "searchPolyHaven",
       "downloadPolyHavenAsset",
+      "getPolyHavenCategories",
       "searchAmbientCG",
       "downloadAmbientCGTexture",
       "webSearch",
+      "createDocument",
+      "updateDocument",
     ],
     maxSteps: 7,
     experimental_transform: smoothStream({ chunking: "word" }),
