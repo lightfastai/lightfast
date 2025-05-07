@@ -1,9 +1,13 @@
 import { tool } from "ai";
 import { z } from "zod";
 
+const PolyhavenAssetTypeSchema = z.enum(["models", "textures", "hdris", "all"]);
+
+type PolyhavenAssetType = z.infer<typeof PolyhavenAssetTypeSchema>;
+
 export const polyhavenSearchParams = z.object({
   query: z.string().describe("Search term for Poly Haven assets"),
-  type: z.enum(["model", "hdri", "texture"]).optional().describe("Asset type"),
+  type: PolyhavenAssetTypeSchema.optional().describe("Asset type"),
   maxResults: z.number().optional().describe("Maximum number of results"),
   categories: z
     .array(z.string())
@@ -13,13 +17,11 @@ export const polyhavenSearchParams = z.object({
 
 export const polyhavenDownloadParams = z.object({
   assetId: z.string().describe("Poly Haven asset ID"),
-  type: z.enum(["model", "hdri", "texture"]).describe("Asset type"),
+  type: PolyhavenAssetTypeSchema.describe("Asset type"),
 });
 
 export const polyhavenCategoryParams = z.object({
-  assetType: z
-    .enum(["hdri", "texture", "model", "all"])
-    .describe("Asset type: hdri, texture, model, or all"),
+  assetType: PolyhavenAssetTypeSchema.describe("Asset type"),
 });
 
 export type PolyhavenSearchParams = z.infer<typeof polyhavenSearchParams>;
