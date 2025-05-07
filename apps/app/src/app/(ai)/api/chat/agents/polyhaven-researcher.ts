@@ -72,7 +72,7 @@ export function createPolyhavenResearcherTool() {
       const downloadTool = createPolyhavenDownloadTool();
       const categoryTool = createPolyhavenCategoryTool();
 
-      const result = await generateText({
+      const { text } = await generateText({
         model: modelProviders.languageModel("chat-model"),
         system: polyhavenResearcherPrompt,
         prompt: `User request: ${userRequest}`,
@@ -82,7 +82,8 @@ export function createPolyhavenResearcherTool() {
           getCategories: categoryTool,
         },
       });
-      return result;
+
+      return text;
     },
   });
 }

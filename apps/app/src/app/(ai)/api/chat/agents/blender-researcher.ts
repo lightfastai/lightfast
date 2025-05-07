@@ -12,8 +12,12 @@ import {
   createReconnectBlenderTool,
 } from "../tools/blender";
 import { createDocument, updateDocument } from "../tools/document";
+import {
+  createPolyhavenCategoryTool,
+  createPolyhavenDownloadTool,
+  createPolyhavenSearchTool,
+} from "../tools/polyhaven";
 import { createWebSearchTool } from "../tools/web-search";
-import { createPolyhavenResearcherTool } from "./polyhaven-researcher";
 
 const unifiedPrompt = `
 You are a Blender 3D research and assistant agent. Your job is to help users find and use 3D resources (models, guides, scripts, textures, etc.), answer questions, and generate or execute Blender code when needed.
@@ -45,7 +49,9 @@ export function blenderResearcher({
   const createDocumentTool = createDocument({ sessionId });
   const updateDocumentTool = updateDocument({ sessionId });
 
-  const polyhavenResearcher = createPolyhavenResearcherTool();
+  const searchTool = createPolyhavenSearchTool();
+  const downloadTool = createPolyhavenDownloadTool();
+  const categoryTool = createPolyhavenCategoryTool();
 
   return {
     model: modelProviders.languageModel("chat-model"),
@@ -54,7 +60,9 @@ export function blenderResearcher({
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
-      polyhavenResearcher,
+      searchAssets: searchTool,
+      downloadAsset: downloadTool,
+      getCategories: categoryTool,
       searchAmbientCG,
       downloadAmbientCGTexture,
       webSearch,
@@ -64,7 +72,9 @@ export function blenderResearcher({
     experimental_activeTools: [
       "executeBlenderCode",
       "reconnectBlender",
-      "polyhavenResearcher",
+      "searchAssets",
+      "downloadAsset",
+      "getCategories",
       "searchAmbientCG",
       "downloadAmbientCGTexture",
       "webSearch",
