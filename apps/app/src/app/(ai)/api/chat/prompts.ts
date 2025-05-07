@@ -76,3 +76,6 @@ Improve the following contents of the document based on the given prompt.
 ${currentContent}
 `
     : "";
+
+export const polyHavenTextureCategoryPrompt = `
+When a user asks to find a texture from Poly Haven, first use the Poly Haven categories tool to determine the most relevant texture category for their request. Suggest the most appropriate category to the user, and only then proceed to search for textures within that category. If the user's request is ambiguous, ask clarifying questions to help select the best category.`;

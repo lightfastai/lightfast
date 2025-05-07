@@ -12,11 +12,7 @@ import {
   createReconnectBlenderTool,
 } from "../tools/blender";
 import { createDocument, updateDocument } from "../tools/document";
-import {
-  createDownloadPolyHavenAssetTool,
-  createGetPolyHavenCategoriesTool,
-  createSearchPolyHavenTool,
-} from "../tools/polyhaven";
+import { createPolyhavenResearcherTool } from "../tools/polyhaven";
 import { createWebSearchTool } from "../tools/web-search";
 
 const unifiedPrompt = `
@@ -43,9 +39,7 @@ export function blenderResearcher({
   // Tool definitions
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
-  const searchPolyHaven = createSearchPolyHavenTool();
-  const downloadPolyHavenAsset = createDownloadPolyHavenAssetTool();
-  const getPolyHavenCategories = createGetPolyHavenCategoriesTool();
+  const polyhavenResearcher = createPolyhavenResearcherTool();
   const searchAmbientCG = createSearchAmbientCGTool();
   const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
   const webSearch = createWebSearchTool();
@@ -59,9 +53,7 @@ export function blenderResearcher({
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
-      searchPolyHaven,
-      downloadPolyHavenAsset,
-      getPolyHavenCategories,
+      polyhavenResearcher,
       searchAmbientCG,
       downloadAmbientCGTexture,
       webSearch,
@@ -71,9 +63,7 @@ export function blenderResearcher({
     experimental_activeTools: [
       "executeBlenderCode",
       "reconnectBlender",
-      "searchPolyHaven",
-      "downloadPolyHavenAsset",
-      "getPolyHavenCategories",
+      "polyhavenResearcher",
       "searchAmbientCG",
       "downloadAmbientCGTexture",
       "webSearch",
