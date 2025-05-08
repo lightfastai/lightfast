@@ -1,10 +1,8 @@
-import { useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 
 import { queryClient } from "@repo/trpc-client/trpc-react-proxy-provider";
 
-import { syncThemeWithLocal } from "./helpers/theme_helpers";
 import { useBlenderListener } from "./hooks/use-blender-listener";
 
 import "@repo/ui/globals.css";
@@ -14,10 +12,6 @@ import { Networks } from "./types/network";
 
 export default function App({ network }: { network: Networks }) {
   useBlenderListener(network);
-
-  useEffect(() => {
-    syncThemeWithLocal();
-  }, []);
 
   let selectedRouter: AppRouter | null = null;
   switch (network) {
