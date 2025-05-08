@@ -2,7 +2,7 @@ import type { Message } from "ai";
 import { z } from "zod";
 
 export interface PostRequestBody {
-  sessionId: string | null;
+  sessionId: string;
   id: string;
   message: Message;
 }

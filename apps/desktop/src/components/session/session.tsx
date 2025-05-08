@@ -41,10 +41,15 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
       <header className="flex w-full items-center justify-between">
         <h1
           className={cn(
-            "text-muted-foreground bg-muted-foreground/10 h-5 min-w-20 rounded-md border px-3 py-1 font-mono text-[0.65rem] font-bold",
+            "text-muted-foreground bg-muted-foreground/10 h-6 min-w-20 rounded-md border px-3 py-1 font-mono text-[0.65rem] font-bold",
+            !session?.title && status === "submitted" && "animate-pulse",
           )}
         >
-          {session?.title}
+          {session?.title
+            ? session?.title
+            : status === "ready"
+              ? "New Chat"
+              : "Thinking..."}
         </h1>
         <BlenderStatusIndicator />
       </header>
@@ -86,7 +91,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               )}
             </div>
           </div>
-          <div className="flex w-full items-center justify-center py-2">
+          <div className="flex w-full items-center justify-center py-4">
             {messages.length === 0 ? (
               <PastSessions sessions={sessions} />
             ) : (

@@ -9,7 +9,6 @@ import type { PostRequestBody } from "./schema";
 import { createStreamId } from "./actions/create-stream-id";
 import { generateTitleFromUserMessage } from "./actions/generate-title-from-user-message";
 import { getMessagesBySessionId } from "./actions/get-messages-by-session-id";
-import { getSession } from "./actions/get-session";
 import { saveMessages } from "./actions/save-messages";
 import { saveSession } from "./actions/save-session";
 import { createToolCallingStreamResponse } from "./streaming/create-tool-calling-stream";
@@ -34,18 +33,13 @@ export async function POST(request: Request) {
     userMessageId,
   });
 
-  // create session if it doesn't exist
   let session: Session;
   try {
-    if (!sessionId) {
-      const title = await generateTitleFromUserMessage({ message });
-
-      session = await saveSession({
-        title,
-      });
-    } else {
-      session = await getSession({ sessionId });
-    }
+    const title = await generateTitleFromUserMessage({ message });
+    session = await saveSession({
+      id: sessionId,
+      title,
+    });
   } catch (_) {
     return new Response("Session not found", { status: 404 });
   }

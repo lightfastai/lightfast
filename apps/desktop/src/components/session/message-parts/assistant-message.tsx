@@ -37,7 +37,7 @@ export function AssistantMessage({
 
   return (
     <div className={cn("group relative mb-8 flex flex-col")}>
-      <div className="flex items-center space-x-2 px-3 py-1">
+      <div className="flex items-center space-x-2 py-1">
         <Avatar className="bg-background flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow select-none">
           <AvatarImage src={`https://avatar.vercel.sh/${assistant.name}`} />
           <AvatarFallback>
@@ -56,7 +56,7 @@ export function AssistantMessage({
         ) : null}
       </div>
       {/* Render parsed content (text/code/tool) */}
-      <div className="pt-3 pr-3 pl-10">
+      <div className="pt-3 pr-3 pl-8">
         <div className="text-sm font-normal break-words whitespace-pre-wrap">
           {parts.length > 0 ? (
             parts.map((part, idx) => {

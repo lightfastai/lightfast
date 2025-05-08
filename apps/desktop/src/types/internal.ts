@@ -1,4 +1,5 @@
 import { UseChatHelpers } from "@ai-sdk/react";
+import { z } from "zod";
 
 import { RouterOutputs } from "@vendor/trpc";
 
@@ -29,3 +30,7 @@ export const convertDBMessageToUIMessage = (
     role: message.role,
   } as SessionChatV1Message;
 };
+
+// Session mode enum (manual mode currently disabled in UI)
+export const SessionMode = z.enum(["agent", "manual"]);
+export type SessionMode = z.infer<typeof SessionMode>;

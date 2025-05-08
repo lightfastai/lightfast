@@ -81,7 +81,10 @@ export function TitleBar() {
         {/* Centered Title */}
         <div className="flex-grow text-center">
           <h1 className="inline-block font-mono text-xs font-bold">
-            Lightfast
+            Lightfast{" "}
+            <span className="relative inline-block bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-400 bg-clip-text font-mono text-transparent">
+              Computer
+            </span>
           </h1>
         </div>
         {/* Right side - invisible buttons for symmetry */}

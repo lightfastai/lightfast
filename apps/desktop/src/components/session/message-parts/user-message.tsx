@@ -20,7 +20,7 @@ export function UserMessage({ message, addToolResult }: UserMessageProps) {
 
   return (
     <div className={cn("group relative mb-8 flex flex-col")}>
-      <div className="flex items-start space-x-2 px-3 py-1">
+      <div className="flex items-start space-x-2 py-1">
         <Avatar className="bg-background flex h-6 w-6 shrink-0 items-center justify-center rounded-md border shadow select-none">
           <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
           <AvatarFallback>
