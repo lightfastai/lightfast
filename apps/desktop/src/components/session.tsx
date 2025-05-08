@@ -6,6 +6,8 @@ import {
 import { trpc } from "@/trpc";
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { HistoryIcon, Plus } from "lucide-react";
 
 import { nanoid } from "@repo/lib";
 import { Button } from "@repo/ui/components/ui/button";
@@ -13,7 +15,6 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { MessageList } from "./message-list";
 import { PastSessions } from "./past-sessions";
-import { BlenderStatusIndicator } from "./status-indicator";
 import { UserMessageInput } from "./user-message-input";
 
 export interface SessionProps {
@@ -67,7 +68,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   }, [sessionId, experimental_resume]);
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 px-4 pt-16">
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-4 pt-16 pb-4">
       <header className="flex w-full items-center justify-between">
         <h1
           className={cn(
@@ -81,7 +82,17 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               ? "New Chat"
               : "Thinking..."}
         </h1>
-        <BlenderStatusIndicator />
+        {/*   <BlenderStatusIndicator /> */}
+        <div className="flex items-center gap-1">
+          <Link to="/">
+            <Button variant="ghost" size="xs">
+              <Plus className="text-muted-foreground size-3" />
+            </Button>
+          </Link>
+          <Button variant="ghost" size="xs">
+            <HistoryIcon className="text-muted-foreground size-3" />
+          </Button>
+        </div>
       </header>
       <main className="flex w-full flex-1 flex-col gap-2">
         <div className="relative flex h-full w-full flex-col items-end justify-between">
@@ -121,25 +132,11 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               )}
             </div>
           </div>
-          <div className="flex w-full items-center justify-center py-4">
-            {messages.length === 0 ? (
+          {messages.length === 0 && (
+            <div className="flex w-full items-center justify-center">
               <PastSessions sessions={sessions} />
-            ) : (
-              <div className="flex w-full items-center justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  aria-label={
-                    showPastSessions ? "Hide sessions" : "Show sessions"
-                  }
-                  className="text-muted-foreground h-6 text-[0.65rem]"
-                  onClick={() => setShowPastSessions((v) => !v)}
-                >
-                  View Sessions
-                </Button>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         {/* Optional: Tool panel (e.g., BlenderMCP) */}
         {/* <BlenderMCP /> */}

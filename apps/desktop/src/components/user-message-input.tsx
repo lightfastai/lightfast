@@ -97,6 +97,7 @@ const PureUserMessageInput = ({
   handleSubmit,
   className,
   setMessages,
+  extension,
 }: SessionInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [mode, setMode] = React.useState<SessionMode>("agent");
