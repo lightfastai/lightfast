@@ -7,7 +7,7 @@ import { queryClient } from "@repo/trpc-client/trpc-react-proxy-provider";
 import { syncThemeWithLocal } from "./helpers/theme_helpers";
 import { useBlenderListener } from "./hooks/use-blender-listener";
 
-import "./styles.css";
+import "@repo/ui/globals.css";
 
 import { AppRouter, composerRouter } from "./routes/router";
 import { Networks } from "./types/network";
