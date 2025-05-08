@@ -98,35 +98,42 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
         <div className="relative flex h-full w-full flex-col items-end justify-between">
           <div className={cn("bg-background flex h-full w-full flex-col")}>
             <div className="flex h-full w-full flex-col items-center">
-              {messages.length === 0 ? (
+              {!messages || messages.length === 0 ? (
                 <div className="w-full">
                   <UserMessageInput
                     input={input}
-                    status={status}
                     setInput={setInput}
                     handleSubmit={handleSubmit}
                     className="w-full"
+                    status={"ready"}
                   />
                 </div>
               ) : (
                 <>
                   <div className="w-full flex-1 overflow-hidden">
                     <MessageList
-                      messages={messages}
+                      messages={messages || []}
                       status={status}
                       error={error || null}
                       className="w-full"
                       addToolResult={addToolResult}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <UserMessageInput
                       input={input}
-                      status={status}
                       setInput={setInput}
                       handleSubmit={handleSubmit}
-                      className="w-full"
+                      stop={undefined}
+                      setMessages={undefined}
                     />
+                    <div>
+                      <UserMessageInput
+                        key={nanoid()}
+                        input={input}
+                        setInput={setInput}
+                        status={"ready"}
+                        stop={undefined}
+                        handleSubmit={handleSubmit}
+                        setMessages={undefined}
+                      />
+                    </div>
                   </div>
                 </>
               )}

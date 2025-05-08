@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useRef } from "react";
-import { UseChatHelpers } from "@ai-sdk/react";
 import { Infinity as InfinityIcon, Info, Send, StopCircle } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -20,12 +20,15 @@ interface SessionInputProps {
   sessionId?: string;
   input: string;
   setInput: (input: string) => void;
-  status?: UseChatHelpers["status"];
   stop?: () => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   className?: string;
   setMessages?: (messages: any) => void;
+  status?: InputStatus;
 }
+
+const InputStatus = z.enum(["ready", "thinking", "done"]);
+type InputStatus = z.infer<typeof InputStatus>;
 
 const MODE_LABELS: Record<SessionMode, string> = {
   agent: "Agent",
@@ -40,68 +43,60 @@ function ModeSelector({
   setMode?: (mode: SessionMode) => void;
 }) {
   return (
-    <div className="absolute bottom-0 left-0 z-10 flex w-fit flex-row items-end p-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="xs"
-            className="justify-start"
-            aria-label="Select mode"
-          >
-            {mode === "agent" ? (
-              <span className="flex items-center gap-1">
-                <InfinityIcon className="text-primary size-3" aria-hidden />
-                {MODE_LABELS.agent}
-              </span>
-            ) : (
-              MODE_LABELS[mode]
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="min-w-[96px] p-0.5">
-          <DropdownMenuRadioGroup
-            value={mode}
-            onValueChange={(v) => setMode?.(v as SessionMode)}
-          >
-            <DropdownMenuRadioItem value="agent" showIndicator={false}>
-              <span className="flex items-center gap-1 text-xs">
-                <InfinityIcon className="text-primary size-3" aria-hidden />
-                {MODE_LABELS.agent}
-              </span>
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem
-              value="manual"
-              disabled
-              showIndicator={false}
-            >
-              <span className="flex items-center gap-1 text-xs">
-                {MODE_LABELS.manual}
-                <Info className="text-muted-foreground/70 size-3" />
-                <span className="sr-only">Manual mode coming soon</span>
-              </span>
-            </DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="xs"
+          className="justify-start"
+          aria-label="Select mode"
+        >
+          {mode === "agent" ? (
+            <span className="flex items-center gap-1">
+              <InfinityIcon className="text-primary size-3" aria-hidden />
+              {MODE_LABELS.agent}
+            </span>
+          ) : (
+            MODE_LABELS[mode]
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[96px] p-0.5">
+        <DropdownMenuRadioGroup
+          value={mode}
+          onValueChange={(v) => setMode?.(v as SessionMode)}
+        >
+          <DropdownMenuRadioItem value="agent" showIndicator={false}>
+            <span className="flex items-center gap-1 text-xs">
+              <InfinityIcon className="text-primary size-3" aria-hidden />
+              {MODE_LABELS.agent}
+            </span>
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="manual" disabled showIndicator={false}>
+            <span className="flex items-center gap-1 text-xs">
+              {MODE_LABELS.manual}
+              <Info className="text-muted-foreground/70 size-3" />
+              <span className="sr-only">Manual mode coming soon</span>
+            </span>
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-const PureUserMessageInput = ({
+export const UserMessageInput = ({
   sessionId,
   input,
   setInput,
-  status = "ready",
   stop,
   handleSubmit,
   className,
   setMessages,
-  extension,
+  status,
 }: SessionInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [mode, setMode] = React.useState<SessionMode>("agent");
-
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
 
@@ -131,9 +126,21 @@ const PureUserMessageInput = ({
 
   return (
     <div className={cn("relative flex w-full flex-col", className)}>
-      <ModeSelector mode={mode} setMode={setMode} />
+      {status === "ready" && (
+        <div className="absolute bottom-0 left-0 z-10 flex w-fit flex-row items-end p-2">
+          <ModeSelector mode={mode} setMode={setMode} />
+        </div>
+      )}
+      {status === "thinking" && (
+        <div className="absolute bottom-0 left-0 z-10 flex w-fit flex-row items-end p-2">
+          <span className="text-muted-foreground text-xs italic">
+            Thinking...
+          </span>
+        </div>
+      )}
       <Textarea
         ref={textareaRef}
+        disabled={status === "done"}
         placeholder="Send a message..."
         value={input}
         onChange={handleInput}
@@ -158,9 +165,8 @@ const PureUserMessageInput = ({
           }
         }}
       />
-
       <div className="absolute right-0 bottom-0 flex w-fit flex-row justify-end p-2">
-        {status === "submitted" || status === "streaming" ? (
+        {status === "thinking" ? (
           <StopButton stop={stop} setMessages={setMessages} />
         ) : (
           <SendButton input={input} submitForm={submitForm} />
@@ -169,8 +175,6 @@ const PureUserMessageInput = ({
     </div>
   );
 };
-
-export const UserMessageInput = memo(PureUserMessageInput);
 
 function PureStopButton({
   stop,

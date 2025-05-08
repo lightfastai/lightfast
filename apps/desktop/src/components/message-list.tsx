@@ -11,7 +11,7 @@ import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 
 import { AssistantMessage } from "./assistant-message";
-import { UserMessage } from "./user-message";
+import { UserMessageInput } from "./user-message-input";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -19,6 +19,11 @@ interface MessageListProps {
   error?: Error | null;
   className?: string;
   addToolResult: (params: { toolCallId: string; result: any }) => void;
+  input: string;
+  setInput: (input: string) => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  stop?: () => void;
+  setMessages?: (messages: any) => void;
 }
 
 export function MessageList({
@@ -27,31 +32,42 @@ export function MessageList({
   error,
   className,
   addToolResult,
+  input,
+  setInput,
+  handleSubmit,
+  stop,
+  setMessages,
 }: MessageListProps) {
   return (
     <div className={cn("flex h-full flex-col overflow-y-auto", className)}>
       <ScrollArea className="h-full">
         <div className="flex-1 space-y-4">
-          {messages.map((message, index) => {
-            switch (message.role) {
-              case "user":
-                return (
-                  <UserMessage
-                    message={message}
-                    addToolResult={addToolResult}
-                  />
-                );
-              case "assistant":
-                return (
-                  <AssistantMessage
-                    message={message}
-                    status={status}
-                    addToolResult={addToolResult}
-                  />
-                );
-              default:
-                return null;
+          {messages.map((message) => {
+            if (message.role === "user") {
+              return (
+                <UserMessageInput
+                  key={message.id}
+                  input={message.content || ""}
+                  setInput={setInput}
+                  status={status === "ready" ? "done" : "thinking"}
+                  stop={stop}
+                  handleSubmit={handleSubmit}
+                  setMessages={setMessages}
+                  className="w-full"
+                />
+              );
             }
+            if (message.role === "assistant") {
+              return (
+                <AssistantMessage
+                  key={message.id}
+                  message={message}
+                  status={status}
+                  addToolResult={addToolResult}
+                />
+              );
+            }
+            return null;
           })}
           {/* {isStreamingOrSubmitted &&
             messages.length > 0 &&
