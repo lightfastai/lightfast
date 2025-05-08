@@ -44,9 +44,9 @@ export function TitleBar() {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="flex h-10 items-center pt-8 pl-4">
+      <div className="flex h-10 items-center justify-between px-4 pt-8">
         {/* Left side - macOS style window controls */}
-        <div className="mr-4 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <button
             className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500 transition-opacity hover:opacity-100"
             onClick={() => sendCommand("close")}
@@ -77,6 +77,18 @@ export function TitleBar() {
               } as React.CSSProperties
             }
           ></button>
+        </div>
+        {/* Centered Title */}
+        <div className="flex-grow text-center">
+          <h1 className="inline-block font-mono text-xs font-bold">
+            Lightfast
+          </h1>
+        </div>
+        {/* Right side - invisible buttons for symmetry */}
+        <div className="flex items-center gap-2">
+          <button className="pointer-events-none flex h-3 w-3 rounded-full opacity-0"></button>
+          <button className="pointer-events-none flex h-3 w-3 rounded-full opacity-0"></button>
+          <button className="pointer-events-none flex h-3 w-3 rounded-full opacity-0"></button>
         </div>
       </div>
     </div>

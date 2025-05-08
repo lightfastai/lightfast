@@ -97,7 +97,7 @@ export function BlenderStatusIndicator() {
       <div
         className={cn("h-2 w-2 rounded-full", color, pulse && "animate-pulse")}
       />
-      <span className="text-xs">Blender</span>
+      <span className="text-xs capitalize">{connectionStatus.status}</span>
     </div>
   );
 }

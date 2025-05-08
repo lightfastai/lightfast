@@ -6,7 +6,7 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 
 import { ApiStatusIndicator } from "../connection-indicators/api-status-indicator";
-import { BlenderStatusIndicator } from "../connection-indicators/blender-status-indicator";
+import { BlenderStatusIndicator } from "../status-indicator";
 
 export function ConnectionIndicators() {
   return (

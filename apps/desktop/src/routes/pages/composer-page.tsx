@@ -1,6 +1,6 @@
 import React from "react";
 import { ComposerRootLayout } from "@/components/composer-root-layout";
-import { BlenderStatusIndicator } from "@/components/connection-indicators/blender-status-indicator";
+import { BlenderStatusIndicator } from "@/components/status-indicator";
 import { ArrowUp } from "lucide-react";
 
 import { Textarea } from "@repo/ui/components/ui/textarea";
