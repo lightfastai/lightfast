@@ -3,21 +3,18 @@ import { useActiveSessionStore } from "@/store/active-session-store";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
 
-import { useCurrentWorkspaceId } from "./use-current-workspace-id";
-
 /**
  * Custom hook to get the current active session ID and a setter function
  *
  * @returns [activeSessionId, setActiveSessionId]
  */
 export function useActiveSessionId(): [string | null, (id: string) => void] {
-  const currentWorkspaceId = useCurrentWorkspaceId();
   const { activeSessionId, setActiveSessionId } = useActiveSessionStore();
 
   // Get all sessions for the current workspace
   const { data: sessions = [] } = useQuery(
     trpc.tenant.session.list.queryOptions({
-      workspaceId: currentWorkspaceId ?? "",
+      workspaceId: "composer-workspace",
     }),
   );
 

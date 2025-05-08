@@ -38,7 +38,7 @@ export function SessionOrchestrator({
   return (
     <div className={cn("bg-background flex h-full w-full flex-col")}>
       <div className="flex h-full w-full flex-col items-center overflow-hidden">
-        <div className="w-full max-w-3xl flex-1 overflow-hidden">
+        <div className="w-full flex-1 overflow-hidden">
           <SessionView
             messages={messages}
             status={status}
@@ -47,7 +47,7 @@ export function SessionOrchestrator({
             addToolResult={addToolResult}
           />
         </div>
-        <div className="w-full max-w-3xl px-4 pb-4">
+        <div className="w-full">
           <SessionInput
             input={input}
             status={status}

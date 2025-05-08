@@ -1,15 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { SidebarTrigger } from "@repo/ui/components/ui/sidebar";
-
 // Custom event name for sidebar toggle
 export const SIDEBAR_TOGGLE_EVENT = "sidebar-toggle";
 
-export function TitleBar({
-  withSidebarTrigger = true,
-}: {
-  withSidebarTrigger?: boolean;
-}) {
+export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
@@ -83,16 +77,6 @@ export function TitleBar({
               } as React.CSSProperties
             }
           ></button>
-        </div>
-
-        {/* Center - App controls and title */}
-        <div className="flex items-center">
-          {withSidebarTrigger && (
-            <SidebarTrigger
-              style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-              className="size-7"
-            />
-          )}
         </div>
       </div>
     </div>

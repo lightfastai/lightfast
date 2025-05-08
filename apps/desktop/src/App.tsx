@@ -9,17 +9,10 @@ import { useBlenderListener } from "./hooks/use-blender-listener";
 
 import "./styles.css";
 
-import { AppRouter, composerRouter, indexRouter } from "./routes/router";
+import { AppRouter, composerRouter } from "./routes/router";
 import { Networks } from "./types/network";
-import { Renderer } from "./types/renderer";
 
-export default function App({
-  network,
-  renderer = "index",
-}: {
-  network: Networks;
-  renderer?: Renderer;
-}) {
+export default function App({ network }: { network: Networks }) {
   useBlenderListener(network);
 
   useEffect(() => {
@@ -27,11 +20,8 @@ export default function App({
   }, []);
 
   let selectedRouter: AppRouter | null = null;
-  switch (renderer) {
-    case "index":
-      selectedRouter = indexRouter;
-      break;
-    case "composer":
+  switch (network) {
+    case "blender":
       selectedRouter = composerRouter;
       break;
   }
@@ -41,7 +31,7 @@ export default function App({
   }
 
   return (
-    <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
+    <div className="dark bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
       {/* <ClerkProvider
         publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       > */}

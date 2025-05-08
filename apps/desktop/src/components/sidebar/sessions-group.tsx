@@ -13,7 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 
@@ -35,7 +34,6 @@ export function SessionsGroup({
   onCreateWorkspace,
 }: SessionsGroupProps) {
   const navigate = useNavigate();
-  const { toggleSidebar } = useSidebar();
   const [activeSessionId, setActiveSessionId] = useActiveSessionId();
 
   // Touch/swipe navigation state

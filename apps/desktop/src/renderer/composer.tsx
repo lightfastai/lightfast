@@ -7,7 +7,7 @@ const root = createRoot(document.getElementById("app")!);
 root.render(
   <React.StrictMode>
     <EnvProvider>
-      <App network="blender" renderer="composer" />
+      <App network="blender" />
     </EnvProvider>
   </React.StrictMode>,
 );

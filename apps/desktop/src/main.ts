@@ -10,13 +10,11 @@ import {
 import type { EnvClient } from "./env/client-types";
 // Import the validated environment variables
 import { env } from "./env/index";
-import registerListeners from "./helpers/ipc/listeners-register";
 // Import the blender connection module and its variables
 import {
   getBlenderStatus,
   isBlenderConnected,
   sendToBlender,
-  startBlenderSocketServer,
 } from "./main/blender-connection";
 
 // Example usage (if you had defined variables in env.ts):
@@ -182,66 +180,12 @@ ipcMain.handle("handle-blender-execute-code", async (event, args) => {
 });
 // --- End IPC Handlers ---
 
-function createWindow() {
-  const preload = path.join(__dirname, "preload.js");
-  const mainWindow = new BrowserWindow({
-    width: 1536,
-    height: 960,
-    frame: false,
-    webPreferences: {
-      devTools: inDevelopment,
-      contextIsolation: true,
-      nodeIntegration: true,
-      nodeIntegrationInSubFrames: false,
-      webSecurity: false,
-      preload: preload,
-    },
-  });
-  registerListeners(mainWindow);
-
-  // Initialize Blender WebSocket server
-  startBlenderSocketServer(mainWindow.webContents);
-  console.log("Blender WebSocket server initialized");
-
-  ipcMain.on("minimize-window", () => {
-    mainWindow?.minimize();
-  });
-
-  ipcMain.on("maximize-window", () => {
-    if (mainWindow?.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow?.maximize();
-    }
-  });
-
-  ipcMain.on("close-window", () => {
-    mainWindow?.close();
-  });
-
-  mainWindow.on("maximize", () => {
-    mainWindow.webContents.send("window-maximized");
-  });
-
-  mainWindow.on("unmaximize", () => {
-    mainWindow.webContents.send("window-unmaximized");
-  });
-
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
-  }
-}
-
 // Function to create the Composer window
 function createComposerWindow() {
   const preload = path.join(__dirname, "preload.js");
   const composerWindow = new BrowserWindow({
     width: 400,
-    height: 700,
+    height: 800,
     frame: false,
     webPreferences: {
       devTools: inDevelopment,
@@ -251,6 +195,30 @@ function createComposerWindow() {
       webSecurity: false,
       preload: preload,
     },
+  });
+
+  ipcMain.on("minimize-window", () => {
+    composerWindow?.minimize();
+  });
+
+  ipcMain.on("maximize-window", () => {
+    if (composerWindow?.isMaximized()) {
+      composerWindow.unmaximize();
+    } else {
+      composerWindow?.maximize();
+    }
+  });
+
+  ipcMain.on("close-window", () => {
+    composerWindow?.close();
+  });
+
+  composerWindow.on("maximize", () => {
+    composerWindow.webContents.send("window-maximized");
+  });
+
+  composerWindow.on("unmaximize", () => {
+    composerWindow.webContents.send("window-unmaximized");
   });
 
   // You may want to register listeners here if needed
@@ -280,13 +248,8 @@ async function installExtensions() {
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  createComposerWindow();
   installExtensions();
-
-  // Register global shortcut for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
-  globalShortcut.register("CommandOrControl+K", () => {
-    createComposerWindow();
-  });
 });
 
 //osX only
@@ -298,7 +261,7 @@ app.on("window-all-closed", () => {
 
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    createComposerWindow();
   }
 });
 //osX only ends
