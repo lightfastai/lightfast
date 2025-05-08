@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { ComposerRootLayout } from "@/components/composer-root-layout";
-import { Session } from "@/components/session/session";
+import { Session } from "@/components/session";
 
 import { nanoid } from "@repo/lib";
 

@@ -7,11 +7,11 @@ import {
 } from "@repo/ui/components/ui/avatar";
 import { cn } from "@repo/ui/lib/utils";
 
-import { ToolSection } from "../../chat/tool-section";
+import { ToolSection } from "./tool-section";
 
 interface UserMessageProps {
   message: UIMessage;
-  addToolResult?: (args: { toolCallId: string; result: any }) => void;
+  addToolResult: (args: { toolCallId: string; result: any }) => void;
 }
 
 export function UserMessage({ message, addToolResult }: UserMessageProps) {

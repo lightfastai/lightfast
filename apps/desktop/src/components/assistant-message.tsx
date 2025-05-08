@@ -8,7 +8,7 @@ import {
 } from "@repo/ui/components/ui/avatar";
 import { cn } from "@repo/ui/lib/utils";
 
-import { ToolSection } from "../../chat/tool-section";
+import { ToolSection } from "./tool-section";
 
 interface AssistantMessageProps {
   message: UIMessage;

@@ -10,9 +10,10 @@ import {
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 
-import { MessagePartsRenderer } from "./message-parts-renderer";
+import { AssistantMessage } from "./assistant-message";
+import { UserMessage } from "./user-message";
 
-interface SessionViewProps {
+interface MessageListProps {
   messages: UIMessage[];
   status: SessionChatV1Status;
   error?: Error | null;
@@ -20,25 +21,38 @@ interface SessionViewProps {
   addToolResult: (params: { toolCallId: string; result: any }) => void;
 }
 
-export function SessionView({
+export function MessageList({
   messages,
   status,
   error,
   className,
   addToolResult,
-}: SessionViewProps) {
+}: MessageListProps) {
   return (
     <div className={cn("flex h-full flex-col overflow-y-auto", className)}>
       <ScrollArea className="h-full">
         <div className="flex-1 space-y-4">
-          {messages.map((message, index) => (
-            <MessagePartsRenderer
-              key={message.id ?? `message-${index}`}
-              message={message}
-              status={status}
-              addToolResult={addToolResult}
-            />
-          ))}
+          {messages.map((message, index) => {
+            switch (message.role) {
+              case "user":
+                return (
+                  <UserMessage
+                    message={message}
+                    addToolResult={addToolResult}
+                  />
+                );
+              case "assistant":
+                return (
+                  <AssistantMessage
+                    message={message}
+                    status={status}
+                    addToolResult={addToolResult}
+                  />
+                );
+              default:
+                return null;
+            }
+          })}
           {/* {isStreamingOrSubmitted &&
             messages.length > 0 &&
             messages[messages.length - 1].role === "user" && (

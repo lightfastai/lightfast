@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { cn } from "@repo/ui/lib/utils";
 
-import { SessionMode } from "../../types/internal";
+import { SessionMode } from "../types/internal";
 
 interface SessionInputProps {
   sessionId?: string;
@@ -88,7 +88,7 @@ function ModeSelector({
   );
 }
 
-const PureSessionInput = ({
+const PureUserMessageInput = ({
   sessionId,
   input,
   setInput,
@@ -169,7 +169,7 @@ const PureSessionInput = ({
   );
 };
 
-export const SessionInput = memo(PureSessionInput);
+export const UserMessageInput = memo(PureUserMessageInput);
 
 function PureStopButton({
   stop,

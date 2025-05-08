@@ -1,15 +1,20 @@
-import React from "react";
-import { PastSessions } from "@/components/past-sessions";
-import { BlenderStatusIndicator } from "@/components/status-indicator";
+import React, { useEffect } from "react";
+import {
+  SESSION_CHAT_API_URL,
+  SESSION_CHAT_AUTO_RESUME,
+} from "@/config/session-constants";
 import { trpc } from "@/trpc";
+import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 
+import { nanoid } from "@repo/lib";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
-import { useSessionStreamableAgent } from "./hooks/use-session-streamable-agent";
-import { SessionView } from "./session-chat-view";
-import { SessionInput } from "./session-input-view";
+import { MessageList } from "./message-list";
+import { PastSessions } from "./past-sessions";
+import { BlenderStatusIndicator } from "./status-indicator";
+import { UserMessageInput } from "./user-message-input";
 
 export interface SessionProps {
   sessionId: string;
@@ -29,12 +34,37 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     handleSubmit,
     status,
     error,
+    experimental_resume,
     addToolResult,
-  } = useSessionStreamableAgent({
-    sessionId,
+  } = useChat({
+    id: sessionId,
+    api: SESSION_CHAT_API_URL,
     initialMessages: session?.messages,
-    autoResume: false,
+    generateId: () => nanoid(),
+    sendExtraMessageFields: true,
+    experimental_streamMode: "words",
+    experimental_prepareRequestBody: (body) => ({
+      message: body.messages.at(-1),
+      sessionId: sessionId ?? body.id, // @IMPORTANT we pass the body.id as inference to create the sesssion if doesn't exists...
+    }),
+    onError: (err) => {
+      // @TODO Proper handling of errors on client-side...
+      console.error("Chat Error:", err);
+      // Resetting execution state is now handled within useBlenderCodeExecutor
+    },
+    onFinish: () => {
+      // window.history.replaceState({}, "", `/search/${id}`);
+    },
+    experimental_throttle: 100,
   });
+
+  useEffect(() => {
+    if (!SESSION_CHAT_AUTO_RESUME) return;
+    if (sessionId && experimental_resume) {
+      console.log(`Attempting to resume chat for session: ${sessionId}`);
+      experimental_resume();
+    }
+  }, [sessionId, experimental_resume]);
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 px-4 pt-16">
@@ -59,7 +89,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
             <div className="flex h-full w-full flex-col items-center">
               {messages.length === 0 ? (
                 <div className="w-full">
-                  <SessionInput
+                  <UserMessageInput
                     input={input}
                     status={status}
                     setInput={setInput}
@@ -70,7 +100,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               ) : (
                 <>
                   <div className="w-full flex-1 overflow-hidden">
-                    <SessionView
+                    <MessageList
                       messages={messages}
                       status={status}
                       error={error || null}
@@ -79,7 +109,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                     />
                   </div>
                   <div className="w-full">
-                    <SessionInput
+                    <UserMessageInput
                       input={input}
                       status={status}
                       setInput={setInput}
