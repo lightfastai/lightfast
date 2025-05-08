@@ -1,49 +1,44 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
-import { createRoot } from "react-dom/client";
 
 import { queryClient } from "@repo/trpc-client/trpc-react-proxy-provider";
 
 import { syncThemeWithLocal } from "./helpers/theme_helpers";
-import { router } from "./routes/router";
-import { useBlenderStore } from "./stores/blender-store";
+import { useBlenderListener } from "./hooks/use-blender-listener";
 
 import "./styles.css";
 
-import { EnvProvider } from "./providers/env-provider";
+import { AppRouter, composerRouter, indexRouter } from "./routes/router";
+import { Networks } from "./types/network";
+import { Renderer } from "./types/renderer";
 
-export default function App() {
-  // This ref needs to be at the top level of the component, not inside useEffect
-  const hasInitializedBlenderListener = React.useRef(false);
-  const initializeListener = useBlenderStore(
-    (state) => state.initializeListener,
-  );
+export default function App({
+  network,
+  renderer = "index",
+}: {
+  network: Networks;
+  renderer?: Renderer;
+}) {
+  useBlenderListener(network);
 
   useEffect(() => {
     syncThemeWithLocal();
   }, []);
 
-  // Initialize Blender connection status listener
-  useEffect(() => {
-    // Don't initialize more than once in development due to StrictMode
-    if (!hasInitializedBlenderListener.current) {
-      console.log("Initializing Blender status listener from App component");
-      const cleanup = initializeListener();
-      hasInitializedBlenderListener.current = true;
+  let selectedRouter: AppRouter | null = null;
+  switch (renderer) {
+    case "index":
+      selectedRouter = indexRouter;
+      break;
+    case "composer":
+      selectedRouter = composerRouter;
+      break;
+  }
 
-      // Return cleanup function to remove listener when component unmounts
-      return () => {
-        console.log("Cleaning up Blender status listener");
-        cleanup();
-        // Don't reset the ref in the cleanup, as that would allow double-initialization
-        // during React's StrictMode unmount/remount cycle
-      };
-    }
-
-    // Return a no-op cleanup if we didn't initialize
-    return () => {};
-  }, []);
+  if (!selectedRouter) {
+    throw new Error("No router found");
+  }
 
   return (
     <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
@@ -51,18 +46,9 @@ export default function App() {
         publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       > */}
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} defaultPreload="intent" />
+        <RouterProvider router={selectedRouter} defaultPreload="intent" />
       </QueryClientProvider>
       {/* </ClerkProvider> */}
     </div>
   );
 }
-
-const root = createRoot(document.getElementById("app")!);
-root.render(
-  <React.StrictMode>
-    <EnvProvider>
-      <App />
-    </EnvProvider>
-  </React.StrictMode>,
-);

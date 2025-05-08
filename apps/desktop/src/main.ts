@@ -1,7 +1,7 @@
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 import {
   installExtension,
   REACT_DEVELOPER_TOOLS,
@@ -236,6 +236,40 @@ function createWindow() {
   }
 }
 
+// Function to create the Composer window
+function createComposerWindow() {
+  const preload = path.join(__dirname, "preload.js");
+  const composerWindow = new BrowserWindow({
+    width: 900,
+    height: 700,
+    frame: false,
+    webPreferences: {
+      devTools: inDevelopment,
+      contextIsolation: true,
+      nodeIntegration: true,
+      nodeIntegrationInSubFrames: false,
+      webSecurity: false,
+      preload: preload,
+    },
+  });
+
+  // You may want to register listeners here if needed
+  // registerListeners(composerWindow);
+
+  // Load the composer HTML (adjust path as needed)
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    // If using Vite dev server, load a specific route or file
+    composerWindow.loadURL(`${MAIN_WINDOW_VITE_DEV_SERVER_URL}/composer`);
+  } else {
+    composerWindow.loadFile(
+      path.join(
+        __dirname,
+        `../renderer/${MAIN_WINDOW_VITE_NAME}/composer.html`,
+      ),
+    );
+  }
+}
+
 async function installExtensions() {
   try {
     const result = await installExtension(REACT_DEVELOPER_TOOLS);
@@ -245,7 +279,15 @@ async function installExtensions() {
   }
 }
 
-app.whenReady().then(createWindow).then(installExtensions);
+app.whenReady().then(() => {
+  createWindow();
+  installExtensions();
+
+  // Register global shortcut for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+  globalShortcut.register("CommandOrControl+K", () => {
+    createComposerWindow();
+  });
+});
 
 //osX only
 app.on("window-all-closed", () => {
@@ -260,3 +302,8 @@ app.on("activate", () => {
   }
 });
 //osX only ends
+
+// Unregister all shortcuts when app quits
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+});

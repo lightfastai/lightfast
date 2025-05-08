@@ -1,6 +1,7 @@
 import { createRoute } from "@tanstack/react-router";
 
 import { RootRoute } from "./__root";
+import ComposerPage from "./pages/composer-page";
 import HomePage from "./pages/home-page";
 import WorkspacePage from "./pages/workspace-page";
 
@@ -35,4 +36,12 @@ export const WorkspaceRoute = createRoute({
   component: WorkspacePage,
 });
 
-export const rootTree = RootRoute.addChildren([HomeRoute, WorkspaceRoute]);
+export const ComposerRoute = createRoute({
+  getParentRoute: () => RootRoute,
+  path: "/composer",
+  component: ComposerPage,
+});
+
+export const indexTree = RootRoute.addChildren([HomeRoute, WorkspaceRoute]);
+
+export const composerTree = RootRoute.addChildren([ComposerRoute]);
