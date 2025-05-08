@@ -9,4 +9,13 @@ export const ComposerRoute = createRoute({
   component: ComposerPage,
 });
 
-export const composerTree = ComposerRootRoute.addChildren([ComposerRoute]);
+export const ComposerSessionRoute = createRoute({
+  getParentRoute: () => ComposerRoute,
+  path: "/$sessionId",
+  component: ComposerPage,
+});
+
+export const composerTree = ComposerRootRoute.addChildren([
+  ComposerRoute,
+  ComposerSessionRoute,
+]);

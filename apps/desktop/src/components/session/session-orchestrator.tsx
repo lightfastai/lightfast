@@ -7,15 +7,13 @@ import { SessionView } from "./session-chat-view";
 import { SessionInput } from "./session-input-view";
 
 interface WorkspaceChatProps {
-  workspaceId: string;
-  sessionId: string | null;
+  sessionId: string;
   initialMessages?: DBMessage[];
   className?: string;
   autoResume?: boolean;
 }
 
 export function SessionOrchestrator({
-  workspaceId,
   sessionId,
   initialMessages,
   autoResume = false,
@@ -29,7 +27,6 @@ export function SessionOrchestrator({
     error,
     addToolResult,
   } = useSessionStreamableAgent({
-    workspaceId,
     sessionId,
     initialMessages,
     autoResume,
@@ -37,25 +34,39 @@ export function SessionOrchestrator({
 
   return (
     <div className={cn("bg-background flex h-full w-full flex-col")}>
-      <div className="flex h-full w-full flex-col items-center overflow-hidden">
-        <div className="w-full flex-1 overflow-hidden">
-          <SessionView
-            messages={messages}
-            status={status}
-            error={error || null}
-            className="w-full"
-            addToolResult={addToolResult}
-          />
-        </div>
-        <div className="w-full">
-          <SessionInput
-            input={input}
-            status={status}
-            setInput={setInput}
-            handleSubmit={handleSubmit}
-            className="w-full"
-          />
-        </div>
+      <div className="flex h-full w-full flex-col items-center">
+        {messages.length === 0 ? (
+          <div className="w-full">
+            <SessionInput
+              input={input}
+              status={status}
+              setInput={setInput}
+              handleSubmit={handleSubmit}
+              className="w-full"
+            />
+          </div>
+        ) : (
+          <>
+            <div className="w-full flex-1 overflow-hidden">
+              <SessionView
+                messages={messages}
+                status={status}
+                error={error || null}
+                className="w-full"
+                addToolResult={addToolResult}
+              />
+            </div>
+            <div className="w-full">
+              <SessionInput
+                input={input}
+                status={status}
+                setInput={setInput}
+                handleSubmit={handleSubmit}
+                className="w-full"
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

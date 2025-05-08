@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   SESSION_CHAT_V1_API_URL,
   SESSION_CHAT_V1_AUTO_RESUME,
@@ -11,20 +10,16 @@ import { nanoid } from "@repo/lib";
 import { useSessionResumable } from "./use-session-resumable";
 
 interface UseSessionChatV1Props {
-  workspaceId: string;
-  sessionId: string | null;
+  sessionId: string;
   initialMessages?: DBMessage[];
   autoResume?: boolean;
 }
 
 export function useSessionStreamableAgent({
-  workspaceId,
   sessionId,
   initialMessages = [],
   autoResume = SESSION_CHAT_V1_AUTO_RESUME,
 }: UseSessionChatV1Props) {
-  const id = useMemo(() => nanoid(), [sessionId, workspaceId]);
-
   const {
     messages,
     input,
@@ -36,7 +31,7 @@ export function useSessionStreamableAgent({
     append,
     addToolResult,
   } = useChat({
-    id,
+    id: sessionId,
     api: SESSION_CHAT_V1_API_URL,
     initialMessages: initialMessages.map(convertDBMessageToUIMessage),
     generateId: () => nanoid(),
@@ -44,8 +39,6 @@ export function useSessionStreamableAgent({
     experimental_streamMode: "words",
     experimental_prepareRequestBody: (body) => ({
       message: body.messages.at(-1),
-      id,
-      workspaceId,
       sessionId: sessionId ?? body.id, // @IMPORTANT we pass the body.id as inference to create the sesssion if doesn't exists...
     }),
     onError: (err) => {

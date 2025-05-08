@@ -57,15 +57,13 @@ const PureSessionInput = ({
   }, [handleSubmit, sessionId]);
 
   return (
-    <div className={cn("relative flex w-full flex-col gap-4", className)}>
+    <div className={cn("relative flex w-full flex-col", className)}>
       <Textarea
         ref={textareaRef}
         placeholder="Send a message..."
         value={input}
         onChange={handleInput}
-        className={cn(
-          "bg-muted dark:border-border max-h-[calc(75vh)] min-h-[24px] resize-none overflow-hidden rounded-md pb-10 !text-xs",
-        )}
+        className={cn("w-full resize-none overflow-hidden rounded-md !text-xs")}
         rows={1}
         autoFocus
         onKeyDown={(event) => {
@@ -108,7 +106,7 @@ function PureStopButton({
   return (
     <Button
       data-testid="stop-button"
-      className="h-fit rounded-md border p-1.5 dark:border-zinc-600"
+      className="border-border hover:bg-accent bg-muted-foreground/10 absolute right-2 bottom-2 flex h-6 items-center justify-center rounded-full border p-1 text-xs"
       onClick={(event) => {
         event.preventDefault();
         if (stop) {
@@ -119,7 +117,7 @@ function PureStopButton({
         }
       }}
     >
-      <StopCircle className="h-3 w-3" />
+      <StopCircle className="text-muted-foreground/70 size-3" />
     </Button>
   );
 }
@@ -138,14 +136,14 @@ function PureSendButton({
       data-testid="send-button"
       variant="default"
       size="icon"
-      className="h-fit rounded-md p-1.5"
+      className="border-border hover:bg-accent bg-muted-foreground/10 absolute right-2 bottom-2 flex h-6 items-center justify-center rounded-full border p-1 text-xs"
       onClick={(event) => {
         event.preventDefault();
         submitForm();
       }}
       disabled={input.length === 0}
     >
-      <Send className="h-3 w-3" />
+      <Send className="text-muted-foreground/70 size-3" />
     </Button>
   );
 }
