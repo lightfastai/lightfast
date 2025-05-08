@@ -2,14 +2,12 @@ import type { Message } from "ai";
 import { z } from "zod";
 
 export interface PostRequestBody {
-  workspaceId: string;
   sessionId: string | null;
   id: string;
   message: Message;
 }
 
 export const $BaseStreamConfig = z.object({
-  workspaceId: z.string().nanoid(),
   sessionId: z.string().nanoid(),
 });
 

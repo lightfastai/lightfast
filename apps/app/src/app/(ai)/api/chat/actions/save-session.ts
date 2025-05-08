@@ -1,18 +1,11 @@
 import { db } from "@vendor/db/client";
 import { Session } from "@vendor/db/lightfast/schema";
 
-export async function saveSession({
-  workspaceId,
-  title,
-}: {
-  workspaceId: string;
-  title: string;
-}) {
+export async function saveSession({ title }: { title: string }) {
   try {
     const [session] = await db
       .insert(Session)
       .values({
-        workspaceId,
         title,
       })
       .returning();
@@ -23,7 +16,7 @@ export async function saveSession({
 
     return session;
   } catch (error) {
-    console.error("Failed to save chat in database");
+    console.error("Failed to save session in database");
     throw error;
   }
 }

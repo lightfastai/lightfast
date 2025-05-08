@@ -1,11 +1,8 @@
 import type { Message } from "ai";
 import { geolocation } from "@vercel/functions";
 import { appendClientMessage } from "ai";
-import { eq } from "drizzle-orm";
 
 import type { Session, Stream } from "@vendor/db/lightfast/schema";
-import { db } from "@vendor/db/client";
-import { Workspace } from "@vendor/db/lightfast/schema";
 
 import type { RequestHints } from "./prompts";
 import type { PostRequestBody } from "./schema";
@@ -29,27 +26,13 @@ export async function POST(request: Request) {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  const { message, sessionId, workspaceId, id: userMessageId } = requestBody;
+  const { message, sessionId, id: userMessageId } = requestBody;
 
   console.log("chat request", {
     message,
     sessionId,
-    workspaceId,
     userMessageId,
   });
-
-  // ensure workspaceId exists
-  try {
-    const workspace = await db.query.Workspace.findFirst({
-      where: eq(Workspace.id, workspaceId),
-    });
-
-    if (!workspace) {
-      return new Response("Workspace not found", { status: 404 });
-    }
-  } catch (_) {
-    return new Response("Workspace not found", { status: 404 });
-  }
 
   // create session if it doesn't exist
   let session: Session;
@@ -58,7 +41,6 @@ export async function POST(request: Request) {
       const title = await generateTitleFromUserMessage({ message });
 
       session = await saveSession({
-        workspaceId,
         title,
       });
     } else {
@@ -124,7 +106,6 @@ export async function POST(request: Request) {
   const stream = createToolCallingStreamResponse({
     messages,
     sessionId: session.id,
-    workspaceId,
     userMessage: message,
   });
 

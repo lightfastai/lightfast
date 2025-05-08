@@ -61,12 +61,11 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
   const { userMessage, ...rest } = config;
   return createDataStream({
     execute: (dataStream: DataStreamWriter) => {
-      const { messages, sessionId, workspaceId } = rest;
+      const { messages, sessionId } = rest;
 
       console.log("createToolCallingStreamResponse", {
         messages,
         sessionId,
-        workspaceId,
       });
 
       try {

@@ -28,7 +28,7 @@ export function SessionView({
   addToolResult,
 }: SessionViewProps) {
   return (
-    <div className={cn("flex h-full flex-col overflow-y-auto p-4", className)}>
+    <div className={cn("flex h-full flex-col overflow-y-auto", className)}>
       <ScrollArea className="h-full">
         <div className="flex-1 space-y-4">
           {messages.map((message, index) => (
