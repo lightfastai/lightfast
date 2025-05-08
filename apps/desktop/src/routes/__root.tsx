@@ -13,6 +13,14 @@ export const RootRoute = createRootRoute({
   ),
 });
 
+export const ComposerRootRoute = createRootRoute({
+  component: ComposerRoot,
+});
+
 function Root() {
+  return <Outlet />;
+}
+
+function ComposerRoot() {
   return <Outlet />;
 }

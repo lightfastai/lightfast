@@ -240,7 +240,7 @@ function createWindow() {
 function createComposerWindow() {
   const preload = path.join(__dirname, "preload.js");
   const composerWindow = new BrowserWindow({
-    width: 900,
+    width: 400,
     height: 700,
     frame: false,
     webPreferences: {
