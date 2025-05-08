@@ -10,11 +10,13 @@ import {
 import type { EnvClient } from "./env/client-types";
 // Import the validated environment variables
 import { env } from "./env/index";
+import registerListeners from "./helpers/ipc/listeners-register";
 // Import the blender connection module and its variables
 import {
   getBlenderStatus,
   isBlenderConnected,
   sendToBlender,
+  startBlenderSocketServer,
 } from "./main/blender-connection";
 
 // Example usage (if you had defined variables in env.ts):
@@ -196,6 +198,12 @@ function createComposerWindow() {
       preload: preload,
     },
   });
+
+  registerListeners(composerWindow);
+
+  // Initialize Blender WebSocket server
+  startBlenderSocketServer(composerWindow.webContents);
+  console.log("Blender WebSocket server initialized");
 
   ipcMain.on("minimize-window", () => {
     composerWindow?.minimize();
