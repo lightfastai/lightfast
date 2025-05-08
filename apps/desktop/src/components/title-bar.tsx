@@ -1,24 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { Minus, X } from "lucide-react";
 
-import { SidebarTrigger, useSidebar } from "@repo/ui/components/ui/sidebar";
+import { SidebarTrigger } from "@repo/ui/components/ui/sidebar";
 
 // Custom event name for sidebar toggle
 export const SIDEBAR_TOGGLE_EVENT = "sidebar-toggle";
 
-export function TitleBar() {
+export function TitleBar({
+  withSidebarTrigger = true,
+}: {
+  withSidebarTrigger?: boolean;
+}) {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
-  const { toggleSidebar } = useSidebar();
 
   const sendCommand = useCallback((command: string) => {
     window.electronAPI.send("window-control", command);
   }, []);
-
-  const handleToggleSidebar = useCallback(() => {
-    toggleSidebar();
-    window.dispatchEvent(new CustomEvent(SIDEBAR_TOGGLE_EVENT));
-  }, [toggleSidebar]);
 
   // Check if window is maximized
   useEffect(() => {
@@ -65,9 +62,7 @@ export function TitleBar() {
                 opacity: isHovering ? 1 : 0.8,
               } as React.CSSProperties
             }
-          >
-            {isHovering && <X className="h-2 w-2 text-red-800" />}
-          </button>
+          ></button>
           <button
             className="flex h-3 w-3 items-center justify-center rounded-full bg-yellow-500 transition-opacity hover:opacity-100"
             onClick={() => sendCommand("minimize")}
@@ -77,9 +72,7 @@ export function TitleBar() {
                 opacity: isHovering ? 1 : 0.8,
               } as React.CSSProperties
             }
-          >
-            {isHovering && <Minus className="h-2 w-2 text-yellow-800" />}
-          </button>
+          ></button>
           <button
             className="flex h-3 w-3 items-center justify-center rounded-full bg-green-500 transition-opacity hover:opacity-100"
             onClick={() => sendCommand(isMaximized ? "unmaximize" : "maximize")}
@@ -89,31 +82,17 @@ export function TitleBar() {
                 opacity: isHovering ? 1 : 0.8,
               } as React.CSSProperties
             }
-          >
-            {isHovering && (
-              <svg
-                className="h-2 w-2 text-green-800"
-                viewBox="0 0 12 12"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M3 1.5h6M3 10.5h6M1.5 3v6M10.5 3v6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            )}
-          </button>
+          ></button>
         </div>
 
         {/* Center - App controls and title */}
         <div className="flex items-center">
-          <SidebarTrigger
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-            className="size-7"
-          />
+          {withSidebarTrigger && (
+            <SidebarTrigger
+              style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+              className="size-7"
+            />
+          )}
         </div>
       </div>
     </div>

@@ -37,3 +37,11 @@ export function RootLayout({ children }: RootLayoutProps) {
     </SidebarProvider>
   );
 }
+
+export function ComposerRootLayout({ children }: RootLayoutProps) {
+  return (
+    <div className="flex h-screen w-full flex-col">
+      <TitleBar withSidebarTrigger={false} />
+    </div>
+  );
+}
