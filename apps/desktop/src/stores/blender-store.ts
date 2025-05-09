@@ -172,8 +172,14 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
   },
 
   updateBlenderSceneInfo: (sceneInfo) => {
+    console.log("🔄 Updating Blender scene info in store...");
+    console.log(`   Scene: ${sceneInfo.name}`);
+    console.log(`   Objects: ${sceneInfo.object_count}`);
+    console.log(`   Materials: ${sceneInfo.materials_count}`);
+
     set({ blenderSceneInfo: sceneInfo });
-    console.log("Blender scene info updated:", sceneInfo);
+
+    console.log("✅ Blender scene info updated in store");
   },
 
   updateCodeExecutionResult: (result) => {

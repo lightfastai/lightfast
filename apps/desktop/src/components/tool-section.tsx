@@ -167,57 +167,99 @@ function ToolInvocationRequest({
         // Get the current Blender scene info
         const currentSceneInfo = useBlenderStore.getState().blenderSceneInfo;
 
-        // First, send the request to update the scene info for future reference
-        const result = await window.electronAPI.invoke(
-          "handle-blender-get-scene-info",
-          {},
-        );
+        // Set up a listener for the scene info response
+        let responseTimeout: NodeJS.Timeout | null = null;
 
-        if (result.error) {
-          setPending(false);
-          throw new Error(result.error);
-        }
+        try {
+          // Initialize message listener if not already active
+          initializeMessageListener();
 
-        // If we already have scene info, return it immediately to the AI
-        // rather than waiting for the async update
-        if (currentSceneInfo) {
-          console.log(
-            "🤖 Returning current Blender scene info to AI agent:",
-            currentSceneInfo,
+          // First, send the request to update the scene info
+          const result = await window.electronAPI.invoke(
+            "handle-blender-get-scene-info",
+            {},
           );
-          setPending(false);
-          addToolResult({
-            toolCallId: toolInvocation.toolCallId,
-            result: {
-              success: true,
-              message: "Using current Blender scene info",
-              scene_info: currentSceneInfo,
-            },
-          });
-          console.log("✅ Blender scene info tool result sent to AI");
-        } else {
-          // If we don't have scene info yet, return a basic response
-          // The AI needs a response now, it can't wait for an async update
+
+          if (result.error) {
+            setPending(false);
+            throw new Error(result.error);
+          }
+
           console.log(
-            "⚠️ No current Blender scene info available, returning placeholder to AI",
+            "📤 Scene info request sent to Blender with ID:",
+            result.requestId,
           );
-          setPending(false);
-          addToolResult({
-            toolCallId: toolInvocation.toolCallId,
-            result: {
-              success: true,
-              message: "Scene info request sent to Blender",
-              scene_info: {
-                name: "UNKNOWN",
-                object_count: 0,
-                materials_count: 0,
-                objects: [],
-                message:
-                  "No current scene info available. Please try again in a moment.",
+
+          // If we already have scene info, return it immediately
+          if (currentSceneInfo) {
+            console.log(
+              "🤖 Returning current Blender scene info to AI agent:",
+              currentSceneInfo,
+            );
+            setPending(false);
+            addToolResult({
+              toolCallId: toolInvocation.toolCallId,
+              result: {
+                success: true,
+                message: "Using current Blender scene info",
+                scene_info: currentSceneInfo,
               },
-            },
-          });
-          console.log("✅ Placeholder scene info tool result sent to AI");
+            });
+            console.log("✅ Blender scene info tool result sent to AI");
+            return;
+          }
+
+          // Otherwise, wait briefly for the response to arrive
+          // This gives a chance for the WebSocket message to be received and stored
+          responseTimeout = setTimeout(() => {
+            // Check again for scene info after timeout
+            const updatedSceneInfo =
+              useBlenderStore.getState().blenderSceneInfo;
+
+            if (updatedSceneInfo) {
+              console.log(
+                "📥 Scene info received from Blender during wait period",
+              );
+              setPending(false);
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: true,
+                  message: "Received Blender scene info",
+                  scene_info: updatedSceneInfo,
+                },
+              });
+            } else {
+              // Still no data, return placeholder after waiting
+              console.log(
+                "⚠️ No scene info received within timeout, returning placeholder to AI",
+              );
+              setPending(false);
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: true,
+                  message: "Scene info request sent to Blender",
+                  scene_info: {
+                    name: "UNKNOWN",
+                    object_count: 0,
+                    materials_count: 0,
+                    objects: [],
+                    message:
+                      "No scene info available yet. The request was sent to Blender. Try again in a moment.",
+                  },
+                },
+              });
+            }
+          }, 1000); // Wait 1 second for response
+
+          // Note: We don't set pending to false here - that happens in the timeout callback
+        } catch (e: any) {
+          if (responseTimeout) {
+            clearTimeout(responseTimeout);
+          }
+          setPending(false);
+          throw e;
         }
       } else {
         // For other tools, use the default "manual" execution
