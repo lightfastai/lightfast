@@ -41,7 +41,7 @@ export function MessageList({
   return (
     <div className={cn("flex h-full flex-col overflow-y-auto", className)}>
       <ScrollArea className="h-full">
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 space-y-4 pb-16">
           {messages.map((message, index) => {
             if (message.role === "user") {
               console.log("rendering", message.content);
@@ -73,11 +73,20 @@ export function MessageList({
               );
             }
             if (message.role === "assistant") {
+              const isLastMessage = index === messages.length - 1;
+              const isChatProcessing =
+                status === "submitted" || status === "streaming";
+
+              // If it's the last message AND the chat is processing, pass the live status.
+              // Otherwise, pass "ready" to indicate it's a completed message.
+              const assistantMessageStatus =
+                isLastMessage && isChatProcessing ? status : "ready";
+
               return (
                 <AssistantMessage
                   key={message.id}
                   message={message}
-                  status={status}
+                  status={assistantMessageStatus} // Use the derived status
                   addToolResult={addToolResult}
                 />
               );
