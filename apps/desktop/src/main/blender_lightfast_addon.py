@@ -19,13 +19,15 @@ import hashlib
 import traceback
 import random
 import string
+import sys
+import io
 from bpy.props import StringProperty, BoolProperty, IntProperty
 
 # WebSocket connection settings
 DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 8765
 
-# Global connection variable
+# Global connection variables
 socket_connection = None
 socket_thread = None
 connected = False
@@ -33,21 +35,31 @@ reconnect_attempts = 0
 max_reconnect_attempts = 5
 reconnect_delay = 2  # seconds
 addon_enabled = False
+response_callbacks = {}  # Dictionary to store callbacks for specific message IDs
 
-def log(message):
-    """Print a log message to the console"""
-    print(f"[Lightfast] {message}")
+# ---------------------- Improved Logging ----------------------
+
+def log(message, level="INFO"):
+    """Print a log message to the console with level"""
+    if level == "INFO":
+        print(f"[Lightfast] {message}")
+    elif level == "WARNING":
+        print(f"[Lightfast WARNING] {message}")
+    elif level == "ERROR":
+        print(f"[Lightfast ERROR] {message}")
+    else:
+        print(f"[Lightfast {level}] {message}")
 
 def log_error(message, include_traceback=False):
     """Print an error message with optional traceback"""
-    print(f"[Lightfast ERROR] {message}")
+    log(message, "ERROR")
     if include_traceback:
         traceback.print_exc()
 
-# ---------------------- Basic WebSocket Implementation ----------------------
+# ---------------------- Improved WebSocket Implementation ----------------------
 
-def create_websocket_request(host, port):
-    """Create a WebSocket handshake request"""
+def create_websocket_handshake(host, port):
+    """Create a proper WebSocket handshake request"""
     # Generate a random key for the WebSocket handshake
     key = base64.b64encode(bytes(''.join(random.choices(string.ascii_letters + string.digits, k=16)), 'utf-8')).decode('utf-8')
     
@@ -62,131 +74,212 @@ def create_websocket_request(host, port):
         f"\r\n"
     )
     
-    return request.encode('utf-8')
+    return request.encode('utf-8'), key
 
-def parse_websocket_response(response):
-    """Parse the WebSocket handshake response"""
+def verify_websocket_handshake(response, key):
+    """Verify the WebSocket handshake response"""
     try:
-        # Log the response for debugging
+        # Check if the response contains the expected headers
         response_str = response.decode('utf-8', errors='replace')
-        log(f"Raw handshake response:\n{response_str}")
         
-        # Check if the response contains the WebSocket acceptance
-        if b"HTTP/1.1 101" in response and b"Upgrade: websocket" in response:
-            log("WebSocket handshake response is valid")
-            return True
-        else:
-            log_error("Invalid WebSocket response - missing expected headers")
-            if b"HTTP/1.1" in response:
-                status_line = response.split(b"\r\n")[0].decode('utf-8', errors='replace')
-                log_error(f"Status line: {status_line}")
+        if "HTTP/1.1 101" not in response_str or "Upgrade: websocket" not in response_str:
+            log_error(f"Invalid WebSocket handshake response:\n{response_str[:200]}")
             return False
+        
+        # Optionally verify the Sec-WebSocket-Accept header (more strict verification)
+        # This would require calculating the expected accept value from the key
+        
+        log("WebSocket handshake successful")
+        return True
+        
     except Exception as e:
-        log_error(f"Error parsing WebSocket response: {e}", True)
+        log_error(f"Error verifying WebSocket handshake: {str(e)}", True)
         return False
 
-def encode_websocket_frame(data):
-    """Encode data as a WebSocket frame"""
+def encode_websocket_frame(data, opcode=0x01):
+    """
+    Encode data as a WebSocket frame
+    opcode: 0x01 for text, 0x02 for binary
+    """
     try:
-        # Convert data to JSON string if it's not already a string
-        if not isinstance(data, str):
+        # Convert dict to JSON string if needed
+        if isinstance(data, dict):
             data = json.dumps(data)
-        
-        # Convert string to bytes
-        payload = data.encode('utf-8')
+            
+        # Convert to bytes if it's a string
+        if isinstance(data, str):
+            payload = data.encode('utf-8')
+        elif isinstance(data, bytes):
+            payload = data
+        else:
+            log_error(f"Unsupported data type for WebSocket frame: {type(data)}")
+            return None
+            
         payload_length = len(payload)
         
-        # Create header
-        # We'll use a text frame (opcode 0x1)
+        # Build header
         header = bytearray()
-        header.append(0x81)  # FIN bit + opcode 0x1 (text)
+        # Set FIN bit and opcode (0x80 | opcode)
+        header.append(0x80 | opcode)
         
         # Set payload length and masking bit
         if payload_length < 126:
-            header.append(0x80 | payload_length)  # Masked flag (0x80) + payload length
+            header.append(0x80 | payload_length)  # Set masking bit and length
         elif payload_length < 65536:
-            header.append(0x80 | 126)  # Masked flag + 126 (indicates 2-byte length)
-            header.extend(struct.pack(">H", payload_length))  # 2 bytes for length
+            header.append(0x80 | 126)  # Set masking bit and use 2-byte length
+            header.extend(struct.pack(">H", payload_length))
         else:
-            header.append(0x80 | 127)  # Masked flag + 127 (indicates 8-byte length)
-            header.extend(struct.pack(">Q", payload_length))  # 8 bytes for length
+            header.append(0x80 | 127)  # Set masking bit and use 8-byte length
+            header.extend(struct.pack(">Q", payload_length))
         
-        # Generate a random 4-byte masking key
-        mask = struct.pack(">I", random.getrandbits(32))
+        # Generate masking key (4 random bytes)
+        mask = bytes([random.randint(0, 255) for _ in range(4)])
         header.extend(mask)
         
         # Apply mask to payload
-        masked_payload = bytearray(payload_length)
+        masked = bytearray(payload_length)
         for i in range(payload_length):
-            masked_payload[i] = payload[i] ^ mask[i % 4]
+            masked[i] = payload[i] ^ mask[i % 4]
         
         # Combine header and masked payload
-        return header + masked_payload
-    
+        return bytes(header) + bytes(masked)
+        
     except Exception as e:
-        log(f"Error encoding WebSocket frame: {e}")
+        log_error(f"Error encoding WebSocket frame: {str(e)}", True)
         return None
 
 def decode_websocket_frame(data):
-    """Decode a WebSocket frame and return the payload"""
+    """
+    Decode a WebSocket frame and return (opcode, payload, frame_length)
+    """
     try:
         if len(data) < 2:
-            return None
+            return None, None, 0
         
-        # Check if this is a final frame
+        # Parse basic frame info
         fin = (data[0] & 0x80) != 0
-        # Get opcode
         opcode = data[0] & 0x0F
+        masked = (data[1] & 0x80) != 0
+        payload_length = data[1] & 0x7F
         
-        # Check if this is a control frame
+        # Handle control frames (ping, pong, close)
         if opcode == 0x8:  # Close frame
             log("Received WebSocket close frame")
-            return {'type': 'close'}
+            return opcode, None, 2
+            
+        if opcode == 0x9:  # Ping frame
+            # Should respond with pong
+            log("Received ping frame")
+            return opcode, None, 2
+            
+        if opcode == 0xA:  # Pong frame
+            log("Received pong frame")
+            return opcode, None, 2
         
-        # Check if the frame is masked
-        masked = (data[1] & 0x80) != 0
-        
-        # Get payload length
-        payload_length = data[1] & 0x7F
-        mask_offset = 2
-        
+        # Determine header size and actual payload length
+        header_length = 2
         if payload_length == 126:
-            # 2-byte length
+            if len(data) < 4:
+                return None, None, 0
             payload_length = struct.unpack(">H", data[2:4])[0]
-            mask_offset = 4
+            header_length = 4
         elif payload_length == 127:
-            # 8-byte length
+            if len(data) < 10:
+                return None, None, 0
             payload_length = struct.unpack(">Q", data[2:10])[0]
-            mask_offset = 10
+            header_length = 10
         
         # Extract masking key if present
         if masked:
-            mask_key = data[mask_offset:mask_offset+4]
-            mask_offset += 4
+            if len(data) < header_length + 4:
+                return None, None, 0
+            mask = data[header_length:header_length+4]
+            header_length += 4
         
+        # Check if we have enough data for the full frame
+        full_length = header_length + payload_length
+        if len(data) < full_length:
+            return None, None, 0
+            
         # Extract payload
-        payload = data[mask_offset:mask_offset+payload_length]
+        payload = data[header_length:full_length]
         
-        # Unmask payload if needed
+        # Unmask if needed
         if masked:
             unmasked = bytearray(payload_length)
             for i in range(payload_length):
-                unmasked[i] = payload[i] ^ mask_key[i % 4]
-            payload = unmasked
+                unmasked[i] = payload[i] ^ mask[i % 4]
+            payload = bytes(unmasked)
         
-        # Convert payload to string
-        try:
-            payload_str = payload.decode('utf-8')
+        # Convert payload based on opcode
+        if opcode == 0x1:  # Text frame
             try:
-                return json.loads(payload_str)
-            except json.JSONDecodeError:
-                return payload_str
-        except UnicodeDecodeError:
-            # Binary data
-            return payload
-    
+                payload_str = payload.decode('utf-8')
+                try:
+                    return opcode, json.loads(payload_str), full_length
+                except json.JSONDecodeError:
+                    return opcode, payload_str, full_length
+            except UnicodeDecodeError:
+                log_error("Failed to decode text frame as UTF-8")
+                return opcode, payload, full_length
+        else:  # Binary or other frames
+            return opcode, payload, full_length
+            
     except Exception as e:
-        log(f"Error decoding WebSocket frame: {e}")
+        log_error(f"Error decoding WebSocket frame: {str(e)}", True)
+        return None, None, 0
+
+def handle_fragmented_receive(sock, buffer_size=4096, timeout=5.0):
+    """
+    Receive potentially fragmented WebSocket frames and reassemble them
+    Returns complete messages as they are received
+    """
+    sock.settimeout(timeout)
+    buffer = bytearray()
+    
+    try:
+        while True:
+            try:
+                chunk = sock.recv(buffer_size)
+                if not chunk:
+                    # Connection closed
+                    if buffer:
+                        # Try to process any remaining data
+                        opcode, payload, consumed = decode_websocket_frame(buffer)
+                        if payload:
+                            return payload
+                    return None
+                
+                # Add new data to buffer
+                buffer.extend(chunk)
+                
+                # Try to decode a frame
+                opcode, payload, consumed = decode_websocket_frame(buffer)
+                
+                # If we have a complete frame
+                if consumed > 0:
+                    # Handle control frames
+                    if opcode == 0x8:  # Close
+                        return {"type": "close"}
+                    elif opcode == 0x9:  # Ping
+                        # Should respond with pong (not implemented here)
+                        pass
+                    elif opcode == 0xA:  # Pong
+                        pass
+                    elif payload:  # We have a complete message
+                        # Remove the processed frame from buffer
+                        buffer = buffer[consumed:]
+                        return payload
+                    
+                    # Remove the processed frame even if no payload (control frames)
+                    buffer = buffer[consumed:]
+            
+            except socket.timeout:
+                # Just continue on timeout, this is expected
+                continue
+                
+    except Exception as e:
+        log_error(f"Error in fragmented receive: {str(e)}", True)
         return None
 
 # ---------------------- Socket Client Functions ----------------------
@@ -198,75 +291,124 @@ def socket_listener_thread(sock):
     try:
         while connected:
             try:
-                # Receive data from socket
-                data = sock.recv(4096)
-                if not data:
+                # Receive data using the fragmented receiver
+                message = handle_fragmented_receive(sock)
+                
+                if message is None:
                     # Connection closed
                     log("Connection closed by server")
                     connected = False
                     break
-                
-                # Decode WebSocket frame
-                message = decode_websocket_frame(data)
-                if message:
-                    if message == {'type': 'close'}:
-                        connected = False
-                        break
-                    handle_message(message)
+                    
+                if message == {"type": "close"}:
+                    log("Received close frame from server")
+                    connected = False
+                    break
+                    
+                # Process the message
+                handle_message(message)
                 
             except socket.timeout:
-                # Socket timeout, just continue
+                # This is expected, just continue
                 continue
             except Exception as e:
-                log(f"Error receiving data: {e}")
-                traceback.print_exc()
+                log_error(f"Error receiving data: {str(e)}", True)
                 connected = False
                 break
-    
     except Exception as e:
-        log(f"Listener thread error: {e}")
-        traceback.print_exc()
-    
+        log_error(f"Listener thread error: {str(e)}", True)
     finally:
         connected = False
         log("Listener thread stopped")
+
+def generate_message_id():
+    """Generate a unique message ID for tracking responses"""
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+
+def send_message(sock, message, callback=None):
+    """
+    Send a message to the server with optional callback for response
+    Returns the message ID that was used
+    """
+    try:
+        if not connected:
+            log("Cannot send message: Not connected", "WARNING")
+            return None
+            
+        # Add a message ID for tracking responses if not present
+        if isinstance(message, dict) and "id" not in message:
+            message_id = generate_message_id()
+            message["id"] = message_id
+        elif isinstance(message, dict):
+            message_id = message["id"]
+        else:
+            message_id = None
+            
+        # Register callback if provided
+        if callback and message_id:
+            response_callbacks[message_id] = callback
+            
+        # Encode and send the message
+        frame = encode_websocket_frame(message)
+        if frame:
+            sock.sendall(frame)
+            log(f"Sent message with ID: {message_id}")
+            return message_id
+        else:
+            log_error("Failed to encode message")
+            return None
+            
+    except Exception as e:
+        log_error(f"Error sending message: {str(e)}", True)
+        return None
 
 def handle_message(message):
     """Handle incoming messages from the desktop app"""
     try:
         log(f"Received message: {message}")
         
+        # Check if this is a response to a previous message
+        if isinstance(message, dict) and "id" in message and message["id"] in response_callbacks:
+            # Call the registered callback
+            callback = response_callbacks.pop(message["id"])
+            callback(message)
+            return
+            
         # Process message based on action type
         if isinstance(message, dict) and "action" in message:
-            if message["action"] == "execute_code":
-                handle_execute_code(message["params"])
-            elif message["action"] == "get_state":
-                handle_get_state(message.get("params", {}))
+            action = message["action"]
+            params = message.get("params", {})
+            message_id = message.get("id", None)
+            
+            if action == "execute_code":
+                handle_execute_code(params, message_id)
+            elif action == "get_state":
+                handle_get_state(params, message_id)
             else:
-                log(f"Unknown action: {message['action']}")
+                log(f"Unknown action: {action}", "WARNING")
+                
+                # Send error response if there's a message ID
+                if message_id and socket_connection:
+                    error_response = {
+                        "id": message_id,
+                        "success": False,
+                        "error": f"Unknown action: {action}"
+                    }
+                    send_message(socket_connection, error_response)
+        else:
+            log(f"Unrecognized message format: {message}", "WARNING")
     
     except Exception as e:
-        log(f"Error processing message: {str(e)}")
-        traceback.print_exc()
-
-def send_message(sock, message):
-    """Send a message to the server"""
-    try:
-        if not connected:
-            log("Cannot send message: Not connected")
-            return False
+        log_error(f"Error processing message: {str(e)}", True)
         
-        # Encode the message as a WebSocket frame
-        frame = encode_websocket_frame(message)
-        if frame:
-            sock.sendall(frame)
-            return True
-        return False
-    
-    except Exception as e:
-        log(f"Error sending message: {e}")
-        traceback.print_exc()
-        return False
+        # Try to send error response if possible
+        if isinstance(message, dict) and "id" in message and socket_connection:
+            error_response = {
+                "id": message["id"],
+                "success": False,
+                "error": f"Error processing message: {str(e)}"
+            }
+            send_message(socket_connection, error_response)
 
 def start_socket_client():
     """Start the socket client connection"""
@@ -282,37 +424,33 @@ def start_socket_client():
     
     try:
         # Get host and port from preferences
-        host = bpy.context.preferences.addons[__name__].preferences.host
-        port = bpy.context.preferences.addons[__name__].preferences.port
+        prefs = bpy.context.preferences.addons[__name__].preferences
+        host = prefs.host
+        port = prefs.port
         
         log(f"Connecting to {host}:{port}...")
         
-        # Create socket
-        log(f"Creating socket...")
+        # Create socket with timeout
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)  # 5-second timeout for operations
         
         # Connect to server
-        log(f"Attempting to connect to {host}:{port}...")
         try:
             sock.connect((host, port))
-            log("TCP connection established successfully")
+            log("TCP connection established")
         except socket.error as e:
-            log_error(f"Failed to establish TCP connection: {e}", True)
+            log_error(f"Failed to connect: {e}", True)
             return False
         
         # Send WebSocket handshake
-        log("Sending WebSocket handshake request...")
-        handshake_request = create_websocket_request(host, port)
+        handshake_request, key = create_websocket_handshake(host, port)
         sock.sendall(handshake_request)
         
         # Wait for handshake response
-        log("Waiting for handshake response...")
         try:
             response = sock.recv(4096)
-            log(f"Received {len(response)} bytes in handshake response")
         except socket.timeout:
-            log_error("Timeout waiting for handshake response", True)
+            log_error("Timeout waiting for handshake response")
             sock.close()
             return False
         except Exception as e:
@@ -320,34 +458,31 @@ def start_socket_client():
             sock.close()
             return False
         
-        # Parse handshake response
-        if not parse_websocket_response(response):
-            log_error("WebSocket handshake failed - invalid response", True)
-            log_error(f"Response (first 200 bytes): {response[:200]}")
+        # Verify handshake response
+        if not verify_websocket_handshake(response, key):
+            log_error("WebSocket handshake failed")
             sock.close()
             return False
         
-        # Set socket and connected flag
+        # Set as connected
         socket_connection = sock
         connected = True
         
-        # Create listener thread
+        # Start listener thread
         log("Starting listener thread...")
         socket_thread = threading.Thread(target=socket_listener_thread, args=(sock,))
         socket_thread.daemon = True
         socket_thread.start()
         
         # Send initial handshake message
-        log("Sending initial handshake message...")
         handshake_message = {
             "type": "handshake",
             "client": "blender",
             "version": bl_info["version"],
             "blender_version": bpy.app.version
         }
-        success = send_message(sock, handshake_message)
-        if not success:
-            log_error("Failed to send initial handshake message", True)
+        if not send_message(sock, handshake_message):
+            log_error("Failed to send handshake message")
             stop_socket_client()
             return False
         
@@ -361,28 +496,22 @@ def start_socket_client():
 
 def stop_socket_client():
     """Stop the socket client connection"""
-    global socket_connection, connected
+    global socket_connection, connected, response_callbacks
+    
+    # Clear any pending callbacks
+    response_callbacks.clear()
     
     if socket_connection is not None:
         try:
             if connected:
-                # Send a proper disconnect message before closing
-                disconnect_message = {
-                    "type": "disconnect",
-                    "client": "blender",
-                    "message": "Disconnecting"
-                }
-                send_message(socket_connection, disconnect_message)
-                
-                # Small delay to allow the message to be sent
-                time.sleep(0.2)
-                
-                # Instead of manually crafting a close frame, we'll just close the socket
-                # The WebSocket protocol implementation on the server side will handle this correctly
+                # Send close frame
+                close_frame = bytearray([0x88, 0x02, 0x03, 0xE8])  # Close frame with status 1000 (normal)
+                socket_connection.sendall(close_frame)
+                time.sleep(0.1)  # Brief pause to allow for transmission
                 
             socket_connection.close()
         except Exception as e:
-            log(f"Error during disconnection: {e}")
+            log(f"Error during disconnection: {e}", "WARNING")
         socket_connection = None
     
     connected = False
@@ -390,108 +519,40 @@ def stop_socket_client():
 
 # ---------------------- Command Handlers ----------------------
 
-# Add a new handler for execute_code
-def handle_execute_code(params):
-    """Handle executing arbitrary Python code in Blender"""
-    try:
-        code = params.get("code", "")
-        if not code:
-            log("Received empty code to execute")
-            # Send error response
-            if socket_connection and connected:
-                response = {
-                    "type": "code_executed",
-                    "success": False,
-                    "error": "Empty code received"
-                }
-                send_message(socket_connection, response)
-            return
+def handle_execute_code(params, message_id=None):
+    """Improved handler for executing arbitrary Python code in Blender"""
+    code = params.get("code", "")
+    if not code:
+        log("Received empty code to execute", "WARNING")
+        send_error_response(message_id, "Empty code received")
+        return
+    
+    log(f"Executing code of length {len(code)}")
+    
+    def execute_in_main_thread():
+        try:
+            log("Running code in main thread")
             
-        log(f"Preparing to execute code of length {len(code)}")
+            # Prepare commonly used modules
+            namespace = {
+                "bpy": bpy,
+                # Add other common modules here if needed
+            }
             
-        # Execute the code in Blender's main thread
-        def execute_code_in_blender():
+            # Capture stdout
+            old_stdout = sys.stdout
+            captured_output = io.StringIO()
+            sys.stdout = captured_output
+            
             try:
-                log("Executing code in Blender")
-                
-                # Import modules in a try block to handle potential import errors gracefully
-                try:
-                    import mathutils
-                    import bmesh
-                    import math
-                    import random
-                    import os
-                    from io import StringIO
-                    import sys
-                    import json
-
-                    # Basic namespace with commonly used modules for Blender scripting
-                    namespace = {
-                        "bpy": bpy,
-                        "mathutils": mathutils,
-                        "bmesh": bmesh,
-                        "math": math,
-                        "random": random,
-                        "os": os,
-                        "Vector": mathutils.Vector,
-                        "Matrix": mathutils.Matrix,
-                        "Euler": mathutils.Euler,
-                        "Quaternion": mathutils.Quaternion,
-                        "json": json
-                    }
-                except ImportError as e:
-                    log(f"Import error: {str(e)}")
-                    if socket_connection and connected:
-                        response = {
-                            "type": "code_executed",
-                            "success": False,
-                            "error": f"Import error: {str(e)}"
-                        }
-                        send_message(socket_connection, response)
-                    return None
-                
-                # Capture stdout for response
-                old_stdout = sys.stdout
-                captured_output = StringIO()
-                sys.stdout = captured_output
-                
-                try:
-                    # Execute the code
-                    exec(code, namespace)
-                    output = captured_output.getvalue()
-                except Exception as e:
-                    # Detailed error reporting
-                    error_msg = f"Error executing code: {str(e)}"
-                    error_type = type(e).__name__
-                    
-                    # Get traceback information
-                    import traceback
-                    tb_str = traceback.format_exc()
-                    
-                    log(f"{error_msg}\n{tb_str}")
-                    
-                    # Send detailed error response
-                    if socket_connection and connected:
-                        response = {
-                            "type": "code_executed",
-                            "success": False,
-                            "error": error_msg,
-                            "error_type": error_type,
-                            "traceback": tb_str,
-                            "partial_output": captured_output.getvalue()  # Include any output before error
-                        }
-                        send_message(socket_connection, response)
-                    
-                    # Don't forget to restore stdout!
-                    sys.stdout = old_stdout
-                    return None
-                finally:
-                    # Restore stdout (do this in finally to ensure it happens)
-                    sys.stdout = old_stdout
+                # Execute the code
+                exec(code, namespace)
+                output = captured_output.getvalue()
                 
                 # Send success response
-                if socket_connection and connected:
+                if socket_connection and connected and message_id:
                     response = {
+                        "id": message_id,
                         "type": "code_executed",
                         "success": True,
                         "output": output
@@ -499,313 +560,132 @@ def handle_execute_code(params):
                     send_message(socket_connection, response)
                 
                 log(f"Code executed successfully, output length: {len(output)}")
+                
             except Exception as e:
-                log(f"Unexpected error in execute_code_in_blender: {str(e)}")
-                traceback.print_exc()
+                # Get detailed error info
+                error_msg = str(e)
+                error_type = type(e).__name__
+                tb_str = traceback.format_exc()
+                
+                log_error(f"Error executing code: {error_msg}\n{tb_str}")
                 
                 # Send error response
-                if socket_connection and connected:
+                if socket_connection and connected and message_id:
                     response = {
+                        "id": message_id,
                         "type": "code_executed",
                         "success": False,
-                        "error": f"Unexpected error: {str(e)}"
+                        "error": error_msg,
+                        "error_type": error_type,
+                        "traceback": tb_str,
+                        "partial_output": captured_output.getvalue()
                     }
                     send_message(socket_connection, response)
-            
-            # Make sure this doesn't repeat
-            return None
+            finally:
+                # Restore stdout
+                sys.stdout = old_stdout
         
-        # Use a try-except block when registering the timer
-        try:
-            # Execute in the main Blender thread
-            bpy.app.timers.register(execute_code_in_blender, first_interval=0.0, persistent=False)
-            log(f"Registered one-time timer to execute code")
         except Exception as e:
-            log(f"Error registering timer for code execution: {str(e)}")
-            traceback.print_exc()
+            log_error(f"Unhandled error in execute_code: {str(e)}", True)
+            send_error_response(message_id, f"Unhandled error: {str(e)}")
+        
+        # Don't repeat
+        return None
+    
+    # Schedule for execution in the main thread
+    try:
+        bpy.app.timers.register(execute_in_main_thread, first_interval=0.0)
+    except Exception as e:
+        log_error(f"Failed to register timer: {str(e)}", True)
+        send_error_response(message_id, f"Failed to schedule execution: {str(e)}")
+
+def handle_get_state(params, message_id=None):
+    """Improved handler for getting Blender state"""
+    log("Getting Blender state")
+    
+    def get_state_in_main_thread():
+        try:
+            state = {}
             
-            # Try to execute directly as a fallback
-            if socket_connection and connected:
+            # Get current mode
+            state["mode"] = bpy.context.mode
+            
+            # Get active object
+            active_obj = bpy.context.active_object
+            if active_obj:
+                state["active_object"] = {
+                    "name": active_obj.name,
+                    "type": active_obj.type if hasattr(active_obj, 'type') else None,
+                    "location": [float(v) for v in active_obj.location] if hasattr(active_obj, 'location') else None,
+                    "dimensions": [float(v) for v in active_obj.dimensions] if hasattr(active_obj, 'dimensions') else None
+                }
+            else:
+                state["active_object"] = None
+            
+            # Get selected objects
+            state["selected_objects"] = [
+                {
+                    "name": obj.name,
+                    "type": obj.type
+                }
+                for obj in bpy.context.selected_objects
+            ]
+            
+            # Get scene info
+            state["scene"] = {
+                "name": bpy.context.scene.name,
+                "frame_current": bpy.context.scene.frame_current,
+                "frame_start": bpy.context.scene.frame_start,
+                "frame_end": bpy.context.scene.frame_end
+            }
+            
+            # Get viewport shading
+            for area in bpy.context.screen.areas:
+                if area.type == 'VIEW_3D':
+                    for space in area.spaces:
+                        if space.type == 'VIEW_3D':
+                            state["viewport"] = {
+                                "shading_type": space.shading.type,
+                                "show_floor": space.overlay.show_floor,
+                                "show_axis_x": space.overlay.show_axis_x,
+                                "show_axis_y": space.overlay.show_axis_y,
+                                "show_axis_z": space.overlay.show_axis_z
+                            }
+                            break
+                    break
+            
+            # Send response
+            if socket_connection and connected and message_id:
                 response = {
-                    "type": "code_executed",
-                    "success": False,
-                    "error": f"Could not register timer for code execution: {str(e)}"
+                    "id": message_id,
+                    "type": "blender_state",
+                    "success": True,
+                    "state": state
                 }
                 send_message(socket_connection, response)
+                log("Sent Blender state")
+            
+        except Exception as e:
+            log_error(f"Error getting state: {str(e)}", True)
+            send_error_response(message_id, f"Error getting state: {str(e)}")
         
-    except Exception as e:
-        log(f"Error handling execute_code: {str(e)}")
-        traceback.print_exc()
-        
-        # Send error response
-        if socket_connection and connected:
-            response = {
-                "type": "code_executed",
-                "success": False,
-                "error": str(e)
-            }
-            send_message(socket_connection, response)
-
-# Add a new handler for get_state
-def handle_get_state(params):
-    """Handle the get_state command and send Blender's current state"""
+        # Don't repeat
+        return None
+    
+    # Schedule for execution in the main thread
     try:
-        log(f"Preparing to get Blender state")
-
-        def get_state_in_blender():
-            try:
-                log("Getting Blender state in main thread")
-
-                state = {}
-                
-                # Get current mode
-                state["mode"] = bpy.context.mode
-                
-                # Get active object
-                active_object = bpy.context.active_object
-                state["active_object_name"] = active_object.name if active_object else None
-                state["active_object_type"] = active_object.type if active_object and hasattr(active_object, 'type') else None
-
-                # Get selected objects
-                selected_objects = bpy.context.selected_objects
-                state["selected_objects_names"] = [obj.name for obj in selected_objects]
-                
-                # Get scene name
-                state["scene_name"] = bpy.context.scene.name
-                
-                # Get viewport shading
-                try:
-                    area = next(area for area in bpy.context.screen.areas if area.type == 'VIEW_3D')
-                    space = next(space for space in area.spaces if space.type == 'VIEW_3D')
-                    state["viewport_shading"] = space.shading.type
-                except (StopIteration, AttributeError) as e:
-                    state["viewport_shading"] = None
-                    log(f"Could not determine viewport shading: {e}")
-
-                # Send success response
-                if socket_connection and connected:
-                    response = {
-                        "type": "blender_state",
-                        "success": True,
-                        "state": state
-                    }
-                    send_message(socket_connection, response)
-                    log(f"Sent Blender state: {state}")
-                
-            except Exception as e:
-                log(f"Error in get_state_in_blender: {str(e)}")
-                traceback.print_exc()
-                
-                if socket_connection and connected:
-                    response = {
-                        "type": "blender_state",
-                        "success": False,
-                        "error": str(e)
-                    }
-                    send_message(socket_connection, response)
-            
-            return None
-
-        # Execute in the main Blender thread
-        bpy.app.timers.register(get_state_in_blender, first_interval=0.0, persistent=False)
-        log(f"Registered one-time timer to get Blender state")
-
+        bpy.app.timers.register(get_state_in_main_thread, first_interval=0.0)
     except Exception as e:
-        log(f"Error handling get_state: {str(e)}")
-        traceback.print_exc()
-        
-        if socket_connection and connected:
-            response = {
-                "type": "blender_state",
-                "success": False,
-                "error": str(e)
-            }
-            send_message(socket_connection, response)
+        log_error(f"Failed to register timer: {str(e)}", True)
+        send_error_response(message_id, f"Failed to schedule state retrieval: {str(e)}")
 
-# ---------------------- Blender UI Classes ----------------------
-
-class LightfastAddonPreferences(bpy.types.AddonPreferences):
-    bl_idname = __name__
-    
-    host: StringProperty(
-        name="Host",
-        description="WebSocket server host",
-        default=DEFAULT_HOST
-    )
-    
-    port: IntProperty(
-        name="Port",
-        description="WebSocket server port",
-        default=DEFAULT_PORT,
-        min=1,
-        max=65535
-    )
-    
-    auto_connect: BoolProperty(
-        name="Auto Connect",
-        description="Automatically connect when Blender starts",
-        default=True
-    )
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.prop(self, "host")
-        layout.prop(self, "port")
-        layout.prop(self, "auto_connect")
-
-class LIGHTFAST_PT_panel(bpy.types.Panel):
-    bl_label = "Lightfast Integration"
-    bl_idname = "LIGHTFAST_PT_panel"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = 'Lightfast'
-    
-    def draw(self, context):
-        layout = self.layout
-        
-        # Connection status
-        box = layout.box()
-        row = box.row()
-        if connected:
-            row.label(text="Status: Connected", icon='CHECKMARK')
-        else:
-            row.label(text="Status: Disconnected", icon='X')
-        
-        # Connection controls
-        row = layout.row()
-        if connected:
-            row.operator("lightfast.disconnect", text="Disconnect", icon='CANCEL')
-        else:
-            row.operator("lightfast.connect", text="Connect", icon='URL')
-        
-        # Emergency Stop Button
-        row = layout.row()
-        row.alert = True  # Make the button red
-        row.operator("lightfast.emergency_stop", text="EMERGENCY STOP", icon='ERROR')
-        
-        # Settings
-        box = layout.box()
-        box.label(text="Connection Settings:")
-        preferences = context.preferences.addons[__name__].preferences
-        box.prop(preferences, "host")
-        box.prop(preferences, "port")
-
-class LIGHTFAST_OT_connect(bpy.types.Operator):
-    bl_idname = "lightfast.connect"
-    bl_label = "Connect to Lightfast"
-    bl_description = "Connect to the Lightfast desktop app"
-    
-    def execute(self, context):
-        global addon_enabled
-        addon_enabled = True
-        
-        # Test if server is running before attempting connection
-        try:
-            host = bpy.context.preferences.addons[__name__].preferences.host
-            port = bpy.context.preferences.addons[__name__].preferences.port
-            
-            # Create a test socket to see if the server is listening
-            test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            test_sock.settimeout(2)
-            
-            log(f"Testing if Lightfast server is running at {host}:{port}...")
-            result = test_sock.connect_ex((host, port))
-            test_sock.close()
-            
-            if result != 0:
-                self.report({'ERROR'}, f"Lightfast server not found at {host}:{port}. Is the Lightfast desktop app running?")
-                log_error(f"Server test failed with code {result}. No server is listening at {host}:{port}")
-                return {'CANCELLED'}
-                
-            log(f"Server found at {host}:{port}")
-        except Exception as e:
-            self.report({'ERROR'}, f"Error checking server: {str(e)}")
-            log_error(f"Error testing server connection: {e}", True)
-            return {'CANCELLED'}
-        
-        if start_socket_client():
-            self.report({'INFO'}, "Connected to Lightfast")
-        else:
-            self.report({'ERROR'}, "Failed to connect to Lightfast")
-        return {'FINISHED'}
-
-class LIGHTFAST_OT_disconnect(bpy.types.Operator):
-    bl_idname = "lightfast.disconnect"
-    bl_label = "Disconnect from Lightfast"
-    bl_description = "Disconnect from the Lightfast desktop app"
-    
-    def execute(self, context):
-        global addon_enabled
-        addon_enabled = False
-        
-        # Then disconnect
-        stop_socket_client()
-        self.report({'INFO'}, "Disconnected from Lightfast")
-        return {'FINISHED'}
-
-class LIGHTFAST_OT_emergency_stop(bpy.types.Operator):
-    bl_idname = "lightfast.emergency_stop"
-    bl_label = "Emergency Stop"
-    bl_description = "Immediately cancel all operations and reset the connection"
-    
-    def execute(self, context):
-        global addon_enabled
-        addon_enabled = False
-        
-        # Make sure all current operations are stopped
-        try:
-            for timer in bpy.app.timers.timers():
-                bpy.app.timers.unregister(timer)
-        except Exception as e:
-            log(f"Error clearing timers: {e}")
-        
-        # Disconnect
-        stop_socket_client()
-        self.report({'INFO'}, "Emergency stop executed. All operations canceled.")
-        return {'FINISHED'}
-
-# ---------------------- Registration ----------------------
-
-classes = (
-    LightfastAddonPreferences,
-    LIGHTFAST_PT_panel,
-    LIGHTFAST_OT_connect,
-    LIGHTFAST_OT_disconnect,
-    LIGHTFAST_OT_emergency_stop,
-)
-
-def register():
-    # Register classes
-    for cls in classes:
-        bpy.utils.register_class(cls)
-    
-    # Auto-connect if enabled
-    def delayed_auto_connect():
-        try:
-            if bpy.context.preferences.addons[__name__].preferences.auto_connect:
-                global addon_enabled
-                addon_enabled = True
-                start_socket_client()
-        except:
-            pass
-        return None  # Don't repeat the timer
-    
-    # Schedule auto-connect after Blender UI is fully loaded
-    bpy.app.timers.register(delayed_auto_connect, first_interval=1.0)
-    
-    log("Addon registered")
-
-def unregister():
-    # Stop socket client
-    global addon_enabled
-    addon_enabled = False
-    stop_socket_client()
-    
-    # Unregister classes
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
-    
-    log("Addon unregistered")
-
-if __name__ == "__main__":
-    register() 
+def send_error_response(message_id, error_message):
+    """Helper to send an error response for a message"""
+    if socket_connection and connected and message_id:
+        response = {
+            "id": message_id,
+            "success": False,
+            "error": error_message
+        }
+        send_message(socket_connection, response)
+        log(f"Sent error response: {error_message}", "WARNING")
