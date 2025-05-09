@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
+import {
+  closeWindow,
+  maximizeWindow,
+  minimizeWindow,
+} from "../helpers/window-helpers";
+
 // Custom event name for sidebar toggle
 export const SIDEBAR_TOGGLE_EVENT = "sidebar-toggle";
 
@@ -9,11 +15,11 @@ export function TitleBar() {
 
   const sendCommand = useCallback((command: string) => {
     if (command === "close") {
-      window.electronAPI.send("close-window");
+      closeWindow();
     } else if (command === "minimize") {
-      window.electronAPI.send("minimize-window");
+      minimizeWindow();
     } else if (command === "maximize" || command === "unmaximize") {
-      window.electronAPI.send("maximize-window");
+      maximizeWindow();
     }
   }, []);
 

@@ -218,30 +218,6 @@ function createComposerWindow() {
   startBlenderSocketServer(composerWindow.webContents);
   console.log("Blender WebSocket server initialized");
 
-  ipcMain.on("minimize-window", () => {
-    composerWindow?.minimize();
-  });
-
-  ipcMain.on("maximize-window", () => {
-    if (composerWindow?.isMaximized()) {
-      composerWindow.unmaximize();
-    } else {
-      composerWindow?.maximize();
-    }
-  });
-
-  ipcMain.on("close-window", () => {
-    composerWindow?.close();
-  });
-
-  composerWindow.on("maximize", () => {
-    composerWindow.webContents.send("window-maximized");
-  });
-
-  composerWindow.on("unmaximize", () => {
-    composerWindow.webContents.send("window-unmaximized");
-  });
-
   // Register listeners
   registerListeners(composerWindow);
 
