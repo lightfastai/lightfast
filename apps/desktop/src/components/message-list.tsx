@@ -44,17 +44,19 @@ export function MessageList({
         <div className="flex-1 space-y-4">
           {messages.map((message) => {
             if (message.role === "user") {
+              console.log("rendering", message.content);
               return (
-                <UserMessageInput
-                  key={message.id}
-                  input={message.content || ""}
-                  setInput={setInput}
-                  status={status === "ready" ? "done" : "thinking"}
-                  stop={stop}
-                  handleSubmit={handleSubmit}
-                  setMessages={setMessages}
-                  className="w-full"
-                />
+                <div key={message.id}>
+                  <UserMessageInput
+                    input={message.content || ""}
+                    setInput={setInput}
+                    status={status === "ready" ? "done" : "thinking"}
+                    stop={stop}
+                    handleSubmit={handleSubmit}
+                    setMessages={setMessages}
+                    className="w-full"
+                  />
+                </div>
               );
             }
             if (message.role === "assistant") {

@@ -98,45 +98,38 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
         <div className="relative flex h-full w-full flex-col items-end justify-between">
           <div className={cn("bg-background flex h-full w-full flex-col")}>
             <div className="flex h-full w-full flex-col items-center">
-              {!messages || messages.length === 0 ? (
-                <div className="w-full">
-                  <UserMessageInput
+              {/* MessageListArea: occupies most space when present */}
+              {messages && messages.length > 0 && (
+                <div className="w-full flex-1 overflow-hidden">
+                  <MessageList
+                    messages={messages || []}
+                    status={status}
+                    error={error || null}
+                    className="w-full"
+                    addToolResult={addToolResult}
+                    // Props for MessageList's internal input capabilities
                     input={input}
                     setInput={setInput}
                     handleSubmit={handleSubmit}
-                    className="w-full"
-                    status={"ready"}
+                    stop={undefined}
+                    setMessages={undefined}
                   />
                 </div>
-              ) : (
-                <>
-                  <div className="w-full flex-1 overflow-hidden">
-                    <MessageList
-                      messages={messages || []}
-                      status={status}
-                      error={error || null}
-                      className="w-full"
-                      addToolResult={addToolResult}
-                      input={input}
-                      setInput={setInput}
-                      handleSubmit={handleSubmit}
-                      stop={undefined}
-                      setMessages={undefined}
-                    />
-                    <div>
-                      <UserMessageInput
-                        key={nanoid()}
-                        input={input}
-                        setInput={setInput}
-                        status={"ready"}
-                        stop={undefined}
-                        handleSubmit={handleSubmit}
-                        setMessages={undefined}
-                      />
-                    </div>
-                  </div>
-                </>
               )}
+
+              {/* UserInputArea: always present. At top if MessageListArea is not there, at bottom otherwise. */}
+              <div className="w-full">
+                <UserMessageInput
+                  input={input}
+                  setInput={setInput}
+                  handleSubmit={handleSubmit}
+                  className="w-full"
+                  status={"ready"}
+                  // Props for the main input field
+                  stop={undefined}
+                  setMessages={undefined}
+                />
+              </div>
             </div>
           </div>
           {messages.length === 0 && (

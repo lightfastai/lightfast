@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { Infinity as InfinityIcon, Info, Send, StopCircle } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -97,6 +97,7 @@ export const UserMessageInput = ({
 }: SessionInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [mode, setMode] = React.useState<SessionMode>("agent");
+
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
 
@@ -176,7 +177,7 @@ export const UserMessageInput = ({
   );
 };
 
-function PureStopButton({
+function StopButton({
   stop,
   setMessages,
 }: {
@@ -203,9 +204,7 @@ function PureStopButton({
   );
 }
 
-const StopButton = memo(PureStopButton);
-
-function PureSendButton({
+function SendButton({
   submitForm,
   input,
 }: {
@@ -228,5 +227,3 @@ function PureSendButton({
     </Button>
   );
 }
-
-const SendButton = memo(PureSendButton);
