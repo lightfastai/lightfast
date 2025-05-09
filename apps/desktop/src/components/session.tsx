@@ -124,10 +124,6 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                     error={error || null}
                     className="w-full"
                     addToolResult={addToolResult}
-                    // Props for MessageList's internal input capabilities
-                    input={input}
-                    setInput={setInput}
-                    handleSubmit={handleSubmit}
                     stop={stop}
                     setMessages={setMessages}
                   />

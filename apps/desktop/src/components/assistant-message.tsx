@@ -61,55 +61,55 @@ export function AssistantMessage({
       </div>
       {/* Render parsed content (text/code/tool) */}
       <div className="pt-3 pr-3 pl-8">
-        <div className="text-sm font-normal break-words whitespace-pre-wrap">
-          {parts.length > 0 ? (
-            parts.map((part, idx) => {
-              // Type guard for tool-call (not in TS type but may be present in runtime data)
-              // if ((part as any).type === "tool-call") {
-              //   return (
-              //     <ToolSection
-              //       key={(part as any).toolCallId || idx}
-              //       part={{ type: "tool-call", ...(part as any) }}
-              //       addToolResult={addToolResult}
-              //     />
-              //   );
-              // }
-              switch (part.type) {
-                case "text":
+        {parts.length > 0 ? (
+          parts.map((part, idx) => {
+            // Type guard for tool-call (not in TS type but may be present in runtime data)
+            // if ((part as any).type === "tool-call") {
+            //   return (
+            //     <ToolSection
+            //       key={(part as any).toolCallId || idx}
+            //       part={{ type: "tool-call", ...(part as any) }}
+            //       addToolResult={addToolResult}
+            //     />
+            //   );
+            // }
+            switch (part.type) {
+              case "text":
+                return (
+                  <div key={idx}>
+                    <Markdown>{sanitizeText(part.text)}</Markdown>
+                  </div>
+                );
+              case "tool-invocation":
+                const { toolInvocation } = part;
+                const { toolName, toolCallId, state } = toolInvocation;
+
+                if (state === "call") {
+                  const { args } = toolInvocation;
                   return (
-                    <Markdown key={idx}>{sanitizeText(part.text)}</Markdown>
+                    <ToolSection
+                      key={idx}
+                      part={{
+                        type: "tool-invocation",
+                        toolInvocation: part.toolInvocation || part,
+                      }}
+                      addToolResult={addToolResult}
+                    />
                   );
-                case "tool-invocation":
-                  const { toolInvocation } = part;
-                  const { toolName, toolCallId, state } = toolInvocation;
+                }
 
-                  if (state === "call") {
-                    const { args } = toolInvocation;
-                    return (
-                      <ToolSection
-                        key={idx}
-                        part={{
-                          type: "tool-invocation",
-                          toolInvocation: part.toolInvocation || part,
-                        }}
-                        addToolResult={addToolResult}
-                      />
-                    );
-                  }
-
-                  if (state === "result") {
-                    // some result...
-                  }
-                default:
-                  return null;
-              }
-            })
-          ) : (
-            <span>
-              {typeof message.content === "string" ? message.content : ""}
-            </span>
-          )}
-        </div>
+                if (state === "result") {
+                  // some result...
+                }
+              default:
+                return null;
+            }
+          })
+        ) : (
+          <span>
+            {typeof message.content === "string" ? message.content : ""}
+          </span>
+        )}
       </div>
     </div>
   );

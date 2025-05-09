@@ -13,15 +13,21 @@ import { cn } from "@repo/ui/lib/utils";
 import { AssistantMessage } from "./assistant-message";
 import { UserMessageInput } from "./user-message-input";
 
+// @todo import from "ai" sdk
+type TextUIPart = {
+  type: "text";
+  /**
+   * The text content.
+   */
+  text: string;
+};
+
 interface MessageListProps {
   messages: UIMessage[];
   status: SessionChatV1Status;
   error?: Error | null;
   className?: string;
   addToolResult: (params: { toolCallId: string; result: any }) => void;
-  input: string;
-  setInput: (input: string) => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   stop?: () => void;
   setMessages?: (messages: any) => void;
 }
@@ -32,11 +38,7 @@ export function MessageList({
   error,
   className,
   addToolResult,
-  input,
-  setInput,
-  handleSubmit,
   stop,
-  setMessages,
 }: MessageListProps) {
   return (
     <div className={cn("flex h-full flex-col overflow-y-auto", className)}>
@@ -44,8 +46,6 @@ export function MessageList({
         <div className="flex-1 space-y-4 pb-16">
           {messages.map((message, index) => {
             if (message.role === "user") {
-              console.log("rendering", message.content);
-
               const isLastMessage = index === messages.length - 1;
               const isChatProcessing =
                 status === "submitted" || status === "streaming";
@@ -61,7 +61,9 @@ export function MessageList({
               return (
                 <div key={message.id}>
                   <UserMessageInput
-                    input={message.content || ""}
+                    input={message.parts
+                      .map((part) => (part as TextUIPart).text)
+                      .join("")}
                     setInput={() => {}}
                     status={itemStatus}
                     stop={itemStop}
@@ -72,6 +74,7 @@ export function MessageList({
                 </div>
               );
             }
+
             if (message.role === "assistant") {
               const isLastMessage = index === messages.length - 1;
               const isChatProcessing =
