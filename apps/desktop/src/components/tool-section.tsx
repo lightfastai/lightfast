@@ -138,12 +138,7 @@ function ToolInvocationRequest({
           console.log(
             `📤 ToolSection: Sending executeBlenderCode request to main process`,
           );
-          const result = await window.electronAPI.invoke(
-            "handle-blender-execute-code",
-            {
-              code,
-            },
-          );
+          const result = await window.blenderConnection.executeCode(code);
 
           console.log(
             `📥 ToolSection: Received direct response from main process for executeBlenderCode`,
@@ -223,10 +218,8 @@ function ToolInvocationRequest({
           console.log(
             `📤 ToolSection: Sending getBlenderSceneInfo request to main process`,
           );
-          const result = await window.electronAPI.invoke(
-            "handle-blender-get-scene-info",
-            {},
-          );
+
+          const result = await window.blenderConnection.getSceneInfo();
 
           console.log(
             `📥 ToolSection: Received direct response from main process for getBlenderSceneInfo`,

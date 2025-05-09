@@ -1,5 +1,4 @@
-import type { EnvClient } from "./env/client-types";
-import { BlenderConnectionStatus } from "./preload";
+import { BlenderConnectionStatus } from "./stores/blender-store";
 
 interface ThemeModeContext {
   toggle: () => Promise<boolean>;
@@ -8,11 +7,13 @@ interface ThemeModeContext {
   system: () => Promise<boolean>;
   current: () => Promise<"dark" | "light" | "system">;
 }
+
 interface ElectronWindow {
   minimize: () => Promise<void>;
   maximize: () => Promise<void>;
   close: () => Promise<void>;
 }
+
 interface BlenderConnectionAPI {
   onStatusUpdate: (
     callback: (status: BlenderConnectionStatus) => void,
@@ -20,25 +21,13 @@ interface BlenderConnectionAPI {
   getStatus: () => Promise<BlenderConnectionStatus>;
   sendToBlender: (message: object) => Promise<any>;
   executeCode: (code: string) => Promise<any>;
-  getSceneInfo: () => Promise<any>; // New method for getting scene information
+  getSceneInfo: () => Promise<any>;
   onMessageResponse: (callback: (message: any) => void) => () => void;
-}
-
-interface ElectronAPI {
-  getClientEnv: () => Promise<EnvClient>;
-  ping: () => Promise<string>;
-  send: (channel: string, ...args: any[]) => void;
-  on: (channel: string, listener: (...args: any[]) => void) => () => void;
-  invoke: (channel: string, ...args: any[]) => Promise<any>;
 }
 
 declare global {
   interface Window {
-    electron?: {
-      ping: () => Promise<string>;
-    };
-    electronAPI: ElectronAPI;
-    electronWindow?: ElectronWindow;
+    electronWindow: ElectronWindow;
     blenderConnection: BlenderConnectionAPI;
     themeMode: ThemeModeContext;
   }

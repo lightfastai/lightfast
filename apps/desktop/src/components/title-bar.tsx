@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import {
   closeWindow,
@@ -10,7 +10,6 @@ import {
 export const SIDEBAR_TOGGLE_EVENT = "sidebar-toggle";
 
 export function TitleBar() {
-  const [isMaximized, setIsMaximized] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
   const sendCommand = useCallback((command: string) => {
@@ -21,30 +20,6 @@ export function TitleBar() {
     } else if (command === "maximize" || command === "unmaximize") {
       maximizeWindow();
     }
-  }, []);
-
-  // Check if window is maximized
-  useEffect(() => {
-    const handleWindowStateChange = (
-      _: unknown,
-      isWindowMaximized: boolean,
-    ) => {
-      setIsMaximized(isWindowMaximized);
-    };
-
-    // Listen for window state changes
-    const cleanup = window.electronAPI.on(
-      "window-state-change",
-      handleWindowStateChange,
-    );
-
-    // Get initial window state
-    window.electronAPI
-      .invoke("is-maximized")
-      .then((maximized) => setIsMaximized(maximized))
-      .catch((err) => console.error("Failed to get window state:", err));
-
-    return cleanup;
   }, []);
 
   // Keyboard shortcuts have been moved to useKeyboardShortcuts hook
@@ -81,7 +56,7 @@ export function TitleBar() {
           ></button>
           <button
             className="flex h-3 w-3 items-center justify-center rounded-full bg-green-500 transition-opacity hover:opacity-100"
-            onClick={() => sendCommand(isMaximized ? "unmaximize" : "maximize")}
+            onClick={() => sendCommand("maximize")}
             style={
               {
                 WebkitAppRegion: "no-drag",

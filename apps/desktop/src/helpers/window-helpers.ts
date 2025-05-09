@@ -1,9 +1,9 @@
 export async function minimizeWindow() {
-  window.electronWindow?.minimize();
+  window.electronWindow.minimize();
 }
 export async function maximizeWindow() {
-  window.electronWindow?.maximize();
+  window.electronWindow.maximize();
 }
 export async function closeWindow() {
-  window.electronWindow?.close();
+  window.electronWindow.close();
 }

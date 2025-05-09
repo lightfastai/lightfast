@@ -1,4 +1,5 @@
 import { BrowserWindow, ipcMain } from "electron";
+
 import {
   WIN_CLOSE_CHANNEL,
   WIN_MAXIMIZE_CHANNEL,
