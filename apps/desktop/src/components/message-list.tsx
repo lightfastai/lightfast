@@ -42,20 +42,29 @@ export function MessageList({
     <div className={cn("flex h-full flex-col overflow-y-auto", className)}>
       <ScrollArea className="h-full">
         <div className="flex-1 space-y-4">
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             if (message.role === "user") {
               console.log("rendering", message.content);
-              const itemStatus =
-                status === "submitted" || status === "streaming"
-                  ? "thinking"
-                  : "done";
+
+              const isLastMessage = index === messages.length - 1;
+              const isChatProcessing =
+                status === "submitted" || status === "streaming";
+
+              let itemStatus: "thinking" | "done" = "done";
+              let itemStop = undefined;
+
+              if (isLastMessage && isChatProcessing) {
+                itemStatus = "thinking";
+                itemStop = stop;
+              }
+
               return (
                 <div key={message.id}>
                   <UserMessageInput
                     input={message.content || ""}
                     setInput={() => {}}
                     status={itemStatus}
-                    stop={stop}
+                    stop={itemStop}
                     handleSubmit={(e) => e.preventDefault()}
                     setMessages={undefined}
                     className="w-full"
