@@ -146,9 +146,13 @@ ipcMain.handle("handle-blender-get-scene-info", async (event, args) => {
       };
     }
 
+    // Create a unique message ID for this request
+    const messageId = `scene_info_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
     // Send to Blender via WebSocket
     const command = {
       action: "get_scene_info",
+      id: messageId,
       params: {},
     };
 
@@ -158,6 +162,7 @@ ipcMain.handle("handle-blender-get-scene-info", async (event, args) => {
     return {
       success: true,
       message: "Request to get Blender scene info has been sent",
+      requestId: messageId,
     };
   } catch (error: any) {
     console.error("Main: Error handling Blender get scene info:", error);

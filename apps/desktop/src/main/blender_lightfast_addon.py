@@ -407,11 +407,14 @@ def handle_message(message):
             
             log(f"Processing action: {action}, message ID: {message_id}")
             
+            if not message_id:
+                log_error(f"Missing message_id for action: {action}. This will cause problems with responses.")
+            
             if action == "execute_code":
-                log(f"Calling handle_execute_code with params: {params}")
+                log(f"Calling handle_execute_code with params: {params}, message_id: {message_id}")
                 handle_execute_code(params, message_id)
             elif action == "get_scene_info":
-                log(f"Calling handle_get_scene_info with params: {params}")
+                log(f"Calling handle_get_scene_info with params: {params}, message_id: {message_id}")
                 handle_get_scene_info(params, message_id)
             else:
                 log(f"Unknown action: {action}", "WARNING")
@@ -427,6 +430,10 @@ def handle_message(message):
                     send_message(socket_connection, error_response)
         else:
             log(f"Unrecognized message format: {message}", "WARNING")
+            if isinstance(message, dict) and "action" not in message:
+                log_error("Message is missing 'action' field")
+            if not isinstance(message, dict):
+                log_error(f"Message is not a dictionary: {type(message)}")
     
     except Exception as e:
         log_error(f"Error processing message: {str(e)}", True)
@@ -634,9 +641,12 @@ def handle_get_scene_info(params, message_id=None):
     log("Getting Blender scene info...")
     log(f"Message ID for scene info request: {message_id}")
     
+    if not message_id:
+        log_error("No message_id provided for get_scene_info request. Response will fail.")
+    
     def get_scene_info_in_main_thread():
         try:
-            log("Starting to collect Blender scene info...")
+            log(f"Starting to collect Blender scene info for message_id: {message_id}")
             
             # Get information about the current Blender scene
             try:
@@ -683,7 +693,7 @@ def handle_get_scene_info(params, message_id=None):
                 }
                 send_result = send_message(socket_connection, response)
                 log(f"Send result: {send_result}")
-                log("Sent scene info")
+                log(f"Scene info sent for message ID: {message_id}")
             else:
                 if not socket_connection:
                     log_error("Cannot send scene info: socket_connection is None")
@@ -694,18 +704,24 @@ def handle_get_scene_info(params, message_id=None):
             
         except Exception as e:
             log_error(f"Error getting scene info: {str(e)}", True)
-            send_error_response(message_id, f"Error getting scene info: {str(e)}")
+            if message_id:
+                send_error_response(message_id, f"Error getting scene info: {str(e)}")
+            else:
+                log_error("Cannot send error response: no message_id provided")
         
         # Don't repeat
         return None
     
     # Schedule for execution in the main thread
     try:
-        log("Registering get_scene_info function with Blender timer")
+        log(f"Registering get_scene_info function with Blender timer for message_id: {message_id}")
         bpy.app.timers.register(get_scene_info_in_main_thread, first_interval=0.0)
     except Exception as e:
         log_error(f"Failed to register timer: {str(e)}", True)
-        send_error_response(message_id, f"Failed to schedule scene info retrieval: {str(e)}")
+        if message_id:
+            send_error_response(message_id, f"Failed to schedule scene info retrieval: {str(e)}")
+        else:
+            log_error("Cannot send error response: no message_id provided")
 
 def send_error_response(message_id, error_message):
     """Helper to send an error response for a message"""
