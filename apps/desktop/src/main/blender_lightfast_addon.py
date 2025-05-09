@@ -689,3 +689,118 @@ def send_error_response(message_id, error_message):
         }
         send_message(socket_connection, response)
         log(f"Sent error response: {error_message}", "WARNING")
+
+# ---------------------- Blender UI Classes ----------------------
+
+class LightfastAddonPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+    
+    host: StringProperty(
+        name="Host",
+        description="Host address for the Lightfast Connection",
+        default=DEFAULT_HOST
+    )
+    
+    port: IntProperty(
+        name="Port",
+        description="Port for the Lightfast Connection",
+        default=DEFAULT_PORT,
+        min=1024,
+        max=65535
+    )
+    
+    auto_connect: BoolProperty(
+        name="Auto Connect",
+        description="Automatically connect to Lightfast on startup",
+        default=False
+    )
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "host")
+        layout.prop(self, "port")
+        layout.prop(self, "auto_connect")
+        
+        row = layout.row()
+        if connected:
+            row.operator("lightfast.disconnect", text="Disconnect from Lightfast")
+        else:
+            row.operator("lightfast.connect", text="Connect to Lightfast")
+
+class LIGHTFAST_OT_Connect(bpy.types.Operator):
+    bl_idname = "lightfast.connect"
+    bl_label = "Connect to Lightfast"
+    bl_description = "Connect to the Lightfast Application"
+    
+    def execute(self, context):
+        if start_socket_client():
+            self.report({'INFO'}, "Connected to Lightfast")
+            return {'FINISHED'}
+        else:
+            self.report({'ERROR'}, "Failed to connect to Lightfast")
+            return {'CANCELLED'}
+
+class LIGHTFAST_OT_Disconnect(bpy.types.Operator):
+    bl_idname = "lightfast.disconnect"
+    bl_label = "Disconnect from Lightfast"
+    bl_description = "Disconnect from the Lightfast Application"
+    
+    def execute(self, context):
+        stop_socket_client()
+        self.report({'INFO'}, "Disconnected from Lightfast")
+        return {'FINISHED'}
+
+class LIGHTFAST_PT_Panel(bpy.types.Panel):
+    bl_label = "Lightfast"
+    bl_idname = "LIGHTFAST_PT_Panel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Lightfast"
+    
+    def draw(self, context):
+        layout = self.layout
+        
+        if connected:
+            layout.label(text="Connected to Lightfast", icon='CHECKMARK')
+            layout.operator("lightfast.disconnect", text="Disconnect")
+        else:
+            layout.label(text="Disconnected from Lightfast", icon='ERROR')
+            layout.operator("lightfast.connect", text="Connect")
+
+# ---------------------- Registration ----------------------
+
+classes = (
+    LightfastAddonPreferences,
+    LIGHTFAST_OT_Connect,
+    LIGHTFAST_OT_Disconnect,
+    LIGHTFAST_PT_Panel
+)
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    
+    log("Lightfast Addon registered")
+    
+    # Auto-connect if enabled in preferences
+    if hasattr(bpy.context, 'preferences') and bpy.context.preferences.addons.get(__name__):
+        prefs = bpy.context.preferences.addons[__name__].preferences
+        if prefs.auto_connect:
+            bpy.app.timers.register(
+                lambda: start_socket_client(),
+                first_interval=1.0
+            )
+
+def unregister():
+    # Stop the socket client if it's running
+    if connected:
+        stop_socket_client()
+    
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+    
+    log("Lightfast Addon unregistered")
+
+# This allows running the script directly from Blender's Text editor
+if __name__ == "__main__":
+    register()
