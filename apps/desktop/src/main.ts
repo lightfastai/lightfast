@@ -38,7 +38,7 @@ ipcMain.handle("get-client-env", (): EnvClient => {
   return clientEnv;
 });
 
-// Add handler for getting Blender status
+// Add handler for getting Blender statu
 ipcMain.handle("get-blender-status", () => {
   // Return the current Blender connection status using the imported function
   return getBlenderStatus();

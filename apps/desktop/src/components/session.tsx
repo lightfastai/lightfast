@@ -86,7 +86,12 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                 !session?.title && status === "submitted" && "animate-pulse",
               )}
             >
-              <span className="[mask-image:linear-gradient(to_right,black_50%,transparent_95%)]">
+              <span
+                className={
+                  session?.title &&
+                  "[mask-image:linear-gradient(to_right,black_50%,transparent_95%)]"
+                }
+              >
                 {session?.title
                   ? session?.title
                   : status === "ready"

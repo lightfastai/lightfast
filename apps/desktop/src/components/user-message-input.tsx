@@ -1,22 +1,23 @@
 import React, { useCallback, useRef } from "react";
-import { Infinity as InfinityIcon, Info, Send, StopCircle } from "lucide-react";
+import { Infinity as InfinityIcon, Send, StopCircle } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Button } from "@repo/ui/components/ui/button";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { cn } from "@repo/ui/lib/utils";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import { Textarea } from "@repo/ui/components/ui/textarea";
-import { cn } from "@repo/ui/lib/utils";
+  ForwardedDropdownMenuTriggerButton,
+} from "../components/ui/dropdown-menu";
+import { InputStatus, MODE_LABELS, SessionMode } from "../types/internal";
 
-import { SessionMode } from "../types/internal";
-
-interface SessionInputProps {
+// Props for user message input component
+export interface SessionInputProps {
   sessionId?: string;
   input: string;
   setInput: (input: string) => void;
@@ -26,14 +27,6 @@ interface SessionInputProps {
   setMessages?: (messages: any) => void;
   status?: InputStatus;
 }
-
-const InputStatus = z.enum(["ready", "thinking", "done"]);
-type InputStatus = z.infer<typeof InputStatus>;
-
-const MODE_LABELS: Record<SessionMode, string> = {
-  agent: "Agent",
-  manual: "Manual",
-};
 
 function ModeSelector({
   mode,
@@ -45,37 +38,41 @@ function ModeSelector({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="xs"
-          className="justify-start"
-          aria-label="Select mode"
-        >
-          {mode === "agent" ? (
-            <span className="flex items-center gap-1">
-              <InfinityIcon className="text-primary size-3" aria-hidden />
-              {MODE_LABELS.agent}
-            </span>
-          ) : (
-            MODE_LABELS[mode]
-          )}
-        </Button>
+        <ForwardedDropdownMenuTriggerButton variant="outline">
+          <span className="flex items-center gap-1 text-xs">
+            {mode === "agent" ? (
+              <>
+                <InfinityIcon className="text-primary size-3" aria-hidden />
+                {MODE_LABELS.agent}
+              </>
+            ) : (
+              MODE_LABELS[mode]
+            )}
+          </span>
+        </ForwardedDropdownMenuTriggerButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[96px] p-0.5">
         <DropdownMenuRadioGroup
           value={mode}
           onValueChange={(v) => setMode?.(v as SessionMode)}
         >
-          <DropdownMenuRadioItem value="agent" showIndicator={false}>
+          <DropdownMenuRadioItem
+            value="agent"
+            showIndicator={false}
+            className="px-2 py-1"
+          >
             <span className="flex items-center gap-1 text-xs">
               <InfinityIcon className="text-primary size-3" aria-hidden />
               {MODE_LABELS.agent}
             </span>
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="manual" disabled showIndicator={false}>
-            <span className="flex items-center gap-1 text-xs">
+          <DropdownMenuRadioItem
+            value="manual"
+            showIndicator={false}
+            className="px-2 py-1"
+          >
+            <span className="flex w-full items-center justify-between gap-1 text-xs">
               {MODE_LABELS.manual}
-              <Info className="text-muted-foreground/70 size-3" />
               <span className="sr-only">Manual mode coming soon</span>
             </span>
           </DropdownMenuRadioItem>
