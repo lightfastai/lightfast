@@ -245,6 +245,8 @@ def handle_message(message):
                 handle_create_object(message["params"])
             elif message["action"] == "execute_code":
                 handle_execute_code(message["params"])
+            elif message["action"] == "get_state":
+                handle_get_state(message.get("params", {}))
             else:
                 log(f"Unknown action: {message['action']}")
     
@@ -659,6 +661,64 @@ def handle_execute_code(params):
         if socket_connection and connected:
             response = {
                 "type": "code_executed",
+                "success": False,
+                "error": str(e)
+            }
+            send_message(socket_connection, response)
+
+# Add a new handler for get_state
+def handle_get_state(params):
+    """Handle the get_state command and send Blender's current state"""
+    try:
+        log("Handling get_state command")
+        
+        state = {}
+        
+        # Get current mode
+        state["mode"] = bpy.context.mode
+        
+        # Get active object
+        active_object = bpy.context.active_object
+        state["active_object_name"] = active_object.name if active_object else None
+        state["active_object_type"] = active_object.type if active_object and hasattr(active_object, 'type') else None
+
+
+        # Get selected objects
+        selected_objects = bpy.context.selected_objects
+        state["selected_objects_names"] = [obj.name for obj in selected_objects]
+        
+        # Get scene name
+        state["scene_name"] = bpy.context.scene.name
+        
+        # Get viewport shading
+        try:
+            # This path might vary slightly based on Blender version or context
+            # For 3D Viewport, check the current space
+            area = next(area for area in bpy.context.screen.areas if area.type == 'VIEW_3D')
+            space = next(space for space in area.spaces if space.type == 'VIEW_3D')
+            state["viewport_shading"] = space.shading.type
+        except (StopIteration, AttributeError) as e:
+            state["viewport_shading"] = None # Or some default/error indicator
+            log(f"Could not determine viewport shading: {e}")
+
+        # Send success response
+        if socket_connection and connected:
+            response = {
+                "type": "blender_state",
+                "success": True,
+                "state": state
+            }
+            send_message(socket_connection, response)
+            log(f"Sent Blender state: {state}")
+            
+    except Exception as e:
+        log(f"Error in handle_get_state: {str(e)}")
+        traceback.print_exc()
+        
+        # Send error response
+        if socket_connection and connected:
+            response = {
+                "type": "blender_state",
                 "success": False,
                 "error": str(e)
             }

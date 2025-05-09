@@ -180,6 +180,45 @@ ipcMain.handle("handle-blender-execute-code", async (event, args) => {
     };
   }
 });
+
+// Add Blender get state handler
+ipcMain.handle("handle-blender-get-state", async (event, args) => {
+  try {
+    console.log("Main: Received request to get Blender state");
+
+    // Check if Blender is connected before attempting to send the command
+    if (!isBlenderConnected()) {
+      console.warn("Main: Blender is not connected. Cannot get state.");
+      return {
+        success: false,
+        error:
+          "Blender is not connected. Please check your Blender connection.",
+        errorCode: "BLENDER_NOT_CONNECTED",
+      };
+    }
+
+    // Send to Blender via WebSocket
+    const command = {
+      action: "get_state",
+      params: {},
+    };
+
+    sendToBlender(command);
+
+    // For now, return a success message - the actual state will be received via WebSocket
+    return {
+      success: true,
+      message: "Request to get Blender state has been sent",
+    };
+  } catch (error: any) {
+    console.error("Main: Error handling Blender get state:", error);
+    return {
+      success: false,
+      error: `Failed to get Blender state: ${error.message}`,
+      errorCode: "EXECUTION_ERROR",
+    };
+  }
+});
 // --- End IPC Handlers ---
 
 // Function to create the Composer window

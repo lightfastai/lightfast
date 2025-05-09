@@ -150,6 +150,23 @@ export function startBlenderSocketServer(webContents: WebContents) {
           }
 
           // Handle other message types as needed
+          // If not a handshake or disconnect, forward to renderer if it's a known type or all general messages
+          else if (
+            parsedMessage.type === "object_created" ||
+            parsedMessage.type === "code_executed" ||
+            parsedMessage.type === "blender_state"
+          ) {
+            if (electronWebContents && !electronWebContents.isDestroyed()) {
+              console.log(
+                "Forwarding message from Blender to renderer:",
+                parsedMessage,
+              );
+              electronWebContents.send(
+                "blender-message-response",
+                parsedMessage,
+              );
+            }
+          }
         } catch (error) {
           console.error("Error processing message from Blender:", error);
         }

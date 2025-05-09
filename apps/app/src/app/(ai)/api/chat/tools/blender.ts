@@ -26,3 +26,18 @@ export function createReconnectBlenderTool() {
     // execute function removed to enable frontend confirmation
   });
 }
+
+// Schema for the GetBlenderState tool (no parameters needed)
+export const getBlenderStateToolSchema = z.object({});
+
+/**
+ * Creates a tool to get the current state of the Blender scene.
+ */
+export function createGetBlenderStateTool() {
+  return tool({
+    description:
+      "Get the current Blender scene state (e.g., active object, selected objects, mode)",
+    parameters: getBlenderStateToolSchema,
+    // execute function removed to enable frontend confirmation
+  });
+}

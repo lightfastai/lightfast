@@ -90,6 +90,26 @@ function ToolInvocationRequest({
             message: `Blender connection status: ${status.status}`,
           },
         });
+      } else if (toolInvocation.toolName === "getBlenderState") {
+        // Handle get Blender state tool
+        const result = await window.electronAPI.invoke(
+          "handle-blender-get-state",
+          {},
+        );
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: true,
+            message: "Get Blender state request sent successfully",
+            // The actual state data will be received asynchronously
+            // and updated in the context/chat elsewhere.
+          },
+        });
       } else {
         // For other tools, use the default "manual" execution
         addToolResult({
