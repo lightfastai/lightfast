@@ -37,57 +37,6 @@ ipcMain.handle("get-client-env", (): EnvClient => {
   return clientEnv;
 });
 
-// Handle Blender object creation
-ipcMain.handle("handle-blender-create-object", async (event, args) => {
-  try {
-    console.log("Main: Received request to create Blender object:", args);
-
-    // Extract parameters from args
-    const { objectType, location = { x: 0, y: 0, z: 0 }, name } = args;
-
-    // Create command for Blender
-    const command = {
-      action: "create_object",
-      params: {
-        type: objectType,
-        location,
-        name:
-          name ||
-          `New${objectType.charAt(0)}${objectType.slice(1).toLowerCase()}`,
-      },
-    };
-
-    // Check if Blender is connected before attempting to send the command
-    if (!isBlenderConnected()) {
-      console.warn("Main: Blender is not connected. Cannot execute command.");
-      return {
-        success: false,
-        error:
-          "Blender is not connected. Please check your Blender connection.",
-        errorCode: "BLENDER_NOT_CONNECTED",
-      };
-    }
-
-    // Send to Blender via WebSocket
-    sendToBlender(command);
-
-    // For now, return a success message - in a more advanced implementation,
-    // we would wait for a response from Blender
-    return {
-      success: true,
-      message: `Created ${objectType.toLowerCase()} at location (${location.x}, ${location.y}, ${location.z})`,
-      objectName: command.params.name,
-    };
-  } catch (error: any) {
-    console.error("Main: Error handling Blender object creation:", error);
-    return {
-      success: false,
-      error: `Failed to create Blender object: ${error.message}`,
-      errorCode: "EXECUTION_ERROR",
-    };
-  }
-});
-
 // Add handler for getting Blender status
 ipcMain.handle("get-blender-status", () => {
   // Return the current Blender connection status using the imported function

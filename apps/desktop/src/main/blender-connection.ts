@@ -152,7 +152,6 @@ export function startBlenderSocketServer(webContents: WebContents) {
           // Handle other message types as needed
           // If not a handshake or disconnect, forward to renderer if it's a known type or all general messages
           else if (
-            parsedMessage.type === "object_created" ||
             parsedMessage.type === "code_executed" ||
             parsedMessage.type === "blender_state"
           ) {
