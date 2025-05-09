@@ -4,6 +4,7 @@ import {
   SESSION_CHAT_AUTO_RESUME,
 } from "@/config/session-constants";
 import { trpc } from "@/trpc";
+import { convertDBMessageToUIMessages } from "@/types/internal";
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -31,7 +32,6 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     trpc.tenant.session.get.queryOptions({ sessionId }),
   );
   const { data: sessions } = useQuery(trpc.tenant.session.list.queryOptions());
-  const [showPastSessions, setShowPastSessions] = React.useState(false);
 
   const {
     messages,
@@ -47,10 +47,9 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   } = useChat({
     id: sessionId,
     api: SESSION_CHAT_API_URL,
-    initialMessages: session?.messages,
+    initialMessages: convertDBMessageToUIMessages(session?.messages || []),
     generateId: () => nanoid(),
     sendExtraMessageFields: true,
-    experimental_streamMode: "words",
     experimental_prepareRequestBody: (body) => ({
       message: body.messages.at(-1),
       sessionId: sessionId ?? body.id, // @IMPORTANT we pass the body.id as inference to create the sesssion if doesn't exists...
@@ -58,7 +57,6 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     onError: (err) => {
       // @TODO Proper handling of errors on client-side...
       console.error("Chat Error:", err);
-      // Resetting execution state is now handled within useBlenderCodeExecutor
     },
     onFinish: () => {
       // window.history.replaceState({}, "", `/search/${id}`);
