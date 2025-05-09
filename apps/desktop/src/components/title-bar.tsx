@@ -8,7 +8,13 @@ export function TitleBar() {
   const [isHovering, setIsHovering] = useState(false);
 
   const sendCommand = useCallback((command: string) => {
-    window.electronAPI.send("window-control", command);
+    if (command === "close") {
+      window.electronAPI.send("close-window");
+    } else if (command === "minimize") {
+      window.electronAPI.send("minimize-window");
+    } else if (command === "maximize" || command === "unmaximize") {
+      window.electronAPI.send("maximize-window");
+    }
   }, []);
 
   // Check if window is maximized

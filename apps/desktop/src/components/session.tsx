@@ -100,7 +100,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               </span>
             </h1>
           </PopoverTrigger>
-          <PopoverContent className="w-auto max-w-xs p-2 text-xs">
+          <PopoverContent className="w-auto max-w-xs px-2 py-1 text-xs">
             {session?.title ? session.title : "New Chat"}
           </PopoverContent>
         </Popover>

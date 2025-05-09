@@ -1,9 +1,9 @@
 export async function minimizeWindow() {
-  await window.electronWindow?.minimize();
+  window.electronAPI.send("minimize-window");
 }
 export async function maximizeWindow() {
-  await window.electronWindow?.maximize();
+  window.electronAPI.send("maximize-window");
 }
 export async function closeWindow() {
-  await window.electronWindow?.close();
+  window.electronAPI.send("close-window");
 }

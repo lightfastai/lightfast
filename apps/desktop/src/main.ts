@@ -214,8 +214,6 @@ function createComposerWindow() {
     },
   });
 
-  registerListeners(composerWindow);
-
   // Initialize Blender WebSocket server
   startBlenderSocketServer(composerWindow.webContents);
   console.log("Blender WebSocket server initialized");
@@ -244,8 +242,8 @@ function createComposerWindow() {
     composerWindow.webContents.send("window-unmaximized");
   });
 
-  // You may want to register listeners here if needed
-  // registerListeners(composerWindow);
+  // Register listeners
+  registerListeners(composerWindow);
 
   // Load the composer HTML (adjust path as needed)
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
