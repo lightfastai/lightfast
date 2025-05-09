@@ -1,12 +1,12 @@
 import type { Components } from "react-markdown";
 import { memo } from "react";
-import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { CodeBlock } from "./code-block";
 
 const components: Partial<Components> = {
+  // @ts-expect-error
   code: CodeBlock,
   pre: ({ children }) => <>{children}</>,
   ol: ({ node, children, ...props }) => {
@@ -39,15 +39,14 @@ const components: Partial<Components> = {
   },
   a: ({ node, children, ...props }) => {
     return (
-      // @ts-expect-error
-      <Link
+      <a
         className="text-blue-500 hover:underline"
         target="_blank"
         rel="noreferrer"
         {...props}
       >
         {children}
-      </Link>
+      </a>
     );
   },
   h1: ({ node, children, ...props }) => {
