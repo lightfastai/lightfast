@@ -145,9 +145,31 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
 
         // Handle different message types
         if (message.type === "blender_state" && message.state) {
+          console.log("📊 Renderer: Processing Blender state data");
+          console.log("- Message ID:", message.id);
+          console.log("- Mode:", message.state.mode);
+          console.log(
+            "- Active Object:",
+            message.state.active_object?.name || "None",
+          );
+          console.log(
+            "- Selected Objects:",
+            message.state.selected_objects?.length || 0,
+          );
+          console.log("- Scene:", message.state.scene?.name || "None");
+
           get().updateBlenderState(message.state);
+          console.log("✅ State data stored in Blender Store");
         } else if (message.type === "code_executed") {
+          console.log("💻 Renderer: Processing code execution result");
+          console.log("- Success:", message.success);
+          console.log(
+            "- Output/Error:",
+            message.success ? message.output : message.error,
+          );
+
           get().updateCodeExecutionResult(message);
+          console.log("✅ Code execution result stored in Blender Store");
         }
       });
 

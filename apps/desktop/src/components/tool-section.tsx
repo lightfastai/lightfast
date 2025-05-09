@@ -181,6 +181,10 @@ function ToolInvocationRequest({
         // If we already have a state, return it immediately to the AI
         // rather than waiting for the async update
         if (currentBlenderState) {
+          console.log(
+            "🤖 Returning current Blender state to AI agent:",
+            currentBlenderState,
+          );
           setPending(false);
           addToolResult({
             toolCallId: toolInvocation.toolCallId,
@@ -190,9 +194,13 @@ function ToolInvocationRequest({
               state: currentBlenderState,
             },
           });
+          console.log("✅ Blender state tool result sent to AI");
         } else {
           // If we don't have state yet, return a basic response
           // The AI needs a response now, it can't wait for an async update
+          console.log(
+            "⚠️ No current Blender state available, returning placeholder to AI",
+          );
           setPending(false);
           addToolResult({
             toolCallId: toolInvocation.toolCallId,
@@ -206,6 +214,7 @@ function ToolInvocationRequest({
               },
             },
           });
+          console.log("✅ Placeholder state tool result sent to AI");
         }
       } else {
         // For other tools, use the default "manual" execution

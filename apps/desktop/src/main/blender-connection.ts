@@ -156,6 +156,46 @@ export function startBlenderSocketServer(webContents: WebContents) {
             parsedMessage.type === "blender_state"
           ) {
             if (electronWebContents && !electronWebContents.isDestroyed()) {
+              // Add detailed logging for Blender state responses
+              if (parsedMessage.type === "blender_state") {
+                console.log("📊 Received Blender state data:");
+                console.log("- Message ID:", parsedMessage.id);
+                console.log("- Success:", parsedMessage.success);
+                if (parsedMessage.state) {
+                  console.log("- Mode:", parsedMessage.state.mode);
+                  console.log(
+                    "- Active Object:",
+                    parsedMessage.state.active_object,
+                  );
+                  console.log(
+                    "- Selected Objects Count:",
+                    parsedMessage.state.selected_objects
+                      ? parsedMessage.state.selected_objects.length
+                      : 0,
+                  );
+                  console.log("- Scene:", parsedMessage.state.scene);
+                  console.log(
+                    "- Full State:",
+                    JSON.stringify(parsedMessage.state, null, 2),
+                  );
+                } else {
+                  console.log("- No state data provided");
+                }
+              } else if (parsedMessage.type === "code_executed") {
+                console.log("💻 Received Blender code execution result:");
+                console.log("- Message ID:", parsedMessage.id);
+                console.log("- Success:", parsedMessage.success);
+                if (parsedMessage.success) {
+                  console.log("- Output:", parsedMessage.output);
+                } else {
+                  console.log("- Error:", parsedMessage.error);
+                  console.log("- Error Type:", parsedMessage.error_type);
+                  if (parsedMessage.traceback) {
+                    console.log("- Traceback:", parsedMessage.traceback);
+                  }
+                }
+              }
+
               console.log(
                 "Forwarding message from Blender to renderer:",
                 parsedMessage,
