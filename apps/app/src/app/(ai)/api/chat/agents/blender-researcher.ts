@@ -1,7 +1,7 @@
 import type { CoreMessage, streamText } from "ai";
 import { smoothStream } from "ai";
 
-import { modelProviders } from "~/app/(ai)/api/chat/providers/models";
+import { createProvider } from "~/app/(ai)/api/chat/providers/models";
 import { systemPrompt } from "../prompts";
 import {
   createDownloadAmbientCGTextureTool,
@@ -67,7 +67,7 @@ export function blenderResearcher({
   const categoryTool = createPolyhavenCategoryTool();
 
   return {
-    model: modelProviders.languageModel("chat-model"),
+    model: createProvider.languageModel("reasoning"),
     system: systemPrompt({ requestPrompt: unifiedPrompt }),
     messages,
     tools: {

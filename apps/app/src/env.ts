@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { anthropicEnv } from "@repo/ai/anthropic-env";
 import { openAiEnv } from "@repo/ai/openai-env";
+import { openrouterEnv } from "@repo/ai/openrouter-env";
 import { env as trpcEnv } from "@repo/trpc-client/env";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as dbEnv } from "@vendor/db/env";
@@ -18,6 +19,7 @@ export const env = createEnv({
     inngestEnv,
     openAiEnv,
     anthropicEnv,
+    openrouterEnv,
   ],
   shared: {
     NODE_ENV: z

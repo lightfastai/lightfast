@@ -40,8 +40,9 @@ export async function POST(request: Request) {
       id: sessionId,
       title,
     });
-  } catch (_) {
-    return new Response("Session not found", { status: 404 });
+  } catch (error) {
+    console.error("Failed to save session", error);
+    return new Response("Failed to save session", { status: 500 });
   }
 
   let messages: Message[];
