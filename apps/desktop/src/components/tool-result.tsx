@@ -29,9 +29,31 @@ interface ToolResultProps {
 export function ToolResult({ toolInvocation }: ToolResultProps) {
   const { toolName, result, error } = toolInvocation;
 
+  // Check for errors in both places - top level and inside result
+  const hasDirectError = !!error;
+  const hasResultError =
+    result &&
+    ((typeof result === "object" && result.error) ||
+      (typeof result === "object" && result.success === false));
+
+  // Get the error message from wherever it exists
+  const errorMessage =
+    error ||
+    (result && typeof result === "object" && result.error) ||
+    (hasResultError ? "Tool execution failed" : null);
+
   // Special handling for different result types
   function renderSpecializedResult() {
     if (!result) return null;
+
+    // If there's an error inside the result object but not a direct error property
+    if (hasResultError && !hasDirectError) {
+      return (
+        <div className="p-2 text-xs text-red-500">
+          Error: {result.error || "Tool execution failed"}
+        </div>
+      );
+    }
 
     // Handle specific tool types if needed
     switch (toolName) {
@@ -60,6 +82,14 @@ export function ToolResult({ toolInvocation }: ToolResultProps) {
         break;
 
       case "executeBlenderCode":
+        // Handle both success and error states
+        if (result.success === false) {
+          return (
+            <div className="p-2 text-xs text-red-500">
+              Error: {result.error || "Failed to execute Blender code"}
+            </div>
+          );
+        }
         return (
           <div>
             {result.output && (
@@ -74,6 +104,15 @@ export function ToolResult({ toolInvocation }: ToolResultProps) {
         );
 
       case "getBlenderSceneInfo":
+        // Handle potential error state
+        if (result.success === false) {
+          return (
+            <div className="p-2 text-xs text-red-500">
+              Error: {result.error || "Failed to get Blender scene info"}
+            </div>
+          );
+        }
+
         if (result.scene_info) {
           return (
             <div className="space-y-2 text-xs">
@@ -129,7 +168,13 @@ export function ToolResult({ toolInvocation }: ToolResultProps) {
             <div className="flex w-full items-center justify-between pr-2">
               <div className="flex min-w-0 flex-1 items-center gap-2 text-[0.65rem] leading-tight font-medium whitespace-nowrap">
                 Result:{" "}
-                <span className="rounded-md bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-200">
+                <span
+                  className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                    hasDirectError || hasResultError
+                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                      : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                  }`}
+                >
                   {toolName || "Unknown Tool"}
                 </span>
               </div>
