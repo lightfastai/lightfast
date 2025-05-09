@@ -167,9 +167,10 @@ export const UserMessageInput = ({
         }}
       />
       <div className="absolute right-0 bottom-0 flex w-fit flex-row justify-end p-2">
-        {status === "thinking" ? (
+        {status === "thinking" && (
           <StopButton stop={stop} setMessages={setMessages} />
-        ) : (
+        )}
+        {status === "ready" && (
           <SendButton input={input} submitForm={submitForm} />
         )}
       </div>

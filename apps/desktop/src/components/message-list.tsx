@@ -45,15 +45,19 @@ export function MessageList({
           {messages.map((message) => {
             if (message.role === "user") {
               console.log("rendering", message.content);
+              const itemStatus =
+                status === "submitted" || status === "streaming"
+                  ? "thinking"
+                  : "done";
               return (
                 <div key={message.id}>
                   <UserMessageInput
                     input={message.content || ""}
-                    setInput={setInput}
-                    status={status === "ready" ? "done" : "thinking"}
+                    setInput={() => {}}
+                    status={itemStatus}
                     stop={stop}
-                    handleSubmit={handleSubmit}
-                    setMessages={setMessages}
+                    handleSubmit={(e) => e.preventDefault()}
+                    setMessages={undefined}
                     className="w-full"
                   />
                 </div>
