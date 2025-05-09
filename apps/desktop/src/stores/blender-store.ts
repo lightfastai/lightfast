@@ -183,8 +183,24 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
   },
 
   updateCodeExecutionResult: (result) => {
+    console.log("🔄 Updating code execution result in store...");
+    console.log(`   ID: ${result.id}`);
+    console.log(`   Success: ${result.success}`);
+    if (result.success) {
+      const output = result.output || "";
+      console.log(
+        `   Output: ${output.substring(0, 100)}${output.length > 100 ? "..." : ""}`,
+      );
+    } else {
+      console.log(`   Error: ${result.error}`);
+      if (result.error_type) {
+        console.log(`   Error type: ${result.error_type}`);
+      }
+    }
+
     set({ lastCodeExecution: result });
-    console.log("Code execution result updated:", result);
+
+    console.log("✅ Code execution result updated in store");
   },
 
   sendMessage: async (message: object) => {

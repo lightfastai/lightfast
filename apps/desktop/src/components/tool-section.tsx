@@ -130,22 +130,95 @@ function ToolInvocationRequest({
     try {
       // Check if this is a Blender code execution tool
       if (toolInvocation.toolName === "executeBlenderCode" && code) {
-        // Execute the code using the Electron API
-        const result = await window.electronAPI.invoke(
-          "handle-blender-execute-code",
-          {
-            code,
-          },
-        );
+        // Set up a listener for the code execution response
+        let responseTimeout: NodeJS.Timeout | null = null;
 
-        if (result.error) {
-          // Handle immediate errors
+        try {
+          // Initialize message listener if not already active
+          initializeMessageListener();
+
+          // Execute the code using the Electron API
+          const result = await window.electronAPI.invoke(
+            "handle-blender-execute-code",
+            {
+              code,
+            },
+          );
+
+          if (result.error) {
+            // Handle immediate errors
+            setPending(false);
+            throw new Error(result.error);
+          }
+
+          console.log(
+            "📤 Code execution request sent to Blender with ID:",
+            result.requestId,
+          );
+
+          // Wait briefly for the response to arrive
+          // This gives a chance for the WebSocket message to be received and stored
+          responseTimeout = setTimeout(() => {
+            // Check for code execution result after timeout
+            const executionResult =
+              useBlenderStore.getState().lastCodeExecution;
+
+            if (executionResult) {
+              console.log(
+                "📥 Code execution result received from Blender during wait period",
+              );
+              setPending(false);
+
+              if (executionResult.success) {
+                addToolResult({
+                  toolCallId: toolInvocation.toolCallId,
+                  result: {
+                    success: true,
+                    output:
+                      executionResult.output || "Code executed successfully",
+                    message: "Blender code executed successfully",
+                  },
+                });
+              } else {
+                setError(
+                  executionResult.error || "Failed to execute code in Blender",
+                );
+                addToolResult({
+                  toolCallId: toolInvocation.toolCallId,
+                  result: {
+                    success: false,
+                    error:
+                      executionResult.error ||
+                      "Failed to execute code in Blender",
+                  },
+                });
+              }
+            } else {
+              // Still no data, return placeholder after waiting
+              console.log(
+                "⚠️ No code execution result received within timeout, returning placeholder to AI",
+              );
+              setPending(false);
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: true,
+                  message: "Code execution request sent to Blender",
+                  output:
+                    "Code sent to Blender for execution. Results will be available shortly.",
+                },
+              });
+            }
+          }, 1000); // Wait 1 second for response
+
+          // Note: We don't set pending to false here - that happens in the timeout callback
+        } catch (e: any) {
+          if (responseTimeout) {
+            clearTimeout(responseTimeout);
+          }
           setPending(false);
-          throw new Error(result.error);
+          throw e;
         }
-
-        // Don't set success yet - wait for the callback
-        // The success will be handled by the useEffect above
       } else if (toolInvocation.toolName === "reconnectBlender") {
         // Handle reconnect Blender tool
         if (!window.blenderConnection) {

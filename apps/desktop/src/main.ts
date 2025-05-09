@@ -104,9 +104,13 @@ ipcMain.handle("handle-blender-execute-code", async (event, args) => {
       };
     }
 
+    // Create a unique message ID for this request
+    const messageId = `execute_code_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
     // Send to Blender via WebSocket
     const command = {
       action: "execute_code",
+      id: messageId,
       params: {
         code,
       },
@@ -119,6 +123,7 @@ ipcMain.handle("handle-blender-execute-code", async (event, args) => {
     return {
       success: true,
       message: "Code has been sent to Blender for execution",
+      requestId: messageId,
     };
   } catch (error: any) {
     console.error("Main: Error handling Blender code execution:", error);
