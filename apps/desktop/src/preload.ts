@@ -99,6 +99,19 @@ contextBridge.exposeInMainWorld("blenderConnection", {
   // Add function to execute code in Blender
   executeCode: (code: string) =>
     ipcRenderer.invoke("handle-blender-execute-code", { code }),
+  // Add function to get state from Blender
+  getState: () => ipcRenderer.invoke("handle-blender-get-state", {}),
+  // Add listener for Blender message responses (code execution results, state data, etc.)
+  onMessageResponse: (callback: (message: any) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, message: any) =>
+      callback(message);
+    ipcRenderer.on("blender-message-response", listener);
+
+    // Return a cleanup function
+    return () => {
+      ipcRenderer.removeListener("blender-message-response", listener);
+    };
+  },
 });
 
 exposeContexts();
