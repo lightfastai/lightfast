@@ -128,6 +128,24 @@ function ToolInvocationRequest({
     initializeMessageListener();
 
     try {
+      // First check if Blender is actually connected
+      const connectionStatus = await window.blenderConnection.getStatus();
+      if (connectionStatus.status !== "connected") {
+        setPending(false);
+        const errorMsg =
+          "Blender is not connected. Current status: " +
+          connectionStatus.status;
+        setError(errorMsg);
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: errorMsg,
+          },
+        });
+        return;
+      }
+
       // Check if this is a Blender code execution tool
       if (toolInvocation.toolName === "executeBlenderCode" && code) {
         try {
