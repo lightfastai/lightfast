@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { CheckIcon, XIcon } from "lucide-react";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@repo/ui/components/ui/accordion";
 import { Button } from "@repo/ui/components/ui/button";
 
 import { CodeBlock } from "./code-block";
@@ -114,59 +120,73 @@ function ToolInvocationRequest({
   };
 
   return (
-    <div className="bg-muted/20 border-border my-1.5 flex flex-col gap-1 rounded border p-2">
-      {/* Title Bar */}
-      <div className="flex w-full items-center justify-between">
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-[0.65rem] leading-tight font-medium whitespace-nowrap">
-          Request:{" "}
-          <pre className="bg-muted-foreground/10 rounded-md border px-2 py-1 text-[0.65rem]">
-            {toolInvocation.toolName.trim()}
-          </pre>
-        </div>
-        <div className="flex flex-shrink-0 items-center gap-1.5">
-          <Button
-            variant="outline"
-            size="xs"
-            disabled={pending}
-            onClick={handleExecuteBlenderCode}
-          >
-            <CheckIcon className="size-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="xs"
-            disabled={pending}
-            onClick={() => {
-              addToolResult?.({
-                toolCallId: toolInvocation.toolCallId,
-                result: { error: "User declined tool invocation" },
-              });
-            }}
-          >
-            <XIcon className="size-3" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Collapsible Content: Code and related error */}
-      {code && (
-        <div className="border-border mt-1 pt-1">
-          <CodeBlock inline={false}>{code}</CodeBlock>
-          {error && (
-            <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
-              {error}
+    <Accordion type="single" collapsible className="w-full">
+      <AccordionItem value="item-1" className="border-b-0">
+        <div className="bg-muted/20 border-border flex flex-col gap-1 rounded border p-2">
+          <AccordionTrigger className="p-0 hover:no-underline">
+            {/* Title Bar */}
+            <div className="flex w-full items-center justify-between pr-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2 text-[0.65rem] leading-tight font-medium whitespace-nowrap">
+                Request:{" "}
+                <pre className="bg-muted-foreground/10 rounded-md border px-2 py-1 text-[0.65rem]">
+                  {toolInvocation.toolName.trim()}
+                </pre>
+              </div>
+              <div className="flex flex-shrink-0 items-center gap-1.5">
+                <Button
+                  variant="secondary"
+                  size="xs"
+                  disabled={pending}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent accordion from toggling
+                    handleExecuteBlenderCode();
+                  }}
+                >
+                  <CheckIcon className="size-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  disabled={pending}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent accordion from toggling
+                    addToolResult?.({
+                      toolCallId: toolInvocation.toolCallId,
+                      result: { error: "User declined tool invocation" },
+                    });
+                  }}
+                >
+                  <XIcon className="size-3" />
+                </Button>
+              </div>
             </div>
+          </AccordionTrigger>
+
+          {/* Collapsible Content: Code and related error */}
+          {(code || error) && ( // Only render content if there's code or an error to show
+            <AccordionContent className="pt-1 pb-0">
+              {code && (
+                <div className="mt-1 pt-1">
+                  <CodeBlock inline={false}>{code}</CodeBlock>
+                  {error && (
+                    <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
+                      {error}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Error when no code is present (e.g., tool call setup error), but still an error to display */}
+              {!code && error && (
+                <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
+                  {error}
+                </div>
+              )}
+            </AccordionContent>
           )}
         </div>
-      )}
-
-      {/* Error when no code is present (e.g., tool call setup error), but still an error to display */}
-      {!code && error && (
-        <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
-          {error}
-        </div>
-      )}
-    </div>
+      </AccordionItem>
+    </Accordion>
   );
 }
 

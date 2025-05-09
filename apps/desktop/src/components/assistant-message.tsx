@@ -8,7 +8,7 @@ import {
 } from "@repo/ui/components/ui/avatar";
 import { cn } from "@repo/ui/lib/utils";
 
-import { Markdown } from "./markdown";
+import { Mdx } from "./mdx-components";
 import { ToolSection } from "./tool-section";
 
 interface AssistantMessageProps {
@@ -60,7 +60,7 @@ export function AssistantMessage({
         ) : null}
       </div>
       {/* Render parsed content (text/code/tool) */}
-      <div className="pt-3 pr-3 pl-8">
+      <div className="space-y-3 pt-3 pr-3 pl-8">
         {parts.length > 0 ? (
           parts.map((part, idx) => {
             // Type guard for tool-call (not in TS type but may be present in runtime data)
@@ -75,11 +75,7 @@ export function AssistantMessage({
             // }
             switch (part.type) {
               case "text":
-                return (
-                  <div key={idx}>
-                    <Markdown>{sanitizeText(part.text)}</Markdown>
-                  </div>
-                );
+                return <Mdx key={idx}>{sanitizeText(part.text)}</Mdx>;
               case "tool-invocation":
                 const { toolInvocation } = part;
                 const { toolName, toolCallId, state } = toolInvocation;
@@ -87,14 +83,15 @@ export function AssistantMessage({
                 if (state === "call") {
                   const { args } = toolInvocation;
                   return (
-                    <ToolSection
-                      key={idx}
-                      part={{
-                        type: "tool-invocation",
-                        toolInvocation: part.toolInvocation || part,
-                      }}
-                      addToolResult={addToolResult}
-                    />
+                    <div className="py-2" key={idx}>
+                      <ToolSection
+                        part={{
+                          type: "tool-invocation",
+                          toolInvocation: part.toolInvocation || part,
+                        }}
+                        addToolResult={addToolResult}
+                      />
+                    </div>
                   );
                 }
 

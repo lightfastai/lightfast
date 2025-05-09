@@ -86,12 +86,12 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                 !session?.title && status === "submitted" && "animate-pulse",
               )}
             >
-              <span className="[mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
+              <span className="[mask-image:linear-gradient(to_right,black_50%,transparent_95%)]">
                 {session?.title
                   ? session?.title
                   : status === "ready"
                     ? "New Chat"
-                    : "Thinking..."}
+                    : ""}
               </span>
             </h1>
           </PopoverTrigger>

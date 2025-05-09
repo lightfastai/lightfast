@@ -86,7 +86,7 @@ const components: Partial<Components> = {
 
 const remarkPlugins = [remarkGfm];
 
-const NonMemoizedMarkdown = ({ children }: { children: string }) => {
+const NonMemoizedMdx = ({ children }: { children: string }) => {
   return (
     <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
       {children}
@@ -94,7 +94,7 @@ const NonMemoizedMarkdown = ({ children }: { children: string }) => {
   );
 };
 
-export const Markdown = memo(
-  NonMemoizedMarkdown,
+export const Mdx = memo(
+  NonMemoizedMdx,
   (prevProps, nextProps) => prevProps.children === nextProps.children,
 );
