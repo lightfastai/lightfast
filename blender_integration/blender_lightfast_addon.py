@@ -36,6 +36,8 @@ addon_enabled = False
 
 # Add a global variable to track active create operations
 _active_create_timer = None
+_active_execute_timer = None
+_active_get_state_timer = None
 
 def log(message):
     """Print a log message to the console"""
@@ -669,53 +671,79 @@ def handle_execute_code(params):
 # Add a new handler for get_state
 def handle_get_state(params):
     """Handle the get_state command and send Blender's current state"""
+    global _active_get_state_timer
+
     try:
-        log("Handling get_state command")
-        
-        state = {}
-        
-        # Get current mode
-        state["mode"] = bpy.context.mode
-        
-        # Get active object
-        active_object = bpy.context.active_object
-        state["active_object_name"] = active_object.name if active_object else None
-        state["active_object_type"] = active_object.type if active_object and hasattr(active_object, 'type') else None
+        log(f"Preparing to get Blender state")
 
+        # Kill all timers first to avoid potential conflicts (optional, but consistent with execute_code)
+        # kill_all_timers() # Decided against this for get_state as it might be too aggressive if called frequently
 
-        # Get selected objects
-        selected_objects = bpy.context.selected_objects
-        state["selected_objects_names"] = [obj.name for obj in selected_objects]
-        
-        # Get scene name
-        state["scene_name"] = bpy.context.scene.name
-        
-        # Get viewport shading
-        try:
-            # This path might vary slightly based on Blender version or context
-            # For 3D Viewport, check the current space
-            area = next(area for area in bpy.context.screen.areas if area.type == 'VIEW_3D')
-            space = next(space for space in area.spaces if space.type == 'VIEW_3D')
-            state["viewport_shading"] = space.shading.type
-        except (StopIteration, AttributeError) as e:
-            state["viewport_shading"] = None # Or some default/error indicator
-            log(f"Could not determine viewport shading: {e}")
+        def get_state_in_blender():
+            global _active_get_state_timer
+            try:
+                log("Getting Blender state in main thread")
+                _active_get_state_timer = None
 
-        # Send success response
-        if socket_connection and connected:
-            response = {
-                "type": "blender_state",
-                "success": True,
-                "state": state
-            }
-            send_message(socket_connection, response)
-            log(f"Sent Blender state: {state}")
+                state = {}
+                
+                # Get current mode
+                state["mode"] = bpy.context.mode
+                
+                # Get active object
+                active_object = bpy.context.active_object
+                state["active_object_name"] = active_object.name if active_object else None
+                state["active_object_type"] = active_object.type if active_object and hasattr(active_object, 'type') else None
+
+                # Get selected objects
+                selected_objects = bpy.context.selected_objects
+                state["selected_objects_names"] = [obj.name for obj in selected_objects]
+                
+                # Get scene name
+                state["scene_name"] = bpy.context.scene.name
+                
+                # Get viewport shading
+                try:
+                    area = next(area for area in bpy.context.screen.areas if area.type == 'VIEW_3D')
+                    space = next(space for space in area.spaces if space.type == 'VIEW_3D')
+                    state["viewport_shading"] = space.shading.type
+                except (StopIteration, AttributeError) as e:
+                    state["viewport_shading"] = None
+                    log(f"Could not determine viewport shading: {e}")
+
+                # Send success response
+                if socket_connection and connected:
+                    response = {
+                        "type": "blender_state",
+                        "success": True,
+                        "state": state
+                    }
+                    send_message(socket_connection, response)
+                    log(f"Sent Blender state: {state}")
+                
+            except Exception as e:
+                log(f"Error in get_state_in_blender: {str(e)}")
+                traceback.print_exc()
+                
+                if socket_connection and connected:
+                    response = {
+                        "type": "blender_state",
+                        "success": False,
+                        "error": str(e)
+                    }
+                    send_message(socket_connection, response)
             
+            return None
+
+        # Execute in the main Blender thread
+        _active_get_state_timer = get_state_in_blender
+        bpy.app.timers.register(get_state_in_blender, first_interval=0.1, persistent=False)
+        log(f"Registered one-time timer to get Blender state")
+
     except Exception as e:
-        log(f"Error in handle_get_state: {str(e)}")
+        log(f"Error handling get_state: {str(e)}")
         traceback.print_exc()
         
-        # Send error response
         if socket_connection and connected:
             response = {
                 "type": "blender_state",
@@ -869,14 +897,15 @@ class LIGHTFAST_OT_test_create_object(bpy.types.Operator):
 # Add emergency stop functions to clear all timers
 def kill_all_timers():
     """Emergency function to kill all Blender timers"""
-    global _active_create_timer, _active_execute_timer
+    global _active_create_timer, _active_execute_timer, _active_get_state_timer
     
     log("EMERGENCY: Killing all Blender timers!")
     
     # Clear our tracked timers
     _active_create_timer = None
     _active_execute_timer = None
-    
+    _active_get_state_timer = None
+
     # Clear all registered timers in Blender
     # Note: bpy.app.timers is not directly iterable in some Blender versions
     # We need to get a list of timer functions through a different approach
