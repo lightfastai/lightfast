@@ -63,10 +63,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     const validChannels = [
       "get-client-env",
       "ping",
-      "handle-blender-create-object", // Add the Blender tool channel
       "get-blender-status", // Add the status check channel
       "handle-blender-execute-code", // Add the Blender execute code channel
-      "handle-blender-get-state", // Add the Blender get state channel
+      "handle-blender-get-scene-info", // Add the Blender get scene info channel
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
@@ -100,9 +99,9 @@ contextBridge.exposeInMainWorld("blenderConnection", {
   // Add function to execute code in Blender
   executeCode: (code: string) =>
     ipcRenderer.invoke("handle-blender-execute-code", { code }),
-  // Add function to get state from Blender
-  getState: () => ipcRenderer.invoke("handle-blender-get-state", {}),
-  // Add listener for Blender message responses (code execution results, state data, etc.)
+  // Add function to get scene info from Blender
+  getSceneInfo: () => ipcRenderer.invoke("handle-blender-get-scene-info", {}),
+  // Add listener for Blender message responses (code execution results, scene info, etc.)
   onMessageResponse: (callback: (message: any) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, message: any) =>
       callback(message);

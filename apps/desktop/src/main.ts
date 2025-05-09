@@ -130,14 +130,14 @@ ipcMain.handle("handle-blender-execute-code", async (event, args) => {
   }
 });
 
-// Add Blender get state handler
-ipcMain.handle("handle-blender-get-state", async (event, args) => {
+// Add Blender get scene info handler
+ipcMain.handle("handle-blender-get-scene-info", async (event, args) => {
   try {
-    console.log("Main: Received request to get Blender state");
+    console.log("Main: Received request to get Blender scene info");
 
     // Check if Blender is connected before attempting to send the command
     if (!isBlenderConnected()) {
-      console.warn("Main: Blender is not connected. Cannot get state.");
+      console.warn("Main: Blender is not connected. Cannot get scene info.");
       return {
         success: false,
         error:
@@ -148,22 +148,22 @@ ipcMain.handle("handle-blender-get-state", async (event, args) => {
 
     // Send to Blender via WebSocket
     const command = {
-      action: "get_state",
+      action: "get_scene_info",
       params: {},
     };
 
     sendToBlender(command);
 
-    // For now, return a success message - the actual state will be received via WebSocket
+    // For now, return a success message - the actual scene info will be received via WebSocket
     return {
       success: true,
-      message: "Request to get Blender state has been sent",
+      message: "Request to get Blender scene info has been sent",
     };
   } catch (error: any) {
-    console.error("Main: Error handling Blender get state:", error);
+    console.error("Main: Error handling Blender get scene info:", error);
     return {
       success: false,
-      error: `Failed to get Blender state: ${error.message}`,
+      error: `Failed to get Blender scene info: ${error.message}`,
       errorCode: "EXECUTION_ERROR",
     };
   }

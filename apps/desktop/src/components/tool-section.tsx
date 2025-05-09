@@ -51,7 +51,7 @@ function ToolInvocationRequest({
 
   // Get Blender store state for code execution and state
   const lastCodeExecution = useBlenderStore((state) => state.lastCodeExecution);
-  const blenderState = useBlenderStore((state) => state.blenderState);
+  const blenderSceneInfo = useBlenderStore((state) => state.blenderSceneInfo);
   const initializeMessageListener = useBlenderStore(
     (state) => state.initializeMessageListener,
   );
@@ -95,25 +95,25 @@ function ToolInvocationRequest({
     addToolResult,
   ]);
 
-  // Effect to handle Blender state results
+  // Effect to handle Blender scene info results
   useEffect(() => {
-    if (!pending || !blenderState) return;
+    if (!pending || !blenderSceneInfo) return;
 
     // Check if this is a response to our current tool execution
-    if (toolInvocation.toolName === "getBlenderState") {
+    if (toolInvocation.toolName === "getBlenderSceneInfo") {
       setPending(false);
 
       addToolResult({
         toolCallId: toolInvocation.toolCallId,
         result: {
           success: true,
-          message: "Received Blender state",
-          state: blenderState,
+          message: "Received Blender scene info",
+          scene_info: blenderSceneInfo,
         },
       });
     }
   }, [
-    blenderState,
+    blenderSceneInfo,
     pending,
     toolInvocation.toolName,
     toolInvocation.toolCallId,
@@ -163,13 +163,13 @@ function ToolInvocationRequest({
             message: `Blender connection status: ${status.status}`,
           },
         });
-      } else if (toolInvocation.toolName === "getBlenderState") {
-        // Get the current Blender state
-        const currentBlenderState = useBlenderStore.getState().blenderState;
+      } else if (toolInvocation.toolName === "getBlenderSceneInfo") {
+        // Get the current Blender scene info
+        const currentSceneInfo = useBlenderStore.getState().blenderSceneInfo;
 
-        // First, send the request to update the state for future reference
+        // First, send the request to update the scene info for future reference
         const result = await window.electronAPI.invoke(
-          "handle-blender-get-state",
+          "handle-blender-get-scene-info",
           {},
         );
 
@@ -178,43 +178,46 @@ function ToolInvocationRequest({
           throw new Error(result.error);
         }
 
-        // If we already have a state, return it immediately to the AI
+        // If we already have scene info, return it immediately to the AI
         // rather than waiting for the async update
-        if (currentBlenderState) {
+        if (currentSceneInfo) {
           console.log(
-            "🤖 Returning current Blender state to AI agent:",
-            currentBlenderState,
+            "🤖 Returning current Blender scene info to AI agent:",
+            currentSceneInfo,
           );
           setPending(false);
           addToolResult({
             toolCallId: toolInvocation.toolCallId,
             result: {
               success: true,
-              message: "Using current Blender state",
-              state: currentBlenderState,
+              message: "Using current Blender scene info",
+              scene_info: currentSceneInfo,
             },
           });
-          console.log("✅ Blender state tool result sent to AI");
+          console.log("✅ Blender scene info tool result sent to AI");
         } else {
-          // If we don't have state yet, return a basic response
+          // If we don't have scene info yet, return a basic response
           // The AI needs a response now, it can't wait for an async update
           console.log(
-            "⚠️ No current Blender state available, returning placeholder to AI",
+            "⚠️ No current Blender scene info available, returning placeholder to AI",
           );
           setPending(false);
           addToolResult({
             toolCallId: toolInvocation.toolCallId,
             result: {
               success: true,
-              message: "State request sent to Blender",
-              state: {
-                mode: "UNKNOWN",
+              message: "Scene info request sent to Blender",
+              scene_info: {
+                name: "UNKNOWN",
+                object_count: 0,
+                materials_count: 0,
+                objects: [],
                 message:
-                  "No current state available. Please try again in a moment.",
+                  "No current scene info available. Please try again in a moment.",
               },
             },
           });
-          console.log("✅ Placeholder state tool result sent to AI");
+          console.log("✅ Placeholder scene info tool result sent to AI");
         }
       } else {
         // For other tools, use the default "manual" execution
@@ -344,9 +347,9 @@ function ToolInvocationResult({ part }: { part: ToolInvocation }) {
         break;
       case "downloadAmbientCGTexture":
         return <AmbientCGAssetResult asset={result} />;
-      case "getBlenderState":
-        if (result?.state) {
-          return <BlenderStateView state={result.state} />;
+      case "getBlenderSceneInfo":
+        if (result?.scene_info) {
+          return <BlenderSceneInfoView state={result.scene_info} />;
         }
         break;
       default:
@@ -525,90 +528,39 @@ function AmbientCGAssetResult({ asset }: { asset: any }) {
   );
 }
 
-function BlenderStateView({ state }: { state: any }) {
+function BlenderSceneInfoView({ state }: { state: any }) {
   return (
     <div className="space-y-2">
       <div className="rounded border p-2">
-        <div className="font-semibold">Blender Mode</div>
-        <div className="text-muted-foreground text-xs">
-          {state.mode || "Unknown"}
+        <div className="font-semibold">Scene Information</div>
+        <div className="grid grid-cols-2 gap-1 text-xs">
+          <div>Name:</div>
+          <div>{state.name || "Unknown"}</div>
+          <div>Object Count:</div>
+          <div>{state.object_count || 0}</div>
+          <div>Materials Count:</div>
+          <div>{state.materials_count || 0}</div>
         </div>
       </div>
 
-      {state.active_object && (
+      {state.objects && state.objects.length > 0 && (
         <div className="rounded border p-2">
-          <div className="font-semibold">Active Object</div>
-          <div className="grid grid-cols-2 gap-1 text-xs">
-            <div>Name:</div>
-            <div>{state.active_object.name}</div>
-            <div>Type:</div>
-            <div>{state.active_object.type || "N/A"}</div>
-            {state.active_object.location && (
-              <>
-                <div>Location:</div>
-                <div>
-                  X: {state.active_object.location[0].toFixed(2)}, Y:{" "}
-                  {state.active_object.location[1].toFixed(2)}, Z:{" "}
-                  {state.active_object.location[2].toFixed(2)}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {state.selected_objects && state.selected_objects.length > 0 && (
-        <div className="rounded border p-2">
-          <div className="font-semibold">
-            Selected Objects ({state.selected_objects.length})
-          </div>
+          <div className="font-semibold">Objects ({state.objects.length})</div>
           <ul className="ml-4 list-disc text-xs">
-            {state.selected_objects.map((obj: any, i: number) => (
+            {state.objects.map((obj: any, i: number) => (
               <li key={i}>
-                {obj.name} ({obj.type})
+                {obj.name} ({obj.type}) - Location: [{obj.location.join(", ")}]
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {state.scene && (
-        <div className="rounded border p-2">
-          <div className="font-semibold">Scene</div>
-          <div className="grid grid-cols-2 gap-1 text-xs">
-            <div>Name:</div>
-            <div>{state.scene.name}</div>
-            <div>Current Frame:</div>
-            <div>{state.scene.frame_current}</div>
-            <div>Frame Range:</div>
-            <div>
-              {state.scene.frame_start} - {state.scene.frame_end}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {state.viewport && (
-        <div className="rounded border p-2">
-          <div className="font-semibold">Viewport</div>
-          <div className="grid grid-cols-2 gap-1 text-xs">
-            <div>Shading Type:</div>
-            <div>{state.viewport.shading_type}</div>
-            <div>Show Floor:</div>
-            <div>{state.viewport.show_floor ? "Yes" : "No"}</div>
-            <div>Show Axes:</div>
-            <div>
-              {state.viewport.show_axis_x ? "X " : ""}
-              {state.viewport.show_axis_y ? "Y " : ""}
-              {state.viewport.show_axis_z ? "Z" : ""}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Show full state data for debugging */}
+      {/* Show full scene info data for debugging */}
       <details className="mt-4">
-        <summary className="cursor-pointer text-xs">Raw State Data</summary>
+        <summary className="cursor-pointer text-xs">
+          Raw Scene Info Data
+        </summary>
         <pre className="bg-background mt-2 mb-2 overflow-x-auto rounded border p-2 text-xs whitespace-pre-wrap">
           {JSON.stringify(state, null, 2)}
         </pre>

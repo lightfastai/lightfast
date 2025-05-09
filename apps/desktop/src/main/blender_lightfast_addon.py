@@ -104,18 +104,31 @@ def encode_websocket_frame(data, opcode=0x01):
     try:
         # Convert dict to JSON string if needed
         if isinstance(data, dict):
-            data = json.dumps(data)
+            try:
+                log(f"Converting dict to JSON, keys: {list(data.keys())}")
+                data = json.dumps(data)
+                log(f"JSON conversion successful, length: {len(data)}")
+            except Exception as e:
+                log_error(f"JSON conversion error: {str(e)}")
+                return None
             
         # Convert to bytes if it's a string
         if isinstance(data, str):
-            payload = data.encode('utf-8')
+            try:
+                payload = data.encode('utf-8')
+                log(f"String encoded to bytes, length: {len(payload)}")
+            except Exception as e:
+                log_error(f"String encoding error: {str(e)}")
+                return None
         elif isinstance(data, bytes):
             payload = data
+            log(f"Data is already bytes, length: {len(payload)}")
         else:
             log_error(f"Unsupported data type for WebSocket frame: {type(data)}")
             return None
             
         payload_length = len(payload)
+        log(f"Payload length: {payload_length} bytes")
         
         # Build header
         header = bytearray()
@@ -125,12 +138,15 @@ def encode_websocket_frame(data, opcode=0x01):
         # Set payload length and masking bit
         if payload_length < 126:
             header.append(0x80 | payload_length)  # Set masking bit and length
+            log("Using short length format (1 byte)")
         elif payload_length < 65536:
             header.append(0x80 | 126)  # Set masking bit and use 2-byte length
             header.extend(struct.pack(">H", payload_length))
+            log("Using medium length format (2 bytes)")
         else:
             header.append(0x80 | 127)  # Set masking bit and use 8-byte length
             header.extend(struct.pack(">Q", payload_length))
+            log("Using long length format (8 bytes)")
         
         # Generate masking key (4 random bytes)
         mask = bytes([random.randint(0, 255) for _ in range(4)])
@@ -142,7 +158,9 @@ def encode_websocket_frame(data, opcode=0x01):
             masked[i] = payload[i] ^ mask[i % 4]
         
         # Combine header and masked payload
-        return bytes(header) + bytes(masked)
+        frame = bytes(header) + bytes(masked)
+        log(f"WebSocket frame created, total size: {len(frame)} bytes")
+        return frame
         
     except Exception as e:
         log_error(f"Error encoding WebSocket frame: {str(e)}", True)
@@ -349,11 +367,17 @@ def send_message(sock, message, callback=None):
             response_callbacks[message_id] = callback
             
         # Encode and send the message
+        log(f"Encoding message type: {message.get('type', 'unknown')} with ID: {message_id}")
         frame = encode_websocket_frame(message)
         if frame:
-            sock.sendall(frame)
-            log(f"Sent message with ID: {message_id}")
-            return message_id
+            log(f"Frame encoded successfully, size: {len(frame)} bytes")
+            try:
+                sock.sendall(frame)
+                log(f"Message sent successfully with ID: {message_id}")
+                return message_id
+            except Exception as e:
+                log_error(f"Socket sendall error: {str(e)}")
+                return None
         else:
             log_error("Failed to encode message")
             return None
@@ -369,6 +393,7 @@ def handle_message(message):
         
         # Check if this is a response to a previous message
         if isinstance(message, dict) and "id" in message and message["id"] in response_callbacks:
+            log(f"Found callback for message ID: {message['id']}")
             # Call the registered callback
             callback = response_callbacks.pop(message["id"])
             callback(message)
@@ -380,15 +405,20 @@ def handle_message(message):
             params = message.get("params", {})
             message_id = message.get("id", None)
             
+            log(f"Processing action: {action}, message ID: {message_id}")
+            
             if action == "execute_code":
+                log(f"Calling handle_execute_code with params: {params}")
                 handle_execute_code(params, message_id)
-            elif action == "get_state":
-                handle_get_state(params, message_id)
+            elif action == "get_scene_info":
+                log(f"Calling handle_get_scene_info with params: {params}")
+                handle_get_scene_info(params, message_id)
             else:
                 log(f"Unknown action: {action}", "WARNING")
                 
                 # Send error response if there's a message ID
                 if message_id and socket_connection:
+                    log(f"Sending error response for unknown action: {action}")
                     error_response = {
                         "id": message_id,
                         "success": False,
@@ -599,85 +629,83 @@ def handle_execute_code(params, message_id=None):
         log_error(f"Failed to register timer: {str(e)}", True)
         send_error_response(message_id, f"Failed to schedule execution: {str(e)}")
 
-def handle_get_state(params, message_id=None):
-    """Improved handler for getting Blender state"""
-    log("Getting Blender state")
+def handle_get_scene_info(params, message_id=None):
+    """Handler for getting Blender scene information"""
+    log("Getting Blender scene info...")
+    log(f"Message ID for scene info request: {message_id}")
     
-    def get_state_in_main_thread():
+    def get_scene_info_in_main_thread():
         try:
-            state = {}
+            log("Starting to collect Blender scene info...")
             
-            # Get current mode
-            state["mode"] = bpy.context.mode
-            
-            # Get active object
-            active_obj = bpy.context.active_object
-            if active_obj:
-                state["active_object"] = {
-                    "name": active_obj.name,
-                    "type": active_obj.type if hasattr(active_obj, 'type') else None,
-                    "location": [float(v) for v in active_obj.location] if hasattr(active_obj, 'location') else None,
-                    "dimensions": [float(v) for v in active_obj.dimensions] if hasattr(active_obj, 'dimensions') else None
+            # Get information about the current Blender scene
+            try:
+                # Simplify the scene info to reduce data size
+                scene_info = {
+                    "name": bpy.context.scene.name,
+                    "object_count": len(bpy.context.scene.objects),
+                    "objects": [],
+                    "materials_count": len(bpy.data.materials),
                 }
-            else:
-                state["active_object"] = None
-            
-            # Get selected objects
-            state["selected_objects"] = [
-                {
-                    "name": obj.name,
-                    "type": obj.type
-                }
-                for obj in bpy.context.selected_objects
-            ]
-            
-            # Get scene info
-            state["scene"] = {
-                "name": bpy.context.scene.name,
-                "frame_current": bpy.context.scene.frame_current,
-                "frame_start": bpy.context.scene.frame_start,
-                "frame_end": bpy.context.scene.frame_end
-            }
-            
-            # Get viewport shading
-            for area in bpy.context.screen.areas:
-                if area.type == 'VIEW_3D':
-                    for space in area.spaces:
-                        if space.type == 'VIEW_3D':
-                            state["viewport"] = {
-                                "shading_type": space.shading.type,
-                                "show_floor": space.overlay.show_floor,
-                                "show_axis_x": space.overlay.show_axis_x,
-                                "show_axis_y": space.overlay.show_axis_y,
-                                "show_axis_z": space.overlay.show_axis_z
-                            }
-                            break
-                    break
+                
+                log(f"Scene: {scene_info['name']}, Objects: {scene_info['object_count']}, Materials: {scene_info['materials_count']}")
+                
+                # Collect minimal object information (limit to first 10 objects)
+                for i, obj in enumerate(bpy.context.scene.objects):
+                    if i >= 10:  # Limit to 10 objects
+                        break
+                        
+                    obj_info = {
+                        "name": obj.name,
+                        "type": obj.type,
+                        # Only include basic location data
+                        "location": [round(float(obj.location.x), 2), 
+                                    round(float(obj.location.y), 2), 
+                                    round(float(obj.location.z), 2)],
+                    }
+                    log(f"Object {i+1}: {obj.name} ({obj.type}) at location {obj_info['location']}")
+                    scene_info["objects"].append(obj_info)
+                
+                log(f"Scene info collected: {len(scene_info['objects'])} objects")
+                
+            except Exception as e:
+                log_error(f"Error collecting scene info: {str(e)}", True)
+                scene_info = {"error": str(e)}
             
             # Send response
             if socket_connection and connected and message_id:
+                log(f"Preparing to send scene info for message ID: {message_id}")
                 response = {
                     "id": message_id,
-                    "type": "blender_state",
+                    "type": "scene_info",
                     "success": True,
-                    "state": state
+                    "scene_info": scene_info
                 }
-                send_message(socket_connection, response)
-                log("Sent Blender state")
+                send_result = send_message(socket_connection, response)
+                log(f"Send result: {send_result}")
+                log("Sent scene info")
+            else:
+                if not socket_connection:
+                    log_error("Cannot send scene info: socket_connection is None")
+                if not connected:
+                    log_error("Cannot send scene info: not connected")
+                if not message_id:
+                    log_error("Cannot send scene info: no message_id provided")
             
         except Exception as e:
-            log_error(f"Error getting state: {str(e)}", True)
-            send_error_response(message_id, f"Error getting state: {str(e)}")
+            log_error(f"Error getting scene info: {str(e)}", True)
+            send_error_response(message_id, f"Error getting scene info: {str(e)}")
         
         # Don't repeat
         return None
     
     # Schedule for execution in the main thread
     try:
-        bpy.app.timers.register(get_state_in_main_thread, first_interval=0.0)
+        log("Registering get_scene_info function with Blender timer")
+        bpy.app.timers.register(get_scene_info_in_main_thread, first_interval=0.0)
     except Exception as e:
         log_error(f"Failed to register timer: {str(e)}", True)
-        send_error_response(message_id, f"Failed to schedule state retrieval: {str(e)}")
+        send_error_response(message_id, f"Failed to schedule scene info retrieval: {str(e)}")
 
 def send_error_response(message_id, error_message):
     """Helper to send an error response for a message"""

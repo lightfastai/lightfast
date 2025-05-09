@@ -20,7 +20,7 @@ interface BlenderConnectionAPI {
   getStatus: () => Promise<BlenderConnectionStatus>;
   sendToBlender: (message: object) => Promise<any>;
   executeCode: (code: string) => Promise<any>;
-  getState: () => Promise<any>;
+  getSceneInfo: () => Promise<any>; // New method for getting scene information
   onMessageResponse: (callback: (message: any) => void) => () => void;
 }
 

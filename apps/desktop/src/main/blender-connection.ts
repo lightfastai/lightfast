@@ -153,33 +153,36 @@ export function startBlenderSocketServer(webContents: WebContents) {
           // If not a handshake or disconnect, forward to renderer if it's a known type or all general messages
           else if (
             parsedMessage.type === "code_executed" ||
-            parsedMessage.type === "blender_state"
+            parsedMessage.type === "scene_info"
           ) {
             if (electronWebContents && !electronWebContents.isDestroyed()) {
-              // Add detailed logging for Blender state responses
-              if (parsedMessage.type === "blender_state") {
-                console.log("📊 Received Blender state data:");
+              // Add detailed logging for scene info responses
+              if (parsedMessage.type === "scene_info") {
+                console.log("🎬 Received Blender scene info:");
                 console.log("- Message ID:", parsedMessage.id);
                 console.log("- Success:", parsedMessage.success);
-                if (parsedMessage.state) {
-                  console.log("- Mode:", parsedMessage.state.mode);
+                if (parsedMessage.scene_info) {
+                  console.log("- Scene name:", parsedMessage.scene_info.name);
                   console.log(
-                    "- Active Object:",
-                    parsedMessage.state.active_object,
+                    "- Object count:",
+                    parsedMessage.scene_info.object_count,
                   );
                   console.log(
-                    "- Selected Objects Count:",
-                    parsedMessage.state.selected_objects
-                      ? parsedMessage.state.selected_objects.length
+                    "- Materials count:",
+                    parsedMessage.scene_info.materials_count,
+                  );
+                  console.log(
+                    "- Objects list count:",
+                    parsedMessage.scene_info.objects
+                      ? parsedMessage.scene_info.objects.length
                       : 0,
                   );
-                  console.log("- Scene:", parsedMessage.state.scene);
                   console.log(
-                    "- Full State:",
-                    JSON.stringify(parsedMessage.state, null, 2),
+                    "- Full Scene Info:",
+                    JSON.stringify(parsedMessage.scene_info, null, 2),
                   );
                 } else {
-                  console.log("- No state data provided");
+                  console.log("- No scene info data provided");
                 }
               } else if (parsedMessage.type === "code_executed") {
                 console.log("💻 Received Blender code execution result:");

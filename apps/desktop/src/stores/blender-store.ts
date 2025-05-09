@@ -8,32 +8,16 @@ export type BlenderConnectionStatus =
   | { status: "listening" }
   | { status: "stopped" };
 
-// Define types for Blender state data
-export interface BlenderStateData {
-  mode?: string;
-  active_object?: {
-    name: string;
-    type: string | null;
-    location: number[] | null;
-    dimensions: number[] | null;
-  } | null;
-  selected_objects?: Array<{
+// Define types for Blender scene info data
+export interface BlenderSceneInfoData {
+  name: string;
+  object_count: number;
+  objects: Array<{
     name: string;
     type: string;
+    location: number[];
   }>;
-  scene?: {
-    name: string;
-    frame_current: number;
-    frame_start: number;
-    frame_end: number;
-  };
-  viewport?: {
-    shading_type: string;
-    show_floor: boolean;
-    show_axis_x: boolean;
-    show_axis_y: boolean;
-    show_axis_z: boolean;
-  };
+  materials_count: number;
 }
 
 // Define type for code execution results
@@ -50,7 +34,7 @@ export interface CodeExecutionResult {
 
 interface BlenderState {
   connectionStatus: BlenderConnectionStatus;
-  blenderState: BlenderStateData | null;
+  blenderSceneInfo: BlenderSceneInfoData | null; // New scene info format
   lastCodeExecution: CodeExecutionResult | null;
   messageListenerActive: boolean;
 
@@ -58,8 +42,8 @@ interface BlenderState {
   initializeMessageListener: () => () => void; // Returns the cleanup function
   sendMessage: (message: object) => Promise<void>;
   executeCode: (code: string) => Promise<void>;
-  getState: () => Promise<void>;
-  updateBlenderState: (state: BlenderStateData) => void;
+  getSceneInfo: () => Promise<void>; // New method
+  updateBlenderSceneInfo: (sceneInfo: BlenderSceneInfoData) => void; // New updater
   updateCodeExecutionResult: (result: CodeExecutionResult) => void;
   _cleanupListener: (() => void) | null;
   _cleanupMessageListener: (() => void) | null;
@@ -69,6 +53,7 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
   // Default to disconnected instead of stopped to show a better UI indication
   connectionStatus: { status: "disconnected" },
   blenderState: null,
+  blenderSceneInfo: null,
   lastCodeExecution: null,
   messageListenerActive: false,
   _cleanupListener: null,
@@ -143,23 +128,19 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
       const cleanup = window.blenderConnection.onMessageResponse((message) => {
         console.log("Blender Message Received:", message);
 
-        // Handle different message types
-        if (message.type === "blender_state" && message.state) {
-          console.log("📊 Renderer: Processing Blender state data");
+        if (message.type === "scene_info" && message.scene_info) {
+          console.log("🎬 Renderer: Processing Blender scene info data");
           console.log("- Message ID:", message.id);
-          console.log("- Mode:", message.state.mode);
+          console.log("- Scene Name:", message.scene_info.name);
+          console.log("- Object Count:", message.scene_info.object_count);
+          console.log("- Materials Count:", message.scene_info.materials_count);
           console.log(
-            "- Active Object:",
-            message.state.active_object?.name || "None",
+            "- Objects List:",
+            message.scene_info.objects?.length || 0,
           );
-          console.log(
-            "- Selected Objects:",
-            message.state.selected_objects?.length || 0,
-          );
-          console.log("- Scene:", message.state.scene?.name || "None");
 
-          get().updateBlenderState(message.state);
-          console.log("✅ State data stored in Blender Store");
+          get().updateBlenderSceneInfo(message.scene_info);
+          console.log("✅ Scene info data stored in Blender Store");
         } else if (message.type === "code_executed") {
           console.log("💻 Renderer: Processing code execution result");
           console.log("- Success:", message.success);
@@ -190,9 +171,9 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
     }
   },
 
-  updateBlenderState: (state) => {
-    set({ blenderState: state });
-    console.log("Blender state updated:", state);
+  updateBlenderSceneInfo: (sceneInfo) => {
+    set({ blenderSceneInfo: sceneInfo });
+    console.log("Blender scene info updated:", sceneInfo);
   },
 
   updateCodeExecutionResult: (result) => {
@@ -236,18 +217,18 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
     }
   },
 
-  getState: async () => {
+  getSceneInfo: async () => {
     try {
       if (!window.blenderConnection) {
         throw new Error("BlenderConnection API not available");
       }
-      // Ensure we have a message listener active before requesting state
+      // Ensure we have a message listener active before requesting scene info
       if (!get().messageListenerActive) {
         get().initializeMessageListener();
       }
-      await window.blenderConnection.getState();
+      await window.blenderConnection.getSceneInfo();
     } catch (error) {
-      console.error("Error getting state from Blender via IPC:", error);
+      console.error("Error getting scene info from Blender via IPC:", error);
       set({
         connectionStatus: {
           status: "error",
@@ -257,10 +238,3 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
     }
   },
 }));
-
-// Initialize the listener once when the store is loaded/used.
-// This approach ensures it's called early.
-// Alternatively, call this explicitly from a top-level component's useEffect.
-// const cleanup = useBlenderStore.getState().initializeListener();
-// Consider potential race conditions or timing issues with this approach.
-// A useEffect in App.tsx might be safer.

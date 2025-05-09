@@ -27,17 +27,17 @@ export function createReconnectBlenderTool() {
   });
 }
 
-// Schema for the GetBlenderState tool (no parameters needed)
-export const getBlenderStateToolSchema = z.object({});
+// Schema for the GetBlenderSceneInfo tool (no parameters needed)
+export const getBlenderSceneInfoToolSchema = z.object({});
 
 /**
- * Creates a tool to get the current state of the Blender scene.
+ * Creates a tool to get the current scene information from Blender.
  */
-export function createGetBlenderStateTool() {
+export function createGetBlenderSceneInfoTool() {
   return tool({
     description:
-      "Get the current Blender scene state (e.g., active object, selected objects, mode)",
-    parameters: getBlenderStateToolSchema,
+      "Get the current Blender scene information (scene name, objects, and materials)",
+    parameters: getBlenderSceneInfoToolSchema,
     // execute function removed to enable frontend confirmation
   });
 }
