@@ -74,11 +74,9 @@ export async function POST(request: Request) {
           sessionId: session.id,
           role: "user",
           parts: message.parts,
-          // attachments: message.experimental_attachments ?? [],
           attachments: [],
           createdAt: new Date(),
           updatedAt: new Date(),
-          content: message.content,
         },
       ],
     });
