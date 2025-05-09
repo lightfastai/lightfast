@@ -9,7 +9,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { Mdx } from "./mdx-components";
-import { ToolSection } from "./tool-section";
+import { ToolInvocationSection } from "./tool-invocation-section";
 
 interface AssistantMessageProps {
   message: UIMessage;
@@ -63,41 +63,17 @@ export function AssistantMessage({
       <div className="space-y-3 pt-3 pr-3 pl-8">
         {parts.length > 0 ? (
           parts.map((part, idx) => {
-            // Type guard for tool-call (not in TS type but may be present in runtime data)
-            // if ((part as any).type === "tool-call") {
-            //   return (
-            //     <ToolSection
-            //       key={(part as any).toolCallId || idx}
-            //       part={{ type: "tool-call", ...(part as any) }}
-            //       addToolResult={addToolResult}
-            //     />
-            //   );
-            // }
             switch (part.type) {
               case "text":
                 return <Mdx key={idx}>{sanitizeText(part.text)}</Mdx>;
               case "tool-invocation":
-                const { toolInvocation } = part;
-                const { toolName, toolCallId, state } = toolInvocation;
-
-                if (state === "call") {
-                  const { args } = toolInvocation;
-                  return (
-                    <div className="py-2" key={idx}>
-                      <ToolSection
-                        part={{
-                          type: "tool-invocation",
-                          toolInvocation: part.toolInvocation || part,
-                        }}
-                        addToolResult={addToolResult}
-                      />
-                    </div>
-                  );
-                }
-
-                if (state === "result") {
-                  // some result...
-                }
+                return (
+                  <ToolInvocationSection
+                    key={part.toolInvocation.toolCallId || idx}
+                    part={part}
+                    addToolResult={addToolResult}
+                  />
+                );
               default:
                 return null;
             }
