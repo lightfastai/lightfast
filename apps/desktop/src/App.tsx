@@ -4,9 +4,6 @@ import { RouterProvider } from "@tanstack/react-router";
 import { queryClient } from "@repo/trpc-client/trpc-react-proxy-provider";
 
 import { useBlenderListener } from "./hooks/use-blender-listener";
-
-import "@repo/ui/globals.css";
-
 import { AppRouter, composerRouter } from "./routes/router";
 import { Networks } from "./types/network";
 

@@ -22,12 +22,14 @@ export const PastSessions: React.FC<PastSessionsProps> = ({ sessions }) => {
       <div className="flex flex-col gap-2">
         {sessions?.slice(0, 3).map((session) => (
           <Link
-            className="text-muted-foreground hover:text-primary flex w-full items-center justify-between"
+            className="text-muted-foreground hover:text-primary flex w-full items-center justify-between whitespace-nowrap"
             key={session.id}
             to="/$sessionId"
             params={{ sessionId: session.id }}
           >
-            <div className="font-mono text-xs">{session.title}</div>
+            <div className="max-w-64 overflow-hidden [mask-image:linear-gradient(to_right,black_90%,transparent_100%)] font-mono text-xs whitespace-nowrap">
+              {session.title.trim()}
+            </div>
             <div className="font-mono text-xs">
               {useTimeAgo(session.updatedAt)}
             </div>

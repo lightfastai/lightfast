@@ -11,6 +11,11 @@ import { HistoryIcon, Plus } from "lucide-react";
 
 import { nanoid } from "@repo/lib";
 import { Button } from "@repo/ui/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
 import { cn } from "@repo/ui/lib/utils";
 
 import { MessageList } from "./message-list";
@@ -75,18 +80,27 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 px-4 pt-16 pb-4">
       <header className="flex w-full items-center justify-between">
-        <h1
-          className={cn(
-            "text-muted-foreground bg-muted-foreground/10 h-6 min-w-20 rounded-md border px-3 py-1 font-mono text-[0.65rem] font-bold",
-            !session?.title && status === "submitted" && "animate-pulse",
-          )}
-        >
-          {session?.title
-            ? session?.title
-            : status === "ready"
-              ? "New Chat"
-              : "Thinking..."}
-        </h1>
+        <Popover>
+          <PopoverTrigger asChild>
+            <h1
+              className={cn(
+                "text-muted-foreground bg-muted-foreground/10 h-6 max-w-64 min-w-20 cursor-default overflow-hidden rounded-md border px-3 py-1 font-mono text-[0.65rem] font-bold whitespace-nowrap",
+                !session?.title && status === "submitted" && "animate-pulse",
+              )}
+            >
+              <span className="[mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
+                {session?.title
+                  ? session?.title
+                  : status === "ready"
+                    ? "New Chat"
+                    : "Thinking..."}
+              </span>
+            </h1>
+          </PopoverTrigger>
+          <PopoverContent className="text-x w-auto max-w-xs p-2">
+            {session?.title ? session.title : "New Chat"}
+          </PopoverContent>
+        </Popover>
         {/*   <BlenderStatusIndicator /> */}
         <div className="flex items-center gap-1">
           <Link to="/">
