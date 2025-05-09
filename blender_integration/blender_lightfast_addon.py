@@ -34,10 +34,10 @@ max_reconnect_attempts = 5
 reconnect_delay = 2  # seconds
 addon_enabled = False
 
-# Add a global variable to track active create operations
-_active_create_timer = None
-_active_execute_timer = None
-_active_get_state_timer = None
+# Global timer tracking variables removed:
+# _active_create_timer = None
+# _active_execute_timer = None
+# _active_get_state_timer = None
 
 def log(message):
     """Print a log message to the console"""
@@ -399,7 +399,7 @@ def stop_socket_client():
 
 def handle_create_object(params):
     """Handle the create_object command"""
-    global _active_create_timer
+    # global _active_create_timer # Removed
     
     try:
         # Extract parameters
@@ -407,18 +407,18 @@ def handle_create_object(params):
         name = params.get("name", None)
         location = params.get("location", {"x": 0, "y": 0, "z": 0})
         
-        # Kill all timers first to be absolutely sure we don't get repeats
-        kill_all_timers()
+        # Kill all timers first to be absolutely sure we don't get repeats # Removed
+        # kill_all_timers() 
             
         # Create the object in Blender (must be executed in the main thread)
         def create_object_in_blender():
-            global _active_create_timer
+            # global _active_create_timer # Removed
             
             try:
                 log(f"Creating object: {obj_type}")
                 
-                # Clear the timer reference immediately to prevent any chance of repeats
-                _active_create_timer = None
+                # Clear the timer reference immediately to prevent any chance of repeats # Removed
+                # _active_create_timer = None 
                 
                 # Switch to object mode if in edit mode
                 if bpy.context.mode != 'OBJECT':
@@ -484,8 +484,8 @@ def handle_create_object(params):
             return None
         
         # Execute in the main Blender thread with one-shot timer
-        _active_create_timer = create_object_in_blender
-        bpy.app.timers.register(create_object_in_blender, first_interval=0.1, persistent=False)
+        # _active_create_timer = create_object_in_blender # Removed assignment
+        bpy.app.timers.register(create_object_in_blender, first_interval=0.0, persistent=False)
         log(f"Registered one-time timer to create {obj_type}")
         
     except Exception as e:
@@ -504,7 +504,7 @@ def handle_create_object(params):
 # Add a new handler for execute_code
 def handle_execute_code(params):
     """Handle executing arbitrary Python code in Blender"""
-    global _active_execute_timer
+    # global _active_execute_timer # Removed
     
     try:
         code = params.get("code", "")
@@ -522,18 +522,18 @@ def handle_execute_code(params):
             
         log(f"Preparing to execute code of length {len(code)}")
         
-        # Kill all timers first to avoid potential conflicts
-        kill_all_timers()
+        # Kill all timers first to avoid potential conflicts # Removed
+        # kill_all_timers()
             
         # Execute the code in Blender's main thread
         def execute_code_in_blender():
-            global _active_execute_timer
+            # global _active_execute_timer # Removed
             
             try:
                 log("Executing code in Blender")
                 
-                # Clear the timer reference immediately
-                _active_execute_timer = None
+                # Clear the timer reference immediately # Removed
+                # _active_execute_timer = None
                 
                 # Import modules in a try block to handle potential import errors gracefully
                 try:
@@ -639,8 +639,8 @@ def handle_execute_code(params):
         # Use a try-except block when registering the timer
         try:
             # Execute in the main Blender thread
-            _active_execute_timer = execute_code_in_blender
-            bpy.app.timers.register(execute_code_in_blender, first_interval=0.1, persistent=False)
+            # _active_execute_timer = execute_code_in_blender # Removed assignment
+            bpy.app.timers.register(execute_code_in_blender, first_interval=0.0, persistent=False)
             log(f"Registered one-time timer to execute code")
         except Exception as e:
             log(f"Error registering timer for code execution: {str(e)}")
@@ -671,19 +671,19 @@ def handle_execute_code(params):
 # Add a new handler for get_state
 def handle_get_state(params):
     """Handle the get_state command and send Blender's current state"""
-    global _active_get_state_timer
+    # global _active_get_state_timer # Removed
 
     try:
         log(f"Preparing to get Blender state")
 
-        # Kill all timers first to avoid potential conflicts (optional, but consistent with execute_code)
+        # Kill all timers first to avoid potential conflicts (optional, but consistent with execute_code) # Removed
         # kill_all_timers() # Decided against this for get_state as it might be too aggressive if called frequently
 
         def get_state_in_blender():
-            global _active_get_state_timer
+            # global _active_get_state_timer # Removed
             try:
                 log("Getting Blender state in main thread")
-                _active_get_state_timer = None
+                # _active_get_state_timer = None # Removed
 
                 state = {}
                 
@@ -736,8 +736,8 @@ def handle_get_state(params):
             return None
 
         # Execute in the main Blender thread
-        _active_get_state_timer = get_state_in_blender
-        bpy.app.timers.register(get_state_in_blender, first_interval=0.1, persistent=False)
+        # _active_get_state_timer = get_state_in_blender # Removed assignment
+        bpy.app.timers.register(get_state_in_blender, first_interval=0.0, persistent=False)
         log(f"Registered one-time timer to get Blender state")
 
     except Exception as e:
@@ -871,8 +871,8 @@ class LIGHTFAST_OT_disconnect(bpy.types.Operator):
         global addon_enabled
         addon_enabled = False
         
-        # Kill all timers first
-        kill_all_timers()
+        # Kill all timers first # Removed
+        # kill_all_timers()
         
         # Then disconnect
         stop_socket_client()
@@ -895,76 +895,14 @@ class LIGHTFAST_OT_test_create_object(bpy.types.Operator):
         return {'FINISHED'}
 
 # Add emergency stop functions to clear all timers
-def kill_all_timers():
-    """Emergency function to kill all Blender timers"""
-    global _active_create_timer, _active_execute_timer, _active_get_state_timer
-    
-    log("EMERGENCY: Killing all Blender timers!")
-    
-    # Clear our tracked timers
-    _active_create_timer = None
-    _active_execute_timer = None
-    _active_get_state_timer = None
-
-    # Clear all registered timers in Blender
-    # Note: bpy.app.timers is not directly iterable in some Blender versions
-    # We need to get a list of timer functions through a different approach
-    try:
-        # Get the timer list in a safe way
-        timers_to_clear = []
-        if hasattr(bpy.app.timers, "get_list"):
-            # For newer Blender versions that have get_list() method
-            timers_to_clear = bpy.app.timers.get_list()
-        else:
-            # For older Blender versions, we need to try a different approach
-            # This is a safer version that doesn't assume bpy.app.timers is iterable
-            from functools import partial
-            
-            # Check if there are any registered timers by trying to unregister a dummy function
-            def dummy_timer():
-                return None
-                
-            try:
-                # If we can register and unregister a timer, timers are working
-                bpy.app.timers.register(dummy_timer)
-                bpy.app.timers.unregister(dummy_timer)
-                
-                # Try to get registered timers through introspection
-                # This is a bit of a hack but safer than direct iteration
-                import gc
-                for obj in gc.get_objects():
-                    if callable(obj) and hasattr(obj, "__name__") and obj.__name__ != "dummy_timer":
-                        if bpy.app.timers.is_registered(obj):
-                            timers_to_clear.append(obj)
-            except Exception as e:
-                log(f"Could not enumerate timers: {e}")
-    
-        # Now unregister all identified timers
-        for timer in timers_to_clear:
-            try:
-                if bpy.app.timers.is_registered(timer):
-                    bpy.app.timers.unregister(timer)
-                    log(f"Unregistered timer: {timer.__name__ if hasattr(timer, '__name__') else 'unnamed'}")
-            except Exception as e:
-                log(f"Error while unregistering timer: {e}")
-        
-        log(f"Cleared {len(timers_to_clear)} timers")
-    except Exception as e:
-        log(f"Error while clearing timers: {e}")
-        traceback.print_exc()
-    
-    return None  # Don't repeat this timer
+# Removed kill_all_timers() function
+# def kill_all_timers():
+#   ...
 
 # Add classes for emergency control
-class LIGHTFAST_OT_emergency_stop(bpy.types.Operator):
-    bl_idname = "lightfast.emergency_stop"
-    bl_label = "EMERGENCY STOP"
-    bl_description = "Stop all timers and ongoing operations"
-    
-    def execute(self, context):
-        kill_all_timers()
-        self.report({'INFO'}, "Emergency stop executed: All timers killed")
-        return {'FINISHED'}
+# Removed LIGHTFAST_OT_emergency_stop class
+# class LIGHTFAST_OT_emergency_stop(bpy.types.Operator):
+#   ...
 
 # ---------------------- Registration ----------------------
 
@@ -974,7 +912,7 @@ classes = (
     LIGHTFAST_OT_connect,
     LIGHTFAST_OT_disconnect,
     LIGHTFAST_OT_test_create_object,
-    LIGHTFAST_OT_emergency_stop,
+    # Removed LIGHTFAST_OT_emergency_stop,
 )
 
 def register():
@@ -999,11 +937,11 @@ def register():
     log("Addon registered")
 
 def unregister():
-    # Kill all timers first
-    try:
-        kill_all_timers()
-    except:
-        pass
+    # Kill all timers first # Removed
+    # try:
+    #     kill_all_timers()
+    # except:
+    #     pass
         
     # Stop socket client
     global addon_enabled
