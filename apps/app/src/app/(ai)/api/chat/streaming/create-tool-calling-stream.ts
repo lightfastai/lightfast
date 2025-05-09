@@ -86,6 +86,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             sessionId,
             messages: truncatedMessages,
           }),
+          toolCallStreaming: true,
           experimental_transform: smoothStream({ chunking: "word" }),
           experimental_generateMessageId: () => nanoid(),
           onFinish: async (result) => {

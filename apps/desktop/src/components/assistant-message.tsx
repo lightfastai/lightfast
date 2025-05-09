@@ -9,6 +9,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 import { Markdown } from "./markdown";
+import { ToolSection } from "./tool-section";
 
 interface AssistantMessageProps {
   message: UIMessage;
@@ -78,19 +79,29 @@ export function AssistantMessage({
                   return (
                     <Markdown key={idx}>{sanitizeText(part.text)}</Markdown>
                   );
-                // case "tool-invocation":
-                //   return (
-                //     <ToolSection
-                //       key={part.toolInvocation?.toolCallId || idx}
-                //       part={{
-                //         type: "tool-invocation",
-                //         toolInvocation: part.toolInvocation || part,
-                //       }}
-                //       addToolResult={addToolResult}
-                //     />
-                //   );
-                // default:
-                //   return null;
+                case "tool-invocation":
+                  const { toolInvocation } = part;
+                  const { toolName, toolCallId, state } = toolInvocation;
+
+                  if (state === "call") {
+                    const { args } = toolInvocation;
+                    return (
+                      <ToolSection
+                        key={idx}
+                        part={{
+                          type: "tool-invocation",
+                          toolInvocation: part.toolInvocation || part,
+                        }}
+                        addToolResult={addToolResult}
+                      />
+                    );
+                  }
+
+                  if (state === "result") {
+                    // some result...
+                  }
+                default:
+                  return null;
               }
             })
           ) : (

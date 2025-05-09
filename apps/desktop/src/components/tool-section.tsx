@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { PencilIcon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
+
+import { CodeBlock } from "./code-block";
 
 interface ToolInvocation {
   type: "tool-invocation";
@@ -112,50 +114,58 @@ function ToolInvocationRequest({
   };
 
   return (
-    <div className="bg-muted/20 border-border my-2 flex flex-col gap-2 rounded border p-4">
-      <div className="mb-1 text-xs font-semibold">
-        Tool Request: {toolInvocation.toolName}
-      </div>
-      {code && (
-        <pre className="bg-background mb-2 overflow-x-auto rounded border p-2 text-xs whitespace-pre-wrap">
-          {code}
-        </pre>
-      )}
-      {error && <div className="mb-2 text-xs text-red-600">{error}</div>}
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold">Suggested Actions:</span>
-        <div className="flex items-center justify-between gap-2 rounded border p-2">
-          <span className="flex items-center gap-2 pl-4 text-xs font-semibold">
-            <PencilIcon className="h-4 w-4 rounded-full text-orange-500" />
-            Execute command
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              disabled={pending}
-              onClick={handleExecuteBlenderCode}
-            >
-              <span className="flex items-center gap-2 text-xs">
-                Accept & Run
-              </span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pending}
-              onClick={() => {
-                addToolResult?.({
-                  toolCallId: toolInvocation.toolCallId,
-                  result: { error: "User declined tool invocation" },
-                });
-              }}
-            >
-              <span className="flex items-center gap-2 text-xs">Decline</span>
-            </Button>
-          </div>
+    <div className="bg-muted/20 border-border my-1.5 flex flex-col gap-1 rounded border p-2">
+      {/* Title Bar */}
+      <div className="flex w-full items-center justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-[0.65rem] leading-tight font-medium whitespace-nowrap">
+          Request:{" "}
+          <pre className="bg-muted-foreground/10 rounded-md border px-2 py-1 text-[0.65rem]">
+            {toolInvocation.toolName.trim()}
+          </pre>
+        </div>
+        <div className="flex flex-shrink-0 items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="xs"
+            disabled={pending}
+            onClick={handleExecuteBlenderCode}
+          >
+            <CheckIcon className="size-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="xs"
+            disabled={pending}
+            onClick={() => {
+              addToolResult?.({
+                toolCallId: toolInvocation.toolCallId,
+                result: { error: "User declined tool invocation" },
+              });
+            }}
+          >
+            <XIcon className="size-3" />
+          </Button>
         </div>
       </div>
+
+      {/* Collapsible Content: Code and related error */}
+      {code && (
+        <div className="border-border mt-1 pt-1">
+          <CodeBlock inline={false}>{code}</CodeBlock>
+          {error && (
+            <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
+              {error}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Error when no code is present (e.g., tool call setup error), but still an error to display */}
+      {!code && error && (
+        <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
