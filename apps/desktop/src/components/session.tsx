@@ -97,7 +97,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               </span>
             </h1>
           </PopoverTrigger>
-          <PopoverContent className="text-x w-auto max-w-xs p-2">
+          <PopoverContent className="w-auto max-w-xs p-2 text-xs">
             {session?.title ? session.title : "New Chat"}
           </PopoverContent>
         </Popover>
@@ -137,7 +137,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               )}
 
               {/* UserInputArea: always present. At top if MessageListArea is not there, at bottom otherwise. */}
-              <div className="w-full">
+              <div className="w-full overflow-hidden">
                 <UserMessageInput
                   input={input}
                   setInput={setInput}
