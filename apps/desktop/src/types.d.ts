@@ -17,9 +17,11 @@ interface BlenderConnectionAPI {
   onStatusUpdate: (
     callback: (status: BlenderConnectionStatus) => void,
   ) => () => void;
-  sendToBlender: (message: object) => Promise<void>;
   getStatus: () => Promise<BlenderConnectionStatus>;
-  executeCode: (code: string) => Promise<void>;
+  sendToBlender: (message: object) => Promise<any>;
+  executeCode: (code: string) => Promise<any>;
+  getState: () => Promise<any>;
+  onMessageResponse: (callback: (message: any) => void) => () => void;
 }
 
 interface ElectronAPI {

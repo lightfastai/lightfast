@@ -66,6 +66,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "handle-blender-create-object", // Add the Blender tool channel
       "get-blender-status", // Add the status check channel
       "handle-blender-execute-code", // Add the Blender execute code channel
+      "handle-blender-get-state", // Add the Blender get state channel
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
