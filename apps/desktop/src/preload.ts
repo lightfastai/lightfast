@@ -1,19 +1,21 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
 import type { EnvClient } from "./env/client-types"; // Import type from new file
+import {
+  BLENDER_EXECUTE_CODE_CHANNEL,
+  BLENDER_GET_SCENE_INFO_CHANNEL,
+  BLENDER_STATUS_CHANNEL,
+} from "./helpers/ipc/blender/blender-channels";
 import exposeContexts from "./helpers/ipc/context-exposer";
+import {
+  WINDOW_CLOSE_CHANNEL,
+  WINDOW_MAXIMIZE_CHANNEL,
+  WINDOW_MAXIMIZED_CHANNEL,
+  WINDOW_MINIMIZE_CHANNEL,
+  WINDOW_UNMAXIMIZED_CHANNEL,
+} from "./helpers/ipc/window/window-event-channels";
 
 console.log("[Preload] Script started");
-
-// Import or redefine types/constants needed from the main process
-export const BLENDER_STATUS_CHANNEL = "blender-status-update";
-
-export type BlenderConnectionStatus =
-  | { status: "connected" }
-  | { status: "disconnected" }
-  | { status: "error"; error?: string }
-  | { status: "listening" }
-  | { status: "stopped" };
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -26,9 +28,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   send: (channel: string, ...args: any[]) => {
     // Whitelist channels to prevent sending arbitrary messages
     const validChannels = [
-      "minimize-window",
-      "maximize-window",
-      "close-window",
+      WINDOW_MINIMIZE_CHANNEL,
+      WINDOW_MAXIMIZE_CHANNEL,
+      WINDOW_CLOSE_CHANNEL,
     ];
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, ...args);
@@ -36,7 +38,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   on: (channel: string, listener: (...args: any[]) => void) => {
     // Whitelist channels
-    const validChannels = ["window-maximized", "window-unmaximized"];
+    const validChannels = [
+      WINDOW_MAXIMIZED_CHANNEL,
+      WINDOW_UNMAXIMIZED_CHANNEL,
+    ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event argument to prevent renderer manipulating it
       const subscription = (_event: IpcRendererEvent, ...args: any[]) =>
@@ -63,9 +68,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     const validChannels = [
       "get-client-env",
       "ping",
-      "get-blender-status", // Add the status check channel
-      "handle-blender-execute-code", // Add the Blender execute code channel
-      "handle-blender-get-scene-info", // Add the Blender get scene info channel
+      BLENDER_STATUS_CHANNEL, // Add the status check channel
+      BLENDER_EXECUTE_CODE_CHANNEL, // Add the Blender execute code channel
+      BLENDER_GET_SCENE_INFO_CHANNEL, // Add the Blender get scene info channel
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
@@ -77,41 +82,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Add more IPC methods as needed
 });
 
-// Expose Blender connection API
-contextBridge.exposeInMainWorld("blenderConnection", {
-  onStatusUpdate: (callback: (status: BlenderConnectionStatus) => void) => {
-    const listener = (
-      _event: Electron.IpcRendererEvent,
-      status: BlenderConnectionStatus,
-    ) => callback(status);
-    ipcRenderer.on(BLENDER_STATUS_CHANNEL, listener);
-
-    // Return a cleanup function
-    return () => {
-      ipcRenderer.removeListener(BLENDER_STATUS_CHANNEL, listener);
-    };
-  },
-  // Add function to get current Blender status
-  getStatus: () => ipcRenderer.invoke("get-blender-status"),
-  // Add function to send messages *to* Blender via main process
-  sendToBlender: (message: object) =>
-    ipcRenderer.invoke("send-to-blender", message),
-  // Add function to execute code in Blender
-  executeCode: (code: string) =>
-    ipcRenderer.invoke("handle-blender-execute-code", { code }),
-  // Add function to get scene info from Blender
-  getSceneInfo: () => ipcRenderer.invoke("handle-blender-get-scene-info", {}),
-  // Add listener for Blender message responses (code execution results, scene info, etc.)
-  onMessageResponse: (callback: (message: any) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, message: any) =>
-      callback(message);
-    ipcRenderer.on("blender-message-response", listener);
-
-    // Return a cleanup function
-    return () => {
-      ipcRenderer.removeListener("blender-message-response", listener);
-    };
-  },
-});
-
+// Use the centralized context exposure system
 exposeContexts();
