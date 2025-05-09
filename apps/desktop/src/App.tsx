@@ -4,7 +4,7 @@ import { RouterProvider } from "@tanstack/react-router";
 
 import { queryClient } from "@repo/trpc-client/trpc-react-proxy-provider";
 
-import { syncThemeWithLocal } from "./helpers/theme_helpers";
+import { syncThemeWithLocal } from "./helpers/theme-helpers";
 import { useBlenderListener } from "./hooks/use-blender-listener";
 import { AppRouter, composerRouter } from "./routes/router";
 import { Networks } from "./types/network";

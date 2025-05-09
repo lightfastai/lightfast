@@ -1,6 +1,6 @@
 import { ThemeMode } from "@/types/theme-mode";
 
-const THEME_KEY = "theme";
+export const THEME_KEY = "theme";
 
 export interface ThemePreferences {
   system: ThemeMode;

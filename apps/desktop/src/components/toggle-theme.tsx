@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { setTheme } from "@/helpers/theme_helpers";
+import { setTheme, THEME_KEY } from "@/helpers/theme-helpers";
 import { ThemeMode } from "@/types/theme-mode";
 import { Monitor, Moon, Sun } from "lucide-react";
 
@@ -7,8 +7,6 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
-
-const THEME_KEY = "theme";
 
 export default function ToggleTheme() {
   // Initialize state from localStorage or default to 'system'
