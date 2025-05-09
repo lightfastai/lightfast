@@ -8,12 +8,15 @@ import {
 } from "@repo/ui/components/ui/avatar";
 import { cn } from "@repo/ui/lib/utils";
 
-import { ToolSection } from "./tool-section";
+import { Markdown } from "./markdown";
 
 interface AssistantMessageProps {
   message: UIMessage;
   status?: "submitted" | "streaming" | "ready" | "error";
   addToolResult: (args: { toolCallId: string; result: any }) => void;
+}
+export function sanitizeText(text: string) {
+  return text.replace("<has_function_call>", "");
 }
 
 export function AssistantMessage({
@@ -72,20 +75,22 @@ export function AssistantMessage({
               // }
               switch (part.type) {
                 case "text":
-                  return <span key={idx}>{(part as any).text}</span>;
-                case "tool-invocation":
                   return (
-                    <ToolSection
-                      key={part.toolInvocation?.toolCallId || idx}
-                      part={{
-                        type: "tool-invocation",
-                        toolInvocation: part.toolInvocation || part,
-                      }}
-                      addToolResult={addToolResult}
-                    />
+                    <Markdown key={idx}>{sanitizeText(part.text)}</Markdown>
                   );
-                default:
-                  return null;
+                // case "tool-invocation":
+                //   return (
+                //     <ToolSection
+                //       key={part.toolInvocation?.toolCallId || idx}
+                //       part={{
+                //         type: "tool-invocation",
+                //         toolInvocation: part.toolInvocation || part,
+                //       }}
+                //       addToolResult={addToolResult}
+                //     />
+                //   );
+                // default:
+                //   return null;
               }
             })
           ) : (
