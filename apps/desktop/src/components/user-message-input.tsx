@@ -141,7 +141,7 @@ export const UserMessageInput = ({
       )}
       <Textarea
         ref={textareaRef}
-        disabled={status === "done"}
+        disabled={status === "thinking" || status === "done"}
         placeholder="Send a message..."
         value={input}
         onChange={handleInput}

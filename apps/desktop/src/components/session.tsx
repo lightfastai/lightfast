@@ -37,6 +37,8 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     error,
     experimental_resume,
     addToolResult,
+    stop,
+    setMessages,
   } = useChat({
     id: sessionId,
     api: SESSION_CHAT_API_URL,
@@ -58,6 +60,9 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     },
     experimental_throttle: 100,
   });
+
+  const inputStatusForUserMessageInput: "ready" | "thinking" =
+    status === "submitted" || status === "streaming" ? "thinking" : "ready";
 
   useEffect(() => {
     if (!SESSION_CHAT_AUTO_RESUME) return;
@@ -94,13 +99,13 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
           </Button>
         </div>
       </header>
-      <main className="flex w-full flex-1 flex-col gap-2">
+      <main className="flex w-full flex-1 flex-col gap-2 overflow-hidden">
         <div className="relative flex h-full w-full flex-col items-end justify-between">
           <div className={cn("bg-background flex h-full w-full flex-col")}>
             <div className="flex h-full w-full flex-col items-center">
               {/* MessageListArea: occupies most space when present */}
               {messages && messages.length > 0 && (
-                <div className="w-full flex-1 overflow-hidden">
+                <div className="w-full flex-1 overflow-y-auto">
                   <MessageList
                     messages={messages || []}
                     status={status}
@@ -111,8 +116,8 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                     input={input}
                     setInput={setInput}
                     handleSubmit={handleSubmit}
-                    stop={undefined}
-                    setMessages={undefined}
+                    stop={stop}
+                    setMessages={setMessages}
                   />
                 </div>
               )}
@@ -124,10 +129,10 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                   setInput={setInput}
                   handleSubmit={handleSubmit}
                   className="w-full"
-                  status={"ready"}
+                  status={inputStatusForUserMessageInput}
                   // Props for the main input field
-                  stop={undefined}
-                  setMessages={undefined}
+                  stop={stop}
+                  setMessages={setMessages}
                 />
               </div>
             </div>
@@ -138,8 +143,6 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
             </div>
           )}
         </div>
-        {/* Optional: Tool panel (e.g., BlenderMCP) */}
-        {/* <BlenderMCP /> */}
       </main>
     </div>
   );
