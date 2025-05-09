@@ -660,11 +660,8 @@ def handle_get_scene_info(params, message_id=None):
                 
                 log(f"Scene: {scene_info['name']}, Objects: {scene_info['object_count']}, Materials: {scene_info['materials_count']}")
                 
-                # Collect minimal object information (limit to first 10 objects)
+                # Collect information for all objects in the scene
                 for i, obj in enumerate(bpy.context.scene.objects):
-                    if i >= 10:  # Limit to 10 objects
-                        break
-                        
                     obj_info = {
                         "name": obj.name,
                         "type": obj.type,

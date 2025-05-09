@@ -15,6 +15,7 @@ import registerListeners from "./helpers/ipc/listeners-register";
 import {
   getBlenderStatus,
   isBlenderConnected,
+  requestFromBlender,
   sendToBlender,
   startBlenderSocketServer,
 } from "./main/blender-connection";
@@ -104,27 +105,31 @@ ipcMain.handle("handle-blender-execute-code", async (event, args) => {
       };
     }
 
-    // Create a unique message ID for this request
-    const messageId = `execute_code_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    try {
+      // Send the request and wait for response
+      console.log(
+        "Main: Sending execute_code request to Blender and waiting for response...",
+      );
+      const response = await requestFromBlender("execute_code", { code });
+      console.log(
+        "Main: Received execute_code response from Blender:",
+        JSON.stringify(response).substring(0, 200),
+      );
+      console.log(
+        `Main: Response details - type: ${response.type}, id: ${response.id}, success: ${response.success}`,
+      );
 
-    // Send to Blender via WebSocket
-    const command = {
-      action: "execute_code",
-      id: messageId,
-      params: {
-        code,
-      },
-    };
-
-    sendToBlender(command);
-
-    // For now, return a success message - in a more advanced implementation,
-    // we would wait for a response from Blender with the execution results
-    return {
-      success: true,
-      message: "Code has been sent to Blender for execution",
-      requestId: messageId,
-    };
+      // Return the response directly to the renderer
+      console.log("Main: Returning execute_code response to renderer");
+      return response;
+    } catch (error: any) {
+      console.error("Main: Error during Blender code execution:", error);
+      return {
+        success: false,
+        error: error.message,
+        errorCode: "EXECUTION_ERROR",
+      };
+    }
   } catch (error: any) {
     console.error("Main: Error handling Blender code execution:", error);
     return {
@@ -151,24 +156,36 @@ ipcMain.handle("handle-blender-get-scene-info", async (event, args) => {
       };
     }
 
-    // Create a unique message ID for this request
-    const messageId = `scene_info_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    try {
+      // Send the request and wait for response
+      console.log(
+        "Main: Sending get_scene_info request to Blender and waiting for response...",
+      );
+      const response = await requestFromBlender("get_scene_info", {});
+      console.log(
+        "Main: Received scene_info response from Blender:",
+        JSON.stringify(response).substring(0, 200),
+      );
+      console.log(
+        `Main: Response details - type: ${response.type}, id: ${response.id}, success: ${response.success}`,
+      );
+      if (response.scene_info) {
+        console.log(
+          `Main: Scene info - name: ${response.scene_info.name}, objects: ${response.scene_info.object_count}`,
+        );
+      }
 
-    // Send to Blender via WebSocket
-    const command = {
-      action: "get_scene_info",
-      id: messageId,
-      params: {},
-    };
-
-    sendToBlender(command);
-
-    // For now, return a success message - the actual scene info will be received via WebSocket
-    return {
-      success: true,
-      message: "Request to get Blender scene info has been sent",
-      requestId: messageId,
-    };
+      // Return the response directly to the renderer
+      console.log("Main: Returning scene_info response to renderer");
+      return response;
+    } catch (error: any) {
+      console.error("Main: Error getting scene info from Blender:", error);
+      return {
+        success: false,
+        error: error.message,
+        errorCode: "EXECUTION_ERROR",
+      };
+    }
   } catch (error: any) {
     console.error("Main: Error handling Blender get scene info:", error);
     return {

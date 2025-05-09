@@ -130,14 +130,14 @@ function ToolInvocationRequest({
     try {
       // Check if this is a Blender code execution tool
       if (toolInvocation.toolName === "executeBlenderCode" && code) {
-        // Set up a listener for the code execution response
-        let responseTimeout: NodeJS.Timeout | null = null;
-
         try {
-          // Initialize message listener if not already active
+          // Initialize message listener (this is still useful for other notifications)
           initializeMessageListener();
 
-          // Execute the code using the Electron API
+          // Execute the code using the Electron API - now waits for response
+          console.log(
+            `📤 ToolSection: Sending executeBlenderCode request to main process`,
+          );
           const result = await window.electronAPI.invoke(
             "handle-blender-execute-code",
             {
@@ -145,79 +145,57 @@ function ToolInvocationRequest({
             },
           );
 
-          if (result.error) {
-            // Handle immediate errors
-            setPending(false);
-            throw new Error(result.error);
-          }
-
           console.log(
-            "📤 Code execution request sent to Blender with ID:",
-            result.requestId,
+            `📥 ToolSection: Received direct response from main process for executeBlenderCode`,
           );
-
-          // Wait briefly for the response to arrive
-          // This gives a chance for the WebSocket message to be received and stored
-          responseTimeout = setTimeout(() => {
-            // Check for code execution result after timeout
-            const executionResult =
-              useBlenderStore.getState().lastCodeExecution;
-
-            if (executionResult) {
-              console.log(
-                "📥 Code execution result received from Blender during wait period",
-              );
-              setPending(false);
-
-              if (executionResult.success) {
-                addToolResult({
-                  toolCallId: toolInvocation.toolCallId,
-                  result: {
-                    success: true,
-                    output:
-                      executionResult.output || "Code executed successfully",
-                    message: "Blender code executed successfully",
-                  },
-                });
-              } else {
-                setError(
-                  executionResult.error || "Failed to execute code in Blender",
-                );
-                addToolResult({
-                  toolCallId: toolInvocation.toolCallId,
-                  result: {
-                    success: false,
-                    error:
-                      executionResult.error ||
-                      "Failed to execute code in Blender",
-                  },
-                });
-              }
-            } else {
-              // Still no data, return placeholder after waiting
-              console.log(
-                "⚠️ No code execution result received within timeout, returning placeholder to AI",
-              );
-              setPending(false);
-              addToolResult({
-                toolCallId: toolInvocation.toolCallId,
-                result: {
-                  success: true,
-                  message: "Code execution request sent to Blender",
-                  output:
-                    "Code sent to Blender for execution. Results will be available shortly.",
-                },
-              });
-            }
-          }, 1000); // Wait 1 second for response
-
-          // Note: We don't set pending to false here - that happens in the timeout callback
-        } catch (e: any) {
-          if (responseTimeout) {
-            clearTimeout(responseTimeout);
+          console.log(
+            `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
+          );
+          if (result.success && result.output) {
+            console.log(
+              `   Output: ${result.output.substring(0, 50)}${result.output.length > 50 ? "..." : ""}`,
+            );
+          } else if (!result.success && result.error) {
+            console.log(`   Error: ${result.error}`);
           }
+
+          // Handle the direct response
+          console.log(`🔄 ToolSection: Processing executeBlenderCode response`);
           setPending(false);
-          throw e;
+
+          if (result.success) {
+            addToolResult({
+              toolCallId: toolInvocation.toolCallId,
+              result: {
+                success: true,
+                output: result.output || "Code executed successfully",
+                message: "Blender code executed successfully",
+              },
+            });
+          } else {
+            const errorMsg =
+              result.error || "Failed to execute code in Blender";
+            setError(errorMsg);
+            addToolResult({
+              toolCallId: toolInvocation.toolCallId,
+              result: {
+                success: false,
+                error: errorMsg,
+              },
+            });
+          }
+        } catch (e: any) {
+          setPending(false);
+          setError(e?.message || "Failed to execute tool");
+
+          // Add error result to the tool call
+          addToolResult({
+            toolCallId: toolInvocation.toolCallId,
+            result: {
+              success: false,
+              error: e?.message || "Failed to execute tool",
+            },
+          });
         }
       } else if (toolInvocation.toolName === "reconnectBlender") {
         // Handle reconnect Blender tool
@@ -237,102 +215,71 @@ function ToolInvocationRequest({
           },
         });
       } else if (toolInvocation.toolName === "getBlenderSceneInfo") {
-        // Get the current Blender scene info
-        const currentSceneInfo = useBlenderStore.getState().blenderSceneInfo;
-
-        // Set up a listener for the scene info response
-        let responseTimeout: NodeJS.Timeout | null = null;
-
         try {
-          // Initialize message listener if not already active
+          // Initialize message listener (this is still useful for other notifications)
           initializeMessageListener();
 
-          // First, send the request to update the scene info
+          // Get scene info from Blender - now waits for direct response
+          console.log(
+            `📤 ToolSection: Sending getBlenderSceneInfo request to main process`,
+          );
           const result = await window.electronAPI.invoke(
             "handle-blender-get-scene-info",
             {},
           );
 
-          if (result.error) {
-            setPending(false);
-            throw new Error(result.error);
+          console.log(
+            `📥 ToolSection: Received direct response from main process for getBlenderSceneInfo`,
+          );
+          console.log(
+            `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
+          );
+          if (result.success && result.scene_info) {
+            console.log(`   Scene: ${result.scene_info.name}`);
+            console.log(`   Objects: ${result.scene_info.object_count}`);
+          } else if (!result.success && result.error) {
+            console.log(`   Error: ${result.error}`);
           }
 
+          // Handle the direct response
           console.log(
-            "📤 Scene info request sent to Blender with ID:",
-            result.requestId,
+            `🔄 ToolSection: Processing getBlenderSceneInfo response`,
           );
+          setPending(false);
 
-          // If we already have scene info, return it immediately
-          if (currentSceneInfo) {
-            console.log(
-              "🤖 Returning current Blender scene info to AI agent:",
-              currentSceneInfo,
-            );
-            setPending(false);
+          if (result.success) {
             addToolResult({
               toolCallId: toolInvocation.toolCallId,
               result: {
                 success: true,
-                message: "Using current Blender scene info",
-                scene_info: currentSceneInfo,
+                message: "Received Blender scene info",
+                scene_info: result.scene_info,
               },
             });
-            console.log("✅ Blender scene info tool result sent to AI");
-            return;
+          } else {
+            const errorMsg =
+              result.error || "Failed to get scene info from Blender";
+            setError(errorMsg);
+            addToolResult({
+              toolCallId: toolInvocation.toolCallId,
+              result: {
+                success: false,
+                error: errorMsg,
+              },
+            });
           }
-
-          // Otherwise, wait briefly for the response to arrive
-          // This gives a chance for the WebSocket message to be received and stored
-          responseTimeout = setTimeout(() => {
-            // Check again for scene info after timeout
-            const updatedSceneInfo =
-              useBlenderStore.getState().blenderSceneInfo;
-
-            if (updatedSceneInfo) {
-              console.log(
-                "📥 Scene info received from Blender during wait period",
-              );
-              setPending(false);
-              addToolResult({
-                toolCallId: toolInvocation.toolCallId,
-                result: {
-                  success: true,
-                  message: "Received Blender scene info",
-                  scene_info: updatedSceneInfo,
-                },
-              });
-            } else {
-              // Still no data, return placeholder after waiting
-              console.log(
-                "⚠️ No scene info received within timeout, returning placeholder to AI",
-              );
-              setPending(false);
-              addToolResult({
-                toolCallId: toolInvocation.toolCallId,
-                result: {
-                  success: true,
-                  message: "Scene info request sent to Blender",
-                  scene_info: {
-                    name: "UNKNOWN",
-                    object_count: 0,
-                    materials_count: 0,
-                    objects: [],
-                    message:
-                      "No scene info available yet. The request was sent to Blender. Try again in a moment.",
-                  },
-                },
-              });
-            }
-          }, 1000); // Wait 1 second for response
-
-          // Note: We don't set pending to false here - that happens in the timeout callback
         } catch (e: any) {
-          if (responseTimeout) {
-            clearTimeout(responseTimeout);
-          }
           setPending(false);
-          throw e;
+          setError(e?.message || "Failed to execute tool");
+
+          // Add error result to the tool call
+          addToolResult({
+            toolCallId: toolInvocation.toolCallId,
+            result: {
+              success: false,
+              error: e?.message || "Failed to execute tool",
+            },
+          });
         }
       } else {
         // For other tools, use the default "manual" execution
