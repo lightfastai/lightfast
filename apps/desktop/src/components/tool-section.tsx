@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSessionStore } from "@/stores/session-store";
 import { CheckIcon, Code2Icon, XIcon } from "lucide-react";
 
@@ -47,7 +47,20 @@ function ToolInvocationRequest({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const code = toolInvocation.args?.code || "";
-  const executedRef = useRef(false);
+  const executionAttemptedRef = useRef(false);
+  const toolCallIdRef = useRef(toolInvocation.toolCallId);
+
+  // Keep track if this specific tool invocation has been processed
+  useEffect(() => {
+    // Reset our tracking when the tool call ID changes
+    if (toolCallIdRef.current !== toolInvocation.toolCallId) {
+      console.log(
+        `🔄 Tool call ID changed from ${toolCallIdRef.current} to ${toolInvocation.toolCallId}`,
+      );
+      toolCallIdRef.current = toolInvocation.toolCallId;
+      executionAttemptedRef.current = false;
+    }
+  }, [toolInvocation.toolCallId]);
 
   // Get the current session mode from the session store
   const sessionMode = useSessionStore((state) => state.sessionMode);
@@ -65,12 +78,45 @@ function ToolInvocationRequest({
     (state) => state.initializeMessageListener,
   );
 
-  // Reset the executedRef when a new tool invocation is received
-  useEffect(() => {
-    if (toolInvocation.state === "call" && !toolInvocation.result) {
-      executedRef.current = false;
+  // Memoized tool execution handler
+  const handleToolExecution = useCallback(async () => {
+    // Prevent duplicate executions
+    if (pending || toolInvocation.result || executionAttemptedRef.current) {
+      console.log(`🛑 Skipping execution of ${toolInvocation.toolName} (${toolInvocation.toolCallId}): 
+        pending=${pending}, 
+        has result=${!!toolInvocation.result}, 
+        already attempted=${executionAttemptedRef.current}`);
+      return;
     }
-  }, [toolInvocation.toolCallId, toolInvocation.state, toolInvocation.result]);
+
+    console.log(
+      `📱 UI: Handling tool execution for: ${toolInvocation.toolName} (${toolInvocation.toolCallId})`,
+    );
+
+    // Mark this tool as having been attempted
+    executionAttemptedRef.current = true;
+
+    // Dispatch to the appropriate handler based on tool name
+    if (toolInvocation.toolName === "executeBlenderCode") {
+      await handleExecuteBlenderCode();
+    } else if (toolInvocation.toolName === "getBlenderSceneInfo") {
+      await handleGetBlenderSceneInfo();
+    } else if (toolInvocation.toolName === "reconnectBlender") {
+      await handleReconnectBlender();
+    } else if (
+      toolInvocation.toolName === "web_search" ||
+      toolInvocation.toolName === "search"
+    ) {
+      await handleWebSearch();
+    } else {
+      handleOtherTool();
+    }
+  }, [
+    toolInvocation.toolCallId,
+    toolInvocation.toolName,
+    pending,
+    toolInvocation.result,
+  ]);
 
   // Auto-execute tool if in agent mode
   useEffect(() => {
@@ -79,12 +125,11 @@ function ToolInvocationRequest({
       toolInvocation.state === "call" &&
       !pending &&
       !toolInvocation.result &&
-      !executedRef.current
+      !executionAttemptedRef.current
     ) {
       console.log(
-        `⚡ Auto-executing tool in agent mode: ${toolInvocation.toolName}`,
+        `⚡ Auto-executing tool in agent mode: ${toolInvocation.toolName} (${toolInvocation.toolCallId})`,
       );
-      executedRef.current = true;
       handleToolExecution();
     }
   }, [
@@ -94,7 +139,66 @@ function ToolInvocationRequest({
     toolInvocation.state,
     toolInvocation.result,
     pending,
+    handleToolExecution,
   ]);
+
+  // Handle Blender code execution results
+  const handleExecuteBlenderCodeResult = useCallback(
+    (result) => {
+      setPending(false);
+
+      if (result.success) {
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: true,
+            output: result.output || "Code executed successfully",
+            message: "Blender code executed successfully",
+          },
+        });
+      } else {
+        const errorMsg = result.error || "Failed to execute code in Blender";
+        setError(errorMsg);
+
+        // Check if this might be a partial execution error
+        const isPartialExecutionError =
+          errorMsg.includes("not in collection") ||
+          errorMsg.includes("does not exist") ||
+          errorMsg.includes("cannot find");
+
+        // Check if we have partial output despite the error
+        const hasPartialOutput = result.output && result.output.length > 0;
+
+        if (isPartialExecutionError && hasPartialOutput) {
+          // This is a partial execution - some code ran successfully
+          setError(`Partial Success: ${errorMsg}`);
+
+          // Return both the error and the partial output
+          addToolResult({
+            toolCallId: toolInvocation.toolCallId,
+            result: {
+              success: true, // Mark as success so the agent continues
+              partial_error: true,
+              error: errorMsg,
+              output: result.output || "",
+              message:
+                "Code executed with partial success. Some operations completed, but errors occurred.",
+            },
+          });
+        } else {
+          // Complete failure
+          addToolResult({
+            toolCallId: toolInvocation.toolCallId,
+            result: {
+              success: false,
+              error: errorMsg,
+            },
+          });
+        }
+      }
+    },
+    [toolInvocation.toolCallId, addToolResult],
+  );
 
   // Effect to handle Blender code execution results
   useEffect(() => {
@@ -102,37 +206,17 @@ function ToolInvocationRequest({
 
     // Check if this is a response to our current tool execution
     if (toolInvocation.toolName === "executeBlenderCode") {
-      setPending(false);
-
-      if (lastCodeExecution.success) {
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: true,
-            output: lastCodeExecution.output || "Code executed successfully",
-            message: "Blender code executed successfully",
-          },
-        });
-      } else {
-        setError(
-          lastCodeExecution.error || "Failed to execute code in Blender",
-        );
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error:
-              lastCodeExecution.error || "Failed to execute code in Blender",
-          },
-        });
-      }
+      console.log(
+        `📥 Received executeBlenderCode result for tool ${toolInvocation.toolCallId}`,
+      );
+      handleExecuteBlenderCodeResult(lastCodeExecution);
     }
   }, [
     lastCodeExecution,
     pending,
     toolInvocation.toolName,
     toolInvocation.toolCallId,
-    addToolResult,
+    handleExecuteBlenderCodeResult,
   ]);
 
   // Effect to handle Blender scene info results
@@ -141,6 +225,9 @@ function ToolInvocationRequest({
 
     // Check if this is a response to our current tool execution
     if (toolInvocation.toolName === "getBlenderSceneInfo") {
+      console.log(
+        `📥 Received getBlenderSceneInfo result for tool ${toolInvocation.toolCallId}`,
+      );
       setPending(false);
 
       addToolResult({
@@ -160,39 +247,11 @@ function ToolInvocationRequest({
     addToolResult,
   ]);
 
-  // Function to handle tool execution
-  const handleToolExecution = async () => {
-    // If already pending or already has a result, don't execute again
-    if (pending || toolInvocation.result) {
-      return;
-    }
-
-    console.log(
-      `📱 UI: Handling tool execution for: ${toolInvocation.toolName}`,
-    );
-
-    // Dispatch to the appropriate handler based on tool name
-    if (toolInvocation.toolName === "executeBlenderCode") {
-      await handleExecuteBlenderCode();
-    } else if (toolInvocation.toolName === "getBlenderSceneInfo") {
-      await handleGetBlenderSceneInfo();
-    } else if (toolInvocation.toolName === "reconnectBlender") {
-      await handleReconnectBlender();
-    } else if (
-      toolInvocation.toolName === "web_search" ||
-      toolInvocation.toolName === "search"
-    ) {
-      await handleWebSearch();
-    } else {
-      handleOtherTool();
-    }
-  };
-
   // Handler for executing Blender code
   const handleExecuteBlenderCode = async () => {
     setPending(true);
     setError(null);
-    console.log(`🧰 Executing Blender code`);
+    console.log(`🧰 Executing Blender code for ${toolInvocation.toolCallId}`);
 
     // Ensure message listener is initialized
     initializeMessageListener();
@@ -220,12 +279,12 @@ function ToolInvocationRequest({
         try {
           // Execute the code using the Electron API - now waits for response
           console.log(
-            `📤 ToolSection: Sending executeBlenderCode request to main process`,
+            `📤 ToolSection: Sending executeBlenderCode request to main process (${toolInvocation.toolCallId})`,
           );
           const result = await window.blenderConnection.executeCode(code);
 
           console.log(
-            `📥 ToolSection: Received direct response from main process for executeBlenderCode`,
+            `📥 ToolSection: Received direct response from main process for executeBlenderCode (${toolInvocation.toolCallId})`,
           );
           console.log(
             `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
@@ -240,58 +299,7 @@ function ToolInvocationRequest({
 
           // Handle the direct response
           console.log(`🔄 ToolSection: Processing executeBlenderCode response`);
-          setPending(false);
-
-          if (result.success) {
-            addToolResult({
-              toolCallId: toolInvocation.toolCallId,
-              result: {
-                success: true,
-                output: result.output || "Code executed successfully",
-                message: "Blender code executed successfully",
-              },
-            });
-          } else {
-            const errorMsg =
-              result.error || "Failed to execute code in Blender";
-
-            // Check if this might be a partial execution error
-            const isPartialExecutionError =
-              errorMsg.includes("not in collection") ||
-              errorMsg.includes("does not exist") ||
-              errorMsg.includes("cannot find");
-
-            // Check if we have partial output despite the error
-            const hasPartialOutput = result.output && result.output.length > 0;
-
-            if (isPartialExecutionError && hasPartialOutput) {
-              // This is a partial execution - some code ran successfully
-              setError(`Partial Success: ${errorMsg}`);
-
-              // Return both the error and the partial output
-              addToolResult({
-                toolCallId: toolInvocation.toolCallId,
-                result: {
-                  success: true, // Mark as success so the agent continues
-                  partial_error: true,
-                  error: errorMsg,
-                  output: result.output || "",
-                  message:
-                    "Code executed with partial success. Some operations completed, but errors occurred.",
-                },
-              });
-            } else {
-              // Complete failure
-              setError(errorMsg);
-              addToolResult({
-                toolCallId: toolInvocation.toolCallId,
-                result: {
-                  success: false,
-                  error: errorMsg,
-                },
-              });
-            }
-          }
+          handleExecuteBlenderCodeResult(result);
         } catch (e: any) {
           setPending(false);
           setError(e?.message || "Failed to execute tool");
@@ -334,7 +342,9 @@ function ToolInvocationRequest({
   const handleGetBlenderSceneInfo = async () => {
     setPending(true);
     setError(null);
-    console.log(`🧰 Getting Blender scene info`);
+    console.log(
+      `🧰 Getting Blender scene info for ${toolInvocation.toolCallId}`,
+    );
 
     // Ensure message listener is initialized
     initializeMessageListener();
@@ -429,7 +439,7 @@ function ToolInvocationRequest({
   const handleReconnectBlender = async () => {
     setPending(true);
     setError(null);
-    console.log(`🧰 Reconnecting to Blender`);
+    console.log(`🧰 Reconnecting to Blender for ${toolInvocation.toolCallId}`);
 
     try {
       // Handle reconnect Blender tool
@@ -481,7 +491,7 @@ function ToolInvocationRequest({
   const handleWebSearch = async () => {
     setPending(true);
     setError(null);
-    console.log(`🔍 Executing web search`);
+    console.log(`🔍 Executing web search for ${toolInvocation.toolCallId}`);
 
     try {
       // Extract search parameters from tool invocation
@@ -569,6 +579,7 @@ function ToolInvocationRequest({
           className={cn(
             "bg-muted/20 border-border flex flex-col gap-1 rounded border",
             toolInvocation.result && "border-green-400/30",
+            pending && "border-amber-400/30",
           )}
         >
           <AccordionTrigger className="p-2 hover:no-underline">
@@ -577,14 +588,18 @@ function ToolInvocationRequest({
                 {autoExecute ? (
                   <span
                     className={
-                      toolInvocation.result
-                        ? "text-green-500/70"
-                        : "text-muted-foreground/70"
+                      pending
+                        ? "text-amber-500/70"
+                        : toolInvocation.result
+                          ? "text-green-500/70"
+                          : "text-muted-foreground/70"
                     }
                   >
                     {toolInvocation.result
                       ? "Auto-executed:"
-                      : "Auto-executing:"}
+                      : pending
+                        ? "Executing..."
+                        : "Auto-executing:"}
                   </span>
                 ) : (
                   "Request:"
@@ -617,12 +632,12 @@ function ToolInvocationRequest({
                   </span>
                 )}
               </div>
-              {!autoExecute && !toolInvocation.result && (
+              {!autoExecute && !toolInvocation.result && !pending && (
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <Button
                     variant="secondary"
                     size="xs"
-                    disabled={pending}
+                    disabled={pending || executionAttemptedRef.current}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent accordion from toggling
                       console.log(
@@ -636,12 +651,16 @@ function ToolInvocationRequest({
                   <Button
                     variant="ghost"
                     size="xs"
-                    disabled={pending}
+                    disabled={pending || executionAttemptedRef.current}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent accordion from toggling
+                      executionAttemptedRef.current = true;
                       addToolResult?.({
                         toolCallId: toolInvocation.toolCallId,
-                        result: { error: "User declined tool invocation" },
+                        result: {
+                          success: false,
+                          error: "User declined tool invocation",
+                        },
                       });
                     }}
                   >
