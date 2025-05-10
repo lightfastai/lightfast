@@ -33,7 +33,26 @@ export const env = createEnv({
   server: {
     CLERK_WEBHOOK_SECRET: z.string(),
     REDIS_URL: z.string().url(),
+
+    // Search API configuration
     EXA_API_KEY: z.string(),
+    TAVILY_API_KEY: z.string().optional(),
+    SEARCH_API: z.enum(["exa", "tavily", "searxng"]).default("exa"),
+
+    // SearXNG configuration
+    SEARXNG_API_URL: z.string().url().optional(),
+    SEARXNG_DEFAULT_DEPTH: z.enum(["basic", "advanced"]).default("basic"),
+    SEARXNG_MAX_RESULTS: z.string().optional(),
+    SEARXNG_ENGINES: z.string().optional(),
+    SEARXNG_TIME_RANGE: z.string().optional(),
+    SEARXNG_SAFESEARCH: z.string().optional(),
+    SEARXNG_CRAWL_MULTIPLIER: z.string().optional(),
+
+    // Redis configuration for caching
+    USE_LOCAL_REDIS: z.enum(["true", "false"]).default("false"),
+    LOCAL_REDIS_URL: z.string().url().optional(),
+    UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   },
 
   /**
@@ -41,16 +60,14 @@ export const env = createEnv({
    * For them to be exposed to the client, prefix them with `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
-    // NEXT_PUBLIC_SENTRY_DSN: z.string().url(),
+    NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
   },
   /**
    * Destructure all variables from `process.env` to make sure they aren't tree-shaken away.
    */
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    // NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

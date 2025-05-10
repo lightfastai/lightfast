@@ -58,7 +58,9 @@
     "svix": "^1.62.0",
     "three": "^0.169.0",
     "zod": "catalog:",
-    "zustand": "^5.0.1"
+    "zustand": "^5.0.1",
+    "jsdom": "^22.1.0",
+    "@upstash/redis": "^1.28.4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

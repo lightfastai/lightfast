@@ -136,6 +136,11 @@ function ToolInvocationRequest({
       await handleGetBlenderSceneInfo();
     } else if (toolInvocation.toolName === "reconnectBlender") {
       await handleReconnectBlender();
+    } else if (
+      toolInvocation.toolName === "web_search" ||
+      toolInvocation.toolName === "search"
+    ) {
+      await handleWebSearch();
     } else {
       handleOtherTool();
     }
@@ -428,6 +433,90 @@ function ToolInvocationRequest({
         },
       },
     });
+  };
+
+  // Handler for web search tool
+  const handleWebSearch = async () => {
+    setPending(true);
+    setError(null);
+    console.log(`🔍 Executing web search`);
+
+    try {
+      // Extract search parameters from tool invocation
+      const {
+        query,
+        max_results,
+        search_depth,
+        include_domains,
+        exclude_domains,
+        use_quotes,
+        time_range,
+      } = toolInvocation.args || {};
+
+      if (!query) {
+        setPending(false);
+        setError("No search query provided");
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: "No search query provided",
+          },
+        });
+        return;
+      }
+
+      // API endpoint for web search
+      console.log(`📤 ToolSection: Forwarding web search to backend API`);
+
+      const response = await fetch("/api/web-search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query,
+          max_results: max_results || 10,
+          search_depth: search_depth || "basic",
+          include_domains: include_domains || [],
+          exclude_domains: exclude_domains || [],
+          use_quotes: use_quotes,
+          time_range: time_range,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Search API error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const result = await response.json();
+
+      console.log(
+        `📥 ToolSection: Received web search results with ${result.results?.length || 0} items`,
+      );
+      setPending(false);
+
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: true,
+          ...result,
+        },
+      });
+    } catch (e: any) {
+      setPending(false);
+      setError(e?.message || "Failed to execute web search");
+
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: false,
+          error: e?.message || "Failed to execute web search",
+        },
+      });
+    }
   };
 
   return (
