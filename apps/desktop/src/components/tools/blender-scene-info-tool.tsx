@@ -10,6 +10,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
+import { useToolExecution } from "../../hooks/use-tool-execution";
 import { ToolProps } from "./types";
 
 export function BlenderSceneInfoTool({
@@ -18,103 +19,37 @@ export function BlenderSceneInfoTool({
   autoExecute = false,
   readyToExecute = false,
 }: ToolProps) {
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [executed, setExecuted] = useState(false);
+
+  // Use the shared tool execution hook
+  const { executeTool, getToolState, declineTool } = useToolExecution();
+
+  // Get current execution state for this tool
+  const { pending, executed } = getToolState(toolInvocation.toolCallId);
 
   const handleExecute = async () => {
     if (executed) return;
 
-    setPending(true);
-    setError(null);
-    console.log(`🧰 Getting Blender scene info`);
-
+    // Execute through our shared hook
     try {
-      // First check if Blender is actually connected
-      const connectionStatus = await window.blenderConnection.getStatus();
-      if (connectionStatus.status !== "connected") {
-        setPending(false);
-        const errorMsg =
-          "Blender is not connected. Current status: " +
-          connectionStatus.status;
-        setError(errorMsg);
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: errorMsg,
-          },
-        });
-        return;
+      const result = await executeTool(
+        toolInvocation.toolCallId,
+        "getBlenderSceneInfo",
+        {},
+      );
+
+      if (!result.success && result.error) {
+        setError(result.error);
       }
 
-      console.log(
-        `🔍 BlenderSceneInfoTool: Starting getBlenderSceneInfo execution`,
-      );
-      console.log(
-        `📤 BlenderSceneInfoTool: Sending getBlenderSceneInfo request to main process`,
-      );
-
-      const result = await window.blenderConnection.getSceneInfo();
-
-      console.log(
-        `✅ BlenderSceneInfoTool: getSceneInfo API call completed with result:`,
-        result,
-      );
-      console.log(
-        `📥 BlenderSceneInfoTool: Received direct response from main process for getBlenderSceneInfo`,
-      );
-      console.log(
-        `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
-      );
-
-      if (result.success && result.scene_info) {
-        console.log(`   Scene: ${result.scene_info.name}`);
-        console.log(`   Objects: ${result.scene_info.object_count}`);
-      } else if (!result.success && result.error) {
-        console.log(`   Error: ${result.error}`);
-      }
-
-      // Handle the direct response
-      console.log(
-        `🔄 BlenderSceneInfoTool: Processing getBlenderSceneInfo response`,
-      );
-      setPending(false);
-      setExecuted(true);
-
-      if (result.success) {
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: true,
-            message: "Received Blender scene info",
-            scene_info: result.scene_info,
-          },
-        });
-      } else {
-        const errorMsg =
-          result.error || "Failed to get scene info from Blender";
-        setError(errorMsg);
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: errorMsg,
-          },
-        });
-      }
-    } catch (e: any) {
-      setPending(false);
-      setError(e?.message || "Failed to execute tool");
-
-      // Add error result to the tool call
+      // Report results back to AI
       addToolResult({
         toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: false,
-          error: e?.message || "Failed to execute tool",
-        },
+        result,
       });
+    } catch (e: any) {
+      // Error handling is done inside the hook, this is just a fallback
+      setError(e?.message || "Failed to execute tool");
     }
   };
 
@@ -168,7 +103,7 @@ export function BlenderSceneInfoTool({
                       disabled={pending}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setExecuted(true);
+                        declineTool(toolInvocation.toolCallId);
                         addToolResult({
                           toolCallId: toolInvocation.toolCallId,
                           result: {

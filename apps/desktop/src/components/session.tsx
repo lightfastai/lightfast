@@ -19,6 +19,7 @@ import {
 } from "@repo/ui/components/ui/popover";
 import { cn } from "@repo/ui/lib/utils";
 
+import { ToolType, useToolExecution } from "../hooks/use-tool-execution";
 import { useSessionStore } from "../stores/session-store";
 import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
@@ -38,6 +39,9 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   // Get the session mode from the store
   const sessionMode = useSessionStore((state) => state.sessionMode);
   const markToolCallReady = useSessionStore((state) => state.markToolCallReady);
+
+  // Use our central tool execution hook
+  const { executeTool, mapToolNameToType } = useToolExecution();
 
   const {
     messages,
@@ -70,78 +74,50 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     },
     onToolCall: async (data) => {
       console.log("🧰 Received tool call from AI SDK");
-      // Since you've confirmed onToolCall is only called when complete,
-      // we can simply extract the toolCallId and mark it as ready
+
       if (data && data.toolCall) {
-        // Using a type assertion here because TypeScript doesn't know the exact structure
+        // Extract tool call details
         const toolCallId = data.toolCall.toolCallId;
-        console.log(`🧰 Tool call completed: ${toolCallId}`);
+        const toolName = data.toolCall.toolName;
+        const toolArgs = data.toolCall.args as Record<string, unknown>;
+
+        console.log(`🧰 Tool call completed: ${toolCallId} (${toolName})`);
 
         // Mark this tool call as ready to execute
         markToolCallReady(toolCallId);
 
-        // If this is a Blender code tool, directly execute it
-        // Need to use type assertion as the AI SDK types may not expose all properties
-        const toolCallData = data.toolCall;
-        if (toolCallData.toolName === "executeBlenderCode") {
-          console.log(`🤖 Directly executing Blender code tool: ${toolCallId}`);
-          console.log(toolCallData.args);
-          const code = toolCallData.args?.code || "";
-          const result = await window.blenderConnection.executeCode(code);
-          if (result.success) {
-            addToolResult({
-              toolCallId: toolCallId,
-              result: {
-                success: true,
-                output: result.output || "Code executed successfully",
-                message: "Blender code executed successfully",
-              },
-            });
-          } else {
-            const errorMsg =
-              result.error || "Failed to execute code in Blender";
-            const isPartialExecutionError =
-              errorMsg.includes("not in collection") ||
-              errorMsg.includes("does not exist") ||
-              errorMsg.includes("cannot find");
-            const hasPartialOutput = result.output && result.output.length > 0;
+        // Check if this is a tool we can auto-execute in agent mode
+        if (sessionMode === "agent") {
+          // Get the tool type based on name (will return "default" for unknown tools)
+          const toolType = mapToolNameToType(toolName) as ToolType;
 
-            if (isPartialExecutionError && hasPartialOutput) {
-              addToolResult({
-                toolCallId: toolCallId,
-                result: {
-                  success: true, // Mark as success so the agent continues
-                  partial_error: true,
-                  error: errorMsg,
-                  output: result.output || "",
-                  message:
-                    "Code executed with partial success. Some operations completed, but errors occurred.",
-                },
-              });
-            } else {
-              addToolResult({
-                toolCallId: toolCallId,
-                result: {
-                  success: false,
-                  error: errorMsg,
-                },
-              });
-            }
-          }
-        } else if (toolCallData.toolName === "getBlenderSceneInfo") {
-          console.log(`🤖 Directly executing Blender code tool: ${toolCallId}`);
-          console.log(toolCallData.args);
-          const result = await window.blenderConnection.getSceneInfo();
-          if (result.success) {
+          console.log(`🤖 Auto-executing ${toolName} tool: ${toolCallId}`);
+
+          try {
+            // Execute the tool using our centralized handler
+            const result = await executeTool(toolCallId, toolType, toolArgs);
+
+            // Report results back to AI
+            addToolResult({
+              toolCallId: toolCallId,
+              result: result,
+            });
+          } catch (e: any) {
+            console.error(`Error auto-executing tool ${toolName}:`, e);
+
+            // Report error back to AI
             addToolResult({
               toolCallId: toolCallId,
               result: {
-                success: true,
-                message: "Received Blender scene info",
-                scene_info: result.scene_info,
+                success: false,
+                error: e?.message || `Failed to execute ${toolName}`,
               },
             });
           }
+        } else {
+          console.log(
+            `🧰 Tool ${toolName} will be executed by the UI component`,
+          );
         }
       }
     },

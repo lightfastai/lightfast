@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { CheckIcon, XIcon } from "lucide-react";
 
 import {
@@ -10,6 +9,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
+import { useToolExecution } from "../../hooks/use-tool-execution";
 import { ToolProps } from "./types";
 
 export function DefaultTool({
@@ -18,22 +18,24 @@ export function DefaultTool({
   autoExecute = false,
   readyToExecute = false,
 }: ToolProps) {
-  const [pending, setPending] = useState(false);
-  const [executed, setExecuted] = useState(false);
+  // Use the shared tool execution hook
+  const { executeTool, getToolState, declineTool } = useToolExecution();
 
-  const handleExecute = () => {
+  // Get current execution state for this tool
+  const { pending, executed } = getToolState(toolInvocation.toolCallId);
+
+  const handleExecute = async () => {
     if (executed) return;
 
-    setPending(true);
-    console.log(
-      `🧰 Executing default handler for tool: ${toolInvocation.toolName}`,
-    );
+    try {
+      // Use a generic handler for tools not specifically implemented
+      const result = await executeTool(
+        toolInvocation.toolCallId,
+        "default" as any, // Cast needed since 'default' isn't in our ToolType enum
+        toolInvocation.args || {},
+      );
 
-    // For default tools, we just accept them immediately
-    setTimeout(() => {
-      setPending(false);
-      setExecuted(true);
-
+      // Add the result to the AI
       addToolResult({
         toolCallId: toolInvocation.toolCallId,
         result: {
@@ -44,18 +46,11 @@ export function DefaultTool({
           },
         },
       });
-    }, 500); // Small delay for visual feedback
-  };
-
-  // Only auto-execute when the tool call is ready
-  useEffect(() => {
-    if (autoExecute && readyToExecute && !executed) {
-      console.log(
-        `🤖 Auto-executing default tool handler for: ${toolInvocation.toolName}`,
-      );
-      handleExecute();
+    } catch (e) {
+      // Error handling is already done in the hook
+      console.error("Error executing default tool:", e);
     }
-  }, [autoExecute, readyToExecute, executed, toolInvocation.toolName]);
+  };
 
   return (
     <Accordion type="single" collapsible className="w-full">
@@ -107,7 +102,7 @@ export function DefaultTool({
                       disabled={pending}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setExecuted(true);
+                        declineTool(toolInvocation.toolCallId);
                         addToolResult({
                           toolCallId: toolInvocation.toolCallId,
                           result: {

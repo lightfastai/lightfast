@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckIcon, XIcon } from "lucide-react";
 
 import {
@@ -10,6 +10,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
+import { useToolExecution } from "../../hooks/use-tool-execution";
 import { ToolProps } from "./types";
 
 export function WebSearchTool({
@@ -18,105 +19,41 @@ export function WebSearchTool({
   autoExecute = false,
   readyToExecute = false,
 }: ToolProps) {
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [executed, setExecuted] = useState(false);
+
+  // Use the shared tool execution hook
+  const { executeTool, getToolState, declineTool } = useToolExecution();
+
+  // Get current execution state for this tool
+  const { pending, executed } = getToolState(toolInvocation.toolCallId);
 
   const query = toolInvocation.args?.query || "";
 
   const handleExecute = async () => {
     if (executed) return;
 
-    setPending(true);
-    setError(null);
-    console.log(`🔍 Executing web search`);
-
+    // Execute through our shared hook
     try {
-      // Extract search parameters from tool invocation
-      const {
-        query,
-        max_results,
-        search_depth,
-        include_domains,
-        exclude_domains,
-        use_quotes,
-        time_range,
-      } = toolInvocation.args || {};
-
-      if (!query) {
-        setPending(false);
-        setError("No search query provided");
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: "No search query provided",
-          },
-        });
-        return;
-      }
-
-      // API endpoint for web search
-      console.log(`📤 WebSearchTool: Forwarding web search to backend API`);
-
-      const response = await fetch("/api/web-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query,
-          max_results: max_results || 10,
-          search_depth: search_depth || "basic",
-          include_domains: include_domains || [],
-          exclude_domains: exclude_domains || [],
-          use_quotes: use_quotes,
-          time_range: time_range,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Search API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const result = await response.json();
-
-      console.log(
-        `📥 WebSearchTool: Received web search results with ${result.results?.length || 0} items`,
+      const result = await executeTool(
+        toolInvocation.toolCallId,
+        "webSearch",
+        toolInvocation.args || {},
       );
-      setPending(false);
-      setExecuted(true);
 
+      if (!result.success && result.error) {
+        setError(result.error);
+      }
+
+      // Report results back to AI
       addToolResult({
         toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: true,
-          ...result,
-        },
+        result,
       });
     } catch (e: any) {
-      setPending(false);
+      // Error handling is done inside the hook, this is just a fallback
       setError(e?.message || "Failed to execute web search");
-
-      addToolResult({
-        toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: false,
-          error: e?.message || "Failed to execute web search",
-        },
-      });
     }
   };
-
-  // Only auto-execute when the tool call is ready
-  useEffect(() => {
-    if (autoExecute && readyToExecute && !executed && query) {
-      console.log(`🤖 Auto-executing web search tool with query: "${query}"`);
-      handleExecute();
-    }
-  }, [autoExecute, readyToExecute, executed, query]);
 
   return (
     <Accordion type="single" collapsible className="w-full">
@@ -175,7 +112,7 @@ export function WebSearchTool({
                       disabled={pending}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setExecuted(true);
+                        declineTool(toolInvocation.toolCallId);
                         addToolResult({
                           toolCallId: toolInvocation.toolCallId,
                           result: {

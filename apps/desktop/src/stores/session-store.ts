@@ -9,7 +9,7 @@ interface SessionState {
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
-  sessionMode: "manual", // Default to manual mode
+  sessionMode: "agent", // Default to manual mode
   readyToolCalls: {},
 
   setSessionMode: (mode: SessionMode) => set({ sessionMode: mode }),

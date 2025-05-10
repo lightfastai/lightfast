@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckIcon, XIcon } from "lucide-react";
 
 import {
@@ -62,14 +62,6 @@ export function BlenderReconnectTool({
       });
     }
   };
-
-  // Only auto-execute when the tool call is ready
-  useEffect(() => {
-    if (autoExecute && readyToExecute && !executed) {
-      console.log(`🤖 Auto-executing Blender reconnect tool`);
-      handleExecute();
-    }
-  }, [autoExecute, readyToExecute, executed]);
 
   return (
     <Accordion type="single" collapsible className="w-full">

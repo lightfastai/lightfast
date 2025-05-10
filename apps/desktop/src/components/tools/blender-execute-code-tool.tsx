@@ -11,7 +11,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 
-import { useSessionStore } from "../../stores/session-store";
+import { useToolExecution } from "../../hooks/use-tool-execution";
 import { CodeBlock } from "../code-block";
 import { ToolProps } from "./types";
 
@@ -21,144 +21,39 @@ export function BlenderCodeTool({
   autoExecute = false,
   readyToExecute = false,
 }: ToolProps) {
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [executed, setExecuted] = useState(false);
 
-  // Subscribe to the session store to detect direct execution requests
-  const readyToolCalls = useSessionStore((state) => state.readyToolCalls);
+  // Use the shared tool execution hook
+  const { executeTool, getToolState, declineTool } = useToolExecution();
+
+  // Get current execution state for this tool
+  const { pending, executed } = getToolState(toolInvocation.toolCallId);
 
   const code = toolInvocation.args?.code || "";
 
   const handleExecute = async () => {
     if (executed || pending) return; // Prevent double execution
 
-    setPending(true);
-    setError(null);
-    console.log(
-      `🧰 Executing Blender code for tool call: ${toolInvocation.toolCallId}`,
-    );
-
+    // Execute through our shared hook
     try {
-      // First check if Blender is actually connected
-      const connectionStatus = await window.blenderConnection.getStatus();
-      if (connectionStatus.status !== "connected") {
-        setPending(false);
-        const errorMsg =
-          "Blender is not connected. Current status: " +
-          connectionStatus.status;
-        setError(errorMsg);
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: errorMsg,
-          },
-        });
-        return;
+      const result = await executeTool(
+        toolInvocation.toolCallId,
+        "executeBlenderCode",
+        { code },
+      );
+
+      if (!result.success && result.error) {
+        setError(result.error);
       }
 
-      if (code) {
-        try {
-          // Execute the code using the Electron API
-          console.log(
-            `📤 BlenderCodeTool: Sending executeBlenderCode request to main process`,
-          );
-          const result = await window.blenderConnection.executeCode(code);
-
-          console.log(
-            `📥 BlenderCodeTool: Received response from main process`,
-          );
-          console.log(
-            `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
-          );
-          if (result.success && result.output) {
-            console.log(
-              `   Output: ${result.output.substring(0, 50)}${
-                result.output.length > 50 ? "..." : ""
-              }`,
-            );
-          } else if (!result.success && result.error) {
-            console.log(`   Error: ${result.error}`);
-          }
-
-          setPending(false);
-          setExecuted(true);
-
-          if (result.success) {
-            addToolResult({
-              toolCallId: toolInvocation.toolCallId,
-              result: {
-                success: true,
-                output: result.output || "Code executed successfully",
-                message: "Blender code executed successfully",
-              },
-            });
-          } else {
-            const errorMsg =
-              result.error || "Failed to execute code in Blender";
-            const isPartialExecutionError =
-              errorMsg.includes("not in collection") ||
-              errorMsg.includes("does not exist") ||
-              errorMsg.includes("cannot find");
-            const hasPartialOutput = result.output && result.output.length > 0;
-
-            if (isPartialExecutionError && hasPartialOutput) {
-              setError(`Partial Success: ${errorMsg}`);
-              addToolResult({
-                toolCallId: toolInvocation.toolCallId,
-                result: {
-                  success: true, // Mark as success so the agent continues
-                  partial_error: true,
-                  error: errorMsg,
-                  output: result.output || "",
-                  message:
-                    "Code executed with partial success. Some operations completed, but errors occurred.",
-                },
-              });
-            } else {
-              setError(errorMsg);
-              addToolResult({
-                toolCallId: toolInvocation.toolCallId,
-                result: {
-                  success: false,
-                  error: errorMsg,
-                },
-              });
-            }
-          }
-        } catch (e: any) {
-          setPending(false);
-          setError(e?.message || "Failed to execute tool");
-          addToolResult({
-            toolCallId: toolInvocation.toolCallId,
-            result: {
-              success: false,
-              error: e?.message || "Failed to execute tool",
-            },
-          });
-        }
-      } else {
-        setPending(false);
-        setError("No code provided");
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: "No code provided",
-          },
-        });
-      }
-    } catch (e: any) {
-      setPending(false);
-      setError(e?.message || "Failed to execute tool");
+      // Report results back to AI
       addToolResult({
         toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: false,
-          error: e?.message || "Failed to execute tool",
-        },
+        result,
       });
+    } catch (e: any) {
+      // Error handling is done inside the hook, this is just a fallback
+      setError(e?.message || "Failed to execute tool");
     }
   };
 
@@ -200,9 +95,7 @@ export function BlenderCodeTool({
                       <Code2Icon className="size-3" />
                     )}
                     <span className="text-xs">
-                      {isGeneratingCode
-                        ? `${code.length} chars`
-                        : `${code.length} chars`}
+                      {code.length > 50 ? `${code.length} chars` : "View code"}
                     </span>
                   </span>
                 )}
@@ -237,7 +130,7 @@ export function BlenderCodeTool({
                       disabled={pending}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setExecuted(true);
+                        declineTool(toolInvocation.toolCallId);
                         addToolResult({
                           toolCallId: toolInvocation.toolCallId,
                           result: {
