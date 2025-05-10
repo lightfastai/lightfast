@@ -19,7 +19,7 @@ import {
   createPolyhavenDownloadTool,
   createPolyhavenSearchTool,
 } from "../tools/polyhaven";
-import { createWebSearchTool } from "../tools/web-search";
+import { createSearchTool } from "../tools/web-search";
 
 // Add instructions about error handling and code wrapping to the prompt
 const unifiedPrompt = `
@@ -193,6 +193,96 @@ When you see these specific errors, use these solutions:
    '''
 </error_examples>
 
+<architectural_research>
+When encountering requests for complex architectural structures (e.g., "create the Parthenon," "model Notre Dame"):
+
+1. STRUCTURAL DECOMPOSITION
+- Use web search to identify the key architectural elements and components
+- Research the following critical aspects:
+  * Overall dimensions and proportions
+  * Primary structural elements (columns, walls, domes, etc.)
+  * Distinctive architectural features (column types, pediments, etc.)
+  * Ornamental details and their patterns
+  * Building materials and textures
+
+2. HIERARCHICAL MODELING APPROACH
+- Organize your research into a hierarchical breakdown:
+  * Foundation/platform elements
+  * Main structural components
+  * Secondary architectural elements
+  * Decorative features
+  * Distinctive details
+
+3. REFERENCE GATHERING
+- Search for floor plans, elevations, and cross-sections
+- Identify precise measurements and proportions where available
+- Find reference images showing different angles and details
+- Research the architectural vocabulary specific to this structure
+- Create a document to store key measurements and references
+
+4. EXECUTION PLANNING
+- Plan a progressive build approach from foundation to details
+- Identify reusable elements that can be created and then duplicated
+- Determine which elements need parametric generation
+- Consider appropriate material and texture strategies
+
+5. MODULAR IMPLEMENTATION STRATEGY
+- Create helper functions for repetitive elements (columns, ornaments, etc.)
+- Build parametric functions that can generate variations of similar components
+- Implement the structure in logical phases:
+  a. Create the foundation and main platform
+  b. Establish primary walls and structural elements
+  c. Add support structures (columns, arches, etc.)
+  d. Implement roofing and ceiling elements
+  e. Add decorative features and ornaments
+  f. Enhance with materials and textures
+
+6. COLUMN SYSTEM IMPLEMENTATION
+For structures with classical columns, create a helper function like:
+
+def create_column(location, height, column_type="doric", diameter=1.0, collection_name="Columns"):
+    """
+    Create a column at the given location with specified parameters
+    
+    Args:
+        location: (x, y, z) coordinates for column base center
+        height: Total height of the column
+        column_type: "doric", "ionic", or "corinthian"
+        diameter: Base diameter of the column
+        collection_name: Collection to place the column in
+    
+    Returns:
+        The created column object
+    """
+    # Get or create the collection
+    column_collection = safe_get_collection(collection_name)
+    
+    try:
+        # Use appropriate proportions based on column type
+        if column_type == "doric":
+            # Doric proportions
+            base_height = 0.06 * height
+            shaft_height = 0.76 * height
+            capital_height = 0.18 * height
+        elif column_type == "ionic":
+            # Ionic proportions
+            base_height = 0.08 * height
+            shaft_height = 0.72 * height
+            capital_height = 0.2 * height
+        elif column_type == "corinthian":
+            # Corinthian proportions
+            base_height = 0.08 * height
+            shaft_height = 0.7 * height
+            capital_height = 0.22 * height
+        
+        # Create column parts with proper error handling
+        # Add to the appropriate collection
+        # Return the created objects
+    except Exception as e:
+        print(f"Error creating column: {str(e)}")
+        return None
+</architectural_research>
+
 <resource_integration>
 - Find and suggest appropriate 3D assets based on user needs
 - Explain why specific assets will help achieve the user's goal
@@ -228,6 +318,15 @@ When you see these specific errors, use these solutions:
 - Download assets with the corresponding download tools
 - Use web search for specialized techniques or reference information
 - Create documents to store reference information, code snippets, or instructions
+
+When using web search for complex architectural modeling:
+1. Always set search_depth to "architectural" for structural analysis queries 
+2. First, search for "key components and dimensions of [structure]" to identify primary elements
+3. Then search for "architectural elements of [structure]" to understand distinctive features
+4. Search for "floor plan and proportions of [structure]" to establish accurate scale
+5. Research "[structure] column type and details" for specific architectural elements
+6. Look for "[structure] ornamental patterns" to accurately recreate decorative elements
+7. Create a structured document to organize your findings before coding
 </tool_selection_guidelines>
 
 <automatic_code_wrapping>
@@ -259,7 +358,7 @@ export function blenderResearcher({
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
   const searchAmbientCG = createSearchAmbientCGTool();
   const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
-  const webSearch = createWebSearchTool();
+  const webSearch = createSearchTool("openai:gpt-4o");
   const createDocumentTool = createDocument({ sessionId });
   const updateDocumentTool = updateDocument({ sessionId });
 
@@ -283,6 +382,12 @@ export function blenderResearcher({
       webSearch,
       createDocument: createDocumentTool,
       updateDocument: updateDocumentTool,
+    },
+    toolCallStreaming: true,
+    providerOptions: {
+      anthropic: {
+        thinking: { type: "enabled", budgetTokens: 12000 },
+      },
     },
     experimental_activeTools: [
       "executeBlenderCode",
