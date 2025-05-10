@@ -33,7 +33,7 @@ export const modelRegistry = createProviderRegistry({
 
 export type ModelUseCase = z.infer<typeof $ModelUseCase>;
 
-export const createProvider = customProvider({
+export const providers = customProvider({
   languageModels: {
     [$ModelUseCase.enum.artifact]: modelRegistry.languageModel(
       "openrouter:gpt-4o-mini",

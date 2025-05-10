@@ -118,9 +118,29 @@ function ToolInvocationRequest({
     addToolResult,
   ]);
 
+  // Function to handle tool execution
+  const handleToolExecution = async () => {
+    console.log(
+      `📱 UI: Handling tool execution for: ${toolInvocation.toolName}`,
+    );
+
+    // Dispatch to the appropriate handler based on tool name
+    if (toolInvocation.toolName === "executeBlenderCode") {
+      await handleExecuteBlenderCode();
+    } else if (toolInvocation.toolName === "getBlenderSceneInfo") {
+      await handleGetBlenderSceneInfo();
+    } else if (toolInvocation.toolName === "reconnectBlender") {
+      await handleReconnectBlender();
+    } else {
+      handleOtherTool();
+    }
+  };
+
+  // Handler for executing Blender code
   const handleExecuteBlenderCode = async () => {
     setPending(true);
     setError(null);
+    console.log(`🧰 Executing Blender code`);
 
     // Ensure message listener is initialized
     initializeMessageListener();
@@ -144,12 +164,8 @@ function ToolInvocationRequest({
         return;
       }
 
-      // Check if this is a Blender code execution tool
-      if (toolInvocation.toolName === "executeBlenderCode" && code) {
+      if (code) {
         try {
-          // Initialize message listener (this is still useful for other notifications)
-          initializeMessageListener();
-
           // Execute the code using the Electron API - now waits for response
           console.log(
             `📤 ToolSection: Sending executeBlenderCode request to main process`,
@@ -237,99 +253,108 @@ function ToolInvocationRequest({
             },
           });
         }
-      } else if (toolInvocation.toolName === "reconnectBlender") {
-        // Handle reconnect Blender tool
-        if (!window.blenderConnection) {
-          throw new Error("Blender connection API not available");
-        }
-
-        const status = await window.blenderConnection.getStatus();
-
+      } else {
         setPending(false);
+        setError("No code provided");
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: "No code provided",
+          },
+        });
+      }
+    } catch (e: any) {
+      setPending(false);
+      setError(e?.message || "Failed to execute tool");
+
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: false,
+          error: e?.message || "Failed to execute tool",
+        },
+      });
+    }
+  };
+
+  // Handler for getting Blender scene info
+  const handleGetBlenderSceneInfo = async () => {
+    setPending(true);
+    setError(null);
+    console.log(`🧰 Getting Blender scene info`);
+
+    // Ensure message listener is initialized
+    initializeMessageListener();
+
+    try {
+      // First check if Blender is actually connected
+      const connectionStatus = await window.blenderConnection.getStatus();
+      if (connectionStatus.status !== "connected") {
+        setPending(false);
+        const errorMsg =
+          "Blender is not connected. Current status: " +
+          connectionStatus.status;
+        setError(errorMsg);
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: errorMsg,
+          },
+        });
+        return;
+      }
+
+      console.log(`🔍 ToolSection: Starting getBlenderSceneInfo execution`);
+
+      // Get scene info from Blender - now waits for direct response
+      console.log(
+        `📤 ToolSection: Sending getBlenderSceneInfo request to main process`,
+      );
+
+      const result = await window.blenderConnection.getSceneInfo();
+
+      console.log(
+        `✅ ToolSection: getSceneInfo API call completed with result:`,
+        result,
+      );
+
+      console.log(
+        `📥 ToolSection: Received direct response from main process for getBlenderSceneInfo`,
+      );
+      console.log(
+        `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
+      );
+      if (result.success && result.scene_info) {
+        console.log(`   Scene: ${result.scene_info.name}`);
+        console.log(`   Objects: ${result.scene_info.object_count}`);
+      } else if (!result.success && result.error) {
+        console.log(`   Error: ${result.error}`);
+      }
+
+      // Handle the direct response
+      console.log(`🔄 ToolSection: Processing getBlenderSceneInfo response`);
+      setPending(false);
+
+      if (result.success) {
         addToolResult({
           toolCallId: toolInvocation.toolCallId,
           result: {
             success: true,
-            status,
-            message: `Blender connection status: ${status.status}`,
+            message: "Received Blender scene info",
+            scene_info: result.scene_info,
           },
         });
-      } else if (toolInvocation.toolName === "getBlenderSceneInfo") {
-        try {
-          // Initialize message listener (this is still useful for other notifications)
-          initializeMessageListener();
-
-          // Get scene info from Blender - now waits for direct response
-          console.log(
-            `📤 ToolSection: Sending getBlenderSceneInfo request to main process`,
-          );
-
-          const result = await window.blenderConnection.getSceneInfo();
-
-          console.log(
-            `📥 ToolSection: Received direct response from main process for getBlenderSceneInfo`,
-          );
-          console.log(
-            `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
-          );
-          if (result.success && result.scene_info) {
-            console.log(`   Scene: ${result.scene_info.name}`);
-            console.log(`   Objects: ${result.scene_info.object_count}`);
-          } else if (!result.success && result.error) {
-            console.log(`   Error: ${result.error}`);
-          }
-
-          // Handle the direct response
-          console.log(
-            `🔄 ToolSection: Processing getBlenderSceneInfo response`,
-          );
-          setPending(false);
-
-          if (result.success) {
-            addToolResult({
-              toolCallId: toolInvocation.toolCallId,
-              result: {
-                success: true,
-                message: "Received Blender scene info",
-                scene_info: result.scene_info,
-              },
-            });
-          } else {
-            const errorMsg =
-              result.error || "Failed to get scene info from Blender";
-            setError(errorMsg);
-            addToolResult({
-              toolCallId: toolInvocation.toolCallId,
-              result: {
-                success: false,
-                error: errorMsg,
-              },
-            });
-          }
-        } catch (e: any) {
-          setPending(false);
-          setError(e?.message || "Failed to execute tool");
-
-          // Add error result to the tool call
-          addToolResult({
-            toolCallId: toolInvocation.toolCallId,
-            result: {
-              success: false,
-              error: e?.message || "Failed to execute tool",
-            },
-          });
-        }
       } else {
-        // For other tools, use the default "manual" execution
-        setPending(false);
+        const errorMsg =
+          result.error || "Failed to get scene info from Blender";
+        setError(errorMsg);
         addToolResult({
           toolCallId: toolInvocation.toolCallId,
           result: {
-            type: "manual-tool-invocation",
-            result: {
-              success: true,
-              message: "Accepted and executed.",
-            },
+            success: false,
+            error: errorMsg,
           },
         });
       }
@@ -346,6 +371,58 @@ function ToolInvocationRequest({
         },
       });
     }
+  };
+
+  // Handler for reconnecting to Blender
+  const handleReconnectBlender = async () => {
+    setPending(true);
+    setError(null);
+    console.log(`🧰 Reconnecting to Blender`);
+
+    try {
+      // Handle reconnect Blender tool
+      if (!window.blenderConnection) {
+        throw new Error("Blender connection API not available");
+      }
+
+      const status = await window.blenderConnection.getStatus();
+
+      setPending(false);
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: true,
+          status,
+          message: `Blender connection status: ${status.status}`,
+        },
+      });
+    } catch (e: any) {
+      setPending(false);
+      setError(e?.message || "Failed to reconnect to Blender");
+
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: false,
+          error: e?.message || "Failed to reconnect to Blender",
+        },
+      });
+    }
+  };
+
+  // Handler for other tools
+  const handleOtherTool = () => {
+    setPending(false);
+    addToolResult({
+      toolCallId: toolInvocation.toolCallId,
+      result: {
+        type: "manual-tool-invocation",
+        result: {
+          success: true,
+          message: "Accepted and executed.",
+        },
+      },
+    });
   };
 
   return (
@@ -375,7 +452,10 @@ function ToolInvocationRequest({
                   disabled={pending}
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent accordion from toggling
-                    handleExecuteBlenderCode();
+                    console.log(
+                      `📱 UI: User clicked execute for tool: ${toolInvocation.toolName}`,
+                    );
+                    handleToolExecution();
                   }}
                 >
                   <CheckIcon className="size-3" />

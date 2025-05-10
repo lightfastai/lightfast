@@ -1,7 +1,7 @@
 import { generateText, tool } from "ai";
 import { z } from "zod";
 
-import { createProvider } from "../providers/models";
+import { providers } from "../providers/models";
 import {
   createPolyhavenCategoryTool,
   createPolyhavenDownloadTool,
@@ -73,7 +73,7 @@ export function createPolyhavenResearcherTool() {
       const categoryTool = createPolyhavenCategoryTool();
 
       const { text } = await generateText({
-        model: createProvider.languageModel("reasoning"),
+        model: providers.languageModel("reasoning"),
         system: polyhavenResearcherPrompt,
         prompt: `User request: ${userRequest}`,
         tools: {

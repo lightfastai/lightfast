@@ -131,6 +131,7 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
         if (message.type === "scene_info" && message.scene_info) {
           console.log("🎬 Renderer: Processing Blender scene info data");
           console.log("- Message ID:", message.id);
+          console.log("- Success:", message.success);
           console.log("- Scene Name:", message.scene_info.name);
           console.log("- Object Count:", message.scene_info.object_count);
           console.log("- Materials Count:", message.scene_info.materials_count);
@@ -248,7 +249,9 @@ export const useBlenderStore = create<BlenderState>((set, get) => ({
       if (!get().messageListenerActive) {
         get().initializeMessageListener();
       }
+      console.log("🔍 Store: Requesting scene info from Blender");
       await window.blenderConnection.getSceneInfo();
+      console.log("✅ Store: getSceneInfo request sent to Blender");
     } catch (error) {
       console.error("Error getting scene info from Blender via IPC:", error);
       set({
