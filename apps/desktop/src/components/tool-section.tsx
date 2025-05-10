@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
 import { Button } from "@repo/ui/components/ui/button";
+import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 
 import { useBlenderStore } from "../stores/blender-store";
 import { CodeBlock } from "./code-block";
@@ -324,8 +325,8 @@ function ToolInvocationRequest({
   return (
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="item-1" className="border-b-0">
-        <div className="bg-muted/20 border-border flex flex-col gap-1 rounded border p-2">
-          <AccordionTrigger className="p-0 hover:no-underline">
+        <div className="bg-muted/20 border-border flex flex-col gap-1 rounded border">
+          <AccordionTrigger className="p-2 hover:no-underline">
             {/* Title Bar */}
             <div className="flex w-full items-center justify-between pr-2">
               <div className="flex min-w-0 flex-1 items-center gap-2 text-[0.65rem] leading-tight font-medium whitespace-nowrap">
@@ -366,10 +367,13 @@ function ToolInvocationRequest({
 
           {/* Collapsible Content: Code and related error */}
           {(code || error) && ( // Only render content if there's code or an error to show
-            <AccordionContent className="pt-1 pb-0">
+            <AccordionContent className="border-t pb-0">
               {code && (
-                <div className="mt-1 pt-1">
-                  <CodeBlock inline={false}>{code}</CodeBlock>
+                <div className="">
+                  <ScrollArea className="h-48 w-full overflow-x-auto">
+                    <ScrollBar orientation="horizontal" />
+                    <CodeBlock inline={false}>{code}</CodeBlock>
+                  </ScrollArea>
                   {error && (
                     <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
                       {error}
@@ -443,11 +447,7 @@ function ToolInvocationResult({ part }: { part: ToolInvocation }) {
       <div className="mb-1 text-xs font-semibold">
         Tool Result: {toolInvocation.toolName}
       </div>
-      {code && (
-        <pre className="bg-background mb-2 overflow-x-auto rounded border p-2 text-xs">
-          {code}
-        </pre>
-      )}
+      {code && <CodeBlock inline={false}>{code}</CodeBlock>}
       {error && <div className="mb-2 text-xs text-red-600">{error}</div>}
       {renderResult()}
     </div>
