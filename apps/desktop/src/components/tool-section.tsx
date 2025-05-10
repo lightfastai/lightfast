@@ -13,7 +13,6 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { useBlenderStore } from "../stores/blender-store";
 import { CodeBlock } from "./code-block";
-import { ToolResult } from "./tool-result";
 
 interface ToolInvocation {
   type: "tool-invocation";
@@ -33,11 +32,7 @@ interface ToolSectionProps {
 }
 
 export function ToolSection({ part, addToolResult }: ToolSectionProps) {
-  const { toolInvocation } = part;
-  if (toolInvocation.state === "call") {
-    return <ToolInvocationRequest part={part} addToolResult={addToolResult} />;
-  }
-  return <ToolResult toolInvocation={toolInvocation} />;
+  return <ToolInvocationRequest part={part} addToolResult={addToolResult} />;
 }
 
 function ToolInvocationRequest({
@@ -375,10 +370,10 @@ function ToolInvocationRequest({
           </AccordionTrigger>
 
           {/* Collapsible Content: Code and related error */}
-          {(code || error) && ( // Only render content if there's code or an error to show
+          {(code || error) && (
             <AccordionContent className="border-t pb-0">
               {code && (
-                <div>
+                <div className="p-2">
                   <ScrollArea className="h-48 w-full">
                     <CodeBlock inline={false}>{code}</CodeBlock>
                     <ScrollBar orientation="horizontal" />
@@ -399,7 +394,7 @@ function ToolInvocationRequest({
               {!code && error && (
                 <div
                   className={cn(
-                    "mt-1 text-[0.65rem] leading-tight text-red-600",
+                    "mt-1 p-2 text-[0.65rem] leading-tight text-red-600",
                   )}
                 >
                   {error}
