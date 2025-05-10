@@ -78,73 +78,9 @@ function ToolInvocationRequest({
     (state) => state.initializeMessageListener,
   );
 
-  // Memoized tool execution handler
-  const handleToolExecution = useCallback(async () => {
-    // Prevent duplicate executions
-    if (pending || toolInvocation.result || executionAttemptedRef.current) {
-      console.log(`🛑 Skipping execution of ${toolInvocation.toolName} (${toolInvocation.toolCallId}): 
-        pending=${pending}, 
-        has result=${!!toolInvocation.result}, 
-        already attempted=${executionAttemptedRef.current}`);
-      return;
-    }
-
-    console.log(
-      `📱 UI: Handling tool execution for: ${toolInvocation.toolName} (${toolInvocation.toolCallId})`,
-    );
-
-    // Mark this tool as having been attempted
-    executionAttemptedRef.current = true;
-
-    // Dispatch to the appropriate handler based on tool name
-    if (toolInvocation.toolName === "executeBlenderCode") {
-      await handleExecuteBlenderCode();
-    } else if (toolInvocation.toolName === "getBlenderSceneInfo") {
-      await handleGetBlenderSceneInfo();
-    } else if (toolInvocation.toolName === "reconnectBlender") {
-      await handleReconnectBlender();
-    } else if (
-      toolInvocation.toolName === "web_search" ||
-      toolInvocation.toolName === "search"
-    ) {
-      await handleWebSearch();
-    } else {
-      handleOtherTool();
-    }
-  }, [
-    toolInvocation.toolCallId,
-    toolInvocation.toolName,
-    pending,
-    toolInvocation.result,
-  ]);
-
-  // Auto-execute tool if in agent mode
-  useEffect(() => {
-    if (
-      autoExecute &&
-      toolInvocation.state === "call" &&
-      !pending &&
-      !toolInvocation.result &&
-      !executionAttemptedRef.current
-    ) {
-      console.log(
-        `⚡ Auto-executing tool in agent mode: ${toolInvocation.toolName} (${toolInvocation.toolCallId})`,
-      );
-      handleToolExecution();
-    }
-  }, [
-    autoExecute,
-    toolInvocation.toolCallId,
-    toolInvocation.toolName,
-    toolInvocation.state,
-    toolInvocation.result,
-    pending,
-    handleToolExecution,
-  ]);
-
   // Handle Blender code execution results
   const handleExecuteBlenderCodeResult = useCallback(
-    (result) => {
+    (result: { success: boolean; output?: string; error?: string }) => {
       setPending(false);
 
       if (result.success) {
@@ -200,6 +136,458 @@ function ToolInvocationRequest({
     [toolInvocation.toolCallId, addToolResult],
   );
 
+  // Handler for executing Blender code
+  const handleExecuteBlenderCode = useCallback(async () => {
+    setPending(true);
+    setError(null);
+    console.log(`🧰 Executing Blender code for ${toolInvocation.toolCallId}`);
+
+    // Ensure message listener is initialized
+    initializeMessageListener();
+
+    try {
+      // First check if Blender is actually connected
+      const connectionStatus = await window.blenderConnection.getStatus();
+      if (connectionStatus.status !== "connected") {
+        setPending(false);
+        const errorMsg =
+          "Blender is not connected. Current status: " +
+          connectionStatus.status;
+        setError(errorMsg);
+
+        console.log(
+          `❌ Blender not connected. Reporting error for ${toolInvocation.toolCallId}`,
+        );
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: errorMsg,
+          },
+        });
+        return;
+      }
+
+      if (code) {
+        try {
+          // Execute the code using the Electron API - now waits for response
+          console.log(
+            `📤 ToolSection: Sending executeBlenderCode request to main process (${toolInvocation.toolCallId})`,
+          );
+          const result = await window.blenderConnection.executeCode(code);
+
+          console.log(
+            `📥 ToolSection: Received direct response from main process for executeBlenderCode (${toolInvocation.toolCallId})`,
+            JSON.stringify(result, null, 2),
+          );
+
+          // Log the result more explicitly
+          if (result.success) {
+            console.log(
+              `✅ executeBlenderCode succeeded for ${toolInvocation.toolCallId}`,
+            );
+          } else {
+            console.log(
+              `⚠️ executeBlenderCode failed for ${toolInvocation.toolCallId}: ${result.error}`,
+            );
+          }
+
+          // Handle the direct response
+          console.log(
+            `🔄 ToolSection: Processing executeBlenderCode response for ${toolInvocation.toolCallId}`,
+          );
+
+          // Directly add the tool result instead of waiting for the effect to handle it
+          handleExecuteBlenderCodeResult(result);
+        } catch (e: any) {
+          console.error(
+            `🔥 Error executing Blender code for ${toolInvocation.toolCallId}:`,
+            e,
+          );
+          setPending(false);
+          setError(e?.message || "Failed to execute tool");
+
+          // Add error result to the tool call
+          addToolResult({
+            toolCallId: toolInvocation.toolCallId,
+            result: {
+              success: false,
+              error: e?.message || "Failed to execute tool",
+            },
+          });
+        }
+      } else {
+        console.log(`⚠️ No code provided for ${toolInvocation.toolCallId}`);
+        setPending(false);
+        setError("No code provided");
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: "No code provided",
+          },
+        });
+      }
+    } catch (e: any) {
+      console.error(
+        `🔥 Error in handleExecuteBlenderCode for ${toolInvocation.toolCallId}:`,
+        e,
+      );
+      setPending(false);
+      setError(e?.message || "Failed to execute tool");
+
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: false,
+          error: e?.message || "Failed to execute tool",
+        },
+      });
+    }
+  }, [
+    toolInvocation.toolCallId,
+    addToolResult,
+    code,
+    initializeMessageListener,
+    handleExecuteBlenderCodeResult,
+  ]);
+
+  // Handler for getting Blender scene info
+  const handleGetBlenderSceneInfo = useCallback(async () => {
+    setPending(true);
+    setError(null);
+    console.log(
+      `🧰 Getting Blender scene info for ${toolInvocation.toolCallId}`,
+    );
+
+    // Ensure message listener is initialized
+    initializeMessageListener();
+
+    try {
+      // First check if Blender is actually connected
+      const connectionStatus = await window.blenderConnection.getStatus();
+      if (connectionStatus.status !== "connected") {
+        setPending(false);
+        const errorMsg =
+          "Blender is not connected. Current status: " +
+          connectionStatus.status;
+        setError(errorMsg);
+
+        console.log(
+          `❌ Blender not connected. Reporting error for ${toolInvocation.toolCallId}`,
+        );
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: errorMsg,
+          },
+        });
+        return;
+      }
+
+      console.log(
+        `🔍 ToolSection: Starting getBlenderSceneInfo execution for ${toolInvocation.toolCallId}`,
+      );
+
+      // Get scene info from Blender - now waits for direct response
+      console.log(
+        `📤 ToolSection: Sending getBlenderSceneInfo request to main process for ${toolInvocation.toolCallId}`,
+      );
+
+      const result = await window.blenderConnection.getSceneInfo();
+
+      console.log(
+        `✅ ToolSection: getSceneInfo API call completed for ${toolInvocation.toolCallId} with result:`,
+        JSON.stringify(result, null, 2),
+      );
+
+      // Handle the direct response
+      console.log(
+        `🔄 ToolSection: Processing getBlenderSceneInfo response for ${toolInvocation.toolCallId}`,
+      );
+      setPending(false);
+
+      if (result.success) {
+        console.log(
+          `✅ getBlenderSceneInfo succeeded for ${toolInvocation.toolCallId}`,
+        );
+
+        // Directly add the result instead of waiting for the effect to pick it up
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: true,
+            message: "Received Blender scene info",
+            scene_info: result.scene_info,
+          },
+        });
+      } else {
+        const errorMsg =
+          result.error || "Failed to get scene info from Blender";
+        console.log(
+          `⚠️ getBlenderSceneInfo failed for ${toolInvocation.toolCallId}: ${errorMsg}`,
+        );
+        setError(errorMsg);
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: errorMsg,
+          },
+        });
+      }
+    } catch (e: any) {
+      console.error(
+        `🔥 Error in handleGetBlenderSceneInfo for ${toolInvocation.toolCallId}:`,
+        e,
+      );
+      setPending(false);
+      setError(e?.message || "Failed to execute tool");
+
+      // Add error result to the tool call
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: false,
+          error: e?.message || "Failed to execute tool",
+        },
+      });
+    }
+  }, [toolInvocation.toolCallId, addToolResult, initializeMessageListener]);
+
+  // Handler for reconnecting to Blender
+  const handleReconnectBlender = useCallback(async () => {
+    setPending(true);
+    setError(null);
+    console.log(`🧰 Reconnecting to Blender for ${toolInvocation.toolCallId}`);
+
+    try {
+      // Handle reconnect Blender tool
+      if (!window.blenderConnection) {
+        console.error(
+          `❌ Blender connection API not available for ${toolInvocation.toolCallId}`,
+        );
+        throw new Error("Blender connection API not available");
+      }
+
+      const status = await window.blenderConnection.getStatus();
+      console.log(
+        `✅ Got Blender connection status for ${toolInvocation.toolCallId}: ${status.status}`,
+      );
+
+      setPending(false);
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: true,
+          status,
+          message: `Blender connection status: ${status.status}`,
+        },
+      });
+    } catch (e: any) {
+      console.error(
+        `🔥 Error in handleReconnectBlender for ${toolInvocation.toolCallId}:`,
+        e,
+      );
+      setPending(false);
+      setError(e?.message || "Failed to reconnect to Blender");
+
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: false,
+          error: e?.message || "Failed to reconnect to Blender",
+        },
+      });
+    }
+  }, [toolInvocation.toolCallId, addToolResult]);
+
+  // Handler for web search tool
+  const handleWebSearch = useCallback(async () => {
+    setPending(true);
+    setError(null);
+    console.log(`🔍 Executing web search for ${toolInvocation.toolCallId}`);
+
+    try {
+      // Extract search parameters from tool invocation
+      const {
+        query,
+        max_results,
+        search_depth,
+        include_domains,
+        exclude_domains,
+        use_quotes,
+        time_range,
+      } = toolInvocation.args || {};
+
+      if (!query) {
+        console.log(
+          `⚠️ No search query provided for ${toolInvocation.toolCallId}`,
+        );
+        setPending(false);
+        setError("No search query provided");
+        addToolResult({
+          toolCallId: toolInvocation.toolCallId,
+          result: {
+            success: false,
+            error: "No search query provided",
+          },
+        });
+        return;
+      }
+
+      // API endpoint for web search
+      console.log(
+        `📤 ToolSection: Forwarding web search to backend API for ${toolInvocation.toolCallId} with query: ${query}`,
+      );
+
+      const response = await fetch("/api/web-search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query,
+          max_results: max_results || 10,
+          search_depth: search_depth || "basic",
+          include_domains: include_domains || [],
+          exclude_domains: exclude_domains || [],
+          use_quotes: use_quotes,
+          time_range: time_range,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Search API error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const result = await response.json();
+
+      console.log(
+        `📥 ToolSection: Received web search results with ${result.results?.length || 0} items for ${toolInvocation.toolCallId}`,
+      );
+      setPending(false);
+
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: true,
+          ...result,
+        },
+      });
+    } catch (e: any) {
+      console.error(
+        `🔥 Error in handleWebSearch for ${toolInvocation.toolCallId}:`,
+        e,
+      );
+      setPending(false);
+      setError(e?.message || "Failed to execute web search");
+
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: false,
+          error: e?.message || "Failed to execute web search",
+        },
+      });
+    }
+  }, [toolInvocation.toolCallId, addToolResult, toolInvocation.args]);
+
+  // Handler for other tools
+  const handleOtherTool = useCallback(() => {
+    console.log(
+      `📋 Handling other tool type for ${toolInvocation.toolCallId}: ${toolInvocation.toolName}`,
+    );
+    setPending(false);
+
+    // Immediately return a result for unknown tool types
+    console.log(
+      `✅ Automatically accepting unknown tool: ${toolInvocation.toolName} for ${toolInvocation.toolCallId}`,
+    );
+    addToolResult({
+      toolCallId: toolInvocation.toolCallId,
+      result: {
+        type: "manual-tool-invocation",
+        result: {
+          success: true,
+          message: "Accepted and executed.",
+        },
+      },
+    });
+  }, [toolInvocation.toolCallId, toolInvocation.toolName, addToolResult]);
+
+  // Memoized tool execution handler
+  const handleToolExecution = useCallback(async () => {
+    // Prevent duplicate executions
+    if (pending || toolInvocation.result || executionAttemptedRef.current) {
+      console.log(`🛑 Skipping execution of ${toolInvocation.toolName} (${toolInvocation.toolCallId}): 
+        pending=${pending}, 
+        has result=${!!toolInvocation.result}, 
+        already attempted=${executionAttemptedRef.current}`);
+      return;
+    }
+
+    console.log(
+      `📱 UI: Handling tool execution for: ${toolInvocation.toolName} (${toolInvocation.toolCallId})`,
+    );
+
+    // Mark this tool as having been attempted
+    executionAttemptedRef.current = true;
+
+    // Dispatch to the appropriate handler based on tool name
+    if (toolInvocation.toolName === "executeBlenderCode") {
+      await handleExecuteBlenderCode();
+    } else if (toolInvocation.toolName === "getBlenderSceneInfo") {
+      await handleGetBlenderSceneInfo();
+    } else if (toolInvocation.toolName === "reconnectBlender") {
+      await handleReconnectBlender();
+    } else if (
+      toolInvocation.toolName === "web_search" ||
+      toolInvocation.toolName === "search"
+    ) {
+      await handleWebSearch();
+    } else {
+      handleOtherTool();
+    }
+  }, [
+    toolInvocation.toolCallId,
+    toolInvocation.toolName,
+    pending,
+    toolInvocation.result,
+    handleExecuteBlenderCode,
+    handleGetBlenderSceneInfo,
+    handleReconnectBlender,
+    handleWebSearch,
+    handleOtherTool,
+  ]);
+
+  // Auto-execute tool if in agent mode
+  useEffect(() => {
+    if (
+      autoExecute &&
+      toolInvocation.state === "call" &&
+      !pending &&
+      !toolInvocation.result &&
+      !executionAttemptedRef.current
+    ) {
+      console.log(
+        `⚡ Auto-executing tool in agent mode: ${toolInvocation.toolName} (${toolInvocation.toolCallId})`,
+      );
+      handleToolExecution();
+    }
+  }, [
+    autoExecute,
+    toolInvocation.toolCallId,
+    toolInvocation.toolName,
+    toolInvocation.state,
+    toolInvocation.result,
+    pending,
+    handleToolExecution,
+  ]);
+
   // Effect to handle Blender code execution results
   useEffect(() => {
     if (!pending || !lastCodeExecution) return;
@@ -246,330 +634,6 @@ function ToolInvocationRequest({
     toolInvocation.toolCallId,
     addToolResult,
   ]);
-
-  // Handler for executing Blender code
-  const handleExecuteBlenderCode = async () => {
-    setPending(true);
-    setError(null);
-    console.log(`🧰 Executing Blender code for ${toolInvocation.toolCallId}`);
-
-    // Ensure message listener is initialized
-    initializeMessageListener();
-
-    try {
-      // First check if Blender is actually connected
-      const connectionStatus = await window.blenderConnection.getStatus();
-      if (connectionStatus.status !== "connected") {
-        setPending(false);
-        const errorMsg =
-          "Blender is not connected. Current status: " +
-          connectionStatus.status;
-        setError(errorMsg);
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: errorMsg,
-          },
-        });
-        return;
-      }
-
-      if (code) {
-        try {
-          // Execute the code using the Electron API - now waits for response
-          console.log(
-            `📤 ToolSection: Sending executeBlenderCode request to main process (${toolInvocation.toolCallId})`,
-          );
-          const result = await window.blenderConnection.executeCode(code);
-
-          console.log(
-            `📥 ToolSection: Received direct response from main process for executeBlenderCode (${toolInvocation.toolCallId})`,
-          );
-          console.log(
-            `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
-          );
-          if (result.success && result.output) {
-            console.log(
-              `   Output: ${result.output.substring(0, 50)}${result.output.length > 50 ? "..." : ""}`,
-            );
-          } else if (!result.success && result.error) {
-            console.log(`   Error: ${result.error}`);
-          }
-
-          // Handle the direct response
-          console.log(`🔄 ToolSection: Processing executeBlenderCode response`);
-          handleExecuteBlenderCodeResult(result);
-        } catch (e: any) {
-          setPending(false);
-          setError(e?.message || "Failed to execute tool");
-
-          // Add error result to the tool call
-          addToolResult({
-            toolCallId: toolInvocation.toolCallId,
-            result: {
-              success: false,
-              error: e?.message || "Failed to execute tool",
-            },
-          });
-        }
-      } else {
-        setPending(false);
-        setError("No code provided");
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: "No code provided",
-          },
-        });
-      }
-    } catch (e: any) {
-      setPending(false);
-      setError(e?.message || "Failed to execute tool");
-
-      addToolResult({
-        toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: false,
-          error: e?.message || "Failed to execute tool",
-        },
-      });
-    }
-  };
-
-  // Handler for getting Blender scene info
-  const handleGetBlenderSceneInfo = async () => {
-    setPending(true);
-    setError(null);
-    console.log(
-      `🧰 Getting Blender scene info for ${toolInvocation.toolCallId}`,
-    );
-
-    // Ensure message listener is initialized
-    initializeMessageListener();
-
-    try {
-      // First check if Blender is actually connected
-      const connectionStatus = await window.blenderConnection.getStatus();
-      if (connectionStatus.status !== "connected") {
-        setPending(false);
-        const errorMsg =
-          "Blender is not connected. Current status: " +
-          connectionStatus.status;
-        setError(errorMsg);
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: errorMsg,
-          },
-        });
-        return;
-      }
-
-      console.log(`🔍 ToolSection: Starting getBlenderSceneInfo execution`);
-
-      // Get scene info from Blender - now waits for direct response
-      console.log(
-        `📤 ToolSection: Sending getBlenderSceneInfo request to main process`,
-      );
-
-      const result = await window.blenderConnection.getSceneInfo();
-
-      console.log(
-        `✅ ToolSection: getSceneInfo API call completed with result:`,
-        result,
-      );
-
-      console.log(
-        `📥 ToolSection: Received direct response from main process for getBlenderSceneInfo`,
-      );
-      console.log(
-        `   Type: ${result.type}, ID: ${result.id}, Success: ${result.success}`,
-      );
-      if (result.success && result.scene_info) {
-        console.log(`   Scene: ${result.scene_info.name}`);
-        console.log(`   Objects: ${result.scene_info.object_count}`);
-      } else if (!result.success && result.error) {
-        console.log(`   Error: ${result.error}`);
-      }
-
-      // Handle the direct response
-      console.log(`🔄 ToolSection: Processing getBlenderSceneInfo response`);
-      setPending(false);
-
-      if (result.success) {
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: true,
-            message: "Received Blender scene info",
-            scene_info: result.scene_info,
-          },
-        });
-      } else {
-        const errorMsg =
-          result.error || "Failed to get scene info from Blender";
-        setError(errorMsg);
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: errorMsg,
-          },
-        });
-      }
-    } catch (e: any) {
-      setPending(false);
-      setError(e?.message || "Failed to execute tool");
-
-      // Add error result to the tool call
-      addToolResult({
-        toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: false,
-          error: e?.message || "Failed to execute tool",
-        },
-      });
-    }
-  };
-
-  // Handler for reconnecting to Blender
-  const handleReconnectBlender = async () => {
-    setPending(true);
-    setError(null);
-    console.log(`🧰 Reconnecting to Blender for ${toolInvocation.toolCallId}`);
-
-    try {
-      // Handle reconnect Blender tool
-      if (!window.blenderConnection) {
-        throw new Error("Blender connection API not available");
-      }
-
-      const status = await window.blenderConnection.getStatus();
-
-      setPending(false);
-      addToolResult({
-        toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: true,
-          status,
-          message: `Blender connection status: ${status.status}`,
-        },
-      });
-    } catch (e: any) {
-      setPending(false);
-      setError(e?.message || "Failed to reconnect to Blender");
-
-      addToolResult({
-        toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: false,
-          error: e?.message || "Failed to reconnect to Blender",
-        },
-      });
-    }
-  };
-
-  // Handler for other tools
-  const handleOtherTool = () => {
-    setPending(false);
-    addToolResult({
-      toolCallId: toolInvocation.toolCallId,
-      result: {
-        type: "manual-tool-invocation",
-        result: {
-          success: true,
-          message: "Accepted and executed.",
-        },
-      },
-    });
-  };
-
-  // Handler for web search tool
-  const handleWebSearch = async () => {
-    setPending(true);
-    setError(null);
-    console.log(`🔍 Executing web search for ${toolInvocation.toolCallId}`);
-
-    try {
-      // Extract search parameters from tool invocation
-      const {
-        query,
-        max_results,
-        search_depth,
-        include_domains,
-        exclude_domains,
-        use_quotes,
-        time_range,
-      } = toolInvocation.args || {};
-
-      if (!query) {
-        setPending(false);
-        setError("No search query provided");
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error: "No search query provided",
-          },
-        });
-        return;
-      }
-
-      // API endpoint for web search
-      console.log(`📤 ToolSection: Forwarding web search to backend API`);
-
-      const response = await fetch("/api/web-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query,
-          max_results: max_results || 10,
-          search_depth: search_depth || "basic",
-          include_domains: include_domains || [],
-          exclude_domains: exclude_domains || [],
-          use_quotes: use_quotes,
-          time_range: time_range,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Search API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const result = await response.json();
-
-      console.log(
-        `📥 ToolSection: Received web search results with ${result.results?.length || 0} items`,
-      );
-      setPending(false);
-
-      addToolResult({
-        toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: true,
-          ...result,
-        },
-      });
-    } catch (e: any) {
-      setPending(false);
-      setError(e?.message || "Failed to execute web search");
-
-      addToolResult({
-        toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: false,
-          error: e?.message || "Failed to execute web search",
-        },
-      });
-    }
-  };
 
   // Modify the UI to show different views based on session mode
   return (
