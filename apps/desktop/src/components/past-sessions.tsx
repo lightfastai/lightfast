@@ -11,7 +11,7 @@ export const PastSessions: React.FC<PastSessionsProps> = ({ sessions }) => {
   if (!sessions || sessions.length === 0) return null;
 
   return (
-    <div className="bg-background mt-8 flex w-full flex-col gap-2">
+    <div className="flex w-full flex-col gap-2">
       <div className="text-muted-foreground/70 font-mono text-[0.65rem]">
         <div className="flex items-center justify-between gap-2">
           <div className="text-muted-foreground/70 font-mono text-xs">

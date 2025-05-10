@@ -8,7 +8,7 @@ import { convertDBMessageToUIMessages } from "@/types/internal";
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { HistoryIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { nanoid } from "@repo/lib";
 import { Button } from "@repo/ui/components/ui/button";
@@ -19,6 +19,7 @@ import {
 } from "@repo/ui/components/ui/popover";
 import { cn } from "@repo/ui/lib/utils";
 
+import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
 import { PastSessions } from "./past-sessions";
 import { UserMessageInput } from "./user-message-input";
@@ -111,9 +112,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               <Plus className="text-muted-foreground size-3" />
             </Button>
           </Link>
-          <Button variant="ghost" size="xs">
-            <HistoryIcon className="text-muted-foreground size-3" />
-          </Button>
+          <HistoryMenu sessions={sessions} />
         </div>
       </header>
       <main className="flex w-full flex-1 flex-col gap-2 overflow-hidden">
