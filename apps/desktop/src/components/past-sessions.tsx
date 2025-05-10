@@ -1,11 +1,37 @@
+import React from "react";
 import { useTimeAgo } from "@/hooks/use-time-ago";
+import { trpc } from "@/trpc";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { RouterOutputs } from "@vendor/trpc";
 
+import type { DBSession } from "../types/internal";
+
 interface PastSessionsProps {
-  sessions?: RouterOutputs["tenant"]["session"]["list"];
+  sessions: RouterOutputs["tenant"]["session"]["list"];
 }
+
+interface PastSessionLinkProps {
+  sessionId: string;
+  children: (session: DBSession | undefined) => React.ReactNode;
+  className?: string;
+}
+
+export const PastSessionLink: React.FC<PastSessionLinkProps> = ({
+  sessionId,
+  children,
+  className,
+}) => {
+  const { data: session } = useQuery(
+    trpc.tenant.session.get.queryOptions({ sessionId }),
+  );
+  return (
+    <Link className={className} to="/$sessionId" params={{ sessionId }}>
+      {children(session)}
+    </Link>
+  );
+};
 
 export const PastSessions: React.FC<PastSessionsProps> = ({ sessions }) => {
   if (!sessions || sessions.length === 0) return null;
@@ -20,20 +46,27 @@ export const PastSessions: React.FC<PastSessionsProps> = ({ sessions }) => {
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        {sessions?.slice(0, 3).map((session) => (
-          <Link
-            className="text-muted-foreground hover:text-primary flex w-full items-center justify-between whitespace-nowrap"
+        {sessions.slice(0, 3).map((session) => (
+          <PastSessionLink
             key={session.id}
-            to="/$sessionId"
-            params={{ sessionId: session.id }}
+            sessionId={session.id}
+            className="text-muted-foreground hover:text-primary flex w-full items-center justify-between whitespace-nowrap"
           >
-            <div className="max-w-64 overflow-hidden [mask-image:linear-gradient(to_right,black_90%,transparent_100%)] font-mono text-xs whitespace-nowrap">
-              {session.title.trim()}
-            </div>
-            <div className="font-mono text-xs">
-              {useTimeAgo(session.updatedAt)}
-            </div>
-          </Link>
+            {(fullSession) =>
+              fullSession ? (
+                <>
+                  <div className="max-w-64 overflow-hidden text-xs whitespace-nowrap">
+                    {fullSession.title.trim()}
+                  </div>
+                  <div className="text-xs">
+                    {useTimeAgo(fullSession.updatedAt)}
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs italic opacity-60">Loading...</div>
+              )
+            }
+          </PastSessionLink>
         ))}
       </div>
     </div>

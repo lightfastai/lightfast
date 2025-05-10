@@ -149,7 +149,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               </div>
             </div>
           </div>
-          {messages.length === 0 && (
+          {messages.length === 0 && sessions && (
             <div className="flex w-full items-center justify-center">
               <PastSessions sessions={sessions} />
             </div>

@@ -5,15 +5,16 @@ import { Check, HistoryIcon, Search } from "lucide-react";
 
 import type { RouterOutputs } from "@vendor/trpc";
 import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import { Input } from "@repo/ui/components/ui/input";
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+} from "../components/ui/dropdown-menu";
 
 interface HistoryMenuProps {
   sessions?: RouterOutputs["tenant"]["session"]["list"];
@@ -21,6 +22,7 @@ interface HistoryMenuProps {
 
 export const HistoryMenu: React.FC<HistoryMenuProps> = ({ sessions }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const router = useRouter();
   const currentSessionId = router.state.matches.find((m) => m.params.sessionId)
     ?.params.sessionId;
@@ -31,7 +33,7 @@ export const HistoryMenu: React.FC<HistoryMenuProps> = ({ sessions }) => {
   );
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="xs">
           <HistoryIcon className="text-muted-foreground size-3" />
@@ -71,8 +73,9 @@ export const HistoryMenu: React.FC<HistoryMenuProps> = ({ sessions }) => {
                     key={session.id}
                     to="/$sessionId"
                     params={{ sessionId: session.id }}
+                    onClick={() => setOpen(false)}
                   >
-                    <div className="min-w-0 flex-1 overflow-hidden pr-2 font-mono text-ellipsis whitespace-nowrap">
+                    <div className="min-w-0 flex-1 overflow-hidden pr-2 text-ellipsis whitespace-nowrap">
                       {session.title.trim() || "Untitled"}
                     </div>
                     <div className="flex min-w-[60px] items-center justify-end gap-1">
