@@ -16,6 +16,7 @@ export function BlenderSceneInfoTool({
   toolInvocation,
   addToolResult,
   autoExecute = false,
+  readyToExecute = false,
 }: ToolProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,13 +118,13 @@ export function BlenderSceneInfoTool({
     }
   };
 
-  // Auto-execute if in agent mode
+  // Only auto-execute when the tool call is ready
   useEffect(() => {
-    if (autoExecute && !executed) {
+    if (autoExecute && readyToExecute && !executed) {
       console.log(`🤖 Auto-executing Blender scene info tool`);
       handleExecute();
     }
-  }, [autoExecute, executed]);
+  }, [autoExecute, readyToExecute, executed]);
 
   return (
     <Accordion type="single" collapsible className="w-full">
@@ -147,6 +148,11 @@ export function BlenderSceneInfoTool({
                 {pending && (
                   <span className="animate-pulse text-xs text-amber-500">
                     Executing...
+                  </span>
+                )}
+                {autoExecute && !readyToExecute && !executed && (
+                  <span className="text-xs text-blue-500">
+                    Waiting for tool to be ready...
                   </span>
                 )}
               </div>

@@ -16,6 +16,7 @@ export function DefaultTool({
   toolInvocation,
   addToolResult,
   autoExecute = false,
+  readyToExecute = false,
 }: ToolProps) {
   const [pending, setPending] = useState(false);
   const [executed, setExecuted] = useState(false);
@@ -46,13 +47,15 @@ export function DefaultTool({
     }, 500); // Small delay for visual feedback
   };
 
-  // Auto-execute if in agent mode
+  // Only auto-execute when the tool call is ready
   useEffect(() => {
-    if (autoExecute && !executed) {
-      console.log(`🤖 Auto-executing default tool handler`);
+    if (autoExecute && readyToExecute && !executed) {
+      console.log(
+        `🤖 Auto-executing default tool handler for: ${toolInvocation.toolName}`,
+      );
       handleExecute();
     }
-  }, [autoExecute, executed]);
+  }, [autoExecute, readyToExecute, executed, toolInvocation.toolName]);
 
   return (
     <Accordion type="single" collapsible className="w-full">
@@ -76,6 +79,11 @@ export function DefaultTool({
                 {pending && (
                   <span className="animate-pulse text-xs text-amber-500">
                     Executing...
+                  </span>
+                )}
+                {autoExecute && !readyToExecute && !executed && (
+                  <span className="text-xs text-blue-500">
+                    Waiting for tool to be ready...
                   </span>
                 )}
               </div>

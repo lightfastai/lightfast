@@ -18,9 +18,12 @@ interface ToolSectionProps {
 
 export function ToolSection({ part, addToolResult }: ToolSectionProps) {
   const sessionMode = useSessionStore((state) => state.sessionMode);
+  const readyToolCalls = useSessionStore((state) => state.readyToolCalls);
   const autoExecute = sessionMode === "agent";
 
   const { toolInvocation } = part;
+  // Check if this specific tool call is ready to execute
+  const isReady = readyToolCalls[toolInvocation.toolCallId] || false;
 
   // Return the appropriate tool component based on tool name
   switch (toolInvocation.toolName) {
@@ -30,6 +33,7 @@ export function ToolSection({ part, addToolResult }: ToolSectionProps) {
           toolInvocation={toolInvocation}
           addToolResult={addToolResult}
           autoExecute={autoExecute}
+          readyToExecute={isReady}
         />
       );
 
@@ -39,6 +43,7 @@ export function ToolSection({ part, addToolResult }: ToolSectionProps) {
           toolInvocation={toolInvocation}
           addToolResult={addToolResult}
           autoExecute={autoExecute}
+          readyToExecute={isReady}
         />
       );
 
@@ -48,6 +53,7 @@ export function ToolSection({ part, addToolResult }: ToolSectionProps) {
           toolInvocation={toolInvocation}
           addToolResult={addToolResult}
           autoExecute={autoExecute}
+          readyToExecute={isReady}
         />
       );
 
@@ -58,6 +64,7 @@ export function ToolSection({ part, addToolResult }: ToolSectionProps) {
           toolInvocation={toolInvocation}
           addToolResult={addToolResult}
           autoExecute={autoExecute}
+          readyToExecute={isReady}
         />
       );
 
@@ -67,6 +74,7 @@ export function ToolSection({ part, addToolResult }: ToolSectionProps) {
           toolInvocation={toolInvocation}
           addToolResult={addToolResult}
           autoExecute={autoExecute}
+          readyToExecute={isReady}
         />
       );
   }

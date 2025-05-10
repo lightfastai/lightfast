@@ -18,6 +18,7 @@ export function BlenderCodeTool({
   toolInvocation,
   addToolResult,
   autoExecute = false,
+  readyToExecute = false,
 }: ToolProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -155,13 +156,17 @@ export function BlenderCodeTool({
     }
   };
 
-  // Auto-execute if in agent mode
+  // Only auto-execute when both conditions are met:
+  // 1. In agent mode (autoExecute is true)
+  // 2. The tool call is fully streamed and ready (readyToExecute is true)
   useEffect(() => {
-    if (autoExecute && !executed) {
-      console.log(`🤖 Auto-executing Blender code tool`);
+    if (autoExecute && readyToExecute && !executed && code) {
+      console.log(
+        `🤖 Auto-executing Blender code tool with complete code (${code.length} chars)`,
+      );
       handleExecute();
     }
-  }, [autoExecute, executed]);
+  }, [autoExecute, readyToExecute, executed, code]);
 
   return (
     <Accordion type="single" collapsible className="w-full">
@@ -193,6 +198,11 @@ export function BlenderCodeTool({
                 {pending && (
                   <span className="animate-pulse text-xs text-amber-500">
                     Executing...
+                  </span>
+                )}
+                {autoExecute && !readyToExecute && !executed && code && (
+                  <span className="text-xs text-blue-500">
+                    Waiting for complete code...
                   </span>
                 )}
               </div>

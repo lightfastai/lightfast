@@ -16,6 +16,7 @@ export function WebSearchTool({
   toolInvocation,
   addToolResult,
   autoExecute = false,
+  readyToExecute = false,
 }: ToolProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,13 +110,13 @@ export function WebSearchTool({
     }
   };
 
-  // Auto-execute if in agent mode
+  // Only auto-execute when the tool call is ready
   useEffect(() => {
-    if (autoExecute && !executed) {
-      console.log(`🤖 Auto-executing web search tool`);
+    if (autoExecute && readyToExecute && !executed && query) {
+      console.log(`🤖 Auto-executing web search tool with query: "${query}"`);
       handleExecute();
     }
-  }, [autoExecute, executed]);
+  }, [autoExecute, readyToExecute, executed, query]);
 
   return (
     <Accordion type="single" collapsible className="w-full">
@@ -146,6 +147,11 @@ export function WebSearchTool({
                 {pending && (
                   <span className="animate-pulse text-xs text-amber-500">
                     Searching...
+                  </span>
+                )}
+                {autoExecute && !readyToExecute && !executed && query && (
+                  <span className="text-xs text-blue-500">
+                    Waiting for tool to be ready...
                   </span>
                 )}
               </div>

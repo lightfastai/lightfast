@@ -11,4 +11,5 @@ export interface ToolProps {
   toolInvocation: ToolInvocation;
   addToolResult: (params: { toolCallId: string; result: any }) => void;
   autoExecute?: boolean;
+  readyToExecute?: boolean;
 }

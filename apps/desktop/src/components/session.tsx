@@ -37,6 +37,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
 
   // Get the session mode from the store
   const sessionMode = useSessionStore((state) => state.sessionMode);
+  const markToolCallReady = useSessionStore((state) => state.markToolCallReady);
 
   const {
     messages,
@@ -66,6 +67,18 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     },
     onFinish: () => {
       // window.history.replaceState({}, "", `/search/${id}`);
+    },
+    onToolCall: (data) => {
+      // Since you've confirmed onToolCall is only called when complete,
+      // we can simply extract the toolCallId and mark it as ready
+      if (data && data.toolCall) {
+        // Using a type assertion here because TypeScript doesn't know the exact structure
+        const toolCallId = data.toolCall.toolCallId;
+        console.log(`🔄 Tool call completed: ${toolCallId}`);
+
+        // Mark this tool call as ready to execute
+        markToolCallReady(toolCallId);
+      }
     },
     experimental_throttle: 100,
   });
