@@ -18,10 +18,34 @@ let blenderClient: WebSocket | null = null;
 let electronWebContents: WebContents | null = null;
 let heartbeatInterval: NodeJS.Timeout | null = null;
 
-// Map to store pending requests
+// Add more explicit type definitions for Blender messages
+export interface BlenderRequestMessage {
+  action: string;
+  id: string;
+  params: any;
+}
+
+export interface BlenderResponseMessage {
+  type: string;
+  id: string;
+  success: boolean;
+  output?: string;
+  error?: string;
+  error_type?: string;
+  traceback?: string;
+  scene_info?: any;
+  client?: string;
+}
+
+// Map to store pending requests with explicit typing
 const pendingRequests = new Map<
   string,
-  { resolve: (value: any) => void; reject: (reason: any) => void }
+  {
+    resolve: (value: BlenderResponseMessage) => void;
+    reject: (reason: any) => void;
+    action: string;
+    timestamp: number;
+  }
 >();
 
 function sendStatusUpdate(status: BlenderConnectionStatus) {
@@ -108,12 +132,17 @@ export function startBlenderSocketServer(webContents: WebContents) {
 
         try {
           // Parse the message as JSON
-          const parsedMessage = JSON.parse(message.toString());
+          const parsedMessage = JSON.parse(
+            message.toString(),
+          ) as BlenderResponseMessage;
 
           // Check if this is a response to a pending request
           if (parsedMessage.id && pendingRequests.has(parsedMessage.id)) {
+            const pendingRequest = pendingRequests.get(parsedMessage.id)!;
+            const elapsedTime = Date.now() - pendingRequest.timestamp;
+
             console.log(
-              `⭐ Resolving pending request (ID: ${parsedMessage.id})`,
+              `⭐ Resolving pending request (ID: ${parsedMessage.id}, action: ${pendingRequest.action}, elapsed: ${elapsedTime}ms)`,
             );
             console.log(`   Message type: ${parsedMessage.type}`);
             console.log(`   Success: ${parsedMessage.success}`);
@@ -136,7 +165,7 @@ export function startBlenderSocketServer(webContents: WebContents) {
               }
             }
 
-            const { resolve } = pendingRequests.get(parsedMessage.id)!;
+            const { resolve } = pendingRequest;
             pendingRequests.delete(parsedMessage.id);
             resolve(parsedMessage);
             console.log(
@@ -145,6 +174,10 @@ export function startBlenderSocketServer(webContents: WebContents) {
           } else if (parsedMessage.id) {
             console.log(
               `⚠️ Received message with ID ${parsedMessage.id} but no matching pending request found`,
+            );
+            // Log the current pending request IDs for debugging
+            console.log(
+              `Current pending request IDs: ${Array.from(pendingRequests.keys()).join(", ")}`,
             );
           }
 
@@ -386,8 +419,8 @@ export function sendToBlender(message: object) {
 export async function requestFromBlender(
   action: string,
   params: any = {},
-  timeoutMs: number = 5000,
-): Promise<any> {
+  timeoutMs: number = 10000, // Increased timeout for complex operations
+): Promise<BlenderResponseMessage> {
   console.log(`📤 requestFromBlender: Starting request for action "${action}"`);
   console.log(`   Params: ${JSON.stringify(params).substring(0, 100)}`);
   console.log(`   Current pending requests: ${pendingRequests.size}`);
@@ -398,21 +431,31 @@ export async function requestFromBlender(
       return reject(new Error("Blender is not connected"));
     }
 
-    // Generate a unique message ID
-    const messageId = `${action}_${Date.now()}_${Math.floor(
-      Math.random() * 1000,
-    )}`;
+    // Generate a unique message ID with consistent format
+    // Format: action_timestamp_random
+    const timestamp = Date.now();
+    const randomPart = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0");
+    const messageId = `${action}_${timestamp}_${randomPart}`;
+
     console.log(`🆔 requestFromBlender: Generated message ID: ${messageId}`);
 
-    // Create message object
-    const message = {
+    // Create message object with explicit typing
+    const message: BlenderRequestMessage = {
       action,
       id: messageId,
       params,
     };
 
-    // Store the promise resolvers
-    pendingRequests.set(messageId, { resolve, reject });
+    // Store the promise resolvers with more metadata
+    pendingRequests.set(messageId, {
+      resolve,
+      reject,
+      action,
+      timestamp: Date.now(),
+    });
+
     console.log(
       `🗂️ requestFromBlender: Added to pending requests (now ${pendingRequests.size})`,
     );
@@ -421,10 +464,14 @@ export async function requestFromBlender(
     const timeoutId = setTimeout(() => {
       if (pendingRequests.has(messageId)) {
         console.error(
-          `⏰ requestFromBlender: Request timed out for ID ${messageId}`,
+          `⏰ requestFromBlender: Request timed out for ID ${messageId} (action: ${action})`,
         );
         pendingRequests.delete(messageId);
-        reject(new Error(`Request to Blender timed out after ${timeoutMs}ms`));
+        reject(
+          new Error(
+            `Request to Blender timed out after ${timeoutMs}ms. Action: ${action}`,
+          ),
+        );
       }
     }, timeoutMs);
 
@@ -432,7 +479,7 @@ export async function requestFromBlender(
     try {
       blenderClient!.send(JSON.stringify(message));
       console.log(
-        `📨 requestFromBlender: Message sent to Blender (ID: ${messageId})`,
+        `📨 requestFromBlender: Message sent to Blender (ID: ${messageId}, action: ${action})`,
       );
     } catch (error) {
       console.error(`❌ requestFromBlender: Error sending message:`, error);

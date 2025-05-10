@@ -170,10 +170,12 @@ function ToolInvocationRequest({
 
       if (code) {
         try {
-          // Execute the code using the Electron API - now waits for response
+          // Execute the code using the Electron API - now waits for direct response
           console.log(
             `📤 ToolSection: Sending executeBlenderCode request to main process (${toolInvocation.toolCallId})`,
           );
+
+          // Execute the code and get the response directly
           const result = await window.blenderConnection.executeCode(code);
 
           console.log(
@@ -197,8 +199,68 @@ function ToolInvocationRequest({
             `🔄 ToolSection: Processing executeBlenderCode response for ${toolInvocation.toolCallId}`,
           );
 
-          // Directly add the tool result instead of waiting for the effect to handle it
-          handleExecuteBlenderCodeResult(result);
+          // Process the result immediately rather than waiting for the effect
+          setPending(false);
+
+          if (result.success) {
+            console.log(
+              `✅ Adding successful tool result for ${toolInvocation.toolCallId}`,
+            );
+            addToolResult({
+              toolCallId: toolInvocation.toolCallId,
+              result: {
+                success: true,
+                output: result.output || "Code executed successfully",
+                message: "Blender code executed successfully",
+              },
+            });
+          } else {
+            const errorMsg =
+              result.error || "Failed to execute code in Blender";
+            setError(errorMsg);
+
+            // Check if this might be a partial execution error
+            const isPartialExecutionError =
+              errorMsg.includes("not in collection") ||
+              errorMsg.includes("does not exist") ||
+              errorMsg.includes("cannot find");
+
+            // Check if we have partial output despite the error
+            const hasPartialOutput = result.output && result.output.length > 0;
+
+            if (isPartialExecutionError && hasPartialOutput) {
+              // This is a partial execution - some code ran successfully
+              setError(`Partial Success: ${errorMsg}`);
+              console.log(
+                `ℹ️ Partial execution success for ${toolInvocation.toolCallId}`,
+              );
+
+              // Return both the error and the partial output
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: true, // Mark as success so the agent continues
+                  partial_error: true,
+                  error: errorMsg,
+                  output: result.output || "",
+                  message:
+                    "Code executed with partial success. Some operations completed, but errors occurred.",
+                },
+              });
+            } else {
+              // Complete failure
+              console.log(
+                `⚠️ Complete execution failure for ${toolInvocation.toolCallId}: ${errorMsg}`,
+              );
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: false,
+                  error: errorMsg,
+                },
+              });
+            }
+          }
         } catch (e: any) {
           console.error(
             `🔥 Error executing Blender code for ${toolInvocation.toolCallId}:`,
@@ -249,7 +311,6 @@ function ToolInvocationRequest({
     addToolResult,
     code,
     initializeMessageListener,
-    handleExecuteBlenderCodeResult,
   ]);
 
   // Handler for getting Blender scene info
@@ -295,6 +356,7 @@ function ToolInvocationRequest({
         `📤 ToolSection: Sending getBlenderSceneInfo request to main process for ${toolInvocation.toolCallId}`,
       );
 
+      // Get the response directly
       const result = await window.blenderConnection.getSceneInfo();
 
       console.log(
@@ -302,7 +364,7 @@ function ToolInvocationRequest({
         JSON.stringify(result, null, 2),
       );
 
-      // Handle the direct response
+      // Handle the direct response - process it immediately
       console.log(
         `🔄 ToolSection: Processing getBlenderSceneInfo response for ${toolInvocation.toolCallId}`,
       );
@@ -313,7 +375,7 @@ function ToolInvocationRequest({
           `✅ getBlenderSceneInfo succeeded for ${toolInvocation.toolCallId}`,
         );
 
-        // Directly add the result instead of waiting for the effect to pick it up
+        // Immediately use the result from the API call
         addToolResult({
           toolCallId: toolInvocation.toolCallId,
           result: {
