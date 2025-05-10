@@ -186,14 +186,43 @@ function ToolInvocationRequest({
           } else {
             const errorMsg =
               result.error || "Failed to execute code in Blender";
-            setError(errorMsg);
-            addToolResult({
-              toolCallId: toolInvocation.toolCallId,
-              result: {
-                success: false,
-                error: errorMsg,
-              },
-            });
+
+            // Check if this might be a partial execution error
+            const isPartialExecutionError =
+              errorMsg.includes("not in collection") ||
+              errorMsg.includes("does not exist") ||
+              errorMsg.includes("cannot find");
+
+            // Check if we have partial output despite the error
+            const hasPartialOutput = result.output && result.output.length > 0;
+
+            if (isPartialExecutionError && hasPartialOutput) {
+              // This is a partial execution - some code ran successfully
+              setError(`Partial Success: ${errorMsg}`);
+
+              // Return both the error and the partial output
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: true, // Mark as success so the agent continues
+                  partial_error: true,
+                  error: errorMsg,
+                  output: result.output || "",
+                  message:
+                    "Code executed with partial success. Some operations completed, but errors occurred.",
+                },
+              });
+            } else {
+              // Complete failure
+              setError(errorMsg);
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: false,
+                  error: errorMsg,
+                },
+              });
+            }
           }
         } catch (e: any) {
           setPending(false);
@@ -370,7 +399,9 @@ function ToolInvocationRequest({
           </AccordionTrigger>
 
           {/* Collapsible Content: Code and related error */}
-          {(code || error) && (
+          {(code ||
+            error ||
+            (toolInvocation.result && toolInvocation.result.partial_error)) && (
             <AccordionContent className="border-t pb-0">
               {code && (
                 <div className="p-2">
@@ -378,7 +409,33 @@ function ToolInvocationRequest({
                     <CodeBlock inline={false}>{code}</CodeBlock>
                     <ScrollBar orientation="horizontal" />
                   </ScrollArea>
-                  {error && (
+
+                  {/* Display partial execution results */}
+                  {toolInvocation.result &&
+                    toolInvocation.result.partial_error && (
+                      <div className="mt-2 rounded-md border p-2">
+                        <div className="mb-1 text-[0.7rem] font-medium text-amber-600 dark:text-amber-500">
+                          Partial Success: Some code executed successfully
+                          before errors
+                        </div>
+
+                        {toolInvocation.result.output && (
+                          <div className="text-muted-foreground bg-muted/30 mb-2 rounded p-1 text-[0.65rem] whitespace-pre-wrap">
+                            {toolInvocation.result.output}
+                          </div>
+                        )}
+
+                        {toolInvocation.result.error && (
+                          <div className="mt-1 text-[0.65rem] text-red-600">
+                            <span className="font-medium">Error:</span>{" "}
+                            {toolInvocation.result.error}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                  {/* Regular error display (when not partial) */}
+                  {error && !toolInvocation.result?.partial_error && (
                     <div
                       className={cn(
                         "mt-1 text-[0.65rem] leading-tight text-red-600",

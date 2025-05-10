@@ -10,9 +10,9 @@ const executeBlenderCodeToolSchema = z.object({
  */
 export function createExecuteBlenderCodeTool() {
   return tool({
-    description: "Execute Blender code",
+    description:
+      "Execute Blender code. When writing code, always include error handling for collections: check if collections exist before accessing them, use try/except blocks for critical operations, verify objects before linking/unlinking from collections, and consider implementing helper functions for repetitive operations.",
     parameters: executeBlenderCodeToolSchema,
-
     // execute function removed to enable frontend confirmation
   });
 }

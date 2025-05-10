@@ -581,33 +581,72 @@ def handle_execute_code(params, message_id=None):
             captured_output = io.StringIO()
             sys.stdout = captured_output
             
+            # Track objects before execution to identify created objects
+            objects_before = set(obj.name for obj in bpy.data.objects)
+            collections_before = set(coll.name for coll in bpy.data.collections)
+            
+            success = True
+            error_msg = ""
+            error_type = ""
+            tb_str = ""
+            
             try:
                 # Execute the code
                 exec(code, namespace)
                 output = captured_output.getvalue()
                 
-                # Send success response
-                if socket_connection and connected and message_id:
+                # Check for new objects and collections
+                objects_after = set(obj.name for obj in bpy.data.objects)
+                collections_after = set(coll.name for coll in bpy.data.collections)
+                
+                new_objects = objects_after - objects_before
+                new_collections = collections_after - collections_before
+                
+                if new_objects or new_collections:
+                    output += "\n\n--- Creation Summary ---\n"
+                    if new_objects:
+                        output += f"Created {len(new_objects)} new object(s): {', '.join(new_objects)}\n"
+                    if new_collections:
+                        output += f"Created {len(new_collections)} new collection(s): {', '.join(new_collections)}\n"
+                
+            except Exception as e:
+                # Get detailed error info
+                success = False
+                error_msg = str(e)
+                error_type = type(e).__name__
+                tb_str = traceback.format_exc()
+                
+                # Check for partial success by examining output
+                output = captured_output.getvalue()
+                
+                # Check for new objects and collections even on error
+                objects_after = set(obj.name for obj in bpy.data.objects)
+                collections_after = set(coll.name for coll in bpy.data.collections)
+                
+                new_objects = objects_after - objects_before
+                new_collections = collections_after - collections_before
+                
+                # If we've created objects/collections but got an error, it's a partial success
+                if new_objects or new_collections:
+                    output += "\n\n--- Partial Success Summary ---\n"
+                    output += f"Error occurred: {error_msg}\n"
+                    if new_objects:
+                        output += f"Created {len(new_objects)} new object(s) before error: {', '.join(new_objects)}\n"
+                    if new_collections:
+                        output += f"Created {len(new_collections)} new collection(s) before error: {', '.join(new_collections)}\n"
+                
+                log_error(f"Error executing code: {error_msg}\n{tb_str}")
+            
+            # Prepare and send the response
+            if socket_connection and connected and message_id:
+                if success:
                     response = {
                         "id": message_id,
                         "type": "code_executed",
                         "success": True,
                         "output": output
                     }
-                    send_message(socket_connection, response)
-                
-                log(f"Code executed successfully, output length: {len(output)}")
-                
-            except Exception as e:
-                # Get detailed error info
-                error_msg = str(e)
-                error_type = type(e).__name__
-                tb_str = traceback.format_exc()
-                
-                log_error(f"Error executing code: {error_msg}\n{tb_str}")
-                
-                # Send error response
-                if socket_connection and connected and message_id:
+                else:
                     response = {
                         "id": message_id,
                         "type": "code_executed",
@@ -615,16 +654,17 @@ def handle_execute_code(params, message_id=None):
                         "error": error_msg,
                         "error_type": error_type,
                         "traceback": tb_str,
-                        "partial_output": captured_output.getvalue()
+                        "output": output  # Include output even for errors
                     }
-                    send_message(socket_connection, response)
-            finally:
-                # Restore stdout
-                sys.stdout = old_stdout
-        
+                send_message(socket_connection, response)
+                log(f"Code execution response sent for message ID: {message_id}, success: {success}")
+            
         except Exception as e:
             log_error(f"Unhandled error in execute_code: {str(e)}", True)
             send_error_response(message_id, f"Unhandled error: {str(e)}")
+        finally:
+            # Always restore stdout
+            sys.stdout = old_stdout
         
         # Don't repeat
         return None
