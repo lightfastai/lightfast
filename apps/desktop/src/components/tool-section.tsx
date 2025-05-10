@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSessionStore } from "@/stores/session-store";
 import { CheckIcon, Code2Icon, XIcon } from "lucide-react";
 
@@ -47,6 +47,7 @@ function ToolInvocationRequest({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const code = toolInvocation.args?.code || "";
+  const executedRef = useRef(false);
 
   // Get the current session mode from the session store
   const sessionMode = useSessionStore((state) => state.sessionMode);
@@ -64,20 +65,36 @@ function ToolInvocationRequest({
     (state) => state.initializeMessageListener,
   );
 
+  // Reset the executedRef when a new tool invocation is received
+  useEffect(() => {
+    if (toolInvocation.state === "call" && !toolInvocation.result) {
+      executedRef.current = false;
+    }
+  }, [toolInvocation.toolCallId, toolInvocation.state, toolInvocation.result]);
+
   // Auto-execute tool if in agent mode
   useEffect(() => {
     if (
       autoExecute &&
       toolInvocation.state === "call" &&
       !pending &&
-      !toolInvocation.result
+      !toolInvocation.result &&
+      !executedRef.current
     ) {
       console.log(
         `⚡ Auto-executing tool in agent mode: ${toolInvocation.toolName}`,
       );
+      executedRef.current = true;
       handleToolExecution();
     }
-  }, [autoExecute, toolInvocation, pending]);
+  }, [
+    autoExecute,
+    toolInvocation.toolCallId,
+    toolInvocation.toolName,
+    toolInvocation.state,
+    toolInvocation.result,
+    pending,
+  ]);
 
   // Effect to handle Blender code execution results
   useEffect(() => {
@@ -145,6 +162,11 @@ function ToolInvocationRequest({
 
   // Function to handle tool execution
   const handleToolExecution = async () => {
+    // If already pending or already has a result, don't execute again
+    if (pending || toolInvocation.result) {
+      return;
+    }
+
     console.log(
       `📱 UI: Handling tool execution for: ${toolInvocation.toolName}`,
     );
@@ -546,14 +568,23 @@ function ToolInvocationRequest({
         <div
           className={cn(
             "bg-muted/20 border-border flex flex-col gap-1 rounded border",
+            toolInvocation.result && "border-green-400/30",
           )}
         >
           <AccordionTrigger className="p-2 hover:no-underline">
             <div className="flex w-full items-center justify-between pr-2">
               <div className="flex min-w-0 flex-1 items-center gap-2 text-[0.65rem] leading-tight font-medium whitespace-nowrap">
                 {autoExecute ? (
-                  <span className="text-muted-foreground/70">
-                    Auto-executing:
+                  <span
+                    className={
+                      toolInvocation.result
+                        ? "text-green-500/70"
+                        : "text-muted-foreground/70"
+                    }
+                  >
+                    {toolInvocation.result
+                      ? "Auto-executed:"
+                      : "Auto-executing:"}
                   </span>
                 ) : (
                   "Request:"
@@ -578,8 +609,15 @@ function ToolInvocationRequest({
                     Executing...
                   </span>
                 )}
+                {toolInvocation.result && (
+                  <span className="text-xs text-green-500">
+                    {toolInvocation.result.success === false
+                      ? "Failed"
+                      : "Completed"}
+                  </span>
+                )}
               </div>
-              {!autoExecute && (
+              {!autoExecute && !toolInvocation.result && (
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <Button
                     variant="secondary"
