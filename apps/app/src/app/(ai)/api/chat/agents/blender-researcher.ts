@@ -388,7 +388,19 @@ export function blenderResearcher({
     toolCallStreaming: true,
     providerOptions: {
       anthropic: {
-        thinking: { type: "enabled", budgetTokens: 12000 },
+        thinking: {
+          type: "enabled",
+          budgetTokens: 12000,
+        },
+        // Setting tool_choice to "auto" to let the model decide when to use tools
+        tool_choice: "auto",
+      },
+      openrouter: {
+        thinking: {
+          type: "enabled",
+          budgetTokens: 12000,
+        },
+        tool_choice: "auto",
       },
     },
     experimental_activeTools: [

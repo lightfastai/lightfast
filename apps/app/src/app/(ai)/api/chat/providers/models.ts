@@ -39,7 +39,7 @@ export const providers = customProvider({
       "openrouter:gpt-4o-mini",
     ),
     [$ModelUseCase.enum.reasoning]: modelRegistry.languageModel(
-      "anthropic:claude-3-7-sonnet-20250219",
+      "openrouter:anthropic/claude-3.5-sonnet",
     ),
     [$ModelUseCase.enum.json]:
       modelRegistry.languageModel("openrouter:o4-mini"),

@@ -2,9 +2,7 @@ import { useSessionStore } from "../stores/session-store";
 import { BlenderCodeTool } from "./tools/blender-execute-code-tool";
 import { BlenderReconnectTool } from "./tools/blender-reconnect-tool";
 import { BlenderSceneInfoTool } from "./tools/blender-scene-info-tool";
-import { DefaultTool } from "./tools/default-tool";
 import { ToolInvocation } from "./tools/types";
-import { WebSearchTool } from "./tools/web-search-tool";
 
 interface ToolInvocationPart {
   type: "tool-invocation";
@@ -50,27 +48,6 @@ export function ToolSection({ part, addToolResult }: ToolSectionProps) {
     case "reconnectBlender":
       return (
         <BlenderReconnectTool
-          toolInvocation={toolInvocation}
-          addToolResult={addToolResult}
-          autoExecute={autoExecute}
-          readyToExecute={isReady}
-        />
-      );
-
-    case "web_search":
-    case "search":
-      return (
-        <WebSearchTool
-          toolInvocation={toolInvocation}
-          addToolResult={addToolResult}
-          autoExecute={autoExecute}
-          readyToExecute={isReady}
-        />
-      );
-
-    default:
-      return (
-        <DefaultTool
           toolInvocation={toolInvocation}
           addToolResult={addToolResult}
           autoExecute={autoExecute}

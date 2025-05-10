@@ -71,9 +71,10 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     },
     onFinish: () => {
       // window.history.replaceState({}, "", `/search/${id}`);
+      console.log("Chat finished successfully");
     },
     onToolCall: async (data) => {
-      console.log("🧰 Received tool call from AI SDK");
+      console.log("🧰 Received tool call from AI SDK", data);
 
       if (data && data.toolCall) {
         // Extract tool call details
@@ -81,7 +82,10 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
         const toolName = data.toolCall.toolName;
         const toolArgs = data.toolCall.args as Record<string, unknown>;
 
-        console.log(`🧰 Tool call completed: ${toolCallId} (${toolName})`);
+        console.log(
+          `🧰 Tool call details: ${toolCallId} (${toolName})`,
+          toolArgs,
+        );
 
         // Mark this tool call as ready to execute
         markToolCallReady(toolCallId);
@@ -91,11 +95,24 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
           // Get the tool type based on name (will return "default" for unknown tools)
           const toolType = mapToolNameToType(toolName) as ToolType;
 
+          if (!toolType) {
+            console.error(`Unknown tool type: ${toolName}`);
+            addToolResult({
+              toolCallId: toolCallId,
+              result: {
+                success: false,
+                error: `Unknown tool type: ${toolName}`,
+              },
+            });
+            return;
+          }
+
           console.log(`🤖 Auto-executing ${toolName} tool: ${toolCallId}`);
 
           try {
             // Execute the tool using our centralized handler
             const result = await executeTool(toolCallId, toolType, toolArgs);
+            console.log(`Tool execution result for ${toolName}:`, result);
 
             // Report results back to AI
             addToolResult({

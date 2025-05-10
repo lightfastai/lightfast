@@ -15,16 +15,6 @@ type ToolExecutionHandlers = {
   executeBlenderCode: (code: string) => Promise<ToolResult>;
   getBlenderSceneInfo: () => Promise<ToolResult>;
   reconnectBlender: () => Promise<ToolResult>;
-  webSearch: (params: {
-    query: string;
-    max_results?: number;
-    search_depth?: string;
-    include_domains?: string[];
-    exclude_domains?: string[];
-    use_quotes?: boolean;
-    time_range?: string;
-  }) => Promise<ToolResult>;
-  default: (args: any) => Promise<ToolResult>;
 };
 
 const handlers: ToolExecutionHandlers = {
@@ -153,97 +143,6 @@ const handlers: ToolExecutionHandlers = {
       };
     }
   },
-
-  /**
-   * Execute web search
-   */
-  webSearch: async (params: {
-    query: string;
-    max_results?: number;
-    search_depth?: string;
-    include_domains?: string[];
-    exclude_domains?: string[];
-    use_quotes?: boolean;
-    time_range?: string;
-  }): Promise<ToolResult> => {
-    const {
-      query,
-      max_results = 10,
-      search_depth = "basic",
-      include_domains = [],
-      exclude_domains = [],
-      use_quotes,
-      time_range,
-    } = params;
-
-    if (!query) {
-      return {
-        success: false,
-        error: "No search query provided",
-      };
-    }
-
-    try {
-      console.log(`📤 Forwarding web search to backend API`);
-
-      const response = await fetch("/api/web-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query,
-          max_results,
-          search_depth,
-          include_domains,
-          exclude_domains,
-          use_quotes,
-          time_range,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Search API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const result = await response.json();
-      console.log(
-        `📥 Received web search results with ${result.results?.length || 0} items`,
-      );
-
-      return {
-        success: true,
-        ...result,
-      };
-    } catch (e: any) {
-      return {
-        success: false,
-        error: e?.message || "Failed to execute web search",
-      };
-    }
-  },
-
-  /**
-   * Generic handler for default/unimplemented tools
-   */
-  default: async (args: any): Promise<ToolResult> => {
-    console.log(`📤 Executing default tool handler with args:`, args);
-
-    // For default tools, we simply return success after a brief delay
-    // to provide a visual indication that something happened
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`📥 Default tool handler completed`);
-        resolve({
-          success: true,
-          message: "Tool executed successfully",
-          type: "manual-tool-invocation",
-        });
-      }, 500);
-    });
-  },
 };
 
 export type ToolType = keyof typeof handlers;
@@ -272,7 +171,7 @@ export function useToolExecution() {
       },
     }));
 
-    console.log(`🧰 Executing ${toolType} tool for call: ${toolCallId}`);
+    console.log(`🧰 Executing ${toolType} tool for call: ${toolCallId}`, args);
 
     try {
       let result: ToolResult;
@@ -287,27 +186,18 @@ export function useToolExecution() {
         case "reconnectBlender":
           result = await handlers.reconnectBlender();
           break;
-        case "webSearch":
-          result = await handlers.webSearch({
-            query: args.query || "",
-            max_results: args.max_results,
-            search_depth: args.search_depth,
-            include_domains: args.include_domains,
-            exclude_domains: args.exclude_domains,
-            use_quotes: args.use_quotes,
-            time_range: args.time_range,
-          });
-          break;
-        case "default":
-          result = await handlers.default(args);
-          break;
         default:
           // If we don't have a specific handler, use the default one
           console.log(
             `No specific handler for ${toolType}, using default handler`,
           );
-          result = await handlers.default(args);
+          return {
+            success: false,
+            error: `No specific handler for ${toolType}`,
+          };
       }
+
+      console.log(`Tool execution completed for ${toolType}:`, result);
 
       // Update state to completed
       setState((prev) => ({
@@ -322,6 +212,7 @@ export function useToolExecution() {
       return result;
     } catch (e: any) {
       const errorMessage = e?.message || `Failed to execute ${toolType}`;
+      console.error(`Error executing ${toolType} tool:`, e);
 
       // Update state to error
       setState((prev) => ({
@@ -371,15 +262,18 @@ export function useToolExecution() {
    * Map tool names from the AI to our internal tool types
    */
   const mapToolNameToType = (toolName: string): ToolType | null => {
+    console.log(`Mapping tool name to type: ${toolName}`);
+
     const mapping: Record<string, ToolType> = {
       executeBlenderCode: "executeBlenderCode",
       getBlenderSceneInfo: "getBlenderSceneInfo",
       reconnectBlender: "reconnectBlender",
-      webSearch: "webSearch",
-      // Add more mappings as needed
     };
 
-    return mapping[toolName] || "default";
+    const mappedType = mapping[toolName] || null;
+    console.log(`Mapped ${toolName} to ${mappedType}`);
+
+    return mappedType;
   };
 
   return {
