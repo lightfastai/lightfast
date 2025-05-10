@@ -1,4 +1,5 @@
 import React, { useCallback, useRef } from "react";
+import { useRouter } from "@tanstack/react-router";
 import { Infinity as InfinityIcon, Send, StopCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -94,7 +95,7 @@ export const UserMessageInput = ({
 }: SessionInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [mode, setMode] = React.useState<SessionMode>("agent");
-
+  const router = useRouter();
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
 
@@ -107,7 +108,7 @@ export const UserMessageInput = ({
 
   const submitForm = useCallback(() => {
     if (sessionId) {
-      window.history.replaceState({}, "", `/session/${sessionId}`);
+      router.history.replace(`/session/${sessionId}`);
     }
 
     handleSubmit(
