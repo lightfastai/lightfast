@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTimeAgo } from "@/hooks/use-time-ago";
-import { Link } from "@tanstack/react-router";
-import { HistoryIcon, Search } from "lucide-react";
+import { Link, useRouter } from "@tanstack/react-router";
+import { Check, HistoryIcon, Search } from "lucide-react";
 
 import type { RouterOutputs } from "@vendor/trpc";
 import { Button } from "@repo/ui/components/ui/button";
@@ -21,6 +21,9 @@ interface HistoryMenuProps {
 
 export const HistoryMenu: React.FC<HistoryMenuProps> = ({ sessions }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+  const currentSessionId = router.state.matches.find((m) => m.params.sessionId)
+    ?.params.sessionId;
 
   // Filter sessions based on search query
   const filteredSessions = sessions?.filter((session) =>
@@ -57,21 +60,36 @@ export const HistoryMenu: React.FC<HistoryMenuProps> = ({ sessions }) => {
         <ScrollArea className="h-[180px]">
           <div className="px-1 py-1">
             {filteredSessions && filteredSessions.length > 0 ? (
-              filteredSessions.map((session) => (
-                <Link
-                  className="text-muted-foreground hover:text-accent-foreground hover:bg-accent flex w-full items-center rounded-sm px-2 py-1.5 text-xs transition-colors"
-                  key={session.id}
-                  to="/$sessionId"
-                  params={{ sessionId: session.id }}
-                >
-                  <div className="min-w-0 flex-1 overflow-hidden pr-2 font-mono text-ellipsis whitespace-nowrap">
-                    {session.title.trim() || "Untitled"}
-                  </div>
-                  <div className="text-muted-foreground/70 shrink-0 font-mono text-[0.65rem] whitespace-nowrap">
-                    {useTimeAgo(session.updatedAt)}
-                  </div>
-                </Link>
-              ))
+              filteredSessions.map((session) => {
+                const isSelected = session.id === currentSessionId;
+                return (
+                  <Link
+                    className={
+                      `text-muted-foreground hover:text-accent-foreground hover:bg-accent flex w-full items-center rounded-sm px-2 py-1.5 text-xs transition-colors` +
+                      (isSelected ? " bg-accent/30 font-semibold" : "")
+                    }
+                    key={session.id}
+                    to="/$sessionId"
+                    params={{ sessionId: session.id }}
+                  >
+                    <div className="min-w-0 flex-1 overflow-hidden pr-2 font-mono text-ellipsis whitespace-nowrap">
+                      {session.title.trim() || "Untitled"}
+                    </div>
+                    <div className="flex min-w-[60px] items-center justify-end gap-1">
+                      <span className="text-muted-foreground/70 shrink-0 font-mono text-[0.65rem] whitespace-nowrap">
+                        {useTimeAgo(session.updatedAt)}
+                      </span>
+                      <Check
+                        className={
+                          isSelected
+                            ? "text-primary ml-2 h-3 w-3 shrink-0"
+                            : "ml-2 h-3 w-3 shrink-0 opacity-0"
+                        }
+                      />
+                    </div>
+                  </Link>
+                );
+              })
             ) : (
               <div className="text-muted-foreground/50 px-2 py-2 text-center text-xs">
                 {searchQuery
