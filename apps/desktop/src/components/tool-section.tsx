@@ -9,6 +9,7 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
+import { cn } from "@repo/ui/lib/utils";
 
 import { useBlenderStore } from "../stores/blender-store";
 import { CodeBlock } from "./code-block";
@@ -325,13 +326,20 @@ function ToolInvocationRequest({
   return (
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="item-1" className="border-b-0">
-        <div className="bg-muted/20 border-border flex flex-col gap-1 rounded border">
+        <div
+          className={cn(
+            "bg-muted/20 border-border flex flex-col gap-1 rounded border",
+          )}
+        >
           <AccordionTrigger className="p-2 hover:no-underline">
-            {/* Title Bar */}
             <div className="flex w-full items-center justify-between pr-2">
               <div className="flex min-w-0 flex-1 items-center gap-2 text-[0.65rem] leading-tight font-medium whitespace-nowrap">
                 Request:{" "}
-                <pre className="bg-muted-foreground/10 rounded-md border px-2 py-1 text-[0.65rem]">
+                <pre
+                  className={cn(
+                    "bg-muted-foreground/10 rounded-md border px-2 py-1 text-[0.65rem]",
+                  )}
+                >
                   {toolInvocation.toolName.trim()}
                 </pre>
               </div>
@@ -369,13 +377,17 @@ function ToolInvocationRequest({
           {(code || error) && ( // Only render content if there's code or an error to show
             <AccordionContent className="border-t pb-0">
               {code && (
-                <div className="">
-                  <ScrollArea className="h-48 w-full overflow-x-auto">
-                    <ScrollBar orientation="horizontal" />
+                <div>
+                  <ScrollArea className="h-48 w-full">
                     <CodeBlock inline={false}>{code}</CodeBlock>
+                    <ScrollBar orientation="horizontal" />
                   </ScrollArea>
                   {error && (
-                    <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
+                    <div
+                      className={cn(
+                        "mt-1 text-[0.65rem] leading-tight text-red-600",
+                      )}
+                    >
                       {error}
                     </div>
                   )}
@@ -384,7 +396,11 @@ function ToolInvocationRequest({
 
               {/* Error when no code is present (e.g., tool call setup error), but still an error to display */}
               {!code && error && (
-                <div className="mt-1 text-[0.65rem] leading-tight text-red-600">
+                <div
+                  className={cn(
+                    "mt-1 text-[0.65rem] leading-tight text-red-600",
+                  )}
+                >
                   {error}
                 </div>
               )}
@@ -433,9 +449,16 @@ function ToolInvocationResult({ part }: { part: ToolInvocation }) {
         // Fallback: pretty-print JSON
         if (result) {
           return (
-            <pre className="bg-background mb-2 overflow-x-auto rounded border p-2 text-xs whitespace-pre-wrap">
-              {JSON.stringify(result, null, 2)}
-            </pre>
+            <ScrollArea className="max-h-72 w-full">
+              <pre
+                className={cn(
+                  "bg-background mb-2 rounded border p-2 text-xs whitespace-pre-wrap",
+                )}
+              >
+                {JSON.stringify(result, null, 2)}
+              </pre>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           );
         }
     }
@@ -443,12 +466,21 @@ function ToolInvocationResult({ part }: { part: ToolInvocation }) {
   }
 
   return (
-    <div className="bg-muted/20 border-border my-2 flex flex-col gap-2 rounded border p-4">
+    <div
+      className={cn(
+        "bg-muted/20 border-border my-2 flex flex-col gap-2 rounded border p-4",
+      )}
+    >
       <div className="mb-1 text-xs font-semibold">
         Tool Result: {toolInvocation.toolName}
       </div>
-      {code && <CodeBlock inline={false}>{code}</CodeBlock>}
-      {error && <div className="mb-2 text-xs text-red-600">{error}</div>}
+      {code && (
+        <ScrollArea className="max-h-48 w-full">
+          <CodeBlock inline={false}>{code}</CodeBlock>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      )}
+      {error && <div className={cn("mb-2 text-xs text-red-600")}>{error}</div>}
       {renderResult()}
     </div>
   );
@@ -459,7 +491,7 @@ function WebSearchResults({ results }: { results: any[] }) {
   return (
     <ul className="space-y-2">
       {results.map((r, i) => (
-        <li key={i} className="rounded border p-2">
+        <li key={i} className={cn("rounded border p-2")}>
           <a
             href={r.url}
             target="_blank"
@@ -469,7 +501,9 @@ function WebSearchResults({ results }: { results: any[] }) {
             {r.title}
           </a>
           {r.content && (
-            <div className="text-muted-foreground text-xs">{r.content}</div>
+            <div className={cn("text-muted-foreground text-xs")}>
+              {r.content}
+            </div>
           )}
         </li>
       ))}
@@ -481,17 +515,19 @@ function PolyHavenResults({ results }: { results: any[] }) {
   return (
     <ul className="space-y-2">
       {results.map((r, i) => (
-        <li key={i} className="rounded border p-2">
+        <li key={i} className={cn("rounded border p-2")}>
           <div className="font-semibold">{r.name || r.id}</div>
           {r.preview && (
             <img
               src={r.preview}
               alt={r.name}
-              className="my-2 max-h-24 rounded"
+              className={cn("my-2 max-h-24 rounded")}
             />
           )}
           {r.description && (
-            <div className="text-muted-foreground text-xs">{r.description}</div>
+            <div className={cn("text-muted-foreground text-xs")}>
+              {r.description}
+            </div>
           )}
         </li>
       ))}
@@ -508,11 +544,11 @@ function PolyHavenAssetResult({ asset }: { asset: any }) {
         <img
           src={asset.preview}
           alt={asset.name}
-          className="my-2 max-h-32 rounded"
+          className={cn("my-2 max-h-32 rounded")}
         />
       )}
       {asset.description && (
-        <div className="text-muted-foreground mb-2 text-xs">
+        <div className={cn("text-muted-foreground mb-2 text-xs")}>
           {asset.description}
         </div>
       )}
@@ -543,17 +579,19 @@ function AmbientCGResults({ results }: { results: any[] }) {
   return (
     <ul className="space-y-2">
       {results.map((r, i) => (
-        <li key={i} className="rounded border p-2">
+        <li key={i} className={cn("rounded border p-2")}>
           <div className="font-semibold">{r.name || r.id}</div>
           {r.preview && (
             <img
               src={r.preview}
               alt={r.name}
-              className="my-2 max-h-24 rounded"
+              className={cn("my-2 max-h-24 rounded")}
             />
           )}
           {r.description && (
-            <div className="text-muted-foreground text-xs">{r.description}</div>
+            <div className={cn("text-muted-foreground text-xs")}>
+              {r.description}
+            </div>
           )}
         </li>
       ))}
@@ -570,11 +608,11 @@ function AmbientCGAssetResult({ asset }: { asset: any }) {
         <img
           src={asset.preview}
           alt={asset.name}
-          className="my-2 max-h-32 rounded"
+          className={cn("my-2 max-h-32 rounded")}
         />
       )}
       {asset.description && (
-        <div className="text-muted-foreground mb-2 text-xs">
+        <div className={cn("text-muted-foreground mb-2 text-xs")}>
           {asset.description}
         </div>
       )}
@@ -604,7 +642,7 @@ function AmbientCGAssetResult({ asset }: { asset: any }) {
 function BlenderSceneInfoView({ state }: { state: any }) {
   return (
     <div className="space-y-2">
-      <div className="rounded border p-2">
+      <div className={cn("rounded border p-2")}>
         <div className="font-semibold">Scene Information</div>
         <div className="grid grid-cols-2 gap-1 text-xs">
           <div>Name:</div>
@@ -617,7 +655,7 @@ function BlenderSceneInfoView({ state }: { state: any }) {
       </div>
 
       {state.objects && state.objects.length > 0 && (
-        <div className="rounded border p-2">
+        <div className={cn("rounded border p-2")}>
           <div className="font-semibold">Objects ({state.objects.length})</div>
           <ul className="ml-4 list-disc text-xs">
             {state.objects.map((obj: any, i: number) => (
@@ -634,9 +672,16 @@ function BlenderSceneInfoView({ state }: { state: any }) {
         <summary className="cursor-pointer text-xs">
           Raw Scene Info Data
         </summary>
-        <pre className="bg-background mt-2 mb-2 overflow-x-auto rounded border p-2 text-xs whitespace-pre-wrap">
-          {JSON.stringify(state, null, 2)}
-        </pre>
+        <ScrollArea className="max-h-72 w-full">
+          <pre
+            className={cn(
+              "bg-background mt-2 mb-2 rounded border p-2 text-xs whitespace-pre-wrap",
+            )}
+          >
+            {JSON.stringify(state, null, 2)}
+          </pre>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </details>
     </div>
   );
