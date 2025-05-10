@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckIcon, Code2Icon, XIcon } from "lucide-react";
+import { CheckIcon, Code2Icon, Loader2Icon, XIcon } from "lucide-react";
 
 import {
   Accordion,
@@ -168,12 +168,16 @@ export function BlenderCodeTool({
     }
   }, [autoExecute, readyToExecute, executed, code]);
 
+  // Determine if we're in the "generating code" state
+  const isGeneratingCode = code && !readyToExecute && !executed;
+
   return (
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="item-1" className="border-b-0">
         <div
           className={cn(
             "bg-muted/20 border-border flex flex-col gap-1 rounded border",
+            isGeneratingCode && "border-blue-400/30",
           )}
         >
           <AccordionTrigger className="p-2 hover:no-underline">
@@ -188,10 +192,25 @@ export function BlenderCodeTool({
                   {toolInvocation.toolName.trim()}
                 </pre>
                 {code && (
-                  <span className="text-muted-foreground flex items-center gap-1">
-                    <Code2Icon className="size-3" />
+                  <span
+                    className={cn(
+                      "flex items-center gap-1",
+                      isGeneratingCode
+                        ? "text-blue-400"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {isGeneratingCode ? (
+                      <Loader2Icon className="size-3 animate-spin" />
+                    ) : (
+                      <Code2Icon className="size-3" />
+                    )}
                     <span className="text-xs">
-                      {code.length > 50 ? `${code.length} chars` : "View code"}
+                      {isGeneratingCode
+                        ? `Generating code... (${code.length} chars so far)`
+                        : code.length > 50
+                          ? `${code.length} chars`
+                          : "View code"}
                     </span>
                   </span>
                 )}
@@ -212,7 +231,7 @@ export function BlenderCodeTool({
                     <Button
                       variant="secondary"
                       size="xs"
-                      disabled={pending}
+                      disabled={pending || isGeneratingCode}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleExecute();
@@ -246,10 +265,23 @@ export function BlenderCodeTool({
           <AccordionContent className="border-t pb-0">
             {code ? (
               <div className="p-2">
-                <ScrollArea className="h-48 w-full">
-                  <CodeBlock inline={false}>{code}</CodeBlock>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+                <div
+                  className={cn(
+                    "relative",
+                    isGeneratingCode && "rounded bg-blue-400/5",
+                  )}
+                >
+                  {isGeneratingCode && (
+                    <div className="absolute top-0 right-0 m-2 flex items-center gap-1 rounded bg-blue-500/10 px-2 py-1 text-[0.65rem] font-medium text-blue-500">
+                      <Loader2Icon className="size-3 animate-spin" />
+                      <span>Generating code...</span>
+                    </div>
+                  )}
+                  <ScrollArea className="h-48 w-full">
+                    <CodeBlock inline={false}>{code}</CodeBlock>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
+                </div>
 
                 {toolInvocation.result &&
                   toolInvocation.result.partial_error && (
