@@ -24,13 +24,13 @@ function ensureToolInvocationsHaveResults(messages: Message[]): Message[] {
         if (part.type !== "tool-invocation") return part;
 
         const toolInvocation = part.toolInvocation;
-        if (toolInvocation.state === "call" && !toolInvocation.result) {
-          // Skip tool invocations that are in 'call' state without results
+        // Skip tool invocations that are in 'call' state without results
+        if (toolInvocation.state === "call" && !("result" in toolInvocation)) {
           return null;
         }
         return part;
       })
-      .filter(Boolean);
+      .filter((part): part is NonNullable<typeof part> => part !== null);
 
     return { ...message, parts: newParts };
   });
@@ -59,7 +59,11 @@ function cleanupUserMessages(messages: Message[]): Message[] {
 }
 
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
-  const { userMessage, ...rest } = config;
+  const { userMessage, sessionMode, ...rest } = config;
+
+  // Determine if tools should be auto-approved based on session mode
+  const autoApproveTools = sessionMode === "agent";
+
   return createDataStream({
     execute: (dataStream: DataStreamWriter) => {
       const { messages, sessionId } = rest;
@@ -67,6 +71,8 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
       console.log("createToolCallingStreamResponse", {
         messages,
         sessionId,
+        sessionMode,
+        autoApproveTools,
       });
 
       try {

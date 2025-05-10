@@ -4,7 +4,7 @@ import {
   SESSION_CHAT_AUTO_RESUME,
 } from "@/config/session-constants";
 import { trpc } from "@/trpc";
-import { convertDBMessageToUIMessages } from "@/types/internal";
+import { convertDBMessageToUIMessages, SessionMode } from "@/types/internal";
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -19,6 +19,7 @@ import {
 } from "@repo/ui/components/ui/popover";
 import { cn } from "@repo/ui/lib/utils";
 
+import { useSessionStore } from "../stores/session-store";
 import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
 import { PastSessions } from "./past-sessions";
@@ -34,11 +35,14 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   );
   const { data: sessions } = useQuery(trpc.tenant.session.list.queryOptions());
 
+  // Get the session mode from the store
+  const sessionMode = useSessionStore((state) => state.sessionMode);
+
   const {
     messages,
     input,
     setInput,
-    handleSubmit,
+    handleSubmit: originalHandleSubmit,
     status,
     error,
     experimental_resume,
@@ -54,6 +58,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     experimental_prepareRequestBody: (body) => ({
       message: body.messages.at(-1),
       sessionId: sessionId ?? body.id, // @IMPORTANT we pass the body.id as inference to create the sesssion if doesn't exists...
+      sessionMode, // Add the session mode to the request
     }),
     onError: (err) => {
       // @TODO Proper handling of errors on client-side...
@@ -64,6 +69,22 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     },
     experimental_throttle: 100,
   });
+
+  // Wrap the original handleSubmit to include the sessionMode
+  const handleSubmit = (
+    e: React.FormEvent<HTMLFormElement>,
+    mode: SessionMode,
+  ) => {
+    // If a mode is provided in the call, use it; otherwise use the current store value
+    const currentMode = mode || sessionMode;
+
+    // Update the store if needed
+    if (mode && mode !== sessionMode) {
+      useSessionStore.getState().setSessionMode(mode);
+    }
+
+    return originalHandleSubmit(e);
+  };
 
   const inputStatusForUserMessageInput: "ready" | "thinking" =
     status === "submitted" || status === "streaming" ? "thinking" : "ready";

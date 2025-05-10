@@ -343,15 +343,17 @@ Follow the patterns in <collection_handling_pattern> and <error_examples> sectio
 Remember: You are a collaborative partner in the user's creative process. Your goal is to empower them to achieve their vision in Blender through efficient, clear guidance and code.
 `;
 
+interface BlenderResearcherParams {
+  sessionId: string;
+  messages: CoreMessage[];
+}
+
 type UnifiedResearcherReturn = Parameters<typeof streamText>[0];
 
 export function blenderResearcher({
   sessionId,
   messages,
-}: {
-  sessionId: string;
-  messages: CoreMessage[];
-}): UnifiedResearcherReturn {
+}: BlenderResearcherParams): UnifiedResearcherReturn {
   // Tool definitions
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();

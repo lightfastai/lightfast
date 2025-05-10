@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSessionStore } from "@/stores/session-store";
 import { CheckIcon, Code2Icon, XIcon } from "lucide-react";
 
 import {
@@ -47,6 +48,10 @@ function ToolInvocationRequest({
   const [error, setError] = useState<string | null>(null);
   const code = toolInvocation.args?.code || "";
 
+  // Get the current session mode from the session store
+  const sessionMode = useSessionStore((state) => state.sessionMode);
+  const autoExecute = sessionMode === "agent";
+
   // Note: When using Claude 3.7 Sonnet as the reasoning model, tool calls like executeBlenderCode
   // won't be streamed character-by-character. Instead, Claude completes the entire tool call before
   // sending it, which is why the executeBlenderCode accordion appears all at once rather than being
@@ -58,6 +63,21 @@ function ToolInvocationRequest({
   const initializeMessageListener = useBlenderStore(
     (state) => state.initializeMessageListener,
   );
+
+  // Auto-execute tool if in agent mode
+  useEffect(() => {
+    if (
+      autoExecute &&
+      toolInvocation.state === "call" &&
+      !pending &&
+      !toolInvocation.result
+    ) {
+      console.log(
+        `⚡ Auto-executing tool in agent mode: ${toolInvocation.toolName}`,
+      );
+      handleToolExecution();
+    }
+  }, [autoExecute, toolInvocation, pending]);
 
   // Effect to handle Blender code execution results
   useEffect(() => {
@@ -519,6 +539,7 @@ function ToolInvocationRequest({
     }
   };
 
+  // Modify the UI to show different views based on session mode
   return (
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="item-1" className="border-b-0">
@@ -530,7 +551,13 @@ function ToolInvocationRequest({
           <AccordionTrigger className="p-2 hover:no-underline">
             <div className="flex w-full items-center justify-between pr-2">
               <div className="flex min-w-0 flex-1 items-center gap-2 text-[0.65rem] leading-tight font-medium whitespace-nowrap">
-                Request:{" "}
+                {autoExecute ? (
+                  <span className="text-muted-foreground/70">
+                    Auto-executing:
+                  </span>
+                ) : (
+                  "Request:"
+                )}
                 <pre
                   className={cn(
                     "bg-muted-foreground/10 rounded-md border px-2 py-1 text-[0.65rem]",
@@ -552,36 +579,38 @@ function ToolInvocationRequest({
                   </span>
                 )}
               </div>
-              <div className="flex flex-shrink-0 items-center gap-1.5">
-                <Button
-                  variant="secondary"
-                  size="xs"
-                  disabled={pending}
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent accordion from toggling
-                    console.log(
-                      `📱 UI: User clicked execute for tool: ${toolInvocation.toolName}`,
-                    );
-                    handleToolExecution();
-                  }}
-                >
-                  <CheckIcon className="size-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  disabled={pending}
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent accordion from toggling
-                    addToolResult?.({
-                      toolCallId: toolInvocation.toolCallId,
-                      result: { error: "User declined tool invocation" },
-                    });
-                  }}
-                >
-                  <XIcon className="size-3" />
-                </Button>
-              </div>
+              {!autoExecute && (
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    disabled={pending}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent accordion from toggling
+                      console.log(
+                        `📱 UI: User clicked execute for tool: ${toolInvocation.toolName}`,
+                      );
+                      handleToolExecution();
+                    }}
+                  >
+                    <CheckIcon className="size-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    disabled={pending}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent accordion from toggling
+                      addToolResult?.({
+                        toolCallId: toolInvocation.toolCallId,
+                        result: { error: "User declined tool invocation" },
+                      });
+                    }}
+                  >
+                    <XIcon className="size-3" />
+                  </Button>
+                </div>
+              )}
             </div>
           </AccordionTrigger>
 
