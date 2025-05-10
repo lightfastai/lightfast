@@ -1,72 +1,72 @@
+import type { DeepPartial } from "ai";
 import { z } from "zod";
 
-/**
- * Standard search schema for most models
- */
-const standardSearchSchema = z.object({
-  query: z
-    .string()
-    .describe(
-      "The search query to run on the web (e.g., 'history of quantum computing')",
-    ),
+export const searchSchema = z.object({
+  query: z.string().describe("The query to search for"),
   max_results: z
     .number()
-    .min(1)
-    .max(50)
     .optional()
-    .describe("Maximum number of results to return (default: 20)"),
+    .describe("The maximum number of results to return. default is 20"),
   search_depth: z
-    .enum(["basic", "advanced"])
+    .string()
     .optional()
     .describe(
-      "Depth of search - basic is faster, advanced is more thorough and comprehensive",
+      'The depth of the search. Allowed values are "basic", "advanced", or "architectural". Use "architectural" for complex structural modeling queries.',
     ),
   include_domains: z
     .array(z.string())
     .optional()
     .describe(
-      "List of domains to specifically include in search results (e.g., ['wikipedia.org', 'github.com'])",
+      "A list of domains to specifically include in the search results. Default is None, which includes all domains.",
     ),
   exclude_domains: z
     .array(z.string())
     .optional()
     .describe(
-      "List of domains to exclude from search results (e.g., ['pinterest.com', 'facebook.com'])",
+      "A list of domains to specifically exclude from the search results. Default is None, which doesn't exclude any domains.",
+    ),
+});
+
+// Strict schema with all fields required
+export const strictSearchSchema = z.object({
+  query: z.string().describe("The query to search for"),
+  max_results: z
+    .number()
+    .describe("The maximum number of results to return. default is 20"),
+  search_depth: z
+    .enum(["basic", "advanced", "architectural"])
+    .describe(
+      'The depth of the search. Use "architectural" for complex structural modeling queries.',
+    ),
+  include_domains: z
+    .array(z.string())
+    .describe(
+      "A list of domains to specifically include in the search results. Default is None, which includes all domains.",
+    ),
+  exclude_domains: z
+    .array(z.string())
+    .describe(
+      "A list of domains to specifically exclude from the search results. Default is None, which doesn't exclude any domains.",
     ),
 });
 
 /**
- * Extended search schema for more capable models (GPT-4, Claude-3, etc.)
+ * Returns the appropriate search schema based on the full model name.
+ * Uses the strict schema for OpenAI models starting with 'o'.
  */
-const extendedSearchSchema = standardSearchSchema.extend({
-  use_quotes: z
-    .boolean()
-    .optional()
-    .describe("Whether to wrap part of the query in quotes for exact matching"),
-  time_range: z
-    .enum(["day", "week", "month", "year", "all"])
-    .optional()
-    .describe("Time range for search results (default: all)"),
-});
+export function getSearchSchemaForModel(fullModel: string) {
+  const [provider, modelName] = fullModel.split(":");
+  const useStrictSchema =
+    (provider === "openai" || provider === "azure") &&
+    modelName?.startsWith("o");
 
-/**
- * Returns the appropriate search schema based on the model
- * @param modelName The full model identifier (e.g., 'openai:gpt-4o-mini')
- * @returns Zod schema for search parameters
- */
-export function getSearchSchemaForModel(modelName: string) {
-  const lowerModel = modelName.toLowerCase();
-
-  // Advanced models get the extended schema
-  if (
-    lowerModel.includes("gpt-4") ||
-    lowerModel.includes("claude-3") ||
-    lowerModel.includes("anthropic.claude") ||
-    lowerModel.includes("llama-3-70b")
-  ) {
-    return extendedSearchSchema;
+  // Ensure search_depth is an enum for the strict schema
+  if (useStrictSchema) {
+    return strictSearchSchema;
+  } else {
+    // For the standard schema, keep search_depth as optional string
+    return searchSchema;
   }
-
-  // Default to standard schema for all other models
-  return standardSearchSchema;
 }
+
+export type PartialInquiry = DeepPartial<typeof searchSchema>;

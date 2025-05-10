@@ -1,47 +1,22 @@
-/**
- * Search result item interface
- */
+export interface SearchResults {
+  images: SearchResultImage[];
+  results: SearchResultItem[];
+  number_of_results?: number;
+  query: string;
+}
+
+// If enabled the include_images_description is true, the images will be an array of { url: string, description: string }
+// Otherwise, the images will be an array of strings
+export type SearchResultImage =
+  | string
+  | {
+      url: string;
+      description: string;
+      number_of_results?: number;
+    };
+
 export interface SearchResultItem {
   title: string;
   url: string;
   content: string;
-}
-
-/**
- * Search result image interface
- */
-export interface SearchResultImage {
-  url: string;
-  description?: string;
-}
-
-/**
- * Search results interface
- */
-export interface SearchResults {
-  results: SearchResultItem[];
-  query: string;
-  images: (string | SearchResultImage)[];
-  number_of_results: number;
-}
-
-/**
- * SearXNG Response interface
- */
-export interface SearXNGResponse {
-  query: string;
-  number_of_results: number;
-  results: SearXNGResult[];
-}
-
-/**
- * SearXNG Result interface
- */
-export interface SearXNGResult {
-  title: string;
-  url: string;
-  content: string;
-  img_src?: string;
-  publishedDate?: string;
-  score?: number;
 }
