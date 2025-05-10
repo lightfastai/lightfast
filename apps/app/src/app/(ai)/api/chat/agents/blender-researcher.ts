@@ -437,7 +437,7 @@ export function blenderResearcher({
       "createDocument",
       "updateDocument",
     ],
-    maxSteps: 7,
+    maxSteps: 10,
     experimental_transform: smoothStream({ chunking: "word" }),
   };
 }

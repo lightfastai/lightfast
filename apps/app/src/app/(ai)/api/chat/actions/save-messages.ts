@@ -12,7 +12,6 @@ export async function saveMessages({ messages }: { messages: DBMessage[] }) {
         target: DBMessage.id,
         set: {
           parts: sql.raw(`excluded.parts`),
-          role: sql.raw(`excluded.role`),
           sessionId: sql.raw(`excluded.session_id`),
           attachments: sql.raw(`excluded.attachments`),
           updatedAt: sql.raw(`now()`),
