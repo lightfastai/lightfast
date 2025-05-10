@@ -68,19 +68,83 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     onFinish: () => {
       // window.history.replaceState({}, "", `/search/${id}`);
     },
-    onToolCall: (data) => {
+    onToolCall: async (data) => {
+      console.log("🧰 Received tool call from AI SDK");
       // Since you've confirmed onToolCall is only called when complete,
       // we can simply extract the toolCallId and mark it as ready
       if (data && data.toolCall) {
         // Using a type assertion here because TypeScript doesn't know the exact structure
         const toolCallId = data.toolCall.toolCallId;
-        console.log(`🔄 Tool call completed: ${toolCallId}`);
+        console.log(`🧰 Tool call completed: ${toolCallId}`);
 
         // Mark this tool call as ready to execute
         markToolCallReady(toolCallId);
+
+        // If this is a Blender code tool, directly execute it
+        // Need to use type assertion as the AI SDK types may not expose all properties
+        const toolCallData = data.toolCall;
+        if (toolCallData.toolName === "executeBlenderCode") {
+          console.log(`🤖 Directly executing Blender code tool: ${toolCallId}`);
+          console.log(toolCallData.args);
+          const code = toolCallData.args?.code || "";
+          const result = await window.blenderConnection.executeCode(code);
+          if (result.success) {
+            addToolResult({
+              toolCallId: toolCallId,
+              result: {
+                success: true,
+                output: result.output || "Code executed successfully",
+                message: "Blender code executed successfully",
+              },
+            });
+          } else {
+            const errorMsg =
+              result.error || "Failed to execute code in Blender";
+            const isPartialExecutionError =
+              errorMsg.includes("not in collection") ||
+              errorMsg.includes("does not exist") ||
+              errorMsg.includes("cannot find");
+            const hasPartialOutput = result.output && result.output.length > 0;
+
+            if (isPartialExecutionError && hasPartialOutput) {
+              addToolResult({
+                toolCallId: toolCallId,
+                result: {
+                  success: true, // Mark as success so the agent continues
+                  partial_error: true,
+                  error: errorMsg,
+                  output: result.output || "",
+                  message:
+                    "Code executed with partial success. Some operations completed, but errors occurred.",
+                },
+              });
+            } else {
+              addToolResult({
+                toolCallId: toolCallId,
+                result: {
+                  success: false,
+                  error: errorMsg,
+                },
+              });
+            }
+          }
+        } else if (toolCallData.toolName === "getBlenderSceneInfo") {
+          console.log(`🤖 Directly executing Blender code tool: ${toolCallId}`);
+          console.log(toolCallData.args);
+          const result = await window.blenderConnection.getSceneInfo();
+          if (result.success) {
+            addToolResult({
+              toolCallId: toolCallId,
+              result: {
+                success: true,
+                message: "Received Blender scene info",
+                scene_info: result.scene_info,
+              },
+            });
+          }
+        }
       }
     },
-    experimental_throttle: 100,
   });
 
   // Wrap the original handleSubmit to include the sessionMode

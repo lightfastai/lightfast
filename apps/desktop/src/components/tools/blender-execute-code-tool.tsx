@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckIcon, Code2Icon, Loader2Icon, XIcon } from "lucide-react";
 
 import {
@@ -11,6 +11,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 
+import { useSessionStore } from "../../stores/session-store";
 import { CodeBlock } from "../code-block";
 import { ToolProps } from "./types";
 
@@ -24,14 +25,19 @@ export function BlenderCodeTool({
   const [error, setError] = useState<string | null>(null);
   const [executed, setExecuted] = useState(false);
 
+  // Subscribe to the session store to detect direct execution requests
+  const readyToolCalls = useSessionStore((state) => state.readyToolCalls);
+
   const code = toolInvocation.args?.code || "";
 
   const handleExecute = async () => {
-    if (executed) return;
+    if (executed || pending) return; // Prevent double execution
 
     setPending(true);
     setError(null);
-    console.log(`🧰 Executing Blender code`);
+    console.log(
+      `🧰 Executing Blender code for tool call: ${toolInvocation.toolCallId}`,
+    );
 
     try {
       // First check if Blender is actually connected
@@ -156,18 +162,6 @@ export function BlenderCodeTool({
     }
   };
 
-  // Only auto-execute when both conditions are met:
-  // 1. In agent mode (autoExecute is true)
-  // 2. The tool call is fully streamed and ready (readyToExecute is true)
-  useEffect(() => {
-    if (autoExecute && readyToExecute && !executed && code) {
-      console.log(
-        `🤖 Auto-executing Blender code tool with complete code (${code.length} chars)`,
-      );
-      handleExecute();
-    }
-  }, [autoExecute, readyToExecute, executed, code]);
-
   // Determine if we're in the "generating code" state
   const isGeneratingCode = code && !readyToExecute && !executed;
 
@@ -207,10 +201,8 @@ export function BlenderCodeTool({
                     )}
                     <span className="text-xs">
                       {isGeneratingCode
-                        ? `Generating code... (${code.length} chars so far)`
-                        : code.length > 50
-                          ? `${code.length} chars`
-                          : "View code"}
+                        ? `${code.length} chars`
+                        : `${code.length} chars`}
                     </span>
                   </span>
                 )}
