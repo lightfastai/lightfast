@@ -131,11 +131,20 @@ const handlers: ToolExecutionHandlers = {
 
       const connectionStatus = await window.blenderConnection.getStatus();
 
-      return {
-        success: true,
-        status: connectionStatus,
-        message: `Blender connection status: ${connectionStatus.status}`,
-      };
+      // Only return success if the status is "connected"
+      if (connectionStatus.status === "connected") {
+        return {
+          success: true,
+          status: connectionStatus,
+          message: `Blender is connected.`,
+        };
+      } else {
+        return {
+          success: false,
+          status: connectionStatus,
+          error: `Blender is not connected. Current status: ${connectionStatus.status}`,
+        };
+      }
     } catch (e: any) {
       return {
         success: false,
