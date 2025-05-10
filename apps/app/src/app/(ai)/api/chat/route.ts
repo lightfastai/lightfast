@@ -25,12 +25,11 @@ export async function POST(request: Request) {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  const { message, sessionId, id: userMessageId, sessionMode } = requestBody;
+  const { message, sessionId, sessionMode } = requestBody;
 
   console.log("chat request", {
     message,
     sessionId,
-    userMessageId,
     sessionMode,
   });
 

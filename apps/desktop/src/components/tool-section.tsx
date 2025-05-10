@@ -12,6 +12,7 @@ import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 
 import { useBlenderStore } from "../stores/blender-store";
+import { useSessionStore } from "../stores/session-store";
 import { CodeBlock } from "./code-block";
 
 interface ToolInvocation {
@@ -45,6 +46,10 @@ function ToolInvocationRequest({
   const { toolInvocation } = part;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoExecutionDone, setAutoExecutionDone] = useState(false);
+
+  // Determine current session mode (agent or manual)
+  const sessionMode = useSessionStore((state) => state.sessionMode);
   const code = toolInvocation.args?.code || "";
 
   // Note: When using Claude 3.7 Sonnet as the reasoning model, tool calls like executeBlenderCode
@@ -519,6 +524,19 @@ function ToolInvocationRequest({
     }
   };
 
+  // Automatically execute tool if in agent mode and not yet executed
+  useEffect(() => {
+    if (sessionMode === "agent" && !autoExecutionDone) {
+      console.log(
+        `🤖 Agent mode active. Auto-executing tool: ${toolInvocation.toolName}`,
+      );
+      handleToolExecution();
+      setAutoExecutionDone(true);
+    }
+    // We intentionally omit handleToolExecution from deps to avoid re-execution
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionMode, autoExecutionDone]);
+
   return (
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="item-1" className="border-b-0">
@@ -553,34 +571,40 @@ function ToolInvocationRequest({
                 )}
               </div>
               <div className="flex flex-shrink-0 items-center gap-1.5">
-                <Button
-                  variant="secondary"
-                  size="xs"
-                  disabled={pending}
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent accordion from toggling
-                    console.log(
-                      `📱 UI: User clicked execute for tool: ${toolInvocation.toolName}`,
-                    );
-                    handleToolExecution();
-                  }}
-                >
-                  <CheckIcon className="size-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  disabled={pending}
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent accordion from toggling
-                    addToolResult?.({
-                      toolCallId: toolInvocation.toolCallId,
-                      result: { error: "User declined tool invocation" },
-                    });
-                  }}
-                >
-                  <XIcon className="size-3" />
-                </Button>
+                {sessionMode === "manual" && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="xs"
+                      disabled={pending}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent accordion from toggling
+                        console.log(
+                          `📱 UI: User clicked execute for tool: ${toolInvocation.toolName}`,
+                        );
+                        handleToolExecution();
+                      }}
+                    >
+                      <CheckIcon className="size-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      disabled={pending}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent accordion from toggling
+                        addToolResult?.({
+                          toolCallId: toolInvocation.toolCallId,
+                          result: {
+                            error: "User declined tool invocation",
+                          },
+                        });
+                      }}
+                    >
+                      <XIcon className="size-3" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </AccordionTrigger>
