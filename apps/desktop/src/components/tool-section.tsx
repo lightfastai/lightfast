@@ -11,7 +11,6 @@ import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 
-import { useBlenderStore } from "../stores/blender-store";
 import { useSessionStore } from "../stores/session-store";
 import { CodeBlock } from "./code-block";
 
@@ -57,77 +56,6 @@ function ToolInvocationRequest({
   // sending it, which is why the executeBlenderCode accordion appears all at once rather than being
   // built up incrementally. This is different from how OpenAI models handle streaming tool calls.
 
-  // Get Blender store state for code execution and state
-  const lastCodeExecution = useBlenderStore((state) => state.lastCodeExecution);
-  const blenderSceneInfo = useBlenderStore((state) => state.blenderSceneInfo);
-  const initializeMessageListener = useBlenderStore(
-    (state) => state.initializeMessageListener,
-  );
-
-  // Effect to handle Blender code execution results
-  useEffect(() => {
-    if (!pending || !lastCodeExecution) return;
-
-    // Check if this is a response to our current tool execution
-    if (toolInvocation.toolName === "executeBlenderCode") {
-      setPending(false);
-
-      if (lastCodeExecution.success) {
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: true,
-            output: lastCodeExecution.output || "Code executed successfully",
-            message: "Blender code executed successfully",
-          },
-        });
-      } else {
-        setError(
-          lastCodeExecution.error || "Failed to execute code in Blender",
-        );
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
-            success: false,
-            error:
-              lastCodeExecution.error || "Failed to execute code in Blender",
-          },
-        });
-      }
-    }
-  }, [
-    lastCodeExecution,
-    pending,
-    toolInvocation.toolName,
-    toolInvocation.toolCallId,
-    addToolResult,
-  ]);
-
-  // Effect to handle Blender scene info results
-  useEffect(() => {
-    if (!pending || !blenderSceneInfo) return;
-
-    // Check if this is a response to our current tool execution
-    if (toolInvocation.toolName === "getBlenderSceneInfo") {
-      setPending(false);
-
-      addToolResult({
-        toolCallId: toolInvocation.toolCallId,
-        result: {
-          success: true,
-          message: "Received Blender scene info",
-          scene_info: blenderSceneInfo,
-        },
-      });
-    }
-  }, [
-    blenderSceneInfo,
-    pending,
-    toolInvocation.toolName,
-    toolInvocation.toolCallId,
-    addToolResult,
-  ]);
-
   // Function to handle tool execution
   const handleToolExecution = async () => {
     console.log(
@@ -156,9 +84,6 @@ function ToolInvocationRequest({
     setPending(true);
     setError(null);
     console.log(`🧰 Executing Blender code`);
-
-    // Ensure message listener is initialized
-    initializeMessageListener();
 
     try {
       // First check if Blender is actually connected
@@ -298,9 +223,6 @@ function ToolInvocationRequest({
     setPending(true);
     setError(null);
     console.log(`🧰 Getting Blender scene info`);
-
-    // Ensure message listener is initialized
-    initializeMessageListener();
 
     try {
       // First check if Blender is actually connected
