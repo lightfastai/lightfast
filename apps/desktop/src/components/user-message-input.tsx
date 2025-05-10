@@ -124,52 +124,54 @@ export const UserMessageInput = ({
 
   return (
     <div className={cn("relative flex w-full flex-col", className)}>
-      {status === "ready" && (
-        <div className="absolute bottom-0 left-0 z-10 flex w-fit flex-row items-end p-2">
-          <ModeSelector mode={mode} setMode={setMode} />
-        </div>
-      )}
-      {status === "thinking" && (
-        <div className="absolute bottom-0 left-0 z-10 flex w-fit flex-row items-end p-2">
-          <span className="text-muted-foreground text-xs italic">
-            Thinking...
-          </span>
-        </div>
-      )}
-      <Textarea
-        ref={textareaRef}
-        disabled={status === "thinking" || status === "done"}
-        placeholder="Send a message..."
-        value={input}
-        onChange={handleInput}
-        className={cn(
-          "min-h-24 w-full resize-none overflow-hidden rounded-md !text-xs",
-        )}
-        rows={3}
-        autoFocus
-        onKeyDown={(event) => {
-          if (
-            event.key === "Enter" &&
-            !event.shiftKey &&
-            !event.nativeEvent.isComposing
-          ) {
-            event.preventDefault();
+      <div className="relative">
+        <Textarea
+          ref={textareaRef}
+          disabled={status === "thinking" || status === "done"}
+          placeholder="Send a message..."
+          value={input}
+          onChange={handleInput}
+          className={cn(
+            "min-h-24 w-full resize-none overflow-hidden rounded-md pb-10 !text-xs",
+          )}
+          rows={3}
+          autoFocus
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" &&
+              !event.shiftKey &&
+              !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault();
 
-            if (status !== "ready") {
-              toast.error("Please wait for the model to finish its response!");
-            } else {
-              submitForm();
+              if (status !== "ready") {
+                toast.error(
+                  "Please wait for the model to finish its response!",
+                );
+              } else {
+                submitForm();
+              }
             }
-          }
-        }}
-      />
-      <div className="absolute right-0 bottom-0 flex w-fit flex-row justify-end p-2">
-        {status === "thinking" && (
-          <StopButton stop={stop} setMessages={setMessages} />
-        )}
-        {status === "ready" && (
-          <SendButton input={input} submitForm={submitForm} />
-        )}
+          }}
+        />
+
+        <div className="absolute bottom-0 left-0 z-10 flex items-end p-2">
+          {status === "ready" && <ModeSelector mode={mode} setMode={setMode} />}
+          {status === "thinking" && (
+            <span className="text-muted-foreground text-xs italic">
+              Thinking...
+            </span>
+          )}
+        </div>
+
+        <div className="absolute right-0 bottom-0 z-10 p-2">
+          {status === "thinking" && (
+            <StopButton stop={stop} setMessages={setMessages} />
+          )}
+          {status === "ready" && (
+            <SendButton input={input} submitForm={submitForm} />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -186,7 +188,7 @@ function StopButton({
     <Button
       data-testid="stop-button"
       size="xs"
-      className="border-border hover:bg-accent bg-muted-foreground/10 absolute right-2 bottom-2 flex items-center justify-center rounded-full border"
+      className="border-border hover:bg-accent bg-muted-foreground/10 flex items-center justify-center rounded-full border"
       onClick={(event) => {
         event.preventDefault();
         if (stop) {
@@ -214,7 +216,7 @@ function SendButton({
       data-testid="send-button"
       variant="default"
       size="xs"
-      className="border-border hover:bg-accent bg-muted-foreground/10 absolute right-2 bottom-2 flex items-center justify-center rounded-full border"
+      className="border-border hover:bg-accent bg-muted-foreground/10 flex items-center justify-center rounded-full border"
       onClick={(event) => {
         event.preventDefault();
         submitForm();
