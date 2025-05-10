@@ -1,10 +1,10 @@
 import { useSessionStore } from "../stores/session-store";
-import { BlenderCodeTool } from "./tools/BlenderCodeTool";
-import { BlenderReconnectTool } from "./tools/BlenderReconnectTool";
-import { BlenderSceneInfoTool } from "./tools/BlenderSceneInfoTool";
-import { DefaultTool } from "./tools/DefaultTool";
+import { BlenderCodeTool } from "./tools/blender-execute-code-tool";
+import { BlenderReconnectTool } from "./tools/blender-reconnect-tool";
+import { BlenderSceneInfoTool } from "./tools/blender-scene-info-tool";
+import { DefaultTool } from "./tools/default-tool";
 import { ToolInvocation } from "./tools/types";
-import { WebSearchTool } from "./tools/WebSearchTool";
+import { WebSearchTool } from "./tools/web-search-tool";
 
 interface ToolInvocationPart {
   type: "tool-invocation";
