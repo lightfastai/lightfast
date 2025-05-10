@@ -103,7 +103,7 @@ export function ToolResult({ toolInvocation }: ToolResultProps) {
         return (
           <div className="p-2">
             {result.output && (
-              <div className="text-xs">
+              <div className="text-[0.65rem] leading-tight">
                 <div className={cn("mb-1 font-medium")}>Output:</div>
                 <ScrollArea className="max-h-48 w-full">
                   <pre className={cn("bg-muted rounded p-2")}>
