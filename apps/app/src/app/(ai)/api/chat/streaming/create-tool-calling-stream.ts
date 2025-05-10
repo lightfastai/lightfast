@@ -86,12 +86,6 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             sessionId,
             messages: truncatedMessages,
           }),
-          toolCallStreaming: true,
-          providerOptions: {
-            anthropic: {
-              thinking: { type: "enabled", budgetTokens: 12000 },
-            },
-          },
           experimental_transform: smoothStream({ chunking: "word" }),
           experimental_generateMessageId: () => nanoid(),
           onFinish: async (result) => {
