@@ -49,6 +49,7 @@ function ToolInvocationRequest({
   const code = toolInvocation.args?.code || "";
   const executionAttemptedRef = useRef(false);
   const toolCallIdRef = useRef(toolInvocation.toolCallId);
+  const activeDirectHandlerIdRef = useRef<string | null>(null);
 
   // Get the current session mode from the session store
   const sessionMode = useSessionStore((state) => state.sessionMode);
@@ -157,6 +158,7 @@ function ToolInvocationRequest({
 
     // Mark as attempted at the start to prevent race conditions
     executionAttemptedRef.current = true;
+    activeDirectHandlerIdRef.current = toolInvocation.toolCallId;
     setPending(true);
     setError(null);
     console.log(`🧰 Executing Blender code for ${toolInvocation.toolCallId}`);
@@ -372,6 +374,10 @@ function ToolInvocationRequest({
           error: e?.message || "Failed to execute tool",
         },
       });
+    } finally {
+      if (activeDirectHandlerIdRef.current === toolInvocation.toolCallId) {
+        activeDirectHandlerIdRef.current = null;
+      }
     }
   }, [
     toolInvocation.toolCallId,
@@ -392,6 +398,7 @@ function ToolInvocationRequest({
 
     // Mark as attempted at the start to prevent race conditions
     executionAttemptedRef.current = true;
+    activeDirectHandlerIdRef.current = toolInvocation.toolCallId;
     setPending(true);
     setError(null);
     console.log(
@@ -817,6 +824,14 @@ function ToolInvocationRequest({
   useEffect(() => {
     if (!pending || !lastCodeExecution) return;
 
+    // If a direct handler is active for this tool call, let it handle the result.
+    if (activeDirectHandlerIdRef.current === toolInvocation.toolCallId) {
+      console.log(
+        `ℹ️ Direct handler active for ${toolInvocation.toolCallId}, store-based executeBlenderCode result processing deferred.`,
+      );
+      return;
+    }
+
     // Check if this is a response to our current tool execution
     if (toolInvocation.toolName === "executeBlenderCode") {
       console.log(
@@ -830,12 +845,21 @@ function ToolInvocationRequest({
     toolInvocation.toolName,
     toolInvocation.toolCallId,
     handleExecuteBlenderCodeResult,
+    activeDirectHandlerIdRef,
   ]);
 
   // Effect to handle Blender scene info results from store (fallback method)
   useEffect(() => {
     // Skip if we're not waiting for scene info or if we don't have scene info
     if (!pending || !blenderSceneInfo) return;
+
+    // If a direct handler is active for this tool call, let it handle the result.
+    if (activeDirectHandlerIdRef.current === toolInvocation.toolCallId) {
+      console.log(
+        `ℹ️ Direct handler active for ${toolInvocation.toolCallId}, store-based getBlenderSceneInfo result processing deferred.`,
+      );
+      return;
+    }
 
     // Skip if this component doesn't handle getBlenderSceneInfo
     if (toolInvocation.toolName !== "getBlenderSceneInfo") return;
@@ -933,6 +957,7 @@ function ToolInvocationRequest({
     toolInvocation.toolName,
     toolInvocation.toolCallId,
     addToolResult,
+    activeDirectHandlerIdRef,
   ]);
 
   // Modify the UI to show different views based on session mode
