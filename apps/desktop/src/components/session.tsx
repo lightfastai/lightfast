@@ -97,13 +97,6 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
 
           if (!toolType) {
             console.error(`Unknown tool type: ${toolName}`);
-            addToolResult({
-              toolCallId: toolCallId,
-              result: {
-                success: false,
-                error: `Unknown tool type: ${toolName}`,
-              },
-            });
             return;
           }
 
