@@ -50,6 +50,18 @@ function ToolInvocationRequest({
   const executionAttemptedRef = useRef(false);
   const toolCallIdRef = useRef(toolInvocation.toolCallId);
 
+  // Get the current session mode from the session store
+  const sessionMode = useSessionStore((state) => state.sessionMode);
+  const autoExecute = sessionMode === "agent";
+
+  // Get Blender store state for code execution and state
+  const lastCodeExecution = useBlenderStore((state) => state.lastCodeExecution);
+  const blenderSceneInfo = useBlenderStore((state) => state.blenderSceneInfo);
+  const initializeMessageListener = useBlenderStore(
+    (state) => state.initializeMessageListener,
+  );
+  const connectionStatus = useBlenderStore((state) => state.connectionStatus);
+
   // Keep track if this specific tool invocation has been processed
   useEffect(() => {
     // Reset our tracking when the tool call ID changes
@@ -60,23 +72,20 @@ function ToolInvocationRequest({
       toolCallIdRef.current = toolInvocation.toolCallId;
       executionAttemptedRef.current = false;
     }
-  }, [toolInvocation.toolCallId]);
 
-  // Get the current session mode from the session store
-  const sessionMode = useSessionStore((state) => state.sessionMode);
-  const autoExecute = sessionMode === "agent";
+    // Reset execution attempted state when result is cleared
+    if (toolInvocation.result === undefined && executionAttemptedRef.current) {
+      console.log(
+        `🔄 Resetting execution attempted for ${toolInvocation.toolCallId} as result was cleared`,
+      );
+      executionAttemptedRef.current = false;
+    }
+  }, [toolInvocation.toolCallId, toolInvocation.result]);
 
   // Note: When using Claude 3.7 Sonnet as the reasoning model, tool calls like executeBlenderCode
   // won't be streamed character-by-character. Instead, Claude completes the entire tool call before
   // sending it, which is why the executeBlenderCode accordion appears all at once rather than being
   // built up incrementally. This is different from how OpenAI models handle streaming tool calls.
-
-  // Get Blender store state for code execution and state
-  const lastCodeExecution = useBlenderStore((state) => state.lastCodeExecution);
-  const blenderSceneInfo = useBlenderStore((state) => state.blenderSceneInfo);
-  const initializeMessageListener = useBlenderStore(
-    (state) => state.initializeMessageListener,
-  );
 
   // Handle Blender code execution results
   const handleExecuteBlenderCodeResult = useCallback(
@@ -138,6 +147,16 @@ function ToolInvocationRequest({
 
   // Handler for executing Blender code
   const handleExecuteBlenderCode = useCallback(async () => {
+    // Prevent duplicate executions
+    if (executionAttemptedRef.current) {
+      console.log(
+        `🛑 Execution already attempted for ${toolInvocation.toolCallId}`,
+      );
+      return;
+    }
+
+    // Mark as attempted at the start to prevent race conditions
+    executionAttemptedRef.current = true;
     setPending(true);
     setError(null);
     console.log(`🧰 Executing Blender code for ${toolInvocation.toolCallId}`);
@@ -206,14 +225,62 @@ function ToolInvocationRequest({
             console.log(
               `✅ Adding successful tool result for ${toolInvocation.toolCallId}`,
             );
-            addToolResult({
-              toolCallId: toolInvocation.toolCallId,
-              result: {
+
+            // Ensure we have a valid string output
+            const safeOutput =
+              typeof result.output === "string"
+                ? result.output
+                : "Code executed successfully";
+
+            // Log the result being sent to the tool
+            console.log(
+              `📤 Sending code execution result to tool ${toolInvocation.toolCallId}`,
+              {
                 success: true,
-                output: result.output || "Code executed successfully",
+                output: safeOutput,
                 message: "Blender code executed successfully",
               },
-            });
+            );
+
+            // Convert the result to a serializable format
+            try {
+              // Force JSON serialization to verify it's valid
+              const test = JSON.stringify({
+                success: true,
+                output: safeOutput,
+                message: "Blender code executed successfully",
+              });
+              console.log(
+                `✅ Code execution result successfully serialized (${test.length} bytes)`,
+              );
+
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: true,
+                  output: safeOutput,
+                  message: "Blender code executed successfully",
+                },
+              });
+
+              console.log(
+                `✅ addToolResult called successfully for ${toolInvocation.toolCallId}`,
+              );
+            } catch (serializationError) {
+              console.error(
+                `🔥 Error serializing code execution result for ${toolInvocation.toolCallId}:`,
+                serializationError,
+              );
+              // Fallback if serialization fails
+              addToolResult({
+                toolCallId: toolInvocation.toolCallId,
+                result: {
+                  success: true,
+                  message:
+                    "Blender code executed successfully (output too large to return)",
+                },
+              });
+            }
           } else {
             const errorMsg =
               result.error || "Failed to execute code in Blender";
@@ -315,6 +382,16 @@ function ToolInvocationRequest({
 
   // Handler for getting Blender scene info
   const handleGetBlenderSceneInfo = useCallback(async () => {
+    // Prevent duplicate executions
+    if (executionAttemptedRef.current) {
+      console.log(
+        `🛑 Execution already attempted for ${toolInvocation.toolCallId}`,
+      );
+      return;
+    }
+
+    // Mark as attempted at the start to prevent race conditions
+    executionAttemptedRef.current = true;
     setPending(true);
     setError(null);
     console.log(
@@ -375,15 +452,87 @@ function ToolInvocationRequest({
           `✅ getBlenderSceneInfo succeeded for ${toolInvocation.toolCallId}`,
         );
 
-        // Immediately use the result from the API call
-        addToolResult({
-          toolCallId: toolInvocation.toolCallId,
-          result: {
+        // Create a properly serializable copy of scene info
+        const safeSceneInfo = {
+          name: result.scene_info.name,
+          object_count: result.scene_info.object_count,
+          materials_count: result.scene_info.materials_count,
+          objects: result.scene_info.objects
+            ? result.scene_info.objects.map(
+                (obj: { name: string; type: string; location: number[] }) => ({
+                  name: obj.name,
+                  type: obj.type,
+                  location: obj.location,
+                }),
+              )
+            : [],
+        };
+
+        // Limit number of objects to prevent excessive response size
+        const limitedSceneInfo = {
+          ...safeSceneInfo,
+          objects: safeSceneInfo.objects.slice(0, 20), // Limit to first 20 objects
+          objects_total: safeSceneInfo.objects.length,
+        };
+
+        // Log the result being sent to the tool
+        console.log(
+          `📤 Sending scene info result to tool ${toolInvocation.toolCallId}`,
+          {
             success: true,
             message: "Received Blender scene info",
-            scene_info: result.scene_info,
+            scene_info: limitedSceneInfo,
           },
-        });
+        );
+
+        // Convert the result to a serializable format
+        try {
+          // Force JSON serialization to verify it's valid
+          const test = JSON.stringify({
+            success: true,
+            message: "Received Blender scene info",
+            scene_info: limitedSceneInfo,
+          });
+          console.log(
+            `✅ Scene info successfully serialized (${test.length} bytes)`,
+          );
+
+          // Immediately use the result from the API call
+          addToolResult({
+            toolCallId: toolInvocation.toolCallId,
+            result: {
+              success: true,
+              message: "Received Blender scene info",
+              scene_info: limitedSceneInfo,
+            },
+          });
+
+          console.log(
+            `✅ addToolResult called successfully for ${toolInvocation.toolCallId}`,
+          );
+        } catch (serializationError) {
+          console.error(
+            `🔥 Error serializing scene info for ${toolInvocation.toolCallId}:`,
+            serializationError,
+          );
+          // Fallback to a simplified version if serialization fails
+          addToolResult({
+            toolCallId: toolInvocation.toolCallId,
+            result: {
+              success: true,
+              message: "Received Blender scene info (simplified due to size)",
+              scene_info: {
+                name: safeSceneInfo.name,
+                object_count: safeSceneInfo.object_count,
+                materials_count: safeSceneInfo.materials_count,
+                objects_count: safeSceneInfo.objects.length,
+                first_few_objects: safeSceneInfo.objects
+                  .slice(0, 5)
+                  .map((o: { name: string }) => o.name),
+              },
+            },
+          });
+        }
       } else {
         const errorMsg =
           result.error || "Failed to get scene info from Blender";
@@ -583,21 +732,17 @@ function ToolInvocationRequest({
 
   // Memoized tool execution handler
   const handleToolExecution = useCallback(async () => {
-    // Prevent duplicate executions
-    if (pending || toolInvocation.result || executionAttemptedRef.current) {
-      console.log(`🛑 Skipping execution of ${toolInvocation.toolName} (${toolInvocation.toolCallId}): 
-        pending=${pending}, 
-        has result=${!!toolInvocation.result}, 
-        already attempted=${executionAttemptedRef.current}`);
+    // Prevent duplicate executions - use a simpler check to avoid race conditions
+    if (executionAttemptedRef.current) {
+      console.log(
+        `🛑 Skipping execution of ${toolInvocation.toolName} (${toolInvocation.toolCallId}): already attempted`,
+      );
       return;
     }
 
     console.log(
       `📱 UI: Handling tool execution for: ${toolInvocation.toolName} (${toolInvocation.toolCallId})`,
     );
-
-    // Mark this tool as having been attempted
-    executionAttemptedRef.current = true;
 
     // Dispatch to the appropriate handler based on tool name
     if (toolInvocation.toolName === "executeBlenderCode") {
@@ -617,8 +762,6 @@ function ToolInvocationRequest({
   }, [
     toolInvocation.toolCallId,
     toolInvocation.toolName,
-    pending,
-    toolInvocation.result,
     handleExecuteBlenderCode,
     handleGetBlenderSceneInfo,
     handleReconnectBlender,
@@ -626,19 +769,40 @@ function ToolInvocationRequest({
     handleOtherTool,
   ]);
 
-  // Auto-execute tool if in agent mode
+  // Auto-execute tool if in agent mode with a more reliable trigger
   useEffect(() => {
-    if (
+    const shouldAutoExecute =
       autoExecute &&
       toolInvocation.state === "call" &&
-      !pending &&
-      !toolInvocation.result &&
-      !executionAttemptedRef.current
-    ) {
+      !executionAttemptedRef.current &&
+      !toolInvocation.result;
+
+    // Debug information to help diagnose execution issues
+    if (autoExecute && !shouldAutoExecute) {
+      console.log(
+        `🔍 Debug: Not auto-executing ${toolInvocation.toolName} (${toolInvocation.toolCallId}) because:`,
+        {
+          autoExecute,
+          state: toolInvocation.state,
+          executionAttempted: executionAttemptedRef.current,
+          hasResult: !!toolInvocation.result,
+        },
+      );
+    }
+
+    if (shouldAutoExecute) {
       console.log(
         `⚡ Auto-executing tool in agent mode: ${toolInvocation.toolName} (${toolInvocation.toolCallId})`,
       );
-      handleToolExecution();
+
+      // Use a small delay to avoid race conditions with state updates
+      const timeoutId = setTimeout(() => {
+        if (!executionAttemptedRef.current) {
+          handleToolExecution();
+        }
+      }, 10);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [
     autoExecute,
@@ -646,7 +810,6 @@ function ToolInvocationRequest({
     toolInvocation.toolName,
     toolInvocation.state,
     toolInvocation.result,
-    pending,
     handleToolExecution,
   ]);
 
@@ -669,23 +832,98 @@ function ToolInvocationRequest({
     handleExecuteBlenderCodeResult,
   ]);
 
-  // Effect to handle Blender scene info results
+  // Effect to handle Blender scene info results from store (fallback method)
   useEffect(() => {
+    // Skip if we're not waiting for scene info or if we don't have scene info
     if (!pending || !blenderSceneInfo) return;
 
-    // Check if this is a response to our current tool execution
-    if (toolInvocation.toolName === "getBlenderSceneInfo") {
+    // Skip if this component doesn't handle getBlenderSceneInfo
+    if (toolInvocation.toolName !== "getBlenderSceneInfo") return;
+
+    // Skip if execution wasn't attempted (direct path should handle it)
+    if (!executionAttemptedRef.current) return;
+
+    console.log(
+      `📥 Received getBlenderSceneInfo from store for tool ${toolInvocation.toolCallId}`,
+    );
+    setPending(false);
+
+    // Create a properly serializable copy of scene info
+    const safeSceneInfo = {
+      name: blenderSceneInfo.name,
+      object_count: blenderSceneInfo.object_count,
+      materials_count: blenderSceneInfo.materials_count,
+      objects: blenderSceneInfo.objects
+        ? blenderSceneInfo.objects.map(
+            (obj: { name: string; type: string; location: number[] }) => ({
+              name: obj.name,
+              type: obj.type,
+              location: obj.location,
+            }),
+          )
+        : [],
+    };
+
+    // Limit number of objects to prevent excessive response size
+    const limitedSceneInfo = {
+      ...safeSceneInfo,
+      objects: safeSceneInfo.objects.slice(0, 20), // Limit to first 20 objects
+      objects_total: safeSceneInfo.objects.length,
+    };
+
+    console.log(
+      `📤 Sending scene info result from store to tool ${toolInvocation.toolCallId}`,
+      {
+        success: true,
+        message: "Received Blender scene info (via store)",
+        scene_info: limitedSceneInfo,
+      },
+    );
+
+    // Convert the result to a serializable format
+    try {
+      // Force JSON serialization to verify it's valid
+      const test = JSON.stringify({
+        success: true,
+        message: "Received Blender scene info (via store)",
+        scene_info: limitedSceneInfo,
+      });
       console.log(
-        `📥 Received getBlenderSceneInfo result for tool ${toolInvocation.toolCallId}`,
+        `✅ Scene info (from store) successfully serialized (${test.length} bytes)`,
       );
-      setPending(false);
 
       addToolResult({
         toolCallId: toolInvocation.toolCallId,
         result: {
           success: true,
           message: "Received Blender scene info",
-          scene_info: blenderSceneInfo,
+          scene_info: limitedSceneInfo,
+        },
+      });
+
+      console.log(
+        `✅ addToolResult called successfully from store handler for ${toolInvocation.toolCallId}`,
+      );
+    } catch (serializationError) {
+      console.error(
+        `🔥 Error serializing scene info from store for ${toolInvocation.toolCallId}:`,
+        serializationError,
+      );
+      // Fallback to a simplified version if serialization fails
+      addToolResult({
+        toolCallId: toolInvocation.toolCallId,
+        result: {
+          success: true,
+          message: "Received Blender scene info (simplified due to size)",
+          scene_info: {
+            name: safeSceneInfo.name,
+            object_count: safeSceneInfo.object_count,
+            materials_count: safeSceneInfo.materials_count,
+            objects_count: safeSceneInfo.objects.length,
+            first_few_objects: safeSceneInfo.objects
+              .slice(0, 5)
+              .map((o: { name: string }) => o.name),
+          },
         },
       });
     }
