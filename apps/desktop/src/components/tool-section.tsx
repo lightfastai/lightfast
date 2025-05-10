@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, Code2Icon, XIcon } from "lucide-react";
 
 import {
   Accordion,
@@ -46,6 +46,11 @@ function ToolInvocationRequest({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const code = toolInvocation.args?.code || "";
+
+  // Note: When using Claude 3.7 Sonnet as the reasoning model, tool calls like executeBlenderCode
+  // won't be streamed character-by-character. Instead, Claude completes the entire tool call before
+  // sending it, which is why the executeBlenderCode accordion appears all at once rather than being
+  // built up incrementally. This is different from how OpenAI models handle streaming tool calls.
 
   // Get Blender store state for code execution and state
   const lastCodeExecution = useBlenderStore((state) => state.lastCodeExecution);
@@ -444,6 +449,19 @@ function ToolInvocationRequest({
                 >
                   {toolInvocation.toolName.trim()}
                 </pre>
+                {code && (
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Code2Icon className="size-3" />
+                    <span className="text-xs">
+                      {code.length > 50 ? `${code.length} chars` : "View code"}
+                    </span>
+                  </span>
+                )}
+                {pending && (
+                  <span className="animate-pulse text-xs text-amber-500">
+                    Executing...
+                  </span>
+                )}
               </div>
               <div className="flex flex-shrink-0 items-center gap-1.5">
                 <Button
@@ -479,66 +497,65 @@ function ToolInvocationRequest({
           </AccordionTrigger>
 
           {/* Collapsible Content: Code and related error */}
-          {(code ||
-            error ||
-            (toolInvocation.result && toolInvocation.result.partial_error)) && (
-            <AccordionContent className="border-t pb-0">
-              {code && (
-                <div className="p-2">
-                  <ScrollArea className="h-48 w-full">
-                    <CodeBlock inline={false}>{code}</CodeBlock>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
+          <AccordionContent className="border-t pb-0">
+            {code ? (
+              <div className="p-2">
+                <ScrollArea className="h-48 w-full">
+                  <CodeBlock inline={false}>{code}</CodeBlock>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
 
-                  {/* Display partial execution results */}
-                  {toolInvocation.result &&
-                    toolInvocation.result.partial_error && (
-                      <div className="mt-2 rounded-md border p-2">
-                        <div className="mb-1 text-[0.7rem] font-medium text-amber-600 dark:text-amber-500">
-                          Partial Success: Some code executed successfully
-                          before errors
-                        </div>
-
-                        {toolInvocation.result.output && (
-                          <div className="text-muted-foreground bg-muted/30 mb-2 rounded p-1 text-[0.65rem] whitespace-pre-wrap">
-                            {toolInvocation.result.output}
-                          </div>
-                        )}
-
-                        {toolInvocation.result.error && (
-                          <div className="mt-1 text-[0.65rem] text-red-600">
-                            <span className="font-medium">Error:</span>{" "}
-                            {toolInvocation.result.error}
-                          </div>
-                        )}
+                {/* Display partial execution results */}
+                {toolInvocation.result &&
+                  toolInvocation.result.partial_error && (
+                    <div className="mt-2 rounded-md border p-2">
+                      <div className="mb-1 text-[0.7rem] font-medium text-amber-600 dark:text-amber-500">
+                        Partial Success: Some code executed successfully before
+                        errors
                       </div>
-                    )}
 
-                  {/* Regular error display (when not partial) */}
-                  {error && !toolInvocation.result?.partial_error && (
-                    <div
-                      className={cn(
-                        "mt-1 text-[0.65rem] leading-tight text-red-600",
+                      {toolInvocation.result.output && (
+                        <div className="text-muted-foreground bg-muted/30 mb-2 rounded p-1 text-[0.65rem] whitespace-pre-wrap">
+                          {toolInvocation.result.output}
+                        </div>
                       )}
-                    >
-                      {error}
+
+                      {toolInvocation.result.error && (
+                        <div className="mt-1 text-[0.65rem] text-red-600">
+                          <span className="font-medium">Error:</span>{" "}
+                          {toolInvocation.result.error}
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* Error when no code is present (e.g., tool call setup error), but still an error to display */}
-              {!code && error && (
-                <div
-                  className={cn(
-                    "mt-1 p-2 text-[0.65rem] leading-tight text-red-600",
-                  )}
-                >
-                  {error}
-                </div>
-              )}
-            </AccordionContent>
-          )}
+                {/* Regular error display (when not partial) */}
+                {error && !toolInvocation.result?.partial_error && (
+                  <div
+                    className={cn(
+                      "mt-1 text-[0.65rem] leading-tight text-red-600",
+                    )}
+                  >
+                    {error}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-muted-foreground p-4 text-center">
+                {error ? (
+                  <div className="text-[0.65rem] leading-tight text-red-600">
+                    {error}
+                  </div>
+                ) : (
+                  <div className="text-[0.65rem]">
+                    {toolInvocation.toolName === "executeBlenderCode"
+                      ? "No code provided for execution"
+                      : "No additional details available"}
+                  </div>
+                )}
+              </div>
+            )}
+          </AccordionContent>
         </div>
       </AccordionItem>
     </Accordion>
