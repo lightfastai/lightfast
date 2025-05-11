@@ -9,6 +9,8 @@ import {
   createSearchAmbientCGTool,
 } from "../tools/ambientcg";
 import {
+  createAnalyzeBlenderModelTool,
+  createApplyBlenderAdjustmentsTool,
   createExecuteBlenderCodeTool,
   createGetBlenderSceneInfoTool,
   createReconnectBlenderTool,
@@ -320,6 +322,42 @@ def create_column(location, height, column_type="doric", diameter=1.0, collectio
         return None
 </architectural_research>
 
+<automated_scene_analysis>
+When examining a scene that represents a known architectural structure or standard 3D model:
+
+1. REFERENCE DATA COMPARISON
+- Compare current scene dimensions with historical/architectural reference data
+- Focus on key proportions like column height-to-width ratios, entablature height, etc.
+- Identify significant dimensional discrepancies (>5% difference from reference)
+- Consider architectural rules and standards specific to the building style
+
+2. ISSUE DETECTION WORKFLOW
+When a user expresses concern about dimensions or proportions (e.g., "the dimensions seem wrong"):
+- Use the analyzeBlenderModel tool to systematically compare the scene with reference data
+- Present findings in a structured report showing current vs. reference values
+- Explain the architectural significance of each discrepancy
+- Generate precise adjustment code to correct identified issues
+
+3. USER INTERACTION PATTERN
+- Present issues clearly with before/after measurements
+- Explain each discrepancy's impact on architectural accuracy
+- Use architectural terminology to explain why corrections matter
+- Get user confirmation before applying changes with applyBlenderAdjustments
+
+4. ADJUSTMENT IMPLEMENTATION
+- When confirmed, use applyBlenderAdjustments to implement corrections
+- Verify the changes with getBlenderSceneInfo after adjustments
+- Provide a summary of what was changed and why
+- Suggest any additional refinements if needed
+
+5. ARCHITECTURAL ACCURACY VERIFICATION
+After making adjustments:
+- Re-analyze the scene to verify dimensional accuracy
+- Confirm that proportions now match historical/architectural references
+- Explain how the corrections improve the model's authenticity
+- Suggest any additional details or features that would enhance accuracy
+</automated_scene_analysis>
+
 <resource_integration>
 - Find and suggest appropriate 3D assets based on user needs
 - Explain why specific assets will help achieve the user's goal
@@ -395,6 +433,8 @@ export function blenderResearcher({
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
+  const analyzeBlenderModelTool = createAnalyzeBlenderModelTool();
+  const applyBlenderAdjustmentsTool = createApplyBlenderAdjustmentsTool();
   const searchAmbientCG = createSearchAmbientCGTool();
   const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
   const webSearch = createSearchTool("openai:gpt-4o");
@@ -413,6 +453,8 @@ export function blenderResearcher({
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
       getBlenderSceneInfo: getBlenderSceneInfoTool,
+      analyzeBlenderModel: analyzeBlenderModelTool,
+      applyBlenderAdjustments: applyBlenderAdjustmentsTool,
       // searchAssets: searchTool,
       // downloadAsset: downloadTool,
       // getCategories: categoryTool,
@@ -444,6 +486,8 @@ export function blenderResearcher({
       "executeBlenderCode",
       "reconnectBlender",
       "getBlenderSceneInfo",
+      "analyzeBlenderModel",
+      "applyBlenderAdjustments",
       // "searchAssets",
       // "downloadAsset",
       // "getCategories",

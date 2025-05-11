@@ -41,3 +41,29 @@ export function createGetBlenderSceneInfoTool() {
     // execute function removed to enable frontend confirmation
   });
 }
+
+export function createAnalyzeBlenderModelTool() {
+  return tool({
+    description:
+      "Analyzes the current Blender scene against architectural references and proposes adjustments",
+    parameters: z.object({
+      modelType: z
+        .string()
+        .describe("Type of model to analyze (e.g., 'parthenon', 'colosseum')"),
+    }),
+    // execute function removed to enable frontend confirmation like other tools
+  });
+}
+
+export function createApplyBlenderAdjustmentsTool() {
+  return tool({
+    description:
+      "Applies generated adjustments to fix architectural proportions in the Blender scene",
+    parameters: z.object({
+      adjustmentCode: z
+        .string()
+        .describe("The Python code that will make the adjustments"),
+    }),
+    // execute function removed to enable frontend confirmation like other tools
+  });
+}
