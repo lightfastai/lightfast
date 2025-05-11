@@ -3,6 +3,7 @@ import {
   appendResponseMessages,
   convertToCoreMessages,
   createDataStream,
+  smoothStream,
   streamText,
 } from "ai";
 
@@ -61,12 +62,11 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
   const { userMessage, ...rest } = config;
   return createDataStream({
     execute: (dataStream: DataStreamWriter) => {
-      const { messages, sessionId, workspaceId } = rest;
+      const { messages, sessionId } = rest;
 
       console.log("createToolCallingStreamResponse", {
         messages,
         sessionId,
-        workspaceId,
       });
 
       try {
@@ -83,8 +83,10 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
 
         const result = streamText({
           ...blenderResearcher({
+            sessionId,
             messages: truncatedMessages,
           }),
+          experimental_transform: smoothStream({ chunking: "word" }),
           experimental_generateMessageId: () => nanoid(),
           onFinish: async (result) => {
             const { response } = result;

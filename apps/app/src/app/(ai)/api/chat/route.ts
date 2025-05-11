@@ -1,18 +1,14 @@
 import type { Message } from "ai";
 import { geolocation } from "@vercel/functions";
 import { appendClientMessage } from "ai";
-import { eq } from "drizzle-orm";
 
 import type { Session, Stream } from "@vendor/db/lightfast/schema";
-import { db } from "@vendor/db/client";
-import { Workspace } from "@vendor/db/lightfast/schema";
 
 import type { RequestHints } from "./prompts";
 import type { PostRequestBody } from "./schema";
 import { createStreamId } from "./actions/create-stream-id";
 import { generateTitleFromUserMessage } from "./actions/generate-title-from-user-message";
 import { getMessagesBySessionId } from "./actions/get-messages-by-session-id";
-import { getSession } from "./actions/get-session";
 import { saveMessages } from "./actions/save-messages";
 import { saveSession } from "./actions/save-session";
 import { createToolCallingStreamResponse } from "./streaming/create-tool-calling-stream";
@@ -29,43 +25,24 @@ export async function POST(request: Request) {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  const { message, sessionId, workspaceId, id: userMessageId } = requestBody;
+  const { message, sessionId, id: userMessageId } = requestBody;
 
   console.log("chat request", {
     message,
     sessionId,
-    workspaceId,
     userMessageId,
   });
 
-  // ensure workspaceId exists
-  try {
-    const workspace = await db.query.Workspace.findFirst({
-      where: eq(Workspace.id, workspaceId),
-    });
-
-    if (!workspace) {
-      return new Response("Workspace not found", { status: 404 });
-    }
-  } catch (_) {
-    return new Response("Workspace not found", { status: 404 });
-  }
-
-  // create session if it doesn't exist
   let session: Session;
   try {
-    if (!sessionId) {
-      const title = await generateTitleFromUserMessage({ message });
-
-      session = await saveSession({
-        workspaceId,
-        title,
-      });
-    } else {
-      session = await getSession({ sessionId });
-    }
-  } catch (_) {
-    return new Response("Session not found", { status: 404 });
+    const title = await generateTitleFromUserMessage({ message });
+    session = await saveSession({
+      id: sessionId,
+      title,
+    });
+  } catch (error) {
+    console.error("Failed to save session", error);
+    return new Response("Failed to save session", { status: 500 });
   }
 
   let messages: Message[];
@@ -98,11 +75,9 @@ export async function POST(request: Request) {
           sessionId: session.id,
           role: "user",
           parts: message.parts,
-          // attachments: message.experimental_attachments ?? [],
           attachments: [],
           createdAt: new Date(),
           updatedAt: new Date(),
-          content: message.content,
         },
       ],
     });
@@ -124,7 +99,6 @@ export async function POST(request: Request) {
   const stream = createToolCallingStreamResponse({
     messages,
     sessionId: session.id,
-    workspaceId,
     userMessage: message,
   });
 

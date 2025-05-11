@@ -18,6 +18,12 @@ let blenderClient: WebSocket | null = null;
 let electronWebContents: WebContents | null = null;
 let heartbeatInterval: NodeJS.Timeout | null = null;
 
+// Map to store pending requests
+const pendingRequests = new Map<
+  string,
+  { resolve: (value: any) => void; reject: (reason: any) => void }
+>();
+
 function sendStatusUpdate(status: BlenderConnectionStatus) {
   if (electronWebContents && !electronWebContents.isDestroyed()) {
     electronWebContents.send(BLENDER_STATUS_CHANNEL, status);
@@ -94,11 +100,53 @@ export function startBlenderSocketServer(webContents: WebContents) {
       }, HEARTBEAT_INTERVAL);
 
       ws.on("message", (message: Buffer) => {
-        console.log("Received from Blender:", message.toString());
+        console.log(
+          "Received from Blender:",
+          message.toString().substring(0, 200) +
+            (message.toString().length > 200 ? "..." : ""),
+        );
 
         try {
           // Parse the message as JSON
           const parsedMessage = JSON.parse(message.toString());
+
+          // Check if this is a response to a pending request
+          if (parsedMessage.id && pendingRequests.has(parsedMessage.id)) {
+            console.log(
+              `⭐ Resolving pending request (ID: ${parsedMessage.id})`,
+            );
+            console.log(`   Message type: ${parsedMessage.type}`);
+            console.log(`   Success: ${parsedMessage.success}`);
+
+            // Log some details about the response based on message type
+            if (
+              parsedMessage.type === "scene_info" &&
+              parsedMessage.scene_info
+            ) {
+              console.log(
+                `   Scene: ${parsedMessage.scene_info.name}, Objects: ${parsedMessage.scene_info.object_count}`,
+              );
+            } else if (parsedMessage.type === "code_executed") {
+              if (parsedMessage.success) {
+                console.log(
+                  `   Output: ${(parsedMessage.output || "").substring(0, 50)}...`,
+                );
+              } else {
+                console.log(`   Error: ${parsedMessage.error}`);
+              }
+            }
+
+            const { resolve } = pendingRequests.get(parsedMessage.id)!;
+            pendingRequests.delete(parsedMessage.id);
+            resolve(parsedMessage);
+            console.log(
+              `✅ Request resolved and removed from pending queue (${pendingRequests.size} remaining)`,
+            );
+          } else if (parsedMessage.id) {
+            console.log(
+              `⚠️ Received message with ID ${parsedMessage.id} but no matching pending request found`,
+            );
+          }
 
           // Check if this is the handshake message from Blender
           if (
@@ -150,6 +198,65 @@ export function startBlenderSocketServer(webContents: WebContents) {
           }
 
           // Handle other message types as needed
+          // If not a handshake or disconnect, forward to renderer if it's a known type or all general messages
+          else if (
+            parsedMessage.type === "code_executed" ||
+            parsedMessage.type === "scene_info"
+          ) {
+            if (electronWebContents && !electronWebContents.isDestroyed()) {
+              // Add detailed logging for scene info responses
+              if (parsedMessage.type === "scene_info") {
+                console.log("🎬 Received Blender scene info:");
+                console.log("- Message ID:", parsedMessage.id);
+                console.log("- Success:", parsedMessage.success);
+                if (parsedMessage.scene_info) {
+                  console.log("- Scene name:", parsedMessage.scene_info.name);
+                  console.log(
+                    "- Object count:",
+                    parsedMessage.scene_info.object_count,
+                  );
+                  console.log(
+                    "- Materials count:",
+                    parsedMessage.scene_info.materials_count,
+                  );
+                  console.log(
+                    "- Objects list count:",
+                    parsedMessage.scene_info.objects
+                      ? parsedMessage.scene_info.objects.length
+                      : 0,
+                  );
+                  console.log(
+                    "- Full Scene Info:",
+                    JSON.stringify(parsedMessage.scene_info, null, 2),
+                  );
+                } else {
+                  console.log("- No scene info data provided");
+                }
+              } else if (parsedMessage.type === "code_executed") {
+                console.log("💻 Received Blender code execution result:");
+                console.log("- Message ID:", parsedMessage.id);
+                console.log("- Success:", parsedMessage.success);
+                if (parsedMessage.success) {
+                  console.log("- Output:", parsedMessage.output);
+                } else {
+                  console.log("- Error:", parsedMessage.error);
+                  console.log("- Error Type:", parsedMessage.error_type);
+                  if (parsedMessage.traceback) {
+                    console.log("- Traceback:", parsedMessage.traceback);
+                  }
+                }
+              }
+
+              console.log(
+                "Forwarding message from Blender to renderer:",
+                parsedMessage,
+              );
+              electronWebContents.send(
+                "blender-message-response",
+                parsedMessage,
+              );
+            }
+          }
         } catch (error) {
           console.error("Error processing message from Blender:", error);
         }
@@ -273,4 +380,65 @@ export function sendToBlender(message: object) {
   } else {
     console.warn("Cannot send message: Blender client not connected or ready.");
   }
+}
+
+// Function to send a request to Blender and wait for response
+export async function requestFromBlender(
+  action: string,
+  params: any = {},
+  timeoutMs: number = 5000,
+): Promise<any> {
+  console.log(`📤 requestFromBlender: Starting request for action "${action}"`);
+  console.log(`   Params: ${JSON.stringify(params).substring(0, 100)}`);
+  console.log(`   Current pending requests: ${pendingRequests.size}`);
+
+  return new Promise((resolve, reject) => {
+    if (!isBlenderConnected()) {
+      console.error("❌ requestFromBlender: Blender is not connected");
+      return reject(new Error("Blender is not connected"));
+    }
+
+    // Generate a unique message ID
+    const messageId = `${action}_${Date.now()}_${Math.floor(
+      Math.random() * 1000,
+    )}`;
+    console.log(`🆔 requestFromBlender: Generated message ID: ${messageId}`);
+
+    // Create message object
+    const message = {
+      action,
+      id: messageId,
+      params,
+    };
+
+    // Store the promise resolvers
+    pendingRequests.set(messageId, { resolve, reject });
+    console.log(
+      `🗂️ requestFromBlender: Added to pending requests (now ${pendingRequests.size})`,
+    );
+
+    // Set timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      if (pendingRequests.has(messageId)) {
+        console.error(
+          `⏰ requestFromBlender: Request timed out for ID ${messageId}`,
+        );
+        pendingRequests.delete(messageId);
+        reject(new Error(`Request to Blender timed out after ${timeoutMs}ms`));
+      }
+    }, timeoutMs);
+
+    // Send the message
+    try {
+      blenderClient!.send(JSON.stringify(message));
+      console.log(
+        `📨 requestFromBlender: Message sent to Blender (ID: ${messageId})`,
+      );
+    } catch (error) {
+      console.error(`❌ requestFromBlender: Error sending message:`, error);
+      clearTimeout(timeoutId);
+      pendingRequests.delete(messageId);
+      reject(error);
+    }
+  });
 }

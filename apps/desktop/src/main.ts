@@ -1,7 +1,7 @@
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 import {
   installExtension,
   REACT_DEVELOPER_TOOLS,
@@ -11,16 +11,6 @@ import type { EnvClient } from "./env/client-types";
 // Import the validated environment variables
 import { env } from "./env/index";
 import registerListeners from "./helpers/ipc/listeners-register";
-// Import the blender connection module and its variables
-import {
-  getBlenderStatus,
-  isBlenderConnected,
-  sendToBlender,
-  startBlenderSocketServer,
-} from "./main/blender-connection";
-
-// Example usage (if you had defined variables in env.ts):
-// console.log("API Key:", env.API_KEY);
 
 const inDevelopment = process.env.NODE_ENV === "development";
 
@@ -36,157 +26,14 @@ ipcMain.handle("get-client-env", (): EnvClient => {
   };
   return clientEnv;
 });
-
-// Handle Blender object creation
-ipcMain.handle("handle-blender-create-object", async (event, args) => {
-  try {
-    console.log("Main: Received request to create Blender object:", args);
-
-    // Extract parameters from args
-    const { objectType, location = { x: 0, y: 0, z: 0 }, name } = args;
-
-    // Create command for Blender
-    const command = {
-      action: "create_object",
-      params: {
-        type: objectType,
-        location,
-        name:
-          name ||
-          `New${objectType.charAt(0)}${objectType.slice(1).toLowerCase()}`,
-      },
-    };
-
-    // Check if Blender is connected before attempting to send the command
-    if (!isBlenderConnected()) {
-      console.warn("Main: Blender is not connected. Cannot execute command.");
-      return {
-        success: false,
-        error:
-          "Blender is not connected. Please check your Blender connection.",
-        errorCode: "BLENDER_NOT_CONNECTED",
-      };
-    }
-
-    // Send to Blender via WebSocket
-    sendToBlender(command);
-
-    // For now, return a success message - in a more advanced implementation,
-    // we would wait for a response from Blender
-    return {
-      success: true,
-      message: `Created ${objectType.toLowerCase()} at location (${location.x}, ${location.y}, ${location.z})`,
-      objectName: command.params.name,
-    };
-  } catch (error: any) {
-    console.error("Main: Error handling Blender object creation:", error);
-    return {
-      success: false,
-      error: `Failed to create Blender object: ${error.message}`,
-      errorCode: "EXECUTION_ERROR",
-    };
-  }
-});
-
-// Add handler for getting Blender status
-ipcMain.handle("get-blender-status", () => {
-  // Return the current Blender connection status using the imported function
-  return getBlenderStatus();
-});
-
-// Add handler for sending messages to Blender
-ipcMain.handle("send-to-blender", async (event, message) => {
-  try {
-    console.log("Main: Sending message to Blender:", message);
-
-    // Check if Blender is connected
-    if (!isBlenderConnected()) {
-      console.warn("Main: Blender is not connected. Cannot send message.");
-      return {
-        success: false,
-        error:
-          "Blender is not connected. Please check your Blender connection.",
-        errorCode: "BLENDER_NOT_CONNECTED",
-      };
-    }
-
-    // Send the message to Blender
-    sendToBlender(message);
-
-    return {
-      success: true,
-      message: "Message sent to Blender",
-    };
-  } catch (error: any) {
-    console.error("Main: Error sending message to Blender:", error);
-    return {
-      success: false,
-      error: `Failed to send message to Blender: ${error.message}`,
-      errorCode: "EXECUTION_ERROR",
-    };
-  }
-});
-
-// Add Blender execute code handler
-ipcMain.handle("handle-blender-execute-code", async (event, args) => {
-  try {
-    console.log("Main: Received request to execute code in Blender");
-
-    // Extract code from args
-    const { code } = args;
-
-    if (!code) {
-      console.warn("Main: No code provided for execution");
-      return {
-        success: false,
-        error: "No code provided for execution",
-        errorCode: "INVALID_CODE",
-      };
-    }
-
-    // Check if Blender is connected before attempting to send the command
-    if (!isBlenderConnected()) {
-      console.warn("Main: Blender is not connected. Cannot execute code.");
-      return {
-        success: false,
-        error:
-          "Blender is not connected. Please check your Blender connection.",
-        errorCode: "BLENDER_NOT_CONNECTED",
-      };
-    }
-
-    // Send to Blender via WebSocket
-    const command = {
-      action: "execute_code",
-      params: {
-        code,
-      },
-    };
-
-    sendToBlender(command);
-
-    // For now, return a success message - in a more advanced implementation,
-    // we would wait for a response from Blender with the execution results
-    return {
-      success: true,
-      message: "Code has been sent to Blender for execution",
-    };
-  } catch (error: any) {
-    console.error("Main: Error handling Blender code execution:", error);
-    return {
-      success: false,
-      error: `Failed to execute code in Blender: ${error.message}`,
-      errorCode: "EXECUTION_ERROR",
-    };
-  }
-});
 // --- End IPC Handlers ---
 
-function createWindow() {
+// Function to create the Composer window
+function createComposerWindow() {
   const preload = path.join(__dirname, "preload.js");
-  const mainWindow = new BrowserWindow({
-    width: 1536,
-    height: 960,
+  const composerWindow = new BrowserWindow({
+    width: 400,
+    height: 800,
     frame: false,
     webPreferences: {
       devTools: inDevelopment,
@@ -197,41 +44,20 @@ function createWindow() {
       preload: preload,
     },
   });
-  registerListeners(mainWindow);
 
-  // Initialize Blender WebSocket server
-  startBlenderSocketServer(mainWindow.webContents);
-  console.log("Blender WebSocket server initialized");
+  // Register listeners
+  registerListeners(composerWindow);
 
-  ipcMain.on("minimize-window", () => {
-    mainWindow?.minimize();
-  });
-
-  ipcMain.on("maximize-window", () => {
-    if (mainWindow?.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow?.maximize();
-    }
-  });
-
-  ipcMain.on("close-window", () => {
-    mainWindow?.close();
-  });
-
-  mainWindow.on("maximize", () => {
-    mainWindow.webContents.send("window-maximized");
-  });
-
-  mainWindow.on("unmaximize", () => {
-    mainWindow.webContents.send("window-unmaximized");
-  });
-
+  // Load the composer HTML (adjust path as needed)
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    // If using Vite dev server, load a specific route or file
+    composerWindow.loadURL(`${MAIN_WINDOW_VITE_DEV_SERVER_URL}/composer`);
   } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+    composerWindow.loadFile(
+      path.join(
+        __dirname,
+        `../renderer/${MAIN_WINDOW_VITE_NAME}/composer.html`,
+      ),
     );
   }
 }
@@ -245,7 +71,10 @@ async function installExtensions() {
   }
 }
 
-app.whenReady().then(createWindow).then(installExtensions);
+app.whenReady().then(() => {
+  createComposerWindow();
+  installExtensions();
+});
 
 //osX only
 app.on("window-all-closed", () => {
@@ -256,7 +85,12 @@ app.on("window-all-closed", () => {
 
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    createComposerWindow();
   }
 });
 //osX only ends
+
+// Unregister all shortcuts when app quits
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+});

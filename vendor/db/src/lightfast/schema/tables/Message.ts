@@ -18,7 +18,6 @@ export const DBMessage = pgTable(
     role: varchar("role", { length: 191 }).notNull(), // @todo enforce enum for typesafety...
     // Using 'parts' to align with Vercel AI SDK v3 messages
     parts: json("parts").notNull().default([]),
-    content: json("content"),
     // Keeping attachments field as in the example for future use
     attachments: json("attachments").notNull().default([]),
     createdAt: timestamp("created_at").defaultNow().notNull(),

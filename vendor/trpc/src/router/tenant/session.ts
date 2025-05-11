@@ -34,47 +34,34 @@ export const sessionRouter = {
       return results;
     }),
 
-  list: publicProcedure
-    .input(
-      z.object({
-        workspaceId: z.string(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const sessions = await ctx.db.query.Session.findMany({
-        with: {
-          messages: true,
-        },
-        where: eq(Session.workspaceId, input.workspaceId),
-        orderBy: [desc(Session.updatedAt)],
+  list: publicProcedure.query(async ({ ctx }) => {
+    const sessions = await ctx.db.query.Session.findMany({
+      with: {
+        messages: true,
+      },
+      orderBy: [desc(Session.updatedAt)],
+    });
+
+    return sessions;
+  }),
+
+  create: publicProcedure.mutation(async ({ ctx }) => {
+    const [newSession] = await ctx.db
+      .insert(Session)
+      .values({
+        title: "New Session",
+      })
+      .returning({ id: Session.id, title: Session.title });
+
+    if (!newSession) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Failed to create session",
       });
+    }
 
-      return sessions;
-    }),
-
-  create: publicProcedure
-    .input(
-      z.object({
-        workspaceId: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const [newSession] = await ctx.db
-        .insert(Session)
-        .values({
-          workspaceId: input.workspaceId,
-        })
-        .returning({ id: Session.id, title: Session.title });
-
-      if (!newSession) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Failed to create session",
-        });
-      }
-
-      return newSession;
-    }),
+    return newSession;
+  }),
 
   update: publicProcedure
     .input(

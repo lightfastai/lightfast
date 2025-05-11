@@ -1,19 +1,28 @@
+import { sql } from "drizzle-orm";
+
 import { db } from "@vendor/db/client";
 import { Session } from "@vendor/db/lightfast/schema";
 
 export async function saveSession({
-  workspaceId,
+  id,
   title,
 }: {
-  workspaceId: string;
+  id?: string;
   title: string;
 }) {
   try {
     const [session] = await db
       .insert(Session)
       .values({
-        workspaceId,
+        ...(id ? { id } : {}),
         title,
+      })
+      .onConflictDoUpdate({
+        target: Session.id,
+        set: {
+          title: sql.raw(`excluded.title`),
+          updatedAt: sql.raw(`now()`),
+        },
       })
       .returning();
 
@@ -23,7 +32,7 @@ export async function saveSession({
 
     return session;
   } catch (error) {
-    console.error("Failed to save chat in database");
+    console.error("Failed to save session in database");
     throw error;
   }
 }

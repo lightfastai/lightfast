@@ -1,11 +1,10 @@
 import { relations } from "drizzle-orm";
-import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm/sql";
 
 import { nanoid } from "@repo/lib";
 
 import { DBMessage } from "./Message";
-import { Workspace } from "./Workspace";
 
 // Renaming Chat to Session as per user preference/file structure
 export const Session = pgTable(
@@ -15,9 +14,6 @@ export const Session = pgTable(
       .notNull()
       .primaryKey()
       .$defaultFn(() => nanoid()),
-    workspaceId: varchar("workspace_id", { length: 191 })
-      .notNull()
-      .references(() => Workspace.id, { onDelete: "cascade" }), // Keep link to Workspace
     title: text("title").notNull().default("New Chat"),
     // Add visibility if needed, like in the example
     // visibility: varchar("visibility", { enum: ["public", "private"] })
@@ -29,17 +25,9 @@ export const Session = pgTable(
       .notNull()
       .$onUpdateFn(() => sql`now()`),
   },
-  (table) => [
-    index("session_workspace_idx").on(table.workspaceId), // Updated index name
-  ],
 );
 
-// Renaming ChatRelations to SessionRelations
-export const SessionRelations = relations(Session, ({ one, many }) => ({
-  workspace: one(Workspace, {
-    fields: [Session.workspaceId],
-    references: [Workspace.id],
-  }),
+export const SessionRelations = relations(Session, ({ many }) => ({
   messages: many(DBMessage), // A session (chat) can have multiple messages
 }));
 
