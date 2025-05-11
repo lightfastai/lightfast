@@ -104,11 +104,11 @@ export function BlenderCodeTool({
                     Executing...
                   </span>
                 )}
-                {autoExecute && !readyToExecute && !executed && code && (
+                {/* {autoExecute && !readyToExecute && !executed && code && (
                   <span className="text-xs text-blue-500">
                     Waiting for complete code...
                   </span>
-                )}
+                )} */}
               </div>
               <div className="flex flex-shrink-0 items-center gap-1.5">
                 {!autoExecute && !executed && (
