@@ -3,7 +3,6 @@ import {
   appendResponseMessages,
   convertToCoreMessages,
   createDataStream,
-  smoothStream,
   streamText,
 } from "ai";
 
@@ -44,7 +43,6 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             sessionId,
             messages: truncatedMessages,
           }),
-          experimental_transform: smoothStream({ chunking: "word" }),
           experimental_generateMessageId: () => nanoid(),
           onFinish: async ({ response }) => {
             const assistantId = getTrailingMessageId({

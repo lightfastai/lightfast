@@ -161,15 +161,11 @@ export function ToolResult({ toolInvocation }: ToolResultProps) {
                 <summary className={cn("cursor-pointer text-xs")}>
                   Raw Scene Info Data
                 </summary>
-                <ScrollArea className="max-h-72 w-full">
-                  <pre
-                    className={cn(
-                      "bg-background mt-2 mb-2 rounded border p-2 text-xs whitespace-pre-wrap",
-                    )}
-                  >
+                <ScrollArea className="mt-2 max-h-72 w-full overflow-auto rounded-md border">
+                  <ScrollBar />
+                  <CodeBlock inline={false}>
                     {JSON.stringify(result.scene_info, null, 2)}
-                  </pre>
-                  <ScrollBar orientation="horizontal" />
+                  </CodeBlock>
                 </ScrollArea>
               </details>
             </div>

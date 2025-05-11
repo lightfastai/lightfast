@@ -27,6 +27,10 @@ const unifiedPrompt = `
 You are an expert Blender 3D assistant, powered by Lightfast AI. Your primary purpose is to help users create and modify 3D scenes in Blender efficiently and accurately.
 </identity>
 
+<scene_info_protocol>
+The MOST IMPORTANT and REQUIRED FIRST STEP before any scene modification, code execution, or troubleshooting is to call 'getBlenderSceneInfo' (with a clear explanation to the user). You MUST always call 'getBlenderSceneInfo' first to obtain the latest scene structure, objects, and state. NEVER proceed with any other tool, code, or suggestion until you have up-to-date scene information. This rule is mandatory and supersedes all other workflow steps. If you do not have current scene info, or if the scene may have changed, you must call 'getBlenderSceneInfo' again before proceeding.
+</scene_info_protocol>
+
 <critical_action_protocol>
 Before calling ANY tool, you MUST provide a clear, concise explanation that includes:
 - What specific action you're taking with the tool
@@ -81,6 +85,8 @@ If you encounter errors:
 2. Describe your plan to resolve it
 3. Take the appropriate action (e.g., reconnect, modify code)
 
+IMPORTANT: If ANY call to 'executeBlenderCode' or 'getBlenderSceneInfo' fails (for any reason), you MUST immediately attempt to call 'reconnectBlender' and explain to the user that you are doing so. Only proceed with further actions after a successful reconnect or after providing clear troubleshooting steps if reconnect fails. This rule is mandatory and supersedes all other error handling instructions.
+
 For partial execution errors:
 1. If an error mentions "object not in collection", this indicates the code executed partially but failed at a specific point
 2. In these cases, first check the scene information again with 'getBlenderSceneInfo' to understand what was created successfully
@@ -91,6 +97,16 @@ For partial execution errors:
    - Add incremental execution blocks with try/except statements for critical operations
    - Avoid assuming collections or objects exist without checking first
 </error_handling>
+
+<dimension_and_scale_reasoning>
+Whenever you are asked to perform any modeling, transformation, or operation that involves dimensions, scale, or real-world proportions (such as creating objects of a certain size, arranging architectural elements, or matching reference images):
+- Think carefully about the correct real-world dimensions and proportions for the objects or structures involved
+- If the user provides dimensions, use them precisely; if not, research or estimate reasonable values based on real-world references or architectural standards
+- Always explain your reasoning for the chosen dimensions, including any sources, standards, or assumptions you use
+- If you are unsure, ask the user for clarification or provide a range of reasonable options
+- Never proceed with arbitrary or default dimensions unless you have explained why they are appropriate
+- This dimension reasoning step is required before any code execution involving scale or size
+</dimension_and_scale_reasoning>
 
 <code_quality_principles>
 - Write clean, well-commented Blender Python code
@@ -397,45 +413,45 @@ export function blenderResearcher({
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
       getBlenderSceneInfo: getBlenderSceneInfoTool,
-      searchAssets: searchTool,
-      downloadAsset: downloadTool,
-      getCategories: categoryTool,
-      searchAmbientCG,
-      downloadAmbientCGTexture,
+      // searchAssets: searchTool,
+      // downloadAsset: downloadTool,
+      // getCategories: categoryTool,
+      // searchAmbientCG,
+      // downloadAmbientCGTexture,
       webSearch,
-      createDocument: createDocumentTool,
-      updateDocument: updateDocumentTool,
+      // createDocument: createDocumentTool,
+      // updateDocument: updateDocumentTool,
     },
-    toolCallStreaming: true,
-    providerOptions: {
-      anthropic: {
-        thinking: {
-          type: "enabled",
-          budgetTokens: 12000,
-        },
-        // Setting tool_choice to "auto" to let the model decide when to use tools
-        tool_choice: "auto",
-      },
-      openrouter: {
-        thinking: {
-          type: "enabled",
-          budgetTokens: 12000,
-        },
-        tool_choice: "auto",
-      },
-    },
+    // toolCallStreaming: true,
+    // providerOptions: {
+    //   anthropic: {
+    //     thinking: {
+    //       type: "enabled",
+    //       budgetTokens: 12000,
+    //     },
+    //     // Setting tool_choice to "auto" to let the model decide when to use tools
+    //     tool_choice: "auto",
+    //   },
+    //   openrouter: {
+    //     thinking: {
+    //       type: "enabled",
+    //       budgetTokens: 12000,
+    //     },
+    //     tool_choice: "auto",
+    //   },
+    // },
     experimental_activeTools: [
       "executeBlenderCode",
       "reconnectBlender",
       "getBlenderSceneInfo",
-      "searchAssets",
-      "downloadAsset",
-      "getCategories",
-      "searchAmbientCG",
-      "downloadAmbientCGTexture",
+      // "searchAssets",
+      // "downloadAsset",
+      // "getCategories",
+      // "searchAmbientCG",
+      // "downloadAmbientCGTexture",
       "webSearch",
-      "createDocument",
-      "updateDocument",
+      // "createDocument",
+      // "updateDocument",
     ],
     maxSteps: 10,
     experimental_transform: smoothStream({ chunking: "word" }),
