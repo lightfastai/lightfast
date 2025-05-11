@@ -1,14 +1,21 @@
 import { createMemoryHistory, createRouter } from "@tanstack/react-router";
 
-import { rootTree } from "./routes";
+import { composerTree } from "./routes";
 
 declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router;
+    router: AppRouter;
   }
 }
 
 const history = createMemoryHistory({
   initialEntries: ["/"],
 });
-export const router = createRouter({ routeTree: rootTree, history: history });
+
+// Custom router for composer network
+export const composerRouter = createRouter({
+  routeTree: composerTree,
+  history: history,
+});
+
+export type AppRouter = typeof composerRouter;

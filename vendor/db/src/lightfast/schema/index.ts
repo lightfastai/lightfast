@@ -1,10 +1,4 @@
+export * from "./tables/Message";
 export * from "./tables/Session";
-export * from "./tables/Workspace";
-
-export * from "./types/Geometry";
-export * from "./types/Material";
-export * from "./types/TextureHandle";
-export * from "./types/Texture";
-export * from "./types/Txt2Img";
-export * from "./types/Window";
-export * from "./types/NodePosition";
+export * from "./tables/Stream";
+export * from "./tables/Document";

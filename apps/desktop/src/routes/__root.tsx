@@ -1,9 +1,9 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 
-export const RootRoute = createRootRoute({
-  component: Root,
+export const ComposerRootRoute = createRootRoute({
+  component: ComposerRoot,
 });
 
-function Root() {
+function ComposerRoot() {
   return <Outlet />;
 }

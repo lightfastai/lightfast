@@ -1,136 +1,85 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
-import { useSidebar } from "@repo/ui/components/ui/sidebar";
+import {
+  closeWindow,
+  maximizeWindow,
+  minimizeWindow,
+} from "../helpers/window-helpers";
 
 // Custom event name for sidebar toggle
-export const SIDEBAR_TOGGLE_EVENT = "app:sidebar:toggle";
+export const SIDEBAR_TOGGLE_EVENT = "sidebar-toggle";
 
 export function TitleBar() {
-  const [isMaximized, setIsMaximized] = useState(false);
-  const cleanupFuncs = useRef<(() => void)[]>([]);
+  const [isHovering, setIsHovering] = useState(false);
 
-  // Use the sidebar context to get the toggle function
-  const { toggleSidebar, open } = useSidebar();
-
-  // Enhanced toggle sidebar function
-  const handleToggleSidebar = () => {
-    toggleSidebar();
-    // Dispatch a custom event that other components can listen for
-    window.dispatchEvent(
-      new CustomEvent(SIDEBAR_TOGGLE_EVENT, {
-        detail: { isOpen: !open },
-      }),
-    );
-  };
-
-  useEffect(() => {
-    const handleMaximized = () => setIsMaximized(true);
-    const handleUnmaximized = () => setIsMaximized(false);
-
-    if (window.electronAPI?.on) {
-      const cleanupMaximized = window.electronAPI.on(
-        "window-maximized",
-        handleMaximized,
-      );
-      const cleanupUnmaximized = window.electronAPI.on(
-        "window-unmaximized",
-        handleUnmaximized,
-      );
-
-      if (cleanupMaximized) cleanupFuncs.current.push(cleanupMaximized);
-      if (cleanupUnmaximized) cleanupFuncs.current.push(cleanupUnmaximized);
-    } else {
-      console.warn(
-        "Electron electronAPI not found. Maximize state won't sync.",
-      );
+  const sendCommand = useCallback((command: string) => {
+    if (command === "close") {
+      closeWindow();
+    } else if (command === "minimize") {
+      minimizeWindow();
+    } else if (command === "maximize" || command === "unmaximize") {
+      maximizeWindow();
     }
-
-    return () => {
-      cleanupFuncs.current.forEach((cleanup) => cleanup());
-      cleanupFuncs.current = [];
-    };
   }, []);
 
-  // Add keyboard shortcut for toggling sidebar (Cmd+S)
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for Cmd+S (macOS) or Ctrl+S (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
-        event.preventDefault(); // Prevent default save action
-        handleToggleSidebar();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [toggleSidebar, open]);
-
-  const handleMinimize = () => {
-    window.electronAPI?.send("minimize-window");
-  };
-
-  const handleMaximize = () => {
-    window.electronAPI?.send("maximize-window");
-  };
-
-  const handleClose = () => {
-    window.electronAPI?.send("close-window");
-  };
+  // Keyboard shortcuts have been moved to useKeyboardShortcuts hook
 
   return (
     <div
-      className="absolute top-0 right-0 left-0 z-[1000] flex h-8 items-center bg-none pt-8 pl-8"
+      className="absolute top-0 right-0 left-0 z-50 bg-transparent select-none"
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="flex items-center space-x-6 pl-1">
-        {/* macOS Traffic Lights */}
-        <div
-          className="flex space-x-2"
-          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-        >
+      <div className="flex h-10 items-center justify-between px-4 pt-8">
+        {/* Left side - macOS style window controls */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleClose}
-            className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-600 focus:outline-none active:bg-red-700"
-            aria-label="Close"
-          />
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand("close")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
+          ></button>
           <button
-            onClick={handleMinimize}
-            className="h-3 w-3 rounded-full bg-yellow-500 hover:bg-yellow-600 focus:outline-none active:bg-yellow-700"
-            aria-label="Minimize"
-          />
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-yellow-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand("minimize")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
+          ></button>
           <button
-            onClick={handleMaximize}
-            className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-600 focus:outline-none active:bg-green-700"
-            aria-label={isMaximized ? "Restore" : "Maximize"}
-          />
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-green-500 transition-opacity hover:opacity-100"
+            onClick={() => sendCommand("maximize")}
+            style={
+              {
+                WebkitAppRegion: "no-drag",
+                opacity: isHovering ? 1 : 0.8,
+              } as React.CSSProperties
+            }
+          ></button>
         </div>
-
-        {/* Sidebar Trigger Button */}
-        <button
-          onClick={handleToggleSidebar}
-          className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-6 w-6 items-center justify-center rounded-md focus:outline-none"
-          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          aria-label="Toggle Sidebar"
-          title="Toggle Sidebar (⌘S)"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-            <line x1="9" x2="9" y1="3" y2="21" />
-          </svg>
-        </button>
+        {/* Centered Title */}
+        <div className="flex-grow text-center">
+          <h1 className="inline-block font-mono text-xs font-bold">
+            Lightfast{" "}
+            <span className="relative inline-block bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-400 bg-clip-text font-mono text-transparent">
+              Computer
+            </span>
+          </h1>
+        </div>
+        {/* Right side - invisible buttons for symmetry */}
+        <div className="flex items-center gap-2">
+          <button className="pointer-events-none flex h-3 w-3 rounded-full opacity-0"></button>
+          <button className="pointer-events-none flex h-3 w-3 rounded-full opacity-0"></button>
+          <button className="pointer-events-none flex h-3 w-3 rounded-full opacity-0"></button>
+        </div>
       </div>
     </div>
   );

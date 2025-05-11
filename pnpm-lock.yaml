@@ -160,6 +160,9 @@ importers:
       ai:
         specifier: ^4.3.13
         version: 4.3.13(react@19.1.0)(zod@3.24.3)
+      exa-js:
+        specifier: ^1.6.13
+        version: 1.6.13(encoding@0.1.13)
       geist:
         specifier: ^1.3.1
         version: 1.3.1(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -190,6 +193,12 @@ importers:
       react-wrap-balancer:
         specifier: ^1.1.1
         version: 1.1.1(react@19.1.0)
+      redis:
+        specifier: ^5.0.0
+        version: 5.0.1
+      resumable-stream:
+        specifier: ^2.0.0
+        version: 2.0.0
       superjson:
         specifier: 2.2.1
         version: 2.2.1
@@ -254,6 +263,9 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@repo/lib':
+        specifier: workspace:^
+        version: link:../../packages/lib
       '@repo/trpc-client':
         specifier: workspace:*
         version: link:../../packages/trpc-client
@@ -290,6 +302,12 @@ importers:
       react-icons:
         specifier: ^5.5.0
         version: 5.5.0(react@19.1.0)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.1.2)(react@19.1.0)
+      remark-gfm:
+        specifier: ^4.0.0
+        version: 4.0.0
       superjson:
         specifier: 2.2.1
         version: 2.2.1
@@ -381,6 +399,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.25.1(jiti@2.4.2)
+      postcss:
+        specifier: ^8.5.3
+        version: 8.5.3
       tailwindcss:
         specifier: catalog:tailwind4
         version: 4.1.4
@@ -793,6 +814,9 @@ importers:
       '@fal-ai/server-proxy':
         specifier: ^1.1.1
         version: 1.1.1(express@4.21.2)(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@openrouter/ai-sdk-provider':
+        specifier: ^0.4.5
+        version: 0.4.5(zod@3.24.3)
       '@t3-oss/env-nextjs':
         specifier: 0.12.0
         version: 0.12.0(typescript@5.8.3)(zod@3.24.3)
@@ -1716,6 +1740,15 @@ packages:
       zod:
         optional: true
 
+  '@ai-sdk/provider-utils@2.1.10':
+    resolution: {integrity: sha512-4GZ8GHjOFxePFzkl3q42AU0DQOtTQ5w09vmaWUf/pKFXJPizlnzKSUkF0f+VkapIUfDugyMqPMT1ge8XQzVI7Q==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
+
   '@ai-sdk/provider-utils@2.2.7':
     resolution: {integrity: sha512-kM0xS3GWg3aMChh9zfeM+80vEZfXzR3JEUBdycZLtbRZ2TRT8xOj3WodGHPb06sUK5yD7pAXC/P7ctsi2fvUGQ==}
     engines: {node: '>=18'}
@@ -1732,6 +1765,10 @@ packages:
 
   '@ai-sdk/provider@1.0.2':
     resolution: {integrity: sha512-YYtP6xWQyaAf5LiWLJ+ycGTOeBLWrED7LUrvc+SQIWhGaneylqbaGsyQL7VouQUeQ4JZ1qKYZuhmi3W56HADPA==}
+    engines: {node: '>=18'}
+
+  '@ai-sdk/provider@1.0.9':
+    resolution: {integrity: sha512-jie6ZJT2ZR0uVOVCDc9R2xCX5I/Dum/wEK28lx21PJx6ZnFAN9EzD2WsPhcDWfCgGx3OAZZ0GyM3CEobXpa9LA==}
     engines: {node: '>=18'}
 
   '@ai-sdk/provider@1.1.3':
@@ -3540,6 +3577,12 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     deprecated: This functionality has been moved to @npmcli/fs
 
+  '@openrouter/ai-sdk-provider@0.4.5':
+    resolution: {integrity: sha512-gbCOcSjNhyWlLHyYZX2rIFnpJi3C2RXNyyzJj+d6pMRfTS/mdvEEOsU66KxK9H8Qju2i9YRLOn/FdQT26K7bIQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+
   '@opentelemetry/api-logs@0.51.1':
     resolution: {integrity: sha512-E3skn949Pk1z2XtXu/lxf6QAZpawuTM/IUEXcAzpiUkTd73Hmvw26FiN3cJuTmkpM5hZzHwkomVdtrh/n/zzwA==}
     engines: {node: '>=14'}
@@ -5156,6 +5199,34 @@ packages:
         optional: true
       react-native:
         optional: true
+
+  '@redis/bloom@5.0.1':
+    resolution: {integrity: sha512-F7L+rnuJvq/upKaVoEgsf8VT7g5pLQYWRqSUOV3uO4vpVtARzSKJ7CLyJjVsQS+wZVCGxsLMh8DwAIDcny1B+g==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      '@redis/client': ^5.0.1
+
+  '@redis/client@5.0.1':
+    resolution: {integrity: sha512-k0EJvlMGEyBqUD3orKe0UMZ66fPtfwqPIr+ZSd853sXj2EyhNtPXSx+J6sENXJNgAlEBhvD+57Dwt0qTisKB0A==}
+    engines: {node: '>= 18'}
+
+  '@redis/json@5.0.1':
+    resolution: {integrity: sha512-t94HOTk5myfhvaHZzlUzk2hoUvH2jsjftcnMgJWuHL/pzjAJQoZDCUJzjkoXIUjWXuyJixTguaaDyOZWwqH2Kg==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      '@redis/client': ^5.0.1
+
+  '@redis/search@5.0.1':
+    resolution: {integrity: sha512-wipK6ZptY7K68B7YLVhP5I/wYCDUU+mDJMyJiUcQLuOs7/eKOBc8lTXKUSssor8QnzZSPy4A5ulcC5PZY22Zgw==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      '@redis/client': ^5.0.1
+
+  '@redis/time-series@5.0.1':
+    resolution: {integrity: sha512-k6PgbrakhnohsEWEAdQZYt3e5vSKoIzpKvgQt8//lnWLrTZx+c3ed2sj0+pKIF4FvnSeuXLo4bBWcH0Z7Urg1A==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      '@redis/client': ^5.0.1
 
   '@rollup/plugin-commonjs@28.0.1':
     resolution: {integrity: sha512-+tNWdlWKbpB3WgBN7ijjYkq9X5uhjmcvyjEght4NmH5fAU++zfQzAJ6wumLS+dNcvwEZhKx2Z+skY8m7v0wGSA==}
@@ -6951,6 +7022,10 @@ packages:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
 
+  cluster-key-slot@1.1.2:
+    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
+    engines: {node: '>=0.10.0'}
+
   cmdk@1.0.0:
     resolution: {integrity: sha512-gDzVf0a09TvoJ5jnuPvygTB77+XdOSwEmJ88L6XPFPlv7T3RxbP9jgenfylrAMD0+Le1aO0nVjQUzl2g+vjz5Q==}
     peerDependencies:
@@ -7958,6 +8033,9 @@ packages:
     resolution: {integrity: sha512-l19WpE2m9hSuyP06+FbuUUf1G+R0SFLrtQfbRb9PRr+oimOfxQhgGCbVaXg5IvZyyTThJsxh6L/srkMiCeBPDA==}
     engines: {node: '>=18.0.0'}
 
+  exa-js@1.6.13:
+    resolution: {integrity: sha512-SkUJCZQwuqXA7OO70fTQnGV9vHFeDiu1jL2sot0Hl6vhxSuGWfvS5sXReKx/1j5R9qL5JAYAcohOFUiusjqNbg==}
+
   execa@1.0.0:
     resolution: {integrity: sha512-adbxcyWV46qiHyvSp50TKt05tB4tK3HcmF7/nxfAdhnox83seTDbwnaqKO4sXRy7roHAIFqJP/Rw/AuEbX61LA==}
     engines: {node: '>=6'}
@@ -8503,6 +8581,9 @@ packages:
   html-to-text@9.0.5:
     resolution: {integrity: sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg==}
     engines: {node: '>=14'}
+
+  html-url-attributes@3.0.1:
+    resolution: {integrity: sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ==}
 
   html-void-elements@3.0.0:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
@@ -10570,6 +10651,12 @@ packages:
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
+  react-markdown@10.1.0:
+    resolution: {integrity: sha512-qKxVopLT/TyA6BX3Ue5NwabOsAzm0Q7kAPwq6L+wWDwisYs7R8vZ0nRXqq6rkueboxpkjvLGU9fWifiX/ZZFxQ==}
+    peerDependencies:
+      '@types/react': '>=18'
+      react: '>=18'
+
   react-promise-suspense@0.3.4:
     resolution: {integrity: sha512-I42jl7L3Ze6kZaq+7zXWSunBa3b1on5yfvUW6Eo/3fFOj6dZ5Bqmcd264nJbTK/gn1HjjILAjSwnZbV4RpSaNQ==}
 
@@ -10737,6 +10824,10 @@ packages:
   recma-stringify@1.0.0:
     resolution: {integrity: sha512-cjwII1MdIIVloKvC9ErQ+OgAtwHBmcZ0Bg4ciz78FtbT8In39aAYbaA7zvxQ61xVMSPE8WxhLwLbhif4Js2C+g==}
 
+  redis@5.0.1:
+    resolution: {integrity: sha512-J8nqUjrfSq0E8NQkcHDZ4HdEQk5RMYjP3jZq02PE+ERiRxolbDNxPaTT4xh6tdrme+lJ86Goje9yMt9uzh23hQ==}
+    engines: {node: '>= 18'}
+
   reflect.getprototypeof@1.0.10:
     resolution: {integrity: sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw==}
     engines: {node: '>= 0.4'}
@@ -10873,6 +10964,9 @@ packages:
   restore-cursor@4.0.0:
     resolution: {integrity: sha512-I9fPXU9geO9bHOt9pHHOhOkYerIMsmVaWB0rA2AI9ERh/+x/i7MV5HKBNrg+ljO5eoPVgCcnFuRjJ9uH6I/3eg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
+  resumable-stream@2.0.0:
+    resolution: {integrity: sha512-D7E0wDUnfoy+Lerba/gyuD44OG3G0APqDcQ9soMSerujaVujPLWc5sSCLXf/ZFQPreLb3MKDjSm3TOPXpNtpZw==}
 
   retry@0.12.0:
     resolution: {integrity: sha512-9LkiTwjUh6rT555DtE9rTX+BKByPfrMzEAtnlEtdEwr3Nkffwiihqe2bWADg+OQRjt9gl6ICdmB/ZFDCGAtSow==}
@@ -12413,6 +12507,15 @@ snapshots:
     optionalDependencies:
       zod: 3.24.3
 
+  '@ai-sdk/provider-utils@2.1.10(zod@3.24.3)':
+    dependencies:
+      '@ai-sdk/provider': 1.0.9
+      eventsource-parser: 3.0.1
+      nanoid: 3.3.8
+      secure-json-parse: 2.7.0
+    optionalDependencies:
+      zod: 3.24.3
+
   '@ai-sdk/provider-utils@2.2.7(zod@3.24.3)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
@@ -12429,6 +12532,10 @@ snapshots:
       json-schema: 0.4.0
 
   '@ai-sdk/provider@1.0.2':
+    dependencies:
+      json-schema: 0.4.0
+
+  '@ai-sdk/provider@1.0.9':
     dependencies:
       json-schema: 0.4.0
 
@@ -14631,6 +14738,12 @@ snapshots:
       mkdirp: 1.0.4
       rimraf: 3.0.2
 
+  '@openrouter/ai-sdk-provider@0.4.5(zod@3.24.3)':
+    dependencies:
+      '@ai-sdk/provider': 1.0.9
+      '@ai-sdk/provider-utils': 2.1.10(zod@3.24.3)
+      zod: 3.24.3
+
   '@opentelemetry/api-logs@0.51.1':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -16334,6 +16447,26 @@ snapshots:
       zustand: 3.7.2(react@19.1.0)
     optionalDependencies:
       react-dom: 19.1.0(react@19.1.0)
+
+  '@redis/bloom@5.0.1(@redis/client@5.0.1)':
+    dependencies:
+      '@redis/client': 5.0.1
+
+  '@redis/client@5.0.1':
+    dependencies:
+      cluster-key-slot: 1.1.2
+
+  '@redis/json@5.0.1(@redis/client@5.0.1)':
+    dependencies:
+      '@redis/client': 5.0.1
+
+  '@redis/search@5.0.1(@redis/client@5.0.1)':
+    dependencies:
+      '@redis/client': 5.0.1
+
+  '@redis/time-series@5.0.1(@redis/client@5.0.1)':
+    dependencies:
+      '@redis/client': 5.0.1
 
   '@rollup/plugin-commonjs@28.0.1(rollup@4.35.0)':
     dependencies:
@@ -18579,6 +18712,8 @@ snapshots:
 
   clsx@2.1.1: {}
 
+  cluster-key-slot@1.1.2: {}
+
   cmdk@1.0.0(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@radix-ui/react-dialog': 1.0.5(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -19839,6 +19974,13 @@ snapshots:
     dependencies:
       eventsource-parser: 3.0.1
 
+  exa-js@1.6.13(encoding@0.1.13):
+    dependencies:
+      cross-fetch: 4.1.0(encoding@0.1.13)
+      dotenv: 16.4.7
+    transitivePeerDependencies:
+      - encoding
+
   execa@1.0.0:
     dependencies:
       cross-spawn: 6.0.6
@@ -20605,6 +20747,8 @@ snapshots:
       dom-serializer: 2.0.0
       htmlparser2: 8.0.2
       selderee: 0.11.0
+
+  html-url-attributes@3.0.1: {}
 
   html-void-elements@3.0.0: {}
 
@@ -22909,6 +23053,24 @@ snapshots:
 
   react-is@18.3.1: {}
 
+  react-markdown@10.1.0(@types/react@19.1.2)(react@19.1.0):
+    dependencies:
+      '@types/hast': 3.0.4
+      '@types/mdast': 4.0.4
+      '@types/react': 19.1.2
+      devlop: 1.1.0
+      hast-util-to-jsx-runtime: 2.3.2
+      html-url-attributes: 3.0.1
+      mdast-util-to-hast: 13.2.0
+      react: 19.1.0
+      remark-parse: 11.0.0
+      remark-rehype: 11.1.1
+      unified: 11.0.5
+      unist-util-visit: 5.0.0
+      vfile: 6.0.3
+    transitivePeerDependencies:
+      - supports-color
+
   react-promise-suspense@0.3.4:
     dependencies:
       fast-deep-equal: 2.0.1
@@ -23108,6 +23270,14 @@ snapshots:
       estree-util-to-js: 2.0.0
       unified: 11.0.5
       vfile: 6.0.3
+
+  redis@5.0.1:
+    dependencies:
+      '@redis/bloom': 5.0.1(@redis/client@5.0.1)
+      '@redis/client': 5.0.1
+      '@redis/json': 5.0.1(@redis/client@5.0.1)
+      '@redis/search': 5.0.1(@redis/client@5.0.1)
+      '@redis/time-series': 5.0.1(@redis/client@5.0.1)
 
   reflect.getprototypeof@1.0.10:
     dependencies:
@@ -23338,6 +23508,8 @@ snapshots:
     dependencies:
       onetime: 5.1.2
       signal-exit: 3.0.7
+
+  resumable-stream@2.0.0: {}
 
   retry@0.12.0: {}
 
