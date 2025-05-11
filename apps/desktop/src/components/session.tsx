@@ -4,7 +4,7 @@ import {
   SESSION_CHAT_AUTO_RESUME,
 } from "@/config/session-constants";
 import { trpc } from "@/trpc";
-import { convertDBMessageToUIMessages } from "@/types/internal";
+import { convertDBMessageToUIMessages, SessionMode } from "@/types/internal";
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -19,6 +19,8 @@ import {
 } from "@repo/ui/components/ui/popover";
 import { cn } from "@repo/ui/lib/utils";
 
+import { ToolType, useToolExecution } from "../hooks/use-tool-execution";
+import { useSessionStore } from "../stores/session-store";
 import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
 import { PastSessions } from "./past-sessions";
@@ -34,11 +36,18 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   );
   const { data: sessions } = useQuery(trpc.tenant.session.list.queryOptions());
 
+  // Get the session mode from the store
+  const sessionMode = useSessionStore((state) => state.sessionMode);
+  const markToolCallReady = useSessionStore((state) => state.markToolCallReady);
+
+  // Use our central tool execution hook
+  const { executeTool, mapToolNameToType } = useToolExecution();
+
   const {
     messages,
     input,
     setInput,
-    handleSubmit,
+    handleSubmit: originalHandleSubmit,
     status,
     error,
     experimental_resume,
@@ -54,6 +63,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     experimental_prepareRequestBody: (body) => ({
       message: body.messages.at(-1),
       sessionId: sessionId ?? body.id, // @IMPORTANT we pass the body.id as inference to create the sesssion if doesn't exists...
+      sessionMode, // Add the session mode to the request
     }),
     onError: (err) => {
       // @TODO Proper handling of errors on client-side...
@@ -61,9 +71,83 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     },
     onFinish: () => {
       // window.history.replaceState({}, "", `/search/${id}`);
+      console.log("Chat finished successfully");
     },
-    experimental_throttle: 100,
+    onToolCall: async (data) => {
+      console.log("🧰 Received tool call from AI SDK", data);
+
+      if (data && data.toolCall) {
+        // Extract tool call details
+        const toolCallId = data.toolCall.toolCallId;
+        const toolName = data.toolCall.toolName;
+        const toolArgs = data.toolCall.args as Record<string, unknown>;
+
+        console.log(
+          `🧰 Tool call details: ${toolCallId} (${toolName})`,
+          toolArgs,
+        );
+
+        // Mark this tool call as ready to execute
+        markToolCallReady(toolCallId);
+
+        // Check if this is a tool we can auto-execute in agent mode
+        if (sessionMode === "agent") {
+          // Get the tool type based on name (will return "default" for unknown tools)
+          const toolType = mapToolNameToType(toolName) as ToolType;
+
+          if (!toolType) {
+            console.error(`Unknown tool type: ${toolName}`);
+            return;
+          }
+
+          console.log(`🤖 Auto-executing ${toolName} tool: ${toolCallId}`);
+
+          try {
+            // Execute the tool using our centralized handler
+            const result = await executeTool(toolCallId, toolType, toolArgs);
+            console.log(`Tool execution result for ${toolName}:`, result);
+
+            // Report results back to AI
+            addToolResult({
+              toolCallId: toolCallId,
+              result: result,
+            });
+          } catch (e: any) {
+            console.error(`Error auto-executing tool ${toolName}:`, e);
+
+            // Report error back to AI
+            addToolResult({
+              toolCallId: toolCallId,
+              result: {
+                success: false,
+                error: e?.message || `Failed to execute ${toolName}`,
+              },
+            });
+          }
+        } else {
+          console.log(
+            `🧰 Tool ${toolName} will be executed by the UI component`,
+          );
+        }
+      }
+    },
   });
+
+  // Wrap the original handleSubmit to include the sessionMode
+  const handleSubmit = (
+    e: React.FormEvent<HTMLFormElement>,
+    mode: SessionMode,
+  ) => {
+    // If a mode is provided in the call, use it; otherwise use the current store value
+    const currentMode = mode || sessionMode;
+
+    // Update the store if needed
+    if (mode && mode !== sessionMode) {
+      useSessionStore.getState().setSessionMode(mode);
+    }
+
+    return originalHandleSubmit(e);
+  };
 
   const inputStatusForUserMessageInput: "ready" | "thinking" =
     status === "submitted" || status === "streaming" ? "thinking" : "ready";

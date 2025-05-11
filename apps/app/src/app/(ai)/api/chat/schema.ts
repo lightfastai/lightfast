@@ -5,6 +5,7 @@ export interface PostRequestBody {
   sessionId: string;
   id: string;
   message: Message;
+  sessionMode: "agent" | "manual";
 }
 
 export const $BaseStreamConfig = z.object({
@@ -14,4 +15,5 @@ export const $BaseStreamConfig = z.object({
 export type BaseStreamConfig = z.infer<typeof $BaseStreamConfig> & {
   userMessage: Message;
   messages: Message[];
+  sessionMode: "agent" | "manual";
 };

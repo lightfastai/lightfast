@@ -10,12 +10,8 @@ import { Networks } from "../types/network";
  */
 export function useBlenderListener(network: Networks) {
   const hasInitializedBlenderListener = useRef(false);
-  const hasInitializedMessageListener = useRef(false);
   const initializeListener = useBlenderStore(
     (state) => state.initializeListener,
-  );
-  const initializeMessageListener = useBlenderStore(
-    (state) => state.initializeMessageListener,
   );
 
   useEffect(() => {
@@ -33,20 +29,4 @@ export function useBlenderListener(network: Networks) {
     // No-op cleanup if not initialized
     return () => {};
   }, [network, initializeListener]);
-
-  useEffect(() => {
-    if (network !== "blender") return;
-    if (!hasInitializedMessageListener.current) {
-      // Only initialize message listener once
-      const cleanup = initializeMessageListener();
-      hasInitializedMessageListener.current = true;
-
-      // Return cleanup function
-      return () => {
-        cleanup();
-      };
-    }
-    // No-op cleanup if not initialized
-    return () => {};
-  }, [network, initializeMessageListener]);
 }

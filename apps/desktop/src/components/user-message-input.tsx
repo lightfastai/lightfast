@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { Infinity as InfinityIcon, Send, StopCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
   ForwardedDropdownMenuTriggerButton,
 } from "../components/ui/dropdown-menu";
+import { useSessionStore } from "../stores/session-store";
 import { InputStatus, MODE_LABELS, SessionMode } from "../types/internal";
 
 // Props for user message input component
@@ -23,7 +24,10 @@ export interface SessionInputProps {
   input: string;
   setInput: (input: string) => void;
   stop?: () => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  handleSubmit: (
+    e: React.FormEvent<HTMLFormElement>,
+    sessionMode: SessionMode,
+  ) => void;
   className?: string;
   setMessages?: (messages: any) => void;
   status?: InputStatus;
@@ -94,8 +98,17 @@ export const UserMessageInput = ({
   status,
 }: SessionInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [mode, setMode] = React.useState<SessionMode>("agent");
+  // Use session store to get and set the current mode
+  const setSessionMode = useSessionStore((state) => state.setSessionMode);
+  const sessionMode = useSessionStore((state) => state.sessionMode);
+  const [mode, setMode] = React.useState<SessionMode>(sessionMode);
   const router = useRouter();
+
+  // Update session store when mode changes
+  useEffect(() => {
+    setSessionMode(mode);
+  }, [mode, setSessionMode]);
+
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
 
@@ -111,8 +124,10 @@ export const UserMessageInput = ({
       router.history.replace(`/session/${sessionId}`);
     }
 
+    // Pass the current mode to the handleSubmit function
     handleSubmit(
       new Event("submit", { cancelable: true, bubbles: true }) as any,
+      mode,
     );
 
     // Reset the textarea height after submission
@@ -121,7 +136,7 @@ export const UserMessageInput = ({
     }
 
     textareaRef.current?.focus();
-  }, [handleSubmit, sessionId]);
+  }, [handleSubmit, sessionId, router.history, mode]);
 
   return (
     <div className={cn("relative flex w-full flex-col", className)}>

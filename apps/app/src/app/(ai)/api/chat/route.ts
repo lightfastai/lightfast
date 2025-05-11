@@ -25,12 +25,12 @@ export async function POST(request: Request) {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  const { message, sessionId, id: userMessageId } = requestBody;
+  const { message, sessionId, sessionMode } = requestBody;
 
   console.log("chat request", {
     message,
     sessionId,
-    userMessageId,
+    sessionMode,
   });
 
   let session: Session;
@@ -100,6 +100,7 @@ export async function POST(request: Request) {
     messages,
     sessionId: session.id,
     userMessage: message,
+    sessionMode,
   });
 
   const streamContext = getStreamContext();

@@ -1,4 +1,4 @@
-import { BlenderConnectionStatus } from "./stores/blender-store";
+import { BlenderConnectionStatus } from "./helpers/ipc/blender/blender-context";
 
 interface ThemeModeContext {
   toggle: () => Promise<boolean>;

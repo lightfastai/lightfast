@@ -17,6 +17,36 @@ export type BlenderConnectionStatus =
   | { status: "listening" }
   | { status: "stopped" };
 
+// Define Blender response message types to match the main process
+export interface BlenderResponseMessage {
+  type: string;
+  id: string;
+  success: boolean;
+  output?: string;
+  error?: string;
+  error_type?: string;
+  traceback?: string;
+  scene_info?: any;
+  client?: string;
+}
+
+// Define code execution and scene info response types
+export interface BlenderCodeExecutionResponse extends BlenderResponseMessage {
+  type: "code_executed";
+  output?: string;
+}
+
+export interface BlenderSceneInfoResponse extends BlenderResponseMessage {
+  type: "scene_info";
+  scene_info: {
+    name: string;
+    object_count: number;
+    materials_count: number;
+    objects?: Array<{ name: string; type: string }>;
+    [key: string]: any;
+  };
+}
+
 export function exposeBlenderContext() {
   // Expose Blender connection API
   contextBridge.exposeInMainWorld("blenderConnection", {
@@ -33,19 +63,31 @@ export function exposeBlenderContext() {
       };
     },
     // Add function to get current Blender status
-    getStatus: () => ipcRenderer.invoke(BLENDER_STATUS_CHANNEL),
+    getStatus: (): Promise<BlenderConnectionStatus> =>
+      ipcRenderer.invoke(BLENDER_STATUS_CHANNEL),
+
     // Add function to send messages *to* Blender via main process
-    sendToBlender: (message: object) =>
+    sendToBlender: (
+      message: object,
+    ): Promise<{ success: boolean; message?: string; error?: string }> =>
       ipcRenderer.invoke(BLENDER_SEND_MESSAGE_CHANNEL, message),
+
     // Add function to execute code in Blender
-    executeCode: (code: string) =>
+    executeCode: (code: string): Promise<BlenderCodeExecutionResponse> =>
       ipcRenderer.invoke(BLENDER_EXECUTE_CODE_CHANNEL, { code }),
+
     // Add function to get scene info from Blender
-    getSceneInfo: () => ipcRenderer.invoke(BLENDER_GET_SCENE_INFO_CHANNEL, {}),
-    // Add listener for Blender message responses (code execution results, scene info, etc.)
-    onMessageResponse: (callback: (message: any) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, message: any) =>
-        callback(message);
+    getSceneInfo: (): Promise<BlenderSceneInfoResponse> =>
+      ipcRenderer.invoke(BLENDER_GET_SCENE_INFO_CHANNEL, {}),
+
+    // Add listener for Blender message responses
+    onMessageResponse: (
+      callback: (message: BlenderResponseMessage) => void,
+    ) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        message: BlenderResponseMessage,
+      ) => callback(message);
       ipcRenderer.on(BLENDER_MESSAGE_RESPONSE_CHANNEL, listener);
 
       // Return a cleanup function
