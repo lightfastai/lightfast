@@ -87,6 +87,63 @@ export function ToolResult({ toolInvocation }: ToolResultProps) {
         }
         break;
 
+      case "analyzeBlenderModel":
+        // Handle Blender model analysis results
+        if (result.success === false) {
+          return (
+            <div
+              className={cn(
+                "mt-1 p-2 text-[0.65rem] leading-tight text-red-600",
+              )}
+            >
+              Error: {result.error || "Failed to analyze Blender model"}
+            </div>
+          );
+        }
+
+        if (result.analysis) {
+          return (
+            <div className="space-y-2 p-2 text-xs">
+              {/* Show object stats summary */}
+              {result.sceneStats && (
+                <div className={cn("rounded border p-2")}>
+                  <div className={cn("mb-1 font-medium")}>Model Statistics</div>
+                  <div>Objects: {result.sceneStats.objectCount}</div>
+                  {result.sceneStats.objectTypes && (
+                    <details>
+                      <summary className={cn("cursor-pointer text-xs")}>
+                        Object Types
+                      </summary>
+                      <ul className="mt-1 list-disc pl-4">
+                        {Object.entries(
+                          result.sceneStats.objectTypes as Record<
+                            string,
+                            number
+                          >,
+                        ).map(([type, count], i) => (
+                          <li key={i}>
+                            {type}: {count}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+              )}
+
+              {/* Show the full analysis */}
+              <div className={cn("rounded border p-2")}>
+                <div className={cn("mb-2 font-medium")}>Analysis</div>
+                <ScrollArea className="max-h-72 w-full">
+                  <div className="whitespace-pre-wrap">{result.analysis}</div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
+            </div>
+          );
+        }
+        break;
+
       case "executeBlenderCode":
         // Handle both success and error states
         if (result.success === false) {
