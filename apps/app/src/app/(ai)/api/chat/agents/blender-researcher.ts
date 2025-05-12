@@ -1,6 +1,5 @@
 // Import necessary types
 import type { CoreMessage, DataStreamWriter, streamText } from "ai";
-import { smoothStream } from "ai";
 
 import { providers } from "~/app/(ai)/api/chat/providers/models";
 import { systemPrompt } from "../prompts";
@@ -527,7 +526,7 @@ export function blenderResearcher({
   // const categoryTool = createPolyhavenCategoryTool();
 
   return {
-    model: providers.languageModel("reasoning"),
+    model: providers.languageModel("chat"),
     system: systemPrompt({ requestPrompt: unifiedPrompt }),
     messages,
     toolCallStreaming: true,
@@ -555,6 +554,6 @@ export function blenderResearcher({
       "webSearch",
     ],
     maxSteps: 10,
-    experimental_transform: smoothStream({ chunking: "word" }),
+    experimental_continueSteps: true,
   };
 }

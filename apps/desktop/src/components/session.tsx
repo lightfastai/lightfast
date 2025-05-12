@@ -134,6 +134,8 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     },
   });
 
+  console.log("messages", messages);
+
   // Wrap the original handleSubmit to include the sessionMode
   const handleSubmit = (
     e: React.FormEvent<HTMLFormElement>,
