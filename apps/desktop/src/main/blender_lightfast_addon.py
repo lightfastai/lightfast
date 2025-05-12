@@ -906,12 +906,56 @@ class LIGHTFAST_OT_Connect(bpy.types.Operator):
     bl_label = "Connect to Lightfast"
     bl_description = "Connect to the Lightfast Application"
 
+    def check_port_availability(self, host, port):
+        """Check if the port is already in use by something else."""
+        try:
+            # Create a test socket
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.settimeout(1)
+
+            # Try to connect to the port
+            result = test_socket.connect_ex((host, port))
+            test_socket.close()
+
+            # If result is 0, the port is in use
+            if result == 0:
+                return False
+
+            return True
+        except Exception as e:
+            # If there's an exception, assume the port might be available
+            # but log the error
+            log_error(f"Error checking port availability: {e}")
+            return True
+
     def execute(self, context):
+        # Get connection settings from preferences
+        prefs = context.preferences.addons[__name__].preferences
+        host = prefs.host
+        port = prefs.port
+
+        # Check if the port is already in use
+        port_available = self.check_port_availability(host, port)
+
+        if not port_available:
+            # The port is in use, but is it in use by another Lightfast instance?
+            # Let's try to connect anyway since our WebSocket handshake is specific
+            self.report(
+                {"WARNING"},
+                f"Port {port} appears to be in use. Attempting connection anyway.",
+            )
+
         if start_socket_client():
-            self.report({"INFO"}, "Connected to Lightfast")
+            if port_available:
+                self.report({"INFO"}, f"Connected to Lightfast on port {port}")
+            else:
+                self.report(
+                    {"INFO"},
+                    f"Connected to Lightfast on port {port} (port was already in use)",
+                )
             return {"FINISHED"}
         else:
-            self.report({"ERROR"}, "Failed to connect to Lightfast")
+            self.report({"ERROR"}, f"Failed to connect to Lightfast on port {port}")
             return {"CANCELLED"}
 
 
@@ -956,23 +1000,71 @@ class LIGHTFAST_PT_Panel(bpy.types.Panel):
         layout = self.layout
         prefs = context.preferences.addons[__name__].preferences
 
-        # Connection status
-        if connected:
-            layout.label(text=f"Connected on port {prefs.port}", icon="CHECKMARK")
-            layout.operator("lightfast.disconnect", text="Disconnect")
-        else:
-            layout.label(text=f"Disconnected (port {prefs.port})", icon="ERROR")
-            layout.operator("lightfast.connect", text="Connect")
-
         # Port configuration
         box = layout.box()
-        box.label(text="Connection Settings")
+        row = box.row()
+        row.scale_y = 0.8
+        row.label(text="Blender Port", icon="CONSOLE")
+
+        # Port input field (directly visible)
+        row = box.row(align=True)
+        row.prop(prefs, "port", text="")
+
+        # Connection button
+        row = box.row(align=True)
+        if connected:
+            row.label(text=f"Connected on port {prefs.port}", icon="CHECKMARK")
+            row.operator("lightfast.disconnect", text="Disconnect")
+        else:
+            row.label(text=f"Disconnected", icon="ERROR")
+            row.operator("lightfast.connect", text="Connect")
+
+        # Apply settings button (only show if not connected)
+        if not connected:
+            row = box.row()
+            row.operator(
+                "lightfast.apply_settings", text="Apply Settings", icon="FILE_REFRESH"
+            )
+
+        # Advanced settings
+        box = layout.box()
+        box.label(text="Advanced Settings")
         row = box.row()
         row.prop(prefs, "host", text="Host")
         row = box.row()
-        row.prop(prefs, "port", text="Port")
+        row.prop(prefs, "auto_connect", text="Auto-connect on startup")
+
+
+class LIGHTFAST_PT_MultiInstanceHelp(bpy.types.Panel):
+    bl_label = "Multi-Instance Configuration"
+    bl_idname = "LIGHTFAST_PT_MultiInstanceHelp"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Lightfast"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout = self.layout
+
+        box = layout.box()
+        col = box.column()
+        col.label(text="Using Multiple Blender Instances:")
+        col.label(text="1. Each Lightfast window uses a", icon="INFO")
+        col.label(text="   unique port number")
+        col.label(text="2. Configure each Blender to use", icon="MODIFIER")
+        col.label(text="   the port shown in Lightfast")
+        col.label(text="3. Connect Blender instances to", icon="LINKED")
+        col.label(text="   their respective Lightfast")
+        col.label(text="   windows")
+
+        box.separator()
         row = box.row()
-        row.operator("lightfast.apply_settings", text="Apply Settings")
+        row.label(text="Default Port: 8765")
+        row = box.row()
+        row.label(
+            text="Current Port: "
+            + str(context.preferences.addons[__name__].preferences.port)
+        )
 
 
 # ---------------------- Registration ----------------------
@@ -983,6 +1075,7 @@ classes = (
     LIGHTFAST_OT_Disconnect,
     LIGHTFAST_OT_ApplySettings,
     LIGHTFAST_PT_Panel,
+    LIGHTFAST_PT_MultiInstanceHelp,
 )
 
 

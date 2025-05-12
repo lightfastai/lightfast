@@ -10,10 +10,11 @@ export type BlenderConnectionStatus =
   | { status: "listening" }
   | { status: "stopped" };
 
-export const BLENDER_PORT = 8765; // Or choose another port
+export const DEFAULT_BLENDER_PORT = 8765; // Default port
+// Store active ports to track which ones are in use
+const activePorts = new Map<number, WebSocketServer>();
 const HEARTBEAT_INTERVAL = 5000; // Check connection every 5 seconds
 
-let wss: WebSocketServer | null = null;
 let blenderClient: WebSocket | null = null;
 let electronWebContents: WebContents | null = null;
 let heartbeatInterval: NodeJS.Timeout | null = null;
@@ -54,33 +55,57 @@ function sendStatusUpdate(status: BlenderConnectionStatus) {
   }
 }
 
-export function startBlenderSocketServer(webContents: WebContents) {
-  console.log("🚀 Attempting to start Blender WebSocket server...");
+export function startBlenderSocketServer(
+  webContents: WebContents,
+  port: number = DEFAULT_BLENDER_PORT,
+) {
+  console.log(
+    `🚀 Attempting to start Blender WebSocket server on port ${port}...`,
+  );
 
-  if (wss) {
-    console.log("Blender WebSocket server already running.");
-    // Send current status to any new renderer that connects
-    if (blenderClient && blenderClient.readyState === WebSocket.OPEN) {
-      sendStatusUpdate({ status: "connected" });
-    } else {
-      sendStatusUpdate({ status: "listening" });
+  // First, check if we need to clean up an existing server on this port
+  if (activePorts.has(port)) {
+    const existingWss = activePorts.get(port)!;
+
+    // If we're requesting the same port with the same web contents,
+    // there's no need to restart the server
+    if (electronWebContents === webContents) {
+      console.log(
+        `Blender WebSocket server already running on port ${port} with same web contents.`,
+      );
+
+      // Update status just in case
+      if (blenderClient && blenderClient.readyState === WebSocket.OPEN) {
+        sendStatusUpdate({ status: "connected" });
+      } else {
+        sendStatusUpdate({ status: "listening" });
+      }
+      return;
     }
-    return;
+
+    // Otherwise, we'll close the existing server and create a new one
+    console.log(
+      `Closing existing WebSocket server on port ${port} to reinitialize with new web contents.`,
+    );
+    closeServerOnPort(port, existingWss);
+    activePorts.delete(port);
   }
+
   electronWebContents = webContents;
 
   try {
-    console.log(`Creating WebSocket server on port ${BLENDER_PORT}...`);
-    wss = new WebSocketServer({ port: BLENDER_PORT });
+    console.log(`Creating WebSocket server on port ${port}...`);
+    const wss = new WebSocketServer({ port });
     console.log("WebSocket server created successfully");
+
+    // Store in active ports map
+    activePorts.set(port, wss);
 
     // Send initial status immediately after server is created
     sendStatusUpdate({ status: "listening" });
 
     wss.on("listening", () => {
-      console.log(
-        `✅ Blender WebSocket server listening on port ${BLENDER_PORT}`,
-      );
+      console.log(`✅ Blender WebSocket server listening on port ${port}`);
       sendStatusUpdate({ status: "listening" });
     });
 
@@ -330,31 +355,58 @@ export function startBlenderSocketServer(webContents: WebContents) {
     });
 
     wss.on("error", (error: Error) => {
-      console.error("❌ Blender WebSocket server error:", error);
+      console.error(
+        `❌ Blender WebSocket server error on port ${port}:`,
+        error,
+      );
       if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
         console.error(
-          `Port ${BLENDER_PORT} is already in use. Try killing any process using this port.`,
+          `Port ${port} is already in use. Try killing any process using this port.`,
         );
         console.error(
-          `You can use 'lsof -i :${BLENDER_PORT}' to find processes using this port.`,
+          `You can use 'lsof -i :${port}' to find processes using this port.`,
         );
       }
       const errorMessage =
         (error as NodeJS.ErrnoException).code === "EADDRINUSE"
-          ? `Port ${BLENDER_PORT} already in use.`
+          ? `Port ${port} already in use.`
           : error.message;
       sendStatusUpdate({ status: "error", error: errorMessage });
-      wss = null; // Reset wss if server fails
+      // Remove from the active ports map
+      activePorts.delete(port);
     });
   } catch (error) {
-    console.error("❌ Failed to start Blender WebSocket server:", error);
+    console.error(
+      `❌ Failed to start Blender WebSocket server on port ${port}:`,
+      error,
+    );
     console.error(`Stack trace: ${(error as Error).stack}`);
     sendStatusUpdate({ status: "error", error: (error as Error).message });
-    wss = null;
+    // Ensure we clean up the activePorts map
+    activePorts.delete(port);
   }
 }
 
-export function stopBlenderSocketServer() {
+export function stopBlenderSocketServer(port?: number) {
+  // If no port specified, close everything
+  if (port === undefined) {
+    // Clean up all servers
+    for (const [port, wss] of activePorts.entries()) {
+      closeServerOnPort(port, wss);
+    }
+    activePorts.clear();
+    return;
+  }
+
+  // Close specific port
+  const wss = activePorts.get(port);
+  if (wss) {
+    closeServerOnPort(port, wss);
+    activePorts.delete(port);
+  }
+}
+
+function closeServerOnPort(port: number, wss: WebSocketServer) {
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
     heartbeatInterval = null;
@@ -364,20 +416,18 @@ export function stopBlenderSocketServer() {
     blenderClient.close();
     blenderClient = null;
   }
-  if (wss) {
-    wss.close((err) => {
-      if (err) {
-        console.error("Error closing Blender WebSocket server:", err);
-      } else {
-        console.log("Blender WebSocket server stopped.");
-      }
-      wss = null;
-      sendStatusUpdate({ status: "stopped" }); // Notify renderer
-    });
-  } else {
-    // If server wasn't running, maybe still send stopped status?
+
+  wss.close((err) => {
+    if (err) {
+      console.error(
+        `Error closing Blender WebSocket server on port ${port}:`,
+        err,
+      );
+    } else {
+      console.log(`Blender WebSocket server on port ${port} stopped.`);
+    }
     sendStatusUpdate({ status: "stopped" });
-  }
+  });
 }
 
 // Function to check if Blender is currently connected
@@ -389,7 +439,7 @@ export function isBlenderConnected(): boolean {
 export function getBlenderStatus(): BlenderConnectionStatus {
   if (blenderClient !== null && blenderClient.readyState === WebSocket.OPEN) {
     return { status: "connected" };
-  } else if (wss !== null) {
+  } else if (activePorts.size > 0) {
     return { status: "listening" };
   } else {
     return { status: "disconnected" };
@@ -398,7 +448,9 @@ export function getBlenderStatus(): BlenderConnectionStatus {
 
 // Function to get the WebSocketServer instance
 export function getWebSocketServer(): WebSocketServer | null {
-  return wss;
+  // Return the first active server or null if none exists
+  const firstServer = activePorts.values().next().value;
+  return firstServer || null;
 }
 
 // Function to send messages *to* Blender

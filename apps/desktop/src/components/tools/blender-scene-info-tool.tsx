@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckIcon, Loader2, ServerIcon, XIcon } from "lucide-react";
 
 import {
@@ -11,7 +11,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
 import { useToolExecution } from "../../hooks/use-tool-execution";
-import { BLENDER_PORT } from "../../main/blender-connection";
+import { DEFAULT_BLENDER_PORT } from "../../main/blender-connection";
 import { useToolExecutionStore } from "../../stores/tool-execution-store";
 import { ToolProps } from "./types";
 
@@ -22,12 +22,22 @@ export function BlenderSceneInfoTool({
   readyToExecute = false,
 }: ToolProps) {
   const [error, setError] = useState<string | null>(null);
+  const [blenderPort, setBlenderPort] = useState<number>(DEFAULT_BLENDER_PORT);
 
   // Use the shared tool execution hook
   const { executeTool, declineTool } = useToolExecution();
 
   // Use the Zustand store directly to ensure we get real-time updates
   const { getToolState } = useToolExecutionStore();
+
+  // Get port from the window context
+  useEffect(() => {
+    if (window.blenderConnection) {
+      window.blenderConnection.getPort().then((port: number) => {
+        setBlenderPort(port);
+      });
+    }
+  }, []);
 
   // Get pending and executed state from the Zustand store
   const { pending, executed } = getToolState(toolInvocation.toolCallId);
@@ -85,7 +95,7 @@ export function BlenderSceneInfoTool({
                 <div className="text-muted-foreground mr-3 flex items-center text-[0.65rem]">
                   <ServerIcon className="mr-1 size-3" />
                   <span title="Change port in Blender via the Lightfast panel in the sidebar">
-                    Port: {BLENDER_PORT}
+                    Port: {blenderPort}
                   </span>
                 </div>
                 {!autoExecute && !executed && (

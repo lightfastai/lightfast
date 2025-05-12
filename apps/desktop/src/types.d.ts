@@ -19,6 +19,8 @@ interface BlenderConnectionAPI {
     callback: (status: BlenderConnectionStatus) => void,
   ) => () => void;
   getStatus: () => Promise<BlenderConnectionStatus>;
+  getPort: () => Promise<number>;
+  setPort: (port: number) => Promise<boolean>;
   sendToBlender: (message: object) => Promise<any>;
   executeCode: (code: string) => Promise<any>;
   getSceneInfo: () => Promise<any>;

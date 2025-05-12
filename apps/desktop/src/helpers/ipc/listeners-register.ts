@@ -1,5 +1,6 @@
 import { BrowserWindow } from "electron";
 
+import { DEFAULT_BLENDER_PORT } from "../../main/blender-connection";
 import {
   addBlenderEventListeners,
   initializeBlenderConnection,
@@ -7,9 +8,12 @@ import {
 import { addThemeEventListeners } from "./theme/theme-listeners";
 import { addWindowEventListeners } from "./window/window-listeners";
 
-export default function registerListeners(mainWindow: BrowserWindow) {
+export default function registerListeners(
+  mainWindow: BrowserWindow,
+  blenderPort: number = DEFAULT_BLENDER_PORT,
+) {
   addWindowEventListeners(mainWindow);
   addThemeEventListeners();
   addBlenderEventListeners();
-  initializeBlenderConnection(mainWindow.webContents);
+  initializeBlenderConnection(mainWindow.webContents, blenderPort);
 }

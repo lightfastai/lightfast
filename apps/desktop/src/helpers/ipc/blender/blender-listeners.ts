@@ -1,6 +1,7 @@
 import { ipcMain, WebContents } from "electron";
 
 import {
+  DEFAULT_BLENDER_PORT,
   getBlenderStatus,
   isBlenderConnected,
   requestFromBlender,
@@ -14,9 +15,12 @@ import {
   BLENDER_STATUS_CHANNEL,
 } from "./blender-channels";
 
-export function initializeBlenderConnection(contents: WebContents) {
-  startBlenderSocketServer(contents);
-  console.log("Blender WebSocket server initialized");
+export function initializeBlenderConnection(
+  contents: WebContents,
+  port: number = DEFAULT_BLENDER_PORT,
+) {
+  startBlenderSocketServer(contents, port);
+  console.log(`Blender WebSocket server initialized on port ${port}`);
 }
 
 export function addBlenderEventListeners() {

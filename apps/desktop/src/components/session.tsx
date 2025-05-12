@@ -22,6 +22,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { ToolType, useToolExecution } from "../hooks/use-tool-execution";
 import { useSessionStore } from "../stores/session-store";
 import { BlenderAnalysisDisplay } from "./blender-analysis-display";
+import { BlenderPortIndicator } from "./blender-port-indicator";
 import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
 import { PastSessions } from "./past-sessions";
@@ -193,14 +194,16 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
             {session?.title ? session.title : "New Chat"}
           </PopoverContent>
         </Popover>
-        {/*   <BlenderStatusIndicator /> */}
-        <div className="flex items-center gap-1">
-          <Link to="/">
-            <Button variant="ghost" size="xs">
-              <Plus className="text-muted-foreground size-3" />
-            </Button>
-          </Link>
-          <HistoryMenu sessions={sessions} />
+        <div className="flex items-center gap-3">
+          <BlenderPortIndicator />
+          <div className="flex items-center gap-1">
+            <Link to="/">
+              <Button variant="ghost" size="xs">
+                <Plus className="text-muted-foreground size-3" />
+              </Button>
+            </Link>
+            <HistoryMenu sessions={sessions} />
+          </div>
         </div>
       </header>
       <main className="flex w-full flex-1 flex-col gap-2 overflow-hidden">
