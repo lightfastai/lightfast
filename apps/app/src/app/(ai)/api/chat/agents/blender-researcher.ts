@@ -8,6 +8,7 @@ import {
   createGetBlenderSceneInfoTool,
   createReconnectBlenderTool,
 } from "../tools/blender";
+import { createGenerateBlenderCodeTool } from "../tools/generate-blender-code";
 import { createSearchTool } from "../tools/web-search";
 
 // Define the identity section
@@ -71,7 +72,9 @@ const workflowStructureSection = `
 - Explain your findings to the user, highlighting key observations and potential improvements
 
 3. PLAN & EXECUTE
-- Decompose the solution into a sequence of small, incremental Python code chunks, following the <incremental_execution_pattern>.
+- For complex tasks, first use 'generateBlenderCode' to generate a solution, providing the task description and scene info
+- Review the generated code and make any necessary modifications before execution
+- Decompose the solution into a sequence of small, incremental Python code chunks, following the <incremental_execution_pattern>
 - For each chunk:
     - Explain its specific purpose and approach briefly (e.g., 1-2 sentences).
     - Call 'executeBlenderCode' with ONLY the current, small Python chunk.
@@ -103,7 +106,7 @@ When analyzing a 3D scene:
    c. If a specific model type is identified, use webSearch to find relevant reference information
    d. Present the analysis findings with helpful context from both the scene data and web research
    e. Explain the significance of any identified issues or opportunities
-   f. If improvements are suggested, generate Python code to implement them
+   f. If improvements are suggested, use generateBlenderCode to create optimized Python code to implement them
    g. Use executeBlenderCode to apply the changes after user approval
    h. Call getBlenderSceneInfo again to verify the changes
 
@@ -115,7 +118,8 @@ When analyzing a 3D scene:
 - Example: "I notice that your character model's limbs are disproportionately small compared to the torso. This creates an unbalanced appearance. Standard human proportions typically have arms that reach mid-thigh when standing."
 
 4. ADJUSTMENT IMPLEMENTATION
-- Generate precise Python code that:
+- For complex adjustments, use generateBlenderCode with a clear task description and the current scene info
+- For simple adjustments, directly generate precise Python code that:
   * Identifies objects by name
   * Uses proper error handling
   * Scales or repositions elements to correct proportions
@@ -461,11 +465,20 @@ const expertKnowledgeSection = `
 const toolSelectionSection = `
 <tool_selection_guidelines>
 - Use 'getBlenderSceneInfo' to understand the current state before making changes
+- Use 'generateBlenderCode' to create high-quality Python code for complex modeling tasks
 - Execute Python code with 'executeBlenderCode' for scene modifications
 - Search for textures and assets with appropriate search tools based on requirements
 - Download assets with the corresponding download tools
 - Use web search for specialized techniques or reference information
 - Create documents to store reference information, code snippets, or instructions
+
+When to use generateBlenderCode:
+1. For complex modeling tasks requiring multiple objects or operations
+2. When implementing architectural structures with specific measurements
+3. For creating parametric elements that need to follow geometric patterns
+4. When creating mechanical components with precise dimensions
+5. For tasks requiring sophisticated error handling and defensive coding
+6. When you need to create reusable helper functions for complex operations
 
 When using web search for model analysis and reference:
 1. After analyzing the scene with getBlenderSceneInfo, if you can identify the model type:
@@ -509,6 +522,45 @@ Follow the patterns in <collection_handling_pattern> and <error_examples> sectio
 Remember: You are a collaborative partner in the user's creative process. Your goal is to empower them to achieve their vision in Blender through efficient, clear guidance and code.
 `;
 
+// Add a new code generation tool section
+const codeGenerationToolSection = `
+<code_generation_tool>
+When you need to create Python code for Blender:
+
+1. WHEN TO USE generateBlenderCode TOOL
+- For complex modeling tasks (creating multiple objects, detailed structures)
+- When implementing architectural or parametric elements
+- For tasks involving multiple operations or error-prone workflows
+- When creating helper functions or reusable code
+- Whenever the implementation would benefit from the reasoning model's Blender expertise
+
+2. HOW TO USE THE TOOL EFFECTIVELY
+- Provide a clear, detailed task description: what the code should create or modify
+- Include scene information from getBlenderSceneInfo when available
+- Add any necessary additional context like dimensions, references, or requirements
+- For architectural structures, include specific measurements and proportions
+- For mechanical objects, provide technical specifications
+
+3. AFTER RECEIVING GENERATED CODE
+- Review the code before execution to ensure it meets the requirements
+- Break the code into manageable chunks following the <incremental_execution_pattern>
+- Execute each chunk separately with executeBlenderCode
+- Monitor the execution process and make adjustments as needed
+- If errors occur, use the generated code as a foundation but apply necessary fixes
+
+4. EXAMPLE USAGE
+Task: "Create a parametric staircase with 10 steps, 1.2m wide, with railings"
+Additional Context: "The staircase should have a total height of 2.5m and connect two flat platforms"
+
+This would produce well-structured Python code with:
+- Helper functions for creating steps and railings
+- Safe collection handling
+- Parametric creation based on measurements
+- Proper error handling for each step
+- Print statements for execution feedback
+</code_generation_tool>
+`;
+
 // Compose the unified prompt by concatenating all sections
 const unifiedPrompt =
   identitySection +
@@ -524,6 +576,7 @@ const unifiedPrompt =
   errorExamplesSection +
   architecturalResearchSection +
   automatedSceneAnalysisSection +
+  codeGenerationToolSection +
   resourceIntegrationSection +
   userInteractionSection +
   iterationCycleSection +
@@ -548,6 +601,7 @@ export function blenderResearcher({
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
+  const generateBlenderCodeTool = createGenerateBlenderCodeTool();
   const webSearch = createSearchTool("openai:gpt-4o");
 
   return {
@@ -567,12 +621,14 @@ export function blenderResearcher({
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
       getBlenderSceneInfo: getBlenderSceneInfoTool,
+      generateBlenderCode: generateBlenderCodeTool,
       webSearch,
     },
     experimental_activeTools: [
       "executeBlenderCode",
       "reconnectBlender",
       "getBlenderSceneInfo",
+      "generateBlenderCode",
       "webSearch",
     ],
   };
