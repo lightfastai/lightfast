@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckIcon, Loader2, XIcon } from "lucide-react";
+import { CheckIcon, Loader2, ServerIcon, XIcon } from "lucide-react";
 
 import {
   Accordion,
@@ -11,6 +11,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
 import { useToolExecution } from "../../hooks/use-tool-execution";
+import { BLENDER_PORT } from "../../main/blender-connection";
 import { useToolExecutionStore } from "../../stores/tool-execution-store";
 import { ToolProps } from "./types";
 
@@ -77,19 +78,16 @@ export function BlenderSceneInfoTool({
                 >
                   {toolInvocation.toolName.trim()}
                 </pre>
-                {/* {pending && (
-                  <span className="flex items-center gap-1 text-xs text-amber-500">
-                    <Loader2 className="size-3 animate-spin" />
-                    Fetching scene info...
-                  </span>
-                )} */}
-                {/* {autoExecute && !readyToExecute && !executed && (
-                  <span className="text-xs text-blue-500">
-                    Waiting for tool to be ready...
-                  </span>
-                )} */}
+                {/* Status indicators would go here */}
               </div>
               <div className="flex flex-shrink-0 items-center gap-1.5">
+                {/* Port information */}
+                <div className="text-muted-foreground mr-3 flex items-center text-[0.65rem]">
+                  <ServerIcon className="mr-1 size-3" />
+                  <span title="Change port in Blender via the Lightfast panel in the sidebar">
+                    Port: {BLENDER_PORT}
+                  </span>
+                </div>
                 {!autoExecute && !executed && (
                   <>
                     <Button

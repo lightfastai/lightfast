@@ -926,6 +926,25 @@ class LIGHTFAST_OT_Disconnect(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class LIGHTFAST_OT_ApplySettings(bpy.types.Operator):
+    bl_idname = "lightfast.apply_settings"
+    bl_label = "Apply Connection Settings"
+    bl_description = "Apply the connection settings and reconnect to Lightfast"
+
+    def execute(self, context):
+        # First disconnect if currently connected
+        if connected:
+            stop_socket_client()
+
+        # Then attempt to connect with new settings
+        if start_socket_client():
+            self.report({"INFO"}, "Connected to Lightfast with new settings")
+            return {"FINISHED"}
+        else:
+            self.report({"ERROR"}, "Failed to connect with new settings")
+            return {"CANCELLED"}
+
+
 class LIGHTFAST_PT_Panel(bpy.types.Panel):
     bl_label = "Lightfast"
     bl_idname = "LIGHTFAST_PT_Panel"
@@ -935,13 +954,25 @@ class LIGHTFAST_PT_Panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        prefs = context.preferences.addons[__name__].preferences
 
+        # Connection status
         if connected:
-            layout.label(text="Connected to Lightfast", icon="CHECKMARK")
+            layout.label(text=f"Connected on port {prefs.port}", icon="CHECKMARK")
             layout.operator("lightfast.disconnect", text="Disconnect")
         else:
-            layout.label(text="Disconnected from Lightfast", icon="ERROR")
+            layout.label(text=f"Disconnected (port {prefs.port})", icon="ERROR")
             layout.operator("lightfast.connect", text="Connect")
+
+        # Port configuration
+        box = layout.box()
+        box.label(text="Connection Settings")
+        row = box.row()
+        row.prop(prefs, "host", text="Host")
+        row = box.row()
+        row.prop(prefs, "port", text="Port")
+        row = box.row()
+        row.operator("lightfast.apply_settings", text="Apply Settings")
 
 
 # ---------------------- Registration ----------------------
@@ -950,6 +981,7 @@ classes = (
     LightfastAddonPreferences,
     LIGHTFAST_OT_Connect,
     LIGHTFAST_OT_Disconnect,
+    LIGHTFAST_OT_ApplySettings,
     LIGHTFAST_PT_Panel,
 )
 

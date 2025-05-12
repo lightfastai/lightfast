@@ -5,6 +5,7 @@ export interface ToolInvocation {
   args?: any;
   result?: any;
   error?: string;
+  portConfig?: number;
 }
 
 export interface ToolProps {

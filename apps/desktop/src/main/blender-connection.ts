@@ -10,7 +10,7 @@ export type BlenderConnectionStatus =
   | { status: "listening" }
   | { status: "stopped" };
 
-const BLENDER_PORT = 8765; // Or choose another port
+export const BLENDER_PORT = 8765; // Or choose another port
 const HEARTBEAT_INTERVAL = 5000; // Check connection every 5 seconds
 
 let wss: WebSocketServer | null = null;
