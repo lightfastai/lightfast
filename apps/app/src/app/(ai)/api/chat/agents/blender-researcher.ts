@@ -66,10 +66,12 @@ const workflowStructureSection = `
 - Use this information to inform your approach
 
 3. PLAN & EXECUTE
-- Craft focused, efficient Python code for the user's goal
-- Explain your code's purpose and approach (≤100 words)
-- Call 'executeBlenderCode' with properly formatted bpy code
-- Review results and iterate if needed
+- Decompose the solution into a sequence of small, incremental Python code chunks, following the <incremental_execution_pattern>.
+- For each chunk:
+    - Explain its specific purpose and approach briefly (e.g., 1-2 sentences).
+    - Call 'executeBlenderCode' with ONLY the current, small Python chunk.
+    - Briefly review the result of THIS chunk's execution before planning the next.
+- After all chunks are successfully executed, review the overall outcome and iterate if needed.
 </workflow_structure>
 `;
 
@@ -195,20 +197,21 @@ const codeQualityPrinciplesSection = `
 
 const incrementalExecutionSection = `
 <incremental_execution_pattern>
-When writing complex Blender Python code:
-1. Break your solution into smaller, focused chunks (5-15 lines each)
-2. Start with foundational setup (materials, collections, etc.)
-3. For each object creation or major operation:
-   - Add explicit error handling using try/except blocks
-   - Verify collections exist before using them
-   - Check for existing objects with the same name
-   - Use helper functions like:
-     * safe_get_collection() - Gets or creates a collection safely
-     * safe_link_object() - Safely links an object to a collection
-4. If you need to repeat similar operations (like creating multiple objects):
-   - Create a reusable function with proper error handling
-   - Test the function with one object before applying to multiple
-5. Include summary printing at the end to report what was created
+When writing Blender Python code that involves multiple steps or complex operations:
+1. ALWAYS break your solution into a sequence of smaller, focused, and independently executable Python chunks. Aim for each chunk to be between 5-20 lines of code. Each chunk MUST be able to run on its own and achieve a distinct sub-goal.
+2. Execute each chunk SEPARATELY using 'executeBlenderCode'. Do NOT combine multiple chunks into a single 'executeBlenderCode' call.
+3. Before executing each chunk, provide a brief explanation (1-2 sentences) of what this specific chunk will do.
+4. After each chunk is executed, briefly summarize its outcome before proceeding to the next chunk or planning further actions. This allows for immediate feedback and error correction.
+5. Start with foundational setup (e.g., importing bpy, safe_get_collection definitions, creating base materials or collections) as its own initial chunk(s).
+6. For each subsequent object creation, modification, or major operation, treat it as a separate chunk with its own 'executeBlenderCode' call.
+   - Ensure each chunk includes explicit error handling (try/except blocks), especially around Blender API calls.
+   - Verify necessary preconditions within the chunk (e.g., collections exist, objects exist) before attempting operations.
+   - Utilize helper functions (like safe_get_collection, safe_link_object from <collection_handling_pattern>) if they are defined in a preceding, successfully executed chunk or at the start of the current chunk.
+7. If you need to repeat similar operations (e.g., creating multiple similar objects):
+   - You can define a reusable Python function in an early chunk.
+   - Then, in subsequent chunks, call this function. Each call or a small group of related calls can form a chunk.
+8. Each Python chunk sent to 'executeBlenderCode' should be self-contained or rely only on state established by previously executed chunks in the current session. Include necessary imports like 'import bpy' at the start of the first chunk or where relevant if chunks are highly independent.
+9. Include targeted print statements within each Python chunk (e.g., \`print(f"Successfully created {object_name}")\`) to confirm its specific actions. This aids in debugging and provides clear feedback after each \`executeBlenderCode\` call.
 </incremental_execution_pattern>
 `;
 
