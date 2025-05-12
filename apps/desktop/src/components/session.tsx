@@ -21,6 +21,7 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { ToolType, useToolExecution } from "../hooks/use-tool-execution";
 import { useSessionStore } from "../stores/session-store";
+import { BlenderAnalysisDisplay } from "./blender-analysis-display";
 import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
 import { PastSessions } from "./past-sessions";
@@ -29,6 +30,15 @@ import { UserMessageInput } from "./user-message-input";
 export interface SessionProps {
   sessionId: string;
 }
+
+type DataStreamDelta = {
+  type:
+    | "blender_analysis_chunk"
+    | "blender_analysis_started"
+    | "blender_analysis_completed"
+    | "blender_analysis_error";
+  content: string;
+};
 
 export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   const { data: session } = useQuery(
@@ -221,24 +231,8 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                 </div>
               )}
 
-              {/* Render streamed suggestions */}
-              {data && (
-                <div className="streaming-data-container border-t p-4">
-                  <h4 className="mb-2 text-sm font-semibold">
-                    Live Suggestions Stream:
-                  </h4>
-                  <pre className="bg-muted max-h-40 overflow-auto rounded p-2 text-xs">
-                    {JSON.stringify(
-                      data.filter(
-                        (item) =>
-                          (item as any)?.type === "blender_analysis_chunk",
-                      ),
-                      null,
-                      2,
-                    )}
-                  </pre>
-                </div>
-              )}
+              {/* Display Blender analysis stream */}
+              {sessionId && <BlenderAnalysisDisplay sessionId={sessionId} />}
 
               {/* UserInputArea: always present. At top if MessageListArea is not there, at bottom otherwise. */}
               <div className="w-full overflow-hidden">

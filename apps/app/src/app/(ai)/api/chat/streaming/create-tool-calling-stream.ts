@@ -91,6 +91,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           ...blenderResearcher({
             messages: truncatedMessages,
             dataStream,
+            sessionId,
           }),
           experimental_transform: smoothStream({ chunking: "word" }),
           experimental_generateMessageId: () => nanoid(),

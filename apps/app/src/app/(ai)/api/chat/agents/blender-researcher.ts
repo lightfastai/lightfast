@@ -1,4 +1,5 @@
 // Import necessary types
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { CoreMessage, DataStreamWriter, streamText } from "ai";
 
 import { providers } from "~/app/(ai)/api/chat/providers/models";
@@ -22,19 +23,24 @@ const sceneInfoProtocolSection = `
 <scene_info_protocol>
 The MOST IMPORTANT and REQUIRED FIRST STEP before any scene modification, code execution, or troubleshooting is to call 'getBlenderSceneInfo' (with a clear explanation to the user). You MUST always call 'getBlenderSceneInfo' first to obtain the latest scene structure, objects, and state. NEVER proceed with any other tool, code, or suggestion until you have up-to-date scene information. This rule is mandatory and supersedes all other workflow steps. If you do not have current scene info, or if the scene may have changed, you must call 'getBlenderSceneInfo' again before proceeding.
 
-// After retrieving scene information with 'getBlenderSceneInfo', AUTOMATICALLY run the 'analyzeBlenderModel' tool (without requiring user prompting) in the following situations:
-// 1. When the user explicitly asks about model analysis, proportions, or structure
-// 2. When the user expresses concern about dimensions or scaling ("this looks too big", "proportions seem off")
-// 3. When creating or modifying architectural models (temples, buildings, structures)
-// 4. When the scene contains multiple related objects that might benefit from structural analysis
-// 5. When the user is new to Blender or asks for guidance on improving their model
-// 6. When the user wants to understand their model better or asks "what do you think of this model?"
+After retrieving scene information with 'getBlenderSceneInfo', you MUST AUTOMATICALLY analyze the scene without requiring user prompting. This analysis should:
+1. Identify the type of model or scene based on object names, structures, and relationships
+2. Evaluate proportions, scale, and overall organization
+3. Assess structural integrity and identify any potential improvements
+4. Look for patterns that suggest the model's purpose (character, architectural, mechanical, etc.)
 
-// When automatically running 'analyzeBlenderModel' after 'getBlenderSceneInfo':
-// - Briefly explain to the user that you're analyzing the scene to provide better insights
-// - Select the most appropriate analysisType based on context (proportions, structure, complete)
-// - Include modelType parameter if you can confidently determine the type of model
-// - Present the analysis results in a concise, helpful way focusing on the most valuable insights
+If your analysis suggests a specific model type or purpose, immediately use 'webSearch' to find relevant information about:
+1. Standard proportions, dimensions, and structural elements for this type of model
+2. Reference materials that could inform improvements or additions
+3. Technical details or specifications related to the model's apparent purpose
+4. Best practices for modeling similar objects or scenes
+
+Present your analysis and research findings to the user in a clear, concise manner, focusing on:
+1. What you believe the model represents
+2. Any observed structural patterns or organization
+3. Potential improvements to proportions, scale, or organization
+4. Suggestions for additional features or details based on your research
+5. Questions to clarify the user's intent if the model's purpose is ambiguous
 </scene_info_protocol>
 `;
 
@@ -60,9 +66,10 @@ const workflowStructureSection = `
 
 2. ASSESS SCENE
 - Before modifying any Blender scene, call 'getBlenderSceneInfo' (with proper explanation)
-- Automatically run 'analyzeBlenderModel' when appropriate (based on scenario criteria)
-- Analyze scene structure, objects, materials, proportions, and state
-- Use this information to inform your approach
+- Immediately analyze the scene to identify the model type, structure, and proportions
+- If the model type is identifiable, search for relevant references and information
+- Use the analysis and research to inform your approach
+- Explain your findings to the user, highlighting key observations and potential improvements
 
 3. PLAN & EXECUTE
 - Decompose the solution into a sequence of small, incremental Python code chunks, following the <incremental_execution_pattern>.
@@ -84,20 +91,22 @@ When examining a 3D scene, follow these steps to provide valuable analysis:
 
 1. SCENE STRUCTURE ANALYSIS
 - Always first call getBlenderSceneInfo to retrieve current scene data
-// - Then use analyzeBlenderModel to analyze the scene's structure and proportions
+- Immediately analyze the retrieved data to understand the scene's structure and proportions
 - Focus on object relationships, scale consistency, and overall organization
 - Identify potential improvements to the model's structure and composition
 - Pay attention to object hierarchies and groupings
+- Look for patterns that suggest the model's purpose or type (character, architectural, mechanical, etc.)
 
 2. COMPLETE ANALYSIS WORKFLOW
 When analyzing a 3D scene:
    a. Call getBlenderSceneInfo to retrieve current scene data
-//    b. Call analyzeBlenderModel with the appropriate modelType if known (e.g., "character", "mechanical", "architectural")
-   c. Present the analysis findings with helpful context
-   d. Explain the significance of any identified issues or opportunities
-   e. If improvements are suggested, generate Python code to implement them
-   f. Use executeBlenderCode to apply the changes after user approval
-   g. Call getBlenderSceneInfo again to verify the changes
+   b. Analyze the scene information to infer the model type (e.g., "character", "mechanical", "architectural")
+   c. If a specific model type is identified, use webSearch to find relevant reference information
+   d. Present the analysis findings with helpful context from both the scene data and web research
+   e. Explain the significance of any identified issues or opportunities
+   f. If improvements are suggested, generate Python code to implement them
+   g. Use executeBlenderCode to apply the changes after user approval
+   h. Call getBlenderSceneInfo again to verify the changes
 
 3. USER INTERACTION PATTERN
 - Present observed patterns clearly with specific examples
@@ -120,6 +129,14 @@ After making adjustments:
 - Verify that proportions now match expected values
 - Explain how the corrections improve the model's balance and appearance
 - Suggest any additional details or features that would enhance the model
+
+6. MODEL TYPE INFERENCE
+When trying to determine the type of model:
+- Look for naming patterns in objects (e.g., "body", "arm", "leg" suggests a character)
+- Analyze object hierarchies and relationships (e.g., columns supporting a roof suggests architecture)
+- Consider the overall scale and proportions relative to real-world objects
+- Check for industry-standard naming conventions (e.g., "rig", "armature", "joint" suggests a rigged character)
+- If the model type is unclear, present multiple possibilities to the user with your reasoning
 </automated_scene_analysis>
 `;
 
@@ -451,14 +468,30 @@ const toolSelectionSection = `
 - Use web search for specialized techniques or reference information
 - Create documents to store reference information, code snippets, or instructions
 
-When using web search for complex architectural modeling:
-1. Always set search_depth to "architectural" for structural analysis queries 
-2. First, search for "key components and dimensions of [structure]" to identify primary elements
-3. Then search for "architectural elements of [structure]" to understand distinctive features
-4. Search for "floor plan and proportions of [structure]" to establish accurate scale
-5. Research "[structure] column type and details" for specific architectural elements
-6. Look for "[structure] ornamental patterns" to accurately recreate decorative elements
-7. Create a structured document to organize your findings before coding
+When using web search for model analysis and reference:
+1. After analyzing the scene with getBlenderSceneInfo, if you can identify the model type:
+   a. Search for "standard proportions for [model type]" (e.g., human character, car, building)
+   b. Search for "key features of [specific model]" if a specific object is identified
+   c. Look for "[model type] modeling best practices in Blender"
+   d. Research "[model type] reference measurements" for accurate scaling
+
+2. For architectural models specifically:
+   a. Always set search_depth to "architectural" for structural analysis queries 
+   b. First, search for "key components and dimensions of [structure]" to identify primary elements
+   c. Then search for "architectural elements of [structure]" to understand distinctive features
+   d. Search for "floor plan and proportions of [structure]" to establish accurate scale
+   e. Research "[structure] column type and details" for specific architectural elements
+   f. Look for "[structure] ornamental patterns" to accurately recreate decorative elements
+
+3. For character models:
+   a. Search for "anatomical proportions for [character type]" 
+   b. Research "standard measurements for [species/character]"
+   c. Look for "character rigging best practices" if the model appears to be for animation
+
+4. For mechanical or technical models:
+   a. Search for "technical specifications for [object type]"
+   b. Research "standard dimensions of [mechanical component]"
+   c. Look for "engineering tolerances for [mechanical system]"
 </tool_selection_guidelines>
 `;
 
@@ -502,6 +535,7 @@ const unifiedPrompt =
 interface BlenderResearcherParams {
   messages: CoreMessage[];
   dataStream: DataStreamWriter;
+  sessionId: string;
 }
 
 type UnifiedResearcherReturn = Parameters<typeof streamText>[0];
@@ -509,48 +543,38 @@ type UnifiedResearcherReturn = Parameters<typeof streamText>[0];
 export function blenderResearcher({
   dataStream,
   messages,
+  sessionId,
 }: BlenderResearcherParams): UnifiedResearcherReturn {
   // Tool definitions
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
-  // const analyzeBlenderModelTool = createAnalyzeBlenderModelTool(dataStream);
-  // const searchAmbientCG = createSearchAmbientCGTool();
-  // const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
   const webSearch = createSearchTool("openai:gpt-4o");
-  // const createDocumentTool = createDocument({ sessionId });
-  // const updateDocumentTool = updateDocument({ sessionId });
-
-  // const searchTool = createPolyhavenSearchTool();
-  // const downloadTool = createPolyhavenDownloadTool();
-  // const categoryTool = createPolyhavenCategoryTool();
 
   return {
     model: providers.languageModel("chat"),
     system: systemPrompt({ requestPrompt: unifiedPrompt }),
     messages,
     toolCallStreaming: true,
-    // providerOptions: {
-    //   google: {
-    //     // Options are nested under 'google' for Vertex provider
-    //     thinkingConfig: {
-    //       // includeThoughts: true,
-    //       thinkingBudget: 12000, // Optional
-    //     },
-    //   } satisfies GoogleGenerativeAIProviderOptions,
-    // },
+    providerOptions: {
+      google: {
+        // Options are nested under 'google' for Vertex provider
+        thinkingConfig: {
+          // includeThoughts: true,
+          thinkingBudget: 12000, // Optional
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
       getBlenderSceneInfo: getBlenderSceneInfoTool,
-      // analyzeBlenderModel: analyzeBlenderModelTool,
       webSearch,
     },
     experimental_activeTools: [
       "executeBlenderCode",
       "reconnectBlender",
       "getBlenderSceneInfo",
-      // "analyzeBlenderModel",
       "webSearch",
     ],
     maxSteps: 10,
