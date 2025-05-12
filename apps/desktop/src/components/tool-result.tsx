@@ -63,6 +63,57 @@ export function ToolResult({ toolInvocation }: ToolResultProps) {
 
     // Handle specific tool types if needed
     switch (toolName) {
+      case "generateBlenderCode":
+        // Handle both success and error states
+        if (result.success === false) {
+          return (
+            <div
+              className={cn(
+                "mt-1 p-2 text-[0.65rem] leading-tight text-red-600",
+              )}
+            >
+              Error: {result.error || "Failed to generate Blender code"}
+            </div>
+          );
+        }
+
+        if (result.code) {
+          return (
+            <div className="p-2">
+              <div className="mb-2 text-[0.65rem]">
+                <div className="font-medium">Task:</div>
+                <div className="text-muted-foreground">
+                  {toolInvocation.args?.task || "No task specified"}
+                </div>
+
+                {toolInvocation.args?.scene_info && (
+                  <details className="mt-1">
+                    <summary className="cursor-pointer font-medium">
+                      Scene Info
+                    </summary>
+                    <div className="text-muted-foreground mt-1">
+                      {toolInvocation.args.scene_info.length > 200
+                        ? `${toolInvocation.args.scene_info.slice(0, 200)}...`
+                        : toolInvocation.args.scene_info}
+                    </div>
+                  </details>
+                )}
+              </div>
+
+              <div className="mt-3">
+                <div className="mb-1 text-[0.7rem] font-medium">
+                  Generated Code:
+                </div>
+                <ScrollArea className="h-48 w-full">
+                  <CodeBlock inline={false}>{result.code}</CodeBlock>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
+            </div>
+          );
+        }
+        break;
+
       case "webSearch":
         if (result.results && Array.isArray(result.results)) {
           return (
