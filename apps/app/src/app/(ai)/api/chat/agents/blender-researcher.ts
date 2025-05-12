@@ -1,25 +1,16 @@
 // Import necessary types
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google"; // Note: importing from @ai-sdk/google
 import type { CoreMessage, DataStreamWriter, streamText } from "ai";
 import { smoothStream } from "ai";
 
 import { providers } from "~/app/(ai)/api/chat/providers/models";
 import { systemPrompt } from "../prompts";
 import {
-  createDownloadAmbientCGTextureTool,
-  createSearchAmbientCGTool,
-} from "../tools/ambientcg";
-import {
   createAnalyzeBlenderModelTool,
   createExecuteBlenderCodeTool,
   createGetBlenderSceneInfoTool,
   createReconnectBlenderTool,
 } from "../tools/blender";
-import { createDocument, updateDocument } from "../tools/document";
-import {
-  createPolyhavenCategoryTool,
-  createPolyhavenDownloadTool,
-  createPolyhavenSearchTool,
-} from "../tools/polyhaven";
 import { createSearchTool } from "../tools/web-search";
 
 // Define the identity section
@@ -526,21 +517,30 @@ export function blenderResearcher({
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
   const analyzeBlenderModelTool = createAnalyzeBlenderModelTool(dataStream);
-  const searchAmbientCG = createSearchAmbientCGTool();
-  const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
+  // const searchAmbientCG = createSearchAmbientCGTool();
+  // const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
   const webSearch = createSearchTool("openai:gpt-4o");
-  const createDocumentTool = createDocument({ sessionId });
-  const updateDocumentTool = updateDocument({ sessionId });
+  // const createDocumentTool = createDocument({ sessionId });
+  // const updateDocumentTool = updateDocument({ sessionId });
 
-  const searchTool = createPolyhavenSearchTool();
-  const downloadTool = createPolyhavenDownloadTool();
-  const categoryTool = createPolyhavenCategoryTool();
+  // const searchTool = createPolyhavenSearchTool();
+  // const downloadTool = createPolyhavenDownloadTool();
+  // const categoryTool = createPolyhavenCategoryTool();
 
   return {
-    model: providers.languageModel("reasoning"),
+    model: providers.languageModel("chat"),
     system: systemPrompt({ requestPrompt: unifiedPrompt }),
     messages,
     toolCallStreaming: true,
+    providerOptions: {
+      google: {
+        // Options are nested under 'google' for Vertex provider
+        thinkingConfig: {
+          // includeThoughts: true,
+          thinkingBudget: 12000, // Optional
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,

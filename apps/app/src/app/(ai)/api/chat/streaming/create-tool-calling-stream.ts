@@ -86,7 +86,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         void result.consumeStream();
 
         result.mergeIntoDataStream(dataStream, {
-          sendReasoning: false,
+          sendReasoning: true,
         });
       } catch (error) {
         console.error("Stream execution error:", error);

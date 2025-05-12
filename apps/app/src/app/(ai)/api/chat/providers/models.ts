@@ -17,7 +17,13 @@ const $ArtifactSupportedModels = z.enum(["gpt-4-turbo-preview"]);
 
 const $TitleSupportedModels = z.enum(["google/gemini-2.0-flash-001"]);
 
-const $ModelUseCase = z.enum(["reasoning", "json", "artifact", "title"]);
+const $ModelUseCase = z.enum([
+  "reasoning",
+  "json",
+  "artifact",
+  "title",
+  "chat",
+]);
 
 export const modelRegistry = createProviderRegistry({
   openai: createOpenAI({
@@ -48,6 +54,9 @@ export const providers = customProvider({
   languageModels: {
     [$ModelUseCase.enum.artifact]: modelRegistry.languageModel(
       "openrouter:gpt-4o-mini",
+    ),
+    [$ModelUseCase.enum.chat]: modelRegistry.languageModel(
+      "google:gemini-2.5-flash-preview-04-17",
     ),
     [$ModelUseCase.enum.reasoning]: modelRegistry.languageModel(
       "google:gemini-2.5-pro-preview-05-06",
