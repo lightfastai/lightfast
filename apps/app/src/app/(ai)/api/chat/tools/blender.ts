@@ -92,7 +92,7 @@ export function createAnalyzeBlenderModelTool() {
         // Build a simple prompt based on scene data and focus
         let prompt = `Analyze this Blender scene:
 
-${JSON.stringify(sceneInfo, null, 2)}
+${JSON.stringify(sceneInfo)}
 
 `;
 
@@ -109,7 +109,7 @@ ${JSON.stringify(sceneInfo, null, 2)}
         prompt += `Provide a concise analysis of the scene with observations and conceptual suggestions for improvement. Include any potential issues or opportunities you notice. Consider the model structure, proportions, and organization. If relevant, suggest high-level approaches to improve the model without providing specific code.`;
 
         // Generate analysis using a reasoning model
-        const response = await generateText({
+        const { text } = await generateText({
           model: providers.languageModel("reasoning"),
           messages: [
             {
@@ -123,19 +123,10 @@ ${JSON.stringify(sceneInfo, null, 2)}
           maxTokens: 1000,
         });
 
-        console.log("response", response);
-
-        // Get response text
-        const analysis = String(response).trim();
-
         // Return the analysis results
         return {
           success: true,
-          analysis: analysis,
-          sceneStats: {
-            objectCount: sceneInfo.object_count,
-            objectTypes: countObjectsByType(sceneInfo.objects),
-          },
+          analysis: text,
         };
       } catch (error) {
         console.error("Error analyzing Blender model:", error);

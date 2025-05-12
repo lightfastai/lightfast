@@ -538,6 +538,7 @@ export function blenderResearcher({
     model: providers.languageModel("reasoning"),
     system: systemPrompt({ requestPrompt: unifiedPrompt }),
     messages,
+    toolCallStreaming: true,
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,

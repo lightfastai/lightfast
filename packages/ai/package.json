@@ -9,6 +9,7 @@
     "./openai-env": "./src/env/openai-env.ts",
     "./anthropic-env": "./src/env/anthropic-env.ts",
     "./openrouter-env": "./src/env/openrouter-env.ts",
+    "./google-env": "./src/env/google-env.ts",
     "./schema": {
       "types": "./dist/src/schema/index.d.ts",
       "default": "./src/schema/index.ts"
@@ -30,6 +31,8 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@ai-sdk/google": "^1.2.17",
+    "@ai-sdk/google-vertex": "^2.2.21",
     "@fal-ai/client": "^1.2.0",
     "@fal-ai/server-proxy": "^1.1.1",
     "@openrouter/ai-sdk-provider": "^0.4.5",
