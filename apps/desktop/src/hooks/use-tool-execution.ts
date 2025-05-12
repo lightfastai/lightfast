@@ -1,10 +1,4 @@
-import { useState } from "react";
-
-type ToolExecutionState = {
-  pending: boolean;
-  error: string | null;
-  executed: boolean;
-};
+import { useToolExecutionStore } from "../stores/tool-execution-store";
 
 type ToolResult = {
   success: boolean;
@@ -97,8 +91,10 @@ const handlers: ToolExecutionHandlers = {
 
     try {
       console.log(`📤 Sending getSceneInfo request to main process`);
+
       const result = await window.blenderConnection.getSceneInfo();
-      console.log(`📥 Received response from main process`);
+
+      console.log(`📥 Received complete scene info response from main process`);
 
       if (result.success) {
         return {
@@ -160,7 +156,11 @@ export type ToolType = keyof typeof handlers;
  * Hook for central tool execution management with state tracking
  */
 export function useToolExecution() {
-  const [state, setState] = useState<Record<string, ToolExecutionState>>({});
+  const setToolPending = useToolExecutionStore((state) => state.setToolPending);
+  const getToolState = useToolExecutionStore((state) => state.getToolState);
+  const setToolExecuted = useToolExecutionStore(
+    (state) => state.setToolExecuted,
+  );
 
   /**
    * Execute a specific tool and track its state
@@ -170,15 +170,8 @@ export function useToolExecution() {
     toolType: ToolType,
     args: any,
   ): Promise<ToolResult> => {
-    // Update state to pending
-    setState((prev) => ({
-      ...prev,
-      [toolCallId]: {
-        pending: true,
-        error: null,
-        executed: false,
-      },
-    }));
+    // Update state to pending using the Zustand store
+    setToolPending(toolCallId, true);
 
     console.log(`🧰 Executing ${toolType} tool for call: ${toolCallId}`, args);
 
@@ -191,6 +184,10 @@ export function useToolExecution() {
           break;
         case "getBlenderSceneInfo":
           result = await handlers.getBlenderSceneInfo();
+          console.log(
+            `📥 Received complete scene info response from main process`,
+            result,
+          );
           break;
         case "reconnectBlender":
           result = await handlers.reconnectBlender();
@@ -208,30 +205,20 @@ export function useToolExecution() {
 
       console.log(`Tool execution completed for ${toolType}:`, result);
 
-      // Update state to completed
-      setState((prev) => ({
-        ...prev,
-        [toolCallId]: {
-          pending: false,
-          error: !result.success ? result.error || null : null,
-          executed: true,
-        },
-      }));
+      // Update state to completed using the Zustand store
+      setToolExecuted(
+        toolCallId,
+        true,
+        !result.success ? result.error || null : null,
+      );
 
       return result;
     } catch (e: any) {
       const errorMessage = e?.message || `Failed to execute ${toolType}`;
       console.error(`Error executing ${toolType} tool:`, e);
 
-      // Update state to error
-      setState((prev) => ({
-        ...prev,
-        [toolCallId]: {
-          pending: false,
-          error: errorMessage,
-          executed: true,
-        },
-      }));
+      // Update state to error using the Zustand store
+      setToolExecuted(toolCallId, true, errorMessage);
 
       return {
         success: false,
@@ -244,27 +231,7 @@ export function useToolExecution() {
    * Mark a tool as declined/rejected by the user
    */
   const declineTool = (toolCallId: string): void => {
-    setState((prev) => ({
-      ...prev,
-      [toolCallId]: {
-        pending: false,
-        error: null,
-        executed: true,
-      },
-    }));
-  };
-
-  /**
-   * Get the current state for a specific tool call
-   */
-  const getToolState = (toolCallId: string): ToolExecutionState => {
-    return (
-      state[toolCallId] || {
-        pending: false,
-        error: null,
-        executed: false,
-      }
-    );
+    setToolExecuted(toolCallId, true);
   };
 
   /**

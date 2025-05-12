@@ -419,7 +419,7 @@ export function sendToBlender(message: object) {
 export async function requestFromBlender(
   action: string,
   params: any = {},
-  timeoutMs: number = 10000, // Increased timeout for complex operations
+  timeoutMs: number = 300000, // Increased timeout to match Blender's 30-second timeout
 ): Promise<BlenderResponseMessage> {
   console.log(`📤 requestFromBlender: Starting request for action "${action}"`);
   console.log(`   Params: ${JSON.stringify(params).substring(0, 100)}`);

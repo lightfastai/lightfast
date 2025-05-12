@@ -31,15 +31,6 @@ export interface SessionProps {
   sessionId: string;
 }
 
-type DataStreamDelta = {
-  type:
-    | "blender_analysis_chunk"
-    | "blender_analysis_started"
-    | "blender_analysis_completed"
-    | "blender_analysis_error";
-  content: string;
-};
-
 export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   const { data: session } = useQuery(
     trpc.tenant.session.get.queryOptions({ sessionId }),

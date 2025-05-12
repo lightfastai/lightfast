@@ -262,7 +262,7 @@ def decode_websocket_frame(data):
         return None, None, 0
 
 
-def handle_fragmented_receive(sock, buffer_size=4096, timeout=5.0):
+def handle_fragmented_receive(sock, buffer_size=4096, timeout=30.0):
     """
     Receive potentially fragmented WebSocket frames and reassemble them
     Returns complete messages as they are received
@@ -502,7 +502,7 @@ def start_socket_client():
 
         # Create socket with timeout
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)  # 5-second timeout for operations
+        sock.settimeout(30)  # 30-second timeout for operations
 
         # Connect to server
         try:
@@ -747,6 +747,7 @@ def handle_get_scene_info(params, message_id=None):
 
                 # Collect information for all objects in the scene
                 for i, obj in enumerate(bpy.context.scene.objects):
+                    print(obj.name)
                     obj_info = {
                         "name": obj.name,
                         "type": obj.type,
@@ -760,7 +761,7 @@ def handle_get_scene_info(params, message_id=None):
                         "rotation": [round(float(r), 3) for r in obj.rotation_euler],
                     }
 
-                    # Compute world-space bounding box corners
+                    # # Compute world-space bounding box corners
                     try:
                         bbox_corners = []
                         for corner in obj.bound_box:
@@ -788,13 +789,13 @@ def handle_get_scene_info(params, message_id=None):
                         ]
 
                     # Custom properties (user-defined only)
-                    custom_props = {
-                        k: v
-                        for k, v in obj.items()
-                        if k not in obj.bl_rna.properties.keys()
-                    }
-                    if custom_props:
-                        obj_info["custom_properties"] = custom_props
+                    # custom_props = {
+                    #     k: v
+                    #     for k, v in obj.items()
+                    #     if k not in obj.bl_rna.properties.keys()
+                    # }
+                    # if custom_props:
+                    #     obj_info["custom_properties"] = custom_props
 
                     log(
                         f"Object {i+1}: {obj.name} ({obj.type}) at location {obj_info['location']}"
