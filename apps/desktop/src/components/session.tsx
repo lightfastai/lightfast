@@ -54,6 +54,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     addToolResult,
     stop,
     setMessages,
+    data,
   } = useChat({
     id: sessionId,
     api: SESSION_CHAT_API_URL,
@@ -215,6 +216,25 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                     stop={stop}
                     setMessages={setMessages}
                   />
+                </div>
+              )}
+
+              {/* Render streamed suggestions */}
+              {data && (
+                <div className="streaming-data-container border-t p-4">
+                  <h4 className="mb-2 text-sm font-semibold">
+                    Live Suggestions Stream:
+                  </h4>
+                  <pre className="bg-muted max-h-40 overflow-auto rounded p-2 text-xs">
+                    {JSON.stringify(
+                      data.filter(
+                        (item) =>
+                          (item as any)?.type === "blender_analysis_chunk",
+                      ),
+                      null,
+                      2,
+                    )}
+                  </pre>
                 </div>
               )}
 

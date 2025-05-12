@@ -1,4 +1,5 @@
-import { generateText, tool } from "ai";
+import type { DataStreamWriter } from "ai";
+import { streamText, tool } from "ai";
 import { z } from "zod";
 
 import { providers } from "~/app/(ai)/api/chat/providers/models";
@@ -51,7 +52,7 @@ export function createGetBlenderSceneInfoTool() {
 /**
  * Creates a tool to analyze a Blender scene and provide conceptual insights and pseudo-code suggestions.
  */
-export function createAnalyzeBlenderModelTool() {
+export function createAnalyzeBlenderModelTool(dataStream: DataStreamWriter) {
   return tool({
     description:
       "Analyzes the current Blender scene to understand its structure, proportions, and relationships. This tool helps identify what's in the scene and what conceptual changes might improve it. It provides analysis for any type of 3D scene - from architectural models to character models, mechanical objects, or abstract scenes.",
@@ -80,8 +81,12 @@ export function createAnalyzeBlenderModelTool() {
           customPrompt?: string;
         };
 
-        // Check if we have a valid scene
+        console.log("sceneInfo", sceneInfo);
         if (!sceneInfo?.objects || sceneInfo.objects.length === 0) {
+          dataStream.writeData({
+            type: "blender_analysis_error",
+            error: "No scene information provided or empty scene.",
+          });
           return {
             success: false,
             error:
@@ -89,27 +94,22 @@ export function createAnalyzeBlenderModelTool() {
           };
         }
 
-        // Build a simple prompt based on scene data and focus
         let prompt = `Analyze this Blender scene:
 
 ${JSON.stringify(sceneInfo)}
 
 `;
-
-        // Add focus if specified
-        if (focus) {
+        if (focus)
           prompt += `Focus specifically on the ${focus} of this scene.\n\n`;
-        }
-
-        // Add custom prompt if specified
-        if (customPrompt) {
-          prompt += `${customPrompt}\n\n`;
-        }
-
+        if (customPrompt) prompt += `${customPrompt}\n\n`;
         prompt += `Provide a concise analysis of the scene with observations and conceptual suggestions for improvement. Include any potential issues or opportunities you notice. Consider the model structure, proportions, and organization. If relevant, suggest high-level approaches to improve the model without providing specific code.`;
 
-        // Generate analysis using a reasoning model
-        const { text } = await generateText({
+        dataStream.writeData({
+          type: "blender_analysis_started",
+          message: "Blender scene analysis started...",
+        });
+
+        const { fullStream } = streamText({
           model: providers.languageModel("reasoning"),
           messages: [
             {
@@ -121,34 +121,45 @@ ${JSON.stringify(sceneInfo)}
           ],
           temperature: 0.2,
           maxTokens: 1000,
+          // stream: true, // Some SDKs might need an explicit stream: true, but generateText usually implies it or handles it via streamText/streamObject
         });
 
-        // Return the analysis results
+        let fullAnalysis = "";
+        for await (const textPart of fullStream) {
+          if (textPart.type === "text-delta") {
+            const { textDelta } = textPart;
+            fullAnalysis += textDelta;
+            dataStream.writeData({
+              type: "blender_analysis_chunk",
+              content: textDelta,
+            });
+          }
+        }
+
+        dataStream.writeData({
+          type: "blender_analysis_completed",
+          fullAnalysisBrief: fullAnalysis.substring(0, 100) + "...",
+        });
+
         return {
           success: true,
-          analysis: text,
+          analysis: fullAnalysis,
         };
       } catch (error) {
         console.error("Error analyzing Blender model:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Unknown error analyzing model";
+        dataStream.writeData({
+          type: "blender_analysis_error",
+          error: errorMessage,
+        });
         return {
           success: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unknown error analyzing model",
+          error: errorMessage,
         };
       }
     },
   });
-}
-
-/**
- * Helper function to count objects by type
- */
-function countObjectsByType(objects: any[]) {
-  return objects.reduce((acc: Record<string, number>, obj) => {
-    const type = obj.type;
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {});
 }

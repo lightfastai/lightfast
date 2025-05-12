@@ -42,6 +42,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           ...blenderResearcher({
             sessionId,
             messages: truncatedMessages,
+            dataStream: dataStream,
           }),
           experimental_generateMessageId: () => nanoid(),
           onFinish: async ({ response }) => {

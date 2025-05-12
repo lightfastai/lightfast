@@ -1,5 +1,5 @@
 // Import necessary types
-import type { CoreMessage, streamText } from "ai";
+import type { CoreMessage, DataStreamWriter, streamText } from "ai";
 import { smoothStream } from "ai";
 
 import { providers } from "~/app/(ai)/api/chat/providers/models";
@@ -511,19 +511,21 @@ const unifiedPrompt =
 interface BlenderResearcherParams {
   sessionId: string;
   messages: CoreMessage[];
+  dataStream: DataStreamWriter;
 }
 
 type UnifiedResearcherReturn = Parameters<typeof streamText>[0];
 
 export function blenderResearcher({
   sessionId,
+  dataStream,
   messages,
 }: BlenderResearcherParams): UnifiedResearcherReturn {
   // Tool definitions
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
-  const analyzeBlenderModelTool = createAnalyzeBlenderModelTool();
+  const analyzeBlenderModelTool = createAnalyzeBlenderModelTool(dataStream);
   const searchAmbientCG = createSearchAmbientCGTool();
   const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
   const webSearch = createSearchTool("openai:gpt-4o");
