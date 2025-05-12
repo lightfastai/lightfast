@@ -15,6 +15,9 @@ import {
   BLENDER_STATUS_CHANNEL,
 } from "./blender-channels";
 
+// Track if we've already registered the global listeners
+let blenderHandlersRegistered = false;
+
 export function initializeBlenderConnection(
   contents: WebContents,
   port: number = DEFAULT_BLENDER_PORT,
@@ -24,6 +27,14 @@ export function initializeBlenderConnection(
 }
 
 export function addBlenderEventListeners() {
+  // Only register handlers once
+  if (blenderHandlersRegistered) {
+    console.log("Blender event listeners already registered, skipping");
+    return;
+  }
+
+  console.log("Registering Blender event listeners");
+
   // Add handler for getting Blender status
   ipcMain.handle(BLENDER_STATUS_CHANNEL, () => {
     // Return the current Blender connection status using the imported function
@@ -181,4 +192,7 @@ export function addBlenderEventListeners() {
       };
     }
   });
+
+  // Mark as registered
+  blenderHandlersRegistered = true;
 }

@@ -27,6 +27,7 @@ const windows: BrowserWindow[] = [];
 function registerShortcuts() {
   // Register Cmd+Shift+N / Ctrl+Shift+N to create a new window
   globalShortcut.register("CommandOrControl+Shift+N", () => {
+    console.log("Creating new window via keyboard shortcut");
     createComposerWindow();
   });
 }
