@@ -15,12 +15,20 @@ import { env } from "./env/index";
 import registerListeners from "./helpers/ipc/listeners-register";
 import { DEFAULT_BLENDER_PORT } from "./main/blender-connection";
 
+// Extend global with our window port map
+declare global {
+  var windowPortMap: Map<number, number>;
+}
+
 const inDevelopment = process.env.NODE_ENV === "development";
 
 // Keep track of the next available port for Blender connections
 let nextBlenderPort = DEFAULT_BLENDER_PORT;
 // Track which port is assigned to which window
 const windowPortMap = new Map<number, number>();
+// Make the port map accessible globally
+global.windowPortMap = windowPortMap;
+
 // Keep track of window unique IDs
 const windowUniqueIds = new Map<number, string>();
 

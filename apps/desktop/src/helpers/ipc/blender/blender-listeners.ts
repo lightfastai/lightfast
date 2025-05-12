@@ -1,4 +1,4 @@
-import { ipcMain, WebContents } from "electron";
+import { BrowserWindow, ipcMain, WebContents } from "electron";
 
 import {
   DEFAULT_BLENDER_PORT,
@@ -36,33 +36,56 @@ export function addBlenderEventListeners() {
   console.log("Registering Blender event listeners");
 
   // Add handler for getting Blender status
-  ipcMain.handle(BLENDER_STATUS_CHANNEL, () => {
+  ipcMain.handle(BLENDER_STATUS_CHANNEL, (event) => {
+    // Get the window's ID to find its port
+    const windowId = BrowserWindow.fromWebContents(event.sender)?.id;
+    let port = DEFAULT_BLENDER_PORT;
+
+    // If we have the window, get its assigned port
+    if (windowId && global.windowPortMap) {
+      const windowPort = global.windowPortMap.get(windowId);
+      if (windowPort) {
+        port = windowPort;
+      }
+    }
+
     // Return the current Blender connection status using the imported function
-    return getBlenderStatus();
+    return getBlenderStatus(port);
   });
 
   // Add handler for sending messages to Blender
   ipcMain.handle(BLENDER_SEND_MESSAGE_CHANNEL, async (event, message) => {
     try {
-      console.log("Main: Sending message to Blender:", message);
+      const windowId = BrowserWindow.fromWebContents(event.sender)?.id;
+      let port = DEFAULT_BLENDER_PORT;
+
+      if (windowId && global.windowPortMap) {
+        const windowPort = global.windowPortMap.get(windowId);
+        if (windowPort) {
+          port = windowPort;
+        }
+      }
+
+      console.log(`Main: Sending message to Blender on port ${port}:`, message);
 
       // Check if Blender is connected
-      if (!isBlenderConnected()) {
-        console.warn("Main: Blender is not connected. Cannot send message.");
+      if (!isBlenderConnected(port)) {
+        console.warn(
+          `Main: Blender is not connected on port ${port}. Cannot send message.`,
+        );
         return {
           success: false,
-          error:
-            "Blender is not connected. Please check your Blender connection.",
+          error: `Blender is not connected on port ${port}. Please check your Blender connection.`,
           errorCode: "BLENDER_NOT_CONNECTED",
         };
       }
 
       // Send the message to Blender
-      sendToBlender(message);
+      sendToBlender(message, port);
 
       return {
         success: true,
-        message: "Message sent to Blender",
+        message: `Message sent to Blender on port ${port}`,
       };
     } catch (error: any) {
       console.error("Main: Error sending message to Blender:", error);
@@ -77,7 +100,19 @@ export function addBlenderEventListeners() {
   // Add Blender execute code handler
   ipcMain.handle(BLENDER_EXECUTE_CODE_CHANNEL, async (event, args) => {
     try {
-      console.log("Main: Received request to execute code in Blender");
+      const windowId = BrowserWindow.fromWebContents(event.sender)?.id;
+      let port = DEFAULT_BLENDER_PORT;
+
+      if (windowId && global.windowPortMap) {
+        const windowPort = global.windowPortMap.get(windowId);
+        if (windowPort) {
+          port = windowPort;
+        }
+      }
+
+      console.log(
+        `Main: Received request to execute code in Blender on port ${port}`,
+      );
 
       // Extract code from args
       const { code } = args;
@@ -92,12 +127,13 @@ export function addBlenderEventListeners() {
       }
 
       // Check if Blender is connected before attempting to send the command
-      if (!isBlenderConnected()) {
-        console.warn("Main: Blender is not connected. Cannot execute code.");
+      if (!isBlenderConnected(port)) {
+        console.warn(
+          `Main: Blender is not connected on port ${port}. Cannot execute code.`,
+        );
         return {
           success: false,
-          error:
-            "Blender is not connected. Please check your Blender connection.",
+          error: `Blender is not connected on port ${port}. Please check your Blender connection.`,
           errorCode: "BLENDER_NOT_CONNECTED",
         };
       }
@@ -105,11 +141,15 @@ export function addBlenderEventListeners() {
       try {
         // Send the request and wait for response
         console.log(
-          "Main: Sending execute_code request to Blender and waiting for response...",
+          `Main: Sending execute_code request to Blender on port ${port} and waiting for response...`,
         );
-        const response = await requestFromBlender("execute_code", { code });
+        const response = await requestFromBlender(
+          "execute_code",
+          { code },
+          port,
+        );
         console.log(
-          "Main: Received execute_code response from Blender:",
+          `Main: Received execute_code response from Blender on port ${port}:`,
           JSON.stringify(response).substring(0, 200),
         );
         console.log(
@@ -117,10 +157,15 @@ export function addBlenderEventListeners() {
         );
 
         // Return the response directly to the renderer
-        console.log("Main: Returning execute_code response to renderer");
+        console.log(
+          `Main: Returning execute_code response from port ${port} to renderer`,
+        );
         return response;
       } catch (error: any) {
-        console.error("Main: Error during Blender code execution:", error);
+        console.error(
+          `Main: Error during Blender code execution on port ${port}:`,
+          error,
+        );
         return {
           success: false,
           error: error.message,
@@ -140,15 +185,28 @@ export function addBlenderEventListeners() {
   // Add Blender get scene info handler
   ipcMain.handle(BLENDER_GET_SCENE_INFO_CHANNEL, async (event, args) => {
     try {
-      console.log("Main: Received request to get Blender scene info");
+      const windowId = BrowserWindow.fromWebContents(event.sender)?.id;
+      let port = DEFAULT_BLENDER_PORT;
+
+      if (windowId && global.windowPortMap) {
+        const windowPort = global.windowPortMap.get(windowId);
+        if (windowPort) {
+          port = windowPort;
+        }
+      }
+
+      console.log(
+        `Main: Received request to get Blender scene info from port ${port}`,
+      );
 
       // Check if Blender is connected before attempting to send the command
-      if (!isBlenderConnected()) {
-        console.warn("Main: Blender is not connected. Cannot get scene info.");
+      if (!isBlenderConnected(port)) {
+        console.warn(
+          `Main: Blender is not connected on port ${port}. Cannot get scene info.`,
+        );
         return {
           success: false,
-          error:
-            "Blender is not connected. Please check your Blender connection.",
+          error: `Blender is not connected on port ${port}. Please check your Blender connection.`,
           errorCode: "BLENDER_NOT_CONNECTED",
         };
       }
@@ -156,11 +214,11 @@ export function addBlenderEventListeners() {
       try {
         // Send the request and wait for response
         console.log(
-          "Main: Sending get_scene_info request to Blender and waiting for response...",
+          `Main: Sending get_scene_info request to Blender on port ${port} and waiting for response...`,
         );
-        const response = await requestFromBlender("get_scene_info", {});
+        const response = await requestFromBlender("get_scene_info", {}, port);
         console.log(
-          "Main: Received scene_info response from Blender:",
+          `Main: Received scene_info response from Blender on port ${port}:`,
           JSON.stringify(response).substring(0, 200),
         );
         console.log(
@@ -168,15 +226,20 @@ export function addBlenderEventListeners() {
         );
         if (response.scene_info) {
           console.log(
-            `Main: Scene info - name: ${response.scene_info.name}, objects: ${response.scene_info.object_count}`,
+            `Main: Scene info from port ${port} - name: ${response.scene_info.name}, objects: ${response.scene_info.object_count}`,
           );
         }
 
         // Return the response directly to the renderer
-        console.log("Main: Returning scene_info response to renderer");
+        console.log(
+          `Main: Returning scene_info response from port ${port} to renderer`,
+        );
         return response;
       } catch (error: any) {
-        console.error("Main: Error getting scene info from Blender:", error);
+        console.error(
+          `Main: Error getting scene info from Blender on port ${port}:`,
+          error,
+        );
         return {
           success: false,
           error: error.message,
