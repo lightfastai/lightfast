@@ -6,12 +6,12 @@ const executeBlenderCodeToolSchema = z.object({
 });
 
 /**
- * Creates a question tool with the appropriate schema for the specified model.
+ * Creates a tool for executing Python code in Blender.
  */
 export function createExecuteBlenderCodeTool() {
   return tool({
     description:
-      "Execute Blender code. When writing code, always include error handling for collections: check if collections exist before accessing them, use try/except blocks for critical operations, verify objects before linking/unlinking from collections, and consider implementing helper functions for repetitive operations.",
+      "Execute Blender Python code to create, modify, or analyze 3D models. When writing code, always include proper error handling: check if collections exist before accessing them, use try/except blocks for critical operations, verify objects before linking/unlinking from collections, and implement helper functions for repetitive operations.",
     parameters: executeBlenderCodeToolSchema,
     // execute function removed to enable frontend confirmation
   });
@@ -19,9 +19,13 @@ export function createExecuteBlenderCodeTool() {
 
 export const reconnectBlenderToolSchema = z.object({});
 
+/**
+ * Creates a tool to reconnect to Blender when connection is lost.
+ */
 export function createReconnectBlenderTool() {
   return tool({
-    description: "Reconnect to Blender",
+    description:
+      "Reconnect to Blender when connection is lost or errors occur. Call this tool immediately when encountering Blender execution errors or when the scene information appears outdated. Explain to the user that you're attempting to reconnect before calling this tool.",
     parameters: reconnectBlenderToolSchema,
     // execute function removed to enable frontend confirmation
   });
@@ -36,7 +40,7 @@ export const getBlenderSceneInfoToolSchema = z.object({});
 export function createGetBlenderSceneInfoTool() {
   return tool({
     description:
-      "Get the current Blender scene information (scene name, objects, and materials)",
+      "Get the current Blender scene information (scene name, objects, materials, and dimensions). This tool must be called before making any scene modifications or analyses. Always fetch the latest scene information after executing code that modifies the scene, or when you need up-to-date information about the model's structure and dimensions.",
     parameters: getBlenderSceneInfoToolSchema,
     // execute function removed to enable frontend confirmation
   });

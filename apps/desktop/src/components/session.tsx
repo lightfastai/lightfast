@@ -21,9 +21,10 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { ToolType, useToolExecution } from "../hooks/use-tool-execution";
 import { useSessionStore } from "../stores/session-store";
+import { BlenderAnalysisDisplay } from "./blender-analysis-display";
+import { BlenderPortIndicator } from "./blender-port-indicator";
 import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
-import { PastSessions } from "./past-sessions";
 import { UserMessageInput } from "./user-message-input";
 
 export interface SessionProps {
@@ -54,6 +55,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     addToolResult,
     stop,
     setMessages,
+    data,
   } = useChat({
     id: sessionId,
     api: SESSION_CHAT_API_URL,
@@ -133,6 +135,8 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
     },
   });
 
+  console.log("messages", messages);
+
   // Wrap the original handleSubmit to include the sessionMode
   const handleSubmit = (
     e: React.FormEvent<HTMLFormElement>,
@@ -189,14 +193,17 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
             {session?.title ? session.title : "New Chat"}
           </PopoverContent>
         </Popover>
-        {/*   <BlenderStatusIndicator /> */}
-        <div className="flex items-center gap-1">
-          <Link to="/">
-            <Button variant="ghost" size="xs">
-              <Plus className="text-muted-foreground size-3" />
-            </Button>
-          </Link>
-          <HistoryMenu sessions={sessions} />
+        <div className="flex items-center gap-3">
+          {/* <WindowIndicator /> */}
+          <BlenderPortIndicator />
+          <div className="flex items-center gap-1">
+            <Link to="/">
+              <Button variant="ghost" size="xs">
+                <Plus className="text-muted-foreground size-3" />
+              </Button>
+            </Link>
+            <HistoryMenu sessions={sessions} />
+          </div>
         </div>
       </header>
       <main className="flex w-full flex-1 flex-col gap-2 overflow-hidden">
@@ -218,6 +225,9 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
                 </div>
               )}
 
+              {/* Display Blender analysis stream */}
+              {sessionId && <BlenderAnalysisDisplay sessionId={sessionId} />}
+
               {/* UserInputArea: always present. At top if MessageListArea is not there, at bottom otherwise. */}
               <div className="w-full overflow-hidden">
                 <UserMessageInput
@@ -233,11 +243,11 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               </div>
             </div>
           </div>
-          {messages.length === 0 && sessions && (
+          {/* {messages.length === 0 && sessions && (
             <div className="flex w-full items-center justify-center">
               <PastSessions sessions={sessions} />
             </div>
-          )}
+          )} */}
         </div>
       </main>
     </div>

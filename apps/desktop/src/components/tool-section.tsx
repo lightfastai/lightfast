@@ -54,5 +54,13 @@ export function ToolSection({ part, addToolResult }: ToolSectionProps) {
           readyToExecute={isReady}
         />
       );
+
+    // Notes: The analyzeBlenderModel tool doesn't need a UI component,
+    // it's handled directly in tool-result.tsx like the web-search tool
+
+    default:
+      // For tools that don't need a UI component (like webSearch or analyzeBlenderModel)
+      // they will be handled by the AI directly and their results displayed in tool-result.tsx
+      return null;
   }
 }

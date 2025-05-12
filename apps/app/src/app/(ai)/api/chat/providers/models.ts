@@ -1,4 +1,5 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createVertex } from "@ai-sdk/google-vertex";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createProviderRegistry, customProvider } from "ai";
 import { z } from "zod";
@@ -16,7 +17,13 @@ const $ArtifactSupportedModels = z.enum(["gpt-4-turbo-preview"]);
 
 const $TitleSupportedModels = z.enum(["google/gemini-2.0-flash-001"]);
 
-const $ModelUseCase = z.enum(["reasoning", "json", "artifact", "title"]);
+const $ModelUseCase = z.enum([
+  "reasoning",
+  "json",
+  "artifact",
+  "title",
+  "chat",
+]);
 
 export const modelRegistry = createProviderRegistry({
   openai: createOpenAI({
@@ -29,6 +36,16 @@ export const modelRegistry = createProviderRegistry({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: env.OPENROUTER_API_KEY,
   }),
+  google: createVertex({
+    project: env.GOOGLE_PROJECT_ID,
+    location: "us-central1",
+    googleAuthOptions: {
+      credentials: {
+        client_email: env.GOOGLE_AUTH_EMAIL,
+        private_key: env.GOOGLE_AUTH_PRIVATE_KEY,
+      },
+    },
+  }),
 });
 
 export type ModelUseCase = z.infer<typeof $ModelUseCase>;
@@ -38,8 +55,10 @@ export const providers = customProvider({
     [$ModelUseCase.enum.artifact]: modelRegistry.languageModel(
       "openrouter:gpt-4o-mini",
     ),
+    [$ModelUseCase.enum.chat]:
+      modelRegistry.languageModel("openai:gpt-4o-mini"),
     [$ModelUseCase.enum.reasoning]: modelRegistry.languageModel(
-      "anthropic:claude-3-5-sonnet-20240620",
+      "google:gemini-2.5-pro-preview-05-06",
     ),
     [$ModelUseCase.enum.json]:
       modelRegistry.languageModel("openrouter:o4-mini"),

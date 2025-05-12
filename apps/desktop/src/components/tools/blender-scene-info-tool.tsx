@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CheckIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckIcon, Loader2, ServerIcon, XIcon } from "lucide-react";
 
 import {
   Accordion,
@@ -11,6 +11,8 @@ import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
 import { useToolExecution } from "../../hooks/use-tool-execution";
+import { DEFAULT_BLENDER_PORT } from "../../main/blender-connection";
+import { useToolExecutionStore } from "../../stores/tool-execution-store";
 import { ToolProps } from "./types";
 
 export function BlenderSceneInfoTool({
@@ -20,11 +22,24 @@ export function BlenderSceneInfoTool({
   readyToExecute = false,
 }: ToolProps) {
   const [error, setError] = useState<string | null>(null);
+  const [blenderPort, setBlenderPort] = useState<number>(DEFAULT_BLENDER_PORT);
 
   // Use the shared tool execution hook
-  const { executeTool, getToolState, declineTool } = useToolExecution();
+  const { executeTool, declineTool } = useToolExecution();
 
-  // Get current execution state for this tool
+  // Use the Zustand store directly to ensure we get real-time updates
+  const { getToolState } = useToolExecutionStore();
+
+  // Get port from the window context
+  useEffect(() => {
+    if (window.blenderConnection) {
+      window.blenderConnection.getPort().then((port: number) => {
+        setBlenderPort(port);
+      });
+    }
+  }, []);
+
+  // Get pending and executed state from the Zustand store
   const { pending, executed } = getToolState(toolInvocation.toolCallId);
 
   const handleExecute = async () => {
@@ -59,6 +74,7 @@ export function BlenderSceneInfoTool({
         <div
           className={cn(
             "bg-muted/20 border-border flex flex-col gap-1 rounded border",
+            // pending && "border-amber-300/50",
           )}
         >
           <AccordionTrigger className="p-2 hover:no-underline">
@@ -72,18 +88,16 @@ export function BlenderSceneInfoTool({
                 >
                   {toolInvocation.toolName.trim()}
                 </pre>
-                {pending && (
-                  <span className="animate-pulse text-xs text-amber-500">
-                    Executing...
-                  </span>
-                )}
-                {autoExecute && !readyToExecute && !executed && (
-                  <span className="text-xs text-blue-500">
-                    Waiting for tool to be ready...
-                  </span>
-                )}
+                {/* Status indicators would go here */}
               </div>
               <div className="flex flex-shrink-0 items-center gap-1.5">
+                {/* Port information */}
+                <div className="text-muted-foreground mr-3 flex items-center text-[0.65rem]">
+                  <ServerIcon className="mr-1 size-3" />
+                  <span title="Change port in Blender via the Lightfast panel in the sidebar">
+                    Port: {blenderPort}
+                  </span>
+                </div>
                 {!autoExecute && !executed && (
                   <>
                     <Button
@@ -128,11 +142,16 @@ export function BlenderSceneInfoTool({
                 </div>
               ) : (
                 <div className="text-[0.65rem]">
-                  {pending
-                    ? "Fetching scene information from Blender..."
-                    : toolInvocation.result?.scene_info
-                      ? `Retrieved scene info: "${toolInvocation.result.scene_info.name}" with ${toolInvocation.result.scene_info.object_count} objects`
-                      : "Request scene information from Blender"}
+                  {pending ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="size-5 animate-spin text-amber-500" />
+                      <span>Fetching scene information from Blender...</span>
+                    </div>
+                  ) : toolInvocation.result?.scene_info ? (
+                    `Retrieved scene info: "${toolInvocation.result.scene_info.name}" with ${toolInvocation.result.scene_info.object_count} objects`
+                  ) : (
+                    "Request scene information from Blender"
+                  )}
                 </div>
               )}
             </div>

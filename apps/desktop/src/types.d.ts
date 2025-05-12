@@ -12,6 +12,13 @@ interface ElectronWindow {
   minimize: () => Promise<void>;
   maximize: () => Promise<void>;
   close: () => Promise<void>;
+  newWindow: () => Promise<void>;
+  getInfo: () => Promise<{
+    index: number;
+    total: number;
+    id: number;
+    uniqueId: string;
+  }>;
 }
 
 interface BlenderConnectionAPI {
@@ -19,6 +26,8 @@ interface BlenderConnectionAPI {
     callback: (status: BlenderConnectionStatus) => void,
   ) => () => void;
   getStatus: () => Promise<BlenderConnectionStatus>;
+  getPort: () => Promise<number>;
+  setPort: (port: number) => Promise<boolean>;
   sendToBlender: (message: object) => Promise<any>;
   executeCode: (code: string) => Promise<any>;
   getSceneInfo: () => Promise<any>;

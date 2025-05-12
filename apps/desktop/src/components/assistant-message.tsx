@@ -59,6 +59,16 @@ export function AssistantMessage({
           </span>
         ) : null}
       </div>
+      <div className="flex flex-col gap-2">
+        {/** Render reasoning */}
+        {parts.map((part, idx) => {
+          if (part.type === "reasoning") {
+            return <div key={idx}>{part.reasoning}</div>;
+          }
+          return null;
+        })}
+      </div>
+
       {/* Render parsed content (text/code/tool) */}
       <div className="space-y-3 pt-3 pr-3 pl-8">
         {parts.length > 0 ? (
