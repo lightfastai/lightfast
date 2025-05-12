@@ -20,6 +20,7 @@ import { useBlenderStore } from "../stores/blender-store";
 
 export function BlenderPortIndicator() {
   const [blenderPort, setBlenderPort] = useState<number>(DEFAULT_BLENDER_PORT);
+  const [windowId, setWindowId] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState<string>("");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -27,12 +28,19 @@ export function BlenderPortIndicator() {
   const connectionStatus = useBlenderStore((state) => state.connectionStatus);
   const isConnected = connectionStatus.status === "connected";
 
-  // Get port from the window context
+  // Get port and window info
   useEffect(() => {
     if (window.blenderConnection) {
       window.blenderConnection.getPort().then((port: number) => {
         setBlenderPort(port);
         setInputValue(port.toString());
+      });
+    }
+
+    // Get window unique ID
+    if (window.electronWindow) {
+      window.electronWindow.getInfo().then((info) => {
+        setWindowId(info.uniqueId || `${info.index + 1}`);
       });
     }
   }, []);
@@ -78,7 +86,9 @@ export function BlenderPortIndicator() {
                   <ServerIcon
                     className={`size-3 ${isConnected ? "text-green-500" : "text-orange-500"}`}
                   />
-                  <span>Port: {blenderPort}</span>
+                  <span>
+                    Port: {blenderPort} ({windowId})
+                  </span>
                   <Pencil className="ml-1 size-3 opacity-50" />
                 </div>
               </Button>
@@ -90,11 +100,9 @@ export function BlenderPortIndicator() {
                   ? "Connected to Blender"
                   : "Not connected to Blender"}
               </p>
-              <div className="text-muted-foreground mt-1 text-xs">
-                <p>For multiple Blender instances:</p>
-                <p>1. Each window uses a unique port</p>
-                <p>2. Configure each Blender to match</p>
-              </div>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Window {windowId} is using port {blenderPort}
+              </p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -116,7 +124,7 @@ export function BlenderPortIndicator() {
             )}
           </div>
           <p className="text-muted-foreground text-xs">
-            Set the port for the Blender WebSocket connection.
+            Set the port for window {windowId}'s Blender connection.
           </p>
           <div className="flex gap-2">
             <Input

@@ -7,6 +7,8 @@ import {
   REACT_DEVELOPER_TOOLS,
 } from "electron-devtools-installer";
 
+import { nanoid } from "@repo/lib";
+
 import type { EnvClient } from "./env/client-types";
 // Import the validated environment variables
 import { env } from "./env/index";
@@ -19,6 +21,8 @@ const inDevelopment = process.env.NODE_ENV === "development";
 let nextBlenderPort = DEFAULT_BLENDER_PORT;
 // Track which port is assigned to which window
 const windowPortMap = new Map<number, number>();
+// Keep track of window unique IDs
+const windowUniqueIds = new Map<number, string>();
 
 // Create a collection to track all active windows
 const windows: BrowserWindow[] = [];
@@ -57,13 +61,17 @@ ipcMain.handle("get-blender-port", (event) => {
 // Handler to get window information (index, total windows)
 ipcMain.handle("get-window-info", (event) => {
   const windowId = BrowserWindow.fromWebContents(event.sender)?.id;
-  if (!windowId) return { index: 0, total: windows.length, id: 0 };
+  if (!windowId)
+    return { index: 0, total: windows.length, id: 0, uniqueId: nanoid(6) };
 
   const index = windows.findIndex((win) => win.id === windowId);
+  const uniqueId = windowUniqueIds.get(windowId) || nanoid(6);
+
   return {
     index: index !== -1 ? index : 0,
     total: windows.length,
     id: windowId,
+    uniqueId,
   };
 });
 
@@ -125,8 +133,13 @@ export function createComposerWindow() {
   // Assign a unique port to this window for Blender connection
   const windowBlenderPort = nextBlenderPort++;
   windowPortMap.set(composerWindow.id, windowBlenderPort);
+
+  // Generate and assign a unique ID for this window
+  const uniqueId = nanoid(6);
+  windowUniqueIds.set(composerWindow.id, uniqueId);
+
   console.log(
-    `Assigned Blender port ${windowBlenderPort} to window ${composerWindow.id}`,
+    `Created window ${uniqueId} (ID: ${composerWindow.id}) with Blender port ${windowBlenderPort}`,
   );
 
   // Register listeners with the assigned port
@@ -138,6 +151,7 @@ export function createComposerWindow() {
   // Clean up when window is closed
   composerWindow.on("closed", () => {
     windowPortMap.delete(composerWindow.id);
+    windowUniqueIds.delete(composerWindow.id);
     const windowIndex = windows.findIndex(
       (win) => win.id === composerWindow.id,
     );

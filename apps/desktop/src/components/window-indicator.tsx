@@ -15,15 +15,19 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 
+interface WindowInfo {
+  index: number;
+  total: number;
+  id: number;
+  uniqueId: string;
+}
+
 export function WindowIndicator() {
-  const [windowInfo, setWindowInfo] = useState<{
-    index: number;
-    total: number;
-    id: number;
-  }>({
+  const [windowInfo, setWindowInfo] = useState<WindowInfo>({
     index: 0,
     total: 1,
     id: 0,
+    uniqueId: "",
   });
 
   useEffect(() => {
@@ -57,7 +61,9 @@ export function WindowIndicator() {
         <Button variant="ghost" size="xs" className="h-auto p-0">
           <div className="text-muted-foreground flex items-center gap-1 text-[0.65rem]">
             <LayoutGrid className="size-3" />
-            <span>Window: {windowInfo.index + 1}</span>
+            <span>
+              Window: {windowInfo.uniqueId || `${windowInfo.index + 1}`}
+            </span>
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -72,14 +78,15 @@ export function WindowIndicator() {
             <TooltipTrigger className="w-full">
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <div className="flex items-center gap-2">
-                  <span>
-                    Window #{windowInfo.index + 1} of {windowInfo.total}
-                  </span>
+                  <span>Window {windowInfo.uniqueId}</span>
                 </div>
               </DropdownMenuItem>
             </TooltipTrigger>
             <TooltipContent>
               <p>Window ID: {windowInfo.id}</p>
+              <p>
+                Window {windowInfo.index + 1} of {windowInfo.total}
+              </p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
