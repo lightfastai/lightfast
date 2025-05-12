@@ -187,11 +187,7 @@ When analyzing a 3D scene:
   * Identifies objects by name
   * Uses proper error handling
   * Scales or repositions elements to correct proportions
-  * Reports before/after measurements
 - Example: Update a character model's arm length to match standard proportions, including proper error handling and measurement reporting.
-
-6. MODEL IMPROVEMENT VERIFICATION
-After making adjustments:
 - Retrieve updated scene info with getBlenderSceneInfo
 - If materials were modified, also retrieve updated shader state with getBlenderShaderState
 - Verify that proportions and materials now match expected values
