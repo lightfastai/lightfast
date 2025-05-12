@@ -55,9 +55,8 @@ export const providers = customProvider({
     [$ModelUseCase.enum.artifact]: modelRegistry.languageModel(
       "openrouter:gpt-4o-mini",
     ),
-    [$ModelUseCase.enum.chat]: modelRegistry.languageModel(
-      "google:gemini-2.5-flash-preview-04-17",
-    ),
+    [$ModelUseCase.enum.chat]:
+      modelRegistry.languageModel("openai:gpt-4o-mini"),
     [$ModelUseCase.enum.reasoning]: modelRegistry.languageModel(
       "google:gemini-2.5-pro-preview-05-06",
     ),

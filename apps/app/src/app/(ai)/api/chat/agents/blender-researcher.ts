@@ -1,5 +1,4 @@
 // Import necessary types
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { CoreMessage, DataStreamWriter, streamText } from "ai";
 
 import { providers } from "~/app/(ai)/api/chat/providers/models";
@@ -555,16 +554,15 @@ export function blenderResearcher({
     model: providers.languageModel("chat"),
     system: systemPrompt({ requestPrompt: unifiedPrompt }),
     messages,
-    toolCallStreaming: true,
-    providerOptions: {
-      google: {
-        // Options are nested under 'google' for Vertex provider
-        thinkingConfig: {
-          // includeThoughts: true,
-          thinkingBudget: 12000, // Optional
-        },
-      } satisfies GoogleGenerativeAIProviderOptions,
-    },
+    // providerOptions: {
+    //   google: {
+    //     // Options are nested under 'google' for Vertex provider
+    //     thinkingConfig: {
+    //       // includeThoughts: true,
+    //       thinkingBudget: 12000, // Optional
+    //     },
+    //   } satisfies GoogleGenerativeAIProviderOptions,
+    // },
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
@@ -577,7 +575,5 @@ export function blenderResearcher({
       "getBlenderSceneInfo",
       "webSearch",
     ],
-    maxSteps: 10,
-    experimental_continueSteps: true,
   };
 }

@@ -93,7 +93,10 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             dataStream,
             sessionId,
           }),
-          experimental_transform: smoothStream({ chunking: "word" }),
+          maxSteps: 10,
+          experimental_continueSteps: true,
+          toolCallStreaming: true,
+          experimental_transform: smoothStream(),
           experimental_generateMessageId: () => nanoid(),
           onFinish: async (result) => {
             const { response } = result;
@@ -141,7 +144,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         void result.consumeStream();
 
         result.mergeIntoDataStream(dataStream, {
-          sendReasoning: true,
+          // sendReasoning: true,
         });
       } catch (error) {
         console.error("Stream execution error:", error);
