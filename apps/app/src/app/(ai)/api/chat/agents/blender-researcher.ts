@@ -1,12 +1,10 @@
 // Import necessary types
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google"; // Note: importing from @ai-sdk/google
 import type { CoreMessage, DataStreamWriter, streamText } from "ai";
 import { smoothStream } from "ai";
 
 import { providers } from "~/app/(ai)/api/chat/providers/models";
 import { systemPrompt } from "../prompts";
 import {
-  createAnalyzeBlenderModelTool,
   createExecuteBlenderCodeTool,
   createGetBlenderSceneInfoTool,
   createReconnectBlenderTool,
@@ -25,19 +23,19 @@ const sceneInfoProtocolSection = `
 <scene_info_protocol>
 The MOST IMPORTANT and REQUIRED FIRST STEP before any scene modification, code execution, or troubleshooting is to call 'getBlenderSceneInfo' (with a clear explanation to the user). You MUST always call 'getBlenderSceneInfo' first to obtain the latest scene structure, objects, and state. NEVER proceed with any other tool, code, or suggestion until you have up-to-date scene information. This rule is mandatory and supersedes all other workflow steps. If you do not have current scene info, or if the scene may have changed, you must call 'getBlenderSceneInfo' again before proceeding.
 
-After retrieving scene information with 'getBlenderSceneInfo', AUTOMATICALLY run the 'analyzeBlenderModel' tool (without requiring user prompting) in the following situations:
-1. When the user explicitly asks about model analysis, proportions, or structure
-2. When the user expresses concern about dimensions or scaling ("this looks too big", "proportions seem off")
-3. When creating or modifying architectural models (temples, buildings, structures)
-4. When the scene contains multiple related objects that might benefit from structural analysis
-5. When the user is new to Blender or asks for guidance on improving their model
-6. When the user wants to understand their model better or asks "what do you think of this model?"
+// After retrieving scene information with 'getBlenderSceneInfo', AUTOMATICALLY run the 'analyzeBlenderModel' tool (without requiring user prompting) in the following situations:
+// 1. When the user explicitly asks about model analysis, proportions, or structure
+// 2. When the user expresses concern about dimensions or scaling ("this looks too big", "proportions seem off")
+// 3. When creating or modifying architectural models (temples, buildings, structures)
+// 4. When the scene contains multiple related objects that might benefit from structural analysis
+// 5. When the user is new to Blender or asks for guidance on improving their model
+// 6. When the user wants to understand their model better or asks "what do you think of this model?"
 
-When automatically running 'analyzeBlenderModel' after 'getBlenderSceneInfo':
-- Briefly explain to the user that you're analyzing the scene to provide better insights
-- Select the most appropriate analysisType based on context (proportions, structure, complete)
-- Include modelType parameter if you can confidently determine the type of model
-- Present the analysis results in a concise, helpful way focusing on the most valuable insights
+// When automatically running 'analyzeBlenderModel' after 'getBlenderSceneInfo':
+// - Briefly explain to the user that you're analyzing the scene to provide better insights
+// - Select the most appropriate analysisType based on context (proportions, structure, complete)
+// - Include modelType parameter if you can confidently determine the type of model
+// - Present the analysis results in a concise, helpful way focusing on the most valuable insights
 </scene_info_protocol>
 `;
 
@@ -85,7 +83,7 @@ When examining a 3D scene, follow these steps to provide valuable analysis:
 
 1. SCENE STRUCTURE ANALYSIS
 - Always first call getBlenderSceneInfo to retrieve current scene data
-- Then use analyzeBlenderModel to analyze the scene's structure and proportions
+// - Then use analyzeBlenderModel to analyze the scene's structure and proportions
 - Focus on object relationships, scale consistency, and overall organization
 - Identify potential improvements to the model's structure and composition
 - Pay attention to object hierarchies and groupings
@@ -93,7 +91,7 @@ When examining a 3D scene, follow these steps to provide valuable analysis:
 2. COMPLETE ANALYSIS WORKFLOW
 When analyzing a 3D scene:
    a. Call getBlenderSceneInfo to retrieve current scene data
-   b. Call analyzeBlenderModel with the appropriate modelType if known (e.g., "character", "mechanical", "architectural")
+//    b. Call analyzeBlenderModel with the appropriate modelType if known (e.g., "character", "mechanical", "architectural")
    c. Present the analysis findings with helpful context
    d. Explain the significance of any identified issues or opportunities
    e. If improvements are suggested, generate Python code to implement them
@@ -500,7 +498,6 @@ const unifiedPrompt =
   autoCodeWrappingSection;
 
 interface BlenderResearcherParams {
-  sessionId: string;
   messages: CoreMessage[];
   dataStream: DataStreamWriter;
 }
@@ -508,7 +505,6 @@ interface BlenderResearcherParams {
 type UnifiedResearcherReturn = Parameters<typeof streamText>[0];
 
 export function blenderResearcher({
-  sessionId,
   dataStream,
   messages,
 }: BlenderResearcherParams): UnifiedResearcherReturn {
@@ -516,7 +512,7 @@ export function blenderResearcher({
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
-  const analyzeBlenderModelTool = createAnalyzeBlenderModelTool(dataStream);
+  // const analyzeBlenderModelTool = createAnalyzeBlenderModelTool(dataStream);
   // const searchAmbientCG = createSearchAmbientCGTool();
   // const downloadAmbientCGTexture = createDownloadAmbientCGTextureTool();
   const webSearch = createSearchTool("openai:gpt-4o");
@@ -528,31 +524,31 @@ export function blenderResearcher({
   // const categoryTool = createPolyhavenCategoryTool();
 
   return {
-    model: providers.languageModel("chat"),
+    model: providers.languageModel("reasoning"),
     system: systemPrompt({ requestPrompt: unifiedPrompt }),
     messages,
     toolCallStreaming: true,
-    providerOptions: {
-      google: {
-        // Options are nested under 'google' for Vertex provider
-        thinkingConfig: {
-          // includeThoughts: true,
-          thinkingBudget: 12000, // Optional
-        },
-      } satisfies GoogleGenerativeAIProviderOptions,
-    },
+    // providerOptions: {
+    //   google: {
+    //     // Options are nested under 'google' for Vertex provider
+    //     thinkingConfig: {
+    //       // includeThoughts: true,
+    //       thinkingBudget: 12000, // Optional
+    //     },
+    //   } satisfies GoogleGenerativeAIProviderOptions,
+    // },
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
       getBlenderSceneInfo: getBlenderSceneInfoTool,
-      analyzeBlenderModel: analyzeBlenderModelTool,
+      // analyzeBlenderModel: analyzeBlenderModelTool,
       webSearch,
     },
     experimental_activeTools: [
       "executeBlenderCode",
       "reconnectBlender",
       "getBlenderSceneInfo",
-      "analyzeBlenderModel",
+      // "analyzeBlenderModel",
       "webSearch",
     ],
     maxSteps: 10,
