@@ -27,6 +27,7 @@ import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
 import { PastSessions } from "./past-sessions";
 import { UserMessageInput } from "./user-message-input";
+import { WindowIndicator } from "./window-indicator";
 
 export interface SessionProps {
   sessionId: string;
@@ -195,6 +196,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
           </PopoverContent>
         </Popover>
         <div className="flex items-center gap-3">
+          <WindowIndicator />
           <BlenderPortIndicator />
           <div className="flex items-center gap-1">
             <Link to="/">

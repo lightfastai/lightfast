@@ -20,6 +20,17 @@ let nextBlenderPort = DEFAULT_BLENDER_PORT;
 // Track which port is assigned to which window
 const windowPortMap = new Map<number, number>();
 
+// Create a collection to track all active windows
+const windows: BrowserWindow[] = [];
+
+// Function to register keyboard shortcuts
+function registerShortcuts() {
+  // Register Cmd+Shift+N / Ctrl+Shift+N to create a new window
+  globalShortcut.register("CommandOrControl+Shift+N", () => {
+    createComposerWindow();
+  });
+}
+
 // --- IPC Handlers ---
 ipcMain.handle("get-client-env", (): EnvClient => {
   // Manually construct the client environment object to send
@@ -40,6 +51,19 @@ ipcMain.handle("get-blender-port", (event) => {
     return windowPortMap.get(windowId);
   }
   return DEFAULT_BLENDER_PORT;
+});
+
+// Handler to get window information (index, total windows)
+ipcMain.handle("get-window-info", (event) => {
+  const windowId = BrowserWindow.fromWebContents(event.sender)?.id;
+  if (!windowId) return { index: 0, total: windows.length, id: 0 };
+
+  const index = windows.findIndex((win) => win.id === windowId);
+  return {
+    index: index !== -1 ? index : 0,
+    total: windows.length,
+    id: windowId,
+  };
 });
 
 // Handler to set the blender port for a window
@@ -81,7 +105,7 @@ ipcMain.handle("set-blender-port", async (event, newPort) => {
 // --- End IPC Handlers ---
 
 // Function to create the Composer window
-function createComposerWindow() {
+export function createComposerWindow() {
   const preload = path.join(__dirname, "preload.js");
   const composerWindow = new BrowserWindow({
     width: 400,
@@ -107,10 +131,22 @@ function createComposerWindow() {
   // Register listeners with the assigned port
   registerListeners(composerWindow, windowBlenderPort);
 
+  // Add window to our collection
+  windows.push(composerWindow);
+
   // Clean up when window is closed
   composerWindow.on("closed", () => {
     windowPortMap.delete(composerWindow.id);
+    const windowIndex = windows.findIndex(
+      (win) => win.id === composerWindow.id,
+    );
+    if (windowIndex !== -1) {
+      windows.splice(windowIndex, 1);
+    }
   });
+
+  // Log the total number of windows whenever a window is created
+  console.log(`Total windows active: ${windows.length}`);
 
   // Load the composer HTML (adjust path as needed)
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -124,6 +160,8 @@ function createComposerWindow() {
       ),
     );
   }
+
+  return composerWindow;
 }
 
 async function installExtensions() {
@@ -136,8 +174,14 @@ async function installExtensions() {
 }
 
 app.whenReady().then(() => {
+  // Create first window
   createComposerWindow();
+
+  // Install extensions
   installExtensions();
+
+  // Register keyboard shortcuts
+  registerShortcuts();
 });
 
 //osX only
@@ -148,7 +192,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+  if (windows.length === 0) {
     createComposerWindow();
   }
 });

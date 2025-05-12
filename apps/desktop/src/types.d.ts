@@ -12,6 +12,8 @@ interface ElectronWindow {
   minimize: () => Promise<void>;
   maximize: () => Promise<void>;
   close: () => Promise<void>;
+  newWindow: () => Promise<void>;
+  getInfo: () => Promise<{ index: number; total: number; id: number }>;
 }
 
 interface BlenderConnectionAPI {
