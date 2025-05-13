@@ -5,8 +5,6 @@ import remarkGfm from "remark-gfm";
 
 import { cn } from "@repo/ui/lib/utils";
 
-import { CodeBlock } from "./code-block";
-
 // Use proper typing for the code component's props
 interface CodeProps {
   inline?: boolean;
@@ -16,11 +14,37 @@ interface CodeProps {
 }
 
 const components: Partial<Components> = {
-  code: ({ inline, className, children, ...props }: CodeProps) => {
+  // For inline code, we use the code component
+  code({ className, children, ...props }: CodeProps) {
+    // This will only be called for inline code with `code`, not code blocks (which use pre > code)
     return (
-      <CodeBlock inline={inline} className={className} {...props}>
+      <code
+        className={cn(
+          "not-prose",
+          "bg-muted rounded-md px-1 py-0.5 text-xs",
+          className,
+        )}
+        {...props}
+      >
         {children}
-      </CodeBlock>
+      </code>
+    );
+  },
+  // For code blocks, we use the pre component which wraps the code element
+  pre({ children, className, ...props }: CodeProps) {
+    // This will be called for code blocks (```code```)
+    return (
+      <div className="not-prose flex flex-col">
+        <pre
+          className={cn(
+            "text-foreground dark:bg-muted/20 w-full overflow-x-auto rounded-md p-2 text-xs",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </pre>
+      </div>
     );
   },
   strong: ({ node, children, ...props }) => {
