@@ -144,12 +144,24 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
               });
             }
           },
+          onChunk(event) {
+            if (event.chunk.type === "tool-call") {
+              console.log("Called Tool: ", event.chunk.toolName);
+            }
+          },
+          onStepFinish(event) {
+            if (event.warnings) {
+              console.log("Warnings: ", event.warnings);
+            }
+          },
+          onError(event) {
+            console.log("Error: ", event.error);
+          },
         });
-
         void result.consumeStream();
 
         result.mergeIntoDataStream(dataStream, {
-          // sendReasoning: true,
+          sendReasoning: true,
         });
       } catch (error) {
         console.error("Stream execution error:", error);
