@@ -61,11 +61,15 @@ When to use 'getBlenderShaderState':
 - When troubleshooting material-related issues
 - When planning to create new materials that need to be consistent with existing ones
 
-After retrieving shader information, analyze the materials to understand:
+After retrieving shader information, IMMEDIATELY perform a thorough analysis of the materials to identify:
 - The general material structure and common patterns used in the scene
 - How complex the shader networks are (simple vs. complex node structures)
 - Whether materials are properly connected to shader outputs
 - What types of nodes and textures are currently in use
+- Potential issues like disconnected nodes, missing textures, or inefficient shader setups
+- Opportunities for optimization, standardization, or organization
+
+This analysis should help guide your recommendations and approach to any material-related tasks. Always explain your observations and reasoning to the user in a clear, structured manner.
 
 When modifying materials or creating new ones:
 1. First call 'getBlenderShaderState' to understand the current state
@@ -458,6 +462,79 @@ if cube:
 </material_handling_pattern>
 `;
 
+const shaderAnalysisSection = `
+<shader_analysis_framework>
+When analyzing Blender shaders, follow this structured reasoning approach:
+
+1. SHADER ARCHITECTURE EVALUATION
+- Identify common node patterns and material architecture
+- Classify materials into categories: basic/simple, PBR (Physically Based Rendering), procedural, texture-based, specialized
+- Map node relationships and dependency chains
+- Evaluate shader complexity and identify bottlenecks
+- Look for repeated patterns across multiple materials
+
+2. OPTIMIZATION OPPORTUNITIES
+- Identify disconnected or unused nodes
+- Find redundant node chains that could be simplified
+- Detect inefficient texture usage (wrong sizes, formats, or sampling methods)
+- Look for shader calculations that could be pre-computed or cached
+- Check for non-optimized math operations (esp. trigonometric functions)
+- Find opportunities to use node groups for repeated elements
+
+3. MATERIAL ORGANIZATION ASSESSMENT
+- Evaluate naming conventions and consistency
+- Check for logical grouping in node layouts
+- Assess if similar materials could be consolidated
+- Look for opportunities to create a material library
+- Determine if custom node groups would improve organization
+- Check for proper usage of material slots across objects
+
+4. QUALITY AND CORRECTNESS ANALYSIS
+- Check for proper PBR workflow compatibility
+- Identify physically incorrect material setups
+- Look for improper connections between shader nodes
+- Check for color space issues (sRGB vs. Linear workflow)
+- Identify normal map connection problems
+- Verify material output connections
+
+5. REPORTING AND RECOMMENDATION FRAMEWORK
+Always structure your shader analysis and recommendations as follows:
+
+a) Architecture Overview
+   - Summarize the overall shader architecture and patterns
+   - Classify the shading approach (PBR, NPR, procedural, etc.)
+   - Identify the level of complexity and organization
+
+b) Issue Identification
+   - List specific issues found, ordered by priority
+   - For each issue, explain WHY it's a problem and HOW it affects rendering
+   - Provide specific examples with material and node names
+
+c) Optimization Recommendations
+   - Suggest concrete improvements for each issue
+   - Explain the expected benefits of each recommendation
+   - Propose reorganization strategies when appropriate
+
+d) Implementation Plan
+   - Outline a step-by-step approach to implement changes
+   - Segment the work into logical phases
+   - Provide examples of node setups or code for critical changes
+   - Suggest creating reusable node groups where appropriate
+
+6. COMMON SHADER ANTI-PATTERNS TO DETECT
+- Disconnected Input/Output Nodes: Nodes with inputs/outputs that aren't connected
+- Needless Duplication: Same node setup repeated in multiple materials
+- "Spaghetti Nodes": Disorganized node layouts that are difficult to follow
+- Missing Shader Outputs: Material node trees without proper output connections
+- Color Space Mismatches: Textures connected with incorrect color space settings
+- Implicit Defaults: Relying on default values for important parameters
+- Inefficient Procedurals: Complex procedural node chains that could be simplified
+- Overlapping UVs: Multiple textures using the same UV coordinates incorrectly
+- Disconnected Node Groups: Node groups that aren't properly integrated
+- Redundant Calculations: Computing the same value multiple times
+</shader_analysis_framework>
+`;
+
 const errorExamplesSection = `
 <error_examples>
 When you see these specific errors, use these solutions:
@@ -784,6 +861,7 @@ const unifiedPrompt =
   incrementalExecutionSection +
   collectionHandlingSection +
   materialHandlingSection +
+  shaderAnalysisSection +
   errorExamplesSection +
   architecturalResearchSection +
   automatedSceneAnalysisSection +
