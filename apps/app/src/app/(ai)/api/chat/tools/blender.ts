@@ -7,6 +7,7 @@ const executeBlenderCodeToolSchema = z.object({
 
 /**
  * Creates a tool for executing Python code in Blender.
+ * This is a client-side tool that requires frontend confirmation.
  */
 export function createExecuteBlenderCodeTool() {
   return tool({
@@ -21,6 +22,7 @@ export const reconnectBlenderToolSchema = z.object({});
 
 /**
  * Creates a tool to reconnect to Blender when connection is lost.
+ * This is a client-side tool that requires frontend confirmation.
  */
 export function createReconnectBlenderTool() {
   return tool({
@@ -36,6 +38,7 @@ export const getBlenderSceneInfoToolSchema = z.object({});
 
 /**
  * Creates a tool to get the current scene information from Blender.
+ * This is a client-side tool that requires frontend confirmation.
  */
 export function createGetBlenderSceneInfoTool() {
   return tool({

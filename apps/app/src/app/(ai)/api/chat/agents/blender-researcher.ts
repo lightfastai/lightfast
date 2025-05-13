@@ -9,7 +9,7 @@ import {
   createGetBlenderSceneInfoTool,
   createReconnectBlenderTool,
 } from "../tools/blender";
-import { createGenerateBlenderCodeTool } from "../tools/generate-blender-code";
+import { createDeepSceneAnalysisTool } from "../tools/deep-scene-analysis";
 import { createSearchTool } from "../tools/web-search";
 
 // Define the identity section
@@ -574,6 +574,50 @@ This would produce well-structured Python code with:
 </code_generation_tool>
 `;
 
+// Add a new deep scene analysis section
+const deepSceneAnalysisSection = `
+<deep_scene_analysis>
+When you need to perform detailed, expert-level analysis of a Blender scene:
+
+1. WHEN TO USE deepSceneAnalysis TOOL
+- For complex scenes that require understanding intricate structure and relationships
+- When you need to identify architectural styles, proportions, or design patterns
+- For discovering optimization opportunities and structural improvements
+- When analyzing character models for anatomical correctness
+- When evaluating mechanical assemblies for functional accuracy
+- After significant changes to provide a comprehensive analysis
+
+2. HOW THE TOOL WORKS
+- The tool performs multi-dimensional analysis using specialized reasoning models
+- It identifies hierarchical structure and relationships between objects
+- It evaluates proportions against standard reference measurements
+- It recognizes architectural, mechanical, or organic patterns
+- It produces actionable insights and specific improvement suggestions
+
+3. ANALYSIS COMPONENTS
+The analysis provides:
+- Scene composition overview: hierarchy, organization, and structural patterns
+- Proportional analysis: comparison with standard references for the identified model type
+- Style identification: architectural, mechanical, organic classification with specific sub-categories
+- Technical evaluation: topology issues, optimization opportunities, and structural integrity
+- Improvement recommendations: specific, actionable suggestions with reasoning
+
+4. FOLLOW-UP ACTIONS
+After receiving the analysis:
+- Present key insights to the user in a clear, structured format
+- Highlight the most important findings and opportunities
+- Connect analysis to specific improvement suggestions
+- Offer to implement recommended changes using executeBlenderCode
+- If necessary, use webSearch to gather reference materials for improvements
+
+5. ANALYSIS INTEGRATION
+- Always use getBlenderSceneInfo before deepSceneAnalysis to ensure you have current scene data
+- Use the analysis to inform your approach to the user's request
+- Reference specific analysis findings when explaining your recommendations
+- Let the analysis guide your implementation strategy for complex tasks
+</deep_scene_analysis>
+`;
+
 // Compose the unified prompt by concatenating all sections
 const unifiedPrompt =
   identitySection +
@@ -590,6 +634,7 @@ const unifiedPrompt =
   architecturalResearchSection +
   automatedSceneAnalysisSection +
   codeGenerationToolSection +
+  deepSceneAnalysisSection +
   resourceIntegrationSection +
   userInteractionSection +
   iterationCycleSection +
@@ -614,7 +659,7 @@ export function blenderResearcher({
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
-  const generateBlenderCodeTool = createGenerateBlenderCodeTool();
+  const deepSceneAnalysisTool = createDeepSceneAnalysisTool();
   const webSearch = createSearchTool("openai:gpt-4o");
 
   return {
@@ -629,22 +674,22 @@ export function blenderResearcher({
           thinkingBudget: 12000, // Optional
         },
       } satisfies GoogleGenerativeAIProviderOptions,
-      // openai: {
-      //   reasoningEffort: "medium",
-      // },
+      openai: {
+        reasoningEffort: "medium",
+      },
     },
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
       getBlenderSceneInfo: getBlenderSceneInfoTool,
-      generateBlenderCode: generateBlenderCodeTool,
+      deepSceneAnalysis: deepSceneAnalysisTool,
       webSearch,
     },
     experimental_activeTools: [
       "executeBlenderCode",
       "reconnectBlender",
       "getBlenderSceneInfo",
-      "generateBlenderCode",
+      "deepSceneAnalysis",
       "webSearch",
     ],
   };

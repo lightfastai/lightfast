@@ -138,6 +138,39 @@ export function ToolResult({ toolInvocation }: ToolResultProps) {
         }
         break;
 
+      case "deepSceneAnalysis":
+        // Handle deep scene analysis results
+        if (result.success === false) {
+          return (
+            <div
+              className={cn(
+                "mt-1 p-2 text-[0.65rem] leading-tight text-red-600",
+              )}
+            >
+              Error: {result.error || "Failed to analyze Blender scene"}
+            </div>
+          );
+        }
+
+        if (result.analysis) {
+          return (
+            <div className="space-y-2 p-2 text-xs">
+              <div className={cn("rounded border p-2")}>
+                <div className={cn("mb-2 font-medium")}>
+                  Deep Scene Analysis
+                </div>
+                <ScrollArea className="max-h-80 w-full">
+                  <div className="whitespace-pre-wrap">
+                    <Mdx>{result.analysis}</Mdx>
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
+            </div>
+          );
+        }
+        break;
+
       case "analyzeBlenderModel":
         // Handle Blender model analysis results
         if (result.success === false) {
