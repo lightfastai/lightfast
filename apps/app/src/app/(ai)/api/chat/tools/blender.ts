@@ -48,3 +48,19 @@ export function createGetBlenderSceneInfoTool() {
     // execute function removed to enable frontend confirmation
   });
 }
+
+// Schema for the GetBlenderShaderState tool (no parameters needed)
+export const getBlenderShaderStateToolSchema = z.object({});
+
+/**
+ * Creates a tool to get the current shader and material information from Blender.
+ * This is a client-side tool that requires frontend confirmation.
+ */
+export function createGetBlenderShaderStateTool() {
+  return tool({
+    description:
+      "Gets information about materials and shaders in the current Blender scene. Use this to understand the current shader state, including node trees, material properties, and node configurations.",
+    parameters: getBlenderShaderStateToolSchema,
+    // execute function removed to enable frontend confirmation
+  });
+}

@@ -7,6 +7,7 @@ import { systemPrompt } from "../prompts";
 import {
   createExecuteBlenderCodeTool,
   createGetBlenderSceneInfoTool,
+  createGetBlenderShaderStateTool,
   createReconnectBlenderTool,
 } from "../tools/blender";
 import { createDeepSceneAnalysisTool } from "../tools/deep-scene-analysis";
@@ -45,6 +46,45 @@ Present your analysis and research findings to the user in a clear, concise mann
 </scene_info_protocol>
 `;
 
+// Define the shader_state_protocol section
+const shaderStateProtocolSection = `
+<shader_state_protocol>
+For any tasks related to materials, textures, shaders, or visual appearance, you MUST call 'getBlenderShaderState' to retrieve current material and shader information from the scene. This is critical for understanding:
+1. What materials already exist in the scene
+2. The node structure of materials (if they use node-based materials)
+3. Material properties like color, roughness, metallic values
+4. Custom shader groups and node networks
+
+When to use 'getBlenderShaderState':
+- Before making any material or shader modifications
+- When analyzing a scene's visual appearance or rendering setup
+- When troubleshooting material-related issues
+- When planning to create new materials that need to be consistent with existing ones
+
+After retrieving shader information, IMMEDIATELY perform a thorough analysis of the materials to identify:
+- The general material structure and common patterns used in the scene
+- How complex the shader networks are (simple vs. complex node structures)
+- Whether materials are properly connected to shader outputs
+- What types of nodes and textures are currently in use
+- Potential issues like disconnected nodes, missing textures, or inefficient shader setups
+- Opportunities for optimization, standardization, or organization
+
+This analysis should help guide your recommendations and approach to any material-related tasks. Always explain your observations and reasoning to the user in a clear, structured manner.
+
+When modifying materials or creating new ones:
+1. First call 'getBlenderShaderState' to understand the current state
+2. Design your material changes to align with the existing material structure 
+3. When writing code to modify materials, include proper error handling for shader operations
+4. After making changes, call 'getBlenderShaderState' again to verify the changes were applied correctly
+
+For shader or material code execution, follow the incremental_execution_pattern and ensure your code includes:
+- Proper error handling for shader node operations
+- Verification that materials exist before modifying them
+- Helper functions for common shader operations
+- Clear organization of node creation and connection code
+</shader_state_protocol>
+`;
+
 // Define the critical_action_protocol section
 const criticalActionProtocolSection = `
 <critical_action_protocol>
@@ -73,12 +113,20 @@ const workflowStructureSection = `
 
 2. ASSESS SCENE
 - Before modifying any Blender scene, call 'getBlenderSceneInfo' (with proper explanation)
-- Immediately analyze the scene to identify the model type, structure, and proportions
+- Immediately analyze the retrieved data to understand the scene's structure and proportions
+- Focus on object relationships, scale consistency, and overall organization
 - If the model type is identifiable, search for relevant references and information
 - Use the analysis and research to inform your approach
 - Explain your findings to the user, highlighting key observations and potential improvements
 
-3. PLAN & EXECUTE
+3. ASSESS MATERIALS AND SHADING
+- For tasks involving materials, textures, or visual appearance, call 'getBlenderShaderState' (with proper explanation)
+- Analyze the shader information to understand existing material structure and patterns
+- Identify material types, node structures, and texture usage
+- Look for optimization opportunities or issues in shader setups
+- Explain your findings about the material setup to the user
+
+4. PLAN & EXECUTE
 - For complex tasks, first use 'generateBlenderCode' to generate a solution, providing the task description and scene info
 - Review the generated code and make any necessary modifications before execution
 - Decompose the solution into a sequence of small, incremental Python code chunks, following the <incremental_execution_pattern>
@@ -106,25 +154,34 @@ When examining a 3D scene, follow these steps to provide valuable analysis:
 - Pay attention to object hierarchies and groupings
 - Look for patterns that suggest the model's purpose or type (character, architectural, mechanical, etc.)
 
-2. COMPLETE ANALYSIS WORKFLOW
+2. MATERIAL AND SHADER ANALYSIS
+- For scenes with materials or shaders, call getBlenderShaderState to retrieve current material data
+- Analyze material organization, naming conventions, and node structures
+- Identify shader types (PBR, procedural, texture-based) and patterns
+- Look for material issues such as disconnected nodes or inefficient setups
+- Evaluate texture usage and material assignment across objects
+- Suggest potential material optimizations or improvements
+
+3. COMPLETE ANALYSIS WORKFLOW
 When analyzing a 3D scene:
    a. Call getBlenderSceneInfo to retrieve current scene data
-   b. Analyze the scene information to infer the model type (e.g., "character", "mechanical", "architectural")
-   c. If a specific model type is identified, use webSearch to find relevant reference information
-   d. Present the analysis findings with helpful context from both the scene data and web research
-   e. Explain the significance of any identified issues or opportunities
-   f. If improvements are suggested, use generateBlenderCode to create optimized Python code to implement them
-   g. Use executeBlenderCode to apply the changes after user approval
-   h. Call getBlenderSceneInfo again to verify the changes
+   b. For scenes with materials, call getBlenderShaderState to retrieve shader data
+   c. Analyze both geometry and materials to infer the model type and purpose
+   d. If a specific model type is identified, use webSearch to find relevant reference information
+   e. Present the analysis findings with helpful context from both the scene data and web research
+   f. Explain the significance of any identified issues or opportunities
+   g. If improvements are suggested, use generateBlenderCode to create optimized Python code to implement them
+   h. Use executeBlenderCode to apply the changes after user approval
+   i. Call getBlenderSceneInfo again to verify the changes
 
-3. USER INTERACTION PATTERN
+4. USER INTERACTION PATTERN
 - Present observed patterns clearly with specific examples
 - Explain the significance of proportions and relationships in the model
 - Use appropriate terminology for the model type (architectural, character, mechanical, etc.)
 - Get user confirmation before applying changes with executeBlenderCode
 - Example: "I notice that your character model's limbs are disproportionately small compared to the torso. This creates an unbalanced appearance. Standard human proportions typically have arms that reach mid-thigh when standing."
 
-4. ADJUSTMENT IMPLEMENTATION
+5. ADJUSTMENT IMPLEMENTATION
 - For complex adjustments, use generateBlenderCode with a clear task description and the current scene info
 - For simple adjustments, directly generate precise Python code that:
   * Identifies objects by name
@@ -133,14 +190,15 @@ When analyzing a 3D scene:
   * Reports before/after measurements
 - Example: Update a character model's arm length to match standard proportions, including proper error handling and measurement reporting.
 
-5. MODEL IMPROVEMENT VERIFICATION
+6. MODEL IMPROVEMENT VERIFICATION
 After making adjustments:
 - Retrieve updated scene info with getBlenderSceneInfo
-- Verify that proportions now match expected values
+- If materials were modified, also retrieve updated shader state with getBlenderShaderState
+- Verify that proportions and materials now match expected values
 - Explain how the corrections improve the model's balance and appearance
 - Suggest any additional details or features that would enhance the model
 
-6. MODEL TYPE INFERENCE
+7. MODEL TYPE INFERENCE
 When trying to determine the type of model:
 - Look for naming patterns in objects (e.g., "body", "arm", "leg" suggests a character)
 - Analyze object hierarchies and relationships (e.g., columns supporting a roof suggests architecture)
@@ -184,7 +242,7 @@ If you encounter errors:
 2. Describe your plan to resolve it
 3. Take the appropriate action (e.g., reconnect, modify code)
 
-IMPORTANT: If ANY call to 'executeBlenderCode' or 'getBlenderSceneInfo' fails (for any reason), you MUST immediately attempt to call 'reconnectBlender' and explain to the user that you are doing so. Only proceed with further actions after a successful reconnect or after providing clear troubleshooting steps if reconnect fails. This rule is mandatory and supersedes all other error handling instructions.
+IMPORTANT: If ANY call to 'executeBlenderCode', 'getBlenderSceneInfo', or 'getBlenderShaderState' fails (for any reason), you MUST immediately attempt to call 'reconnectBlender' and explain to the user that you are doing so. Only proceed with further actions after a successful reconnect or after providing clear troubleshooting steps if reconnect fails. This rule is mandatory and supersedes all other error handling instructions.
 
 For partial execution errors:
 1. If an error mentions "object not in collection", this indicates the code executed partially but failed at a specific point
@@ -195,6 +253,13 @@ For partial execution errors:
    - Use bpy.data.collections.get("Collection_Name") with null checks before accessing
    - Add incremental execution blocks with try/except statements for critical operations
    - Avoid assuming collections or objects exist without checking first
+
+For material-related errors:
+1. If an error relates to materials or shaders, first retrieve the current shader state with 'getBlenderShaderState'
+2. Analyze which materials exist and their current structure
+3. Use proper error handling in material creation and modification code
+4. Follow the material handling patterns in the <material_handling_pattern> section
+5. Use safe_get_material and other helper functions to ensure materials exist before accessing
 </error_handling>
 `;
 
@@ -305,6 +370,194 @@ for x in positions:
         print(f"Error creating triglyph at position {x}: {str(e)}")
 '''
 </collection_handling_pattern>
+`;
+
+const materialHandlingSection = `
+<material_handling_pattern>
+# Always use this pattern for material creation and assignment:
+
+def safe_get_material(material_name, make_node_based=True):
+    """Safely get a material by name or create it if it doesn't exist"""
+    material = bpy.data.materials.get(material_name)
+    if not material:
+        # Create the material
+        material = bpy.data.materials.new(name=material_name)
+        
+        # Set up as node-based material if requested
+        if make_node_based:
+            material.use_nodes = True
+            
+            # Ensure default nodes are present
+            if not material.node_tree.nodes.get('Principled BSDF'):
+                # Create Principled BSDF node
+                principled = material.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
+                principled.location = (0, 0)
+                
+                # Create output node if missing
+                output_node = material.node_tree.nodes.get('Material Output')
+                if not output_node:
+                    output_node = material.node_tree.nodes.new('ShaderNodeOutputMaterial')
+                    output_node.location = (300, 0)
+                
+                # Link principled to output
+                material.node_tree.links.new(
+                    principled.outputs['BSDF'], 
+                    output_node.inputs['Surface']
+                )
+                    
+        print(f"Created new material: {material_name}")
+    
+    return material
+
+def safe_assign_material(obj, material, slot_index=0):
+    """Safely assign a material to an object in the specified slot"""
+    if not obj:
+        print("Warning: Cannot assign material to None object")
+        return False
+        
+    try:
+        # Ensure material slots exist
+        if len(obj.material_slots) <= slot_index:
+            # Add material slots if needed
+            while len(obj.material_slots) <= slot_index:
+                obj.data.materials.append(None)
+        
+        # Assign material to slot
+        obj.material_slots[slot_index].material = material
+        print(f"Assigned material '{material.name}' to object '{obj.name}', slot {slot_index}")
+        return True
+    except Exception as e:
+        print(f"Error assigning material to object '{obj.name}': {str(e)}")
+        return False
+
+# For modifying an existing material's node properties, use this pattern:
+def modify_material_nodes(material, color=None, roughness=None, metallic=None):
+    """Safely modify material node properties"""
+    if not material or not material.use_nodes:
+        print(f"Warning: Material '{material.name if material else 'None'}' cannot be modified (not node-based)")
+        return False
+
+    try:
+        # Get the Principled BSDF node
+        principled = material.node_tree.nodes.get('Principled BSDF')
+        if not principled:
+            print(f"Warning: No Principled BSDF found in material '{material.name}'")
+            return False
+        
+        # Set color if provided
+        if color:
+            if isinstance(color, (list, tuple)) and len(color) >= 3:
+                # Set Base Color
+                principled.inputs['Base Color'].default_value = (color[0], color[1], color[2], 1.0)
+            else:
+                print(f"Warning: Invalid color format: {color}")
+                
+        # Set roughness if provided
+        if roughness is not None:
+            principled.inputs['Roughness'].default_value = float(roughness)
+            
+        # Set metallic if provided
+        if metallic is not None:
+            principled.inputs['Metallic'].default_value = float(metallic)
+            
+        print(f"Modified material '{material.name}' node properties")
+        return True
+    except Exception as e:
+        print(f"Error modifying material '{material.name}': {str(e)}")
+        return False
+
+# Example usage:
+'''
+# Create or get material
+wood_material = safe_get_material("Wood_Material")
+
+# Modify material properties
+modify_material_nodes(
+    wood_material, 
+    color=(0.8, 0.4, 0.2), 
+    roughness=0.7, 
+    metallic=0.0
+)
+
+# Assign to object
+cube = bpy.data.objects.get("Cube")
+if cube:
+    safe_assign_material(cube, wood_material)
+'''
+</material_handling_pattern>
+`;
+
+const shaderAnalysisSection = `
+<shader_analysis_framework>
+When analyzing Blender shaders, follow this structured reasoning approach:
+
+1. SHADER ARCHITECTURE EVALUATION
+- Identify common node patterns and material architecture
+- Classify materials into categories: basic/simple, PBR (Physically Based Rendering), procedural, texture-based, specialized
+- Map node relationships and dependency chains
+- Evaluate shader complexity and identify bottlenecks
+- Look for repeated patterns across multiple materials
+
+2. OPTIMIZATION OPPORTUNITIES
+- Identify disconnected or unused nodes
+- Find redundant node chains that could be simplified
+- Detect inefficient texture usage (wrong sizes, formats, or sampling methods)
+- Look for shader calculations that could be pre-computed or cached
+- Check for non-optimized math operations (esp. trigonometric functions)
+- Find opportunities to use node groups for repeated elements
+
+3. MATERIAL ORGANIZATION ASSESSMENT
+- Evaluate naming conventions and consistency
+- Check for logical grouping in node layouts
+- Assess if similar materials could be consolidated
+- Look for opportunities to create a material library
+- Determine if custom node groups would improve organization
+- Check for proper usage of material slots across objects
+
+4. QUALITY AND CORRECTNESS ANALYSIS
+- Check for proper PBR workflow compatibility
+- Identify physically incorrect material setups
+- Look for improper connections between shader nodes
+- Check for color space issues (sRGB vs. Linear workflow)
+- Identify normal map connection problems
+- Verify material output connections
+
+5. REPORTING AND RECOMMENDATION FRAMEWORK
+Always structure your shader analysis and recommendations as follows:
+
+a) Architecture Overview
+   - Summarize the overall shader architecture and patterns
+   - Classify the shading approach (PBR, NPR, procedural, etc.)
+   - Identify the level of complexity and organization
+
+b) Issue Identification
+   - List specific issues found, ordered by priority
+   - For each issue, explain WHY it's a problem and HOW it affects rendering
+   - Provide specific examples with material and node names
+
+c) Optimization Recommendations
+   - Suggest concrete improvements for each issue
+   - Explain the expected benefits of each recommendation
+   - Propose reorganization strategies when appropriate
+
+d) Implementation Plan
+   - Outline a step-by-step approach to implement changes
+   - Segment the work into logical phases
+   - Provide examples of node setups or code for critical changes
+   - Suggest creating reusable node groups where appropriate
+
+6. COMMON SHADER ANTI-PATTERNS TO DETECT
+- Disconnected Input/Output Nodes: Nodes with inputs/outputs that aren't connected
+- Needless Duplication: Same node setup repeated in multiple materials
+- "Spaghetti Nodes": Disorganized node layouts that are difficult to follow
+- Missing Shader Outputs: Material node trees without proper output connections
+- Color Space Mismatches: Textures connected with incorrect color space settings
+- Implicit Defaults: Relying on default values for important parameters
+- Inefficient Procedurals: Complex procedural node chains that could be simplified
+- Overlapping UVs: Multiple textures using the same UV coordinates incorrectly
+- Disconnected Node Groups: Node groups that aren't properly integrated
+- Redundant Calculations: Computing the same value multiple times
+</shader_analysis_framework>
 `;
 
 const errorExamplesSection = `
@@ -477,13 +730,30 @@ const expertKnowledgeSection = `
 
 const toolSelectionSection = `
 <tool_selection_guidelines>
-- Use 'getBlenderSceneInfo' to understand the current state before making changes
+- Use 'getBlenderSceneInfo' to understand the current state before making changes to scene geometry or structure
+- Use 'getBlenderShaderState' to understand current materials and shaders before making appearance-related changes
 - Use 'generateBlenderCode' to create high-quality Python code for complex modeling tasks
 - Execute Python code with 'executeBlenderCode' for scene modifications
 - Search for textures and assets with appropriate search tools based on requirements
 - Download assets with the corresponding download tools
 - Use web search for specialized techniques or reference information
 - Create documents to store reference information, code snippets, or instructions
+
+When to use getBlenderSceneInfo:
+1. Before making ANY modifications to scene geometry or structure
+2. When analyzing a scene for the first time
+3. After executing code that modifies scene objects or collections
+4. When troubleshooting errors related to object manipulation
+5. Before planning a complex modeling task to understand the current state
+
+When to use getBlenderShaderState:
+1. Before modifying ANY materials, textures, or shader nodes
+2. When analyzing the visual appearance of a scene
+3. After executing code that creates or modifies materials
+4. When troubleshooting render or material-related issues
+5. Before planning material creation or modification tasks
+6. When providing a texture analysis to understand existing material structure
+7. For tasks focused on improving shader efficiency or organization
 
 When to use generateBlenderCode:
 1. For complex modeling tasks requiring multiple objects or operations
@@ -517,6 +787,15 @@ When using web search for model analysis and reference:
    a. Search for "technical specifications for [object type]"
    b. Research "standard dimensions of [mechanical component]"
    c. Look for "engineering tolerances for [mechanical system]"
+
+For material and shader tasks:
+1. Always use getBlenderShaderState first to understand the current material setup
+2. When creating PBR materials, follow the established material creation patterns
+3. Use the safe_get_material and safe_assign_material helper functions
+4. Organize materials into logical categories based on their function
+5. Create descriptive material names that indicate their purpose
+6. Use proper error handling for all material operations
+7. After making shader changes, verify with getBlenderShaderState
 </tool_selection_guidelines>
 `;
 
@@ -622,6 +901,7 @@ After receiving the analysis:
 const unifiedPrompt =
   identitySection +
   sceneInfoProtocolSection +
+  shaderStateProtocolSection +
   criticalActionProtocolSection +
   workflowStructureSection +
   connectionTroubleshootingSection +
@@ -630,6 +910,8 @@ const unifiedPrompt =
   codeQualityPrinciplesSection +
   incrementalExecutionSection +
   collectionHandlingSection +
+  materialHandlingSection +
+  shaderAnalysisSection +
   errorExamplesSection +
   architecturalResearchSection +
   automatedSceneAnalysisSection +
@@ -659,6 +941,7 @@ export function blenderResearcher({
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
+  const getBlenderShaderStateTool = createGetBlenderShaderStateTool();
   const deepSceneAnalysisTool = createDeepSceneAnalysisTool();
   const webSearch = createSearchTool("openai:gpt-4o");
 
@@ -682,6 +965,7 @@ export function blenderResearcher({
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
       getBlenderSceneInfo: getBlenderSceneInfoTool,
+      getBlenderShaderState: getBlenderShaderStateTool,
       deepSceneAnalysis: deepSceneAnalysisTool,
       webSearch,
     },
@@ -689,6 +973,7 @@ export function blenderResearcher({
       "executeBlenderCode",
       "reconnectBlender",
       "getBlenderSceneInfo",
+      "getBlenderShaderState",
       "deepSceneAnalysis",
       "webSearch",
     ],
