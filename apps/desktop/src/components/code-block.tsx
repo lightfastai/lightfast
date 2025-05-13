@@ -1,25 +1,34 @@
 "use client";
 
+import React from "react";
+
 import { cn } from "@repo/ui/lib/utils";
 
+// Make the interface match what ReactMarkdown passes
 interface CodeBlockProps {
   inline?: boolean;
   className?: string;
-  children: any;
+  children?: React.ReactNode;
 }
 
 export function CodeBlock({
-  inline,
-  className,
+  inline = false,
+  className = "",
   children,
   ...props
 }: CodeBlockProps) {
-  if (!inline) {
+  // Handle both explicit inline prop and className-based detection
+  const isInline = inline === true;
+
+  if (!isInline) {
     return (
       <div className="not-prose flex flex-col">
         <pre
           {...props}
-          className={`text-foreground dark:bg-muted/20 w-full overflow-x-auto rounded-md p-2 text-xs ${className}`}
+          className={cn(
+            "text-foreground dark:bg-muted/20 w-full overflow-x-auto rounded-md p-2 text-xs",
+            className,
+          )}
         >
           <code className="break-words">{children}</code>
         </pre>

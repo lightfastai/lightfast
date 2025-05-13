@@ -7,9 +7,22 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { CodeBlock } from "./code-block";
 
+// Use proper typing for the code component's props
+interface CodeProps {
+  inline?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  [key: string]: any; // For other props that might be passed
+}
+
 const components: Partial<Components> = {
-  // @ts-expect-error
-  code: CodeBlock,
+  code: ({ inline, className, children, ...props }: CodeProps) => {
+    return (
+      <CodeBlock inline={inline} className={className} {...props}>
+        {children}
+      </CodeBlock>
+    );
+  },
   strong: ({ node, children, ...props }) => {
     return (
       <span className="font-semibold" {...props}>
