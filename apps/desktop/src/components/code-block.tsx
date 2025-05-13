@@ -1,3 +1,6 @@
+// This component is no longer needed as we handle code rendering directly in mdx-components.tsx
+// You can delete this file entirely after the changes are tested and working
+
 "use client";
 
 import React from "react";
@@ -17,10 +20,26 @@ export function CodeBlock({
   children,
   ...props
 }: CodeBlockProps) {
-  // Handle both explicit inline prop and className-based detection
-  const isInline = inline === true;
+  // In ReactMarkdown, the 'inline' prop is the definitive indicator:
+  // - true: for inline code like `code`
+  // - false/undefined: for code blocks like ```code```
 
-  if (!isInline) {
+  if (inline) {
+    // This is inline code like `code` in markdown
+    return (
+      <code
+        className={cn(
+          "not-prose",
+          "bg-muted rounded-md px-1 py-0.5 text-xs",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  } else {
+    // This is a code block like ```code``` in markdown
     return (
       <div className="not-prose flex flex-col">
         <pre
@@ -33,19 +52,6 @@ export function CodeBlock({
           <code className="break-words">{children}</code>
         </pre>
       </div>
-    );
-  } else {
-    return (
-      <code
-        className={cn(
-          "not-prose",
-          "bg-muted rounded-md px-1 py-0.5 text-xs",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </code>
     );
   }
 }
