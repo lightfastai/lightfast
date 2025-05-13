@@ -50,6 +50,7 @@ export interface BlenderResponseMessage {
   error_type?: string;
   traceback?: string;
   scene_info?: any;
+  shader_info?: any;
   client?: string;
 }
 
@@ -295,7 +296,8 @@ export function startBlenderSocketServer(
           // If not a handshake or disconnect, forward to renderer if it's a known type or all general messages
           else if (
             parsedMessage.type === "code_executed" ||
-            parsedMessage.type === "scene_info"
+            parsedMessage.type === "scene_info" ||
+            parsedMessage.type === "shader_info"
           ) {
             if (portData.webContents && !portData.webContents.isDestroyed()) {
               // Add detailed logging for scene info responses
@@ -336,6 +338,37 @@ export function startBlenderSocketServer(
                   if (parsedMessage.traceback) {
                     console.log("- Traceback:", parsedMessage.traceback);
                   }
+                }
+              }
+
+              // Add detailed logging for shader info responses
+              if (parsedMessage.type === "shader_info") {
+                console.log(`🎭 Received Blender shader info on port ${port}:`);
+                console.log("- Message ID:", parsedMessage.id);
+                console.log("- Success:", parsedMessage.success);
+                if (parsedMessage.shader_info) {
+                  console.log(
+                    "- Materials count:",
+                    parsedMessage.shader_info.materials_count,
+                  );
+                  console.log(
+                    "- Node groups count:",
+                    parsedMessage.shader_info.node_groups_count,
+                  );
+                  console.log(
+                    "- Materials list count:",
+                    parsedMessage.shader_info.materials
+                      ? parsedMessage.shader_info.materials.length
+                      : 0,
+                  );
+                  console.log(
+                    "- Node groups list count:",
+                    parsedMessage.shader_info.node_groups
+                      ? parsedMessage.shader_info.node_groups.length
+                      : 0,
+                  );
+                } else {
+                  console.log("- No shader info data provided");
                 }
               }
 

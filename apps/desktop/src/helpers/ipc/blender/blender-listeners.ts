@@ -11,6 +11,7 @@ import {
 import {
   BLENDER_EXECUTE_CODE_CHANNEL,
   BLENDER_GET_SCENE_INFO_CHANNEL,
+  BLENDER_GET_SHADER_STATE_CHANNEL,
   BLENDER_SEND_MESSAGE_CHANNEL,
   BLENDER_STATUS_CHANNEL,
 } from "./blender-channels";
@@ -251,6 +252,80 @@ export function addBlenderEventListeners() {
       return {
         success: false,
         error: `Failed to get Blender scene info: ${error.message}`,
+        errorCode: "EXECUTION_ERROR",
+      };
+    }
+  });
+
+  // Add Blender get shader state handler
+  ipcMain.handle(BLENDER_GET_SHADER_STATE_CHANNEL, async (event, args) => {
+    try {
+      const windowId = BrowserWindow.fromWebContents(event.sender)?.id;
+      let port = DEFAULT_BLENDER_PORT;
+
+      if (windowId && global.windowPortMap) {
+        const windowPort = global.windowPortMap.get(windowId);
+        if (windowPort) {
+          port = windowPort;
+        }
+      }
+
+      console.log(
+        `Main: Received request to get Blender shader state from port ${port}`,
+      );
+
+      // Check if Blender is connected before attempting to send the command
+      if (!isBlenderConnected(port)) {
+        console.warn(
+          `Main: Blender is not connected on port ${port}. Cannot get shader state.`,
+        );
+        return {
+          success: false,
+          error: `Blender is not connected on port ${port}. Please check your Blender connection.`,
+          errorCode: "BLENDER_NOT_CONNECTED",
+        };
+      }
+
+      try {
+        // Send the request and wait for response
+        console.log(
+          `Main: Sending get_shader_state request to Blender on port ${port} and waiting for response...`,
+        );
+        const response = await requestFromBlender("get_shader_state", {}, port);
+        console.log(
+          `Main: Received shader_info response from Blender on port ${port}:`,
+          JSON.stringify(response).substring(0, 200),
+        );
+        console.log(
+          `Main: Response details - type: ${response.type}, id: ${response.id}, success: ${response.success}`,
+        );
+        if (response.shader_info) {
+          console.log(
+            `Main: Shader info from port ${port} - materials: ${response.shader_info.materials_count}, node groups: ${response.shader_info.node_groups_count}`,
+          );
+        }
+
+        // Return the response directly to the renderer
+        console.log(
+          `Main: Returning shader_info response from port ${port} to renderer`,
+        );
+        return response;
+      } catch (error: any) {
+        console.error(
+          `Main: Error getting shader state from Blender on port ${port}:`,
+          error,
+        );
+        return {
+          success: false,
+          error: error.message,
+          errorCode: "EXECUTION_ERROR",
+        };
+      }
+    } catch (error: any) {
+      console.error("Main: Error handling Blender get shader state:", error);
+      return {
+        success: false,
+        error: `Failed to get Blender shader state: ${error.message}`,
         errorCode: "EXECUTION_ERROR",
       };
     }

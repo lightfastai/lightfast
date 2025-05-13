@@ -7,6 +7,7 @@ import { systemPrompt } from "../prompts";
 import {
   createExecuteBlenderCodeTool,
   createGetBlenderSceneInfoTool,
+  createGetBlenderShaderStateTool,
   createReconnectBlenderTool,
 } from "../tools/blender";
 import { createDeepSceneAnalysisTool } from "../tools/deep-scene-analysis";
@@ -43,6 +44,41 @@ Present your analysis and research findings to the user in a clear, concise mann
 4. Suggestions for additional features or details based on your research
 5. Questions to clarify the user's intent if the model's purpose is ambiguous
 </scene_info_protocol>
+`;
+
+// Define the shader_state_protocol section
+const shaderStateProtocolSection = `
+<shader_state_protocol>
+For any tasks related to materials, textures, shaders, or visual appearance, you MUST call 'getBlenderShaderState' to retrieve current material and shader information from the scene. This is critical for understanding:
+1. What materials already exist in the scene
+2. The node structure of materials (if they use node-based materials)
+3. Material properties like color, roughness, metallic values
+4. Custom shader groups and node networks
+
+When to use 'getBlenderShaderState':
+- Before making any material or shader modifications
+- When analyzing a scene's visual appearance or rendering setup
+- When troubleshooting material-related issues
+- When planning to create new materials that need to be consistent with existing ones
+
+After retrieving shader information, analyze the materials to understand:
+- The general material structure and common patterns used in the scene
+- How complex the shader networks are (simple vs. complex node structures)
+- Whether materials are properly connected to shader outputs
+- What types of nodes and textures are currently in use
+
+When modifying materials or creating new ones:
+1. First call 'getBlenderShaderState' to understand the current state
+2. Design your material changes to align with the existing material structure 
+3. When writing code to modify materials, include proper error handling for shader operations
+4. After making changes, call 'getBlenderShaderState' again to verify the changes were applied correctly
+
+For shader or material code execution, follow the incremental_execution_pattern and ensure your code includes:
+- Proper error handling for shader node operations
+- Verification that materials exist before modifying them
+- Helper functions for common shader operations
+- Clear organization of node creation and connection code
+</shader_state_protocol>
 `;
 
 // Define the critical_action_protocol section
@@ -307,6 +343,121 @@ for x in positions:
 </collection_handling_pattern>
 `;
 
+const materialHandlingSection = `
+<material_handling_pattern>
+# Always use this pattern for material creation and assignment:
+
+def safe_get_material(material_name, make_node_based=True):
+    """Safely get a material by name or create it if it doesn't exist"""
+    material = bpy.data.materials.get(material_name)
+    if not material:
+        # Create the material
+        material = bpy.data.materials.new(name=material_name)
+        
+        # Set up as node-based material if requested
+        if make_node_based:
+            material.use_nodes = True
+            
+            # Ensure default nodes are present
+            if not material.node_tree.nodes.get('Principled BSDF'):
+                # Create Principled BSDF node
+                principled = material.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
+                principled.location = (0, 0)
+                
+                # Create output node if missing
+                output_node = material.node_tree.nodes.get('Material Output')
+                if not output_node:
+                    output_node = material.node_tree.nodes.new('ShaderNodeOutputMaterial')
+                    output_node.location = (300, 0)
+                
+                # Link principled to output
+                material.node_tree.links.new(
+                    principled.outputs['BSDF'], 
+                    output_node.inputs['Surface']
+                )
+                    
+        print(f"Created new material: {material_name}")
+    
+    return material
+
+def safe_assign_material(obj, material, slot_index=0):
+    """Safely assign a material to an object in the specified slot"""
+    if not obj:
+        print("Warning: Cannot assign material to None object")
+        return False
+        
+    try:
+        # Ensure material slots exist
+        if len(obj.material_slots) <= slot_index:
+            # Add material slots if needed
+            while len(obj.material_slots) <= slot_index:
+                obj.data.materials.append(None)
+        
+        # Assign material to slot
+        obj.material_slots[slot_index].material = material
+        print(f"Assigned material '{material.name}' to object '{obj.name}', slot {slot_index}")
+        return True
+    except Exception as e:
+        print(f"Error assigning material to object '{obj.name}': {str(e)}")
+        return False
+
+# For modifying an existing material's node properties, use this pattern:
+def modify_material_nodes(material, color=None, roughness=None, metallic=None):
+    """Safely modify material node properties"""
+    if not material or not material.use_nodes:
+        print(f"Warning: Material '{material.name if material else 'None'}' cannot be modified (not node-based)")
+        return False
+
+    try:
+        # Get the Principled BSDF node
+        principled = material.node_tree.nodes.get('Principled BSDF')
+        if not principled:
+            print(f"Warning: No Principled BSDF found in material '{material.name}'")
+            return False
+        
+        # Set color if provided
+        if color:
+            if isinstance(color, (list, tuple)) and len(color) >= 3:
+                # Set Base Color
+                principled.inputs['Base Color'].default_value = (color[0], color[1], color[2], 1.0)
+            else:
+                print(f"Warning: Invalid color format: {color}")
+                
+        # Set roughness if provided
+        if roughness is not None:
+            principled.inputs['Roughness'].default_value = float(roughness)
+            
+        # Set metallic if provided
+        if metallic is not None:
+            principled.inputs['Metallic'].default_value = float(metallic)
+            
+        print(f"Modified material '{material.name}' node properties")
+        return True
+    except Exception as e:
+        print(f"Error modifying material '{material.name}': {str(e)}")
+        return False
+
+# Example usage:
+'''
+# Create or get material
+wood_material = safe_get_material("Wood_Material")
+
+# Modify material properties
+modify_material_nodes(
+    wood_material, 
+    color=(0.8, 0.4, 0.2), 
+    roughness=0.7, 
+    metallic=0.0
+)
+
+# Assign to object
+cube = bpy.data.objects.get("Cube")
+if cube:
+    safe_assign_material(cube, wood_material)
+'''
+</material_handling_pattern>
+`;
+
 const errorExamplesSection = `
 <error_examples>
 When you see these specific errors, use these solutions:
@@ -477,7 +628,8 @@ const expertKnowledgeSection = `
 
 const toolSelectionSection = `
 <tool_selection_guidelines>
-- Use 'getBlenderSceneInfo' to understand the current state before making changes
+- Use 'getBlenderSceneInfo' to understand the current state before making changes to scene geometry or structure
+- Use 'getBlenderShaderState' to understand current materials and shaders before making appearance-related changes
 - Use 'generateBlenderCode' to create high-quality Python code for complex modeling tasks
 - Execute Python code with 'executeBlenderCode' for scene modifications
 - Search for textures and assets with appropriate search tools based on requirements
@@ -622,6 +774,7 @@ After receiving the analysis:
 const unifiedPrompt =
   identitySection +
   sceneInfoProtocolSection +
+  shaderStateProtocolSection +
   criticalActionProtocolSection +
   workflowStructureSection +
   connectionTroubleshootingSection +
@@ -630,6 +783,7 @@ const unifiedPrompt =
   codeQualityPrinciplesSection +
   incrementalExecutionSection +
   collectionHandlingSection +
+  materialHandlingSection +
   errorExamplesSection +
   architecturalResearchSection +
   automatedSceneAnalysisSection +
@@ -659,6 +813,7 @@ export function blenderResearcher({
   const executeBlenderCodeTool = createExecuteBlenderCodeTool();
   const reconnectBlenderTool = createReconnectBlenderTool();
   const getBlenderSceneInfoTool = createGetBlenderSceneInfoTool();
+  const getBlenderShaderStateTool = createGetBlenderShaderStateTool();
   const deepSceneAnalysisTool = createDeepSceneAnalysisTool();
   const webSearch = createSearchTool("openai:gpt-4o");
 
@@ -682,6 +837,7 @@ export function blenderResearcher({
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,
       getBlenderSceneInfo: getBlenderSceneInfoTool,
+      getBlenderShaderState: getBlenderShaderStateTool,
       deepSceneAnalysis: deepSceneAnalysisTool,
       webSearch,
     },
@@ -689,6 +845,7 @@ export function blenderResearcher({
       "executeBlenderCode",
       "reconnectBlender",
       "getBlenderSceneInfo",
+      "getBlenderShaderState",
       "deepSceneAnalysis",
       "webSearch",
     ],
