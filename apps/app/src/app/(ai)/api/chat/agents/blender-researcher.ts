@@ -1,4 +1,5 @@
 // Import necessary types
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { CoreMessage, DataStreamWriter, streamText } from "ai";
 
 import { providers } from "~/app/(ai)/api/chat/providers/models";
@@ -46,12 +47,18 @@ Present your analysis and research findings to the user in a clear, concise mann
 // Define the critical_action_protocol section
 const criticalActionProtocolSection = `
 <critical_action_protocol>
-Before calling ANY tool, you MUST provide a clear, concise explanation that includes:
+BEFORE calling ANY tool, you MUST provide a clear, concise explanation that includes:
 - What specific action you're taking with the tool
 - Why this action is necessary right now
 - What the user should expect to see as a result
 
-Never call a tool without this explanation first. This rule supersedes all others.
+AFTER EVERY tool call, you MUST:
+- Explain what happened as a result of the tool execution
+- Highlight any changes that occurred in the Blender scene
+- Confirm whether the operation was successful
+- Explain what will be done next and why
+
+Never proceed to another tool call without first explaining the results of the previous tool call. This rule is mandatory and supersedes all others.
 </critical_action_protocol>
 `;
 
@@ -215,8 +222,14 @@ const incrementalExecutionSection = `
 When writing Blender Python code that involves multiple steps or complex operations:
 1. ALWAYS break your solution into a sequence of smaller, focused, and independently executable Python chunks. Aim for each chunk to be between 5-20 lines of code. Each chunk MUST be able to run on its own and achieve a distinct sub-goal.
 2. Execute each chunk SEPARATELY using 'executeBlenderCode'. Do NOT combine multiple chunks into a single 'executeBlenderCode' call.
-3. Before executing each chunk, provide a brief explanation (1-2 sentences) of what this specific chunk will do.
-4. After each chunk is executed, briefly summarize its outcome before proceeding to the next chunk or planning further actions. This allows for immediate feedback and error correction.
+3. Before executing each chunk, provide a clear explanation (2-3 sentences) of what this specific chunk will do and why it's necessary.
+4. After each chunk is executed, you MUST thoroughly explain:
+   - What the code accomplished
+   - What specific changes were made to the Blender scene
+   - Whether the execution was successful
+   - Any errors or issues that occurred
+   - How this step connects to the overall goal
+   Never proceed to the next chunk without this detailed explanation.
 5. Start with foundational setup (e.g., importing bpy, safe_get_collection definitions, creating base materials or collections) as its own initial chunk(s).
 6. For each subsequent object creation, modification, or major operation, treat it as a separate chunk with its own 'executeBlenderCode' call.
    - Ensure each chunk includes explicit error handling (try/except blocks), especially around Blender API calls.
@@ -554,15 +567,18 @@ export function blenderResearcher({
     model: providers.languageModel("chat"),
     system: systemPrompt({ requestPrompt: unifiedPrompt }),
     messages,
-    // providerOptions: {
-    //   google: {
-    //     // Options are nested under 'google' for Vertex provider
-    //     thinkingConfig: {
-    //       // includeThoughts: true,
-    //       thinkingBudget: 12000, // Optional
-    //     },
-    //   } satisfies GoogleGenerativeAIProviderOptions,
-    // },
+    providerOptions: {
+      google: {
+        // Options are nested under 'google' for Vertex provider
+        thinkingConfig: {
+          // includeThoughts: true,
+          thinkingBudget: 12000, // Optional
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+      // openai: {
+      //   reasoningEffort: "medium",
+      // },
+    },
     tools: {
       executeBlenderCode: executeBlenderCodeTool,
       reconnectBlender: reconnectBlenderTool,

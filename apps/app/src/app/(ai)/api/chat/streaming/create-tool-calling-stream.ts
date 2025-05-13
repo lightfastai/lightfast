@@ -93,10 +93,15 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             dataStream,
             sessionId,
           }),
+          temperature: 1,
           maxSteps: 10,
           experimental_continueSteps: true,
           toolCallStreaming: true,
-          experimental_transform: smoothStream(),
+          experimental_transform: smoothStream({
+            chunking: "word",
+            delayInMs: 15,
+          }),
+          toolChoice: "auto",
           experimental_generateMessageId: () => nanoid(),
           onFinish: async (result) => {
             const { response } = result;
