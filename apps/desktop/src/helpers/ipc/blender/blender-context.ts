@@ -66,6 +66,13 @@ export function exposeBlenderContext() {
     getStatus: (): Promise<BlenderConnectionStatus> =>
       ipcRenderer.invoke(BLENDER_STATUS_CHANNEL),
 
+    // Get the assigned Blender port for this window
+    getPort: (): Promise<number> => ipcRenderer.invoke("get-blender-port"),
+
+    // Set the port for the Blender connection
+    setPort: (port: number): Promise<boolean> =>
+      ipcRenderer.invoke("set-blender-port", port),
+
     // Add function to send messages *to* Blender via main process
     sendToBlender: (
       message: object,

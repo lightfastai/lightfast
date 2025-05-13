@@ -93,10 +93,15 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             dataStream,
             sessionId,
           }),
+          temperature: 1,
           maxSteps: 10,
           experimental_continueSteps: true,
           toolCallStreaming: true,
-          experimental_transform: smoothStream(),
+          experimental_transform: smoothStream({
+            chunking: "word",
+            delayInMs: 15,
+          }),
+          toolChoice: "auto",
           experimental_generateMessageId: () => nanoid(),
           onFinish: async (result) => {
             const { response } = result;
@@ -139,12 +144,24 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
               });
             }
           },
+          onChunk(event) {
+            if (event.chunk.type === "tool-call") {
+              console.log("Called Tool: ", event.chunk.toolName);
+            }
+          },
+          onStepFinish(event) {
+            if (event.warnings) {
+              console.log("Warnings: ", event.warnings);
+            }
+          },
+          onError(event) {
+            console.log("Error: ", event.error);
+          },
         });
-
         void result.consumeStream();
 
         result.mergeIntoDataStream(dataStream, {
-          // sendReasoning: true,
+          sendReasoning: true,
         });
       } catch (error) {
         console.error("Stream execution error:", error);

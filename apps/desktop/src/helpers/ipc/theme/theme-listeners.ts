@@ -8,7 +8,18 @@ import {
   THEME_MODE_TOGGLE_CHANNEL,
 } from "./theme-channels";
 
+// Track if we've already registered the theme listeners
+let themeHandlersRegistered = false;
+
 export function addThemeEventListeners() {
+  // Only register handlers once
+  if (themeHandlersRegistered) {
+    console.log("Theme event listeners already registered, skipping");
+    return;
+  }
+
+  console.log("Registering theme event listeners");
+
   ipcMain.handle(THEME_MODE_CURRENT_CHANNEL, () => nativeTheme.themeSource);
   ipcMain.handle(THEME_MODE_TOGGLE_CHANNEL, () => {
     if (nativeTheme.shouldUseDarkColors) {
@@ -30,4 +41,7 @@ export function addThemeEventListeners() {
     nativeTheme.themeSource = "system";
     return nativeTheme.shouldUseDarkColors;
   });
+
+  // Mark as registered
+  themeHandlersRegistered = true;
 }
