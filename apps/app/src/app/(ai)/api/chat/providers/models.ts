@@ -56,6 +56,8 @@ export const providers = customProvider({
       "openrouter:gpt-4o-mini",
     ),
     [$ModelUseCase.enum.chat]: modelRegistry.languageModel(
+      // "google:gemini-2.5-flash-preview-04-17",
+      // "google:gemini-2.5-flash-preview-04-17",
       "openai:o4-mini-2025-04-16",
     ),
     [$ModelUseCase.enum.reasoning]: modelRegistry.languageModel(
