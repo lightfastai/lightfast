@@ -31,6 +31,7 @@ interface BlenderConnectionAPI {
   sendToBlender: (message: object) => Promise<any>;
   executeCode: (code: string) => Promise<any>;
   getSceneInfo: () => Promise<any>;
+  getShaderState: () => Promise<any>;
   onMessageResponse: (callback: (message: any) => void) => () => void;
 }
 

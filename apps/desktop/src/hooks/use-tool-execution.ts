@@ -8,6 +8,7 @@ type ToolResult = {
 type ToolExecutionHandlers = {
   executeBlenderCode: (code: string) => Promise<ToolResult>;
   getBlenderSceneInfo: () => Promise<ToolResult>;
+  getBlenderShaderState: () => Promise<ToolResult>;
   reconnectBlender: () => Promise<ToolResult>;
 };
 
@@ -117,6 +118,48 @@ const handlers: ToolExecutionHandlers = {
   },
 
   /**
+   * Get Blender shader state
+   */
+  getBlenderShaderState: async (): Promise<ToolResult> => {
+    // First check if Blender is actually connected
+    const connectionStatus = await window.blenderConnection.getStatus();
+    if (connectionStatus.status !== "connected") {
+      return {
+        success: false,
+        error: `Blender is not connected. Current status: ${connectionStatus.status}`,
+      };
+    }
+
+    try {
+      console.log(`📤 Sending getShaderState request to main process`);
+
+      const result = await window.blenderConnection.getShaderState();
+
+      console.log(
+        `📥 Received complete shader state response from main process`,
+      );
+
+      if (result.success) {
+        return {
+          success: true,
+          message: "Received Blender shader state",
+          shader_info: result.shader_info,
+        };
+      } else {
+        return {
+          success: false,
+          error: result.error || "Failed to get shader state from Blender",
+        };
+      }
+    } catch (e: any) {
+      return {
+        success: false,
+        error: e?.message || "Failed to execute tool",
+      };
+    }
+  },
+
+  /**
    * Reconnect to Blender
    */
   reconnectBlender: async (): Promise<ToolResult> => {
@@ -184,10 +227,9 @@ export function useToolExecution() {
           break;
         case "getBlenderSceneInfo":
           result = await handlers.getBlenderSceneInfo();
-          console.log(
-            `📥 Received complete scene info response from main process`,
-            result,
-          );
+          break;
+        case "getBlenderShaderState":
+          result = await handlers.getBlenderShaderState();
           break;
         case "reconnectBlender":
           result = await handlers.reconnectBlender();
@@ -243,6 +285,7 @@ export function useToolExecution() {
     const mapping: Record<string, ToolType> = {
       executeBlenderCode: "executeBlenderCode",
       getBlenderSceneInfo: "getBlenderSceneInfo",
+      getBlenderShaderState: "getBlenderShaderState",
       reconnectBlender: "reconnectBlender",
     };
 

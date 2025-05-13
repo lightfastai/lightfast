@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import {
   BLENDER_EXECUTE_CODE_CHANNEL,
   BLENDER_GET_SCENE_INFO_CHANNEL,
+  BLENDER_GET_SHADER_STATE_CHANNEL,
   BLENDER_MESSAGE_RESPONSE_CHANNEL,
   BLENDER_SEND_MESSAGE_CHANNEL,
   BLENDER_STATUS_CHANNEL,
@@ -27,6 +28,7 @@ export interface BlenderResponseMessage {
   error_type?: string;
   traceback?: string;
   scene_info?: any;
+  shader_info?: any;
   client?: string;
 }
 
@@ -43,6 +45,54 @@ export interface BlenderSceneInfoResponse extends BlenderResponseMessage {
     object_count: number;
     materials_count: number;
     objects?: Array<{ name: string; type: string }>;
+    [key: string]: any;
+  };
+}
+
+export interface BlenderShaderStateResponse extends BlenderResponseMessage {
+  type: "shader_info";
+  shader_info: {
+    materials_count: number;
+    materials: Array<{
+      name: string;
+      is_node_based: boolean;
+      users: number;
+      diffuse_color?: number[];
+      roughness?: number;
+      metallic?: number;
+      blend_method?: string;
+      nodes?: Array<{
+        name: string;
+        type: string;
+        location: number[];
+        inputs?: Array<{
+          name: string;
+          type: string;
+          default_value?: number | number[];
+        }>;
+      }>;
+      links?: Array<{
+        from_node: string;
+        from_socket: string;
+        to_node: string;
+        to_socket: string;
+      }>;
+      has_output_connection?: boolean;
+    }>;
+    node_groups_count: number;
+    node_groups: Array<{
+      name: string;
+      type: string;
+      users: number;
+      inputs?: Array<{
+        name: string;
+        type: string;
+      }>;
+      outputs?: Array<{
+        name: string;
+        type: string;
+      }>;
+    }>;
     [key: string]: any;
   };
 }
@@ -86,6 +136,10 @@ export function exposeBlenderContext() {
     // Add function to get scene info from Blender
     getSceneInfo: (): Promise<BlenderSceneInfoResponse> =>
       ipcRenderer.invoke(BLENDER_GET_SCENE_INFO_CHANNEL, {}),
+
+    // Add function to get shader state from Blender
+    getShaderState: (): Promise<BlenderShaderStateResponse> =>
+      ipcRenderer.invoke(BLENDER_GET_SHADER_STATE_CHANNEL, {}),
 
     // Add listener for Blender message responses
     onMessageResponse: (
