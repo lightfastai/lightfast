@@ -242,7 +242,7 @@ If you encounter errors:
 2. Describe your plan to resolve it
 3. Take the appropriate action (e.g., reconnect, modify code)
 
-IMPORTANT: If ANY call to 'executeBlenderCode' or 'getBlenderSceneInfo' fails (for any reason), you MUST immediately attempt to call 'reconnectBlender' and explain to the user that you are doing so. Only proceed with further actions after a successful reconnect or after providing clear troubleshooting steps if reconnect fails. This rule is mandatory and supersedes all other error handling instructions.
+IMPORTANT: If ANY call to 'executeBlenderCode', 'getBlenderSceneInfo', or 'getBlenderShaderState' fails (for any reason), you MUST immediately attempt to call 'reconnectBlender' and explain to the user that you are doing so. Only proceed with further actions after a successful reconnect or after providing clear troubleshooting steps if reconnect fails. This rule is mandatory and supersedes all other error handling instructions.
 
 For partial execution errors:
 1. If an error mentions "object not in collection", this indicates the code executed partially but failed at a specific point
@@ -253,6 +253,13 @@ For partial execution errors:
    - Use bpy.data.collections.get("Collection_Name") with null checks before accessing
    - Add incremental execution blocks with try/except statements for critical operations
    - Avoid assuming collections or objects exist without checking first
+
+For material-related errors:
+1. If an error relates to materials or shaders, first retrieve the current shader state with 'getBlenderShaderState'
+2. Analyze which materials exist and their current structure
+3. Use proper error handling in material creation and modification code
+4. Follow the material handling patterns in the <material_handling_pattern> section
+5. Use safe_get_material and other helper functions to ensure materials exist before accessing
 </error_handling>
 `;
 
