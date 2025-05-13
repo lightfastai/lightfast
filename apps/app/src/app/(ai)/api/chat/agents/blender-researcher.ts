@@ -739,6 +739,22 @@ const toolSelectionSection = `
 - Use web search for specialized techniques or reference information
 - Create documents to store reference information, code snippets, or instructions
 
+When to use getBlenderSceneInfo:
+1. Before making ANY modifications to scene geometry or structure
+2. When analyzing a scene for the first time
+3. After executing code that modifies scene objects or collections
+4. When troubleshooting errors related to object manipulation
+5. Before planning a complex modeling task to understand the current state
+
+When to use getBlenderShaderState:
+1. Before modifying ANY materials, textures, or shader nodes
+2. When analyzing the visual appearance of a scene
+3. After executing code that creates or modifies materials
+4. When troubleshooting render or material-related issues
+5. Before planning material creation or modification tasks
+6. When providing a texture analysis to understand existing material structure
+7. For tasks focused on improving shader efficiency or organization
+
 When to use generateBlenderCode:
 1. For complex modeling tasks requiring multiple objects or operations
 2. When implementing architectural structures with specific measurements
@@ -771,6 +787,15 @@ When using web search for model analysis and reference:
    a. Search for "technical specifications for [object type]"
    b. Research "standard dimensions of [mechanical component]"
    c. Look for "engineering tolerances for [mechanical system]"
+
+For material and shader tasks:
+1. Always use getBlenderShaderState first to understand the current material setup
+2. When creating PBR materials, follow the established material creation patterns
+3. Use the safe_get_material and safe_assign_material helper functions
+4. Organize materials into logical categories based on their function
+5. Create descriptive material names that indicate their purpose
+6. Use proper error handling for all material operations
+7. After making shader changes, verify with getBlenderShaderState
 </tool_selection_guidelines>
 `;
 
