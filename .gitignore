@@ -55,3 +55,4 @@ dist/
 .dev.vars
 .internal
 .internal/.env.development.local
+.clerk
