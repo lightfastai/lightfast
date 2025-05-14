@@ -48,7 +48,7 @@ export default function Home() {
           <Image
             src="/bg-gradient.png"
             alt="Gradient"
-            className="h-full w-full object-cover grayscale filter"
+            className="h-full w-full object-cover"
             fill
           />
         </div>
