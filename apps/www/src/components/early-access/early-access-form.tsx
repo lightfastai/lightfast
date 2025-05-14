@@ -138,7 +138,7 @@ export function EarlyAccessForm() {
                   <FormLabel className="sr-only text-xs">Email</FormLabel>
                   <FormControl>
                     <Input
-                      className="focus-visible:ring-ring/50 text-xs focus-visible:border-none focus-visible:ring-[1px] md:text-xs"
+                      className="focus-visible:ring-ring/50 text-xs focus-visible:border-none focus-visible:ring-[1px] md:text-xs dark:border-white dark:bg-white"
                       placeholder="you@example.com"
                       autoComplete="email"
                       {...field}
