@@ -150,13 +150,11 @@ export function EarlyAccessForm() {
             />
             <Button
               type="submit"
-              variant="outline"
+              variant="default"
               disabled={form.formState.isSubmitting}
               className="w-full rounded-lg px-3 text-xs whitespace-nowrap sm:col-span-3"
             >
-              <span className="bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-400 bg-clip-text text-transparent">
-                {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
-              </span>
+              {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
             </Button>
           </form>
         </Form>
