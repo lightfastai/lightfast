@@ -52,8 +52,8 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-muted-foreground mx-auto max-w-xs text-center text-xs text-balance sm:max-w-lg">
-            Simplifying the way you integrate AI workflows into your day to day
-            &#x2014; from design to development
+            Simplifying the way you work with your creative tools <br />
+            We integrate with your tools to make your workflow more efficient
           </p>
         </div>
         <div className="flex w-full max-w-[320px] flex-col gap-2 sm:max-w-md md:max-w-lg">
