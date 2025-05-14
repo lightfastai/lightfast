@@ -41,34 +41,29 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen w-full">
-      {/* Background container */}
-      <Container>
-        <div className="relative">
-          {/* Dynamic background gradient */}
-          <div className="absolute top-[5vh] left-1/2 z-0 h-[calc(100vh-10rem)] w-full -translate-x-1/2 overflow-hidden rounded-xl">
-            {/* <BackgroundGradient className="h-full w-full" /> */}
-            <Image
-              src="/bg-gradient.png"
-              alt="Gradient"
-              className="h-full w-full object-cover"
-              fill
-            />
-          </div>
+    <div className="relative w-full overflow-hidden">
+      <Container className="relative">
+        {/* Background gradient */}
+        <div className="absolute inset-0 z-0 overflow-hidden rounded-xl">
+          <Image
+            src="/bg-gradient.png"
+            alt="Gradient"
+            className="h-full w-full object-cover"
+            fill
+          />
         </div>
-      </Container>
 
-      {/* Main content container */}
-      <Container className="relative z-10">
-        <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center">
-          <div className="flex flex-col items-center justify-center gap-8 text-center">
+        {/* Main content */}
+        <div className="relative z-10 flex h-full flex-col items-center justify-between">
+          {/* Hero section */}
+          <div className="flex flex-col items-center justify-center gap-5 pt-16 text-center">
             {/* Main heading */}
-            <h1 className="text-4xl font-semibold sm:text-5xl md:text-6xl lg:text-8xl">
+            <h1 className="text-4xl font-semibold sm:text-5xl md:text-6xl lg:text-7xl">
               Copilot for Creatives
             </h1>
 
             {/* Description */}
-            <div className="max-w-2xl space-y-4">
+            <div className="max-w-2xl">
               <p className="text-primary text-center text-base text-balance md:text-lg">
                 Simplifying the way you interact with applications like Blender,
                 Unity, Fusion360 and more.
@@ -76,7 +71,7 @@ export default function Home() {
             </div>
 
             {/* Form section */}
-            <div className="mt-6 flex w-full max-w-md flex-col gap-2">
+            <div className="mt-3 flex w-full max-w-md flex-col gap-2">
               <EarlyAccessJotaiProvider>
                 <Suspense
                   fallback={
@@ -97,6 +92,19 @@ export default function Home() {
                   </ErrorBoundary>
                 </div>
               </EarlyAccessJotaiProvider>
+            </div>
+          </div>
+
+          {/* Application example image */}
+          <div className="flex w-full justify-center pt-16">
+            <div className="border-border relative aspect-video w-full max-w-4xl overflow-hidden rounded-lg border shadow-lg">
+              <Image
+                src="/app-example.png"
+                alt="Lightfast application example"
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
           </div>
         </div>
