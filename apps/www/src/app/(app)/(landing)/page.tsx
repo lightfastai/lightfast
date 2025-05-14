@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { Wifi } from "lucide-react";
 
 import { Container } from "@repo/ui/components/ui/container";
 
@@ -31,6 +32,16 @@ const EarlyAccessCount = dynamic(
   {
     ssr: true,
     loading: () => <EarlyAccessCountFallback />,
+  },
+);
+
+const CurrentTime = dynamic(
+  () => import("./useLiveTime").then((mod) => mod.CurrentTimeButton),
+  {
+    ssr: true,
+    loading: () => (
+      <div className="bg-muted/30 h-10 w-full animate-pulse rounded-lg" />
+    ),
   },
 );
 
@@ -151,6 +162,95 @@ export default function Home() {
               </li>
             ))}
           </ul>
+        </section>
+      </Container>
+
+      {/* Automation section */}
+      <Container className="relative">
+        <section
+          className="border-border bg-background/80 relative mt-12 flex min-h-[40vh] w-full flex-col items-center justify-center overflow-hidden rounded-lg border pb-12"
+          aria-label="Single interface to automate your creative needs"
+        >
+          {/* Grayscale background gradient */}
+          <div className="absolute inset-0 z-0 overflow-hidden rounded-lg">
+            <Image
+              src="/automation-section-bg.png"
+              alt="Gradient"
+              className="h-full w-full grayscale filter"
+              width={1376}
+              height={895}
+              priority={false}
+            />
+          </div>
+          {/* Blur overlay */}
+          <div className="pointer-events-none absolute inset-0 z-10 rounded-lg bg-black/50 backdrop-blur-sm" />
+          {/* Main content */}
+          <div className="relative z-20 flex h-full w-full flex-col items-center justify-center">
+            <div className="border-border flex h-8 w-full items-center justify-end gap-2 px-4">
+              {/* Right: wifi, date, time */}
+              <div className="text-foreground flex items-center gap-4 text-xs">
+                <Wifi className="h-4 w-4" />
+                <CurrentTime />
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="flex max-w-2xl flex-col items-center gap-4">
+                <h2 className="text-center text-2xl font-semibold">
+                  An intelligent Creative Copilot
+                </h2>
+                <p className="text-muted-foreground mb-6 text-center text-sm">
+                  Lightfast is an intelligent creative copilot that simplifies
+                  the way you interact with applications like Blender, Unity,
+                  Fusion360 and more.
+                </p>
+              </div>
+              {/* Powered by OpenAI logo */}
+              <div
+                className="flex items-center justify-center gap-2"
+                aria-label="Powered by OpenAI"
+              >
+                <span className="sr-only">Powered by OpenAI</span>
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 32 32"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <g>
+                    <path
+                      d="M16.001 2.667c-3.68 0-6.667 2.987-6.667 6.667v1.333h-1.334C4.987 10.667 2 13.653 2 17.333c0 3.68 2.987 6.667 6.667 6.667h1.333v1.333c0 3.68 2.987 6.667 6.667 6.667 3.68 0 6.667-2.987 6.667-6.667v-1.333h1.333c3.68 0 6.667-2.987 6.667-6.667 0-3.68-2.987-6.667-6.667-6.667h-1.333V9.334c0-3.68-2.987-6.667-6.667-6.667zm0 2c2.577 0 4.667 2.09 4.667 4.667v1.333h-9.334V9.334c0-2.577 2.09-4.667 4.667-4.667zm-6.667 6.667h13.334c2.577 0 4.667 2.09 4.667 4.667 0 2.577-2.09 4.667-4.667 4.667H9.334c-2.577 0-4.667-2.09-4.667-4.667 0-2.577 2.09-4.667 4.667-4.667zm0 13.334c-2.577 0-4.667-2.09-4.667-4.667 0-2.577 2.09-4.667 4.667-4.667h13.334c2.577 0 4.667 2.09 4.667 4.667 0 2.577-2.09 4.667-4.667 4.667H9.334zm6.667 6.666c-2.577 0-4.667-2.09-4.667-4.666v-1.334h9.334v1.334c0 2.576-2.09 4.666-4.667 4.666z"
+                      fill="#10A37F"
+                    />
+                  </g>
+                </svg>
+                <span className="text-muted-foreground text-xs font-medium">
+                  Powered by OpenAI
+                </span>
+              </div>
+            </div>
+            <div className="bg-muted flex w-full max-w-4xl flex-col items-center gap-8 border p-12 px-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex-1 text-center md:text-left">
+                <p className="text-primary mb-4 text-base md:text-xl">
+                  Orchestrate, script, and automate tasks across your favorite
+                  creative tools from one unified interface. Lightfast empowers
+                  you to streamline your workflow, save time, and focus on what
+                  matters most: creating.
+                </p>
+              </div>
+              <div className="flex flex-1 justify-center">
+                <Image
+                  src="/images/playground-placeholder-1.webp"
+                  alt="Automation example"
+                  width={400}
+                  height={225}
+                  className="rounded-lg object-cover shadow-lg"
+                  priority={false}
+                />
+              </div>
+            </div>
+          </div>
         </section>
       </Container>
     </div>
