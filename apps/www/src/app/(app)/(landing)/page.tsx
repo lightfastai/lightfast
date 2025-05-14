@@ -112,6 +112,47 @@ export default function Home() {
           </div>
         </div>
       </Container>
+
+      {/* Integrated with section in its own Container, not over the bg gradient */}
+      <Container className="relative">
+        <section
+          className="bg-background/80 mt-12 flex h-[50vh] w-full flex-col items-center justify-center"
+          aria-label="Integrated with popular creative apps"
+        >
+          <h2 className="mb-8 text-center font-mono text-xs font-semibold tracking-widest uppercase">
+            Integrated with
+          </h2>
+          <ul className="grid w-full max-w-4xl grid-cols-2 gap-12 px-4 sm:grid-cols-3 md:grid-cols-4">
+            {[
+              {
+                title: "Blender",
+                image: "/creative-app-logos/blender.png",
+              },
+              {
+                title: "TouchDesigner",
+                image: "/creative-app-logos/touchdesigner.png",
+              },
+              {
+                title: "Houdini",
+                image: "/creative-app-logos/houdini.png",
+              },
+              {
+                title: "Unreal Engine",
+                image: "/creative-app-logos/unreal-engine.png",
+              },
+            ].map((app) => (
+              <li key={app.title} className="flex items-center justify-center">
+                <Image
+                  src={app.image}
+                  alt={app.title}
+                  width={200}
+                  height={200}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      </Container>
     </div>
   );
 }
