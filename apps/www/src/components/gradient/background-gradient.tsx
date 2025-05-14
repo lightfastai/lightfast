@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { cn } from "@repo/ui/lib/utils";
+
 import { generateGradientProps } from "~/lib/gradient-utils/gradient-utils";
 import { GradientCanvas } from "./gradient-canvas";
 
@@ -43,7 +45,7 @@ export function BackgroundGradient({ className }: BackgroundGradientProps) {
   }, []);
 
   return (
-    <div className={`gradient-container relative ${className || ""}`}>
+    <div className={cn("gradient-container relative", className)}>
       <GradientCanvas {...gradientProps} />
     </div>
   );

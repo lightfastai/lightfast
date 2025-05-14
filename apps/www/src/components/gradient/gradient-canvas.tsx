@@ -41,39 +41,10 @@ export function GradientCanvas({
 
   // Initialize background canvas
   useEffect(() => {
-    if (!backgroundLayerRef.current) {
-      backgroundLayerRef.current = document.createElement("canvas");
-    }
-
-    if (backgroundLayerRef.current) {
-      backgroundLayerRef.current.width = width;
-      backgroundLayerRef.current.height = height;
-    }
+    backgroundLayerRef.current ??= document.createElement("canvas");
+    backgroundLayerRef.current.width = width;
+    backgroundLayerRef.current.height = height;
   }, [width, height]);
-
-  // Draw background and shapes
-  useEffect(() => {
-    if (!backgroundLayerRef.current) return;
-    const ctx = backgroundLayerRef.current.getContext("2d");
-
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, width, height);
-
-    circles.forEach((circle) => {
-      const shape = generateRandomShape(circle.color);
-      drawShape(ctx, shape, circle);
-    });
-
-    debouncedRender(renderCanvas);
-  }, [backgroundColor, circles, width, height, debouncedRender]);
-
-  // Handle filters
-  useEffect(() => {
-    debouncedRender(renderCanvas);
-  }, [blur, brightness, contrast, saturation, grainIntensity, debouncedRender]);
 
   const renderCanvas = useCallback(() => {
     if (!canvasRef.current || !backgroundLayerRef.current) return;
@@ -118,6 +89,38 @@ export function GradientCanvas({
     contrast,
     saturation,
     grainIntensity,
+  ]);
+
+  // Draw background and shapes
+  useEffect(() => {
+    if (!backgroundLayerRef.current) return;
+    const ctx = backgroundLayerRef.current.getContext("2d");
+
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, width, height);
+
+    circles.forEach((circle) => {
+      const shape = generateRandomShape(circle.color);
+      drawShape(ctx, shape, circle);
+    });
+
+    debouncedRender(renderCanvas);
+  }, [backgroundColor, circles, width, height, debouncedRender, renderCanvas]);
+
+  // Handle filters
+  useEffect(() => {
+    debouncedRender(renderCanvas);
+  }, [
+    blur,
+    brightness,
+    contrast,
+    saturation,
+    grainIntensity,
+    debouncedRender,
+    renderCanvas,
   ]);
 
   return (
