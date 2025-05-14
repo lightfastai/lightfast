@@ -5,7 +5,7 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "../../lib/utils";
 
-const containerVariants = cva("container mx-auto px-4 md:px-6", {
+const containerVariants = cva("container mx-auto px-8 md:px-12", {
   variants: {
     fluid: {
       true: "max-w-none",

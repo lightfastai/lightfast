@@ -48,7 +48,7 @@ export default function Home() {
           <Image
             src="/bg-gradient.png"
             alt="Gradient"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover grayscale filter"
             fill
           />
         </div>
@@ -58,51 +58,54 @@ export default function Home() {
           {/* Hero section */}
           <div className="flex flex-col items-center justify-center gap-5 pt-16 text-center">
             {/* Main heading */}
-            <h1 className="text-4xl font-semibold sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="text-4xl font-semibold sm:text-5xl md:text-6xl lg:text-8xl">
               Copilot for Creatives
             </h1>
 
-            {/* Description */}
-            <div className="max-w-2xl">
-              <p className="text-primary text-center text-base text-balance md:text-lg">
-                Simplifying the way you interact with applications like Blender,
-                Unity, Fusion360 and more.
-              </p>
-            </div>
+            {/* Description and form wrapper */}
+            <div className="flex flex-col items-center gap-4 pt-8">
+              {/* Description */}
+              <div className="max-w-4xl">
+                <p className="text-primary text-center text-base text-balance md:text-xl">
+                  Simplifying the way you interact with applications like
+                  Blender, Unity, Fusion360 and more.
+                </p>
+              </div>
 
-            {/* Form section */}
-            <div className="mt-3 flex w-full max-w-md flex-col gap-2">
-              <EarlyAccessJotaiProvider>
-                <Suspense
-                  fallback={
-                    <div className="bg-muted/30 h-10 w-full animate-pulse rounded-lg" />
-                  }
-                >
-                  <EarlyAccessForm />
-                </Suspense>
-                <div className="flex h-5 items-center justify-center">
-                  <ErrorBoundary errorComponent={EarlyAccessCountFallback}>
-                    <Suspense
-                      fallback={
-                        <div className="bg-muted/30 h-5 w-20 animate-pulse rounded-lg" />
-                      }
-                    >
-                      <EarlyAccessCount />
-                    </Suspense>
-                  </ErrorBoundary>
-                </div>
-              </EarlyAccessJotaiProvider>
+              {/* Form section */}
+              <div className="mt-3 flex w-full max-w-md flex-col gap-2">
+                <EarlyAccessJotaiProvider>
+                  <Suspense
+                    fallback={
+                      <div className="bg-muted/30 h-10 w-full animate-pulse rounded-lg" />
+                    }
+                  >
+                    <EarlyAccessForm />
+                  </Suspense>
+                  <div className="flex h-5 items-center justify-center">
+                    <ErrorBoundary errorComponent={EarlyAccessCountFallback}>
+                      <Suspense
+                        fallback={
+                          <div className="bg-muted/30 h-5 w-20 animate-pulse rounded-lg" />
+                        }
+                      >
+                        <EarlyAccessCount />
+                      </Suspense>
+                    </ErrorBoundary>
+                  </div>
+                </EarlyAccessJotaiProvider>
+              </div>
             </div>
           </div>
 
           {/* Application example image */}
           <div className="flex w-full justify-center pt-16">
-            <div className="border-border relative aspect-video w-full max-w-4xl overflow-hidden rounded-lg border shadow-lg">
+            <div className="border-border relative aspect-video w-full max-w-4xl overflow-hidden rounded-t-lg border-x border-t shadow-lg">
               <Image
                 src="/app-example.png"
                 alt="Lightfast application example"
                 fill
-                className="object-cover"
+                className="bg-muted object-cover"
                 priority
               />
             </div>

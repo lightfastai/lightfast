@@ -4,27 +4,15 @@ export const Icons = {
   logo: (props: IconProps) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}>
       <rect width="256" height="256" fill="none" />
-      <line
-        x1="208"
-        y1="128"
-        x2="128"
-        y2="208"
+      <polygon points="64,96 64,160 112,128" fill="currentColor" />
+      <rect
+        x="0"
+        y="0"
+        width="256"
+        height="256"
         fill="none"
         stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="32"
-      />
-      <line
-        x1="192"
-        y1="40"
-        x2="40"
-        y2="192"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="32"
+        strokeWidth="7"
       />
     </svg>
   ),
