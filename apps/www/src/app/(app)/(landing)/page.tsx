@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { Wifi } from "lucide-react";
 
 import { Container } from "@repo/ui/components/ui/container";
 
@@ -35,8 +34,8 @@ const EarlyAccessCount = dynamic(
   },
 );
 
-const CurrentTime = dynamic(
-  () => import("./useLiveTime").then((mod) => mod.CurrentTimeButton),
+const MacOSTime = dynamic(
+  () => import("~/components/macos-time").then((mod) => mod.MacOSTime),
   {
     ssr: true,
     loading: () => (
@@ -59,8 +58,12 @@ export default function Home() {
           <Image
             src="/bg-gradient.png"
             alt="Gradient"
-            className="h-full w-full object-cover"
-            fill
+            className="h-full w-full"
+            width={1376}
+            height={895}
+            priority
+            loading="eager"
+            quality={70}
           />
         </div>
 
@@ -166,12 +169,11 @@ export default function Home() {
       </Container>
 
       {/* Automation section */}
-      <Container className="relative">
+      {/* <Container className="relative">
         <section
           className="border-border bg-background/80 relative mt-12 flex min-h-[40vh] w-full flex-col items-center justify-center overflow-hidden rounded-lg border pb-12"
           aria-label="Single interface to automate your creative needs"
         >
-          {/* Grayscale background gradient */}
           <div className="absolute inset-0 z-0 overflow-hidden rounded-lg">
             <Image
               src="/automation-section-bg.png"
@@ -182,12 +184,9 @@ export default function Home() {
               priority={false}
             />
           </div>
-          {/* Blur overlay */}
           <div className="pointer-events-none absolute inset-0 z-10 rounded-lg bg-black/50 backdrop-blur-sm" />
-          {/* Main content */}
           <div className="relative z-20 flex h-full w-full flex-col items-center justify-center">
             <div className="border-border flex h-8 w-full items-center justify-end gap-2 px-4">
-              {/* Right: wifi, date, time */}
               <div className="text-foreground flex items-center gap-4 text-xs">
                 <Wifi className="h-4 w-4" />
                 <CurrentTime />
@@ -204,7 +203,6 @@ export default function Home() {
                   Fusion360 and more.
                 </p>
               </div>
-              {/* Powered by OpenAI logo */}
               <div
                 className="flex items-center justify-center gap-2"
                 aria-label="Powered by OpenAI"
@@ -252,7 +250,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-      </Container>
+      </Container> */}
     </div>
   );
 }

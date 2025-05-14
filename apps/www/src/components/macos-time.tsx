@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@repo/ui/components/ui/button";
 
-export function CurrentTimeButton() {
+export function MacOSTime() {
   const date = useMemo<string>(() => {
     const now = new Date();
     return now.toLocaleDateString("en-US", {
