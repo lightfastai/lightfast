@@ -31,6 +31,20 @@ const EarlyAccessCount = dynamic(
   },
 );
 
+// Dynamic import for the background gradient to avoid SSR issues with canvas
+const BackgroundGradient = dynamic(
+  () =>
+    import("~/components/gradient/background-gradient").then(
+      (mod) => mod.BackgroundGradient,
+    ),
+  {
+    ssr: true,
+    loading: () => (
+      <div className="absolute top-[5vh] left-1/2 z-0 h-[calc(100vh-10rem)] w-full max-w-5xl -translate-x-1/2 rounded-xl bg-gradient-to-br from-indigo-500/30 via-purple-500/30 to-pink-500/30" />
+    ),
+  },
+);
+
 export const metadata: Metadata = {
   title: "Home",
   description: "Join the waitlist to get early access to Lightfast",
@@ -39,9 +53,10 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="relative min-h-screen w-full">
-      {/* Background gradients - stacked for visual depth */}
-      <div className="absolute top-[5vh] left-1/2 z-0 h-[calc(100vh-10rem)] w-full max-w-5xl -translate-x-1/2 rounded-xl bg-gradient-to-br from-indigo-500/30 via-purple-500/30 to-pink-500/30" />
-      <div className="absolute top-[5vh] left-1/2 z-0 h-[calc(100vh-10rem)] w-full max-w-5xl -translate-x-1/2 rounded-xl bg-gradient-to-tr from-sky-400/20 via-fuchsia-500/20 to-orange-400/20" />
+      {/* Dynamic background gradient */}
+      <div className="absolute top-[5vh] left-1/2 z-0 h-[calc(100vh-10rem)] w-full max-w-5xl -translate-x-1/2 rounded-xl">
+        <BackgroundGradient className="h-full w-full" />
+      </div>
 
       {/* Main content container */}
       <div className="relative z-10 flex min-h-[calc(100vh-12rem)] w-full flex-col items-center justify-center px-4">
