@@ -52,13 +52,13 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="relative w-full overflow-hidden">
-      <Container className="relative">
+      <Container className="relative rounded-lg">
         {/* Background gradient */}
-        <div className="absolute inset-0 z-0 overflow-hidden rounded-xl">
+        <div className="overflow bg-muted/20 absolute inset-0 z-0 rounded-lg border p-2 focus:outline-none">
           <Image
             src="/bg-gradient.png"
             alt="Gradient"
-            className="h-full w-full"
+            className="h-full w-full rounded-md"
             width={1376}
             height={895}
             priority
@@ -70,19 +70,18 @@ export default function Home() {
         {/* Main content */}
         <div className="relative z-10 flex h-full flex-col items-center justify-between">
           {/* Hero section */}
-          <div className="flex flex-col items-center justify-center gap-5 pt-16 text-center">
+          <div className="flex flex-col items-center justify-center gap-6 pt-32">
             {/* Main heading */}
-            <h1 className="text-4xl font-semibold sm:text-5xl md:text-6xl lg:text-8xl">
-              Copilot for Creatives
-            </h1>
+            <h1 className="text-6xl font-bold">Copilot for Creatives</h1>
 
             {/* Description and form wrapper */}
-            <div className="flex flex-col items-center gap-4 pt-8">
+            <div className="flex flex-col items-center gap-4">
               {/* Description */}
               <div className="max-w-4xl">
-                <p className="text-primary text-center text-base text-balance md:text-xl">
+                <p className="text-primary text-md text-center text-balance">
                   Simplifying the way you interact with applications like
-                  Blender, Unity, Fusion360 and more.
+                  Blender, Unity, Fusion360 and more. We integrate with your
+                  tools to make your workflow more efficient.
                 </p>
               </div>
 
