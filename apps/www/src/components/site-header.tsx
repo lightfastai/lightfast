@@ -11,8 +11,8 @@ export function SiteHeader() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-4">
-              <h1 className="py-2 text-lg font-semibold tracking-widest uppercase">
-                <span className="">{siteConfig.name}.</span>{" "}
+              <h1 className="py-2 text-sm font-semibold tracking-widest uppercase">
+                <span className="">{siteConfig.name}</span>
               </h1>
             </Link>
           </div>
