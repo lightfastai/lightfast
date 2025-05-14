@@ -58,7 +58,8 @@ export const providers = customProvider({
     [$ModelUseCase.enum.chat]: modelRegistry.languageModel(
       // "google:gemini-2.5-flash-preview-04-17",
       // "google:gemini-2.5-flash-preview-04-17",
-      "openai:o4-mini-2025-04-16",
+      // "openai:o4-mini-2025-04-16",
+      "openai:gpt-4.1-mini",
     ),
     [$ModelUseCase.enum.reasoning]: modelRegistry.languageModel(
       "google:gemini-2.5-flash-preview-04-17",
