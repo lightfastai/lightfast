@@ -7,15 +7,16 @@ import type {
   CreateEmailOptions,
   CreateEmailResponseSuccess,
 } from "@vendor/email/types";
+import { emailConfig } from "@repo/lightfast-config";
 import { createEmailClient } from "@vendor/email";
+import { env } from "@vendor/email/env";
 
-import { emailConfig } from "~/config/email";
-import { env } from "~/env";
+import { RESEND_AUDIENCES_ID_MAPPING } from "../constants";
 
 export const mail = createEmailClient(env.RESEND_API_KEY);
 
 // Types for Resend error response
-interface ResendErrorResponse {
+export interface ResendErrorResponse {
   statusCode: number;
   name: string;
   message: string;
@@ -25,9 +26,18 @@ interface ResendErrorResponse {
 }
 
 type CreateResendEmailSuccess = Pick<CreateEmailResponseSuccess, "id">;
-type CreateResendContactSuccess = Pick<CreateContactResponseSuccess, "id">;
-type CreateResendContact = Pick<CreateContactOptions, "email" | "unsubscribed">;
-type CreateResendEmail = Pick<CreateEmailOptions, "to" | "subject" | "text"> & {
+export type CreateResendContactSuccess = Pick<
+  CreateContactResponseSuccess,
+  "id"
+>;
+export type CreateResendContact = Pick<
+  CreateContactOptions,
+  "email" | "unsubscribed"
+>;
+type CreateResendEmail = Pick<
+  CreateEmailOptions,
+  "to" | "subject" | "text" | "from"
+> & {
   react: JSX.Element;
 };
 
@@ -148,11 +158,11 @@ const sendResendEmailUnsafe = async ({
   return response.data;
 };
 
-const addToWaitlistContactsUnsafe = async (
+export const addToWaitlistContactsUnsafe = async (
   contact: CreateResendContact,
 ): Promise<CreateResendContactSuccess> => {
   const response = await mail.contacts.create({
-    audienceId: env.RESEND_EARLY_ACCESS_AUDIENCE_ID,
+    audienceId: RESEND_AUDIENCES_ID_MAPPING["early-access"],
     ...contact,
   });
 
@@ -194,13 +204,14 @@ const addToWaitlistContactsUnsafe = async (
 };
 
 export const sendResendEmailSafe = ({
+  from,
   react,
   to,
   subject,
   text,
 }: CreateResendEmail) =>
   ResultAsync.fromPromise(
-    sendResendEmailUnsafe({ react, to, subject, text }),
+    sendResendEmailUnsafe({ from, react, to, subject, text }),
     (error): ResendEmailError => {
       // If it's already one of our error types, return it
       if (

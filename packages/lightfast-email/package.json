@@ -1,0 +1,49 @@
+{
+  "name": "@repo/lightfast-email",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./templates": "./src/templates.ts",
+    "./functions": "./src/functions.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev:email": "email dev --dir ./src/templates -p 4109",
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.36",
+    "@repo/lightfast-config": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@vendor/email": "workspace:*",
+    "@vendor/observability": "workspace:*",
+    "react-email": "4.0.7",
+    "tailwindcss": "catalog:tailwind4",
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "autoprefixer": "^10.4.20",
+    "eslint": "catalog:",
+    "postcss": "catalog:tailwind4",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}
