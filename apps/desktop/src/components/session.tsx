@@ -26,6 +26,7 @@ import { BlenderAnalysisDisplay } from "./blender-analysis-display";
 import { BlenderPortIndicator } from "./blender-port-indicator";
 import { HistoryMenu } from "./history-menu";
 import { MessageList } from "./message-list";
+import { PastSessions } from "./past-sessions";
 import { UserMessageInput } from "./user-message-input";
 
 export interface SessionProps {
@@ -244,11 +245,11 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               </div>
             </div>
           </div>
-          {/* {messages.length === 0 && sessions && (
+          {messages.length === 0 && sessions && (
             <div className="flex w-full items-center justify-center">
               <PastSessions sessions={sessions} />
             </div>
-          )} */}
+          )}
         </div>
       </main>
     </div>
