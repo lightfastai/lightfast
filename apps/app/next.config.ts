@@ -10,8 +10,6 @@ let config: NextConfig = {
     "@repo/ai",
     "@repo/lib",
     "@repo/ui",
-    "@repo/webgl",
-    "@repo/threejs",
     "@vendor/clerk",
     "@vendor/db",
     "@vendor/trpc",

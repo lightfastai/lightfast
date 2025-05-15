@@ -21,7 +21,15 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL(siteConfig.url),
   description: siteConfig.description,
-  keywords: ["Lightfast", "AI", "Design", "WebGL", "Blender"],
+  keywords: [
+    "Lightfast",
+    "AI",
+    "Design",
+    "Blender",
+    "Unreal Engine",
+    "Ableton",
+    "MCP",
+  ],
   authors: [
     {
       name: siteConfig.name,

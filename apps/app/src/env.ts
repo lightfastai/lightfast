@@ -8,7 +8,6 @@ import { openAiEnv } from "@repo/ai/openai-env";
 import { env as trpcEnv } from "@repo/trpc-client/env";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as dbEnv } from "@vendor/db/env";
-import { env as inngestEnv } from "@vendor/inngest/env";
 
 export const env = createEnv({
   extends: [
@@ -16,7 +15,6 @@ export const env = createEnv({
     dbEnv,
     clerkEnvBase,
     trpcEnv,
-    inngestEnv,
     openAiEnv,
     anthropicEnv,
     googleEnv,
