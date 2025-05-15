@@ -1,5 +1,16 @@
 import { nanoid } from "nanoid";
 
+import { emailConfig } from "@repo/lightfast-config";
+import {
+  addToWaitlistContactsSafe,
+  ResendAuthenticationError,
+  ResendDailyQuotaError,
+  ResendRateLimitError,
+  ResendSecurityError,
+  ResendUnknownError,
+  ResendValidationError,
+  sendResendEmailSafe,
+} from "@repo/lightfast-email/functions";
 import {
   EarlyAccessEntryEmail,
   earlyAccessEntryEmailText,
@@ -17,16 +28,6 @@ import {
   incrementEarlyAccessCountSafe,
   UpstashRateLimitError,
 } from "~/components/early-access/api/get-early-access-count";
-import {
-  addToWaitlistContactsSafe,
-  ResendAuthenticationError,
-  ResendDailyQuotaError,
-  ResendRateLimitError,
-  ResendSecurityError,
-  ResendUnknownError,
-  ResendValidationError,
-  sendResendEmailSafe,
-} from "~/lib/resend";
 import { inngest } from "../_client/client";
 
 export const handleJoinEarlyAccess = inngest.createFunction(
@@ -214,6 +215,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
 
     await step.run("send-welcome-email", async () => {
       const res = await sendResendEmailSafe({
+        from: emailConfig.welcome,
         to: email,
         react: EarlyAccessEntryEmail({ email }),
         subject: "Welcome to Lightfast.ai Early Access",

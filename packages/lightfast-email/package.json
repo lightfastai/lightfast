@@ -8,10 +8,12 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./templates": "./src/templates/index.tsx"
+    "./templates": "./src/templates.ts",
+    "./functions": "./src/functions.ts"
   },
   "license": "MIT",
   "scripts": {
+    "dev:email": "email dev --dir ./src/templates -p 4109",
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
@@ -27,7 +29,8 @@
     "@vendor/observability": "workspace:*",
     "react-email": "4.0.7",
     "tailwindcss": "catalog:tailwind4",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

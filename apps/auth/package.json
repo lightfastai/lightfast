@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@openauthjs/openauth": "^0.3.2",
-    "@react-email/components": "^0.0.36",
+    "@repo/lightfast-config": "workspace:^",
+    "@repo/lightfast-email": "workspace:*",
     "@repo/ui": "workspace:*",
     "@vendor/email": "workspace:*",
     "@vendor/observability": "workspace:*",
@@ -40,8 +41,6 @@
     "eslint": "catalog:",
     "jiti": "^1.21.6",
     "postcss": "catalog:tailwind4",
-    "react-email": "4.0.7",
-    "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
