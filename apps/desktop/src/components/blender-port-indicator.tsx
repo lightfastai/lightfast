@@ -76,11 +76,20 @@ export function BlenderPortIndicator() {
   };
 
   return (
-    <Popover open={isEditing} onOpenChange={setIsEditing}>
-      <PopoverTrigger asChild>
+    <div className="flex items-center gap-1 text-xs">
+      {/* <div className="flex items-center">
+        <span className="mr-1 inline-block h-2 w-2 rounded-full bg-green-500"></span>
+      </div> */}
+      <span>Port: {blenderPort}</span>
+    </div>
+  );
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild disabled>
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger asChild disabled>
               <Button variant="ghost" size="xs" className="h-auto p-0">
                 <div className="text-muted-foreground flex items-center gap-1 text-[0.65rem]">
                   <ServerIcon

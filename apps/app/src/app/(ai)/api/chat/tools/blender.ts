@@ -7,6 +7,7 @@ const executeBlenderCodeToolSchema = z.object({
 
 /**
  * Creates a tool for executing Python code in Blender.
+ * This is a client-side tool that requires frontend confirmation.
  */
 export function createExecuteBlenderCodeTool() {
   return tool({
@@ -21,6 +22,7 @@ export const reconnectBlenderToolSchema = z.object({});
 
 /**
  * Creates a tool to reconnect to Blender when connection is lost.
+ * This is a client-side tool that requires frontend confirmation.
  */
 export function createReconnectBlenderTool() {
   return tool({
@@ -36,12 +38,29 @@ export const getBlenderSceneInfoToolSchema = z.object({});
 
 /**
  * Creates a tool to get the current scene information from Blender.
+ * This is a client-side tool that requires frontend confirmation.
  */
 export function createGetBlenderSceneInfoTool() {
   return tool({
     description:
       "Get the current Blender scene information (scene name, objects, materials, and dimensions). This tool must be called before making any scene modifications or analyses. Always fetch the latest scene information after executing code that modifies the scene, or when you need up-to-date information about the model's structure and dimensions.",
     parameters: getBlenderSceneInfoToolSchema,
+    // execute function removed to enable frontend confirmation
+  });
+}
+
+// Schema for the GetBlenderShaderState tool (no parameters needed)
+export const getBlenderShaderStateToolSchema = z.object({});
+
+/**
+ * Creates a tool to get the current shader and material information from Blender.
+ * This is a client-side tool that requires frontend confirmation.
+ */
+export function createGetBlenderShaderStateTool() {
+  return tool({
+    description:
+      "Gets information about materials and shaders in the current Blender scene. Use this to understand the current shader state, including node trees, material properties, and node configurations.",
+    parameters: getBlenderShaderStateToolSchema,
     // execute function removed to enable frontend confirmation
   });
 }

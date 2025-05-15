@@ -448,6 +448,11 @@ def handle_message(message):
                     f"Calling handle_get_scene_info with params: {params}, message_id: {message_id}"
                 )
                 handle_get_scene_info(params, message_id)
+            elif action == "get_shader_state":
+                log(
+                    f"Calling handle_get_shader_state with params: {params}, message_id: {message_id}"
+                )
+                handle_get_shader_state(params, message_id)
             else:
                 log(f"Unknown action: {action}", "WARNING")
 
@@ -849,6 +854,201 @@ def handle_get_scene_info(params, message_id=None):
         if message_id:
             send_error_response(
                 message_id, f"Failed to schedule scene info retrieval: {str(e)}"
+            )
+        else:
+            log_error("Cannot send error response: no message_id provided")
+
+
+def handle_get_shader_state(params, message_id=None):
+    """Handler for getting Blender material and shader information"""
+    log("Getting Blender shader and material information...")
+    log(f"Message ID for shader info request: {message_id}")
+
+    if not message_id:
+        log_error(
+            "No message_id provided for get_shader_state request. Response will fail."
+        )
+
+    def get_shader_info_in_main_thread():
+        try:
+            log(f"Starting to collect Blender shader info for message_id: {message_id}")
+
+            # Get information about materials and shaders in the Blender scene
+            try:
+                # Collect information for all materials
+                shader_info = {
+                    "materials_count": len(bpy.data.materials),
+                    "materials": [],
+                    "node_groups_count": len(bpy.data.node_groups),
+                    "node_groups": [],
+                }
+
+                log(
+                    f"Materials: {shader_info['materials_count']}, Node Groups: {shader_info['node_groups_count']}"
+                )
+
+                # Collect information for all materials
+                for mat in bpy.data.materials:
+                    mat_info = {
+                        "name": mat.name,
+                        "is_node_based": mat.use_nodes,
+                        "users": mat.users,
+                        "is_grease_pencil": mat.is_grease_pencil,
+                        "diffuse_color": [
+                            round(float(c), 3) for c in mat.diffuse_color
+                        ],
+                        "roughness": float(mat.roughness),
+                        "metallic": float(mat.metallic),
+                        "blend_method": mat.blend_method,
+                    }
+
+                    # Get node tree information if material uses nodes
+                    if mat.use_nodes and mat.node_tree:
+                        nodes_info = []
+                        links_info = []
+
+                        # Get nodes information
+                        for node in mat.node_tree.nodes:
+                            node_info = {
+                                "name": node.name,
+                                "type": node.type,
+                                "location": [round(float(c), 2) for c in node.location],
+                                "width": round(float(node.width), 2),
+                                "height": round(float(node.height), 2),
+                            }
+
+                            # Add inputs information if available
+                            if hasattr(node, "inputs") and node.inputs:
+                                inputs_info = []
+                                for input in node.inputs:
+                                    input_info = {
+                                        "name": input.name,
+                                        "type": input.type,
+                                    }
+
+                                    # Add default value for inputs if available
+                                    if hasattr(input, "default_value"):
+                                        if isinstance(input.default_value, float):
+                                            input_info["default_value"] = round(
+                                                float(input.default_value), 3
+                                            )
+                                        elif hasattr(input.default_value, "__len__"):
+                                            # For color or vector inputs
+                                            input_info["default_value"] = [
+                                                round(float(c), 3)
+                                                for c in input.default_value
+                                            ]
+
+                                    inputs_info.append(input_info)
+
+                                node_info["inputs"] = inputs_info
+
+                            nodes_info.append(node_info)
+
+                        # Get links information
+                        for link in mat.node_tree.links:
+                            if link.from_node and link.to_node:
+                                link_info = {
+                                    "from_node": link.from_node.name,
+                                    "from_socket": (
+                                        link.from_socket.name
+                                        if hasattr(link.from_socket, "name")
+                                        else ""
+                                    ),
+                                    "to_node": link.to_node.name,
+                                    "to_socket": (
+                                        link.to_socket.name
+                                        if hasattr(link.to_socket, "name")
+                                        else ""
+                                    ),
+                                }
+                                links_info.append(link_info)
+
+                        mat_info["nodes"] = nodes_info
+                        mat_info["links"] = links_info
+
+                        # Check for output node connection
+                        output_found = False
+                        for node in mat.node_tree.nodes:
+                            if node.type == "OUTPUT_MATERIAL" and any(
+                                link.to_node == node for link in mat.node_tree.links
+                            ):
+                                output_found = True
+                                break
+                        mat_info["has_output_connection"] = output_found
+
+                    shader_info["materials"].append(mat_info)
+
+                # Collect information about node groups (custom shader groups)
+                for group in bpy.data.node_groups:
+                    group_info = {
+                        "name": group.name,
+                        "type": group.type,
+                        "users": group.users,
+                    }
+
+                    # Get inputs and outputs
+                    if hasattr(group, "inputs"):
+                        group_info["inputs"] = [
+                            {"name": input.name, "type": input.type}
+                            for input in group.inputs
+                        ]
+
+                    if hasattr(group, "outputs"):
+                        group_info["outputs"] = [
+                            {"name": output.name, "type": output.type}
+                            for output in group.outputs
+                        ]
+
+                    shader_info["node_groups"].append(group_info)
+
+                log(f"Shader info collected: {len(shader_info['materials'])} materials")
+
+            except Exception as e:
+                log_error(f"Error collecting shader info: {str(e)}", True)
+                shader_info = {"error": str(e)}
+
+            # Send response
+            if socket_connection and connected and message_id:
+                log(f"Preparing to send shader info for message ID: {message_id}")
+                response = {
+                    "id": message_id,
+                    "type": "shader_info",
+                    "success": True,
+                    "shader_info": shader_info,
+                }
+                send_result = send_message(socket_connection, response)
+                log(f"Send result: {send_result}")
+                log(f"Shader info sent for message ID: {message_id}")
+            else:
+                if not socket_connection:
+                    log_error("Cannot send shader info: socket_connection is None")
+                if not connected:
+                    log_error("Cannot send shader info: not connected")
+                if not message_id:
+                    log_error("Cannot send shader info: no message_id provided")
+
+        except Exception as e:
+            log_error(f"Error getting shader info: {str(e)}", True)
+            if message_id:
+                send_error_response(message_id, f"Error getting shader info: {str(e)}")
+            else:
+                log_error("Cannot send error response: no message_id provided")
+
+        # Don't repeat
+        return None
+
+    # Schedule for execution in the main thread
+    try:
+        log(
+            f"Registering get_shader_info function with Blender timer for message_id: {message_id}"
+        )
+        bpy.app.timers.register(get_shader_info_in_main_thread, first_interval=0.0)
+    except Exception as e:
+        log_error(f"Failed to register timer: {str(e)}", True)
+        if message_id:
+            send_error_response(
+                message_id, f"Failed to schedule shader info retrieval: {str(e)}"
             )
         else:
             log_error("Cannot send error response: no message_id provided")

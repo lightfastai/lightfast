@@ -61,7 +61,7 @@ export const providers = customProvider({
       "openai:gpt-4.1-mini",
     ),
     [$ModelUseCase.enum.reasoning]: modelRegistry.languageModel(
-      "google:gemini-2.5-pro-preview-05-06",
+      "google:gemini-2.5-flash-preview-04-17",
     ),
     [$ModelUseCase.enum.json]: modelRegistry.languageModel(
       "google:gemini-2.5-pro-preview-05-06",
