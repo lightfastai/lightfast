@@ -9,7 +9,6 @@
       "default": "./src/index.ts"
     },
     "./lightfast/schema": "./src/lightfast/schema/index.ts",
-    "./lightfast/types": "./src/lightfast/types.ts",
     "./client": "./src/client.ts",
     "./env": "./env.ts"
   },
