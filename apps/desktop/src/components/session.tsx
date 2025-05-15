@@ -4,13 +4,14 @@ import {
   SESSION_CHAT_AUTO_RESUME,
 } from "@/config/session-constants";
 import { trpc } from "@/trpc";
-import { convertDBMessageToUIMessages, SessionMode } from "@/types/internal";
+import { convertDBMessageToUIMessages } from "@/types/internal";
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 
 import { nanoid } from "@repo/lib";
+import { AgentMode } from "@repo/lightfast-js";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Popover,
@@ -140,7 +141,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
   // Wrap the original handleSubmit to include the sessionMode
   const handleSubmit = (
     e: React.FormEvent<HTMLFormElement>,
-    mode: SessionMode,
+    mode: AgentMode,
   ) => {
     // If a mode is provided in the call, use it; otherwise use the current store value
     const currentMode = mode || sessionMode;

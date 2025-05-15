@@ -112,6 +112,9 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
+      '@repo/lightfast-js':
+        specifier: workspace:*
+        version: link:../../packages/lightfast-js
       '@repo/threejs':
         specifier: workspace:*
         version: link:../../packages/threejs
@@ -266,6 +269,9 @@ importers:
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
+      '@repo/lightfast-js':
+        specifier: workspace:*
+        version: link:../../packages/lightfast-js
       '@repo/trpc-client':
         specifier: workspace:*
         version: link:../../packages/trpc-client
@@ -866,6 +872,40 @@ importers:
       nanoid:
         specifier: ^5.0.8
         version: 5.0.8
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      eslint:
+        specifier: 'catalog:'
+        version: 9.25.1(jiti@2.4.2)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.5.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
+
+  packages/lightfast-js:
+    dependencies:
+      lucide-react:
+        specifier: 'catalog:'
+        version: 0.451.0(react@19.1.0)
+      react:
+        specifier: catalog:react19
+        version: 19.1.0
+      react-dom:
+        specifier: catalog:react19
+        version: 19.1.0(react@19.1.0)
+      zod:
+        specifier: ^3.24.3
+        version: 3.24.3
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

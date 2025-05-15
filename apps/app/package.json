@@ -25,6 +25,7 @@
     "@react-three/fiber": "^8.17.10",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@repo/lightfast-js": "workspace:*",
     "@repo/threejs": "workspace:*",
     "@repo/trpc-client": "workspace:*",
     "@repo/ui": "workspace:*",

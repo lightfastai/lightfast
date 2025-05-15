@@ -3,6 +3,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Infinity as InfinityIcon, Send, StopCircle } from "lucide-react";
 import { toast } from "sonner";
 
+import { AGENT_MODE_CONFIG_MAPPING, AgentMode } from "@repo/lightfast-js";
 import { Button } from "@repo/ui/components/ui/button";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { cn } from "@repo/ui/lib/utils";
@@ -16,7 +17,7 @@ import {
   ForwardedDropdownMenuTriggerButton,
 } from "../components/ui/dropdown-menu";
 import { useSessionStore } from "../stores/session-store";
-import { InputStatus, MODE_LABELS, SessionMode } from "../types/internal";
+import { InputStatus } from "../types/internal";
 
 // Props for user message input component
 export interface SessionInputProps {
@@ -26,20 +27,19 @@ export interface SessionInputProps {
   stop?: () => void;
   handleSubmit: (
     e: React.FormEvent<HTMLFormElement>,
-    sessionMode: SessionMode,
+    sessionMode: AgentMode,
   ) => void;
   className?: string;
   setMessages?: (messages: any) => void;
   status?: InputStatus;
 }
 
-function ModeSelector({
-  mode,
-  setMode,
-}: {
-  mode: SessionMode;
-  setMode?: (mode: SessionMode) => void;
-}) {
+interface AgentModeSelectorProps {
+  mode: AgentMode;
+  setMode: (mode: AgentMode) => void;
+}
+
+function AgentModeSelector({ mode, setMode }: AgentModeSelectorProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -48,10 +48,10 @@ function ModeSelector({
             {mode === "agent" ? (
               <>
                 <InfinityIcon className="text-primary size-3" aria-hidden />
-                {MODE_LABELS.agent}
+                {AGENT_MODE_CONFIG_MAPPING[mode].title}
               </>
             ) : (
-              MODE_LABELS[mode]
+              AGENT_MODE_CONFIG_MAPPING[mode].title
             )}
           </span>
         </ForwardedDropdownMenuTriggerButton>
@@ -59,7 +59,7 @@ function ModeSelector({
       <DropdownMenuContent align="start" className="min-w-[96px] p-0.5">
         <DropdownMenuRadioGroup
           value={mode}
-          onValueChange={(v) => setMode?.(v as SessionMode)}
+          onValueChange={(v) => setMode?.(v as AgentMode)}
         >
           <DropdownMenuRadioItem
             value="agent"
@@ -68,7 +68,7 @@ function ModeSelector({
           >
             <span className="flex items-center gap-1 text-xs">
               <InfinityIcon className="text-primary size-3" aria-hidden />
-              {MODE_LABELS.agent}
+              {AGENT_MODE_CONFIG_MAPPING.agent.title}
             </span>
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem
@@ -77,7 +77,7 @@ function ModeSelector({
             className="px-2 py-1"
           >
             <span className="flex w-full items-center justify-between gap-1 text-xs">
-              {MODE_LABELS.manual}
+              {AGENT_MODE_CONFIG_MAPPING.manual.title}
               <span className="sr-only">Manual mode coming soon</span>
             </span>
           </DropdownMenuRadioItem>
@@ -101,7 +101,7 @@ export const UserMessageInput = ({
   // Use session store to get and set the current mode
   const setSessionMode = useSessionStore((state) => state.setSessionMode);
   const sessionMode = useSessionStore((state) => state.sessionMode);
-  const [mode, setMode] = React.useState<SessionMode>(sessionMode);
+  const [mode, setMode] = React.useState<AgentMode>(sessionMode);
   const router = useRouter();
 
   // Update session store when mode changes
@@ -172,7 +172,9 @@ export const UserMessageInput = ({
         />
 
         <div className="absolute bottom-0 left-0 z-10 flex items-end p-2">
-          {status === "ready" && <ModeSelector mode={mode} setMode={setMode} />}
+          {status === "ready" && (
+            <AgentModeSelector mode={mode} setMode={setMode} />
+          )}
           {status === "thinking" && (
             <span className="text-muted-foreground text-xs italic">
               Thinking...

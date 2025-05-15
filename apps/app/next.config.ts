@@ -15,6 +15,7 @@ let config: NextConfig = {
     "@vendor/clerk",
     "@vendor/db",
     "@vendor/trpc",
+    "@repo/lightfast-js",
   ],
 
   experimental: {
