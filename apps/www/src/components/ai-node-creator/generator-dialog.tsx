@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 import { Send, X } from "lucide-react";
 
+import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { ScrollArea, ScrollBar } from "@repo/ui/components/ui/scroll-area";
 
 import type { CommandDialogProps } from "./types";
-import { Icons } from "~/components/icons";
 
 export const GeneratorDialog = ({
   isOpen,

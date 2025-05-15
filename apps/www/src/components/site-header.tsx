@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Icons } from "~/components/icons";
+import { Icons } from "@repo/ui/components/icons";
 
 export function SiteHeader() {
   return (
