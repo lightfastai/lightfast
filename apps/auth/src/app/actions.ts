@@ -3,7 +3,7 @@
 import { cookies as getCookies, headers as getHeaders } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { subjects } from "../auth/subjects";
+import { authSubjects } from "../auth/subjects";
 import { client, setTokens } from "./auth";
 
 export async function auth() {
@@ -15,7 +15,7 @@ export async function auth() {
     return false;
   }
 
-  const verified = await client.verify(subjects, accessToken.value, {
+  const verified = await client.verify(authSubjects, accessToken.value, {
     refresh: refreshToken?.value,
   });
 
@@ -35,7 +35,7 @@ export async function login() {
   const refreshToken = cookies.get("refresh_token");
 
   if (accessToken) {
-    const verified = await client.verify(subjects, accessToken.value, {
+    const verified = await client.verify(authSubjects, accessToken.value, {
       refresh: refreshToken?.value,
     });
     if (!verified.err && verified.tokens) {
