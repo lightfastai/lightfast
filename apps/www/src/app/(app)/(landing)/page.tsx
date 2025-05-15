@@ -3,9 +3,10 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import dynamic from "next/dynamic";
 
+import { siteConfig } from "@repo/lightfast-config";
+
 import { EarlyAccessCountFallback } from "~/components/early-access/early-access-count-error";
 import { EarlyAccessJotaiProvider } from "~/components/early-access/jotai/early-access-jotai-provider";
-import { siteConfig } from "~/config/site";
 
 // Preload the dynamic components to avoid navigation delays
 const EarlyAccessForm = dynamic(

@@ -7,9 +7,9 @@ import type {
   CreateEmailOptions,
   CreateEmailResponseSuccess,
 } from "@vendor/email/types";
+import { emailConfig } from "@repo/lightfast-config";
 import { createEmailClient } from "@vendor/email";
 
-import { emailConfig } from "~/config/email";
 import { env } from "~/env";
 
 export const mail = createEmailClient(env.RESEND_API_KEY);

@@ -24,6 +24,9 @@ let config: NextConfig = withBetterStack({
     "@vendor/observability",
     "@vendor/next",
     "@vendor/upstash",
+    "@repo/lightfast-config",
+    "@repo/lightfast-email",
+    "@repo/lib",
   ],
 
   /** We already do linting and typechecking as separate tasks in CI */

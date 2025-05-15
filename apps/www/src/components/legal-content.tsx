@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
+import { emailConfig } from "@repo/lightfast-config";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@repo/ui/components/ui/alert";
-
-import { emailConfig } from "~/config/email";
 
 interface LegalContentProps {
   type: "privacy" | "terms";
