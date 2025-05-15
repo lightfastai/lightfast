@@ -1,11 +1,13 @@
 import type { Message } from "ai";
 import { z } from "zod";
 
+import type { AgentMode } from "@repo/lightfast-js";
+
 export interface PostRequestBody {
   sessionId: string;
   id: string;
   message: Message;
-  sessionMode: "agent" | "manual";
+  sessionMode: AgentMode;
 }
 
 export const $BaseStreamConfig = z.object({
@@ -15,5 +17,5 @@ export const $BaseStreamConfig = z.object({
 export type BaseStreamConfig = z.infer<typeof $BaseStreamConfig> & {
   userMessage: Message;
   messages: Message[];
-  sessionMode: "agent" | "manual";
+  sessionMode: AgentMode;
 };

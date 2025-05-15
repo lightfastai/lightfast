@@ -30,7 +30,6 @@
   "dependencies": {
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@repo/webgl": "workspace:*",
     "@vercel/postgres": "^0.10.0",
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.7.1",

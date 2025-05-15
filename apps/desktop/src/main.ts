@@ -35,12 +35,32 @@ const windowUniqueIds = new Map<number, string>();
 // Create a collection to track all active windows
 const windows: BrowserWindow[] = [];
 
-// Function to register keyboard shortcuts
-function registerShortcuts() {
-  // Register Cmd+Shift+N / Ctrl+Shift+N to create a new window
-  globalShortcut.register("CommandOrControl+Shift+N", () => {
+// Helper to register/unregister shortcut for a window
+function registerWindowShortcut(win: BrowserWindow) {
+  const shortcut = "CommandOrControl+Shift+N";
+  const handler = () => {
     console.log("Creating new window via keyboard shortcut");
     createComposerWindow();
+  };
+
+  // Register on focus
+  win.on("focus", () => {
+    // Only register if not already registered
+    if (!globalShortcut.isRegistered(shortcut)) {
+      globalShortcut.register(shortcut, handler);
+    }
+  });
+  // Unregister on blur
+  win.on("blur", () => {
+    if (globalShortcut.isRegistered(shortcut)) {
+      globalShortcut.unregister(shortcut);
+    }
+  });
+  // Unregister on close (cleanup)
+  win.on("closed", () => {
+    if (globalShortcut.isRegistered(shortcut)) {
+      globalShortcut.unregister(shortcut);
+    }
   });
 }
 
@@ -138,6 +158,9 @@ export function createComposerWindow() {
     },
   });
 
+  // Register window-specific shortcut
+  registerWindowShortcut(composerWindow);
+
   // Assign a unique port to this window for Blender connection
   const windowBlenderPort = nextBlenderPort++;
   windowPortMap.set(composerWindow.id, windowBlenderPort);
@@ -202,9 +225,6 @@ app.whenReady().then(() => {
 
   // Install extensions
   installExtensions();
-
-  // Register keyboard shortcuts
-  registerShortcuts();
 });
 
 //osX only
