@@ -3,11 +3,11 @@ import { CodeProvider } from "@openauthjs/openauth/provider/code";
 import { MemoryStorage } from "@openauthjs/openauth/storage/memory";
 import { CodeUI } from "@openauthjs/openauth/ui/code";
 
-import { sendEmail } from "../lib/email"; // Assuming this will be resolved
-import CodeEmail, { codeEmailText } from "../templates/code-email";
-import { subjects } from "./subjects";
+import { emailConfig } from "@repo/lightfast-config";
+import { sendResendEmailSafe } from "@repo/lightfast-email/functions";
+import { CodeEmail, codeEmailText } from "@repo/lightfast-email/templates";
 
-// Adjusted path for www
+import { subjects } from "./subjects";
 
 function getUser(email: string) {
   // Get user from database and return user ID
@@ -31,7 +31,8 @@ export default issuer({
 
           console.log(`Sending code ${code} to email: ${email}`);
 
-          const result = await sendEmail({
+          const result = await sendResendEmailSafe({
+            from: emailConfig.auth,
             to: email,
             subject: "Your Lightfast.ai sign-in code",
             text: codeEmailText({ code }),
