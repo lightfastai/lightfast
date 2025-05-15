@@ -7,7 +7,7 @@ import { emailConfig } from "@repo/lightfast-config";
 import { sendResendEmailSafe } from "@repo/lightfast-email/functions";
 import { CodeEmail, codeEmailText } from "@repo/lightfast-email/templates";
 
-import { subjects } from "./subjects";
+import { authSubjects } from "./subjects";
 
 function getUser(email: string) {
   // Get user from database and return user ID
@@ -17,10 +17,10 @@ function getUser(email: string) {
 }
 
 export default issuer({
-  subjects,
+  subjects: authSubjects,
   storage: MemoryStorage(),
   providers: {
-    code: CodeProvider(
+    email: CodeProvider(
       CodeUI({
         sendCode: async (claims, code) => {
           const { email } = claims;
@@ -52,20 +52,19 @@ export default issuer({
     ),
   },
   success: async (ctx, value) => {
-    if (value.provider === "code") {
-      if (!value.claims.email) {
-        // This case should ideally not happen if email is required by the provider
-        console.error("Email claim is missing in provider response");
-        throw new Error("Email not found in claims after code verification.");
+    if (value.provider === "email") {
+      const email = value.claims.email;
+      if (!email) {
+        throw new Error("No email found");
       }
-      return ctx.subject("user", {
-        id: await getUser(value.claims.email), // Email is now guaranteed to be a string
-      });
+
+      return ctx.subject(
+        "account",
+        { type: "email", email },
+        { subject: email },
+      );
     }
-    console.error(
-      "Invalid provider encountered in success callback:",
-      value.provider,
-    );
+
     throw new Error("Invalid provider");
   },
 });
