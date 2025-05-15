@@ -32,10 +32,10 @@ export const modelRegistry = createProviderRegistry({
   anthropic: createAnthropic({
     apiKey: env.ANTHROPIC_API_KEY,
   }),
-  openrouter: createOpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
-    apiKey: env.OPENROUTER_API_KEY,
-  }),
+  // openrouter: createOpenAI({
+  //   baseURL: "https://openrouter.ai/api/v1",
+  //   apiKey: env.OPENROUTER_API_KEY,
+  // }),
   google: createVertex({
     project: env.GOOGLE_PROJECT_ID,
     location: "us-central1",
@@ -53,21 +53,21 @@ export type ModelUseCase = z.infer<typeof $ModelUseCase>;
 export const providers = customProvider({
   languageModels: {
     [$ModelUseCase.enum.artifact]: modelRegistry.languageModel(
-      "openrouter:gpt-4o-mini",
+      "google:gemini-2.5-pro-preview-05-06",
     ),
     [$ModelUseCase.enum.chat]: modelRegistry.languageModel(
       // "google:gemini-2.5-flash-preview-04-17",
       // "google:gemini-2.5-flash-preview-04-17",
-      // "openai:o4-mini-2025-04-16",
       "openai:gpt-4.1-mini",
     ),
     [$ModelUseCase.enum.reasoning]: modelRegistry.languageModel(
       "google:gemini-2.5-flash-preview-04-17",
     ),
-    [$ModelUseCase.enum.json]:
-      modelRegistry.languageModel("openrouter:o4-mini"),
+    [$ModelUseCase.enum.json]: modelRegistry.languageModel(
+      "google:gemini-2.5-pro-preview-05-06",
+    ),
     [$ModelUseCase.enum.title]: modelRegistry.languageModel(
-      "openrouter:gpt-4o-mini",
+      "google:gemini-2.5-pro-preview-05-06",
     ),
   },
 });

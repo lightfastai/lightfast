@@ -35,16 +35,6 @@ export const convertDBMessageToUIMessages = (
   }));
 };
 
-// Session mode enum (manual mode currently disabled in UI)
-export const SessionMode = z.enum(["agent", "manual"]);
-export type SessionMode = z.infer<typeof SessionMode>;
-
 // Input status for message input component
 export const InputStatus = z.enum(["ready", "thinking", "done"]);
 export type InputStatus = z.infer<typeof InputStatus>;
-
-// Record mapping session modes to display labels
-export const MODE_LABELS: Record<SessionMode, string> = {
-  agent: "Agent",
-  manual: "Manual",
-};
