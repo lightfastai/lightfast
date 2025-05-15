@@ -1,7 +1,7 @@
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
-import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
+import { app, BrowserWindow, globalShortcut, ipcMain, shell } from "electron";
 import {
   installExtension,
   REACT_DEVELOPER_TOOLS,
@@ -139,7 +139,23 @@ ipcMain.handle("set-blender-port", async (event, newPort) => {
     return false;
   }
 });
+
+// Handler to open external URLs
+ipcMain.handle("open-external", (_event, url: string) => {
+  shell.openExternal(url);
+});
 // --- End IPC Handlers ---
+
+// Custom protocol handler for auth callback
+app.setAsDefaultProtocolClient("lightfast");
+
+app.on("open-url", (event, url) => {
+  event.preventDefault();
+  // Send the URL to the first window (or all windows if needed)
+  if (windows.length > 0) {
+    windows[0].webContents.send("auth-callback", url);
+  }
+});
 
 // Function to create the Composer window
 export function createComposerWindow() {
