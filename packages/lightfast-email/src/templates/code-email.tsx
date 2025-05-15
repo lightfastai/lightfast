@@ -19,7 +19,15 @@ export function codeEmailText({ code }: { code: string }): string {
 
 Enter this code to continue signing in.
 
-If you did not request this, you can ignore this email.`;
+If you did not request this, you can ignore this email.
+
+-------------------
+
+Privacy Policy: ${siteConfig.links.privacy.href}
+Terms & Conditions: ${siteConfig.links.terms.href}
+
+-------------------
+`;
 }
 
 export const CodeEmail = ({ email, code }: CodeEmailProps) => (

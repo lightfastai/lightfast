@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@react-email/components": "^0.0.36",
+    "@repo/lightfast-config": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@repo/lightfast-email": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "0.12.0",
     "@vendor/analytics": "workspace:*",
