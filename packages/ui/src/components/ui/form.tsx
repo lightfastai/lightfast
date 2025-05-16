@@ -1,6 +1,7 @@
 "use client";
 
 import type * as LabelPrimitive from "@radix-ui/react-label";
+import type { OTPInputProps } from "input-otp";
 import type {
   ControllerProps,
   FieldPath,
@@ -11,6 +12,7 @@ import type { ZodType, ZodTypeDef } from "zod";
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Slot } from "@radix-ui/react-slot";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 import {
   useForm as __useForm,
   Controller,
@@ -21,6 +23,13 @@ import {
 
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
+
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "./input-otp";
 
 const Form = FormProvider;
 
@@ -178,6 +187,73 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     </p>
   );
 }
+
+export type ListOfErrors = (string | null | undefined)[] | null | undefined;
+
+export function ErrorList({
+  id,
+  errors,
+  className,
+}: {
+  errors?: ListOfErrors;
+  id?: string;
+  className?: string;
+}) {
+  const errorsToRender = errors?.filter(Boolean);
+  if (!errorsToRender?.length) return null;
+  return (
+    <ul id={id} className={cn("flex flex-col gap-1", className)}>
+      {errorsToRender.map((e) => (
+        <li key={`${id}-${e}`} className="text-destructive text-sm">
+          {e}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export const OTPField = React.forwardRef<
+  HTMLInputElement,
+  {
+    labelProps?: React.LabelHTMLAttributes<HTMLLabelElement>;
+    inputProps: Partial<OTPInputProps & { render: never }>;
+    errors?: ListOfErrors;
+    className?: string;
+  }
+>(({ labelProps, inputProps, errors, className }, ref) => {
+  const fallbackId = React.useId();
+  const id = inputProps.id ?? fallbackId;
+  const errorId = errors?.length ? `${id}-error` : undefined;
+  return (
+    <div className={className}>
+      {!!labelProps && <Label htmlFor={id} {...labelProps} />}
+      <InputOTP
+        pattern={REGEXP_ONLY_DIGITS}
+        maxLength={6}
+        ref={ref}
+        id={id}
+        aria-invalid={errorId ? true : undefined}
+        aria-describedby={errorId}
+        {...inputProps}
+      >
+        <InputOTPGroup>
+          <InputOTPSlot index={0} />
+          <InputOTPSlot index={1} />
+          <InputOTPSlot index={2} />
+        </InputOTPGroup>
+        <InputOTPSeparator />
+        <InputOTPGroup>
+          <InputOTPSlot index={3} />
+          <InputOTPSlot index={4} />
+          <InputOTPSlot index={5} />
+        </InputOTPGroup>
+      </InputOTP>
+      <div className="px-4 py-3 text-center">
+        {errorId ? <ErrorList id={errorId} errors={errors} /> : null}
+      </div>
+    </div>
+  );
+});
 
 export {
   useFormField,
