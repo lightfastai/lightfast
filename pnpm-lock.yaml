@@ -288,6 +288,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@openauthjs/openauth':
+        specifier: ^0.3.2
+        version: 0.3.9(arctic@2.3.4)(hono@4.7.9)
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
