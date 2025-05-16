@@ -5,6 +5,7 @@ import { $SessionType } from "@vendor/openauth";
 
 import { setTokensElectronHandler } from "../helpers/auth-helpers";
 
+
 // Declare the types for the electron context bridge API
 declare global {
   interface Window {
