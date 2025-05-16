@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@openauthjs/openauth/client";
 import { useRouter } from "@tanstack/react-router";
 
+import { AuthSession, SessionType } from "@vendor/clerk/types";
+
 // Declare the types for the electron context bridge API
 declare global {
   interface Window {
@@ -16,10 +18,7 @@ declare global {
   }
 }
 
-interface AuthSession {
-  accessToken?: string;
-  refreshToken?: string;
-  userId?: string;
+interface InternalAuthSession extends AuthSession {
   isValid?: boolean;
 }
 
@@ -30,7 +29,7 @@ const client = createClient({
 });
 
 export function useAuth() {
-  const [session, setSession] = useState<AuthSession | null>(null);
+  const [session, setSession] = useState<InternalAuthSession | null>(null);
   const [loading, setLoading] = useState(true); // Start as loading to prevent flash of unauthenticated state
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -82,7 +81,10 @@ export function useAuth() {
 
   // Validate token with the auth server
   const validateToken = useCallback(
-    async (token: string, refreshToken?: string): Promise<AuthSession> => {
+    async (
+      token: string,
+      refreshToken?: string,
+    ): Promise<InternalAuthSession> => {
       try {
         console.log("Validating token with server...");
         const response = await fetch(`${authBaseUrl}/api/validate`, {
@@ -107,19 +109,23 @@ export function useAuth() {
           throw new Error(data.error || "Invalid token");
         }
 
+        console.log("Data subject:", data.subject);
+
         // Update tokens if refreshed
-        const updatedSession: AuthSession = {
-          accessToken: token,
-          refreshToken,
-          userId:
-            data.subject?.properties?.id || data.subject?.properties?.email,
+        const updatedSession: InternalAuthSession = {
+          user: {
+            id: data.subject?.properties?.id || data.subject?.properties?.email,
+            accessToken: token,
+            refreshToken: refreshToken || "",
+          },
+          type: SessionType.User,
           isValid: true,
         };
 
         if (data.tokens) {
           console.log("Received refreshed tokens");
-          updatedSession.accessToken = data.tokens.access;
-          updatedSession.refreshToken = data.tokens.refresh;
+          updatedSession.user.accessToken = data.tokens.access;
+          updatedSession.user.refreshToken = data.tokens.refresh;
 
           // Update localStorage with new tokens
           localStorage.setItem("auth_access_token", data.tokens.access);
@@ -216,10 +222,13 @@ export function useAuth() {
               exchanged.tokens.refresh,
             );
 
-            const newSession = {
-              accessToken: exchanged.tokens.access,
-              refreshToken: exchanged.tokens.refresh,
-              userId: "user", // We'll get the actual ID from validation
+            const newSession: InternalAuthSession = {
+              user: {
+                id: "user",
+                accessToken: exchanged.tokens.access,
+                refreshToken: exchanged.tokens.refresh,
+              },
+              type: SessionType.User,
               isValid: true,
             };
 
@@ -244,10 +253,13 @@ export function useAuth() {
             localStorage.setItem("auth_access_token", data.access);
             localStorage.setItem("auth_refresh_token", data.refresh);
 
-            const newSession = {
-              accessToken: data.access,
-              refreshToken: data.refresh,
-              userId: "user", // We'll get the actual ID from validation
+            const newSession: InternalAuthSession = {
+              user: {
+                id: "user",
+                accessToken: data.access,
+                refreshToken: data.refresh,
+              },
+              type: SessionType.User,
               isValid: true,
             };
 

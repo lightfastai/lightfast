@@ -9,9 +9,7 @@ import {
 
 import { nanoid } from "@repo/lib";
 
-import type { EnvClient } from "./env/client-types";
 // Import the validated environment variables
-import { env } from "./env/index";
 import registerListeners from "./helpers/ipc/listeners-register";
 import { DEFAULT_BLENDER_PORT } from "./main/blender-connection";
 
@@ -63,19 +61,6 @@ function registerWindowShortcut(win: BrowserWindow) {
     }
   });
 }
-
-// --- IPC Handlers ---
-ipcMain.handle("get-client-env", (): EnvClient => {
-  // Manually construct the client environment object to send
-  // We use the EnvClient type for type safety.
-  // Note: The keys here match the *original* variable names (incl. prefix)
-  // as defined in EnvClient type, which is what the renderer expects.
-  const clientEnv: EnvClient = {
-    VITE_PUBLIC_LIGHTFAST_API_URL: env.VITE_PUBLIC_LIGHTFAST_API_URL,
-    // Add other client variables defined in EnvClient here
-  };
-  return clientEnv;
-});
 
 // Handler to get the blender port for a window
 ipcMain.handle("get-blender-port", (event) => {

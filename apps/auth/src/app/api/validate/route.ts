@@ -16,6 +16,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log("Validating token:", token, refresh);
+
     const verified = await client.verify(authSubjects, token, {
       refresh,
     });
