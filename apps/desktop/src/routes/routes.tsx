@@ -13,10 +13,11 @@ export const LoginRoute = createRoute({
 
 // Auth guard for protected routes
 async function authGuard() {
-  // This will run on navigation; use a global or context-based session check
-  // For now, use localStorage/sessionStorage as a placeholder
-  const code = window.localStorage.getItem("auth_code");
-  if (!code) {
+  // Check for access token instead of auth_code
+  const accessToken = window.localStorage.getItem("auth_access_token");
+  console.log("Auth guard check:", { accessToken: !!accessToken });
+  if (!accessToken) {
+    console.log("No access token found, redirecting to login");
     throw redirect({ to: "/login" });
   }
 }

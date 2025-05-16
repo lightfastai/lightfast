@@ -30,7 +30,7 @@ const client = createClient({
 
 export function useAuth() {
   const [session, setSession] = useState<AuthSession | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start as loading to prevent flash of unauthenticated state
   const [error, setError] = useState<string | null>(null);
 
   const authBaseUrl =
@@ -62,6 +62,9 @@ export function useAuth() {
       localStorage.removeItem("auth_access_token");
       localStorage.removeItem("auth_refresh_token");
 
+      // Also clear session state
+      setSession(null);
+
       // Generate authorization URL directly using OpenAuth client
       const { url: authUrl } = await client.authorize(redirectUri, "code");
       console.log("Full auth URL:", authUrl);
@@ -74,12 +77,13 @@ export function useAuth() {
       setError("Failed to start auth flow: " + (err?.message || String(err)));
       setLoading(false);
     }
-  }, [authBaseUrl, redirectUri, client]);
+  }, [authBaseUrl, redirectUri]);
 
   // Validate token with the auth server
   const validateToken = useCallback(
     async (token: string, refreshToken?: string): Promise<AuthSession> => {
       try {
+        console.log("Validating token with server...");
         const response = await fetch(`${authBaseUrl}/api/validate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -87,12 +91,18 @@ export function useAuth() {
         });
 
         if (!response.ok) {
+          console.error(
+            "Token validation failed: Server returned",
+            response.status,
+          );
           throw new Error("Token validation failed");
         }
 
         const data = await response.json();
+        console.log("Token validation response:", data);
 
         if (!data.valid) {
+          console.error("Token not valid:", data.error);
           throw new Error(data.error || "Invalid token");
         }
 
@@ -100,11 +110,13 @@ export function useAuth() {
         const updatedSession: AuthSession = {
           accessToken: token,
           refreshToken,
-          userId: data.subject?.properties?.id,
+          userId:
+            data.subject?.properties?.id || data.subject?.properties?.email,
           isValid: true,
         };
 
         if (data.tokens) {
+          console.log("Received refreshed tokens");
           updatedSession.accessToken = data.tokens.access;
           updatedSession.refreshToken = data.tokens.refresh;
 
@@ -113,6 +125,7 @@ export function useAuth() {
           localStorage.setItem("auth_refresh_token", data.tokens.refresh);
         }
 
+        console.log("Session is valid:", updatedSession);
         return updatedSession;
       } catch (error) {
         console.error("Token validation error:", error);
@@ -124,6 +137,7 @@ export function useAuth() {
 
   // Logout function
   const logout = useCallback(() => {
+    console.log("Logging out - clearing tokens and session");
     localStorage.removeItem("auth_access_token");
     localStorage.removeItem("auth_refresh_token");
     setSession(null);
@@ -136,6 +150,7 @@ export function useAuth() {
       return;
     }
 
+    console.log("Registering auth callback handler");
     // Register auth callback handler
     const removeListener = window.electron.auth.onAuthCallback(
       async (url: string) => {
@@ -161,9 +176,18 @@ export function useAuth() {
               accessToken,
               refreshToken || undefined,
             );
+            console.log("Setting session after validation:", validatedSession);
             setSession(validatedSession);
             setLoading(false);
             return;
+          }
+
+          // Check for error in the callback
+          const errorCode = parsed.searchParams.get("error");
+          if (errorCode) {
+            const errorDesc = parsed.searchParams.get("error_description");
+            console.error("Auth error:", errorCode, errorDesc);
+            throw new Error(errorDesc || `Authentication error: ${errorCode}`);
           }
 
           // Legacy code path for compatibility
@@ -171,6 +195,7 @@ export function useAuth() {
           if (!code) throw new Error("No code or tokens in callback");
 
           try {
+            console.log("Exchanging code for tokens using OpenAuth client...");
             // Exchange code for tokens using the OpenAuth client directly
             const exchanged = await client.exchange(code, redirectUri);
             if (exchanged.err) {
@@ -188,11 +213,15 @@ export function useAuth() {
               exchanged.tokens.refresh,
             );
 
-            setSession({
+            const newSession = {
               accessToken: exchanged.tokens.access,
               refreshToken: exchanged.tokens.refresh,
+              userId: "user", // We'll get the actual ID from validation
               isValid: true,
-            });
+            };
+
+            console.log("Setting session after code exchange:", newSession);
+            setSession(newSession);
           } catch (exchangeError) {
             console.error("Code exchange failed:", exchangeError);
 
@@ -205,17 +234,21 @@ export function useAuth() {
             if (!res.ok) throw new Error("Failed to exchange code for tokens");
             const data = await res.json();
 
-            console.log("Received tokens:", data);
+            console.log("Received tokens from server exchange:", data);
 
             // Store tokens in localStorage
             localStorage.setItem("auth_access_token", data.access);
             localStorage.setItem("auth_refresh_token", data.refresh);
 
-            setSession({
+            const newSession = {
               accessToken: data.access,
               refreshToken: data.refresh,
+              userId: "user", // We'll get the actual ID from validation
               isValid: true,
-            });
+            };
+
+            console.log("Setting session after server exchange:", newSession);
+            setSession(newSession);
           }
 
           setLoading(false);
@@ -229,35 +262,51 @@ export function useAuth() {
 
     // Cleanup
     return removeListener;
-  }, [authBaseUrl, redirectUri, validateToken, client]);
+  }, [authBaseUrl, redirectUri, validateToken]);
 
   // On mount, restore and validate session from localStorage
   useEffect(() => {
     const restoreSession = async () => {
+      console.log("Attempting to restore session from localStorage");
       const accessToken = localStorage.getItem("auth_access_token");
       const refreshToken = localStorage.getItem("auth_refresh_token");
 
       if (accessToken) {
+        console.log("Found access token in localStorage, validating...");
         try {
           setLoading(true);
           const validatedSession = await validateToken(
             accessToken,
             refreshToken || undefined,
           );
+          console.log("Session restored successfully:", validatedSession);
           setSession(validatedSession);
         } catch (error) {
           console.error("Session restoration failed:", error);
           // Clear invalid tokens
           localStorage.removeItem("auth_access_token");
           localStorage.removeItem("auth_refresh_token");
+          setSession(null);
         } finally {
           setLoading(false);
         }
+      } else {
+        console.log("No access token found in localStorage");
+        setLoading(false);
       }
     };
 
     restoreSession();
   }, [validateToken]);
+
+  // Log whenever authentication state changes
+  useEffect(() => {
+    console.log("Authentication state updated:", {
+      isAuthenticated: !!session?.isValid,
+      loading,
+      error,
+    });
+  }, [session, loading, error]);
 
   return {
     session,
