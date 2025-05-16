@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
@@ -10,7 +11,7 @@ import {
 
 export function LogoutButton() {
   const { logout } = useAuth();
-
+  const router = useRouter();
   const handleLogout = () => {
     console.log("Logging out...");
     logout();
