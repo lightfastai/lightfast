@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@openauthjs/openauth/client";
+import { useRouter } from "@tanstack/react-router";
 
 // Declare the types for the electron context bridge API
 declare global {
@@ -32,7 +33,7 @@ export function useAuth() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true); // Start as loading to prevent flash of unauthenticated state
   const [error, setError] = useState<string | null>(null);
-
+  const router = useRouter();
   const authBaseUrl =
     import.meta.env.VITE_AUTH_APP_URL || "http://localhost:3001";
   const redirectUri = "lightfast://auth/callback";
@@ -141,7 +142,8 @@ export function useAuth() {
     localStorage.removeItem("auth_access_token");
     localStorage.removeItem("auth_refresh_token");
     setSession(null);
-  }, []);
+    router.navigate({ to: "/login" });
+  }, [router]);
 
   // Listen for auth callback from main process
   useEffect(() => {
@@ -179,6 +181,7 @@ export function useAuth() {
             console.log("Setting session after validation:", validatedSession);
             setSession(validatedSession);
             setLoading(false);
+            router.navigate({ to: "/" });
             return;
           }
 
@@ -222,6 +225,7 @@ export function useAuth() {
 
             console.log("Setting session after code exchange:", newSession);
             setSession(newSession);
+            router.navigate({ to: "/" });
           } catch (exchangeError) {
             console.error("Code exchange failed:", exchangeError);
 
