@@ -2,18 +2,30 @@ import { issuer } from "@openauthjs/openauth";
 import { CodeProvider } from "@openauthjs/openauth/provider/code";
 import { MemoryStorage } from "@openauthjs/openauth/storage/memory";
 import { CodeUI } from "@openauthjs/openauth/ui/code";
+import { TRPCError } from "@trpc/server";
 
+import type { RouterOutputs } from "@vendor/trpc";
 import { emailConfig } from "@repo/lightfast-config";
 import { sendResendEmailSafe } from "@repo/lightfast-email/functions";
 import { CodeEmail, codeEmailText } from "@repo/lightfast-email/templates";
+import { trpc } from "@repo/trpc-client/trpc-pure-server-provider";
 
 import { authSubjects } from "./subjects";
 
-function getUser(email: string) {
-  // Get user from database and return user ID
-  // This is a placeholder. In a real app, you would query your database.
-  console.log(`Fetching user ID for email: ${email}`);
-  return "123"; // Placeholder user ID
+async function getUserByEmailOrCreate(
+  email: string,
+): Promise<RouterOutputs["tenant"]["user"]["getByEmail"]["id"]> {
+  // find user. if does not exist, create user
+  try {
+    const user = await trpc.tenant.user.getByEmail({ email });
+    return user.id;
+  } catch (error) {
+    if (error instanceof TRPCError && error.code === "NOT_FOUND") {
+      const newUser = await trpc.app.user.create({ email });
+      return newUser.id;
+    }
+    throw error;
+  }
 }
 
 export default issuer({
@@ -59,10 +71,16 @@ export default issuer({
         throw new Error("No email found");
       }
 
+      const userId = await getUserByEmailOrCreate(email);
+
+      if (!userId) {
+        throw new Error("Failed to create user");
+      }
+
       return ctx.subject(
         "account",
         { type: "email", email },
-        { subject: email },
+        { subject: userId },
       );
     }
 

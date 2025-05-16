@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   // If redirectUri is provided and is a custom protocol (Electron app),
   // use that instead of the default
-  const callbackUrl = redirectUri || `${url.origin}/api/callback`;
+  const callbackUrl = redirectUri ?? `${url.origin}/api/callback`;
 
   const exchanged = await client.exchange(code, callbackUrl);
 
