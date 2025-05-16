@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@openauthjs/openauth/client";
 
 // Declare the types for the electron context bridge API
 declare global {
@@ -21,6 +22,12 @@ interface AuthSession {
   isValid?: boolean;
 }
 
+// Create the OpenAuth client
+const client = createClient({
+  clientID: "nextjs",
+  issuer: "http://localhost:3001",
+});
+
 export function useAuth() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,20 +35,15 @@ export function useAuth() {
 
   const authBaseUrl =
     import.meta.env.VITE_AUTH_APP_URL || "http://localhost:3001";
-  const redirectUri =
-    import.meta.env.VITE_AUTH_APP_REDIRECT_URI || "lightfast://auth/callback";
+  const redirectUri = "lightfast://auth/callback";
 
-  // Construct login URL with redirect_uri for the auth page
-  const loginUrl = `${authBaseUrl}/auth?redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-  const login = useCallback(() => {
+  const login = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     // Debug logging
     console.log("Auth URL:", authBaseUrl);
     console.log("Redirect URI:", redirectUri);
-    console.log("Full login URL:", loginUrl);
 
     if (!authBaseUrl) {
       setError("Missing VITE_AUTH_APP_URL environment variable");
@@ -55,19 +57,24 @@ export function useAuth() {
       return;
     }
 
-    // Clear any existing tokens before starting a new login
-    localStorage.removeItem("auth_access_token");
-    localStorage.removeItem("auth_refresh_token");
+    try {
+      // Clear any existing tokens before starting a new login
+      localStorage.removeItem("auth_access_token");
+      localStorage.removeItem("auth_refresh_token");
 
-    window.electron.shell
-      .openExternal(loginUrl)
-      .then(() => console.log("Browser open request sent"))
-      .catch((err) => {
-        console.error("Failed to open browser:", err);
-        setError("Failed to open browser: " + (err?.message || String(err)));
-        setLoading(false);
-      });
-  }, [loginUrl, authBaseUrl, redirectUri]);
+      // Generate authorization URL directly using OpenAuth client
+      const { url: authUrl } = await client.authorize(redirectUri, "code");
+      console.log("Full auth URL:", authUrl);
+
+      // Open the auth URL in the user's browser
+      await window.electron.shell.openExternal(authUrl);
+      console.log("Browser open request sent");
+    } catch (err: any) {
+      console.error("Failed to start auth flow:", err);
+      setError("Failed to start auth flow: " + (err?.message || String(err)));
+      setLoading(false);
+    }
+  }, [authBaseUrl, redirectUri, client]);
 
   // Validate token with the auth server
   const validateToken = useCallback(
@@ -163,25 +170,54 @@ export function useAuth() {
           const code = parsed.searchParams.get("code");
           if (!code) throw new Error("No code or tokens in callback");
 
-          // Exchange code for tokens
-          const callbackUrl = `${authBaseUrl}/api/callback?code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-          console.log("Exchanging code at:", callbackUrl);
+          try {
+            // Exchange code for tokens using the OpenAuth client directly
+            const exchanged = await client.exchange(code, redirectUri);
+            if (exchanged.err) {
+              throw new Error(
+                exchanged.err.message || "Failed to exchange code",
+              );
+            }
 
-          const res = await fetch(callbackUrl, { credentials: "include" });
-          if (!res.ok) throw new Error("Failed to exchange code for tokens");
-          const data = await res.json();
+            console.log("Received tokens from exchange:", exchanged.tokens);
 
-          console.log("Received tokens:", data);
+            // Store tokens in localStorage
+            localStorage.setItem("auth_access_token", exchanged.tokens.access);
+            localStorage.setItem(
+              "auth_refresh_token",
+              exchanged.tokens.refresh,
+            );
 
-          // Store tokens in localStorage
-          localStorage.setItem("auth_access_token", data.access);
-          localStorage.setItem("auth_refresh_token", data.refresh);
+            setSession({
+              accessToken: exchanged.tokens.access,
+              refreshToken: exchanged.tokens.refresh,
+              isValid: true,
+            });
+          } catch (exchangeError) {
+            console.error("Code exchange failed:", exchangeError);
 
-          setSession({
-            accessToken: data.access,
-            refreshToken: data.refresh,
-            isValid: true,
-          });
+            // Fallback to server-side exchange if direct exchange fails
+            console.log("Falling back to server-side exchange");
+            const callbackUrl = `${authBaseUrl}/api/callback?code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+            console.log("Exchanging code at:", callbackUrl);
+
+            const res = await fetch(callbackUrl, { credentials: "include" });
+            if (!res.ok) throw new Error("Failed to exchange code for tokens");
+            const data = await res.json();
+
+            console.log("Received tokens:", data);
+
+            // Store tokens in localStorage
+            localStorage.setItem("auth_access_token", data.access);
+            localStorage.setItem("auth_refresh_token", data.refresh);
+
+            setSession({
+              accessToken: data.access,
+              refreshToken: data.refresh,
+              isValid: true,
+            });
+          }
+
           setLoading(false);
         } catch (e: any) {
           console.error("Auth error:", e);
@@ -193,7 +229,7 @@ export function useAuth() {
 
     // Cleanup
     return removeListener;
-  }, [authBaseUrl, redirectUri, validateToken]);
+  }, [authBaseUrl, redirectUri, validateToken, client]);
 
   // On mount, restore and validate session from localStorage
   useEffect(() => {

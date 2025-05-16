@@ -19,6 +19,7 @@ function getUser(email: string) {
 export default issuer({
   subjects: authSubjects,
   storage: MemoryStorage(),
+  allow: async () => true,
   providers: {
     email: CodeProvider(
       CodeUI({

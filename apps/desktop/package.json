@@ -26,6 +26,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@openauthjs/openauth": "^0.3.2",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:^",
     "@repo/lightfast-js": "workspace:*",
