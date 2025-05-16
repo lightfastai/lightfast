@@ -6,7 +6,8 @@ export enum SessionType {
 export interface AuthSession {
   user: {
     id: string;
-    clerkId: string;
+    accessToken: string;
+    refreshToken: string;
   };
   type: SessionType.User;
 }

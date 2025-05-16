@@ -120,7 +120,7 @@ const protectedMiddleware = t.middleware(async ({ next, ctx }) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  if (ctx.session.type === SessionType.User && !ctx.session.user.clerkId) {
+  if (ctx.session.type === SessionType.User && !ctx.session.user.id) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
