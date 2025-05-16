@@ -25,6 +25,7 @@ import { useSessionStore } from "../stores/session-store";
 import { BlenderAnalysisDisplay } from "./blender-analysis-display";
 import { BlenderPortIndicator } from "./blender-port-indicator";
 import { HistoryMenu } from "./history-menu";
+import { LogoutButton } from "./logout-button";
 import { MessageList } from "./message-list";
 import { PastSessions } from "./past-sessions";
 import { UserMessageInput } from "./user-message-input";
@@ -205,6 +206,7 @@ export const Session: React.FC<SessionProps> = ({ sessionId }) => {
               </Button>
             </Link>
             <HistoryMenu sessions={sessions} />
+            <LogoutButton />
           </div>
         </div>
       </header>

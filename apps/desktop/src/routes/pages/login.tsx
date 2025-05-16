@@ -1,9 +1,10 @@
 import { useAuth } from "@/hooks/use-auth";
+import { LogOut } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
 
 export default function LoginPage() {
-  const { login, loading, error } = useAuth();
+  const { login, logout, loading, error, isAuthenticated } = useAuth();
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4">
@@ -12,6 +13,24 @@ export default function LoginPage() {
         {loading ? "Opening browser..." : "Sign in with Email"}
       </Button>
       {error && <div className="mt-2 text-sm text-red-500">{error}</div>}
+
+      {/* Small logout button shown when isAuthenticated but we're on the login page - 
+          this can happen if the token is expired or invalid */}
+      {isAuthenticated && (
+        <div className="mt-4 flex flex-col items-center">
+          <div className="text-muted-foreground mb-1 text-xs">
+            Already have a session?
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={logout}
+            className="flex items-center gap-1 text-xs"
+          >
+            <LogOut className="size-3" /> Clear Session
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
