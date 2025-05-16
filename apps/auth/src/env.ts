@@ -1,10 +1,11 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+import { env as dbEnv } from "@vendor/db/env";
 import { env as emailEnv } from "@vendor/email/env";
 
 export const env = createEnv({
-  extends: [emailEnv],
+  extends: [emailEnv, dbEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

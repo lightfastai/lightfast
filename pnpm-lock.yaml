@@ -219,23 +219,32 @@ importers:
   apps/auth:
     dependencies:
       '@openauthjs/openauth':
-        specifier: ^0.3.2
-        version: 0.3.9(arctic@2.3.4)(hono@4.7.9)
+        specifier: ^0.4.3
+        version: 0.4.3(arctic@2.3.4)(hono@4.7.9)
       '@repo/lightfast-config':
         specifier: workspace:^
         version: link:../../packages/lightfast-config
       '@repo/lightfast-email':
         specifier: workspace:*
         version: link:../../packages/lightfast-email
+      '@repo/trpc-client':
+        specifier: workspace:*
+        version: link:../../packages/trpc-client
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@vendor/db':
+        specifier: workspace:^
+        version: link:../../vendor/db
       '@vendor/email':
         specifier: workspace:*
         version: link:../../vendor/email
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/trpc':
+        specifier: workspace:*
+        version: link:../../vendor/trpc
       next:
         specifier: 'catalog:'
         version: 15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -289,8 +298,8 @@ importers:
   apps/desktop:
     dependencies:
       '@openauthjs/openauth':
-        specifier: ^0.3.2
-        version: 0.3.9(arctic@2.3.4)(hono@4.7.9)
+        specifier: ^0.4.3
+        version: 0.4.3(arctic@2.3.4)(hono@4.7.9)
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -1072,6 +1081,9 @@ importers:
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk
+      '@vendor/db':
+        specifier: workspace:*
+        version: link:../../vendor/db
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc
@@ -3646,8 +3658,8 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     deprecated: This functionality has been moved to @npmcli/fs
 
-  '@openauthjs/openauth@0.3.9':
-    resolution: {integrity: sha512-a8UGz9iLQnB8TmY4bMDkCvMEWLHPEtDlXGnYNoFbEOxO13cCPu1pSS0DcUvKzHBAhXWnAMU01sSDMNZQr+aKWg==}
+  '@openauthjs/openauth@0.4.3':
+    resolution: {integrity: sha512-RlnjqvHzqcbFVymEwhlUEuac4utA5h4nhSK/i2szZuQmxTIqbGUxZ+nM+avM+VV4Ing+/ZaNLKILoXS3yrkOOw==}
     peerDependencies:
       arctic: ^2.2.2
       hono: ^4.0.0
@@ -14556,7 +14568,7 @@ snapshots:
       mkdirp: 1.0.4
       rimraf: 3.0.2
 
-  '@openauthjs/openauth@0.3.9(arctic@2.3.4)(hono@4.7.9)':
+  '@openauthjs/openauth@0.4.3(arctic@2.3.4)(hono@4.7.9)':
     dependencies:
       '@standard-schema/spec': 1.0.0-beta.3
       arctic: 2.3.4

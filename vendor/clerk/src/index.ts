@@ -3,6 +3,7 @@
 import { auth as clerkAuth } from "@clerk/nextjs/server";
 
 import type { Session } from "./types";
+import { SessionType } from "./types";
 
 /**
  * Light wrapper around clerkAuth to transform the return type
@@ -19,5 +20,6 @@ export const auth = async (): Promise<Session | null> => {
       id: session.userId,
       clerkId: session.userId,
     },
+    type: SessionType.User,
   };
 };
