@@ -94,6 +94,12 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+<<<<<<< HEAD
+=======
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+>>>>>>> 22c7d56a (feat: update dependencies and configurations for AI integration)
       '@repo/lightfast-js':
         specifier: workspace:*
         version: link:../../packages/lightfast-js
@@ -221,8 +227,11 @@ importers:
         version: link:../../vendor/db
 =======
       '@openauthjs/openauth':
-        specifier: ^0.3.2
-        version: 0.3.9(arctic@2.3.4)(hono@4.7.9)
+        specifier: ^0.4.3
+        version: 0.4.3(arctic@2.3.4)(hono@4.7.9)
+      '@react-email/components':
+        specifier: ^0.0.36
+        version: 0.0.36(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -3723,12 +3732,17 @@ packages:
     deprecated: This functionality has been moved to @npmcli/fs
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@openauthjs/openauth@0.4.3':
     resolution: {integrity: sha512-RlnjqvHzqcbFVymEwhlUEuac4utA5h4nhSK/i2szZuQmxTIqbGUxZ+nM+avM+VV4Ing+/ZaNLKILoXS3yrkOOw==}
 =======
   '@openauthjs/openauth@0.3.9':
     resolution: {integrity: sha512-a8UGz9iLQnB8TmY4bMDkCvMEWLHPEtDlXGnYNoFbEOxO13cCPu1pSS0DcUvKzHBAhXWnAMU01sSDMNZQr+aKWg==}
 >>>>>>> fcec2fbe (feat: update package.json and pnpm-lock.yaml for auth integration and dependency updates)
+=======
+  '@openauthjs/openauth@0.4.3':
+    resolution: {integrity: sha512-RlnjqvHzqcbFVymEwhlUEuac4utA5h4nhSK/i2szZuQmxTIqbGUxZ+nM+avM+VV4Ing+/ZaNLKILoXS3yrkOOw==}
+>>>>>>> 22c7d56a (feat: update dependencies and configurations for AI integration)
     peerDependencies:
       arctic: ^2.2.2
       hono: ^4.0.0
@@ -14632,10 +14646,14 @@ snapshots:
       rimraf: 3.0.2
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@openauthjs/openauth@0.4.3(arctic@2.3.4)(hono@4.7.9)':
 =======
   '@openauthjs/openauth@0.3.9(arctic@2.3.4)(hono@4.7.9)':
 >>>>>>> fcec2fbe (feat: update package.json and pnpm-lock.yaml for auth integration and dependency updates)
+=======
+  '@openauthjs/openauth@0.4.3(arctic@2.3.4)(hono@4.7.9)':
+>>>>>>> 22c7d56a (feat: update dependencies and configurations for AI integration)
     dependencies:
       '@standard-schema/spec': 1.0.0-beta.3
       arctic: 2.3.4
