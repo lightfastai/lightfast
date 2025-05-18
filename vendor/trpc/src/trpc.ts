@@ -10,10 +10,10 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import type { Session } from "@vendor/clerk/types";
-import { auth } from "@vendor/clerk";
-import { SessionType } from "@vendor/clerk/types";
+import type { Session } from "@vendor/openauth";
 import { db } from "@vendor/db/client";
+import { $SessionType } from "@vendor/openauth";
+import { getUserSession } from "@vendor/openauth/server";
 
 /**
  * 1. CONTEXT
@@ -34,20 +34,18 @@ export const createTRPCContext = async (opts: {
   session: Session | null;
   db: typeof db;
 }> => {
-  const session = await auth();
+  const userSession = await getUserSession();
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
-  if (!session) {
+  if (!userSession) {
     console.info(`>>> tRPC Request from ${source} by unknown`);
   }
 
-  if (session?.type === SessionType.User) {
-    console.info(`>>> tRPC Request from ${source} by ${session.user.id}`);
-  }
-
-  if (session?.type === SessionType.Server) {
-    console.info(`>>> tRPC Request from ${source} by server`);
+  if (userSession?.type === $SessionType.Enum.user) {
+    console.info(
+      `>>> tRPC Request from ${source} by ${userSession.user.email}`,
+    );
   }
 
   return {
@@ -120,7 +118,7 @@ const protectedMiddleware = t.middleware(async ({ next, ctx }) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  if (ctx.session.type === SessionType.User && !ctx.session.user.id) {
+  if (ctx.session.type === $SessionType.Enum.user && !ctx.session.user.email) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
@@ -132,7 +130,7 @@ const serverMiddleware = t.middleware(async ({ next, ctx }) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  if (ctx.session.type !== SessionType.Server) {
+  if (ctx.session.type !== $SessionType.Enum.server) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 

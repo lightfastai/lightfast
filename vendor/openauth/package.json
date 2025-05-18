@@ -1,5 +1,5 @@
 {
-  "name": "@vendor/trpc",
+  "name": "@vendor/openauth",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,10 +9,7 @@
       "default": "./src/index.ts"
     },
     "./env": "./env.ts",
-    "./inngest": {
-      "types": "./inngest/dist/index.d.ts",
-      "default": "./src/inngest/index.ts"
-    }
+    "./server": "./src/server/index.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -21,21 +18,13 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@repo/ai": "workspace:^",
-    "@tanstack/react-query": "catalog:",
-    "@trpc/client": "catalog:",
-    "@trpc/server": "catalog:",
-    "@trpc/tanstack-react-query": "catalog:",
-    "@vendor/db": "workspace:*",
-    "@vendor/inngest": "workspace:^",
-    "@vendor/observability": "workspace:*",
-    "@vendor/openauth": "workspace:*",
-    "bcrypt-ts": "^5.0.2",
+    "@openauthjs/openauth": "^0.4.3",
+    "@t3-oss/env-nextjs": "0.12.0",
     "react": "catalog:react19",
-    "superjson": "2.2.1",
+    "react-dom": "catalog:react19",
     "zod": "catalog:"
   },
   "devDependencies": {

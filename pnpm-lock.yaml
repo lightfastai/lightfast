@@ -218,9 +218,6 @@ importers:
 
   apps/auth:
     dependencies:
-      '@openauthjs/openauth':
-        specifier: ^0.4.3
-        version: 0.4.3(arctic@2.3.4)(hono@4.7.9)
       '@repo/lightfast-config':
         specifier: workspace:^
         version: link:../../packages/lightfast-config
@@ -242,6 +239,9 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/openauth':
+        specifier: workspace:*
+        version: link:../../vendor/openauth
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc
@@ -1601,6 +1601,40 @@ importers:
         specifier: 'catalog:'
         version: 5.8.3
 
+  vendor/openauth:
+    dependencies:
+      '@openauthjs/openauth':
+        specifier: ^0.4.3
+        version: 0.4.3(arctic@2.3.4)(hono@4.7.9)
+      '@t3-oss/env-nextjs':
+        specifier: 0.12.0
+        version: 0.12.0(typescript@5.8.3)(valibot@1.1.0(typescript@5.8.3))(zod@3.24.3)
+      react:
+        specifier: catalog:react19
+        version: 19.1.0
+      react-dom:
+        specifier: catalog:react19
+        version: 19.1.0(react@19.1.0)
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      eslint:
+        specifier: 'catalog:'
+        version: 9.25.1(jiti@2.4.2)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.5.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
+
   vendor/security:
     dependencies:
       '@arcjet/decorate':
@@ -1695,9 +1729,6 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
         version: 11.1.2(@tanstack/react-query@5.74.11(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../clerk
       '@vendor/db':
         specifier: workspace:*
         version: link:../db
@@ -1707,6 +1738,9 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../observability
+      '@vendor/openauth':
+        specifier: workspace:*
+        version: link:../openauth
       bcrypt-ts:
         specifier: ^5.0.2
         version: 5.0.2

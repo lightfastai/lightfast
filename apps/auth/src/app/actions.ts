@@ -3,31 +3,32 @@
 import { cookies as getCookies, headers as getHeaders } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { authSubjects } from "../auth/subjects";
+import { authSubjects } from "@vendor/openauth/server";
+
 import { client, setTokens } from "./auth";
 
-export async function auth() {
-  const cookies = await getCookies();
-  const accessToken = cookies.get("access_token");
-  const refreshToken = cookies.get("refresh_token");
+// export async function auth() {
+//   const cookies = await getCookies();
+//   const accessToken = cookies.get("access_token");
+//   const refreshToken = cookies.get("refresh_token");
 
-  if (!accessToken) {
-    return false;
-  }
+//   if (!accessToken) {
+//     return false;
+//   }
 
-  const verified = await client.verify(authSubjects, accessToken.value, {
-    refresh: refreshToken?.value,
-  });
+//   const verified = await client.verify(authSubjects, accessToken.value, {
+//     refresh: refreshToken?.value,
+//   });
 
-  if (verified.err) {
-    return false;
-  }
-  if (verified.tokens) {
-    await setTokens(verified.tokens.access, verified.tokens.refresh);
-  }
+//   if (verified.err) {
+//     return false;
+//   }
+//   if (verified.tokens) {
+//     await setTokens(verified.tokens.access, verified.tokens.refresh);
+//   }
 
-  return verified.subject;
-}
+//   return verified.subject;
+// }
 
 export async function login() {
   const cookies = await getCookies();

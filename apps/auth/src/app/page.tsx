@@ -1,9 +1,11 @@
 import Image from "next/image";
 
-import { auth, login, logout } from "./actions";
+import { getUserSession } from "@vendor/openauth/server";
+
+import { login, logout } from "./actions";
 
 export default async function Home() {
-  const subject = await auth();
+  const userSession = await getUserSession();
   return (
     <div className="page">
       <main className="main">
@@ -16,10 +18,10 @@ export default async function Home() {
           priority
         />
         <ol>
-          {subject ? (
+          {userSession ? (
             <>
               <li>
-                Logged in as <code>{subject.properties.id}</code>.
+                Logged in as <code>{userSession.user.email}</code>.
               </li>
               <li>
                 And then check out <code>app/page.tsx</code>.
@@ -36,7 +38,7 @@ export default async function Home() {
         </ol>
 
         <div className="ctas">
-          {subject ? (
+          {userSession ? (
             <form action={logout}>
               <button className="secondary">Logout</button>
             </form>
