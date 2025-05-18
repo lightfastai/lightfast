@@ -9,8 +9,7 @@ import { emailConfig } from "@repo/lightfast-config";
 import { sendResendEmailSafe } from "@repo/lightfast-email/functions";
 import { CodeEmail, codeEmailText } from "@repo/lightfast-email/templates";
 import { trpc } from "@repo/trpc-client/trpc-pure-server-provider";
-
-import { authSubjects } from "./subjects";
+import { authSubjects } from "@vendor/openauth/server";
 
 async function getUserByEmailOrCreate(
   email: string,

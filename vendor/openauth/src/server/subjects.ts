@@ -9,7 +9,7 @@ const EmailAccount = z.object({
 export type EmailAccount = z.infer<typeof EmailAccount>;
 export type Account = EmailAccount;
 
-const AccountSchema = z.discriminatedUnion("type", [EmailAccount]);
+export const AccountSchema = z.discriminatedUnion("type", [EmailAccount]);
 
 export const authSubjects = createSubjects({
   account: AccountSchema,

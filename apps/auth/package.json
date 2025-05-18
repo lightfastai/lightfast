@@ -18,7 +18,6 @@
     "db:generate": "pnpm with-env drizzle-kit generate --config=./src/db/drizzle.config.ts"
   },
   "dependencies": {
-    "@openauthjs/openauth": "^0.4.3",
     "@repo/lightfast-config": "workspace:^",
     "@repo/lightfast-email": "workspace:*",
     "@repo/trpc-client": "workspace:*",
@@ -26,6 +25,7 @@
     "@vendor/db": "workspace:^",
     "@vendor/email": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vendor/openauth": "workspace:*",
     "@vendor/trpc": "workspace:*",
     "next": "catalog:",
     "react": "catalog:react19",
