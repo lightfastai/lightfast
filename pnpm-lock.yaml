@@ -100,6 +100,12 @@ importers:
       '@next/bundle-analyzer':
         specifier: ^15.0.3
         version: 15.0.3(bufferutil@4.0.9)
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
       '@repo/lightfast-js':
         specifier: workspace:*
         version: link:../../packages/lightfast-js
@@ -219,8 +225,11 @@ importers:
   apps/auth:
     dependencies:
       '@openauthjs/openauth':
-        specifier: ^0.3.2
-        version: 0.3.9(arctic@2.3.4)(hono@4.7.9)
+        specifier: ^0.4.3
+        version: 0.4.3(arctic@2.3.4)(hono@4.7.9)
+      '@react-email/components':
+        specifier: ^0.0.36
+        version: 0.0.36(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -3542,8 +3551,8 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     deprecated: This functionality has been moved to @npmcli/fs
 
-  '@openauthjs/openauth@0.3.9':
-    resolution: {integrity: sha512-a8UGz9iLQnB8TmY4bMDkCvMEWLHPEtDlXGnYNoFbEOxO13cCPu1pSS0DcUvKzHBAhXWnAMU01sSDMNZQr+aKWg==}
+  '@openauthjs/openauth@0.4.3':
+    resolution: {integrity: sha512-RlnjqvHzqcbFVymEwhlUEuac4utA5h4nhSK/i2szZuQmxTIqbGUxZ+nM+avM+VV4Ing+/ZaNLKILoXS3yrkOOw==}
     peerDependencies:
       arctic: ^2.2.2
       hono: ^4.0.0
@@ -14452,7 +14461,7 @@ snapshots:
       mkdirp: 1.0.4
       rimraf: 3.0.2
 
-  '@openauthjs/openauth@0.3.9(arctic@2.3.4)(hono@4.7.9)':
+  '@openauthjs/openauth@0.4.3(arctic@2.3.4)(hono@4.7.9)':
     dependencies:
       '@standard-schema/spec': 1.0.0-beta.3
       arctic: 2.3.4

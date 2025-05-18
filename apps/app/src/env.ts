@@ -3,7 +3,6 @@ import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
 import { anthropicEnv } from "@repo/ai/anthropic-env";
-import { googleEnv } from "@repo/ai/google-env";
 import { openAiEnv } from "@repo/ai/openai-env";
 import { env as trpcEnv } from "@repo/trpc-client/env";
 import { clerkEnvBase } from "@vendor/clerk/env";
@@ -17,7 +16,7 @@ export const env = createEnv({
     trpcEnv,
     openAiEnv,
     anthropicEnv,
-    googleEnv,
+    // googleEnv,
   ],
   shared: {
     NODE_ENV: z
