@@ -29,11 +29,7 @@ export default async function Home() {
               <li>
                 And then check out <code>app/page.tsx</code>.
               </li>
-            </>
           ) : (
-            <>
-              <li>Login with your email and password.</li>
-              <li>
                 And then check out <code>app/page.tsx</code>.
               </li>
             </>
