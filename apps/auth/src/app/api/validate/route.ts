@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-<<<<<<< HEAD
 import type { Token, UserSession } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
 import { authSubjects, client } from "@vendor/openauth/server";
@@ -25,9 +24,6 @@ export const OPTIONS = () => {
   setCorsHeaders(response);
   return response;
 };
-=======
-import { authSubjects, client } from "@vendor/openauth/server";
->>>>>>> eeb48f5c (feat: integrate OpenAuth and enhance authentication flow)
 
 export async function POST(req: NextRequest) {
   let response;
