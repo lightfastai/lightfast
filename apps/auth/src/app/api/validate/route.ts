@@ -3,33 +3,39 @@ import { NextResponse } from "next/server";
 
 import { authSubjects, client } from "@vendor/openauth/server";
 
-const setCorsHeaders = (res: Response) => {
+const setCorsHeaders = (res: NextResponse) => {
+  // Allow requests from any origin during development
+  // For production, restrict this to your app's domain
   res.headers.set("Access-Control-Allow-Origin", "*");
-  res.headers.set("Access-Control-Request-Method", "*");
-  res.headers.set("Access-Control-Allow-Methods", "OPTIONS, GET, POST");
-  res.headers.set("Access-Control-Allow-Headers", "content-type");
-  res.headers.set("Referrer-Policy", "no-referrer");
+  res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization",
+  );
+  // Allow credentials (cookies, authorization headers, etc.)
   res.headers.set("Access-Control-Allow-Credentials", "true");
 };
 
-export const OPTIONS = () => {
-  const response = new Response(null, {
-    status: 204,
-  });
+// Handle OPTIONS preflight requests
+export const OPTIONS = async () => {
+  const response = NextResponse.json({}, { status: 200 });
   setCorsHeaders(response);
   return response;
 };
 
 export async function POST(req: NextRequest) {
+  let response;
   try {
     const body = await req.json();
     const { token, refresh } = body;
 
     if (!token) {
-      return NextResponse.json(
+      response = NextResponse.json(
         { valid: false, error: "No token provided" },
         { status: 400 },
       );
+      setCorsHeaders(response); // Ensure CORS headers on this error response
+      return response;
     }
 
     console.log("Validating token:", token, refresh);
@@ -39,23 +45,29 @@ export async function POST(req: NextRequest) {
     });
 
     if (verified.err) {
-      return NextResponse.json(
+      response = NextResponse.json(
         { valid: false, error: verified.err },
         { status: 401 },
       );
+      setCorsHeaders(response); // Ensure CORS headers on this error response
+      return response;
     }
 
     // Return validation result with user info and possibly refreshed tokens
-    return NextResponse.json({
+    response = NextResponse.json({
       valid: true,
       subject: verified.subject,
       tokens: verified.tokens,
     });
+    setCorsHeaders(response); // Ensure CORS headers on the success response
+    return response;
   } catch (error) {
     console.error("Token validation error:", error);
-    return NextResponse.json(
+    response = NextResponse.json(
       { valid: false, error: "Internal server error" },
       { status: 500 },
     );
+    setCorsHeaders(response); // Ensure CORS headers on this catch-all error response
+    return response;
   }
 }
