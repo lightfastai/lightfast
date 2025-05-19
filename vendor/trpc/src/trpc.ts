@@ -12,8 +12,32 @@ import { ZodError } from "zod";
 
 import type { Session } from "@vendor/openauth";
 import { db } from "@vendor/db/client";
-import { $SessionType } from "@vendor/openauth";
-import { auth } from "@vendor/openauth/server";
+import { $SessionType, authSubjects } from "@vendor/openauth";
+import { auth, client } from "@vendor/openauth/server";
+
+/**
+ * Isomorphic Session getter for API requests
+ * - Expo requests will have a session token in the Authorization header
+ * - Next.js requests will have a session token in cookies
+ */
+const isomorphicGetSession = async (
+  headers: Headers,
+): Promise<Session | null> => {
+  const accessToken = headers.get("x-access-token") ?? null;
+  if (accessToken) {
+    const verified = await client.verify(authSubjects, accessToken);
+    if (verified.err) return null;
+    return {
+      type: $SessionType.Enum.user,
+      user: {
+        id: verified.subject.properties.id,
+        accessToken,
+        refreshToken: verified.tokens?.refresh ?? "",
+      },
+    };
+  }
+  return auth();
+};
 
 /**
  * 1. CONTEXT
@@ -34,7 +58,7 @@ export const createTRPCContext = async (opts: {
   session: Session | null;
   db: typeof db;
 }> => {
-  const userSession = await auth();
+  const userSession = await isomorphicGetSession(opts.headers);
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
@@ -47,7 +71,7 @@ export const createTRPCContext = async (opts: {
   }
 
   return {
-    session: opts.session,
+    session: userSession,
     db,
   };
 };

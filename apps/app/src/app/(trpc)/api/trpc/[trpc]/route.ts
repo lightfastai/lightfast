@@ -1,6 +1,6 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-import { auth } from "@vendor/openauth/server";
+import { authFromRequest } from "@vendor/openauth/server";
 import { appRouter, createTRPCContext } from "@vendor/trpc";
 
 /**
@@ -8,10 +8,16 @@ import { appRouter, createTRPCContext } from "@vendor/trpc";
  * You should extend this to match your needs
  */
 const setCorsHeaders = (res: Response) => {
+  // res.headers.set("Access-Control-Allow-Origin", "*");
+  // res.headers.set("Access-Control-Request-Method", "*");
+  // res.headers.set("Access-Control-Allow-Methods", "OPTIONS, GET, POST");
+  // res.headers.set("Access-Control-Allow-Headers", "*");
   res.headers.set("Access-Control-Allow-Origin", "*");
   res.headers.set("Access-Control-Request-Method", "*");
-  res.headers.set("Access-Control-Allow-Methods", "OPTIONS, GET, POST");
-  res.headers.set("Access-Control-Allow-Headers", "*");
+  res.headers.set("Access-Control-Allow-Methods", "OPTIONS, GET");
+  res.headers.set("Access-Control-Allow-Headers", "content-type");
+  res.headers.set("Referrer-Policy", "no-referrer");
+  res.headers.set("Access-Control-Allow-Credentials", "true");
 };
 
 export const OPTIONS = () => {
@@ -23,7 +29,8 @@ export const OPTIONS = () => {
 };
 
 const handler = async (req: Request) => {
-  const session = await auth();
+  const session = await authFromRequest(req);
+  console.log("Session", session);
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,
