@@ -6,13 +6,18 @@ import { redirect } from "next/navigation";
 import type { UserSession } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
 
+import { openauthEnv } from "../../../env";
 import { client } from "../root";
 import { authSubjects } from "../subjects";
 
+const getCookieName = (name: string) => {
+  return openauthEnv.NODE_ENV === "production" ? `__Secure-${name}` : name;
+};
+
 export const auth = async (): Promise<UserSession | null> => {
   const cookies = await getCookies();
-  const accessToken = cookies.get("access_token");
-  const refreshToken = cookies.get("refresh_token");
+  const accessToken = cookies.get(getCookieName("openauth.access-token"));
+  const refreshToken = cookies.get(getCookieName("openauth.refresh-token"));
 
   if (!accessToken) {
     console.log("No access token found");
@@ -50,34 +55,36 @@ export const auth = async (): Promise<UserSession | null> => {
 export const setTokens = async (access: string, refresh: string) => {
   const cookies = await getCookies();
   cookies.set({
-    name: "access_token",
+    name: getCookieName("openauth.access-token"),
     value: access,
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: 34560000,
+    secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
   cookies.set({
-    name: "refresh_token",
+    name: getCookieName("openauth.refresh-token"),
     value: refresh,
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: 34560000,
+    secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
 };
 
 export const logout = async () => {
   const cookies = await getCookies();
-  cookies.delete("access_token");
-  cookies.delete("refresh_token");
+  cookies.delete(getCookieName("openauth.access-token"));
+  cookies.delete(getCookieName("openauth.refresh-token"));
   redirect("/");
 };
 
 export const login = async () => {
   const cookies = await getCookies();
-  const accessToken = cookies.get("access_token");
-  const refreshToken = cookies.get("refresh_token");
+  const accessToken = cookies.get(getCookieName("openauth.access-token"));
+  const refreshToken = cookies.get(getCookieName("openauth.refresh-token"));
 
   if (accessToken) {
     const verified = await client.verify(authSubjects, accessToken.value, {
