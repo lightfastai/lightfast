@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@openauthjs/openauth/client";
 import { useRouter } from "@tanstack/react-router";
 
-import { AuthSession, SessionType } from "@vendor/clerk/types";
+import { $SessionType, UserSession } from "@vendor/openauth";
 
 // Declare the types for the electron context bridge API
 declare global {
@@ -18,15 +18,14 @@ declare global {
   }
 }
 
-interface InternalAuthSession extends AuthSession {
-  isValid?: boolean;
-}
-
-// Create the OpenAuth client
-const client = createClient({
-  clientID: "nextjs",
+export const client = createClient({
+  clientID: "nextjs", // @TODO what should this be?
   issuer: "http://localhost:3001",
 });
+
+interface InternalAuthSession extends UserSession {
+  isValid?: boolean;
+}
 
 export function useAuth() {
   const [session, setSession] = useState<InternalAuthSession | null>(null);
@@ -118,7 +117,7 @@ export function useAuth() {
             accessToken: token,
             refreshToken: refreshToken || "",
           },
-          type: SessionType.User,
+          type: $SessionType.Enum.user,
           isValid: true,
         };
 
@@ -228,7 +227,7 @@ export function useAuth() {
                 accessToken: exchanged.tokens.access,
                 refreshToken: exchanged.tokens.refresh,
               },
-              type: SessionType.User,
+              type: $SessionType.Enum.user,
               isValid: true,
             };
 
@@ -259,7 +258,7 @@ export function useAuth() {
                 accessToken: data.access,
                 refreshToken: data.refresh,
               },
-              type: SessionType.User,
+              type: $SessionType.Enum.user,
               isValid: true,
             };
 

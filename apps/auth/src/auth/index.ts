@@ -27,7 +27,7 @@ async function getUserByEmailOrCreate(
 export default issuer({
   subjects: authSubjects,
   storage: MemoryStorage(),
-  // allow: async () => true,
+  allow: async () => true,
   providers: {
     email: CodeProvider(
       CodeUI({

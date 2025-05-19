@@ -26,7 +26,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@openauthjs/openauth": "^0.4.3",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:^",
     "@repo/lightfast-js": "workspace:*",
@@ -34,7 +33,7 @@
     "@repo/ui": "workspace:*",
     "@t3-oss/env-core": "^0.12.0",
     "@tailwindcss/vite": "^4.1.4",
-    "@vendor/clerk": "workspace:*",
+    "@vendor/openauth": "workspace:*",
     "@vendor/trpc": "workspace:*",
     "babel-plugin-react-compiler": "^19.0.0-beta-e993439-20250328",
     "bufferutil": "^4.0.9",
