@@ -154,7 +154,7 @@ export function createComposerWindow() {
       contextIsolation: true,
       nodeIntegration: true,
       nodeIntegrationInSubFrames: false,
-      webSecurity: false,
+      // webSecurity: false,
       preload: preload,
     },
   });
