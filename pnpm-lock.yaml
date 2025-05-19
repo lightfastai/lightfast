@@ -297,9 +297,6 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@openauthjs/openauth':
-        specifier: ^0.4.3
-        version: 0.4.3(arctic@2.3.4)(hono@4.7.9)
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -321,9 +318,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.4
         version: 4.1.4(vite@6.3.3(@types/node@20.17.2)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)(tsx@4.19.4)(yaml@2.6.0))
-      '@vendor/clerk':
+      '@vendor/openauth':
         specifier: workspace:*
-        version: link:../../vendor/clerk
+        version: link:../../vendor/openauth
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc

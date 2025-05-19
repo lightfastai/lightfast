@@ -29,13 +29,9 @@ export default function App({ network }: { network: Networks }) {
 
   return (
     <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
-      {/* <ClerkProvider
-        publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      > */}
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={selectedRouter} defaultPreload="intent" />
       </QueryClientProvider>
-      {/* </ClerkProvider> */}
     </div>
   );
 }
