@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const redirectUri = url.searchParams.get("redirect_uri");
   const code = url.searchParams.get("code");
+  const redirectUri = url.searchParams.get("redirect_uri");
 
   const exchanged = await client.exchange(
     code!,
