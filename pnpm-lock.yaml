@@ -318,6 +318,9 @@ importers:
       electron-squirrel-startup:
         specifier: ^1.0.1
         version: 1.0.1
+      js-cookie:
+        specifier: ^3.0.5
+        version: 3.0.5
       react:
         specifier: catalog:react19
         version: 19.1.0

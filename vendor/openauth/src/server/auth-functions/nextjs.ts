@@ -7,12 +7,15 @@ import type { UserSession } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
 
 import { openauthEnv } from "../../../env";
-import {
-  ACCESS_TOKEN_COOKIE_NAME,
-  REFRESH_TOKEN_COOKIE_NAME,
-} from "../cookies";
 import { client } from "../root";
 import { verifyToken } from "./core";
+
+const getCookieName = (name: string) => {
+  return openauthEnv.NODE_ENV === "production" ? `__Secure-${name}` : name;
+};
+
+const ACCESS_TOKEN_COOKIE_NAME = getCookieName("lightfast.access-token");
+const REFRESH_TOKEN_COOKIE_NAME = getCookieName("lightfast.refresh-token");
 
 export const getSessionFromCookiesNextHandler =
   async (): Promise<UserSession | null> => {

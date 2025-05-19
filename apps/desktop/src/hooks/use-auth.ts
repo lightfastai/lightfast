@@ -3,11 +3,12 @@ import { createClient } from "@openauthjs/openauth/client";
 import { useRouter } from "@tanstack/react-router";
 
 import { $SessionType, UserSession } from "@vendor/openauth";
+
 import {
   clearTokensElectronHandler,
   getTokenElectronHandler,
   setTokensElectronHandler,
-} from "@vendor/openauth/server/auth-functions/electron";
+} from "../helpers/auth-helpers";
 
 // Declare the types for the electron context bridge API
 declare global {
@@ -170,16 +171,28 @@ export function useAuth() {
           // Handle redirect with tokens in URL (new flow)
           const accessToken = parsed.searchParams.get("access_token");
           const refreshToken = parsed.searchParams.get("refresh_token");
+          const expiresIn = parsed.searchParams.get("expires_in");
 
-          if (accessToken) {
+          console.log("Received tokens directly in callback:", {
+            accessToken,
+            refreshToken,
+            expiresIn,
+          });
+
+          if (accessToken && refreshToken && expiresIn) {
             console.log("Received tokens directly in callback");
 
-            setTokensElectronHandler(accessToken, refreshToken);
+            // Ensure refreshToken is a string or null
+            setTokensElectronHandler(
+              accessToken,
+              refreshToken,
+              Number(expiresIn),
+            );
 
             // Validate token to get user info
             const validatedSession = await validateToken(
-              accessToken,
-              refreshToken || undefined,
+              String(accessToken),
+              String(refreshToken) || undefined,
             );
             console.log("Setting session after validation:", validatedSession);
             setSession(validatedSession);
@@ -273,7 +286,7 @@ export function useAuth() {
 
     // Cleanup
     return removeListener;
-  }, [authBaseUrl, redirectUri, validateToken]);
+  }, [authBaseUrl, redirectUri, validateToken, router]);
 
   // On mount, restore and validate session from cookies
   useEffect(() => {

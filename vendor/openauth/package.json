@@ -8,9 +8,9 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./env.ts",
     "./server": "./src/server/index.ts",
-    "./server/auth-functions/electron": "./src/server/auth-functions/electron.ts"
+    "./env": "./env.ts",
+    "./server/auth-functions/core": "./src/server/auth-functions/core.ts"
   },
   "license": "MIT",
   "scripts": {

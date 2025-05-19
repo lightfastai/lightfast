@@ -1,8 +1,7 @@
 import Cookies from "js-cookie";
 
-import type { UserSession } from "../../schema";
-import { $SessionType } from "../../schema";
-import { verifyToken } from "./core";
+import { $SessionType, UserSession } from "@vendor/openauth";
+import { verifyToken } from "@vendor/openauth/server/auth-functions/core";
 
 const ACCESS_TOKEN_COOKIE_NAME = "lightfast.access-token";
 const REFRESH_TOKEN_COOKIE_NAME = "lightfast.refresh-token";
@@ -23,7 +22,11 @@ export const getSessionFromCookiesElectronHandler =
     }
 
     if (verified.tokens) {
-      setTokensElectronHandler(verified.tokens.access, verified.tokens.refresh);
+      setTokensElectronHandler(
+        verified.tokens.access,
+        verified.tokens.refresh,
+        verified.tokens.expiresIn,
+      );
     }
 
     return {
@@ -38,19 +41,21 @@ export const getSessionFromCookiesElectronHandler =
 
 export const setTokensElectronHandler = (
   access: string,
-  refresh: string | null,
+  refresh: string,
+  expiresIn: number,
 ) => {
   Cookies.set(ACCESS_TOKEN_COOKIE_NAME, access, {
     secure: true,
-    sameSite: "strict",
-    maxAge: 34560000,
+    sameSite: "lax",
+    expires: expiresIn,
     path: "/",
   });
+
   if (refresh) {
     Cookies.set(REFRESH_TOKEN_COOKIE_NAME, refresh, {
       secure: true,
-      sameSite: "strict",
-      maxAge: 34560000,
+      sameSite: "lax",
+      expires: expiresIn,
       path: "/",
     });
   }
