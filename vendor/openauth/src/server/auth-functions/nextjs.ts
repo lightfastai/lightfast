@@ -1,6 +1,7 @@
 "use server";
 
-import { cookies as getCookies } from "next/headers";
+import { cookies as getCookies, headers as getHeaders } from "next/headers";
+import { redirect } from "next/navigation";
 
 import type { UserSession } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
@@ -13,11 +14,8 @@ export const auth = async (): Promise<UserSession | null> => {
   const accessToken = cookies.get("access_token");
   const refreshToken = cookies.get("refresh_token");
 
-  console.log("accessToken", accessToken);
-  console.log("refreshToken", refreshToken);
-
   if (!accessToken) {
-    console.error("No access token found");
+    console.log("No access token found");
     return null;
   }
 
@@ -26,11 +24,16 @@ export const auth = async (): Promise<UserSession | null> => {
   });
 
   if (verified.err) {
-    console.error("Error verifying token", verified.err);
+    console.log("Error verifying token", verified.err);
     return null;
   }
 
   if (verified.tokens) {
+    console.log(
+      "Setting tokens",
+      verified.tokens.access,
+      verified.tokens.refresh,
+    );
     await setTokens(verified.tokens.access, verified.tokens.refresh);
   }
 
@@ -62,4 +65,36 @@ export const setTokens = async (access: string, refresh: string) => {
     path: "/",
     maxAge: 34560000,
   });
+};
+
+export const logout = async () => {
+  const cookies = await getCookies();
+  cookies.delete("access_token");
+  cookies.delete("refresh_token");
+  redirect("/");
+};
+
+export const login = async () => {
+  const cookies = await getCookies();
+  const accessToken = cookies.get("access_token");
+  const refreshToken = cookies.get("refresh_token");
+
+  if (accessToken) {
+    const verified = await client.verify(authSubjects, accessToken.value, {
+      refresh: refreshToken?.value,
+    });
+    if (!verified.err && verified.tokens) {
+      await setTokens(verified.tokens.access, verified.tokens.refresh);
+      redirect("/");
+    }
+  }
+
+  const headers = await getHeaders();
+  const host = headers.get("host");
+  const protocol = host?.includes("localhost") ? "http" : "https";
+  const { url } = await client.authorize(
+    `${protocol}://${host}/api/callback`,
+    "code",
+  );
+  redirect(url);
 };
