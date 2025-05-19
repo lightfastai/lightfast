@@ -3,6 +3,11 @@ import { createClient } from "@openauthjs/openauth/client";
 import { useRouter } from "@tanstack/react-router";
 
 import { $SessionType, UserSession } from "@vendor/openauth";
+import {
+  clearTokensElectronHandler,
+  getTokenElectronHandler,
+  setTokensElectronHandler,
+} from "@vendor/openauth/server/auth-functions/electron";
 
 // Declare the types for the electron context bridge API
 declare global {
@@ -58,8 +63,7 @@ export function useAuth() {
 
     try {
       // Clear any existing tokens before starting a new login
-      localStorage.removeItem("auth_access_token");
-      localStorage.removeItem("auth_refresh_token");
+      clearTokensElectronHandler();
 
       // Also clear session state
       setSession(null);
@@ -126,9 +130,8 @@ export function useAuth() {
           updatedSession.user.accessToken = data.tokens.access;
           updatedSession.user.refreshToken = data.tokens.refresh;
 
-          // Update localStorage with new tokens
-          localStorage.setItem("auth_access_token", data.tokens.access);
-          localStorage.setItem("auth_refresh_token", data.tokens.refresh);
+          // Update cookies with new tokens
+          setTokensElectronHandler(data.tokens.access, data.tokens.refresh);
         }
 
         console.log("Session is valid:", updatedSession);
@@ -144,8 +147,7 @@ export function useAuth() {
   // Logout function
   const logout = useCallback(() => {
     console.log("Logging out - clearing tokens and session");
-    localStorage.removeItem("auth_access_token");
-    localStorage.removeItem("auth_refresh_token");
+    clearTokensElectronHandler();
     setSession(null);
     router.navigate({ to: "/login" });
   }, [router]);
@@ -172,11 +174,7 @@ export function useAuth() {
           if (accessToken) {
             console.log("Received tokens directly in callback");
 
-            // Store tokens in localStorage
-            localStorage.setItem("auth_access_token", accessToken);
-            if (refreshToken) {
-              localStorage.setItem("auth_refresh_token", refreshToken);
-            }
+            setTokensElectronHandler(accessToken, refreshToken);
 
             // Validate token to get user info
             const validatedSession = await validateToken(
@@ -214,10 +212,9 @@ export function useAuth() {
 
             console.log("Received tokens from exchange:", exchanged.tokens);
 
-            // Store tokens in localStorage
-            localStorage.setItem("auth_access_token", exchanged.tokens.access);
-            localStorage.setItem(
-              "auth_refresh_token",
+            // Store tokens in cookies
+            setTokensElectronHandler(
+              exchanged.tokens.access,
               exchanged.tokens.refresh,
             );
 
@@ -248,9 +245,8 @@ export function useAuth() {
 
             console.log("Received tokens from server exchange:", data);
 
-            // Store tokens in localStorage
-            localStorage.setItem("auth_access_token", data.access);
-            localStorage.setItem("auth_refresh_token", data.refresh);
+            // Store tokens in cookies
+            setTokensElectronHandler(data.access, data.refresh);
 
             const newSession: InternalAuthSession = {
               user: {
@@ -279,15 +275,14 @@ export function useAuth() {
     return removeListener;
   }, [authBaseUrl, redirectUri, validateToken]);
 
-  // On mount, restore and validate session from localStorage
+  // On mount, restore and validate session from cookies
   useEffect(() => {
     const restoreSession = async () => {
-      console.log("Attempting to restore session from localStorage");
-      const accessToken = localStorage.getItem("auth_access_token");
-      const refreshToken = localStorage.getItem("auth_refresh_token");
+      console.log("Attempting to restore session from cookies");
+      const { accessToken, refreshToken } = getTokenElectronHandler();
 
       if (accessToken) {
-        console.log("Found access token in localStorage, validating...");
+        console.log("Found access token in cookies, validating...");
         try {
           setLoading(true);
           const validatedSession = await validateToken(
@@ -299,14 +294,13 @@ export function useAuth() {
         } catch (error) {
           console.error("Session restoration failed:", error);
           // Clear invalid tokens
-          localStorage.removeItem("auth_access_token");
-          localStorage.removeItem("auth_refresh_token");
+          clearTokensElectronHandler();
           setSession(null);
         } finally {
           setLoading(false);
         }
       } else {
-        console.log("No access token found in localStorage");
+        console.log("No access token found in cookies");
         setLoading(false);
       }
     };
