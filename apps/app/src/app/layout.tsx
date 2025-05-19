@@ -16,7 +16,11 @@ export default function RootLayout({ children }: RootLayoutProperties) {
       <head />
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <body className={cn("dark bg-background min-h-screen", fonts)}>
+<<<<<<< HEAD
         <TRPCReactProvider source={$TRPCSource.Enum["lightfast-app"]}>
+=======
+        <TRPCReactProvider baseUrl={env.NEXT_PUBLIC_LIGHTFAST_API_URL}>
+>>>>>>> 013be9a9 (refactor: transition from Clerk to OpenAuth for authentication management)
           {children}
         </TRPCReactProvider>
         <Toaster />
