@@ -4,6 +4,7 @@ import { z } from "zod";
 const EmailAccount = z.object({
   type: z.literal("email"),
   email: z.string(),
+  id: z.string(),
 });
 
 export type EmailAccount = z.infer<typeof EmailAccount>;

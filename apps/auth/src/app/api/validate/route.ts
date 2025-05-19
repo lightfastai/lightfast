@@ -1,8 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { authSubjects } from "../../../auth/subjects";
-import { client } from "../../auth";
+import { authSubjects, client } from "@vendor/openauth/server";
 
 export async function POST(req: NextRequest) {
   try {

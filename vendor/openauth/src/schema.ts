@@ -7,7 +7,7 @@ export type SessionType = z.infer<typeof $SessionType>;
 export const $UserSession = z.object({
   type: z.literal($SessionType.Enum.user),
   user: z.object({
-    email: z.string(),
+    id: z.string(),
     accessToken: z.string(),
     refreshToken: z.string(),
   }),

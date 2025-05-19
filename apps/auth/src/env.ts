@@ -3,9 +3,10 @@ import { z } from "zod";
 
 import { env as dbEnv } from "@vendor/db/env";
 import { env as emailEnv } from "@vendor/email/env";
+import { openauthEnv } from "@vendor/openauth/env";
 
 export const env = createEnv({
-  extends: [emailEnv, dbEnv],
+  extends: [emailEnv, dbEnv, openauthEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

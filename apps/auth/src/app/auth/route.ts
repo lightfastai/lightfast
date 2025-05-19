@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { client } from "../auth";
+import { client } from "@vendor/openauth/server";
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
