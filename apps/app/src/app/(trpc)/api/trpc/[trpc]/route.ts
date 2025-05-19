@@ -1,6 +1,7 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-import { authFromRequest } from "@vendor/openauth/server";
+import type { UserSession } from "@vendor/openauth";
+import { getSessionFromExternalRequest } from "@vendor/openauth/server";
 import { appRouter, createTRPCContext } from "@vendor/trpc";
 
 /**
@@ -29,8 +30,11 @@ export const OPTIONS = () => {
 };
 
 const handler = async (req: Request) => {
-  const session = await authFromRequest(req);
-  console.log("Session", session);
+  const headers = new Headers(req.headers);
+
+  const session: UserSession | null =
+    await getSessionFromExternalRequest(headers);
+
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,

@@ -3,19 +3,21 @@ import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { SuperJSON } from "superjson";
 
 import type { AppRouter } from "@vendor/trpc";
+import { createTRPCHeaders, TRPCSource } from "@vendor/trpc/headers";
 
 import { createQueryClient } from "./trpc-react-query-client";
 
 export const queryClient = createQueryClient();
+
+interface TRPCProxyProviderProps {
+  url: string;
+  source: TRPCSource;
+}
+
 export const createTRPCOptionsProxyWrapper = ({
   url,
-  accessToken,
-  refreshToken,
-}: {
-  url: string;
-  accessToken: string;
-  refreshToken: string;
-}) =>
+  source,
+}: TRPCProxyProviderProps) =>
   createTRPCOptionsProxy<AppRouter>({
     client: createTRPCClient({
       links: [
@@ -28,13 +30,18 @@ export const createTRPCOptionsProxyWrapper = ({
         httpBatchLink({
           transformer: SuperJSON,
           url: `${url}/api/trpc`,
-          headers() {
-            const headers = new Headers();
-            headers.set("x-trpc-source", "electron-react");
-            headers.set("x-access-token", accessToken);
-            headers.set("x-refresh-token", refreshToken);
-            //   const token = getToken();
-            //   if (token) headers.set("Authorization", `Bearer ${token}`);
+          headers: () => {
+            // get token from auth provider
+            // change to cookie...
+            const accessToken = localStorage.getItem("accessToken");
+            const refreshToken = localStorage.getItem("refreshToken");
+
+            const headers = createTRPCHeaders({
+              source,
+              accessToken: accessToken ?? undefined,
+              refreshToken: refreshToken ?? undefined,
+            });
+
             return headers;
           },
           fetch(url, options) {
