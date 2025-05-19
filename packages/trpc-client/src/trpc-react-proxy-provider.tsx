@@ -47,7 +47,7 @@ export const createTRPCOptionsProxyWrapper = ({
           fetch(url, options) {
             return fetch(url, {
               ...options,
-              credentials: "include",
+              credentials: "omit",
             });
           },
         }),

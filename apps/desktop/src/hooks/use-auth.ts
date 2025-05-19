@@ -95,6 +95,7 @@ export function useAuth() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token, refresh: refreshToken }),
+          credentials: "omit",
         });
 
         if (!response.ok) {
@@ -132,7 +133,11 @@ export function useAuth() {
           updatedSession.user.refreshToken = data.tokens.refresh;
 
           // Update cookies with new tokens
-          setTokensElectronHandler(data.tokens.access, data.tokens.refresh);
+          setTokensElectronHandler(
+            data.tokens.access,
+            data.tokens.refresh,
+            data.tokens.expiresIn,
+          );
         }
 
         console.log("Session is valid:", updatedSession);
@@ -229,6 +234,7 @@ export function useAuth() {
             setTokensElectronHandler(
               exchanged.tokens.access,
               exchanged.tokens.refresh,
+              exchanged.tokens.expiresIn,
             );
 
             const newSession: InternalAuthSession = {
@@ -259,7 +265,11 @@ export function useAuth() {
             console.log("Received tokens from server exchange:", data);
 
             // Store tokens in cookies
-            setTokensElectronHandler(data.access, data.refresh);
+            setTokensElectronHandler(
+              data.access,
+              data.refresh,
+              Number(data.expiresIn),
+            );
 
             const newSession: InternalAuthSession = {
               user: {
