@@ -139,9 +139,6 @@ export const getSessionFromExternalRequest = async (
     refreshToken,
   );
 
-  console.log("accessToken", accessToken);
-  console.log("refreshToken", refreshToken);
-
   if (!accessToken) {
     console.log("No access token found");
     return null;

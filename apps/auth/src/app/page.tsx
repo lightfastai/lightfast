@@ -29,10 +29,11 @@ export default async function Home() {
               <li>
                 And then check out <code>app/page.tsx</code>.
               </li>
-          ) : (
-                And then check out <code>app/page.tsx</code>.
-              </li>
             </>
+          ) : (
+            <li>
+              And then check out <code>app/page.tsx</code>.
+            </li>
           )}
         </ol>
 
