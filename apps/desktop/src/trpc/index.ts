@@ -6,11 +6,5 @@ import { getTokenElectronHandler } from "../helpers/auth-helpers";
 export const trpc = createTRPCOptionsProxyWrapper({
   url: import.meta.env.VITE_PUBLIC_LIGHTFAST_API_URL,
   source: $TRPCSource.Enum["lightfast-desktop"],
-  getTokens: () => {
-    const { accessToken, refreshToken } = getTokenElectronHandler();
-    return {
-      accessToken: accessToken || null,
-      refreshToken: refreshToken || null,
-    };
-  },
+  getTokens: () => getTokenElectronHandler(),
 });

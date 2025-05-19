@@ -1,47 +1,13 @@
 import Cookies from "js-cookie";
 
-import { $SessionType, UserSession } from "@vendor/openauth";
-import { verifyToken } from "@vendor/openauth/server/auth-functions/core";
+import { AccessToken, RefreshToken, TokenOrNull } from "@vendor/openauth";
 
 export const ACCESS_TOKEN_COOKIE_NAME = "lightfast.access-token";
 export const REFRESH_TOKEN_COOKIE_NAME = "lightfast.refresh-token";
 
-export const getSessionFromCookiesElectronHandler =
-  async (): Promise<UserSession | null> => {
-    const accessToken = Cookies.get(ACCESS_TOKEN_COOKIE_NAME);
-    const refreshToken = Cookies.get(REFRESH_TOKEN_COOKIE_NAME);
-
-    if (!accessToken) {
-      return null;
-    }
-
-    const verified = await verifyToken(accessToken, refreshToken ?? undefined);
-
-    if (verified.err) {
-      return null;
-    }
-
-    if (verified.tokens) {
-      setTokensElectronHandler(
-        verified.tokens.access,
-        verified.tokens.refresh,
-        verified.tokens.expiresIn,
-      );
-    }
-
-    return {
-      type: $SessionType.Enum.user,
-      user: {
-        id: verified.subject.properties.id,
-        accessToken,
-        refreshToken: refreshToken ?? "",
-      },
-    };
-  };
-
 export const setTokensElectronHandler = (
-  access: string,
-  refresh: string,
+  access: AccessToken,
+  refresh: RefreshToken,
   expiresIn: number,
 ) => {
   Cookies.set(ACCESS_TOKEN_COOKIE_NAME, access, {
@@ -66,12 +32,9 @@ export const clearTokensElectronHandler = () => {
   Cookies.remove(REFRESH_TOKEN_COOKIE_NAME);
 };
 
-export const getTokenElectronHandler = (): {
-  accessToken: string | null;
-  refreshToken: string | null;
-} => {
+export const getTokenElectronHandler = (): TokenOrNull => {
   return {
-    accessToken: Cookies.get(ACCESS_TOKEN_COOKIE_NAME) ?? null,
-    refreshToken: Cookies.get(REFRESH_TOKEN_COOKIE_NAME) ?? null,
+    accessToken: Cookies.get(ACCESS_TOKEN_COOKIE_NAME),
+    refreshToken: Cookies.get(REFRESH_TOKEN_COOKIE_NAME),
   };
 };

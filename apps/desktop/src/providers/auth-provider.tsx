@@ -10,7 +10,7 @@ import {
 // Cookies will be managed by auth-helpers, so direct import might not be needed here
 // import Cookies from "js-cookie";
 
-import { $SessionType, UserSession } from "@vendor/openauth";
+import { TokenOrNull, UserSession } from "@vendor/openauth";
 
 import {
   clearTokensElectronHandler,
@@ -24,7 +24,6 @@ import { client, useAuthCallback } from "../hooks/use-auth";
 
 interface InternalAuthSession extends UserSession {
   isValid?: boolean;
-  expiresIn?: number;
 }
 
 interface AuthContextType {
@@ -45,16 +44,8 @@ interface LightfastElectronAuthProviderProps {
 // Helper function to validate tokens
 async function validateToken(
   authBaseUrl: string,
-  token: string,
-  refreshToken?: string,
-): Promise<{
-  subject?: any;
-  tokens?: {
-    access: string;
-    refresh: string;
-    expiresIn: number;
-  };
-}> {
+  token: TokenOrNull,
+): Promise<UserSession> {
   try {
     console.log("Validating token with server...");
     const response = await fetch(`${authBaseUrl}/api/validate`, {
@@ -62,7 +53,7 @@ async function validateToken(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ token, refresh: refreshToken }),
+      body: JSON.stringify(token),
       credentials: "omit",
       mode: "cors",
     });
@@ -75,18 +66,14 @@ async function validateToken(
       throw new Error("Token validation failed");
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as UserSession;
     console.log("Token validation response:", data);
 
-    if (!data.valid) {
-      console.error("Token not valid:", data.error);
-      throw new Error(data.error || "Invalid token");
+    if (!data.user.accessToken) {
+      throw new Error("Invalid token");
     }
 
-    return {
-      subject: data.subject,
-      tokens: data.tokens,
-    };
+    return data;
   } catch (error) {
     console.error("Token validation error:", error);
     throw error;
@@ -106,27 +93,12 @@ export function LightfastElectronAuthProvider({
   // Handle auth callback result
   const handleAuthResult = useCallback(
     (newSession: InternalAuthSession | null, newError: string | null) => {
-      console.log("Auth callback result:", {
-        hasSession: !!newSession,
-        isValid: newSession?.isValid,
-        error: newError,
-        tokenInfo: newSession
-          ? {
-              hasAccessToken: !!newSession.user.accessToken,
-              hasRefreshToken: !!newSession.user.refreshToken,
-              accessTokenLength: newSession.user.accessToken
-                ? newSession.user.accessToken.length
-                : 0,
-            }
-          : null,
-      });
-
       if (newSession?.user?.accessToken) {
         // Use auth-helper to set tokens (handles cookies and potentially other stores)
         setTokensElectronHandler(
           newSession.user.accessToken,
           newSession.user.refreshToken || "",
-          newSession.expiresIn || 3600, // Default to 1 hour if not provided
+          newSession.user.expiresIn || 3600, // Default to 1 hour if not provided
         );
       } else {
         // Use auth-helper to clear tokens
@@ -144,32 +116,38 @@ export function LightfastElectronAuthProvider({
   useAuthCallback(handleAuthResult);
 
   const login = useCallback(async () => {
+    console.log("[AUTH PROVIDER] Login attempt started.");
     setLoading(true);
     setError(null);
-    // Use auth-helper to clear tokens before new login attempt
     clearTokensElectronHandler();
 
     if (!authBaseUrl) {
+      console.error("[AUTH PROVIDER] Missing VITE_AUTH_APP_URL.");
       setError("Missing VITE_AUTH_APP_URL environment variable");
       setLoading(false);
       return;
     }
 
     if (!window.electron?.shell?.openExternal) {
+      console.error("[AUTH PROVIDER] Electron shell API not available.");
       setError("Electron shell API not available");
       setLoading(false);
       return;
     }
 
     try {
-      // ensure session state is also cleared
-      setSession(null);
+      setSession(null); // Clear current session state immediately
       const { url: authUrl } = await client.authorize(redirectUri, "code");
+      console.log("[AUTH PROVIDER] Authorization URL generated:", authUrl);
       await window.electron.shell.openExternal(authUrl);
+      console.log(
+        "[AUTH PROVIDER] Browser open request sent. Waiting for callback...",
+      );
+      // setLoading(false) is NOT called here; it's handled by handleAuthResult
     } catch (err: any) {
-      console.error("Failed to start auth flow:", err);
+      console.error("[AUTH PROVIDER] Failed to start auth flow:", err);
       setError("Failed to start auth flow: " + (err?.message || String(err)));
-      setLoading(false);
+      setLoading(false); // Ensure loading is false if error occurs here
     }
   }, [authBaseUrl, redirectUri]);
 
@@ -184,53 +162,40 @@ export function LightfastElectronAuthProvider({
     const restoreSession = async () => {
       console.log("Attempting to restore session using auth-helpers");
       // getTokenElectronHandler already checks cookies via auth-helpers
-      const { accessToken, refreshToken } = getTokenElectronHandler();
+      const tokens = getTokenElectronHandler();
 
       console.log("Tokens found via getTokenElectronHandler:", {
-        hasAccessToken: !!accessToken,
+        hasAccessToken: !!tokens?.accessToken,
       });
 
-      if (accessToken) {
-        try {
-          setLoading(true);
-          const verified = await validateToken(
-            authBaseUrl,
-            accessToken,
-            refreshToken || undefined,
-          );
+      if (!tokens?.accessToken) {
+        setLoading(false);
+        return;
+      }
 
-          const validatedSession: InternalAuthSession = {
-            user: {
-              id:
-                verified.subject?.properties?.id ||
-                verified.subject?.properties?.email ||
-                "user",
-              accessToken: verified.tokens?.access || accessToken,
-              refreshToken: verified.tokens?.refresh || refreshToken || "",
-            },
-            type: $SessionType.Enum.user,
-            isValid: true,
-            expiresIn: verified.tokens?.expiresIn,
-          };
+      try {
+        setLoading(true);
+        const verified = await validateToken(authBaseUrl, tokens);
 
-          // Update tokens using auth-helper with potentially refreshed tokens
-          setTokensElectronHandler(
-            validatedSession.user.accessToken,
-            validatedSession.user.refreshToken,
-            validatedSession.expiresIn || 3600, // Default to 1 hour
-          );
+        const validatedSession: InternalAuthSession = {
+          ...verified,
+          isValid: true,
+        };
 
-          setSession(validatedSession);
-        } catch (error) {
-          console.error("Session restoration failed:", error);
-          // Use auth-helper to clear tokens on failure
-          clearTokensElectronHandler();
-          setSession(null);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        console.log("No access token found by getTokenElectronHandler");
+        // Update tokens using auth-helper with potentially refreshed tokens
+        setTokensElectronHandler(
+          validatedSession.user.accessToken,
+          validatedSession.user.refreshToken,
+          validatedSession.user.expiresIn,
+        );
+
+        setSession(validatedSession);
+      } catch (error) {
+        console.error("Session restoration failed:", error);
+        // Use auth-helper to clear tokens on failure
+        clearTokensElectronHandler();
+        setSession(null);
+      } finally {
         setLoading(false);
       }
     };

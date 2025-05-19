@@ -3,21 +3,17 @@ import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { SuperJSON } from "superjson";
 
 import type { AppRouter } from "@vendor/trpc";
+import { TokenOrNull } from "@vendor/openauth";
 import { createTRPCHeaders, TRPCSource } from "@vendor/trpc/headers";
 
 import { createQueryClient } from "./trpc-react-query-client";
 
 export const queryClient = createQueryClient();
 
-interface TokenProvider {
-  accessToken?: string | null;
-  refreshToken?: string | null;
-}
-
 interface TRPCProxyProviderProps {
   url: string;
   source: TRPCSource;
-  getTokens: () => TokenProvider | Promise<TokenProvider>;
+  getTokens: () => TokenOrNull | Promise<TokenOrNull>;
 }
 
 export const createTRPCOptionsProxyWrapper = ({
@@ -38,12 +34,12 @@ export const createTRPCOptionsProxyWrapper = ({
           transformer: SuperJSON,
           url: `${url}/api/trpc`,
           headers: async () => {
-            const { accessToken, refreshToken } = await getTokens();
+            const tokens = await getTokens();
 
             const headers = createTRPCHeaders({
               source,
-              accessToken: accessToken ?? undefined,
-              refreshToken: refreshToken ?? undefined,
+              accessToken: tokens?.accessToken ?? undefined,
+              refreshToken: tokens?.refreshToken ?? undefined,
             });
 
             console.log("tRPC Request Headers:", headers);

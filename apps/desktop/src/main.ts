@@ -136,9 +136,20 @@ app.setAsDefaultProtocolClient("lightfast");
 
 app.on("open-url", (event, url) => {
   event.preventDefault();
-  // Send the URL to the first window (or all windows if needed)
+  console.log("[MAIN PROCESS] Received open-url event with URL:", url);
   if (windows.length > 0) {
-    windows[0].webContents.send("auth-callback", url);
+    // Prefer sending to the focused window if available, otherwise first window
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    const targetWindow = focusedWindow || windows[0];
+    console.log(
+      "[MAIN PROCESS] Sending 'auth-callback' to renderer for window ID:",
+      targetWindow.id,
+    );
+    targetWindow.webContents.send("auth-callback", url);
+  } else {
+    console.error(
+      "[MAIN PROCESS] No windows available to send auth-callback to.",
+    );
   }
 });
 
