@@ -33,8 +33,8 @@ export const createTRPCOptionsProxyWrapper = ({
           headers: () => {
             // get token from auth provider
             // change to cookie...
-            const accessToken = localStorage.getItem("accessToken");
-            const refreshToken = localStorage.getItem("refreshToken");
+            const accessToken = localStorage.getItem("auth_access_token");
+            const refreshToken = localStorage.getItem("auth_refresh_token");
 
             const headers = createTRPCHeaders({
               source,
