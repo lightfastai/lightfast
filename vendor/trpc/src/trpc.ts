@@ -13,6 +13,9 @@ import { ZodError } from "zod";
 import type { Session } from "@vendor/openauth";
 import { db } from "@vendor/db/client";
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
 import { $SessionType } from "@vendor/openauth";
 import {
   getSessionFromCookiesNextHandler,
@@ -20,6 +23,7 @@ import {
 } from "@vendor/openauth/server";
 
 import { $TRPCHeaderName, getHeaderFromTRPCHeaders } from "./headers";
+<<<<<<< HEAD
 
 /**
  * Isomorphic Session getter for API requests
@@ -33,11 +37,20 @@ import { auth, client } from "@vendor/openauth/server";
  * - Expo requests will have a session token in the Authorization header
  * - Next.js requests will have a session token in cookies
 >>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
+=======
+
+/**
+ * Isomorphic Session getter for API requests
+ * - Works for both Next.JS and non-Next.JS requests through the Headers object
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
  */
 const isomorphicGetSession = async (
   headers: Headers,
 ): Promise<Session | null> => {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
   const accessToken = getHeaderFromTRPCHeaders(
     headers,
     $TRPCHeaderName.Enum["x-lightfast-trpc-access-token"],
@@ -46,6 +59,7 @@ const isomorphicGetSession = async (
     headers,
     $TRPCHeaderName.Enum["x-lightfast-trpc-refresh-token"],
   );
+<<<<<<< HEAD
   if (accessToken) {
     const verified = await verifyToken(accessToken, refreshToken ?? undefined);
 =======
@@ -53,12 +67,17 @@ const isomorphicGetSession = async (
   if (accessToken) {
     const verified = await client.verify(authSubjects, accessToken);
 >>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
+=======
+  if (accessToken) {
+    const verified = await verifyToken(accessToken, refreshToken ?? undefined);
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
     if (verified.err) return null;
     return {
       type: $SessionType.Enum.user,
       user: {
         id: verified.subject.properties.id,
         accessToken,
+<<<<<<< HEAD
 <<<<<<< HEAD
         refreshToken: refreshToken ?? "",
       },
@@ -72,6 +91,13 @@ const isomorphicGetSession = async (
   }
   return auth();
 >>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
+=======
+        refreshToken: refreshToken ?? "",
+      },
+    };
+  }
+  return getSessionFromCookiesNextHandler();
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
 };
 
 /**
