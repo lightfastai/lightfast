@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { anthropicEnv } from "@repo/ai/anthropic-env";
 import { openAiEnv } from "@repo/ai/openai-env";
-import { env as trpcEnv } from "@repo/trpc-client/env";
 import { env as dbEnv } from "@vendor/db/env";
 import { openauthEnv } from "@vendor/openauth/env";
 
@@ -12,7 +11,6 @@ export const env = createEnv({
   extends: [
     vercel(),
     dbEnv,
-    trpcEnv,
     openAiEnv,
     anthropicEnv,
     // googleEnv,

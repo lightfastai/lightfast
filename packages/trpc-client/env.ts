@@ -10,12 +10,9 @@ export const env = createEnv({
       .default("development"),
   },
   server: {},
-  client: {
-    NEXT_PUBLIC_LIGHTFAST_API_URL: z.string().url(),
-  },
+  client: {},
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_LIGHTFAST_API_URL: process.env.NEXT_PUBLIC_LIGHTFAST_API_URL,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
