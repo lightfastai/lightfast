@@ -1,12 +1,10 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
-import { auth } from "@vendor/openauth/server";
-
-import { login, logout } from "./actions";
+import { auth, login, logout } from "@vendor/openauth/server";
 
 export default async function Home() {
   const userSession = await auth();
-  console.log("session", userSession);
   return (
     <div className="page">
       <main className="main">
@@ -40,7 +38,13 @@ export default async function Home() {
 
         <div className="ctas">
           {userSession ? (
-            <form action={logout}>
+            <form
+              action={async () => {
+                "use server";
+                await logout();
+                redirect("/");
+              }}
+            >
               <button className="secondary">Logout</button>
             </form>
           ) : (
