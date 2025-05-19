@@ -12,6 +12,7 @@ import { ZodError } from "zod";
 
 import type { Session } from "@vendor/openauth";
 import { db } from "@vendor/db/client";
+<<<<<<< HEAD
 import { $SessionType } from "@vendor/openauth";
 import {
   getSessionFromCookiesNextHandler,
@@ -23,10 +24,20 @@ import { $TRPCHeaderName, getHeaderFromTRPCHeaders } from "./headers";
 /**
  * Isomorphic Session getter for API requests
  * - Works for both Next.JS and non-Next.JS requests through the Headers object
+=======
+import { $SessionType, authSubjects } from "@vendor/openauth";
+import { auth, client } from "@vendor/openauth/server";
+
+/**
+ * Isomorphic Session getter for API requests
+ * - Expo requests will have a session token in the Authorization header
+ * - Next.js requests will have a session token in cookies
+>>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
  */
 const isomorphicGetSession = async (
   headers: Headers,
 ): Promise<Session | null> => {
+<<<<<<< HEAD
   const accessToken = getHeaderFromTRPCHeaders(
     headers,
     $TRPCHeaderName.Enum["x-lightfast-trpc-access-token"],
@@ -37,17 +48,30 @@ const isomorphicGetSession = async (
   );
   if (accessToken) {
     const verified = await verifyToken(accessToken, refreshToken ?? undefined);
+=======
+  const accessToken = headers.get("x-access-token") ?? null;
+  if (accessToken) {
+    const verified = await client.verify(authSubjects, accessToken);
+>>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
     if (verified.err) return null;
     return {
       type: $SessionType.Enum.user,
       user: {
         id: verified.subject.properties.id,
         accessToken,
+<<<<<<< HEAD
         refreshToken: refreshToken ?? "",
       },
     };
   }
   return getSessionFromCookiesNextHandler();
+=======
+        refreshToken: verified.tokens?.refresh ?? "",
+      },
+    };
+  }
+  return auth();
+>>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
 };
 
 /**
