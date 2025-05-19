@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import type { Token, UserSession } from "@vendor/openauth";
+import { $SessionType } from "@vendor/openauth";
 import { authSubjects, client } from "@vendor/openauth/server";
 
 const setCorsHeaders = (res: NextResponse) => {
@@ -17,7 +19,7 @@ const setCorsHeaders = (res: NextResponse) => {
 };
 
 // Handle OPTIONS preflight requests
-export const OPTIONS = async () => {
+export const OPTIONS = () => {
   const response = NextResponse.json({}, { status: 200 });
   setCorsHeaders(response);
   return response;
@@ -26,10 +28,10 @@ export const OPTIONS = async () => {
 export async function POST(req: NextRequest) {
   let response;
   try {
-    const body = await req.json();
-    const { token, refresh } = body;
+    const body = (await req.json()) as Omit<Token, "expiresIn">;
+    const { accessToken, refreshToken } = body;
 
-    if (!token) {
+    if (!accessToken) {
       response = NextResponse.json(
         { valid: false, error: "No token provided" },
         { status: 400 },
@@ -38,10 +40,10 @@ export async function POST(req: NextRequest) {
       return response;
     }
 
-    console.log("Validating token:", token, refresh);
+    console.log("Validating token:", accessToken, refreshToken);
 
-    const verified = await client.verify(authSubjects, token, {
-      refresh,
+    const verified = await client.verify(authSubjects, accessToken, {
+      refresh: refreshToken,
     });
 
     if (verified.err) {
@@ -54,11 +56,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Return validation result with user info and possibly refreshed tokens
-    response = NextResponse.json({
-      valid: true,
-      subject: verified.subject,
-      tokens: verified.tokens,
+    response = NextResponse.json<UserSession>({
+      type: $SessionType.Enum.user,
+      user: {
+        id: verified.subject.properties.id,
+        accessToken: verified.tokens?.access || accessToken,
+        refreshToken: verified.tokens?.refresh || refreshToken,
+        expiresIn: verified.tokens?.expiresIn ?? 3600,
+      },
     });
+
     setCorsHeaders(response); // Ensure CORS headers on the success response
     return response;
   } catch (error) {

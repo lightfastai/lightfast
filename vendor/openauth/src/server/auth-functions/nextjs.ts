@@ -3,7 +3,7 @@
 import { cookies as getCookies, headers as getHeaders } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { UserSession } from "@vendor/openauth";
+import type { Token, UserSession } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
 
 import { openauthEnv } from "../../../env";
@@ -36,14 +36,10 @@ export const getSessionFromCookiesNextHandler =
     }
 
     if (verified.tokens) {
-      console.log(
-        "Setting tokens",
-        verified.tokens.access,
-        verified.tokens.refresh,
-      );
       await setTokensNextHandler(
         verified.tokens.access,
         verified.tokens.refresh,
+        verified.tokens.expiresIn,
       );
     }
 
@@ -53,11 +49,17 @@ export const getSessionFromCookiesNextHandler =
         id: verified.subject.properties.id,
         accessToken: accessToken.value,
         refreshToken: refreshToken?.value ?? "",
+        expiresIn: verified.tokens?.expiresIn,
       },
     };
   };
 
-export const setTokensNextHandler = async (access: string, refresh: string) => {
+export const setTokensNextHandler = async (
+  access: string,
+  refresh: string,
+  expiresIn: number,
+) => {
+  console.log("Setting tokens", access, refresh, expiresIn);
   const cookies = await getCookies();
   cookies.set({
     name: ACCESS_TOKEN_COOKIE_NAME,
@@ -65,7 +67,7 @@ export const setTokensNextHandler = async (access: string, refresh: string) => {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    maxAge: 34560000,
+    maxAge: expiresIn,
     secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
   cookies.set({
@@ -74,15 +76,12 @@ export const setTokensNextHandler = async (access: string, refresh: string) => {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    maxAge: 34560000,
+    maxAge: expiresIn,
     secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
 };
 
-export const getTokenFromCookiesNextHandler = async (): Promise<{
-  accessToken: string;
-  refreshToken: string;
-}> => {
+export const getTokenFromCookiesNextHandler = async (): Promise<Token> => {
   const cookies = await getCookies();
   const accessToken = cookies.get(ACCESS_TOKEN_COOKIE_NAME);
   const refreshToken = cookies.get(REFRESH_TOKEN_COOKIE_NAME);
@@ -109,7 +108,9 @@ export const login = async () => {
     if (!verified.err && verified.tokens) {
       await setTokensNextHandler(
         verified.tokens.access,
+
         verified.tokens.refresh,
+        verified.tokens.expiresIn,
       );
       redirect("/");
     }
