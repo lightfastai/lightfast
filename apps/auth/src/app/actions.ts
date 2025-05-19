@@ -3,9 +3,7 @@
 import { cookies as getCookies, headers as getHeaders } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { authSubjects } from "@vendor/openauth/server";
-
-import { client, setTokens } from "./auth";
+import { authSubjects, client, setTokens } from "@vendor/openauth/server";
 
 // export async function auth() {
 //   const cookies = await getCookies();

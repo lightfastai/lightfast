@@ -5,9 +5,6 @@ import { CodeUI } from "@openauthjs/openauth/ui/code";
 import { TRPCError } from "@trpc/server";
 
 import type { RouterOutputs } from "@vendor/trpc";
-import { emailConfig } from "@repo/lightfast-config";
-import { sendResendEmailSafe } from "@repo/lightfast-email/functions";
-import { CodeEmail, codeEmailText } from "@repo/lightfast-email/templates";
 import { trpc } from "@repo/trpc-client/trpc-pure-server-provider";
 import { authSubjects } from "@vendor/openauth/server";
 
@@ -30,7 +27,7 @@ async function getUserByEmailOrCreate(
 export default issuer({
   subjects: authSubjects,
   storage: MemoryStorage(),
-  allow: async () => true,
+  // allow: async () => true,
   providers: {
     email: CodeProvider(
       CodeUI({
@@ -43,22 +40,22 @@ export default issuer({
 
           console.log(`Sending code ${code} to email: ${email}`);
 
-          const result = await sendResendEmailSafe({
-            from: emailConfig.auth,
-            to: email,
-            subject: "Your Lightfast.ai sign-in code",
-            text: codeEmailText({ code }),
-            react: CodeEmail({ email, code }),
-          });
+          // const result = await sendResendEmailSafe({
+          //   from: emailConfig.auth,
+          //   to: email,
+          //   subject: "Your Lightfast.ai sign-in code",
+          //   text: codeEmailText({ code }),
+          //   react: CodeEmail({ email, code }),
+          // });
 
-          if (result.isErr()) {
-            console.error("Failed to send email:", result.error);
-            // Handle error appropriately - maybe throw or log to an error service
-            // For now, we'll just log it. Depending on requirements, you might
-            // want to inform the user or retry.
-          } else {
-            console.log("Email sent successfully, ID:", result.value.id);
-          }
+          // if (result.isErr()) {
+          //   console.error("Failed to send email:", result.error);
+          //   // Handle error appropriately - maybe throw or log to an error service
+          //   // For now, we'll just log it. Depending on requirements, you might
+          //   // want to inform the user or retry.
+          // } else {
+          //   console.log("Email sent successfully, ID:", result.value.id);
+          // }
         },
       }),
     ),
@@ -78,7 +75,7 @@ export default issuer({
 
       return ctx.subject(
         "account",
-        { type: "email", email },
+        { type: "email", email, id: userId },
         { subject: userId },
       );
     }

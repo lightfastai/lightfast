@@ -1,11 +1,12 @@
 import Image from "next/image";
 
-import { getUserSession } from "@vendor/openauth/server";
+import { auth } from "@vendor/openauth/server";
 
 import { login, logout } from "./actions";
 
 export default async function Home() {
-  const userSession = await getUserSession();
+  const userSession = await auth();
+  console.log("session", userSession);
   return (
     <div className="page">
       <main className="main">
@@ -21,7 +22,7 @@ export default async function Home() {
           {userSession ? (
             <>
               <li>
-                Logged in as <code>{userSession.user.email}</code>.
+                Logged in as <code>{userSession.user.id}</code>.
               </li>
               <li>
                 And then check out <code>app/page.tsx</code>.

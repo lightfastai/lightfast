@@ -13,7 +13,7 @@ import { ZodError } from "zod";
 import type { Session } from "@vendor/openauth";
 import { db } from "@vendor/db/client";
 import { $SessionType } from "@vendor/openauth";
-import { getUserSession } from "@vendor/openauth/server";
+import { auth } from "@vendor/openauth/server";
 
 /**
  * 1. CONTEXT
@@ -34,7 +34,7 @@ export const createTRPCContext = async (opts: {
   session: Session | null;
   db: typeof db;
 }> => {
-  const userSession = await getUserSession();
+  const userSession = await auth();
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
@@ -43,9 +43,7 @@ export const createTRPCContext = async (opts: {
   }
 
   if (userSession?.type === $SessionType.Enum.user) {
-    console.info(
-      `>>> tRPC Request from ${source} by ${userSession.user.email}`,
-    );
+    console.info(`>>> tRPC Request from ${source} by ${userSession.user.id}`);
   }
 
   return {
@@ -118,7 +116,7 @@ const protectedMiddleware = t.middleware(async ({ next, ctx }) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  if (ctx.session.type === $SessionType.Enum.user && !ctx.session.user.email) {
+  if (ctx.session.type === $SessionType.Enum.user && !ctx.session.user.id) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
