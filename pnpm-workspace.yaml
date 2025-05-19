@@ -29,6 +29,15 @@ catalogs:
     '@tailwindcss/typography': ^0.5.16
 onlyBuiltDependencies:
   - '@clerk/shared'
+  - '@sentry/cli'
   - '@vercel/speed-insights'
+  - bufferutil
+  - contentlayer2
+  - core-js
+  - core-js-pure
   - electron
   - electron-winstaller
+  - esbuild
+  - protobufjs
+  - sharp
+  - utf-8-validate

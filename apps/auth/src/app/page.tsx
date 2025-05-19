@@ -1,9 +1,14 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
-import { auth, login, logout } from "./actions";
+import {
+  getSessionFromCookiesNextHandler,
+  login,
+  logout,
+} from "@vendor/openauth/server";
 
 export default async function Home() {
-  const subject = await auth();
+  const userSession = await getSessionFromCookiesNextHandler();
   return (
     <div className="page">
       <main className="main">
@@ -16,10 +21,10 @@ export default async function Home() {
           priority
         />
         <ol>
-          {subject ? (
+          {userSession ? (
             <>
               <li>
-                Logged in as <code>{subject.properties.id}</code>.
+                Logged in as <code>{userSession.user.id}</code>.
               </li>
               <li>
                 And then check out <code>app/page.tsx</code>.
@@ -36,8 +41,14 @@ export default async function Home() {
         </ol>
 
         <div className="ctas">
-          {subject ? (
-            <form action={logout}>
+          {userSession ? (
+            <form
+              action={async () => {
+                "use server";
+                await logout();
+                redirect("/");
+              }}
+            >
               <button className="secondary">Logout</button>
             </form>
           ) : (

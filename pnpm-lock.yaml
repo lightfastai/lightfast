@@ -88,18 +88,12 @@ importers:
 
   apps/app:
     dependencies:
-      '@ai-sdk/anthropic':
-        specifier: ^0.0.53
-        version: 0.0.53(zod@3.24.3)
-      '@ai-sdk/openai':
-        specifier: ^0.0.70
-        version: 0.0.70(zod@3.24.3)
-      '@ai-sdk/react':
-        specifier: ^1.2.11
-        version: 1.2.11(react@19.1.0)(zod@3.24.3)
       '@next/bundle-analyzer':
         specifier: ^15.0.3
         version: 15.0.3(bufferutil@4.0.9)
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@repo/lightfast-js':
         specifier: workspace:*
         version: link:../../packages/lightfast-js
@@ -124,24 +118,18 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
         version: 11.1.2(@tanstack/react-query@5.74.11(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
       '@vendor/next':
         specifier: workspace:*
         version: link:../../vendor/next
+      '@vendor/openauth':
+        specifier: workspace:^
+        version: link:../../vendor/openauth
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc
-      ai:
-        specifier: ^4.3.13
-        version: 4.3.13(react@19.1.0)(zod@3.24.3)
-      exa-js:
-        specifier: ^1.6.13
-        version: 1.6.13(encoding@0.1.13)
       geist:
         specifier: ^1.3.1
         version: 1.3.1(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -160,9 +148,6 @@ importers:
       redis:
         specifier: ^5.0.0
         version: 5.0.1
-      resumable-stream:
-        specifier: ^2.0.0
-        version: 2.0.0
       superjson:
         specifier: 2.2.1
         version: 2.2.1
@@ -218,24 +203,33 @@ importers:
 
   apps/auth:
     dependencies:
-      '@openauthjs/openauth':
-        specifier: ^0.3.2
-        version: 0.3.9(arctic@2.3.4)(hono@4.7.9)
       '@repo/lightfast-config':
         specifier: workspace:^
         version: link:../../packages/lightfast-config
       '@repo/lightfast-email':
         specifier: workspace:*
         version: link:../../packages/lightfast-email
+      '@repo/trpc-client':
+        specifier: workspace:*
+        version: link:../../packages/trpc-client
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@vendor/db':
+        specifier: workspace:^
+        version: link:../../vendor/db
       '@vendor/email':
         specifier: workspace:*
         version: link:../../vendor/email
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/openauth':
+        specifier: workspace:*
+        version: link:../../vendor/openauth
+      '@vendor/trpc':
+        specifier: workspace:*
+        version: link:../../vendor/trpc
       next:
         specifier: 'catalog:'
         version: 15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -309,9 +303,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.4
         version: 4.1.4(vite@6.3.3(@types/node@20.17.2)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)(tsx@4.19.4)(yaml@2.6.0))
-      '@vendor/clerk':
+      '@vendor/openauth':
         specifier: workspace:*
-        version: link:../../vendor/clerk
+        version: link:../../vendor/openauth
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc
@@ -324,6 +318,9 @@ importers:
       electron-squirrel-startup:
         specifier: ^1.0.1
         version: 1.0.1
+      js-cookie:
+        specifier: ^3.0.5
+        version: 3.0.5
       react:
         specifier: catalog:react19
         version: 19.1.0
@@ -839,12 +836,21 @@ importers:
 
   packages/ai:
     dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^0.0.53
+        version: 0.0.53(zod@3.24.3)
       '@ai-sdk/google':
         specifier: ^1.2.17
         version: 1.2.17(zod@3.24.3)
       '@ai-sdk/google-vertex':
         specifier: ^2.2.21
         version: 2.2.21(encoding@0.1.13)(zod@3.24.3)
+      '@ai-sdk/openai':
+        specifier: ^0.0.70
+        version: 0.0.70(zod@3.24.3)
+      '@ai-sdk/react':
+        specifier: ^1.2.11
+        version: 1.2.11(react@19.1.0)(zod@3.24.3)
       '@fal-ai/client':
         specifier: ^1.2.0
         version: 1.2.0
@@ -866,6 +872,12 @@ importers:
       braintrust:
         specifier: ^0.0.168
         version: 0.0.168(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0))(openai@4.73.1(encoding@0.1.13)(zod@3.24.3))(react@19.1.0)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.12(typescript@5.8.3))(zod@3.24.3)
+      exa-js:
+        specifier: ^1.6.13
+        version: 1.6.13(encoding@0.1.13)
+      resumable-stream:
+        specifier: ^2.0.0
+        version: 2.0.0
       voyage-ai-provider:
         specifier: ^1.0.0
         version: 1.0.0(zod@3.24.3)
@@ -1066,9 +1078,12 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
         version: 11.1.2(@tanstack/react-query@5.74.11(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.2(typescript@5.8.3))(react-dom@18.3.1(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
-      '@vendor/clerk':
+      '@vendor/db':
         specifier: workspace:*
-        version: link:../../vendor/clerk
+        version: link:../../vendor/db
+      '@vendor/openauth':
+        specifier: workspace:*
+        version: link:../../vendor/openauth
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc
@@ -1586,6 +1601,49 @@ importers:
         specifier: 'catalog:'
         version: 5.8.3
 
+  vendor/openauth:
+    dependencies:
+      '@openauthjs/openauth':
+        specifier: ^0.4.3
+        version: 0.4.3(arctic@2.3.4)(hono@4.7.9)
+      '@t3-oss/env-nextjs':
+        specifier: 0.12.0
+        version: 0.12.0(typescript@5.8.3)(valibot@1.1.0(typescript@5.8.3))(zod@3.24.3)
+      js-cookie:
+        specifier: ^3.0.5
+        version: 3.0.5
+      react:
+        specifier: catalog:react19
+        version: 19.1.0
+      react-dom:
+        specifier: catalog:react19
+        version: 19.1.0(react@19.1.0)
+      zod:
+        specifier: 'catalog:'
+        version: 3.24.3
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/js-cookie':
+        specifier: ^3.0.6
+        version: 3.0.6
+      eslint:
+        specifier: 'catalog:'
+        version: 9.25.1(jiti@2.4.2)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.5.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
+
   vendor/security:
     dependencies:
       '@arcjet/decorate':
@@ -1680,9 +1738,6 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
         version: 11.1.2(@tanstack/react-query@5.74.11(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../clerk
       '@vendor/db':
         specifier: workspace:*
         version: link:../db
@@ -1692,6 +1747,9 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../observability
+      '@vendor/openauth':
+        specifier: workspace:*
+        version: link:../openauth
       bcrypt-ts:
         specifier: ^5.0.2
         version: 5.0.2
@@ -3643,8 +3701,8 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     deprecated: This functionality has been moved to @npmcli/fs
 
-  '@openauthjs/openauth@0.3.9':
-    resolution: {integrity: sha512-a8UGz9iLQnB8TmY4bMDkCvMEWLHPEtDlXGnYNoFbEOxO13cCPu1pSS0DcUvKzHBAhXWnAMU01sSDMNZQr+aKWg==}
+  '@openauthjs/openauth@0.4.3':
+    resolution: {integrity: sha512-RlnjqvHzqcbFVymEwhlUEuac4utA5h4nhSK/i2szZuQmxTIqbGUxZ+nM+avM+VV4Ing+/ZaNLKILoXS3yrkOOw==}
     peerDependencies:
       arctic: ^2.2.2
       hono: ^4.0.0
@@ -14553,7 +14611,7 @@ snapshots:
       mkdirp: 1.0.4
       rimraf: 3.0.2
 
-  '@openauthjs/openauth@0.3.9(arctic@2.3.4)(hono@4.7.9)':
+  '@openauthjs/openauth@0.4.3(arctic@2.3.4)(hono@4.7.9)':
     dependencies:
       '@standard-schema/spec': 1.0.0-beta.3
       arctic: 2.3.4

@@ -12,7 +12,8 @@
     "./inngest": {
       "types": "./inngest/dist/index.d.ts",
       "default": "./src/inngest/index.ts"
-    }
+    },
+    "./headers": "./src/headers.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -29,10 +30,10 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
-    "@vendor/clerk": "workspace:*",
     "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:^",
     "@vendor/observability": "workspace:*",
+    "@vendor/openauth": "workspace:*",
     "bcrypt-ts": "^5.0.2",
     "react": "catalog:react19",
     "superjson": "2.2.1",

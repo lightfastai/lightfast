@@ -1,10 +1,12 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+import { env as dbEnv } from "@vendor/db/env";
 import { env as emailEnv } from "@vendor/email/env";
+import { openauthEnv } from "@vendor/openauth/env";
 
 export const env = createEnv({
-  extends: [emailEnv],
+  extends: [emailEnv, dbEnv, openauthEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -23,7 +25,6 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    // For client variables: NEXT_PUBLIC_SOME_VAR: process.env.NEXT_PUBLIC_SOME_VAR,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

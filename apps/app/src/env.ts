@@ -3,21 +3,18 @@ import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
 import { anthropicEnv } from "@repo/ai/anthropic-env";
-import { googleEnv } from "@repo/ai/google-env";
 import { openAiEnv } from "@repo/ai/openai-env";
-import { env as trpcEnv } from "@repo/trpc-client/env";
-import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as dbEnv } from "@vendor/db/env";
+import { openauthEnv } from "@vendor/openauth/env";
 
 export const env = createEnv({
   extends: [
     vercel(),
     dbEnv,
-    clerkEnvBase,
-    trpcEnv,
     openAiEnv,
     anthropicEnv,
-    googleEnv,
+    // googleEnv,
+    openauthEnv,
   ],
   shared: {
     NODE_ENV: z
@@ -29,7 +26,6 @@ export const env = createEnv({
    * This way you can ensure the app isn't built with invalid env vars.
    */
   server: {
-    CLERK_WEBHOOK_SECRET: z.string(),
     REDIS_URL: z.string().url(),
 
     // Search API configuration

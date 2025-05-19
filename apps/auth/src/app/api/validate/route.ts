@@ -1,70 +1,80 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { subjects } from "../../../auth/subjects";
-import { client } from "../../auth";
+import type { Token, UserSession } from "@vendor/openauth";
+import { $SessionType } from "@vendor/openauth";
+import { authSubjects, client } from "@vendor/openauth/server";
 
-// Configure CORS headers for the Electron app
-const setCorsHeaders = (res: Response) => {
-  // For production, consider restricting to specific origins
+const setCorsHeaders = (res: NextResponse) => {
+  // Allow requests from any origin during development
+  // For production, restrict this to your app's domain
   res.headers.set("Access-Control-Allow-Origin", "*");
-  res.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.headers.set(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization",
   );
+  // Allow credentials (cookies, authorization headers, etc.)
+  res.headers.set("Access-Control-Allow-Credentials", "true");
 };
 
-// OPTIONS handler for CORS preflight
-export async function OPTIONS() {
-  const response = new Response(null, { status: 204 });
+// Handle OPTIONS preflight requests
+export const OPTIONS = () => {
+  const response = NextResponse.json({}, { status: 200 });
   setCorsHeaders(response);
   return response;
-}
+};
 
 export async function POST(req: NextRequest) {
+  let response;
   try {
-    const { token, refresh } = await req.json();
+    const body = (await req.json()) as Omit<Token, "expiresIn">;
+    const { accessToken, refreshToken } = body;
 
-    if (!token) {
-      return NextResponse.json(
-        { valid: false, error: "Missing token" },
+    if (!accessToken) {
+      response = NextResponse.json(
+        { valid: false, error: "No token provided" },
         { status: 400 },
       );
-    }
-
-    // Validate the token
-    const verified = await client.verify(subjects, token, {
-      refresh: refresh,
-    });
-
-    if (verified.err) {
-      const response = NextResponse.json(
-        { valid: false, error: verified.err },
-        { status: 401 },
-      );
-      setCorsHeaders(response);
+      setCorsHeaders(response); // Ensure CORS headers on this error response
       return response;
     }
 
-    // Return new tokens if refreshed
-    const responseData: any = { valid: true, subject: verified.subject };
-    if (verified.tokens) {
-      responseData.tokens = {
-        access: verified.tokens.access,
-        refresh: verified.tokens.refresh,
-      };
+    console.log("Validating token:", accessToken, refreshToken);
+
+    const verified = await client.verify(authSubjects, accessToken, {
+      refresh: refreshToken,
+    });
+
+    if (verified.err) {
+      response = NextResponse.json(
+        { valid: false, error: verified.err },
+        { status: 401 },
+      );
+      setCorsHeaders(response); // Ensure CORS headers on this error response
+      return response;
     }
 
-    const response = NextResponse.json(responseData);
-    setCorsHeaders(response);
+    // Return validation result with user info and possibly refreshed tokens
+    response = NextResponse.json<UserSession>({
+      type: $SessionType.Enum.user,
+      user: {
+        id: verified.subject.properties.id,
+        accessToken: verified.tokens?.access || accessToken,
+        refreshToken: verified.tokens?.refresh || refreshToken,
+        expiresIn: verified.tokens?.expiresIn ?? 3600,
+      },
+    });
+
+    setCorsHeaders(response); // Ensure CORS headers on the success response
     return response;
-  } catch (error: any) {
-    const response = NextResponse.json(
-      { valid: false, error: error.message || "Invalid request" },
-      { status: 400 },
+  } catch (error) {
+    console.error("Token validation error:", error);
+    response = NextResponse.json(
+      { valid: false, error: "Internal server error" },
+      { status: 500 },
     );
-    setCorsHeaders(response);
+    setCorsHeaders(response); // Ensure CORS headers on this catch-all error response
     return response;
   }
 }

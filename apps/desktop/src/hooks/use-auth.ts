@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
+import { createClient } from "@openauthjs/openauth/client";
+
+import { $SessionType } from "@vendor/openauth";
+
+import { setTokensElectronHandler } from "../helpers/auth-helpers";
 
 // Declare the types for the electron context bridge API
 declare global {
@@ -14,221 +19,146 @@ declare global {
   }
 }
 
-interface AuthSession {
-  accessToken?: string;
-  refreshToken?: string;
-  userId?: string;
-  isValid?: boolean;
-}
+export const client = createClient({
+  clientID: "nextjs", // @TODO what should this be?
+  issuer: "http://localhost:3001",
+});
 
-export function useAuth() {
-  const [session, setSession] = useState<AuthSession | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+type AuthCallbackHandler = (session: any | null, error: string | null) => void;
 
-  const authBaseUrl =
-    import.meta.env.VITE_AUTH_APP_URL || "http://localhost:3001";
-  const redirectUri =
-    import.meta.env.VITE_AUTH_APP_REDIRECT_URI || "lightfast://auth/callback";
-
-  // Construct login URL with redirect_uri for the auth page
-  const loginUrl = `${authBaseUrl}/auth?redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-  const login = useCallback(() => {
-    setLoading(true);
-    setError(null);
-
-    // Debug logging
-    console.log("Auth URL:", authBaseUrl);
-    console.log("Redirect URI:", redirectUri);
-    console.log("Full login URL:", loginUrl);
-
-    if (!authBaseUrl) {
-      setError("Missing VITE_AUTH_APP_URL environment variable");
-      setLoading(false);
-      return;
-    }
-
-    if (!window.electron?.shell?.openExternal) {
-      setError("Electron shell API not available");
-      setLoading(false);
-      return;
-    }
-
-    // Clear any existing tokens before starting a new login
-    localStorage.removeItem("auth_access_token");
-    localStorage.removeItem("auth_refresh_token");
-
-    window.electron.shell
-      .openExternal(loginUrl)
-      .then(() => console.log("Browser open request sent"))
-      .catch((err) => {
-        console.error("Failed to open browser:", err);
-        setError("Failed to open browser: " + (err?.message || String(err)));
-        setLoading(false);
-      });
-  }, [loginUrl, authBaseUrl, redirectUri]);
-
-  // Validate token with the auth server
-  const validateToken = useCallback(
-    async (token: string, refreshToken?: string): Promise<AuthSession> => {
-      try {
-        const response = await fetch(`${authBaseUrl}/api/validate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, refresh: refreshToken }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Token validation failed");
-        }
-
-        const data = await response.json();
-
-        if (!data.valid) {
-          throw new Error(data.error || "Invalid token");
-        }
-
-        // Update tokens if refreshed
-        const updatedSession: AuthSession = {
-          accessToken: token,
-          refreshToken,
-          userId: data.subject?.properties?.id,
-          isValid: true,
-        };
-
-        if (data.tokens) {
-          updatedSession.accessToken = data.tokens.access;
-          updatedSession.refreshToken = data.tokens.refresh;
-
-          // Update localStorage with new tokens
-          localStorage.setItem("auth_access_token", data.tokens.access);
-          localStorage.setItem("auth_refresh_token", data.tokens.refresh);
-        }
-
-        return updatedSession;
-      } catch (error) {
-        console.error("Token validation error:", error);
-        throw error;
-      }
-    },
-    [authBaseUrl],
-  );
-
-  // Logout function
-  const logout = useCallback(() => {
-    localStorage.removeItem("auth_access_token");
-    localStorage.removeItem("auth_refresh_token");
-    setSession(null);
-  }, []);
-
-  // Listen for auth callback from main process
+// This is the singleton hook that should only be used once in the app
+export function useAuthCallback(onAuthResult: AuthCallbackHandler) {
   useEffect(() => {
     if (!window.electron?.auth?.onAuthCallback) {
-      console.error("Auth callback registration not available");
+      console.error(
+        "[RENDERER] Auth callback registration API (window.electron.auth.onAuthCallback) not available!",
+      );
+      onAuthResult(
+        null,
+        "Electron auth API not available for callback handling.",
+      );
       return;
     }
 
-    // Register auth callback handler
+    console.log(
+      "[RENDERER] Registering auth callback handler in useAuthCallback.",
+    );
+    const processedUrls = new Set<string>();
+
     const removeListener = window.electron.auth.onAuthCallback(
       async (url: string) => {
-        try {
-          console.log("Received auth callback:", url);
-          const parsed = new URL(url);
+        console.log(
+          "[RENDERER] 'auth-callback' event received in useAuthCallback with URL:",
+          url,
+        );
+        if (processedUrls.has(url)) {
+          console.log("[RENDERER] Already processed this URL, skipping:", url);
+          return;
+        }
+        processedUrls.add(url);
 
-          // Handle redirect with tokens in URL (new flow)
+        try {
+          const parsed = new URL(url);
+          const redirectUri = "lightfast://auth/callback";
+
           const accessToken = parsed.searchParams.get("access_token");
           const refreshToken = parsed.searchParams.get("refresh_token");
+          const expiresInStr = parsed.searchParams.get("expires_in");
 
-          if (accessToken) {
-            console.log("Received tokens directly in callback");
-
-            // Store tokens in localStorage
-            localStorage.setItem("auth_access_token", accessToken);
-            if (refreshToken) {
-              localStorage.setItem("auth_refresh_token", refreshToken);
-            }
-
-            // Validate token to get user info
-            const validatedSession = await validateToken(
-              accessToken,
-              refreshToken || undefined,
+          if (accessToken && refreshToken && expiresInStr) {
+            console.log("[RENDERER] Tokens received directly in callback.");
+            const expiresIn = Number(expiresInStr);
+            setTokensElectronHandler(accessToken, refreshToken, expiresIn);
+            // For direct tokens, we assume they are valid for now and let AuthProvider validate later if needed
+            // Or, you could add a quick validation step here if your OpenAuth client supports it client-side safely
+            onAuthResult(
+              {
+                type: $SessionType.Enum.user,
+                user: {
+                  id: "user_from_direct_token",
+                  accessToken,
+                  refreshToken,
+                }, // ID might be placeholder until full validation
+                isValid: true, // Tentatively true
+                expiresIn,
+              },
+              null,
             );
-            setSession(validatedSession);
-            setLoading(false);
             return;
           }
 
-          // Legacy code path for compatibility
+          const errorCode = parsed.searchParams.get("error");
+          if (errorCode) {
+            const errorDesc = parsed.searchParams.get("error_description");
+            console.error(
+              "[RENDERER] Auth error in callback URL:",
+              errorCode,
+              errorDesc,
+            );
+            onAuthResult(
+              null,
+              errorDesc || `Authentication error: ${errorCode}`,
+            );
+            return;
+          }
+
           const code = parsed.searchParams.get("code");
-          if (!code) throw new Error("No code or tokens in callback");
+          if (!code) {
+            console.error(
+              "[RENDERER] No code or direct tokens in callback URL.",
+            );
+            onAuthResult(
+              null,
+              "No authorization code or tokens in callback URL.",
+            );
+            return;
+          }
 
-          // Exchange code for tokens
-          const callbackUrl = `${authBaseUrl}/api/callback?code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-          console.log("Exchanging code at:", callbackUrl);
+          console.log(
+            "[RENDERER] Exchanging code for tokens using OpenAuth client...",
+          );
+          const exchanged = await client.exchange(code, redirectUri);
+          if (exchanged.err) {
+            console.error("[RENDERER] Code exchange failed:", exchanged.err);
+            throw new Error(exchanged.err.message || "Failed to exchange code");
+          }
 
-          const res = await fetch(callbackUrl, { credentials: "include" });
-          if (!res.ok) throw new Error("Failed to exchange code for tokens");
-          const data = await res.json();
-
-          console.log("Received tokens:", data);
-
-          // Store tokens in localStorage
-          localStorage.setItem("auth_access_token", data.access);
-          localStorage.setItem("auth_refresh_token", data.refresh);
-
-          setSession({
-            accessToken: data.access,
-            refreshToken: data.refresh,
-            isValid: true,
-          });
-          setLoading(false);
+          console.log("[RENDERER] Code exchange successful. Tokens received.");
+          setTokensElectronHandler(
+            exchanged.tokens.access,
+            exchanged.tokens.refresh,
+            exchanged.tokens.expiresIn,
+          );
+          onAuthResult(
+            {
+              type: $SessionType.Enum.user,
+              user: {
+                id: "user_from_code_exchange",
+                accessToken: exchanged.tokens.access,
+                refreshToken: exchanged.tokens.refresh,
+              },
+              isValid: true, // Tentatively true
+              expiresIn: exchanged.tokens.expiresIn,
+            },
+            null,
+          );
         } catch (e: any) {
-          console.error("Auth error:", e);
-          setError(e?.message || "Failed to authenticate");
-          setLoading(false);
+          console.error(
+            "[RENDERER] Critical error in auth callback processing logic:",
+            e,
+          );
+          onAuthResult(null, e?.message || "Critical auth callback failure");
         }
       },
     );
 
-    // Cleanup
-    return removeListener;
-  }, [authBaseUrl, redirectUri, validateToken]);
-
-  // On mount, restore and validate session from localStorage
-  useEffect(() => {
-    const restoreSession = async () => {
-      const accessToken = localStorage.getItem("auth_access_token");
-      const refreshToken = localStorage.getItem("auth_refresh_token");
-
-      if (accessToken) {
-        try {
-          setLoading(true);
-          const validatedSession = await validateToken(
-            accessToken,
-            refreshToken || undefined,
-          );
-          setSession(validatedSession);
-        } catch (error) {
-          console.error("Session restoration failed:", error);
-          // Clear invalid tokens
-          localStorage.removeItem("auth_access_token");
-          localStorage.removeItem("auth_refresh_token");
-        } finally {
-          setLoading(false);
-        }
-      }
+    return () => {
+      console.log(
+        "[RENDERER] Cleaning up auth callback listener in useAuthCallback.",
+      );
+      removeListener();
     };
-
-    restoreSession();
-  }, [validateToken]);
-
-  return {
-    session,
-    login,
-    logout,
-    loading,
-    error,
-    isAuthenticated: !!session?.isValid,
-  };
+    // Ensure onAuthResult is stable or memoized if included, otherwise an empty array is often preferred if the setup truly doesn't change.
+    // For simplicity and if onAuthResult from AuthProvider is stable (wrapped in useCallback with empty deps), this is okay.
+  }, [onAuthResult]);
 }
