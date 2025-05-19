@@ -6,9 +6,7 @@ import { useTRPC } from "@repo/trpc-client/trpc-react-provider";
 
 export function FetchSecretTest() {
   const trpc = useTRPC();
-  const { data, isLoading } = useQuery(
-    trpc.app.auth.randomSecret.queryOptions(),
-  );
+  const { data, isLoading } = useQuery(trpc.app.auth.getSession.queryOptions());
   if (isLoading) return <div>Loading...</div>;
-  return <div>{data}</div>;
+  return <div>{data?.user.id}</div>;
 }

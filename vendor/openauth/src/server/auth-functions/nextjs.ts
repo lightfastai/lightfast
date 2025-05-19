@@ -105,3 +105,82 @@ export const login = async () => {
   );
   redirect(url);
 };
+
+export const authFromRequest = async (
+  req: Request,
+): Promise<UserSession | null> => {
+  const headers = new Headers(req.headers);
+
+  // Check source to determine where to get tokens from
+  const source = headers.get("x-trpc-source");
+
+  let accessToken: string | null = null;
+  let refreshToken: string | null = null;
+
+  if (source === "electron-react") {
+    // For Electron, tokens are in custom headers
+    accessToken = headers.get("x-access-token");
+    refreshToken = headers.get("x-refresh-token");
+    console.log("Using electron auth headers");
+  } else {
+    // For Next.js, tokens are in cookies
+    const cookieHeader = headers.get("cookie");
+
+    if (!cookieHeader) {
+      console.log("No cookies found");
+      return null;
+    }
+
+    // Parse cookies from the cookie header
+    const cookies = parseCookies(cookieHeader);
+
+    accessToken = cookies[getCookieName("openauth.access-token")] ?? null;
+    refreshToken = cookies[getCookieName("openauth.refresh-token")] ?? null;
+  }
+
+  if (!accessToken) {
+    console.log("No access token found");
+    return null;
+  }
+
+  const verified = await client.verify(authSubjects, accessToken, {
+    refresh: refreshToken ?? undefined,
+  });
+
+  if (verified.err) {
+    console.log("Error verifying token", verified.err);
+    return null;
+  }
+
+  if (verified.tokens) {
+    console.log(
+      "Setting tokens",
+      verified.tokens.access,
+      verified.tokens.refresh,
+    );
+    await setTokens(verified.tokens.access, verified.tokens.refresh);
+  }
+
+  return {
+    type: $SessionType.Enum.user,
+    user: {
+      id: verified.subject.properties.id,
+      accessToken: accessToken,
+      refreshToken: refreshToken ?? "",
+    },
+  };
+};
+
+// Helper function to parse cookies from header
+function parseCookies(cookieHeader: string): Record<string, string> {
+  return cookieHeader
+    .split(";")
+    .map((cookie) => cookie.trim().split("="))
+    .reduce(
+      (cookies, [key, value]) => {
+        cookies[key] = decodeURIComponent(value);
+        return cookies;
+      },
+      {} as Record<string, string>,
+    );
+}

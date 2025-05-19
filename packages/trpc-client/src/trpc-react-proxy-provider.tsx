@@ -7,7 +7,15 @@ import type { AppRouter } from "@vendor/trpc";
 import { createQueryClient } from "./trpc-react-query-client";
 
 export const queryClient = createQueryClient();
-export const createTRPCOptionsProxyWrapper = ({ url }: { url: string }) =>
+export const createTRPCOptionsProxyWrapper = ({
+  url,
+  accessToken,
+  refreshToken,
+}: {
+  url: string;
+  accessToken: string;
+  refreshToken: string;
+}) =>
   createTRPCOptionsProxy<AppRouter>({
     client: createTRPCClient({
       links: [
@@ -21,13 +29,19 @@ export const createTRPCOptionsProxyWrapper = ({ url }: { url: string }) =>
           transformer: SuperJSON,
           url: `${url}/api/trpc`,
           headers() {
-            const headers = new Map<string, string>();
+            const headers = new Headers();
             headers.set("x-trpc-source", "electron-react");
-
+            headers.set("x-access-token", accessToken);
+            headers.set("x-refresh-token", refreshToken);
             //   const token = getToken();
             //   if (token) headers.set("Authorization", `Bearer ${token}`);
-
-            return Object.fromEntries(headers);
+            return headers;
+          },
+          fetch(url, options) {
+            return fetch(url, {
+              ...options,
+              credentials: "include",
+            });
           },
         }),
       ],
