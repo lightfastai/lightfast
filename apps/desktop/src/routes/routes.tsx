@@ -1,5 +1,6 @@
 import { createRoute, redirect } from "@tanstack/react-router";
 
+import { getTokenElectronHandler } from "../helpers/auth-helpers";
 import { ComposerRootRoute } from "./__root";
 import ComposerPageExisting from "./pages/composer-page-existing";
 import ComposerPageNew from "./pages/composer-page-new";
@@ -13,8 +14,8 @@ export const LoginRoute = createRoute({
 
 // Auth guard for protected routes
 async function authGuard() {
-  // Check for access token instead of auth_code
-  const accessToken = window.localStorage.getItem("auth_access_token");
+  // Get access token from cookies
+  const { accessToken } = getTokenElectronHandler();
   console.log("Auth guard check:", { accessToken: !!accessToken });
   if (!accessToken) {
     console.log("No access token found, redirecting to login");
