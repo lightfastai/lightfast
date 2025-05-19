@@ -10,12 +10,16 @@ import {
 } from "@repo/ui/components/ui/tooltip";
 
 export function LogoutButton() {
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const router = useRouter();
   const handleLogout = () => {
     console.log("Logging out...");
     logout();
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Tooltip>
