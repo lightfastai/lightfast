@@ -7,16 +7,24 @@ import {
   useState,
 } from "react";
 
+// Cookies will be managed by auth-helpers, so direct import might not be needed here
+// import Cookies from "js-cookie";
+
 import { $SessionType, UserSession } from "@vendor/openauth";
 
 import {
   clearTokensElectronHandler,
   getTokenElectronHandler,
+  setTokensElectronHandler,
+  // Cookie name constants are used internally by auth-helpers, no need to import them here
+  // ACCESS_TOKEN_COOKIE_NAME,
+  // REFRESH_TOKEN_COOKIE_NAME,
 } from "../helpers/auth-helpers";
 import { client, useAuthCallback } from "../hooks/use-auth";
 
 interface InternalAuthSession extends UserSession {
   isValid?: boolean;
+  expiresIn?: number;
 }
 
 interface AuthContextType {
@@ -113,11 +121,21 @@ export function LightfastElectronAuthProvider({
           : null,
       });
 
+      if (newSession?.user?.accessToken) {
+        // Use auth-helper to set tokens (handles cookies and potentially other stores)
+        setTokensElectronHandler(
+          newSession.user.accessToken,
+          newSession.user.refreshToken || "",
+          newSession.expiresIn || 3600, // Default to 1 hour if not provided
+        );
+      } else {
+        // Use auth-helper to clear tokens
+        clearTokensElectronHandler();
+      }
+
       setSession(newSession);
       setError(newError);
       setLoading(false);
-
-      // No navigation here - will be handled by the route component
     },
     [],
   );
@@ -128,10 +146,8 @@ export function LightfastElectronAuthProvider({
   const login = useCallback(async () => {
     setLoading(true);
     setError(null);
-
-    // Debug logging
-    console.log("Auth URL:", authBaseUrl);
-    console.log("Redirect URI:", redirectUri);
+    // Use auth-helper to clear tokens before new login attempt
+    clearTokensElectronHandler();
 
     if (!authBaseUrl) {
       setError("Missing VITE_AUTH_APP_URL environment variable");
@@ -146,19 +162,10 @@ export function LightfastElectronAuthProvider({
     }
 
     try {
-      // Clear any existing tokens before starting a new login
-      clearTokensElectronHandler();
-
-      // Also clear session state
+      // ensure session state is also cleared
       setSession(null);
-
-      // Generate authorization URL directly using OpenAuth client
       const { url: authUrl } = await client.authorize(redirectUri, "code");
-      console.log("Full auth URL:", authUrl);
-
-      // Open the auth URL in the user's browser
       await window.electron.shell.openExternal(authUrl);
-      console.log("Browser open request sent");
     } catch (err: any) {
       console.error("Failed to start auth flow:", err);
       setError("Failed to start auth flow: " + (err?.message || String(err)));
@@ -166,22 +173,24 @@ export function LightfastElectronAuthProvider({
     }
   }, [authBaseUrl, redirectUri]);
 
-  // Logout function
   const logout = useCallback(() => {
     console.log("Logging out - clearing tokens and session");
+    // Use auth-helper to clear tokens
     clearTokensElectronHandler();
     setSession(null);
-    // Navigation is handled by the route component
   }, []);
 
-  // On mount, restore and validate session from cookies
   useEffect(() => {
     const restoreSession = async () => {
-      console.log("Attempting to restore session from cookies");
+      console.log("Attempting to restore session using auth-helpers");
+      // getTokenElectronHandler already checks cookies via auth-helpers
       const { accessToken, refreshToken } = getTokenElectronHandler();
 
+      console.log("Tokens found via getTokenElectronHandler:", {
+        hasAccessToken: !!accessToken,
+      });
+
       if (accessToken) {
-        console.log("Found access token in cookies, validating...");
         try {
           setLoading(true);
           const verified = await validateToken(
@@ -201,24 +210,30 @@ export function LightfastElectronAuthProvider({
             },
             type: $SessionType.Enum.user,
             isValid: true,
+            expiresIn: verified.tokens?.expiresIn,
           };
 
-          console.log("Session restored successfully:", validatedSession);
+          // Update tokens using auth-helper with potentially refreshed tokens
+          setTokensElectronHandler(
+            validatedSession.user.accessToken,
+            validatedSession.user.refreshToken,
+            validatedSession.expiresIn || 3600, // Default to 1 hour
+          );
+
           setSession(validatedSession);
         } catch (error) {
           console.error("Session restoration failed:", error);
-          // Clear invalid tokens
+          // Use auth-helper to clear tokens on failure
           clearTokensElectronHandler();
           setSession(null);
         } finally {
           setLoading(false);
         }
       } else {
-        console.log("No access token found in cookies");
+        console.log("No access token found by getTokenElectronHandler");
         setLoading(false);
       }
     };
-
     restoreSession();
   }, [authBaseUrl]);
 

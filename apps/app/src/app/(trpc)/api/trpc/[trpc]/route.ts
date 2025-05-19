@@ -9,15 +9,15 @@ import { appRouter, createTRPCContext } from "@vendor/trpc";
  * You should extend this to match your needs
  */
 const setCorsHeaders = (res: Response) => {
-  // res.headers.set("Access-Control-Allow-Origin", "*");
-  // res.headers.set("Access-Control-Request-Method", "*");
-  // res.headers.set("Access-Control-Allow-Methods", "OPTIONS, GET, POST");
-  // res.headers.set("Access-Control-Allow-Headers", "*");
+  // Allow requests from any origin during development
+  // For production, restrict this to your app's domain(s)
   res.headers.set("Access-Control-Allow-Origin", "*");
-  res.headers.set("Access-Control-Request-Method", "*");
-  res.headers.set("Access-Control-Allow-Methods", "OPTIONS, GET");
-  res.headers.set("Access-Control-Allow-Headers", "content-type");
-  res.headers.set("Referrer-Policy", "no-referrer");
+  res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  // Ensure all headers used by your tRPC client are listed here
+  res.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, x-lightfast-trpc-source, x-lightfast-trpc-access-token, x-lightfast-trpc-refresh-token",
+  );
   res.headers.set("Access-Control-Allow-Credentials", "true");
 };
 

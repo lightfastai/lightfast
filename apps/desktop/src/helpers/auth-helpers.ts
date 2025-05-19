@@ -3,8 +3,8 @@ import Cookies from "js-cookie";
 import { $SessionType, UserSession } from "@vendor/openauth";
 import { verifyToken } from "@vendor/openauth/server/auth-functions/core";
 
-const ACCESS_TOKEN_COOKIE_NAME = "lightfast.access-token";
-const REFRESH_TOKEN_COOKIE_NAME = "lightfast.refresh-token";
+export const ACCESS_TOKEN_COOKIE_NAME = "lightfast.access-token";
+export const REFRESH_TOKEN_COOKIE_NAME = "lightfast.refresh-token";
 
 export const getSessionFromCookiesElectronHandler =
   async (): Promise<UserSession | null> => {

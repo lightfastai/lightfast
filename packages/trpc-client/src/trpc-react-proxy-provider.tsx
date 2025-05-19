@@ -9,14 +9,21 @@ import { createQueryClient } from "./trpc-react-query-client";
 
 export const queryClient = createQueryClient();
 
+interface TokenProvider {
+  accessToken?: string | null;
+  refreshToken?: string | null;
+}
+
 interface TRPCProxyProviderProps {
   url: string;
   source: TRPCSource;
+  getTokens: () => TokenProvider | Promise<TokenProvider>;
 }
 
 export const createTRPCOptionsProxyWrapper = ({
   url,
   source,
+  getTokens,
 }: TRPCProxyProviderProps) =>
   createTRPCOptionsProxy<AppRouter>({
     client: createTRPCClient({
@@ -30,11 +37,8 @@ export const createTRPCOptionsProxyWrapper = ({
         httpBatchLink({
           transformer: SuperJSON,
           url: `${url}/api/trpc`,
-          headers: () => {
-            // get token from auth provider
-            // change to cookie...
-            const accessToken = localStorage.getItem("auth_access_token");
-            const refreshToken = localStorage.getItem("auth_refresh_token");
+          headers: async () => {
+            const { accessToken, refreshToken } = await getTokens();
 
             const headers = createTRPCHeaders({
               source,
@@ -42,6 +46,7 @@ export const createTRPCOptionsProxyWrapper = ({
               refreshToken: refreshToken ?? undefined,
             });
 
+            console.log("tRPC Request Headers:", headers);
             return headers;
           },
           fetch(url, options) {
