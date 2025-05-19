@@ -10,11 +10,6 @@ import { createQueryClient } from "./trpc-react-query-client";
 
 export const queryClient = createQueryClient();
 
-interface TokenProvider {
-  accessToken?: string | null;
-  refreshToken?: string | null;
-}
-
 interface TRPCProxyProviderProps {
   url: string;
   source: TRPCSource;

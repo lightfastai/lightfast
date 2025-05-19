@@ -24,7 +24,6 @@ import { client, useAuthCallback } from "../hooks/use-auth";
 
 interface InternalAuthSession extends UserSession {
   isValid?: boolean;
-  expiresIn?: number;
 }
 
 interface AuthContextType {
@@ -111,7 +110,7 @@ export function LightfastElectronAuthProvider({
         setTokensElectronHandler(
           newSession.user.accessToken,
           newSession.user.refreshToken || "",
-          newSession.expiresIn || 3600, // Default to 1 hour if not provided
+          newSession.user.expiresIn || 3600, // Default to 1 hour if not provided
         );
       } else {
         // Use auth-helper to clear tokens
