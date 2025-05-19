@@ -124,15 +124,15 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
         version: 11.1.2(@tanstack/react-query@5.74.11(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
       '@vendor/next':
         specifier: workspace:*
         version: link:../../vendor/next
+      '@vendor/openauth':
+        specifier: workspace:^
+        version: link:../../vendor/openauth
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc
@@ -1078,12 +1078,12 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
         version: 11.1.2(@tanstack/react-query@5.74.11(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.2(typescript@5.8.3))(react-dom@18.3.1(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
+      '@vendor/openauth':
+        specifier: workspace:*
+        version: link:../../vendor/openauth
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc
@@ -1615,6 +1615,9 @@ importers:
       react-dom:
         specifier: catalog:react19
         version: 19.1.0(react@19.1.0)
+      zod:
+        specifier: 'catalog:'
+        version: 3.24.3
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
