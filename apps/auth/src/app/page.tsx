@@ -1,10 +1,14 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
-import { auth, login, logout } from "@vendor/openauth/server";
+import {
+  getSessionFromCookiesNextHandler,
+  login,
+  logout,
+} from "@vendor/openauth/server";
 
 export default async function Home() {
-  const userSession = await auth();
+  const userSession = await getSessionFromCookiesNextHandler();
   return (
     <div className="page">
       <main className="main">

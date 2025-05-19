@@ -12,6 +12,8 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
 import type { AppRouter } from "@vendor/trpc";
+import { getTokenFromCookiesNextHandler } from "@vendor/openauth/server";
+import { createTRPCHeaders, TRPCSource } from "@vendor/trpc/headers";
 
 import { env } from "../env";
 import { createQueryClient } from "./trpc-react-query-client";
@@ -30,9 +32,11 @@ const getQueryClient = () => {
 export const { useTRPC, TRPCProvider } = createTRPCContext<AppRouter>();
 
 export function TRPCReactProvider({
+  source,
   children,
   baseUrl = getBaseUrl(),
 }: {
+  source: TRPCSource;
   children: React.ReactNode;
   baseUrl?: string;
 }) {
@@ -49,9 +53,15 @@ export function TRPCReactProvider({
         httpBatchStreamLink({
           transformer: SuperJSON,
           url: `${baseUrl}/api/trpc`,
-          headers() {
-            const headers = new Headers();
-            headers.set("x-trpc-source", "nextjs-react");
+          headers: async () => {
+            // get token from cookies
+            const { accessToken, refreshToken } =
+              await getTokenFromCookiesNextHandler();
+            const headers = createTRPCHeaders({
+              source,
+              accessToken,
+              refreshToken,
+            });
             return headers;
           },
         }),

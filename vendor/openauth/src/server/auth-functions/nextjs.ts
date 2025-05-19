@@ -7,55 +7,57 @@ import type { UserSession } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
 
 import { openauthEnv } from "../../../env";
+import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
+} from "../cookies";
 import { client } from "../root";
-import { authSubjects } from "../subjects";
+import { verifyToken } from "./core";
 
-const getCookieName = (name: string) => {
-  return openauthEnv.NODE_ENV === "production" ? `__Secure-${name}` : name;
-};
+export const getSessionFromCookiesNextHandler =
+  async (): Promise<UserSession | null> => {
+    const cookies = await getCookies();
+    const accessToken = cookies.get(ACCESS_TOKEN_COOKIE_NAME);
+    const refreshToken = cookies.get(REFRESH_TOKEN_COOKIE_NAME);
 
-export const auth = async (): Promise<UserSession | null> => {
-  const cookies = await getCookies();
-  const accessToken = cookies.get(getCookieName("openauth.access-token"));
-  const refreshToken = cookies.get(getCookieName("openauth.refresh-token"));
+    if (!accessToken) {
+      console.log("No access token found");
+      return null;
+    }
 
-  if (!accessToken) {
-    console.log("No access token found");
-    return null;
-  }
+    const verified = await verifyToken(accessToken.value, refreshToken?.value);
 
-  const verified = await client.verify(authSubjects, accessToken.value, {
-    refresh: refreshToken?.value,
-  });
+    if (verified.err) {
+      console.log("Error verifying token", verified.err);
+      return null;
+    }
 
-  if (verified.err) {
-    console.log("Error verifying token", verified.err);
-    return null;
-  }
+    if (verified.tokens) {
+      console.log(
+        "Setting tokens",
+        verified.tokens.access,
+        verified.tokens.refresh,
+      );
+      await setTokensNextHandler(
+        verified.tokens.access,
+        verified.tokens.refresh,
+      );
+    }
 
-  if (verified.tokens) {
-    console.log(
-      "Setting tokens",
-      verified.tokens.access,
-      verified.tokens.refresh,
-    );
-    await setTokens(verified.tokens.access, verified.tokens.refresh);
-  }
-
-  return {
-    type: $SessionType.Enum.user,
-    user: {
-      id: verified.subject.properties.id,
-      accessToken: accessToken.value,
-      refreshToken: refreshToken?.value ?? "",
-    },
+    return {
+      type: $SessionType.Enum.user,
+      user: {
+        id: verified.subject.properties.id,
+        accessToken: accessToken.value,
+        refreshToken: refreshToken?.value ?? "",
+      },
+    };
   };
-};
 
-export const setTokens = async (access: string, refresh: string) => {
+export const setTokensNextHandler = async (access: string, refresh: string) => {
   const cookies = await getCookies();
   cookies.set({
-    name: getCookieName("openauth.access-token"),
+    name: ACCESS_TOKEN_COOKIE_NAME,
     value: access,
     httpOnly: true,
     sameSite: "lax",
@@ -64,7 +66,7 @@ export const setTokens = async (access: string, refresh: string) => {
     secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
   cookies.set({
-    name: getCookieName("openauth.refresh-token"),
+    name: REFRESH_TOKEN_COOKIE_NAME,
     value: refresh,
     httpOnly: true,
     sameSite: "lax",
@@ -74,24 +76,38 @@ export const setTokens = async (access: string, refresh: string) => {
   });
 };
 
+export const getTokenFromCookiesNextHandler = async (): Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> => {
+  const cookies = await getCookies();
+  const accessToken = cookies.get(ACCESS_TOKEN_COOKIE_NAME);
+  const refreshToken = cookies.get(REFRESH_TOKEN_COOKIE_NAME);
+  return {
+    accessToken: accessToken?.value ?? "",
+    refreshToken: refreshToken?.value ?? "",
+  };
+};
+
 export const logout = async () => {
   const cookies = await getCookies();
-  cookies.delete(getCookieName("openauth.access-token"));
-  cookies.delete(getCookieName("openauth.refresh-token"));
+  cookies.delete(ACCESS_TOKEN_COOKIE_NAME);
+  cookies.delete(REFRESH_TOKEN_COOKIE_NAME);
   redirect("/");
 };
 
 export const login = async () => {
   const cookies = await getCookies();
-  const accessToken = cookies.get(getCookieName("openauth.access-token"));
-  const refreshToken = cookies.get(getCookieName("openauth.refresh-token"));
+  const accessToken = cookies.get(ACCESS_TOKEN_COOKIE_NAME);
+  const refreshToken = cookies.get(REFRESH_TOKEN_COOKIE_NAME);
 
   if (accessToken) {
-    const verified = await client.verify(authSubjects, accessToken.value, {
-      refresh: refreshToken?.value,
-    });
+    const verified = await verifyToken(accessToken.value, refreshToken?.value);
     if (!verified.err && verified.tokens) {
-      await setTokens(verified.tokens.access, verified.tokens.refresh);
+      await setTokensNextHandler(
+        verified.tokens.access,
+        verified.tokens.refresh,
+      );
       redirect("/");
     }
   }
@@ -106,59 +122,29 @@ export const login = async () => {
   redirect(url);
 };
 
-export const authFromRequest = async (
-  req: Request,
+export const getSessionFromExternalRequest = async (
+  headers: Headers,
 ): Promise<UserSession | null> => {
-  const headers = new Headers(req.headers);
+  // For desktop app, tokens are in custom headers
+  const accessToken = headers.get("x-lightfast-trpc-access-token");
+  const refreshToken = headers.get("x-lightfast-trpc-refresh-token");
 
-  // Check source to determine where to get tokens from
-  const source = headers.get("x-trpc-source");
-
-  let accessToken: string | null = null;
-  let refreshToken: string | null = null;
-
-  if (source === "electron-react") {
-    // For Electron, tokens are in custom headers
-    accessToken = headers.get("x-access-token");
-    refreshToken = headers.get("x-refresh-token");
-    console.log("Using electron auth headers");
-  } else {
-    // For Next.js, tokens are in cookies
-    const cookieHeader = headers.get("cookie");
-
-    if (!cookieHeader) {
-      console.log("No cookies found");
-      return null;
-    }
-
-    // Parse cookies from the cookie header
-    const cookies = parseCookies(cookieHeader);
-
-    accessToken = cookies[getCookieName("openauth.access-token")] ?? null;
-    refreshToken = cookies[getCookieName("openauth.refresh-token")] ?? null;
-  }
+  console.log(
+    "Using lightfast-desktop auth headers",
+    accessToken,
+    refreshToken,
+  );
 
   if (!accessToken) {
     console.log("No access token found");
     return null;
   }
 
-  const verified = await client.verify(authSubjects, accessToken, {
-    refresh: refreshToken ?? undefined,
-  });
+  const verified = await verifyToken(accessToken, refreshToken ?? undefined);
 
   if (verified.err) {
     console.log("Error verifying token", verified.err);
     return null;
-  }
-
-  if (verified.tokens) {
-    console.log(
-      "Setting tokens",
-      verified.tokens.access,
-      verified.tokens.refresh,
-    );
-    await setTokens(verified.tokens.access, verified.tokens.refresh);
   }
 
   return {
@@ -170,17 +156,3 @@ export const authFromRequest = async (
     },
   };
 };
-
-// Helper function to parse cookies from header
-function parseCookies(cookieHeader: string): Record<string, string> {
-  return cookieHeader
-    .split(";")
-    .map((cookie) => cookie.trim().split("="))
-    .reduce(
-      (cookies, [key, value]) => {
-        cookies[key] = decodeURIComponent(value);
-        return cookies;
-      },
-      {} as Record<string, string>,
-    );
-}

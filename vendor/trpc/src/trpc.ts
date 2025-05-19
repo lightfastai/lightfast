@@ -12,31 +12,42 @@ import { ZodError } from "zod";
 
 import type { Session } from "@vendor/openauth";
 import { db } from "@vendor/db/client";
-import { $SessionType, authSubjects } from "@vendor/openauth";
-import { auth, client } from "@vendor/openauth/server";
+import { $SessionType } from "@vendor/openauth";
+import {
+  getSessionFromCookiesNextHandler,
+  verifyToken,
+} from "@vendor/openauth/server";
+
+import { $TRPCHeaderName, getHeaderFromTRPCHeaders } from "./headers";
 
 /**
  * Isomorphic Session getter for API requests
- * - Expo requests will have a session token in the Authorization header
- * - Next.js requests will have a session token in cookies
+ * - Works for both Next.JS and non-Next.JS requests through the Headers object
  */
 const isomorphicGetSession = async (
   headers: Headers,
 ): Promise<Session | null> => {
-  const accessToken = headers.get("x-access-token") ?? null;
+  const accessToken = getHeaderFromTRPCHeaders(
+    headers,
+    $TRPCHeaderName.Enum["x-lightfast-trpc-access-token"],
+  );
+  const refreshToken = getHeaderFromTRPCHeaders(
+    headers,
+    $TRPCHeaderName.Enum["x-lightfast-trpc-refresh-token"],
+  );
   if (accessToken) {
-    const verified = await client.verify(authSubjects, accessToken);
+    const verified = await verifyToken(accessToken, refreshToken ?? undefined);
     if (verified.err) return null;
     return {
       type: $SessionType.Enum.user,
       user: {
         id: verified.subject.properties.id,
         accessToken,
-        refreshToken: verified.tokens?.refresh ?? "",
+        refreshToken: refreshToken ?? "",
       },
     };
   }
-  return auth();
+  return getSessionFromCookiesNextHandler();
 };
 
 /**
@@ -60,7 +71,10 @@ export const createTRPCContext = async (opts: {
 }> => {
   const userSession = await isomorphicGetSession(opts.headers);
 
-  const source = opts.headers.get("x-trpc-source") ?? "unknown";
+  const source = getHeaderFromTRPCHeaders(
+    opts.headers,
+    $TRPCHeaderName.Enum["x-lightfast-trpc-source"],
+  );
 
   if (!userSession) {
     console.info(`>>> tRPC Request from ${source} by unknown`);
