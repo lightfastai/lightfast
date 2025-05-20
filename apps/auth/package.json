@@ -1,0 +1,50 @@
+{
+  "name": "@lightfast/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm with-env next build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules .env.sentry-build-plugin .clerk",
+    "dev:auth": "PORT=3001 pnpm with-env  bun run --hot src/auth/index.ts",
+    "dev": "pnpm with-env next dev -p 4102",
+    "analyze": "ANALYZE=true pnpm with-env next build",
+    "format": "prettier --check . --ignore-path ../../../.gitignore",
+    "lint": "eslint",
+    "start": "pnpm with-env next start",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --",
+    "db:migrate": "pnpm with-env drizzle-kit migrate --config=./src/db/drizzle.config.ts",
+    "db:generate": "pnpm with-env drizzle-kit generate --config=./src/db/drizzle.config.ts"
+  },
+  "dependencies": {
+    "@repo/lightfast-config": "workspace:^",
+    "@repo/lightfast-email": "workspace:*",
+    "@repo/trpc-client": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@vendor/db": "workspace:^",
+    "@vendor/email": "workspace:*",
+    "@vendor/observability": "workspace:*",
+    "@vendor/openauth": "workspace:*",
+    "@vendor/trpc": "workspace:*",
+    "next": "catalog:",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "valibot": "^1.0.0-beta.11"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "autoprefixer": "^10.4.20",
+    "dotenv-cli": "^7.4.2",
+    "eslint": "catalog:",
+    "jiti": "^1.21.6",
+    "postcss": "catalog:tailwind4",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

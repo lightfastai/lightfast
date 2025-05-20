@@ -2,15 +2,13 @@ import type { Metadata, Viewport } from "next";
 
 import "@repo/ui/globals.css";
 
-import { ClerkProvider } from "@clerk/nextjs";
-
+import { siteConfig } from "@repo/lightfast-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
-import { siteConfig } from "~/config/site";
 import { createBaseUrl } from "~/lib/base-url";
 
 export const metadata: Metadata = {
@@ -20,7 +18,15 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL(siteConfig.url),
   description: siteConfig.description,
-  keywords: ["Lightfast", "AI", "Design", "WebGL", "Blender"],
+  keywords: [
+    "Lightfast",
+    "AI",
+    "Design",
+    "Blender",
+    "Unreal Engine",
+    "Ableton",
+    "MCP",
+  ],
   authors: [
     {
       name: siteConfig.name,
@@ -91,20 +97,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider waitlistUrl="/">
-      <html lang="en" suppressHydrationWarning>
-        <head />
-        <body className={cn("dark bg-background min-h-screen", fonts)}>
-          <PostHogProvider baseUrl={createBaseUrl()}>
-            <div className="bg-background relative flex min-h-screen flex-col">
-              {children}
-            </div>
-            <Toaster />
-            <VercelAnalytics />
-            <SpeedInsights />
-          </PostHogProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body className={cn("dark bg-background min-h-screen", fonts)}>
+        <PostHogProvider baseUrl={createBaseUrl()}>
+          <div className="bg-background relative flex min-h-screen flex-col">
+            {children}
+          </div>
+          <Toaster />
+          <VercelAnalytics />
+          <SpeedInsights />
+        </PostHogProvider>
+      </body>
+    </html>
   );
 }

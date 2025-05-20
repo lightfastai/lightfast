@@ -1,93 +1,11 @@
 {
-  "id": "d0d099f8-1ff8-428d-bf95-2340471a376b",
-  "prevId": "9a410d94-7b7a-4da6-98b8-bb3d1c2238a3",
+  "id": "0dd42c4e-f410-4544-abef-e4cafc932398",
+  "prevId": "ed24ce27-dc21-48b9-b3f6-aeda42adb22e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.edge": {
-      "name": "edge",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "source": {
-          "name": "source",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target": {
-          "name": "target",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source_handle": {
-          "name": "source_handle",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_handle": {
-          "name": "target_handle",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "edge_source_node_id_fk": {
-          "name": "edge_source_node_id_fk",
-          "tableFrom": "edge",
-          "tableTo": "node",
-          "columnsFrom": [
-            "source"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "edge_target_node_id_fk": {
-          "name": "edge_target_node_id_fk",
-          "tableFrom": "edge",
-          "tableTo": "node",
-          "columnsFrom": [
-            "target"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "public.node": {
-      "name": "node",
+    "public.session": {
+      "name": "session",
       "schema": "",
       "columns": {
         "id": {
@@ -102,23 +20,19 @@
           "primaryKey": false,
           "notNull": true
         },
-        "type": {
-          "name": "type",
-          "type": "varchar(50)",
+        "title": {
+          "name": "title",
+          "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'New Chat'"
         },
-        "position": {
-          "name": "position",
+        "messages": {
+          "name": "messages",
           "type": "json",
           "primaryKey": false,
-          "notNull": true
-        },
-        "data": {
-          "name": "data",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": "'[]'::json"
         },
         "created_at": {
           "name": "created_at",
@@ -131,14 +45,15 @@
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "node_workspace_id_workspace_id_fk": {
-          "name": "node_workspace_id_workspace_id_fk",
-          "tableFrom": "node",
+        "session_workspace_id_workspace_id_fk": {
+          "name": "session_workspace_id_workspace_id_fk",
+          "tableFrom": "session",
           "tableTo": "workspace",
           "columnsFrom": [
             "workspace_id"
@@ -152,65 +67,9 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "public.user": {
-      "name": "user",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "clerk_id": {
-          "name": "clerk_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email_address": {
-          "name": "email_address",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "user_clerkId_unique": {
-          "name": "user_clerkId_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "clerk_id"
-          ]
-        },
-        "user_emailAddress_unique": {
-          "name": "user_emailAddress_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email_address"
-          ]
-        }
-      },
-      "checkConstraints": {}
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.workspace": {
       "name": "workspace",
@@ -241,38 +100,22 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "workspace_user_id_user_id_fk": {
-          "name": "workspace_user_id_user_id_fk",
-          "tableFrom": "workspace",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {},
   "schemas": {},
   "sequences": {},
+  "roles": {},
+  "policies": {},
   "views": {},
   "_meta": {
     "columns": {},
