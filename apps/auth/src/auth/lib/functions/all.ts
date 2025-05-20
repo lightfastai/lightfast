@@ -75,9 +75,7 @@ export const fetchUserByEmailUnsafe = async (
   email: string,
 ): Promise<User> => {
   try {
-    console.log(`Fetching user by email: ${email}`);
     const user = await trpc.tenant.user.getByEmail({ email: email });
-    console.log(`User found for email: ${email}`);
     return user;
   } catch (error) {
     if (error instanceof TRPCError) {
