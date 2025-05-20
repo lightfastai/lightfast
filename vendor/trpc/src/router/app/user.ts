@@ -20,15 +20,35 @@ export const userRouter = {
     .mutation(async ({ ctx, input }) => {
       const lowercaseEmail = input.email.toLowerCase();
 
-      const [existingUser] = await ctx.db
-        .select()
-        .from(User)
-        .where(eq(User.email, lowercaseEmail));
+      try {
+        const [existingUser] = await ctx.db
+          .select()
+          .from(User)
+          .where(eq(User.email, lowercaseEmail));
 
-      if (existingUser) {
+        if (existingUser) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "A user with this email address already exists.",
+          });
+        }
+      } catch (error) {
+        // Log the error for server-side debugging
+        console.error(
+          `Database error while checking for existing user ${lowercaseEmail}:`,
+          error,
+        );
+        // If it's already a TRPCError that we threw (e.g., CONFLICT from within this block, though unlikely here),
+        // rethrow it. More likely, this catches unexpected DB errors during the select.
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        // For other types of errors, throw a generic internal server error
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "A user with this email address already exists.",
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            "An unexpected error occurred while checking user existence.",
+          // cause: process.env.NODE_ENV === 'development' ? error : undefined,
         });
       }
 

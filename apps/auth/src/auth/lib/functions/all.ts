@@ -75,7 +75,9 @@ export const fetchUserByEmailUnsafe = async (
   email: string,
 ): Promise<User> => {
   try {
-    const user = await trpc.tenant.user.getByEmail({ email });
+    console.log(`Fetching user by email: ${email}`);
+    const user = await trpc.tenant.user.getByEmail({ email: email });
+    console.log(`User found for email: ${email}`);
     return user;
   } catch (error) {
     if (error instanceof TRPCError) {
@@ -121,58 +123,6 @@ export const createUserUnsafe = async (
   }
 };
 
-/**
- * Attempts to get a user by email. If not found, attempts to create the user.
- * If creation conflicts, attempts to fetch the user again.
- * Throws specific errors on failure at any step.
- */
-export const getOrCreateUserUnsafe = async (
-  trpc: TRPCPureServerProvider,
-  email: string,
-): Promise<User> => {
-  try {
-    return await fetchUserByEmailUnsafe(trpc, email);
-  } catch (fetchError) {
-    if (fetchError instanceof UserNotFoundError) {
-      // User not found, try to create them
-      try {
-        return await createUserUnsafe(trpc, email);
-      } catch (createError) {
-        if (createError instanceof UserCreationConflictError) {
-          // Creation conflicted, user was likely created concurrently. Try fetching again.
-          try {
-            return await fetchUserByEmailUnsafe(trpc, email);
-          } catch (postConflictFetchError) {
-            // If the second get fails, something is seriously wrong.
-            console.error(
-              `Failed to get user ${email} after conflict:`,
-              postConflictFetchError,
-            );
-            throw new UserFetchError(
-              `Failed to retrieve user ${email} after conflict during creation.`,
-              postConflictFetchError,
-            );
-          }
-        }
-        // Creation failed for a reason other than CONFLICT
-        console.error(`Failed to create user ${email}:`, createError);
-        if (createError instanceof UserCreationError) throw createError;
-        throw new UserCreationError( // Ensure it's always a UserCreationError
-          `Failed to create user ${email}.`,
-          createError,
-        );
-      }
-    }
-    // Initial getByEmail failed for a reason other than NOT_FOUND
-    console.error(`Failed to get user by email ${email}:`, fetchError);
-    if (fetchError instanceof UserFetchError) throw fetchError;
-    throw new UserFetchError( // Ensure it's always a UserFetchError
-      `Failed to retrieve user information for ${email}.`,
-      fetchError,
-    );
-  }
-};
-
 // --- Safe Operations ---
 
 export const fetchUserByEmailSafe = (
@@ -213,32 +163,6 @@ export const createUserSafe = (trpc: TRPCPureServerProvider, email: string) =>
         error instanceof Error
           ? error.message
           : "Unknown error while creating user.",
-        error,
-      );
-    },
-  );
-
-export const getOrCreateUserSafe = (
-  trpc: TRPCPureServerProvider,
-  email: string,
-) =>
-  ResultAsync.fromPromise(
-    getOrCreateUserUnsafe(trpc, email),
-    (error): UserOperationError => {
-      if (
-        error instanceof UserNotFoundError ||
-        error instanceof UserCreationConflictError ||
-        error instanceof UserCreationError ||
-        error instanceof UserFetchError ||
-        error instanceof UserIndeterminateStateError
-      ) {
-        return error;
-      }
-      console.error("Unknown error in getOrCreateUserSafe:", error);
-      return new UserUnknownError(
-        error instanceof Error
-          ? error.message
-          : `Unknown error during get/create process for ${email}.`,
         error,
       );
     },
