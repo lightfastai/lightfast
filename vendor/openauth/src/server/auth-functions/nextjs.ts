@@ -7,9 +7,14 @@ import type { Token, UserSession } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
 
 import { openauthEnv } from "../../../env";
-import { getCookieName } from "../cookies";
 import { client } from "../root";
 import { verifyToken } from "./core";
+
+const getCookieName = (name: string) => {
+  return openauthEnv.NODE_ENV === "production"
+    ? `_Secure-${name}_${openauthEnv.NODE_ENV}`
+    : name;
+};
 
 const ACCESS_TOKEN_COOKIE_NAME = getCookieName("lightfast.access-token");
 const REFRESH_TOKEN_COOKIE_NAME = getCookieName("lightfast.refresh-token");
@@ -46,7 +51,7 @@ export const getSessionFromCookiesNextHandler =
         id: verified.subject.properties.id,
         accessToken: accessToken.value,
         refreshToken: refreshToken?.value ?? "",
-        expiresIn: verified.tokens?.expiresIn,
+        expiresIn: verified.tokens?.expiresIn ?? 1000 * 60 * 60 * 24 * 30,
       },
     };
   };
@@ -64,7 +69,7 @@ export const setTokensNextHandler = async (
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    maxAge: expiresIn,
+    expires: expiresIn,
     secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
   cookies.set({
@@ -73,7 +78,7 @@ export const setTokensNextHandler = async (
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    maxAge: expiresIn,
+    expires: expiresIn,
     secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
 };
@@ -85,6 +90,7 @@ export const getTokenFromCookiesNextHandler = async (): Promise<Token> => {
   return {
     accessToken: accessToken?.value ?? "",
     refreshToken: refreshToken?.value ?? "",
+    expiresIn: 1000 * 60 * 60 * 24 * 30,
   };
 };
 
@@ -154,6 +160,7 @@ export const getSessionFromExternalRequest = async (
       id: verified.subject.properties.id,
       accessToken: accessToken,
       refreshToken: refreshToken ?? "",
+      expiresIn: verified.tokens?.expiresIn ?? 1000 * 60 * 60 * 24 * 30,
     },
   };
 };

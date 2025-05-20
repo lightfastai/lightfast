@@ -10,7 +10,8 @@
     },
     "./lightfast/schema": "./src/lightfast/schema/index.ts",
     "./client": "./src/client.ts",
-    "./env": "./env.ts"
+    "./env": "./env.ts",
+    "./create-db-client": "./src/utils/create-db-client.ts"
   },
   "license": "MIT",
   "scripts": {

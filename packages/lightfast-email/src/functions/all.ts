@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import { ResultAsync } from "neverthrow";
 
+import type { createEmailClient } from "@vendor/email";
 import type {
   CreateContactOptions,
   CreateContactResponseSuccess,
@@ -8,12 +9,8 @@ import type {
   CreateEmailResponseSuccess,
 } from "@vendor/email/types";
 import { emailConfig } from "@repo/lightfast-config";
-import { createEmailClient } from "@vendor/email";
-import { env } from "@vendor/email/env";
 
 import { RESEND_AUDIENCES_ID_MAPPING } from "../constants";
-
-export const mail = createEmailClient(env.RESEND_API_KEY);
 
 // Types for Resend error response
 export interface ResendErrorResponse {
@@ -25,21 +22,30 @@ export interface ResendErrorResponse {
   };
 }
 
+interface CreateResendEmailOptions {
+  client: ReturnType<typeof createEmailClient>;
+}
+
 type CreateResendEmailSuccess = Pick<CreateEmailResponseSuccess, "id">;
+
 export type CreateResendContactSuccess = Pick<
   CreateContactResponseSuccess,
   "id"
 >;
+
 export type CreateResendContact = Pick<
   CreateContactOptions,
   "email" | "unsubscribed"
->;
+> &
+  CreateResendEmailOptions;
+
 type CreateResendEmail = Pick<
   CreateEmailOptions,
   "to" | "subject" | "text" | "from"
-> & {
-  react: JSX.Element;
-};
+> &
+  CreateResendEmailOptions & {
+    react: JSX.Element;
+  };
 
 export class ResendError extends Error {
   constructor(
@@ -107,13 +113,15 @@ export type ResendEmailError =
   | ResendUnknownError;
 
 const sendResendEmailUnsafe = async ({
+  client,
+  from,
   react,
   to,
   subject,
   text,
 }: CreateResendEmail): Promise<CreateResendEmailSuccess> => {
-  const response = await mail.emails.send({
-    from: emailConfig.welcome,
+  const response = await client.emails.send({
+    from,
     replyTo: emailConfig.supportReployTo,
     to,
     subject,
@@ -161,7 +169,7 @@ const sendResendEmailUnsafe = async ({
 export const addToWaitlistContactsUnsafe = async (
   contact: CreateResendContact,
 ): Promise<CreateResendContactSuccess> => {
-  const response = await mail.contacts.create({
+  const response = await contact.client.contacts.create({
     audienceId: RESEND_AUDIENCES_ID_MAPPING["early-access"],
     ...contact,
   });
@@ -204,6 +212,7 @@ export const addToWaitlistContactsUnsafe = async (
 };
 
 export const sendResendEmailSafe = ({
+  client,
   from,
   react,
   to,
@@ -211,7 +220,7 @@ export const sendResendEmailSafe = ({
   text,
 }: CreateResendEmail) =>
   ResultAsync.fromPromise(
-    sendResendEmailUnsafe({ from, react, to, subject, text }),
+    sendResendEmailUnsafe({ client, from, react, to, subject, text }),
     (error): ResendEmailError => {
       // If it's already one of our error types, return it
       if (

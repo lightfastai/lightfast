@@ -1,13 +1,8 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-
 import { env } from "../env";
-import * as schema from "./lightfast/schema";
+import { createDbClient } from "./utils/create-db-client";
 
-const client = postgres(env.POSTGRES_URL);
-
-export const db = drizzle({
-  client,
-  schema,
-  casing: "snake_case",
-});
+// This is a singleton database client.
+// It works with process.env defined using t3-oss.
+// If using Cloudflare Workers, this singleton can't be used
+// since we don't have access to process.env.
+export const db = createDbClient(env.POSTGRES_URL);

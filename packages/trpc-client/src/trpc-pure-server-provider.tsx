@@ -1,10 +1,11 @@
-import { db } from "@vendor/db/client";
+import { createDbClient } from "@vendor/db/create-db-client";
 import { $SessionType } from "@vendor/openauth";
-import { createCaller } from "@vendor/trpc";
+import { createServerOnlyCaller } from "@vendor/trpc/callers/server-only";
 
-export const trpc = createCaller({
-  session: {
-    type: $SessionType.Enum.server,
-  },
-  db: db,
-});
+export const createTRPCPureProvider = (dbUrl: string) =>
+  createServerOnlyCaller({
+    session: {
+      type: $SessionType.Enum.server,
+    },
+    db: createDbClient(dbUrl),
+  });

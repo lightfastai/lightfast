@@ -10,12 +10,8 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import type { createDbClient } from "@vendor/db/create-db-client";
 import type { Session } from "@vendor/openauth";
-import { db } from "@vendor/db/client";
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
 import { $SessionType } from "@vendor/openauth";
 import {
   getSessionFromCookiesNextHandler,
@@ -23,34 +19,14 @@ import {
 } from "@vendor/openauth/server";
 
 import { $TRPCHeaderName, getHeaderFromTRPCHeaders } from "./headers";
-<<<<<<< HEAD
 
 /**
  * Isomorphic Session getter for API requests
  * - Works for both Next.JS and non-Next.JS requests through the Headers object
-=======
-import { $SessionType, authSubjects } from "@vendor/openauth";
-import { auth, client } from "@vendor/openauth/server";
-
-/**
- * Isomorphic Session getter for API requests
- * - Expo requests will have a session token in the Authorization header
- * - Next.js requests will have a session token in cookies
->>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
-=======
-
-/**
- * Isomorphic Session getter for API requests
- * - Works for both Next.JS and non-Next.JS requests through the Headers object
->>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
  */
 const isomorphicGetSession = async (
   headers: Headers,
 ): Promise<Session | null> => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
   const accessToken = getHeaderFromTRPCHeaders(
     headers,
     $TRPCHeaderName.Enum["x-lightfast-trpc-access-token"],
@@ -59,45 +35,21 @@ const isomorphicGetSession = async (
     headers,
     $TRPCHeaderName.Enum["x-lightfast-trpc-refresh-token"],
   );
-<<<<<<< HEAD
   if (accessToken) {
     const verified = await verifyToken(accessToken, refreshToken ?? undefined);
-=======
-  const accessToken = headers.get("x-access-token") ?? null;
-  if (accessToken) {
-    const verified = await client.verify(authSubjects, accessToken);
->>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
-=======
-  if (accessToken) {
-    const verified = await verifyToken(accessToken, refreshToken ?? undefined);
->>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
     if (verified.err) return null;
     return {
       type: $SessionType.Enum.user,
       user: {
         id: verified.subject.properties.id,
         accessToken,
-<<<<<<< HEAD
-<<<<<<< HEAD
         refreshToken: refreshToken ?? "",
+        // expiresIn: verified.tokens?.access.expires,
+        expiresIn: 1000 * 60 * 60 * 24 * 30,
       },
     };
   }
   return getSessionFromCookiesNextHandler();
-=======
-        refreshToken: verified.tokens?.refresh ?? "",
-      },
-    };
-  }
-  return auth();
->>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
-=======
-        refreshToken: refreshToken ?? "",
-      },
-    };
-  }
-  return getSessionFromCookiesNextHandler();
->>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
 };
 
 /**
@@ -113,11 +65,12 @@ const isomorphicGetSession = async (
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: {
+  db: ReturnType<typeof createDbClient>;
   headers: Headers;
   session: Session | null;
 }): Promise<{
   session: Session | null;
-  db: typeof db;
+  db: ReturnType<typeof createDbClient>;
 }> => {
   const userSession = await isomorphicGetSession(opts.headers);
 
@@ -136,7 +89,7 @@ export const createTRPCContext = async (opts: {
 
   return {
     session: userSession,
-    db,
+    db: opts.db,
   };
 };
 

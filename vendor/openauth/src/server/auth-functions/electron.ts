@@ -32,6 +32,7 @@ export const getSessionFromCookiesElectronHandler =
         id: verified.subject.properties.id,
         accessToken,
         refreshToken: refreshToken ?? "",
+        expiresIn: verified.tokens?.expiresIn ?? 1000 * 60 * 60 * 24 * 30,
       },
     };
   };
