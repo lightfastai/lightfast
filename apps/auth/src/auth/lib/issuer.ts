@@ -1,7 +1,7 @@
 import type { StorageAdapter } from "@openauthjs/openauth/storage/storage";
 import { issuer as OpenAuthIssuer } from "@openauthjs/openauth";
 import { CodeProvider } from "@openauthjs/openauth/provider/code";
-import { CodeUI } from "@openauthjs/openauth/ui/code";
+import { UnknownStateError } from "sst/auth";
 
 import { emailConfig } from "@repo/lightfast-config";
 import { sendResendEmailSafe } from "@repo/lightfast-email/functions";
@@ -44,32 +44,62 @@ export function createAuthIssuer({
   return OpenAuthIssuer({
     subjects: authSubjects,
     storage,
+    select: async (providers) => {
+      const redirectUrl = new URL(`${"http://localhost:4102"}/auth/select`);
+      redirectUrl.searchParams.set("providers", JSON.stringify(providers));
+      return Response.redirect(redirectUrl.toString(), 302);
+    },
     allow: async () => true,
     providers: {
-      email: CodeProvider(
-        CodeUI({
-          sendCode: async (claims, code) => {
-            const { email } = claims;
-            if (!email) {
-              throw new Error("Email is required");
+      email: CodeProvider({
+        length: 6,
+        sendCode: async (claims, code) => {
+          const { email } = claims;
+          if (!email) {
+            throw new Error("Email is required");
+          }
+          console.log(`Sending code ${code} to email: ${email}`);
+          const result = await sendResendEmailSafe({
+            client: emailClient,
+            from: emailConfig.auth,
+            to: email,
+            subject: "Your Lightfast.ai sign-in code",
+            text: codeEmailText({ code }),
+            react: CodeEmail({ email, code }),
+          });
+          if (result.isErr()) {
+            console.error("Failed to send email:", result.error);
+          } else {
+            console.log("Email sent successfully, ID:", result.value.id);
+          }
+        },
+        async request(_req, state, _form, error) {
+          const params = new URLSearchParams();
+          // we pass the error to the frontend with a query param
+          if (error) {
+            params.set("error", error.type);
+          }
+          if (state.type === "start") {
+            return Response.redirect(
+              `${"http://localhost:4102"}/auth/email?${params.toString()}`,
+              302,
+            );
+          }
+          if (state.type === "code") {
+            params.set("claims", JSON.stringify(state.claims));
+            if (state.resend) {
+              params.set("resend", "true");
             }
-            console.log(`Sending code ${code} to email: ${email}`);
-            const result = await sendResendEmailSafe({
-              client: emailClient,
-              from: emailConfig.auth,
-              to: email,
-              subject: "Your Lightfast.ai sign-in code",
-              text: codeEmailText({ code }),
-              react: CodeEmail({ email, code }),
-            });
-            if (result.isErr()) {
-              console.error("Failed to send email:", result.error);
-            } else {
-              console.log("Email sent successfully, ID:", result.value.id);
-            }
-          },
-        }),
-      ),
+            return Response.redirect(
+              `${"http://localhost:4102"}/auth/code?${params.toString()}`,
+              302,
+            );
+          }
+
+          // OpenAuth throws a UnknownStateError here, so we just mimic it
+          throw new UnknownStateError();
+        },
+      }),
     },
     success: async (ctx, value) => {
       if (value.provider !== "email") {
