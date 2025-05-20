@@ -1748,7 +1748,7 @@ importers:
         specifier: workspace:*
         version: link:../db
       '@vendor/inngest':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../inngest
       '@vendor/observability':
         specifier: workspace:*

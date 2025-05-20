@@ -4,22 +4,20 @@
 export default $config({
   app(input) {
     return {
-      name: "lightfast-auth",
+      name: "lightfast-auth-test",
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "cloudflare",
-      // providers: { cloudflare: "6.2.0" },
     };
   },
   async run() {
-    const env = await import("~/env").then((m) => m.env);
+    const postgresUrlSecret = new sst.Secret("POSTGRES_URL");
+    const resendApiKeySecret = new sst.Secret("RESEND_API_KEY");
     const kv = new sst.cloudflare.Kv("CloudflareAuthKV");
     const auth = new sst.cloudflare.Worker("CloudflareAuth", {
       handler: "src/auth/issuer",
-      link: [kv],
+      link: [kv, postgresUrlSecret, resendApiKeySecret],
       environment: {
-        POSTGRES_URL: env.POSTGRES_URL,
-        RESEND_API_KEY: env.RESEND_API_KEY,
-        // NODE_ENV: env.NODE_ENV,
+        NODE_ENV: process.env.NODE_ENV ?? "development",
       },
       url: true,
     });

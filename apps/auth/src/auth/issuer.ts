@@ -13,9 +13,10 @@ import { createEmailClient } from "@vendor/email";
 import { authSubjects } from "@vendor/openauth";
 
 interface Env {
-  CloudflareAuthKV: KVNamespace;
-  RESEND_API_KEY: string;
-  POSTGRES_URL: string;
+  CloudflareAuthKV: KVNamespace; // KV binding
+  RESEND_API_KEY: string; // Secret linked by SST
+  POSTGRES_URL: string; // Secret linked by SST
+  NODE_ENV: string; // Environment variable set by SST
 }
 
 async function getUserByEmailOrCreate(
@@ -37,8 +38,22 @@ async function getUserByEmailOrCreate(
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    // You can access NODE_ENV like this:
+    console.log(`Running in environment: ${env.NODE_ENV}`);
+
+    // Example: Conditional logic based on environment
+    if (env.NODE_ENV === "staging") {
+      console.log(
+        "This is the staging environment. Special staging logic can go here.",
+      );
+    } else if (env.NODE_ENV === "production") {
+      console.log("This is the production environment.");
+    }
+
+    // Secrets are already being used correctly:
     const emailClient = createEmailClient(env.RESEND_API_KEY);
     const trpc = createTRPCPureProvider(env.POSTGRES_URL);
+
     return issuer({
       subjects: authSubjects,
       storage: CloudflareStorage({

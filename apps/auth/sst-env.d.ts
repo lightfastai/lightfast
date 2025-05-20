@@ -12,6 +12,14 @@ declare module "sst" {
     "CloudflareAuthKV": {
       "type": "sst.cloudflare.Kv"
     }
+    "POSTGRES_URL": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "RESEND_API_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />
