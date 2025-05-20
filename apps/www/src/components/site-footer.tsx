@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Dot } from "lucide-react";
 
-import { Icons } from "~/components/icons";
-import { siteConfig } from "~/config/site";
+import { siteConfig } from "@repo/lightfast-config";
+import { Icons } from "@repo/ui/components/icons";
 
 export function SiteFooter() {
   return (

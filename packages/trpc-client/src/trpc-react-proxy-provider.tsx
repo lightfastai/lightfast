@@ -3,11 +3,24 @@ import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { SuperJSON } from "superjson";
 
 import type { AppRouter } from "@vendor/trpc";
+import { TokenOrNull } from "@vendor/openauth";
+import { createTRPCHeaders, TRPCSource } from "@vendor/trpc/headers";
 
 import { createQueryClient } from "./trpc-react-query-client";
 
 export const queryClient = createQueryClient();
-export const createTRPCOptionsProxyWrapper = ({ url }: { url: string }) =>
+
+interface TRPCProxyProviderProps {
+  url: string;
+  source: TRPCSource;
+  getTokens: () => TokenOrNull | Promise<TokenOrNull>;
+}
+
+export const createTRPCOptionsProxyWrapper = ({
+  url,
+  source,
+  getTokens,
+}: TRPCProxyProviderProps) =>
   createTRPCOptionsProxy<AppRouter>({
     client: createTRPCClient({
       links: [
@@ -20,14 +33,23 @@ export const createTRPCOptionsProxyWrapper = ({ url }: { url: string }) =>
         httpBatchLink({
           transformer: SuperJSON,
           url: `${url}/api/trpc`,
-          headers() {
-            const headers = new Map<string, string>();
-            headers.set("x-trpc-source", "electron-react");
+          headers: async () => {
+            const tokens = await getTokens();
 
-            //   const token = getToken();
-            //   if (token) headers.set("Authorization", `Bearer ${token}`);
+            const headers = createTRPCHeaders({
+              source,
+              accessToken: tokens?.accessToken ?? undefined,
+              refreshToken: tokens?.refreshToken ?? undefined,
+            });
 
-            return Object.fromEntries(headers);
+            console.log("tRPC Request Headers:", headers);
+            return headers;
+          },
+          fetch(url, options) {
+            return fetch(url, {
+              ...options,
+              credentials: "omit",
+            });
           },
         }),
       ],

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { siteConfig } from "~/config/site";
+import { siteConfig } from "@repo/lightfast-config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {

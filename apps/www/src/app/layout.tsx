@@ -4,6 +4,7 @@ import "@repo/ui/globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
 
+import { siteConfig } from "@repo/lightfast-config";
 import { ThemeProvider } from "@repo/ui/components/theme-provider";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
@@ -11,7 +12,6 @@ import { cn } from "@repo/ui/lib/utils";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
-import { siteConfig } from "~/config/site";
 import { createBaseUrl } from "~/lib/base-url";
 
 export const metadata: Metadata = {

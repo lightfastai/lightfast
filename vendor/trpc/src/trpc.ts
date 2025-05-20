@@ -10,9 +10,95 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import type { Session } from "@vendor/clerk/types";
-import { auth } from "@vendor/clerk";
+import type { Session } from "@vendor/openauth";
 import { db } from "@vendor/db/client";
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
+import { $SessionType } from "@vendor/openauth";
+import {
+  getSessionFromCookiesNextHandler,
+  verifyToken,
+} from "@vendor/openauth/server";
+
+import { $TRPCHeaderName, getHeaderFromTRPCHeaders } from "./headers";
+<<<<<<< HEAD
+
+/**
+ * Isomorphic Session getter for API requests
+ * - Works for both Next.JS and non-Next.JS requests through the Headers object
+=======
+import { $SessionType, authSubjects } from "@vendor/openauth";
+import { auth, client } from "@vendor/openauth/server";
+
+/**
+ * Isomorphic Session getter for API requests
+ * - Expo requests will have a session token in the Authorization header
+ * - Next.js requests will have a session token in cookies
+>>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
+=======
+
+/**
+ * Isomorphic Session getter for API requests
+ * - Works for both Next.JS and non-Next.JS requests through the Headers object
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
+ */
+const isomorphicGetSession = async (
+  headers: Headers,
+): Promise<Session | null> => {
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
+  const accessToken = getHeaderFromTRPCHeaders(
+    headers,
+    $TRPCHeaderName.Enum["x-lightfast-trpc-access-token"],
+  );
+  const refreshToken = getHeaderFromTRPCHeaders(
+    headers,
+    $TRPCHeaderName.Enum["x-lightfast-trpc-refresh-token"],
+  );
+<<<<<<< HEAD
+  if (accessToken) {
+    const verified = await verifyToken(accessToken, refreshToken ?? undefined);
+=======
+  const accessToken = headers.get("x-access-token") ?? null;
+  if (accessToken) {
+    const verified = await client.verify(authSubjects, accessToken);
+>>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
+=======
+  if (accessToken) {
+    const verified = await verifyToken(accessToken, refreshToken ?? undefined);
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
+    if (verified.err) return null;
+    return {
+      type: $SessionType.Enum.user,
+      user: {
+        id: verified.subject.properties.id,
+        accessToken,
+<<<<<<< HEAD
+<<<<<<< HEAD
+        refreshToken: refreshToken ?? "",
+      },
+    };
+  }
+  return getSessionFromCookiesNextHandler();
+=======
+        refreshToken: verified.tokens?.refresh ?? "",
+      },
+    };
+  }
+  return auth();
+>>>>>>> 108e4271 (refactor: simplify TRPC provider and enhance session handling)
+=======
+        refreshToken: refreshToken ?? "",
+      },
+    };
+  }
+  return getSessionFromCookiesNextHandler();
+>>>>>>> ac8850d9 (refactor: enhance TRPC provider and authentication handling)
+};
 
 /**
  * 1. CONTEXT
@@ -33,13 +119,23 @@ export const createTRPCContext = async (opts: {
   session: Session | null;
   db: typeof db;
 }> => {
-  const session = await auth();
+  const userSession = await isomorphicGetSession(opts.headers);
 
-  const source = opts.headers.get("x-trpc-source") ?? "unknown";
-  console.info(`>>> tRPC Request from ${source} by ${session?.user.id}`);
+  const source = getHeaderFromTRPCHeaders(
+    opts.headers,
+    $TRPCHeaderName.Enum["x-lightfast-trpc-source"],
+  );
+
+  if (!userSession) {
+    console.info(`>>> tRPC Request from ${source} by unknown`);
+  }
+
+  if (userSession?.type === $SessionType.Enum.user) {
+    console.info(`>>> tRPC Request from ${source} by ${userSession.user.id}`);
+  }
 
   return {
-    session: opts.session,
+    session: userSession,
     db,
   };
 };
@@ -104,9 +200,26 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 });
 
 const protectedMiddleware = t.middleware(async ({ next, ctx }) => {
-  if (!ctx.session?.user.clerkId) {
+  if (!ctx.session) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
+
+  if (ctx.session.type === $SessionType.Enum.user && !ctx.session.user.id) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return next({ ctx: { session: ctx.session } });
+});
+
+const serverMiddleware = t.middleware(async ({ next, ctx }) => {
+  if (!ctx.session) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  if (ctx.session.type !== $SessionType.Enum.server) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
   return next({ ctx: { session: ctx.session } });
 });
 
@@ -130,3 +243,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(protectedMiddleware);
+
+export const serverProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(serverMiddleware);
