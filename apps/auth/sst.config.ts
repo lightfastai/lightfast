@@ -14,7 +14,7 @@ export default $config({
     const resendApiKeySecret = new sst.Secret("RESEND_API_KEY");
     const kv = new sst.cloudflare.Kv("CloudflareAuthKV");
     const auth = new sst.cloudflare.Worker("CloudflareAuth", {
-      handler: "src/auth/issuer",
+      handler: "src/auth/cf-worker-index",
       link: [kv, postgresUrlSecret, resendApiKeySecret],
       environment: {
         NODE_ENV: process.env.NODE_ENV ?? "development",
