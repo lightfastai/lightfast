@@ -11,25 +11,19 @@ import { createTRPCPureProvider } from "@repo/trpc-client/trpc-pure-server-provi
 import { createEmailClient } from "@vendor/email";
 import { authSubjects } from "@vendor/openauth";
 
+import {
+  getOrCreateUserSafe,
+  UserCreationConflictError,
+  UserCreationError,
+  UserFetchError,
+  UserIndeterminateStateError,
+  UserNotFoundError,
+  UserUnknownError,
+} from "./user-operations";
+
 export interface CreateAuthIssuerEnv {
   RESEND_API_KEY: string;
   POSTGRES_URL: string;
-}
-
-async function getUserByEmailOrCreate(
-  trpc: ReturnType<typeof createTRPCPureProvider>,
-  email: string,
-): Promise<string> {
-  try {
-    const user = await trpc.tenant.user.getByEmail({ email });
-    return user.id;
-  } catch (error) {
-    if (error instanceof TRPCError && error.code === "NOT_FOUND") {
-      const newUser = await trpc.app.user.create({ email });
-      return newUser.id;
-    }
-    throw error;
-  }
 }
 
 export function createAuthIssuer({
@@ -76,19 +70,90 @@ export function createAuthIssuer({
       if (value.provider === "email") {
         const email = value.claims.email;
         if (!email) {
-          throw new Error("No email found");
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "No email found in claims",
+          });
         }
-        const userId = await getUserByEmailOrCreate(trpc, email);
+
+        const userResult = await getOrCreateUserSafe(trpc, email);
+
+        if (userResult.isErr()) {
+          const error = userResult.error;
+          console.error(
+            `Failed to get or create user for email ${email}:`,
+            error,
+          );
+
+          // Map specific errors to TRPCError codes
+          if (
+            error instanceof UserNotFoundError ||
+            error instanceof UserCreationConflictError
+          ) {
+            // These cases are handled internally by getOrCreateUserSafe,
+            // so if they propagate here, it's an unexpected state.
+            // Logically, getOrCreateUserSafe should always return a user or a more generic error.
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Unexpected error state after user operation: ${error.message}`,
+              cause: error,
+            });
+          }
+          if (
+            error instanceof UserCreationError ||
+            error instanceof UserFetchError
+          ) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Failed to process user: ${error.message}`,
+              cause: error.cause,
+            });
+          }
+          if (error instanceof UserIndeterminateStateError) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: error.message,
+              cause: error,
+            });
+          }
+          if (error instanceof UserUnknownError) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "An unknown error occurred while processing user data.",
+              cause: error.cause,
+            });
+          }
+
+          // Fallback for any other UserOperationError type not explicitly handled
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "An unexpected error occurred during user processing.",
+            cause: error,
+          });
+        }
+
+        const user = userResult.value;
+        const userId = user.id;
+
         if (!userId) {
-          throw new Error("Failed to create user");
+          // This should not be reached if getOrCreateUserSafe guarantees a user object with an id on success.
+          // And UserIndeterminateStateError should have been caught above.
+          console.error(
+            `User ID is missing for ${email} after successful get/create.`,
+          );
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "User ID was not determined after get/create process.",
+          });
         }
+
         return ctx.subject(
           "account",
           { type: "email", email, id: userId },
           { subject: userId },
         );
       }
-      throw new Error("Invalid provider");
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid provider" });
     },
   });
 }

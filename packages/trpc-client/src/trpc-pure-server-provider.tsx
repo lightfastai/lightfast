@@ -9,3 +9,5 @@ export const createTRPCPureProvider = (dbUrl: string) =>
     },
     db: createDbClient(dbUrl),
   });
+
+export type TRPCPureServerProvider = ReturnType<typeof createTRPCPureProvider>;

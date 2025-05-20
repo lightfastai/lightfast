@@ -233,6 +233,9 @@ importers:
       '@vendor/trpc':
         specifier: workspace:*
         version: link:../../vendor/trpc
+      neverthrow:
+        specifier: ^8.2.0
+        version: 8.2.0
       next:
         specifier: 'catalog:'
         version: 15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -270,6 +273,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.5.3)
+      bun-types:
+        specifier: latest
+        version: 1.2.13
       dotenv-cli:
         specifier: ^7.4.2
         version: 7.4.2
@@ -1432,10 +1438,10 @@ importers:
         version: 0.10.0(utf-8-validate@6.0.5)
       drizzle-orm:
         specifier: ^0.43.1
-        version: 0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(postgres@3.4.5)
+        version: 0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(bun-types@1.2.13)(postgres@3.4.5)
       drizzle-zod:
         specifier: ^0.7.1
-        version: 0.7.1(drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(postgres@3.4.5))(zod@3.24.3)
+        version: 0.7.1(drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(bun-types@1.2.13)(postgres@3.4.5))(zod@3.24.3)
       postgres:
         specifier: ^3.4.5
         version: 3.4.5
@@ -6877,6 +6883,9 @@ packages:
   bufferutil@4.0.9:
     resolution: {integrity: sha512-WDtdLmJvAuNNPzByAYpRo2rF1Mmradw6gvWsQKf63476DDXmomT9zUiGypLcG4ibIM67vhAj8jJRdbmEws2Aqw==}
     engines: {node: '>=6.14.2'}
+
+  bun-types@1.2.13:
+    resolution: {integrity: sha512-rRjA1T6n7wto4gxhAO/ErZEtOXyEZEmnIHQfl0Dt1QQSB4QV0iP6BZ9/YB5fZaHFQ2dwHFrmPaRQ9GGMX01k9Q==}
 
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -18401,6 +18410,10 @@ snapshots:
     dependencies:
       node-gyp-build: 4.8.4
 
+  bun-types@1.2.13:
+    dependencies:
+      '@types/node': 20.17.2
+
   busboy@1.6.0:
     dependencies:
       streamsearch: 1.1.0
@@ -19088,7 +19101,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(postgres@3.4.5):
+  drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(bun-types@1.2.13)(postgres@3.4.5):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250519.0
       '@libsql/client-wasm': 0.14.0
@@ -19096,11 +19109,12 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.11.6
       '@vercel/postgres': 0.10.0(utf-8-validate@6.0.5)
+      bun-types: 1.2.13
       postgres: 3.4.5
 
-  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(postgres@3.4.5))(zod@3.24.3):
+  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(bun-types@1.2.13)(postgres@3.4.5))(zod@3.24.3):
     dependencies:
-      drizzle-orm: 0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(postgres@3.4.5)
+      drizzle-orm: 0.43.1(@cloudflare/workers-types@4.20250519.0)(@libsql/client-wasm@0.14.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@vercel/postgres@0.10.0(utf-8-validate@6.0.5))(bun-types@1.2.13)(postgres@3.4.5)
       zod: 3.24.3
 
   dunder-proto@1.0.1:
