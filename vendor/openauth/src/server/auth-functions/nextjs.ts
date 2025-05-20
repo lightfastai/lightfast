@@ -61,7 +61,6 @@ export const setTokensNextHandler = async (
   refresh: string,
   expiresIn: number,
 ) => {
-  console.log("Setting tokens", access, refresh, expiresIn);
   const cookies = await getCookies();
   cookies.set({
     name: ACCESS_TOKEN_COOKIE_NAME,
@@ -69,7 +68,7 @@ export const setTokensNextHandler = async (
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    expires: expiresIn,
+    expires: new Date(Date.now() + expiresIn),
     secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
   cookies.set({
@@ -78,7 +77,7 @@ export const setTokensNextHandler = async (
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    expires: expiresIn,
+    expires: new Date(Date.now() + expiresIn),
     secure: openauthEnv.NODE_ENV === "production" ? true : false,
   });
 };

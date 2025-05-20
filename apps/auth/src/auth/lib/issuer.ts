@@ -3,6 +3,9 @@ import { issuer as OpenAuthIssuer } from "@openauthjs/openauth";
 import { CodeProvider } from "@openauthjs/openauth/provider/code";
 import { CodeUI } from "@openauthjs/openauth/ui/code";
 
+import { emailConfig } from "@repo/lightfast-config";
+import { sendResendEmailSafe } from "@repo/lightfast-email/functions";
+import { CodeEmail, codeEmailText } from "@repo/lightfast-email/templates";
 import { createTRPCPureProvider } from "@repo/trpc-client/trpc-pure-server-provider";
 import { createEmailClient } from "@vendor/email";
 import { authSubjects } from "@vendor/openauth";
@@ -51,19 +54,19 @@ export function createAuthIssuer({
               throw new Error("Email is required");
             }
             console.log(`Sending code ${code} to email: ${email}`);
-            // const result = await sendResendEmailSafe({
-            //   client: emailClient,
-            //   from: emailConfig.auth,
-            //   to: email,
-            //   subject: "Your Lightfast.ai sign-in code",
-            //   text: codeEmailText({ code }),
-            //   react: CodeEmail({ email, code }),
-            // });
-            // if (result.isErr()) {
-            //   console.error("Failed to send email:", result.error);
-            // } else {
-            //   console.log("Email sent successfully, ID:", result.value.id);
-            // }
+            const result = await sendResendEmailSafe({
+              client: emailClient,
+              from: emailConfig.auth,
+              to: email,
+              subject: "Your Lightfast.ai sign-in code",
+              text: codeEmailText({ code }),
+              react: CodeEmail({ email, code }),
+            });
+            if (result.isErr()) {
+              console.error("Failed to send email:", result.error);
+            } else {
+              console.log("Email sent successfully, ID:", result.value.id);
+            }
           },
         }),
       ),

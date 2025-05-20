@@ -28,6 +28,7 @@ import {
   incrementEarlyAccessCountSafe,
   UpstashRateLimitError,
 } from "~/components/early-access/api/get-early-access-count";
+import { emailClient } from "~/lib/email";
 import { inngest } from "../_client/client";
 
 export const handleJoinEarlyAccess = inngest.createFunction(
@@ -138,6 +139,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
       const res = await addToWaitlistContactsSafe({
         email,
         unsubscribed: false,
+        client: emailClient,
       });
 
       if (res.isErr()) {
@@ -215,6 +217,7 @@ export const handleJoinEarlyAccess = inngest.createFunction(
 
     await step.run("send-welcome-email", async () => {
       const res = await sendResendEmailSafe({
+        client: emailClient,
         from: emailConfig.welcome,
         to: email,
         react: EarlyAccessEntryEmail({ email }),

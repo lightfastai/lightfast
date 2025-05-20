@@ -30,8 +30,6 @@ export async function GET(req: NextRequest) {
     redirectUri ?? `${url.origin}/api/callback`,
   );
 
-  console.log("Exchanged tokens:", exchanged);
-
   if (exchanged.err) {
     console.error("Error exchanging tokens:", exchanged.err);
     const response = NextResponse.json(exchanged.err, { status: 400 });
@@ -39,7 +37,11 @@ export async function GET(req: NextRequest) {
     return response;
   }
 
-  await setTokensNextHandler(exchanged.tokens.access, exchanged.tokens.refresh);
+  await setTokensNextHandler(
+    exchanged.tokens.access,
+    exchanged.tokens.refresh,
+    exchanged.tokens.expiresIn,
+  );
 
   // Check if this is an API request or browser request
   if (redirectUri) {
