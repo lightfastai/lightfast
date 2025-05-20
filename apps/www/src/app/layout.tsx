@@ -2,10 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 import "@repo/ui/globals.css";
 
-import { ClerkProvider } from "@clerk/nextjs";
-
 import { siteConfig } from "@repo/lightfast-config";
-import { ThemeProvider } from "@repo/ui/components/theme-provider";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
@@ -100,27 +97,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider waitlistUrl="/">
-      <html lang="en" suppressHydrationWarning>
-        <head />
-        <body className={cn("bg-background min-h-screen", fonts)}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <PostHogProvider baseUrl={createBaseUrl()}>
-              <div className="bg-background relative flex min-h-screen flex-col">
-                {children}
-              </div>
-              <Toaster />
-              <VercelAnalytics />
-              <SpeedInsights />
-            </PostHogProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body className={cn("dark bg-background min-h-screen", fonts)}>
+        <PostHogProvider baseUrl={createBaseUrl()}>
+          <div className="bg-background relative flex min-h-screen flex-col">
+            {children}
+          </div>
+          <Toaster />
+          <VercelAnalytics />
+          <SpeedInsights />
+        </PostHogProvider>
+      </body>
+    </html>
   );
 }

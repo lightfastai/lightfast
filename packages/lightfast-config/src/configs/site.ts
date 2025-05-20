@@ -18,7 +18,7 @@ export const siteConfig: SiteConfig<SiteLinks> = {
     },
     discord: {
       title: "Discord",
-      href: "https://discord.gg/lightfastai",
+      href: "https://discord.gg/YqPDfcar2C",
     },
     privacy: {
       title: "Privacy Policy",
