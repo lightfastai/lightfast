@@ -8,6 +8,7 @@ interface Env {
   RESEND_API_KEY: string; // Secret linked by SST
   POSTGRES_URL: string; // Secret linked by SST
   NODE_ENV: string; // Environment variable set by SST
+  LIGHTFAST_AUTH_URL: string; // Environment variable set by SST
 }
 
 export default {
@@ -29,6 +30,7 @@ export default {
       env: {
         RESEND_API_KEY: workerEnv.RESEND_API_KEY,
         POSTGRES_URL: workerEnv.POSTGRES_URL,
+        LIGHTFAST_AUTH_URL: workerEnv.LIGHTFAST_AUTH_URL,
       },
       storage: CloudflareStorage({
         namespace: workerEnv.CloudflareAuthKV,

@@ -10,7 +10,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import type { createDbClient } from "@vendor/db/create-db-client";
+import type { DbClient } from "@vendor/db/create-db-client";
 import type { Session } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
 import {
@@ -65,12 +65,12 @@ const isomorphicGetSession = async (
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: {
-  db: ReturnType<typeof createDbClient>;
+  db: DbClient;
   headers: Headers;
   session: Session | null;
 }): Promise<{
   session: Session | null;
-  db: ReturnType<typeof createDbClient>;
+  db: DbClient;
 }> => {
   const userSession = await isomorphicGetSession(opts.headers);
 

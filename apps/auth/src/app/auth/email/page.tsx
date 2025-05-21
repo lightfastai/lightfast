@@ -2,11 +2,12 @@
 
 import { useSearchParams } from "next/navigation";
 
-import { Card } from "@repo/ui/components/card";
 import { Button } from "@repo/ui/components/ui/button";
-import { CardContent, CardFooter } from "@repo/ui/components/ui/card";
+import { Card, CardContent, CardFooter } from "@repo/ui/components/ui/card";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
+
+import { env } from "~/env";
 
 export default function EmailAuthRoute() {
   const searchParams = useSearchParams();
@@ -18,7 +19,7 @@ export default function EmailAuthRoute() {
           <form
             method="post"
             className="grid gap-4"
-            action={`${"http://localhost:3001"}/email/authorize`}
+            action={`${env.NEXT_PUBLIC_OPENAUTH_ISSUER_URL}/email/authorize`}
           >
             {error === "invalid_claim" && (
               <FormAlert message={"Invalid email address"} />

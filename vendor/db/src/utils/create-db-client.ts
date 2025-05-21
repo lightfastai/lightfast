@@ -9,3 +9,5 @@ export const createDbClient = (url: string) =>
     schema,
     casing: "snake_case",
   });
+
+export type DbClient = ReturnType<typeof createDbClient>;

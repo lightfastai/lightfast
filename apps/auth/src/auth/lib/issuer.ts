@@ -29,6 +29,7 @@ import {
 export interface CreateAuthIssuerEnv {
   RESEND_API_KEY: string;
   POSTGRES_URL: string;
+  LIGHTFAST_AUTH_URL: string;
 }
 
 export function createAuthIssuer({
@@ -40,12 +41,11 @@ export function createAuthIssuer({
 }) {
   const emailClient = createEmailClient(env.RESEND_API_KEY);
   const trpc = createTRPCPureProvider(env.POSTGRES_URL);
-
   return OpenAuthIssuer({
     subjects: authSubjects,
     storage,
     select: async (providers) => {
-      const redirectUrl = new URL(`${"http://localhost:4102"}/auth/select`);
+      const redirectUrl = new URL(`${env.LIGHTFAST_AUTH_URL}/auth/select`);
       redirectUrl.searchParams.set("providers", JSON.stringify(providers));
       return Response.redirect(redirectUrl.toString(), 302);
     },
@@ -81,7 +81,7 @@ export function createAuthIssuer({
           }
           if (state.type === "start") {
             return Response.redirect(
-              `${"http://localhost:4102"}/auth/email?${params.toString()}`,
+              `${env.LIGHTFAST_AUTH_URL}/auth/email?${params.toString()}`,
               302,
             );
           }
@@ -91,7 +91,7 @@ export function createAuthIssuer({
               params.set("resend", "true");
             }
             return Response.redirect(
-              `${"http://localhost:4102"}/auth/code?${params.toString()}`,
+              `${env.LIGHTFAST_AUTH_URL}/auth/code?${params.toString()}`,
               302,
             );
           }

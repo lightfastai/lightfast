@@ -13,6 +13,8 @@ import {
   CardTitle,
 } from "@repo/ui/components/ui/card";
 
+import { env } from "~/env";
+
 export default function AuthenticationSelect() {
   const providers = useProviders();
   return (
@@ -28,7 +30,10 @@ export default function AuthenticationSelect() {
         <CardContent className="grid w-full gap-4">
           {Object.entries(providers).map(([key, type]) => {
             const Icon = ProviderIcons[key];
-            const url = new URL(`${key}/authorize`, "http://localhost:3001");
+            const url = new URL(
+              `${key}/authorize`,
+              env.NEXT_PUBLIC_OPENAUTH_ISSUER_URL,
+            );
             return (
               <Button
                 asChild

@@ -12,7 +12,6 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
 import type { AppRouter } from "@vendor/trpc";
-import { getTokenFromCookiesNextHandler } from "@vendor/openauth/server";
 import { createTRPCHeaders, TRPCSource } from "@vendor/trpc/headers";
 
 import { env } from "../env";
@@ -54,13 +53,8 @@ export function TRPCReactProvider({
           transformer: SuperJSON,
           url: `${baseUrl}/api/trpc`,
           headers: async () => {
-            // get token from cookies
-            const { accessToken, refreshToken } =
-              await getTokenFromCookiesNextHandler();
             const headers = createTRPCHeaders({
               source,
-              accessToken,
-              refreshToken,
             });
             return headers;
           },

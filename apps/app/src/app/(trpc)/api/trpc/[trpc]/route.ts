@@ -1,8 +1,10 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 import type { UserSession } from "@vendor/openauth";
+import { db } from "@vendor/db/client";
 import { getSessionFromExternalRequest } from "@vendor/openauth/server";
 import { appRouter, createTRPCContext } from "@vendor/trpc";
+import { trpcHeaderNames } from "@vendor/trpc/headers";
 
 /**
  * Configure basic CORS headers
@@ -14,10 +16,12 @@ const setCorsHeaders = (res: Response) => {
   res.headers.set("Access-Control-Allow-Origin", "*");
   res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   // Ensure all headers used by your tRPC client are listed here
-  res.headers.set(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, x-lightfast-trpc-source, x-lightfast-trpc-access-token, x-lightfast-trpc-refresh-token",
-  );
+  const allowedHeaders = [
+    "Content-Type",
+    "Authorization",
+    ...trpcHeaderNames,
+  ].join(", ");
+  res.headers.set("Access-Control-Allow-Headers", allowedHeaders);
   res.headers.set("Access-Control-Allow-Credentials", "true");
 };
 
@@ -30,10 +34,7 @@ export const OPTIONS = () => {
 };
 
 const handler = async (req: Request) => {
-  const headers = new Headers(req.headers);
-
-  const session: UserSession | null =
-    await getSessionFromExternalRequest(headers);
+  const session: UserSession | null = await getSessionFromExternalRequest(req);
 
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
@@ -41,6 +42,7 @@ const handler = async (req: Request) => {
     req,
     createContext: () =>
       createTRPCContext({
+        db: db,
         session,
         headers: req.headers,
       }),

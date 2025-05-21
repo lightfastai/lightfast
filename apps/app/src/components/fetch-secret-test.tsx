@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "@repo/trpc-client/trpc-react-provider";
@@ -7,6 +8,7 @@ import { useTRPC } from "@repo/trpc-client/trpc-react-provider";
 export function FetchSecretTest() {
   const trpc = useTRPC();
   const { data, isLoading } = useQuery(trpc.app.auth.getSession.queryOptions());
+  const router = useRouter();
   if (isLoading) return <div>Loading...</div>;
   return <div>{data?.user.id}</div>;
 }

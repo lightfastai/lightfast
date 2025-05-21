@@ -3,7 +3,7 @@
 import { cookies as getCookies, headers as getHeaders } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { Token, UserSession } from "@vendor/openauth";
+import type { UserSession } from "@vendor/openauth";
 import { $SessionType } from "@vendor/openauth";
 
 import { openauthEnv } from "../../../env";
@@ -26,14 +26,12 @@ export const getSessionFromCookiesNextHandler =
     const refreshToken = cookies.get(REFRESH_TOKEN_COOKIE_NAME);
 
     if (!accessToken) {
-      console.log("No access token found");
       return null;
     }
 
     const verified = await verifyToken(accessToken.value, refreshToken?.value);
 
     if (verified.err) {
-      console.log("Error verifying token", verified.err);
       return null;
     }
 
@@ -82,17 +80,6 @@ export const setTokensNextHandler = async (
   });
 };
 
-export const getTokenFromCookiesNextHandler = async (): Promise<Token> => {
-  const cookies = await getCookies();
-  const accessToken = cookies.get(ACCESS_TOKEN_COOKIE_NAME);
-  const refreshToken = cookies.get(REFRESH_TOKEN_COOKIE_NAME);
-  return {
-    accessToken: accessToken?.value ?? "",
-    refreshToken: refreshToken?.value ?? "",
-    expiresIn: 1000 * 60 * 60 * 24 * 30,
-  };
-};
-
 export const logout = async () => {
   const cookies = await getCookies();
   cookies.delete(ACCESS_TOKEN_COOKIE_NAME);
@@ -128,28 +115,21 @@ export const login = async () => {
   redirect(url);
 };
 
-export const getSessionFromExternalRequest = async (
-  headers: Headers,
+export const getSessionFromRequestNextHandler = async (
+  request: Request,
 ): Promise<UserSession | null> => {
   // For desktop app, tokens are in custom headers
+  const headers = new Headers(request.headers);
   const accessToken = headers.get("x-lightfast-trpc-access-token");
   const refreshToken = headers.get("x-lightfast-trpc-refresh-token");
 
-  console.log(
-    "Using lightfast-desktop auth headers",
-    accessToken,
-    refreshToken,
-  );
-
   if (!accessToken) {
-    console.log("No access token found");
     return null;
   }
 
   const verified = await verifyToken(accessToken, refreshToken ?? undefined);
 
   if (verified.err) {
-    console.log("Error verifying token", verified.err);
     return null;
   }
 
@@ -162,4 +142,15 @@ export const getSessionFromExternalRequest = async (
       expiresIn: verified.tokens?.expiresIn ?? 1000 * 60 * 60 * 24 * 30,
     },
   };
+};
+
+export const getSessionFromExternalRequest = async (
+  request: Request,
+): Promise<UserSession | null> => {
+  const session = await getSessionFromCookiesNextHandler();
+  if (session) {
+    return session;
+  } else {
+    return await getSessionFromRequestNextHandler(request);
+  }
 };

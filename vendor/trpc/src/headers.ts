@@ -12,6 +12,11 @@ export const $TRPCHeaderName = z.enum([
 
 export type TRPCHeaderName = z.infer<typeof $TRPCHeaderName>;
 
+// convert $TRPCHeaderName to a string for res.headers.set
+export const trpcHeaderNames = Object.values($TRPCHeaderName.Enum).map(
+  (value) => value.toString(),
+);
+
 export const createTRPCHeaders = ({
   source,
   accessToken,

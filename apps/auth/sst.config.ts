@@ -18,6 +18,10 @@ export default $config({
       link: [kv, postgresUrlSecret, resendApiKeySecret],
       environment: {
         NODE_ENV: process.env.NODE_ENV ?? "development",
+        LIGHTFAST_AUTH_URL:
+          process.env.NODE_ENV === "production"
+            ? "https://auth.lightfast.ai"
+            : "http://localhost:3001",
       },
       url: true,
     });
