@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import dynamic from "next/dynamic";
 
-import { siteConfig } from "@repo/lightfast-config";
+import { Icons } from "@repo/ui/components/icons";
 
 import { EarlyAccessCountFallback } from "~/components/early-access/early-access-count-error";
 import { EarlyAccessJotaiProvider } from "~/components/early-access/jotai/early-access-jotai-provider";
@@ -46,9 +46,9 @@ export default function Home() {
           <span className="text-muted-foreground font-mono text-xs">
             Introducing
           </span>
-          <h1 className="py-2 text-2xl font-semibold sm:text-3xl md:text-4xl">
-            <span className="">{siteConfig.name}</span>{" "}
-            <span className="relative inline-block bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-400 bg-clip-text font-mono text-transparent">
+          <h1 className="text-md text-md flex items-center justify-center gap-2 py-2 leading-none font-bold tracking-[0.1em] uppercase lg:text-xl">
+            <Icons.logo className="w-26 lg:w-32" />
+            <span className="relative inline-block bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-400 bg-clip-text text-transparent">
               Computer
             </span>
           </h1>

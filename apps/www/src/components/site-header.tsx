@@ -8,7 +8,7 @@ export function SiteHeader() {
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center space-x-2">
-            <Icons.logo className="size-4" />
+            <Icons.logoShort className="size-6" />
           </Link>
         </div>
       </div>
