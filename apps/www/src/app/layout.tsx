@@ -4,13 +4,13 @@ import "@repo/ui/globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
 
+import { siteConfig } from "@repo/lightfast-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
-import { siteConfig } from "~/config/site";
 import { createBaseUrl } from "~/lib/base-url";
 
 export const metadata: Metadata = {
@@ -20,7 +20,22 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL(siteConfig.url),
   description: siteConfig.description,
-  keywords: ["Lightfast", "AI", "Design", "WebGL", "Blender"],
+  keywords: [
+    "Lightfast",
+    "AI",
+    "Design",
+    "Blender",
+    "Unreal Engine",
+    "Ableton",
+    "MCP",
+    "Model Context Protocol",
+    "AI Copilot",
+    "AI Copilot for Creatives",
+    "AI Copilot for Blender",
+    "AI Copilot for TouchDesigner",
+    "AI Copilot for Houdini",
+    "AI Copilot for Unreal Engine",
+  ],
   authors: [
     {
       name: siteConfig.name,

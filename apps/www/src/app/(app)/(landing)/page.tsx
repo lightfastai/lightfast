@@ -66,7 +66,7 @@ export default function Home() {
       </div>
 
       {/* Early Access Form Section */}
-      <div className="flex flex-col items-center gap-4 py-8">
+      <div className="flex flex-col items-center gap-4 pt-4 pb-12">
         <div className="mt-3 flex w-full max-w-md flex-col gap-2">
           <EarlyAccessJotaiProvider>
             <Suspense

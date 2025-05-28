@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ColumnFiltersState,
   flexRender,
@@ -14,6 +15,7 @@ import {
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { parseAsJson, useQueryState } from "nuqs";
 
+import { useTRPC } from "@repo/trpc-client/trpc-react-provider";
 import {
   Pagination,
   PaginationContent,
@@ -51,6 +53,12 @@ import { columns } from "./columns";
 
 function ExpandedContent({ resource }: { resource: Resource }) {
   const data = resource.data as Record<string, string>;
+  const trpc = useTRPC();
+  const { data: runData } = useQuery(trpc.app.health.health.queryOptions());
+
+  useEffect(() => {
+    console.log("runData", runData);
+  }, [runData]);
 
   return (
     <div className="bg-muted/50 px-8 py-4">

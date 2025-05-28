@@ -1,35 +1,25 @@
 import { relations, sql } from "drizzle-orm";
-import { pgTable } from "drizzle-orm/pg-core";
+import { pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 import { nanoid } from "@repo/lib";
 
-import { Workspace } from "./Workspace";
+import { Session } from "./Session";
 
-/**
- * User table
- * @todo 1. Ensure that clerkId & email is unique. There is a situation where if a user is manually deleted from Clerk,
- *        a new user is created with the different clerkId but the same email...
- * @todo 2. Implement Cascade Delete for User with Tenant Database delete...
- */
-export const User = pgTable("user", (t) => ({
-  id: t
-    .varchar({ length: 191 })
+export const User = pgTable("user", {
+  id: varchar("id", { length: 191 })
     .notNull()
     .primaryKey()
     .$defaultFn(() => nanoid()),
-  createdAt: t
-    .timestamp("created_at", { withTimezone: true })
+  email: varchar("email", { length: 191 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
     .defaultNow()
-    .notNull(),
-  updatedAt: t
-    .timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .defaultNow()
     .$onUpdateFn(() => sql`now()`),
-  clerkId: t.varchar({ length: 255 }).notNull().unique(),
-  emailAddress: t.varchar({ length: 255 }).notNull().unique(),
-}));
+});
 
 export const UserRelations = relations(User, ({ many }) => ({
-  workspaces: many(Workspace),
+  sessions: many(Session),
 }));
+
+export type User = typeof User.$inferSelect;

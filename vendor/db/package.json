@@ -8,14 +8,7 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./lightfast/schema": {
-      "types": "./dist/lightfast/schema.d.ts",
-      "default": "./src/lightfast/schema/index.ts"
-    },
-    "./lightfast/types": {
-      "types": "./dist/lightfast/types.d.ts",
-      "default": "./src/lightfast/types.ts"
-    },
+    "./lightfast/schema": "./src/lightfast/schema/index.ts",
     "./client": "./src/client.ts",
     "./env": "./env.ts"
   },
@@ -31,12 +24,11 @@
     "studio": "pnpm with-env-lightfast drizzle-kit studio --config=./src/lightfast/drizzle.config.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --",
-    "with-env-lightfast": "dotenv -e ../../apps/media-server/.internal/.env.development.local --"
+    "with-env-lightfast": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@repo/webgl": "workspace:*",
     "@vercel/postgres": "^0.10.0",
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.7.1",
