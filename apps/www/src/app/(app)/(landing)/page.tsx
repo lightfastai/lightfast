@@ -4,6 +4,7 @@ import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
+import { Icons } from "@repo/ui/components/icons";
 import { Container } from "@repo/ui/components/ui/container";
 
 import { EarlyAccessCountFallback } from "~/components/early-access/early-access-count-error";
@@ -52,11 +53,60 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="relative w-full overflow-hidden">
+      {/* Pre-container section */}
+      <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-muted-foreground font-mono text-xs font-medium">
+            Introducing
+          </span>
+          <div className="flex items-center gap-2">
+            <Icons.logo className="w-32" />
+            <span className="bg-gradient-to-r from-sky-200 to-sky-500 bg-clip-text text-xl font-medium tracking-widest text-transparent uppercase">
+              Computer
+            </span>
+          </div>
+          <div className="max-w-2xl">
+            <p className="text-muted-foreground text-center text-xs text-balance">
+              Simplifying the way you interact with applications like Blender,
+              Unity, Fusion360 and more. We integrate with your tools to make
+              your workflow more efficient.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Early Access Form Section */}
+      <div className="flex flex-col items-center gap-4 py-8">
+        <div className="mt-3 flex w-full max-w-md flex-col gap-2">
+          <EarlyAccessJotaiProvider>
+            <Suspense
+              fallback={
+                <div className="bg-muted/30 h-10 w-full animate-pulse rounded-lg" />
+              }
+            >
+              <EarlyAccessForm />
+            </Suspense>
+            <div className="flex h-5 items-center justify-center">
+              <ErrorBoundary errorComponent={EarlyAccessCountFallback}>
+                <Suspense
+                  fallback={
+                    <div className="bg-muted/30 h-5 w-20 animate-pulse rounded-lg" />
+                  }
+                >
+                  <EarlyAccessCount />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          </EarlyAccessJotaiProvider>
+        </div>
+      </div>
+
+      {/* Main container with blue sky background */}
       <Container className="relative rounded-lg">
         {/* Background gradient */}
         <div className="overflow bg-muted/20 absolute inset-0 z-0 rounded-lg border p-2 focus:outline-none">
           <Image
-            src="/bg-gradient.png"
+            src="/blue-sky.0.png"
             alt="Gradient"
             className="h-full w-full rounded-md"
             width={1376}
@@ -68,60 +118,13 @@ export default function Home() {
         </div>
 
         {/* Main content */}
-        <div className="relative z-10 flex h-full flex-col items-center justify-between">
-          {/* Hero section */}
-          <div className="flex flex-col items-center justify-center gap-6 pt-32">
-            {/* Main heading */}
-            <h1 className="text-6xl font-bold">Copilot for Creatives</h1>
-
-            {/* Description and form wrapper */}
-            <div className="flex flex-col items-center gap-4">
-              {/* Description */}
-              <div className="max-w-4xl">
-                <p className="text-primary text-md text-center text-balance">
-                  Simplifying the way you interact with applications like
-                  Blender, Unity, Fusion360 and more. We integrate with your
-                  tools to make your workflow more efficient.
-                </p>
-              </div>
-
-              {/* Form section */}
-              <div className="mt-3 flex w-full max-w-md flex-col gap-2">
-                <EarlyAccessJotaiProvider>
-                  <Suspense
-                    fallback={
-                      <div className="bg-muted/30 h-10 w-full animate-pulse rounded-lg" />
-                    }
-                  >
-                    <EarlyAccessForm />
-                  </Suspense>
-                  <div className="flex h-5 items-center justify-center">
-                    <ErrorBoundary errorComponent={EarlyAccessCountFallback}>
-                      <Suspense
-                        fallback={
-                          <div className="bg-muted/30 h-5 w-20 animate-pulse rounded-lg" />
-                        }
-                      >
-                        <EarlyAccessCount />
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                </EarlyAccessJotaiProvider>
-              </div>
-            </div>
-          </div>
-
-          {/* Application example image */}
-          <div className="flex w-full justify-center pt-16">
-            <div className="border-border relative aspect-video w-full max-w-4xl overflow-hidden rounded-t-lg border-x border-t shadow-lg">
-              <Image
-                src="/app-example.png"
-                alt="Lightfast application example"
-                fill
-                className="bg-muted object-cover"
-                priority
-              />
-            </div>
+        <div className="relative z-10 flex h-full flex-col items-center justify-center py-64">
+          {/* White div with "Copilot for Creatives" */}
+          <div className="rounded-lg bg-white px-8 py-6 shadow-lg">
+            <h1 className="text-lg text-black">
+              We are building the{" "}
+              <span className="font-bold">Copilot for Creatives</span>
+            </h1>
           </div>
         </div>
       </Container>
