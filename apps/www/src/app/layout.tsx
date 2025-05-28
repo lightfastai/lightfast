@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 
 import "@repo/ui/globals.css";
 
+import { ClerkProvider } from "@clerk/nextjs";
+
 import { siteConfig } from "@repo/lightfast-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
@@ -26,6 +28,13 @@ export const metadata: Metadata = {
     "Unreal Engine",
     "Ableton",
     "MCP",
+    "Model Context Protocol",
+    "AI Copilot",
+    "AI Copilot for Creatives",
+    "AI Copilot for Blender",
+    "AI Copilot for TouchDesigner",
+    "AI Copilot for Houdini",
+    "AI Copilot for Unreal Engine",
   ],
   authors: [
     {
@@ -97,18 +106,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head />
-      <body className={cn("dark bg-background min-h-screen", fonts)}>
-        <PostHogProvider baseUrl={createBaseUrl()}>
-          <div className="bg-background relative flex min-h-screen flex-col">
+    <ClerkProvider waitlistUrl="/">
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body className={cn("dark bg-background min-h-screen", fonts)}>
+          <PostHogProvider baseUrl={createBaseUrl()}>
             {children}
-          </div>
-          <Toaster />
-          <VercelAnalytics />
-          <SpeedInsights />
-        </PostHogProvider>
-      </body>
-    </html>
+            <Toaster />
+            <VercelAnalytics />
+            <SpeedInsights />
+          </PostHogProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

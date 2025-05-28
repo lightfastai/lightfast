@@ -1,17 +1,20 @@
 import Link from "next/link";
 
 import { Icons } from "@repo/ui/components/icons";
+import { Container } from "@repo/ui/components/ui/container";
 
 export function SiteHeader() {
   return (
-    <header className="w-full px-4 py-6 md:px-6">
-      <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center space-x-2">
-            <Icons.logoShort className="size-6" />
-          </Link>
+    <header className="w-full py-12">
+      <Container>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-4">
+              <Icons.logoShort className="w-24" />
+            </Link>
+          </div>
         </div>
-      </div>
+      </Container>
     </header>
   );
 }
