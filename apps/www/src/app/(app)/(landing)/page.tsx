@@ -44,19 +44,19 @@ export default function Home() {
   return (
     <div className="relative w-full overflow-hidden">
       {/* Pre-container section */}
-      <div className="flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
+      <div className="flex items-center justify-center px-4 pb-2">
+        <div className="flex flex-col items-center gap-3 sm:gap-4">
           <span className="text-muted-foreground font-mono text-xs font-medium">
             Introducing
           </span>
-          <div className="flex items-center gap-2">
-            <Icons.logo className="w-32" />
-            <span className="bg-gradient-to-r from-sky-200 to-sky-500 bg-clip-text text-xl font-medium tracking-widest text-transparent uppercase">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Icons.logo className="w-30" />
+            <span className="bg-gradient-to-r from-sky-200 to-sky-500 bg-clip-text text-lg font-medium tracking-widest text-transparent uppercase">
               Computer
             </span>
           </div>
-          <div className="max-w-2xl">
-            <p className="text-muted-foreground text-center text-xs text-balance">
+          <div className="max-w-2xl px-4">
+            <p className="text-muted-foreground text-center text-xs text-balance sm:text-sm">
               Simplifying the way you interact with applications like Blender,
               Unity, Fusion360 and more. We integrate with your tools to make
               your workflow more efficient.
@@ -66,7 +66,7 @@ export default function Home() {
       </div>
 
       {/* Early Access Form Section */}
-      <div className="flex flex-col items-center gap-4 pt-4 pb-12">
+      <div className="flex flex-col items-center gap-4 px-4 pt-2 pb-6 sm:pt-4 sm:pb-8">
         <div className="mt-3 flex w-full max-w-md flex-col gap-2">
           <EarlyAccessJotaiProvider>
             <Suspense
@@ -92,26 +92,27 @@ export default function Home() {
       </div>
 
       {/* Main container with blue sky background */}
-      <Container className="relative rounded-lg">
+      <Container className="relative mt-12 mb-8 overflow-hidden rounded-lg sm:mb-12">
         {/* Background gradient */}
-        <div className="overflow bg-muted/20 absolute inset-0 z-0 rounded-lg border p-2 focus:outline-none">
+        <div className="absolute inset-0 z-0 rounded-lg border bg-gradient-to-br from-sky-200 via-sky-300 to-sky-500">
           <Image
             src="/blue-sky.0.png"
-            alt="Gradient"
-            className="h-full w-full rounded-md"
+            alt="Blue sky gradient background"
+            className="h-full w-full rounded-md object-cover object-center"
             width={1376}
             height={895}
             priority
             loading="eager"
             quality={70}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
           />
         </div>
 
         {/* Main content */}
-        <div className="relative z-10 flex h-full flex-col items-center justify-center py-64">
+        <div className="relative z-10 flex h-full min-h-[50vh] flex-col items-center justify-center px-4 py-24 sm:min-h-[60vh] sm:py-32 md:py-48 lg:py-64">
           {/* White div with "Copilot for Creatives" */}
-          <div className="rounded-lg bg-white px-8 py-6 shadow-lg">
-            <h1 className="text-lg text-black">
+          <div className="rounded-lg bg-white px-4 py-3 shadow-lg sm:px-6 sm:py-4 md:px-8 md:py-6">
+            <h1 className="text-sm text-black sm:text-base md:text-lg lg:text-xl">
               We are building the{" "}
               <span className="font-bold">Copilot for Creatives</span>
             </h1>
@@ -122,13 +123,13 @@ export default function Home() {
       {/* Integrated with section in its own Container, not over the bg gradient */}
       <Container className="relative">
         <section
-          className="bg-background/80 mt-12 flex h-[50vh] w-full flex-col items-center justify-center"
+          className="bg-background/80 flex min-h-[40vh] w-full flex-col items-center justify-center px-4 py-12 sm:min-h-[50vh] sm:py-16"
           aria-label="Integrated with popular creative apps"
         >
-          <h2 className="mb-8 text-center font-mono text-xs font-semibold tracking-widest uppercase">
+          <h2 className="mb-6 text-center font-mono text-xs font-semibold tracking-widest uppercase sm:mb-8 sm:text-sm">
             Integrated with
           </h2>
-          <ul className="grid w-full max-w-4xl grid-cols-2 gap-12 px-4 sm:grid-cols-3 md:grid-cols-4">
+          <ul className="grid w-full max-w-4xl grid-cols-2 gap-6 sm:gap-8 md:grid-cols-4 md:gap-12">
             {[
               {
                 title: "Blender",
@@ -153,6 +154,8 @@ export default function Home() {
                   alt={app.title}
                   width={200}
                   height={200}
+                  className="h-auto w-24 sm:w-28 md:w-36 lg:w-40"
+                  sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, (max-width: 1024px) 144px, 160px"
                 />
               </li>
             ))}
