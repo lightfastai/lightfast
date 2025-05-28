@@ -35,16 +35,6 @@ const EarlyAccessCount = dynamic(
   },
 );
 
-const MacOSTime = dynamic(
-  () => import("~/components/macos-time").then((mod) => mod.MacOSTime),
-  {
-    ssr: true,
-    loading: () => (
-      <div className="bg-muted/30 h-10 w-full animate-pulse rounded-lg" />
-    ),
-  },
-);
-
 export const metadata: Metadata = {
   title: "Home",
   description: "Join the waitlist to get early access to Lightfast",
