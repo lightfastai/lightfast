@@ -248,7 +248,7 @@ export function FloatingEarlyAccessChat() {
                               <FormControl>
                                 <div className="relative">
                                   <Input
-                                    className="pr-12 text-sm"
+                                    className="pr-12 text-xs md:text-xs"
                                     placeholder="Curious? Enter your email for early access"
                                     autoComplete="email"
                                     {...field}
@@ -286,7 +286,7 @@ export function FloatingEarlyAccessChat() {
         </div>
         {/* Logo - Always visible and acts as anchor point in bottom row */}
         <Button
-          className={`absolute bottom-8 left-4 z-20 cursor-pointer transition-all duration-500 ease-out ${
+          className={`absolute bottom-8 left-4 z-20 cursor-pointer rounded-full transition-all duration-500 ease-out ${
             isExpanded ? "opacity-80" : "opacity-100 hover:scale-110"
           }`}
           onClick={() => setIsExpanded((prev) => !prev)}
