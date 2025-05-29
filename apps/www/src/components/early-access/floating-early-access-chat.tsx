@@ -380,7 +380,7 @@ export function FloatingEarlyAccessChat() {
 
   return (
     <div
-      className="fixed bottom-6 left-6 z-50 flex flex-col items-start"
+      className="fixed bottom-8 left-8 z-50 flex flex-col items-start"
       role="complementary"
       aria-label="Early access signup"
     >
