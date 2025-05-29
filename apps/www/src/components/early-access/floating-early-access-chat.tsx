@@ -3,7 +3,7 @@
 import type * as z from "zod";
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Send } from "lucide-react";
 import Confetti from "react-confetti";
 
 import { Button } from "@repo/ui/components/ui/button";
@@ -251,27 +251,36 @@ export function FloatingEarlyAccessChat() {
                       <FormItem>
                         <FormLabel className="sr-only">Email</FormLabel>
                         <FormControl>
-                          <Input
-                            className="text-sm"
-                            placeholder="Curious? Enter your email for early access"
-                            autoComplete="email"
-                            {...field}
-                          />
+                          <div className="relative">
+                            <Input
+                              className="pr-12 text-sm"
+                              placeholder="Curious? Enter your email for early access"
+                              autoComplete="email"
+                              {...field}
+                            />
+                            <Button
+                              type="submit"
+                              variant="ghost"
+                              size="sm"
+                              disabled={
+                                form.formState.isSubmitting ||
+                                !field.value?.trim() ||
+                                !form.formState.isValid
+                              }
+                              className="hover:bg-muted absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0"
+                            >
+                              {form.formState.isSubmitting ? (
+                                <div className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
-                  <Button
-                    type="submit"
-                    variant="default"
-                    disabled={form.formState.isSubmitting}
-                    className="w-full"
-                  >
-                    {form.formState.isSubmitting
-                      ? "Joining..."
-                      : "Join Waitlist"}
-                  </Button>
                 </form>
               </Form>
             </div>
