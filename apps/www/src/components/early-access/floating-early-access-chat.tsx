@@ -51,7 +51,6 @@ export function FloatingEarlyAccessChat() {
   // Text loading states
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isLoadingComplete, setIsLoadingComplete] = useState(false);
 
   const form = useForm({
@@ -71,56 +70,49 @@ export function FloatingEarlyAccessChat() {
     const currentText = INTRO_TEXTS[currentMessageIndex];
     if (!currentText) return;
 
-    const words = currentText.split(" ");
+    // Load full sentences instead of word by word
+    const timer = setTimeout(() => {
+      const messageId = `message-${currentMessageIndex}`;
 
-    if (currentWordIndex < words.length) {
-      const timer = setTimeout(() => {
-        const messageId = `message-${currentMessageIndex}`;
-        const partialContent = words.slice(0, currentWordIndex + 1).join(" ");
+      setMessages((prev) => {
+        const existingMessageIndex = prev.findIndex(
+          (msg) => msg.id === messageId,
+        );
+        if (existingMessageIndex >= 0) {
+          // Update existing message to complete
+          const updated = [...prev];
+          updated[existingMessageIndex] = {
+            id: messageId,
+            content: currentText,
+            isComplete: true,
+          };
+          return updated;
+        } else {
+          // Add new message
+          return [
+            ...prev,
+            { id: messageId, content: currentText, isComplete: false },
+          ];
+        }
+      });
 
-        setMessages((prev) => {
-          const existingMessageIndex = prev.findIndex(
-            (msg) => msg.id === messageId,
-          );
-          if (existingMessageIndex >= 0) {
-            // Update existing message
-            const updated = [...prev];
-            updated[existingMessageIndex] = {
-              id: messageId,
-              content: partialContent,
-              isComplete: false,
-            };
-            return updated;
-          } else {
-            // Add new message
-            return [
-              ...prev,
-              { id: messageId, content: partialContent, isComplete: false },
-            ];
-          }
-        });
-
-        setCurrentWordIndex(currentWordIndex + 1);
-      }, 150); // Delay between words
-
-      return () => clearTimeout(timer);
-    } else {
-      // Mark current message as complete and move to next
-      const timer = setTimeout(() => {
+      // Mark as complete after a brief moment to show the animation
+      setTimeout(() => {
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id === `message-${currentMessageIndex}`
-              ? { ...msg, isComplete: true }
-              : msg,
+            msg.id === messageId ? { ...msg, isComplete: true } : msg,
           ),
         );
-        setCurrentMessageIndex(currentMessageIndex + 1);
-        setCurrentWordIndex(0);
-      }, 800); // Delay before next message
+      }, 100);
 
-      return () => clearTimeout(timer);
-    }
-  }, [currentMessageIndex, currentWordIndex]);
+      // Move to next message
+      setTimeout(() => {
+        setCurrentMessageIndex(currentMessageIndex + 1);
+      }, 1200); // Delay before next message
+    }, 800); // Initial delay before showing message
+
+    return () => clearTimeout(timer);
+  }, [currentMessageIndex]);
 
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
     const result = await createEarlyAccessEntrySafe({
@@ -221,11 +213,14 @@ export function FloatingEarlyAccessChat() {
             <div className="space-y-4">
               {/* Sequential bot messages */}
               {messages.map((message) => (
-                <div key={message.id} className="flex items-start gap-2">
-                  <div className="bg-primary text-primary-foreground flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs">
-                    AI
-                  </div>
-                  <div className="bg-muted flex-1 rounded-lg p-3 text-sm">
+                <div key={message.id} className="flex items-start">
+                  <div
+                    className={`text-sm transition-all duration-700 ease-out ${
+                      message.isComplete
+                        ? "opacity-100 blur-none"
+                        : "opacity-70 blur-sm"
+                    }`}
+                  >
                     {message.content}
                     {!message.isComplete && (
                       <span className="ml-1 animate-pulse">|</span>
@@ -234,56 +229,51 @@ export function FloatingEarlyAccessChat() {
                 </div>
               ))}
 
-              {/* Show form after text loading is complete */}
+              {/* Show final message after text loading is complete */}
               {isLoadingComplete && (
-                <>
-                  <div className="flex items-start gap-2">
-                    <div className="bg-primary text-primary-foreground flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs">
-                      AI
-                    </div>
-                    <div className="bg-muted flex-1 rounded-lg p-3 text-sm">
-                      Ready to get started? Join our waitlist for early access!
-                    </div>
+                <div className="flex items-start">
+                  <div className="text-sm">
+                    Ready to get started? Join our waitlist for early access!
                   </div>
-
-                  {/* Form */}
-                  <Form {...form}>
-                    <form
-                      onSubmit={form.handleSubmit(onSubmit)}
-                      className="ml-8 space-y-3"
-                    >
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="sr-only">Email</FormLabel>
-                            <FormControl>
-                              <Input
-                                className="text-sm"
-                                placeholder="Curious? Enter your email for early access"
-                                autoComplete="email"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="submit"
-                        variant="default"
-                        disabled={form.formState.isSubmitting}
-                        className="w-full"
-                      >
-                        {form.formState.isSubmitting
-                          ? "Joining..."
-                          : "Join Waitlist"}
-                      </Button>
-                    </form>
-                  </Form>
-                </>
+                </div>
               )}
+
+              {/* Form - always visible */}
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-3"
+                >
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            className="text-sm"
+                            placeholder="Curious? Enter your email for early access"
+                            autoComplete="email"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    variant="default"
+                    disabled={form.formState.isSubmitting}
+                    className="w-full"
+                  >
+                    {form.formState.isSubmitting
+                      ? "Joining..."
+                      : "Join Waitlist"}
+                  </Button>
+                </form>
+              </Form>
             </div>
           )}
         </div>
