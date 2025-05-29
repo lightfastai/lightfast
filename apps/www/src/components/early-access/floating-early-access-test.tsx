@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Maximize2, MessageCircle, Minimize2, Send } from "lucide-react";
 
+import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 
@@ -28,7 +29,10 @@ export function FloatingEarlyAccessTest() {
             className={`transition-opacity delay-300 duration-500 ease-in-out ${isMinimized ? "opacity-100" : "pointer-events-none opacity-0"} `}
           >
             <div className="flex items-center gap-2 whitespace-nowrap">
-              <div className="h-2 w-2 rounded-full bg-green-500"></div>
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ background: "var(--gradient-sky)" }}
+              ></div>
               <span className="text-sm font-medium">
                 Click here to join our early access
               </span>
@@ -42,8 +46,11 @@ export function FloatingEarlyAccessTest() {
             {/* Chat header */}
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-sm font-medium">Lightfast</span>
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: "var(--gradient-sky)" }}
+                ></div>
+                <Icons.logoShort className="h-4 w-auto" />
               </div>
               <MessageCircle className="text-muted-foreground h-4 w-4" />
             </div>
