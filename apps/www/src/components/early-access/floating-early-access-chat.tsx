@@ -68,7 +68,6 @@ export function FloatingEarlyAccessChat() {
   const [isLoadingComplete, setIsLoadingComplete] = useState(false);
   const chatCardRef = useRef<HTMLDivElement>(null);
   const logoButtonRef = useRef<HTMLButtonElement>(null);
-  const emailInputRef = useRef<HTMLInputElement>(null);
 
   // Helper to add timeout with cleanup tracking
   const addTimeout = (callback: () => void, delay: number) => {
@@ -199,6 +198,14 @@ export function FloatingEarlyAccessChat() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "/" || event.key === "Escape") {
+        console.log("Key pressed:", event.key, {
+          isExpanded,
+          isSubmitted,
+          hasChatRef: !!chatCardRef.current,
+        });
+      }
+
       // ESC to close
       if (event.key === "Escape" && isExpanded) {
         event.preventDefault();
@@ -213,12 +220,30 @@ export function FloatingEarlyAccessChat() {
         event.key === "/" &&
         isExpanded &&
         !isSubmitted &&
-        emailInputRef.current &&
-        document.activeElement !== emailInputRef.current
+        chatCardRef.current
       ) {
-        event.preventDefault();
-        emailInputRef.current.focus();
-        return;
+        console.log("/ key pressed, looking for input...");
+        const emailInput = chatCardRef.current.querySelector(
+          'input[type="email"]',
+        );
+        console.log("Found input:", emailInput);
+        if (
+          emailInput &&
+          emailInput instanceof HTMLInputElement &&
+          document.activeElement !== emailInput
+        ) {
+          console.log("Focusing input...");
+          event.preventDefault();
+          emailInput.focus();
+          return;
+        }
+      } else if (event.key === "/") {
+        console.log("/ key pressed but conditions not met:", {
+          isExpanded,
+          isSubmitted,
+          hasChatCardRef: !!chatCardRef.current,
+          activeElement: document.activeElement?.tagName,
+        });
       }
     };
 
@@ -404,7 +429,7 @@ export function FloatingEarlyAccessChat() {
                               <FormControl>
                                 <div className="relative">
                                   <Input
-                                    ref={emailInputRef}
+                                    type="email"
                                     className="pr-12 text-xs md:text-xs"
                                     placeholder="Curious? Enter your email for early access"
                                     autoComplete="email"
