@@ -31,16 +31,40 @@ import { useEarlyAccessAnalytics } from "./hooks/use-early-access-analytics";
 import { earlyAccessCountAtom } from "./jotai/early-access-count-atom";
 
 // Timing constants (in milliseconds)
-const AUTO_EXPAND_DELAY = 1000; // Delay before auto-expanding
+const AUTO_EXPAND_DELAY = 500; // Delay before auto-expanding
 const MESSAGE_DELAY = 800; // Delay before showing each message
 const MESSAGE_COMPLETE_DELAY = 100; // Delay before marking message as complete
-const NEXT_MESSAGE_DELAY = 1200; // Delay before showing next message
+const NEXT_MESSAGE_DELAY = 400; // Delay before showing next message
+
+// LocalStorage key for tracking onboarding status
+const EARLY_ACCESS_ONBOARDED_KEY = "lightfast_early_access_onboarded";
+// Feature flag to enable/disable localStorage onboarding tracking
+const ENABLE_ONBOARDING_TRACKING = false;
 
 const INTRO_TEXTS = [
   "Simplifying the way you interact with applications like Blender, Unity, Fusion360 and more.",
   "Lightfast gives your ideas room to grow... to branch, remix and become what they're meant to be.",
   "We integrate with your tools to make your workflow more efficient.",
 ];
+
+// Helper functions for localStorage
+const isUserOnboarded = (): boolean => {
+  if (!ENABLE_ONBOARDING_TRACKING) return false;
+  try {
+    return localStorage.getItem(EARLY_ACCESS_ONBOARDED_KEY) === "true";
+  } catch {
+    return false; // Fallback if localStorage is disabled
+  }
+};
+
+const markUserAsOnboarded = (): void => {
+  if (!ENABLE_ONBOARDING_TRACKING) return;
+  try {
+    localStorage.setItem(EARLY_ACCESS_ONBOARDED_KEY, "true");
+  } catch {
+    // Silently fail if localStorage is disabled
+  }
+};
 
 interface ChatMessage {
   id: string;
@@ -103,10 +127,11 @@ export function FloatingEarlyAccessChat() {
 
   // Auto-expand effect
   useEffect(() => {
-    if (!hasStreamedOnce.current) {
+    if (!hasStreamedOnce.current && !isUserOnboarded()) {
       addTimeout(() => {
         setIsExpanded(true);
         wasAutoExpanded.current = true;
+        markUserAsOnboarded();
       }, AUTO_EXPAND_DELAY);
     }
     return clearAllTimeouts;
@@ -198,14 +223,6 @@ export function FloatingEarlyAccessChat() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "/" || event.key === "Escape") {
-        console.log("Key pressed:", event.key, {
-          isExpanded,
-          isSubmitted,
-          hasChatRef: !!chatCardRef.current,
-        });
-      }
-
       // ESC to close
       if (event.key === "Escape" && isExpanded) {
         event.preventDefault();
@@ -222,28 +239,18 @@ export function FloatingEarlyAccessChat() {
         !isSubmitted &&
         chatCardRef.current
       ) {
-        console.log("/ key pressed, looking for input...");
         const emailInput = chatCardRef.current.querySelector(
           'input[type="email"]',
         );
-        console.log("Found input:", emailInput);
         if (
           emailInput &&
           emailInput instanceof HTMLInputElement &&
           document.activeElement !== emailInput
         ) {
-          console.log("Focusing input...");
           event.preventDefault();
           emailInput.focus();
           return;
         }
-      } else if (event.key === "/") {
-        console.log("/ key pressed but conditions not met:", {
-          isExpanded,
-          isSubmitted,
-          hasChatCardRef: !!chatCardRef.current,
-          activeElement: document.activeElement?.tagName,
-        });
       }
     };
 
@@ -291,6 +298,7 @@ export function FloatingEarlyAccessChat() {
         });
         setWaitlistCount((count) => count + 1);
         setIsSubmitted(true);
+        markUserAsOnboarded();
       },
       (error) => {
         reportError(error, {
@@ -352,6 +360,7 @@ export function FloatingEarlyAccessChat() {
                     // If user manually opens, disable auto-scroll-close
                     if (!isExpanded) {
                       wasAutoExpanded.current = false;
+                      markUserAsOnboarded();
                     }
                     setIsExpanded((prev) => !prev);
                   }}
@@ -489,6 +498,7 @@ export function FloatingEarlyAccessChat() {
             // If user manually opens, disable auto-scroll-close
             if (!isExpanded) {
               wasAutoExpanded.current = false;
+              markUserAsOnboarded();
             }
             setIsExpanded((prev) => !prev);
           }}
