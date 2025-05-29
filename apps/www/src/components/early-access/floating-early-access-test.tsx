@@ -18,15 +18,19 @@ export function FloatingEarlyAccessTest() {
         {/* Morphing container - transitions between chat and button */}
         <div
           onClick={isMinimized ? () => setIsMinimized(false) : undefined}
-          className={`bg-background relative overflow-hidden border shadow-lg transition-all duration-800 ease-in-out ${
+          className={`bg-background relative overflow-hidden border shadow-lg transition-all duration-800 ease-out ${
             isMinimized
-              ? "w-auto cursor-pointer rounded-lg px-4 py-3 hover:shadow-xl"
-              : "w-96 rounded-2xl"
-          } `}
+              ? "w-auto cursor-pointer rounded-lg px-4 py-3 hover:shadow-xl starting:w-96 starting:rounded-2xl starting:px-0 starting:py-0"
+              : "w-96 rounded-2xl starting:w-auto starting:rounded-lg starting:px-4 starting:py-3"
+          }`}
         >
           {/* Button content - shows when minimized */}
           <div
-            className={`transition-opacity delay-300 duration-500 ease-in-out ${isMinimized ? "opacity-100" : "pointer-events-none opacity-0"} `}
+            className={`transition-all delay-300 duration-500 ease-out ${
+              isMinimized
+                ? "opacity-100 starting:translate-y-1 starting:scale-95 starting:opacity-0"
+                : "pointer-events-none translate-y-1 scale-95 opacity-0"
+            }`}
           >
             <div className="flex items-center gap-2 whitespace-nowrap">
               <div
@@ -41,16 +45,20 @@ export function FloatingEarlyAccessTest() {
 
           {/* Chat content - shows when expanded */}
           <div
-            className={`transition-opacity delay-300 duration-500 ease-in-out ${isMinimized ? "pointer-events-none absolute inset-0 opacity-0" : "opacity-100"} `}
+            className={`transition-all delay-300 duration-500 ease-out ${
+              isMinimized
+                ? "pointer-events-none absolute inset-0 -translate-y-2 scale-105 opacity-0"
+                : "opacity-100 starting:-translate-y-2 starting:scale-105 starting:opacity-0"
+            }`}
           >
             {/* Chat header */}
-            <div className="flex items-center justify-between border-b px-4 py-3">
+            <div className="grid h-10 grid-cols-[1fr_auto] items-center border-b px-4">
               <div className="flex items-center gap-2">
                 <div
                   className="h-2 w-2 rounded-full"
                   style={{ background: "var(--gradient-sky)" }}
                 ></div>
-                <Icons.logoShort className="h-4 w-auto" />
+                <Icons.logoShort className="h-3 w-auto" />
               </div>
               <MessageCircle className="text-muted-foreground h-4 w-4" />
             </div>

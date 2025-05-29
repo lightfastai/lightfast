@@ -251,13 +251,13 @@ export function FloatingEarlyAccessChat() {
           className={`transition-opacity delay-300 duration-500 ease-in-out ${isMinimized ? "pointer-events-none absolute inset-0 opacity-0" : "opacity-100"} `}
         >
           {/* Chat header */}
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <div className="flex items-center gap-2">
+          <div className="flex h-10 items-center justify-between border-b px-4">
+            <div className="flex items-center gap-2 leading-none">
               <div
                 className="h-2 w-2 rounded-full"
                 style={{ background: "var(--gradient-sky)" }}
               ></div>
-              <Icons.logoShort className="h-4 w-auto" />
+              <Icons.logoShort className="h-4 w-auto leading-none" />
             </div>
             <MessageCircle className="text-muted-foreground h-4 w-4" />
           </div>
