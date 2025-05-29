@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Maximize2, MessageCircle, Minimize2, Send } from "lucide-react";
+import { Maximize2, Minimize2, Send } from "lucide-react";
 
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
@@ -15,86 +15,84 @@ export function FloatingEarlyAccessTest() {
     <div className="grid grid-cols-[400px_200px] items-center gap-8">
       {/* Chat Component - fixed width column */}
       <div className="flex flex-col items-start">
-        {/* Morphing container - transitions between chat and button */}
+        {/* Morphing container - smooth transition from icon to chat */}
         <div
           onClick={isMinimized ? () => setIsMinimized(false) : undefined}
-          className={`bg-background relative overflow-hidden border shadow-lg transition-all duration-800 ease-out ${
+          className={`group bg-background relative overflow-hidden border shadow-lg transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
             isMinimized
-              ? "w-auto cursor-pointer rounded-lg px-4 py-3 hover:shadow-xl starting:w-96 starting:rounded-2xl starting:px-0 starting:py-0"
-              : "w-96 rounded-2xl starting:w-auto starting:rounded-lg starting:px-4 starting:py-3"
+              ? "h-12 w-12 cursor-pointer rounded-xl hover:shadow-xl"
+              : "h-auto w-96 rounded-2xl"
           }`}
         >
-          {/* Button content - shows when minimized */}
-          <div
-            className={`transition-all delay-300 duration-500 ease-out ${
-              isMinimized
-                ? "opacity-100 starting:translate-y-1 starting:scale-95 starting:opacity-0"
-                : "pointer-events-none translate-y-1 scale-95 opacity-0"
-            }`}
-          >
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <div
-                className="h-2 w-2 rounded-full"
-                style={{ background: "var(--gradient-sky)" }}
-              ></div>
-              <span className="text-sm font-medium">
-                Click here to join our early access
-              </span>
+          {/* Unified content container - prevents layout shifts */}
+          <div className="relative h-full w-full">
+            {/* Icon state - positioned to align with future header */}
+            <div
+              className={`absolute top-0 left-0 flex h-12 w-full items-center transition-all duration-500 ${
+                isMinimized
+                  ? "justify-center opacity-100 delay-200"
+                  : "justify-start px-4 opacity-0 delay-0"
+              }`}
+            >
+              <Icons.logoShort
+                className={`transition-all duration-500 ${
+                  isMinimized ? "h-6 w-auto" : "h-3 w-auto"
+                }`}
+              />
             </div>
-          </div>
 
-          {/* Chat content - shows when expanded */}
-          <div
-            className={`transition-all delay-300 duration-500 ease-out ${
-              isMinimized
-                ? "pointer-events-none absolute inset-0 -translate-y-2 scale-105 opacity-0"
-                : "opacity-100 starting:-translate-y-2 starting:scale-105 starting:opacity-0"
-            }`}
-          >
-            {/* Chat header */}
-            <div className="grid h-10 grid-cols-[1fr_auto] items-center border-b px-4">
-              <div className="flex items-center gap-2">
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: "var(--gradient-sky)" }}
-                ></div>
-                <Icons.logoShort className="h-3 w-auto" />
+            {/* Chat content - grows from the header area */}
+            <div
+              className={`transition-all duration-500 ${
+                isMinimized
+                  ? "scale-95 opacity-0 delay-0"
+                  : "scale-100 opacity-100 delay-200"
+              }`}
+            >
+              {/* Chat header - same height as icon button for alignment */}
+              <div className="flex h-12 items-center border-b px-4">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: "var(--gradient-sky)" }}
+                  ></div>
+                  <Icons.logoShort className="h-3 w-auto" />
+                </div>
               </div>
-              <MessageCircle className="text-muted-foreground h-4 w-4" />
-            </div>
 
-            {/* Chat content */}
-            <div className="max-h-96 overflow-y-auto p-4">
-              <div className="space-y-4">
-                {/* Sample messages for testing */}
-                <div className="flex items-start">
-                  <div className="text-sm">
-                    Simplifying the way you interact with applications like
-                    Blender, Unity, Fusion360 and more.
+              {/* Chat content - only visible when expanded */}
+              <div className="p-4">
+                <div className="space-y-4">
+                  {/* Sample messages */}
+                  <div className="flex items-start">
+                    <div className="text-sm">
+                      Simplifying the way you interact with applications like
+                      Blender, Unity, Fusion360 and more.
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-start">
-                  <div className="text-sm">
-                    Ready to get started? Join our waitlist for early access!
+                  <div className="flex items-start">
+                    <div className="text-sm">
+                      Ready to get started? Join our waitlist for early access!
+                    </div>
                   </div>
-                </div>
 
-                {/* Simple form for testing */}
-                <div className="relative">
-                  <Input
-                    className="pr-12 text-sm"
-                    placeholder="Curious? Enter your email for early access"
-                    disabled
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled
-                    className="hover:bg-muted absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
+                  {/* Simple form */}
+                  <div className="relative">
+                    <Input
+                      className="pr-12 text-sm"
+                      placeholder="Curious? Enter your email for early access"
+                      disabled
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled
+                      className="hover:bg-muted absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
