@@ -1,7 +1,7 @@
 "use client";
 
 import type * as z from "zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAtom } from "jotai";
 import { Send, X } from "lucide-react";
 import Confetti from "react-confetti";
@@ -30,6 +30,12 @@ import { useErrorReporter } from "~/lib/error-reporting/client-error-reporter";
 import { useEarlyAccessAnalytics } from "./hooks/use-early-access-analytics";
 import { earlyAccessCountAtom } from "./jotai/early-access-count-atom";
 
+// Timing constants (in milliseconds)
+const AUTO_EXPAND_DELAY = 1000; // Delay before auto-expanding
+const MESSAGE_DELAY = 800; // Delay before showing each message
+const MESSAGE_COMPLETE_DELAY = 100; // Delay before marking message as complete
+const NEXT_MESSAGE_DELAY = 1200; // Delay before showing next message
+
 const INTRO_TEXTS = [
   "Simplifying the way you interact with applications like Blender, Unity, Fusion360 and more.",
   "Lightfast gives your ideas room to grow... to branch, remix and become what they're meant to be.",
@@ -49,6 +55,7 @@ export function FloatingEarlyAccessChat() {
   const [_, setWaitlistCount] = useAtom(earlyAccessCountAtom);
   const logger = useLogger();
   const { trackSignup } = useEarlyAccessAnalytics();
+  const hasStreamedOnce = useRef(false);
 
   // Card expand/collapse state
   const [isExpanded, setIsExpanded] = useState(false);
@@ -58,27 +65,31 @@ export function FloatingEarlyAccessChat() {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isLoadingComplete, setIsLoadingComplete] = useState(false);
 
-  const form = useForm({
-    schema: earlyAccessFormSchema,
-    defaultValues: {
-      email: "",
-    },
-  });
+  // Auto-expand effect
+  useEffect(() => {
+    if (!hasStreamedOnce.current) {
+      const timer = setTimeout(() => {
+        setIsExpanded(true);
+      }, AUTO_EXPAND_DELAY);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Sequential text loading effect
   useEffect(() => {
-    if (!isExpanded) {
-      setMessages([]);
-      setCurrentMessageIndex(0);
-      setIsLoadingComplete(false);
+    if (!isExpanded || hasStreamedOnce.current) {
       return;
     }
+
     if (currentMessageIndex >= INTRO_TEXTS.length) {
       setIsLoadingComplete(true);
+      hasStreamedOnce.current = true;
       return;
     }
+
     const currentText = INTRO_TEXTS[currentMessageIndex];
     if (!currentText) return;
+
     const timer = setTimeout(() => {
       const messageId = `message-${currentMessageIndex}`;
       setMessages((prev) => {
@@ -100,28 +111,49 @@ export function FloatingEarlyAccessChat() {
           ];
         }
       });
+
       setTimeout(() => {
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === messageId ? { ...msg, isComplete: true } : msg,
           ),
         );
-      }, 100);
+      }, MESSAGE_COMPLETE_DELAY);
+
       setTimeout(() => {
         setCurrentMessageIndex(currentMessageIndex + 1);
-      }, 1200);
-    }, 800);
+      }, NEXT_MESSAGE_DELAY);
+    }, MESSAGE_DELAY);
+
     return () => clearTimeout(timer);
   }, [currentMessageIndex, isExpanded]);
 
-  // Reset messages when card is closed
+  // Reset messages when card is closed or re-opened
   useEffect(() => {
     if (!isExpanded) {
       setMessages([]);
       setCurrentMessageIndex(0);
       setIsLoadingComplete(false);
+    } else if (hasStreamedOnce.current) {
+      // If already streamed, show all messages as complete
+      setMessages(
+        INTRO_TEXTS.map((content, idx) => ({
+          id: `message-${idx}`,
+          content,
+          isComplete: true,
+        })),
+      );
+      setCurrentMessageIndex(INTRO_TEXTS.length);
+      setIsLoadingComplete(true);
     }
   }, [isExpanded]);
+
+  const form = useForm({
+    schema: earlyAccessFormSchema,
+    defaultValues: {
+      email: "",
+    },
+  });
 
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
     const result = await createEarlyAccessEntrySafe({
@@ -186,7 +218,7 @@ export function FloatingEarlyAccessChat() {
         <div
           className={`expanding-card ${isExpanded ? "expanded" : "collapsed"}`}
         >
-          <Card className="w-108 shadow-xl backdrop-blur-sm">
+          <Card className="bg-background/90 w-108 shadow-xl backdrop-blur-sm">
             <CardContent className="space-y-4">
               {/* Header area with close button */}
               <div className="flex items-center justify-end">
