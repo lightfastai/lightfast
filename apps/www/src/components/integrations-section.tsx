@@ -73,6 +73,7 @@ export function IntegrationsSection() {
                     className="grayscale transition-all duration-300 group-hover:grayscale-0"
                     sizes="(max-width: 768px) 64px, (max-width: 1200px) 96px, 128px"
                     priority={index < 8}
+                    quality={70}
                   />
                 </div>
                 <div className="absolute bottom-3 left-3 font-mono text-xs text-white">
