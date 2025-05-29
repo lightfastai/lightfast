@@ -53,6 +53,10 @@ export function FloatingEarlyAccessChat() {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isLoadingComplete, setIsLoadingComplete] = useState(false);
 
+  // Scroll-to-minimize states
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
   const form = useForm({
     schema: earlyAccessFormSchema,
     defaultValues: {
@@ -113,6 +117,37 @@ export function FloatingEarlyAccessChat() {
 
     return () => clearTimeout(timer);
   }, [currentMessageIndex]);
+
+  // Scroll detection effect
+  useEffect(() => {
+    let scrollTimer: NodeJS.Timeout | undefined;
+
+    const handleScroll = () => {
+      if (!hasScrolled) {
+        setHasScrolled(true);
+        setIsMinimized(true);
+      }
+
+      // Clear existing timer if it exists
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+      }
+
+      // Reset minimized state after scrolling stops (optional - keeps it minimized)
+      // scrollTimer = setTimeout(() => {
+      //   setIsMinimized(false);
+      // }, 2000);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+      }
+    };
+  }, [hasScrolled]);
 
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
     const result = await createEarlyAccessEntrySafe({
@@ -186,105 +221,129 @@ export function FloatingEarlyAccessChat() {
 
   return (
     <div className="fixed bottom-6 left-6 z-50 flex flex-col items-start">
-      {/* Always visible chat interface */}
-      <div className="bg-background w-80 max-w-[calc(100vw-3rem)] rounded-2xl border shadow-lg">
-        {/* Chat header */}
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <div className="flex items-center gap-2">
+      {/* Morphing container - transitions between chat and button */}
+      <div
+        onClick={isMinimized ? () => setIsMinimized(false) : undefined}
+        className={`bg-background relative overflow-hidden border shadow-lg transition-all duration-500 ease-out ${
+          isMinimized
+            ? "w-auto cursor-pointer rounded-lg px-4 py-3 hover:shadow-xl"
+            : "w-96 max-w-[calc(100vw-3rem)] rounded-2xl"
+        } `}
+      >
+        {/* Button content - shows when minimized */}
+        <div
+          className={`transition-opacity duration-300 ease-out ${isMinimized ? "opacity-100" : "pointer-events-none opacity-0"} `}
+        >
+          <div className="flex items-center gap-2 whitespace-nowrap">
             <div className="h-2 w-2 rounded-full bg-green-500"></div>
-            <span className="text-sm font-medium">Lightfast</span>
+            <span className="text-sm font-medium">
+              Click here to join our early access
+            </span>
           </div>
-          <MessageCircle className="text-muted-foreground h-4 w-4" />
         </div>
 
-        {/* Chat content */}
-        <div className="max-h-96 overflow-y-auto p-4">
-          {isSubmitted ? (
-            <div className="flex flex-col items-center justify-center text-center">
-              <Confetti recycle={false} numberOfPieces={200} />
-              <p className="mb-2 text-sm font-semibold">
-                {form.getValues("email")} is now on the list! 🎉
-              </p>
-              <p className="text-muted-foreground text-xs">
-                We'll notify you when we launch.
-              </p>
+        {/* Chat content - shows when expanded */}
+        <div
+          className={`transition-opacity duration-300 ease-out ${isMinimized ? "pointer-events-none absolute inset-0 opacity-0" : "opacity-100"} `}
+        >
+          {/* Chat header */}
+          <div className="flex items-center justify-between border-b px-4 py-3">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-green-500"></div>
+              <span className="text-sm font-medium">Lightfast</span>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Sequential bot messages */}
-              {messages.map((message) => (
-                <div key={message.id} className="flex items-start">
-                  <div
-                    className={`text-sm transition-all duration-700 ease-out ${
-                      message.isComplete
-                        ? "opacity-100 blur-none"
-                        : "opacity-70 blur-sm"
-                    }`}
+            <MessageCircle className="text-muted-foreground h-4 w-4" />
+          </div>
+
+          {/* Chat content */}
+          <div className="max-h-96 overflow-y-auto p-4">
+            {isSubmitted ? (
+              <div className="flex flex-col items-center justify-center text-center">
+                <Confetti recycle={false} numberOfPieces={200} />
+                <p className="mb-2 text-sm font-semibold">
+                  {form.getValues("email")} is now on the list! 🎉
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  We'll notify you when we launch.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Sequential bot messages */}
+                {messages.map((message) => (
+                  <div key={message.id} className="flex items-start">
+                    <div
+                      className={`text-sm transition-all duration-700 ease-out ${
+                        message.isComplete
+                          ? "opacity-100 blur-none"
+                          : "opacity-70 blur-sm"
+                      }`}
+                    >
+                      {message.content}
+                      {!message.isComplete && (
+                        <span className="ml-1 animate-pulse">|</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Show final message after text loading is complete */}
+                {isLoadingComplete && (
+                  <div className="flex items-start">
+                    <div className="text-sm">
+                      Ready to get started? Join our waitlist for early access!
+                    </div>
+                  </div>
+                )}
+
+                {/* Form - always visible */}
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-3"
                   >
-                    {message.content}
-                    {!message.isComplete && (
-                      <span className="ml-1 animate-pulse">|</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* Show final message after text loading is complete */}
-              {isLoadingComplete && (
-                <div className="flex items-start">
-                  <div className="text-sm">
-                    Ready to get started? Join our waitlist for early access!
-                  </div>
-                </div>
-              )}
-
-              {/* Form - always visible */}
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-3"
-                >
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="sr-only">Email</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              className="pr-12 text-sm"
-                              placeholder="Curious? Enter your email for early access"
-                              autoComplete="email"
-                              {...field}
-                            />
-                            <Button
-                              type="submit"
-                              variant="ghost"
-                              size="sm"
-                              disabled={
-                                form.formState.isSubmitting ||
-                                !field.value?.trim() ||
-                                !form.formState.isValid
-                              }
-                              className="hover:bg-muted absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0"
-                            >
-                              {form.formState.isSubmitting ? (
-                                <div className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-                              ) : (
-                                <Send className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </form>
-              </Form>
-            </div>
-          )}
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="sr-only">Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                className="pr-12 text-sm"
+                                placeholder="Curious? Enter your email for early access"
+                                autoComplete="email"
+                                {...field}
+                              />
+                              <Button
+                                type="submit"
+                                variant="ghost"
+                                size="sm"
+                                disabled={
+                                  form.formState.isSubmitting ||
+                                  !field.value?.trim() ||
+                                  !form.formState.isValid
+                                }
+                                className="hover:bg-muted absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0"
+                              >
+                                {form.formState.isSubmitting ? (
+                                  <div className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                                ) : (
+                                  <Send className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
