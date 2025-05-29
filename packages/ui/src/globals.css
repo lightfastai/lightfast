@@ -225,3 +225,35 @@
     }
   }
 }
+
+@layer components {
+  .expanding-card {
+    @apply transition-all duration-500 ease-out;
+  }
+
+  .expanding-card.collapsed {
+    @apply pointer-events-none scale-75 opacity-0;
+    transform-origin: 40px bottom; /* Anchor to logo position in bottom row (left-4 + half logo size, bottom) */
+  }
+
+  .expanding-card.expanded {
+    @apply pointer-events-auto scale-100 opacity-100;
+    transform-origin: 40px bottom; /* Anchor to logo position in bottom row (left-4 + half logo size, bottom) */
+  }
+
+  /* Starting style for smooth entrance animation */
+  @starting-style {
+    .expanding-card.expanded {
+      @apply scale-75 opacity-0;
+    }
+  }
+
+  /* Smooth transitions for card content */
+  .expanding-card.expanded .card-content {
+    @apply transition-all delay-200 duration-300;
+  }
+
+  .expanding-card.collapsed .card-content {
+    @apply transition-all duration-200;
+  }
+}
