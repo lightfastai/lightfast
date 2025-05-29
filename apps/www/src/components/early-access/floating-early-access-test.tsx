@@ -87,30 +87,37 @@ export function FloatingEarlyAccessTest() {
         </div>
       </div>
 
-      {/* State Controls - positioned independently */}
-      <div className="bg-background rounded-lg border p-3 shadow-lg">
-        <div className="text-muted-foreground mb-2 text-center text-xs font-medium">
-          STATE
-        </div>
-        <div className="flex gap-1">
-          <Button
-            onClick={() => setIsMinimized(false)}
-            variant="outline"
-            size="sm"
-            disabled={!isMinimized}
-            className="flex-1 p-2"
-          >
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={() => setIsMinimized(true)}
-            variant="outline"
-            size="sm"
-            disabled={isMinimized}
-            className="flex-1 p-2"
-          >
-            <Minimize2 className="h-4 w-4" />
-          </Button>
+      {/* Controls Panel */}
+      <div className="bg-card rounded-xl border p-4 shadow-sm">
+        <div className="mb-4 text-sm font-semibold">Controls</div>
+
+        {/* State Section */}
+        <div className="space-y-2">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            State
+          </div>
+          <div className="bg-muted flex gap-0 rounded-lg p-1">
+            <Button
+              onClick={() => setIsMinimized(false)}
+              variant={!isMinimized ? "default" : "ghost"}
+              size="sm"
+              className={`h-8 flex-1 rounded-md transition-all ${
+                !isMinimized ? "shadow-sm" : "hover:bg-background/60"
+              }`}
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              onClick={() => setIsMinimized(true)}
+              variant={isMinimized ? "default" : "ghost"}
+              size="sm"
+              className={`h-8 flex-1 rounded-md transition-all ${
+                isMinimized ? "shadow-sm" : "hover:bg-background/60"
+              }`}
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
