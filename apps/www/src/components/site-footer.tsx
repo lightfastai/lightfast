@@ -13,7 +13,7 @@ export function SiteFooter() {
           <div className="flex items-start justify-between">
             {/* Left - Logo (fixed width for alignment) */}
             <div className="w-1/2 flex-shrink-0">
-              <Icons.logo className="text-foreground w-32 border" />
+              <Icons.logo className="text-foreground w-32" />
             </div>
 
             {/* Right - Services and Company (fixed width for alignment) */}
@@ -150,7 +150,7 @@ export function SiteFooter() {
 
             {/* Right - Copyright and Additional Info (fixed width for alignment) */}
             <div className="w-1/2">
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-8 font-mono">
                 {/* Copyright */}
                 <div className="flex items-center">
                   <span className="group text-muted-foreground relative cursor-default text-sm">
