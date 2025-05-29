@@ -35,6 +35,8 @@ const AUTO_EXPAND_DELAY = 500; // Delay before auto-expanding
 const MESSAGE_DELAY = 800; // Delay before showing each message
 const MESSAGE_COMPLETE_DELAY = 100; // Delay before marking message as complete
 const NEXT_MESSAGE_DELAY = 400; // Delay before showing next message
+const SCROLL_GRACE_PERIOD = 3000; // Grace period after auto-expand before scroll-to-close becomes active
+const SCROLL_THRESHOLD = 50; // Minimum scroll distance (in pixels) to trigger close
 
 // LocalStorage key for tracking onboarding status
 const EARLY_ACCESS_ONBOARDED_KEY = "lightfast_early_access_onboarded";
@@ -82,6 +84,8 @@ export function FloatingEarlyAccessChat() {
   const hasStreamedOnce = useRef(false);
   const wasAutoExpanded = useRef(false);
   const timeoutRefs = useRef<NodeJS.Timeout[]>([]);
+  const scrollGracePeriodActive = useRef(false);
+  const initialScrollPosition = useRef(0);
 
   // Card expand/collapse state
   const [isExpanded, setIsExpanded] = useState(false);
@@ -112,12 +116,33 @@ export function FloatingEarlyAccessChat() {
     timeoutRefs.current = [];
   };
 
+  // Helper to handle chat toggle with grace period management
+  const handleChatToggle = () => {
+    if (!isExpanded) {
+      // User is manually opening the chat
+      wasAutoExpanded.current = false;
+      markUserAsOnboarded();
+
+      // Set up grace period for manually opened chat too
+      scrollGracePeriodActive.current = true;
+      initialScrollPosition.current = window.scrollY;
+
+      // End grace period after delay
+      addTimeout(() => {
+        scrollGracePeriodActive.current = false;
+      }, SCROLL_GRACE_PERIOD);
+    }
+    setIsExpanded((prev) => !prev);
+  };
+
   // Reset refs on component mount to ensure clean state
   useEffect(() => {
     // Reset all refs to initial state on mount
     hasStreamedOnce.current = false;
     wasAutoExpanded.current = false;
     timeoutRefs.current = [];
+    scrollGracePeriodActive.current = false;
+    initialScrollPosition.current = 0;
 
     // Cleanup on unmount
     return () => {
@@ -132,6 +157,15 @@ export function FloatingEarlyAccessChat() {
         setIsExpanded(true);
         wasAutoExpanded.current = true;
         markUserAsOnboarded();
+
+        // Set up grace period for scroll-to-close
+        scrollGracePeriodActive.current = true;
+        initialScrollPosition.current = window.scrollY;
+
+        // End grace period after delay
+        addTimeout(() => {
+          scrollGracePeriodActive.current = false;
+        }, SCROLL_GRACE_PERIOD);
       }, AUTO_EXPAND_DELAY);
     }
     return clearAllTimeouts;
@@ -208,12 +242,25 @@ export function FloatingEarlyAccessChat() {
     }
   }, [isExpanded]);
 
-  // Close chat on scroll (only if auto-expanded)
+  // Close chat on scroll (only if auto-expanded, with grace period and threshold)
   useEffect(() => {
     if (!isExpanded || !wasAutoExpanded.current) return;
+
     const handleScroll = () => {
-      setIsExpanded(false);
+      // Don't close during grace period
+      if (scrollGracePeriodActive.current) {
+        return;
+      }
+
+      // Only close if scroll distance exceeds threshold
+      const scrollDistance = Math.abs(
+        window.scrollY - initialScrollPosition.current,
+      );
+      if (scrollDistance > SCROLL_THRESHOLD) {
+        setIsExpanded(false);
+      }
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -356,14 +403,7 @@ export function FloatingEarlyAccessChat() {
                   size="icon"
                   className="h-8 w-8 rounded-full"
                   aria-label="Close early access chat"
-                  onClick={() => {
-                    // If user manually opens, disable auto-scroll-close
-                    if (!isExpanded) {
-                      wasAutoExpanded.current = false;
-                      markUserAsOnboarded();
-                    }
-                    setIsExpanded((prev) => !prev);
-                  }}
+                  onClick={handleChatToggle}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -494,14 +534,7 @@ export function FloatingEarlyAccessChat() {
             isExpanded ? "Close early access chat" : "Open early access chat"
           }
           aria-expanded={isExpanded}
-          onClick={() => {
-            // If user manually opens, disable auto-scroll-close
-            if (!isExpanded) {
-              wasAutoExpanded.current = false;
-              markUserAsOnboarded();
-            }
-            setIsExpanded((prev) => !prev);
-          }}
+          onClick={handleChatToggle}
           variant="outline"
           size="icon"
         >
