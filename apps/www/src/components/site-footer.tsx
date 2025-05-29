@@ -12,55 +12,55 @@ export function SiteFooter() {
         <div className="mx-auto w-full max-w-7xl px-8">
           <div className="flex items-start justify-between">
             {/* Left - Logo (fixed width for alignment) */}
-            <div className="w-2/3 flex-shrink-0">
+            <div className="w-1/2 flex-shrink-0">
               <Icons.logo className="text-foreground w-32 border" />
             </div>
 
             {/* Right - Services and Company (fixed width for alignment) */}
-            <div className="w-1/3">
+            <div className="w-1/2">
               <div className="flex gap-24">
                 {/* Services Column */}
                 <div className="flex flex-col">
-                  <h3 className="text-foreground mb-6 text-lg font-semibold">
+                  <h3 className="text-muted-foreground mb-3 text-xl font-semibold">
                     Services
                   </h3>
                   <nav className="flex flex-col gap-3">
                     <Link
                       href="#"
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-200"
+                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
                     >
-                      AI Solutions
+                      Copilot for Creatives
                     </Link>
                     <Link
                       href="#"
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-200"
+                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
                     >
-                      X-as-a-Service
+                      Workflow Automation
                     </Link>
                     <Link
                       href="#"
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-200"
+                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
                     >
-                      Professional Services
+                      AI-powered Design
                     </Link>
                   </nav>
                 </div>
 
                 {/* Company Column */}
                 <div className="flex flex-col">
-                  <h3 className="text-foreground mb-6 text-lg font-semibold">
+                  <h3 className="text-muted-foreground mb-3 text-xl font-semibold">
                     Links
                   </h3>
                   <nav className="flex flex-col gap-3">
                     <Link
                       href="/legal/terms"
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-200"
+                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
                     >
                       Terms & Conditions
                     </Link>
                     <Link
                       href="/legal/privacy"
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-200"
+                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
                     >
                       Privacy Policy
                     </Link>
@@ -75,19 +75,19 @@ export function SiteFooter() {
       {/* Section 2 - Contact and Early Access (30vh) */}
       <section className="flex h-[30vh] items-center">
         <div className="mx-auto w-full max-w-7xl px-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start">
             {/* Left - Contact (fixed width for alignment) */}
-            <div className="flex w-2/3 flex-col">
-              <h3 className="text-foreground mb-4 text-xl font-medium">
+            <div className="flex w-1/2 flex-col">
+              <h3 className="text-foreground mb-1 text-lg font-semibold">
                 Have questions or want to chat?
               </h3>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">
-                  Drop us a line at
+                <span className="text-foreground text-lg font-semibold">
+                  Drop us a line at &rarr;
                 </span>
                 <Link
                   href={`mailto:${emailConfig.hello}`}
-                  className="text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200 hover:underline"
+                  className="text-primary hover:text-primary/80 text-lg font-medium transition-colors duration-200 hover:underline"
                 >
                   {emailConfig.hello}
                 </Link>
@@ -95,9 +95,9 @@ export function SiteFooter() {
             </div>
 
             {/* Right - Early Access (fixed width for alignment) */}
-            <div className="w-1/3">
+            <div className="w-1/2 max-w-xs">
               <div className="flex flex-col">
-                <h3 className="text-foreground mb-4 text-xl font-medium">
+                <h3 className="text-foreground text-md mb-4 font-semibold">
                   Stay in the loop and be the first to know what's coming next
                   for Lightfast, get industry expert analysis, and much more.
                 </h3>
@@ -121,7 +121,7 @@ export function SiteFooter() {
         <div className="mx-auto w-full max-w-7xl px-8">
           <div className="flex items-center justify-between">
             {/* Left - Social Links (fixed width for alignment) */}
-            <div className="flex w-2/3 items-center gap-6">
+            <div className="flex w-1/2 items-center gap-6">
               <Link
                 target="_blank"
                 href={siteConfig.links.github.href}
@@ -149,7 +149,7 @@ export function SiteFooter() {
             </div>
 
             {/* Right - Copyright and Additional Info (fixed width for alignment) */}
-            <div className="w-1/3">
+            <div className="w-1/2">
               <div className="flex items-center gap-8">
                 {/* Copyright */}
                 <div className="flex items-center">
