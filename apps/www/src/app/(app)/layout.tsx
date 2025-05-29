@@ -1,3 +1,4 @@
+import { IntegrationsSection } from "~/components/integrations-section";
 import { SiteFooter } from "~/components/site-footer";
 import { SiteHeader } from "~/components/site-header";
 
@@ -12,6 +13,7 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
       <div className="relative flex-1">
         <main className="h-full">{children}</main>
       </div>
+      <IntegrationsSection />
       <SiteFooter />
     </div>
   );
