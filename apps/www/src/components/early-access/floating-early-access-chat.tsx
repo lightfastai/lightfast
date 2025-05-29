@@ -56,6 +56,7 @@ export function FloatingEarlyAccessChat() {
   const logger = useLogger();
   const { trackSignup } = useEarlyAccessAnalytics();
   const hasStreamedOnce = useRef(false);
+  const wasAutoExpanded = useRef(false);
 
   // Card expand/collapse state
   const [isExpanded, setIsExpanded] = useState(false);
@@ -70,6 +71,7 @@ export function FloatingEarlyAccessChat() {
     if (!hasStreamedOnce.current) {
       const timer = setTimeout(() => {
         setIsExpanded(true);
+        wasAutoExpanded.current = true;
       }, AUTO_EXPAND_DELAY);
       return () => clearTimeout(timer);
     }
@@ -146,6 +148,18 @@ export function FloatingEarlyAccessChat() {
       setCurrentMessageIndex(INTRO_TEXTS.length);
       setIsLoadingComplete(true);
     }
+  }, [isExpanded]);
+
+  // Close chat on scroll (only if auto-expanded)
+  useEffect(() => {
+    if (!isExpanded || !wasAutoExpanded.current) return;
+    const handleScroll = () => {
+      setIsExpanded(false);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [isExpanded]);
 
   const form = useForm({
@@ -226,7 +240,13 @@ export function FloatingEarlyAccessChat() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-full"
-                  onClick={() => setIsExpanded(false)}
+                  onClick={() => {
+                    // If user manually opens, disable auto-scroll-close
+                    if (!isExpanded) {
+                      wasAutoExpanded.current = false;
+                    }
+                    setIsExpanded((prev) => !prev);
+                  }}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -321,7 +341,13 @@ export function FloatingEarlyAccessChat() {
           className={`absolute bottom-8 left-4 z-20 cursor-pointer rounded-full transition-all duration-500 ease-out ${
             isExpanded ? "opacity-80" : "opacity-100 hover:scale-110"
           }`}
-          onClick={() => setIsExpanded((prev) => !prev)}
+          onClick={() => {
+            // If user manually opens, disable auto-scroll-close
+            if (!isExpanded) {
+              wasAutoExpanded.current = false;
+            }
+            setIsExpanded((prev) => !prev);
+          }}
           variant="outline"
           size="icon"
         >
