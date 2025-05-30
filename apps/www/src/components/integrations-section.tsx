@@ -1,48 +1,78 @@
-import Image from "next/image";
+// --- Data Structure ---
 
-interface Integration {
+interface IntegrationApp {
   name: string;
-  image: string;
+  category: string;
+  connection: string;
+  priority: string;
+  status: string;
+  issue?: string;
 }
 
-// Available creative app logos
-const creativeAppLogos = [
-  "/creative-app-logos/blender.png",
-  "/creative-app-logos/houdini.png",
-  "/creative-app-logos/touchdesigner.png",
-  "/creative-app-logos/unreal-engine.png",
+interface IntegrationCategory {
+  name: string;
+  grid: {
+    colSpan: number;
+    rowSpan: number;
+    colStart: number;
+    rowStart: number;
+  };
+  color: string;
+  apps?: IntegrationApp[];
+  isLogo?: boolean;
+}
+
+// --- Integration Data ---
+
+const integrationCategories: IntegrationCategory[] = [
+  {
+    name: "Category 1",
+    grid: { colSpan: 2, rowSpan: 6, colStart: 1, rowStart: 1 },
+    color: "bg-blue-500",
+  },
+  {
+    name: "Category 2",
+    grid: { colSpan: 2, rowSpan: 5, colStart: 1, rowStart: 7 },
+    color: "bg-red-500",
+  },
+  {
+    name: "Category 3",
+    grid: { colSpan: 4, rowSpan: 4, colStart: 3, rowStart: 1 },
+    color: "bg-yellow-400",
+  },
+  {
+    name: "Category 4",
+    grid: { colSpan: 3, rowSpan: 7, colStart: 3, rowStart: 5 },
+    color: "bg-green-400",
+  },
+  {
+    name: "Category 5 (Center)",
+    grid: { colSpan: 1, rowSpan: 1, colStart: 6, rowStart: 5 },
+    color: "bg-purple-400",
+  },
+  {
+    name: "Category 9",
+    grid: { colSpan: 3, rowSpan: 5, colStart: 7, rowStart: 1 },
+    color: "bg-purple-400",
+  },
+  {
+    name: "Category 6",
+    grid: { colSpan: 2, rowSpan: 3, colStart: 10, rowStart: 1 },
+    color: "bg-pink-400",
+  },
+  {
+    name: "Category 7",
+    grid: { colSpan: 2, rowSpan: 8, colStart: 10, rowStart: 4 },
+    color: "bg-orange-400",
+  },
+  {
+    name: "Category 8",
+    grid: { colSpan: 4, rowSpan: 6, colStart: 6, rowStart: 6 },
+    color: "bg-teal-400",
+  },
 ];
 
-// List of integrations (names only, images will be assigned randomly)
-const integrationNames = [
-  "Blender",
-  "Maya",
-  "Cinema 4D",
-  "3ds Max",
-  "Houdini",
-  "ZBrush",
-  "Substance Painter",
-  "Mudbox",
-  "Unity",
-  "Unreal Engine",
-  "Godot",
-  "GameMaker Studio",
-  "Construct 3",
-  "CryEngine",
-  "RPG Maker",
-  "Defold",
-  "Fusion 360",
-  "SolidWorks",
-  "AutoCAD",
-  "Rhino",
-  "After Effects",
-];
-
-// Assign a logo to each integration (modulo ensures always a string)
-const integrations: Integration[] = integrationNames.map((name, i) => ({
-  name,
-  image: creativeAppLogos[i % creativeAppLogos.length]!,
-}));
+// --- Component ---
 
 export function IntegrationsSection() {
   return (
@@ -56,32 +86,26 @@ export function IntegrationsSection() {
           </h2>
         </div>
 
-        {/* Applications Grid - 3 rows, 8 per row */}
-        <div className="grid grid-cols-4 gap-4 sm:grid-cols-6 md:grid-cols-7">
-          {integrations.map((integration, index) => (
-            <div
-              key={`${integration.name}-${index}`}
-              className="group flex items-center justify-center"
-            >
-              <div className="border-border hover:border-primary/50 bg-background relative flex aspect-square w-full items-center justify-center border transition-all duration-300">
-                <div className="relative h-12 w-12 sm:h-16 sm:w-16 md:h-24 md:w-24">
-                  <Image
-                    src={integration.image}
-                    alt={integration.name + " logo"}
-                    fill
-                    style={{ objectFit: "contain" }}
-                    className="grayscale transition-all duration-300 group-hover:grayscale-0"
-                    sizes="(max-width: 768px) 64px, (max-width: 1200px) 96px, 128px"
-                    priority={index < 8}
-                    quality={70}
-                  />
-                </div>
-                <div className="absolute bottom-3 left-3 font-mono text-xs text-white">
-                  {integration.name}
-                </div>
+        {/* 12x12 Custom Grid */}
+        <div
+          className="relative mx-auto grid w-full grid-cols-12 grid-rows-12 gap-2"
+          style={{ minHeight: 600 }}
+        >
+          {integrationCategories.map((cat, idx) => {
+            const gridStyles = {
+              gridColumn: `${cat.grid.colStart} / span ${cat.grid.colSpan}`,
+              gridRow: `${cat.grid.rowStart} / span ${cat.grid.rowSpan}`,
+            };
+            return (
+              <div
+                key={cat.name}
+                className={`flex items-center justify-center border text-lg font-bold text-white ${cat.color}`}
+                style={gridStyles}
+              >
+                {cat.name}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
