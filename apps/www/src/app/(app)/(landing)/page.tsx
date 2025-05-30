@@ -6,7 +6,6 @@ import {
   CenterCard,
   GridLines,
   IntegrationCategories,
-  PageHeader,
   useAnimationPhases,
   useViewportSize,
   useWheelProgress,
@@ -53,7 +52,7 @@ export default function Home() {
       />
 
       {/* Header that appears */}
-      <PageHeader categoryPhase={animationPhases.categoryPhase} />
+      {/* <PageHeader categoryPhase={animationPhases.categoryPhase} /> */}
     </div>
   );
 }

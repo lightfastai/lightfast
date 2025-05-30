@@ -17,23 +17,21 @@ export const calculateGridLayout = (
   const containerWidth = viewportWidth - 64; // 32px padding on each side
   const containerHeight = viewportHeight - 128; // 64px padding on top/bottom
 
-  // Calculate cell dimensions to maintain proportional grid
-  // The grid should maintain equal cell sizes when possible
-  const minCellSize = Math.min(
-    containerWidth / GRID_SIZE,
-    containerHeight / GRID_SIZE,
-  );
+  // Calculate cell size based on full container width
+  // This ensures the grid expands to use the full width available
+  const cellSize = containerWidth / GRID_SIZE;
 
-  // Calculate actual grid dimensions centered in the container
-  const gridWidth = minCellSize * GRID_SIZE;
-  const gridHeight = minCellSize * GRID_SIZE;
+  // Calculate actual grid dimensions using full container width
+  const gridWidth = containerWidth;
+  const gridHeight = cellSize * GRID_SIZE;
 
-  // Calculate offset to center the grid in the container
-  const gridOffsetX = 32 + (containerWidth - gridWidth) / 2;
-  const gridOffsetY = 64 + (containerHeight - gridHeight) / 2;
+  // No horizontal offset since we're using full width
+  // Center vertically if grid height is smaller than container height
+  const gridOffsetX = 32;
+  const gridOffsetY = 64 + Math.max(0, (containerHeight - gridHeight) / 2);
 
   return {
-    cellSize: minCellSize,
+    cellSize,
     gridWidth,
     gridHeight,
     gridOffsetX,
