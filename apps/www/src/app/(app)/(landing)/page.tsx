@@ -10,29 +10,42 @@ import { Icons } from "@repo/ui/components/icons";
 // };
 
 export default function Home() {
-  const [scrollY, setScrollY] = useState(0);
+  const [wheelProgress, setWheelProgress] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    let accumulatedDelta = 0;
+    const maxDelta = 400; // Maximum wheel delta to reach full transformation
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+
+      // Accumulate wheel delta
+      accumulatedDelta += e.deltaY;
+
+      // Clamp between 0 and maxDelta
+      accumulatedDelta = Math.max(0, Math.min(maxDelta, accumulatedDelta));
+
+      // Calculate progress (0 to 1)
+      const progress = accumulatedDelta / maxDelta;
+      setWheelProgress(progress);
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
   }, []);
 
-  // Calculate scroll progress (0 to 1)
-  const scrollProgress = Math.min(scrollY / 400, 1);
-
   // Calculate card dimensions (from 600px to 300px)
-  const cardSize = 600 - scrollProgress * 300;
+  const cardSize = 600 - wheelProgress * 300;
 
   // Calculate opacity for original text (fades out)
-  const originalTextOpacity = 1 - scrollProgress;
+  const originalTextOpacity = 1 - wheelProgress;
 
   // Calculate opacity for new text (fades in)
-  const newTextOpacity = scrollProgress;
+  const newTextOpacity = wheelProgress;
 
   return (
-    <div className="relative min-h-[200vh]">
-      <div className="sticky top-0 flex h-screen w-screen items-center justify-center">
+    <div className="relative h-screen overflow-hidden">
+      <div className="flex h-screen w-screen items-center justify-center">
         {/* Lines extending from square corners */}
         <div className="pointer-events-none absolute inset-0">
           {/* Top horizontal lines */}
@@ -110,7 +123,7 @@ export default function Home() {
 
         <div
           className={`relative overflow-hidden border shadow-2xl transition-all duration-500 ${
-            scrollProgress > 0.5
+            wheelProgress > 0.5
               ? "border-sky-600 bg-sky-500 text-white"
               : "bg-card border-border"
           }`}
@@ -133,10 +146,10 @@ export default function Home() {
 
           {/* New text that appears on scroll */}
           <div
-            className="absolute top-8 left-8 max-w-[400px] transition-opacity duration-500"
+            className="absolute top-4 left-4 max-w-[350px] transition-opacity duration-500"
             style={{ opacity: newTextOpacity }}
           >
-            <p className="text-2xl font-bold">
+            <p className="text-lg leading-tight font-bold">
               We're prioritizing increasing development speeds of creatives
               using Lightfast's intelligent automation and seamless workflow
               integration.
