@@ -65,10 +65,11 @@ export const calculateCenterCard = (
   const startCenterX = viewportWidth / 2;
   const startCenterY = viewportHeight / 2;
 
-  // Final size when in grid position - use actual cell dimensions to match grid
-  // The center card should occupy CENTER_SIZE x CENTER_SIZE grid cells
-  const finalWidth = cellWidth * CENTER_SIZE;
-  const finalHeight = cellHeight * CENTER_SIZE;
+  // Final size when in grid position - maintain 1:1 aspect ratio (square)
+  // Use the smaller grid dimension to ensure the square fits within the grid cells
+  const maxGridWidth = cellWidth * CENTER_SIZE;
+  const maxGridHeight = cellHeight * CENTER_SIZE;
+  const finalSize = Math.min(maxGridWidth, maxGridHeight);
 
   // Use the smaller dimension for the starting size to maintain aspect ratio
   const startSize = Math.min(
@@ -77,12 +78,8 @@ export const calculateCenterCard = (
   );
 
   // Current properties based on expansion phase
-  // Interpolate between circular start size and rectangular final size
-  const currentWidth = startSize + (finalWidth - startSize) * expansionPhase;
-  const currentHeight = startSize + (finalHeight - startSize) * expansionPhase;
-
-  // Use average for size property (for backward compatibility)
-  const currentSize = (currentWidth + currentHeight) / 2;
+  // Always maintain square (1:1) aspect ratio
+  const currentSize = startSize + (finalSize - startSize) * expansionPhase;
 
   const currentCenterX =
     startCenterX + (gridCenterX - startCenterX) * expansionPhase;
@@ -91,12 +88,12 @@ export const calculateCenterCard = (
 
   return {
     size: currentSize,
-    width: currentWidth,
-    height: currentHeight,
+    width: currentSize, // Square: width = height
+    height: currentSize, // Square: width = height
     centerX: currentCenterX,
     centerY: currentCenterY,
-    left: currentCenterX - currentWidth / 2,
-    top: currentCenterY - currentHeight / 2,
+    left: currentCenterX - currentSize / 2,
+    top: currentCenterY - currentSize / 2,
     gridCenterX,
     gridCenterY,
   };

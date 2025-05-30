@@ -40,6 +40,7 @@ export default function Home() {
       {/* Integration category cards */}
       <IntegrationCategories
         gridLayout={gridLayout}
+        centerCard={centerCard}
         expansionPhase={animationPhases.expansionPhase}
         categoryPhase={animationPhases.categoryPhase}
       />

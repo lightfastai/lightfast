@@ -1,14 +1,16 @@
-import type { GridLayout } from "./types";
+import type { CenterCard, GridLayout } from "./types";
 import { integrationCategories } from "./constants";
 
 export interface IntegrationCategoriesProps {
   gridLayout: GridLayout;
+  centerCard: CenterCard;
   expansionPhase: number;
   categoryPhase: number;
 }
 
 export const IntegrationCategories = ({
   gridLayout,
+  centerCard,
   expansionPhase,
   categoryPhase,
 }: IntegrationCategoriesProps) => {
@@ -24,10 +26,36 @@ export const IntegrationCategories = ({
       }}
     >
       {integrationCategories.map((cat, index) => {
-        const cardWidth = gridLayout.cellWidth * cat.grid.colSpan;
+        // Calculate default grid-based position
+        let cardWidth = gridLayout.cellWidth * cat.grid.colSpan;
         const cardHeight = gridLayout.cellHeight * cat.grid.rowSpan;
-        const cardLeft = gridLayout.cellWidth * cat.grid.colStart;
+        let cardLeft = gridLayout.cellWidth * cat.grid.colStart;
         const cardTop = gridLayout.cellHeight * cat.grid.rowStart;
+
+        // Adjust positions for cards that should align with center anchor borders
+        const centerLeft = centerCard.left - gridLayout.gridOffsetX;
+        const centerRight = centerLeft + centerCard.width;
+        const centerTop = centerCard.top - gridLayout.gridOffsetY;
+        const centerBottom = centerTop + centerCard.height;
+
+        // Cards that need border alignment adjustments
+        if (cat.name === "2D Graphics") {
+          // Right border should align with center's right border
+          cardWidth = centerRight - cardLeft;
+        } else if (cat.name === "Game Engines") {
+          // Right border should align with center's left border
+          cardWidth = centerLeft - cardLeft;
+        } else if (cat.name === "Video & VFX") {
+          // Left border should align with center's right border
+          const originalRight = cardLeft + cardWidth;
+          cardLeft = centerRight;
+          cardWidth = originalRight - centerRight;
+        } else if (cat.name === "3D Texturing & CAD") {
+          // Left border should align with center's left border
+          const originalRight = cardLeft + cardWidth;
+          cardLeft = centerLeft;
+          cardWidth = originalRight - centerLeft;
+        }
 
         return (
           <div
