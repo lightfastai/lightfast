@@ -9,17 +9,13 @@ import {
   useLandingCSSVariables,
 } from "../../../components/landing";
 
-// PageHeader can be added back if used
-
 export default function Home() {
-  useLandingCSSVariables();
-
+  useLandingCSSVariables(); // This hook now handles all phase calculations and CSS variable setting internally
   return (
     <div className="bg-background relative h-screen overflow-hidden">
-      <GridLines centerCard={{}} />
-      <IntegrationCategories centerCard={{}} />
-      <CenterCard centerCard={{}} />
-      {/* <PageHeader /> */}
+      <GridLines />
+      <IntegrationCategories />
+      <CenterCard />
     </div>
   );
 }

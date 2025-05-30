@@ -1,12 +1,15 @@
 import { cn } from "@repo/ui/lib/utils";
 
-import type { CenterCard } from "./types";
-
 export interface GridLinesProps {
-  centerCard: Partial<CenterCard>;
+  // centerCard: Partial<CenterCard>; // Removed
+  // expansionPhase is also removed as its effect is CSS driven by --grid-lines-opacity
 }
 
-export const GridLines = ({}: GridLinesProps) => {
+export const GridLines = (
+  {
+    // No props needed if all styling is via CSS vars
+  }: GridLinesProps,
+) => {
   return (
     <div
       className={cn(

@@ -1,23 +1,10 @@
 import { cn } from "@repo/ui/lib/utils"; // Import cn utility
 
-import type { CenterCard } from "./types";
 import { integrationCategories } from "./constants";
 // import { useEffect, useState } from "react"; // No longer needed here
 import { getCSSVariableValue } from "./utils";
 
-export interface IntegrationCategoriesProps {
-  centerCard: Partial<CenterCard>; // centerCard might not have all properties if calculateCenterCard is minimal
-  // expansionPhase: number; // To be removed
-  // categoryPhase: number; // To be removed
-}
-
-export const IntegrationCategories = (
-  {
-    // centerCard,
-    // expansionPhase, // To be removed
-    // categoryPhase, // To be removed
-  }: IntegrationCategoriesProps,
-) => {
+export const IntegrationCategories = () => {
   // Read grid layout values from CSS custom properties
   // These could also be read once on mount and stored in state if they don't change frequently,
   // or if direct usage in style objects becomes too verbose.

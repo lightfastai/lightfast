@@ -1,14 +1,9 @@
 import { Icons } from "@repo/ui/components/icons";
 import { cn } from "@repo/ui/lib/utils";
 
-import type { CenterCard as CenterCardType } from "./types";
 import { getCSSVariableValue } from "./utils";
 
-export interface CenterCardProps {
-  centerCard: Partial<CenterCardType>;
-}
-
-export const CenterCard = ({}: CenterCardProps) => {
+export const CenterCard = () => {
   const logoSize = 48; // h-12 w-12
   const padding = 32; // p-8
 

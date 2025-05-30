@@ -1,68 +1,8 @@
 import { useEffect, useState } from "react";
 
-import type { AnimationPhases, GridLayout, ViewportSize } from "./types";
+import type { AnimationPhases } from "./types";
 import { CENTER_SIZE, CENTER_START, GRID_SIZE } from "./constants";
 import { getCSSVariableValue } from "./utils";
-
-// Calculate grid layout for any viewport
-/**
- * @deprecated This function will be replaced by CSS custom properties updated by useLandingCSSVariables.
- * Calculations will be done in CSS directly or by simpler JS functions reading CSS vars.
- */
-export const calculateGridLayout = (
-  viewportWidth: number,
-  viewportHeight: number,
-): GridLayout => {
-  // Container dimensions (accounting for padding)
-  const containerWidth = viewportWidth - 64; // 32px padding on each side
-  const containerHeight = viewportHeight - 128; // 64px padding on top/bottom
-
-  // Calculate separate cell dimensions to fit within the container
-  const cellWidth = containerWidth / GRID_SIZE;
-  const cellHeight = containerHeight / GRID_SIZE;
-
-  // Keep cellSize for backward compatibility (used by center card)
-  const cellSize = Math.min(cellWidth, cellHeight);
-
-  // Calculate actual grid dimensions using full container width and height
-  const gridWidth = containerWidth;
-  const gridHeight = containerHeight; // Always use full height (100vh minus padding)
-
-  // No offset since we're using full width and full height
-  const gridOffsetX = 32;
-  const gridOffsetY = 64;
-
-  return {
-    cellSize,
-    cellWidth,
-    cellHeight,
-    gridWidth,
-    gridHeight,
-    gridOffsetX,
-    gridOffsetY,
-    containerWidth,
-    containerHeight,
-  };
-};
-
-export const useViewportSize = () => {
-  const [viewportSize, setViewportSize] = useState<ViewportSize>({
-    width: 1920,
-    height: 1080,
-  });
-
-  useEffect(() => {
-    const updateViewportSize = () => {
-      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
-    };
-
-    updateViewportSize();
-    window.addEventListener("resize", updateViewportSize);
-    return () => window.removeEventListener("resize", updateViewportSize);
-  }, []);
-
-  return viewportSize;
-};
 
 export const useWheelProgress = () => {
   const [wheelProgress, setWheelProgress] = useState(0);
