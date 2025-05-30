@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Icons } from "@repo/ui/components/icons";
 
 // Integration data for the surrounding cards - using 12x12 grid system
-// Center card will be at approximately cols 5-7, rows 5-7 (2x2 area in middle)
+// Center card will be at cols 5-6, rows 5-6 (2x2 area in middle)
 const integrationCategories = [
   {
     name: "3D Modeling",
@@ -23,7 +23,7 @@ const integrationCategories = [
   },
   {
     name: "2D Graphics",
-    grid: { colStart: 2, colSpan: 4, rowStart: 0, rowSpan: 5 }, // Top, left of center
+    grid: { colStart: 2, colSpan: 5, rowStart: 0, rowSpan: 5 }, // Top, left of center
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
@@ -37,7 +37,7 @@ const integrationCategories = [
   },
   {
     name: "Video & VFX",
-    grid: { colStart: 6, colSpan: 3, rowStart: 0, rowSpan: 7 }, // Top, right of center
+    grid: { colStart: 7, colSpan: 3, rowStart: 0, rowSpan: 7 }, // Top, right of center
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
@@ -58,12 +58,92 @@ const integrationCategories = [
   },
   {
     name: "3D Texturing & CAD",
-    grid: { colStart: 5, colSpan: 4, rowStart: 7, rowSpan: 5 }, // Bottom, right of center
+    grid: { colStart: 5, colSpan: 5, rowStart: 7, rowSpan: 5 }, // Bottom, right of center
     apps: 3,
     liveApps: 0,
     plannedApps: 3,
   },
 ];
+
+// Grid constants
+const GRID_SIZE = 12;
+const CENTER_START = 5;
+const CENTER_SIZE = 2;
+const CENTER_END = CENTER_START + CENTER_SIZE;
+
+// Calculate grid layout for any viewport
+const calculateGridLayout = (viewportWidth: number, viewportHeight: number) => {
+  // Container dimensions (accounting for padding)
+  const containerWidth = viewportWidth - 64; // 32px padding on each side
+  const containerHeight = viewportHeight - 128; // 64px padding on top/bottom
+
+  // Calculate cell dimensions to maintain proportional grid
+  // The grid should maintain equal cell sizes when possible
+  const minCellSize = Math.min(
+    containerWidth / GRID_SIZE,
+    containerHeight / GRID_SIZE,
+  );
+
+  // Calculate actual grid dimensions centered in the container
+  const gridWidth = minCellSize * GRID_SIZE;
+  const gridHeight = minCellSize * GRID_SIZE;
+
+  // Calculate offset to center the grid in the container
+  const gridOffsetX = 32 + (containerWidth - gridWidth) / 2;
+  const gridOffsetY = 64 + (containerHeight - gridHeight) / 2;
+
+  return {
+    cellSize: minCellSize,
+    gridWidth,
+    gridHeight,
+    gridOffsetX,
+    gridOffsetY,
+    containerWidth,
+    containerHeight,
+  };
+};
+
+// Calculate center card properties
+const calculateCenterCard = (
+  gridLayout: ReturnType<typeof calculateGridLayout>,
+  expansionPhase: number,
+  viewportWidth: number,
+  viewportHeight: number,
+) => {
+  const { cellSize, gridOffsetX, gridOffsetY } = gridLayout;
+
+  // Center position in the grid (5-6, 5-6 = 2x2 center)
+  const gridCenterX = gridOffsetX + (CENTER_START + CENTER_SIZE / 2) * cellSize;
+  const gridCenterY = gridOffsetY + (CENTER_START + CENTER_SIZE / 2) * cellSize;
+
+  // Starting position (viewport center)
+  const startCenterX = viewportWidth / 2;
+  const startCenterY = viewportHeight / 2;
+
+  // Final size when in grid position
+  const finalSize = cellSize * CENTER_SIZE;
+  const startSize = Math.min(
+    600,
+    Math.min(viewportWidth, viewportHeight) * 0.6,
+  );
+
+  // Current properties based on expansion phase
+  const currentSize = startSize - (startSize - finalSize) * expansionPhase;
+  const currentCenterX =
+    startCenterX + (gridCenterX - startCenterX) * expansionPhase;
+  const currentCenterY =
+    startCenterY + (gridCenterY - startCenterY) * expansionPhase;
+
+  return {
+    size: currentSize,
+    centerX: currentCenterX,
+    centerY: currentCenterY,
+    left: currentCenterX - currentSize / 2,
+    top: currentCenterY - currentSize / 2,
+    gridCenterX,
+    gridCenterY,
+  };
+};
 
 // export const metadata: Metadata = {
 //   title: "Home",
@@ -72,6 +152,20 @@ const integrationCategories = [
 
 export default function Home() {
   const [wheelProgress, setWheelProgress] = useState(0);
+  const [viewportSize, setViewportSize] = useState({
+    width: 1920,
+    height: 1080,
+  });
+
+  useEffect(() => {
+    const updateViewportSize = () => {
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    updateViewportSize();
+    window.addEventListener("resize", updateViewportSize);
+    return () => window.removeEventListener("resize", updateViewportSize);
+  }, []);
 
   useEffect(() => {
     let accumulatedDelta = 0;
@@ -97,80 +191,17 @@ export default function Home() {
   const expansionPhase = Math.min(Math.max(0, (wheelProgress - 0.2) / 0.6), 1); // Card expands 20-80%
   const categoryPhase = Math.min(Math.max(0, (wheelProgress - 0.5) / 0.5), 1); // Categories appear 50-100%
 
-  // Calculate container size
-  const containerWidth = window.innerWidth - 64;
-  const containerHeight = window.innerHeight - 128;
-
-  // Adaptive grid system that maintains proportions
-  const aspectRatio = containerWidth / containerHeight;
-  const baseGridSize = 12;
-
-  // Calculate effective grid dimensions based on aspect ratio
-  // If wider than square, expand columns; if taller, expand rows
-  let effectiveCols, effectiveRows;
-
-  if (aspectRatio >= 1) {
-    // Landscape: keep 12 rows, scale columns proportionally
-    effectiveRows = baseGridSize;
-    effectiveCols = Math.round(baseGridSize * aspectRatio);
-  } else {
-    // Portrait: keep 12 columns, scale rows proportionally
-    effectiveCols = baseGridSize;
-    effectiveRows = Math.round(baseGridSize / aspectRatio);
-  }
-
-  // Calculate cell dimensions
-  const colWidth = containerWidth / effectiveCols;
-  const rowHeight = containerHeight / effectiveRows;
-
-  // Center card grid position (2x2 area in the middle of effective grid)
-  const CENTER_COL_START = Math.floor((effectiveCols - 2) / 2);
-  const CENTER_COL_SPAN = 2;
-  const CENTER_ROW_START = Math.floor((effectiveRows - 2) / 2);
-  const CENTER_ROW_SPAN = 2;
-
-  // Scale the original 12x12 grid positions to the new effective grid
-  const scaleColPosition = (originalCol: number) =>
-    Math.round((originalCol * effectiveCols) / baseGridSize);
-  const scaleColSpan = (originalSpan: number) =>
-    Math.round((originalSpan * effectiveCols) / baseGridSize);
-  const scaleRowPosition = (originalRow: number) =>
-    Math.round((originalRow * effectiveRows) / baseGridSize);
-  const scaleRowSpan = (originalSpan: number) =>
-    Math.round((originalSpan * effectiveRows) / baseGridSize);
-
-  // Calculate center card properties
-  const centerOriginalSize = 600; // Starting card size
-  const centerFinalWidth = colWidth * CENTER_COL_SPAN;
-  const centerFinalHeight = rowHeight * CENTER_ROW_SPAN;
-  const centerFinalSize = Math.min(centerFinalWidth, centerFinalHeight, 150); // Keep it square and not too big
-
-  const centerCurrentSize =
-    centerOriginalSize -
-    (centerOriginalSize - centerFinalSize) * expansionPhase;
-
-  // Calculate center card's grid-based final position
-  const gridCenterLeft =
-    32 + CENTER_COL_START * colWidth + (centerFinalWidth - centerFinalSize) / 2;
-  const gridCenterTop =
-    64 +
-    CENTER_ROW_START * rowHeight +
-    (centerFinalHeight - centerFinalSize) / 2;
-
-  // Calculate current center position (interpolate from viewport center to grid center)
-  const startCenterX = window.innerWidth / 2;
-  const startCenterY = window.innerHeight / 2;
-
-  const currentCenterX =
-    startCenterX +
-    (gridCenterLeft + centerFinalSize / 2 - startCenterX) * expansionPhase;
-  const currentCenterY =
-    startCenterY +
-    (gridCenterTop + centerFinalSize / 2 - startCenterY) * expansionPhase;
-
-  // Convert center position to left/top coordinates for the card
-  const centerCurrentLeft = currentCenterX - centerCurrentSize / 2;
-  const centerCurrentTop = currentCenterY - centerCurrentSize / 2;
+  // Calculate grid layout
+  const gridLayout = calculateGridLayout(
+    viewportSize.width,
+    viewportSize.height,
+  );
+  const centerCard = calculateCenterCard(
+    gridLayout,
+    expansionPhase,
+    viewportSize.width,
+    viewportSize.height,
+  );
 
   // Calculate logo position within the card
   const logoSize = 48; // h-12 w-12
@@ -180,20 +211,16 @@ export default function Home() {
   let logoCurrentX, logoCurrentY;
 
   if (logoMovePhase >= 1) {
-    // Logo is fully centered - always keep it centered regardless of card size changes
-    logoCurrentX = (centerCurrentSize - logoSize) / 2;
-    logoCurrentY = (centerCurrentSize - logoSize) / 2;
+    // Logo is fully centered
+    logoCurrentX = (centerCard.size - logoSize) / 2;
+    logoCurrentY = (centerCard.size - logoSize) / 2;
   } else {
     // Logo is transitioning from original position to center
-    // Original position (bottom-left of current card)
     const logoOriginalX = padding;
-    const logoOriginalY = centerCurrentSize - padding - logoSize;
+    const logoOriginalY = centerCard.size - padding - logoSize;
+    const logoFinalX = (centerCard.size - logoSize) / 2;
+    const logoFinalY = (centerCard.size - logoSize) / 2;
 
-    // Final position (center of current card)
-    const logoFinalX = (centerCurrentSize - logoSize) / 2;
-    const logoFinalY = (centerCurrentSize - logoSize) / 2;
-
-    // Current logo position - interpolate between start and end
     logoCurrentX = logoOriginalX + (logoFinalX - logoOriginalX) * logoMovePhase;
     logoCurrentY = logoOriginalY + (logoFinalY - logoOriginalY) * logoMovePhase;
   }
@@ -203,26 +230,26 @@ export default function Home() {
 
   return (
     <div className="bg-background relative h-screen overflow-hidden">
-      {/* Lines extending from square corners - keep original lines */}
+      {/* Lines extending from center card corners */}
       <div
         className="pointer-events-none absolute inset-0 transition-opacity duration-500"
-        style={{ opacity: 1 - expansionPhase * 0.8 }} // Fade out lines during expansion
+        style={{ opacity: 1 - expansionPhase * 0.8 }}
       >
         {/* Top horizontal lines */}
         <div
           className="bg-border absolute h-[1px] transition-all duration-300"
           style={{
-            top: `calc(50vh - ${centerCurrentSize / 2}px)`,
+            top: `${centerCard.top}px`,
             left: 0,
-            width: `calc(50vw - ${centerCurrentSize / 2}px)`,
+            width: `${centerCard.left}px`,
           }}
         />
         <div
           className="bg-border absolute h-[1px] transition-all duration-300"
           style={{
-            top: `calc(50vh - ${centerCurrentSize / 2}px)`,
-            left: `calc(50vw + ${centerCurrentSize / 2}px)`,
-            width: `calc(50vw - ${centerCurrentSize / 2}px)`,
+            top: `${centerCard.top}px`,
+            left: `${centerCard.left + centerCard.size}px`,
+            width: `${viewportSize.width - (centerCard.left + centerCard.size)}px`,
           }}
         />
 
@@ -230,17 +257,17 @@ export default function Home() {
         <div
           className="bg-border absolute h-[1px] transition-all duration-300"
           style={{
-            top: `calc(50vh + ${centerCurrentSize / 2}px - 1px)`,
+            top: `${centerCard.top + centerCard.size}px`,
             left: 0,
-            width: `calc(50vw - ${centerCurrentSize / 2}px)`,
+            width: `${centerCard.left}px`,
           }}
         />
         <div
           className="bg-border absolute h-[1px] transition-all duration-300"
           style={{
-            top: `calc(50vh + ${centerCurrentSize / 2}px - 1px)`,
-            left: `calc(50vw + ${centerCurrentSize / 2}px)`,
-            width: `calc(50vw - ${centerCurrentSize / 2}px)`,
+            top: `${centerCard.top + centerCard.size}px`,
+            left: `${centerCard.left + centerCard.size}px`,
+            width: `${viewportSize.width - (centerCard.left + centerCard.size)}px`,
           }}
         />
 
@@ -248,17 +275,17 @@ export default function Home() {
         <div
           className="bg-border absolute w-[1px] transition-all duration-300"
           style={{
-            left: `calc(50vw - ${centerCurrentSize / 2}px)`,
+            left: `${centerCard.left}px`,
             top: 0,
-            height: `calc(50vh - ${centerCurrentSize / 2}px)`,
+            height: `${centerCard.top}px`,
           }}
         />
         <div
           className="bg-border absolute w-[1px] transition-all duration-300"
           style={{
-            left: `calc(50vw - ${centerCurrentSize / 2}px)`,
-            top: `calc(50vh + ${centerCurrentSize / 2}px)`,
-            height: `calc(50vh - ${centerCurrentSize / 2}px)`,
+            left: `${centerCard.left}px`,
+            top: `${centerCard.top + centerCard.size}px`,
+            height: `${viewportSize.height - (centerCard.top + centerCard.size)}px`,
           }}
         />
 
@@ -266,43 +293,37 @@ export default function Home() {
         <div
           className="bg-border absolute w-[1px] transition-all duration-300"
           style={{
-            left: `calc(50vw + ${centerCurrentSize / 2}px - 1px)`,
+            left: `${centerCard.left + centerCard.size}px`,
             top: 0,
-            height: `calc(50vh - ${centerCurrentSize / 2}px)`,
+            height: `${centerCard.top}px`,
           }}
         />
         <div
           className="bg-border absolute w-[1px] transition-all duration-300"
           style={{
-            left: `calc(50vw + ${centerCurrentSize / 2}px - 1px)`,
-            top: `calc(50vh + ${centerCurrentSize / 2}px)`,
-            height: `calc(50vh - ${centerCurrentSize / 2}px - 1px)`,
+            left: `${centerCard.left + centerCard.size}px`,
+            top: `${centerCard.top + centerCard.size}px`,
+            height: `${viewportSize.height - (centerCard.top + centerCard.size)}px`,
           }}
         />
       </div>
 
-      {/* Integration category cards that appear around the center */}
+      {/* Integration category cards */}
       <div
         className="absolute transition-all duration-500"
         style={{
-          left: "32px",
-          top: "64px",
-          width: `${containerWidth}px`,
-          height: `${containerHeight}px`,
+          left: `${gridLayout.gridOffsetX}px`,
+          top: `${gridLayout.gridOffsetY}px`,
+          width: `${gridLayout.gridWidth}px`,
+          height: `${gridLayout.gridHeight}px`,
           opacity: expansionPhase > 0.3 ? categoryPhase : 0,
         }}
       >
         {integrationCategories.map((cat, index) => {
-          // Scale the original 12x12 grid positions to the effective grid
-          const scaledColStart = scaleColPosition(cat.grid.colStart);
-          const scaledColSpan = scaleColSpan(cat.grid.colSpan);
-          const scaledRowStart = scaleRowPosition(cat.grid.rowStart);
-          const scaledRowSpan = scaleRowSpan(cat.grid.rowSpan);
-
-          const cardWidth = colWidth * scaledColSpan;
-          const cardHeight = rowHeight * scaledRowSpan;
-          const cardLeft = scaledColStart * colWidth;
-          const cardTop = scaledRowStart * rowHeight;
+          const cardWidth = gridLayout.cellSize * cat.grid.colSpan;
+          const cardHeight = gridLayout.cellSize * cat.grid.rowSpan;
+          const cardLeft = gridLayout.cellSize * cat.grid.colStart;
+          const cardTop = gridLayout.cellSize * cat.grid.rowStart;
 
           return (
             <div
@@ -349,10 +370,10 @@ export default function Home() {
       <div
         className="bg-card border-border absolute overflow-hidden border shadow-2xl transition-all duration-700"
         style={{
-          width: `${centerCurrentSize}px`,
-          height: `${centerCurrentSize}px`,
-          left: `${centerCurrentLeft}px`,
-          top: `${centerCurrentTop}px`,
+          width: `${centerCard.size}px`,
+          height: `${centerCard.size}px`,
+          left: `${centerCard.left}px`,
+          top: `${centerCard.top}px`,
         }}
       >
         {/* Text content (top-left, fades out) */}
