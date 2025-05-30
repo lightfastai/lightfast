@@ -9,7 +9,7 @@ export function SiteFooter() {
     <footer className="bg-background relative h-screen w-full text-white">
       {/* Section 1 - Logo and Services/Company (40vh) */}
       <section className="flex h-[40vh] items-center">
-        <div className="mx-auto w-full max-w-7xl px-8">
+        <div className="mx-auto w-full px-8">
           <div className="flex items-start justify-between">
             {/* Left - Logo (fixed width for alignment) */}
             <div className="w-1/2 flex-shrink-0">
@@ -74,7 +74,7 @@ export function SiteFooter() {
 
       {/* Section 2 - Contact and Early Access (30vh) */}
       <section className="flex h-[30vh] items-center">
-        <div className="mx-auto w-full max-w-7xl px-8">
+        <div className="mx-auto w-full px-8">
           <div className="flex items-start">
             {/* Left - Contact (fixed width for alignment) */}
             <div className="flex w-1/2 flex-col">
@@ -118,7 +118,7 @@ export function SiteFooter() {
 
       {/* Section 3 - Copyright and Social (30vh) */}
       <section className="flex h-[30vh] items-center">
-        <div className="mx-auto w-full max-w-7xl px-8">
+        <div className="mx-auto w-full px-8">
           <div className="flex items-center justify-between">
             {/* Left - Social Links (fixed width for alignment) */}
             <div className="flex w-1/2 items-center gap-6">
