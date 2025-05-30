@@ -27,47 +27,47 @@ interface IntegrationCategory {
 const integrationCategories: IntegrationCategory[] = [
   {
     name: "Category 1",
-    grid: { colSpan: 2, rowSpan: 6, colStart: 1, rowStart: 1 },
+    grid: { colSpan: 2, rowSpan: 7, colStart: 1, rowStart: 1 },
     color: "bg-blue-500",
   },
   {
     name: "Category 2",
-    grid: { colSpan: 2, rowSpan: 5, colStart: 1, rowStart: 7 },
+    grid: { colSpan: 2, rowSpan: 5, colStart: 1, rowStart: 8 },
     color: "bg-red-500",
   },
   {
     name: "Category 3",
-    grid: { colSpan: 4, rowSpan: 4, colStart: 3, rowStart: 1 },
+    grid: { colSpan: 5, rowSpan: 5, colStart: 3, rowStart: 1 },
     color: "bg-yellow-400",
   },
   {
     name: "Category 4",
-    grid: { colSpan: 3, rowSpan: 7, colStart: 3, rowStart: 5 },
+    grid: { colSpan: 3, rowSpan: 7, colStart: 3, rowStart: 6 },
     color: "bg-green-400",
   },
   {
     name: "Category 5 (Center)",
-    grid: { colSpan: 1, rowSpan: 1, colStart: 6, rowStart: 5 },
+    grid: { colSpan: 2, rowSpan: 2, colStart: 6, rowStart: 6 },
     color: "bg-purple-400",
   },
   {
     name: "Category 9",
-    grid: { colSpan: 3, rowSpan: 5, colStart: 7, rowStart: 1 },
+    grid: { colSpan: 3, rowSpan: 7, colStart: 8, rowStart: 1 },
     color: "bg-purple-400",
   },
   {
     name: "Category 6",
-    grid: { colSpan: 2, rowSpan: 3, colStart: 10, rowStart: 1 },
+    grid: { colSpan: 2, rowSpan: 4, colStart: 11, rowStart: 1 },
     color: "bg-pink-400",
   },
   {
     name: "Category 7",
-    grid: { colSpan: 2, rowSpan: 8, colStart: 10, rowStart: 4 },
+    grid: { colSpan: 2, rowSpan: 8, colStart: 11, rowStart: 5 },
     color: "bg-orange-400",
   },
   {
     name: "Category 8",
-    grid: { colSpan: 4, rowSpan: 6, colStart: 6, rowStart: 6 },
+    grid: { colSpan: 5, rowSpan: 5, colStart: 6, rowStart: 8 },
     color: "bg-teal-400",
   },
 ];
@@ -76,8 +76,8 @@ const integrationCategories: IntegrationCategory[] = [
 
 export function IntegrationsSection() {
   return (
-    <section className="bg-background py-16">
-      <div>
+    <section className="bg-background flex h-screen min-h-screen w-full items-center justify-center">
+      <div className="w-full py-16">
         {/* Header */}
         <div className="mb-12 text-center">
           <h2 className="text-foreground mb-4 text-3xl font-bold">
@@ -88,7 +88,7 @@ export function IntegrationsSection() {
 
         {/* 12x12 Custom Grid */}
         <div
-          className="relative mx-auto grid w-full grid-cols-12 grid-rows-12 gap-2"
+          className="relative mx-auto grid w-full grid-cols-12 grid-rows-12 gap-0"
           style={{ minHeight: 600 }}
         >
           {integrationCategories.map((cat, idx) => {
