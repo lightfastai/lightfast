@@ -134,19 +134,27 @@ export default function Home() {
   const logoSize = 48; // h-12 w-12
   const padding = 32; // p-8
 
-  // Original position (bottom-left)
-  const logoOriginalX = padding;
-  const logoOriginalY = centerCurrentSize - padding - logoSize;
+  // Calculate logo position - always center it when move phase is complete
+  let logoCurrentX, logoCurrentY;
 
-  // Final position (center)
-  const logoFinalX = (centerCurrentSize - logoSize) / 2;
-  const logoFinalY = (centerCurrentSize - logoSize) / 2;
+  if (logoMovePhase >= 1) {
+    // Logo is fully centered - always keep it centered regardless of card size changes
+    logoCurrentX = (centerCurrentSize - logoSize) / 2;
+    logoCurrentY = (centerCurrentSize - logoSize) / 2;
+  } else {
+    // Logo is transitioning from original position to center
+    // Original position (bottom-left of current card)
+    const logoOriginalX = padding;
+    const logoOriginalY = centerCurrentSize - padding - logoSize;
 
-  // Current logo position
-  const logoCurrentX =
-    logoOriginalX + (logoFinalX - logoOriginalX) * logoMovePhase;
-  const logoCurrentY =
-    logoOriginalY + (logoFinalY - logoOriginalY) * logoMovePhase;
+    // Final position (center of current card)
+    const logoFinalX = (centerCurrentSize - logoSize) / 2;
+    const logoFinalY = (centerCurrentSize - logoSize) / 2;
+
+    // Current logo position - interpolate between start and end
+    logoCurrentX = logoOriginalX + (logoFinalX - logoOriginalX) * logoMovePhase;
+    logoCurrentY = logoOriginalY + (logoFinalY - logoOriginalY) * logoMovePhase;
+  }
 
   // Calculate content opacity
   const textOpacity = 1 - textFadePhase;
@@ -312,7 +320,7 @@ export default function Home() {
 
         {/* Logo (transforms from bottom-left to center) */}
         <div
-          className="absolute transition-all duration-700"
+          className="absolute flex items-center justify-center transition-all duration-700"
           style={{
             left: `${logoCurrentX}px`,
             top: `${logoCurrentY}px`,
