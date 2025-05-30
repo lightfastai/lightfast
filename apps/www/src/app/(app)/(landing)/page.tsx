@@ -1,19 +1,18 @@
-"use client";
-
-import "../../../components/landing/landing-layout.css";
+import "~/components/landing/landing-layout.css";
 
 import {
   CenterCard,
   GridLines,
   IntegrationCategories,
-  useLandingCSSVariables,
-} from "../../../components/landing";
+  PageHeader,
+} from "~/components/landing";
+import { ClientInteractivity } from "~/components/landing/client-interactivity";
 
 export default function Home() {
-  useLandingCSSVariables(); // This hook now handles all phase calculations and CSS variable setting internally
   return (
-    <div className="bg-background relative h-screen overflow-hidden">
-      {/* <PageHeader /> */}
+    <div className="bg-background landing-ssr relative h-screen overflow-hidden">
+      <ClientInteractivity />
+      <PageHeader />
       <GridLines />
       <IntegrationCategories />
       <CenterCard />
