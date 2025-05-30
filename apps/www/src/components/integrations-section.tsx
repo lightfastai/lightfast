@@ -30,49 +30,354 @@ interface IntegrationCategory {
 
 const integrationCategories: IntegrationCategory[] = [
   {
-    name: "Category 1",
+    name: "3D Modeling",
     position: { top: 0, left: 0, width: 16.67, height: 58.33 },
-    color: "bg-blue-500",
+    color: "bg-purple-500",
+    apps: [
+      {
+        name: "Blender",
+        category: "3D",
+        connection: "Socket-based",
+        priority: "✅",
+        status: "Implemented",
+        issue: "",
+      },
+      {
+        name: "Maya",
+        category: "3D",
+        connection: "Python API",
+        priority: "High",
+        status: "Planned",
+        issue: "#28",
+      },
+      {
+        name: "Cinema 4D",
+        category: "3D",
+        connection: "Python API",
+        priority: "High",
+        status: "Planned",
+        issue: "#27",
+      },
+      {
+        name: "3ds Max",
+        category: "3D",
+        connection: "PyMXS/MaxScript",
+        priority: "High",
+        status: "Planned",
+        issue: "#33",
+      },
+      {
+        name: "Houdini",
+        category: "3D",
+        connection: "Python API",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "Modo",
+        category: "3D",
+        connection: "Python API",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+      {
+        name: "ZBrush",
+        category: "3D",
+        connection: "ZScript/Python",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+    ],
   },
   {
-    name: "Category 2",
+    name: "Audio Production",
     position: { top: 58.33, left: 0, width: 16.67, height: 41.67 },
-    color: "bg-red-500",
+    color: "bg-pink-500",
+    apps: [
+      {
+        name: "Ableton Live",
+        category: "Audio",
+        connection: "OSC/Max for Live",
+        priority: "High",
+        status: "Planned",
+        issue: "#31",
+      },
+      {
+        name: "Reaper",
+        category: "Audio",
+        connection: "Python API",
+        priority: "High",
+        status: "Planned",
+        issue: "#36",
+      },
+      {
+        name: "Logic Pro",
+        category: "Audio",
+        connection: "AppleScript",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+      {
+        name: "FL Studio",
+        category: "Audio",
+        connection: "Python API",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+      {
+        name: "Pro Tools",
+        category: "Audio",
+        connection: "EUCON API",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+    ],
   },
   {
-    name: "Category 3",
+    name: "2D Graphics",
     position: { top: 0, left: 16.67, width: 41.67, height: 41.67 },
-    color: "bg-yellow-400",
+    color: "bg-blue-500",
+    apps: [
+      {
+        name: "Photoshop",
+        category: "2D Graphics",
+        connection: "ExtendScript/CEP",
+        priority: "High",
+        status: "Planned",
+        issue: "#1",
+      },
+      {
+        name: "Illustrator",
+        category: "2D Graphics",
+        connection: "ExtendScript/CEP",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "GIMP",
+        category: "2D Graphics",
+        connection: "Python-Fu",
+        priority: "Low",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "Inkscape",
+        category: "2D Graphics",
+        connection: "CLI",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+      {
+        name: "Krita",
+        category: "2D Graphics",
+        connection: "Python API",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+    ],
   },
   {
-    name: "Category 4",
+    name: "Game Engines",
     position: { top: 41.67, left: 16.67, width: 25, height: 58.33 },
-    color: "bg-green-400",
+    color: "bg-green-500",
+    apps: [
+      {
+        name: "Unreal Engine",
+        category: "Game Dev",
+        connection: "Python API",
+        priority: "High",
+        status: "Planned",
+        issue: "#32",
+      },
+      {
+        name: "Unity",
+        category: "Game Dev",
+        connection: "TCP/C# API",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "Godot",
+        category: "Game Dev",
+        connection: "HTTP/CLI",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "GameMaker Studio",
+        category: "Game Dev",
+        connection: "GML Scripting",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+    ],
   },
   {
-    name: "Category 5 (Center)",
+    name: "Lightfast",
     position: { top: 41.67, left: 41.67, width: 16.67, height: 16.67 },
-    color: "bg-purple-400",
+    color: "bg-gradient-to-br from-violet-600 to-indigo-600",
+    isLogo: true,
   },
   {
-    name: "Category 9",
+    name: "Video & VFX",
     position: { top: 0, left: 58.33, width: 25, height: 58.33 },
-    color: "bg-purple-400",
+    color: "bg-red-500",
+    apps: [
+      {
+        name: "DaVinci Resolve",
+        category: "Video",
+        connection: "Python API",
+        priority: "High",
+        status: "Planned",
+        issue: "#30",
+      },
+      {
+        name: "Premiere Pro",
+        category: "Video",
+        connection: "ExtendScript/CEP",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "After Effects",
+        category: "Motion Graphics",
+        connection: "ExtendScript",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "Nuke",
+        category: "VFX",
+        connection: "Python API",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "Final Cut Pro",
+        category: "Video",
+        connection: "AppleScript",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+    ],
   },
   {
-    name: "Category 6",
+    name: "Design Tools",
     position: { top: 0, left: 83.33, width: 16.67, height: 33.33 },
-    color: "bg-pink-400",
+    color: "bg-amber-500",
+    apps: [
+      {
+        name: "Figma",
+        category: "Web Design",
+        connection: "WebSocket-based",
+        priority: "✅",
+        status: "Implemented",
+        issue: "",
+      },
+      {
+        name: "Sketch",
+        category: "Web Design",
+        connection: "JavaScript API",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+      {
+        name: "Canva",
+        category: "Web Design",
+        connection: "REST API",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+    ],
   },
   {
-    name: "Category 7",
+    name: "Interactive & Live",
     position: { top: 33.33, left: 83.33, width: 16.67, height: 66.67 },
-    color: "bg-orange-400",
+    color: "bg-cyan-500",
+    apps: [
+      {
+        name: "TouchDesigner",
+        category: "Interactive",
+        connection: "Socket/Python",
+        priority: "High",
+        status: "Planned",
+        issue: "#35",
+      },
+      {
+        name: "Max/MSP",
+        category: "Audio/Interactive",
+        connection: "OSC/TCP",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "Resolume",
+        category: "Live Performance",
+        connection: "OSC/Web API",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+      {
+        name: "Processing",
+        category: "Creative Coding",
+        connection: "CLI",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+    ],
   },
   {
-    name: "Category 8",
+    name: "3D Texturing & CAD",
     position: { top: 58.33, left: 41.67, width: 41.67, height: 41.67 },
-    color: "bg-teal-400",
+    color: "bg-orange-500",
+    apps: [
+      {
+        name: "Substance 3D",
+        category: "Materials",
+        connection: "SDK/HTTP",
+        priority: "Medium",
+        status: "Planned",
+        issue: "",
+      },
+      {
+        name: "KeyShot",
+        category: "3D Rendering",
+        connection: "Python API",
+        priority: "Low",
+        status: "Future",
+        issue: "",
+      },
+      {
+        name: "OpenSCAD",
+        category: "3D CAD",
+        connection: "CLI/File-based",
+        priority: "Medium",
+        status: "Planned",
+        issue: "#2",
+      },
+    ],
   },
 ];
 
@@ -148,7 +453,7 @@ export function IntegrationsSection() {
     const centerActualBottom = centerActualTop + centerSize;
 
     // For the center item, we want it to be square and fixed size
-    if (categoryName === "Category 5 (Center)") {
+    if (categoryName === "Lightfast") {
       return {
         width: centerSize,
         height: centerSize,
@@ -173,14 +478,14 @@ export function IntegrationsSection() {
     };
 
     // Category 3: Above and to the left of center
-    if (categoryName === "Category 3") {
+    if (categoryName === "2D Graphics") {
       // Adjust right edge to meet Category 9's left edge (at 58.33%)
       width = 58.33 * scaleX - left;
       // Adjust bottom edge to meet center's top edge
       height = centerActualTop - top;
     }
     // Category 4: Left of center
-    else if (categoryName === "Category 4") {
+    else if (categoryName === "Game Engines") {
       // Adjust right edge to meet center's left edge
       width = centerActualLeft - left;
       // Top aligns with center's top
@@ -189,7 +494,7 @@ export function IntegrationsSection() {
       height = vh - top;
     }
     // Category 8: Below center
-    else if (categoryName === "Category 8") {
+    else if (categoryName === "3D Texturing & CAD") {
       // Adjust top to center's bottom
       top = centerActualBottom;
       // Adjust height to fill remaining space
@@ -200,7 +505,7 @@ export function IntegrationsSection() {
       width = 83.33 * scaleX - left;
     }
     // Category 9: Above and to the right of center
-    else if (categoryName === "Category 9") {
+    else if (categoryName === "Video & VFX") {
       // Adjust left edge to meet center's right edge
       left = centerActualRight;
       // Width extends to category 6
@@ -245,7 +550,11 @@ export function IntegrationsSection() {
             return (
               <div
                 key={cat.name}
-                className={`absolute flex items-center justify-center border text-lg font-bold text-white ${cat.color}`}
+                className={`absolute flex items-center justify-center overflow-hidden transition-all duration-300 hover:z-10 ${
+                  cat.isLogo
+                    ? "shadow-2xl"
+                    : "border border-white/10 backdrop-blur-sm"
+                } ${cat.color}`}
                 style={{
                   width: `${dimensions.width}px`,
                   height: `${dimensions.height}px`,
@@ -254,7 +563,52 @@ export function IntegrationsSection() {
                   transform: dimensions.transform,
                 }}
               >
-                {cat.name}
+                {cat.isLogo ? (
+                  <div className="flex h-full w-full flex-col items-center justify-center p-4">
+                    <div className="mb-2 text-4xl font-bold text-white">⚡</div>
+                    <span className="text-lg font-bold text-white">
+                      {cat.name}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex h-full w-full flex-col items-start justify-start p-6">
+                    <span className="text-5xl font-semibold text-white/90">
+                      {cat.name}
+                    </span>
+                    {cat.apps && (
+                      <div className="mt-4 flex flex-col items-start gap-1">
+                        <span className="text-sm text-white/70 md:text-base">
+                          {cat.apps.length} apps
+                        </span>
+                        <div className="flex gap-1">
+                          {cat.apps.filter(
+                            (app) => app.status === "Implemented",
+                          ).length > 0 && (
+                            <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs text-white/90">
+                              {
+                                cat.apps.filter(
+                                  (app) => app.status === "Implemented",
+                                ).length
+                              }{" "}
+                              Live
+                            </span>
+                          )}
+                          {cat.apps.filter((app) => app.status === "Planned")
+                            .length > 0 && (
+                            <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                              {
+                                cat.apps.filter(
+                                  (app) => app.status === "Planned",
+                                ).length
+                              }{" "}
+                              Soon
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
