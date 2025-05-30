@@ -1,156 +1,316 @@
 :root {
-  /* Grid & Container Base Values */
-  --landing-grid-offset-x: 32px;
-  --landing-grid-offset-y: 64px;
-  --landing-grid-size: 12;
-  --landing-container-padding-x: 64px; /* 32px each side */
-  --landing-container-padding-y: 128px; /* 64px top/bottom */
-  --landing-container-width: calc(100vw - var(--landing-container-padding-x));
-  --landing-container-height: calc(100vh - var(--landing-container-padding-y));
-  --landing-grid-cell-width: calc(
-    var(--landing-container-width) / var(--landing-grid-size)
-  );
-  --landing-grid-cell-height: calc(
-    var(--landing-container-height) / var(--landing-grid-size)
-  );
-  --landing-grid-width: var(--landing-container-width);
-  --landing-grid-height: var(--landing-container-height);
+  /* Single progress variable (0 to 1) set by JavaScript */
+  --wheel-progress: 0;
 
-  /* CenterCard Base Values (used by JS to calculate initial state) */
-  --landing-center-card-base-start-size: 600px;
-  --landing-center-card-viewport-size-factor: 0.6;
-  --landing-center-start-grid-units: 5; /* From constants.ts CENTER_START */
-  --landing-center-size-grid-units: 2; /* From constants.ts CENTER_SIZE */
+  /* Viewport variables (set by JavaScript) */
+  --viewport-width: 100vw;
+  --viewport-height: 100vh;
+  --container-width: calc(100vw - 64px);
+  --container-height: calc(100vh - 128px);
 
-  /* Actual calculated start size (will be refined by JS based on viewport) */
-  /* For initial render, estimate based on typical viewport to avoid large jumps */
-  --landing-center-card-current-start-size-val: min(
-    var(--landing-center-card-base-start-size),
-    calc(min(100vw, 100vh) * var(--landing-center-card-viewport-size-factor))
+  /* Grid constants */
+  --grid-size: 12;
+  --grid-offset-x: 32px;
+  --grid-offset-y: 64px;
+  --center-start: 5;
+  --center-size: 2;
+
+  /* Calculated grid dimensions */
+  --cell-width: calc(var(--container-width) / var(--grid-size));
+  --cell-height: calc(var(--container-height) / var(--grid-size));
+
+  /* Animation phases calculated purely in CSS */
+  --text-fade-phase: min(calc(var(--wheel-progress) / 0.3), 1);
+  --logo-move-phase: min(max(0, calc((var(--wheel-progress) - 0.1) / 0.4)), 1);
+  --expansion-phase: min(max(0, calc((var(--wheel-progress) - 0.2) / 0.6)), 1);
+  --category-phase: min(max(0, calc((var(--wheel-progress) - 0.5) / 0.5)), 1);
+
+  /* Center card sizing */
+  --cc-start-size: min(
+    600px,
+    calc(min(var(--viewport-width), var(--viewport-height)) * 0.6)
   );
-
-  /* Actual calculated final size in grid (will be refined by JS) */
-  --landing-center-card-final-grid-size-val: calc(
-    min(var(--landing-grid-cell-width), var(--landing-grid-cell-height)) *
-      var(--landing-center-size-grid-units)
+  --cc-final-size: calc(
+    min(var(--cell-width), var(--cell-height)) * var(--center-size)
   );
-
-  /* Static initial positions for CenterCard (viewport center) */
-  --landing-center-card-start-x-vw: 50vw;
-  --landing-center-card-start-y-vh: 50vh;
-
-  /* Static final grid positions for CenterCard (calculated by JS and set, but can have CSS fallbacks) */
-  --landing-center-card-final-x-grid-val: calc(
-    var(--landing-grid-offset-x) +
-      (
-        var(--landing-center-start-grid-units) +
-          var(--landing-center-size-grid-units) / 2
-      ) *
-      var(--landing-grid-cell-width)
-  );
-  --landing-center-card-final-y-grid-val: calc(
-    var(--landing-grid-offset-y) +
-      (
-        var(--landing-center-start-grid-units) +
-          var(--landing-center-size-grid-units) / 2
-      ) *
-      var(--landing-grid-cell-height)
+  --cc-current-size: calc(
+    var(--cc-start-size) + (var(--cc-final-size) - var(--cc-start-size)) *
+      var(--expansion-phase)
   );
 
-  /* Expansion factor (controlled by JS via useLandingCSSVariables) */
-  --landing-center-card-expansion-factor: 0;
-
-  /* Global CenterCard animated state variables (JS in useLandingCSSVariables primarily sets these) */
-  /* Defaults should reflect expansionPhase = 0 */
-  --global-cc-current-width: var(--landing-center-card-current-start-size-val);
-  --global-cc-current-height: var(--global-cc-current-width);
-  --global-cc-current-center-x: var(--landing-center-card-start-x-vw);
-  --global-cc-current-center-y: var(--landing-center-card-start-y-vh);
-  --global-cc-current-left: calc(
-    var(--global-cc-current-center-x) - (var(--global-cc-current-width) / 2)
+  /* Center card positions */
+  --cc-start-x: calc(var(--viewport-width) / 2);
+  --cc-start-y: calc(var(--viewport-height) / 2);
+  --cc-final-x: calc(
+    var(--grid-offset-x) + (var(--center-start) + var(--center-size) / 2) *
+      var(--cell-width)
   );
-  --global-cc-current-top: calc(
-    var(--global-cc-current-center-y) - (var(--global-cc-current-height) / 2)
+  --cc-final-y: calc(
+    var(--grid-offset-y) + (var(--center-start) + var(--center-size) / 2) *
+      var(--cell-height)
+  );
+  --cc-current-x: calc(
+    var(--cc-start-x) + (var(--cc-final-x) - var(--cc-start-x)) *
+      var(--expansion-phase)
+  );
+  --cc-current-y: calc(
+    var(--cc-start-y) + (var(--cc-final-y) - var(--cc-start-y)) *
+      var(--expansion-phase)
   );
 
-  /* NEW Phase-driven opacity/scale variables (set by JS in useLandingCSSVariables) */
-  /* Defaults should reflect initial state (expansionPhase=0, categoryPhase=0) */
-  --grid-lines-opacity: 1; /* (1 - 0 * 0.8) */
-  --integration-container-opacity: 0; /* (0 > 0.3 ? 0 : 0) -> (expPhase > 0.3 ? catPhase : 0) */
-  --integration-card-opacity: 0; /* (categoryPhase) */
-  --integration-card-scale: 0.8; /* (0.8 + 0 * 0.2) */
+  /* Component opacity and scale */
+  --grid-lines-opacity: calc(1 - var(--expansion-phase) * 0.8);
+  --integration-container-opacity: calc(
+    max(0, min(1, (var(--expansion-phase) - 0.3) / 0.1)) * var(--category-phase)
+  );
+  --integration-card-opacity: var(--category-phase);
+  --integration-card-scale: calc(0.8 + var(--category-phase) * 0.2);
 
-  /* Text Fade and Logo Move factors */
-  --text-fade-factor: 0; /* Text opacity = 1 - var(--text-fade-factor) */
-  --logo-move-factor: 0; /* Drives logo from corner to center */
+  /* Text and logo animation */
+  --text-opacity: calc(1 - var(--text-fade-phase));
+  --logo-move-factor: var(--logo-move-phase);
 }
 
-/* Styles for the CenterCard component animation */
+/* PERFORMANCE OPTIMIZED: Transform-based center card animation */
+.optimized-center-card {
+  /* Use transforms for GPU acceleration instead of layout properties */
+  position: absolute;
+  width: var(--cc-current-size);
+  height: var(--cc-current-size);
+  left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
+  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+
+  /* Performance optimizations */
+  will-change: transform, width, height;
+  contain: layout style paint;
+
+  /* Instant transitions - no more delays */
+  transition: none;
+}
+
+/* Center card text with pure CSS opacity animation */
+.center-card-text {
+  opacity: var(--text-opacity);
+  transition: opacity 0.2s ease-out;
+  will-change: opacity;
+}
+
+/* Center card logo with pure CSS transform animation */
+.center-card-logo {
+  width: 48px;
+  height: 48px;
+
+  /* Logo position interpolation using pure CSS */
+  --logo-start-x: 32px;
+  --logo-start-y: calc(var(--cc-current-size) - 32px - 48px);
+  --logo-final-x: calc((var(--cc-current-size) - 48px) / 2);
+  --logo-final-y: calc((var(--cc-current-size) - 48px) / 2);
+
+  --logo-current-x: calc(
+    var(--logo-start-x) + (var(--logo-final-x) - var(--logo-start-x)) *
+      var(--logo-move-factor)
+  );
+  --logo-current-y: calc(
+    var(--logo-start-y) + (var(--logo-final-y) - var(--logo-start-y)) *
+      var(--logo-move-factor)
+  );
+
+  left: var(--logo-current-x);
+  top: var(--logo-current-y);
+
+  /* Performance optimizations */
+  will-change: left, top;
+  transition: none;
+}
+
+/* Legacy center card (keeping for compatibility) */
 .animated-center-card {
-  /* These are now set by JS on :root and interpolated there */
-  /* --cc-start-size: var(--landing-center-card-current-start-size-val, 600px); */
-  /* --cc-final-size: var(--landing-center-card-final-grid-size-val, 100px); */
-  /* --cc-start-x: var(--landing-center-card-start-x-vw, 50vw); */
-  /* --cc-start-y: var(--landing-center-card-start-y-vh, 50vh); */
-  /* --cc-final-x: var(--landing-center-card-final-x-grid-val, 0px); */
-  /* --cc-final-y: var(--landing-center-card-final-y-grid-val, 0px); */
-
-  /* No longer need to interpolate here, directly use the global animated values */
-  /* --cc-current-width: calc(var(--cc-start-size) + (var(--cc-final-size) - var(--cc-start-size)) * var(--landing-center-card-expansion-factor)); */
-  /* --cc-current-height: var(--cc-current-width); */
-  /* --cc-current-center-x: calc(var(--cc-start-x) + (var(--cc-final-x) - var(--cc-start-x)) * var(--landing-center-card-expansion-factor)); */
-  /* --cc-current-center-y: calc(var(--cc-start-y) + (var(--cc-final-y) - var(--cc-start-y)) * var(--landing-center-card-expansion-factor)); */
-
   width: var(--global-cc-current-width);
   height: var(--global-cc-current-height);
   left: var(--global-cc-current-left);
   top: var(--global-cc-current-top);
-
   position: absolute;
   overflow: hidden;
-  /* border: 1px solid hsl(var(--border)); /* Assuming border-border translates to this */
-  /* box-shadow: 0 0 15px rgba(0,0,0,0.2); /* Assuming shadow-2xl */
-  /* background-color: hsl(var(--card)); /* Assuming bg-card */
-
-  /* Add transition - make sure it matches or is better than existing */
-  /* transition: width 0.7s, height 0.7s, left 0.7s, top 0.7s; */
-  /* The className already has transition-all duration-700 */
 }
 
-/* Styles for GridLines opacity */
+/* PERFORMANCE OPTIMIZED: Grid lines with instant response */
+.optimized-grid-lines {
+  opacity: var(--grid-lines-opacity);
+  transition: opacity 0.2s ease-out;
+  will-change: opacity;
+}
+
+/* Grid line elements - no transitions for instant response */
+.grid-line-h-top-left {
+  position: absolute;
+  height: 1px;
+  background-color: hsl(var(--border));
+  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+  left: 0;
+  width: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
+}
+
+.grid-line-h-top-right {
+  position: absolute;
+  height: 1px;
+  background-color: hsl(var(--border));
+  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
+  width: calc(100vw - (var(--cc-current-x) + var(--cc-current-size) / 2));
+}
+
+.grid-line-h-bottom-left {
+  position: absolute;
+  height: 1px;
+  background-color: hsl(var(--border));
+  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
+  left: 0;
+  width: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
+}
+
+.grid-line-h-bottom-right {
+  position: absolute;
+  height: 1px;
+  background-color: hsl(var(--border));
+  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
+  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
+  width: calc(100vw - (var(--cc-current-x) + var(--cc-current-size) / 2));
+}
+
+.grid-line-v-left-top {
+  position: absolute;
+  width: 1px;
+  background-color: hsl(var(--border));
+  left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
+  top: 0;
+  height: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+}
+
+.grid-line-v-left-bottom {
+  position: absolute;
+  width: 1px;
+  background-color: hsl(var(--border));
+  left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
+  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
+  height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
+}
+
+.grid-line-v-right-top {
+  position: absolute;
+  width: 1px;
+  background-color: hsl(var(--border));
+  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
+  top: 0;
+  height: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+}
+
+.grid-line-v-right-bottom {
+  position: absolute;
+  width: 1px;
+  background-color: hsl(var(--border));
+  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
+  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
+  height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
+}
+
+/* Legacy grid lines (keeping for compatibility) */
 .grid-lines-animated {
   opacity: var(--grid-lines-opacity);
-  /* Ensure existing transitions from className are respected or defined here */
-  /* className already has transition-opacity duration-500 */
 }
 
-/* Styles for IntegrationCategories container opacity */
-.integration-categories-container-animated {
-  opacity: var(--integration-container-opacity);
-  /* Ensure existing transitions from className are respected or defined here */
-  /* className already has transition-all duration-500 - this applies to opacity */
-}
-
-/* Styles for individual IntegrationCategory card opacity and scale */
-.integration-category-card-base {
-  /* Base styles from the original component */
+/* PERFORMANCE OPTIMIZED: Integration categories with instant response */
+.optimized-integration-container {
   position: absolute;
-  /* display: flex; // Already in className */
-  /* alignItems: "items-start"; // Already in className */
-  /* justifyContent: "justify-start"; // Already in className */
-  overflow: hidden;
-  /* border: 1px solid hsl(var(--border)); */
-  /* padding: 1.5rem; /* p-6 */
-  /* backdrop-filter: blur(4px); /* backdrop-blur-sm - Note: Tailwind's blur might be different */
-  /* background-color: hsla(var(--card), 0.8); /* bg-card/80 */
-  /* transition: all 0.7s; /* Already in className */
+  left: var(--grid-offset-x);
+  top: var(--grid-offset-y);
+  width: var(--container-width);
+  height: var(--container-height);
+  opacity: var(--integration-container-opacity);
+  transition: opacity 0.2s ease-out;
+  will-change: opacity;
+}
 
-  /* Base positioning - these will be overridden by inline styles for now for unique grid positions */
-  /* but width/height might be settable if all cards had same span, or via specific classes */
+/* Optimized integration cards */
+.optimized-integration-card {
+  position: absolute;
   opacity: var(--integration-card-opacity);
   transform: scale(var(--integration-card-scale));
-  /* Ensure existing transitions from className are respected or defined here */
-  /* className already has transition-all duration-700 - this applies to opacity and transform */
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out;
+  will-change: opacity, transform;
+}
+
+/* Default grid positioning */
+.integration-card-default {
+  left: calc(var(--cell-width) * var(--grid-col-start));
+  top: calc(var(--cell-height) * var(--grid-row-start));
+  width: calc(var(--cell-width) * var(--grid-col-span));
+  height: calc(var(--cell-height) * var(--grid-row-span));
+}
+
+/* Special positioning for cards that align with center card */
+.integration-card-2d-graphics {
+  --center-card-left-rel: calc(
+    var(--cc-current-x) - var(--cc-current-size) / 2 - var(--grid-offset-x)
+  );
+  left: calc(var(--cell-width) * 2);
+  top: calc(var(--cell-height) * var(--grid-row-start));
+  width: calc(var(--center-card-left-rel) - var(--cell-width) * 2);
+  height: calc(var(--cell-height) * var(--grid-row-span));
+}
+
+.integration-card-game-engines {
+  --center-card-left-rel: calc(
+    var(--cc-current-x) - var(--cc-current-size) / 2 - var(--grid-offset-x)
+  );
+  left: calc(var(--cell-width) * 2);
+  top: calc(var(--cell-height) * var(--grid-row-start));
+  width: calc(var(--center-card-left-rel) - var(--cell-width) * 2);
+  height: calc(var(--cell-height) * var(--grid-row-span));
+}
+
+.integration-card-video-vfx {
+  --center-card-right-rel: calc(
+    var(--cc-current-x) + var(--cc-current-size) / 2 - var(--grid-offset-x)
+  );
+  left: var(--center-card-right-rel);
+  top: calc(var(--cell-height) * var(--grid-row-start));
+  width: calc(var(--cell-width) * 10 - var(--center-card-right-rel));
+  height: calc(var(--cell-height) * var(--grid-row-span));
+}
+
+.integration-card-3d-texturing {
+  --center-card-left-rel: calc(
+    var(--cc-current-x) - var(--cc-current-size) / 2 - var(--grid-offset-x)
+  );
+  left: var(--center-card-left-rel);
+  top: calc(var(--cell-height) * var(--grid-row-start));
+  width: calc(var(--cell-width) * 10 - var(--center-card-left-rel));
+  height: calc(var(--cell-height) * var(--grid-row-span));
+}
+
+/* PERFORMANCE OPTIMIZED: Page header with instant response */
+.optimized-page-header {
+  position: absolute;
+  top: 64px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  opacity: var(--category-phase);
+  transition: opacity 0.2s ease-out;
+  will-change: opacity;
+}
+
+/* Legacy styles (keeping for compatibility) */
+.integration-categories-container-animated {
+  opacity: var(--integration-container-opacity);
+}
+
+.integration-category-card-base {
+  position: absolute;
+  opacity: var(--integration-card-opacity);
+  transform: scale(var(--integration-card-scale));
 }
 
 /* Modifier classes for cards aligning with CenterCard */
