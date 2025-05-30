@@ -126,43 +126,88 @@ export function IntegrationsSection() {
     // First, determine the scaling factor based on the center item
     // The center item is 16.67% in the original grid
     const centerOriginalSize = 16.67;
-
-    // Calculate what the grid size would be if we maintain the center item size
-    const gridSizeFromWidth = (centerSize / centerOriginalSize) * 100;
-    const gridSizeFromHeight = (centerSize / centerOriginalSize) * 100;
+    const centerOriginalLeft = 41.67;
+    const centerOriginalTop = 41.67;
 
     // Use the grid size to calculate scale factors for each axis
     const scaleX = vw / 100; // Map 100% grid to viewport width
     const scaleY = vh / 100; // Map 100% grid to viewport height
 
+    // Calculate where the center item actually is
+    const centerScaledLeft = centerOriginalLeft * scaleX;
+    const centerScaledTop = centerOriginalTop * scaleY;
+    const centerScaledWidth = centerOriginalSize * scaleX;
+    const centerScaledHeight = centerOriginalSize * scaleY;
+
+    // The actual center item position (centered within its grid cell)
+    const centerActualLeft =
+      centerScaledLeft + (centerScaledWidth - centerSize) / 2;
+    const centerActualTop =
+      centerScaledTop + (centerScaledHeight - centerSize) / 2;
+    const centerActualRight = centerActualLeft + centerSize;
+    const centerActualBottom = centerActualTop + centerSize;
+
     // For the center item, we want it to be square and fixed size
     if (categoryName === "Category 5 (Center)") {
-      // Calculate center position in the scaled grid
-      const scaledLeft = position.left * scaleX;
-      const scaledTop = position.top * scaleY;
-
-      // Adjust to center the square item within its scaled position
-      const scaledWidth = position.width * scaleX;
-      const scaledHeight = position.height * scaleY;
-
-      // Position the center item to maintain its relative position
-      const left = scaledLeft + (scaledWidth - centerSize) / 2;
-      const top = scaledTop + (scaledHeight - centerSize) / 2;
-
       return {
         width: centerSize,
         height: centerSize,
-        top,
-        left,
+        top: centerActualTop,
+        left: centerActualLeft,
         transform: "translate(0, 0)",
       };
     }
 
-    // For all other items, scale proportionally
-    const width = position.width * scaleX;
-    const height = position.height * scaleY;
-    const left = position.left * scaleX;
-    const top = position.top * scaleY;
+    // For all other items, scale proportionally but adjust those touching the center
+    let width = position.width * scaleX;
+    let height = position.height * scaleY;
+    let left = position.left * scaleX;
+    let top = position.top * scaleY;
+
+    // Adjust items that touch the center to eliminate gaps
+    const touchesCenter = {
+      left: position.left + position.width === centerOriginalLeft,
+      right: position.left === centerOriginalLeft + centerOriginalSize,
+      top: position.top + position.height === centerOriginalTop,
+      bottom: position.top === centerOriginalTop + centerOriginalSize,
+    };
+
+    // Category 3: Above and to the left of center
+    if (categoryName === "Category 3") {
+      // Adjust right edge to meet Category 9's left edge (at 58.33%)
+      width = 58.33 * scaleX - left;
+      // Adjust bottom edge to meet center's top edge
+      height = centerActualTop - top;
+    }
+    // Category 4: Left of center
+    else if (categoryName === "Category 4") {
+      // Adjust right edge to meet center's left edge
+      width = centerActualLeft - left;
+      // Top aligns with center's top
+      top = centerActualTop;
+      // Height extends to bottom
+      height = vh - top;
+    }
+    // Category 8: Below center
+    else if (categoryName === "Category 8") {
+      // Adjust top to center's bottom
+      top = centerActualBottom;
+      // Adjust height to fill remaining space
+      height = vh - top;
+      // Adjust left to center's left
+      left = centerActualLeft;
+      // Width extends to Category 7's left edge (at 83.33%)
+      width = 83.33 * scaleX - left;
+    }
+    // Category 9: Above and to the right of center
+    else if (categoryName === "Category 9") {
+      // Adjust left edge to meet center's right edge
+      left = centerActualRight;
+      // Width extends to category 6
+      width = 83.33 * scaleX - left;
+      // Height extends to center's bottom
+      height = centerActualBottom - top;
+    }
 
     return {
       width,
