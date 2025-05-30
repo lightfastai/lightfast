@@ -1,15 +1,18 @@
+import { cn } from "@repo/ui/lib/utils"; // Import cn utility
+
 import type { CenterCard } from "./types";
 import { integrationCategories } from "./constants";
+// import { useEffect, useState } from "react"; // No longer needed here
 import { getCSSVariableValue } from "./utils";
 
 export interface IntegrationCategoriesProps {
-  centerCard: CenterCard;
+  centerCard: Partial<CenterCard>; // centerCard might not have all properties if calculateCenterCard is minimal
   expansionPhase: number;
   categoryPhase: number;
 }
 
 export const IntegrationCategories = ({
-  centerCard,
+  centerCard, // Used for conditional logic, but primarily for its presence/phase
   expansionPhase,
   categoryPhase,
 }: IntegrationCategoriesProps) => {
@@ -29,7 +32,7 @@ export const IntegrationCategories = ({
   if (cellWidth === 0 || cellHeight === 0) {
     // console.warn("Landing page CSS variables not found, IntegrationCategories might not render correctly.");
     // Depending on how critical this is, you might return null or a placeholder
-    // return null;
+    return null;
   }
 
   return (
@@ -44,57 +47,56 @@ export const IntegrationCategories = ({
       }}
     >
       {integrationCategories.map((cat, index) => {
-        // Calculate default grid-based position
-        let cardWidth = cellWidth * cat.grid.colSpan;
-        const cardHeight = cellHeight * cat.grid.rowSpan;
-        let cardLeft = cellWidth * cat.grid.colStart;
-        const cardTop = cellHeight * cat.grid.rowStart;
+        let cardSpecificStyles: React.CSSProperties = {};
+        let cardClasses = "integration-category-card-base"; // Base class
 
-        // Adjust positions for cards that should align with center anchor borders
-        const centerLeftInGridContext = centerCard.left - gridOffsetX;
-        const centerRightInGridContext =
-          centerLeftInGridContext + centerCard.width;
+        // Default grid-based position & dimensions (used if no special alignment class applies)
+        const defaultCardWidth = cellWidth * cat.grid.colSpan;
+        const defaultCardHeight = cellHeight * cat.grid.rowSpan;
+        const defaultCardLeft = cellWidth * cat.grid.colStart;
+        const defaultCardTop = cellHeight * cat.grid.rowStart;
 
-        // Cards that need border alignment adjustments
+        cardSpecificStyles = {
+          width: `${defaultCardWidth}px`,
+          height: `${defaultCardHeight}px`,
+          left: `${defaultCardLeft}px`,
+          top: `${defaultCardTop}px`,
+        };
+
+        // Apply modifier classes for cards that need special alignment
+        // These classes will override width/left as needed using their own CSS calc()
         if (cat.name === "2D Graphics") {
-          cardWidth = centerRightInGridContext - cardLeft;
+          cardClasses = cn(cardClasses, "align-2d-graphics");
+          // JS calculated width/left are overridden by CSS, so no need to set them in cardSpecificStyles
+          delete cardSpecificStyles.width;
+          delete cardSpecificStyles.left;
         } else if (cat.name === "Game Engines") {
-          cardWidth = centerLeftInGridContext - cardLeft;
+          cardClasses = cn(cardClasses, "align-game-engines");
+          delete cardSpecificStyles.width;
+          delete cardSpecificStyles.left;
         } else if (cat.name === "Video & VFX") {
-          const originalRight = cardLeft + cardWidth;
-          cardLeft = centerRightInGridContext;
-          cardWidth = originalRight - centerRightInGridContext;
+          cardClasses = cn(cardClasses, "align-video-vfx");
+          delete cardSpecificStyles.width;
+          delete cardSpecificStyles.left;
         } else if (cat.name === "3D Texturing & CAD") {
-          const originalRight = cardLeft + cardWidth;
-          cardLeft = centerLeftInGridContext;
-          cardWidth = originalRight - centerLeftInGridContext;
+          cardClasses = cn(cardClasses, "align-3d-texturing-cad");
+          delete cardSpecificStyles.width;
+          delete cardSpecificStyles.left;
         }
 
-        // Ensure cardWidth is not negative or zero if critical
-        if (
-          cardWidth <= 0 &&
-          (cat.name.includes("2D Graphics") ||
-            cat.name.includes("Game Engines") ||
-            cat.name.includes("Video & VFX") ||
-            cat.name.includes("3D Texturing & CAD"))
-        ) {
-          // This might happen if centerCard values are not yet stable or CSS vars are missing
-          // console.warn(`Calculated cardWidth for ${cat.name} is ${cardWidth}px. Check layout logic or CSS variables.`);
-        }
+        // Opacity and transform are still JS-driven based on phase
+        cardSpecificStyles.opacity = categoryPhase;
+        cardSpecificStyles.transform = `scale(${0.8 + categoryPhase * 0.2})`;
+        cardSpecificStyles.transitionDelay = `${index * 50}ms`;
 
         return (
           <div
             key={cat.name}
-            className="border-border bg-card/80 hover:bg-card/90 absolute flex items-start justify-start overflow-hidden border p-6 backdrop-blur-sm transition-all duration-700"
-            style={{
-              width: `${Math.max(0, cardWidth)}px`,
-              height: `${Math.max(0, cardHeight)}px`,
-              left: `${cardLeft}px`,
-              top: `${cardTop}px`,
-              opacity: categoryPhase,
-              transform: `scale(${0.8 + categoryPhase * 0.2})`,
-              transitionDelay: `${index * 50}ms`,
-            }}
+            className={cn(
+              "border-border bg-card/80 hover:bg-card/90 absolute flex items-start justify-start overflow-hidden border p-6 backdrop-blur-sm transition-all duration-700",
+              cardClasses,
+            )}
+            style={cardSpecificStyles}
           >
             <div className="flex flex-col">
               <span className="text-foreground/90 mb-4 text-2xl font-semibold">

@@ -30,4 +30,125 @@
 
   /* This variable will be updated by JavaScript (0 to 1) to drive the animation */
   --landing-center-card-expansion-factor: 0;
+
+  /* NEW Global CenterCard animated state variables (set by JS in useLandingCSSVariables) */
+  --global-cc-current-width: 600px; /* Default/initial */
+  --global-cc-current-height: 600px; /* Default/initial */
+  --global-cc-current-left: 50vw; /* Default/initial */
+  --global-cc-current-top: 50vh; /* Default/initial */
+  --global-cc-current-center-x: 50vw; /* Default/initial */
+  --global-cc-current-center-y: 50vh; /* Default/initial */
+}
+
+/* Styles for the CenterCard component animation */
+.animated-center-card {
+  /* These are now set by JS on :root and interpolated there */
+  /* --cc-start-size: var(--landing-center-card-current-start-size-val, 600px); */
+  /* --cc-final-size: var(--landing-center-card-final-grid-size-val, 100px); */
+  /* --cc-start-x: var(--landing-center-card-start-x-vw, 50vw); */
+  /* --cc-start-y: var(--landing-center-card-start-y-vh, 50vh); */
+  /* --cc-final-x: var(--landing-center-card-final-x-grid-val, 0px); */
+  /* --cc-final-y: var(--landing-center-card-final-y-grid-val, 0px); */
+
+  /* No longer need to interpolate here, directly use the global animated values */
+  /* --cc-current-width: calc(var(--cc-start-size) + (var(--cc-final-size) - var(--cc-start-size)) * var(--landing-center-card-expansion-factor)); */
+  /* --cc-current-height: var(--cc-current-width); */
+  /* --cc-current-center-x: calc(var(--cc-start-x) + (var(--cc-final-x) - var(--cc-start-x)) * var(--landing-center-card-expansion-factor)); */
+  /* --cc-current-center-y: calc(var(--cc-start-y) + (var(--cc-final-y) - var(--cc-start-y)) * var(--landing-center-card-expansion-factor)); */
+
+  width: var(--global-cc-current-width);
+  height: var(--global-cc-current-height);
+  left: var(--global-cc-current-left);
+  top: var(--global-cc-current-top);
+
+  position: absolute;
+  overflow: hidden;
+  /* border: 1px solid hsl(var(--border)); /* Assuming border-border translates to this */
+  /* box-shadow: 0 0 15px rgba(0,0,0,0.2); /* Assuming shadow-2xl */
+  /* background-color: hsl(var(--card)); /* Assuming bg-card */
+
+  /* Add transition - make sure it matches or is better than existing */
+  /* transition: width 0.7s, height 0.7s, left 0.7s, top 0.7s; */
+  /* The className already has transition-all duration-700 */
+}
+
+/* Styles for IntegrationCategory cards */
+.integration-category-card-base {
+  /* Base styles from the original component */
+  position: absolute;
+  /* display: flex; // Already in className */
+  /* alignItems: "items-start"; // Already in className */
+  /* justifyContent: "justify-start"; // Already in className */
+  overflow: hidden;
+  /* border: 1px solid hsl(var(--border)); */
+  /* padding: 1.5rem; /* p-6 */
+  /* backdrop-filter: blur(4px); /* backdrop-blur-sm - Note: Tailwind's blur might be different */
+  /* background-color: hsla(var(--card), 0.8); /* bg-card/80 */
+  /* transition: all 0.7s; /* Already in className */
+
+  /* Base positioning - these will be overridden by inline styles for now for unique grid positions */
+  /* but width/height might be settable if all cards had same span, or via specific classes */
+}
+
+/* Modifier classes for cards aligning with CenterCard */
+/* These assume that the CenterCard's CSS variables (--cc-current-left, --cc-current-width, etc.) */
+/* are accessible/inherited or we set them on a common parent for IntegrationCategories as well. */
+/* For simplicity, we'll assume they can be read. */
+
+/* We need to know grid-offset-x to correctly align with centerCard using its absolute CSS vars */
+/* This is a bit tricky because --cc-current-left is an absolute viewport position. */
+/* The category cards are positioned relative to their grid container which has gridOffsetX. */
+/* So, center_card_left_relative_to_grid = var(--cc-current-left) - var(--landing-grid-offset-x) */
+
+.align-2d-graphics {
+  --center-card-left-in-grid: calc(
+    var(--global-cc-current-left) - var(--landing-grid-offset-x)
+  );
+  --center-card-width-val: var(--global-cc-current-width);
+  --center-card-right-in-grid: calc(
+    var(--center-card-left-in-grid) + var(--center-card-width-val)
+  );
+  left: calc(
+    var(--landing-grid-cell-width) * 2
+  ); /* colStart is 2 for 2D Graphics */
+  width: calc(
+    var(--center-card-right-in-grid) - (var(--landing-grid-cell-width) * 2)
+  );
+}
+
+.align-game-engines {
+  --center-card-left-in-grid: calc(
+    var(--global-cc-current-left) - var(--landing-grid-offset-x)
+  );
+  left: calc(
+    var(--landing-grid-cell-width) * 2
+  ); /* colStart is 2 for Game Engines */
+  width: calc(
+    var(--center-card-left-in-grid) - (var(--landing-grid-cell-width) * 2)
+  );
+}
+
+.align-video-vfx {
+  --center-card-left-in-grid: calc(
+    var(--global-cc-current-left) - var(--landing-grid-offset-x)
+  );
+  --center-card-width-val: var(--global-cc-current-width);
+  --center-card-right-in-grid: calc(
+    var(--center-card-left-in-grid) + var(--center-card-width-val)
+  );
+  left: var(--center-card-right-in-grid);
+  width: calc(
+    (var(--landing-grid-cell-width) * (7 + 3)) -
+      var(--center-card-right-in-grid)
+  );
+}
+
+.align-3d-texturing-cad {
+  --center-card-left-in-grid: calc(
+    var(--global-cc-current-left) - var(--landing-grid-offset-x)
+  );
+  left: var(--center-card-left-in-grid);
+  width: calc(
+    (var(--landing-grid-cell-width) * (5 + 5)) - var(--center-card-left-in-grid)
+  );
 }

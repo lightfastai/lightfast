@@ -1,9 +1,11 @@
 import { Icons } from "@repo/ui/components/icons";
+import { cn } from "@repo/ui/lib/utils";
 
 import type { CenterCard as CenterCardType } from "./types";
+import { getCSSVariableValue } from "./utils";
 
 export interface CenterCardProps {
-  centerCard: CenterCardType;
+  centerCard: Partial<CenterCardType>;
   textFadePhase: number;
   logoMovePhase: number;
 }
@@ -13,40 +15,44 @@ export const CenterCard = ({
   textFadePhase,
   logoMovePhase,
 }: CenterCardProps) => {
-  // Calculate logo position within the card
   const logoSize = 48; // h-12 w-12
   const padding = 32; // p-8
 
-  // Calculate logo position - always center it when move phase is complete
+  const currentCardWidth =
+    typeof window !== "undefined"
+      ? getCSSVariableValue("--cc-current-width")
+      : 0;
+  const currentCardHeight =
+    typeof window !== "undefined"
+      ? getCSSVariableValue("--cc-current-height")
+      : 0;
+
+  const safeCardWidth = Math.max(0, currentCardWidth);
+  const safeCardHeight = Math.max(0, currentCardHeight);
+
   let logoCurrentX, logoCurrentY;
 
   if (logoMovePhase >= 1) {
-    // Logo is fully centered
-    logoCurrentX = (centerCard.width - logoSize) / 2;
-    logoCurrentY = (centerCard.height - logoSize) / 2;
+    logoCurrentX = (safeCardWidth - logoSize) / 2;
+    logoCurrentY = (safeCardHeight - logoSize) / 2;
   } else {
-    // Logo is transitioning from original position to center
     const logoOriginalX = padding;
-    const logoOriginalY = centerCard.height - padding - logoSize;
-    const logoFinalX = (centerCard.width - logoSize) / 2;
-    const logoFinalY = (centerCard.height - logoSize) / 2;
+    const logoOriginalY = safeCardHeight - padding - logoSize;
+    const logoFinalX = (safeCardWidth - logoSize) / 2;
+    const logoFinalY = (safeCardHeight - logoSize) / 2;
 
     logoCurrentX = logoOriginalX + (logoFinalX - logoOriginalX) * logoMovePhase;
     logoCurrentY = logoOriginalY + (logoFinalY - logoOriginalY) * logoMovePhase;
   }
 
-  // Calculate content opacity
   const textOpacity = 1 - textFadePhase;
 
   return (
     <div
-      className="bg-card border-border absolute overflow-hidden border shadow-2xl transition-all duration-700"
-      style={{
-        width: `${centerCard.width}px`,
-        height: `${centerCard.height}px`,
-        left: `${centerCard.left}px`,
-        top: `${centerCard.top}px`,
-      }}
+      className={cn(
+        "bg-card border-border absolute overflow-hidden border shadow-2xl transition-all duration-700",
+        "animated-center-card",
+      )}
     >
       {/* Text content (top-left, fades out) */}
       <div

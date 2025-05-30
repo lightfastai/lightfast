@@ -7,7 +7,6 @@ import type {
   ViewportSize,
 } from "./types";
 import { CENTER_SIZE, CENTER_START, GRID_SIZE } from "./constants";
-import { getCSSVariableValue } from "./utils"; // Import the helper
 
 // Calculate grid layout for any viewport
 /**
@@ -50,54 +49,18 @@ export const calculateGridLayout = (
   };
 };
 
-// Calculate center card properties
-export const calculateCenterCard = (expansionPhase: number): CenterCard => {
-  if (typeof window !== "undefined") {
-    document.documentElement.style.setProperty(
-      "--landing-center-card-expansion-factor",
-      expansionPhase.toString(),
-    );
-  }
+// Calculate center card properties - Now much simpler
+export const calculateCenterCard = (
+  expansionPhase: number,
+): Partial<CenterCard> => {
+  // This function is now almost a NO-OP if useLandingCSSVariables handles the expansion factor.
+  // However, page.tsx calls it and expects it to trigger the factor update.
+  // For clarity, let useLandingCSSVariables be the single source of truth for updating CSS from JS state.
+  // So, this function can be removed if page.tsx calls useLandingCSSVariables which depends on useAnimationPhases.
 
-  // Temporarily, we need to reconstruct the CenterCard object by reading the interpolated CSS variables
-  // This is until CenterCard.tsx itself is refactored to use these CSS variables directly for its style.
-  const startSize = getCSSVariableValue(
-    "--landing-center-card-current-start-size-val",
-  );
-  const finalSize = getCSSVariableValue(
-    "--landing-center-card-final-grid-size-val",
-  );
-
-  const startX =
-    (getCSSVariableValue("--landing-center-card-start-x-vw") / 100) *
-    (typeof window !== "undefined" ? window.innerWidth : 0); // Convert vw to px
-  const startY =
-    (getCSSVariableValue("--landing-center-card-start-y-vh") / 100) *
-    (typeof window !== "undefined" ? window.innerHeight : 0); // Convert vh to px
-
-  const finalX = getCSSVariableValue("--landing-center-card-final-x-grid-val");
-  const finalY = getCSSVariableValue("--landing-center-card-final-y-grid-val");
-
-  const currentSize = startSize + (finalSize - startSize) * expansionPhase;
-  const currentCenterX = startX + (finalX - startX) * expansionPhase;
-  const currentCenterY = startY + (finalY - startY) * expansionPhase;
-
-  // Ensure gridCenterX and gridCenterY (which are static) are also part of the return if CenterCardType expects them
-  // These are essentially finalX and finalY if the card moves to the center of the grid cell area
-  const gridCenterX = finalX;
-  const gridCenterY = finalY;
-
-  return {
-    size: currentSize,
-    width: currentSize,
-    height: currentSize,
-    centerX: currentCenterX,
-    centerY: currentCenterY,
-    left: currentCenterX - currentSize / 2,
-    top: currentCenterY - currentSize / 2,
-    gridCenterX: gridCenterX, // Added, assuming CenterCardType needs it
-    gridCenterY: gridCenterY, // Added, assuming CenterCardType needs it
-  };
+  // If still called, it should not also set the expansion factor if useLandingCSSVariables does.
+  // For now, assume it's still called but its action of setting expansion factor is now inside useLandingCSSVariables.
+  return {};
 };
 
 export const useViewportSize = () => {
@@ -153,6 +116,8 @@ export const useAnimationPhases = (wheelProgress: number): AnimationPhases => {
 };
 
 export const useLandingCSSVariables = () => {
+  const { expansionPhase } = useAnimationPhases(useWheelProgress()); // Get expansionPhase here
+
   useEffect(() => {
     const updateCSSVariables = () => {
       const viewportWidth = window.innerWidth;
@@ -201,64 +166,95 @@ export const useLandingCSSVariables = () => {
         CENTER_SIZE.toString(),
       );
 
-      // Calculate and set CenterCard animation state variables
-      const centerStartConst = CENTER_START;
-      const centerSizeConst = CENTER_SIZE;
+      // --- CenterCard State Calculations ---
+      const currentExpansionPhase = expansionPhase; // Use the live expansionPhase from the hook state
+      root.style.setProperty(
+        "--landing-center-card-expansion-factor",
+        currentExpansionPhase.toString(),
+      );
 
-      // Start Size (viewport dependent)
-      const baseStartSize =
+      // Static values (can also be read from existing CSS vars if preferred)
+      const ccBaseStartSize =
         parseFloat(
           getComputedStyle(root).getPropertyValue(
             "--landing-center-card-start-size",
           ),
         ) || 600;
-      const viewportFactor =
+      const ccViewportFactor =
         parseFloat(
           getComputedStyle(root).getPropertyValue(
             "--landing-center-card-viewport-size-factor",
           ),
         ) || 0.6;
-      const calculatedStartSize = Math.min(
-        baseStartSize,
-        Math.min(viewportWidth, viewportHeight) * viewportFactor,
+      const ccCalculatedStartSize = Math.min(
+        ccBaseStartSize,
+        Math.min(viewportWidth, viewportHeight) * ccViewportFactor,
       );
-      root.style.setProperty(
-        "--landing-center-card-current-start-size-val",
-        `${calculatedStartSize}px`,
-      );
+      // root.style.setProperty('--landing-center-card-current-start-size-val', `${ccCalculatedStartSize}px`); // This was an intermediate step, now used directly below
 
-      // Final Size (grid dependent)
-      const maxGridWidthForCenter = cellWidth * centerSizeConst;
-      const maxGridHeightForCenter = cellHeight * centerSizeConst;
-      const calculatedFinalSize = Math.min(
-        maxGridWidthForCenter,
-        maxGridHeightForCenter,
+      const ccCenterStartConst = CENTER_START;
+      const ccCenterSizeConst = CENTER_SIZE;
+      const ccMaxGridWidthForCenter = cellWidth * ccCenterSizeConst;
+      const ccMaxGridHeightForCenter = cellHeight * ccCenterSizeConst;
+      const ccCalculatedFinalSize = Math.min(
+        ccMaxGridWidthForCenter,
+        ccMaxGridHeightForCenter,
       );
-      root.style.setProperty(
-        "--landing-center-card-final-grid-size-val",
-        `${calculatedFinalSize}px`,
-      );
+      // root.style.setProperty('--landing-center-card-final-grid-size-val', `${ccCalculatedFinalSize}px`); // Intermediate, used below
 
-      // Final X and Y in grid context (these are static once grid is known)
-      const finalGridX =
-        gridOffsetX + (centerStartConst + centerSizeConst / 2) * cellWidth;
-      const finalGridY =
-        gridOffsetY + (centerStartConst + centerSizeConst / 2) * cellHeight;
-      root.style.setProperty(
-        "--landing-center-card-final-x-grid-val",
-        `${finalGridX}px`,
-      );
-      root.style.setProperty(
-        "--landing-center-card-final-y-grid-val",
-        `${finalGridY}px`,
-      );
+      const ccFinalGridX =
+        gridOffsetX + (ccCenterStartConst + ccCenterSizeConst / 2) * cellWidth;
+      const ccFinalGridY =
+        gridOffsetY + (ccCenterStartConst + ccCenterSizeConst / 2) * cellHeight;
+      // root.style.setProperty('--landing-center-card-final-x-grid-val', `${ccFinalGridX}px`); // Intermediate, used below
+      // root.style.setProperty('--landing-center-card-final-y-grid-val', `${ccFinalGridY}px`); // Intermediate, used below
 
-      // Initial X and Y are based on viewport center, defined in CSS as 50vw, 50vh by default
-      // So, --landing-center-card-start-x-vw and --landing-center-card-start-y-vh are used directly by CSS
+      const ccStartX = viewportWidth / 2;
+      const ccStartY = viewportHeight / 2;
+
+      // Calculate CURRENT interpolated values for CenterCard and set them globally
+      const globalCurrentWidth =
+        ccCalculatedStartSize +
+        (ccCalculatedFinalSize - ccCalculatedStartSize) * currentExpansionPhase;
+      const globalCurrentCenterX =
+        ccStartX + (ccFinalGridX - ccStartX) * currentExpansionPhase;
+      const globalCurrentCenterY =
+        ccStartY + (ccFinalGridY - ccStartY) * currentExpansionPhase;
+
+      root.style.setProperty(
+        "--global-cc-current-width",
+        `${globalCurrentWidth}px`,
+      );
+      root.style.setProperty(
+        "--global-cc-current-height",
+        `${globalCurrentWidth}px`,
+      ); // Assuming square
+      root.style.setProperty(
+        "--global-cc-current-left",
+        `${globalCurrentCenterX - globalCurrentWidth / 2}px`,
+      );
+      root.style.setProperty(
+        "--global-cc-current-top",
+        `${globalCurrentCenterY - globalCurrentWidth / 2}px`,
+      );
+      // Also set center positions if needed by other components, though left/top/width/height should be enough
+      root.style.setProperty(
+        "--global-cc-current-center-x",
+        `${globalCurrentCenterX}px`,
+      );
+      root.style.setProperty(
+        "--global-cc-current-center-y",
+        `${globalCurrentCenterY}px`,
+      );
     };
 
+    // Need to call updateCSSVariables when expansionPhase changes as well, not just resize
     updateCSSVariables();
     window.addEventListener("resize", updateCSSVariables);
+    // No direct dependency on expansionPhase in useEffect here, as updateCSSVariables reads it from its own scope.
+    // However, this means this effect only runs on mount/resize. If expansionPhase drives these variables,
+    // this effect needs to re-run when expansionPhase changes.
+
     return () => window.removeEventListener("resize", updateCSSVariables);
-  }, []);
+  }, [expansionPhase]); // ADD expansionPhase as a dependency
 };
