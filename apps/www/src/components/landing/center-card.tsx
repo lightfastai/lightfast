@@ -22,14 +22,14 @@ export const CenterCard = ({
 
   if (logoMovePhase >= 1) {
     // Logo is fully centered
-    logoCurrentX = (centerCard.size - logoSize) / 2;
-    logoCurrentY = (centerCard.size - logoSize) / 2;
+    logoCurrentX = (centerCard.width - logoSize) / 2;
+    logoCurrentY = (centerCard.height - logoSize) / 2;
   } else {
     // Logo is transitioning from original position to center
     const logoOriginalX = padding;
-    const logoOriginalY = centerCard.size - padding - logoSize;
-    const logoFinalX = (centerCard.size - logoSize) / 2;
-    const logoFinalY = (centerCard.size - logoSize) / 2;
+    const logoOriginalY = centerCard.height - padding - logoSize;
+    const logoFinalX = (centerCard.width - logoSize) / 2;
+    const logoFinalY = (centerCard.height - logoSize) / 2;
 
     logoCurrentX = logoOriginalX + (logoFinalX - logoOriginalX) * logoMovePhase;
     logoCurrentY = logoOriginalY + (logoFinalY - logoOriginalY) * logoMovePhase;
@@ -42,8 +42,8 @@ export const CenterCard = ({
     <div
       className="bg-card border-border absolute overflow-hidden border shadow-2xl transition-all duration-700"
       style={{
-        width: `${centerCard.size}px`,
-        height: `${centerCard.size}px`,
+        width: `${centerCard.width}px`,
+        height: `${centerCard.height}px`,
         left: `${centerCard.left}px`,
         top: `${centerCard.top}px`,
       }}

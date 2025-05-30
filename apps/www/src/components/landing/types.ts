@@ -16,7 +16,9 @@ export interface GridLayout {
 }
 
 export interface CenterCard {
-  size: number;
+  size: number; // Keep for backward compatibility
+  width: number; // Actual width of the card
+  height: number; // Actual height of the card
   centerX: number;
   centerY: number;
   left: number;
