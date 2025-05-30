@@ -80,18 +80,31 @@ const integrationCategories: IntegrationCategory[] = [
 
 export function IntegrationsSection() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [containerSize, setContainerSize] = useState({
+    width: 0,
+    height: 0,
+    centerSize: 100,
+  });
 
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
-        const { width } = containerRef.current.getBoundingClientRect();
-        // Calculate height based on the center item's position
-        // The center item is 16.67% of the width, so we need to make sure
-        // that 16.67% of the height equals 16.67% of the width
-        const centerItemWidth = width * 0.1667;
-        const height = centerItemWidth / 0.1667;
-        setContainerSize({ width, height });
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Fixed center item size - can be adjusted based on viewport or kept constant
+        const centerSize = Math.min(
+          viewportWidth * 0.15,
+          viewportHeight * 0.15,
+          150,
+        ); // Max 150px
+
+        setContainerSize({
+          width: viewportWidth,
+          height: viewportHeight,
+          centerSize, // Pass center size for calculations
+        });
       }
     };
 
@@ -100,41 +113,106 @@ export function IntegrationsSection() {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
+  // Calculate item dimensions relative to fixed center
+  const calculateItemDimensions = (
+    position: IntegrationCategory["position"],
+    categoryName: string,
+  ) => {
+    const { width: vw, height: vh, centerSize = 100 } = containerSize;
+
+    // The original grid assumes a 1:1 aspect ratio (100x100)
+    // We need to map this to our actual viewport dimensions
+
+    // First, determine the scaling factor based on the center item
+    // The center item is 16.67% in the original grid
+    const centerOriginalSize = 16.67;
+
+    // Calculate what the grid size would be if we maintain the center item size
+    const gridSizeFromWidth = (centerSize / centerOriginalSize) * 100;
+    const gridSizeFromHeight = (centerSize / centerOriginalSize) * 100;
+
+    // Use the grid size to calculate scale factors for each axis
+    const scaleX = vw / 100; // Map 100% grid to viewport width
+    const scaleY = vh / 100; // Map 100% grid to viewport height
+
+    // For the center item, we want it to be square and fixed size
+    if (categoryName === "Category 5 (Center)") {
+      // Calculate center position in the scaled grid
+      const scaledLeft = position.left * scaleX;
+      const scaledTop = position.top * scaleY;
+
+      // Adjust to center the square item within its scaled position
+      const scaledWidth = position.width * scaleX;
+      const scaledHeight = position.height * scaleY;
+
+      // Position the center item to maintain its relative position
+      const left = scaledLeft + (scaledWidth - centerSize) / 2;
+      const top = scaledTop + (scaledHeight - centerSize) / 2;
+
+      return {
+        width: centerSize,
+        height: centerSize,
+        top,
+        left,
+        transform: "translate(0, 0)",
+      };
+    }
+
+    // For all other items, scale proportionally
+    const width = position.width * scaleX;
+    const height = position.height * scaleY;
+    const left = position.left * scaleX;
+    const top = position.top * scaleY;
+
+    return {
+      width,
+      height,
+      top,
+      left,
+      transform: "translate(0, 0)",
+    };
+  };
+
   return (
-    <section className="bg-background flex h-screen min-h-screen w-full items-center justify-center">
+    <section className="bg-background w-full">
+      {/* Header Section */}
       <div className="w-full py-16">
-        {/* Header */}
         <div className="mb-12 text-center">
           <h2 className="text-foreground mb-4 text-3xl font-bold">
             Works with your
             <span className="text-primary ml-2 italic">favorite tools</span>
           </h2>
         </div>
+      </div>
 
-        {/* Container */}
-        <div className="relative w-full px-4">
-          <div
-            ref={containerRef}
-            className="relative w-full"
-            style={{
-              height: containerSize.height,
-            }}
-          >
-            {integrationCategories.map((cat) => (
+      {/* Integration Grid Section - Full Viewport */}
+      <div className="relative h-screen w-screen overflow-hidden">
+        <div
+          ref={containerRef}
+          className="relative h-full w-full"
+          style={{
+            width: containerSize.width,
+            height: containerSize.height,
+          }}
+        >
+          {integrationCategories.map((cat) => {
+            const dimensions = calculateItemDimensions(cat.position, cat.name);
+            return (
               <div
                 key={cat.name}
                 className={`absolute flex items-center justify-center border text-lg font-bold text-white ${cat.color}`}
                 style={{
-                  top: `${cat.position.top}%`,
-                  left: `${cat.position.left}%`,
-                  width: `${cat.position.width}%`,
-                  height: `${cat.position.height}%`,
+                  width: `${dimensions.width}px`,
+                  height: `${dimensions.height}px`,
+                  top: `${dimensions.top}px`,
+                  left: `${dimensions.left}px`,
+                  transform: dimensions.transform,
                 }}
               >
                 {cat.name}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>
