@@ -17,4 +17,17 @@
   --landing-center-card-start-size: 600px;
   --landing-center-card-viewport-size-factor: 0.6;
   --landing-center-card-final-size-factor: 2; /* Corresponds to CENTER_SIZE from constants.ts */
+
+  /* New variables for CenterCard animation states */
+  --landing-center-card-current-start-size-val: 600px; /* Actual calculated start size, set by JS */
+  --landing-center-card-final-grid-size-val: 100px; /* Actual calculated final size in grid, set by JS */
+
+  --landing-center-card-start-x-vw: 50vw; /* Initial X position (viewport center) */
+  --landing-center-card-start-y-vh: 50vh; /* Initial Y position (viewport center) */
+
+  --landing-center-card-final-x-grid-val: 0px; /* Calculated final X in grid, set by JS */
+  --landing-center-card-final-y-grid-val: 0px; /* Calculated final Y in grid, set by JS */
+
+  /* This variable will be updated by JavaScript (0 to 1) to drive the animation */
+  --landing-center-card-expansion-factor: 0;
 }

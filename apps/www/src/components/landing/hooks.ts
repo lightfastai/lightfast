@@ -7,15 +7,7 @@ import type {
   ViewportSize,
 } from "./types";
 import { CENTER_SIZE, CENTER_START, GRID_SIZE } from "./constants";
-import { getCSSVariableValue } from "./utils";
-
-// Helper function to read CSS variables, can be moved to a utils file or imported if already exists
-// Ensure this is consistent with the one in integration-categories.tsx or defined globally
-// const getCSSVariableValue = (variableName: string, defaultValue: number = 0): number => {
-//   if (typeof window === "undefined") return defaultValue;
-//   const value = getComputedStyle(document.documentElement).getPropertyValue(variableName.trim());
-//   return parseFloat(value) || defaultValue;
-// };
+import { getCSSVariableValue } from "./utils"; // Import the helper
 
 // Calculate grid layout for any viewport
 /**
@@ -59,86 +51,52 @@ export const calculateGridLayout = (
 };
 
 // Calculate center card properties
-export const calculateCenterCard = (
-  expansionPhase: number,
-  viewportWidth: number,
-  viewportHeight: number,
-): CenterCard => {
-  // Read necessary grid layout values from CSS custom properties
-  const cellWidth = getCSSVariableValue("--landing-grid-cell-width");
-  const cellHeight = getCSSVariableValue("--landing-grid-cell-height");
-  const gridOffsetX = getCSSVariableValue("--landing-grid-offset-x");
-  const gridOffsetY = getCSSVariableValue("--landing-grid-offset-y");
-  // GRID_SIZE, CENTER_START, CENTER_SIZE are also available as CSS variables if needed for pure CSS calcs later
-  // const gridSizeConst = getCSSVariableValue('--landing-grid-size', GRID_SIZE); // Example
-  const centerStartConst = getCSSVariableValue(
-    "--landing-center-start-grid-units",
-    CENTER_START,
-  );
-  const centerSizeConst = getCSSVariableValue(
-    "--landing-center-size-grid-units",
-    CENTER_SIZE,
-  );
-
-  // Center position in the grid (5-6, 5-6 = 2x2 center)
-  const gridCenterX =
-    gridOffsetX + (centerStartConst + centerSizeConst / 2) * cellWidth;
-  const gridCenterY =
-    gridOffsetY + (centerStartConst + centerSizeConst / 2) * cellHeight;
-
-  // Starting position (viewport center)
-  const startCenterX = viewportWidth / 2;
-  const startCenterY = viewportHeight / 2;
-
-  // Final size when in grid position - maintain 1:1 aspect ratio (square)
-  // Use the smaller grid dimension to ensure the square fits within the grid cells
-  let finalSize = getCSSVariableValue("--landing-center-card-final-grid-size");
-  if (finalSize === 0) {
-    // Fallback if not set or zero, recalculate
-    const maxGridWidth = cellWidth * centerSizeConst;
-    const maxGridHeight = cellHeight * centerSizeConst;
-    finalSize = Math.min(maxGridWidth, maxGridHeight);
-  }
-
-  // Use the smaller dimension for the starting size to maintain aspect ratio
-  let startSize = getCSSVariableValue(
-    "--landing-center-card-current-start-size",
-  );
-  if (startSize === 0) {
-    // Fallback if not set or zero, recalculate
-    const maxStartSizeFallback = getCSSVariableValue(
-      "--landing-center-card-start-size",
-      600,
-    );
-    const viewportFactorFallback = getCSSVariableValue(
-      "--landing-center-card-viewport-size-factor",
-      0.6,
-    );
-    startSize = Math.min(
-      maxStartSizeFallback,
-      Math.min(viewportWidth, viewportHeight) * viewportFactorFallback,
+export const calculateCenterCard = (expansionPhase: number): CenterCard => {
+  if (typeof window !== "undefined") {
+    document.documentElement.style.setProperty(
+      "--landing-center-card-expansion-factor",
+      expansionPhase.toString(),
     );
   }
 
-  // Current properties based on expansion phase
-  // Always maintain square (1:1) aspect ratio
+  // Temporarily, we need to reconstruct the CenterCard object by reading the interpolated CSS variables
+  // This is until CenterCard.tsx itself is refactored to use these CSS variables directly for its style.
+  const startSize = getCSSVariableValue(
+    "--landing-center-card-current-start-size-val",
+  );
+  const finalSize = getCSSVariableValue(
+    "--landing-center-card-final-grid-size-val",
+  );
+
+  const startX =
+    (getCSSVariableValue("--landing-center-card-start-x-vw") / 100) *
+    (typeof window !== "undefined" ? window.innerWidth : 0); // Convert vw to px
+  const startY =
+    (getCSSVariableValue("--landing-center-card-start-y-vh") / 100) *
+    (typeof window !== "undefined" ? window.innerHeight : 0); // Convert vh to px
+
+  const finalX = getCSSVariableValue("--landing-center-card-final-x-grid-val");
+  const finalY = getCSSVariableValue("--landing-center-card-final-y-grid-val");
+
   const currentSize = startSize + (finalSize - startSize) * expansionPhase;
+  const currentCenterX = startX + (finalX - startX) * expansionPhase;
+  const currentCenterY = startY + (finalY - startY) * expansionPhase;
 
-  const currentCenterX =
-    startCenterX + (gridCenterX - startCenterX) * expansionPhase;
-  const currentCenterY =
-    startCenterY + (gridCenterY - startCenterY) * expansionPhase;
+  // Ensure gridCenterX and gridCenterY (which are static) are also part of the return if CenterCardType expects them
+  // These are essentially finalX and finalY if the card moves to the center of the grid cell area
+  const gridCenterX = finalX;
+  const gridCenterY = finalY;
 
   return {
     size: currentSize,
-    width: currentSize, // Square: width = height
-    height: currentSize, // Square: width = height
+    width: currentSize,
+    height: currentSize,
     centerX: currentCenterX,
     centerY: currentCenterY,
     left: currentCenterX - currentSize / 2,
     top: currentCenterY - currentSize / 2,
-    gridCenterX,
-    gridCenterY,
+    gridCenterX: gridCenterX, // Added, assuming CenterCardType needs it
+    gridCenterY: gridCenterY, // Added, assuming CenterCardType needs it
   };
 };
 
@@ -199,6 +157,7 @@ export const useLandingCSSVariables = () => {
     const updateCSSVariables = () => {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
+      const root = document.documentElement;
 
       // Container dimensions (accounting for padding)
       // These are also set as CSS variables for direct use in CSS if needed
@@ -217,7 +176,6 @@ export const useLandingCSSVariables = () => {
       const gridOffsetX = 32; // As per original calculateGridLayout
       const gridOffsetY = 64; // As per original calculateGridLayout
 
-      const root = document.documentElement;
       root.style.setProperty(
         "--landing-container-width",
         `${containerWidth}px`,
@@ -243,37 +201,60 @@ export const useLandingCSSVariables = () => {
         CENTER_SIZE.toString(),
       );
 
-      // Update CenterCard related CSS variables if they depend on viewport/grid
-      // Example: Start size might be viewport dependent
-      const centerCardStartSize = Math.min(
+      // Calculate and set CenterCard animation state variables
+      const centerStartConst = CENTER_START;
+      const centerSizeConst = CENTER_SIZE;
+
+      // Start Size (viewport dependent)
+      const baseStartSize =
         parseFloat(
           getComputedStyle(root).getPropertyValue(
             "--landing-center-card-start-size",
           ),
-        ) || 600,
-        Math.min(viewportWidth, viewportHeight) *
-          (parseFloat(
-            getComputedStyle(root).getPropertyValue(
-              "--landing-center-card-viewport-size-factor",
-            ),
-          ) || 0.6),
+        ) || 600;
+      const viewportFactor =
+        parseFloat(
+          getComputedStyle(root).getPropertyValue(
+            "--landing-center-card-viewport-size-factor",
+          ),
+        ) || 0.6;
+      const calculatedStartSize = Math.min(
+        baseStartSize,
+        Math.min(viewportWidth, viewportHeight) * viewportFactor,
       );
       root.style.setProperty(
-        "--landing-center-card-current-start-size",
-        `${centerCardStartSize}px`,
+        "--landing-center-card-current-start-size-val",
+        `${calculatedStartSize}px`,
       );
 
-      // Final size of the center card when in grid (derived from cell dimensions)
-      const maxGridWidthForCenter = cellWidth * CENTER_SIZE;
-      const maxGridHeightForCenter = cellHeight * CENTER_SIZE;
-      const centerCardFinalSize = Math.min(
+      // Final Size (grid dependent)
+      const maxGridWidthForCenter = cellWidth * centerSizeConst;
+      const maxGridHeightForCenter = cellHeight * centerSizeConst;
+      const calculatedFinalSize = Math.min(
         maxGridWidthForCenter,
         maxGridHeightForCenter,
       );
       root.style.setProperty(
-        "--landing-center-card-final-grid-size",
-        `${centerCardFinalSize}px`,
+        "--landing-center-card-final-grid-size-val",
+        `${calculatedFinalSize}px`,
       );
+
+      // Final X and Y in grid context (these are static once grid is known)
+      const finalGridX =
+        gridOffsetX + (centerStartConst + centerSizeConst / 2) * cellWidth;
+      const finalGridY =
+        gridOffsetY + (centerStartConst + centerSizeConst / 2) * cellHeight;
+      root.style.setProperty(
+        "--landing-center-card-final-x-grid-val",
+        `${finalGridX}px`,
+      );
+      root.style.setProperty(
+        "--landing-center-card-final-y-grid-val",
+        `${finalGridY}px`,
+      );
+
+      // Initial X and Y are based on viewport center, defined in CSS as 50vw, 50vh by default
+      // So, --landing-center-card-start-x-vw and --landing-center-card-start-y-vh are used directly by CSS
     };
 
     updateCSSVariables();

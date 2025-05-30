@@ -22,11 +22,7 @@ export default function Home() {
   // The gridLayout properties are now available as CSS variables.
   // calculateCenterCard will now use these CSS variables directly.
 
-  const centerCard = calculateCenterCard(
-    animationPhases.expansionPhase,
-    viewportSize.width,
-    viewportSize.height,
-  );
+  const centerCard = calculateCenterCard(animationPhases.expansionPhase);
 
   return (
     <div className="bg-background relative h-screen overflow-hidden">
