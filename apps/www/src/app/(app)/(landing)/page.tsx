@@ -122,7 +122,7 @@ export default function Home() {
         </div>
 
         <div
-          className={`relative overflow-hidden border shadow-2xl transition-all duration-500 ${
+          className={`relative flex flex-col justify-between overflow-hidden border shadow-2xl transition-all duration-500 ${
             wheelProgress > 0.5
               ? "border-sky-600 bg-sky-500 text-white"
               : "bg-card border-border"
@@ -132,32 +132,27 @@ export default function Home() {
             height: `${cardSize}px`,
           }}
         >
-          {/* Original text */}
+          {/* Dynamic text content */}
           <div
-            className="absolute top-8 left-8 max-w-[400px] transition-opacity duration-500"
-            style={{ opacity: originalTextOpacity }}
+            className={`transition-all duration-500 ${wheelProgress > 0.5 ? "p-4" : "p-8"}`}
           >
-            <p className="text-2xl font-bold">
-              The intelligent creative copilot that simplifies the way you
-              interact with applications like Blender, Unity, Fusion360 and
-              more.
+            <p
+              className={`font-bold transition-all duration-500 ${
+                wheelProgress > 0.5
+                  ? "max-w-[350px] text-lg leading-tight"
+                  : "max-w-[400px] text-2xl"
+              }`}
+            >
+              {wheelProgress > 0.5
+                ? "We're prioritizing increasing development speeds of creatives using Lightfast's intelligent automation and seamless workflow integration."
+                : "The intelligent creative copilot that simplifies the way you interact with applications like Blender, Unity, Fusion360 and more."}
             </p>
           </div>
 
-          {/* New text that appears on scroll */}
+          {/* Logo */}
           <div
-            className="absolute top-4 left-4 max-w-[350px] transition-opacity duration-500"
-            style={{ opacity: newTextOpacity }}
+            className={`transition-all duration-500 ${wheelProgress > 0.5 ? "p-4" : "p-8"}`}
           >
-            <p className="text-lg leading-tight font-bold">
-              We're prioritizing increasing development speeds of creatives
-              using Lightfast's intelligent automation and seamless workflow
-              integration.
-            </p>
-          </div>
-
-          {/* Logo - always visible */}
-          <div className="absolute bottom-8 left-8">
             <Icons.logoShort className="text-primary h-12 w-12" />
           </div>
         </div>
