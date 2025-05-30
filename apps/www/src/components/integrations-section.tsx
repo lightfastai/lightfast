@@ -426,7 +426,7 @@ export function IntegrationsSection() {
     categoryName: string,
   ) => {
     const { width: vw, height: vh, centerSize = 100 } = containerSize;
-    const gap = 4; // 4px gap between items
+    const gap = 0; // Remove gap between items
 
     // The original grid assumes a 1:1 aspect ratio (100x100)
     // We need to map this to our actual viewport dimensions
@@ -472,64 +472,65 @@ export function IntegrationsSection() {
     let left = position.left * scaleX;
     let top = position.top * scaleY;
 
-    // Add gaps based on position
-    // Left column items
-    if (position.left === 0) {
-      width -= gap;
+    // Apply consistent gap spacing
+    // Add gap offset to left position (except for leftmost items)
+    if (position.left > 0) {
+      left += gap / 2;
     }
-    // Top row items
-    if (position.top === 0) {
-      height -= gap;
+    // Add gap offset to top position (except for topmost items)
+    if (position.top > 0) {
+      top += gap / 2;
     }
-    // Items not on the right edge
+
+    // Reduce width to create gaps (except for rightmost items)
     if (position.left + position.width < 100) {
       width -= gap;
+    } else {
+      // Rightmost items only need half gap
+      width -= gap / 2;
     }
-    // Items not on the bottom edge
+
+    // Reduce height to create gaps (except for bottommost items)
     if (position.top + position.height < 100) {
       height -= gap;
+    } else {
+      // Bottommost items only need half gap
+      height -= gap / 2;
     }
 
-    // Adjust items that touch the center to eliminate gaps
-    const touchesCenter = {
-      left: position.left + position.width === centerOriginalLeft,
-      right: position.left === centerOriginalLeft + centerOriginalSize,
-      top: position.top + position.height === centerOriginalTop,
-      bottom: position.top === centerOriginalTop + centerOriginalSize,
-    };
-
-    // Category 3: Above and to the left of center
+    // Special adjustments for items that directly touch the center
+    // Category 2: 2D Graphics - needs to align with Game Engines and Video & VFX
     if (categoryName === "2D Graphics") {
-      // Adjust right edge to meet Category 9's left edge (at 58.33%)
-      width = 58.33 * scaleX - left - gap * 2;
-      // Adjust bottom edge to meet center's top edge
-      height = centerActualTop - top - gap;
+      // Width should extend to where Video & VFX starts (58.33%)
+      width = 54.6 * scaleX - left - gap;
+      // Height should extend to where Game Engines starts (41.67%)
+      height = 42.5 * scaleY - top - gap;
     }
-    // Category 4: Left of center
+    // Category 4: Left of center (Game Engines)
     else if (categoryName === "Game Engines") {
       // Adjust right edge to meet center's left edge
       width = centerActualLeft - left - gap;
       // Top aligns with center's top
       top = centerActualTop;
-      // Height extends to bottom
-      height = vh - top - gap;
+      // Height extends to bottom with gap
+      height = vh - top - gap / 2;
     }
-    // Category 8: Below center
+    // Category 8: Below center (3D Texturing & CAD)
     else if (categoryName === "3D Texturing & CAD") {
       // Adjust top to center's bottom
       top = centerActualBottom + gap;
       // Adjust height to fill remaining space
-      height = vh - top - gap;
+      height = vh - top - gap / 2;
       // Adjust left to center's left
       left = centerActualLeft;
       // Width extends to Category 7's left edge (at 83.33%)
       width = 83.33 * scaleX - left - gap;
     }
-    // Category 9: Above and to the right of center
+    // Category 9: Above and to the right of center (Video & VFX)
     else if (categoryName === "Video & VFX") {
       // Adjust left edge to meet center's right edge
       left = centerActualRight + gap;
-      // Width extends to category 6
+      // Width extends to Design Tools with gap
       width = 83.33 * scaleX - left - gap;
       // Height extends to center's bottom
       height = centerActualBottom - top - gap;
@@ -566,70 +567,89 @@ export function IntegrationsSection() {
             height: containerSize.height,
           }}
         >
-          {integrationCategories.map((cat) => {
-            const dimensions = calculateItemDimensions(cat.position, cat.name);
-            return (
-              <div
-                key={cat.name}
-                className={`absolute flex items-center justify-center overflow-hidden transition-all duration-300 hover:z-10 ${
-                  cat.isLogo
-                    ? "shadow-2xl"
-                    : "border border-white/10 backdrop-blur-sm"
-                } ${cat.color}`}
-                style={{
-                  width: `${dimensions.width}px`,
-                  height: `${dimensions.height}px`,
-                  top: `${dimensions.top}px`,
-                  left: `${dimensions.left}px`,
-                  transform: dimensions.transform,
-                }}
-              >
-                {cat.isLogo ? (
-                  <div className="flex h-full w-full flex-col items-center justify-center p-4">
-                    <Icons.logoShort className="h-12 w-12 text-white" />
-                  </div>
-                ) : (
-                  <div className="flex h-full w-full flex-col items-start justify-start p-6">
-                    <span className="text-5xl font-semibold text-white/90">
-                      {cat.name}
-                    </span>
-                    {cat.apps && (
-                      <div className="mt-4 flex flex-col items-start gap-1">
-                        <span className="text-sm text-white/70 md:text-base">
-                          {cat.apps.length} apps
-                        </span>
-                        <div className="flex gap-1">
-                          {cat.apps.filter(
-                            (app) => app.status === "Implemented",
-                          ).length > 0 && (
-                            <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs text-white/90">
-                              {
-                                cat.apps.filter(
-                                  (app) => app.status === "Implemented",
-                                ).length
-                              }{" "}
-                              Live
-                            </span>
-                          )}
-                          {cat.apps.filter((app) => app.status === "Planned")
-                            .length > 0 && (
-                            <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
-                              {
-                                cat.apps.filter(
-                                  (app) => app.status === "Planned",
-                                ).length
-                              }{" "}
-                              Soon
-                            </span>
-                          )}
+          <div
+            className="grid h-full w-full"
+            style={{
+              gridTemplateAreas: `
+                "modeling graphics graphics video video design"
+                "modeling graphics graphics video video design"
+                "modeling games games center video design"
+                "audio games games center video interactive"
+                "audio texturing texturing texturing texturing interactive"
+                "audio texturing texturing texturing texturing interactive"
+              `,
+              gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr",
+              gridTemplateRows: "1fr 1fr 1fr 1fr 1fr 1fr",
+            }}
+          >
+            {integrationCategories.map((cat) => {
+              const dimensions = calculateItemDimensions(
+                cat.position,
+                cat.name,
+              );
+              return (
+                <div
+                  key={cat.name}
+                  className={`absolute flex items-center justify-center overflow-hidden transition-all duration-300 hover:z-10 ${
+                    cat.isLogo
+                      ? "shadow-2xl"
+                      : "border-border border backdrop-blur-sm"
+                  } ${cat.color}`}
+                  style={{
+                    width: `${dimensions.width}px`,
+                    height: `${dimensions.height}px`,
+                    top: `${dimensions.top}px`,
+                    left: `${dimensions.left}px`,
+                    transform: dimensions.transform,
+                  }}
+                >
+                  {cat.isLogo ? (
+                    <div className="flex h-full w-full flex-col items-center justify-center p-4">
+                      <Icons.logoShort className="h-12 w-12 text-white" />
+                    </div>
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-start justify-start p-6">
+                      <span className="text-5xl font-semibold text-white/90">
+                        {cat.name}
+                      </span>
+                      {cat.apps && (
+                        <div className="mt-4 flex flex-col items-start gap-1">
+                          <span className="text-sm text-white/70 md:text-base">
+                            {cat.apps.length} apps
+                          </span>
+                          <div className="flex gap-1">
+                            {cat.apps.filter(
+                              (app) => app.status === "Implemented",
+                            ).length > 0 && (
+                              <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs text-white/90">
+                                {
+                                  cat.apps.filter(
+                                    (app) => app.status === "Implemented",
+                                  ).length
+                                }{" "}
+                                Live
+                              </span>
+                            )}
+                            {cat.apps.filter((app) => app.status === "Planned")
+                              .length > 0 && (
+                              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                                {
+                                  cat.apps.filter(
+                                    (app) => app.status === "Planned",
+                                  ).length
+                                }{" "}
+                                Soon
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
