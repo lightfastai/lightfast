@@ -254,9 +254,12 @@
   --center-card-left-rel: calc(
     var(--cc-current-x) - var(--cc-current-size) / 2 - var(--grid-offset-x)
   );
+  --center-card-right-rel: calc(
+    var(--cc-current-x) + var(--cc-current-size) / 2 - var(--grid-offset-x)
+  );
   left: calc(var(--cell-width) * 2);
   top: calc(var(--cell-height) * var(--grid-row-start));
-  width: calc(var(--center-card-left-rel) - var(--cell-width) * 2);
+  width: calc(var(--center-card-right-rel) - var(--cell-width) * 2);
   height: calc(var(--cell-height) * var(--grid-row-span));
 }
 

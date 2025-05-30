@@ -13,6 +13,7 @@ export default function Home() {
   useLandingCSSVariables(); // This hook now handles all phase calculations and CSS variable setting internally
   return (
     <div className="bg-background relative h-screen overflow-hidden">
+      {/* <PageHeader /> */}
       <GridLines />
       <IntegrationCategories />
       <CenterCard />
