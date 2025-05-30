@@ -111,25 +111,24 @@ export default function Home() {
     centerOriginalSize -
     (centerOriginalSize - centerFinalSize) * expansionPhase;
 
-  // Calculate center position
-  const centerFinalLeft = 32 + containerWidth * 0.4167; // Account for container offset
-  const centerFinalTop = 64 + containerHeight * 0.4167;
+  // Calculate where the CENTER of the card should be positioned
+  // In the grid, the center area is at 41.67% left and 41.67% top, with 16.67% width/height
+  // So the center of that area is at 41.67% + 16.67%/2 = 50% of the container
+  const gridCenterX = 32 + containerWidth * 0.5; // 50% of container width + container offset
+  const gridCenterY = 64 + containerHeight * 0.5; // 50% of container height + container offset
 
-  // Calculate current center position
-  const centerCurrentLeft =
-    window.innerWidth / 2 -
-    centerCurrentSize / 2 +
-    (centerFinalLeft -
-      centerCurrentSize / 2 -
-      (window.innerWidth / 2 - centerCurrentSize / 2)) *
-      expansionPhase;
-  const centerCurrentTop =
-    window.innerHeight / 2 -
-    centerCurrentSize / 2 +
-    (centerFinalTop -
-      centerCurrentSize / 2 -
-      (window.innerHeight / 2 - centerCurrentSize / 2)) *
-      expansionPhase;
+  // Calculate current center position (interpolate from viewport center to grid center)
+  const startCenterX = window.innerWidth / 2;
+  const startCenterY = window.innerHeight / 2;
+
+  const currentCenterX =
+    startCenterX + (gridCenterX - startCenterX) * expansionPhase;
+  const currentCenterY =
+    startCenterY + (gridCenterY - startCenterY) * expansionPhase;
+
+  // Convert center position to left/top coordinates for the card
+  const centerCurrentLeft = currentCenterX - centerCurrentSize / 2;
+  const centerCurrentTop = currentCenterY - centerCurrentSize / 2;
 
   // Calculate logo position within the card
   const logoSize = 48; // h-12 w-12
