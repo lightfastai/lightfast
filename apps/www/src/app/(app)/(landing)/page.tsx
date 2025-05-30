@@ -23,21 +23,21 @@ const integrationCategories = [
   },
   {
     name: "2D Graphics",
-    grid: { colStart: 2, colSpan: 3, rowStart: 0, rowSpan: 5 }, // Top, left of center
+    grid: { colStart: 2, colSpan: 5, rowStart: 0, rowSpan: 5 }, // Top, left of center
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
   },
   {
     name: "Game Engines",
-    grid: { colStart: 2, colSpan: 3, rowStart: 7, rowSpan: 5 }, // Bottom, left of center
+    grid: { colStart: 2, colSpan: 3, rowStart: 5, rowSpan: 7 }, // Bottom, left of center
     apps: 4,
     liveApps: 0,
     plannedApps: 4,
   },
   {
     name: "Video & VFX",
-    grid: { colStart: 7, colSpan: 3, rowStart: 0, rowSpan: 5 }, // Top, right of center
+    grid: { colStart: 7, colSpan: 3, rowStart: 0, rowSpan: 7 }, // Top, right of center
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
@@ -58,7 +58,7 @@ const integrationCategories = [
   },
   {
     name: "3D Texturing & CAD",
-    grid: { colStart: 7, colSpan: 3, rowStart: 7, rowSpan: 5 }, // Bottom, right of center
+    grid: { colStart: 5, colSpan: 5, rowStart: 7, rowSpan: 5 }, // Bottom, right of center
     apps: 3,
     liveApps: 0,
     plannedApps: 3,
