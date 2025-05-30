@@ -1,60 +1,85 @@
-import type { CenterCard, GridLayout } from "./types";
+import type { CenterCard } from "./types";
 import { integrationCategories } from "./constants";
+import { getCSSVariableValue } from "./utils";
 
 export interface IntegrationCategoriesProps {
-  gridLayout: GridLayout;
   centerCard: CenterCard;
   expansionPhase: number;
   categoryPhase: number;
 }
 
 export const IntegrationCategories = ({
-  gridLayout,
   centerCard,
   expansionPhase,
   categoryPhase,
 }: IntegrationCategoriesProps) => {
+  // Read grid layout values from CSS custom properties
+  // These could also be read once on mount and stored in state if they don't change frequently,
+  // or if direct usage in style objects becomes too verbose.
+  const gridOffsetX = getCSSVariableValue("--landing-grid-offset-x");
+  const gridOffsetY = getCSSVariableValue("--landing-grid-offset-y");
+  const gridWidth = getCSSVariableValue("--landing-grid-width");
+  const gridHeight = getCSSVariableValue("--landing-grid-height");
+  const cellWidth = getCSSVariableValue("--landing-grid-cell-width");
+  const cellHeight = getCSSVariableValue("--landing-grid-cell-height");
+
+  // Fallback if CSS variables are not available (e.g. during SSR or if not set)
+  // This part is tricky because these values are essential for layout.
+  // Ideally, the component should not render or show a loader if these are not available.
+  if (cellWidth === 0 || cellHeight === 0) {
+    // console.warn("Landing page CSS variables not found, IntegrationCategories might not render correctly.");
+    // Depending on how critical this is, you might return null or a placeholder
+    // return null;
+  }
+
   return (
     <div
       className="absolute transition-all duration-500"
       style={{
-        left: `${gridLayout.gridOffsetX}px`,
-        top: `${gridLayout.gridOffsetY}px`,
-        width: `${gridLayout.gridWidth}px`,
-        height: `${gridLayout.gridHeight}px`,
+        left: `${gridOffsetX}px`,
+        top: `${gridOffsetY}px`,
+        width: `${gridWidth}px`,
+        height: `${gridHeight}px`,
         opacity: expansionPhase > 0.3 ? categoryPhase : 0,
       }}
     >
       {integrationCategories.map((cat, index) => {
         // Calculate default grid-based position
-        let cardWidth = gridLayout.cellWidth * cat.grid.colSpan;
-        const cardHeight = gridLayout.cellHeight * cat.grid.rowSpan;
-        let cardLeft = gridLayout.cellWidth * cat.grid.colStart;
-        const cardTop = gridLayout.cellHeight * cat.grid.rowStart;
+        let cardWidth = cellWidth * cat.grid.colSpan;
+        const cardHeight = cellHeight * cat.grid.rowSpan;
+        let cardLeft = cellWidth * cat.grid.colStart;
+        const cardTop = cellHeight * cat.grid.rowStart;
 
         // Adjust positions for cards that should align with center anchor borders
-        const centerLeft = centerCard.left - gridLayout.gridOffsetX;
-        const centerRight = centerLeft + centerCard.width;
-        const centerTop = centerCard.top - gridLayout.gridOffsetY;
-        const centerBottom = centerTop + centerCard.height;
+        const centerLeftInGridContext = centerCard.left - gridOffsetX;
+        const centerRightInGridContext =
+          centerLeftInGridContext + centerCard.width;
 
         // Cards that need border alignment adjustments
         if (cat.name === "2D Graphics") {
-          // Right border should align with center's right border
-          cardWidth = centerRight - cardLeft;
+          cardWidth = centerRightInGridContext - cardLeft;
         } else if (cat.name === "Game Engines") {
-          // Right border should align with center's left border
-          cardWidth = centerLeft - cardLeft;
+          cardWidth = centerLeftInGridContext - cardLeft;
         } else if (cat.name === "Video & VFX") {
-          // Left border should align with center's right border
           const originalRight = cardLeft + cardWidth;
-          cardLeft = centerRight;
-          cardWidth = originalRight - centerRight;
+          cardLeft = centerRightInGridContext;
+          cardWidth = originalRight - centerRightInGridContext;
         } else if (cat.name === "3D Texturing & CAD") {
-          // Left border should align with center's left border
           const originalRight = cardLeft + cardWidth;
-          cardLeft = centerLeft;
-          cardWidth = originalRight - centerLeft;
+          cardLeft = centerLeftInGridContext;
+          cardWidth = originalRight - centerLeftInGridContext;
+        }
+
+        // Ensure cardWidth is not negative or zero if critical
+        if (
+          cardWidth <= 0 &&
+          (cat.name.includes("2D Graphics") ||
+            cat.name.includes("Game Engines") ||
+            cat.name.includes("Video & VFX") ||
+            cat.name.includes("3D Texturing & CAD"))
+        ) {
+          // This might happen if centerCard values are not yet stable or CSS vars are missing
+          // console.warn(`Calculated cardWidth for ${cat.name} is ${cardWidth}px. Check layout logic or CSS variables.`);
         }
 
         return (
@@ -62,8 +87,8 @@ export const IntegrationCategories = ({
             key={cat.name}
             className="border-border bg-card/80 hover:bg-card/90 absolute flex items-start justify-start overflow-hidden border p-6 backdrop-blur-sm transition-all duration-700"
             style={{
-              width: `${cardWidth}px`,
-              height: `${cardHeight}px`,
+              width: `${Math.max(0, cardWidth)}px`,
+              height: `${Math.max(0, cardHeight)}px`,
               left: `${cardLeft}px`,
               top: `${cardTop}px`,
               opacity: categoryPhase,

@@ -1,0 +1,20 @@
+:root {
+  --landing-grid-cell-width: 30px; /* Default fallback */
+  --landing-grid-cell-height: 30px; /* Default fallback */
+  --landing-grid-width: 360px; /* Default fallback (12 * 30) */
+  --landing-grid-height: 360px; /* Default fallback (12 * 30) */
+  --landing-grid-offset-x: 32px; /* Default from existing code */
+  --landing-grid-offset-y: 64px; /* Default from existing code */
+  --landing-container-width: calc(
+    100vw - 64px
+  ); /* Based on 32px padding on each side */
+  --landing-container-height: calc(
+    100vh - 128px
+  ); /* Based on 64px padding top/bottom */
+  --landing-grid-size: 12; /* From constants.ts */
+
+  /* For CenterCard - can be expanded */
+  --landing-center-card-start-size: 600px;
+  --landing-center-card-viewport-size-factor: 0.6;
+  --landing-center-card-final-size-factor: 2; /* Corresponds to CENTER_SIZE from constants.ts */
+}

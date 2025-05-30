@@ -11,7 +11,11 @@ export {
   useAnimationPhases,
   useViewportSize,
   useWheelProgress,
+  useLandingCSSVariables,
 } from "./hooks";
+
+// Utils
+export { getCSSVariableValue } from "./utils";
 
 // Types
 export type {
