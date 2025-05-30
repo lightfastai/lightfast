@@ -4,60 +4,61 @@ import { useEffect, useState } from "react";
 
 import { Icons } from "@repo/ui/components/icons";
 
-// Integration data for the surrounding cards
+// Integration data for the surrounding cards - using 12x12 grid system
+// Center card will be at approximately cols 5-7, rows 5-7 (2x2 area in middle)
 const integrationCategories = [
   {
     name: "3D Modeling",
-    position: { top: 0, left: 0, width: 16.67, height: 58.33 },
+    grid: { colStart: 0, colSpan: 2, rowStart: 0, rowSpan: 7 }, // Left side, top portion
     apps: 7,
     liveApps: 1,
     plannedApps: 6,
   },
   {
     name: "Audio Production",
-    position: { top: 58.33, left: 0, width: 16.67, height: 41.67 },
+    grid: { colStart: 0, colSpan: 2, rowStart: 7, rowSpan: 5 }, // Left side, bottom portion
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
   },
   {
     name: "2D Graphics",
-    position: { top: 0, left: 16.67, width: 41.67, height: 41.67 },
+    grid: { colStart: 2, colSpan: 3, rowStart: 0, rowSpan: 5 }, // Top, left of center
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
   },
   {
     name: "Game Engines",
-    position: { top: 41.67, left: 16.67, width: 25, height: 58.33 },
+    grid: { colStart: 2, colSpan: 3, rowStart: 7, rowSpan: 5 }, // Bottom, left of center
     apps: 4,
     liveApps: 0,
     plannedApps: 4,
   },
   {
     name: "Video & VFX",
-    position: { top: 0, left: 58.33, width: 25, height: 58.33 },
+    grid: { colStart: 7, colSpan: 3, rowStart: 0, rowSpan: 5 }, // Top, right of center
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
   },
   {
     name: "Design Tools",
-    position: { top: 0, left: 83.33, width: 16.67, height: 33.33 },
+    grid: { colStart: 10, colSpan: 2, rowStart: 0, rowSpan: 4 }, // Right side, top portion
     apps: 3,
     liveApps: 1,
     plannedApps: 2,
   },
   {
     name: "Interactive & Live",
-    position: { top: 33.33, left: 83.33, width: 16.67, height: 66.67 },
+    grid: { colStart: 10, colSpan: 2, rowStart: 4, rowSpan: 8 }, // Right side, bottom portion
     apps: 4,
     liveApps: 0,
     plannedApps: 4,
   },
   {
     name: "3D Texturing & CAD",
-    position: { top: 58.33, left: 41.67, width: 41.67, height: 41.67 },
+    grid: { colStart: 7, colSpan: 3, rowStart: 7, rowSpan: 5 }, // Bottom, right of center
     apps: 3,
     liveApps: 0,
     plannedApps: 3,
@@ -100,31 +101,46 @@ export default function Home() {
   const containerWidth = window.innerWidth - 64;
   const containerHeight = window.innerHeight - 128;
 
+  // Grid system constants
+  const GRID_COLS = 12;
+  const GRID_ROWS = 12;
+  const colWidth = containerWidth / GRID_COLS;
+  const rowHeight = containerHeight / GRID_ROWS;
+
+  // Center card grid position (2x2 area in the middle)
+  const CENTER_COL_START = 5;
+  const CENTER_COL_SPAN = 2;
+  const CENTER_ROW_START = 5;
+  const CENTER_ROW_SPAN = 2;
+
   // Calculate center card properties
-  const centerOriginalSize = 600; // Starting card size (back to original)
-  const centerFinalSize = Math.min(
-    containerWidth * 0.15,
-    containerHeight * 0.15,
-    150,
-  );
+  const centerOriginalSize = 600; // Starting card size
+  const centerFinalWidth = colWidth * CENTER_COL_SPAN;
+  const centerFinalHeight = rowHeight * CENTER_ROW_SPAN;
+  const centerFinalSize = Math.min(centerFinalWidth, centerFinalHeight, 150); // Keep it square and not too big
+
   const centerCurrentSize =
     centerOriginalSize -
     (centerOriginalSize - centerFinalSize) * expansionPhase;
 
-  // Calculate where the CENTER of the card should be positioned
-  // In the grid, the center area is at 41.67% left and 41.67% top, with 16.67% width/height
-  // So the center of that area is at 41.67% + 16.67%/2 = 50% of the container
-  const gridCenterX = 32 + containerWidth * 0.5; // 50% of container width + container offset
-  const gridCenterY = 64 + containerHeight * 0.5; // 50% of container height + container offset
+  // Calculate center card's grid-based final position
+  const gridCenterLeft =
+    32 + CENTER_COL_START * colWidth + (centerFinalWidth - centerFinalSize) / 2;
+  const gridCenterTop =
+    64 +
+    CENTER_ROW_START * rowHeight +
+    (centerFinalHeight - centerFinalSize) / 2;
 
   // Calculate current center position (interpolate from viewport center to grid center)
   const startCenterX = window.innerWidth / 2;
   const startCenterY = window.innerHeight / 2;
 
   const currentCenterX =
-    startCenterX + (gridCenterX - startCenterX) * expansionPhase;
+    startCenterX +
+    (gridCenterLeft + centerFinalSize / 2 - startCenterX) * expansionPhase;
   const currentCenterY =
-    startCenterY + (gridCenterY - startCenterY) * expansionPhase;
+    startCenterY +
+    (gridCenterTop + centerFinalSize / 2 - startCenterY) * expansionPhase;
 
   // Convert center position to left/top coordinates for the card
   const centerCurrentLeft = currentCenterX - centerCurrentSize / 2;
@@ -251,10 +267,10 @@ export default function Home() {
         }}
       >
         {integrationCategories.map((cat, index) => {
-          const cardWidth = containerWidth * (cat.position.width / 100);
-          const cardHeight = containerHeight * (cat.position.height / 100);
-          const cardLeft = containerWidth * (cat.position.left / 100);
-          const cardTop = containerHeight * (cat.position.top / 100);
+          const cardWidth = colWidth * cat.grid.colSpan;
+          const cardHeight = rowHeight * cat.grid.rowSpan;
+          const cardLeft = cat.grid.colStart * colWidth;
+          const cardTop = cat.grid.rowStart * rowHeight;
 
           return (
             <div
