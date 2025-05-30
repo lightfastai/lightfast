@@ -1,18 +1,18 @@
-import type { CenterCard, ViewportSize } from "./types";
+import { cn } from "@repo/ui/lib/utils";
+
+import type { CenterCard } from "./types";
 
 export interface GridLinesProps {
   centerCard: Partial<CenterCard>;
-  viewportSize: ViewportSize;
-  expansionPhase: number;
 }
 
-export const GridLines = ({ viewportSize, expansionPhase }: GridLinesProps) => {
+export const GridLines = ({}: GridLinesProps) => {
   return (
     <div
-      className="pointer-events-none absolute inset-0 transition-opacity duration-500"
-      style={{
-        opacity: 1 - expansionPhase * 0.8,
-      }}
+      className={cn(
+        "pointer-events-none absolute inset-0 transition-opacity duration-500",
+        "grid-lines-animated",
+      )}
     >
       {/* Top horizontal lines */}
       <div
@@ -28,7 +28,7 @@ export const GridLines = ({ viewportSize, expansionPhase }: GridLinesProps) => {
         style={{
           top: `var(--global-cc-current-top)`,
           left: `calc(var(--global-cc-current-left) + var(--global-cc-current-width))`,
-          width: `calc(${viewportSize.width}px - (var(--global-cc-current-left) + var(--global-cc-current-width)))`,
+          width: `calc(100vw - (var(--global-cc-current-left) + var(--global-cc-current-width)))`,
         }}
       />
 
@@ -46,7 +46,7 @@ export const GridLines = ({ viewportSize, expansionPhase }: GridLinesProps) => {
         style={{
           top: `calc(var(--global-cc-current-top) + var(--global-cc-current-height))`,
           left: `calc(var(--global-cc-current-left) + var(--global-cc-current-width))`,
-          width: `calc(${viewportSize.width}px - (var(--global-cc-current-left) + var(--global-cc-current-width)))`,
+          width: `calc(100vw - (var(--global-cc-current-left) + var(--global-cc-current-width)))`,
         }}
       />
 
@@ -64,7 +64,7 @@ export const GridLines = ({ viewportSize, expansionPhase }: GridLinesProps) => {
         style={{
           left: `var(--global-cc-current-left)`,
           top: `calc(var(--global-cc-current-top) + var(--global-cc-current-height))`,
-          height: `calc(${viewportSize.height}px - (var(--global-cc-current-top) + var(--global-cc-current-height)))`,
+          height: `calc(100vh - (var(--global-cc-current-top) + var(--global-cc-current-height)))`,
         }}
       />
 
@@ -82,7 +82,7 @@ export const GridLines = ({ viewportSize, expansionPhase }: GridLinesProps) => {
         style={{
           left: `calc(var(--global-cc-current-left) + var(--global-cc-current-width))`,
           top: `calc(var(--global-cc-current-top) + var(--global-cc-current-height))`,
-          height: `calc(${viewportSize.height}px - (var(--global-cc-current-top) + var(--global-cc-current-height)))`,
+          height: `calc(100vh - (var(--global-cc-current-top) + var(--global-cc-current-height)))`,
         }}
       />
     </div>

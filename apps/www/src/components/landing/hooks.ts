@@ -90,15 +90,16 @@ export const useWheelProgress = () => {
 
 export const useAnimationPhases = (wheelProgress: number): AnimationPhases => {
   return {
-    textFadePhase: Math.min(wheelProgress / 0.3, 1), // Text fades in first 30%
-    logoMovePhase: Math.min(Math.max(0, (wheelProgress - 0.1) / 0.4), 1), // Logo moves 10-50%
-    expansionPhase: Math.min(Math.max(0, (wheelProgress - 0.2) / 0.6), 1), // Card expands 20-80%
-    categoryPhase: Math.min(Math.max(0, (wheelProgress - 0.5) / 0.5), 1), // Categories appear 50-100%
+    textFadePhase: Math.min(wheelProgress / 0.3, 1),
+    logoMovePhase: Math.min(Math.max(0, (wheelProgress - 0.1) / 0.4), 1),
+    expansionPhase: Math.min(Math.max(0, (wheelProgress - 0.2) / 0.6), 1),
+    categoryPhase: Math.min(Math.max(0, (wheelProgress - 0.5) / 0.5), 1),
   };
 };
 
 export const useLandingCSSVariables = () => {
-  const { expansionPhase } = useAnimationPhases(useWheelProgress()); // Get expansionPhase here
+  const wheelProgress = useWheelProgress();
+  const animationPhases = useAnimationPhases(wheelProgress);
 
   useEffect(() => {
     const updateCSSVariables = () => {
@@ -106,26 +107,18 @@ export const useLandingCSSVariables = () => {
       const viewportHeight = window.innerHeight;
       const root = document.documentElement;
 
-      console.log("LANDING DEBUG: Updating CSS Variables ---");
-      console.log("LANDING DEBUG: JS Viewport:", viewportWidth, viewportHeight);
-      console.log("LANDING DEBUG: Current Expansion Phase:", expansionPhase);
+      const { expansionPhase, categoryPhase, textFadePhase, logoMovePhase } =
+        animationPhases; // Destructure all phases
 
-      // Container dimensions (accounting for padding)
-      // These are also set as CSS variables for direct use in CSS if needed
-      const containerWidth = viewportWidth - 64; // 32px padding on each side
-      const containerHeight = viewportHeight - 128; // 64px padding on top/bottom
-
-      // Calculate separate cell dimensions to fit within the container
+      // Grid, Container, and CenterCard base values (already being set)
+      const containerWidth = viewportWidth - 64;
+      const containerHeight = viewportHeight - 128;
       const cellWidth = containerWidth / GRID_SIZE;
       const cellHeight = containerHeight / GRID_SIZE;
-
-      // Grid dimensions
       const gridWidth = containerWidth;
       const gridHeight = containerHeight;
-
-      // Offsets
-      const gridOffsetX = 32; // As per original calculateGridLayout
-      const gridOffsetY = 64; // As per original calculateGridLayout
+      const gridOffsetX = 32;
+      const gridOffsetY = 64;
 
       root.style.setProperty(
         "--landing-container-width",
@@ -142,7 +135,6 @@ export const useLandingCSSVariables = () => {
       root.style.setProperty("--landing-grid-offset-x", `${gridOffsetX}px`);
       root.style.setProperty("--landing-grid-offset-y", `${gridOffsetY}px`);
       root.style.setProperty("--landing-grid-size", GRID_SIZE.toString());
-      // Add other variables from constants.ts if they are needed for dynamic CSS calculations
       root.style.setProperty(
         "--landing-center-start-grid-units",
         CENTER_START.toString(),
@@ -152,32 +144,39 @@ export const useLandingCSSVariables = () => {
         CENTER_SIZE.toString(),
       );
 
-      // --- CenterCard State Calculations ---
-      const currentExpansionPhase = expansionPhase; // Use the live expansionPhase from the hook state
       root.style.setProperty(
         "--landing-center-card-expansion-factor",
-        currentExpansionPhase.toString(),
+        expansionPhase.toString(),
+      );
+      root.style.setProperty(
+        "--grid-lines-opacity",
+        (1 - expansionPhase * 0.8).toString(),
+      );
+      root.style.setProperty(
+        "--integration-container-opacity",
+        (expansionPhase > 0.3 ? categoryPhase : 0).toString(),
+      );
+      root.style.setProperty(
+        "--integration-card-opacity",
+        categoryPhase.toString(),
+      );
+      root.style.setProperty(
+        "--integration-card-scale",
+        (0.8 + categoryPhase * 0.2).toString(),
       );
 
-      // Static values (can also be read from existing CSS vars if preferred)
-      const ccBaseStartSize =
-        parseFloat(
-          getComputedStyle(root).getPropertyValue(
-            "--landing-center-card-start-size",
-          ),
-        ) || 600;
-      const ccViewportFactor =
-        parseFloat(
-          getComputedStyle(root).getPropertyValue(
-            "--landing-center-card-viewport-size-factor",
-          ),
-        ) || 0.6;
+      const ccBaseStartSize = getCSSVariableValue(
+        "--landing-center-card-base-start-size",
+        600,
+      );
+      const ccViewportFactor = getCSSVariableValue(
+        "--landing-center-card-viewport-size-factor",
+        0.6,
+      );
       const ccCalculatedStartSize = Math.min(
         ccBaseStartSize,
         Math.min(viewportWidth, viewportHeight) * ccViewportFactor,
       );
-      // root.style.setProperty('--landing-center-card-current-start-size-val', `${ccCalculatedStartSize}px`); // This was an intermediate step, now used directly below
-
       const ccCenterStartConst = CENTER_START;
       const ccCenterSizeConst = CENTER_SIZE;
       const ccMaxGridWidthForCenter = cellWidth * ccCenterSizeConst;
@@ -186,27 +185,19 @@ export const useLandingCSSVariables = () => {
         ccMaxGridWidthForCenter,
         ccMaxGridHeightForCenter,
       );
-      // root.style.setProperty('--landing-center-card-final-grid-size-val', `${ccCalculatedFinalSize}px`); // Intermediate, used below
-
       const ccFinalGridX =
         gridOffsetX + (ccCenterStartConst + ccCenterSizeConst / 2) * cellWidth;
       const ccFinalGridY =
         gridOffsetY + (ccCenterStartConst + ccCenterSizeConst / 2) * cellHeight;
-      // root.style.setProperty('--landing-center-card-final-x-grid-val', `${ccFinalGridX}px`); // Intermediate, used below
-      // root.style.setProperty('--landing-center-card-final-y-grid-val', `${ccFinalGridY}px`); // Intermediate, used below
-
       const ccStartX = viewportWidth / 2;
       const ccStartY = viewportHeight / 2;
-
-      // Calculate CURRENT interpolated values for CenterCard and set them globally
       const globalCurrentWidth =
         ccCalculatedStartSize +
-        (ccCalculatedFinalSize - ccCalculatedStartSize) * currentExpansionPhase;
+        (ccCalculatedFinalSize - ccCalculatedStartSize) * expansionPhase;
       const globalCurrentCenterX =
-        ccStartX + (ccFinalGridX - ccStartX) * currentExpansionPhase;
+        ccStartX + (ccFinalGridX - ccStartX) * expansionPhase;
       const globalCurrentCenterY =
-        ccStartY + (ccFinalGridY - ccStartY) * currentExpansionPhase;
-
+        ccStartY + (ccFinalGridY - ccStartY) * expansionPhase;
       root.style.setProperty(
         "--global-cc-current-width",
         `${globalCurrentWidth}px`,
@@ -214,7 +205,7 @@ export const useLandingCSSVariables = () => {
       root.style.setProperty(
         "--global-cc-current-height",
         `${globalCurrentWidth}px`,
-      ); // Assuming square
+      );
       root.style.setProperty(
         "--global-cc-current-left",
         `${globalCurrentCenterX - globalCurrentWidth / 2}px`,
@@ -223,7 +214,6 @@ export const useLandingCSSVariables = () => {
         "--global-cc-current-top",
         `${globalCurrentCenterY - globalCurrentWidth / 2}px`,
       );
-      // Also set center positions if needed by other components, though left/top/width/height should be enough
       root.style.setProperty(
         "--global-cc-current-center-x",
         `${globalCurrentCenterX}px`,
@@ -233,38 +223,36 @@ export const useLandingCSSVariables = () => {
         `${globalCurrentCenterY}px`,
       );
 
-      console.log("LANDING DEBUG: Set Global CC Width:", globalCurrentWidth);
-      console.log(
-        "LANDING DEBUG: Set Global CC Left:",
-        globalCurrentCenterX - globalCurrentWidth / 2,
+      // NEW: Set phase-based opacity/scale variables
+      const gridLinesOpacity = 1 - expansionPhase * 0.8;
+      const integrationContainerOpacity =
+        expansionPhase > 0.3 ? categoryPhase : 0;
+      const integrationCardOpacity = categoryPhase;
+      const integrationCardScale = 0.8 + categoryPhase * 0.2;
+
+      root.style.setProperty(
+        "--grid-lines-opacity",
+        gridLinesOpacity.toString(),
+      );
+      root.style.setProperty(
+        "--integration-container-opacity",
+        integrationContainerOpacity.toString(),
+      );
+      root.style.setProperty(
+        "--integration-card-opacity",
+        integrationCardOpacity.toString(),
+      );
+      root.style.setProperty(
+        "--integration-card-scale",
+        integrationCardScale.toString(),
       );
 
-      // Log comparison for vw/innerWidth
-      const cssContainerWidth = getCSSVariableValue(
-        "--landing-container-width",
-      ); // Reads from :root which is 100vw based
-      console.log(
-        "LANDING DEBUG: JS containerWidth (from innerWidth):",
-        containerWidth,
-        "CSS container-width (from 100vw via :root):",
-        cssContainerWidth,
-      );
-      const cssCellWidth = getCSSVariableValue("--landing-grid-cell-width"); // Reads from :root which is 100vw based
-      console.log(
-        "LANDING DEBUG: JS cellWidth (from innerWidth):",
-        cellWidth,
-        "CSS cell-width (from 100vw via :root):",
-        cssCellWidth,
-      );
+      // Ensure these are actually set
+      root.style.setProperty("--text-fade-factor", textFadePhase.toString());
+      root.style.setProperty("--logo-move-factor", logoMovePhase.toString());
     };
 
-    // Need to call updateCSSVariables when expansionPhase changes as well, not just resize
     updateCSSVariables();
     window.addEventListener("resize", updateCSSVariables);
-    // No direct dependency on expansionPhase in useEffect here, as updateCSSVariables reads it from its own scope.
-    // However, this means this effect only runs on mount/resize. If expansionPhase drives these variables,
-    // this effect needs to re-run when expansionPhase changes.
-
-    return () => window.removeEventListener("resize", updateCSSVariables);
-  }, [expansionPhase]); // ADD expansionPhase as a dependency
+  }, [animationPhases]);
 };

@@ -7,15 +7,17 @@ import { getCSSVariableValue } from "./utils";
 
 export interface IntegrationCategoriesProps {
   centerCard: Partial<CenterCard>; // centerCard might not have all properties if calculateCenterCard is minimal
-  expansionPhase: number;
-  categoryPhase: number;
+  // expansionPhase: number; // To be removed
+  // categoryPhase: number; // To be removed
 }
 
-export const IntegrationCategories = ({
-  centerCard, // Used for conditional logic, but primarily for its presence/phase
-  expansionPhase,
-  categoryPhase,
-}: IntegrationCategoriesProps) => {
+export const IntegrationCategories = (
+  {
+    // centerCard,
+    // expansionPhase, // To be removed
+    // categoryPhase, // To be removed
+  }: IntegrationCategoriesProps,
+) => {
   // Read grid layout values from CSS custom properties
   // These could also be read once on mount and stored in state if they don't change frequently,
   // or if direct usage in style objects becomes too verbose.
@@ -37,13 +39,16 @@ export const IntegrationCategories = ({
 
   return (
     <div
-      className="absolute transition-all duration-500"
+      className={cn(
+        "absolute transition-all duration-500",
+        "integration-categories-container-animated", // Add class for CSS-driven opacity
+      )}
       style={{
         left: `${gridOffsetX}px`,
         top: `${gridOffsetY}px`,
         width: `${gridWidth}px`,
         height: `${gridHeight}px`,
-        opacity: expansionPhase > 0.3 ? categoryPhase : 0,
+        // opacity: expansionPhase > 0.3 ? categoryPhase : 0, // Removed
       }}
     >
       {integrationCategories.map((cat, index) => {
@@ -84,10 +89,10 @@ export const IntegrationCategories = ({
           delete cardSpecificStyles.left;
         }
 
-        // Opacity and transform are still JS-driven based on phase
-        cardSpecificStyles.opacity = categoryPhase;
-        cardSpecificStyles.transform = `scale(${0.8 + categoryPhase * 0.2})`;
-        cardSpecificStyles.transitionDelay = `${index * 50}ms`;
+        // Opacity and transform are now handled by .integration-category-card-base CSS rules
+        // cardSpecificStyles.opacity = categoryPhase; // Removed
+        // cardSpecificStyles.transform = `scale(${0.8 + categoryPhase * 0.2})`; // Removed
+        cardSpecificStyles.transitionDelay = `${index * 50}ms`; // Keep transitionDelay if it's unique per card
 
         return (
           <div

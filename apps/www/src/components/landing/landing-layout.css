@@ -72,6 +72,17 @@
   --global-cc-current-top: calc(
     var(--global-cc-current-center-y) - (var(--global-cc-current-height) / 2)
   );
+
+  /* NEW Phase-driven opacity/scale variables (set by JS in useLandingCSSVariables) */
+  /* Defaults should reflect initial state (expansionPhase=0, categoryPhase=0) */
+  --grid-lines-opacity: 1; /* (1 - 0 * 0.8) */
+  --integration-container-opacity: 0; /* (0 > 0.3 ? 0 : 0) -> (expPhase > 0.3 ? catPhase : 0) */
+  --integration-card-opacity: 0; /* (categoryPhase) */
+  --integration-card-scale: 0.8; /* (0.8 + 0 * 0.2) */
+
+  /* Text Fade and Logo Move factors */
+  --text-fade-factor: 0; /* Text opacity = 1 - var(--text-fade-factor) */
+  --logo-move-factor: 0; /* Drives logo from corner to center */
 }
 
 /* Styles for the CenterCard component animation */
@@ -106,7 +117,21 @@
   /* The className already has transition-all duration-700 */
 }
 
-/* Styles for IntegrationCategory cards */
+/* Styles for GridLines opacity */
+.grid-lines-animated {
+  opacity: var(--grid-lines-opacity);
+  /* Ensure existing transitions from className are respected or defined here */
+  /* className already has transition-opacity duration-500 */
+}
+
+/* Styles for IntegrationCategories container opacity */
+.integration-categories-container-animated {
+  opacity: var(--integration-container-opacity);
+  /* Ensure existing transitions from className are respected or defined here */
+  /* className already has transition-all duration-500 - this applies to opacity */
+}
+
+/* Styles for individual IntegrationCategory card opacity and scale */
 .integration-category-card-base {
   /* Base styles from the original component */
   position: absolute;
@@ -122,6 +147,10 @@
 
   /* Base positioning - these will be overridden by inline styles for now for unique grid positions */
   /* but width/height might be settable if all cards had same span, or via specific classes */
+  opacity: var(--integration-card-opacity);
+  transform: scale(var(--integration-card-scale));
+  /* Ensure existing transitions from className are respected or defined here */
+  /* className already has transition-all duration-700 - this applies to opacity and transform */
 }
 
 /* Modifier classes for cards aligning with CenterCard */

@@ -6,25 +6,28 @@ import { getCSSVariableValue } from "./utils";
 
 export interface CenterCardProps {
   centerCard: Partial<CenterCardType>;
-  textFadePhase: number;
-  logoMovePhase: number;
 }
 
-export const CenterCard = ({
-  centerCard,
-  textFadePhase,
-  logoMovePhase,
-}: CenterCardProps) => {
+export const CenterCard = ({}: CenterCardProps) => {
   const logoSize = 48; // h-12 w-12
   const padding = 32; // p-8
 
+  const textFadeFactor =
+    typeof window !== "undefined"
+      ? getCSSVariableValue("--text-fade-factor")
+      : 0;
+  const logoMoveFactor =
+    typeof window !== "undefined"
+      ? getCSSVariableValue("--logo-move-factor")
+      : 0;
+
   const currentCardWidth =
     typeof window !== "undefined"
-      ? getCSSVariableValue("--cc-current-width")
+      ? getCSSVariableValue("--global-cc-current-width")
       : 0;
   const currentCardHeight =
     typeof window !== "undefined"
-      ? getCSSVariableValue("--cc-current-height")
+      ? getCSSVariableValue("--global-cc-current-height")
       : 0;
 
   const safeCardWidth = Math.max(0, currentCardWidth);
@@ -32,7 +35,7 @@ export const CenterCard = ({
 
   let logoCurrentX, logoCurrentY;
 
-  if (logoMovePhase >= 1) {
+  if (logoMoveFactor >= 1) {
     logoCurrentX = (safeCardWidth - logoSize) / 2;
     logoCurrentY = (safeCardHeight - logoSize) / 2;
   } else {
@@ -41,11 +44,13 @@ export const CenterCard = ({
     const logoFinalX = (safeCardWidth - logoSize) / 2;
     const logoFinalY = (safeCardHeight - logoSize) / 2;
 
-    logoCurrentX = logoOriginalX + (logoFinalX - logoOriginalX) * logoMovePhase;
-    logoCurrentY = logoOriginalY + (logoFinalY - logoOriginalY) * logoMovePhase;
+    logoCurrentX =
+      logoOriginalX + (logoFinalX - logoOriginalX) * logoMoveFactor;
+    logoCurrentY =
+      logoOriginalY + (logoFinalY - logoOriginalY) * logoMoveFactor;
   }
 
-  const textOpacity = 1 - textFadePhase;
+  const textOpacity = 1 - textFadeFactor;
 
   return (
     <div
