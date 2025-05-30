@@ -15,11 +15,14 @@
   },
   "dependencies": {
     "@react-spring/parallax": "^10.0.1",
+    "@react-three/drei": "^10.1.2",
+    "@react-three/fiber": "^9.1.2",
     "@repo/lib": "workspace:*",
     "@repo/lightfast-config": "workspace:*",
     "@repo/lightfast-email": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "0.12.0",
+    "@types/three": "^0.176.0",
     "@vendor/analytics": "workspace:*",
     "@vendor/clerk": "workspace:*",
     "@vendor/email": "workspace:*",
@@ -38,7 +41,8 @@
     "react": "catalog:react19",
     "react-confetti": "^6.4.0",
     "react-dom": "catalog:react19",
-    "simplex-noise": "^4.0.3"
+    "simplex-noise": "^4.0.3",
+    "three": "^0.176.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
