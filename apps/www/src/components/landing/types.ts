@@ -4,7 +4,9 @@ export interface ViewportSize {
 }
 
 export interface GridLayout {
-  cellSize: number;
+  cellSize: number; // Keep for backward compatibility with center card
+  cellWidth: number; // Separate width dimension for cards
+  cellHeight: number; // Separate height dimension for cards
   gridWidth: number;
   gridHeight: number;
   gridOffsetX: number;

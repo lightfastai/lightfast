@@ -24,10 +24,10 @@ export const IntegrationCategories = ({
       }}
     >
       {integrationCategories.map((cat, index) => {
-        const cardWidth = gridLayout.cellSize * cat.grid.colSpan;
-        const cardHeight = gridLayout.cellSize * cat.grid.rowSpan;
-        const cardLeft = gridLayout.cellSize * cat.grid.colStart;
-        const cardTop = gridLayout.cellSize * cat.grid.rowStart;
+        const cardWidth = gridLayout.cellWidth * cat.grid.colSpan;
+        const cardHeight = gridLayout.cellHeight * cat.grid.rowSpan;
+        const cardLeft = gridLayout.cellWidth * cat.grid.colStart;
+        const cardTop = gridLayout.cellHeight * cat.grid.rowStart;
 
         return (
           <div

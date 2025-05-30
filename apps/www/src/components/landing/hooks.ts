@@ -17,21 +17,25 @@ export const calculateGridLayout = (
   const containerWidth = viewportWidth - 64; // 32px padding on each side
   const containerHeight = viewportHeight - 128; // 64px padding on top/bottom
 
-  // Calculate cell size based on full container width
-  // This ensures the grid expands to use the full width available
-  const cellSize = containerWidth / GRID_SIZE;
+  // Calculate separate cell dimensions to fit within the container
+  const cellWidth = containerWidth / GRID_SIZE;
+  const cellHeight = containerHeight / GRID_SIZE;
 
-  // Calculate actual grid dimensions using full container width
+  // Keep cellSize for backward compatibility (used by center card)
+  const cellSize = Math.min(cellWidth, cellHeight);
+
+  // Calculate actual grid dimensions using full container width and height
   const gridWidth = containerWidth;
-  const gridHeight = cellSize * GRID_SIZE;
+  const gridHeight = containerHeight; // Always use full height (100vh minus padding)
 
-  // No horizontal offset since we're using full width
-  // Center vertically if grid height is smaller than container height
+  // No offset since we're using full width and full height
   const gridOffsetX = 32;
-  const gridOffsetY = 64 + Math.max(0, (containerHeight - gridHeight) / 2);
+  const gridOffsetY = 64;
 
   return {
     cellSize,
+    cellWidth,
+    cellHeight,
     gridWidth,
     gridHeight,
     gridOffsetX,
@@ -48,18 +52,21 @@ export const calculateCenterCard = (
   viewportWidth: number,
   viewportHeight: number,
 ): CenterCard => {
-  const { cellSize, gridOffsetX, gridOffsetY } = gridLayout;
+  const { cellWidth, cellHeight, gridOffsetX, gridOffsetY } = gridLayout;
 
   // Center position in the grid (5-6, 5-6 = 2x2 center)
-  const gridCenterX = gridOffsetX + (CENTER_START + CENTER_SIZE / 2) * cellSize;
-  const gridCenterY = gridOffsetY + (CENTER_START + CENTER_SIZE / 2) * cellSize;
+  // Use cellWidth for X positioning and cellHeight for Y positioning to match grid cards
+  const gridCenterX =
+    gridOffsetX + (CENTER_START + CENTER_SIZE / 2) * cellWidth;
+  const gridCenterY =
+    gridOffsetY + (CENTER_START + CENTER_SIZE / 2) * cellHeight;
 
   // Starting position (viewport center)
   const startCenterX = viewportWidth / 2;
   const startCenterY = viewportHeight / 2;
 
-  // Final size when in grid position
-  const finalSize = cellSize * CENTER_SIZE;
+  // Final size when in grid position - use the smaller dimension to maintain square shape
+  const finalSize = Math.min(cellWidth, cellHeight) * CENTER_SIZE;
   const startSize = Math.min(
     600,
     Math.min(viewportWidth, viewportHeight) * 0.6,
