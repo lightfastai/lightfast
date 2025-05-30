@@ -23,7 +23,7 @@ const integrationCategories = [
   },
   {
     name: "2D Graphics",
-    grid: { colStart: 2, colSpan: 5, rowStart: 0, rowSpan: 5 }, // Top, left of center
+    grid: { colStart: 2, colSpan: 4, rowStart: 0, rowSpan: 5 }, // Top, left of center
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
@@ -37,7 +37,7 @@ const integrationCategories = [
   },
   {
     name: "Video & VFX",
-    grid: { colStart: 7, colSpan: 3, rowStart: 0, rowSpan: 7 }, // Top, right of center
+    grid: { colStart: 6, colSpan: 3, rowStart: 0, rowSpan: 7 }, // Top, right of center
     apps: 5,
     liveApps: 0,
     plannedApps: 5,
@@ -58,7 +58,7 @@ const integrationCategories = [
   },
   {
     name: "3D Texturing & CAD",
-    grid: { colStart: 5, colSpan: 5, rowStart: 7, rowSpan: 5 }, // Bottom, right of center
+    grid: { colStart: 5, colSpan: 4, rowStart: 7, rowSpan: 5 }, // Bottom, right of center
     apps: 3,
     liveApps: 0,
     plannedApps: 3,
@@ -101,17 +101,43 @@ export default function Home() {
   const containerWidth = window.innerWidth - 64;
   const containerHeight = window.innerHeight - 128;
 
-  // Grid system constants
-  const GRID_COLS = 12;
-  const GRID_ROWS = 12;
-  const colWidth = containerWidth / GRID_COLS;
-  const rowHeight = containerHeight / GRID_ROWS;
+  // Adaptive grid system that maintains proportions
+  const aspectRatio = containerWidth / containerHeight;
+  const baseGridSize = 12;
 
-  // Center card grid position (2x2 area in the middle)
-  const CENTER_COL_START = 5;
+  // Calculate effective grid dimensions based on aspect ratio
+  // If wider than square, expand columns; if taller, expand rows
+  let effectiveCols, effectiveRows;
+
+  if (aspectRatio >= 1) {
+    // Landscape: keep 12 rows, scale columns proportionally
+    effectiveRows = baseGridSize;
+    effectiveCols = Math.round(baseGridSize * aspectRatio);
+  } else {
+    // Portrait: keep 12 columns, scale rows proportionally
+    effectiveCols = baseGridSize;
+    effectiveRows = Math.round(baseGridSize / aspectRatio);
+  }
+
+  // Calculate cell dimensions
+  const colWidth = containerWidth / effectiveCols;
+  const rowHeight = containerHeight / effectiveRows;
+
+  // Center card grid position (2x2 area in the middle of effective grid)
+  const CENTER_COL_START = Math.floor((effectiveCols - 2) / 2);
   const CENTER_COL_SPAN = 2;
-  const CENTER_ROW_START = 5;
+  const CENTER_ROW_START = Math.floor((effectiveRows - 2) / 2);
   const CENTER_ROW_SPAN = 2;
+
+  // Scale the original 12x12 grid positions to the new effective grid
+  const scaleColPosition = (originalCol: number) =>
+    Math.round((originalCol * effectiveCols) / baseGridSize);
+  const scaleColSpan = (originalSpan: number) =>
+    Math.round((originalSpan * effectiveCols) / baseGridSize);
+  const scaleRowPosition = (originalRow: number) =>
+    Math.round((originalRow * effectiveRows) / baseGridSize);
+  const scaleRowSpan = (originalSpan: number) =>
+    Math.round((originalSpan * effectiveRows) / baseGridSize);
 
   // Calculate center card properties
   const centerOriginalSize = 600; // Starting card size
@@ -267,10 +293,16 @@ export default function Home() {
         }}
       >
         {integrationCategories.map((cat, index) => {
-          const cardWidth = colWidth * cat.grid.colSpan;
-          const cardHeight = rowHeight * cat.grid.rowSpan;
-          const cardLeft = cat.grid.colStart * colWidth;
-          const cardTop = cat.grid.rowStart * rowHeight;
+          // Scale the original 12x12 grid positions to the effective grid
+          const scaledColStart = scaleColPosition(cat.grid.colStart);
+          const scaledColSpan = scaleColSpan(cat.grid.colSpan);
+          const scaledRowStart = scaleRowPosition(cat.grid.rowStart);
+          const scaledRowSpan = scaleRowSpan(cat.grid.rowSpan);
+
+          const cardWidth = colWidth * scaledColSpan;
+          const cardHeight = rowHeight * scaledRowSpan;
+          const cardLeft = scaledColStart * colWidth;
+          const cardTop = scaledRowStart * rowHeight;
 
           return (
             <div
