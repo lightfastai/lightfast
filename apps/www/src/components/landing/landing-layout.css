@@ -1,43 +1,77 @@
 :root {
-  --landing-grid-cell-width: 30px; /* Default fallback */
-  --landing-grid-cell-height: 30px; /* Default fallback */
-  --landing-grid-width: 360px; /* Default fallback (12 * 30) */
-  --landing-grid-height: 360px; /* Default fallback (12 * 30) */
-  --landing-grid-offset-x: 32px; /* Default from existing code */
-  --landing-grid-offset-y: 64px; /* Default from existing code */
-  --landing-container-width: calc(
-    100vw - 64px
-  ); /* Based on 32px padding on each side */
-  --landing-container-height: calc(
-    100vh - 128px
-  ); /* Based on 64px padding top/bottom */
-  --landing-grid-size: 12; /* From constants.ts */
+  /* Grid & Container Base Values */
+  --landing-grid-offset-x: 32px;
+  --landing-grid-offset-y: 64px;
+  --landing-grid-size: 12;
+  --landing-container-padding-x: 64px; /* 32px each side */
+  --landing-container-padding-y: 128px; /* 64px top/bottom */
+  --landing-container-width: calc(100vw - var(--landing-container-padding-x));
+  --landing-container-height: calc(100vh - var(--landing-container-padding-y));
+  --landing-grid-cell-width: calc(
+    var(--landing-container-width) / var(--landing-grid-size)
+  );
+  --landing-grid-cell-height: calc(
+    var(--landing-container-height) / var(--landing-grid-size)
+  );
+  --landing-grid-width: var(--landing-container-width);
+  --landing-grid-height: var(--landing-container-height);
 
-  /* For CenterCard - can be expanded */
-  --landing-center-card-start-size: 600px;
+  /* CenterCard Base Values (used by JS to calculate initial state) */
+  --landing-center-card-base-start-size: 600px;
   --landing-center-card-viewport-size-factor: 0.6;
-  --landing-center-card-final-size-factor: 2; /* Corresponds to CENTER_SIZE from constants.ts */
+  --landing-center-start-grid-units: 5; /* From constants.ts CENTER_START */
+  --landing-center-size-grid-units: 2; /* From constants.ts CENTER_SIZE */
 
-  /* New variables for CenterCard animation states */
-  --landing-center-card-current-start-size-val: 600px; /* Actual calculated start size, set by JS */
-  --landing-center-card-final-grid-size-val: 100px; /* Actual calculated final size in grid, set by JS */
+  /* Actual calculated start size (will be refined by JS based on viewport) */
+  /* For initial render, estimate based on typical viewport to avoid large jumps */
+  --landing-center-card-current-start-size-val: min(
+    var(--landing-center-card-base-start-size),
+    calc(min(100vw, 100vh) * var(--landing-center-card-viewport-size-factor))
+  );
 
-  --landing-center-card-start-x-vw: 50vw; /* Initial X position (viewport center) */
-  --landing-center-card-start-y-vh: 50vh; /* Initial Y position (viewport center) */
+  /* Actual calculated final size in grid (will be refined by JS) */
+  --landing-center-card-final-grid-size-val: calc(
+    min(var(--landing-grid-cell-width), var(--landing-grid-cell-height)) *
+      var(--landing-center-size-grid-units)
+  );
 
-  --landing-center-card-final-x-grid-val: 0px; /* Calculated final X in grid, set by JS */
-  --landing-center-card-final-y-grid-val: 0px; /* Calculated final Y in grid, set by JS */
+  /* Static initial positions for CenterCard (viewport center) */
+  --landing-center-card-start-x-vw: 50vw;
+  --landing-center-card-start-y-vh: 50vh;
 
-  /* This variable will be updated by JavaScript (0 to 1) to drive the animation */
+  /* Static final grid positions for CenterCard (calculated by JS and set, but can have CSS fallbacks) */
+  --landing-center-card-final-x-grid-val: calc(
+    var(--landing-grid-offset-x) +
+      (
+        var(--landing-center-start-grid-units) +
+          var(--landing-center-size-grid-units) / 2
+      ) *
+      var(--landing-grid-cell-width)
+  );
+  --landing-center-card-final-y-grid-val: calc(
+    var(--landing-grid-offset-y) +
+      (
+        var(--landing-center-start-grid-units) +
+          var(--landing-center-size-grid-units) / 2
+      ) *
+      var(--landing-grid-cell-height)
+  );
+
+  /* Expansion factor (controlled by JS via useLandingCSSVariables) */
   --landing-center-card-expansion-factor: 0;
 
-  /* NEW Global CenterCard animated state variables (set by JS in useLandingCSSVariables) */
-  --global-cc-current-width: 600px; /* Default/initial */
-  --global-cc-current-height: 600px; /* Default/initial */
-  --global-cc-current-left: 50vw; /* Default/initial */
-  --global-cc-current-top: 50vh; /* Default/initial */
-  --global-cc-current-center-x: 50vw; /* Default/initial */
-  --global-cc-current-center-y: 50vh; /* Default/initial */
+  /* Global CenterCard animated state variables (JS in useLandingCSSVariables primarily sets these) */
+  /* Defaults should reflect expansionPhase = 0 */
+  --global-cc-current-width: var(--landing-center-card-current-start-size-val);
+  --global-cc-current-height: var(--global-cc-current-width);
+  --global-cc-current-center-x: var(--landing-center-card-start-x-vw);
+  --global-cc-current-center-y: var(--landing-center-card-start-y-vh);
+  --global-cc-current-left: calc(
+    var(--global-cc-current-center-x) - (var(--global-cc-current-width) / 2)
+  );
+  --global-cc-current-top: calc(
+    var(--global-cc-current-center-y) - (var(--global-cc-current-height) / 2)
+  );
 }
 
 /* Styles for the CenterCard component animation */

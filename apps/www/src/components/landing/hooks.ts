@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { AnimationPhases, GridLayout, ViewportSize } from "./types";
 import { CENTER_SIZE, CENTER_START, GRID_SIZE } from "./constants";
+import { getCSSVariableValue } from "./utils";
 
 // Calculate grid layout for any viewport
 /**
@@ -104,6 +105,10 @@ export const useLandingCSSVariables = () => {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       const root = document.documentElement;
+
+      console.log("LANDING DEBUG: Updating CSS Variables ---");
+      console.log("LANDING DEBUG: JS Viewport:", viewportWidth, viewportHeight);
+      console.log("LANDING DEBUG: Current Expansion Phase:", expansionPhase);
 
       // Container dimensions (accounting for padding)
       // These are also set as CSS variables for direct use in CSS if needed
@@ -226,6 +231,30 @@ export const useLandingCSSVariables = () => {
       root.style.setProperty(
         "--global-cc-current-center-y",
         `${globalCurrentCenterY}px`,
+      );
+
+      console.log("LANDING DEBUG: Set Global CC Width:", globalCurrentWidth);
+      console.log(
+        "LANDING DEBUG: Set Global CC Left:",
+        globalCurrentCenterX - globalCurrentWidth / 2,
+      );
+
+      // Log comparison for vw/innerWidth
+      const cssContainerWidth = getCSSVariableValue(
+        "--landing-container-width",
+      ); // Reads from :root which is 100vw based
+      console.log(
+        "LANDING DEBUG: JS containerWidth (from innerWidth):",
+        containerWidth,
+        "CSS container-width (from 100vw via :root):",
+        cssContainerWidth,
+      );
+      const cssCellWidth = getCSSVariableValue("--landing-grid-cell-width"); // Reads from :root which is 100vw based
+      console.log(
+        "LANDING DEBUG: JS cellWidth (from innerWidth):",
+        cellWidth,
+        "CSS cell-width (from 100vw via :root):",
+        cssCellWidth,
       );
     };
 
