@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type {
-  AnimationPhases,
-  CenterCard,
-  GridLayout,
-  ViewportSize,
-} from "./types";
+import type { AnimationPhases, GridLayout, ViewportSize } from "./types";
 import { CENTER_SIZE, CENTER_START, GRID_SIZE } from "./constants";
 
 // Calculate grid layout for any viewport
@@ -47,20 +42,6 @@ export const calculateGridLayout = (
     containerWidth,
     containerHeight,
   };
-};
-
-// Calculate center card properties - Now much simpler
-export const calculateCenterCard = (
-  expansionPhase: number,
-): Partial<CenterCard> => {
-  // This function is now almost a NO-OP if useLandingCSSVariables handles the expansion factor.
-  // However, page.tsx calls it and expects it to trigger the factor update.
-  // For clarity, let useLandingCSSVariables be the single source of truth for updating CSS from JS state.
-  // So, this function can be removed if page.tsx calls useLandingCSSVariables which depends on useAnimationPhases.
-
-  // If still called, it should not also set the expansion factor if useLandingCSSVariables does.
-  // For now, assume it's still called but its action of setting expansion factor is now inside useLandingCSSVariables.
-  return {};
 };
 
 export const useViewportSize = () => {

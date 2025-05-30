@@ -6,7 +6,6 @@ export { PageHeader } from "./page-header";
 
 // Hooks
 export {
-  calculateCenterCard,
   calculateGridLayout,
   useAnimationPhases,
   useViewportSize,
