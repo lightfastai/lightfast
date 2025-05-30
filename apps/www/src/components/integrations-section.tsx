@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { Icons } from "@repo/ui/components/icons";
+
 // --- Data Structure ---
 
 interface IntegrationApp {
@@ -32,7 +34,7 @@ const integrationCategories: IntegrationCategory[] = [
   {
     name: "3D Modeling",
     position: { top: 0, left: 0, width: 16.67, height: 58.33 },
-    color: "bg-purple-500",
+    color: "bg-black",
     apps: [
       {
         name: "Blender",
@@ -95,7 +97,7 @@ const integrationCategories: IntegrationCategory[] = [
   {
     name: "Audio Production",
     position: { top: 58.33, left: 0, width: 16.67, height: 41.67 },
-    color: "bg-pink-500",
+    color: "bg-black",
     apps: [
       {
         name: "Ableton Live",
@@ -142,7 +144,7 @@ const integrationCategories: IntegrationCategory[] = [
   {
     name: "2D Graphics",
     position: { top: 0, left: 16.67, width: 41.67, height: 41.67 },
-    color: "bg-blue-500",
+    color: "bg-black",
     apps: [
       {
         name: "Photoshop",
@@ -189,7 +191,7 @@ const integrationCategories: IntegrationCategory[] = [
   {
     name: "Game Engines",
     position: { top: 41.67, left: 16.67, width: 25, height: 58.33 },
-    color: "bg-green-500",
+    color: "bg-black",
     apps: [
       {
         name: "Unreal Engine",
@@ -228,13 +230,13 @@ const integrationCategories: IntegrationCategory[] = [
   {
     name: "Lightfast",
     position: { top: 41.67, left: 41.67, width: 16.67, height: 16.67 },
-    color: "bg-gradient-to-br from-violet-600 to-indigo-600",
+    color: "bg-black",
     isLogo: true,
   },
   {
     name: "Video & VFX",
     position: { top: 0, left: 58.33, width: 25, height: 58.33 },
-    color: "bg-red-500",
+    color: "bg-black",
     apps: [
       {
         name: "DaVinci Resolve",
@@ -281,7 +283,7 @@ const integrationCategories: IntegrationCategory[] = [
   {
     name: "Design Tools",
     position: { top: 0, left: 83.33, width: 16.67, height: 33.33 },
-    color: "bg-amber-500",
+    color: "bg-black",
     apps: [
       {
         name: "Figma",
@@ -312,7 +314,7 @@ const integrationCategories: IntegrationCategory[] = [
   {
     name: "Interactive & Live",
     position: { top: 33.33, left: 83.33, width: 16.67, height: 66.67 },
-    color: "bg-cyan-500",
+    color: "bg-black",
     apps: [
       {
         name: "TouchDesigner",
@@ -351,7 +353,7 @@ const integrationCategories: IntegrationCategory[] = [
   {
     name: "3D Texturing & CAD",
     position: { top: 58.33, left: 41.67, width: 41.67, height: 41.67 },
-    color: "bg-orange-500",
+    color: "bg-black",
     apps: [
       {
         name: "Substance 3D",
@@ -424,6 +426,7 @@ export function IntegrationsSection() {
     categoryName: string,
   ) => {
     const { width: vw, height: vh, centerSize = 100 } = containerSize;
+    const gap = 4; // 4px gap between items
 
     // The original grid assumes a 1:1 aspect ratio (100x100)
     // We need to map this to our actual viewport dimensions
@@ -469,6 +472,24 @@ export function IntegrationsSection() {
     let left = position.left * scaleX;
     let top = position.top * scaleY;
 
+    // Add gaps based on position
+    // Left column items
+    if (position.left === 0) {
+      width -= gap;
+    }
+    // Top row items
+    if (position.top === 0) {
+      height -= gap;
+    }
+    // Items not on the right edge
+    if (position.left + position.width < 100) {
+      width -= gap;
+    }
+    // Items not on the bottom edge
+    if (position.top + position.height < 100) {
+      height -= gap;
+    }
+
     // Adjust items that touch the center to eliminate gaps
     const touchesCenter = {
       left: position.left + position.width === centerOriginalLeft,
@@ -480,38 +501,38 @@ export function IntegrationsSection() {
     // Category 3: Above and to the left of center
     if (categoryName === "2D Graphics") {
       // Adjust right edge to meet Category 9's left edge (at 58.33%)
-      width = 58.33 * scaleX - left;
+      width = 58.33 * scaleX - left - gap * 2;
       // Adjust bottom edge to meet center's top edge
-      height = centerActualTop - top;
+      height = centerActualTop - top - gap;
     }
     // Category 4: Left of center
     else if (categoryName === "Game Engines") {
       // Adjust right edge to meet center's left edge
-      width = centerActualLeft - left;
+      width = centerActualLeft - left - gap;
       // Top aligns with center's top
       top = centerActualTop;
       // Height extends to bottom
-      height = vh - top;
+      height = vh - top - gap;
     }
     // Category 8: Below center
     else if (categoryName === "3D Texturing & CAD") {
       // Adjust top to center's bottom
-      top = centerActualBottom;
+      top = centerActualBottom + gap;
       // Adjust height to fill remaining space
-      height = vh - top;
+      height = vh - top - gap;
       // Adjust left to center's left
       left = centerActualLeft;
       // Width extends to Category 7's left edge (at 83.33%)
-      width = 83.33 * scaleX - left;
+      width = 83.33 * scaleX - left - gap;
     }
     // Category 9: Above and to the right of center
     else if (categoryName === "Video & VFX") {
       // Adjust left edge to meet center's right edge
-      left = centerActualRight;
+      left = centerActualRight + gap;
       // Width extends to category 6
-      width = 83.33 * scaleX - left;
+      width = 83.33 * scaleX - left - gap;
       // Height extends to center's bottom
-      height = centerActualBottom - top;
+      height = centerActualBottom - top - gap;
     }
 
     return {
@@ -524,11 +545,11 @@ export function IntegrationsSection() {
   };
 
   return (
-    <section className="bg-background w-full">
+    <section className="w-full bg-neutral-950">
       {/* Header Section */}
       <div className="w-full py-16">
         <div className="mb-12 text-center">
-          <h2 className="text-foreground mb-4 text-3xl font-bold">
+          <h2 className="mb-4 text-3xl font-bold text-white">
             Works with your
             <span className="text-primary ml-2 italic">favorite tools</span>
           </h2>
@@ -536,7 +557,7 @@ export function IntegrationsSection() {
       </div>
 
       {/* Integration Grid Section - Full Viewport */}
-      <div className="relative h-screen w-screen overflow-hidden">
+      <div className="relative h-screen w-screen overflow-hidden bg-neutral-950">
         <div
           ref={containerRef}
           className="relative h-full w-full"
@@ -565,10 +586,7 @@ export function IntegrationsSection() {
               >
                 {cat.isLogo ? (
                   <div className="flex h-full w-full flex-col items-center justify-center p-4">
-                    <div className="mb-2 text-4xl font-bold text-white">⚡</div>
-                    <span className="text-lg font-bold text-white">
-                      {cat.name}
-                    </span>
+                    <Icons.logoShort className="h-12 w-12 text-white" />
                   </div>
                 ) : (
                   <div className="flex h-full w-full flex-col items-start justify-start p-6">
