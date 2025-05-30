@@ -396,28 +396,49 @@ export function IntegrationsSection() {
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
-        // Get viewport dimensions
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        // Get the actual container dimensions from the DOM element
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const viewportWidth = containerRect.width;
+        const viewportHeight = containerRect.height;
 
-        // Fixed center item size - can be adjusted based on viewport or kept constant
-        const centerSize = Math.min(
-          viewportWidth * 0.15,
-          viewportHeight * 0.15,
-          150,
-        ); // Max 150px
+        // Only update if we have valid dimensions
+        if (viewportWidth > 0 && viewportHeight > 0) {
+          // Fixed center item size - can be adjusted based on viewport or kept constant
+          const centerSize = Math.min(
+            viewportWidth * 0.15,
+            viewportHeight * 0.15,
+            150,
+          ); // Max 150px
 
-        setContainerSize({
-          width: viewportWidth,
-          height: viewportHeight,
-          centerSize, // Pass center size for calculations
-        });
+          setContainerSize({
+            width: viewportWidth,
+            height: viewportHeight,
+            centerSize, // Pass center size for calculations
+          });
+        }
       }
     };
 
-    updateSize();
+    // Initial update with a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(updateSize, 100);
+
+    // Use ResizeObserver for more accurate container size tracking
+    const resizeObserver = new ResizeObserver(() => {
+      updateSize();
+    });
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    // Fallback to window resize for older browsers
     window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
+
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateSize);
+    };
   }, []);
 
   // Calculate item dimensions relative to fixed center
@@ -546,27 +567,28 @@ export function IntegrationsSection() {
   };
 
   return (
-    <section className="w-full bg-neutral-950">
+    <section className="bg-background w-full">
       {/* Header Section */}
       <div className="w-full py-16">
         <div className="mb-12 text-center">
-          <h2 className="mb-4 text-3xl font-bold text-white">
+          <h2 className="text-foreground mb-4 text-3xl font-bold">
             Works with your
             <span className="text-primary ml-2 italic">favorite tools</span>
           </h2>
         </div>
       </div>
 
-      {/* Integration Grid Section - Full Viewport */}
-      <div className="relative h-screen w-screen overflow-hidden bg-neutral-950">
-        <div
-          ref={containerRef}
-          className="relative h-full w-full"
-          style={{
-            width: containerSize.width,
-            height: containerSize.height,
-          }}
-        >
+      {/* Integration Grid Section - Reduced Viewport */}
+      <div
+        ref={containerRef}
+        className="bg-background relative overflow-hidden"
+        style={{
+          width: "calc(100vw - 4rem)",
+          height: "calc(100vh - 8rem)",
+          margin: "0 auto",
+        }}
+      >
+        <div className="relative h-full w-full">
           <div
             className="grid h-full w-full"
             style={{
@@ -592,9 +614,9 @@ export function IntegrationsSection() {
                   key={cat.name}
                   className={`absolute flex items-center justify-center overflow-hidden transition-all duration-300 hover:z-10 ${
                     cat.isLogo
-                      ? "shadow-2xl"
-                      : "border-border border backdrop-blur-sm"
-                  } ${cat.color}`}
+                      ? "bg-card shadow-2xl"
+                      : "border-border bg-card/80 hover:bg-card/90 border backdrop-blur-sm"
+                  }`}
                   style={{
                     width: `${dimensions.width}px`,
                     height: `${dimensions.height}px`,
@@ -604,24 +626,24 @@ export function IntegrationsSection() {
                   }}
                 >
                   {cat.isLogo ? (
-                    <div className="flex h-full w-full flex-col items-center justify-center p-4">
-                      <Icons.logoShort className="h-12 w-12 text-white" />
+                    <div className="card-content flex h-full w-full flex-col items-center justify-center p-4">
+                      <Icons.logoShort className="text-primary h-12 w-12" />
                     </div>
                   ) : (
-                    <div className="flex h-full w-full flex-col items-start justify-start p-6">
-                      <span className="text-5xl font-semibold text-white/90">
+                    <div className="card-content flex h-full w-full flex-col items-start justify-start p-6">
+                      <span className="text-foreground/90 text-4xl font-semibold">
                         {cat.name}
                       </span>
                       {cat.apps && (
                         <div className="mt-4 flex flex-col items-start gap-1">
-                          <span className="text-sm text-white/70 md:text-base">
+                          <span className="text-muted-foreground text-sm md:text-base">
                             {cat.apps.length} apps
                           </span>
                           <div className="flex gap-1">
                             {cat.apps.filter(
                               (app) => app.status === "Implemented",
                             ).length > 0 && (
-                              <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs text-white/90">
+                              <span className="bg-primary/20 text-primary rounded-full px-2 py-0.5 text-xs">
                                 {
                                   cat.apps.filter(
                                     (app) => app.status === "Implemented",
@@ -632,7 +654,7 @@ export function IntegrationsSection() {
                             )}
                             {cat.apps.filter((app) => app.status === "Planned")
                               .length > 0 && (
-                              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
                                 {
                                   cat.apps.filter(
                                     (app) => app.status === "Planned",
