@@ -19,6 +19,26 @@ export interface IntegrationCategory {
   plannedApps: number;
 }
 
+// Animation timing constants - keep in sync with CSS custom properties
+export const ANIMATION_TIMING = {
+  // Core animation durations (in milliseconds)
+  GRID_LINE_DURATION: 1600, // 1.6s - matches --grid-line-duration
+  GRID_LINE_DELAY_STEP: 200, // 0.2s - matches --grid-line-delay-step
+  TEXT_ANIMATION_DURATION: 600, // 0.6s
+  ANIMATION_BUFFER: 200, // 0.2s
+
+  // Calculated total loading duration
+  // Grid lines (1.6s) + delays (0.6s = 0.2s * 3) + text animation (0.6s) + buffer (0.2s)
+  get LOADING_DURATION() {
+    return (
+      this.GRID_LINE_DURATION +
+      this.GRID_LINE_DELAY_STEP * 3 +
+      this.TEXT_ANIMATION_DURATION +
+      this.ANIMATION_BUFFER
+    );
+  },
+} as const;
+
 // Integration data for the surrounding cards - using 12x12 grid system
 // Center card will be at cols 5-6, rows 5-6 (2x2 area in middle)
 export const integrationCategories: IntegrationCategory[] = [

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import type { IntegrationCategory } from "../constants";
+import type { IntegrationCategory } from "../../../lib/animation/constants";
 
 interface VideoVFXCardProps {
   category: IntegrationCategory;

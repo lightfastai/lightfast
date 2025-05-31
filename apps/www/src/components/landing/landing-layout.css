@@ -3,6 +3,7 @@
   --wheel-progress: 0;
 
   /* Grid line animation timing */
+  /* IMPORTANT: Keep these values in sync with ANIMATION_TIMING in constants.ts */
   --grid-line-duration: 1.6s;
   --grid-line-delay-step: 0.2s;
   --grid-line-easing: ease-out;
@@ -101,6 +102,7 @@
   --logo-move-factor: var(--logo-move-phase);
 
   /* Animation timing for scroll lock */
+  /* NOTE: This calculation matches ANIMATION_TIMING.LOADING_DURATION in constants.ts */
   --loading-animation-duration: calc(
     var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.6s + 0.2s
   ); /* Grid lines + text delay + text duration + buffer */

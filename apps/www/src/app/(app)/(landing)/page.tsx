@@ -1,11 +1,9 @@
 import "~/components/landing/landing-layout.css";
 
-import {
-  CenterCard,
-  GridLines,
-  IntegrationCategories,
-} from "~/components/landing";
+import { CenterCard } from "~/components/landing/center-card";
 import { ClientInteractivity } from "~/components/landing/client-interactivity";
+import { GridLines } from "~/components/landing/grid-lines";
+import { IntegrationCategories } from "~/components/landing/integration-categories";
 
 export default function Home() {
   return (
