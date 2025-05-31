@@ -2,6 +2,11 @@
   /* Single progress variable (0 to 1) set by JavaScript */
   --wheel-progress: 0;
 
+  /* Grid line animation timing */
+  --grid-line-duration: 1.6s;
+  --grid-line-delay-step: 0.2s;
+  --grid-line-easing: ease-out;
+
   /* Viewport variables (set by JavaScript) */
   --viewport-width: 100vw;
   --viewport-height: 100vh;
@@ -15,6 +20,9 @@
   --center-start: 5;
   --center-size: 2;
   --card-gap: 12px;
+
+  /* Center card border configuration */
+  --cc-border-width: 1px;
 
   /* Calculated grid dimensions */
   --cell-width: calc(var(--container-width) / var(--grid-size));
@@ -64,6 +72,22 @@
       var(--expansion-phase)
   );
 
+  /* Center card visual boundaries (including border) */
+  --cc-visual-top: calc(
+    var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+  );
+  --cc-visual-bottom: calc(
+    var(--cc-current-y) + var(--cc-current-size) / 2 - var(--card-gap) / 2 -
+      var(--cc-border-width) / 2
+  );
+  --cc-visual-left: calc(
+    var(--cc-current-x) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+  );
+  --cc-visual-right: calc(
+    var(--cc-current-x) + var(--cc-current-size) / 2 - var(--card-gap) / 2 -
+      var(--cc-border-width) / 2
+  );
+
   /* Component opacity and scale */
   --grid-lines-opacity: calc(1 - var(--expansion-phase) * 0.8);
   --integration-container-opacity: calc(
@@ -96,6 +120,12 @@
 
   /* Instant transitions - no more delays */
   transition: none;
+
+  /* Border animation - appears after grid lines finish */
+  border: 1px solid transparent;
+  animation: showBorder 0.3s ease-out
+    calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.1s)
+    forwards;
 }
 
 /* Center card text with pure CSS opacity animation */
@@ -141,51 +171,56 @@
   opacity: var(--grid-lines-opacity);
   transition: opacity 0.2s ease-out;
   will-change: opacity;
+  z-index: 10; /* Ensure grid lines appear above center card during animation */
 }
 
-/* Grid line elements - simplified full lines that intersect the center card */
+/* Grid line elements - aligned with center card visual boundaries */
 .grid-line-top {
   position: absolute;
   height: 1px;
-  top: calc(
-    var(--cc-current-y, 50vh) - var(--cc-current-size, 600px) / 2 +
-      var(--card-gap, 12px) / 2
-  );
+  top: var(--cc-visual-top);
   left: 0;
   width: 100vw;
+  transform-origin: right center;
+  transform: scaleX(0);
+  animation: drawFromRight var(--grid-line-duration) var(--grid-line-easing)
+    forwards;
 }
 
 .grid-line-bottom {
   position: absolute;
   height: 1px;
-  top: calc(
-    var(--cc-current-y, 50vh) + var(--cc-current-size, 600px) / 2 -
-      var(--card-gap, 12px) / 2
-  );
+  top: var(--cc-visual-bottom);
   left: 0;
   width: 100vw;
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: drawFromLeft var(--grid-line-duration) var(--grid-line-easing)
+    var(--grid-line-delay-step) forwards;
 }
 
 .grid-line-left {
   position: absolute;
   width: 1px;
-  left: calc(
-    var(--cc-current-x, 50vw) - var(--cc-current-size, 600px) / 2 +
-      var(--card-gap, 12px) / 2
-  );
+  left: var(--cc-visual-left);
   top: 0;
   height: 100vh;
+  transform-origin: center top;
+  transform: scaleY(0);
+  animation: drawFromTop var(--grid-line-duration) var(--grid-line-easing)
+    calc(var(--grid-line-delay-step) * 2) forwards;
 }
 
 .grid-line-right {
   position: absolute;
   width: 1px;
-  left: calc(
-    var(--cc-current-x, 50vw) + var(--cc-current-size, 600px) / 2 -
-      var(--card-gap, 12px) / 2
-  );
+  left: var(--cc-visual-right);
   top: 0;
   height: 100vh;
+  transform-origin: center bottom;
+  transform: scaleY(0);
+  animation: drawFromBottom var(--grid-line-duration) var(--grid-line-easing)
+    calc(var(--grid-line-delay-step) * 3) forwards;
 }
 
 /* PERFORMANCE OPTIMIZED: Integration categories with instant response */
@@ -406,5 +441,52 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+/* Grid line drawing animations */
+@keyframes drawFromRight {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes drawFromLeft {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes drawFromTop {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes drawFromBottom {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Center card border animation */
+@keyframes showBorder {
+  from {
+    border-color: transparent;
+  }
+  to {
+    border-color: hsl(var(--border));
   }
 }
