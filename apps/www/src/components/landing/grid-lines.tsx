@@ -8,21 +8,13 @@ export const GridLines = () => {
         "optimized-grid-lines",
       )}
     >
-      {/* Top horizontal lines */}
-      <div className="grid-line-h-top-left" />
-      <div className="grid-line-h-top-right" />
+      {/* Single horizontal lines */}
+      <div className="grid-line-top bg-border" />
+      <div className="grid-line-bottom bg-border" />
 
-      {/* Bottom horizontal lines */}
-      <div className="grid-line-h-bottom-left" />
-      <div className="grid-line-h-bottom-right" />
-
-      {/* Left vertical lines */}
-      <div className="grid-line-v-left-top" />
-      <div className="grid-line-v-left-bottom" />
-
-      {/* Right vertical lines */}
-      <div className="grid-line-v-right-top" />
-      <div className="grid-line-v-right-bottom" />
+      {/* Single vertical lines */}
+      <div className="grid-line-left bg-border" />
+      <div className="grid-line-right bg-border" />
     </div>
   );
 };

@@ -143,77 +143,49 @@
   will-change: opacity;
 }
 
-/* Grid line elements - no transitions for instant response */
-.grid-line-h-top-left {
+/* Grid line elements - simplified full lines that intersect the center card */
+.grid-line-top {
   position: absolute;
   height: 1px;
-  background-color: hsl(var(--border));
-  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+  top: calc(
+    var(--cc-current-y, 50vh) - var(--cc-current-size, 600px) / 2 +
+      var(--card-gap, 12px) / 2
+  );
   left: 0;
-  width: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
+  width: 100vw;
 }
 
-.grid-line-h-top-right {
+.grid-line-bottom {
   position: absolute;
   height: 1px;
-  background-color: hsl(var(--border));
-  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
-  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
-  width: calc(100vw - (var(--cc-current-x) + var(--cc-current-size) / 2));
-}
-
-.grid-line-h-bottom-left {
-  position: absolute;
-  height: 1px;
-  background-color: hsl(var(--border));
-  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
+  top: calc(
+    var(--cc-current-y, 50vh) + var(--cc-current-size, 600px) / 2 -
+      var(--card-gap, 12px) / 2
+  );
   left: 0;
-  width: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
+  width: 100vw;
 }
 
-.grid-line-h-bottom-right {
-  position: absolute;
-  height: 1px;
-  background-color: hsl(var(--border));
-  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
-  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
-  width: calc(100vw - (var(--cc-current-x) + var(--cc-current-size) / 2));
-}
-
-.grid-line-v-left-top {
+.grid-line-left {
   position: absolute;
   width: 1px;
-  background-color: hsl(var(--border));
-  left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
+  left: calc(
+    var(--cc-current-x, 50vw) - var(--cc-current-size, 600px) / 2 +
+      var(--card-gap, 12px) / 2
+  );
   top: 0;
-  height: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+  height: 100vh;
 }
 
-.grid-line-v-left-bottom {
+.grid-line-right {
   position: absolute;
   width: 1px;
-  background-color: hsl(var(--border));
-  left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
-  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
-  height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
-}
-
-.grid-line-v-right-top {
-  position: absolute;
-  width: 1px;
-  background-color: hsl(var(--border));
-  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
+  left: calc(
+    var(--cc-current-x, 50vw) + var(--cc-current-size, 600px) / 2 -
+      var(--card-gap, 12px) / 2
+  );
   top: 0;
-  height: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
-}
-
-.grid-line-v-right-bottom {
-  position: absolute;
-  width: 1px;
-  background-color: hsl(var(--border));
-  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
-  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
-  height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
+  height: 100vh;
 }
 
 /* PERFORMANCE OPTIMIZED: Integration categories with instant response */
