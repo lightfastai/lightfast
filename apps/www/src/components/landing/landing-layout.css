@@ -288,7 +288,7 @@
 }
 
 /* Interactive & Live - Right edge, bottom portion */
-.integration-card[data-category="interactive-live"] {
+.integration-card[data-category="interactive--live"] {
   left: calc(
     100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span)
   );
@@ -312,33 +312,33 @@
 }
 
 .integration-card[data-category="game-engines"] {
-  /* Game Engines: colStart=2, rowStart=5, colSpan=3, rowSpan=7 - wraps around center card */
+  /* Game Engines: top starts at center card top border, width ends at center card left border */
   left: calc(var(--grid-offset-x) + var(--cell-width) * 2);
-  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
+  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
   width: calc(
     var(--cc-current-x) - var(--cc-current-size) / 2 - var(--grid-offset-x) -
       var(--cell-width) * 2
   );
-  height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
+  height: calc(100vh - (var(--cc-current-y) - var(--cc-current-size) / 2));
 }
 
-.integration-card[data-category="video-vfx"] {
-  /* Video & VFX: colStart=7, rowStart=0, colSpan=3, rowSpan=7 - from center card right to col 10 */
+.integration-card[data-category="video--vfx"] {
+  /* Video & VFX: starts exactly at center card right border, ends where Design Tools begins */
   left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
   top: 0;
   width: calc(
-    var(--grid-offset-x) + var(--cell-width) * 10 -
+    100vw - var(--grid-offset-x) - var(--cell-width) * 2 -
       (var(--cc-current-x) + var(--cc-current-size) / 2)
   );
   height: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
 }
 
-.integration-card[data-category="3d-texturing-cad"] {
-  /* 3D Texturing & CAD: colStart=5, rowStart=7, colSpan=5, rowSpan=5 - from center card left to col 10 */
+.integration-card[data-category="3d-texturing--cad"] {
+  /* 3D Texturing & CAD: starts exactly at center card left border, ends where Interactive & Live begins */
   left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
   top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
   width: calc(
-    var(--grid-offset-x) + var(--cell-width) * 10 -
+    100vw - var(--grid-offset-x) - var(--cell-width) * 2 -
       (var(--cc-current-x) - var(--cc-current-size) / 2)
   );
   height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
@@ -544,6 +544,9 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.4s ease;
   overflow: hidden;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .video-vfx-card-hovered {
@@ -648,6 +651,9 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.4s ease;
   overflow: hidden;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .interactive-live-card-hovered {
