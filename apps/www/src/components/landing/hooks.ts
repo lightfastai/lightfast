@@ -31,9 +31,7 @@ export const useWheelProgress = () => {
       );
 
       // Only schedule update if not already scheduled
-      if (rafIdRef.current === null) {
-        rafIdRef.current = requestAnimationFrame(updateProgress);
-      }
+      rafIdRef.current ??= requestAnimationFrame(updateProgress);
     };
 
     // Set initial progress
@@ -45,6 +43,58 @@ export const useWheelProgress = () => {
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
+    };
+  }, []);
+};
+
+// Custom hook to handle scroll locking during loading animations
+export const useScrollLock = () => {
+  useEffect(() => {
+    // Calculate total loading animation duration
+    // Grid lines (1.6s) + delays (0.6s) + text animation (0.6s) + buffer (0.2s)
+    const loadingDuration = 3000; // 3 seconds
+
+    // Lock scroll immediately
+    document.documentElement.classList.add("landing-scroll-locked");
+    document.body.classList.add("landing-scroll-locked");
+
+    // Prevent wheel, touch, and keyboard scrolling
+    const preventDefault = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const preventKeys = (e: KeyboardEvent) => {
+      // Prevent arrow keys, space, page up/down, home/end
+      if ([32, 33, 34, 35, 36, 37, 38, 39, 40].includes(e.keyCode)) {
+        preventDefault(e);
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener("wheel", preventDefault, { passive: false });
+    document.addEventListener("touchmove", preventDefault, { passive: false });
+    document.addEventListener("keydown", preventKeys, { passive: false });
+
+    // Release scroll lock after animations complete
+    const timeoutId = setTimeout(() => {
+      document.documentElement.classList.remove("landing-scroll-locked");
+      document.body.classList.remove("landing-scroll-locked");
+
+      // Remove event listeners
+      document.removeEventListener("wheel", preventDefault);
+      document.removeEventListener("touchmove", preventDefault);
+      document.removeEventListener("keydown", preventKeys);
+    }, loadingDuration);
+
+    // Cleanup on unmount
+    return () => {
+      clearTimeout(timeoutId);
+      document.documentElement.classList.remove("landing-scroll-locked");
+      document.body.classList.remove("landing-scroll-locked");
+      document.removeEventListener("wheel", preventDefault);
+      document.removeEventListener("touchmove", preventDefault);
+      document.removeEventListener("keydown", preventKeys);
     };
   }, []);
 };

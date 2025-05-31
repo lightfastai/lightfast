@@ -99,6 +99,11 @@
   /* Text and logo animation */
   --text-opacity: calc(1 - var(--text-fade-phase));
   --logo-move-factor: var(--logo-move-phase);
+
+  /* Animation timing for scroll lock */
+  --loading-animation-duration: calc(
+    var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.6s + 0.2s
+  ); /* Grid lines + text delay + text duration + buffer */
 }
 
 /* PERFORMANCE OPTIMIZED: Transform-based center card animation */
@@ -130,15 +135,25 @@
 
 /* Center card text with loading animation */
 .center-card-text {
+  /* Initial state for loading animation */
   opacity: 0;
   transform: translateY(20px);
+
+  /* Loading animation */
   animation: fadeInUp 0.6s ease-out
     calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards;
 
-  /* Scroll-based opacity for later scroll interactions */
-  /* opacity: var(--text-opacity); */
-  /* transition: opacity 0.2s ease-out; */
+  /* After loading, controlled by scroll interactions */
+  animation-fill-mode: forwards;
   will-change: opacity, transform;
+}
+
+/* Text opacity controlled by scroll after loading completes */
+.center-card-text.loading-complete {
+  opacity: var(--text-opacity) !important;
+  transform: translateY(0) !important;
+  transition: opacity 0.2s ease-out;
+  animation: none;
 }
 
 /* Center card logo with loading animation */
@@ -420,6 +435,20 @@
   opacity: var(--category-phase);
   transition: opacity 0.2s ease-out;
   will-change: opacity;
+}
+
+/* Scroll lock during loading animations */
+.landing-scroll-locked {
+  overflow: hidden;
+  touch-action: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.landing-scroll-locked body {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
 }
 
 /* ===== KEYFRAMES FOR COMPONENTS ===== */
