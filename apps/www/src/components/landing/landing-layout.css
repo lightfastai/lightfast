@@ -128,14 +128,20 @@
     forwards;
 }
 
-/* Center card text with pure CSS opacity animation */
+/* Center card text with loading animation */
 .center-card-text {
-  opacity: var(--text-opacity);
-  transition: opacity 0.2s ease-out;
-  will-change: opacity;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease-out
+    calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards;
+
+  /* Scroll-based opacity for later scroll interactions */
+  /* opacity: var(--text-opacity); */
+  /* transition: opacity 0.2s ease-out; */
+  will-change: opacity, transform;
 }
 
-/* Center card logo with pure CSS transform animation */
+/* Center card logo with loading animation */
 .center-card-logo {
   width: 48px;
   height: 48px;
@@ -143,23 +149,14 @@
   /* Actual card size after gap adjustments */
   --actual-card-size: calc(var(--cc-current-size) - var(--card-gap));
 
-  /* Logo position interpolation using actual card size */
-  --logo-start-x: 32px;
-  --logo-start-y: calc(var(--actual-card-size) - 32px - 48px);
-  --logo-final-x: calc((var(--actual-card-size) - 48px) / 2);
-  --logo-final-y: calc((var(--actual-card-size) - 48px) / 2);
+  /* Start position - center of card */
+  left: calc((var(--actual-card-size) - 48px) / 2);
+  top: calc((var(--actual-card-size) - 48px) / 2);
 
-  --logo-current-x: calc(
-    var(--logo-start-x) + (var(--logo-final-x) - var(--logo-start-x)) *
-      var(--logo-move-factor)
-  );
-  --logo-current-y: calc(
-    var(--logo-start-y) + (var(--logo-final-y) - var(--logo-start-y)) *
-      var(--logo-move-factor)
-  );
-
-  left: var(--logo-current-x);
-  top: var(--logo-current-y);
+  /* Loading animation - starts with grid lines, moves to bottom-left */
+  opacity: 1;
+  animation: logoMoveToCorner var(--grid-line-duration) var(--grid-line-easing)
+    forwards;
 
   /* Performance optimizations */
   will-change: left, top;
@@ -488,5 +485,47 @@
   }
   to {
     border-color: hsl(var(--border));
+  }
+}
+
+/* Center card content animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Logo movement animation - starts big, scales down fast, then moves */
+@keyframes logoMoveToCorner {
+  0% {
+    left: calc((var(--actual-card-size) - 48px) / 2);
+    top: calc((var(--actual-card-size) - 48px) / 2);
+    transform: scale(4);
+  }
+  20% {
+    left: calc((var(--actual-card-size) - 48px) / 2);
+    top: calc((var(--actual-card-size) - 48px) / 2);
+    transform: scale(1);
+  }
+  100% {
+    left: 32px;
+    top: calc(var(--actual-card-size) - 32px - 48px);
+    transform: scale(1);
   }
 }
