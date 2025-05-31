@@ -242,86 +242,103 @@
   transition:
     opacity 0.2s ease-out,
     transform 0.2s ease-out;
+  transition-delay: calc(var(--index) * 50ms);
   will-change: opacity, transform;
 }
 
-/* Default grid positioning with edge-to-edge support */
-.integration-card-default {
-  left: calc(var(--grid-offset-x) + var(--cell-width) * var(--grid-col-start));
-  top: calc(var(--grid-offset-y) + var(--cell-height) * var(--grid-row-start));
-  width: calc(var(--cell-width) * var(--grid-col-span));
-  height: calc(var(--cell-height) * var(--grid-row-span));
+/* Base positioning for all integration cards using CSS custom properties */
+.integration-card {
+  position: absolute;
+
+  /* Default positioning - works for most cards */
+  left: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-start));
+  top: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-start));
+  width: calc(var(--cell-width) * var(--col-span));
+  height: calc(var(--cell-height) * var(--row-span));
 }
 
-/* Edge-to-edge positioning for cards that should touch viewport edges */
-.integration-card-edge-left {
+/* Edge-to-edge positioning using data attributes */
+
+/* 3D Modeling - Left edge, top portion */
+.integration-card[data-category="3d-modeling"] {
   left: 0;
-  top: calc(var(--full-cell-height) * var(--grid-row-start));
-  width: calc(var(--full-cell-width) * var(--grid-col-span));
-  height: calc(var(--full-cell-height) * var(--grid-row-span));
-}
-
-.integration-card-edge-right {
-  left: calc(100vw - var(--full-cell-width) * var(--grid-col-span));
-  top: calc(var(--full-cell-height) * var(--grid-row-start));
-  width: calc(var(--full-cell-width) * var(--grid-col-span));
-  height: calc(var(--full-cell-height) * var(--grid-row-span));
-}
-
-.integration-card-edge-top {
-  left: calc(var(--full-cell-width) * var(--grid-col-start));
   top: 0;
-  width: calc(var(--full-cell-width) * var(--grid-col-span));
-  height: calc(var(--full-cell-height) * var(--grid-row-span));
+  width: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-span));
+  height: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-span));
 }
 
-.integration-card-edge-bottom {
-  left: calc(var(--full-cell-width) * var(--grid-col-start));
-  top: calc(100vh - var(--full-cell-height) * var(--grid-row-span));
-  width: calc(var(--full-cell-width) * var(--grid-col-span));
-  height: calc(var(--full-cell-height) * var(--grid-row-span));
+/* Audio Production - Left edge, bottom portion */
+.integration-card[data-category="audio-production"] {
+  left: 0;
+  top: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-start));
+  width: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-span));
+  height: calc(
+    100vh - (var(--grid-offset-y) + var(--cell-height) * var(--row-start))
+  );
 }
 
-/* Special positioning for cards that align with center card - with edge-to-edge support */
-.integration-card-2d-graphics {
-  /* 2D Graphics: from top edge to center card top, from left position to center card right */
-  left: calc(var(--full-cell-width) * 2);
+/* Design Tools - Right edge, top portion */
+.integration-card[data-category="design-tools"] {
+  left: calc(
+    100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span)
+  );
+  top: 0;
+  width: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-span));
+  height: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-span));
+}
+
+/* Interactive & Live - Right edge, bottom portion */
+.integration-card[data-category="interactive-live"] {
+  left: calc(
+    100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span)
+  );
+  top: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-start));
+  width: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-span));
+  height: calc(
+    100vh - (var(--grid-offset-y) + var(--cell-height) * var(--row-start))
+  );
+}
+
+/* Center card wrapping - preserves exact behavior */
+.integration-card[data-category="2d-graphics"] {
+  /* 2D Graphics: colStart=2, rowStart=0, colSpan=5, rowSpan=5 - wraps around center card */
+  left: calc(var(--grid-offset-x) + var(--cell-width) * 2);
   top: 0;
   width: calc(
-    var(--cc-current-x) + var(--cc-current-size) / 2 - var(--full-cell-width) *
-      2
+    var(--cc-current-x) + var(--cc-current-size) / 2 - var(--grid-offset-x) -
+      var(--cell-width) * 2
   );
   height: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
 }
 
-.integration-card-game-engines {
-  /* Game Engines: from center card top to bottom edge, from left position to center card left */
-  left: calc(var(--full-cell-width) * 2);
-  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+.integration-card[data-category="game-engines"] {
+  /* Game Engines: colStart=2, rowStart=5, colSpan=3, rowSpan=7 - wraps around center card */
+  left: calc(var(--grid-offset-x) + var(--cell-width) * 2);
+  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
   width: calc(
-    var(--cc-current-x) - var(--cc-current-size) / 2 - var(--full-cell-width) *
-      2
+    var(--cc-current-x) - var(--cc-current-size) / 2 - var(--grid-offset-x) -
+      var(--cell-width) * 2
   );
-  height: calc(100vh - (var(--cc-current-y) - var(--cc-current-size) / 2));
+  height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
 }
 
-.integration-card-video-vfx {
-  /* Video & VFX: from top edge to center card bottom, from center card right to right position */
+.integration-card[data-category="video-vfx"] {
+  /* Video & VFX: colStart=7, rowStart=0, colSpan=3, rowSpan=7 - from center card right to col 10 */
   left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
   top: 0;
   width: calc(
-    var(--full-cell-width) * 10 -
+    var(--grid-offset-x) + var(--cell-width) * 10 -
       (var(--cc-current-x) + var(--cc-current-size) / 2)
   );
   height: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
 }
 
-.integration-card-3d-texturing {
-  /* 3D Texturing & CAD: from center card bottom to bottom edge, from center card left to right position */
+.integration-card[data-category="3d-texturing-cad"] {
+  /* 3D Texturing & CAD: colStart=5, rowStart=7, colSpan=5, rowSpan=5 - from center card left to col 10 */
   left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
   top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
   width: calc(
-    var(--full-cell-width) * 10 -
+    var(--grid-offset-x) + var(--cell-width) * 10 -
       (var(--cc-current-x) - var(--cc-current-size) / 2)
   );
   height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
