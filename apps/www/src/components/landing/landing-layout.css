@@ -14,6 +14,7 @@
   --grid-offset-y: 64px;
   --center-start: 5;
   --center-size: 2;
+  --card-gap: 12px;
 
   /* Calculated grid dimensions */
   --cell-width: calc(var(--container-width) / var(--grid-size));
@@ -35,7 +36,8 @@
     calc(min(var(--viewport-width), var(--viewport-height)) * 0.6)
   );
   --cc-final-size: calc(
-    min(var(--cell-width), var(--cell-height)) * var(--center-size)
+    (min(var(--cell-width), var(--cell-height)) * var(--center-size)) -
+      var(--card-gap)
   );
   --cc-current-size: calc(
     var(--cc-start-size) + (var(--cc-final-size) - var(--cc-start-size)) *
@@ -235,98 +237,166 @@
 .integration-card {
   position: absolute;
 
-  /* Default positioning - works for most cards */
-  left: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-start));
-  top: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-start));
-  width: calc(var(--cell-width) * var(--col-span));
-  height: calc(var(--cell-height) * var(--row-span));
+  /* Default positioning - works for most cards with gaps */
+  left: calc(
+    var(--grid-offset-x) + var(--cell-width) * var(--col-start) +
+      var(--card-gap) / 2
+  );
+  top: calc(
+    var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
+      var(--card-gap) / 2
+  );
+  width: calc(var(--cell-width) * var(--col-span) - var(--card-gap));
+  height: calc(var(--cell-height) * var(--row-span) - var(--card-gap));
 }
 
 /* Edge-to-edge positioning using data attributes */
 
 /* 3D Modeling - Left edge, top portion */
 .integration-card[data-category="3d-modeling"] {
-  left: 0;
-  top: 0;
-  width: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-span));
-  height: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-span));
+  left: var(--card-gap);
+  top: var(--card-gap);
+  width: calc(
+    var(--grid-offset-x) + var(--cell-width) * var(--col-span) -
+      var(--card-gap) - var(--card-gap) / 2
+  );
+  height: calc(
+    var(--grid-offset-y) + var(--cell-height) * var(--row-span) -
+      var(--card-gap) - var(--card-gap) / 2
+  );
 }
 
 /* Audio Production - Left edge, bottom portion */
 .integration-card[data-category="audio-production"] {
-  left: 0;
-  top: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-start));
-  width: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-span));
+  left: var(--card-gap);
+  top: calc(
+    var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
+      var(--card-gap) / 2
+  );
+  width: calc(
+    var(--grid-offset-x) + var(--cell-width) * var(--col-span) -
+      var(--card-gap) - var(--card-gap) / 2
+  );
   height: calc(
-    100vh - (var(--grid-offset-y) + var(--cell-height) * var(--row-start))
+    100vh -
+      (
+        var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
+          var(--card-gap) / 2
+      ) -
+      var(--card-gap)
   );
 }
 
 /* Design Tools - Right edge, top portion */
 .integration-card[data-category="design-tools"] {
   left: calc(
-    100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span)
+    100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span) +
+      var(--card-gap) / 2
   );
-  top: 0;
-  width: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-span));
-  height: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-span));
+  top: var(--card-gap);
+  width: calc(
+    var(--grid-offset-x) + var(--cell-width) * var(--col-span) -
+      var(--card-gap) - var(--card-gap) / 2
+  );
+  height: calc(
+    var(--grid-offset-y) + var(--cell-height) * var(--row-span) -
+      var(--card-gap) - var(--card-gap) / 2
+  );
 }
 
 /* Interactive & Live - Right edge, bottom portion */
 .integration-card[data-category="interactive--live"] {
   left: calc(
-    100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span)
+    100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span) +
+      var(--card-gap) / 2
   );
-  top: calc(var(--grid-offset-y) + var(--cell-height) * var(--row-start));
-  width: calc(var(--grid-offset-x) + var(--cell-width) * var(--col-span));
+  top: calc(
+    var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
+      var(--card-gap) / 2
+  );
+  width: calc(
+    var(--grid-offset-x) + var(--cell-width) * var(--col-span) -
+      var(--card-gap) - var(--card-gap) / 2
+  );
   height: calc(
-    100vh - (var(--grid-offset-y) + var(--cell-height) * var(--row-start))
+    100vh -
+      (
+        var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
+          var(--card-gap) / 2
+      ) -
+      var(--card-gap)
   );
 }
 
 /* Center card wrapping - preserves exact behavior */
 .integration-card[data-category="2d-graphics"] {
   /* 2D Graphics: colStart=2, rowStart=0, colSpan=5, rowSpan=5 - wraps around center card */
-  left: calc(var(--grid-offset-x) + var(--cell-width) * 2);
-  top: 0;
+  left: calc(
+    var(--grid-offset-x) + var(--cell-width) * 2 + var(--card-gap) / 2
+  );
+  top: var(--card-gap);
   width: calc(
     var(--cc-current-x) + var(--cc-current-size) / 2 - var(--grid-offset-x) -
-      var(--cell-width) * 2
+      var(--cell-width) * 2 - var(--card-gap)
   );
-  height: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+  height: calc(
+    var(--cc-current-y) - var(--cc-current-size) / 2 - var(--card-gap) -
+      var(--card-gap) / 2
+  );
 }
 
 .integration-card[data-category="game-engines"] {
   /* Game Engines: top starts at center card top border, width ends at center card left border */
-  left: calc(var(--grid-offset-x) + var(--cell-width) * 2);
-  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+  left: calc(
+    var(--grid-offset-x) + var(--cell-width) * 2 + var(--card-gap) / 2
+  );
+  top: calc(
+    var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+  );
   width: calc(
     var(--cc-current-x) - var(--cc-current-size) / 2 - var(--grid-offset-x) -
-      var(--cell-width) * 2
+      var(--cell-width) * 2 - var(--card-gap)
   );
-  height: calc(100vh - (var(--cc-current-y) - var(--cc-current-size) / 2));
+  height: calc(
+    100vh -
+      (var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2) -
+      var(--card-gap)
+  );
 }
 
 .integration-card[data-category="video--vfx"] {
   /* Video & VFX: starts exactly at center card right border, ends where Design Tools begins */
-  left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
-  top: 0;
+  left: calc(
+    var(--cc-current-x) + var(--cc-current-size) / 2 + var(--card-gap) / 2
+  );
+  top: var(--card-gap);
   width: calc(
     100vw - var(--grid-offset-x) - var(--cell-width) * 2 -
-      (var(--cc-current-x) + var(--cc-current-size) / 2)
+      (var(--cc-current-x) + var(--cc-current-size) / 2) - var(--card-gap)
   );
-  height: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
+  height: calc(
+    var(--cc-current-y) + var(--cc-current-size) / 2 - var(--card-gap) -
+      var(--card-gap) / 2
+  );
 }
 
 .integration-card[data-category="3d-texturing--cad"] {
   /* 3D Texturing & CAD: starts exactly at center card left border, ends where Interactive & Live begins */
-  left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
-  top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
+  left: calc(
+    var(--cc-current-x) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+  );
+  top: calc(
+    var(--cc-current-y) + var(--cc-current-size) / 2 + var(--card-gap) / 2
+  );
   width: calc(
     100vw - var(--grid-offset-x) - var(--cell-width) * 2 -
-      (var(--cc-current-x) - var(--cc-current-size) / 2)
+      (var(--cc-current-x) - var(--cc-current-size) / 2) - var(--card-gap)
   );
-  height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
+  height: calc(
+    100vh -
+      (var(--cc-current-y) + var(--cc-current-size) / 2 + var(--card-gap) / 2) -
+      var(--card-gap)
+  );
 }
 
 /* PERFORMANCE OPTIMIZED: Page header with instant response */
