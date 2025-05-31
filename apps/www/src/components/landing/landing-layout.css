@@ -49,11 +49,11 @@
   --cc-start-y: calc(var(--viewport-height) / 2);
   --cc-final-x: calc(
     var(--grid-offset-x) + (var(--center-start) + var(--center-size) / 2) *
-      var(--cell-width)
+      var(--cell-width) + var(--card-gap) / 2
   );
   --cc-final-y: calc(
     var(--grid-offset-y) + (var(--center-start) + var(--center-size) / 2) *
-      var(--cell-height)
+      var(--cell-height) + var(--card-gap) / 2
   );
   --cc-current-x: calc(
     var(--cc-start-x) + (var(--cc-final-x) - var(--cc-start-x)) *
@@ -81,10 +81,14 @@
 .optimized-center-card {
   /* Use transforms for GPU acceleration instead of layout properties */
   position: absolute;
-  width: var(--cc-current-size);
-  height: var(--cc-current-size);
-  left: calc(var(--cc-current-x) - var(--cc-current-size) / 2);
-  top: calc(var(--cc-current-y) - var(--cc-current-size) / 2);
+  width: calc(var(--cc-current-size) - var(--card-gap));
+  height: calc(var(--cc-current-size) - var(--card-gap));
+  left: calc(
+    var(--cc-current-x) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+  );
+  top: calc(
+    var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+  );
 
   /* Performance optimizations */
   will-change: transform, width, height;
@@ -106,11 +110,14 @@
   width: 48px;
   height: 48px;
 
-  /* Logo position interpolation using pure CSS */
+  /* Actual card size after gap adjustments */
+  --actual-card-size: calc(var(--cc-current-size) - var(--card-gap));
+
+  /* Logo position interpolation using actual card size */
   --logo-start-x: 32px;
-  --logo-start-y: calc(var(--cc-current-size) - 32px - 48px);
-  --logo-final-x: calc((var(--cc-current-size) - 48px) / 2);
-  --logo-final-y: calc((var(--cc-current-size) - 48px) / 2);
+  --logo-start-y: calc(var(--actual-card-size) - 32px - 48px);
+  --logo-final-x: calc((var(--actual-card-size) - 48px) / 2);
+  --logo-final-y: calc((var(--actual-card-size) - 48px) / 2);
 
   --logo-current-x: calc(
     var(--logo-start-x) + (var(--logo-final-x) - var(--logo-start-x)) *
