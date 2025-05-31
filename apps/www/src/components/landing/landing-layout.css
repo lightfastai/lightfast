@@ -127,16 +127,6 @@
   transition: none;
 }
 
-/* Legacy center card (keeping for compatibility) */
-.animated-center-card {
-  width: var(--global-cc-current-width);
-  height: var(--global-cc-current-height);
-  left: var(--global-cc-current-left);
-  top: var(--global-cc-current-top);
-  position: absolute;
-  overflow: hidden;
-}
-
 /* PERFORMANCE OPTIMIZED: Grid lines with instant response */
 .optimized-grid-lines {
   opacity: var(--grid-lines-opacity);
@@ -215,11 +205,6 @@
   left: calc(var(--cc-current-x) + var(--cc-current-size) / 2);
   top: calc(var(--cc-current-y) + var(--cc-current-size) / 2);
   height: calc(100vh - (var(--cc-current-y) + var(--cc-current-size) / 2));
-}
-
-/* Legacy grid lines (keeping for compatibility) */
-.grid-lines-animated {
-  opacity: var(--grid-lines-opacity);
 }
 
 /* PERFORMANCE OPTIMIZED: Integration categories with instant response */
@@ -835,78 +820,4 @@
   100% {
     transform: translateX(1px);
   }
-}
-
-/* Legacy styles (keeping for compatibility) */
-.integration-categories-container-animated {
-  opacity: var(--integration-container-opacity);
-}
-
-.integration-category-card-base {
-  position: absolute;
-  opacity: var(--integration-card-opacity);
-  transform: scale(var(--integration-card-scale));
-}
-
-/* Modifier classes for cards aligning with CenterCard */
-/* These assume that the CenterCard's CSS variables (--cc-current-left, --cc-current-width, etc.) */
-/* are accessible/inherited or we set them on a common parent for IntegrationCategories as well. */
-/* For simplicity, we'll assume they can be read. */
-
-/* We need to know grid-offset-x to correctly align with centerCard using its absolute CSS vars */
-/* This is a bit tricky because --cc-current-left is an absolute viewport position. */
-/* The category cards are positioned relative to their grid container which has gridOffsetX. */
-/* So, center_card_left_relative_to_grid = var(--cc-current-left) - var(--landing-grid-offset-x) */
-
-.align-2d-graphics {
-  --center-card-left-in-grid: calc(
-    var(--global-cc-current-left) - var(--landing-grid-offset-x)
-  );
-  --center-card-width-val: var(--global-cc-current-width);
-  --center-card-right-in-grid: calc(
-    var(--center-card-left-in-grid) + var(--center-card-width-val)
-  );
-  left: calc(
-    var(--landing-grid-cell-width) * 2
-  ); /* colStart is 2 for 2D Graphics */
-  width: calc(
-    var(--center-card-right-in-grid) - (var(--landing-grid-cell-width) * 2)
-  );
-}
-
-.align-game-engines {
-  --center-card-left-in-grid: calc(
-    var(--global-cc-current-left) - var(--landing-grid-offset-x)
-  );
-  left: calc(
-    var(--landing-grid-cell-width) * 2
-  ); /* colStart is 2 for Game Engines */
-  width: calc(
-    var(--center-card-left-in-grid) - (var(--landing-grid-cell-width) * 2)
-  );
-}
-
-.align-video-vfx {
-  --center-card-left-in-grid: calc(
-    var(--global-cc-current-left) - var(--landing-grid-offset-x)
-  );
-  --center-card-width-val: var(--global-cc-current-width);
-  --center-card-right-in-grid: calc(
-    var(--center-card-left-in-grid) + var(--center-card-width-val)
-  );
-  left: var(--center-card-right-in-grid);
-  width: calc(
-    (var(--landing-grid-cell-width) * (7 + 3)) -
-      var(--center-card-right-in-grid)
-  );
-}
-
-.align-3d-texturing-cad {
-  --center-card-left-in-grid: calc(
-    var(--global-cc-current-left) - var(--landing-grid-offset-x)
-  );
-  left: var(--center-card-left-in-grid);
-  width: calc(
-    (var(--landing-grid-cell-width) * (5 + 5)) - var(--center-card-left-in-grid)
-  );
 }
