@@ -1,6 +1,25 @@
 import { cn } from "@repo/ui/lib/utils";
 
+import type { IntegrationCategory } from "./constants";
+import { ThreeDModelingCard } from "./cards/3d-modeling-card";
+import { DefaultCard } from "./cards/default-card";
+import { InteractiveLiveCard } from "./cards/interactive-live-card";
+import { VideoVFXCard } from "./cards/video-vfx-card";
 import { integrationCategories } from "./constants";
+
+// Function to render the appropriate card component
+function renderUniqueCard(category: IntegrationCategory) {
+  switch (category.name) {
+    case "3D Modeling":
+      return <ThreeDModelingCard category={category} />;
+    case "Video & VFX":
+      return <VideoVFXCard category={category} />;
+    case "Interactive & Live":
+      return <InteractiveLiveCard category={category} />;
+    default:
+      return <DefaultCard category={category} />;
+  }
+}
 
 export const IntegrationCategories = () => {
   return (
@@ -72,28 +91,7 @@ export const IntegrationCategories = () => {
               } as React.CSSProperties
             }
           >
-            <div className="flex flex-col">
-              <span className="text-foreground/90 mb-4 text-2xl font-semibold">
-                {cat.name}
-              </span>
-              <div className="flex flex-col gap-1">
-                <span className="text-muted-foreground text-sm">
-                  {cat.apps} apps
-                </span>
-                <div className="flex gap-1">
-                  {cat.liveApps > 0 && (
-                    <span className="bg-primary/20 text-primary rounded-full px-2 py-0.5 text-xs">
-                      {cat.liveApps} Live
-                    </span>
-                  )}
-                  {cat.plannedApps > 0 && (
-                    <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
-                      {cat.plannedApps} Soon
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+            {renderUniqueCard(cat)}
           </div>
         );
       })}
