@@ -201,11 +201,46 @@
   opacity: var(--early-access-text-phase);
   transition: opacity 0.3s ease-out;
   will-change: opacity;
+  /* Disable pointer events when not visible */
+  pointer-events: none;
+}
+
+/* Enable pointer events when explicitly activated by scroll state */
+.center-card-early-access-container.pointer-events-active {
   pointer-events: auto;
 }
 
 /* Enable interactions when visible */
 .center-card-early-access-container[data-visible="true"] {
+  pointer-events: auto;
+}
+
+/* Next Phase Button - synchronized with logo animation */
+.center-card-next-button {
+  /* Start invisible for loading animation */
+  opacity: 0;
+  transform: translateY(20px) scale(0.8);
+
+  /* Loading animation sequence: fade in after text appears, then sync with logo */
+  animation:
+    fadeInScale 0.6s ease-out
+      calc(var(--grid-line-duration) + var(--grid-line-delay-step) + 0.2s)
+      forwards,
+    /* After loading completes, sync opacity with logo */ buttonLogoSync 0.1s
+      linear calc(var(--loading-animation-duration)) forwards;
+
+  will-change: opacity, transform;
+  /* Smooth transition during state changes */
+  transition:
+    opacity 0.15s ease-out,
+    transform 0.15s ease-out;
+
+  /* Only show pointer events when visible */
+  pointer-events: none;
+}
+
+/* Enable interactions when button is visible */
+.center-card-next-button[data-visible="true"] {
   pointer-events: auto;
 }
 
@@ -684,5 +719,25 @@
   }
   to {
     opacity: var(--text-opacity);
+  }
+}
+
+/* Button scroll control animation - controls button visibility based on scroll state */
+@keyframes buttonScrollControl {
+  from {
+    opacity: var(--text-fade-phase);
+  }
+  to {
+    opacity: var(--text-fade-phase);
+  }
+}
+
+/* Button logo sync animation - synchronizes button opacity with logo */
+@keyframes buttonLogoSync {
+  from {
+    opacity: var(--text-fade-phase);
+  }
+  to {
+    opacity: var(--text-fade-phase);
   }
 }

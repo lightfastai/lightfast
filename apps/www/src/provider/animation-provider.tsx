@@ -26,7 +26,22 @@ export function AnimationProvider() {
 
   useScrollLock(loadingDuration);
   useScrollIndicator();
-  useBinaryScrollState();
+  const { currentState } = useBinaryScrollState();
+
+  // Manage pointer events for the early access container
+  useEffect(() => {
+    const earlyAccessContainer = document.querySelector(
+      ".center-card-early-access-container",
+    );
+
+    if (earlyAccessContainer) {
+      if (currentState === "earlyAccess") {
+        earlyAccessContainer.classList.add("pointer-events-active");
+      } else {
+        earlyAccessContainer.classList.remove("pointer-events-active");
+      }
+    }
+  }, [currentState]);
 
   useEffect(() => {
     const updateViewportVariables = () => {

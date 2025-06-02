@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { Icons } from "@repo/ui/components/icons";
-import { Button } from "@repo/ui/components/ui/button";
 import { Container } from "@repo/ui/components/ui/container";
 
 export function SiteHeader() {
@@ -15,12 +14,12 @@ export function SiteHeader() {
               <Icons.logo className="w-28" />
             </Link>
           </div>
-          <div className="flex flex-1 items-center justify-end gap-4">
+          {/* <div className="flex flex-1 items-center justify-end gap-4">
             <span className="text-muted-foreground text-sm">Have access?</span>
             <Button variant="default" size="sm" asChild>
               <Link href="/sign-in">Sign in</Link>
             </Button>
-          </div>
+          </div> */}
         </div>
       </Container>
     </header>

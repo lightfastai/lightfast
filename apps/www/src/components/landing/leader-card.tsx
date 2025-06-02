@@ -1,7 +1,18 @@
+import dynamic from "next/dynamic";
+
 import { Icons } from "@repo/ui/components/icons";
 import { cn } from "@repo/ui/lib/utils";
 
 import { CenterCardEarlyAccessForm } from "../early-access/early-access-form";
+
+// Dynamically import the client component
+const NextPhaseButton = dynamic(
+  () =>
+    import("./next-phase-button").then((mod) => ({
+      default: mod.NextPhaseButton,
+    })),
+  { ssr: true },
+);
 
 // Removed streaming text functionality
 
@@ -40,6 +51,9 @@ export const LeaderCard = () => {
           <CenterCardEarlyAccessForm />
         </div>
       </div>
+
+      {/* Next Phase Button (bottom-right, appears during initial phase) */}
+      <NextPhaseButton />
     </div>
   );
 };
