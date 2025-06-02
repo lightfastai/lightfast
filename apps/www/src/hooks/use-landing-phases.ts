@@ -96,12 +96,12 @@ export const defaultPhaseConfig: LandingPhaseConfig = {
       endProgress: 0.7,
     },
     expansion: {
-      enabled: true,
+      enabled: false, // TEMPORARILY DISABLED for testing
       startProgress: 0.6,
       endProgress: 0.8,
     },
     categories: {
-      enabled: true,
+      enabled: false, // TEMPORARILY DISABLED for testing
       startProgress: 0.7,
       endProgress: 1.0,
     },
@@ -244,6 +244,9 @@ export function useLandingPhases(
   // Update CSS variables based on phase states
   const updateCSSVariables = useCallback(
     (states: PhaseStates, progress: number) => {
+      // Only update CSS variables on the client side
+      if (typeof document === "undefined") return;
+
       const root = document.documentElement;
 
       // Update main progress variable

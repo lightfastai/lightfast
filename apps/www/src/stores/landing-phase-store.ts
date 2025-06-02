@@ -186,6 +186,9 @@ export const useLandingPhaseStore = create<LandingPhaseStore>()(
     },
 
     updateCSSVariables: (states: PhaseStates, progress: number) => {
+      // Only update CSS variables on the client side
+      if (typeof document === "undefined") return;
+
       const root = document.documentElement;
 
       // Update main progress variable
