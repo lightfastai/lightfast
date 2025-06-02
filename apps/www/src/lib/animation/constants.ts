@@ -1,168 +1,23 @@
-export interface Application {
-  name: string;
-  status: "live" | "planned" | "future";
-  logo?: string;
-}
+/**
+ * Animation timing constants - read from CSS custom properties
+ * CSS is the single source of truth for timing values
+ *
+ * @deprecated Use useAnimationTiming() hook instead for React components
+ * This file maintains backward compatibility for non-React usage
+ */
 
-export interface IntegrationCategory {
-  name: string;
-  grid: {
-    colStart: number;
-    colSpan: number;
-    rowStart: number;
-    rowSpan: number;
-  };
-  applications: Application[];
-  // Legacy fields for backwards compatibility
-  apps: number;
-  liveApps: number;
-  plannedApps: number;
-}
+// Re-export CSS timing reader for non-React usage
+export {
+  ANIMATION_TIMING,
+  getAnimationTiming,
+  refreshAnimationTiming,
+} from "./css-timing";
 
-// Animation timing constants - keep in sync with CSS custom properties
-export const ANIMATION_TIMING = {
-  // Core animation durations (in milliseconds)
-  GRID_LINE_DURATION: 1600, // 1.6s - matches --grid-line-duration
-  GRID_LINE_DELAY_STEP: 200, // 0.2s - matches --grid-line-delay-step
-  TEXT_ANIMATION_DURATION: 600, // 0.6s
-  ANIMATION_BUFFER: 200, // 0.2s
-
-  // Calculated total loading duration
-  // Grid lines (1.6s) + delays (0.6s = 0.2s * 3) + text animation (0.6s) + buffer (0.2s)
-  get LOADING_DURATION() {
-    return (
-      this.GRID_LINE_DURATION +
-      this.GRID_LINE_DELAY_STEP * 3 +
-      this.TEXT_ANIMATION_DURATION +
-      this.ANIMATION_BUFFER
-    );
-  },
-} as const;
-
-// Integration data for the surrounding cards - using 12x12 grid system
-// Center card will be at cols 5-6, rows 5-6 (2x2 area in middle)
-export const integrationCategories: IntegrationCategory[] = [
-  {
-    name: "3D Modeling",
-    grid: { colStart: 0, colSpan: 2, rowStart: 0, rowSpan: 7 }, // Left side, top portion
-    applications: [
-      {
-        name: "Blender",
-        status: "live",
-        logo: "/creative-app-logos/blender.png",
-      },
-      { name: "Maya", status: "planned" },
-      { name: "Cinema 4D", status: "planned" },
-      { name: "3ds Max", status: "planned" },
-      {
-        name: "Houdini",
-        status: "planned",
-        logo: "/creative-app-logos/houdini.png",
-      },
-    ],
-    apps: 5,
-    liveApps: 1,
-    plannedApps: 4,
-  },
-  {
-    name: "Audio Production",
-    grid: { colStart: 0, colSpan: 2, rowStart: 7, rowSpan: 5 }, // Left side, bottom portion
-    applications: [
-      { name: "Ableton Live", status: "planned" },
-      { name: "Reaper", status: "planned" },
-      { name: "Logic Pro", status: "future" },
-    ],
-    apps: 3,
-    liveApps: 0,
-    plannedApps: 2,
-  },
-  {
-    name: "2D Graphics",
-    grid: { colStart: 2, colSpan: 5, rowStart: 0, rowSpan: 5 }, // Top, left of center
-    applications: [
-      { name: "Photoshop", status: "planned" },
-      { name: "Illustrator", status: "planned" },
-      { name: "GIMP", status: "future" },
-    ],
-    apps: 3,
-    liveApps: 0,
-    plannedApps: 2,
-  },
-  {
-    name: "Game Engines",
-    grid: { colStart: 2, colSpan: 3, rowStart: 5, rowSpan: 7 }, // Bottom, left of center
-    applications: [
-      { name: "Unity", status: "planned" },
-      { name: "Godot", status: "planned" },
-    ],
-    apps: 2,
-    liveApps: 0,
-    plannedApps: 2,
-  },
-  {
-    name: "Video & VFX",
-    grid: { colStart: 7, colSpan: 3, rowStart: 0, rowSpan: 7 }, // Top, right of center
-    applications: [
-      { name: "DaVinci Resolve", status: "planned" },
-      { name: "Nuke", status: "planned" },
-      { name: "Premiere Pro", status: "planned" },
-      { name: "After Effects", status: "planned" },
-      { name: "Final Cut Pro", status: "future" },
-    ],
-    apps: 5,
-    liveApps: 0,
-    plannedApps: 4,
-  },
-  {
-    name: "Design Tools",
-    grid: { colStart: 10, colSpan: 2, rowStart: 0, rowSpan: 4 }, // Right side, top portion
-    applications: [
-      { name: "Figma", status: "live" },
-      { name: "Sketch", status: "future" },
-      { name: "Canva", status: "future" },
-    ],
-    apps: 3,
-    liveApps: 1,
-    plannedApps: 0,
-  },
-  {
-    name: "Interactive & Live",
-    grid: { colStart: 10, colSpan: 2, rowStart: 4, rowSpan: 8 }, // Right side, bottom portion
-    applications: [
-      {
-        name: "TouchDesigner",
-        status: "planned",
-        logo: "/creative-app-logos/touchdesigner.png",
-      },
-      { name: "Max/MSP", status: "planned" },
-      {
-        name: "Unreal Engine",
-        status: "planned",
-        logo: "/creative-app-logos/unreal-engine.png",
-      },
-      { name: "Processing", status: "future" },
-      { name: "Resolume", status: "future" },
-    ],
-    apps: 5,
-    liveApps: 0,
-    plannedApps: 3,
-  },
-  {
-    name: "3D Texturing & CAD",
-    grid: { colStart: 5, colSpan: 5, rowStart: 7, rowSpan: 5 }, // Bottom, right of center
-    applications: [
-      { name: "Substance 3D", status: "planned" },
-      { name: "OpenSCAD", status: "planned" },
-      { name: "KeyShot", status: "future" },
-    ],
-    apps: 3,
-    liveApps: 0,
-    plannedApps: 2,
-  },
-];
-
-// Grid constants
-export const GRID_SIZE = 12;
-export const CENTER_START = 5;
-export const CENTER_SIZE = 2;
-export const CENTER_END = CENTER_START + CENTER_SIZE;
+// Re-export React hooks (recommended approach)
+export {
+  useAnimationTiming,
+  useAnimationTimingBatch,
+  useGridLineDuration,
+  useGridLineDelayStep,
+  useLoadingDuration,
+} from "../../hooks/use-animation-timing";

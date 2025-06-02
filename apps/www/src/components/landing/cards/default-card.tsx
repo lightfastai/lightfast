@@ -1,4 +1,4 @@
-import type { IntegrationCategory } from "../../../lib/animation/constants";
+import type { IntegrationCategory } from "../../../lib/landing/constants";
 
 interface DefaultCardProps {
   category: IntegrationCategory;

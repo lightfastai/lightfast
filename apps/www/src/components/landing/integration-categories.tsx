@@ -1,7 +1,7 @@
 import { cn } from "@repo/ui/lib/utils";
 
-import type { IntegrationCategory } from "../../lib/animation/constants";
-import { integrationCategories } from "../../lib/animation/constants";
+import type { IntegrationCategory } from "../../lib/landing/constants";
+import { integrationCategories } from "../../lib/landing/constants";
 import { ThreeDModelingCard } from "./cards/3d-modeling-card";
 import { DefaultCard } from "./cards/default-card";
 import { InteractiveLiveCard } from "./cards/interactive-live-card";

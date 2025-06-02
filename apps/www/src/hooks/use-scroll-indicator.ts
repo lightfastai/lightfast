@@ -6,7 +6,7 @@ import { useEffect } from "react";
  * Hook to handle scroll indicator visibility
  * Shows the indicator after loading, hides it permanently on first scroll
  */
-export function useScrollIndicator() {
+export function useScrollIndicator(): void {
   useEffect(() => {
     let hasScrolled = false;
 
