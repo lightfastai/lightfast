@@ -185,10 +185,10 @@
   left: calc((var(--actual-card-size) - 48px) / 2);
   top: calc((var(--actual-card-size) - 48px) / 2);
 
-  /* Loading animation - starts with grid lines, moves to bottom-left, then fades out */
+  /* Loading animation with fixed positions - no jitter during scroll */
   opacity: var(--text-fade-phase);
-  animation: logoMoveToCorner var(--grid-line-duration) var(--grid-line-easing)
-    forwards;
+  animation: logoMoveToCornerFixed var(--grid-line-duration)
+    var(--grid-line-easing) forwards;
 
   /* Performance optimizations */
   will-change: left, top, opacity;
@@ -577,7 +577,26 @@
   }
 }
 
-/* Logo movement animation - starts big, scales down fast, then moves */
+/* Logo movement animation with fixed positions - no jitter during scroll */
+@keyframes logoMoveToCornerFixed {
+  0% {
+    left: calc(50% - 24px);
+    top: calc(50% - 24px);
+    transform: scale(4);
+  }
+  20% {
+    left: calc(50% - 24px);
+    top: calc(50% - 24px);
+    transform: scale(1);
+  }
+  100% {
+    left: 32px;
+    top: calc(100% - 80px);
+    transform: scale(1);
+  }
+}
+
+/* Original logo movement animation - kept for reference */
 @keyframes logoMoveToCorner {
   0% {
     left: calc((var(--actual-card-size) - 48px) / 2);
