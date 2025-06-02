@@ -2,14 +2,13 @@
 
 import { useEffect } from "react";
 
-import { env } from "~/env";
-import { useSpringWheelProgress } from "~/hooks/use-spring-wheel-progress";
 import { useScrollLock } from "../../hooks/use-scroll-lock";
 
 // Client-side component that adds interactivity to the SSR-rendered page
+// Note: Phase management is now handled by LandingPhaseProvider
 export function ClientInteractivity() {
-  useSpringWheelProgress(env.NODE_ENV === "development"); // Initialize spring wheel progress tracking with debug in dev
   useScrollLock();
+
   useEffect(() => {
     const updateViewportVariables = () => {
       const viewportWidth = window.innerWidth;
