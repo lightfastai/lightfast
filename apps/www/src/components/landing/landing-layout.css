@@ -186,7 +186,7 @@
   top: calc((var(--actual-card-size) - 48px) / 2);
 
   /* Loading animation - starts with grid lines, moves to bottom-left, then fades out */
-  opacity: calc(1 - var(--early-access-text-phase));
+  opacity: var(--text-fade-phase);
   animation: logoMoveToCorner var(--grid-line-duration) var(--grid-line-easing)
     forwards;
 
