@@ -33,14 +33,29 @@
   --full-cell-width: calc(100vw / var(--grid-size));
   --full-cell-height: calc(100vh / var(--grid-size));
 
-  /* Animation phases calculated purely in CSS */
+  /* Animation phases calculated purely in CSS - separated card and text phases */
   --text-fade-phase: min(calc(var(--wheel-progress) / 0.3), 1);
   --logo-move-phase: min(max(0, calc((var(--wheel-progress) - 0.1) / 0.4)), 1);
-  --expansion-phase: min(max(0, calc((var(--wheel-progress) - 0.2) / 0.6)), 1);
-  --category-phase: min(max(0, calc((var(--wheel-progress) - 0.5) / 0.5)), 1);
+
+  /* Early access split into card transformation and text appearance */
+  --early-access-card-phase: min(
+    max(0, calc((var(--wheel-progress) - 0.3) / 0.2)),
+    1
+  ); /* 30-50% */
+  --early-access-text-phase: min(
+    max(0, calc((var(--wheel-progress) - 0.5) / 0.2)),
+    1
+  ); /* 50-70% */
+
+  --expansion-phase: min(max(0, calc((var(--wheel-progress) - 0.6) / 0.2)), 1);
+  --category-phase: min(max(0, calc((var(--wheel-progress) - 0.7) / 0.3)), 1);
 
   /* Center card sizing */
   --cc-start-size: min(
+    900px,
+    calc(min(var(--viewport-width), var(--viewport-height)) * 0.8)
+  );
+  --cc-early-access-size: min(
     600px,
     calc(min(var(--viewport-width), var(--viewport-height)) * 0.6)
   );
@@ -48,8 +63,16 @@
     (min(var(--cell-width), var(--cell-height)) * var(--center-size)) -
       var(--card-gap)
   );
+
+  /* Multi-phase sizing: start -> early access -> final */
+  --cc-intermediate-size: calc(
+    var(--cc-start-size) +
+      (var(--cc-early-access-size) - var(--cc-start-size)) *
+      var(--early-access-card-phase)
+  );
   --cc-current-size: calc(
-    var(--cc-start-size) + (var(--cc-final-size) - var(--cc-start-size)) *
+    var(--cc-intermediate-size) +
+      (var(--cc-final-size) - var(--cc-early-access-size)) *
       var(--expansion-phase)
   );
 
@@ -127,12 +150,6 @@
 
   /* Instant transitions - no more delays */
   transition: none;
-
-  /* Border animation - appears after grid lines finish */
-  border: 1px solid transparent;
-  animation: showBorder 0.3s ease-out
-    calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.1s)
-    forwards;
 }
 
 /* Center card text with loading animation */
@@ -176,8 +193,107 @@
     forwards;
 
   /* Performance optimizations */
-  will-change: left, top;
+  will-change: left, top, opacity;
   transition: none;
+}
+
+/* Logo stays visible after loading animation - keep final position from animation */
+.center-card-logo.loading-complete {
+  /* Set final position to match animation end state */
+  left: 32px !important;
+  top: calc(var(--actual-card-size) - 32px - 48px) !important;
+  opacity: 1 !important;
+  animation: none;
+}
+
+/* Early Access Chat Container */
+.center-card-early-access-container {
+  opacity: var(--early-access-text-phase);
+  transform: scale(calc(0.9 + var(--early-access-text-phase) * 0.1));
+  transition:
+    opacity 0.3s ease-out,
+    transform 0.3s ease-out;
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+
+/* Enable interactions when visible */
+.center-card-early-access-container[data-visible="true"] {
+  pointer-events: auto;
+}
+
+/* Early Access Text Animations - CSS driven */
+.early-access-text {
+  opacity: 0;
+  transform: translateY(10px);
+  filter: blur(4px);
+  transition:
+    opacity 0.7s ease-out,
+    transform 0.7s ease-out,
+    filter 0.7s ease-out;
+}
+
+/* Staggered text animations based on text-specific phase (50-70%) */
+.early-access-text[data-index="0"] {
+  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.1) * 5)));
+  transform: translateY(
+    calc(
+      10px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.1) * 5)))
+    )
+  );
+  filter: blur(
+    calc(4px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.1) * 5))))
+  );
+  transition-delay: 0.2s;
+}
+
+.early-access-text[data-index="1"] {
+  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.3) * 5)));
+  transform: translateY(
+    calc(
+      10px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.3) * 5)))
+    )
+  );
+  filter: blur(
+    calc(4px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.3) * 5))))
+  );
+  transition-delay: 0.4s;
+}
+
+.early-access-text[data-index="2"] {
+  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.5) * 5)));
+  transform: translateY(
+    calc(
+      10px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.5) * 5)))
+    )
+  );
+  filter: blur(
+    calc(4px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.5) * 5))))
+  );
+  transition-delay: 0.6s;
+}
+
+.early-access-text[data-index="3"] {
+  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.8) * 5)));
+  transform: translateY(
+    calc(
+      10px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.8) * 5)))
+    )
+  );
+  filter: blur(
+    calc(4px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.8) * 5))))
+  );
+  transition-delay: 0.8s;
+}
+
+/* Early Access Form - appears after text animations */
+.early-access-form {
+  opacity: var(--early-access-text-phase);
+  transform: translateY(calc(20px * (1 - var(--early-access-text-phase))));
+  transition:
+    opacity 0.5s ease-out,
+    transform 0.5s ease-out;
+  transition-delay: 1s;
 }
 
 /* PERFORMANCE OPTIMIZED: Grid lines with instant response */
@@ -506,16 +622,6 @@
   }
   to {
     transform: scaleY(1);
-  }
-}
-
-/* Center card border animation */
-@keyframes showBorder {
-  from {
-    border-color: transparent;
-  }
-  to {
-    border-color: hsl(var(--border));
   }
 }
 
