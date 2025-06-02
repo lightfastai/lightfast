@@ -152,27 +152,22 @@
   transition: none;
 }
 
-/* Center card text with loading animation */
+/* Center card text with seamless animation-to-scroll transition */
 .center-card-text {
-  /* Initial state for loading animation */
+  /* During loading: CSS animation controls opacity */
+  /* After loading (3s): scroll variables take over via higher specificity */
   opacity: 0;
   transform: translateY(20px);
 
-  /* Loading animation */
-  animation: fadeInUp 0.6s ease-out
-    calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards;
+  /* Loading animation runs first */
+  animation:
+    fadeInUp 0.6s ease-out
+      calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards,
+    /* After loading completes, switch to scroll control */ textScrollControl
+      0.1s linear calc(var(--loading-animation-duration)) forwards;
 
-  /* After loading, controlled by scroll interactions */
-  animation-fill-mode: forwards;
   will-change: opacity, transform;
-}
-
-/* Text opacity controlled by scroll after loading completes */
-.center-card-text.loading-complete {
-  opacity: var(--text-opacity) !important;
-  transform: translateY(0) !important;
   transition: opacity 0.2s ease-out;
-  animation: none;
 }
 
 /* Center card logo with loading animation */
@@ -195,15 +190,6 @@
   /* Performance optimizations */
   will-change: left, top, opacity;
   transition: none;
-}
-
-/* Logo stays visible after loading animation - keep final position from animation */
-.center-card-logo.loading-complete {
-  /* Set final position to match animation end state */
-  left: 32px !important;
-  top: calc(var(--actual-card-size) - 32px - 48px) !important;
-  opacity: 1 !important;
-  animation: none;
 }
 
 /* Early Access Chat Container */
@@ -664,5 +650,15 @@
     left: 32px;
     top: calc(var(--actual-card-size) - 32px - 48px);
     transform: scale(1);
+  }
+}
+
+/* Text scroll control animation - switches opacity to scroll variables */
+@keyframes textScrollControl {
+  from {
+    opacity: var(--text-opacity);
+  }
+  to {
+    opacity: var(--text-opacity);
   }
 }
