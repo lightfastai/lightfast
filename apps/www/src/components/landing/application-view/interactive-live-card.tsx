@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import type { IntegrationCategory } from "../../../lib/landing/constants";
+import type { IntegrationCategory } from "../../../config/landing";
 
 interface InteractiveLiveCardProps {
   category: IntegrationCategory;

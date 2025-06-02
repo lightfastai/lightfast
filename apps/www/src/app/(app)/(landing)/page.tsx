@@ -1,21 +1,16 @@
-import "~/components/landing/landing-layout.css";
+import "~/components/landing/landing.css";
 
-import { CenterCard } from "~/components/landing/center-card";
-import { ClientInteractivity } from "~/components/landing/client-interactivity";
-import { GridLines } from "~/components/landing/grid-lines";
+import { BackgroundLines } from "~/components/landing/bg-grid/background-lines";
+import { LeaderCard } from "~/components/landing/leader-card";
 import { ScrollIndicator } from "~/components/landing/scroll-indicator";
-
-// import { IntegrationCategories } from "~/components/landing/integration-categories";
+import { AnimationProvider } from "~/provider/animation-provider";
 
 export default function Home() {
   return (
     <div className="bg-background landing-ssr relative h-screen overflow-hidden">
-      <ClientInteractivity />
-      {/* Version 1: Logo/text → early access form with grid lines */}
-      {/* <PageHeader /> */}
-      <GridLines />
-      {/* <IntegrationCategories /> */}
-      <CenterCard />
+      <AnimationProvider />
+      <BackgroundLines />
+      <LeaderCard />
       <ScrollIndicator />
     </div>
   );

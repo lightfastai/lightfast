@@ -1,4 +1,4 @@
-import type { IntegrationCategory } from "../../../lib/landing/constants";
+import type { IntegrationCategory } from "../../../config/landing";
 
 interface DefaultCardProps {
   category: IntegrationCategory;

@@ -1,11 +1,11 @@
 import { Icons } from "@repo/ui/components/icons";
 import { cn } from "@repo/ui/lib/utils";
 
-import { CenterCardEarlyAccessForm } from "./center-card-early-access-form";
+import { CenterCardEarlyAccessForm } from "../early-access/early-access-form";
 
 // Removed streaming text functionality
 
-export const CenterCard = () => {
+export const LeaderCard = () => {
   return (
     <div className={cn("optimized-center-card")}>
       {/* Text content (top-left, fades out during text phase) */}

@@ -1,11 +1,11 @@
 import { cn } from "@repo/ui/lib/utils";
 
-import type { IntegrationCategory } from "../../lib/landing/constants";
-import { integrationCategories } from "../../lib/landing/constants";
-import { ThreeDModelingCard } from "./cards/3d-modeling-card";
-import { DefaultCard } from "./cards/default-card";
-import { InteractiveLiveCard } from "./cards/interactive-live-card";
-import { VideoVFXCard } from "./cards/video-vfx-card";
+import type { IntegrationCategory } from "../../../config/landing";
+import { integrationCategories } from "../../../config/landing";
+import { ThreeDModelingCard } from "./3d-modeling-card";
+import { DefaultCard } from "./default-card";
+import { InteractiveLiveCard } from "./interactive-live-card";
+import { VideoVFXCard } from "./video-vfx-card";
 
 // Function to render the appropriate card component
 function renderUniqueCard(category: IntegrationCategory) {

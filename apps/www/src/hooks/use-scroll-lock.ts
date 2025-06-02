@@ -2,27 +2,10 @@
 
 import { useEffect } from "react";
 
-import { env } from "~/env";
-import { validateAnimationTiming } from "~/lib/animation/utils";
-import { useLoadingDuration } from "./use-animation-timing";
-
 // Custom hook to handle scroll locking during loading animations
 
-export const useScrollLock = (): void => {
-  const loadingDuration = useLoadingDuration();
-
+export const useScrollLock = (lockDuration: number): void => {
   useEffect(() => {
-    // Development-only validation to ensure JS constants match CSS values
-    if (env.NODE_ENV === "development") {
-      const validation = validateAnimationTiming();
-      if (!validation.isValid) {
-        console.warn(
-          "Animation timing mismatch detected between CSS and JavaScript constants:",
-          validation.errors,
-        );
-      }
-    }
-
     // Lock scroll immediately
     document.documentElement.classList.add("landing-scroll-locked");
     document.body.classList.add("landing-scroll-locked");
@@ -54,7 +37,7 @@ export const useScrollLock = (): void => {
       document.removeEventListener("wheel", preventDefault);
       document.removeEventListener("touchmove", preventDefault);
       document.removeEventListener("keydown", preventKeys);
-    }, loadingDuration);
+    }, lockDuration);
 
     // Cleanup on unmount
     return () => {
@@ -65,5 +48,5 @@ export const useScrollLock = (): void => {
       document.removeEventListener("touchmove", preventDefault);
       document.removeEventListener("keydown", preventKeys);
     };
-  }, [loadingDuration]);
+  }, [lockDuration]);
 };

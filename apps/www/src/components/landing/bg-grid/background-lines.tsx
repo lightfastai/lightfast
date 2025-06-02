@@ -1,6 +1,6 @@
 import { cn } from "@repo/ui/lib/utils";
 
-export const GridLines = () => {
+export const BackgroundLines = () => {
   return (
     <div
       className={cn(

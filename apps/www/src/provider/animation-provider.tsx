@@ -1,14 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
-import { useBinaryScrollState } from "../../hooks/use-binary-scroll-state";
-import { useScrollIndicator } from "../../hooks/use-scroll-indicator";
-import { useScrollLock } from "../../hooks/use-scroll-lock";
+import { useCSSTimingVariable } from "~/hooks/use-css-timing-variable";
+import { useBinaryScrollState } from "../hooks/use-binary-scroll-state";
+import { useScrollIndicator } from "../hooks/use-scroll-indicator";
+import { useScrollLock } from "../hooks/use-scroll-lock";
 
 // Client-side component that adds interactivity to the SSR-rendered page
-export function ClientInteractivity() {
-  useScrollLock();
+export function AnimationProvider() {
+  const gridLineDuration = useCSSTimingVariable("--grid-line-duration", 1600);
+  const gridLineDelayStep = useCSSTimingVariable("--grid-line-delay-step", 200);
+
+  // Calculate loading duration with memoization
+  const loadingDuration = useMemo(() => {
+    const textAnimationDuration = 600; // 0.6s
+    const animationBuffer = 200; // 0.2s
+    return (
+      gridLineDuration +
+      gridLineDelayStep * 3 +
+      textAnimationDuration +
+      animationBuffer
+    );
+  }, [gridLineDuration, gridLineDelayStep]);
+
+  useScrollLock(loadingDuration);
   useScrollIndicator();
   useBinaryScrollState();
 
