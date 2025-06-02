@@ -134,7 +134,7 @@ export function CenterCardEarlyAccessForm() {
                     <div className="relative">
                       <Input
                         type="email"
-                        className="pr-12"
+                        className="w-full border-white/20 bg-white/10 pr-12 text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
                         placeholder="Enter your email for early access"
                         autoComplete="email"
                         {...field}
@@ -149,11 +149,11 @@ export function CenterCardEarlyAccessForm() {
                           !field.value?.trim() ||
                           !form.formState.isValid
                         }
-                        className="hover:bg-muted absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0"
+                        className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0 text-white hover:bg-white/10 disabled:text-white/50"
                       >
                         {form.formState.isSubmitting ? (
                           <div
-                            className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"
+                            className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
                             aria-label="Submitting..."
                           />
                         ) : (
