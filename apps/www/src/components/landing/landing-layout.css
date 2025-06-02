@@ -36,8 +36,8 @@
   /* Binary animation phases - simplified for version 1 */
   /* Initial state: progress = 0, Early access state: progress = 1 */
 
-  /* Text fade: inverse of progress (fades out as we scroll to early access) */
-  --text-fade-phase: calc(1 - var(--wheel-progress));
+  /* Text fade: only appears when wheel-progress is extremely close to 0 to prevent overlap */
+  --text-fade-phase: calc(1 - min(1, var(--wheel-progress) * 100));
 
   /* Early access phases: both use direct progress value */
   --early-access-card-phase: var(--wheel-progress);
@@ -106,7 +106,7 @@
 
 /* PERFORMANCE OPTIMIZED: Transform-based center card animation */
 .optimized-center-card {
-  /* Use transforms for GPU acceleration instead of layout properties */
+  /* === LAYOUT & POSITIONING === */
   position: absolute;
   width: calc(var(--cc-current-size) - var(--card-gap));
   height: calc(var(--cc-current-size) - var(--card-gap));
@@ -116,17 +116,43 @@
   top: calc(
     var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2
   );
+  overflow: hidden;
 
-  /* Performance optimizations */
-  will-change: transform, width, height;
+  /* === COLOR CONFIGURATION === */
+  --cc-bg-initial: white;
+  --cc-bg-early-access: black;
+  --cc-text-initial: black;
+  --cc-text-early-access: white;
+
+  /* Progress-based weights */
+  --cc-initial-weight: calc((1 - var(--early-access-card-phase)) * 100%);
+  --cc-early-access-weight: calc(var(--early-access-card-phase) * 100%);
+
+  /* === COLOR TRANSITIONS === */
+  background-color: color-mix(
+    in srgb,
+    var(--cc-bg-initial) var(--cc-initial-weight),
+    var(--cc-bg-early-access) var(--cc-early-access-weight)
+  );
+
+  color: color-mix(
+    in srgb,
+    var(--cc-text-initial) var(--cc-initial-weight),
+    var(--cc-text-early-access) var(--cc-early-access-weight)
+  );
+
+  /* === PERFORMANCE OPTIMIZATIONS === */
+  will-change: transform, width, height, background-color, color;
   contain: layout style paint;
 
-  /* Smooth transitions for spring animations */
+  /* === TRANSITIONS === */
   transition:
     width 0.1s ease-out,
     height 0.1s ease-out,
     left 0.1s ease-out,
-    top 0.1s ease-out;
+    top 0.1s ease-out,
+    background-color 0.1s ease-out,
+    color 0.1s ease-out;
 }
 
 /* Center card text with proper loading sequence */
@@ -173,8 +199,8 @@
   opacity: var(--early-access-text-phase);
   transform: scale(calc(0.9 + var(--early-access-text-phase) * 0.1));
   transition:
-    opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: opacity, transform;
   pointer-events: none;
 }
