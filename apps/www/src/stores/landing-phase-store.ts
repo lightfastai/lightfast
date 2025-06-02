@@ -186,42 +186,12 @@ export const useLandingPhaseStore = create<LandingPhaseStore>()(
     },
 
     updateCSSVariables: (states: PhaseStates, progress: number) => {
-      // Only update CSS variables on the client side
-      if (typeof document === "undefined") return;
-
-      const root = document.documentElement;
-
-      // Update main progress variable
-      root.style.setProperty("--wheel-progress", progress.toString());
-
-      // Update phase-specific variables
-      root.style.setProperty(
-        "--text-fade-phase",
-        states.textFade.progress.toString(),
-      );
-      root.style.setProperty(
-        "--logo-move-phase",
-        states.logoMove.progress.toString(),
-      );
-      root.style.setProperty(
-        "--early-access-card-phase",
-        states.earlyAccessCard.progress.toString(),
-      );
-      root.style.setProperty(
-        "--early-access-text-phase",
-        states.earlyAccessText.progress.toString(),
-      );
-      root.style.setProperty(
-        "--expansion-phase",
-        states.expansion.progress.toString(),
-      );
-      root.style.setProperty(
-        "--category-phase",
-        states.categories.progress.toString(),
-      );
+      // Disabled for version 1 - using binary scroll system instead
+      // The binary scroll hook (useBinaryScrollState) now manages CSS variables
+      return;
     },
   })),
 );
 
-// Initialize phase states on store creation
-useLandingPhaseStore.getState().setProgress(0);
+// Store initialization disabled for version 1 - using binary scroll system instead
+// useLandingPhaseStore.getState().setProgress(0);

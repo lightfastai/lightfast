@@ -42,22 +42,22 @@ const SPRING_CONFIGS: Record<string, SectionConfig> = {
   earlyAccessCard: {
     range: [0.3, 0.5],
     spring: {
-      tension: 140,
-      friction: 15,
+      tension: 120,
+      friction: 16,
       mass: 1,
-      allowOvershoot: false,
-      momentum: 0.6,
+      allowOvershoot: true,
+      momentum: 0.5,
     },
     boundaries: { allowNegative: false, allowExceed: false },
   },
   earlyAccessText: {
     range: [0.5, 0.7],
     spring: {
-      tension: 120,
-      friction: 18,
-      mass: 1,
+      tension: 60,
+      friction: 25,
+      mass: 1.5,
       allowOvershoot: false,
-      momentum: 0.4,
+      momentum: 0.2,
     },
     boundaries: { allowNegative: false, allowExceed: false },
   },
@@ -98,11 +98,11 @@ const SPRING_CONFIGS: Record<string, SectionConfig> = {
 
 // Global tweaking parameters for easy experimentation
 const SPRING_TWEAKS = {
-  globalTension: 1.0, // Multiply all tension values
-  globalFriction: 1.0, // Multiply all friction values
-  interpolationSpeed: 0.1, // How fast configs blend (0.05-0.2)
-  bounceIntensity: 1.0, // Scale boundary overshoot
-  velocityMultiplier: 0.001, // Scale wheel delta to velocity
+  globalTension: 0.85, // Multiply all tension values - increased for more responsive early access
+  globalFriction: 1.2, // Multiply all friction values - slightly reduced for more movement
+  interpolationSpeed: 0.08, // How fast configs blend (0.05-0.2) - faster for quicker response
+  bounceIntensity: 0.8, // Scale boundary overshoot - increased for more noticeable spring
+  velocityMultiplier: 0.001, // Scale wheel delta to velocity - back to original
 };
 
 export const useSpringWheelProgress = (debugMode = false) => {

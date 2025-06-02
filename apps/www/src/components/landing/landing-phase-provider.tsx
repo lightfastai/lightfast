@@ -4,13 +4,12 @@ import { useEffect } from "react";
 
 import type { LandingPhaseConfig } from "../../hooks/use-landing-phases";
 import { env } from "~/env";
+import { useBinaryScrollState } from "../../hooks/use-binary-scroll-state";
 import {
   defaultPhaseConfig,
   testConfigs,
 } from "../../hooks/use-landing-phases";
-import { useWheelInput } from "../../hooks/use-wheel-input";
 import { useLandingPhaseStore } from "../../stores/landing-phase-store";
-import { ZustandDebugPanel } from "./zustand-debug-panel";
 
 interface LandingPhaseProviderProps {
   children: React.ReactNode;
@@ -23,8 +22,10 @@ export function LandingPhaseProvider({
 }: LandingPhaseProviderProps) {
   const setConfig = useLandingPhaseStore((state) => state.setConfig);
 
-  // Set up wheel input
-  useWheelInput();
+  // Set up binary scroll state for version 1
+  const { currentState, progress, isTransitioning } = useBinaryScrollState(
+    env.NODE_ENV === "development",
+  );
 
   // Initialize configuration on mount
   useEffect(() => {
@@ -63,8 +64,8 @@ export function LandingPhaseProvider({
   return (
     <>
       {children}
-      {/* Debug Panel - automatically shows/hides based on store state */}
-      <ZustandDebugPanel />
+      {/* Zustand Debug Panel disabled for version 1 - using binary scroll system instead */}
+      {/* <ZustandDebugPanel /> */}
     </>
   );
 }

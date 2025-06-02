@@ -33,24 +33,24 @@
   --full-cell-width: calc(100vw / var(--grid-size));
   --full-cell-height: calc(100vh / var(--grid-size));
 
-  /* Animation phases calculated purely in CSS - separated card and text phases */
-  --text-fade-phase: min(calc(var(--wheel-progress) / 0.3), 1);
-  --logo-move-phase: min(max(0, calc((var(--wheel-progress) - 0.1) / 0.4)), 1);
+  /* Binary animation phases - simplified for version 1 */
+  /* Initial state: progress = 0, Early access state: progress = 1 */
 
-  /* Early access split into card transformation and text appearance */
-  --early-access-card-phase: min(
-    max(0, calc((var(--wheel-progress) - 0.3) / 0.2)),
-    1
-  ); /* 30-50% */
-  --early-access-text-phase: min(
-    max(0, calc((var(--wheel-progress) - 0.5) / 0.2)),
-    1
-  ); /* 50-70% */
+  /* Text fade: inverse of progress (fades out as we scroll to early access) */
+  --text-fade-phase: calc(1 - var(--wheel-progress));
 
-  --expansion-phase: min(max(0, calc((var(--wheel-progress) - 0.6) / 0.2)), 1);
-  --category-phase: min(max(0, calc((var(--wheel-progress) - 0.7) / 0.3)), 1);
+  /* Early access phases: both use direct progress value */
+  --early-access-card-phase: var(--wheel-progress);
+  --early-access-text-phase: var(--wheel-progress);
 
-  /* Center card sizing */
+  /* Logo moves during the transition */
+  --logo-move-phase: var(--wheel-progress);
+
+  /* Disabled phases for version 1 */
+  --expansion-phase: 0;
+  --category-phase: 0;
+
+  /* Center card sizing - simplified for binary states */
   --cc-start-size: min(
     900px,
     calc(min(var(--viewport-width), var(--viewport-height)) * 0.8)
@@ -59,42 +59,17 @@
     600px,
     calc(min(var(--viewport-width), var(--viewport-height)) * 0.6)
   );
-  --cc-final-size: calc(
-    (min(var(--cell-width), var(--cell-height)) * var(--center-size)) -
-      var(--card-gap)
-  );
 
-  /* Multi-phase sizing: start -> early access -> final */
-  --cc-intermediate-size: calc(
+  /* Binary sizing: interpolate between start and early access */
+  --cc-current-size: calc(
     var(--cc-start-size) +
       (var(--cc-early-access-size) - var(--cc-start-size)) *
       var(--early-access-card-phase)
   );
-  --cc-current-size: calc(
-    var(--cc-intermediate-size) +
-      (var(--cc-final-size) - var(--cc-early-access-size)) *
-      var(--expansion-phase)
-  );
 
-  /* Center card positions */
-  --cc-start-x: calc(var(--viewport-width) / 2);
-  --cc-start-y: calc(var(--viewport-height) / 2);
-  --cc-final-x: calc(
-    var(--grid-offset-x) + (var(--center-start) + var(--center-size) / 2) *
-      var(--cell-width) + var(--card-gap) / 2
-  );
-  --cc-final-y: calc(
-    var(--grid-offset-y) + (var(--center-start) + var(--center-size) / 2) *
-      var(--cell-height) + var(--card-gap) / 2
-  );
-  --cc-current-x: calc(
-    var(--cc-start-x) + (var(--cc-final-x) - var(--cc-start-x)) *
-      var(--expansion-phase)
-  );
-  --cc-current-y: calc(
-    var(--cc-start-y) + (var(--cc-final-y) - var(--cc-start-y)) *
-      var(--expansion-phase)
-  );
+  /* Center card positions - stays centered for version 1 */
+  --cc-current-x: calc(var(--viewport-width) / 2);
+  --cc-current-y: calc(var(--viewport-height) / 2);
 
   /* Center card visual boundaries (including border) */
   --cc-visual-top: calc(
@@ -112,16 +87,14 @@
       var(--cc-border-width) / 2
   );
 
-  /* Component opacity and scale */
-  --grid-lines-opacity: calc(1 - var(--expansion-phase) * 0.8);
-  --integration-container-opacity: calc(
-    max(0, min(1, (var(--expansion-phase) - 0.3) / 0.1)) * var(--category-phase)
-  );
-  --integration-card-opacity: var(--category-phase);
-  --integration-card-scale: calc(0.8 + var(--category-phase) * 0.2);
+  /* Component opacity and scale - grid lines enabled for version 1 */
+  --grid-lines-opacity: 1;
+  --integration-container-opacity: 0;
+  --integration-card-opacity: 0;
+  --integration-card-scale: 0.8;
 
-  /* Text and logo animation */
-  --text-opacity: calc(1 - var(--text-fade-phase));
+  /* Text and logo animation - simplified */
+  --text-opacity: var(--text-fade-phase);
   --logo-move-factor: var(--logo-move-phase);
 
   /* Animation timing for scroll lock */
@@ -148,8 +121,12 @@
   will-change: transform, width, height;
   contain: layout style paint;
 
-  /* Instant transitions - no more delays */
-  transition: none;
+  /* Smooth transitions for spring animations */
+  transition:
+    width 0.1s ease-out,
+    height 0.1s ease-out,
+    left 0.1s ease-out,
+    top 0.1s ease-out;
 }
 
 /* Center card text with seamless animation-to-scroll transition */
@@ -197,8 +174,8 @@
   opacity: var(--early-access-text-phase);
   transform: scale(calc(0.9 + var(--early-access-text-phase) * 0.1));
   transition:
-    opacity 0.3s ease-out,
-    transform 0.3s ease-out;
+    opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: opacity, transform;
   pointer-events: none;
 }
@@ -211,75 +188,75 @@
 /* Early Access Text Animations - CSS driven */
 .early-access-text {
   opacity: 0;
-  transform: translateY(10px);
-  filter: blur(4px);
+  transform: translateY(15px);
+  filter: blur(6px);
   transition:
-    opacity 0.7s ease-out,
-    transform 0.7s ease-out,
-    filter 0.7s ease-out;
+    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Staggered text animations based on text-specific phase (50-70%) */
+/* Simplified staggered text animations for binary system */
 .early-access-text[data-index="0"] {
-  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.1) * 5)));
+  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.1) * 2)));
   transform: translateY(
     calc(
-      10px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.1) * 5)))
+      15px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.1) * 2)))
     )
   );
   filter: blur(
-    calc(4px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.1) * 5))))
+    calc(6px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.1) * 2))))
+  );
+  transition-delay: 0.1s;
+}
+
+.early-access-text[data-index="1"] {
+  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.2) * 2)));
+  transform: translateY(
+    calc(
+      15px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.2) * 2)))
+    )
+  );
+  filter: blur(
+    calc(6px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.2) * 2))))
   );
   transition-delay: 0.2s;
 }
 
-.early-access-text[data-index="1"] {
-  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.3) * 5)));
-  transform: translateY(
-    calc(
-      10px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.3) * 5)))
-    )
-  );
-  filter: blur(
-    calc(4px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.3) * 5))))
-  );
-  transition-delay: 0.4s;
-}
-
 .early-access-text[data-index="2"] {
-  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.5) * 5)));
+  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.3) * 2)));
   transform: translateY(
     calc(
-      10px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.5) * 5)))
+      15px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.3) * 2)))
     )
   );
   filter: blur(
-    calc(4px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.5) * 5))))
+    calc(6px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.3) * 2))))
   );
-  transition-delay: 0.6s;
+  transition-delay: 0.3s;
 }
 
 .early-access-text[data-index="3"] {
-  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.8) * 5)));
+  opacity: calc(min(1, max(0, (var(--early-access-text-phase) - 0.4) * 2)));
   transform: translateY(
     calc(
-      10px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.8) * 5)))
+      15px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.4) * 2)))
     )
   );
   filter: blur(
-    calc(4px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.8) * 5))))
+    calc(6px * (1 - min(1, max(0, (var(--early-access-text-phase) - 0.4) * 2))))
   );
-  transition-delay: 0.8s;
+  transition-delay: 0.4s;
 }
 
 /* Early Access Form - appears after text animations */
 .early-access-form {
   opacity: var(--early-access-text-phase);
-  transform: translateY(calc(20px * (1 - var(--early-access-text-phase))));
+  transform: translateY(calc(25px * (1 - var(--early-access-text-phase))));
   transition:
-    opacity 0.5s ease-out,
-    transform 0.5s ease-out;
-  transition-delay: 1s;
+    opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: 0.9s;
 }
 
 /* PERFORMANCE OPTIMIZED: Grid lines with instant response */
@@ -301,6 +278,8 @@
   transform: scaleX(0);
   animation: drawFromRight var(--grid-line-duration) var(--grid-line-easing)
     forwards;
+  transition: top 0.1s ease-out;
+  will-change: top;
 }
 
 .grid-line-bottom {
@@ -313,6 +292,8 @@
   transform: scaleX(0);
   animation: drawFromLeft var(--grid-line-duration) var(--grid-line-easing)
     var(--grid-line-delay-step) forwards;
+  transition: top 0.1s ease-out;
+  will-change: top;
 }
 
 .grid-line-left {
@@ -325,6 +306,8 @@
   transform: scaleY(0);
   animation: drawFromTop var(--grid-line-duration) var(--grid-line-easing)
     calc(var(--grid-line-delay-step) * 2) forwards;
+  transition: left 0.1s ease-out;
+  will-change: left;
 }
 
 .grid-line-right {
@@ -337,6 +320,8 @@
   transform: scaleY(0);
   animation: drawFromBottom var(--grid-line-duration) var(--grid-line-easing)
     calc(var(--grid-line-delay-step) * 3) forwards;
+  transition: left 0.1s ease-out;
+  will-change: left;
 }
 
 /* PERFORMANCE OPTIMIZED: Integration categories with instant response */
