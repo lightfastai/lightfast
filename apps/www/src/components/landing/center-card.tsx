@@ -3,12 +3,7 @@ import { cn } from "@repo/ui/lib/utils";
 
 import { CenterCardEarlyAccessForm } from "./center-card-early-access-form";
 
-const INTRO_TEXTS = [
-  "Simplifying the way you interact with applications like Blender, Unity, Fusion360 and more.",
-  // "Lightfast gives your ideas room to grow... to branch, remix and become what they're meant to be.",
-  // "We integrate with your tools to make your workflow more efficient.",
-  "Join the waitlist to get early access.",
-];
+// Removed streaming text functionality
 
 export const CenterCard = () => {
   return (
@@ -25,31 +20,24 @@ export const CenterCard = () => {
         <Icons.logoShort className="text-primary" />
       </div>
 
-      {/* Early Access Chat (appears during early access phase) */}
+      {/* Early Access Content (appears during early access phase) */}
       <div className="center-card-early-access-container absolute inset-0">
-        <div className="center-card-early-access absolute top-8 right-8 left-8">
-          {/* Animated intro messages - CSS driven */}
-          <div
-            className="mb-12 max-w-md space-y-4"
-            aria-live="polite"
-            aria-atomic="false"
-          >
-            {INTRO_TEXTS.map((text, index) => (
-              <div
-                key={`intro-${index}`}
-                className="early-access-text text-2xl font-bold"
-                data-index={index}
-                role="status"
-              >
-                {text}
-              </div>
-            ))}
+        {/* Early Access Text (top-left position) */}
+        <div className="absolute top-8 right-8 left-8">
+          <div className="max-w-sm text-white">
+            <p className="mb-2 text-3xl font-bold">
+              Simplifying the way you interact with applications like Blender,
+              Unity, Fusion360 and more.
+            </p>
+            <p className="text-sm text-white/80">
+              Join the waitlist to get early access.
+            </p>
           </div>
+        </div>
 
-          {/* Form area - client component */}
-          <div className="max-w-sm">
-            <CenterCardEarlyAccessForm />
-          </div>
+        {/* Early Access Form (spans whole card width) */}
+        <div className="absolute right-8 bottom-8 left-8">
+          <CenterCardEarlyAccessForm />
         </div>
       </div>
     </div>
