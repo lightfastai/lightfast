@@ -129,15 +129,18 @@
     top 0.1s ease-out;
 }
 
-/* Center card text - simplified for binary scroll system */
+/* Center card text with proper loading sequence */
 .center-card-text {
-  /* Let binary scroll system control opacity directly */
-  opacity: var(--text-opacity);
+  /* Start invisible for loading animation */
+  opacity: 0;
   transform: translateY(20px);
 
-  /* Only run the initial fadeInUp animation */
-  animation: fadeInUp 0.6s ease-out
-    calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards;
+  /* Loading animation sequence: fade in, then switch to scroll control */
+  animation:
+    fadeInUp 0.6s ease-out
+      calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards,
+    /* After loading completes, switch to scroll control */ textScrollControl
+      0.1s linear calc(var(--loading-animation-duration)) forwards;
 
   will-change: opacity, transform;
   transition: opacity 0.2s ease-out;

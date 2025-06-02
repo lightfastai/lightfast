@@ -134,19 +134,11 @@ export const useBinaryScrollState = (debugMode = false) => {
         target: state.target,
       };
 
-      // Update CSS variable with detailed logging
-      const wheelProgressValue = newPosition.toString();
+      // Update CSS variable
       document.documentElement.style.setProperty(
         "--wheel-progress",
-        wheelProgressValue,
+        newPosition.toString(),
       );
-
-      // Debug logging to track variable changes
-      if (debugMode) {
-        console.log(
-          `[Binary Scroll] Setting --wheel-progress to ${wheelProgressValue}, target: ${state.target}, settled: ${Math.abs(newVelocity) < 0.001 && Math.abs(displacement) < 0.001}`,
-        );
-      }
 
       // Check if spring has settled
       const isSettled =
@@ -185,83 +177,9 @@ export const useBinaryScrollState = (debugMode = false) => {
 
         // Unlock accumulator after animation completes
         unlockAccumulator();
-
-        // Monitor for external interference after our animation completes
-        if (debugMode) {
-          console.log(
-            `[Binary Scroll] Animation COMPLETED. Final state: ${finalState}, CSS var set to: ${exactTarget}`,
-          );
-
-          // Set up post-completion monitoring
-          let monitorCount = 0;
-          const maxMonitorChecks = 100; // Monitor for 5 seconds after completion
-
-          const postCompletionMonitor = () => {
-            const currentCSSValue = getComputedStyle(document.documentElement)
-              .getPropertyValue("--wheel-progress")
-              .trim();
-            const expectedValue = exactTarget.toString();
-
-            // Also check derived variables
-            const textFadePhase = getComputedStyle(document.documentElement)
-              .getPropertyValue("--text-fade-phase")
-              .trim();
-            const earlyAccessCardPhase = getComputedStyle(
-              document.documentElement,
-            )
-              .getPropertyValue("--early-access-card-phase")
-              .trim();
-            const earlyAccessTextPhase = getComputedStyle(
-              document.documentElement,
-            )
-              .getPropertyValue("--early-access-text-phase")
-              .trim();
-
-            console.log(
-              `[Monitor Check ${monitorCount}] --wheel-progress: ${currentCSSValue}, --text-fade-phase: ${textFadePhase}, --early-access-card-phase: ${earlyAccessCardPhase}, --early-access-text-phase: ${earlyAccessTextPhase}`,
-            );
-
-            if (currentCSSValue !== expectedValue) {
-              console.error(
-                `[INTERFERENCE DETECTED] CSS variable changed from ${expectedValue} to ${currentCSSValue} AFTER our animation completed!`,
-              );
-              console.error(
-                `[INTERFERENCE] This confirms something else is overriding our values`,
-              );
-            }
-
-            // Check if derived variables have expected values
-            const expectedTextFade = (1 - exactTarget).toString();
-            const expectedEarlyAccess = exactTarget.toString();
-
-            if (textFadePhase !== expectedTextFade) {
-              console.error(
-                `[DERIVED VAR ISSUE] --text-fade-phase is ${textFadePhase}, expected ${expectedTextFade}`,
-              );
-            }
-            if (earlyAccessCardPhase !== expectedEarlyAccess) {
-              console.error(
-                `[DERIVED VAR ISSUE] --early-access-card-phase is ${earlyAccessCardPhase}, expected ${expectedEarlyAccess}`,
-              );
-            }
-            if (earlyAccessTextPhase !== expectedEarlyAccess) {
-              console.error(
-                `[DERIVED VAR ISSUE] --early-access-text-phase is ${earlyAccessTextPhase}, expected ${expectedEarlyAccess}`,
-              );
-            }
-
-            monitorCount++;
-            if (monitorCount < maxMonitorChecks) {
-              setTimeout(postCompletionMonitor, 50); // Check every 50ms
-            }
-          };
-
-          // Start monitoring 100ms after completion
-          setTimeout(postCompletionMonitor, 100);
-        }
       }
     },
-    [progressToState],
+    [progressToState, unlockAccumulator],
   );
 
   // Start spring animation to target
@@ -365,7 +283,7 @@ export const useBinaryScrollState = (debugMode = false) => {
     [currentState, changeState, resetAccumulator],
   );
 
-  // Set up wheel event listener and CSS variable monitoring
+  // Set up wheel event listener
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -380,26 +298,6 @@ export const useBinaryScrollState = (debugMode = false) => {
       document.documentElement.style.setProperty("--wheel-progress", "0");
     }
 
-    // CSS Variable Monitor (debug mode only)
-    let lastKnownValue = "0";
-    let cssMonitorId: number | null = null;
-
-    if (debugMode) {
-      const monitorCSSVariable = () => {
-        const currentValue = getComputedStyle(document.documentElement)
-          .getPropertyValue("--wheel-progress")
-          .trim();
-        if (currentValue !== lastKnownValue) {
-          console.log(
-            `[CSS Monitor] --wheel-progress changed from ${lastKnownValue} to ${currentValue} (NOT set by Binary Scroll)`,
-          );
-          lastKnownValue = currentValue;
-        }
-        cssMonitorId = requestAnimationFrame(monitorCSSVariable);
-      };
-      cssMonitorId = requestAnimationFrame(monitorCSSVariable);
-    }
-
     window.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
@@ -407,62 +305,8 @@ export const useBinaryScrollState = (debugMode = false) => {
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
-      if (cssMonitorId !== null) {
-        cancelAnimationFrame(cssMonitorId);
-      }
     };
   }, [processScroll]);
-
-  // Debug mode effect
-  useEffect(() => {
-    if (!debugMode) return;
-
-    const debugElement = document.createElement("div");
-    debugElement.id = "binary-scroll-debug";
-    debugElement.style.cssText = `
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
-      font-family: monospace;
-      font-size: 12px;
-      z-index: 10000;
-      min-width: 200px;
-    `;
-    document.body.appendChild(debugElement);
-
-    const updateDebug = () => {
-      const spring = springStateRef.current;
-      const accumulator = scrollAccumulatorRef.current;
-
-      debugElement.innerHTML = `
-        <div><strong>Binary Scroll Debug</strong></div>
-        <div>State: ${currentState}</div>
-        <div>Progress: ${spring.position.toFixed(3)}</div>
-        <div>Target: ${spring.target}</div>
-        <div>Velocity: ${spring.velocity.toFixed(3)}</div>
-        <div>Animating: ${isAnimatingRef.current ? "Yes" : "No"}</div>
-        <div>Locked: ${accumulator.isLocked ? "Yes" : "No"}</div>
-        <div>Scroll Dir: ${accumulator.direction || "none"}</div>
-        <div>Scroll Amount: ${accumulator.amount.toFixed(0)}</div>
-        <div>Threshold: ${SCROLL_CONFIG.THRESHOLD_PERCENTAGE * 20}</div>
-        <div>Cooldown: ${isInCooldown() ? "Yes" : "No"}</div>
-      `;
-
-      requestAnimationFrame(updateDebug);
-    };
-
-    updateDebug();
-
-    return () => {
-      if (document.body.contains(debugElement)) {
-        document.body.removeChild(debugElement);
-      }
-    };
-  }, [debugMode, currentState, isInCooldown]);
 
   return {
     currentState,
