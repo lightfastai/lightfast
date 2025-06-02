@@ -3,6 +3,7 @@ import "~/components/landing/landing-layout.css";
 import { CenterCard } from "~/components/landing/center-card";
 import { ClientInteractivity } from "~/components/landing/client-interactivity";
 import { GridLines } from "~/components/landing/grid-lines";
+import { ScrollIndicator } from "~/components/landing/scroll-indicator";
 
 // import { IntegrationCategories } from "~/components/landing/integration-categories";
 
@@ -15,6 +16,7 @@ export default function Home() {
       <GridLines />
       {/* <IntegrationCategories /> */}
       <CenterCard />
+      <ScrollIndicator />
     </div>
   );
 }

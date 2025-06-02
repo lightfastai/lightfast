@@ -4,11 +4,13 @@ import { useEffect } from "react";
 
 import { env } from "~/env";
 import { useBinaryScrollState } from "../../hooks/use-binary-scroll-state";
+import { useScrollIndicator } from "../../hooks/use-scroll-indicator";
 import { useScrollLock } from "../../hooks/use-scroll-lock";
 
 // Client-side component that adds interactivity to the SSR-rendered page
 export function ClientInteractivity() {
   useScrollLock();
+  useScrollIndicator();
 
   // Move binary scroll state here to simplify architecture
   const { currentState, progress, isTransitioning } = useBinaryScrollState(

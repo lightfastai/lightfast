@@ -218,6 +218,17 @@
   will-change: opacity;
 }
 
+/* Floating Scroll Indicator - appears after loading completes, JavaScript hides on scroll */
+.scroll-indicator-floating {
+  /* Initially hidden, fade in after loading animation completes */
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out calc(var(--loading-animation-duration) + 0.5s)
+    forwards;
+  /* Smooth transitions */
+  transition: opacity 0.3s ease-out;
+  will-change: opacity;
+}
+
 /* PERFORMANCE OPTIMIZED: Grid lines with instant response */
 .optimized-grid-lines {
   opacity: var(--grid-lines-opacity);
