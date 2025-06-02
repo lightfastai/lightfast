@@ -24,7 +24,7 @@ export const CenterCard = () => {
       <div className="center-card-early-access-container absolute inset-0">
         {/* Early Access Text (top-left position) */}
         <div className="absolute top-8 right-8 left-8">
-          <div className="max-w-sm text-white">
+          <div className="text-white">
             <p className="mb-2 text-3xl font-bold">
               Simplifying the way you interact with applications like Blender,
               Unity, Fusion360 and more.
