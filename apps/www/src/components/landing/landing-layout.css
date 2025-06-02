@@ -129,19 +129,15 @@
     top 0.1s ease-out;
 }
 
-/* Center card text with seamless animation-to-scroll transition */
+/* Center card text - simplified for binary scroll system */
 .center-card-text {
-  /* During loading: CSS animation controls opacity */
-  /* After loading (3s): scroll variables take over via higher specificity */
-  opacity: 0;
+  /* Let binary scroll system control opacity directly */
+  opacity: var(--text-opacity);
   transform: translateY(20px);
 
-  /* Loading animation runs first */
-  animation:
-    fadeInUp 0.6s ease-out
-      calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards,
-    /* After loading completes, switch to scroll control */ textScrollControl
-      0.1s linear calc(var(--loading-animation-duration)) forwards;
+  /* Only run the initial fadeInUp animation */
+  animation: fadeInUp 0.6s ease-out
+    calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards;
 
   will-change: opacity, transform;
   transition: opacity 0.2s ease-out;

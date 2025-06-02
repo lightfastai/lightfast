@@ -2,12 +2,18 @@
 
 import { useEffect } from "react";
 
+import { env } from "~/env";
+import { useBinaryScrollState } from "../../hooks/use-binary-scroll-state";
 import { useScrollLock } from "../../hooks/use-scroll-lock";
 
 // Client-side component that adds interactivity to the SSR-rendered page
-// Note: Phase management is now handled by LandingPhaseProvider
 export function ClientInteractivity() {
   useScrollLock();
+
+  // Move binary scroll state here to simplify architecture
+  const { currentState, progress, isTransitioning } = useBinaryScrollState(
+    env.NODE_ENV === "development",
+  );
 
   useEffect(() => {
     const updateViewportVariables = () => {
