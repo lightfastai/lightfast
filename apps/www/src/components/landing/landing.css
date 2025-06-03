@@ -41,7 +41,9 @@
 
   /* Early access phases: text fades out first, then card transforms */
   --early-access-card-phase: var(--wheel-progress);
-  --early-access-text-phase: calc(max(0, (var(--wheel-progress) - 0.5) * 2));
+  --early-access-text-phase: var(
+    --wheel-progress
+  ); /* Form should be visible when scroll state is active */
 
   /* Logo moves during the transition */
   --logo-move-phase: var(--wheel-progress);

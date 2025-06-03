@@ -101,7 +101,16 @@ export function CenterCardEarlyAccessForm() {
   };
 
   return (
-    <div className="early-access-form">
+    <div
+      className="early-access-form"
+      data-pointer-events="enabled"
+      style={{
+        pointerEvents: "auto",
+        userSelect: "text",
+        // Fallback to ensure visibility and interaction
+        opacity: 1,
+      }}
+    >
       {isSubmitted ? (
         <div className="flex flex-col" role="status" aria-live="polite">
           {typeof window !== "undefined" &&
@@ -147,9 +156,10 @@ export function CenterCardEarlyAccessForm() {
                     <div className="relative">
                       <Input
                         type="email"
-                        className="w-full border-white/20 bg-white/10 pr-12 text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
+                        className="w-full border-white/20 bg-white/10 pr-12 text-white selection:bg-white/30 selection:text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
                         placeholder="Enter your email for early access"
                         autoComplete="email"
+                        style={{ pointerEvents: "auto", userSelect: "text" }}
                         {...field}
                       />
                       <Button
@@ -162,7 +172,8 @@ export function CenterCardEarlyAccessForm() {
                           !field.value.trim() ||
                           !form.formState.isValid
                         }
-                        className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0 text-white hover:bg-white/10 disabled:text-white/50"
+                        className="pointer-events-auto absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0 text-white hover:bg-white/10 disabled:text-white/50"
+                        style={{ pointerEvents: "auto", zIndex: 1 }}
                       >
                         {form.formState.isSubmitting ? (
                           <div

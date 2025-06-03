@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 
+import { useSetupBinaryScrollBehavior } from "~/hooks/use-binary-scroll-state";
 import { useCSSTimingVariable } from "~/hooks/use-css-timing-variable";
 import { useBinaryScrollStore } from "~/stores/binary-scroll-store";
 import { useScrollIndicator } from "../hooks/use-scroll-indicator";
@@ -11,6 +12,7 @@ import { useScrollLock } from "../hooks/use-scroll-lock";
 export function AnimationProvider() {
   const gridLineDuration = useCSSTimingVariable("--grid-line-duration", 1600);
   const gridLineDelayStep = useCSSTimingVariable("--grid-line-delay-step", 200);
+  useSetupBinaryScrollBehavior();
 
   // Calculate loading duration with memoization
   const loadingDuration = useMemo(() => {
@@ -35,10 +37,15 @@ export function AnimationProvider() {
     );
 
     if (earlyAccessContainer) {
+      // Always ensure pointer events are enabled when container is visible
+      // The CSS now handles this by default, so we only need to add the class for explicit control
       if (currentState === "earlyAccess") {
         earlyAccessContainer.classList.add("pointer-events-active");
+        earlyAccessContainer.classList.remove("pointer-events-disabled");
       } else {
+        // Don't disable pointer events by default - let CSS handle it
         earlyAccessContainer.classList.remove("pointer-events-active");
+        // Only disable if explicitly needed (which shouldn't be the case for the form)
       }
     }
   }, [currentState]);
