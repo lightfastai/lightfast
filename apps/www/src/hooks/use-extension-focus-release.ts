@@ -6,15 +6,16 @@ import { useCallback } from "react";
  */
 export const useExtensionFocusRelease = () => {
   const releaseFocus = useCallback((container: Element) => {
-    const focusedElement = document.activeElement as HTMLElement;
+    const focusedElement = document.activeElement as HTMLElement | null;
 
     if (!focusedElement || !container.contains(focusedElement)) {
       return;
     }
 
     // Clear text selection if it exists
-    if (window.getSelection) {
-      window.getSelection()?.removeAllRanges();
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
     }
 
     // For input elements, clear selection if supported
@@ -33,7 +34,7 @@ export const useExtensionFocusRelease = () => {
           focusedElement.selectionStart = null;
           focusedElement.selectionEnd = null;
         }
-      } catch (error) {
+      } catch {
         // Silently ignore if selection is not supported for this input type
         console.debug(
           "Selection not supported for this input type:",

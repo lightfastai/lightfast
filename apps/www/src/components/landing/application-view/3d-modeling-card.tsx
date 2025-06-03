@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 import type { IntegrationCategory } from "../../../config/landing";
 
@@ -126,9 +127,11 @@ export const ThreeDModelingCard = ({ category }: ThreeDModelingCardProps) => {
                 }
               >
                 {app.logo && (
-                  <img
+                  <Image
                     src={app.logo}
                     alt={app.name}
+                    width={20}
+                    height={20}
                     className="h-5 w-5 object-contain opacity-80 transition-all duration-300"
                     style={{
                       ...(isHovered && {
