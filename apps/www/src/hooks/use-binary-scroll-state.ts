@@ -120,9 +120,9 @@ export const useSetupBinaryScrollBehavior = (): void => {
           if (accDirection === "down") {
             changeStateLogic("earlyAccess", false);
           }
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         } else if (actualCurrentState === "earlyAccess") {
-          if (wheelDelta < 0 && accDirection === "up") {
-            // Ensure negative wheelDelta for 'up' direction from 'earlyAccess'
+          if (accDirection === "up") {
             changeStateLogic("initial", false);
           }
         }

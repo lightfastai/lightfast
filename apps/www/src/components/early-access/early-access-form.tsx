@@ -146,7 +146,7 @@ export function CenterCardEarlyAccessForm() {
                         aria-label="Submit early access signup"
                         disabled={
                           form.formState.isSubmitting ||
-                          !field.value?.trim() ||
+                          !field.value.trim() ||
                           !form.formState.isValid
                         }
                         className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0 text-white hover:bg-white/10 disabled:text-white/50"

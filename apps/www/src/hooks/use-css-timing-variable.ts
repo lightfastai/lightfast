@@ -17,7 +17,7 @@ export function useCSSTimingVariable(
  * Hook for reading multiple CSS variables at once
  */
 
-export function useCSSVariables<T extends Record<string, any>>(variables: {
+export function useCSSVariables<T extends Record<string, unknown>>(variables: {
   [K in keyof T]: {
     name: string;
     converter?: CSSConverter;
@@ -27,11 +27,16 @@ export function useCSSVariables<T extends Record<string, any>>(variables: {
   const result = {} as T;
 
   for (const [key, config] of Object.entries(variables)) {
+    const typedConfig = config as {
+      name: string;
+      converter?: CSSConverter;
+      defaultValue?: T[keyof T];
+    };
     // eslint-disable-next-line react-hooks/rules-of-hooks
     result[key as keyof T] = useCSSVariable(
-      config.name,
-      config.converter || "string",
-      config.defaultValue,
+      typedConfig.name,
+      typedConfig.converter ?? "string",
+      typedConfig.defaultValue,
     );
   }
 

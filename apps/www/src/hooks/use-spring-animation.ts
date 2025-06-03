@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { SpringConfig, SpringState } from "~/lib/animation/spring-physics";
 import {
@@ -28,7 +28,10 @@ export const useSpringAnimation = (
   config: Partial<SpringConfig> = {},
   minDuration = 400,
 ): SpringAnimationReturn => {
-  const springConfig = { ...DEFAULT_SPRING_CONFIG, ...config };
+  const springConfig = useMemo(
+    () => ({ ...DEFAULT_SPRING_CONFIG, ...config }),
+    [config],
+  );
 
   const stateRef = useRef<SpringState>(createSpringState());
 
@@ -67,12 +70,7 @@ export const useSpringAnimation = (
       onUpdateRef.current?.(stateRef.current.position);
       onCompleteRef.current?.();
     }
-  }, [
-    springConfig.tension,
-    springConfig.friction,
-    springConfig.mass,
-    minDuration,
-  ]);
+  }, [springConfig, minDuration]);
 
   const animateTo = useCallback(
     (

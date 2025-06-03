@@ -14,15 +14,11 @@
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@react-spring/parallax": "^10.0.1",
-    "@react-three/drei": "^10.1.2",
-    "@react-three/fiber": "^9.1.2",
     "@repo/lib": "workspace:*",
     "@repo/lightfast-config": "workspace:*",
     "@repo/lightfast-email": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "0.12.0",
-    "@types/three": "^0.176.0",
     "@vendor/analytics": "workspace:*",
     "@vendor/clerk": "workspace:*",
     "@vendor/email": "workspace:*",
@@ -31,18 +27,14 @@
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:*",
     "@vendor/upstash": "workspace:*",
-    "context-filter-polyfill": "^0.3.22",
     "geist": "^1.3.1",
     "jotai": "^2.12.3",
-    "js-cookie": "^3.0.5",
     "lucide-react": "catalog:",
     "neverthrow": "^8.2.0",
     "next": "catalog:",
     "react": "catalog:react19",
     "react-confetti": "^6.4.0",
-    "react-dom": "catalog:react19",
-    "simplex-noise": "^4.0.3",
-    "three": "^0.176.0"
+    "react-dom": "catalog:react19"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
