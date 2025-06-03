@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAtom } from "jotai";
 import { Send } from "lucide-react";
 import Confetti from "react-confetti";
+import { createPortal } from "react-dom";
 
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -102,12 +103,24 @@ export function CenterCardEarlyAccessForm() {
   return (
     <div className="early-access-form">
       {isSubmitted ? (
-        <div
-          className="flex flex-col items-center justify-center text-center"
-          role="status"
-          aria-live="polite"
-        >
-          <Confetti recycle={false} numberOfPieces={200} />
+        <div className="flex flex-col" role="status" aria-live="polite">
+          {typeof window !== "undefined" &&
+            createPortal(
+              <Confetti
+                recycle={false}
+                numberOfPieces={200}
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",
+                  zIndex: 9999,
+                }}
+              />,
+              document.body,
+            )}
           <p className="mb-2 text-sm font-semibold">
             {form.getValues("email")} is now on the list! 🎉
           </p>
