@@ -26,13 +26,13 @@ export const useSetupBinaryScrollBehavior = (): void => {
   }, []);
 
   const manualChangeTimeRef = useRef<number>(0);
-  const MANUAL_CHANGE_COOLDOWN = 1000;
+  const MANUAL_CHANGE_COOLDOWN = 250;
   const lastScrollChangeTimeRef = useRef<number>(0);
-  const SCROLL_CHANGE_COOLDOWN = 1000;
+  const SCROLL_CHANGE_COOLDOWN = 250;
 
   const spring = useSpringAnimation();
   const accumulator = useScrollAccumulator({
-    thresholdAmount: 250,
+    thresholdAmount: 150,
   });
 
   const cssVariable = "--wheel-progress";
