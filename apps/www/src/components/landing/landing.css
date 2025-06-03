@@ -292,6 +292,18 @@
   pointer-events: auto;
 }
 
+/* Remove focus styles when early access container is not visible */
+.center-card-early-access-container:not([data-visible="true"])
+  .early-access-form
+  input:focus,
+.center-card-early-access-container:not([data-visible="true"])
+  .early-access-form
+  button:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: inherit;
+}
+
 /* Floating Scroll Indicator - appears after loading completes, JavaScript hides on scroll */
 .scroll-indicator-floating {
   /* Initially hidden, fade in after loading animation completes */

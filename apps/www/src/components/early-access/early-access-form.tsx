@@ -44,6 +44,9 @@ export function CenterCardEarlyAccessForm() {
     },
   });
 
+  // Watch the email field to make button state reactive
+  const emailValue = form.watch("email");
+
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
     const result = await createEarlyAccessEntrySafe({
       email: values.email,
@@ -135,16 +138,16 @@ export function CenterCardEarlyAccessForm() {
             className="space-y-4"
             aria-label="Early access signup form"
           >
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="sr-only">
-                    Email address for early access
-                  </FormLabel>
-                  <FormControl>
-                    <div className="relative">
+            <div className="flex flex-row gap-2">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel className="sr-only">
+                      Email address for early access
+                    </FormLabel>
+                    <FormControl>
                       <Input
                         type="email"
                         className="w-full border-white/20 bg-white/10 text-white selection:bg-white/30 selection:text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
@@ -152,30 +155,34 @@ export function CenterCardEarlyAccessForm() {
                         autoComplete="email"
                         {...field}
                       />
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Submit early access signup"
-                        disabled={
-                          form.formState.isSubmitting ||
-                          !field.value.trim() ||
-                          !form.formState.isValid
-                        }
-                        className="absolute top-1/2 right-1.5 h-7 w-7 -translate-y-1/2 p-0 text-white hover:bg-white/10 disabled:text-white/50"
-                        style={{ pointerEvents: "auto", zIndex: 1 }}
-                      >
-                        {form.formState.isSubmitting ? (
-                          <div
-                            className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-                            aria-label="Submitting..."
-                          />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </FormControl>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                variant="default"
+                size="icon"
+                aria-label="Submit early access signup"
+                disabled={
+                  form.formState.isSubmitting ||
+                  !emailValue.trim() ||
+                  !!form.formState.errors.email
+                }
+                className="shrink-0 bg-white text-black hover:bg-white/90 disabled:bg-white/50 disabled:text-black/50"
+              >
+                {form.formState.isSubmitting ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <FormField
+              control={form.control}
+              name="email"
+              render={() => (
+                <FormItem>
                   <FormMessage className="text-xs" />
                 </FormItem>
               )}

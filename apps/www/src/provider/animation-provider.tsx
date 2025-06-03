@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 
 import { useSetupBinaryScrollBehavior } from "~/hooks/use-binary-scroll-state";
 import { useCSSTimingVariable } from "~/hooks/use-css-timing-variable";
+import { useExtensionFocusRelease } from "~/hooks/use-extension-focus-release";
 import { useBinaryScrollStore } from "~/stores/binary-scroll-store";
 import { useScrollIndicator } from "../hooks/use-scroll-indicator";
 import { useScrollLock } from "../hooks/use-scroll-lock";
@@ -12,6 +13,7 @@ import { useScrollLock } from "../hooks/use-scroll-lock";
 export function AnimationProvider() {
   const gridLineDuration = useCSSTimingVariable("--grid-line-duration", 1600);
   const gridLineDelayStep = useCSSTimingVariable("--grid-line-delay-step", 200);
+  const { releaseFocus } = useExtensionFocusRelease();
   useSetupBinaryScrollBehavior();
 
   // Calculate loading duration with memoization
@@ -41,9 +43,11 @@ export function AnimationProvider() {
         earlyAccessContainer.setAttribute("data-visible", "true");
       } else {
         earlyAccessContainer.removeAttribute("data-visible");
+        // Use the dedicated hook to release focus and dismiss extension UI
+        releaseFocus(earlyAccessContainer);
       }
     }
-  }, [currentState]);
+  }, [currentState, releaseFocus]);
 
   useEffect(() => {
     const updateViewportVariables = () => {
