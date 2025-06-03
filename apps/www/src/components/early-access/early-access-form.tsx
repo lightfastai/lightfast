@@ -149,7 +149,7 @@ export function CenterCardEarlyAccessForm() {
                     <FormControl>
                       <Input
                         type="email"
-                        className="h-full w-full border-white/20 bg-white/10 text-white selection:bg-white/30 selection:text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
+                        className="w-full border-white/20 bg-white/10 text-white selection:bg-white/30 selection:text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
                         placeholder="Enter your email for early access"
                         autoComplete="email"
                         {...field}
@@ -161,14 +161,14 @@ export function CenterCardEarlyAccessForm() {
               <Button
                 type="submit"
                 variant="default"
-                size="sm"
+                size="default"
                 aria-label="Submit early access signup"
                 disabled={
                   form.formState.isSubmitting ||
                   !emailValue.trim() ||
                   !!form.formState.errors.email
                 }
-                className="shrink-0 bg-white text-black hover:bg-white/90 disabled:bg-white/50 disabled:text-black/50"
+                className="bg-white text-black hover:bg-white/90 disabled:bg-white/50 disabled:text-black/50"
               >
                 {form.formState.isSubmitting ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />

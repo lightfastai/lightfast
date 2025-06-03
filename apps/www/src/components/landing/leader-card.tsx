@@ -45,7 +45,7 @@ export const LeaderCard = () => {
           {/* Early Access Text (top-left position) */}
           <div className="absolute top-0 right-0 left-0 max-w-sm">
             <div className="text-white">
-              <p className="mb-2 text-xl font-bold sm:text-2xl lg:text-3xl">
+              <p className="text-md mb-2 font-bold sm:text-2xl lg:text-3xl">
                 Simplifying the way you interact with applications like Blender,
                 Unity, Fusion360 and more.
               </p>

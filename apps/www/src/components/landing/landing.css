@@ -107,7 +107,7 @@
     --cc-start-height: calc(var(--cc-start-width) * 1.33); /* 4:3 height */
     --cc-early-access-width: min(75vw, 300px);
     --cc-early-access-height: calc(
-      var(--cc-early-access-width) * 1.25
+      var(--cc-early-access-width) * 1.5
     ); /* 5:4 height */
   }
 }
@@ -123,9 +123,9 @@
     --card-gap: 10px;
 
     /* Tablet: Slightly vertical aspect ratio (4:5) */
-    --cc-start-width: min(70vmin, 600px);
+    --cc-start-width: min(70vmin, 750px);
     --cc-start-height: calc(var(--cc-start-width) * 1.1); /* 10:11 height */
-    --cc-early-access-width: min(60vmin, 500px);
+    --cc-early-access-width: min(60vmin, 800px);
     --cc-early-access-height: calc(
       var(--cc-early-access-width) * 1.15
     ); /* Slightly taller */
@@ -444,15 +444,6 @@
 @media (max-width: 640px) {
   /* Touch-friendly targets */
   .center-card-next-button,
-  .early-access-form button {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  /* Prevent iOS zoom */
-  .early-access-form input {
-    font-size: 16px;
-  }
 
   /* Simplified animations */
   .center-card-text {
@@ -490,13 +481,7 @@
   }
 }
 
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .early-access-form input,
-  .early-access-form button {
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
-}
+/* Touch device optimizations - input font size handled by component */
 
 /* === KEYFRAMES === */
 @keyframes fadeIn {
