@@ -135,7 +135,6 @@ export function CenterCardEarlyAccessForm() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
             aria-label="Early access signup form"
           >
             <div className="flex flex-row gap-2">
@@ -150,7 +149,7 @@ export function CenterCardEarlyAccessForm() {
                     <FormControl>
                       <Input
                         type="email"
-                        className="w-full border-white/20 bg-white/10 text-white selection:bg-white/30 selection:text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
+                        className="h-full w-full border-white/20 bg-white/10 text-white selection:bg-white/30 selection:text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
                         placeholder="Enter your email for early access"
                         autoComplete="email"
                         {...field}
@@ -162,7 +161,7 @@ export function CenterCardEarlyAccessForm() {
               <Button
                 type="submit"
                 variant="default"
-                size="icon"
+                size="sm"
                 aria-label="Submit early access signup"
                 disabled={
                   form.formState.isSubmitting ||

@@ -130,6 +130,25 @@
       var(--cc-early-access-width) * 1.15
     ); /* Slightly taller */
   }
+
+  /* Tablet logo positioning - same as desktop now */
+  @keyframes logoMoveToCorner {
+    0% {
+      left: calc(50% - 28px);
+      top: calc(50% - 16px);
+      transform: scale(4);
+    }
+    20% {
+      left: calc(50% - 28px);
+      top: calc(50% - 16px);
+      transform: scale(1);
+    }
+    100% {
+      left: 0; /* Align to left edge of padded area */
+      top: calc(100% - 32px); /* Align to bottom edge of padded area */
+      transform: scale(1);
+    }
+  }
 }
 
 /* Reduced motion preference */
@@ -204,12 +223,12 @@
 }
 
 .center-card-logo {
-  width: 48px;
-  height: 48px;
-  --actual-card-width: calc(var(--cc-current-width) - var(--card-gap));
-  --actual-card-height: calc(var(--cc-current-height) - var(--card-gap));
-  left: calc((var(--actual-card-width) - 48px) / 2);
-  top: calc((var(--actual-card-height) - 48px) / 2);
+  /* The logo icon has dimensions of 28x16, but we want it larger during animation */
+  width: 56px; /* 28 * 2 scale */
+  height: 32px; /* 16 * 2 scale */
+  /* Center initially, then animate to bottom-left corner of padded area */
+  left: calc(50% - 28px); /* Half of the actual width */
+  top: calc(50% - 16px); /* Half of the actual height */
   opacity: var(--text-fade-phase);
   animation: logoMoveToCorner var(--grid-line-duration) var(--grid-line-easing)
     forwards;
@@ -439,6 +458,25 @@
   .center-card-text {
     animation-duration: 0.4s;
   }
+
+  /* Mobile logo positioning - same as desktop now */
+  @keyframes logoMoveToCorner {
+    0% {
+      left: calc(50% - 28px);
+      top: calc(50% - 16px);
+      transform: scale(4);
+    }
+    20% {
+      left: calc(50% - 28px);
+      top: calc(50% - 16px);
+      transform: scale(1);
+    }
+    100% {
+      left: 0; /* Align to left edge of padded area */
+      top: calc(100% - 32px); /* Align to bottom edge of padded area */
+      transform: scale(1);
+    }
+  }
 }
 
 /* Landscape mobile optimizations */
@@ -494,18 +532,18 @@
 
 @keyframes logoMoveToCorner {
   0% {
-    left: calc(50% - 24px);
-    top: calc(50% - 24px);
+    left: calc(50% - 28px);
+    top: calc(50% - 16px);
     transform: scale(4);
   }
   20% {
-    left: calc(50% - 24px);
-    top: calc(50% - 24px);
+    left: calc(50% - 28px);
+    top: calc(50% - 16px);
     transform: scale(1);
   }
   100% {
-    left: var(--grid-offset-x, 32px);
-    top: calc(100% - 80px);
+    left: 0; /* Align to left edge of padded area */
+    top: calc(100% - 32px); /* Align to bottom edge of padded area */
     transform: scale(1);
   }
 }
