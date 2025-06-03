@@ -3,18 +3,17 @@
   --wheel-progress: 0;
 
   /* Grid line animation timing */
-  /* IMPORTANT: Keep these values in sync with ANIMATION_TIMING in constants.ts */
   --grid-line-duration: 1.6s;
   --grid-line-delay-step: 0.2s;
   --grid-line-easing: ease-out;
 
-  /* Viewport variables (set by JavaScript) */
+  /* Basic viewport variables (set by JavaScript) */
   --viewport-width: 100vw;
   --viewport-height: 100vh;
   --container-width: calc(100vw - 64px);
   --container-height: calc(100vh - 128px);
 
-  /* Grid constants */
+  /* Grid constants - responsive via CSS */
   --grid-size: 12;
   --grid-offset-x: 32px;
   --grid-offset-y: 64px;
@@ -29,109 +28,146 @@
   --cell-width: calc(var(--container-width) / var(--grid-size));
   --cell-height: calc(var(--container-height) / var(--grid-size));
 
-  /* Full viewport grid dimensions for edge-to-edge positioning */
-  --full-cell-width: calc(100vw / var(--grid-size));
-  --full-cell-height: calc(100vh / var(--grid-size));
-
-  /* Binary animation phases - simplified for version 1 */
-  /* Initial state: progress = 0, Early access state: progress = 1 */
-
-  /* Text fade: completes fade out by 0.5 wheel progress */
+  /* Binary animation phases */
   --text-fade-phase: calc(1 - min(1, var(--wheel-progress) * 2));
-
-  /* Early access phases: text fades out first, then card transforms */
   --early-access-card-phase: var(--wheel-progress);
-  --early-access-text-phase: var(
-    --wheel-progress
-  ); /* Form should be visible when scroll state is active */
-
-  /* Logo moves during the transition */
+  --early-access-text-phase: var(--wheel-progress);
   --logo-move-phase: var(--wheel-progress);
 
-  /* Disabled phases for version 1 */
-  --expansion-phase: 0;
-  --category-phase: 0;
-
-  /* Center card sizing - simplified for binary states */
-  --cc-start-size: min(
+  /* Center card sizing - responsive with aspect ratios */
+  /* Desktop: Square aspect ratio */
+  --cc-start-width: min(
     900px,
     calc(min(var(--viewport-width), var(--viewport-height)) * 0.8)
   );
-  --cc-early-access-size: min(
+  --cc-start-height: var(--cc-start-width);
+  --cc-early-access-width: min(
     600px,
     calc(min(var(--viewport-width), var(--viewport-height)) * 0.6)
   );
+  --cc-early-access-height: var(--cc-early-access-width);
 
   /* Binary sizing: interpolate between start and early access */
-  --cc-current-size: calc(
-    var(--cc-start-size) +
-      (var(--cc-early-access-size) - var(--cc-start-size)) *
+  --cc-current-width: calc(
+    var(--cc-start-width) +
+      (var(--cc-early-access-width) - var(--cc-start-width)) *
+      var(--early-access-card-phase)
+  );
+  --cc-current-height: calc(
+    var(--cc-start-height) +
+      (var(--cc-early-access-height) - var(--cc-start-height)) *
       var(--early-access-card-phase)
   );
 
-  /* Center card positions - stays centered for version 1 */
+  /* Center card positions - stays centered */
   --cc-current-x: calc(var(--viewport-width) / 2);
   --cc-current-y: calc(var(--viewport-height) / 2);
 
-  /* Center card visual boundaries (including border) */
+  /* Center card visual boundaries */
   --cc-visual-top: calc(
-    var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+    var(--cc-current-y) - var(--cc-current-height) / 2 + var(--card-gap) / 2
   );
   --cc-visual-bottom: calc(
-    var(--cc-current-y) + var(--cc-current-size) / 2 - var(--card-gap) / 2 -
+    var(--cc-current-y) + var(--cc-current-height) / 2 - var(--card-gap) / 2 -
       var(--cc-border-width) / 2
   );
   --cc-visual-left: calc(
-    var(--cc-current-x) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+    var(--cc-current-x) - var(--cc-current-width) / 2 + var(--card-gap) / 2
   );
   --cc-visual-right: calc(
-    var(--cc-current-x) + var(--cc-current-size) / 2 - var(--card-gap) / 2 -
+    var(--cc-current-x) + var(--cc-current-width) / 2 - var(--card-gap) / 2 -
       var(--cc-border-width) / 2
   );
 
-  /* Component opacity and scale - grid lines enabled for version 1 */
+  /* Component opacity and scale */
   --grid-lines-opacity: 1;
   --integration-container-opacity: 0;
   --integration-card-opacity: 0;
   --integration-card-scale: 0.8;
 
-  /* Text and logo animation - simplified */
-  --text-opacity: var(--text-fade-phase);
-  --logo-move-factor: var(--logo-move-phase);
-
   /* Animation timing for scroll lock */
-  /* NOTE: This calculation matches ANIMATION_TIMING.LOADING_DURATION in constants.ts */
   --loading-animation-duration: calc(
     var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.6s + 0.2s
-  ); /* Grid lines + text delay + text duration + buffer */
+  );
 }
 
-/* PERFORMANCE OPTIMIZED: Transform-based center card animation */
+/* === RESPONSIVE BREAKPOINTS === */
+@media (max-width: 640px) {
+  :root {
+    /* Mobile: Faster animations, smaller grid */
+    --grid-line-duration: 0.8s;
+    --grid-line-delay-step: 0.1s;
+    --grid-size: 8;
+    --grid-offset-x: 16px;
+    --grid-offset-y: 32px;
+    --card-gap: 8px;
+
+    /* Mobile: Vertical aspect ratio (3:4) for better content layout */
+    --cc-start-width: min(85vw, 350px);
+    --cc-start-height: calc(var(--cc-start-width) * 1.33); /* 4:3 height */
+    --cc-early-access-width: min(75vw, 300px);
+    --cc-early-access-height: calc(
+      var(--cc-early-access-width) * 1.25
+    ); /* 5:4 height */
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  :root {
+    /* Tablet: Medium settings */
+    --grid-line-duration: 1.2s;
+    --grid-line-delay-step: 0.15s;
+    --grid-size: 10;
+    --grid-offset-x: 24px;
+    --grid-offset-y: 48px;
+    --card-gap: 10px;
+
+    /* Tablet: Slightly vertical aspect ratio (4:5) */
+    --cc-start-width: min(70vmin, 600px);
+    --cc-start-height: calc(var(--cc-start-width) * 1.1); /* 10:11 height */
+    --cc-early-access-width: min(60vmin, 500px);
+    --cc-early-access-height: calc(
+      var(--cc-early-access-width) * 1.15
+    ); /* Slightly taller */
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --grid-line-duration: 0.3s;
+    --grid-line-delay-step: 0.05s;
+  }
+
+  .center-card-text,
+  .center-card-logo,
+  .center-card-next-button {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* === CENTER CARD === */
 .optimized-center-card {
-  /* === LAYOUT & POSITIONING === */
   position: absolute;
-  width: calc(var(--cc-current-size) - var(--card-gap));
-  height: calc(var(--cc-current-size) - var(--card-gap));
+  width: calc(var(--cc-current-width) - var(--card-gap));
+  height: calc(var(--cc-current-height) - var(--card-gap));
   left: calc(
-    var(--cc-current-x) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+    var(--cc-current-x) - var(--cc-current-width) / 2 + var(--card-gap) / 2
   );
   top: calc(
-    var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2
+    var(--cc-current-y) - var(--cc-current-height) / 2 + var(--card-gap) / 2
   );
   overflow: hidden;
   z-index: 20;
 
-  /* === COLOR CONFIGURATION === */
+  /* Color transitions */
   --cc-bg-initial: white;
   --cc-bg-early-access: black;
-  --cc-text-initial: black;
-  --cc-text-early-access: white;
-
-  /* Progress-based weights */
   --cc-initial-weight: calc((1 - var(--early-access-card-phase)) * 100%);
   --cc-early-access-weight: calc(var(--early-access-card-phase) * 100%);
 
-  /* === COLOR TRANSITIONS === */
   background-color: color-mix(
     in srgb,
     var(--cc-bg-initial) var(--cc-initial-weight),
@@ -140,15 +176,11 @@
 
   color: color-mix(
     in srgb,
-    var(--cc-text-initial) var(--cc-initial-weight),
-    var(--cc-text-early-access) var(--cc-early-access-weight)
+    black var(--cc-initial-weight),
+    white var(--cc-early-access-weight)
   );
 
-  /* === PERFORMANCE OPTIMIZATIONS === */
   will-change: transform, width, height, background-color, color;
-  contain: layout style paint;
-
-  /* === TRANSITIONS === */
   transition:
     width 0.1s ease-out,
     height 0.1s ease-out,
@@ -158,172 +190,101 @@
     color 0.1s ease-out;
 }
 
-/* Center card text with proper loading sequence */
+/* === TEXT AND LOGO ANIMATIONS === */
 .center-card-text {
-  /* Start invisible for loading animation */
   opacity: 0;
   transform: translateY(20px);
-
-  /* Loading animation sequence: fade in, then switch to scroll control */
   animation:
     fadeInUp 0.6s ease-out
       calc(var(--grid-line-duration) + var(--grid-line-delay-step)) forwards,
-    /* After loading completes, switch to scroll control */ textScrollControl
-      0.1s linear calc(var(--loading-animation-duration)) forwards;
-
+    textScrollControl 0.1s linear calc(var(--loading-animation-duration))
+      forwards;
   will-change: opacity, transform;
-  /* Smooth transition during state changes */
   transition: opacity 0.15s ease-out;
 }
 
-/* Center card logo with loading animation and fade out */
 .center-card-logo {
   width: 48px;
   height: 48px;
-
-  /* Actual card size after gap adjustments */
-  --actual-card-size: calc(var(--cc-current-size) - var(--card-gap));
-
-  /* Start position - center of card */
-  left: calc((var(--actual-card-size) - 48px) / 2);
-  top: calc((var(--actual-card-size) - 48px) / 2);
-
-  /* Loading animation with fixed positions - no jitter during scroll */
+  --actual-card-width: calc(var(--cc-current-width) - var(--card-gap));
+  --actual-card-height: calc(var(--cc-current-height) - var(--card-gap));
+  left: calc((var(--actual-card-width) - 48px) / 2);
+  top: calc((var(--actual-card-height) - 48px) / 2);
   opacity: var(--text-fade-phase);
-  animation: logoMoveToCornerFixed var(--grid-line-duration)
-    var(--grid-line-easing) forwards;
-
-  /* Performance optimizations */
+  animation: logoMoveToCorner var(--grid-line-duration) var(--grid-line-easing)
+    forwards;
   will-change: left, top, opacity;
   transition: opacity 0.3s ease-out;
 }
 
-/* Early Access Chat Container - Simple fade in */
+/* === EARLY ACCESS CONTAINER === */
 .center-card-early-access-container {
   opacity: var(--early-access-text-phase);
   transition: opacity 0.3s ease-out;
   will-change: opacity;
-  /* Disable pointer events when not visible */
   pointer-events: none;
-  /* Start with lower z-index, only elevate when active */
   z-index: 10;
 }
 
-/* Enable pointer events when explicitly activated by scroll state */
-.center-card-early-access-container.pointer-events-active {
-  pointer-events: auto;
-  z-index: 30;
-}
-
-/* Enable interactions when visible */
 .center-card-early-access-container[data-visible="true"] {
   pointer-events: auto;
   z-index: 30;
 }
 
-/* Next Phase Button - synchronized with logo animation and hidden during early access */
+/* === BUTTONS === */
 .center-card-next-button {
-  /* Start invisible for loading animation */
   opacity: 0;
   transform: translateY(20px) scale(0.8);
-
-  /* Loading animation sequence: fade in after text appears, then sync with logo */
   animation:
     fadeInScale 0.6s ease-out
       calc(var(--grid-line-duration) + var(--grid-line-delay-step) + 0.2s)
       forwards,
-    /* After loading completes, sync opacity with logo */ buttonLogoSync 0.1s
-      linear calc(var(--loading-animation-duration)) forwards;
-
+    buttonLogoSync 0.1s linear calc(var(--loading-animation-duration)) forwards;
   will-change: opacity, transform;
-  /* Smooth transition during state changes */
   transition:
     opacity 0.15s ease-out,
     transform 0.15s ease-out;
-
-  /* Enable pointer events only when button is visible (text-fade-phase > 0.5) */
   pointer-events: none;
-  /* Button should be above early access form when active */
   z-index: 20;
 }
 
-/* Enable interactions when button is visible and text hasn't faded (not in early access state) */
 .center-card-next-button[data-visible="true"] {
   pointer-events: auto;
-  z-index: 20;
 }
 
-/* Hide button container when early access form is active */
-.center-card-early-access-container[data-visible="true"] {
-  z-index: 30; /* Ensure early access content appears above button area */
-}
-
-.center-card-early-access-container[data-visible="true"]
-  ~ div
-  .center-card-next-button {
-  pointer-events: none !important;
-  opacity: 0 !important;
-}
-
-/* Removed streaming animations - no longer needed */
-
-/* Early Access Form - controlled visibility and interaction */
+/* === FORMS === */
 .early-access-form {
   opacity: var(--early-access-text-phase);
   transition: opacity 0.3s ease-out;
   will-change: opacity;
-
-  /* Disable pointer events when form is not visible (early-access-text-phase near 0) */
   pointer-events: none;
 }
 
-/* Enable form interactions when early access is active */
 .center-card-early-access-container[data-visible="true"] .early-access-form {
   pointer-events: auto;
 }
 
-/* Ensure all form elements inherit pointer-events behavior */
 .early-access-form * {
   pointer-events: inherit;
 }
 
-/* Only allow pointer events on form elements when container is active */
-.center-card-early-access-container[data-visible="true"] .early-access-form * {
-  pointer-events: auto;
-}
-
-/* Remove focus styles when early access container is not visible */
-.center-card-early-access-container:not([data-visible="true"])
-  .early-access-form
-  input:focus,
-.center-card-early-access-container:not([data-visible="true"])
-  .early-access-form
-  button:focus {
-  outline: none;
-  box-shadow: none;
-  border-color: inherit;
-}
-
-/* Floating Scroll Indicator - appears after loading completes, JavaScript hides on scroll */
+/* === SCROLL INDICATOR === */
 .scroll-indicator-floating {
-  /* Initially hidden, fade in after loading animation completes */
   opacity: 0;
   animation: fadeIn 0.5s ease-out calc(var(--loading-animation-duration) + 0.5s)
     forwards;
-  /* Smooth transitions */
   transition: opacity 0.3s ease-out;
   will-change: opacity;
 }
 
-/* PERFORMANCE OPTIMIZED: Grid lines with instant response */
+/* === GRID LINES === */
 .optimized-grid-lines {
   opacity: var(--grid-lines-opacity);
   transition: opacity 0.2s ease-out;
   will-change: opacity;
-  z-index: 10; /* Ensure grid lines appear above center card during animation */
+  z-index: 10;
 }
 
-/* Grid line elements - aligned with center card visual boundaries */
 .grid-line-top {
   position: absolute;
   height: 1px;
@@ -334,7 +295,7 @@
   transform: scaleX(0);
   animation: drawFromRight var(--grid-line-duration) var(--grid-line-easing)
     forwards;
-  transition: top 0.1s ease-out; /* Restore transition */
+  transition: top 0.1s ease-out;
   will-change: top;
 }
 
@@ -348,7 +309,7 @@
   transform: scaleX(0);
   animation: drawFromLeft var(--grid-line-duration) var(--grid-line-easing)
     var(--grid-line-delay-step) forwards;
-  transition: top 0.1s ease-out; /* Restore transition */
+  transition: top 0.1s ease-out;
   will-change: top;
 }
 
@@ -362,7 +323,7 @@
   transform: scaleY(0);
   animation: drawFromTop var(--grid-line-duration) var(--grid-line-easing)
     calc(var(--grid-line-delay-step) * 2) forwards;
-  transition: left 0.1s ease-out; /* Restore transition */
+  transition: left 0.1s ease-out;
   will-change: left;
 }
 
@@ -376,30 +337,35 @@
   transform: scaleY(0);
   animation: drawFromBottom var(--grid-line-duration) var(--grid-line-easing)
     calc(var(--grid-line-delay-step) * 3) forwards;
-  transition: left 0.1s ease-out; /* Restore transition */
+  transition: left 0.1s ease-out;
   will-change: left;
 }
 
-/* Additional grid lines at 33% and 66% intersections */
-.grid-line-h33 {
+/* Additional grid lines */
+.grid-line-h33,
+.grid-line-h66,
+.grid-line-v33,
+.grid-line-v66 {
   position: absolute;
-  height: 1px;
-  top: calc(
-    var(--cc-visual-top) + (var(--cc-visual-bottom) - var(--cc-visual-top)) *
-      0.33
-  );
-  left: 0;
-  width: 100vw;
   opacity: 0;
   animation: fadeIn 0.4s ease-out
     calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.2s)
     forwards;
-  transition: top 0.1s ease-out; /* Restore transition */
-  will-change: top, opacity;
+  will-change: opacity;
+}
+
+.grid-line-h33 {
+  height: 1px;
+  top: calc(
+    var(--cc-visual-top) + (var(--cc-visual-bottom) - var(--cc-visual-top)) *
+      0.33
+  );
+  left: 0;
+  width: 100vw;
+  transition: top 0.1s ease-out;
 }
 
 .grid-line-h66 {
-  position: absolute;
   height: 1px;
   top: calc(
     var(--cc-visual-top) + (var(--cc-visual-bottom) - var(--cc-visual-top)) *
@@ -407,16 +373,13 @@
   );
   left: 0;
   width: 100vw;
-  opacity: 0;
-  animation: fadeIn 0.4s ease-out
-    calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.4s)
-    forwards;
-  transition: top 0.1s ease-out; /* Restore transition */
-  will-change: top, opacity;
+  transition: top 0.1s ease-out;
+  animation-delay: calc(
+    var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.4s
+  );
 }
 
 .grid-line-v33 {
-  position: absolute;
   width: 1px;
   left: calc(
     var(--cc-visual-left) + (var(--cc-visual-right) - var(--cc-visual-left)) *
@@ -424,16 +387,13 @@
   );
   top: 0;
   height: 100vh;
-  opacity: 0;
-  animation: fadeIn 0.4s ease-out
-    calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.6s)
-    forwards;
-  transition: left 0.1s ease-out; /* Restore transition */
-  will-change: left, opacity;
+  transition: left 0.1s ease-out;
+  animation-delay: calc(
+    var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.6s
+  );
 }
 
 .grid-line-v66 {
-  position: absolute;
   width: 1px;
   left: calc(
     var(--cc-visual-left) + (var(--cc-visual-right) - var(--cc-visual-left)) *
@@ -441,217 +401,13 @@
   );
   top: 0;
   height: 100vh;
-  opacity: 0;
-  animation: fadeIn 0.4s ease-out
-    calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.8s)
-    forwards;
-  transition: left 0.1s ease-out; /* Restore transition */
-  will-change: left, opacity;
-}
-
-/* PERFORMANCE OPTIMIZED: Integration categories with instant response */
-.optimized-integration-container {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  opacity: var(--integration-container-opacity);
-  transition: opacity 0.2s ease-out;
-  will-change: opacity;
-}
-
-/* Optimized integration cards */
-.optimized-integration-card {
-  position: absolute;
-  opacity: var(--integration-card-opacity);
-  transform: scale(var(--integration-card-scale));
-  transition:
-    opacity 0.2s ease-out,
-    transform 0.2s ease-out;
-  transition-delay: calc(var(--index) * 50ms);
-  will-change: opacity, transform;
-}
-
-/* Base positioning for all integration cards using CSS custom properties */
-.integration-card {
-  position: absolute;
-
-  /* Default positioning - works for most cards with gaps */
-  left: calc(
-    var(--grid-offset-x) + var(--cell-width) * var(--col-start) +
-      var(--card-gap) / 2
-  );
-  top: calc(
-    var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
-      var(--card-gap) / 2
-  );
-  width: calc(var(--cell-width) * var(--col-span) - var(--card-gap));
-  height: calc(var(--cell-height) * var(--row-span) - var(--card-gap));
-}
-
-/* Edge-to-edge positioning using data attributes */
-
-/* 3D Modeling - Left edge, top portion */
-.integration-card[data-category="3d-modeling"] {
-  left: var(--card-gap);
-  top: var(--card-gap);
-  width: calc(
-    var(--grid-offset-x) + var(--cell-width) * var(--col-span) -
-      var(--card-gap) - var(--card-gap) / 2
-  );
-  height: calc(
-    var(--grid-offset-y) + var(--cell-height) * var(--row-span) -
-      var(--card-gap) - var(--card-gap) / 2
+  transition: left 0.1s ease-out;
+  animation-delay: calc(
+    var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.8s
   );
 }
 
-/* Audio Production - Left edge, bottom portion */
-.integration-card[data-category="audio-production"] {
-  left: var(--card-gap);
-  top: calc(
-    var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
-      var(--card-gap) / 2
-  );
-  width: calc(
-    var(--grid-offset-x) + var(--cell-width) * var(--col-span) -
-      var(--card-gap) - var(--card-gap) / 2
-  );
-  height: calc(
-    100vh -
-      (
-        var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
-          var(--card-gap) / 2
-      ) -
-      var(--card-gap)
-  );
-}
-
-/* Design Tools - Right edge, top portion */
-.integration-card[data-category="design-tools"] {
-  left: calc(
-    100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span) +
-      var(--card-gap) / 2
-  );
-  top: var(--card-gap);
-  width: calc(
-    var(--grid-offset-x) + var(--cell-width) * var(--col-span) -
-      var(--card-gap) - var(--card-gap) / 2
-  );
-  height: calc(
-    var(--grid-offset-y) + var(--cell-height) * var(--row-span) -
-      var(--card-gap) - var(--card-gap) / 2
-  );
-}
-
-/* Interactive & Live - Right edge, bottom portion */
-.integration-card[data-category="interactive--live"] {
-  left: calc(
-    100vw - var(--grid-offset-x) - var(--cell-width) * var(--col-span) +
-      var(--card-gap) / 2
-  );
-  top: calc(
-    var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
-      var(--card-gap) / 2
-  );
-  width: calc(
-    var(--grid-offset-x) + var(--cell-width) * var(--col-span) -
-      var(--card-gap) - var(--card-gap) / 2
-  );
-  height: calc(
-    100vh -
-      (
-        var(--grid-offset-y) + var(--cell-height) * var(--row-start) +
-          var(--card-gap) / 2
-      ) -
-      var(--card-gap)
-  );
-}
-
-/* Center card wrapping - preserves exact behavior */
-.integration-card[data-category="2d-graphics"] {
-  /* 2D Graphics: colStart=2, rowStart=0, colSpan=5, rowSpan=5 - wraps around center card */
-  left: calc(
-    var(--grid-offset-x) + var(--cell-width) * 2 + var(--card-gap) / 2
-  );
-  top: var(--card-gap);
-  width: calc(
-    var(--cc-current-x) + var(--cc-current-size) / 2 - var(--grid-offset-x) -
-      var(--cell-width) * 2 - var(--card-gap)
-  );
-  height: calc(
-    var(--cc-current-y) - var(--cc-current-size) / 2 - var(--card-gap) -
-      var(--card-gap) / 2
-  );
-}
-
-.integration-card[data-category="game-engines"] {
-  /* Game Engines: top starts at center card top border, width ends at center card left border */
-  left: calc(
-    var(--grid-offset-x) + var(--cell-width) * 2 + var(--card-gap) / 2
-  );
-  top: calc(
-    var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2
-  );
-  width: calc(
-    var(--cc-current-x) - var(--cc-current-size) / 2 - var(--grid-offset-x) -
-      var(--cell-width) * 2 - var(--card-gap)
-  );
-  height: calc(
-    100vh -
-      (var(--cc-current-y) - var(--cc-current-size) / 2 + var(--card-gap) / 2) -
-      var(--card-gap)
-  );
-}
-
-.integration-card[data-category="video--vfx"] {
-  /* Video & VFX: starts exactly at center card right border, ends where Design Tools begins */
-  left: calc(
-    var(--cc-current-x) + var(--cc-current-size) / 2 + var(--card-gap) / 2
-  );
-  top: var(--card-gap);
-  width: calc(
-    100vw - var(--grid-offset-x) - var(--cell-width) * 2 -
-      (var(--cc-current-x) + var(--cc-current-size) / 2) - var(--card-gap)
-  );
-  height: calc(
-    var(--cc-current-y) + var(--cc-current-size) / 2 - var(--card-gap) -
-      var(--card-gap) / 2
-  );
-}
-
-.integration-card[data-category="3d-texturing--cad"] {
-  /* 3D Texturing & CAD: starts exactly at center card left border, ends where Interactive & Live begins */
-  left: calc(
-    var(--cc-current-x) - var(--cc-current-size) / 2 + var(--card-gap) / 2
-  );
-  top: calc(
-    var(--cc-current-y) + var(--cc-current-size) / 2 + var(--card-gap) / 2
-  );
-  width: calc(
-    100vw - var(--grid-offset-x) - var(--cell-width) * 2 -
-      (var(--cc-current-x) - var(--cc-current-size) / 2) - var(--card-gap)
-  );
-  height: calc(
-    100vh -
-      (var(--cc-current-y) + var(--cc-current-size) / 2 + var(--card-gap) / 2) -
-      var(--card-gap)
-  );
-}
-
-/* PERFORMANCE OPTIMIZED: Page header with instant response */
-.optimized-page-header {
-  position: absolute;
-  top: 64px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  opacity: var(--category-phase);
-  transition: opacity 0.2s ease-out;
-  will-change: opacity;
-}
-
-/* Scroll lock during loading animations */
+/* === SCROLL LOCK === */
 .landing-scroll-locked {
   overflow: hidden;
   touch-action: none;
@@ -665,16 +421,46 @@
   height: 100%;
 }
 
-/* ===== KEYFRAMES FOR COMPONENTS ===== */
-@keyframes rotate3d {
-  from {
-    transform: rotateX(0deg) rotateY(0deg);
+/* === MOBILE OPTIMIZATIONS === */
+@media (max-width: 640px) {
+  /* Touch-friendly targets */
+  .center-card-next-button,
+  .early-access-form button {
+    min-height: 44px;
+    min-width: 44px;
   }
-  to {
-    transform: rotateX(360deg) rotateY(360deg);
+
+  /* Prevent iOS zoom */
+  .early-access-form input {
+    font-size: 16px;
+  }
+
+  /* Simplified animations */
+  .center-card-text {
+    animation-duration: 0.4s;
   }
 }
 
+/* Landscape mobile optimizations */
+@media (max-width: 767px) and (orientation: landscape) {
+  :root {
+    /* Even more vertical on landscape phones for better content fit */
+    --cc-start-width: min(50vw, 280px);
+    --cc-start-height: calc(var(--cc-start-width) * 1.5); /* 2:3 height */
+    --cc-early-access-width: min(45vw, 250px);
+    --cc-early-access-height: calc(var(--cc-early-access-width) * 1.4);
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .early-access-form input,
+  .early-access-form button {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
+
+/* === KEYFRAMES === */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -684,7 +470,64 @@
   }
 }
 
-/* Grid line drawing animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes logoMoveToCorner {
+  0% {
+    left: calc(50% - 24px);
+    top: calc(50% - 24px);
+    transform: scale(4);
+  }
+  20% {
+    left: calc(50% - 24px);
+    top: calc(50% - 24px);
+    transform: scale(1);
+  }
+  100% {
+    left: var(--grid-offset-x, 32px);
+    top: calc(100% - 80px);
+    transform: scale(1);
+  }
+}
+
+@keyframes textScrollControl {
+  from {
+    opacity: var(--text-fade-phase);
+  }
+  to {
+    opacity: var(--text-fade-phase);
+  }
+}
+
+@keyframes buttonLogoSync {
+  from {
+    opacity: var(--text-fade-phase);
+  }
+  to {
+    opacity: var(--text-fade-phase);
+  }
+}
+
 @keyframes drawFromRight {
   from {
     transform: scaleX(0);
@@ -718,77 +561,5 @@
   }
   to {
     transform: scaleY(1);
-  }
-}
-
-/* Center card content animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Logo movement animation with fixed positions - no jitter during scroll */
-@keyframes logoMoveToCornerFixed {
-  0% {
-    left: calc(50% - 24px);
-    top: calc(50% - 24px);
-    transform: scale(4);
-  }
-  20% {
-    left: calc(50% - 24px);
-    top: calc(50% - 24px);
-    transform: scale(1);
-  }
-  100% {
-    left: 32px;
-    top: calc(100% - 80px);
-    transform: scale(1);
-  }
-}
-
-/* Text scroll control animation - switches opacity to scroll variables */
-@keyframes textScrollControl {
-  from {
-    opacity: var(--text-opacity);
-  }
-  to {
-    opacity: var(--text-opacity);
-  }
-}
-
-/* Button scroll control animation - controls button visibility based on scroll state */
-@keyframes buttonScrollControl {
-  from {
-    opacity: var(--text-fade-phase);
-  }
-  to {
-    opacity: var(--text-fade-phase);
-  }
-}
-
-/* Button logo sync animation - synchronizes button opacity with logo */
-@keyframes buttonLogoSync {
-  from {
-    opacity: var(--text-fade-phase);
-  }
-  to {
-    opacity: var(--text-fade-phase);
   }
 }

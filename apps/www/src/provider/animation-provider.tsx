@@ -55,7 +55,7 @@ export function AnimationProvider() {
       const viewportHeight = window.innerHeight;
       const root = document.documentElement;
 
-      // Only set basic viewport and grid variables
+      // Basic viewport and grid variables
       const containerWidth = viewportWidth - 64;
       const containerHeight = viewportHeight - 128;
 

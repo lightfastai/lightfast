@@ -21,7 +21,7 @@ export const LeaderCard = () => {
     <div className={cn("optimized-center-card")}>
       {/* Text content (top-left, fades out during text phase) */}
       <div className="center-card-text absolute top-8 right-8 left-8">
-        <p className="max-w-sm text-4xl font-bold">
+        <p className="max-w-sm text-2xl font-bold sm:text-3xl lg:text-4xl">
           Automate your workflow with an intelligent creative copilot.
         </p>
       </div>
@@ -44,11 +44,11 @@ export const LeaderCard = () => {
         {/* Early Access Text (top-left position) */}
         <div className="absolute top-8 right-8 left-8 max-w-sm">
           <div className="text-white">
-            <p className="mb-2 text-2xl font-bold">
+            <p className="mb-2 text-xl font-bold sm:text-2xl lg:text-3xl">
               Simplifying the way you interact with applications like Blender,
               Unity, Fusion360 and more.
             </p>
-            <p className="text-sm text-white/80">
+            <p className="text-xs text-white/80 sm:text-sm">
               Join the waitlist to get early access.
             </p>
           </div>
