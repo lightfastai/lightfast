@@ -205,19 +205,23 @@
   will-change: opacity;
   /* Disable pointer events when not visible */
   pointer-events: none;
+  /* Start with lower z-index, only elevate when active */
+  z-index: 10;
 }
 
 /* Enable pointer events when explicitly activated by scroll state */
 .center-card-early-access-container.pointer-events-active {
   pointer-events: auto;
+  z-index: 30;
 }
 
 /* Enable interactions when visible */
 .center-card-early-access-container[data-visible="true"] {
   pointer-events: auto;
+  z-index: 30;
 }
 
-/* Next Phase Button - synchronized with logo animation */
+/* Next Phase Button - synchronized with logo animation and hidden during early access */
 .center-card-next-button {
   /* Start invisible for loading animation */
   opacity: 0;
@@ -237,22 +241,55 @@
     opacity 0.15s ease-out,
     transform 0.15s ease-out;
 
-  /* Only show pointer events when visible */
+  /* Enable pointer events only when button is visible (text-fade-phase > 0.5) */
   pointer-events: none;
+  /* Button should be above early access form when active */
+  z-index: 20;
 }
 
-/* Enable interactions when button is visible */
+/* Enable interactions when button is visible and text hasn't faded (not in early access state) */
 .center-card-next-button[data-visible="true"] {
   pointer-events: auto;
+  z-index: 20;
+}
+
+/* Hide button container when early access form is active */
+.center-card-early-access-container[data-visible="true"] {
+  z-index: 30; /* Ensure early access content appears above button area */
+}
+
+.center-card-early-access-container[data-visible="true"]
+  ~ div
+  .center-card-next-button {
+  pointer-events: none !important;
+  opacity: 0 !important;
 }
 
 /* Removed streaming animations - no longer needed */
 
-/* Early Access Form - simple fade in */
+/* Early Access Form - controlled visibility and interaction */
 .early-access-form {
   opacity: var(--early-access-text-phase);
   transition: opacity 0.3s ease-out;
   will-change: opacity;
+
+  /* Disable pointer events when form is not visible (early-access-text-phase near 0) */
+  pointer-events: none;
+}
+
+/* Enable form interactions when early access is active */
+.center-card-early-access-container[data-visible="true"] .early-access-form {
+  pointer-events: auto;
+}
+
+/* Ensure all form elements inherit pointer-events behavior */
+.early-access-form * {
+  pointer-events: inherit;
+}
+
+/* Only allow pointer events on form elements when container is active */
+.center-card-early-access-container[data-visible="true"] .early-access-form * {
+  pointer-events: auto;
 }
 
 /* Floating Scroll Indicator - appears after loading completes, JavaScript hides on scroll */

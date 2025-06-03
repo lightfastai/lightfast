@@ -30,22 +30,17 @@ export function AnimationProvider() {
   useScrollIndicator();
   const currentState = useBinaryScrollStore((state) => state.currentState);
 
-  // Manage pointer events for the early access container
+  // Set data-visible attribute based on current state for CSS targeting
   useEffect(() => {
     const earlyAccessContainer = document.querySelector(
       ".center-card-early-access-container",
     );
 
     if (earlyAccessContainer) {
-      // Always ensure pointer events are enabled when container is visible
-      // The CSS now handles this by default, so we only need to add the class for explicit control
       if (currentState === "earlyAccess") {
-        earlyAccessContainer.classList.add("pointer-events-active");
-        earlyAccessContainer.classList.remove("pointer-events-disabled");
+        earlyAccessContainer.setAttribute("data-visible", "true");
       } else {
-        // Don't disable pointer events by default - let CSS handle it
-        earlyAccessContainer.classList.remove("pointer-events-active");
-        // Only disable if explicitly needed (which shouldn't be the case for the form)
+        earlyAccessContainer.removeAttribute("data-visible");
       }
     }
   }, [currentState]);

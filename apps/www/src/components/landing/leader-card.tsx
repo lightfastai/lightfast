@@ -31,6 +31,14 @@ export const LeaderCard = () => {
         <Icons.logoShort className="text-primary" />
       </div>
 
+      {/* Bottom Content Area - contains both button and form */}
+      <div className="absolute right-8 bottom-8 left-8">
+        {/* Next Phase Button - only visible in initial state */}
+        <div className="flex justify-end">
+          <NextPhaseButton />
+        </div>
+      </div>
+
       {/* Early Access Content (appears during early access phase) */}
       <div className="center-card-early-access-container absolute inset-0">
         {/* Early Access Text (top-left position) */}
@@ -51,9 +59,6 @@ export const LeaderCard = () => {
           <CenterCardEarlyAccessForm />
         </div>
       </div>
-
-      {/* Next Phase Button (bottom-right, appears during initial phase) */}
-      <NextPhaseButton />
     </div>
   );
 };

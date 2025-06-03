@@ -8,24 +8,22 @@ import { useBinaryScrollStore } from "~/stores/binary-scroll-store"; // Import Z
 
 export const NextPhaseButton = () => {
   // Get manualChangeState from the Zustand store
-  // currentState can also be selected if needed for conditional logic/styling
   const manualChangeState = useBinaryScrollStore(
     (state) => state.manualChangeState,
   );
-  // const currentState = useBinaryScrollStore((state) => state.currentState); // Example if needed
 
   const handleNextPhase = () => {
     manualChangeState("earlyAccess"); // Call the action from the store
   };
 
-  // Always render but sync opacity with logo using CSS variables
+  // Always render but let CSS handle visibility based on scroll state
   return (
     <Button
       onClick={handleNextPhase}
       variant="default"
-      className={cn("center-card-next-button", "absolute right-8 bottom-8")}
+      className={cn("center-card-next-button")}
       aria-label="Go to next phase"
-      data-visible="true" // This might need to be dynamic based on currentState
+      data-visible="true"
     >
       Join Early Access
     </Button>
