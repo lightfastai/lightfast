@@ -283,7 +283,7 @@
   transform: scaleX(0);
   animation: drawFromRight var(--grid-line-duration) var(--grid-line-easing)
     forwards;
-  transition: top 0.1s ease-out;
+  transition: top 0.1s ease-out; /* Restore transition */
   will-change: top;
 }
 
@@ -297,7 +297,7 @@
   transform: scaleX(0);
   animation: drawFromLeft var(--grid-line-duration) var(--grid-line-easing)
     var(--grid-line-delay-step) forwards;
-  transition: top 0.1s ease-out;
+  transition: top 0.1s ease-out; /* Restore transition */
   will-change: top;
 }
 
@@ -311,7 +311,7 @@
   transform: scaleY(0);
   animation: drawFromTop var(--grid-line-duration) var(--grid-line-easing)
     calc(var(--grid-line-delay-step) * 2) forwards;
-  transition: left 0.1s ease-out;
+  transition: left 0.1s ease-out; /* Restore transition */
   will-change: left;
 }
 
@@ -325,7 +325,7 @@
   transform: scaleY(0);
   animation: drawFromBottom var(--grid-line-duration) var(--grid-line-easing)
     calc(var(--grid-line-delay-step) * 3) forwards;
-  transition: left 0.1s ease-out;
+  transition: left 0.1s ease-out; /* Restore transition */
   will-change: left;
 }
 
@@ -343,7 +343,7 @@
   animation: fadeIn 0.4s ease-out
     calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.2s)
     forwards;
-  transition: top 0.1s ease-out;
+  transition: top 0.1s ease-out; /* Restore transition */
   will-change: top, opacity;
 }
 
@@ -360,7 +360,7 @@
   animation: fadeIn 0.4s ease-out
     calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.4s)
     forwards;
-  transition: top 0.1s ease-out;
+  transition: top 0.1s ease-out; /* Restore transition */
   will-change: top, opacity;
 }
 
@@ -377,7 +377,7 @@
   animation: fadeIn 0.4s ease-out
     calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.6s)
     forwards;
-  transition: left 0.1s ease-out;
+  transition: left 0.1s ease-out; /* Restore transition */
   will-change: left, opacity;
 }
 
@@ -394,7 +394,7 @@
   animation: fadeIn 0.4s ease-out
     calc(var(--grid-line-duration) + var(--grid-line-delay-step) * 3 + 0.8s)
     forwards;
-  transition: left 0.1s ease-out;
+  transition: left 0.1s ease-out; /* Restore transition */
   will-change: left, opacity;
 }
 

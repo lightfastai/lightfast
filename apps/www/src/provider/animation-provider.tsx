@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react";
 
 import { useCSSTimingVariable } from "~/hooks/use-css-timing-variable";
-import { useBinaryScrollState } from "../hooks/use-binary-scroll-state";
+import { useBinaryScrollStore } from "~/stores/binary-scroll-store";
 import { useScrollIndicator } from "../hooks/use-scroll-indicator";
 import { useScrollLock } from "../hooks/use-scroll-lock";
 
@@ -26,7 +26,7 @@ export function AnimationProvider() {
 
   useScrollLock(loadingDuration);
   useScrollIndicator();
-  const { currentState } = useBinaryScrollState();
+  const currentState = useBinaryScrollStore((state) => state.currentState);
 
   // Manage pointer events for the early access container
   useEffect(() => {

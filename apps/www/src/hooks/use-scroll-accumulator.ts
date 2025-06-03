@@ -6,6 +6,7 @@ export interface ScrollAccumulatorConfig {
   thresholdAmount: number;
   resetDelayMs: number;
   cooldownMs: number;
+  minConsecutiveScrolls: number;
 }
 
 interface ScrollAccumulatorState {
@@ -13,6 +14,7 @@ interface ScrollAccumulatorState {
   amount: number;
   lastWheelTime: number;
   isLocked: boolean;
+  consecutiveScrollsInDirection: number;
 }
 
 interface ScrollProcessResult {
@@ -32,6 +34,7 @@ const DEFAULT_SCROLL_CONFIG: ScrollAccumulatorConfig = {
   thresholdAmount: 100,
   resetDelayMs: 500,
   cooldownMs: 300,
+  minConsecutiveScrolls: 3,
 };
 
 export const useScrollAccumulator = (
@@ -44,6 +47,7 @@ export const useScrollAccumulator = (
     amount: 0,
     lastWheelTime: 0,
     isLocked: false,
+    consecutiveScrollsInDirection: 0,
   });
 
   const lastTriggerTimeRef = useRef(0);
@@ -53,7 +57,8 @@ export const useScrollAccumulator = (
       direction: null,
       amount: 0,
       lastWheelTime: performance.now(),
-      isLocked: false,
+      isLocked: stateRef.current.isLocked,
+      consecutiveScrollsInDirection: 0,
     };
   }, []);
 
@@ -75,45 +80,57 @@ export const useScrollAccumulator = (
       const now = performance.now();
       const state = stateRef.current;
 
-      // Ignore if locked or in cooldown
       if (state.isLocked || isInCooldown()) {
         return { shouldTrigger: false, direction: null };
       }
 
-      // Reset if too much time has passed
       if (now - state.lastWheelTime > scrollConfig.resetDelayMs) {
         reset();
       }
 
-      // Determine scroll direction
-      const scrollDirection: "up" | "down" = wheelDelta > 0 ? "down" : "up";
+      const currentEventScrollDirection: "up" | "down" =
+        wheelDelta > 0 ? "down" : "up";
 
-      // Reset if direction changed
-      if (state.direction && state.direction !== scrollDirection) {
-        reset();
+      if (
+        state.direction === null ||
+        state.direction !== currentEventScrollDirection
+      ) {
+        state.direction = currentEventScrollDirection;
+        state.amount = Math.abs(wheelDelta);
+        state.consecutiveScrollsInDirection = 1;
+      } else {
+        state.amount += Math.abs(wheelDelta);
+        state.consecutiveScrollsInDirection += 1;
       }
 
-      // Update accumulator
-      state.direction = scrollDirection;
-      state.amount += Math.abs(wheelDelta);
       state.lastWheelTime = now;
 
-      // Check if threshold reached
-      const shouldTrigger = state.amount >= scrollConfig.thresholdAmount;
+      const meetsThreshold = state.amount >= scrollConfig.thresholdAmount;
+      const meetsConsecutive =
+        state.consecutiveScrollsInDirection >=
+        scrollConfig.minConsecutiveScrolls;
+
+      const shouldTrigger = meetsThreshold && meetsConsecutive;
 
       if (shouldTrigger) {
         lastTriggerTimeRef.current = now;
+        const triggeringDirection = state.direction;
         reset();
+        return {
+          shouldTrigger: true,
+          direction: triggeringDirection,
+        };
       }
 
       return {
-        shouldTrigger,
-        direction: shouldTrigger ? scrollDirection : null,
-      } as const;
+        shouldTrigger: false,
+        direction: null,
+      };
     },
     [
       scrollConfig.thresholdAmount,
       scrollConfig.resetDelayMs,
+      scrollConfig.minConsecutiveScrolls,
       isInCooldown,
       reset,
     ],
