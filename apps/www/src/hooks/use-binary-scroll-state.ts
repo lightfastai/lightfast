@@ -14,9 +14,11 @@ import { useSpringAnimation } from "./use-spring-animation";
 // It sets up the global scroll listeners and updates the Zustand store.
 export const useSetupBinaryScrollBehavior = (): void => {
   // Get the state update function from the Zustand store
-  const storeApi = useBinaryScrollStore.getState(); // For calling actions outside of component render
-
-  const currentStateRef = useRef<ScrollState>(storeApi.currentState);
+  const currentState = useBinaryScrollStore((state) => state.currentState); // For calling actions outside of component render
+  const setCurrentState = useBinaryScrollStore(
+    (state) => state._setCurrentStateFromHook,
+  );
+  const currentStateRef = useRef<ScrollState>(currentState);
   // Keep store and ref in sync
   useEffect(() => {
     const unsubscribe = useBinaryScrollStore.subscribe(
@@ -71,7 +73,7 @@ export const useSetupBinaryScrollBehavior = (): void => {
         accumulator.reset(); // Reset accumulation for a clean manual animation start
 
         spring.animateTo(targetProgress, updateCSSVariable, () => {
-          storeApi._setCurrentStateFromHook(newState); // Update store on animation complete
+          setCurrentState(newState); // Update store on animation complete
           // lastScrollChangeTimeRef should be set here to prevent immediate scroll-back if the user tries to scroll during/right after manual animation
           lastScrollChangeTimeRef.current = performance.now();
           accumulator.unlock(); // Unlock accumulator after animation and state update
@@ -84,13 +86,13 @@ export const useSetupBinaryScrollBehavior = (): void => {
       spring.addVelocity(direction * 0.1);
       accumulator.lock();
       spring.animateTo(targetProgress, updateCSSVariable, () => {
-        storeApi._setCurrentStateFromHook(newState);
+        setCurrentState(newState);
         accumulator.reset();
         lastScrollChangeTimeRef.current = performance.now();
         accumulator.unlock();
       });
     },
-    [stateToProgress, spring, accumulator, updateCSSVariable, storeApi],
+    [stateToProgress, spring, accumulator, updateCSSVariable, setCurrentState],
   );
 
   useEffect(() => {
