@@ -29,18 +29,19 @@ export function calculateSpringStep(
   config: SpringConfig,
   deltaTime: number,
 ): SpringState {
+  // Safeguard against large time steps to prevent instability
+  // Limit deltaTime to 16ms (~60fps) for stable physics
+  const safeDeltaTime = Math.min(deltaTime, 0.016);
+
   // Spring physics calculation
   const displacement = state.target - state.position;
   const springForce = displacement * config.tension;
   const dampingForce = state.velocity * config.friction;
   const acceleration = (springForce - dampingForce) / config.mass;
 
-  // Update velocity and position
-  const newVelocity = state.velocity + acceleration * deltaTime;
-  const newPosition = Math.max(
-    0,
-    Math.min(1, state.position + newVelocity * deltaTime),
-  );
+  // Update velocity and position without clamping for natural spring movement
+  const newVelocity = state.velocity + acceleration * safeDeltaTime;
+  const newPosition = state.position + newVelocity * safeDeltaTime;
 
   return {
     position: newPosition,
@@ -80,9 +81,9 @@ export function createSpringState(
   target = 0,
 ): SpringState {
   return {
-    position: clamp01(position),
+    position,
     velocity,
-    target: clamp01(target),
+    target,
   };
 }
 

@@ -168,17 +168,25 @@
   --cc-initial-weight: calc((1 - var(--early-access-card-phase)) * 100%);
   --cc-early-access-weight: calc(var(--early-access-card-phase) * 100%);
 
-  background-color: color-mix(
-    in srgb,
-    var(--cc-bg-initial) var(--cc-initial-weight),
-    var(--cc-bg-early-access) var(--cc-early-access-weight)
-  );
+  /* Fallback background color for browsers without color-mix() support */
+  background-color: var(--cc-bg-initial);
+  /* Fallback text color for browsers without color-mix() support */
+  color: black;
 
-  color: color-mix(
-    in srgb,
-    black var(--cc-initial-weight),
-    white var(--cc-early-access-weight)
-  );
+  /* Modern browsers with color-mix() support */
+  @supports (background-color: color-mix(in srgb, white, black)) {
+    background-color: color-mix(
+      in srgb,
+      var(--cc-bg-initial) var(--cc-initial-weight),
+      var(--cc-bg-early-access) var(--cc-early-access-weight)
+    );
+
+    color: color-mix(
+      in srgb,
+      black var(--cc-initial-weight),
+      white var(--cc-early-access-weight)
+    );
+  }
 
   will-change: transform, width, height, background-color, color;
   transition:
