@@ -5,14 +5,23 @@ import { cn } from "@repo/ui/lib/utils";
 
 // import { useBinaryScrollContext } from "../../context/binary-scroll-context"; // Removed
 import { useBinaryScrollStore } from "~/stores/binary-scroll-store"; // Import Zustand store
+import { useLandingAnalytics } from "./hooks/use-landing-analytics";
 
 export const NextPhaseButton = () => {
+  const { trackCTAClick, trackPhaseTransition } = useLandingAnalytics();
+
   // Get manualChangeState from the Zustand store
   const manualChangeState = useBinaryScrollStore(
     (state) => state.manualChangeState,
   );
 
   const handleNextPhase = () => {
+    // Track the CTA click
+    trackCTAClick("next_phase");
+
+    // Track phase transition
+    trackPhaseTransition("landing", "earlyAccess");
+
     manualChangeState("earlyAccess"); // Call the action from the store
   };
 
