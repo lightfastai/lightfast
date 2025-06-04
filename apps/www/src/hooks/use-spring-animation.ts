@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { SpringConfig, SpringState } from "~/lib/animation/spring-physics";
 import {
@@ -35,6 +35,10 @@ export const useSpringAnimation = (
 
   const stateRef = useRef<SpringState>(createSpringState());
 
+  // Use state for values that need to trigger re-renders
+  const [position, setPosition] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
   const rafIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef(0);
   const startTimeRef = useRef(0);
@@ -54,6 +58,9 @@ export const useSpringAnimation = (
     const newState = calculateSpringStep(state, springConfig, deltaTime);
     stateRef.current = newState;
 
+    // Update state to trigger re-renders
+    setPosition(newState.position);
+
     // Call update callback
     onUpdateRef.current?.(newState.position);
 
@@ -66,7 +73,9 @@ export const useSpringAnimation = (
     } else {
       // Animation complete
       rafIdRef.current = null;
+      setIsAnimating(false);
       stateRef.current.position = stateRef.current.target;
+      setPosition(stateRef.current.position);
       onUpdateRef.current?.(stateRef.current.position);
       onCompleteRef.current?.();
     }
@@ -83,6 +92,7 @@ export const useSpringAnimation = (
       onCompleteRef.current = onComplete;
 
       if (rafIdRef.current === null) {
+        setIsAnimating(true);
         startTimeRef.current = performance.now();
         lastTimeRef.current = startTimeRef.current;
         rafIdRef.current = requestAnimationFrame(step);
@@ -95,16 +105,18 @@ export const useSpringAnimation = (
     stateRef.current.velocity += velocity;
   }, []);
 
-  const setPosition = useCallback((position: number) => {
-    const newPosition = clamp01(position);
-    stateRef.current.position = newPosition;
-    stateRef.current.target = newPosition;
+  const setPositionCallback = useCallback((newPosition: number) => {
+    const clampedPosition = clamp01(newPosition);
+    stateRef.current.position = clampedPosition;
+    stateRef.current.target = clampedPosition;
+    setPosition(clampedPosition);
   }, []);
 
   const stop = useCallback(() => {
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
+      setIsAnimating(false);
     }
   }, []);
 
@@ -118,11 +130,11 @@ export const useSpringAnimation = (
   }, []);
 
   return {
-    position: stateRef.current.position,
-    isAnimating: rafIdRef.current !== null,
+    position,
+    isAnimating,
     animateTo,
     addVelocity,
-    setPosition,
+    setPosition: setPositionCallback,
     stop,
   } as const;
 };
