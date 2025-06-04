@@ -83,7 +83,7 @@ importers:
         specifier: ^2.4.4
         version: 2.4.4
       turbo-ignore:
-        specifier: ^2.5.4
+        specifier: ^2.4.4
         version: 2.5.4
       typescript:
         specifier: 'catalog:'
