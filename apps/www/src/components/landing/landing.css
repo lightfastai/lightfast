@@ -219,9 +219,12 @@
   left: 0; /* Align to left edge of padded area */
   top: calc(100% - 32px); /* Align to bottom edge of padded area */
   opacity: 0;
-  animation: fadeIn 0.6s ease-out
-    calc(var(--grid-line-duration) + var(--grid-line-delay-step) + 0.2s)
-    forwards;
+  animation:
+    fadeIn 0.6s ease-out
+      calc(var(--grid-line-duration) + var(--grid-line-delay-step) + 0.2s)
+      forwards,
+    logoScrollControl 0.1s linear calc(var(--loading-animation-duration))
+      forwards;
   will-change: opacity;
   transition: opacity 0.3s ease-out;
 }
@@ -497,6 +500,15 @@
 }
 
 @keyframes buttonLogoSync {
+  from {
+    opacity: var(--text-fade-phase);
+  }
+  to {
+    opacity: var(--text-fade-phase);
+  }
+}
+
+@keyframes logoScrollControl {
   from {
     opacity: var(--text-fade-phase);
   }
