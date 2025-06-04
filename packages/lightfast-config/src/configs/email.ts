@@ -3,6 +3,7 @@ export interface EmailConfig {
   supportReployTo: string;
   auth: string;
   legal: string;
+  hello: string;
 }
 
 export const emailConfig: EmailConfig = {
@@ -10,4 +11,5 @@ export const emailConfig: EmailConfig = {
   supportReployTo: "Lightfast.ai <support@mail.lightfast.ai>",
   auth: "Lightfast.ai <auth@mail.lightfast.ai>",
   legal: "legal@lightfast.ai",
+  hello: "hello@lightfast.ai",
 };

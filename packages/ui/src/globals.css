@@ -39,6 +39,7 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --sky-gradient: linear-gradient(to bottom right, #e0f2fe, #7dd3fc, #0ea5e9);
 
   --font-weight-bold: 700;
 }
@@ -112,6 +113,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --gradient-sky: var(--sky-gradient);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -221,5 +223,37 @@
     to {
       opacity: 1;
     }
+  }
+}
+
+@layer components {
+  .expanding-card {
+    @apply transition-all duration-1000 ease-out;
+  }
+
+  .expanding-card.collapsed {
+    @apply pointer-events-none scale-75 opacity-0;
+    transform-origin: 40px bottom; /* Anchor to logo position in bottom row (left-4 + half logo size, bottom) */
+  }
+
+  .expanding-card.expanded {
+    @apply pointer-events-auto scale-100 opacity-100;
+    transform-origin: 40px bottom; /* Anchor to logo position in bottom row (left-4 + half logo size, bottom) */
+  }
+
+  /* Starting style for smooth entrance animation */
+  @starting-style {
+    .expanding-card.expanded {
+      @apply scale-75 opacity-0;
+    }
+  }
+
+  /* Smooth transitions for card content */
+  .expanding-card.expanded .card-content {
+    @apply transition-all delay-200 duration-300;
+  }
+
+  .expanding-card.collapsed .card-content {
+    @apply transition-all duration-200;
   }
 }

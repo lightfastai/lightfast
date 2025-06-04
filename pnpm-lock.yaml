@@ -82,6 +82,9 @@ importers:
       turbo:
         specifier: ^2.4.4
         version: 2.4.4
+      turbo-ignore:
+        specifier: ^2.4.4
+        version: 2.5.4
       typescript:
         specifier: 'catalog:'
         version: 5.8.3
@@ -699,18 +702,12 @@ importers:
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
-      context-filter-polyfill:
-        specifier: ^0.3.22
-        version: 0.3.22
       geist:
         specifier: ^1.3.1
         version: 1.3.1(next@15.3.0(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       jotai:
         specifier: ^2.12.3
         version: 2.12.3(@types/react@19.1.2)(react@19.1.0)
-      js-cookie:
-        specifier: ^3.0.5
-        version: 3.0.5
       lucide-react:
         specifier: 'catalog:'
         version: 0.451.0(react@19.1.0)
@@ -729,9 +726,6 @@ importers:
       react-dom:
         specifier: catalog:react19
         version: 19.1.0(react@19.1.0)
-      simplex-noise:
-        specifier: ^4.0.3
-        version: 4.0.3
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -7150,9 +7144,6 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  context-filter-polyfill@0.3.22:
-    resolution: {integrity: sha512-0zaP1URpNrqx2kk6pUzXS5f0/65J2Ogy0rhOY+bPkMxaVF9L9DE8DrDfhPcFdAB4R/dYeB5DnWijaM5sBjGKww==}
-
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
@@ -11147,9 +11138,6 @@ packages:
   simple-swizzle@0.2.2:
     resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
 
-  simplex-noise@4.0.3:
-    resolution: {integrity: sha512-qSE2I4AngLQG7BXqoZj51jokT4WUXe8mOBrvfOXpci8+6Yu44+/dD5zqDpOx3Ux792eamTd2lLcI8jqFntk/lg==}
-
   sirv@2.0.4:
     resolution: {integrity: sha512-94Bdh3cC2PKrbgSOUqTiGPWVZeSiXfKOVZNJniWoqrWrRkB1CJzBU3NEbiTsPcYy1lDsANA/THzS+9WBiy5nfQ==}
     engines: {node: '>= 10'}
@@ -11648,6 +11636,10 @@ packages:
     resolution: {integrity: sha512-/gtHPqbGQXDFhrmy+Q/MFW2HUTUlThJ97WLLSe4bxkDrKHecDYhAjbZ4rN3MM93RV9STQb3Tqy4pZBtsd4DfCw==}
     cpu: [arm64]
     os: [darwin]
+
+  turbo-ignore@2.5.4:
+    resolution: {integrity: sha512-40Dpk/V9FZ1K9xYPacuAqvXvImBI9KqjldpQvgRpTZ9QFzW+DD1cSYJNZnDjU8gymJ79Tus3Ow4MDNI6dAKbyQ==}
+    hasBin: true
 
   turbo-linux-64@2.4.4:
     resolution: {integrity: sha512-SR0gri4k0bda56hw5u9VgDXLKb1Q+jrw4lM7WAhnNdXvVoep4d6LmnzgMHQQR12Wxl3KyWPbkz9d1whL6NTm2Q==}
@@ -18571,8 +18563,6 @@ snapshots:
       - markdown-wasm
       - supports-color
 
-  context-filter-polyfill@0.3.22: {}
-
   convert-source-map@2.0.0: {}
 
   cookie-signature@1.0.6: {}
@@ -23563,8 +23553,6 @@ snapshots:
       is-arrayish: 0.3.2
     optional: true
 
-  simplex-noise@4.0.3: {}
-
   sirv@2.0.4:
     dependencies:
       '@polka/url': 1.0.0-next.28
@@ -24105,6 +24093,10 @@ snapshots:
 
   turbo-darwin-arm64@2.4.4:
     optional: true
+
+  turbo-ignore@2.5.4:
+    dependencies:
+      json5: 2.2.3
 
   turbo-linux-64@2.4.4:
     optional: true

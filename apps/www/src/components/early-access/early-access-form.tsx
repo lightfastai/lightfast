@@ -3,7 +3,9 @@
 import type * as z from "zod";
 import { useState } from "react";
 import { useAtom } from "jotai";
+import { Send } from "lucide-react";
 import Confetti from "react-confetti";
+import { createPortal } from "react-dom";
 
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -27,7 +29,7 @@ import { useErrorReporter } from "~/lib/error-reporting/client-error-reporter";
 import { useEarlyAccessAnalytics } from "./hooks/use-early-access-analytics";
 import { earlyAccessCountAtom } from "./jotai/early-access-count-atom";
 
-export function EarlyAccessForm() {
+export function CenterCardEarlyAccessForm() {
   const { toast } = useToast();
   const { reportError } = useErrorReporter();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -42,43 +44,37 @@ export function EarlyAccessForm() {
     },
   });
 
+  // Watch the email field to make button state reactive
+  const emailValue = form.watch("email");
+
   const onSubmit = async (values: z.infer<typeof earlyAccessFormSchema>) => {
     const result = await createEarlyAccessEntrySafe({
       email: values.email,
       logger,
     });
-
     result.match(
       (data) => {
-        // Log success in development
         if (env.NODE_ENV === "development") {
           logger.info("Early access form success:", {
             requestId: data.requestId,
             success: data.success,
           });
         }
-
-        // Track signup with analytics
         trackSignup({
           email: values.email,
           requestId: data.requestId,
         });
-
         toast({
           title: "Welcome aboard! 🎉",
           description:
             "You've successfully joined the waitlist. We'll notify you when we launch.",
         });
-
-        // Update the waitlist count
         setWaitlistCount((count) => count + 1);
-
         setIsSubmitted(true);
       },
       (error) => {
-        // Report error with context
         reportError(error, {
-          component: "EarlyAccessForm",
+          component: "CenterCardEarlyAccessForm",
           errorType: error.type,
           requestId: error.requestId ?? "unknown",
           error: error.error,
@@ -87,8 +83,6 @@ export function EarlyAccessForm() {
             email: values.email,
           },
         });
-
-        // Log error for debugging in development
         if (env.NODE_ENV === "development") {
           logger.error("Early access form error:", {
             type: error.type,
@@ -97,12 +91,9 @@ export function EarlyAccessForm() {
             requestId: error.requestId,
           });
         }
-
-        // Get user-friendly message based on error type
         const errorMessage =
           EarlyAccessFormErrorMap[error.type] ||
           "Failed to join the waitlist. Please try again.";
-
         toast({
           title: "Error",
           description: errorMessage,
@@ -113,11 +104,27 @@ export function EarlyAccessForm() {
   };
 
   return (
-    <>
+    <div className="early-access-form">
       {isSubmitted ? (
-        <div className="flex flex-col items-center justify-center text-center">
-          <Confetti recycle={false} numberOfPieces={400} />
-          <p className="text-sm font-semibold">
+        <div className="flex flex-col" role="status" aria-live="polite">
+          {typeof window !== "undefined" &&
+            createPortal(
+              <Confetti
+                recycle={false}
+                numberOfPieces={200}
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",
+                  zIndex: 9999,
+                }}
+              />,
+              document.body,
+            )}
+          <p className="mb-2 text-sm font-semibold">
             {form.getValues("email")} is now on the list! 🎉
           </p>
           <p className="text-muted-foreground text-xs">
@@ -128,37 +135,60 @@ export function EarlyAccessForm() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="grid w-full grid-cols-1 gap-2 sm:grid-cols-12 sm:gap-2"
+            aria-label="Early access signup form"
           >
+            <div className="flex flex-row gap-2">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel className="sr-only">
+                      Email address for early access
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        className="w-full border-white/20 bg-white/10 text-white selection:bg-white/30 selection:text-white placeholder:text-white/60 focus-visible:border-white/80 focus-visible:ring-white/20"
+                        placeholder="Enter your email for early access"
+                        autoComplete="email"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                variant="default"
+                size="default"
+                aria-label="Submit early access signup"
+                disabled={
+                  form.formState.isSubmitting ||
+                  !emailValue.trim() ||
+                  !!form.formState.errors.email
+                }
+                className="bg-white text-black hover:bg-white/90 disabled:bg-white/50 disabled:text-black/50"
+              >
+                {form.formState.isSubmitting ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
             <FormField
               control={form.control}
               name="email"
-              render={({ field }) => (
-                <FormItem className="flex flex-col items-start sm:col-span-9">
-                  <FormLabel className="sr-only text-xs">Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      className="text-xs md:text-xs"
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      {...field}
-                    />
-                  </FormControl>
+              render={() => (
+                <FormItem>
                   <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
-            <Button
-              type="submit"
-              variant="default"
-              disabled={form.formState.isSubmitting}
-              className="w-full rounded-lg px-3 text-xs whitespace-nowrap sm:col-span-3"
-            >
-              {form.formState.isSubmitting ? "Joining..." : "Join Waitlist"}
-            </Button>
           </form>
         </Form>
       )}
-    </>
+    </div>
   );
 }
