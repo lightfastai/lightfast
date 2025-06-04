@@ -31,8 +31,7 @@ export const useExtensionFocusRelease = () => {
           (focusedElement instanceof HTMLInputElement &&
             ["text", "search", "url", "tel"].includes(focusedElement.type))
         ) {
-          focusedElement.selectionStart = null;
-          focusedElement.selectionEnd = null;
+          focusedElement.setSelectionRange(0, 0);
         }
       } catch {
         // Silently ignore if selection is not supported for this input type

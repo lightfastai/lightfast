@@ -18,7 +18,19 @@ export const useScrollLock = (lockDuration: number): void => {
 
     const preventKeys = (e: KeyboardEvent) => {
       // Prevent arrow keys, space, page up/down, home/end
-      if ([32, 33, 34, 35, 36, 37, 38, 39, 40].includes(e.keyCode)) {
+      const scrollKeys = [
+        " ", // Space
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "PageUp",
+        "PageDown",
+        "Home",
+        "End",
+      ];
+
+      if (scrollKeys.includes(e.key)) {
         preventDefault(e);
       }
     };
