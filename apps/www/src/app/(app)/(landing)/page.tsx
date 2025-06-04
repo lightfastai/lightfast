@@ -1,6 +1,7 @@
 import "~/components/landing/landing.css";
 
 import { BackgroundLines } from "~/components/landing/bg-grid/background-lines";
+import { LandingAnalyticsProvider } from "~/components/landing/landing-analytics-provider";
 import { LeaderCard } from "~/components/landing/leader-card";
 import { ScrollIndicator } from "~/components/landing/scroll-indicator";
 import { AnimationProvider } from "~/provider/animation-provider";
@@ -9,6 +10,7 @@ export default function Home() {
   return (
     <div className="bg-background landing-ssr relative h-screen overflow-hidden">
       <AnimationProvider />
+      <LandingAnalyticsProvider />
       <BackgroundLines />
       <LeaderCard />
       <ScrollIndicator />
