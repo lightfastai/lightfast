@@ -18,7 +18,7 @@ export const env = createEnv({
     AUTH_GITHUB_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
     // Site URL for authentication redirects
-    SITE_URL: z.string().url(),
+    SITE_URL: z.string().url().optional(),
     // JWT private key for authentication tokens
     JWT_PRIVATE_KEY: z.string(),
     // JWKS for JWT verification
