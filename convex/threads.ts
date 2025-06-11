@@ -1,6 +1,6 @@
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server.js"
-import { auth } from "./auth.js"
+import { getAuthUserId } from "@convex-dev/auth/server"
 
 // Create a new thread
 export const create = mutation({
@@ -9,7 +9,7 @@ export const create = mutation({
   },
   returns: v.id("threads"),
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx)
+    const userId = await getAuthUserId(ctx)
     if (!userId) {
       throw new Error("User must be authenticated")
     }
@@ -38,7 +38,7 @@ export const list = query({
     }),
   ),
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx)
+    const userId = await getAuthUserId(ctx)
     if (!userId) {
       return []
     }
@@ -68,7 +68,7 @@ export const get = query({
     v.null(),
   ),
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx)
+    const userId = await getAuthUserId(ctx)
     if (!userId) {
       return null
     }
@@ -91,7 +91,7 @@ export const updateLastMessage = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx)
+    const userId = await getAuthUserId(ctx)
     if (!userId) {
       throw new Error("User must be authenticated")
     }
@@ -116,7 +116,7 @@ export const updateTitle = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx)
+    const userId = await getAuthUserId(ctx)
     if (!userId) {
       throw new Error("User must be authenticated")
     }
@@ -140,7 +140,7 @@ export const deleteThread = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx)
+    const userId = await getAuthUserId(ctx)
     if (!userId) {
       throw new Error("User must be authenticated")
     }

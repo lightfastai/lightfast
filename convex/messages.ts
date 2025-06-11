@@ -10,7 +10,7 @@ import { internal } from "./_generated/api.js"
 import type { Doc, Id } from "./_generated/dataModel.js"
 import { openai } from "@ai-sdk/openai"
 import { streamText } from "ai"
-import { auth } from "./auth.js"
+import { getAuthUserId } from "@convex-dev/auth/server"
 
 export const list = query({
   args: {
@@ -30,7 +30,7 @@ export const list = query({
     }),
   ),
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx)
+    const userId = await getAuthUserId(ctx)
     if (!userId) {
       return []
     }
@@ -56,7 +56,7 @@ export const send = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx)
+    const userId = await getAuthUserId(ctx)
     if (!userId) {
       throw new Error("User must be authenticated")
     }

@@ -29,7 +29,7 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "OPENAI_API_KEY=your_openai_key_here"
     echo "AUTH_GITHUB_ID=your_github_oauth_client_id"
     echo "AUTH_GITHUB_SECRET=your_github_oauth_client_secret"
-    echo "SITE_URL=http://localhost:3000"
+    # echo "SITE_URL=http://localhost:3000"
     echo "JWT_PRIVATE_KEY=your_jwt_private_key_here"
     echo "JWKS=your_jwks_here"
     exit 1
