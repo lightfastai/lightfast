@@ -1,4 +1,4 @@
-import { internalMutation } from "./_generated/server"
+import { mutation } from "./_generated/server"
 import { v } from "convex/values"
 
 /**
@@ -6,7 +6,7 @@ import { v } from "convex/values"
  * This runs automatically when creating preview deployments
  * to populate them with initial test data
  */
-export const setupInitialData = internalMutation({
+export const setupInitialData = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
