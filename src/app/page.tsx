@@ -13,63 +13,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  MessageCircle,
-  Plus,
-  Send,
-  User,
-  Zap,
-  LogIn,
-  LogOut,
-  ChevronDown,
-  Settings,
-} from "lucide-react"
+import { MessageCircle, Plus, Send, User, Zap } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
+import { useQuery, useMutation } from "convex/react"
 import {
-  useQuery,
-  useMutation,
   Authenticated,
   Unauthenticated,
-  useConvexAuth,
-} from "convex/react"
-import { useAuthActions } from "@convex-dev/auth/react"
+  SignInButton,
+  SignOutButton,
+  UserDropdown,
+} from "@/components/auth"
+import { useAuth } from "@/hooks/useAuth"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
-import { useRouter } from "next/navigation"
 
 type Message = Doc<"messages">
-
-function SignOutButton() {
-  const { isAuthenticated } = useConvexAuth()
-  console.log("isAuthenticated", isAuthenticated)
-  const { signOut } = useAuthActions()
-  const router = useRouter()
-  return (
-    <>
-      {isAuthenticated && (
-        <Button
-          onClick={() =>
-            void signOut().then(() => {
-              router.push("/signin")
-            })
-          }
-          variant="outline"
-          className="gap-2"
-        >
-          Sign out
-        </Button>
-      )}
-    </>
-  )
-}
 
 // Header component that works for both authenticated and unauthenticated states
 function Header() {
@@ -96,77 +54,9 @@ function Header() {
   )
 }
 
-// Sign in button component
-function SignInButton() {
-  const { signIn } = useAuthActions()
-
-  const handleSignIn = () => {
-    void signIn("github")
-  }
-
-  return (
-    <Button onClick={handleSignIn} className="gap-2">
-      <LogIn className="w-4 h-4" />
-      Sign in with GitHub
-    </Button>
-  )
-}
-
-// User dropdown component for authenticated users
-function UserDropdown() {
-  const { signOut } = useAuthActions()
-  const currentUser = useQuery(api.users.current)
-
-  const handleSignOut = () => {
-    void signOut()
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="gap-2 h-10">
-          <Avatar className="w-6 h-6">
-            <AvatarFallback className="text-xs">
-              <User className="w-3 h-3" />
-            </AvatarFallback>
-          </Avatar>
-          <span className="hidden sm:inline">
-            {currentUser?.name || currentUser?.email || "User"}
-          </span>
-          <ChevronDown className="w-4 h-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {currentUser?.name || "User"}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {currentUser?.email || "No email"}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <a href="/profile" className="cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Sign out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
 // Landing page component for unauthenticated users
 function LandingPage() {
-  const { signIn } = useAuthActions()
+  const { signIn } = useAuth()
   const [message, setMessage] = useState("")
 
   const handleSubmit = () => {
