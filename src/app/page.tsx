@@ -17,17 +17,27 @@ import { MessageCircle, Plus, Send, User, Zap } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
-import type { Doc } from "../../convex/_generated/dataModel"
+import type { Doc, Id } from "../../convex/_generated/dataModel"
 
 type Message = Doc<"messages">
 
 export default function Home() {
   const [message, setMessage] = useState("")
   const [author, setAuthor] = useState("User")
+  const [currentThreadId, setCurrentThreadId] = useState<Id<"threads"> | null>(
+    null,
+  )
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-  // Get all messages with real-time updates
-  const messages = useQuery(api.messages.list)
+  // Get threads for user
+  const threads = useQuery(api.threads.list, { userId: author })
+  const createThread = useMutation(api.threads.create)
+
+  // Get messages for current thread
+  const messages = useQuery(
+    api.messages.list,
+    currentThreadId ? { threadId: currentThreadId } : "skip",
+  )
   const sendMessage = useMutation(api.messages.send)
 
   // Auto-scroll to bottom when new messages arrive
@@ -37,14 +47,54 @@ export default function Home() {
     }
   }, [messages])
 
+  // Auto-select first thread when threads are loaded
+  useEffect(() => {
+    if (threads && threads.length > 0 && !currentThreadId) {
+      setCurrentThreadId(threads[0]._id)
+    }
+  }, [threads, currentThreadId])
+
+  // Clear current thread when user changes
+  useEffect(() => {
+    setCurrentThreadId(null)
+  }, [author])
+
+  const handleNewChat = async () => {
+    try {
+      const newThreadId = await createThread({
+        title: "New Chat",
+        userId: author,
+      })
+      setCurrentThreadId(newThreadId)
+    } catch (error) {
+      console.error("Error creating new thread:", error)
+    }
+  }
+
   const handleSendMessage = async () => {
     if (!message.trim()) return
 
     try {
-      await sendMessage({
-        author,
-        body: message,
-      })
+      // Create a new thread if none is selected
+      if (!currentThreadId) {
+        const newThreadId = await createThread({
+          title: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
+          userId: author,
+        })
+        setCurrentThreadId(newThreadId)
+
+        await sendMessage({
+          threadId: newThreadId,
+          author,
+          body: message,
+        })
+      } else {
+        await sendMessage({
+          threadId: currentThreadId,
+          author,
+          body: message,
+        })
+      }
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
@@ -70,7 +120,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   className="w-full justify-start gap-2"
-                  onClick={() => window.location.reload()}
+                  onClick={handleNewChat}
                 >
                   <Plus className="w-4 h-4" />
                   New chat
@@ -107,15 +157,35 @@ export default function Home() {
           {/* Chat History */}
           <ScrollArea className="flex-1 px-4">
             <div className="space-y-2 py-2">
-              <div className="p-2 rounded-md hover:bg-accent cursor-pointer group">
-                <div className="flex items-center gap-2 text-sm">
-                  <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                  <span className="truncate">AI Streaming Chat</span>
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    Active
-                  </Badge>
+              {threads?.map((thread) => (
+                <button
+                  key={thread._id}
+                  type="button"
+                  className={`w-full p-2 rounded-md hover:bg-accent cursor-pointer group text-left ${
+                    currentThreadId === thread._id ? "bg-accent" : ""
+                  }`}
+                  onClick={() => setCurrentThreadId(thread._id)}
+                >
+                  <div className="flex items-center gap-2 text-sm">
+                    <MessageCircle className="w-4 h-4 text-muted-foreground" />
+                    <span className="truncate">{thread.title}</span>
+                    {currentThreadId === thread._id && (
+                      <Badge variant="secondary" className="ml-auto text-xs">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {new Date(thread.lastMessageAt).toLocaleDateString()}
+                  </p>
+                </button>
+              ))}
+              {(!threads || threads.length === 0) && (
+                <div className="text-center text-muted-foreground py-4">
+                  <p className="text-sm">No conversations yet</p>
+                  <p className="text-xs">Start a new chat to begin</p>
                 </div>
-              </div>
+              )}
             </div>
           </ScrollArea>
 
@@ -142,7 +212,12 @@ export default function Home() {
           {/* Header */}
           <div className="border-b p-4 flex-shrink-0">
             <div className="flex items-center justify-between">
-              <h1 className="text-lg font-semibold">AI Chat</h1>
+              <h1 className="text-lg font-semibold">
+                {currentThreadId && threads
+                  ? threads.find((t) => t._id === currentThreadId)?.title ||
+                    "AI Chat"
+                  : "AI Chat"}
+              </h1>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">Streaming</Badge>
                 <Badge variant="outline">GPT-4o-mini</Badge>

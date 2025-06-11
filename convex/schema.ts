@@ -2,7 +2,15 @@ import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
 
 export default defineSchema({
+  threads: defineTable({
+    title: v.string(),
+    userId: v.string(),
+    createdAt: v.number(),
+    lastMessageAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   messages: defineTable({
+    threadId: v.id("threads"),
     author: v.string(),
     body: v.string(),
     timestamp: v.number(),
@@ -11,7 +19,7 @@ export default defineSchema({
     streamId: v.optional(v.string()),
     chunkIndex: v.optional(v.number()),
     isComplete: v.optional(v.boolean()),
-  }),
+  }).index("by_thread", ["threadId"]),
 
   messageChunks: defineTable({
     messageId: v.id("messages"),

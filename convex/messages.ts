@@ -12,11 +12,14 @@ import { openai } from "@ai-sdk/openai"
 import { streamText } from "ai"
 
 export const list = query({
-  args: {},
+  args: {
+    threadId: v.id("threads"),
+  },
   returns: v.array(
     v.object({
       _id: v.id("messages"),
       _creationTime: v.number(),
+      threadId: v.id("threads"),
       author: v.string(),
       body: v.string(),
       timestamp: v.number(),
@@ -27,13 +30,18 @@ export const list = query({
       isComplete: v.optional(v.boolean()),
     }),
   ),
-  handler: async (ctx) => {
-    return await ctx.db.query("messages").order("desc").take(50)
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
+      .order("desc")
+      .take(50)
   },
 })
 
 export const send = mutation({
   args: {
+    threadId: v.id("threads"),
     author: v.string(),
     body: v.string(),
   },
@@ -41,14 +49,21 @@ export const send = mutation({
   handler: async (ctx, args) => {
     // Insert user message
     await ctx.db.insert("messages", {
+      threadId: args.threadId,
       author: args.author,
       body: args.body,
       timestamp: Date.now(),
       messageType: "user",
     })
 
+    // Update thread's last message timestamp
+    await ctx.db.patch(args.threadId, {
+      lastMessageAt: Date.now(),
+    })
+
     // Schedule AI response
     await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
+      threadId: args.threadId,
       userMessage: args.body,
       author: args.author,
     })
@@ -110,6 +125,7 @@ export const getStreamChunks = query({
 // Internal action to generate AI response with streaming using Vercel AI SDK
 export const generateAIResponse = internalAction({
   args: {
+    threadId: v.id("threads"),
     userMessage: v.string(),
     author: v.string(),
   },
@@ -124,6 +140,7 @@ export const generateAIResponse = internalAction({
       messageId = await ctx.runMutation(
         internal.messages.createStreamingMessage,
         {
+          threadId: args.threadId,
           streamId,
           author: "AI Assistant",
         },
@@ -132,7 +149,7 @@ export const generateAIResponse = internalAction({
       // Get recent conversation context
       const recentMessages = await ctx.runQuery(
         internal.messages.getRecentContext,
-        {},
+        { threadId: args.threadId },
       )
 
       // Prepare messages for AI SDK
@@ -209,6 +226,7 @@ export const generateAIResponse = internalAction({
       } else {
         const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         await ctx.runMutation(internal.messages.createErrorMessage, {
+          threadId: args.threadId,
           streamId,
           errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
         })
@@ -221,7 +239,9 @@ export const generateAIResponse = internalAction({
 
 // Internal function to get recent conversation context
 export const getRecentContext = internalQuery({
-  args: {},
+  args: {
+    threadId: v.id("threads"),
+  },
   returns: v.array(
     v.object({
       author: v.string(),
@@ -229,8 +249,12 @@ export const getRecentContext = internalQuery({
       messageType: v.union(v.literal("user"), v.literal("ai")),
     }),
   ),
-  handler: async (ctx) => {
-    const messages = await ctx.db.query("messages").order("desc").take(10)
+  handler: async (ctx, args) => {
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
+      .order("desc")
+      .take(10)
 
     return messages
       .reverse() // Get chronological order
@@ -246,12 +270,14 @@ export const getRecentContext = internalQuery({
 // Internal mutation to create initial streaming message
 export const createStreamingMessage = internalMutation({
   args: {
+    threadId: v.id("threads"),
     streamId: v.string(),
     author: v.string(),
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
     return await ctx.db.insert("messages", {
+      threadId: args.threadId,
       author: args.author,
       body: "", // Will be updated as chunks arrive
       timestamp: Date.now(),
@@ -317,12 +343,14 @@ export const completeStreamingMessage = internalMutation({
 // Internal mutation to create error message
 export const createErrorMessage = internalMutation({
   args: {
+    threadId: v.id("threads"),
     streamId: v.string(),
     errorMessage: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.insert("messages", {
+      threadId: args.threadId,
       author: "AI Assistant",
       body: args.errorMessage,
       timestamp: Date.now(),
