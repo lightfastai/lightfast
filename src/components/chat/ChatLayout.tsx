@@ -27,6 +27,7 @@ interface ChatLayoutProps {
   children: React.ReactNode
   threads?: Thread[]
   currentThreadId?: Id<"threads"> | "new"
+  title?: string
   onNewChat?: () => void
   onThreadSelect?: (threadId: Id<"threads">) => void
 }
@@ -221,6 +222,7 @@ export function ChatLayout({
   children,
   threads = [],
   currentThreadId,
+  title,
   onNewChat,
   onThreadSelect,
 }: ChatLayoutProps) {
@@ -234,7 +236,7 @@ export function ChatLayout({
           onThreadSelect={onThreadSelect}
         />
         <SidebarInset className="flex flex-col">
-          <ChatHeader />
+          <ChatHeader title={title} />
           <div className="flex-1 min-h-0">{children}</div>
         </SidebarInset>
       </div>

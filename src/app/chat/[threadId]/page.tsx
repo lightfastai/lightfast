@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation"
 import { isAuthenticated } from "@/lib/auth"
 import type { Id } from "../../../../convex/_generated/dataModel"
-import { ChatInterface } from "@/components/chat/ChatInterface"
+import { ChatInterface } from "../../../components/chat/ChatInterface"
 
 interface ChatThreadPageProps {
   params: {
@@ -36,7 +36,5 @@ export default async function ChatThreadPage({ params }: ChatThreadPageProps) {
   }
 
   // Pass minimal data to client component - let client-side queries handle real data
-  return (
-    <ChatInterface currentThread={thread} threads={[]} initialMessages={[]} />
-  )
+  return <ChatInterface />
 }

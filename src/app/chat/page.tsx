@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import { isAuthenticated } from "@/lib/auth"
-import { ChatRouter } from "@/components/chat/ChatRouter"
-
+import { ChatInterface } from "../../components/chat/ChatInterface"
 // Server component that handles chat routing logic
 export default async function ChatPage() {
   // Check authentication - redirect to home if not authenticated
@@ -10,6 +9,6 @@ export default async function ChatPage() {
     redirect("/")
   }
 
-  // Use the client component to handle the chat routing
-  return <ChatRouter />
+  // Use the ChatInterface component directly
+  return <ChatInterface />
 }
