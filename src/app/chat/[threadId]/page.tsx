@@ -1,7 +1,17 @@
 import { isAuthenticated } from "@/lib/auth"
+import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import type { Id } from "../../../../convex/_generated/dataModel"
 import { ChatInterface } from "../../../components/chat/ChatInterface"
+
+export const metadata: Metadata = {
+  title: "Chat Thread - Lightfast",
+  description: "Continue your AI conversation.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 interface ChatThreadPageProps {
   params: Promise<{
@@ -10,10 +20,10 @@ interface ChatThreadPageProps {
 }
 
 export default async function ChatThreadPage({ params }: ChatThreadPageProps) {
-  // Check authentication - redirect to home if not authenticated
+  // Check authentication - redirect to signin if not authenticated
   const authenticated = await isAuthenticated()
   if (!authenticated) {
-    redirect("/")
+    redirect("/signin")
   }
 
   // Await params in Next.js 15

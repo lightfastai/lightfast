@@ -1,9 +1,74 @@
 import { LandingChatInput } from "@/components/landing/LandingChatInput"
 import { Button } from "@/components/ui/button"
-import { isAuthenticated } from "@/lib/auth"
 import { Zap } from "lucide-react"
 import Link from "next/link"
-import { redirect } from "next/navigation"
+import type { Metadata } from "next"
+import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler"
+
+export const metadata: Metadata = {
+  title: "Lightfast - Agent-first Chat Experience",
+  description:
+    "Experience the future of AI conversations with Lightfast. Our agent-first approach delivers intelligent, real-time chat interactions that understand context and provide meaningful responses.",
+  keywords: [
+    "AI chat",
+    "artificial intelligence",
+    "agent-first",
+    "real-time chat",
+    "conversational AI",
+    "intelligent chat",
+    "AI assistant",
+    "machine learning",
+    "natural language processing",
+    "Lightfast",
+  ],
+  authors: [{ name: "Lightfast" }],
+  creator: "Lightfast",
+  publisher: "Lightfast",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://lightfast.ai",
+    title: "Lightfast - Agent-first Chat Experience",
+    description:
+      "Experience the future of AI conversations with Lightfast. Our agent-first approach delivers intelligent, real-time chat interactions.",
+    siteName: "Lightfast",
+    images: [
+      {
+        url: "https://lightfast.ai/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Lightfast - Agent-first Chat Experience",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lightfast - Agent-first Chat Experience",
+    description:
+      "Experience the future of AI conversations with our agent-first approach to intelligent chat.",
+    images: ["https://lightfast.ai/og-image.png"],
+    creator: "@lightfast_ai",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: "google-site-verification-code",
+  },
+}
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -30,7 +95,7 @@ function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
-// Server-side header component for unauthenticated users
+// Server-side header component for landing page
 function LandingHeader() {
   return (
     <header className="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -48,7 +113,7 @@ function LandingHeader() {
   )
 }
 
-// Landing page component for unauthenticated users
+// Landing page component - fully SSR
 function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
@@ -78,16 +143,15 @@ function LandingPage() {
   )
 }
 
-// Main server component that handles authentication routing
-export default async function Home() {
-  // Check authentication server-side
-  const authenticated = await isAuthenticated()
+// Main server component - SSR landing page with client-side auth handling
+export default function Home() {
+  return (
+    <>
+      {/* Client component handles auth redirects without affecting SSR */}
+      <AuthRedirectHandler />
 
-  // If user is authenticated, redirect to chat
-  if (authenticated) {
-    redirect("/chat")
-  }
-
-  // Show landing page for unauthenticated users
-  return <LandingPage />
+      {/* Server-rendered landing page */}
+      <LandingPage />
+    </>
+  )
 }

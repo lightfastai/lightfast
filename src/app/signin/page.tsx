@@ -1,10 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { isAuthenticated } from "@/lib/auth"
 import { Github } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { redirect } from "next/navigation"
 import { SignInButton } from "../../components/auth/SignInButton"
+import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler"
 
 export const metadata: Metadata = {
   title: "Sign In - Lightfast",
@@ -31,13 +30,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function SignInPage() {
-  const authenticated = await isAuthenticated()
-
-  if (authenticated) {
-    redirect("/")
-  }
-
+// Server-rendered signin page
+function SignInPageContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -85,5 +79,17 @@ export default async function SignInPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <>
+      {/* Client component handles auth redirects for authenticated users */}
+      <AuthRedirectHandler redirectTo="/chat" />
+
+      {/* Server-rendered signin page */}
+      <SignInPageContent />
+    </>
   )
 }

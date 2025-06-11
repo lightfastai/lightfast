@@ -13,6 +13,7 @@ import {
 import { useAuthActions } from "@convex-dev/auth/react"
 import { useQuery } from "convex/react"
 import { ChevronDown, LogOut, Settings, User } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 
 interface UserDropdownProps {
@@ -21,6 +22,7 @@ interface UserDropdownProps {
   showSettings?: boolean
   settingsHref?: string
   onSignOut?: () => void
+  redirectAfterSignOut?: boolean
 }
 
 export function UserDropdown({
@@ -29,14 +31,21 @@ export function UserDropdown({
   showSettings = true,
   settingsHref = "/profile",
   onSignOut,
+  redirectAfterSignOut = true,
 }: UserDropdownProps) {
   const { signOut } = useAuthActions()
   const currentUser = useQuery(api.users.current)
+  const router = useRouter()
 
   const handleSignOut = async () => {
     try {
       onSignOut?.()
       await signOut()
+
+      // Redirect to home page after successful signout
+      if (redirectAfterSignOut) {
+        router.push("/")
+      }
     } catch (error) {
       console.error("Error signing out:", error)
     }

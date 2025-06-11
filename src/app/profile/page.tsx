@@ -3,21 +3,31 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCurrentUser, isAuthenticated } from "@/lib/auth"
 import { Calendar, User } from "lucide-react"
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
+
+export const metadata: Metadata = {
+  title: "Profile - Lightfast",
+  description: "Manage your Lightfast profile and account settings.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function ProfilePage() {
   // Check authentication on the server side
   const authenticated = await isAuthenticated()
 
   if (!authenticated) {
-    redirect("/")
+    redirect("/signin")
   }
 
   // Get current user information
   const user = await getCurrentUser()
 
   if (!user) {
-    redirect("/")
+    redirect("/signin")
   }
 
   return (
