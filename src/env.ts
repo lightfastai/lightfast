@@ -7,11 +7,10 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
-    // Convex deployment identifier for server-side operations
-    CONVEX_DEPLOYMENT: z.string().min(1),
-    // OpenAI API key for AI functionality (if needed)
-    OPENAI_API_KEY: z.string().min(1).optional(),
-    // Node environment
+    // Convex handles deployment vs deploy key automatically
+    // In development: CONVEX_DEPLOYMENT is used
+    // In production: CONVEX_DEPLOY_KEY is used
+    // We only need to validate what we actually use in our app
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -22,6 +21,7 @@ export const env = createEnv({
    */
   client: {
     // Convex URL for client-side connections
+    // This is the only Convex variable our app actually needs
     NEXT_PUBLIC_CONVEX_URL: z.string().url(),
   },
   /*
@@ -31,8 +31,6 @@ export const env = createEnv({
    */
   runtimeEnv: {
     // Server-side
-    CONVEX_DEPLOYMENT: process.env.CONVEX_DEPLOYMENT,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
     // Client-side
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,

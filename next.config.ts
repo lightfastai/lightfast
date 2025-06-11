@@ -1,5 +1,5 @@
 import type { NextConfig } from "next"
-import "./src/env.ts"
+import "./src/env"
 
 const nextConfig: NextConfig = {
   // App Router is enabled by default in Next.js 13+

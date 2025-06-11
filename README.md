@@ -15,16 +15,13 @@ Create a `.env.local` file in the root directory with the following variables:
 CONVEX_DEPLOYMENT=your-convex-deployment-name
 NEXT_PUBLIC_CONVEX_URL=your-convex-url
 
-# Optional: OpenAI API Key for AI functionality
-OPENAI_API_KEY=your_openai_api_key_here
-
 # Node Environment
 NODE_ENV=development
 ```
 
 ### Environment Variable Types
 
-- **Server-only variables**: `CONVEX_DEPLOYMENT`, `OPENAI_API_KEY`, `NODE_ENV`
+- **Server-only variables**: `CONVEX_DEPLOYMENT`, `NODE_ENV`
   - These are only available on the server-side and will throw an error if accessed on the client
 - **Client-accessible variables**: `NEXT_PUBLIC_CONVEX_URL`
   - These are available on both server and client (must be prefixed with `NEXT_PUBLIC_`)
