@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation"
 import { isAuthenticated } from "@/lib/auth"
+import { redirect } from "next/navigation"
 import { ChatInterface } from "../../components/chat/ChatInterface"
 // Server component that handles chat routing logic
 export default async function ChatPage() {

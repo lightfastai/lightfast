@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { ArrowUp } from "lucide-react"
 import { SignInDialog } from "@/components/auth/SignInDialog"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { ArrowUp } from "lucide-react"
+import { useState } from "react"
 
 export function LandingChatInput() {
   const [showSignInDialog, setShowSignInDialog] = useState(false)

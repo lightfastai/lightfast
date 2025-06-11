@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation"
-import { Zap } from "lucide-react"
+import { LandingChatInput } from "@/components/landing/LandingChatInput"
 import { Button } from "@/components/ui/button"
 import { isAuthenticated } from "@/lib/auth"
+import { Zap } from "lucide-react"
 import Link from "next/link"
-import { LandingChatInput } from "@/components/landing/LandingChatInput"
+import { redirect } from "next/navigation"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {

@@ -1,10 +1,10 @@
 "use client"
 
-import { useRouter, usePathname } from "next/navigation"
-import { useQuery, useMutation } from "convex/react"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { useQuery } from "convex/react"
+import { usePathname, useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import { ChatLayout } from "../../components/chat/ChatLayout"
 
 interface ChatLayoutWrapperProps {
@@ -19,9 +19,6 @@ export default function ChatLayoutWrapper({
 
   // Get threads list with real-time updates
   const threads = useQuery(api.threads.list) ?? []
-
-  // Mutations
-  const createThread = useMutation(api.threads.create)
 
   // Extract current thread ID from pathname
   const getCurrentThreadId = (): Id<"threads"> | "new" => {

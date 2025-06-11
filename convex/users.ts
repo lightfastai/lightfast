@@ -1,6 +1,6 @@
+import { getAuthUserId } from "@convex-dev/auth/server"
 import { v } from "convex/values"
 import { query } from "./_generated/server.js"
-import { getAuthUserId } from "@convex-dev/auth/server"
 
 /**
  * Get the current authenticated user's information
@@ -21,7 +21,7 @@ export const current = query({
     }),
     v.null(),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx, _args) => {
     const userId = await getAuthUserId(ctx)
     if (!userId) {
       return null

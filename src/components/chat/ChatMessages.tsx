@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Zap } from "lucide-react"
-import { MessageDisplay } from "./MessageDisplay"
+import { useEffect, useRef } from "react"
 import type { Doc } from "../../../convex/_generated/dataModel"
+import { MessageDisplay } from "./MessageDisplay"
 
 type Message = Doc<"messages">
 

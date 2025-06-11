@@ -1,6 +1,5 @@
 "use client"
 
-import { Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -17,11 +16,12 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import type { Doc, Id } from "../../../convex/_generated/dataModel"
+import { Plus } from "lucide-react"
 import Link from "next/link"
+import type { Doc, Id } from "../../../convex/_generated/dataModel"
+import { PrefetchThread } from "./PrefetchThread"
 
 type Thread = Doc<"threads">
-type Message = Doc<"messages">
 
 interface ChatLayoutProps {
   children: React.ReactNode
@@ -226,6 +226,9 @@ export function ChatLayout({
   onNewChat,
   onThreadSelect,
 }: ChatLayoutProps) {
+  // Get the latest 10 threads for prefetching
+  const latestThreads = threads.slice(0, 10)
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -240,6 +243,11 @@ export function ChatLayout({
           <div className="flex-1 min-h-0">{children}</div>
         </SidebarInset>
       </div>
+
+      {/* Prefetch messages for the latest 10 threads for instant navigation */}
+      {latestThreads.map((thread) => (
+        <PrefetchThread key={`prefetch-${thread._id}`} threadId={thread._id} />
+      ))}
     </SidebarProvider>
   )
 }

@@ -1,10 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { Github } from "lucide-react"
 import { isAuthenticated } from "@/lib/auth"
+import { Github } from "lucide-react"
 import type { Metadata } from "next"
-import { SignInButton } from "../../components/auth/SignInButton"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { SignInButton } from "../../components/auth/SignInButton"
 
 export const metadata: Metadata = {
   title: "Sign In - Lightfast",

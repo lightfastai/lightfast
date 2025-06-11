@@ -1,8 +1,8 @@
-import { v } from "convex/values"
-import { internalAction, internalMutation } from "./_generated/server.js"
-import { internal } from "./_generated/api.js"
 import { openai } from "@ai-sdk/openai"
 import { generateText } from "ai"
+import { v } from "convex/values"
+import { internal } from "./_generated/api.js"
+import { internalAction, internalMutation } from "./_generated/server.js"
 
 // Internal action to generate title using fast AI model
 export const generateTitle = internalAction({

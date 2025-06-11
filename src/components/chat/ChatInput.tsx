@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -9,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Send } from "lucide-react"
+import { useState } from "react"
 
 interface ChatInputProps {
   onSendMessage: (message: string) => Promise<void> | void

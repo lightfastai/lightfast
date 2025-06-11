@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { useQuery, useMutation } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
-import { ChatMessages } from "./ChatMessages"
 import { ChatInput } from "./ChatInput"
+import { ChatMessages } from "./ChatMessages"
 
 type Message = Doc<"messages">
 
@@ -42,7 +42,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
       : { threadId: currentThreadId as Id<"threads"> },
   )
 
-  // Get messages for current thread (with real-time updates)
+  // Get messages for current thread (leverages prefetched cache for instant loading)
   const messages =
     useQuery(
       api.messages.list,

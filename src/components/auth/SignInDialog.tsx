@@ -1,15 +1,15 @@
 "use client"
 
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
-  DialogTitle,
   DialogDescription,
+  DialogTitle,
 } from "@/components/ui/dialog"
-import { Card, CardContent } from "@/components/ui/card"
 import { Github } from "lucide-react"
-import { SignInButton } from "./SignInButton"
 import Link from "next/link"
+import { SignInButton } from "./SignInButton"
 
 interface SignInDialogProps {
   open: boolean

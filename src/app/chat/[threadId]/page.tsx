@@ -1,12 +1,12 @@
-import { redirect, notFound } from "next/navigation"
 import { isAuthenticated } from "@/lib/auth"
+import { notFound, redirect } from "next/navigation"
 import type { Id } from "../../../../convex/_generated/dataModel"
 import { ChatInterface } from "../../../components/chat/ChatInterface"
 
 interface ChatThreadPageProps {
-  params: {
+  params: Promise<{
     threadId: string
-  }
+  }>
 }
 
 export default async function ChatThreadPage({ params }: ChatThreadPageProps) {
@@ -23,16 +23,6 @@ export default async function ChatThreadPage({ params }: ChatThreadPageProps) {
   const threadId = threadIdString as Id<"threads">
   if (!threadId) {
     notFound()
-  }
-
-  // Create minimal thread object for initial render
-  const thread = {
-    _id: threadId,
-    _creationTime: Date.now(),
-    title: "Loading...",
-    userId: "temp" as Id<"users">,
-    createdAt: Date.now(),
-    lastMessageAt: Date.now(),
   }
 
   // Pass minimal data to client component - let client-side queries handle real data

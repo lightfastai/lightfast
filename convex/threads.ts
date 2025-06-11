@@ -1,6 +1,6 @@
+import { getAuthUserId } from "@convex-dev/auth/server"
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server.js"
-import { getAuthUserId } from "@convex-dev/auth/server"
 
 // Create a new thread
 export const create = mutation({
@@ -39,7 +39,7 @@ export const list = query({
       isTitleGenerating: v.optional(v.boolean()),
     }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx, _args) => {
     const userId = await getAuthUserId(ctx)
     if (!userId) {
       return []
