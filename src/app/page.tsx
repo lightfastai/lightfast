@@ -1,37 +1,12 @@
-"use client"
-
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { MessageCircle, Plus, Send, User, Zap } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
-import {
-  useQuery,
-  useMutation,
-  Authenticated,
-  Unauthenticated,
-} from "convex/react"
-import { useAuth } from "@/hooks/useAuth"
-import { api } from "../../convex/_generated/api"
-import type { Doc, Id } from "../../convex/_generated/dataModel"
+import { MessageCircle, User, Zap } from "lucide-react"
 import { SignInButton } from "@/components/auth/SignInButton"
-import { SignOutButton } from "@/components/auth/SignOutButton"
-import { UserDropdown } from "@/components/auth/UserDropdown"
+import { isAuthenticated } from "@/lib/auth"
 
-type Message = Doc<"messages">
-
-// Header component that works for both authenticated and unauthenticated states
-function Header() {
+// Server-side header component for unauthenticated users
+function LandingHeader() {
   return (
     <header className="border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -41,15 +16,7 @@ function Header() {
           </div>
           <span className="font-semibold text-lg">AI Chat</span>
         </div>
-        <SignOutButton />
-
-        <Unauthenticated>
-          <SignInButton />
-        </Unauthenticated>
-
-        <Authenticated>
-          <UserDropdown />
-        </Authenticated>
+        <SignInButton />
       </div>
     </header>
   )
@@ -57,24 +24,9 @@ function Header() {
 
 // Landing page component for unauthenticated users
 function LandingPage() {
-  const { signIn } = useAuth()
-  const [message, setMessage] = useState("")
-
-  const handleSubmit = () => {
-    // Trigger sign in when user tries to send a message
-    void signIn("github")
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit()
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header />
+      <LandingHeader />
 
       {/* Main content */}
       <main className="container mx-auto px-4 py-8">
@@ -99,31 +51,20 @@ function LandingPage() {
           <div className="max-w-2xl mx-auto">
             <div className="relative">
               <Textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
                 placeholder="Ask anything... (Sign in to start chatting)"
                 className="min-h-[120px] resize-none pr-16 text-lg border-2 transition-colors focus:border-primary"
                 rows={4}
+                disabled
               />
-              <Button
-                onClick={handleSubmit}
-                size="lg"
-                className="absolute right-3 bottom-3 h-12 w-12 p-0 rounded-full"
-              >
-                <Send className="w-5 h-5" />
-              </Button>
+              <div className="absolute right-3 bottom-3 h-12 w-12 bg-muted rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-muted-foreground" />
+              </div>
             </div>
 
             <div className="mt-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Press{" "}
-                <kbd className="px-2 py-1 text-xs bg-muted rounded">Enter</kbd>{" "}
-                to send,
-                <kbd className="px-2 py-1 text-xs bg-muted rounded">
-                  Shift + Enter
-                </kbd>{" "}
-                for new line
+              <SignInButton />
+              <p className="text-sm text-muted-foreground mt-2">
+                Sign in with GitHub to start chatting with AI
               </p>
             </div>
           </div>
@@ -174,341 +115,16 @@ function LandingPage() {
   )
 }
 
-// Main chat interface for authenticated users
-function ChatInterface() {
-  const [message, setMessage] = useState("")
-  const [currentThreadId, setCurrentThreadId] = useState<Id<"threads"> | null>(
-    null,
-  )
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
+// Main server component that handles authentication routing
+export default async function Home() {
+  // Check authentication server-side
+  const authenticated = await isAuthenticated()
 
-  // Get threads for user
-  const threads = useQuery(api.threads.list)
-  const createThread = useMutation(api.threads.create)
-
-  // Get messages for current thread
-  const messages = useQuery(
-    api.messages.list,
-    currentThreadId ? { threadId: currentThreadId } : "skip",
-  )
-  const sendMessage = useMutation(api.messages.send)
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
-    }
-  }, [messages])
-
-  // Auto-select first thread when threads are loaded
-  useEffect(() => {
-    if (threads && threads.length > 0 && !currentThreadId) {
-      setCurrentThreadId(threads[0]._id)
-    }
-  }, [threads, currentThreadId])
-
-  const handleNewChat = async () => {
-    try {
-      const newThreadId = await createThread({
-        title: "New Chat",
-      })
-      setCurrentThreadId(newThreadId)
-    } catch (error) {
-      console.error("Error creating new thread:", error)
-    }
+  // If user is authenticated, redirect to chat
+  if (authenticated) {
+    redirect("/chat")
   }
 
-  const handleSendMessage = async () => {
-    if (!message.trim()) return
-
-    try {
-      // Create a new thread if none is selected
-      if (!currentThreadId) {
-        const newThreadId = await createThread({
-          title: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
-        })
-        setCurrentThreadId(newThreadId)
-
-        await sendMessage({
-          threadId: newThreadId,
-          body: message,
-        })
-      } else {
-        await sendMessage({
-          threadId: currentThreadId,
-          body: message,
-        })
-      }
-      setMessage("")
-    } catch (error) {
-      console.error("Error sending message:", error)
-    }
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
-    }
-  }
-
-  return (
-    <TooltipProvider>
-      <div className="flex flex-col h-screen bg-background">
-        <Header />
-
-        <div className="flex flex-1 min-h-0">
-          {/* Sidebar */}
-          <div className="w-64 border-r bg-muted/40 flex flex-col">
-            {/* New Chat Button */}
-            <div className="p-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2"
-                    onClick={handleNewChat}
-                  >
-                    <Plus className="w-4 h-4" />
-                    New chat
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Start a new conversation</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-
-            <Separator />
-
-            {/* Chat History */}
-            <ScrollArea className="flex-1 px-4">
-              <div className="space-y-2 py-2">
-                {threads?.map((thread) => (
-                  <button
-                    key={thread._id}
-                    type="button"
-                    className={`w-full p-2 rounded-md hover:bg-accent cursor-pointer group text-left ${
-                      currentThreadId === thread._id ? "bg-accent" : ""
-                    }`}
-                    onClick={() => setCurrentThreadId(thread._id)}
-                  >
-                    <div className="flex items-center gap-2 text-sm">
-                      <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                      <span className="truncate">{thread.title}</span>
-                      {currentThreadId === thread._id && (
-                        <Badge variant="secondary" className="ml-auto text-xs">
-                          Active
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(thread.lastMessageAt).toLocaleDateString()}
-                    </p>
-                  </button>
-                ))}
-                {(!threads || threads.length === 0) && (
-                  <div className="text-center text-muted-foreground py-4">
-                    <p className="text-sm">No conversations yet</p>
-                    <p className="text-xs">Start a new chat to begin</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* Main Chat Area */}
-          <div className="flex-1 flex flex-col min-h-0">
-            {/* Chat Header */}
-            <div className="border-b p-4 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold">
-                  {currentThreadId && threads
-                    ? threads.find((t) => t._id === currentThreadId)?.title ||
-                      "AI Chat"
-                    : "AI Chat"}
-                </h1>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">Streaming</Badge>
-                  <Badge variant="outline">GPT-4o-mini</Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-              <div className="p-4">
-                <div className="space-y-6 max-w-3xl mx-auto">
-                  {!messages?.length && (
-                    <div className="text-center text-muted-foreground py-12">
-                      <Zap className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">
-                        Welcome to AI Chat
-                      </h3>
-                      <p>
-                        Start a conversation with our AI assistant. Messages
-                        stream in real-time!
-                      </p>
-                    </div>
-                  )}
-
-                  {messages
-                    ?.slice()
-                    .reverse()
-                    .map((msg) => (
-                      <MessageDisplay
-                        key={msg._id}
-                        message={msg}
-                        userName="User"
-                      />
-                    ))}
-                </div>
-              </div>
-            </ScrollArea>
-
-            {/* Input Area */}
-            <div className="border-t p-4 flex-shrink-0">
-              <div className="max-w-3xl mx-auto">
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <Textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Message AI assistant..."
-                      className="min-h-[60px] resize-none pr-12"
-                      rows={1}
-                    />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={handleSendMessage}
-                          disabled={!message.trim()}
-                          size="sm"
-                          className="absolute right-2 bottom-2 h-8 w-8 p-0"
-                        >
-                          <Send className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Send message (Enter)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  AI responses are generated using Vercel AI SDK with real-time
-                  streaming
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </TooltipProvider>
-  )
-}
-
-// Component to display individual messages with streaming support
-function MessageDisplay({
-  message,
-  userName,
-}: { message: Message; userName: string }) {
-  const [displayText, setDisplayText] = useState(message.body)
-  const [isTyping, setIsTyping] = useState(false)
-
-  // Update display text when message body changes (via Convex reactivity)
-  useEffect(() => {
-    setDisplayText(message.body)
-    setIsTyping(
-      Boolean(
-        message.isStreaming && !message.isComplete && message.body.length > 0,
-      ),
-    )
-  }, [message.body, message.isStreaming, message.isComplete])
-
-  const isAI = message.messageType === "assistant"
-  const isStreaming = message.isStreaming && !message.isComplete
-
-  return (
-    <div className={`flex gap-4 ${isAI ? "" : "justify-end"} animate-fade-in`}>
-      {isAI && (
-        <Avatar className="w-8 h-8 shrink-0">
-          <AvatarFallback className="bg-primary text-primary-foreground">
-            <Zap className="w-4 h-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
-
-      <Card
-        className={`max-w-2xl ${
-          isAI ? "" : "bg-primary text-primary-foreground"
-        }`}
-      >
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium opacity-70">
-              {message.messageType === "user" ? userName : "AI Assistant"}
-            </p>
-            {isStreaming && (
-              <div className="flex items-center text-xs opacity-70">
-                <div className="flex space-x-1">
-                  <div className="w-1 h-1 bg-current rounded-full animate-bounce" />
-                  <div
-                    className="w-1 h-1 bg-current rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  />
-                  <div
-                    className="w-1 h-1 bg-current rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  />
-                </div>
-                <span className="ml-2">typing...</span>
-              </div>
-            )}
-          </div>
-
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {displayText || (isStreaming ? "..." : "")}
-            {isTyping && (
-              <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1 opacity-70" />
-            )}
-          </p>
-
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-xs opacity-70">
-              {new Date(message.timestamp).toLocaleTimeString()}
-            </p>
-            {message.isComplete && isAI && (
-              <Badge variant="secondary" className="text-xs">
-                ✓ Complete
-              </Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {!isAI && (
-        <Avatar className="w-8 h-8 shrink-0">
-          <AvatarFallback className="bg-secondary">
-            <User className="w-4 h-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
-    </div>
-  )
-}
-
-// Main component that switches between landing and chat based on auth state
-export default function Home() {
-  return (
-    <>
-      <Unauthenticated>
-        <LandingPage />
-      </Unauthenticated>
-      <Authenticated>
-        <ChatInterface />
-      </Authenticated>
-    </>
-  )
+  // Show landing page for unauthenticated users
+  return <LandingPage />
 }
