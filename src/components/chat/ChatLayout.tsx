@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -19,6 +20,7 @@ import {
 import { Plus } from "lucide-react"
 import Link from "next/link"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
+import { UserDropdown } from "../auth/UserDropdown"
 import { PrefetchThread } from "./PrefetchThread"
 
 type Thread = Doc<"threads">
@@ -144,7 +146,7 @@ function ChatSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <ScrollArea className="h-[calc(100vh-200px)]">
+        <ScrollArea className="h-[calc(100vh-280px)]">
           {threads.length === 0 ? (
             <div className="px-3 py-8 text-center text-muted-foreground">
               <p className="text-sm">No conversations yet</p>
@@ -192,6 +194,10 @@ function ChatSidebar({
           )}
         </ScrollArea>
       </SidebarContent>
+
+      <SidebarFooter className="p-4">
+        <UserDropdown className="w-full justify-start" />
+      </SidebarFooter>
     </Sidebar>
   )
 }
