@@ -1,0 +1,110 @@
+{
+  "Convex Query": {
+    "prefix": "convex-query",
+    "body": [
+      "export const ${1:functionName} = query({",
+      "  args: {",
+      "    ${2:// Add arguments here}",
+      "  },",
+      "  returns: ${3:v.null()},",
+      "  handler: async (ctx, args) => {",
+      "    ${4:// Query logic here}",
+      "    return ${5:null}",
+      "  },",
+      "})"
+    ],
+    "description": "Create a Convex query function"
+  },
+  "Convex Mutation": {
+    "prefix": "convex-mutation",
+    "body": [
+      "export const ${1:functionName} = mutation({",
+      "  args: {",
+      "    ${2:// Add arguments here}",
+      "  },",
+      "  returns: ${3:v.null()},",
+      "  handler: async (ctx, args) => {",
+      "    ${4:// Mutation logic here}",
+      "    return ${5:null}",
+      "  },",
+      "})"
+    ],
+    "description": "Create a Convex mutation function"
+  },
+  "Convex Action": {
+    "prefix": "convex-action",
+    "body": [
+      "export const ${1:functionName} = action({",
+      "  args: {",
+      "    ${2:// Add arguments here}",
+      "  },",
+      "  returns: ${3:v.null()},",
+      "  handler: async (ctx, args) => {",
+      "    ${4:// Action logic here}",
+      "    return ${5:null}",
+      "  },",
+      "})"
+    ],
+    "description": "Create a Convex action function"
+  },
+  "Convex Internal Query": {
+    "prefix": "convex-internal-query",
+    "body": [
+      "export const ${1:functionName} = internalQuery({",
+      "  args: {",
+      "    ${2:// Add arguments here}",
+      "  },",
+      "  returns: ${3:v.null()},",
+      "  handler: async (ctx, args) => {",
+      "    ${4:// Internal query logic here}",
+      "    return ${5:null}",
+      "  },",
+      "})"
+    ],
+    "description": "Create a Convex internal query function"
+  },
+  "Convex Internal Mutation": {
+    "prefix": "convex-internal-mutation",
+    "body": [
+      "export const ${1:functionName} = internalMutation({",
+      "  args: {",
+      "    ${2:// Add arguments here}",
+      "  },",
+      "  returns: ${3:v.null()},",
+      "  handler: async (ctx, args) => {",
+      "    ${4:// Internal mutation logic here}",
+      "    return ${5:null}",
+      "  },",
+      "})"
+    ],
+    "description": "Create a Convex internal mutation function"
+  },
+  "Convex Schema Table": {
+    "prefix": "convex-table",
+    "body": [
+      "${1:tableName}: defineTable({",
+      "  ${2:// Add fields here}",
+      "})${3:.index(\"${4:indexName}\", [\"${5:field}\"])},"
+    ],
+    "description": "Create a Convex table definition"
+  },
+  "Convex Database Insert": {
+    "prefix": "convex-insert",
+    "body": [
+      "await ctx.db.insert(\"${1:tableName}\", {",
+      "  ${2:// Add fields here}",
+      "})"
+    ],
+    "description": "Insert a document into Convex database"
+  },
+  "Convex Database Query": {
+    "prefix": "convex-db-query",
+    "body": [
+      "await ctx.db.query(\"${1:tableName}\")",
+      "  ${2:.withIndex(\"${3:indexName}\", (q) => q.eq(\"${4:field}\", ${5:value}))}",
+      "  ${6:.order(\"${7:desc}\")}",
+      "  ${8:.take(${9:10})}"
+    ],
+    "description": "Query documents from Convex database"
+  }
+}

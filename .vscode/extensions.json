@@ -1,0 +1,19 @@
+{
+  "recommendations": [
+    // Core development tools - absolutely essential
+    "biomejs.biome",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "get-convex.vscode-convex",
+    "eamodio.gitlens"
+  ],
+  "unwantedRecommendations": [
+    // Disable ESLint and Prettier since we're using Biome
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-eslint",
+
+    // Disable other formatters that might conflict
+    "HookyQR.beautify"
+  ]
+}
