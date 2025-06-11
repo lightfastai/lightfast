@@ -10,6 +10,7 @@ export default defineSchema({
     userId: v.id("users"),
     createdAt: v.number(),
     lastMessageAt: v.number(),
+    isTitleGenerating: v.optional(v.boolean()),
   }).index("by_user", ["userId"]),
 
   messages: defineTable({

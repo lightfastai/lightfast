@@ -20,6 +20,7 @@ export const create = mutation({
       userId: userId,
       createdAt: now,
       lastMessageAt: now,
+      isTitleGenerating: true, // New threads start with title generation pending
     })
   },
 })
@@ -35,6 +36,7 @@ export const list = query({
       userId: v.id("users"),
       createdAt: v.number(),
       lastMessageAt: v.number(),
+      isTitleGenerating: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -64,6 +66,7 @@ export const get = query({
       userId: v.id("users"),
       createdAt: v.number(),
       lastMessageAt: v.number(),
+      isTitleGenerating: v.optional(v.boolean()),
     }),
     v.null(),
   ),

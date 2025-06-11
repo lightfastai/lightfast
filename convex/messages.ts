@@ -86,6 +86,21 @@ export const send = mutation({
       userMessage: args.body,
     })
 
+    // Check if this is the first user message in the thread (for title generation)
+    const userMessages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
+      .filter((q) => q.eq(q.field("messageType"), "user"))
+      .collect()
+
+    // If this is the first user message, schedule title generation
+    if (userMessages.length === 1) {
+      await ctx.scheduler.runAfter(100, internal.titles.generateTitle, {
+        threadId: args.threadId,
+        userMessage: args.body,
+      })
+    }
+
     return null
   },
 })
