@@ -44,7 +44,22 @@ load_env_vars() {
         if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
             # Strip inline comments (everything after #)
             clean_line=$(echo "$line" | sed 's/[[:space:]]*#.*$//')
-            export "$clean_line"
+
+            # Strip quotes from values if present
+            if [[ "$clean_line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=\"(.*)\"$ ]]; then
+                # Handle double quotes
+                var_name="${BASH_REMATCH[1]}"
+                var_value="${BASH_REMATCH[2]}"
+                export "$var_name=$var_value"
+            elif [[ "$clean_line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=\'(.*)\'$ ]]; then
+                # Handle single quotes
+                var_name="${BASH_REMATCH[1]}"
+                var_value="${BASH_REMATCH[2]}"
+                export "$var_name=$var_value"
+            else
+                # No quotes, export as is
+                export "$clean_line"
+            fi
         fi
     done < "$ENV_FILE"
 }

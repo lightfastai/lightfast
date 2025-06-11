@@ -137,3 +137,5 @@ dist
 
 # Mac
 .DS_Store
+.env*.local
+.vercel
