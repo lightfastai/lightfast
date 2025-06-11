@@ -1,0 +1,44 @@
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "biome check --write .",
+    "format": "biome format --write .",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightfastai/chat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lightfastai/chat/issues"
+  },
+  "homepage": "https://github.com/lightfastai/chat#readme",
+  "description": "A Convex Next.js chat application with Biome",
+  "dependencies": {
+    "convex": "^1.24.8",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@tailwindcss/postcss": "^4.1.8",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.7",
+    "@types/react-dom": "^19.1.6",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
+}
