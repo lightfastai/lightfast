@@ -1,9 +1,11 @@
-// Validate environment variables at build time
-import "./src/env.js"
+import type { NextConfig } from "next"
+import "./src/env.ts"
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   // App Router is enabled by default in Next.js 13+
+  experimental: {
+    ppr: true,
+  },
 }
 
-module.exports = nextConfig
+export default nextConfig

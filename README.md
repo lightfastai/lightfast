@@ -73,16 +73,18 @@ SKIP_ENV_VALIDATION=true npm run build
 
 - ✅ Type-safe environment variables with `@t3-oss/env-nextjs`
 - ✅ Real-time chat with Convex
-- ✅ Next.js 15 with App Router
+- ✅ Next.js 15 Canary with App Router
+- ✅ **PPR (Partial Prerendering)** - Latest Next.js experimental feature
 - ✅ TypeScript support
 - ✅ Build-time environment validation
 
 ## Architecture
 
-- **Frontend**: Next.js 15 with App Router
+- **Frontend**: Next.js 15 Canary with App Router + PPR
 - **Backend**: Convex for real-time database and API
 - **Type Safety**: TypeScript with validated environment variables
 - **Styling**: Tailwind CSS (configured via `@/components/ui`)
+- **Performance**: PPR for optimal static/dynamic content rendering
 
 ## Environment Validation Benefits
 

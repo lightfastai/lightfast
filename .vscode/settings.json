@@ -154,6 +154,5 @@
   "window.title": "${dirty}${activeEditorShort}${separator}${rootName}",
 
   // Zen mode
-  "zenMode.hideLineNumbers": false,
-  "zenMode.hideTabs": false
+  "zenMode.hideLineNumbers": false
 }

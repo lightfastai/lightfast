@@ -1,8 +1,8 @@
-import { GeistMono } from "geist/font/mono"
-import { GeistSans } from "geist/font/sans"
 import type { Metadata } from "next"
 import "./globals.css"
 import { ConvexClientProvider } from "@/lib/ConvexProvider"
+import { cn } from "@/lib/utils"
+import { fonts } from "../lib/fonts"
 
 export const metadata: Metadata = {
   title: "Chat App",
@@ -14,9 +14,7 @@ export default function RootLayout({
 }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
-      >
+      <body className={cn(fonts, "dark")}>
         <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
