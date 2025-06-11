@@ -15,17 +15,18 @@ import {
 } from "@/components/ui/tooltip"
 import { MessageCircle, Plus, Send, User, Zap } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
-import { useQuery, useMutation } from "convex/react"
 import {
+  useQuery,
+  useMutation,
   Authenticated,
   Unauthenticated,
-  SignInButton,
-  SignOutButton,
-  UserDropdown,
-} from "@/components/auth"
+} from "convex/react"
 import { useAuth } from "@/hooks/useAuth"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
+import { SignInButton } from "@/components/auth/SignInButton"
+import { SignOutButton } from "@/components/auth/SignOutButton"
+import { UserDropdown } from "@/components/auth/UserDropdown"
 
 type Message = Doc<"messages">
 

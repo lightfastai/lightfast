@@ -1,74 +1,89 @@
-"use client"
+import { Card, CardContent } from "@/components/ui/card"
+import { Github } from "lucide-react"
+import { isAuthenticated } from "@/lib/auth"
+import type { Metadata } from "next"
+import { SignInButton } from "../../components/auth/SignInButton"
+import Link from "next/link"
+import { redirect } from "next/navigation"
 
-import {
-  AuthWrapper,
-  SignInButton,
-  SignOutButton,
-  useAuth,
-} from "@/components/auth"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { useRouter } from "next/navigation"
+export const metadata: Metadata = {
+  title: "Sign In - Lightfast",
+  description:
+    "Sign in to access your AI chat conversations with real-time streaming responses.",
+  keywords: [
+    "AI chat",
+    "sign in",
+    "authentication",
+    "GitHub OAuth",
+    "real-time chat",
+  ],
+  openGraph: {
+    title: "Sign In - AI Chat",
+    description:
+      "Sign in to access your AI chat conversations with real-time streaming responses.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Sign In - AI Chat",
+    description:
+      "Sign in to access your AI chat conversations with real-time streaming responses.",
+  },
+}
 
-export default function SignInPage() {
-  const router = useRouter()
-  const { isAuthenticated } = useAuth()
+export default async function SignInPage() {
+  const authenticated = await isAuthenticated()
+
+  if (authenticated) {
+    redirect("/")
+  }
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4">
-      <AuthWrapper
-        loadingComponent={
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Loading...</CardTitle>
-              <CardDescription>
-                Please wait while we authenticate you.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        }
-      >
-        {isAuthenticated ? (
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Welcome!</CardTitle>
-              <CardDescription>You are successfully signed in.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button
-                onClick={() => router.push("/")}
-                className="w-full"
-                size="lg"
-              >
-                Go to Chat
-              </Button>
-              <SignOutButton className="w-full" variant="outline">
-                Sign Out
-              </SignOutButton>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Sign In</CardTitle>
-              <CardDescription>
-                Sign in to your account to access the chat application.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SignInButton className="w-full" size="lg">
-                Sign in with GitHub
-              </SignInButton>
-            </CardContent>
-          </Card>
-        )}
-      </AuthWrapper>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="shadow-xl bg-background/80 backdrop-blur-sm">
+          <CardContent className="p-8">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-semibold mb-2">
+                Sign in to continue
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Access your AI chat conversations
+              </p>
+            </div>
+
+            <SignInButton
+              className="w-full h-12 text-base font-medium relative overflow-hidden group"
+              size="lg"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <Github className="w-5 h-5 mr-2" />
+              Continue with GitHub
+            </SignInButton>
+
+            <div className="mt-6 text-center">
+              <p className="text-xs text-muted-foreground">
+                By signing in, you agree to our{" "}
+                <Link
+                  href="https://lightfast.ai/legal/terms"
+                  target="_blank"
+                  className="underline"
+                >
+                  terms
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="https://lightfast.ai/legal/privacy"
+                  target="_blank"
+                  className="underline"
+                >
+                  privacy policy
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
