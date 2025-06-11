@@ -7,7 +7,7 @@ import {
   internalQuery,
 } from "./_generated/server.js"
 import { internal } from "./_generated/api.js"
-import type { Doc } from "./_generated/dataModel.js"
+import type { Doc, Id } from "./_generated/dataModel.js"
 import { openai } from "@ai-sdk/openai"
 import { streamText } from "ai"
 
@@ -65,6 +65,7 @@ export const getMessageChunks = query({
   returns: v.array(
     v.object({
       _id: v.id("messageChunks"),
+      _creationTime: v.number(),
       messageId: v.id("messages"),
       streamId: v.string(),
       chunkIndex: v.number(),
@@ -89,6 +90,7 @@ export const getStreamChunks = query({
   returns: v.array(
     v.object({
       _id: v.id("messageChunks"),
+      _creationTime: v.number(),
       messageId: v.id("messages"),
       streamId: v.string(),
       chunkIndex: v.number(),
@@ -113,12 +115,13 @@ export const generateAIResponse = internalAction({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    let messageId: Id<"messages"> | null = null
     try {
       // Generate unique stream ID
       const streamId = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
       // Create initial AI message placeholder
-      const messageId = await ctx.runMutation(
+      messageId = await ctx.runMutation(
         internal.messages.createStreamingMessage,
         {
           streamId,
@@ -148,6 +151,8 @@ export const generateAIResponse = internalAction({
         })),
       ]
 
+      console.log("Attempting to call OpenAI with messages:", messages.length)
+
       // Stream response using Vercel AI SDK
       const { textStream } = await streamText({
         model: openai("gpt-4o-mini"),
@@ -159,8 +164,11 @@ export const generateAIResponse = internalAction({
       let chunkIndex = 0
       let fullContent = ""
 
+      console.log("Starting to process stream chunks...")
+
       // Process each chunk as it arrives from the stream
       for await (const chunk of textStream) {
+        console.log(`Received chunk ${chunkIndex}:`, chunk)
         fullContent += chunk
 
         // Save each chunk to database
@@ -174,6 +182,16 @@ export const generateAIResponse = internalAction({
         chunkIndex++
       }
 
+      console.log(
+        `Stream complete. Total chunks: ${chunkIndex}, Full content length: ${fullContent.length}`,
+      )
+
+      if (fullContent.trim() === "") {
+        throw new Error(
+          "OpenAI returned empty response - check API key and quota",
+        )
+      }
+
       // Mark message as complete and update final content
       await ctx.runMutation(internal.messages.completeStreamingMessage, {
         messageId,
@@ -182,12 +200,19 @@ export const generateAIResponse = internalAction({
     } catch (error) {
       console.error("Error generating AI response:", error)
 
-      // Handle error by creating an error message
-      const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      await ctx.runMutation(internal.messages.createErrorMessage, {
-        streamId,
-        errorMessage: "Sorry, I encountered an error. Please try again.",
-      })
+      // If we have a messageId, update it with error, otherwise create new error message
+      if (messageId) {
+        await ctx.runMutation(internal.messages.completeStreamingMessage, {
+          messageId,
+          finalContent: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
+        })
+      } else {
+        const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        await ctx.runMutation(internal.messages.createErrorMessage, {
+          streamId,
+          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
+        })
+      }
     }
 
     return null
