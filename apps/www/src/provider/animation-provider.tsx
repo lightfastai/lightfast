@@ -8,6 +8,7 @@ import { useExtensionFocusRelease } from "~/hooks/use-extension-focus-release";
 import { useBinaryScrollStore } from "~/stores/binary-scroll-store";
 import { useScrollIndicator } from "../hooks/use-scroll-indicator";
 import { useScrollLock } from "../hooks/use-scroll-lock";
+import { applySafariColorFix, initSafariCompatibility } from "~/lib/safari-compatibility";
 
 // Client-side component that adds interactivity to the SSR-rendered page
 export function AnimationProvider() {
@@ -32,6 +33,12 @@ export function AnimationProvider() {
   useScrollIndicator();
   const currentState = useBinaryScrollStore((state) => state.currentState);
 
+  // Initialize Safari compatibility fixes
+  useEffect(() => {
+    const cleanupSafari = initSafariCompatibility();
+    return cleanupSafari;
+  }, []);
+
   // Set data-visible attribute based on current state for CSS targeting
   useEffect(() => {
     const earlyAccessContainer = document.querySelector(
@@ -46,6 +53,12 @@ export function AnimationProvider() {
         // Use the dedicated hook to release focus and dismiss extension UI
         releaseFocus(earlyAccessContainer);
       }
+    }
+
+    // Apply Safari color fix for the center card
+    const centerCard = document.querySelector(".optimized-center-card") as HTMLElement;
+    if (centerCard) {
+      applySafariColorFix(centerCard, currentState === "earlyAccess" ? "earlyAccess" : "initial");
     }
   }, [currentState, releaseFocus]);
 

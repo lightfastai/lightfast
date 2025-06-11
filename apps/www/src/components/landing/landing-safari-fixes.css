@@ -1,0 +1,167 @@
+/* Safari-specific fixes for landing.css */
+
+/* 1. Simplify complex calculations for Safari */
+@supports not (background-color: color-mix(in srgb, white, black)) {
+  :root {
+    /* Fallback for browsers without color-mix support */
+    --cc-bg-color: white;
+    --cc-text-color: black;
+  }
+  
+  .optimized-center-card {
+    /* Use simple transitions instead of color-mix */
+    background-color: var(--cc-bg-color);
+    color: var(--cc-text-color);
+    transition: background-color 0.3s ease-out, color 0.3s ease-out;
+  }
+  
+  /* JavaScript will need to set these based on scroll state */
+  .optimized-center-card[data-state="early-access"] {
+    --cc-bg-color: black;
+    --cc-text-color: white;
+  }
+}
+
+/* 2. Safari-specific will-change optimizations */
+@supports (-webkit-appearance: none) {
+  .optimized-center-card {
+    /* Reduce will-change properties for Safari */
+    will-change: transform;
+    /* Force hardware acceleration */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  .grid-line-top,
+  .grid-line-bottom,
+  .grid-line-left,
+  .grid-line-right {
+    /* Remove will-change from grid lines in Safari */
+    will-change: auto;
+  }
+}
+
+/* 3. iOS Safari scroll lock fixes */
+@supports (-webkit-touch-callout: none) {
+  .landing-scroll-locked {
+    /* iOS-specific scroll lock */
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    -webkit-overflow-scrolling: auto;
+  }
+  
+  .landing-scroll-locked body {
+    position: relative;
+    overflow: hidden;
+    /* Prevent iOS bounce scrolling */
+    overscroll-behavior: none;
+  }
+}
+
+/* 4. Safari animation fixes */
+@supports (-webkit-appearance: none) {
+  /* Simplify keyframe animations for Safari */
+  @keyframes safariTextScrollControl {
+    from, to {
+      opacity: var(--text-fade-phase);
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes safariLogoScrollControl {
+    from, to {
+      opacity: var(--text-fade-phase);
+    }
+  }
+  
+  .center-card-text {
+    animation-name: fadeInUp, safariTextScrollControl;
+  }
+  
+  .center-card-logo {
+    animation-name: fadeIn, safariLogoScrollControl;
+  }
+}
+
+/* 5. Viewport unit fixes for Safari */
+@supports (-webkit-appearance: none) {
+  :root {
+    /* Use JavaScript-set values instead of viewport units in calc() */
+    --safe-viewport-width: var(--viewport-width, 100vw);
+    --safe-viewport-height: var(--viewport-height, 100vh);
+  }
+  
+  .optimized-center-card {
+    /* Use the safe viewport variables */
+    --cc-current-x: calc(var(--safe-viewport-width) / 2);
+    --cc-current-y: calc(var(--safe-viewport-height) / 2);
+  }
+}
+
+/* 6. Touch handling improvements for iOS */
+@supports (-webkit-touch-callout: none) {
+  .center-card-next-button,
+  .early-access-form input,
+  .early-access-form button {
+    /* Improve touch responsiveness */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+}
+
+/* 7. Grid line rendering fixes */
+@supports (-webkit-appearance: none) {
+  .grid-line-top,
+  .grid-line-bottom,
+  .grid-line-left,
+  .grid-line-right,
+  .grid-line-h33,
+  .grid-line-h66,
+  .grid-line-v33,
+  .grid-line-v66 {
+    /* Force subpixel rendering off for cleaner lines */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    /* Prevent blurry lines on retina displays */
+    transform: translateZ(0);
+  }
+}
+
+/* 8. Performance optimizations for mobile Safari */
+@media (max-width: 768px) and (-webkit-touch-callout: none) {
+  /* Reduce animation complexity on mobile Safari */
+  :root {
+    --grid-line-duration: 0.8s;
+    --grid-line-delay-step: 0.1s;
+  }
+  
+  /* Disable non-essential animations */
+  .grid-line-h33,
+  .grid-line-h66,
+  .grid-line-v33,
+  .grid-line-v66 {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* 9. Font rendering improvements for Safari */
+@supports (-webkit-appearance: none) {
+  .optimized-center-card {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* 10. Flexbox fixes for older Safari versions */
+@supports (-webkit-appearance: none) and (not (display: grid)) {
+  .center-card-early-access-container {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+  }
+}

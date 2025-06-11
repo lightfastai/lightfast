@@ -1,4 +1,5 @@
 import "~/components/landing/landing.css";
+import "~/components/landing/landing-safari-fixes.css";
 
 import { BackgroundLines } from "~/components/landing/bg-grid/background-lines";
 import { LeaderCard } from "~/components/landing/leader-card";
