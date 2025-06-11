@@ -10,6 +10,7 @@ import { internal } from "./_generated/api.js"
 import type { Doc, Id } from "./_generated/dataModel.js"
 import { openai } from "@ai-sdk/openai"
 import { streamText } from "ai"
+import { auth } from "./auth.js"
 
 export const list = query({
   args: {
@@ -29,6 +30,17 @@ export const list = query({
     }),
   ),
   handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx)
+    if (!userId) {
+      return []
+    }
+
+    // Verify the user owns this thread
+    const thread = await ctx.db.get(args.threadId)
+    if (!thread || thread.userId !== userId) {
+      return []
+    }
+
     return await ctx.db
       .query("messages")
       .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
@@ -44,6 +56,17 @@ export const send = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx)
+    if (!userId) {
+      throw new Error("User must be authenticated")
+    }
+
+    // Verify the user owns this thread
+    const thread = await ctx.db.get(args.threadId)
+    if (!thread || thread.userId !== userId) {
+      throw new Error("Thread not found or access denied")
+    }
+
     // Insert user message
     await ctx.db.insert("messages", {
       threadId: args.threadId,

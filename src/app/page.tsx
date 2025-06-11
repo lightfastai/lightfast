@@ -13,24 +13,176 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { MessageCircle, Plus, Send, User, Zap } from "lucide-react"
+import {
+  MessageCircle,
+  Plus,
+  Send,
+  User,
+  Zap,
+  LogIn,
+  LogOut,
+} from "lucide-react"
 import { useState, useEffect, useRef } from "react"
-import { useQuery, useMutation } from "convex/react"
+import {
+  useQuery,
+  useMutation,
+  Authenticated,
+  Unauthenticated,
+} from "convex/react"
+import { useAuthActions } from "@convex-dev/auth/react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
 
 type Message = Doc<"messages">
 
-export default function Home() {
+// Landing page component for unauthenticated users
+function LandingPage() {
+  const { signIn } = useAuthActions()
   const [message, setMessage] = useState("")
-  const [author, setAuthor] = useState("User")
+
+  const handleSignIn = () => {
+    void signIn("github")
+  }
+
+  const handleSubmit = () => {
+    // Trigger sign in when user tries to send a message
+    void signIn("github")
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Header */}
+      <header className="border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Zap className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="font-semibold text-lg">AI Chat</span>
+          </div>
+          <Button onClick={handleSignIn} className="gap-2">
+            <LogIn className="w-4 h-4" />
+            Sign in with GitHub
+          </Button>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Hero section */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-muted/50 rounded-full px-4 py-2 text-sm text-muted-foreground mb-6">
+              <Zap className="w-4 h-4" />
+              Powered by GPT-4o-mini • Real-time streaming
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+              Chat with AI
+              <span className="block text-muted-foreground">in real-time</span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+              Experience the future of AI conversation with real-time streaming
+              responses, persistent chat history, and a beautiful interface.
+            </p>
+          </div>
+
+          {/* Chat input preview */}
+          <div className="max-w-2xl mx-auto">
+            <div className="relative">
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask anything... (Sign in to start chatting)"
+                className="min-h-[120px] resize-none pr-16 text-lg border-2 transition-colors focus:border-primary"
+                rows={4}
+              />
+              <Button
+                onClick={handleSubmit}
+                size="lg"
+                className="absolute right-3 bottom-3 h-12 w-12 p-0 rounded-full"
+              >
+                <Send className="w-5 h-5" />
+              </Button>
+            </div>
+
+            <div className="mt-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Press{" "}
+                <kbd className="px-2 py-1 text-xs bg-muted rounded">Enter</kbd>{" "}
+                to send,
+                <kbd className="px-2 py-1 text-xs bg-muted rounded">
+                  Shift + Enter
+                </kbd>{" "}
+                for new line
+              </p>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="mt-20 grid md:grid-cols-3 gap-8">
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Zap className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Real-time Streaming</h3>
+                <p className="text-sm text-muted-foreground">
+                  Watch AI responses appear character by character as they're
+                  generated
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Persistent History</h3>
+                <p className="text-sm text-muted-foreground">
+                  All your conversations are saved and organized by topic
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <User className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Secure & Private</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your conversations are private and secured with GitHub
+                  authentication
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+// Main chat interface for authenticated users
+function ChatInterface() {
+  const { signOut } = useAuthActions()
+  const [message, setMessage] = useState("")
   const [currentThreadId, setCurrentThreadId] = useState<Id<"threads"> | null>(
     null,
   )
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   // Get threads for user
-  const threads = useQuery(api.threads.list, { userId: author })
+  const threads = useQuery(api.threads.list)
   const createThread = useMutation(api.threads.create)
 
   // Get messages for current thread
@@ -54,16 +206,10 @@ export default function Home() {
     }
   }, [threads, currentThreadId])
 
-  // Clear current thread when user changes
-  useEffect(() => {
-    setCurrentThreadId(null)
-  }, [author])
-
   const handleNewChat = async () => {
     try {
       const newThreadId = await createThread({
         title: "New Chat",
-        userId: author,
       })
       setCurrentThreadId(newThreadId)
     } catch (error) {
@@ -79,7 +225,6 @@ export default function Home() {
       if (!currentThreadId) {
         const newThreadId = await createThread({
           title: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
-          userId: author,
         })
         setCurrentThreadId(newThreadId)
 
@@ -106,6 +251,10 @@ export default function Home() {
     }
   }
 
+  const handleSignOut = () => {
+    void signOut()
+  }
+
   return (
     <TooltipProvider>
       <div className="flex h-screen bg-background">
@@ -128,26 +277,6 @@ export default function Home() {
                 <p>Start a new conversation</p>
               </TooltipContent>
             </Tooltip>
-          </div>
-
-          <Separator />
-
-          {/* User Name Input */}
-          <div className="p-4">
-            <label
-              htmlFor="author-input"
-              className="text-sm font-medium mb-2 block"
-            >
-              Your Name
-            </label>
-            <input
-              id="author-input"
-              type="text"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              placeholder="Enter your name"
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background"
-            />
           </div>
 
           <Separator />
@@ -198,9 +327,17 @@ export default function Home() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{author}</p>
+                <p className="text-sm font-medium truncate">User</p>
                 <p className="text-xs text-muted-foreground">Convex + AI</p>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="h-8 w-8 p-0"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -247,7 +384,7 @@ export default function Home() {
                     <MessageDisplay
                       key={msg._id}
                       message={msg}
-                      userName={author}
+                      userName="User"
                     />
                   ))}
               </div>
@@ -266,13 +403,12 @@ export default function Home() {
                     placeholder="Message AI assistant..."
                     className="min-h-[60px] resize-none pr-12"
                     rows={1}
-                    disabled={!author.trim()}
                   />
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         onClick={handleSendMessage}
-                        disabled={!message.trim() || !author.trim()}
+                        disabled={!message.trim()}
                         size="sm"
                         className="absolute right-2 bottom-2 h-8 w-8 p-0"
                       >
@@ -286,9 +422,8 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                {!author.trim()
-                  ? "Please enter your name to start chatting"
-                  : "AI responses are generated using Vercel AI SDK with real-time streaming"}
+                AI responses are generated using Vercel AI SDK with real-time
+                streaming
               </p>
             </div>
           </div>
@@ -385,5 +520,19 @@ function MessageDisplay({
         </Avatar>
       )}
     </div>
+  )
+}
+
+// Main component that switches between landing and chat based on auth state
+export default function Home() {
+  return (
+    <>
+      <Unauthenticated>
+        <LandingPage />
+      </Unauthenticated>
+      <Authenticated>
+        <ChatInterface />
+      </Authenticated>
+    </>
   )
 }

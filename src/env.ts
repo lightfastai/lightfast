@@ -14,6 +14,15 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    // GitHub OAuth for Convex Auth
+    AUTH_GITHUB_ID: z.string().optional(),
+    AUTH_GITHUB_SECRET: z.string().optional(),
+    // Site URL for authentication redirects
+    SITE_URL: z.string().url(),
+    // JWT private key for authentication tokens
+    JWT_PRIVATE_KEY: z.string(),
+    // JWKS for JWT verification
+    JWKS: z.string(),
   },
   /*
    * Environment variables available on the client (and server).
@@ -36,6 +45,11 @@ export const env = createEnv({
   runtimeEnv: {
     // Server-side
     NODE_ENV: process.env.NODE_ENV,
+    AUTH_GITHUB_ID: process.env.AUTH_GITHUB_ID,
+    AUTH_GITHUB_SECRET: process.env.AUTH_GITHUB_SECRET,
+    SITE_URL: process.env.SITE_URL,
+    JWT_PRIVATE_KEY: process.env.JWT_PRIVATE_KEY,
+    JWKS: process.env.JWKS,
     // Client-side
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
     NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,

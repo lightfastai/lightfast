@@ -1,4 +1,5 @@
 import { internalMutation } from "./_generated/server"
+import type { Id } from "./_generated/dataModel"
 
 /**
  * Setup function for preview deployments
@@ -17,36 +18,44 @@ export const setupInitialData = internalMutation({
 
     console.log("Setting up initial data for preview deployment...")
 
+    // Create a sample thread first
+    const threadId = await ctx.db.insert("threads", {
+      title: "Welcome Thread",
+      userId: "sample-user" as Id<"users">, // We'll need a real user ID in production
+      createdAt: Date.now(),
+      lastMessageAt: Date.now(),
+    })
+
     // Add welcome message
     await ctx.db.insert("messages", {
+      threadId: threadId,
       body: "Welcome to Lightfast Chat! 🚀\n\nThis is a preview deployment with fresh test data. You can:\n- Send messages and see real-time updates\n- Test AI integrations\n- Explore the chat interface\n\nEnjoy testing! 💬",
-      author: "System",
       timestamp: Date.now(),
-      messageType: "ai",
+      messageType: "assistant",
       isComplete: true,
     })
 
     // Add a few sample messages to demonstrate the chat
     const sampleMessages = [
       {
+        threadId: threadId,
         body: "Hello! This is a sample message in the preview environment.",
-        author: "Test User",
         timestamp: Date.now() + 1000,
         messageType: "user" as const,
         isComplete: true,
       },
       {
+        threadId: threadId,
         body: "Preview deployments are great for testing features before production!",
-        author: "Developer",
         timestamp: Date.now() + 2000,
         messageType: "user" as const,
         isComplete: true,
       },
       {
+        threadId: threadId,
         body: "Each preview deployment gets its own fresh Convex backend.",
-        author: "System",
         timestamp: Date.now() + 3000,
-        messageType: "ai" as const,
+        messageType: "assistant" as const,
         isComplete: true,
       },
     ]

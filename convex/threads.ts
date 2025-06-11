@@ -1,18 +1,23 @@
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server.js"
+import { auth } from "./auth.js"
 
 // Create a new thread
 export const create = mutation({
   args: {
     title: v.string(),
-    userId: v.string(),
   },
   returns: v.id("threads"),
   handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx)
+    if (!userId) {
+      throw new Error("User must be authenticated")
+    }
+
     const now = Date.now()
     return await ctx.db.insert("threads", {
       title: args.title,
-      userId: args.userId,
+      userId: userId,
       createdAt: now,
       lastMessageAt: now,
     })
@@ -21,23 +26,26 @@ export const create = mutation({
 
 // List threads for a user
 export const list = query({
-  args: {
-    userId: v.string(),
-  },
+  args: {},
   returns: v.array(
     v.object({
       _id: v.id("threads"),
       _creationTime: v.number(),
       title: v.string(),
-      userId: v.string(),
+      userId: v.id("users"),
       createdAt: v.number(),
       lastMessageAt: v.number(),
     }),
   ),
   handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx)
+    if (!userId) {
+      return []
+    }
+
     return await ctx.db
       .query("threads")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .collect()
   },
@@ -53,14 +61,26 @@ export const get = query({
       _id: v.id("threads"),
       _creationTime: v.number(),
       title: v.string(),
-      userId: v.string(),
+      userId: v.id("users"),
       createdAt: v.number(),
       lastMessageAt: v.number(),
     }),
     v.null(),
   ),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.threadId)
+    const userId = await auth.getUserId(ctx)
+    if (!userId) {
+      return null
+    }
+
+    const thread = await ctx.db.get(args.threadId)
+
+    // Only return the thread if it belongs to the current user
+    if (thread && thread.userId === userId) {
+      return thread
+    }
+
+    return null
   },
 })
 
@@ -71,6 +91,16 @@ export const updateLastMessage = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx)
+    if (!userId) {
+      throw new Error("User must be authenticated")
+    }
+
+    const thread = await ctx.db.get(args.threadId)
+    if (!thread || thread.userId !== userId) {
+      throw new Error("Thread not found or access denied")
+    }
+
     await ctx.db.patch(args.threadId, {
       lastMessageAt: Date.now(),
     })
@@ -86,6 +116,16 @@ export const updateTitle = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx)
+    if (!userId) {
+      throw new Error("User must be authenticated")
+    }
+
+    const thread = await ctx.db.get(args.threadId)
+    if (!thread || thread.userId !== userId) {
+      throw new Error("Thread not found or access denied")
+    }
+
     await ctx.db.patch(args.threadId, {
       title: args.title,
     })
@@ -100,6 +140,16 @@ export const deleteThread = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx)
+    if (!userId) {
+      throw new Error("User must be authenticated")
+    }
+
+    const thread = await ctx.db.get(args.threadId)
+    if (!thread || thread.userId !== userId) {
+      throw new Error("Thread not found or access denied")
+    }
+
     // First delete all messages in the thread
     const messages = await ctx.db
       .query("messages")

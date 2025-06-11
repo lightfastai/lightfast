@@ -1,10 +1,13 @@
 import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
+import { authTables } from "@convex-dev/auth/server"
 
 export default defineSchema({
+  ...authTables,
+
   threads: defineTable({
     title: v.string(),
-    userId: v.string(),
+    userId: v.id("users"),
     createdAt: v.number(),
     lastMessageAt: v.number(),
   }).index("by_user", ["userId"]),
