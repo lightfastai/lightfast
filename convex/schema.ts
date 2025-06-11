@@ -11,10 +11,9 @@ export default defineSchema({
 
   messages: defineTable({
     threadId: v.id("threads"),
-    author: v.string(),
     body: v.string(),
     timestamp: v.number(),
-    messageType: v.union(v.literal("user"), v.literal("ai")),
+    messageType: v.union(v.literal("user"), v.literal("assistant")),
     isStreaming: v.optional(v.boolean()),
     streamId: v.optional(v.string()),
     chunkIndex: v.optional(v.number()),

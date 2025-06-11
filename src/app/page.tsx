@@ -85,13 +85,11 @@ export default function Home() {
 
         await sendMessage({
           threadId: newThreadId,
-          author,
           body: message,
         })
       } else {
         await sendMessage({
           threadId: currentThreadId,
-          author,
           body: message,
         })
       }
@@ -246,7 +244,11 @@ export default function Home() {
                   ?.slice()
                   .reverse()
                   .map((msg) => (
-                    <MessageDisplay key={msg._id} message={msg} />
+                    <MessageDisplay
+                      key={msg._id}
+                      message={msg}
+                      userName={author}
+                    />
                   ))}
               </div>
             </div>
@@ -297,7 +299,10 @@ export default function Home() {
 }
 
 // Component to display individual messages with streaming support
-function MessageDisplay({ message }: { message: Message }) {
+function MessageDisplay({
+  message,
+  userName,
+}: { message: Message; userName: string }) {
   const [displayText, setDisplayText] = useState(message.body)
   const [isTyping, setIsTyping] = useState(false)
 
@@ -320,7 +325,7 @@ function MessageDisplay({ message }: { message: Message }) {
     }
   }, [chunks, message.body, message.isStreaming, message.isComplete])
 
-  const isAI = message.messageType === "ai"
+  const isAI = message.messageType === "assistant"
   const isStreaming = message.isStreaming && !message.isComplete
 
   return (
@@ -340,7 +345,9 @@ function MessageDisplay({ message }: { message: Message }) {
       >
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium opacity-70">{message.author}</p>
+            <p className="text-xs font-medium opacity-70">
+              {message.messageType === "user" ? userName : "AI Assistant"}
+            </p>
             {isStreaming && (
               <div className="flex items-center text-xs opacity-70">
                 <div className="flex space-x-1">

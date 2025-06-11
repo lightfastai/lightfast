@@ -20,10 +20,9 @@ export const list = query({
       _id: v.id("messages"),
       _creationTime: v.number(),
       threadId: v.id("threads"),
-      author: v.string(),
       body: v.string(),
       timestamp: v.number(),
-      messageType: v.union(v.literal("user"), v.literal("ai")),
+      messageType: v.union(v.literal("user"), v.literal("assistant")),
       isStreaming: v.optional(v.boolean()),
       streamId: v.optional(v.string()),
       chunkIndex: v.optional(v.number()),
@@ -42,7 +41,6 @@ export const list = query({
 export const send = mutation({
   args: {
     threadId: v.id("threads"),
-    author: v.string(),
     body: v.string(),
   },
   returns: v.null(),
@@ -50,7 +48,6 @@ export const send = mutation({
     // Insert user message
     await ctx.db.insert("messages", {
       threadId: args.threadId,
-      author: args.author,
       body: args.body,
       timestamp: Date.now(),
       messageType: "user",
@@ -65,7 +62,6 @@ export const send = mutation({
     await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
       threadId: args.threadId,
       userMessage: args.body,
-      author: args.author,
     })
 
     return null
@@ -127,7 +123,6 @@ export const generateAIResponse = internalAction({
   args: {
     threadId: v.id("threads"),
     userMessage: v.string(),
-    author: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -142,7 +137,6 @@ export const generateAIResponse = internalAction({
         {
           threadId: args.threadId,
           streamId,
-          author: "AI Assistant",
         },
       )
 
@@ -164,7 +158,7 @@ export const generateAIResponse = internalAction({
             msg.messageType === "user"
               ? ("user" as const)
               : ("assistant" as const),
-          content: `${msg.author}: ${msg.body}`,
+          content: msg.body,
         })),
       ]
 
@@ -244,9 +238,8 @@ export const getRecentContext = internalQuery({
   },
   returns: v.array(
     v.object({
-      author: v.string(),
       body: v.string(),
-      messageType: v.union(v.literal("user"), v.literal("ai")),
+      messageType: v.union(v.literal("user"), v.literal("assistant")),
     }),
   ),
   handler: async (ctx, args) => {
@@ -260,7 +253,6 @@ export const getRecentContext = internalQuery({
       .reverse() // Get chronological order
       .filter((msg: Doc<"messages">) => msg.isComplete !== false) // Only include complete messages
       .map((msg: Doc<"messages">) => ({
-        author: msg.author,
         body: msg.body,
         messageType: msg.messageType,
       }))
@@ -272,16 +264,14 @@ export const createStreamingMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
     streamId: v.string(),
-    author: v.string(),
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
     return await ctx.db.insert("messages", {
       threadId: args.threadId,
-      author: args.author,
       body: "", // Will be updated as chunks arrive
       timestamp: Date.now(),
-      messageType: "ai",
+      messageType: "assistant",
       isStreaming: true,
       streamId: args.streamId,
       chunkIndex: 0,
@@ -351,10 +341,9 @@ export const createErrorMessage = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.insert("messages", {
       threadId: args.threadId,
-      author: "AI Assistant",
       body: args.errorMessage,
       timestamp: Date.now(),
-      messageType: "ai",
+      messageType: "assistant",
       isStreaming: false,
       streamId: args.streamId,
       isComplete: true,
