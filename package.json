@@ -14,8 +14,6 @@
     "env:check": "npx convex env list",
     "setup": "pnpm install && pnpm env:sync && echo '✅ Setup complete! Run: pnpm dev (Terminal 1) && pnpm convex:dev (Terminal 2)'",
     "dev:all": "concurrently \"pnpm dev\" \"pnpm convex:dev\" --names \"NEXT,CONVEX\" --prefix-colors \"blue,green\"",
-    "deploy:preview": "git push origin HEAD",
-    "deploy:prod": "git checkout main && git merge - && git push origin main",
     "logs": "npx convex logs"
   },
   "repository": {
