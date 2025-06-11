@@ -16,17 +16,6 @@ export default defineSchema({
     messageType: v.union(v.literal("user"), v.literal("assistant")),
     isStreaming: v.optional(v.boolean()),
     streamId: v.optional(v.string()),
-    chunkIndex: v.optional(v.number()),
     isComplete: v.optional(v.boolean()),
   }).index("by_thread", ["threadId"]),
-
-  messageChunks: defineTable({
-    messageId: v.id("messages"),
-    streamId: v.string(),
-    chunkIndex: v.number(),
-    content: v.string(),
-    timestamp: v.number(),
-  })
-    .index("by_message", ["messageId"])
-    .index("by_stream", ["streamId", "chunkIndex"]),
 })

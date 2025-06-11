@@ -25,7 +25,6 @@ export const list = query({
       messageType: v.union(v.literal("user"), v.literal("assistant")),
       isStreaming: v.optional(v.boolean()),
       streamId: v.optional(v.string()),
-      chunkIndex: v.optional(v.number()),
       isComplete: v.optional(v.boolean()),
     }),
   ),
@@ -65,56 +64,6 @@ export const send = mutation({
     })
 
     return null
-  },
-})
-
-// Get streaming chunks for a specific message
-export const getMessageChunks = query({
-  args: {
-    messageId: v.id("messages"),
-  },
-  returns: v.array(
-    v.object({
-      _id: v.id("messageChunks"),
-      _creationTime: v.number(),
-      messageId: v.id("messages"),
-      streamId: v.string(),
-      chunkIndex: v.number(),
-      content: v.string(),
-      timestamp: v.number(),
-    }),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("messageChunks")
-      .withIndex("by_message", (q) => q.eq("messageId", args.messageId))
-      .order("asc")
-      .collect()
-  },
-})
-
-// Get all chunks for a stream ID (useful for reconstructing full message)
-export const getStreamChunks = query({
-  args: {
-    streamId: v.string(),
-  },
-  returns: v.array(
-    v.object({
-      _id: v.id("messageChunks"),
-      _creationTime: v.number(),
-      messageId: v.id("messages"),
-      streamId: v.string(),
-      chunkIndex: v.number(),
-      content: v.string(),
-      timestamp: v.number(),
-    }),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("messageChunks")
-      .withIndex("by_stream", (q) => q.eq("streamId", args.streamId))
-      .order("asc")
-      .collect()
   },
 })
 
@@ -172,30 +121,23 @@ export const generateAIResponse = internalAction({
         temperature: 0.7,
       })
 
-      let chunkIndex = 0
       let fullContent = ""
 
       console.log("Starting to process stream chunks...")
 
       // Process each chunk as it arrives from the stream
       for await (const chunk of textStream) {
-        console.log(`Received chunk ${chunkIndex}:`, chunk)
+        console.log("Received chunk:", chunk)
         fullContent += chunk
 
-        // Save each chunk to database
-        await ctx.runMutation(internal.messages.addStreamChunk, {
+        // Update the message body progressively
+        await ctx.runMutation(internal.messages.updateStreamingMessage, {
           messageId,
-          streamId,
-          chunkIndex,
-          content: chunk,
+          content: fullContent,
         })
-
-        chunkIndex++
       }
 
-      console.log(
-        `Stream complete. Total chunks: ${chunkIndex}, Full content length: ${fullContent.length}`,
-      )
+      console.log(`Stream complete. Full content length: ${fullContent.length}`)
 
       if (fullContent.trim() === "") {
         throw new Error(
@@ -203,19 +145,21 @@ export const generateAIResponse = internalAction({
         )
       }
 
-      // Mark message as complete and update final content
+      // Mark message as complete
       await ctx.runMutation(internal.messages.completeStreamingMessage, {
         messageId,
-        finalContent: fullContent,
       })
     } catch (error) {
       console.error("Error generating AI response:", error)
 
       // If we have a messageId, update it with error, otherwise create new error message
       if (messageId) {
+        await ctx.runMutation(internal.messages.updateStreamingMessage, {
+          messageId,
+          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
+        })
         await ctx.runMutation(internal.messages.completeStreamingMessage, {
           messageId,
-          finalContent: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
         })
       } else {
         const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -274,39 +218,22 @@ export const createStreamingMessage = internalMutation({
       messageType: "assistant",
       isStreaming: true,
       streamId: args.streamId,
-      chunkIndex: 0,
       isComplete: false,
     })
   },
 })
 
-// Internal mutation to add a streaming chunk
-export const addStreamChunk = internalMutation({
+// Internal mutation to update streaming message content
+export const updateStreamingMessage = internalMutation({
   args: {
     messageId: v.id("messages"),
-    streamId: v.string(),
-    chunkIndex: v.number(),
     content: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Add chunk to messageChunks table
-    await ctx.db.insert("messageChunks", {
-      messageId: args.messageId,
-      streamId: args.streamId,
-      chunkIndex: args.chunkIndex,
-      content: args.content,
-      timestamp: Date.now(),
+    await ctx.db.patch(args.messageId, {
+      body: args.content,
     })
-
-    // Update the main message with accumulated content
-    const message = await ctx.db.get(args.messageId)
-    if (message) {
-      await ctx.db.patch(args.messageId, {
-        body: message.body + args.content,
-        chunkIndex: args.chunkIndex,
-      })
-    }
 
     return null
   },
@@ -316,12 +243,10 @@ export const addStreamChunk = internalMutation({
 export const completeStreamingMessage = internalMutation({
   args: {
     messageId: v.id("messages"),
-    finalContent: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.messageId, {
-      body: args.finalContent,
       isStreaming: false,
       isComplete: true,
     })

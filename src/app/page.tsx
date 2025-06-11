@@ -306,24 +306,15 @@ function MessageDisplay({
   const [displayText, setDisplayText] = useState(message.body)
   const [isTyping, setIsTyping] = useState(false)
 
-  // Get chunks for streaming messages
-  const chunks = useQuery(
-    api.messages.getMessageChunks,
-    message.isStreaming ? { messageId: message._id } : "skip",
-  )
-
-  // Update display text as chunks arrive
+  // Update display text when message body changes (via Convex reactivity)
   useEffect(() => {
-    if (message.isStreaming && chunks) {
-      const sortedChunks = chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
-      const fullText = sortedChunks.map((chunk) => chunk.content).join("")
-      setDisplayText(fullText)
-      setIsTyping(!message.isComplete && chunks.length > 0)
-    } else {
-      setDisplayText(message.body)
-      setIsTyping(false)
-    }
-  }, [chunks, message.body, message.isStreaming, message.isComplete])
+    setDisplayText(message.body)
+    setIsTyping(
+      Boolean(
+        message.isStreaming && !message.isComplete && message.body.length > 0,
+      ),
+    )
+  }, [message.body, message.isStreaming, message.isComplete])
 
   const isAI = message.messageType === "assistant"
   const isStreaming = message.isStreaming && !message.isComplete

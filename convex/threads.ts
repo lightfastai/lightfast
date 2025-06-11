@@ -106,17 +106,8 @@ export const deleteThread = mutation({
       .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
       .collect()
 
-    // Delete all message chunks for these messages
+    // Delete all messages
     for (const message of messages) {
-      const chunks = await ctx.db
-        .query("messageChunks")
-        .withIndex("by_message", (q) => q.eq("messageId", message._id))
-        .collect()
-
-      for (const chunk of chunks) {
-        await ctx.db.delete(chunk._id)
-      }
-
       await ctx.db.delete(message._id)
     }
 
