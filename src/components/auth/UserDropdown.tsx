@@ -29,7 +29,7 @@ export function UserDropdown({
   className,
   showEmail = true,
   showSettings = true,
-  settingsHref = "/profile",
+  settingsHref = "/settings/account",
   onSignOut,
   redirectAfterSignOut = true,
 }: UserDropdownProps) {
