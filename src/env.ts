@@ -23,6 +23,10 @@ export const env = createEnv({
     // Convex URL for client-side connections
     // This is the only Convex variable our app actually needs
     NEXT_PUBLIC_CONVEX_URL: z.string().url(),
+    // Environment identifier for conditional logic
+    NEXT_PUBLIC_APP_ENV: z
+      .enum(["development", "preview", "production"])
+      .default("development"),
   },
   /*
    * You can't destruct `process.env` as a regular object in the Next.js Edge Runtime (e.g.
@@ -34,6 +38,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     // Client-side
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
+    NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   },
   /*
    * Run `build` or `dev` with SKIP_ENV_VALIDATION to skip env validation.
@@ -46,3 +51,13 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 })
+
+// Environment helpers for conditional logic
+export const isDevelopment = env.NEXT_PUBLIC_APP_ENV === "development"
+export const isPreview = env.NEXT_PUBLIC_APP_ENV === "preview"
+export const isProduction = env.NEXT_PUBLIC_APP_ENV === "production"
+
+// Convex URL helpers
+export const getConvexUrl = () => env.NEXT_PUBLIC_CONVEX_URL
+export const isLocalConvex = () =>
+  env.NEXT_PUBLIC_CONVEX_URL.includes("127.0.0.1")
