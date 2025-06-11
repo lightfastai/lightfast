@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation"
-import { Textarea } from "@/components/ui/textarea"
-import { User, Zap } from "lucide-react"
+import { Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { isAuthenticated } from "@/lib/auth"
 import Link from "next/link"
+import { LandingChatInput } from "@/components/landing/LandingChatInput"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -51,7 +51,7 @@ function LandingHeader() {
 // Landing page component for unauthenticated users
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       <LandingHeader />
 
       {/* Main content */}
@@ -59,32 +59,18 @@ function LandingPage() {
         <div className="max-w-4xl mx-auto">
           {/* Hero section */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-muted/50 rounded-full px-4 py-2 text-sm text-muted-foreground mb-6">
+            <div className="inline-flex items-center gap-2 bg-muted/50 border rounded-full px-4 py-2 text-sm text-muted-foreground mb-6">
               <Zap className="w-4 h-4" />
               Agent-first approach to chats.
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              A chat interface for power users.
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+              What makes a good chat?
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Experience the future of AI conversation with real-time streaming
-              responses, persistent chat history, and a beautiful interface.
-            </p>
           </div>
 
           {/* Chat input preview */}
-          <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              <Textarea
-                placeholder="Ask anything... (Sign in to start chatting)"
-                className="min-h-[120px] resize-none pr-16 text-lg border-2 transition-colors focus:border-primary"
-                rows={4}
-                disabled
-              />
-              <div className="absolute right-3 bottom-3 h-12 w-12 bg-muted rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-muted-foreground" />
-              </div>
-            </div>
+          <div className="max-w-4xl mx-auto">
+            <LandingChatInput />
           </div>
         </div>
       </main>
