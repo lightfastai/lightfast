@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { ChatInterface } from "../../components/chat/ChatInterface"
 
 export const metadata: Metadata = {
-  title: "Chat - Lightfast",
+  title: "New Chat - Lightfast",
   description: "Start intelligent conversations with AI agents.",
   robots: {
     index: false,
@@ -10,9 +10,9 @@ export const metadata: Metadata = {
   },
 }
 
-// Server component that handles chat routing logic
+// Server component that enables SSR for the new chat page
 export default function ChatPage() {
-  // Authentication is now handled by middleware
-  // This allows for instant client-side navigation
+  // This server component provides the static shell
+  // Client-side hydration happens in ChatInterface and ChatLayoutClient
   return <ChatInterface />
 }

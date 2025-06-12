@@ -44,7 +44,20 @@ async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  return NextResponse.next()
+  // Add prefetch headers for chat routes to improve performance
+  const response = NextResponse.next()
+
+  if (isAuthenticated && pathname.startsWith("/chat")) {
+    // Add cache headers for better navigation performance
+    response.headers.set("Cache-Control", "public, max-age=0, must-revalidate")
+    // Add prefetch hints for common resources
+    response.headers.set(
+      "Link",
+      "</chat; rel=prefetch>, </chat/new; rel=prefetch>",
+    )
+  }
+
+  return response
 }
 
 export default convexAuthNextjsMiddleware(middleware)

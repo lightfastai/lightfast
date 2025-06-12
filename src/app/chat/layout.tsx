@@ -1,55 +1,16 @@
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { useQuery } from "convex/react"
-import { useOptimisticNavigation } from "@/hooks/useOptimisticNavigation"
-import { api } from "../../../convex/_generated/api"
-import { ChatLayout } from "../../components/chat/ChatLayout"
+import { SimplifiedChatLayout } from "@/components/chat/ChatLayout"
 import type React from "react"
 
-interface ChatLayoutWrapperProps {
+interface ChatLayoutProps {
   children: React.ReactNode
 }
 
-// Server component that handles auth once for entire chat section
-export default async function ChatLayoutWrapper({
-  children,
-}: ChatLayoutWrapperProps) {
-  const {
-    navigateToThread,
-    navigateToNewChat,
-    prefetchThread,
-    currentThreadId,
-  } = useOptimisticNavigation()
-
-  // Get threads list with real-time updates
-  const threads = useQuery(api.threads.list) ?? []
-
-  // Get current thread for title display
-  const currentThread = useQuery(
-    api.threads.get,
-    currentThreadId === "new" || !currentThreadId
-      ? "skip"
-      : { threadId: currentThreadId },
-  )
-
-  const getTitle = () => {
-    if (!currentThreadId || currentThreadId === "new") {
-      return "New Chat"
-    }
-    return currentThread?.title || "Loading..."
-  }
-
+// Server component layout - provides static shell and enables SSR
+export default function ChatLayout({ children }: ChatLayoutProps) {
   return (
     <TooltipProvider>
-      <ChatLayout
-        threads={threads}
-        currentThreadId={currentThreadId || "new"}
-        title={getTitle()}
-        onNewChat={navigateToNewChat}
-        onThreadSelect={navigateToThread}
-        onThreadHover={prefetchThread}
-      >
-        {children}
-      </ChatLayout>
+      <SimplifiedChatLayout>{children}</SimplifiedChatLayout>
     </TooltipProvider>
   )
 }
