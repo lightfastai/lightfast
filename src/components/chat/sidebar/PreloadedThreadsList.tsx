@@ -1,8 +1,5 @@
 "use client"
 
-import { usePreloadedQuery, type Preloaded } from "convex/react"
-import type { api } from "../../../../convex/_generated/api"
-import type { Doc } from "../../../../convex/_generated/dataModel"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   SidebarGroup,
@@ -11,6 +8,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { type Preloaded, usePreloadedQuery } from "convex/react"
+import type { api } from "../../../../convex/_generated/api"
+import type { Doc } from "../../../../convex/_generated/dataModel"
 import { ActiveMenuItem } from "./ActiveMenuItem"
 
 type Thread = Doc<"threads">

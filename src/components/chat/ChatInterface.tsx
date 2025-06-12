@@ -1,8 +1,9 @@
 "use client"
 
+import type { ModelProvider } from "@/lib/ai"
 import { useMutation, useQuery } from "convex/react"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
 import { ChatInput } from "./ChatInput"
@@ -70,7 +71,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     }
   }, [isNewChat])
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, model: ModelProvider) => {
     if (!message.trim()) return
 
     try {
@@ -84,6 +85,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
         await sendMessage({
           threadId: newThreadId,
           body: message,
+          model: model,
         })
 
         // Navigate to the new thread using replace for better UX
@@ -94,6 +96,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
         await sendMessage({
           threadId: currentThreadId,
           body: message,
+          model: model,
         })
       }
     } catch (error) {

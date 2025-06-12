@@ -1,6 +1,6 @@
-import { convexAuth } from "@convex-dev/auth/server"
 import GitHub from "@auth/core/providers/github"
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous"
+import { convexAuth } from "@convex-dev/auth/server"
 
 // Enable anonymous authentication for any non-production environment
 const isNonProductionEnvironment = process.env.NODE_ENV !== "production"

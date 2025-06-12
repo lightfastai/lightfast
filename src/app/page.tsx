@@ -1,9 +1,9 @@
+import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler"
 import { LandingChatInput } from "@/components/landing/LandingChatInput"
 import { Button } from "@/components/ui/button"
 import { Zap } from "lucide-react"
-import Link from "next/link"
 import type { Metadata } from "next"
-import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler"
+import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "Lightfast - Agent-first Chat Experience",

@@ -18,6 +18,7 @@ export default defineSchema({
     body: v.string(),
     timestamp: v.number(),
     messageType: v.union(v.literal("user"), v.literal("assistant")),
+    model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
     isStreaming: v.optional(v.boolean()),
     streamId: v.optional(v.string()),
     isComplete: v.optional(v.boolean()),

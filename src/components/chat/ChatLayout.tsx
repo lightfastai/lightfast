@@ -1,11 +1,11 @@
-import { Suspense } from "react"
 import { Badge } from "@/components/ui/badge"
 import {
-  SidebarProvider,
   SidebarInset,
+  SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import dynamic from "next/dynamic"
+import { Suspense } from "react"
 import { ServerSidebar } from "./sidebar/ServerSidebar"
 
 const DynamicChatTitle = dynamic(

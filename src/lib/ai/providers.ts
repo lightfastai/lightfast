@@ -1,0 +1,125 @@
+import { anthropic } from "@ai-sdk/anthropic"
+import { openai } from "@ai-sdk/openai"
+import type { CoreMessage, LanguageModel } from "ai"
+import { DEFAULT_MODELS, getModelById } from "./models"
+import type { AIGenerationOptions, ChatMessage, ModelProvider } from "./types"
+
+/**
+ * Provider configurations and settings
+ */
+export const PROVIDER_CONFIG = {
+  openai: {
+    name: "OpenAI",
+    apiKeyEnvVar: "OPENAI_API_KEY",
+    models: ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"],
+  },
+  anthropic: {
+    name: "Anthropic",
+    apiKeyEnvVar: "ANTHROPIC_API_KEY",
+    models: [
+      "claude-3-5-sonnet-20241022",
+      "claude-3-haiku-20240307",
+      "claude-3-opus-20240229",
+    ],
+  },
+} as const
+
+/**
+ * Get the appropriate language model instance for a provider
+ */
+export function getLanguageModel(provider: ModelProvider): LanguageModel {
+  const defaultModel = DEFAULT_MODELS[provider]
+
+  switch (provider) {
+    case "openai":
+      return openai(defaultModel.name)
+    case "anthropic":
+      return anthropic(defaultModel.name)
+    default:
+      throw new Error(`Unsupported provider: ${provider}`)
+  }
+}
+
+/**
+ * Get language model by specific model ID
+ */
+export function getLanguageModelById(modelId: string): LanguageModel {
+  const model = getModelById(modelId)
+  if (!model) {
+    throw new Error(`Model not found: ${modelId}`)
+  }
+
+  switch (model.provider) {
+    case "openai":
+      return openai(model.name)
+    case "anthropic":
+      return anthropic(model.name)
+    default:
+      throw new Error(`Unsupported provider: ${model.provider}`)
+  }
+}
+
+/**
+ * Convert chat messages to the format expected by AI SDK
+ */
+export function convertToAIMessages(messages: ChatMessage[]): CoreMessage[] {
+  return messages.map((msg) => ({
+    role: msg.role,
+    content: msg.content,
+  }))
+}
+
+/**
+ * Get default generation options for a provider
+ */
+export function getDefaultGenerationOptions(
+  provider: ModelProvider,
+): Partial<AIGenerationOptions> {
+  const model = DEFAULT_MODELS[provider]
+
+  return {
+    maxTokens: Math.min(500, model.maxTokens), // Conservative default
+    temperature: 0.7,
+    stream: true,
+  }
+}
+
+/**
+ * Validate if a provider is supported
+ */
+export function isProviderSupported(
+  provider: string,
+): provider is ModelProvider {
+  return provider in PROVIDER_CONFIG
+}
+
+/**
+ * Get provider display name
+ */
+export function getProviderDisplayName(provider: ModelProvider): string {
+  return PROVIDER_CONFIG[provider].name
+}
+
+/**
+ * Get all supported providers
+ */
+export function getSupportedProviders(): ModelProvider[] {
+  return Object.keys(PROVIDER_CONFIG) as ModelProvider[]
+}
+
+/**
+ * Create generation options with provider-specific defaults
+ */
+export function createGenerationOptions(
+  provider: ModelProvider,
+  overrides: Partial<AIGenerationOptions> = {},
+): AIGenerationOptions {
+  const defaults = getDefaultGenerationOptions(provider)
+
+  return {
+    model: provider,
+    messages: [],
+    ...defaults,
+    ...overrides,
+  }
+}

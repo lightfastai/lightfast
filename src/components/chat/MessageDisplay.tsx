@@ -1,6 +1,7 @@
 "use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { type ModelProvider, getModelDisplayName } from "@/lib/ai"
 import { useQuery } from "convex/react"
 import { User } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -90,6 +91,12 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
     return `${minutes}m ${seconds}s`
   }
 
+  // Get model display name safely
+  const getModelName = (model: ModelProvider | undefined): string => {
+    if (!model) return "AI Assistant"
+    return getModelDisplayName(model)
+  }
+
   return (
     <div
       className={`flex gap-3  ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""}`}
@@ -117,18 +124,26 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
         {/* Show thinking indicators at the top for assistant messages */}
         {isAI && (
           <>
-            {/* Show final thinking duration for completed assistant messages */}
-            {!isStreaming && thinkingDuration && (
-              <div className="text-xs text-muted-foreground mb-2">
-                <span className="font-mono">
-                  Thought for {formatDuration(thinkingDuration)}
-                </span>
+            {/* Show model name and thinking duration for completed assistant messages */}
+            {!isStreaming && (
+              <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
+                <span>{getModelName(message.model)}</span>
+                {thinkingDuration && (
+                  <>
+                    <span>•</span>
+                    <span className="font-mono">
+                      Thought for {formatDuration(thinkingDuration)}
+                    </span>
+                  </>
+                )}
               </div>
             )}
 
             {/* Show thinking indicator while streaming */}
             {isStreaming && (
-              <div className="mb-2 text-xs text-muted-foreground">
+              <div className="mb-2 text-xs text-muted-foreground flex items-center gap-2">
+                <span>{getModelName(message.model)}</span>
+                <span>•</span>
                 <span>Thinking</span>
               </div>
             )}

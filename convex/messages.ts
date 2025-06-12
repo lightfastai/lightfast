@@ -1,3 +1,4 @@
+import { anthropic } from "@ai-sdk/anthropic"
 import { openai } from "@ai-sdk/openai"
 import { getAuthUserId } from "@convex-dev/auth/server"
 import { streamText } from "ai"
@@ -24,6 +25,7 @@ export const list = query({
       body: v.string(),
       timestamp: v.number(),
       messageType: v.union(v.literal("user"), v.literal("assistant")),
+      model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
       isStreaming: v.optional(v.boolean()),
       streamId: v.optional(v.string()),
       isComplete: v.optional(v.boolean()),
@@ -55,6 +57,7 @@ export const send = mutation({
   args: {
     threadId: v.id("threads"),
     body: v.string(),
+    model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -75,6 +78,7 @@ export const send = mutation({
       body: args.body,
       timestamp: Date.now(),
       messageType: "user",
+      model: args.model,
     })
 
     // Update thread's last message timestamp
@@ -86,6 +90,7 @@ export const send = mutation({
     await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
       threadId: args.threadId,
       userMessage: args.body,
+      model: args.model || "openai", // Default to OpenAI if not specified
     })
 
     // Check if this is the first user message in the thread (for title generation)
@@ -112,6 +117,7 @@ export const generateAIResponse = internalAction({
   args: {
     threadId: v.id("threads"),
     userMessage: v.string(),
+    model: v.union(v.literal("openai"), v.literal("anthropic")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -126,6 +132,7 @@ export const generateAIResponse = internalAction({
         {
           threadId: args.threadId,
           streamId,
+          model: args.model,
         },
       )
 
@@ -151,11 +158,20 @@ export const generateAIResponse = internalAction({
         })),
       ]
 
-      console.log("Attempting to call OpenAI with messages:", messages.length)
+      console.log(
+        `Attempting to call ${args.model} with messages:`,
+        messages.length,
+      )
+
+      // Choose the appropriate model based on the parameter
+      const selectedModel =
+        args.model === "anthropic"
+          ? anthropic("claude-3-5-sonnet-20241022")
+          : openai("gpt-4o-mini")
 
       // Stream response using Vercel AI SDK
       const { textStream } = await streamText({
-        model: openai("gpt-4o-mini"),
+        model: selectedModel,
         messages,
         maxTokens: 500,
         temperature: 0.7,
@@ -181,7 +197,7 @@ export const generateAIResponse = internalAction({
 
       if (fullContent.trim() === "") {
         throw new Error(
-          "OpenAI returned empty response - check API key and quota",
+          `${args.model} returned empty response - check API key and quota`,
         )
       }
 
@@ -190,13 +206,13 @@ export const generateAIResponse = internalAction({
         messageId,
       })
     } catch (error) {
-      console.error("Error generating AI response:", error)
+      console.error(`Error generating ${args.model} response:`, error)
 
       // If we have a messageId, update it with error, otherwise create new error message
       if (messageId) {
         await ctx.runMutation(internal.messages.updateStreamingMessage, {
           messageId,
-          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
+          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your ${args.model} API key.`,
         })
         await ctx.runMutation(internal.messages.completeStreamingMessage, {
           messageId,
@@ -206,7 +222,8 @@ export const generateAIResponse = internalAction({
         await ctx.runMutation(internal.messages.createErrorMessage, {
           threadId: args.threadId,
           streamId,
-          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
+          model: args.model,
+          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your ${args.model} API key.`,
         })
       }
     }
@@ -248,6 +265,7 @@ export const createStreamingMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
     streamId: v.string(),
+    model: v.union(v.literal("openai"), v.literal("anthropic")),
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
@@ -257,6 +275,7 @@ export const createStreamingMessage = internalMutation({
       body: "", // Will be updated as chunks arrive
       timestamp: now,
       messageType: "assistant",
+      model: args.model,
       isStreaming: true,
       streamId: args.streamId,
       isComplete: false,
@@ -303,6 +322,7 @@ export const createErrorMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
     streamId: v.string(),
+    model: v.union(v.literal("openai"), v.literal("anthropic")),
     errorMessage: v.string(),
   },
   returns: v.null(),
@@ -313,6 +333,7 @@ export const createErrorMessage = internalMutation({
       body: args.errorMessage,
       timestamp: now,
       messageType: "assistant",
+      model: args.model,
       isStreaming: false,
       streamId: args.streamId,
       isComplete: true,

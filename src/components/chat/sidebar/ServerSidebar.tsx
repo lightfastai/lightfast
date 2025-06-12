@@ -1,9 +1,9 @@
-import { Suspense } from "react"
 import { preloadQuery } from "convex/nextjs"
+import { Suspense } from "react"
 import { api } from "../../../../convex/_generated/api"
+import { getAuthToken } from "../../../lib/auth"
 import { ServerSidebarImplementation } from "./ServerSidebarImplementation"
 import { SidebarSkeleton } from "./SidebarSkeleton"
-import { getAuthToken } from "../../../lib/auth"
 
 // Server component wrapper for the sidebar that preloads threads for PPR
 export async function ServerSidebar() {
