@@ -13,6 +13,13 @@ export const env = createEnv({
     // In development: CONVEX_DEPLOYMENT is used
     // In production: CONVEX_DEPLOY_KEY is used
     // We only need to validate what we actually use in our app
+
+    // AI API Keys for Convex backend
+    OPENAI_API_KEY: z.string().min(1, "OpenAI API key is required"),
+    ANTHROPIC_API_KEY: z
+      .string()
+      .min(1, "Anthropic API key is required for Claude Sonnet 4"),
+
     // GitHub OAuth for Convex Auth
     AUTH_GITHUB_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
@@ -47,6 +54,8 @@ export const env = createEnv({
    */
   runtimeEnv: {
     // Server-side
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     AUTH_GITHUB_ID: process.env.AUTH_GITHUB_ID,
     AUTH_GITHUB_SECRET: process.env.AUTH_GITHUB_SECRET,
     SITE_URL: process.env.SITE_URL,

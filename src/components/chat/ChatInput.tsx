@@ -1,17 +1,27 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Send } from "lucide-react"
+import { DEFAULT_MODEL_ID, getAllModels, getModelById } from "@/lib/ai"
+import { Bot, Send } from "lucide-react"
 import { useState } from "react"
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => Promise<void> | void
+  onSendMessage: (message: string, modelId: string) => Promise<void> | void
   isLoading?: boolean
   placeholder?: string
   disabled?: boolean
@@ -29,13 +39,30 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [selectedModelId, setSelectedModelId] =
+    useState<string>(DEFAULT_MODEL_ID)
+
+  const allModels = getAllModels()
+  const selectedModel = getModelById(selectedModelId)
+
+  // Group models by provider
+  const modelsByProvider = allModels.reduce(
+    (acc, model) => {
+      if (!acc[model.provider]) {
+        acc[model.provider] = []
+      }
+      acc[model.provider].push(model)
+      return acc
+    },
+    {} as Record<string, typeof allModels>,
+  )
 
   const handleSendMessage = async () => {
     if (!message.trim() || isSending || disabled) return
 
     setIsSending(true)
     try {
-      await onSendMessage(message)
+      await onSendMessage(message, selectedModelId)
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
@@ -87,10 +114,39 @@ export function ChatInput({
         </div>
 
         <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-muted-foreground">
-            AI responses are generated using Vercel AI SDK with real-time
-            streaming
-          </p>
+          <div className="flex items-center gap-2">
+            <Bot className="w-4 h-4 text-muted-foreground" />
+            <Select value={selectedModelId} onValueChange={setSelectedModelId}>
+              <SelectTrigger className="h-8 w-[220px] text-xs">
+                <SelectValue>{selectedModel?.displayName}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(modelsByProvider).map(([provider, models]) => (
+                  <SelectGroup key={provider}>
+                    <SelectLabel className="text-xs font-medium capitalize">
+                      {provider}
+                    </SelectLabel>
+                    {models.map((model) => (
+                      <SelectItem
+                        key={model.id}
+                        value={model.id}
+                        className="text-xs"
+                      >
+                        <div className="flex flex-col">
+                          <span>{model.displayName}</span>
+                          {model.features.thinking && (
+                            <span className="text-[10px] text-muted-foreground">
+                              Extended reasoning mode
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="text-xs text-muted-foreground">
             {message.length}/{maxLength}
           </div>

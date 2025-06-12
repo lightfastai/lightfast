@@ -1,15 +1,24 @@
-import { Suspense } from "react"
-import { Badge } from "@/components/ui/badge"
 import {
-  SidebarProvider,
   SidebarInset,
+  SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import dynamic from "next/dynamic"
+import { Suspense } from "react"
 import { ServerSidebar } from "./sidebar/ServerSidebar"
 
 const DynamicChatTitle = dynamic(
   () => import("./ChatTitleClient").then((mod) => mod.ChatTitleClient),
+  {
+    ssr: true,
+  },
+)
+
+const DynamicTokenUsageHeader = dynamic(
+  () =>
+    import("./TokenUsageHeaderWrapper").then(
+      (mod) => mod.TokenUsageHeaderWrapper,
+    ),
   {
     ssr: true,
   },
@@ -27,10 +36,16 @@ async function ChatHeader() {
           <DynamicChatTitle />
         </Suspense>
       </div>
-      <div className="flex items-center gap-2">
-        <Badge variant="outline">Streaming</Badge>
-        <Badge variant="outline">GPT-4o-mini</Badge>
-      </div>
+      <Suspense
+        fallback={
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-16 bg-muted animate-pulse rounded" />
+            <div className="h-6 w-20 bg-muted animate-pulse rounded" />
+          </div>
+        }
+      >
+        <DynamicTokenUsageHeader />
+      </Suspense>
     </header>
   )
 }

@@ -1,12 +1,14 @@
 "use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Markdown } from "@/components/ui/markdown"
 import { useQuery } from "convex/react"
-import { User } from "lucide-react"
+import { ChevronDown, ChevronRight, User, Brain } from "lucide-react"
 import { useEffect, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { StreamingMessage } from "./StreamingMessage"
+import { type ModelProvider, getModelDisplayName } from "@/lib/ai"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -45,6 +47,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   const [displayText, setDisplayText] = useState(message.body)
   const [isTyping, setIsTyping] = useState(false)
   const [thinkingDuration, setThinkingDuration] = useState<number | null>(null)
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(false)
 
   // Get current user for avatar display
   const currentUser = useQuery(api.users.current)
@@ -83,6 +86,9 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
 
   const isAI = message.messageType === "assistant"
   const isStreaming = message.isStreaming && !message.isComplete
+  const hasThinking = Boolean(
+    message.hasThinkingContent && message.thinkingContent,
+  )
 
   // Helper function to format duration
   const formatDuration = (ms: number) => {
@@ -147,6 +153,19 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   }
 
   // Original display logic for non-resumable messages
+  // Get model display name safely
+  const getModelName = (
+    modelId: string | undefined,
+    provider: ModelProvider | undefined,
+  ): string => {
+    if (modelId) {
+      return getModelDisplayName(modelId)
+    }
+    // Fallback to provider name for backward compatibility
+    if (!provider) return "AI Assistant"
+    return getModelDisplayName(provider)
+  }
+
   return (
     <div
       className={`flex gap-3  ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""}`}
@@ -174,19 +193,58 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
         {/* Show thinking indicators at the top for assistant messages */}
         {isAI && (
           <>
-            {/* Show final thinking duration for completed assistant messages */}
-            {!isStreaming && thinkingDuration && (
-              <div className="text-xs text-muted-foreground mb-2">
-                <span className="font-mono">
-                  Thought for {formatDuration(thinkingDuration)}
-                </span>
+            {/* Show model name and thinking duration for completed assistant messages */}
+            {!isStreaming && (
+              <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
+                <span>{getModelName(message.modelId, message.model)}</span>
+                {thinkingDuration && (
+                  <>
+                    <span>•</span>
+                    <span className="font-mono">
+                      Thought for {formatDuration(thinkingDuration)}
+                    </span>
+                  </>
+                )}
               </div>
             )}
 
             {/* Show thinking indicator while streaming */}
             {isStreaming && (
-              <div className="mb-2 text-xs text-muted-foreground">
-                <span>Thinking</span>
+              <div className="mb-2 text-xs text-muted-foreground flex items-center gap-2">
+                <span>{getModelName(message.modelId, message.model)}</span>
+                <span>•</span>
+                <span>{message.isThinking ? "Thinking" : "Responding"}</span>
+              </div>
+            )}
+
+            {/* Show collapsible thinking content for Claude */}
+            {hasThinking && (
+              <div className="mb-4 rounded-lg border border-muted bg-muted/20 p-3">
+                <button
+                  type="button"
+                  onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
+                  className="flex w-full items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {isThinkingExpanded ? (
+                    <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3" />
+                  )}
+                  <Brain className="h-3 w-3" />
+                  <span>View reasoning process</span>
+                  {thinkingDuration && (
+                    <span className="ml-auto font-mono text-[10px]">
+                      {formatDuration(thinkingDuration)}
+                    </span>
+                  )}
+                </button>
+                {isThinkingExpanded && message.thinkingContent && (
+                  <div className="mt-3 text-xs text-muted-foreground space-y-2">
+                    <p className="whitespace-pre-wrap font-mono leading-relaxed">
+                      {message.thinkingContent}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -196,12 +254,12 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
           {isStreaming && !displayText && !isAI ? (
             <span className="text-muted-foreground italic">Thinking</span>
           ) : displayText ? (
-            <p className="whitespace-pre-wrap">
-              {displayText}
+            <>
+              <Markdown className="text-sm">{displayText}</Markdown>
               {isTyping && (
                 <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1 opacity-70" />
               )}
-            </p>
+            </>
           ) : null}
         </div>
       </div>

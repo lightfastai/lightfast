@@ -1,3 +1,4 @@
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Plus } from "lucide-react"
 
 // Skeleton loader for the sidebar - provides instant visual feedback
