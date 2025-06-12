@@ -57,7 +57,7 @@ export function ClipboardButton({
   disabled,
   ...props
 }: ClipboardButtonProps) {
-  const { copy, isCopied, isLoading, error } = useCopyToClipboard({
+  const { copy, isCopied, isLoading } = useCopyToClipboard({
     timeout,
     onSuccess: onCopySuccess,
     onError: onCopyError,

@@ -48,7 +48,6 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   const [thinkingDuration, setThinkingDuration] = React.useState<number | null>(
     null,
   )
-  const [isHovered, setIsHovered] = React.useState(false)
 
   // Get current user for avatar display
   const currentUser = useQuery(api.users.current)
@@ -74,8 +73,6 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   return (
     <div
       className={`flex gap-3 ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""} group/message`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <Avatar className="w-8 h-8 shrink-0 rounded-md">
         {!isAI && currentUser?.image && (
