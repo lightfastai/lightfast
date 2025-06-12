@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { preloadQuery } from "convex/nextjs"
 import { api } from "../../../convex/_generated/api"
-import { PreloadedSidebar } from "./PreloadedSidebar"
+import { ServerSidebarImplementation } from "./ServerSidebarImplementation"
 import { SidebarSkeleton } from "./SidebarSkeleton"
 import { getAuthToken } from "../../lib/auth"
 
@@ -28,8 +28,8 @@ async function SidebarWithPreloadedData() {
     // Preload threads data for PPR - this will be cached and streamed instantly
     const preloadedThreads = await preloadQuery(api.threads.list, {}, { token })
 
-    // Pass preloaded data to client component for reactivity
-    return <PreloadedSidebar preloadedThreads={preloadedThreads} />
+    // Pass preloaded data to server component - only threads list will be client-side
+    return <ServerSidebarImplementation preloadedThreads={preloadedThreads} />
   } catch (error) {
     // Log error but still render - don't break the UI
     console.warn("Server-side thread preload failed:", error)
