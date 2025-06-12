@@ -32,13 +32,13 @@ export const OPENAI_MODELS: Record<OpenAIModel, ModelConfig> = {
  * Anthropic Model Configurations
  */
 export const ANTHROPIC_MODELS: Record<AnthropicModel, ModelConfig> = {
-  "claude-3-5-sonnet-20241022": {
-    id: "claude-3-5-sonnet-20241022",
+  "claude-sonnet-4-20250514": {
+    id: "claude-sonnet-4-20250514",
     provider: "anthropic",
-    name: "claude-3-5-sonnet-20241022",
-    displayName: "Claude 3.5 Sonnet",
+    name: "claude-sonnet-4-20250514",
+    displayName: "Claude Sonnet 4.0",
     description:
-      "Latest high-performance model with exceptional reasoning and coding capabilities",
+      "Claude Sonnet 4.0 - Superior coding and reasoning model with extended thinking capabilities",
     maxTokens: 200000,
     costPer1KTokens: {
       input: 0.003,
@@ -65,7 +65,7 @@ export const ALL_MODELS = {
  */
 export const DEFAULT_MODELS: Record<ModelProvider, ModelConfig> = {
   openai: OPENAI_MODELS["gpt-4o-mini"],
-  anthropic: ANTHROPIC_MODELS["claude-3-5-sonnet-20241022"],
+  anthropic: ANTHROPIC_MODELS["claude-sonnet-4-20250514"],
 }
 
 /**

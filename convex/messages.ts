@@ -168,7 +168,7 @@ export const generateAIResponse = internalAction({
       // Choose the appropriate model using updated model IDs for v5
       const selectedModel =
         args.model === "anthropic"
-          ? anthropic("claude-3-5-sonnet-20241022") // Use Claude 3.5 Sonnet which supports reasoning
+          ? anthropic("claude-sonnet-4-20250514") // Claude Sonnet 4.0
           : openai("gpt-4o-mini")
 
       // Stream response using AI SDK v5 with full stream for reasoning support
@@ -178,11 +178,19 @@ export const generateAIResponse = internalAction({
         temperature: 0.7,
       }
 
-      // For Claude, we need to handle reasoning differently
+      // For Claude 4.0, enable thinking/reasoning mode
       if (args.model === "anthropic") {
-        // Add system prompt to encourage reasoning
+        // Claude 4.0 has native thinking support
         streamOptions.system =
-          "You are a helpful AI assistant. Think through your response step by step before answering."
+          "You are a helpful AI assistant. For complex questions, show your reasoning process step by step before providing the final answer."
+        streamOptions.providerOptions = {
+          anthropic: {
+            thinking: {
+              type: "enabled",
+              budgetTokens: 12000, // Budget for thinking tokens
+            },
+          },
+        }
       }
 
       const { fullStream } = await streamText(streamOptions)
@@ -191,7 +199,6 @@ export const generateAIResponse = internalAction({
       let thinkingContent = ""
       let isInThinkingPhase = false
       let hasThinking = false
-      let reasoningStarted = false
 
       console.log("Starting to process v5 stream chunks...")
 
@@ -201,87 +208,44 @@ export const generateAIResponse = internalAction({
 
         // Handle different types of chunks
         if (chunk.type === "text-delta" && chunk.textDelta) {
-          // For Claude, reasoning content might come in a specific format
-          const text = chunk.textDelta
+          // Regular text content
+          fullContent += chunk.textDelta
 
-          if (args.model === "anthropic") {
-            // Claude's reasoning might be prefixed or in a specific format
-            // Check if this is reasoning content
-            if (
-              text.includes("[REASONING]") ||
-              text.includes("Let me think") ||
-              text.includes("I need to") ||
-              text.includes("First,") ||
-              (!reasoningStarted &&
-                (text.includes("Step") || text.includes("think")))
-            ) {
-              if (!hasThinking) {
-                isInThinkingPhase = true
-                hasThinking = true
-                reasoningStarted = true
-                // Update message to indicate thinking phase
-                await ctx.runMutation(internal.messages.updateThinkingState, {
-                  messageId,
-                  isThinking: true,
-                  hasThinkingContent: true,
-                })
-              }
-            }
-
-            // Check for end of reasoning
-            if (
-              reasoningStarted &&
-              (text.includes("[/REASONING]") ||
-                text.includes("Based on") ||
-                text.includes("Therefore") ||
-                text.includes("In conclusion") ||
-                text.includes("So,"))
-            ) {
-              if (isInThinkingPhase) {
-                isInThinkingPhase = false
-                // Mark end of thinking phase
-                await ctx.runMutation(internal.messages.updateThinkingState, {
-                  messageId,
-                  isThinking: false,
-                  hasThinkingContent: true,
-                })
-              }
-            }
-
-            // Accumulate content
-            if (isInThinkingPhase) {
-              thinkingContent += text
-              // Update thinking content progressively
-              await ctx.runMutation(internal.messages.updateThinkingContent, {
-                messageId,
-                thinkingContent,
-              })
-            } else {
-              fullContent += text
-            }
-          } else {
-            // Non-anthropic models
-            fullContent += text
-          }
-
-          // Update the message body progressively (only non-thinking content)
-          if (!isInThinkingPhase) {
-            await ctx.runMutation(internal.messages.updateStreamingMessage, {
+          // Update the message body progressively
+          await ctx.runMutation(internal.messages.updateStreamingMessage, {
+            messageId,
+            content: fullContent,
+          })
+        } else if (chunk.type === "reasoning" && chunk.textDelta) {
+          // Claude 4.0 native reasoning tokens
+          if (!hasThinking) {
+            hasThinking = true
+            isInThinkingPhase = true
+            // Update message to indicate thinking phase
+            await ctx.runMutation(internal.messages.updateThinkingState, {
               messageId,
-              content: fullContent,
+              isThinking: true,
+              hasThinkingContent: true,
             })
           }
-        } else if (
-          chunk.type === "step-finish" &&
-          chunk.finishReason === "stop"
-        ) {
-          // Handle completion
-          if (isInThinkingPhase) {
-            // Make sure we close thinking phase
+
+          // Accumulate thinking content
+          thinkingContent += chunk.textDelta
+
+          // Update thinking content progressively
+          await ctx.runMutation(internal.messages.updateThinkingContent, {
+            messageId,
+            thinkingContent,
+          })
+        } else if (chunk.type === "step-finish" || chunk.type === "finish") {
+          // End of reasoning phase or stream completion
+          if (isInThinkingPhase && hasThinking) {
+            isInThinkingPhase = false
+            // Mark end of thinking phase
             await ctx.runMutation(internal.messages.updateThinkingState, {
               messageId,
               isThinking: false,
-              hasThinkingContent: hasThinking,
+              hasThinkingContent: true,
             })
           }
         }
