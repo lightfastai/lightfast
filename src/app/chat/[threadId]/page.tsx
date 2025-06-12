@@ -1,7 +1,5 @@
-import { isAuthenticated } from "@/lib/auth"
 import type { Metadata } from "next"
-import { notFound, redirect } from "next/navigation"
-import type { Id } from "../../../../convex/_generated/dataModel"
+import { notFound } from "next/navigation"
 import { ChatInterface } from "../../../components/chat/ChatInterface"
 
 export const metadata: Metadata = {
@@ -19,22 +17,18 @@ interface ChatThreadPageProps {
   }>
 }
 
+// Server component for specific thread - optimized for SSR and instant navigation
 export default async function ChatThreadPage({ params }: ChatThreadPageProps) {
-  // Check authentication - redirect to signin if not authenticated
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    redirect("/signin")
-  }
-
   // Await params in Next.js 15
   const { threadId: threadIdString } = await params
 
-  // Validate threadId format (basic check)
-  const threadId = threadIdString as Id<"threads">
-  if (!threadId) {
+  // Validate threadId format - basic check to prevent obvious invalid IDs
+  if (!threadIdString || threadIdString.length < 10) {
     notFound()
   }
 
-  // Pass minimal data to client component - let client-side queries handle real data
+  // Server component provides the static shell
+  // Client-side queries handle data fetching and validation via pathname
+  // This enables instant navigation with prefetched data
   return <ChatInterface />
 }

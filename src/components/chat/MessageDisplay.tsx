@@ -119,7 +119,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
 
   return (
     <div
-      className={`flex gap-3 animate-fade-in ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""}`}
+      className={`flex gap-3  ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""}`}
     >
       <Avatar className="w-8 h-8 shrink-0 rounded-md">
         {!isAI && currentUser?.image && (

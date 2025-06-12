@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "convex/react"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
 import { ChatInput } from "./ChatInput"
@@ -19,22 +19,22 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
   const pathname = usePathname()
   const [hasCreatedThread, setHasCreatedThread] = useState(false)
 
-  // Extract current thread ID from pathname
-  const getCurrentThreadId = (): Id<"threads"> | "new" => {
+  // Extract current thread ID from pathname with better parsing
+  const currentThreadId = useMemo(() => {
     if (pathname === "/chat") {
       return "new"
     }
-    const threadId = pathname.split("/chat/")[1]
-    return threadId as Id<"threads">
-  }
+    // More robust pathname parsing
+    const match = pathname.match(/^\/chat\/(.+)$/)
+    return match ? (match[1] as Id<"threads">) : "new"
+  }, [pathname])
 
-  const currentThreadId = getCurrentThreadId()
   const isNewChat = currentThreadId === "new"
 
   // Determine if we should skip queries (only skip if we're in new chat mode AND haven't created thread yet)
   const shouldSkipQueries = isNewChat && !hasCreatedThread
 
-  // Get the actual thread data
+  // Get the actual thread data with better error handling
   const currentThread = useQuery(
     api.threads.get,
     shouldSkipQueries || currentThreadId === "new"
@@ -57,11 +57,18 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
 
   // Handle case where thread doesn't exist or user doesn't have access
   useEffect(() => {
-    if (currentThread === null && !isNewChat) {
+    if (currentThread === null && !isNewChat && !shouldSkipQueries) {
       // Thread doesn't exist or user doesn't have access, redirect to chat
-      router.push("/chat")
+      router.replace("/chat")
     }
-  }, [currentThread, isNewChat, router])
+  }, [currentThread, isNewChat, shouldSkipQueries, router])
+
+  // Reset hasCreatedThread when navigating to new chat
+  useEffect(() => {
+    if (isNewChat) {
+      setHasCreatedThread(false)
+    }
+  }, [isNewChat])
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return
@@ -79,8 +86,8 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
           body: message,
         })
 
-        // Navigate to the new thread
-        router.push(`/chat/${newThreadId}`)
+        // Navigate to the new thread using replace for better UX
+        router.replace(`/chat/${newThreadId}`)
         setHasCreatedThread(true)
       } else {
         // Normal message sending
@@ -91,6 +98,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
       }
     } catch (error) {
       console.error("Error sending message:", error)
+      // Could add toast notification here for better UX
     }
   }
 
@@ -101,19 +109,26 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     return currentThread?.title || "Chat"
   }
 
+  const getEmptyStateDescription = () => {
+    if (isNewChat) {
+      return "Start a conversation with our AI assistant. Messages stream in real-time!"
+    }
+    return ""
+  }
+
   return (
     <div className="flex flex-col h-full">
       <ChatMessages
         messages={messages}
         emptyState={{
           title: getEmptyStateTitle(),
-          description:
-            "Start a conversation with our AI assistant. Messages stream in real-time!",
+          description: getEmptyStateDescription(),
         }}
       />
       <ChatInput
         onSendMessage={handleSendMessage}
         placeholder="Message AI assistant..."
+        disabled={currentThread === null && !isNewChat}
       />
     </div>
   )

@@ -1,10 +1,8 @@
-import { isAuthenticated } from "@/lib/auth"
 import type { Metadata } from "next"
-import { redirect } from "next/navigation"
 import { ChatInterface } from "../../components/chat/ChatInterface"
 
 export const metadata: Metadata = {
-  title: "Chat - Lightfast",
+  title: "New Chat - Lightfast",
   description: "Start intelligent conversations with AI agents.",
   robots: {
     index: false,
@@ -12,14 +10,9 @@ export const metadata: Metadata = {
   },
 }
 
-// Server component that handles chat routing logic
-export default async function ChatPage() {
-  // Check authentication - redirect to signin if not authenticated
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    redirect("/signin")
-  }
-
-  // Use the ChatInterface component directly
+// Server component that enables SSR for the new chat page
+export default function ChatPage() {
+  // This server component provides the static shell
+  // Client-side hydration happens in ChatInterface and ChatLayoutClient
   return <ChatInterface />
 }
