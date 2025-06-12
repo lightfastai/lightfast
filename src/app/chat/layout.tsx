@@ -1,16 +1,16 @@
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { SimplifiedChatLayout } from "@/components/chat/ChatLayout"
+import { ServerChatLayout } from "@/components/chat/ServerChatLayout"
 import type React from "react"
 
 interface ChatLayoutProps {
   children: React.ReactNode
 }
 
-// Server component layout - provides static shell and enables SSR
+// Server component layout - provides static shell and enables SSR with PPR
 export default function ChatLayout({ children }: ChatLayoutProps) {
   return (
     <TooltipProvider>
-      <SimplifiedChatLayout>{children}</SimplifiedChatLayout>
+      <ServerChatLayout>{children}</ServerChatLayout>
     </TooltipProvider>
   )
 }
