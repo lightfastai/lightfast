@@ -29,6 +29,7 @@ export default defineSchema({
     createdAt: v.number(),
     lastMessageAt: v.number(),
     isTitleGenerating: v.optional(v.boolean()),
+    isGenerating: v.optional(v.boolean()),
     // Thread-level usage tracking (denormalized for performance)
     usage: v.optional(
       v.object({

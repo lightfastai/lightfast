@@ -112,6 +112,13 @@ export const send = mutation({
       throw new Error("Thread not found or access denied")
     }
 
+    // Prevent new messages while AI is generating
+    if (thread.isGenerating) {
+      throw new Error(
+        "Please wait for the current AI response to complete before sending another message",
+      )
+    }
+
     // Use default model if none provided
     const modelId = args.modelId || "gpt-4o-mini"
 
@@ -128,9 +135,10 @@ export const send = mutation({
       modelId: modelId,
     })
 
-    // Update thread's last message timestamp
+    // Update thread's last message timestamp and set generation flag
     await ctx.db.patch(args.threadId, {
       lastMessageAt: Date.now(),
+      isGenerating: true,
     })
 
     // Schedule AI response using the modelId
@@ -324,6 +332,11 @@ export const generateAIResponse = internalAction({
         messageId,
         usage: finalUsage,
       })
+
+      // Clear generation flag on success
+      await ctx.runMutation(internal.messages.clearGenerationFlag, {
+        threadId: args.threadId,
+      })
     } catch (error) {
       console.error("Error generating response:", error)
 
@@ -347,6 +360,11 @@ export const generateAIResponse = internalAction({
           errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
         })
       }
+
+      // Clear generation flag on error as well
+      await ctx.runMutation(internal.messages.clearGenerationFlag, {
+        threadId: args.threadId,
+      })
     }
 
     return null
@@ -830,5 +848,18 @@ export const getStreamChunks = query({
       currentBody: message.body,
       messageId: message._id,
     }
+  },
+})
+
+// Internal mutation to clear the generation flag
+export const clearGenerationFlag = internalMutation({
+  args: {
+    threadId: v.id("threads"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.threadId, {
+      isGenerating: false,
+    })
   },
 })

@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DEFAULT_MODEL_ID, getAllModels, getModelById } from "@/lib/ai"
-import { Send } from "lucide-react"
+import { Send, Loader2 } from "lucide-react"
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react"
 
 interface ChatInputProps {
@@ -89,6 +89,11 @@ const ChatInputComponent = ({
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
+      // If it's a generation conflict, show a user-friendly message
+      if (error instanceof Error && error.message.includes("Please wait for the current")) {
+        // You could add a toast notification here
+        console.log("Generation in progress, please wait...")
+      }
     } finally {
       setIsSending(false)
     }
@@ -126,7 +131,7 @@ const ChatInputComponent = ({
       <div className="max-w-3xl mx-auto">
         <div className="flex gap-2">
           <div className="flex-1 min-w-0">
-            <div className="w-full rounded-md border flex flex-col">
+            <div className={`w-full rounded-md border flex flex-col ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}>
               {/* Textarea area - grows with content up to max height */}
               <div
                 className="flex-1"
@@ -209,7 +214,12 @@ const ChatInputComponent = ({
         {/* Bottom section for future features */}
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2">
-            {/* Placeholder for future features like Deep Research */}
+            {isLoading && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span>AI is responding...</span>
+              </div>
+            )}
           </div>
           <div className="text-xs text-muted-foreground">
             {message.length}/{maxLength}

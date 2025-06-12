@@ -144,6 +144,12 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     return ""
   }
 
+  // Check if AI is currently generating (any message is streaming)
+  const isAIGenerating = useMemo(() => {
+    return messages.some(msg => msg.isStreaming && !msg.isComplete) || 
+           activeStreams.size > 0
+  }, [messages, activeStreams])
+
   // Enhance messages with streaming text
   const enhancedMessages = useMemo(() => {
     return messages.map((msg: Message) => {
@@ -168,6 +174,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
         onSendMessage={handleSendMessage}
         placeholder="Message AI assistant..."
         disabled={currentThread === null && !isNewChat}
+        isLoading={isAIGenerating}
       />
     </div>
   )
