@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Markdown } from "@/components/ui/markdown"
 import { type ModelProvider, getModelDisplayName } from "@/lib/ai"
 import { useQuery } from "convex/react"
-import { User } from "lucide-react"
+import { ChevronDown, ChevronRight, User, Brain } from "lucide-react"
 import { useEffect, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
@@ -46,6 +46,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   const [displayText, setDisplayText] = useState(message.body)
   const [isTyping, setIsTyping] = useState(false)
   const [thinkingDuration, setThinkingDuration] = useState<number | null>(null)
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(false)
 
   // Get current user for avatar display
   const currentUser = useQuery(api.users.current)
@@ -78,6 +79,9 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
 
   const isAI = message.messageType === "assistant"
   const isStreaming = message.isStreaming && !message.isComplete
+  const hasThinking = Boolean(
+    message.hasThinkingContent && message.thinkingContent,
+  )
 
   // Helper function to format duration
   const formatDuration = (ms: number) => {
@@ -93,9 +97,16 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   }
 
   // Get model display name safely
-  const getModelName = (model: ModelProvider | undefined): string => {
-    if (!model) return "AI Assistant"
-    return getModelDisplayName(model)
+  const getModelName = (
+    modelId: string | undefined,
+    provider: ModelProvider | undefined,
+  ): string => {
+    if (modelId) {
+      return getModelDisplayName(modelId)
+    }
+    // Fallback to provider name for backward compatibility
+    if (!provider) return "AI Assistant"
+    return getModelDisplayName(provider)
   }
 
   return (
@@ -128,7 +139,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
             {/* Show model name and thinking duration for completed assistant messages */}
             {!isStreaming && (
               <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
-                <span>{getModelName(message.model)}</span>
+                <span>{getModelName(message.modelId, message.model)}</span>
                 {thinkingDuration && (
                   <>
                     <span>•</span>
@@ -143,9 +154,40 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
             {/* Show thinking indicator while streaming */}
             {isStreaming && (
               <div className="mb-2 text-xs text-muted-foreground flex items-center gap-2">
-                <span>{getModelName(message.model)}</span>
+                <span>{getModelName(message.modelId, message.model)}</span>
                 <span>•</span>
-                <span>Thinking</span>
+                <span>{message.isThinking ? "Thinking" : "Responding"}</span>
+              </div>
+            )}
+
+            {/* Show collapsible thinking content for Claude */}
+            {hasThinking && (
+              <div className="mb-4 rounded-lg border border-muted bg-muted/20 p-3">
+                <button
+                  type="button"
+                  onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
+                  className="flex w-full items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {isThinkingExpanded ? (
+                    <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3" />
+                  )}
+                  <Brain className="h-3 w-3" />
+                  <span>View reasoning process</span>
+                  {thinkingDuration && (
+                    <span className="ml-auto font-mono text-[10px]">
+                      {formatDuration(thinkingDuration)}
+                    </span>
+                  )}
+                </button>
+                {isThinkingExpanded && message.thinkingContent && (
+                  <div className="mt-3 text-xs text-muted-foreground space-y-2">
+                    <p className="whitespace-pre-wrap font-mono leading-relaxed">
+                      {message.thinkingContent}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </>

@@ -2,6 +2,24 @@ import { authTables } from "@convex-dev/auth/server"
 import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
 
+// Model ID validator for type safety
+const modelIdValidator = v.union(
+  // OpenAI models
+  v.literal("gpt-4o-mini"),
+  v.literal("gpt-4o"),
+  v.literal("gpt-3.5-turbo"),
+  // Anthropic models
+  v.literal("claude-sonnet-4-20250514"),
+  v.literal("claude-sonnet-4-20250514-thinking"),
+  v.literal("claude-3-5-sonnet-20241022"),
+  v.literal("claude-3-haiku-20240307"),
+)
+
+const modelProviderValidator = v.union(
+  v.literal("openai"),
+  v.literal("anthropic"),
+)
+
 export default defineSchema({
   ...authTables,
 
@@ -41,12 +59,16 @@ export default defineSchema({
     body: v.string(),
     timestamp: v.number(),
     messageType: v.union(v.literal("user"), v.literal("assistant")),
-    model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
+    model: v.optional(modelProviderValidator),
+    modelId: v.optional(modelIdValidator),
     isStreaming: v.optional(v.boolean()),
     streamId: v.optional(v.string()),
     isComplete: v.optional(v.boolean()),
     thinkingStartedAt: v.optional(v.number()),
     thinkingCompletedAt: v.optional(v.number()),
+    thinkingContent: v.optional(v.string()),
+    isThinking: v.optional(v.boolean()),
+    hasThinkingContent: v.optional(v.boolean()),
     // Token usage tracking per message
     usage: v.optional(
       v.object({
