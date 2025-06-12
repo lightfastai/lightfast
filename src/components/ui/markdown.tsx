@@ -28,7 +28,7 @@ const components: Partial<Components> = {
       return (
         <code
           className={cn(
-            "bg-muted rounded-md px-1 py-0.5 text-xs font-mono",
+            "bg-muted/50 rounded-md px-1 py-0.5 text-xs font-mono",
             className,
           )}
           {...props}
@@ -51,7 +51,7 @@ const components: Partial<Components> = {
       <div className="flex flex-col my-4">
         <pre
           className={cn(
-            "text-foreground bg-muted/50 dark:bg-muted/20",
+            "text-foreground bg-muted/50 dark:bg-muted/20 border border-border",
             "w-full overflow-x-auto rounded-md p-3",
             "text-xs font-mono leading-relaxed",
             className,
