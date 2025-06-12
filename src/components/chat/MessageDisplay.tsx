@@ -44,9 +44,6 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   const [displayText, setDisplayText] = useState(message.body)
   const [isTyping, setIsTyping] = useState(false)
   const [thinkingDuration, setThinkingDuration] = useState<number | null>(null)
-  const [liveThinkingDuration, setLiveThinkingDuration] = useState<
-    number | null
-  >(null)
 
   // Get current user for avatar display
   const currentUser = useQuery(api.users.current)
@@ -66,38 +63,14 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
       setThinkingDuration(
         message.thinkingCompletedAt - message.thinkingStartedAt,
       )
-      setLiveThinkingDuration(null)
-    } else if (message.thinkingStartedAt && message.isStreaming) {
-      // Message is still streaming, don't show completed duration yet
-      setThinkingDuration(null)
     } else {
       setThinkingDuration(null)
-      setLiveThinkingDuration(null)
     }
   }, [
     message.body,
     message.isStreaming,
     message.isComplete,
     message.thinkingStartedAt,
-    message.thinkingCompletedAt,
-  ])
-
-  // Live timer for ongoing thinking
-  useEffect(() => {
-    if (
-      message.thinkingStartedAt &&
-      message.isStreaming &&
-      !message.thinkingCompletedAt
-    ) {
-      const interval = setInterval(() => {
-        setLiveThinkingDuration(Date.now() - message.thinkingStartedAt!)
-      }, 100) // Update every 100ms for smooth display
-
-      return () => clearInterval(interval)
-    }
-  }, [
-    message.thinkingStartedAt,
-    message.isStreaming,
     message.thinkingCompletedAt,
   ])
 
@@ -141,57 +114,38 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
       </Avatar>
 
       <div className="flex-1 space-y-1">
-        {/* Show final thinking duration for completed assistant messages */}
-        {isAI && !isStreaming && thinkingDuration && (
-          <div className="text-xs text-muted-foreground mb-3">
-            <span className="font-mono">
-              Thought for {formatDuration(thinkingDuration)}
-            </span>
-          </div>
+        {/* Show thinking indicators at the top for assistant messages */}
+        {isAI && (
+          <>
+            {/* Show final thinking duration for completed assistant messages */}
+            {!isStreaming && thinkingDuration && (
+              <div className="text-xs text-muted-foreground mb-2">
+                <span className="font-mono">
+                  Thought for {formatDuration(thinkingDuration)}
+                </span>
+              </div>
+            )}
+
+            {/* Show thinking indicator while streaming */}
+            {isStreaming && (
+              <div className="mb-2 text-xs text-muted-foreground">
+                <span>Thinking</span>
+              </div>
+            )}
+          </>
         )}
 
         <div className="text-sm leading-relaxed">
-          {isStreaming && !displayText ? (
-            <span className="text-muted-foreground italic">
-              thinking...
-              {liveThinkingDuration && (
-                <span className="ml-1 font-mono not-italic">
-                  ({formatDuration(liveThinkingDuration)})
-                </span>
-              )}
-            </span>
-          ) : (
+          {isStreaming && !displayText && !isAI ? (
+            <span className="text-muted-foreground italic">Thinking</span>
+          ) : displayText ? (
             <p className="whitespace-pre-wrap">
               {displayText}
               {isTyping && (
                 <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1 opacity-70" />
               )}
             </p>
-          )}
-
-          {isStreaming && displayText && (
-            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-              <div className="flex space-x-1">
-                <div className="w-1 h-1 bg-current rounded-full animate-bounce" />
-                <div
-                  className="w-1 h-1 bg-current rounded-full animate-bounce"
-                  style={{ animationDelay: "0.1s" }}
-                />
-                <div
-                  className="w-1 h-1 bg-current rounded-full animate-bounce"
-                  style={{ animationDelay: "0.2s" }}
-                />
-              </div>
-              <span>
-                thinking...
-                {liveThinkingDuration && (
-                  <span className="ml-1 font-mono">
-                    ({formatDuration(liveThinkingDuration)})
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
