@@ -15,7 +15,7 @@ export function StreamingMessage({
   message,
   className,
 }: StreamingMessageProps) {
-  const { streamingText, isStreaming, isComplete } = useResumableStream({
+  const { streamingText, isComplete } = useResumableStream({
     streamId: message._streamId || null,
     enabled: !!message._streamId && !!message.isStreaming,
   })

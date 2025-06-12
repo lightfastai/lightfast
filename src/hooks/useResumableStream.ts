@@ -28,7 +28,6 @@ export function useResumableStream({
   // Track the last chunk ID we've seen
   const lastChunkIdRef = useRef<string | undefined>(undefined)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
-  const isPollingRef = useRef(false)
 
   // Query for new chunks since our last seen chunk
   const streamData = useQuery(

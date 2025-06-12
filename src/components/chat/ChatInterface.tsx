@@ -7,10 +7,7 @@ import { api } from "../../../convex/_generated/api"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
 import { ChatInput } from "./ChatInput"
 import { ChatMessages } from "./ChatMessages"
-import {
-  useResumableStream,
-  useResumableChat,
-} from "@/hooks/useResumableStream"
+import { useResumableChat } from "@/hooks/useResumableStream"
 
 type Message = Doc<"messages">
 
