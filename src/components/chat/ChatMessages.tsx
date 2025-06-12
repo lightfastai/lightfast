@@ -141,7 +141,7 @@ export function ChatMessages({
 
   return (
     <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-      <div className="p-4">
+      <div className="p-4 pb-16">
         <div className="space-y-6 max-w-3xl mx-auto">
           {!messages?.length && !isLoading && (
             <div className="text-center text-muted-foreground py-12">
@@ -174,7 +174,7 @@ export function ChatMessages({
             setIsUserScrolling(false)
             scrollToBottom()
           }}
-          className="absolute bottom-20 right-4 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
           aria-label="Scroll to bottom"
         >
           <svg
