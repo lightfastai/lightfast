@@ -83,7 +83,9 @@ function groupThreadsByDate(threads: Thread[]) {
 }
 
 // Main server component - renders immediately with SSR
-export function SimplifiedChatSidebar({ threads }: SimplifiedChatSidebarProps) {
+export function ServerSidebarImplementation({
+  threads,
+}: SimplifiedChatSidebarProps) {
   const groupedThreads = groupThreadsByDate(threads)
   const categoryOrder = [
     "Today",

@@ -1,59 +1,51 @@
 import { Suspense } from "react"
-import { SimplifiedChatSidebar } from "./ChatSidebar"
+import { preloadQuery } from "convex/nextjs"
+import { api } from "../../../convex/_generated/api"
+import { PreloadedSidebar } from "./PreloadedSidebar"
 import { SidebarSkeleton } from "./SidebarSkeleton"
-import { ClientSidebar } from "./ClientSidebar"
-import { env } from "../../env"
 import { getAuthToken } from "../../lib/auth"
 
-// Server component wrapper for the sidebar that fetches threads
+// Server component wrapper for the sidebar that preloads threads for PPR
 export async function ServerSidebar() {
   return (
     <Suspense fallback={<SidebarSkeleton />}>
-      <SidebarWithData />
+      <SidebarWithPreloadedData />
     </Suspense>
   )
 }
 
-// Server component that handles data fetching with build-time safety
-async function SidebarWithData() {
-  // During build time, always fall back to client-side loading
-  // This prevents build failures when the Convex backend isn't available
-  if (env.NODE_ENV === "production" && !env.NEXT_PUBLIC_CONVEX_URL) {
-    return <SidebarFallback />
-  }
-
+// Server component that handles data preloading with PPR optimization
+async function SidebarWithPreloadedData() {
   try {
     // Get authentication token for server-side requests
     const token = await getAuthToken()
 
-    // If no authentication token, fall back to client-side rendering
+    // If no authentication token, render empty sidebar with prompt to sign in
     if (!token) {
-      return <SidebarFallback />
+      return <SidebarUnauthenticated />
     }
 
-    // Import fetchQuery dynamically to avoid issues during build
-    const { fetchQuery } = await import("convex/nextjs")
-    const { api } = await import("../../../convex/_generated/api")
+    // Preload threads data for PPR - this will be cached and streamed instantly
+    const preloadedThreads = await preloadQuery(api.threads.list, {}, { token })
 
-    // Fetch threads on the server with authentication - this will be cached and streamed with PPR
-    const threads = await fetchQuery(api.threads.list, {}, { token })
-
-    return <SimplifiedChatSidebar threads={threads} />
+    // Pass preloaded data to client component for reactivity
+    return <PreloadedSidebar preloadedThreads={preloadedThreads} />
   } catch (error) {
-    // Fallback to client-side loading if server fetch fails
-    console.warn(
-      "Server-side thread fetch failed, falling back to client:",
-      error,
-    )
-    return <SidebarFallback />
+    // Log error but still render - don't break the UI
+    console.warn("Server-side thread preload failed:", error)
+
+    // Fallback to loading state - client component will handle the error
+    return <SidebarSkeleton />
   }
 }
 
-// Fallback component that uses client-side data fetching
-function SidebarFallback() {
+// Component for unauthenticated state
+function SidebarUnauthenticated() {
   return (
-    <Suspense fallback={<SidebarSkeleton />}>
-      <ClientSidebar />
-    </Suspense>
+    <div className="w-64 p-4 border-r">
+      <div className="text-center text-muted-foreground">
+        <p className="text-sm">Please sign in to view your chats</p>
+      </div>
+    </div>
   )
 }

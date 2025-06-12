@@ -9,7 +9,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { api } from "../../../convex/_generated/api"
-import { SimplifiedChatSidebar } from "./ChatSidebar"
+import { ServerSidebarImplementation } from "./ServerSidebarImplementation"
 import type { Id } from "../../../convex/_generated/dataModel"
 import { useMemo } from "react"
 
@@ -66,7 +66,7 @@ export function SimplifiedChatLayout({ children }: SimplifiedChatLayoutProps) {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
-        <SimplifiedChatSidebar threads={threads} />
+        <ServerSidebarImplementation threads={threads} />
         <SidebarInset className="flex flex-col">
           <ChatHeader title={getTitle()} />
           <div className="flex-1 min-h-0">{children}</div>

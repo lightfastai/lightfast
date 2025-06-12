@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
-import { SimplifiedChatSidebar } from "./ChatSidebar"
+import { ServerSidebarImplementation } from "./ServerSidebarImplementation"
 import { SidebarSkeleton } from "./SidebarSkeleton"
 
 // Client-side fallback for the sidebar when server-side fetching fails
@@ -14,5 +14,5 @@ export function ClientSidebar() {
     return <SidebarSkeleton />
   }
 
-  return <SimplifiedChatSidebar threads={threads} />
+  return <ServerSidebarImplementation threads={threads} />
 }
