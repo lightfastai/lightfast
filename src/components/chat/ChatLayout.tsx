@@ -29,7 +29,7 @@ async function ChatHeader() {
       </div>
       <div className="flex items-center gap-2">
         <Badge variant="outline">Streaming</Badge>
-        <Badge variant="outline">GPT-4o-mini</Badge>
+        <Badge variant="outline">Claude Sonnet 4</Badge>
       </div>
     </header>
   )

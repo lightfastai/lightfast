@@ -86,11 +86,11 @@ export const send = mutation({
       lastMessageAt: Date.now(),
     })
 
-    // Schedule AI response
+    // Schedule AI response - default to anthropic (Claude Sonnet 4) for better performance
     await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
       threadId: args.threadId,
       userMessage: args.body,
-      model: args.model || "openai", // Default to OpenAI if not specified
+      model: args.model || "anthropic", // Default to Claude Sonnet 4
     })
 
     // Check if this is the first user message in the thread (for title generation)
@@ -112,7 +112,7 @@ export const send = mutation({
   },
 })
 
-// Internal action to generate AI response with streaming using Vercel AI SDK
+// Internal action to generate AI response using AI SDK v5
 export const generateAIResponse = internalAction({
   args: {
     threadId: v.id("threads"),
@@ -142,7 +142,7 @@ export const generateAIResponse = internalAction({
         { threadId: args.threadId },
       )
 
-      // Prepare messages for AI SDK
+      // Prepare messages for AI SDK v5 - using standard format
       const messages = [
         {
           role: "system" as const,
@@ -159,31 +159,29 @@ export const generateAIResponse = internalAction({
       ]
 
       console.log(
-        `Attempting to call ${args.model} with messages:`,
-        messages.length,
+        `Attempting to call ${args.model} with ${messages.length} messages`,
       )
 
-      // Choose the appropriate model based on the parameter
+      // Choose the appropriate model using updated model IDs for v5
       const selectedModel =
         args.model === "anthropic"
-          ? anthropic("claude-3-5-sonnet-20241022")
+          ? anthropic("claude-sonnet-4-20250514") // Latest Claude Sonnet 4
           : openai("gpt-4o-mini")
 
-      // Stream response using Vercel AI SDK
+      // Stream response using AI SDK v5
       const { textStream } = await streamText({
         model: selectedModel,
-        messages,
-        maxTokens: 500,
+        messages: messages,
         temperature: 0.7,
       })
 
       let fullContent = ""
 
-      console.log("Starting to process stream chunks...")
+      console.log("Starting to process v5 stream chunks...")
 
       // Process each chunk as it arrives from the stream
       for await (const chunk of textStream) {
-        console.log("Received chunk:", chunk)
+        console.log("Received v5 chunk:", chunk)
         fullContent += chunk
 
         // Update the message body progressively
@@ -193,7 +191,9 @@ export const generateAIResponse = internalAction({
         })
       }
 
-      console.log(`Stream complete. Full content length: ${fullContent.length}`)
+      console.log(
+        `V5 stream complete. Full content length: ${fullContent.length}`,
+      )
 
       if (fullContent.trim() === "") {
         throw new Error(

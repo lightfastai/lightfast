@@ -4,11 +4,8 @@
 
 export type ModelProvider = "openai" | "anthropic"
 
-export type OpenAIModel = "gpt-4o-mini" | "gpt-4o" | "gpt-3.5-turbo"
-export type AnthropicModel =
-  | "claude-3-5-sonnet-20241022"
-  | "claude-3-haiku-20240307"
-  | "claude-3-opus-20240229"
+export type OpenAIModel = "gpt-4o-mini"
+export type AnthropicModel = "claude-sonnet-4-20250514"
 
 export interface ModelConfig {
   id: string
