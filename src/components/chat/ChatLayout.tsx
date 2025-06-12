@@ -21,7 +21,7 @@ import { Plus } from "lucide-react"
 import Link from "next/link"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
 import { UserDropdown } from "../auth/UserDropdown"
-import { PrefetchThread } from "./PrefetchThread"
+import { PrefetchManager } from "./PrefetchManager"
 
 type Thread = Doc<"threads">
 
@@ -32,6 +32,7 @@ interface ChatLayoutProps {
   title?: string
   onNewChat?: () => void
   onThreadSelect?: (threadId: Id<"threads">) => void
+  onThreadHover?: (threadId: Id<"threads">) => void
 }
 
 // Lightfast logo component
@@ -103,11 +104,13 @@ function ChatSidebar({
   currentThreadId,
   onNewChat,
   onThreadSelect,
+  onThreadHover,
 }: {
   threads: Thread[]
   currentThreadId?: Id<"threads"> | "new"
   onNewChat?: () => void
   onThreadSelect?: (threadId: Id<"threads">) => void
+  onThreadHover?: (threadId: Id<"threads">) => void
 }) {
   const groupedThreads = groupThreadsByDate(threads)
   const categoryOrder = [
@@ -170,7 +173,12 @@ function ChatSidebar({
                         <SidebarMenuItem key={thread._id}>
                           <SidebarMenuButton
                             isActive={currentThreadId === thread._id}
-                            onClick={() => onThreadSelect?.(thread._id)}
+                            onClick={() =>
+                              onThreadSelect?.(thread._id as Id<"threads">)
+                            }
+                            onMouseEnter={() =>
+                              onThreadHover?.(thread._id as Id<"threads">)
+                            }
                             className="w-full h-auto p-2.5 text-left"
                             size="default"
                           >
@@ -231,10 +239,8 @@ export function ChatLayout({
   title,
   onNewChat,
   onThreadSelect,
+  onThreadHover,
 }: ChatLayoutProps) {
-  // Get the latest 10 threads for prefetching
-  const latestThreads = threads.slice(0, 10)
-
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -243,6 +249,7 @@ export function ChatLayout({
           currentThreadId={currentThreadId}
           onNewChat={onNewChat}
           onThreadSelect={onThreadSelect}
+          onThreadHover={onThreadHover}
         />
         <SidebarInset className="flex flex-col">
           <ChatHeader title={title} />
@@ -250,10 +257,14 @@ export function ChatLayout({
         </SidebarInset>
       </div>
 
-      {/* Prefetch messages for the latest 10 threads for instant navigation */}
-      {latestThreads.map((thread) => (
-        <PrefetchThread key={`prefetch-${thread._id}`} threadId={thread._id} />
-      ))}
+      {/* Enhanced prefetching for instant navigation */}
+      <PrefetchManager
+        threads={threads}
+        currentThreadId={
+          currentThreadId === "new" ? undefined : currentThreadId
+        }
+        maxPrefetchCount={25}
+      />
     </SidebarProvider>
   )
 }

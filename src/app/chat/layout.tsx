@@ -2,9 +2,8 @@
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useQuery } from "convex/react"
-import { usePathname, useRouter } from "next/navigation"
+import { useOptimisticNavigation } from "@/hooks/useOptimisticNavigation"
 import { api } from "../../../convex/_generated/api"
-import type { Id } from "../../../convex/_generated/dataModel"
 import { ChatLayout } from "../../components/chat/ChatLayout"
 
 interface ChatLayoutWrapperProps {
@@ -14,54 +13,40 @@ interface ChatLayoutWrapperProps {
 export default function ChatLayoutWrapper({
   children,
 }: ChatLayoutWrapperProps) {
-  const router = useRouter()
-  const pathname = usePathname()
+  const {
+    navigateToThread,
+    navigateToNewChat,
+    prefetchThread,
+    currentThreadId,
+  } = useOptimisticNavigation()
 
   // Get threads list with real-time updates
   const threads = useQuery(api.threads.list) ?? []
 
-  // Extract current thread ID from pathname
-  const getCurrentThreadId = (): Id<"threads"> | "new" => {
-    if (pathname === "/chat") {
-      return "new"
-    }
-    const threadId = pathname.split("/chat/")[1]
-    return threadId as Id<"threads">
-  }
-
-  const currentThreadId = getCurrentThreadId()
-
   // Get current thread for title display
   const currentThread = useQuery(
     api.threads.get,
-    currentThreadId === "new" ? "skip" : { threadId: currentThreadId },
+    currentThreadId === "new" || !currentThreadId
+      ? "skip"
+      : { threadId: currentThreadId },
   )
 
   const getTitle = () => {
-    if (currentThreadId === "new") {
+    if (!currentThreadId || currentThreadId === "new") {
       return "New Chat"
     }
     return currentThread?.title || "Loading..."
-  }
-
-  const handleNewChat = () => {
-    // Use client-side navigation to avoid page reload
-    router.push("/chat")
-  }
-
-  const handleThreadSelect = (threadId: Id<"threads">) => {
-    // Use client-side navigation to avoid page reload
-    router.push(`/chat/${threadId}`)
   }
 
   return (
     <TooltipProvider>
       <ChatLayout
         threads={threads}
-        currentThreadId={currentThreadId}
+        currentThreadId={currentThreadId || "new"}
         title={getTitle()}
-        onNewChat={handleNewChat}
-        onThreadSelect={handleThreadSelect}
+        onNewChat={navigateToNewChat}
+        onThreadSelect={navigateToThread}
+        onThreadHover={prefetchThread}
       >
         {children}
       </ChatLayout>

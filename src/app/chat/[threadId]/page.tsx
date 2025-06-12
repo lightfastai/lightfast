@@ -1,6 +1,5 @@
-import { isAuthenticated } from "@/lib/auth"
 import type { Metadata } from "next"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import type { Id } from "../../../../convex/_generated/dataModel"
 import { ChatInterface } from "../../../components/chat/ChatInterface"
 
@@ -20,11 +19,7 @@ interface ChatThreadPageProps {
 }
 
 export default async function ChatThreadPage({ params }: ChatThreadPageProps) {
-  // Check authentication - redirect to signin if not authenticated
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    redirect("/signin")
-  }
+  // Authentication is now handled by middleware
 
   // Await params in Next.js 15
   const { threadId: threadIdString } = await params
