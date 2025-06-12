@@ -93,4 +93,18 @@ export default defineSchema({
   })
     .index("by_thread", ["threadId"])
     .index("by_stream_id", ["streamId"]),
+
+  // Feedback table for message ratings and comments
+  feedback: defineTable({
+    messageId: v.id("messages"),
+    userId: v.id("users"),
+    threadId: v.id("threads"),
+    rating: v.union(v.literal("positive"), v.literal("negative")),
+    comment: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_user_message", ["userId", "messageId"])
+    .index("by_thread", ["threadId"]),
 })

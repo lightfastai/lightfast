@@ -8,6 +8,7 @@ import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { StreamingMessage } from "./StreamingMessage"
 import { getModelDisplayName } from "@/lib/ai"
+import { FeedbackButtons } from "./FeedbackButtons"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -104,6 +105,10 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
           }
           thinkingDuration={thinkingDuration}
         />
+        {/* Show feedback buttons only for completed AI messages */}
+        {isAI && message.isComplete !== false && !message._streamId && (
+          <FeedbackButtons messageId={message._id} className="mt-2" />
+        )}
       </div>
     </div>
   )
