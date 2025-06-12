@@ -198,13 +198,3 @@ export function modelSupportsFeature(
   const model = getModelById(modelId)
   return model?.features[feature] ?? false
 }
-
-/**
- * Get provider from model ID
- */
-export function getProviderFromModelId(
-  modelId: string,
-): ModelProvider | undefined {
-  const model = getModelById(modelId)
-  return model?.provider
-}

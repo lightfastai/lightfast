@@ -5,7 +5,7 @@
  * and generation options across the application.
  */
 
-// Types
+// Types and utilities
 export type {
   ModelProvider,
   ModelId,
@@ -15,6 +15,17 @@ export type {
   ChatMessage,
   ModelSelectionProps,
   AIGenerationOptions,
+} from "./types"
+
+export {
+  MODEL_PROVIDERS,
+  OPENAI_MODEL_IDS,
+  ANTHROPIC_MODEL_IDS,
+  ALL_MODEL_IDS,
+  isValidModelId,
+  getProviderFromModelId,
+  getActualModelName,
+  isThinkingMode,
 } from "./types"
 
 // Models
@@ -28,7 +39,6 @@ export {
   getModelById,
   getModelDisplayName,
   modelSupportsFeature,
-  getProviderFromModelId,
 } from "./models"
 
 // Providers

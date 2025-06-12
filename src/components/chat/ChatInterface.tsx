@@ -1,11 +1,11 @@
 "use client"
 
-import { getProviderFromModelId } from "@/lib/ai"
 import { useMutation, useQuery } from "convex/react"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
+import type { ModelId } from "@/lib/ai/types"
 import { ChatInput } from "./ChatInput"
 import { ChatMessages } from "./ChatMessages"
 
@@ -74,13 +74,6 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
   const handleSendMessage = async (message: string, modelId: string) => {
     if (!message.trim()) return
 
-    // Get the provider from model ID to maintain backend compatibility
-    const provider = getProviderFromModelId(modelId)
-    if (!provider) {
-      console.error("Invalid model ID:", modelId)
-      return
-    }
-
     try {
       if (isNewChat) {
         // First message in new chat - create thread first with placeholder title
@@ -88,12 +81,11 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
           title: "Generating title...",
         })
 
-        // Send the message to the new thread with both model ID and provider
+        // Send the message to the new thread with just the modelId
         await sendMessage({
           threadId: newThreadId,
           body: message,
-          model: provider,
-          modelId: modelId, // Pass the full model ID as well
+          modelId: modelId as ModelId, // Type assertion for the validated modelId
         })
 
         // Navigate to the new thread using replace for better UX
@@ -104,8 +96,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
         await sendMessage({
           threadId: currentThreadId,
           body: message,
-          model: provider,
-          modelId: modelId, // Pass the full model ID as well
+          modelId: modelId as ModelId, // Type assertion for the validated modelId
         })
       }
     } catch (error) {

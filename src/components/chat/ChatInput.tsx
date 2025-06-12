@@ -39,7 +39,8 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
-  const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID)
+  const [selectedModelId, setSelectedModelId] =
+    useState<string>(DEFAULT_MODEL_ID)
 
   const allModels = getAllModels()
   const selectedModel = getModelById(selectedModelId)

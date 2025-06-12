@@ -1,8 +1,14 @@
 import { anthropic } from "@ai-sdk/anthropic"
 import { openai } from "@ai-sdk/openai"
-import type { CoreMessage, LanguageModel } from "ai"
-import { getModelById, getProviderFromModelId } from "./models"
-import type { AIGenerationOptions, ChatMessage, ModelProvider } from "./types"
+import type { CoreMessage } from "ai"
+import { getModelById } from "./models"
+import { getProviderFromModelId } from "./types"
+import type {
+  AIGenerationOptions,
+  ChatMessage,
+  ModelId,
+  ModelProvider,
+} from "./types"
 
 /**
  * Provider configurations and settings
@@ -29,7 +35,7 @@ export const PROVIDER_CONFIG = {
  * Get the appropriate language model instance for a provider
  * Note: This uses the default model for the provider
  */
-export function getLanguageModel(provider: ModelProvider): LanguageModel {
+export function getLanguageModel(provider: ModelProvider) {
   // Get first model for the provider as default
   const models = PROVIDER_CONFIG[provider].models
   const defaultModelId = models[0]
@@ -52,7 +58,7 @@ export function getLanguageModel(provider: ModelProvider): LanguageModel {
 /**
  * Get language model by specific model ID
  */
-export function getLanguageModelById(modelId: string): LanguageModel {
+export function getLanguageModelById(modelId: string) {
   const model = getModelById(modelId)
   if (!model) {
     throw new Error(`Model not found: ${modelId}`)
@@ -135,7 +141,7 @@ export function createGenerationOptions(
   modelId: string,
   overrides: Partial<AIGenerationOptions> = {},
 ): AIGenerationOptions {
-  const provider = getProviderFromModelId(modelId)
+  const provider = getProviderFromModelId(modelId as ModelId)
   if (!provider) {
     throw new Error(`Invalid model ID: ${modelId}`)
   }

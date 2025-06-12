@@ -13,6 +13,22 @@ import {
   query,
 } from "./_generated/server.js"
 
+// Import shared types and utilities
+import {
+  ALL_MODEL_IDS,
+  getProviderFromModelId,
+  getActualModelName,
+  isThinkingMode,
+  type ModelId,
+} from "../src/lib/ai/types.js"
+
+// Create validators from the shared types
+const modelIdValidator = v.union(...ALL_MODEL_IDS.map((id) => v.literal(id)))
+const modelProviderValidator = v.union(
+  v.literal("openai"),
+  v.literal("anthropic"),
+)
+
 export const list = query({
   args: {
     threadId: v.id("threads"),
@@ -25,8 +41,8 @@ export const list = query({
       body: v.string(),
       timestamp: v.number(),
       messageType: v.union(v.literal("user"), v.literal("assistant")),
-      model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
-      modelId: v.optional(v.string()),
+      model: v.optional(modelProviderValidator),
+      modelId: v.optional(v.string()), // Keep as string for flexibility but validate in handler
       isStreaming: v.optional(v.boolean()),
       streamId: v.optional(v.string()),
       isComplete: v.optional(v.boolean()),
@@ -61,8 +77,7 @@ export const send = mutation({
   args: {
     threadId: v.id("threads"),
     body: v.string(),
-    model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
-    modelId: v.optional(v.string()),
+    modelId: v.optional(modelIdValidator), // Use the validated modelId
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -77,14 +92,20 @@ export const send = mutation({
       throw new Error("Thread not found or access denied")
     }
 
+    // Use default model if none provided
+    const modelId = args.modelId || "gpt-4o-mini"
+
+    // Derive provider from modelId (type-safe)
+    const provider = getProviderFromModelId(modelId as ModelId)
+
     // Insert user message
     await ctx.db.insert("messages", {
       threadId: args.threadId,
       body: args.body,
       timestamp: Date.now(),
       messageType: "user",
-      model: args.model,
-      modelId: args.modelId,
+      model: provider,
+      modelId: modelId,
     })
 
     // Update thread's last message timestamp
@@ -92,12 +113,11 @@ export const send = mutation({
       lastMessageAt: Date.now(),
     })
 
-    // Schedule AI response - default to anthropic (Claude Sonnet 4) for better performance
+    // Schedule AI response using the modelId
     await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
       threadId: args.threadId,
       userMessage: args.body,
-      model: args.model || "anthropic", // Default to Claude Sonnet 4
-      modelId: args.modelId || "claude-sonnet-4-20250514", // Default to standard Claude 4
+      modelId: modelId,
     })
 
     // Check if this is the first user message in the thread (for title generation)
@@ -124,13 +144,17 @@ export const generateAIResponse = internalAction({
   args: {
     threadId: v.id("threads"),
     userMessage: v.string(),
-    model: v.union(v.literal("openai"), v.literal("anthropic")),
-    modelId: v.string(),
+    modelId: modelIdValidator, // Use validated modelId
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     let messageId: Id<"messages"> | null = null
     try {
+      // Derive provider and other settings from modelId
+      const provider = getProviderFromModelId(args.modelId as ModelId)
+      const actualModelName = getActualModelName(args.modelId as ModelId)
+      const isThinking = isThinkingMode(args.modelId as ModelId)
+
       // Generate unique stream ID
       const streamId = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
@@ -140,7 +164,7 @@ export const generateAIResponse = internalAction({
         {
           threadId: args.threadId,
           streamId,
-          model: args.model,
+          provider,
           modelId: args.modelId,
         },
       )
@@ -168,17 +192,13 @@ export const generateAIResponse = internalAction({
       ]
 
       console.log(
-        `Attempting to call ${args.model} with model ID ${args.modelId} and ${messages.length} messages`,
+        `Attempting to call ${provider} with model ID ${args.modelId} and ${messages.length} messages`,
       )
 
-      // Get the actual model name from modelId
-      const actualModelName = args.modelId.replace("-thinking", "")
-      const isThinkingMode = args.modelId.includes("-thinking")
-
-      // Choose the appropriate model using the actual model ID
+      // Choose the appropriate model using the actual model name
       const selectedModel =
-        args.model === "anthropic"
-          ? anthropic(actualModelName) // Use the actual model name
+        provider === "anthropic"
+          ? anthropic(actualModelName)
           : openai(actualModelName)
 
       // Stream response using AI SDK v5 with full stream for reasoning support
@@ -189,7 +209,7 @@ export const generateAIResponse = internalAction({
       }
 
       // For Claude 4.0 thinking mode, enable thinking/reasoning
-      if (args.model === "anthropic" && isThinkingMode) {
+      if (provider === "anthropic" && isThinking) {
         // Claude 4.0 has native thinking support
         streamOptions.system =
           "You are a helpful AI assistant. For complex questions, show your reasoning process step by step before providing the final answer."
@@ -217,16 +237,16 @@ export const generateAIResponse = internalAction({
         console.log("Received v5 chunk type:", chunk.type)
 
         // Handle different types of chunks
-        if (chunk.type === "text-delta" && chunk.textDelta) {
+        if (chunk.type === "text" && chunk.text) {
           // Regular text content
-          fullContent += chunk.textDelta
+          fullContent += chunk.text
 
           // Update the message body progressively
           await ctx.runMutation(internal.messages.updateStreamingMessage, {
             messageId,
             content: fullContent,
           })
-        } else if (chunk.type === "reasoning" && chunk.textDelta) {
+        } else if (chunk.type === "reasoning" && chunk.text) {
           // Claude 4.0 native reasoning tokens
           if (!hasThinking) {
             hasThinking = true
@@ -240,14 +260,14 @@ export const generateAIResponse = internalAction({
           }
 
           // Accumulate thinking content
-          thinkingContent += chunk.textDelta
+          thinkingContent += chunk.text
 
           // Update thinking content progressively
           await ctx.runMutation(internal.messages.updateThinkingContent, {
             messageId,
             thinkingContent,
           })
-        } else if (chunk.type === "step-finish" || chunk.type === "finish") {
+        } else if (chunk.type === "finish-step" || chunk.type === "finish") {
           // End of reasoning phase or stream completion
           if (isInThinkingPhase && hasThinking) {
             isInThinkingPhase = false
@@ -267,7 +287,7 @@ export const generateAIResponse = internalAction({
 
       if (fullContent.trim() === "") {
         throw new Error(
-          `${args.model} returned empty response - check API key and quota`,
+          `${provider} returned empty response - check API key and quota`,
         )
       }
 
@@ -276,25 +296,26 @@ export const generateAIResponse = internalAction({
         messageId,
       })
     } catch (error) {
-      console.error(`Error generating ${args.model} response:`, error)
+      console.error("Error generating response:", error)
 
       // If we have a messageId, update it with error, otherwise create new error message
       if (messageId) {
         await ctx.runMutation(internal.messages.updateStreamingMessage, {
           messageId,
-          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your ${args.model} API key.`,
+          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
         })
         await ctx.runMutation(internal.messages.completeStreamingMessage, {
           messageId,
         })
       } else {
+        const provider = getProviderFromModelId(args.modelId as ModelId)
         const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         await ctx.runMutation(internal.messages.createErrorMessage, {
           threadId: args.threadId,
           streamId,
-          model: args.model,
+          provider,
           modelId: args.modelId,
-          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your ${args.model} API key.`,
+          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
         })
       }
     }
@@ -336,8 +357,8 @@ export const createStreamingMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
     streamId: v.string(),
-    model: v.union(v.literal("openai"), v.literal("anthropic")),
-    modelId: v.string(),
+    provider: modelProviderValidator,
+    modelId: modelIdValidator,
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
@@ -347,7 +368,7 @@ export const createStreamingMessage = internalMutation({
       body: "", // Will be updated as chunks arrive
       timestamp: now,
       messageType: "assistant",
-      model: args.model,
+      model: args.provider,
       isStreaming: true,
       streamId: args.streamId,
       isComplete: false,
@@ -395,8 +416,8 @@ export const createErrorMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
     streamId: v.string(),
-    model: v.union(v.literal("openai"), v.literal("anthropic")),
-    modelId: v.optional(v.string()),
+    provider: modelProviderValidator,
+    modelId: v.optional(modelIdValidator),
     errorMessage: v.string(),
   },
   returns: v.null(),
@@ -407,7 +428,7 @@ export const createErrorMessage = internalMutation({
       body: args.errorMessage,
       timestamp: now,
       messageType: "assistant",
-      model: args.model,
+      model: args.provider,
       modelId: args.modelId,
       isStreaming: false,
       streamId: args.streamId,
