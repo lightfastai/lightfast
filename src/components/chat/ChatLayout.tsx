@@ -1,14 +1,10 @@
-"use client"
-
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import dynamic from "next/dynamic"
-import { Suspense, useMemo } from "react"
-import { usePathname } from "next/navigation"
-import type { Id } from "../../../convex/_generated/dataModel"
+import { Suspense } from "react"
 import { ServerSidebar } from "./sidebar/ServerSidebar"
 
 const DynamicChatTitle = dynamic(
@@ -28,26 +24,8 @@ const DynamicTokenUsageHeader = dynamic(
   },
 )
 
-const DynamicShareButton = dynamic(
-  () => import("./ShareButton").then((mod) => mod.ShareButton),
-  {
-    ssr: false,
-  },
-)
-
-// Client component for chat header to access pathname
-function ChatHeader() {
-  const pathname = usePathname()
-
-  // Extract thread ID from pathname
-  const currentThreadId = useMemo(() => {
-    if (pathname === "/chat") {
-      return null
-    }
-    const match = pathname.match(/^\/chat\/(.+)$/)
-    return match ? (match[1] as Id<"threads">) : null
-  }, [pathname])
-
+// Server component for chat header - can be static with PPR
+async function ChatHeader() {
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 px-4">
       <SidebarTrigger className="-ml-1" />
@@ -58,11 +36,6 @@ function ChatHeader() {
           <DynamicChatTitle />
         </Suspense>
       </div>
-      {currentThreadId && (
-        <Suspense fallback={null}>
-          <DynamicShareButton threadId={currentThreadId} />
-        </Suspense>
-      )}
       <Suspense
         fallback={
           <div className="flex items-center gap-2">
@@ -81,7 +54,7 @@ interface ChatLayoutProps {
   children: React.ReactNode
 }
 
-// Main layout component
+// Main server layout component
 export function ChatLayout({ children }: ChatLayoutProps) {
   return (
     <SidebarProvider>
