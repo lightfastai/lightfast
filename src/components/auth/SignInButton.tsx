@@ -15,7 +15,7 @@ interface SignInButtonProps {
     | "secondary"
     | "ghost"
     | "link"
-  provider?: "github" // Can be extended for other providers
+  provider?: "github" | "anonymous" // Extended to include anonymous
   children?: React.ReactNode
   onSignInStart?: () => void
   onSignInComplete?: () => void
@@ -42,6 +42,26 @@ export function SignInButton({
     }
   }
 
+  // Default content based on provider
+  const getDefaultContent = () => {
+    switch (provider) {
+      case "anonymous":
+        return (
+          <>
+            <LogIn className="w-4 h-4 mr-2" />
+            Continue as Guest
+          </>
+        )
+      case "github":
+        return (
+          <>
+            <LogIn className="w-4 h-4 mr-2" />
+            Sign in with GitHub
+          </>
+        )
+    }
+  }
+
   return (
     <Button
       onClick={handleSignIn}
@@ -49,12 +69,7 @@ export function SignInButton({
       size={size}
       variant={variant}
     >
-      {children || (
-        <>
-          <LogIn className="w-4 h-4 mr-2" />
-          Sign in with GitHub
-        </>
-      )}
+      {children || getDefaultContent()}
     </Button>
   )
 }

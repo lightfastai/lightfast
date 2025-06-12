@@ -195,7 +195,7 @@ function ChatSidebar({
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter>
         <UserDropdown className="w-full justify-start" />
       </SidebarFooter>
     </Sidebar>

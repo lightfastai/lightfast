@@ -15,6 +15,7 @@ import { useQuery } from "convex/react"
 import { ChevronDown, LogOut, Settings, User } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
+import { cn } from "../../lib/utils"
 
 interface UserDropdownProps {
   className?: string
@@ -57,7 +58,7 @@ export function UserDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className={`gap-2 h-10 ${className || ""}`}>
+        <Button variant="ghost" className={cn("gap-2 h-10", className)}>
           <Avatar className="w-6 h-6">
             {currentUser?.image && (
               <AvatarImage

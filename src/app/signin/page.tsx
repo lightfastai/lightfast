@@ -1,11 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { Github } from "lucide-react"
+import { Github, UserIcon } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { SignInButton } from "../../components/auth/SignInButton"
 import { redirect } from "next/navigation"
 import { isAuthenticated } from "../../lib/auth"
 import { AuthRedirectHandler } from "../../components/auth/AuthRedirectHandler"
+import { isNonProduction, isVercelPreview } from "@/env"
 
 export const metadata: Metadata = {
   title: "Sign In - Lightfast",
@@ -48,10 +49,23 @@ function SignInPageContent() {
               </p>
             </div>
 
-            <SignInButton size="lg" className="w-full">
-              <Github className="w-5 h-5 mr-2" />
-              Continue with GitHub
-            </SignInButton>
+            <div className="space-y-3">
+              {/* Hide GitHub login in Vercel previews */}
+              {!isVercelPreview() && (
+                <SignInButton size="lg" className="w-full" provider="github">
+                  <Github className="w-5 h-5 mr-2" />
+                  Continue with GitHub
+                </SignInButton>
+              )}
+
+              {/* Show anonymous login in all non-production environments */}
+              {isNonProduction() && (
+                <SignInButton size="lg" className="w-full" provider="anonymous">
+                  <UserIcon className="w-5 h-5 mr-2" />
+                  Continue as Guest
+                </SignInButton>
+              )}
+            </div>
 
             <div className="mt-6 text-center">
               <p className="text-xs text-muted-foreground">
