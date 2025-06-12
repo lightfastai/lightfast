@@ -16,17 +16,13 @@ export const metadata: Metadata = {
 }
 
 export default async function ProfilePage() {
-  // Check authentication on the server side
-  const authenticated = await isAuthenticated()
+  // Check authentication and get current user information concurrently
+  const [authenticated, user] = await Promise.all([
+    isAuthenticated(),
+    getCurrentUser(),
+  ])
 
-  if (!authenticated) {
-    redirect("/signin")
-  }
-
-  // Get current user information
-  const user = await getCurrentUser()
-
-  if (!user) {
+  if (!authenticated || !user) {
     redirect("/signin")
   }
 

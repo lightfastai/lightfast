@@ -3,7 +3,9 @@ import { Github } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { SignInButton } from "../../components/auth/SignInButton"
-import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler"
+import { redirect } from "next/navigation"
+import { isAuthenticated } from "../../lib/auth"
+import { AuthRedirectHandler } from "../../components/auth/AuthRedirectHandler"
 
 export const metadata: Metadata = {
   title: "Sign In - Lightfast",
@@ -33,9 +35,9 @@ export const metadata: Metadata = {
 // Server-rendered signin page
 function SignInPageContent() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="shadow-xl bg-background/80 backdrop-blur-sm">
+        <Card className="shadow-xl bg-background">
           <CardContent className="p-8">
             <div className="text-center mb-6">
               <h2 className="text-xl font-semibold mb-2">
@@ -46,11 +48,7 @@ function SignInPageContent() {
               </p>
             </div>
 
-            <SignInButton
-              className="w-full h-12 text-base font-medium relative overflow-hidden group"
-              size="lg"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <SignInButton size="lg" className="w-full">
               <Github className="w-5 h-5 mr-2" />
               Continue with GitHub
             </SignInButton>
@@ -82,7 +80,13 @@ function SignInPageContent() {
   )
 }
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const [authenticated] = await Promise.all([isAuthenticated()])
+
+  if (authenticated) {
+    redirect("/chat")
+  }
+
   return (
     <>
       {/* Client component handles auth redirects for authenticated users */}

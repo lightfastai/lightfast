@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useAuthActions } from "@convex-dev/auth/react"
 import { LogIn } from "lucide-react"
+import { cn } from "../../lib/utils"
 
 interface SignInButtonProps {
   className?: string
@@ -34,7 +35,7 @@ export function SignInButton({
   const handleSignIn = async () => {
     try {
       onSignInStart?.()
-      await signIn(provider)
+      await signIn(provider, { redirectTo: "/chat" })
       onSignInComplete?.()
     } catch (error) {
       console.error("Error signing in:", error)
@@ -44,7 +45,7 @@ export function SignInButton({
   return (
     <Button
       onClick={handleSignIn}
-      className={className}
+      className={cn("w-full cursor-pointer", className)}
       size={size}
       variant={variant}
     >
