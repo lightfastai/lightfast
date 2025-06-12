@@ -5,7 +5,7 @@
 export type ModelProvider = "openai" | "anthropic"
 
 export type OpenAIModel = "gpt-4o-mini"
-export type AnthropicModel = "claude-sonnet-4-20250514"
+export type AnthropicModel = "claude-3-5-sonnet-20241022"
 
 export interface ModelConfig {
   id: string

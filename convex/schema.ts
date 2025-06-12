@@ -24,5 +24,8 @@ export default defineSchema({
     isComplete: v.optional(v.boolean()),
     thinkingStartedAt: v.optional(v.number()),
     thinkingCompletedAt: v.optional(v.number()),
+    thinkingContent: v.optional(v.string()),
+    isThinking: v.optional(v.boolean()),
+    hasThinkingContent: v.optional(v.boolean()),
   }).index("by_thread", ["threadId"]),
 })

@@ -31,6 +31,9 @@ export const list = query({
       isComplete: v.optional(v.boolean()),
       thinkingStartedAt: v.optional(v.number()),
       thinkingCompletedAt: v.optional(v.number()),
+      thinkingContent: v.optional(v.string()),
+      isThinking: v.optional(v.boolean()),
+      hasThinkingContent: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -165,30 +168,123 @@ export const generateAIResponse = internalAction({
       // Choose the appropriate model using updated model IDs for v5
       const selectedModel =
         args.model === "anthropic"
-          ? anthropic("claude-sonnet-4-20250514") // Latest Claude Sonnet 4
+          ? anthropic("claude-3-5-sonnet-20241022") // Use Claude 3.5 Sonnet which supports reasoning
           : openai("gpt-4o-mini")
 
-      // Stream response using AI SDK v5
-      const { textStream } = await streamText({
+      // Stream response using AI SDK v5 with full stream for reasoning support
+      const streamOptions: Parameters<typeof streamText>[0] = {
         model: selectedModel,
         messages: messages,
         temperature: 0.7,
-      })
+      }
+
+      // For Claude, we need to handle reasoning differently
+      if (args.model === "anthropic") {
+        // Add system prompt to encourage reasoning
+        streamOptions.system =
+          "You are a helpful AI assistant. Think through your response step by step before answering."
+      }
+
+      const { fullStream } = await streamText(streamOptions)
 
       let fullContent = ""
+      let thinkingContent = ""
+      let isInThinkingPhase = false
+      let hasThinking = false
+      let reasoningStarted = false
 
       console.log("Starting to process v5 stream chunks...")
 
       // Process each chunk as it arrives from the stream
-      for await (const chunk of textStream) {
-        console.log("Received v5 chunk:", chunk)
-        fullContent += chunk
+      for await (const chunk of fullStream) {
+        console.log("Received v5 chunk type:", chunk.type)
 
-        // Update the message body progressively
-        await ctx.runMutation(internal.messages.updateStreamingMessage, {
-          messageId,
-          content: fullContent,
-        })
+        // Handle different types of chunks
+        if (chunk.type === "text-delta" && chunk.textDelta) {
+          // For Claude, reasoning content might come in a specific format
+          const text = chunk.textDelta
+
+          if (args.model === "anthropic") {
+            // Claude's reasoning might be prefixed or in a specific format
+            // Check if this is reasoning content
+            if (
+              text.includes("[REASONING]") ||
+              text.includes("Let me think") ||
+              text.includes("I need to") ||
+              text.includes("First,") ||
+              (!reasoningStarted &&
+                (text.includes("Step") || text.includes("think")))
+            ) {
+              if (!hasThinking) {
+                isInThinkingPhase = true
+                hasThinking = true
+                reasoningStarted = true
+                // Update message to indicate thinking phase
+                await ctx.runMutation(internal.messages.updateThinkingState, {
+                  messageId,
+                  isThinking: true,
+                  hasThinkingContent: true,
+                })
+              }
+            }
+
+            // Check for end of reasoning
+            if (
+              reasoningStarted &&
+              (text.includes("[/REASONING]") ||
+                text.includes("Based on") ||
+                text.includes("Therefore") ||
+                text.includes("In conclusion") ||
+                text.includes("So,"))
+            ) {
+              if (isInThinkingPhase) {
+                isInThinkingPhase = false
+                // Mark end of thinking phase
+                await ctx.runMutation(internal.messages.updateThinkingState, {
+                  messageId,
+                  isThinking: false,
+                  hasThinkingContent: true,
+                })
+              }
+            }
+
+            // Accumulate content
+            if (isInThinkingPhase) {
+              thinkingContent += text
+              // Update thinking content progressively
+              await ctx.runMutation(internal.messages.updateThinkingContent, {
+                messageId,
+                thinkingContent,
+              })
+            } else {
+              fullContent += text
+            }
+          } else {
+            // Non-anthropic models
+            fullContent += text
+          }
+
+          // Update the message body progressively (only non-thinking content)
+          if (!isInThinkingPhase) {
+            await ctx.runMutation(internal.messages.updateStreamingMessage, {
+              messageId,
+              content: fullContent,
+            })
+          }
+        } else if (
+          chunk.type === "step-finish" &&
+          chunk.finishReason === "stop"
+        ) {
+          // Handle completion
+          if (isInThinkingPhase) {
+            // Make sure we close thinking phase
+            await ctx.runMutation(internal.messages.updateThinkingState, {
+              messageId,
+              isThinking: false,
+              hasThinkingContent: hasThinking,
+            })
+          }
+        }
       }
 
       console.log(
@@ -341,6 +437,38 @@ export const createErrorMessage = internalMutation({
       thinkingCompletedAt: now, // Error occurred immediately
     })
 
+    return null
+  },
+})
+
+// Internal mutation to update thinking state
+export const updateThinkingState = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    isThinking: v.boolean(),
+    hasThinkingContent: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, {
+      isThinking: args.isThinking,
+      hasThinkingContent: args.hasThinkingContent,
+    })
+    return null
+  },
+})
+
+// Internal mutation to update thinking content
+export const updateThinkingContent = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    thinkingContent: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, {
+      thinkingContent: args.thinkingContent,
+    })
     return null
   },
 })
