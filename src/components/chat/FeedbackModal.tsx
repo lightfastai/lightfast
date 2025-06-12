@@ -1,7 +1,6 @@
 "use client"
 
 import React from "react"
-import { ThumbsUp, ThumbsDown } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -14,35 +13,67 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
-import type { Id } from "../../../convex/_generated/dataModel"
+import type { Doc, Id } from "../../../convex/_generated/dataModel"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+
+const feedbackOptions = [
+  "Incorrect information",
+  "Instructions ignored",
+  "Being lazy",
+  "Don't like style",
+  "Bad recommendation",
+  "Other",
+] as const
+
+type FeedbackReason = (typeof feedbackOptions)[number]
 
 interface FeedbackModalProps {
   isOpen: boolean
   onClose: () => void
   messageId: Id<"messages">
-  initialRating: "positive" | "negative"
-  existingComment?: string
+  existingFeedback?: Doc<"feedback"> | null
 }
 
 export function FeedbackModal({
   isOpen,
   onClose,
   messageId,
-  initialRating,
-  existingComment,
+  existingFeedback,
 }: FeedbackModalProps) {
-  const [comment, setComment] = React.useState(existingComment || "")
+  const [comment, setComment] = React.useState("")
+  const [selectedReasons, setSelectedReasons] = React.useState<
+    FeedbackReason[]
+  >([])
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setComment(existingFeedback?.comment || "")
+      setSelectedReasons(
+        (existingFeedback?.reasons as FeedbackReason[] | undefined) || [],
+      )
+    }
+  }, [isOpen, existingFeedback])
+
   const submitFeedback = useMutation(api.feedback.submitFeedback)
+
+  const handleReasonChange = (reason: FeedbackReason) => {
+    setSelectedReasons((prev) =>
+      prev.includes(reason)
+        ? prev.filter((r) => r !== reason)
+        : [...prev, reason],
+    )
+  }
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
       await submitFeedback({
         messageId,
-        rating: initialRating,
+        rating: "negative",
         comment: comment.trim() || undefined,
+        reasons: selectedReasons,
       })
       onClose()
     } catch (error) {
@@ -56,37 +87,38 @@ export function FeedbackModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {initialRating === "positive" ? (
-              <>
-                <ThumbsUp className="h-4 w-4 text-green-600" />
-                Provide additional feedback
-              </>
-            ) : (
-              <>
-                <ThumbsDown className="h-4 w-4 text-red-600" />
-                What went wrong?
-              </>
-            )}
-          </DialogTitle>
+          <DialogTitle>Give feedback</DialogTitle>
           <DialogDescription>
-            {initialRating === "positive"
-              ? "Help us understand what made this response helpful."
-              : "Your feedback helps us improve our responses."}
+            Provide additional feedback on this message. Select all that apply.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4">
+        <div className="grid grid-cols-2 gap-4 py-4">
+          {feedbackOptions.map((reason) => (
+            <div key={reason} className="flex items-center space-x-2">
+              <Checkbox
+                id={reason}
+                checked={selectedReasons.includes(reason)}
+                onCheckedChange={() => handleReasonChange(reason)}
+              />
+              <Label
+                htmlFor={reason}
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                {reason}
+              </Label>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="comment">How can we improve? (optional)</Label>
           <Textarea
-            placeholder={
-              initialRating === "positive"
-                ? "What did you like about this response?"
-                : "What could have been better?"
-            }
+            id="comment"
+            placeholder="Your feedback..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             className="min-h-[100px]"
-            autoFocus
           />
         </div>
 
@@ -94,8 +126,14 @@ export function FeedbackModal({
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit feedback"}
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              isSubmitting ||
+              (selectedReasons.length === 0 && comment.trim() === "")
+            }
+          >
+            {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
         </DialogFooter>
       </DialogContent>

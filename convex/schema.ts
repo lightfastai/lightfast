@@ -101,6 +101,7 @@ export default defineSchema({
     threadId: v.id("threads"),
     rating: v.union(v.literal("positive"), v.literal("negative")),
     comment: v.optional(v.string()),
+    reasons: v.optional(v.array(v.string())),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

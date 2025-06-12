@@ -8,6 +8,7 @@ export const submitFeedback = mutation({
     messageId: v.id("messages"),
     rating: v.union(v.literal("positive"), v.literal("negative")),
     comment: v.optional(v.string()),
+    reasons: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx)
@@ -36,6 +37,7 @@ export const submitFeedback = mutation({
       await ctx.db.patch(existingFeedback._id, {
         rating: args.rating,
         comment: args.comment,
+        reasons: args.reasons,
         updatedAt: now,
       })
       return existingFeedback._id
@@ -48,6 +50,7 @@ export const submitFeedback = mutation({
       threadId: message.threadId,
       rating: args.rating,
       comment: args.comment,
+      reasons: args.reasons,
       createdAt: now,
       updatedAt: now,
     })
