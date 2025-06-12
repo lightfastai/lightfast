@@ -443,7 +443,7 @@ export const completeStreamingMessage = internalMutation({
       await updateThreadUsage(
         ctx,
         message.threadId,
-        message.model || "unknown",
+        message.modelId || message.model || "unknown",
         args.usage,
       )
     }
@@ -531,6 +531,12 @@ async function updateThreadUsage(
 
 // Helper to get full model ID for consistent tracking across providers
 function getFullModelId(model: string): string {
+  // If it's already a full model ID, return as-is
+  if (model.includes("-")) {
+    return model
+  }
+
+  // Otherwise, convert provider names to default model IDs
   switch (model) {
     case "anthropic":
       return "claude-sonnet-4-20250514"
