@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/tooltip"
 import { DEFAULT_MODEL_ID, getAllModels, getModelById } from "@/lib/ai"
 import { Send } from "lucide-react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react"
 
 interface ChatInputProps {
   onSendMessage: (message: string, modelId: string) => Promise<void> | void
@@ -29,37 +29,43 @@ interface ChatInputProps {
   className?: string
 }
 
-export function ChatInput({
+const ChatInputComponent = ({
   onSendMessage,
   isLoading = false,
   placeholder = "Message AI assistant...",
   disabled = false,
   maxLength = 4000,
   className = "",
-}: ChatInputProps) {
+}: ChatInputProps) => {
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
   const [selectedModelId, setSelectedModelId] =
     useState<string>(DEFAULT_MODEL_ID)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const allModels = getAllModels()
-  const selectedModel = getModelById(selectedModelId)
-
-  // Group models by provider
-  const modelsByProvider = allModels.reduce(
-    (acc, model) => {
-      if (!acc[model.provider]) {
-        acc[model.provider] = []
-      }
-      acc[model.provider].push(model)
-      return acc
-    },
-    {} as Record<string, typeof allModels>,
+  // Memoize expensive computations
+  const allModels = useMemo(() => getAllModels(), [])
+  const selectedModel = useMemo(
+    () => getModelById(selectedModelId),
+    [selectedModelId],
   )
 
-  // Auto-resize textarea within container constraint
-  const adjustTextareaHeight = () => {
+  // Memoize models grouping
+  const modelsByProvider = useMemo(() => {
+    return allModels.reduce(
+      (acc, model) => {
+        if (!acc[model.provider]) {
+          acc[model.provider] = []
+        }
+        acc[model.provider].push(model)
+        return acc
+      },
+      {} as Record<string, typeof allModels>,
+    )
+  }, [allModels])
+
+  // Memoize textarea height adjustment
+  const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current
     if (!textarea) return
 
@@ -67,13 +73,14 @@ export function ChatInput({
     textarea.style.height = "auto"
     // Let textarea grow naturally, container will handle overflow
     textarea.style.height = `${textarea.scrollHeight}px`
-  }
+  }, [])
 
   useEffect(() => {
     adjustTextareaHeight()
-  }, [message])
+  }, [message, adjustTextareaHeight])
 
-  const handleSendMessage = async () => {
+  // Memoize event handlers
+  const handleSendMessage = useCallback(async () => {
     if (!message.trim() || isSending || disabled) return
 
     setIsSending(true)
@@ -85,16 +92,34 @@ export function ChatInput({
     } finally {
       setIsSending(false)
     }
-  }
+  }, [message, isSending, disabled, onSendMessage, selectedModelId])
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
-    }
-  }
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault()
+        handleSendMessage()
+      }
+    },
+    [handleSendMessage],
+  )
 
-  const canSend = message.trim() && !isSending && !disabled && !isLoading
+  const handleMessageChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setMessage(e.target.value)
+    },
+    [],
+  )
+
+  const handleModelChange = useCallback((value: string) => {
+    setSelectedModelId(value)
+  }, [])
+
+  // Memoize computed values
+  const canSend = useMemo(
+    () => message.trim() && !isSending && !disabled && !isLoading,
+    [message, isSending, disabled, isLoading],
+  )
 
   return (
     <div className={`p-4 flex-shrink-0 ${className}`}>
@@ -110,7 +135,7 @@ export function ChatInput({
                 <Textarea
                   ref={textareaRef}
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={handleMessageChange}
                   onKeyPress={handleKeyPress}
                   placeholder={placeholder}
                   className="w-full resize-none border-0 focus-visible:ring-0 whitespace-pre-wrap break-words p-3"
@@ -127,7 +152,7 @@ export function ChatInput({
               <div className="flex items-center justify-between p-2 bg-input/10">
                 <Select
                   value={selectedModelId}
-                  onValueChange={setSelectedModelId}
+                  onValueChange={handleModelChange}
                 >
                   <SelectTrigger className="h-6 w-[140px] text-xs border-0">
                     <SelectValue>{selectedModel?.displayName}</SelectValue>
@@ -194,3 +219,6 @@ export function ChatInput({
     </div>
   )
 }
+
+// Memoize the entire component to prevent unnecessary re-renders
+export const ChatInput = memo(ChatInputComponent)
