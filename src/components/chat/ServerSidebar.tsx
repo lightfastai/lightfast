@@ -1,16 +1,8 @@
 import { Suspense } from "react"
-import { fetchQuery } from "convex/nextjs"
-import { api } from "../../../convex/_generated/api"
 import { SimplifiedChatSidebar } from "./ChatSidebar"
 import { SidebarSkeleton } from "./SidebarSkeleton"
-import dynamic from "next/dynamic"
-
-const ClientSidebarFallback = dynamic(
-  () => import("./ClientSidebar").then((mod) => mod.ClientSidebar),
-  {
-    ssr: true,
-  },
-)
+import { ClientSidebar } from "./ClientSidebar"
+import { env } from "../../env"
 
 // Server component wrapper for the sidebar that fetches threads
 export async function ServerSidebar() {
@@ -21,9 +13,19 @@ export async function ServerSidebar() {
   )
 }
 
-// Server component that fetches the threads data
+// Server component that handles data fetching with build-time safety
 async function SidebarWithData() {
+  // During build time, always fall back to client-side loading
+  // This prevents build failures when the Convex backend isn't available
+  if (env.NODE_ENV === "production" && !env.NEXT_PUBLIC_CONVEX_URL) {
+    return <SidebarFallback />
+  }
+
   try {
+    // Import fetchQuery dynamically to avoid issues during build
+    const { fetchQuery } = await import("convex/nextjs")
+    const { api } = await import("../../../convex/_generated/api")
+
     // Fetch threads on the server - this will be cached and streamed with PPR
     const threads = await fetchQuery(api.threads.list)
 
@@ -42,7 +44,7 @@ async function SidebarWithData() {
 function SidebarFallback() {
   return (
     <Suspense fallback={<SidebarSkeleton />}>
-      <ClientSidebarFallback />
+      <ClientSidebar />
     </Suspense>
   )
 }

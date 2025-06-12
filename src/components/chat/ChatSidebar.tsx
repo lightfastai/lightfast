@@ -1,7 +1,4 @@
-"use client"
-
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { Plus } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -13,11 +10,11 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { UserDropdown } from "../auth/UserDropdown"
+import { ActiveMenuItem } from "./ActiveMenuItem"
 
 type Thread = Doc<"threads">
 
@@ -25,7 +22,7 @@ interface SimplifiedChatSidebarProps {
   threads: Thread[]
 }
 
-// Lightfast logo component
+// Lightfast logo component - can be server-rendered
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -50,6 +47,7 @@ function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
+// Server-side function to group threads by date - no client needed
 function groupThreadsByDate(threads: Thread[]) {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -84,8 +82,8 @@ function groupThreadsByDate(threads: Thread[]) {
   return groups
 }
 
+// Main server component - renders immediately with SSR
 export function SimplifiedChatSidebar({ threads }: SimplifiedChatSidebarProps) {
-  const pathname = usePathname()
   const groupedThreads = groupThreadsByDate(threads)
   const categoryOrder = [
     "Today",
@@ -110,12 +108,15 @@ export function SimplifiedChatSidebar({ threads }: SimplifiedChatSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <Link href="/chat" prefetch>
-                  <SidebarMenuButton size="default" className="h-10 w-full">
-                    <Plus className="w-4 h-4" />
-                    <span>New Chat</span>
-                  </SidebarMenuButton>
-                </Link>
+                <ActiveMenuItem
+                  threadId="new"
+                  href="/chat"
+                  className="h-10 w-full"
+                  size="default"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>New Chat</span>
+                </ActiveMenuItem>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -141,34 +142,24 @@ export function SimplifiedChatSidebar({ threads }: SimplifiedChatSidebarProps) {
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="space-y-0.5">
-                      {categoryThreads.map((thread) => {
-                        const isActive = pathname === `/chat/${thread._id}`
-
-                        return (
-                          <SidebarMenuItem key={thread._id}>
-                            <Link
-                              href={`/chat/${thread._id}`}
-                              prefetch={true} // Aggressive prefetching for better UX
+                      {categoryThreads.map((thread) => (
+                        <SidebarMenuItem key={thread._id}>
+                          <ActiveMenuItem
+                            threadId={thread._id}
+                            href={`/chat/${thread._id}`}
+                          >
+                            <span
+                              className={`truncate text-sm font-medium ${
+                                thread.isTitleGenerating
+                                  ? "animate-pulse blur-[0.5px] opacity-70"
+                                  : ""
+                              }`}
                             >
-                              <SidebarMenuButton
-                                isActive={isActive}
-                                className="w-full h-auto p-2.5 text-left"
-                                size="default"
-                              >
-                                <span
-                                  className={`truncate text-sm font-medium ${
-                                    thread.isTitleGenerating
-                                      ? "animate-pulse blur-[0.5px] opacity-70"
-                                      : ""
-                                  }`}
-                                >
-                                  {thread.title}
-                                </span>
-                              </SidebarMenuButton>
-                            </Link>
-                          </SidebarMenuItem>
-                        )
-                      })}
+                              {thread.title}
+                            </span>
+                          </ActiveMenuItem>
+                        </SidebarMenuItem>
+                      ))}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>

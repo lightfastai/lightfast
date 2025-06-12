@@ -50,7 +50,7 @@ export function SidebarSkeleton() {
                 {/* Skeleton thread items */}
                 {Array.from(
                   { length: 5 },
-                  (_, i) =>
+                  () =>
                     `skeleton-thread-${Math.random().toString(36).substr(2, 9)}`,
                 ).map((id) => (
                   <SidebarMenuItem key={id}>
