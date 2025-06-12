@@ -7,9 +7,8 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Github } from "lucide-react"
 import Link from "next/link"
-import { SignInButton } from "./SignInButton"
+import { SignInOptions } from "./SignInOptions"
 
 interface SignInDialogProps {
   open: boolean
@@ -35,15 +34,11 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
               </p>
             </div>
 
-            <SignInButton
-              className="w-full h-12 text-base font-medium relative overflow-hidden group"
-              size="lg"
+            <SignInOptions
               onSignInComplete={() => onOpenChange(false)}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              <Github className="w-5 h-5 mr-2" />
-              Continue with GitHub
-            </SignInButton>
+              buttonClassName="w-full h-12 text-base font-medium"
+              showAnimations={true}
+            />
 
             <div className="mt-6 text-center">
               <p className="text-xs text-muted-foreground">
