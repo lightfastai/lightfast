@@ -94,8 +94,6 @@ export default defineSchema({
     .index("by_thread", ["threadId"])
     .index("by_stream_id", ["streamId"]),
 
-<<<<<<< cursor/explore-feedback-mechanism-implementation-8e48
-  // Feedback table for message ratings and comments
   feedback: defineTable({
     messageId: v.id("messages"),
     userId: v.id("users"),
@@ -107,9 +105,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_message", ["messageId"])
-    .index("by_user_message", ["userId", "messageId"])
-=======
-  // Simple shares table for read-only sharing
+    .index("by_user_message", ["userId", "messageId"]),
+
   shares: defineTable({
     threadId: v.id("threads"),
     shareId: v.string(),
@@ -118,6 +115,5 @@ export default defineSchema({
     isActive: v.boolean(),
   })
     .index("by_shareId", ["shareId"])
->>>>>>> main
     .index("by_thread", ["threadId"]),
 })
