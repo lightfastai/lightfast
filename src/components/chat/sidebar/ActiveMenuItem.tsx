@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { SidebarMenuButton } from "@/components/ui/sidebar"
-import type { Id } from "../../../convex/_generated/dataModel"
+import type { Id } from "../../../../convex/_generated/dataModel"
 
 interface ActiveMenuItemProps {
   threadId: Id<"threads"> | "new"

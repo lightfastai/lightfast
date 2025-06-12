@@ -31,7 +31,7 @@ export function ChatTitleClient() {
     if (currentThreadId === "new") {
       return "New Chat"
     }
-    return currentThread?.title || "AI Chat"
+    return currentThread?.title || ""
   }
 
   return <h1 className="text-lg font-semibold">{getTitle()}</h1>

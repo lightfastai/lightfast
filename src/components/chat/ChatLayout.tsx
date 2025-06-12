@@ -5,21 +5,20 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { ServerSidebar } from "./ServerSidebar"
 import dynamic from "next/dynamic"
+import { ServerSidebar } from "./sidebar/ServerSidebar"
 
-interface ServerChatLayoutProps {
-  children: React.ReactNode
-}
-
-const DynamicChatTitle = dynamic(() =>
-  import("./ChatTitleClient").then((mod) => mod.ChatTitleClient),
+const DynamicChatTitle = dynamic(
+  () => import("./ChatTitleClient").then((mod) => mod.ChatTitleClient),
+  {
+    ssr: true,
+  },
 )
 
 // Server component for chat header - can be static with PPR
 async function ChatHeader() {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+    <header className="flex h-16 shrink-0 items-center gap-2 px-4">
       <SidebarTrigger className="-ml-1" />
       <div className="flex items-center gap-2 flex-1">
         <Suspense
@@ -36,8 +35,12 @@ async function ChatHeader() {
   )
 }
 
+interface ChatLayoutProps {
+  children: React.ReactNode
+}
+
 // Main server layout component
-export function ServerChatLayout({ children }: ServerChatLayoutProps) {
+export function ChatLayout({ children }: ChatLayoutProps) {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">

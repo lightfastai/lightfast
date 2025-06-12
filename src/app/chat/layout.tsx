@@ -1,5 +1,5 @@
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { ServerChatLayout } from "@/components/chat/ServerChatLayout"
+import { ChatLayout as ChatLayoutImplementation } from "@/components/chat/ChatLayout"
 import type React from "react"
 
 interface ChatLayoutProps {
@@ -10,7 +10,7 @@ interface ChatLayoutProps {
 export default function ChatLayout({ children }: ChatLayoutProps) {
   return (
     <TooltipProvider>
-      <ServerChatLayout>{children}</ServerChatLayout>
+      <ChatLayoutImplementation>{children}</ChatLayoutImplementation>
     </TooltipProvider>
   )
 }

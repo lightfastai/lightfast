@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Suspense } from "react"
 import type { Preloaded } from "convex/react"
-import type { api } from "../../../convex/_generated/api"
+import type { api } from "../../../../convex/_generated/api"
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { UserDropdown } from "../auth/UserDropdown"
+import { UserDropdown } from "../../auth/UserDropdown"
 import { ActiveMenuItem } from "./ActiveMenuItem"
 import { PreloadedThreadsList } from "./PreloadedThreadsList"
 
