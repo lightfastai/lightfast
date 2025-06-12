@@ -8,7 +8,7 @@ import type * as React from "react"
 
 type ButtonProps = React.ComponentProps<typeof Button>
 
-export interface CopyButtonProps extends Omit<ButtonProps, "onClick"> {
+export interface ClipboardButtonProps extends Omit<ButtonProps, "onClick"> {
   /**
    * The text to copy to clipboard
    */
@@ -43,7 +43,7 @@ export interface CopyButtonProps extends Omit<ButtonProps, "onClick"> {
   onCopyError?: (error: Error) => void
 }
 
-export function CopyButton({
+export function ClipboardButton({
   text,
   label = "Copy",
   copiedLabel = "Copied!",
@@ -56,7 +56,7 @@ export function CopyButton({
   size = "icon",
   disabled,
   ...props
-}: CopyButtonProps) {
+}: ClipboardButtonProps) {
   const { copy, isCopied, isLoading, error } = useCopyToClipboard({
     timeout,
     onSuccess: onCopySuccess,
@@ -100,13 +100,13 @@ export function CopyButton({
 /**
  * Inline copy button for use within text or code blocks
  */
-export function InlineCopyButton({
+export function InlineClipboardButton({
   text,
   className,
   ...props
-}: Omit<CopyButtonProps, "showLabel" | "size" | "variant">) {
+}: Omit<ClipboardButtonProps, "showLabel" | "size" | "variant">) {
   return (
-    <CopyButton
+    <ClipboardButton
       text={text}
       size="icon"
       variant="ghost"

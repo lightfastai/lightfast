@@ -8,7 +8,7 @@ import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { StreamingMessage } from "./StreamingMessage"
 import { getModelDisplayName } from "@/lib/ai"
-import { CopyButton } from "@/components/ui/copy-button"
+import { ClipboardButton } from "@/components/chat/ClipboardButton"
 import { FeedbackButtons } from "./FeedbackButtons"
 
 // Lightfast logo component
@@ -115,7 +115,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
           <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/message:opacity-100">
             <FeedbackButtons messageId={message._id} />
             {message.body && (
-              <CopyButton
+              <ClipboardButton
                 text={message.body}
                 size="icon"
                 variant="ghost"
