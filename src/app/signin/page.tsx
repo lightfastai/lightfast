@@ -6,7 +6,7 @@ import { SignInButton } from "../../components/auth/SignInButton"
 import { redirect } from "next/navigation"
 import { isAuthenticated } from "../../lib/auth"
 import { AuthRedirectHandler } from "../../components/auth/AuthRedirectHandler"
-import { isNonProduction, isVercelPreview } from "@/env"
+import { isDevelopment, isVercelPreview } from "@/env"
 
 export const metadata: Metadata = {
   title: "Sign In - Lightfast",
@@ -59,7 +59,7 @@ function SignInPageContent() {
               )}
 
               {/* Show anonymous login in all non-production environments */}
-              {isNonProduction() && (
+              {(isVercelPreview() || isDevelopment()) && (
                 <SignInButton size="lg" className="w-full" provider="anonymous">
                   <UserIcon className="w-5 h-5 mr-2" />
                   Continue as Guest
