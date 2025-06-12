@@ -5,6 +5,7 @@ import { useQuery } from "convex/react"
 import { useOptimisticNavigation } from "@/hooks/useOptimisticNavigation"
 import { api } from "../../../convex/_generated/api"
 import { ChatLayout } from "../../components/chat/ChatLayout"
+import type React from "react"
 
 interface ChatLayoutWrapperProps {
   children: React.ReactNode
