@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm"
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
-  node?: unknown
+  node?: unknown // Using unknown instead of any for better type safety
   children?: React.ReactNode
 }
 
@@ -28,7 +28,6 @@ const components: Partial<Components> = {
       return (
         <code
           className={cn(
-            "not-prose",
             "bg-muted rounded-md px-1 py-0.5 text-xs font-mono",
             className,
           )}
@@ -49,7 +48,7 @@ const components: Partial<Components> = {
   // Pre component for code blocks
   pre({ children, className, ...props }: MarkdownComponentProps) {
     return (
-      <div className="not-prose flex flex-col my-2">
+      <div className="flex flex-col my-4">
         <pre
           className={cn(
             "text-foreground bg-muted/50 dark:bg-muted/20",
@@ -102,7 +101,7 @@ const components: Partial<Components> = {
   h1({ children, ...props }: MarkdownComponentProps) {
     return (
       <h1
-        className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6"
+        className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6 first:mt-0"
         {...props}
       >
         {children}
@@ -310,9 +309,7 @@ export interface MarkdownProps {
  */
 const NonMemoizedMarkdown = ({ children, className }: MarkdownProps) => {
   return (
-    <div
-      className={cn("prose prose-sm dark:prose-invert max-w-none", className)}
-    >
+    <div className={cn("w-full", className)}>
       <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
         {children}
       </ReactMarkdown>
