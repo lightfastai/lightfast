@@ -1,316 +1,157 @@
-"use client"
-
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { LandingChatInput } from "@/components/landing/LandingChatInput"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { MessageCircle, Plus, Send, User, Zap } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
-import { useQuery, useMutation } from "convex/react"
-import { api } from "../../convex/_generated/api"
-import type { Doc } from "../../convex/_generated/dataModel"
+import { Zap } from "lucide-react"
+import Link from "next/link"
+import type { Metadata } from "next"
+import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler"
 
-type Message = Doc<"messages">
+export const metadata: Metadata = {
+  title: "Lightfast - Agent-first Chat Experience",
+  description:
+    "Experience the future of AI conversations with Lightfast. Our agent-first approach delivers intelligent, real-time chat interactions that understand context and provide meaningful responses.",
+  keywords: [
+    "AI chat",
+    "artificial intelligence",
+    "agent-first",
+    "real-time chat",
+    "conversational AI",
+    "intelligent chat",
+    "AI assistant",
+    "machine learning",
+    "natural language processing",
+    "Lightfast",
+  ],
+  authors: [{ name: "Lightfast" }],
+  creator: "Lightfast",
+  publisher: "Lightfast",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://lightfast.ai",
+    title: "Lightfast - Agent-first Chat Experience",
+    description:
+      "Experience the future of AI conversations with Lightfast. Our agent-first approach delivers intelligent, real-time chat interactions.",
+    siteName: "Lightfast",
+    images: [
+      {
+        url: "https://lightfast.ai/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Lightfast - Agent-first Chat Experience",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lightfast - Agent-first Chat Experience",
+    description:
+      "Experience the future of AI conversations with our agent-first approach to intelligent chat.",
+    images: ["https://lightfast.ai/og-image.png"],
+    creator: "@lightfast_ai",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: "google-site-verification-code",
+  },
+}
 
-export default function Home() {
-  const [message, setMessage] = useState("")
-  const [author, setAuthor] = useState("User")
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
-
-  // Get all messages with real-time updates
-  const messages = useQuery(api.messages.list)
-  const sendMessage = useMutation(api.messages.send)
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
-    }
-  }, [messages])
-
-  const handleSendMessage = async () => {
-    if (!message.trim()) return
-
-    try {
-      await sendMessage({
-        author,
-        body: message,
-      })
-      setMessage("")
-    } catch (error) {
-      console.error("Error sending message:", error)
-    }
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
-    }
-  }
-
+// Lightfast logo component
+function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <TooltipProvider>
-      <div className="flex h-screen bg-background">
-        {/* Sidebar */}
-        <div className="w-64 border-r bg-muted/40 flex flex-col">
-          {/* New Chat Button */}
-          <div className="p-4">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2"
-                  onClick={() => window.location.reload()}
-                >
-                  <Plus className="w-4 h-4" />
-                  New chat
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Start a new conversation</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          <Separator />
-
-          {/* User Name Input */}
-          <div className="p-4">
-            <label
-              htmlFor="author-input"
-              className="text-sm font-medium mb-2 block"
-            >
-              Your Name
-            </label>
-            <input
-              id="author-input"
-              type="text"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              placeholder="Enter your name"
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background"
-            />
-          </div>
-
-          <Separator />
-
-          {/* Chat History */}
-          <ScrollArea className="flex-1 px-4">
-            <div className="space-y-2 py-2">
-              <div className="p-2 rounded-md hover:bg-accent cursor-pointer group">
-                <div className="flex items-center gap-2 text-sm">
-                  <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                  <span className="truncate">AI Streaming Chat</span>
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    Active
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
-
-          <Separator />
-
-          {/* User Profile */}
-          <div className="p-4">
-            <div className="flex items-center gap-2">
-              <Avatar className="w-8 h-8">
-                <AvatarFallback>
-                  <User className="w-4 h-4" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{author}</p>
-                <p className="text-xs text-muted-foreground">Convex + AI</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Header */}
-          <div className="border-b p-4 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <h1 className="text-lg font-semibold">AI Chat</h1>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Streaming</Badge>
-                <Badge variant="outline">GPT-4o-mini</Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-            <div className="p-4">
-              <div className="space-y-6 max-w-3xl mx-auto">
-                {!messages?.length && (
-                  <div className="text-center text-muted-foreground py-12">
-                    <Zap className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-medium mb-2">
-                      Welcome to AI Chat
-                    </h3>
-                    <p>
-                      Start a conversation with our AI assistant. Messages
-                      stream in real-time!
-                    </p>
-                  </div>
-                )}
-
-                {messages
-                  ?.slice()
-                  .reverse()
-                  .map((msg) => (
-                    <MessageDisplay key={msg._id} message={msg} />
-                  ))}
-              </div>
-            </div>
-          </ScrollArea>
-
-          {/* Input Area */}
-          <div className="border-t p-4 flex-shrink-0">
-            <div className="max-w-3xl mx-auto">
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Message AI assistant..."
-                    className="min-h-[60px] resize-none pr-12"
-                    rows={1}
-                    disabled={!author.trim()}
-                  />
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!message.trim() || !author.trim()}
-                        size="sm"
-                        className="absolute right-2 bottom-2 h-8 w-8 p-0"
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Send message (Enter)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                {!author.trim()
-                  ? "Please enter your name to start chatting"
-                  : "AI responses are generated using Vercel AI SDK with real-time streaming"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </TooltipProvider>
+    <svg
+      width="104"
+      height="70"
+      viewBox="0 0 104 70"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Lightfast"
+      {...props}
+    >
+      <title>Lightfast</title>
+      <path
+        d="M15.3354 57.3195H47.1597V69.7863H0.543457V0.632019H15.3354V57.3195Z"
+        fill="currentColor"
+      />
+      <path
+        d="M79.6831 69.7863H65.2798L89.0532 0.658386H103.457L79.6831 69.7863Z"
+        fill="currentColor"
+      />
+    </svg>
   )
 }
 
-// Component to display individual messages with streaming support
-function MessageDisplay({ message }: { message: Message }) {
-  const [displayText, setDisplayText] = useState(message.body)
-  const [isTyping, setIsTyping] = useState(false)
-
-  // Get chunks for streaming messages
-  const chunks = useQuery(
-    api.messages.getMessageChunks,
-    message.isStreaming ? { messageId: message._id } : "skip",
-  )
-
-  // Update display text as chunks arrive
-  useEffect(() => {
-    if (message.isStreaming && chunks) {
-      const sortedChunks = chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
-      const fullText = sortedChunks.map((chunk) => chunk.content).join("")
-      setDisplayText(fullText)
-      setIsTyping(!message.isComplete && chunks.length > 0)
-    } else {
-      setDisplayText(message.body)
-      setIsTyping(false)
-    }
-  }, [chunks, message.body, message.isStreaming, message.isComplete])
-
-  const isAI = message.messageType === "ai"
-  const isStreaming = message.isStreaming && !message.isComplete
-
+// Server-side header component for landing page
+function LandingHeader() {
   return (
-    <div className={`flex gap-4 ${isAI ? "" : "justify-end"} animate-fade-in`}>
-      {isAI && (
-        <Avatar className="w-8 h-8 shrink-0">
-          <AvatarFallback className="bg-primary text-primary-foreground">
-            <Zap className="w-4 h-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
+    <header className="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Link href="/">
+            <LightfastLogo className="w-6 h-5 text-foreground" />
+          </Link>
+        </div>
+        <Link href="/signin">
+          <Button variant="outline">Sign In</Button>
+        </Link>
+      </div>
+    </header>
+  )
+}
 
-      <Card
-        className={`max-w-2xl ${
-          isAI ? "" : "bg-primary text-primary-foreground"
-        }`}
-      >
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium opacity-70">{message.author}</p>
-            {isStreaming && (
-              <div className="flex items-center text-xs opacity-70">
-                <div className="flex space-x-1">
-                  <div className="w-1 h-1 bg-current rounded-full animate-bounce" />
-                  <div
-                    className="w-1 h-1 bg-current rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  />
-                  <div
-                    className="w-1 h-1 bg-current rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  />
-                </div>
-                <span className="ml-2">typing...</span>
-              </div>
-            )}
+// Landing page component - fully SSR
+function LandingPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <LandingHeader />
+
+      {/* Main content */}
+      <main className="container mx-auto px-4 py-48">
+        <div className="max-w-4xl mx-auto">
+          {/* Hero section */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-muted/50 border rounded-full px-4 py-2 text-sm text-muted-foreground mb-6">
+              <Zap className="w-4 h-4" />
+              Agent-first approach to chats.
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+              What makes a good chat?
+            </h1>
           </div>
 
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {displayText || (isStreaming ? "..." : "")}
-            {isTyping && (
-              <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1 opacity-70" />
-            )}
-          </p>
-
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-xs opacity-70">
-              {new Date(message.timestamp).toLocaleTimeString()}
-            </p>
-            {message.isComplete && isAI && (
-              <Badge variant="secondary" className="text-xs">
-                ✓ Complete
-              </Badge>
-            )}
+          {/* Chat input preview */}
+          <div className="max-w-4xl mx-auto">
+            <LandingChatInput />
           </div>
-        </CardContent>
-      </Card>
-
-      {!isAI && (
-        <Avatar className="w-8 h-8 shrink-0">
-          <AvatarFallback className="bg-secondary">
-            <User className="w-4 h-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
+        </div>
+      </main>
     </div>
+  )
+}
+
+// Main server component - SSR landing page with client-side auth handling
+export default function Home() {
+  return (
+    <>
+      {/* Client component handles auth redirects without affecting SSR */}
+      <AuthRedirectHandler />
+
+      {/* Server-rendered landing page */}
+      <LandingPage />
+    </>
   )
 }

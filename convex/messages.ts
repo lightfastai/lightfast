@@ -1,117 +1,117 @@
+import { openai } from "@ai-sdk/openai"
+import { getAuthUserId } from "@convex-dev/auth/server"
+import { streamText } from "ai"
 import { v } from "convex/values"
-import {
-  mutation,
-  query,
-  internalMutation,
-  internalAction,
-  internalQuery,
-} from "./_generated/server.js"
 import { internal } from "./_generated/api.js"
 import type { Doc, Id } from "./_generated/dataModel.js"
-import { openai } from "@ai-sdk/openai"
-import { streamText } from "ai"
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server.js"
 
 export const list = query({
-  args: {},
+  args: {
+    threadId: v.id("threads"),
+  },
   returns: v.array(
     v.object({
       _id: v.id("messages"),
       _creationTime: v.number(),
-      author: v.string(),
+      threadId: v.id("threads"),
       body: v.string(),
       timestamp: v.number(),
-      messageType: v.union(v.literal("user"), v.literal("ai")),
+      messageType: v.union(v.literal("user"), v.literal("assistant")),
       isStreaming: v.optional(v.boolean()),
       streamId: v.optional(v.string()),
-      chunkIndex: v.optional(v.number()),
       isComplete: v.optional(v.boolean()),
+      thinkingStartedAt: v.optional(v.number()),
+      thinkingCompletedAt: v.optional(v.number()),
     }),
   ),
-  handler: async (ctx) => {
-    return await ctx.db.query("messages").order("desc").take(50)
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      return []
+    }
+
+    // Verify the user owns this thread
+    const thread = await ctx.db.get(args.threadId)
+    if (!thread || thread.userId !== userId) {
+      return []
+    }
+
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
+      .order("desc")
+      .take(50)
   },
 })
 
 export const send = mutation({
   args: {
-    author: v.string(),
+    threadId: v.id("threads"),
     body: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      throw new Error("User must be authenticated")
+    }
+
+    // Verify the user owns this thread
+    const thread = await ctx.db.get(args.threadId)
+    if (!thread || thread.userId !== userId) {
+      throw new Error("Thread not found or access denied")
+    }
+
     // Insert user message
     await ctx.db.insert("messages", {
-      author: args.author,
+      threadId: args.threadId,
       body: args.body,
       timestamp: Date.now(),
       messageType: "user",
     })
 
-    // Schedule AI response
-    await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
-      userMessage: args.body,
-      author: args.author,
+    // Update thread's last message timestamp
+    await ctx.db.patch(args.threadId, {
+      lastMessageAt: Date.now(),
     })
 
+    // Schedule AI response
+    await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
+      threadId: args.threadId,
+      userMessage: args.body,
+    })
+
+    // Check if this is the first user message in the thread (for title generation)
+    const userMessages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
+      .filter((q) => q.eq(q.field("messageType"), "user"))
+      .collect()
+
+    // If this is the first user message, schedule title generation
+    if (userMessages.length === 1) {
+      await ctx.scheduler.runAfter(100, internal.titles.generateTitle, {
+        threadId: args.threadId,
+        userMessage: args.body,
+      })
+    }
+
     return null
-  },
-})
-
-// Get streaming chunks for a specific message
-export const getMessageChunks = query({
-  args: {
-    messageId: v.id("messages"),
-  },
-  returns: v.array(
-    v.object({
-      _id: v.id("messageChunks"),
-      _creationTime: v.number(),
-      messageId: v.id("messages"),
-      streamId: v.string(),
-      chunkIndex: v.number(),
-      content: v.string(),
-      timestamp: v.number(),
-    }),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("messageChunks")
-      .withIndex("by_message", (q) => q.eq("messageId", args.messageId))
-      .order("asc")
-      .collect()
-  },
-})
-
-// Get all chunks for a stream ID (useful for reconstructing full message)
-export const getStreamChunks = query({
-  args: {
-    streamId: v.string(),
-  },
-  returns: v.array(
-    v.object({
-      _id: v.id("messageChunks"),
-      _creationTime: v.number(),
-      messageId: v.id("messages"),
-      streamId: v.string(),
-      chunkIndex: v.number(),
-      content: v.string(),
-      timestamp: v.number(),
-    }),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("messageChunks")
-      .withIndex("by_stream", (q) => q.eq("streamId", args.streamId))
-      .order("asc")
-      .collect()
   },
 })
 
 // Internal action to generate AI response with streaming using Vercel AI SDK
 export const generateAIResponse = internalAction({
   args: {
+    threadId: v.id("threads"),
     userMessage: v.string(),
-    author: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -124,15 +124,15 @@ export const generateAIResponse = internalAction({
       messageId = await ctx.runMutation(
         internal.messages.createStreamingMessage,
         {
+          threadId: args.threadId,
           streamId,
-          author: "AI Assistant",
         },
       )
 
       // Get recent conversation context
       const recentMessages = await ctx.runQuery(
         internal.messages.getRecentContext,
-        {},
+        { threadId: args.threadId },
       )
 
       // Prepare messages for AI SDK
@@ -147,7 +147,7 @@ export const generateAIResponse = internalAction({
             msg.messageType === "user"
               ? ("user" as const)
               : ("assistant" as const),
-          content: `${msg.author}: ${msg.body}`,
+          content: msg.body,
         })),
       ]
 
@@ -161,30 +161,23 @@ export const generateAIResponse = internalAction({
         temperature: 0.7,
       })
 
-      let chunkIndex = 0
       let fullContent = ""
 
       console.log("Starting to process stream chunks...")
 
       // Process each chunk as it arrives from the stream
       for await (const chunk of textStream) {
-        console.log(`Received chunk ${chunkIndex}:`, chunk)
+        console.log("Received chunk:", chunk)
         fullContent += chunk
 
-        // Save each chunk to database
-        await ctx.runMutation(internal.messages.addStreamChunk, {
+        // Update the message body progressively
+        await ctx.runMutation(internal.messages.updateStreamingMessage, {
           messageId,
-          streamId,
-          chunkIndex,
-          content: chunk,
+          content: fullContent,
         })
-
-        chunkIndex++
       }
 
-      console.log(
-        `Stream complete. Total chunks: ${chunkIndex}, Full content length: ${fullContent.length}`,
-      )
+      console.log(`Stream complete. Full content length: ${fullContent.length}`)
 
       if (fullContent.trim() === "") {
         throw new Error(
@@ -192,23 +185,26 @@ export const generateAIResponse = internalAction({
         )
       }
 
-      // Mark message as complete and update final content
+      // Mark message as complete
       await ctx.runMutation(internal.messages.completeStreamingMessage, {
         messageId,
-        finalContent: fullContent,
       })
     } catch (error) {
       console.error("Error generating AI response:", error)
 
       // If we have a messageId, update it with error, otherwise create new error message
       if (messageId) {
+        await ctx.runMutation(internal.messages.updateStreamingMessage, {
+          messageId,
+          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
+        })
         await ctx.runMutation(internal.messages.completeStreamingMessage, {
           messageId,
-          finalContent: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
         })
       } else {
         const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         await ctx.runMutation(internal.messages.createErrorMessage, {
+          threadId: args.threadId,
           streamId,
           errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your OpenAI API key.`,
         })
@@ -221,22 +217,26 @@ export const generateAIResponse = internalAction({
 
 // Internal function to get recent conversation context
 export const getRecentContext = internalQuery({
-  args: {},
+  args: {
+    threadId: v.id("threads"),
+  },
   returns: v.array(
     v.object({
-      author: v.string(),
       body: v.string(),
-      messageType: v.union(v.literal("user"), v.literal("ai")),
+      messageType: v.union(v.literal("user"), v.literal("assistant")),
     }),
   ),
-  handler: async (ctx) => {
-    const messages = await ctx.db.query("messages").order("desc").take(10)
+  handler: async (ctx, args) => {
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
+      .order("desc")
+      .take(10)
 
     return messages
       .reverse() // Get chronological order
       .filter((msg: Doc<"messages">) => msg.isComplete !== false) // Only include complete messages
       .map((msg: Doc<"messages">) => ({
-        author: msg.author,
         body: msg.body,
         messageType: msg.messageType,
       }))
@@ -246,51 +246,36 @@ export const getRecentContext = internalQuery({
 // Internal mutation to create initial streaming message
 export const createStreamingMessage = internalMutation({
   args: {
+    threadId: v.id("threads"),
     streamId: v.string(),
-    author: v.string(),
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
+    const now = Date.now()
     return await ctx.db.insert("messages", {
-      author: args.author,
+      threadId: args.threadId,
       body: "", // Will be updated as chunks arrive
-      timestamp: Date.now(),
-      messageType: "ai",
+      timestamp: now,
+      messageType: "assistant",
       isStreaming: true,
       streamId: args.streamId,
-      chunkIndex: 0,
       isComplete: false,
+      thinkingStartedAt: now,
     })
   },
 })
 
-// Internal mutation to add a streaming chunk
-export const addStreamChunk = internalMutation({
+// Internal mutation to update streaming message content
+export const updateStreamingMessage = internalMutation({
   args: {
     messageId: v.id("messages"),
-    streamId: v.string(),
-    chunkIndex: v.number(),
     content: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Add chunk to messageChunks table
-    await ctx.db.insert("messageChunks", {
-      messageId: args.messageId,
-      streamId: args.streamId,
-      chunkIndex: args.chunkIndex,
-      content: args.content,
-      timestamp: Date.now(),
+    await ctx.db.patch(args.messageId, {
+      body: args.content,
     })
-
-    // Update the main message with accumulated content
-    const message = await ctx.db.get(args.messageId)
-    if (message) {
-      await ctx.db.patch(args.messageId, {
-        body: message.body + args.content,
-        chunkIndex: args.chunkIndex,
-      })
-    }
 
     return null
   },
@@ -300,14 +285,13 @@ export const addStreamChunk = internalMutation({
 export const completeStreamingMessage = internalMutation({
   args: {
     messageId: v.id("messages"),
-    finalContent: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.messageId, {
-      body: args.finalContent,
       isStreaming: false,
       isComplete: true,
+      thinkingCompletedAt: Date.now(),
     })
 
     return null
@@ -317,19 +301,23 @@ export const completeStreamingMessage = internalMutation({
 // Internal mutation to create error message
 export const createErrorMessage = internalMutation({
   args: {
+    threadId: v.id("threads"),
     streamId: v.string(),
     errorMessage: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const now = Date.now()
     await ctx.db.insert("messages", {
-      author: "AI Assistant",
+      threadId: args.threadId,
       body: args.errorMessage,
-      timestamp: Date.now(),
-      messageType: "ai",
+      timestamp: now,
+      messageType: "assistant",
       isStreaming: false,
       streamId: args.streamId,
       isComplete: true,
+      thinkingStartedAt: now,
+      thinkingCompletedAt: now, // Error occurred immediately
     })
 
     return null

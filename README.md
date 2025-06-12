@@ -1,6 +1,6 @@
 # Chat App with Convex
 
-A real-time chat application built with Next.js and Convex, featuring type-safe environment variables using `@t3-oss/env-nextjs`.
+A real-time chat application built with Next.js and Convex, featuring GitHub authentication, AI responses, and a v0.dev-inspired landing page.
 
 ## Environment Variables
 
@@ -12,8 +12,14 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```bash
 # Convex Configuration
-CONVEX_DEPLOYMENT=your-convex-deployment-name
-NEXT_PUBLIC_CONVEX_URL=your-convex-url
+NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210  # For local development
+
+# OpenAI API (Required for AI responses)
+OPENAI_API_KEY=sk-your-openai-api-key-here
+
+# GitHub OAuth (Required for authentication)
+AUTH_GITHUB_ID=your-github-oauth-client-id
+AUTH_GITHUB_SECRET=your-github-oauth-client-secret
 
 # Node Environment
 NODE_ENV=development
@@ -21,10 +27,42 @@ NODE_ENV=development
 
 ### Environment Variable Types
 
-- **Server-only variables**: `CONVEX_DEPLOYMENT`, `NODE_ENV`
+- **Server-only variables**: `OPENAI_API_KEY`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `NODE_ENV`
   - These are only available on the server-side and will throw an error if accessed on the client
 - **Client-accessible variables**: `NEXT_PUBLIC_CONVEX_URL`
   - These are available on both server and client (must be prefixed with `NEXT_PUBLIC_`)
+
+## Authentication Setup
+
+This app uses GitHub OAuth for authentication. To set up authentication:
+
+### 1. Create a GitHub OAuth App
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click "New OAuth App"
+3. Fill in the application details:
+   - **Application name**: Your app name
+   - **Homepage URL**: `http://localhost:3000` (for development)
+   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+4. Click "Register application"
+5. Copy the **Client ID** and **Client Secret**
+
+### 2. Set Environment Variables
+
+Add the GitHub OAuth credentials to your `.env.local` file:
+
+```bash
+AUTH_GITHUB_ID=your_github_client_id_here
+AUTH_GITHUB_SECRET=your_github_client_secret_here
+```
+
+### 3. Sync Environment Variables
+
+Run the sync script to push environment variables to Convex:
+
+```bash
+pnpm env:sync
+```
 
 ### Usage
 
@@ -54,26 +92,37 @@ SKIP_ENV_VALIDATION=true npm run build
    pnpm install
    ```
 
-2. Set up your environment variables (copy `.env.example` to `.env.local`)
+2. Set up your environment variables (create `.env.local` with the variables shown above)
 
-3. Start the Convex development server:
+3. Set up GitHub OAuth (see Authentication Setup section above)
+
+4. Sync environment variables to Convex:
    ```bash
-   npx convex dev
+   pnpm env:sync
    ```
 
-4. Start the Next.js development server:
+5. Start the Convex development server:
+   ```bash
+   pnpm convex:dev
+   ```
+
+6. In a new terminal, start the Next.js development server:
    ```bash
    pnpm dev
    ```
 
+7. Open [http://localhost:3000](http://localhost:3000) and sign in with GitHub
+
 ## Features
 
-- ✅ Type-safe environment variables with `@t3-oss/env-nextjs`
-- ✅ Real-time chat with Convex
-- ✅ Next.js 15 Canary with App Router
-- ✅ **PPR (Partial Prerendering)** - Latest Next.js experimental feature
-- ✅ TypeScript support
-- ✅ Build-time environment validation
+- ✅ **v0.dev-inspired landing page** - Clean, modern design with centered textarea
+- ✅ **GitHub Authentication** - Secure login with Convex Auth
+- ✅ **Real-time AI Chat** - Streaming responses with GPT-4o-mini
+- ✅ **Thread Management** - Organized conversations with persistent history
+- ✅ **Real-time Updates** - Live message updates with Convex
+- ✅ **Type-safe Environment Variables** - Validated with `@t3-oss/env-nextjs`
+- ✅ **Next.js 15 Canary** - Latest features with App Router and PPR
+- ✅ **Modern UI** - Built with shadcn/ui and Tailwind CSS
 
 ## Architecture
 

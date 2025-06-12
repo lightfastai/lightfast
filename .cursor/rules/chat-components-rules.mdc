@@ -1,0 +1,208 @@
+---
+description: Standardized chat component architecture using shadcn/ui sidebar
+globs: ["src/components/chat/**/*", "src/app/chat/**/*"]
+alwaysApply: false
+---
+
+# Standardized Chat Components
+
+Use the standardized chat component architecture built with shadcn/ui sidebar component.
+
+## Core Components Structure
+
+### ChatLayout - Main layout wrapper
+- Uses shadcn/ui `SidebarProvider`, `Sidebar`, and `SidebarInset`
+- Contains integrated sidebar with Lightfast branding
+- Handles thread navigation and new chat creation
+- Props: `children`, `threads`, `currentThreadId`, `onNewChat`, `onThreadSelect`
+
+### ChatMessages - Message display area
+- Auto-scrolling ScrollArea with message list
+- Configurable empty state with icon, title, and description
+- Handles loading states and message rendering
+- Props: `messages`, `isLoading`, `emptyState`
+
+### ChatInput - Message input component
+- Textarea with send button and character counter
+- Keyboard shortcuts (Enter to send, Shift+Enter for new line)
+- Loading and disabled states with proper UX feedback
+- Props: `onSendMessage`, `isLoading`, `placeholder`, `disabled`, `maxLength`
+
+### ChatInterface - Complete chat interface
+- Combines all components with Convex real-time integration
+- Handles thread creation, message sending, and navigation
+- Manages loading states and error handling
+- Props: `currentThread`, `threads`, `initialMessages`, `isNewChat`
+
+## Usage Patterns
+
+### Import from index file
+```tsx
+import { ChatInterface, ChatLayout, ChatMessages, ChatInput } from "@/components/chat"
+```
+
+### Full chat interface
+```tsx
+<ChatInterface
+  currentThread={thread}
+  threads={threads}
+  initialMessages={messages}
+  isNewChat={false}
+/>
+```
+
+### Custom composition
+```tsx
+<ChatLayout
+  threads={threads}
+  currentThreadId={currentThreadId}
+  onNewChat={handleNewChat}
+  onThreadSelect={handleThreadSelect}
+>
+  <div className="flex flex-col h-full">
+    <ChatMessages messages={messages} />
+    <ChatInput onSendMessage={handleSendMessage} />
+  </div>
+</ChatLayout>
+```
+
+## Design Patterns
+
+### Sidebar Structure
+- **SidebarHeader**: Lightfast logo and brand name
+- **SidebarContent**: New chat button + recent chats list with ScrollArea
+- **SidebarFooter**: UserDropdown for account management
+- **Responsive**: Collapses to sheet on mobile, supports keyboard shortcuts
+
+### Message Handling
+- Always reverse message order for chronological display (newest at bottom)
+- Auto-scroll to bottom on new messages
+- Handle empty states with meaningful content
+- Support real-time updates via Convex queries
+
+### Event Handling
+- Use async/await pattern for message sending
+- Handle errors gracefully with console.error
+- Update URL history for thread navigation
+- Use window.location.href for navigation (Next.js App Router compatible)
+
+## Component Requirements
+
+### Always wrap chat components in TooltipProvider
+```tsx
+import { TooltipProvider } from "@/components/ui/tooltip"
+
+<TooltipProvider>
+  <ChatInterface {...props} />
+</TooltipProvider>
+```
+
+### Handle loading states appropriately
+- Disable input during message sending
+- Show loading indicators for async operations
+- Provide feedback for user actions
+
+### Follow accessibility patterns
+- Use proper ARIA labels
+- Support keyboard navigation
+- Maintain semantic HTML structure
+- Include screen reader friendly content
+
+## Styling Guidelines
+
+### Use Tailwind CSS classes consistently
+- Follow shadcn/ui design system patterns
+- Use CSS variables for theming support
+- Maintain responsive design principles
+- Support dark/light mode automatically
+
+### Layout Structure
+```tsx
+// Full height container
+<div className="flex flex-col h-full">
+  <ChatMessages className="flex-1 min-h-0" />
+  <ChatInput className="flex-shrink-0" />
+</div>
+```
+
+### Responsive Considerations
+- Mobile-first design approach
+- Collapsible sidebar with proper breakpoints
+- Touch-friendly interface elements
+- Adequate spacing for mobile interactions
+
+## Integration with Convex
+
+### Query Patterns
+```tsx
+// Real-time threads list
+const threads = useQuery(api.threads.list) ?? initialThreads
+
+// Conditional queries for thread data
+const actualThread = useQuery(
+  api.threads.get,
+  shouldSkipQueries ? "skip" : { threadId: currentThreadId }
+)
+
+// Real-time messages
+const messages = useQuery(
+  api.messages.list,
+  shouldSkipQueries ? "skip" : { threadId: currentThreadId }
+) ?? initialMessages
+```
+
+### Mutation Patterns
+```tsx
+// Thread creation
+const createThread = useMutation(api.threads.create)
+
+// Message sending
+const sendMessage = useMutation(api.messages.send)
+```
+
+## Error Handling
+
+### Handle missing threads gracefully
+```tsx
+useEffect(() => {
+  if (actualThread === null && currentThread.title === "Loading...") {
+    window.location.href = "/chat"
+  }
+}, [actualThread, currentThread.title])
+```
+
+### Catch and log errors appropriately
+```tsx
+try {
+  await sendMessage({ threadId, body: message })
+} catch (error) {
+  console.error("Error sending message:", error)
+}
+```
+
+## Navigation Patterns
+
+### Thread Navigation
+- Use `window.location.href` for full page navigation
+- Update URL history with `window.history.replaceState`
+- Handle new chat creation with immediate thread creation
+
+### URL Structure
+- `/chat` - New chat/landing page
+- `/chat/[threadId]` - Specific thread conversation
+
+## Future Extensibility
+
+### Planned Enhancements
+- Message search functionality
+- Thread archiving and deletion
+- Message reactions and threading
+- File upload support
+- Voice message integration
+- Custom message types (images, code blocks)
+
+### Extension Points
+- Custom empty states via props
+- Custom message renderers
+- Additional sidebar sections
+- Theme customization hooks

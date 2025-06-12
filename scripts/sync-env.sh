@@ -5,7 +5,7 @@ set -e  # Exit on error
 # Configuration
 ENV_FILE=".env.local"
 REQUIRED_VARS=("OPENAI_API_KEY")
-OPTIONAL_VARS=("ANTHROPIC_API_KEY" "GOOGLE_API_KEY")
+OPTIONAL_VARS=("ANTHROPIC_API_KEY" "GOOGLE_API_KEY" "AUTH_GITHUB_ID" "AUTH_GITHUB_SECRET" "SITE_URL" "JWT_PRIVATE_KEY" "JWKS")
 
 # Colors for output
 RED='\033[0;31m'
@@ -27,6 +27,11 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "Example:"
     echo "NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210"
     echo "OPENAI_API_KEY=your_openai_key_here"
+    echo "AUTH_GITHUB_ID=your_github_oauth_client_id"
+    echo "AUTH_GITHUB_SECRET=your_github_oauth_client_secret"
+    echo "SITE_URL=http://localhost:3000"
+    echo "JWT_PRIVATE_KEY=your_jwt_private_key_here"
+    echo "JWKS=your_jwks_here"
     exit 1
 fi
 
