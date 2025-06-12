@@ -60,6 +60,17 @@ export const list = query({
           cachedInputTokens: v.optional(v.number()),
         }),
       ),
+      lastChunkId: v.optional(v.string()),
+      streamChunks: v.optional(
+        v.array(
+          v.object({
+            id: v.string(),
+            content: v.string(),
+            timestamp: v.number(),
+          }),
+        ),
+      ),
+      streamVersion: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -250,10 +261,14 @@ export const generateAIResponse = internalAction({
           // Regular text content
           fullContent += chunk.text
 
-          // Update the message body progressively
-          await ctx.runMutation(internal.messages.updateStreamingMessage, {
+          // Generate unique chunk ID for resumability
+          const chunkId = `chunk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+          // Append chunk to the message for resumable streaming
+          await ctx.runMutation(internal.messages.appendStreamChunk, {
             messageId,
-            content: fullContent,
+            chunk: chunk.text,
+            chunkId,
           })
         } else if (chunk.type === "reasoning" && chunk.text) {
           // Claude 4.0 native reasoning tokens
@@ -387,8 +402,45 @@ export const createStreamingMessage = internalMutation({
       streamId: args.streamId,
       isComplete: false,
       thinkingStartedAt: now,
+      streamChunks: [], // Initialize empty chunks array
+      streamVersion: 0, // Initialize version counter
+      lastChunkId: undefined, // Initialize last chunk ID
       modelId: args.modelId,
     })
+  },
+})
+
+// Internal mutation to append a chunk and update the message
+export const appendStreamChunk = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    chunk: v.string(),
+    chunkId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const message = await ctx.db.get(args.messageId)
+    if (!message) return null
+
+    const currentChunks = message.streamChunks || []
+    const newChunk = {
+      id: args.chunkId,
+      content: args.chunk,
+      timestamp: Date.now(),
+    }
+
+    // Append chunk to array and update body
+    const updatedChunks = [...currentChunks, newChunk]
+    const updatedBody = message.body + args.chunk
+
+    await ctx.db.patch(args.messageId, {
+      body: updatedBody,
+      streamChunks: updatedChunks,
+      lastChunkId: args.chunkId,
+      streamVersion: (message.streamVersion || 0) + 1,
+    })
+
+    return null
   },
 })
 
@@ -400,8 +452,12 @@ export const updateStreamingMessage = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // For backward compatibility, we'll update the body directly
+    // but in the new streaming logic, use appendStreamChunk instead
     await ctx.db.patch(args.messageId, {
       body: args.content,
+      streamVersion:
+        ((await ctx.db.get(args.messageId))?.streamVersion || 0) + 1,
     })
 
     return null
@@ -695,6 +751,84 @@ export const getThreadUsage = query({
       totalCachedInputTokens: usage.totalCachedInputTokens,
       messageCount: usage.messageCount,
       modelStats,
+    }
+  },
+})
+
+// Query to get stream chunks for resumable streaming
+export const getStreamChunks = query({
+  args: {
+    streamId: v.string(),
+    sinceChunkId: v.optional(v.string()),
+  },
+  returns: v.object({
+    chunks: v.array(
+      v.object({
+        id: v.string(),
+        content: v.string(),
+        timestamp: v.number(),
+      }),
+    ),
+    isComplete: v.boolean(),
+    currentBody: v.string(),
+    messageId: v.optional(v.id("messages")),
+  }),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      return {
+        chunks: [],
+        isComplete: true,
+        currentBody: "",
+        messageId: undefined,
+      }
+    }
+
+    // Find the message with this streamId
+    const message = await ctx.db
+      .query("messages")
+      .withIndex("by_stream_id", (q) => q.eq("streamId", args.streamId))
+      .first()
+
+    if (!message) {
+      return {
+        chunks: [],
+        isComplete: true,
+        currentBody: "",
+        messageId: undefined,
+      }
+    }
+
+    // Verify the user owns the thread containing this message
+    const thread = await ctx.db.get(message.threadId)
+    if (!thread || thread.userId !== userId) {
+      return {
+        chunks: [],
+        isComplete: true,
+        currentBody: "",
+        messageId: undefined,
+      }
+    }
+
+    const streamChunks = message.streamChunks || []
+
+    // If sinceChunkId is provided, filter to only newer chunks
+    let newChunks = streamChunks
+    if (args.sinceChunkId) {
+      const sinceIndex = streamChunks.findIndex(
+        (chunk) => chunk.id === args.sinceChunkId,
+      )
+      if (sinceIndex >= 0) {
+        // Return chunks after the sinceChunkId
+        newChunks = streamChunks.slice(sinceIndex + 1)
+      }
+    }
+
+    return {
+      chunks: newChunks,
+      isComplete: message.isComplete !== false,
+      currentBody: message.body,
+      messageId: message._id,
     }
   },
 })

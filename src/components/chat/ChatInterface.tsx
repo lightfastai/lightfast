@@ -8,6 +8,7 @@ import type { Doc, Id } from "../../../convex/_generated/dataModel"
 import type { ModelId } from "@/lib/ai/types"
 import { ChatInput } from "./ChatInput"
 import { ChatMessages } from "./ChatMessages"
+import { useResumableChat } from "@/hooks/useResumableStream"
 
 type Message = Doc<"messages">
 
@@ -19,6 +20,9 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [hasCreatedThread, setHasCreatedThread] = useState(false)
+
+  // Manage resumable streams
+  const { activeStreams, startStream, endStream } = useResumableChat()
 
   // Extract current thread ID from pathname with better parsing
   const currentThreadId = useMemo(() => {
@@ -51,6 +55,27 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
         ? "skip"
         : { threadId: currentThreadId as Id<"threads"> },
     ) ?? initialMessages
+
+  // Track streaming messages
+  const streamingMessages = useMemo(() => {
+    return messages.filter((msg: Message) => msg.isStreaming && msg.streamId)
+  }, [messages])
+
+  // Set up streams for streaming messages
+  useEffect(() => {
+    for (const msg of streamingMessages) {
+      if (msg.streamId && !activeStreams.has(msg._id)) {
+        startStream(msg._id, msg.streamId)
+      }
+    }
+
+    // Clean up completed streams
+    for (const msg of messages) {
+      if (!msg.isStreaming && activeStreams.has(msg._id)) {
+        endStream(msg._id)
+      }
+    }
+  }, [streamingMessages, messages, activeStreams, startStream, endStream])
 
   // Mutations
   const createThread = useMutation(api.threads.create)
@@ -119,10 +144,21 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     return ""
   }
 
+  // Enhance messages with streaming text
+  const enhancedMessages = useMemo(() => {
+    return messages.map((msg: Message) => {
+      const streamId = activeStreams.get(msg._id)
+      return {
+        ...msg,
+        _streamId: streamId || null,
+      }
+    })
+  }, [messages, activeStreams])
+
   return (
     <div className="flex flex-col h-full">
       <ChatMessages
-        messages={messages}
+        messages={enhancedMessages}
         emptyState={{
           title: getEmptyStateTitle(),
           description: getEmptyStateDescription(),
