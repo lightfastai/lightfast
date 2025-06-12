@@ -109,7 +109,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     if (isNewChat) {
       return "Welcome to AI Chat"
     }
-    return currentThread?.title || "Chat"
+    return currentThread?.title || ""
   }
 
   const getEmptyStateDescription = () => {
