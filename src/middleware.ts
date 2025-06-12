@@ -5,7 +5,7 @@ import {
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const publicRoutes = ["/", "/signin", "/api", "/_next", "/favicon.ico"]
+// const publicRoutes = ["/", "/signin", "/api", "/_next", "/favicon.ico"]
 const authRoutes = ["/signin"]
 const protectedRoutes = ["/chat", "/settings"]
 
@@ -13,9 +13,9 @@ async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Check if the route is public
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  )
+  // const isPublicRoute = publicRoutes.some(
+  //   (route) => pathname === route || pathname.startsWith(`${route}/`),
+  // )
 
   // Check if the route is auth-related
   const isAuthRoute = authRoutes.some(
