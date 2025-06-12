@@ -1,8 +1,14 @@
 import { anthropic } from "@ai-sdk/anthropic"
 import { openai } from "@ai-sdk/openai"
-import type { CoreMessage, LanguageModel } from "ai"
-import { DEFAULT_MODELS, getModelById } from "./models"
-import type { AIGenerationOptions, ChatMessage, ModelProvider } from "./types"
+import type { CoreMessage } from "ai"
+import { getModelById } from "./models"
+import { getProviderFromModelId } from "./types"
+import type {
+  AIGenerationOptions,
+  ChatMessage,
+  ModelId,
+  ModelProvider,
+} from "./types"
 
 /**
  * Provider configurations and settings
@@ -17,24 +23,33 @@ export const PROVIDER_CONFIG = {
     name: "Anthropic",
     apiKeyEnvVar: "ANTHROPIC_API_KEY",
     models: [
+      "claude-sonnet-4-20250514",
+      "claude-sonnet-4-20250514-thinking",
       "claude-3-5-sonnet-20241022",
       "claude-3-haiku-20240307",
-      "claude-3-opus-20240229",
     ],
   },
 } as const
 
 /**
  * Get the appropriate language model instance for a provider
+ * Note: This uses the default model for the provider
  */
-export function getLanguageModel(provider: ModelProvider): LanguageModel {
-  const defaultModel = DEFAULT_MODELS[provider]
+export function getLanguageModel(provider: ModelProvider) {
+  // Get first model for the provider as default
+  const models = PROVIDER_CONFIG[provider].models
+  const defaultModelId = models[0]
+  const model = getModelById(defaultModelId)
+
+  if (!model) {
+    throw new Error(`Default model not found for provider: ${provider}`)
+  }
 
   switch (provider) {
     case "openai":
-      return openai(defaultModel.name)
+      return openai(model.name)
     case "anthropic":
-      return anthropic(defaultModel.name)
+      return anthropic(model.name)
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }
@@ -43,7 +58,7 @@ export function getLanguageModel(provider: ModelProvider): LanguageModel {
 /**
  * Get language model by specific model ID
  */
-export function getLanguageModelById(modelId: string): LanguageModel {
+export function getLanguageModelById(modelId: string) {
   const model = getModelById(modelId)
   if (!model) {
     throw new Error(`Model not found: ${modelId}`)
@@ -75,7 +90,19 @@ export function convertToAIMessages(messages: ChatMessage[]): CoreMessage[] {
 export function getDefaultGenerationOptions(
   provider: ModelProvider,
 ): Partial<AIGenerationOptions> {
-  const model = DEFAULT_MODELS[provider]
+  // Get first model for the provider as default
+  const models = PROVIDER_CONFIG[provider].models
+  const defaultModelId = models[0]
+  const model = getModelById(defaultModelId)
+
+  if (!model) {
+    // Fallback values if model not found
+    return {
+      maxTokens: 500,
+      temperature: 0.7,
+      stream: true,
+    }
+  }
 
   return {
     maxTokens: Math.min(500, model.maxTokens), // Conservative default
@@ -111,13 +138,18 @@ export function getSupportedProviders(): ModelProvider[] {
  * Create generation options with provider-specific defaults
  */
 export function createGenerationOptions(
-  provider: ModelProvider,
+  modelId: string,
   overrides: Partial<AIGenerationOptions> = {},
 ): AIGenerationOptions {
+  const provider = getProviderFromModelId(modelId as ModelId)
+  if (!provider) {
+    throw new Error(`Invalid model ID: ${modelId}`)
+  }
+
   const defaults = getDefaultGenerationOptions(provider)
 
   return {
-    model: provider,
+    modelId,
     messages: [],
     ...defaults,
     ...overrides,

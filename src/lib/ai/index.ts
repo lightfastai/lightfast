@@ -5,11 +5,10 @@
  * and generation options across the application.
  */
 
-import type { ModelProvider } from "./types"
-
-// Types
+// Types and utilities
 export type {
   ModelProvider,
+  ModelId,
   OpenAIModel,
   AnthropicModel,
   ModelConfig,
@@ -18,13 +17,25 @@ export type {
   AIGenerationOptions,
 } from "./types"
 
+export {
+  MODEL_PROVIDERS,
+  OPENAI_MODEL_IDS,
+  ANTHROPIC_MODEL_IDS,
+  ALL_MODEL_IDS,
+  isValidModelId,
+  getProviderFromModelId,
+  getActualModelName,
+  isThinkingMode,
+} from "./types"
+
 // Models
 export {
   OPENAI_MODELS,
   ANTHROPIC_MODELS,
   ALL_MODELS,
-  DEFAULT_MODELS,
+  DEFAULT_MODEL_ID,
   getModelsByProvider,
+  getAllModels,
   getModelById,
   getModelDisplayName,
   modelSupportsFeature,
@@ -45,4 +56,3 @@ export {
 
 // Constants for easy access
 export const AI_PROVIDERS = ["openai", "anthropic"] as const
-export const DEFAULT_PROVIDER: ModelProvider = "openai"

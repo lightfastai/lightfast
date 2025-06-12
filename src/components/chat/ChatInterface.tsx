@@ -1,11 +1,11 @@
 "use client"
 
-import type { ModelProvider } from "@/lib/ai"
 import { useMutation, useQuery } from "convex/react"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
+import type { ModelId } from "@/lib/ai/types"
 import { ChatInput } from "./ChatInput"
 import { ChatMessages } from "./ChatMessages"
 
@@ -71,7 +71,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     }
   }, [isNewChat])
 
-  const handleSendMessage = async (message: string, model: ModelProvider) => {
+  const handleSendMessage = async (message: string, modelId: string) => {
     if (!message.trim()) return
 
     try {
@@ -81,11 +81,11 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
           title: "Generating title...",
         })
 
-        // Send the message to the new thread
+        // Send the message to the new thread with just the modelId
         await sendMessage({
           threadId: newThreadId,
           body: message,
-          model: model,
+          modelId: modelId as ModelId, // Type assertion for the validated modelId
         })
 
         // Navigate to the new thread using replace for better UX
@@ -96,7 +96,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
         await sendMessage({
           threadId: currentThreadId,
           body: message,
-          model: model,
+          modelId: modelId as ModelId, // Type assertion for the validated modelId
         })
       }
     } catch (error) {

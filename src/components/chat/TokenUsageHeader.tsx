@@ -35,6 +35,20 @@ function getModelDisplayName(model: string): string {
       return "Claude Sonnet 4"
     case "openai":
       return "GPT-4o Mini"
+    case "claude-sonnet-4-20250514":
+      return "Claude Sonnet 4"
+    case "claude-sonnet-4-20250514-thinking":
+      return "Claude Sonnet 4 (Thinking)"
+    case "claude-3-5-sonnet-20241022":
+      return "Claude 3.5 Sonnet"
+    case "claude-3-haiku-20240307":
+      return "Claude 3 Haiku"
+    case "gpt-4o":
+      return "GPT-4o"
+    case "gpt-4o-mini":
+      return "GPT-4o Mini"
+    case "gpt-3.5-turbo":
+      return "GPT-3.5 Turbo"
     default:
       return model
   }

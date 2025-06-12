@@ -13,6 +13,22 @@ import {
   query,
 } from "./_generated/server.js"
 
+// Import shared types and utilities
+import {
+  ALL_MODEL_IDS,
+  getProviderFromModelId,
+  getActualModelName,
+  isThinkingMode,
+  type ModelId,
+} from "../src/lib/ai/types.js"
+
+// Create validators from the shared types
+const modelIdValidator = v.union(...ALL_MODEL_IDS.map((id) => v.literal(id)))
+const modelProviderValidator = v.union(
+  v.literal("openai"),
+  v.literal("anthropic"),
+)
+
 export const list = query({
   args: {
     threadId: v.id("threads"),
@@ -25,12 +41,16 @@ export const list = query({
       body: v.string(),
       timestamp: v.number(),
       messageType: v.union(v.literal("user"), v.literal("assistant")),
-      model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
+      model: v.optional(modelProviderValidator),
+      modelId: v.optional(v.string()), // Keep as string for flexibility but validate in handler
       isStreaming: v.optional(v.boolean()),
       streamId: v.optional(v.string()),
       isComplete: v.optional(v.boolean()),
       thinkingStartedAt: v.optional(v.number()),
       thinkingCompletedAt: v.optional(v.number()),
+      thinkingContent: v.optional(v.string()),
+      isThinking: v.optional(v.boolean()),
+      hasThinkingContent: v.optional(v.boolean()),
       usage: v.optional(
         v.object({
           inputTokens: v.optional(v.number()),
@@ -66,7 +86,7 @@ export const send = mutation({
   args: {
     threadId: v.id("threads"),
     body: v.string(),
-    model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
+    modelId: v.optional(modelIdValidator), // Use the validated modelId
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -81,13 +101,20 @@ export const send = mutation({
       throw new Error("Thread not found or access denied")
     }
 
+    // Use default model if none provided
+    const modelId = args.modelId || "gpt-4o-mini"
+
+    // Derive provider from modelId (type-safe)
+    const provider = getProviderFromModelId(modelId as ModelId)
+
     // Insert user message
     await ctx.db.insert("messages", {
       threadId: args.threadId,
       body: args.body,
       timestamp: Date.now(),
       messageType: "user",
-      model: args.model,
+      model: provider,
+      modelId: modelId,
     })
 
     // Update thread's last message timestamp
@@ -95,11 +122,11 @@ export const send = mutation({
       lastMessageAt: Date.now(),
     })
 
-    // Schedule AI response - default to anthropic (Claude Sonnet 4) for better performance
+    // Schedule AI response using the modelId
     await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
       threadId: args.threadId,
       userMessage: args.body,
-      model: args.model || "anthropic", // Default to Claude Sonnet 4
+      modelId: modelId,
     })
 
     // Check if this is the first user message in the thread (for title generation)
@@ -126,12 +153,17 @@ export const generateAIResponse = internalAction({
   args: {
     threadId: v.id("threads"),
     userMessage: v.string(),
-    model: v.union(v.literal("openai"), v.literal("anthropic")),
+    modelId: modelIdValidator, // Use validated modelId
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     let messageId: Id<"messages"> | null = null
     try {
+      // Derive provider and other settings from modelId
+      const provider = getProviderFromModelId(args.modelId as ModelId)
+      const actualModelName = getActualModelName(args.modelId as ModelId)
+      const isThinking = isThinkingMode(args.modelId as ModelId)
+
       // Generate unique stream ID
       const streamId = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
@@ -141,7 +173,8 @@ export const generateAIResponse = internalAction({
         {
           threadId: args.threadId,
           streamId,
-          model: args.model,
+          provider,
+          modelId: args.modelId,
         },
       )
 
@@ -168,36 +201,93 @@ export const generateAIResponse = internalAction({
       ]
 
       console.log(
-        `Attempting to call ${args.model} with ${messages.length} messages`,
+        `Attempting to call ${provider} with model ID ${args.modelId} and ${messages.length} messages`,
       )
 
-      // Choose the appropriate model using updated model IDs for v5
+      // Choose the appropriate model using the actual model name
       const selectedModel =
-        args.model === "anthropic"
-          ? anthropic("claude-sonnet-4-20250514") // Latest Claude Sonnet 4
-          : openai("gpt-4o-mini")
+        provider === "anthropic"
+          ? anthropic(actualModelName)
+          : openai(actualModelName)
 
-      // Stream response using AI SDK v5
-      const { textStream, usage } = await streamText({
+      // Stream response using AI SDK v5 with full stream for reasoning support
+      const streamOptions: Parameters<typeof streamText>[0] = {
         model: selectedModel,
         messages: messages,
         temperature: 0.7,
-      })
+      }
+
+      // For Claude 4.0 thinking mode, enable thinking/reasoning
+      if (provider === "anthropic" && isThinking) {
+        // Claude 4.0 has native thinking support
+        streamOptions.system =
+          "You are a helpful AI assistant. For complex questions, show your reasoning process step by step before providing the final answer."
+        streamOptions.providerOptions = {
+          anthropic: {
+            thinking: {
+              type: "enabled",
+              budgetTokens: 12000, // Budget for thinking tokens
+            },
+          },
+        }
+      }
+
+      const { fullStream, usage } = await streamText(streamOptions)
 
       let fullContent = ""
+      let thinkingContent = ""
+      let isInThinkingPhase = false
+      let hasThinking = false
 
       console.log("Starting to process v5 stream chunks...")
 
       // Process each chunk as it arrives from the stream
-      for await (const chunk of textStream) {
-        console.log("Received v5 chunk:", chunk)
-        fullContent += chunk
+      for await (const chunk of fullStream) {
+        console.log("Received v5 chunk type:", chunk.type)
 
-        // Update the message body progressively
-        await ctx.runMutation(internal.messages.updateStreamingMessage, {
-          messageId,
-          content: fullContent,
-        })
+        // Handle different types of chunks
+        if (chunk.type === "text" && chunk.text) {
+          // Regular text content
+          fullContent += chunk.text
+
+          // Update the message body progressively
+          await ctx.runMutation(internal.messages.updateStreamingMessage, {
+            messageId,
+            content: fullContent,
+          })
+        } else if (chunk.type === "reasoning" && chunk.text) {
+          // Claude 4.0 native reasoning tokens
+          if (!hasThinking) {
+            hasThinking = true
+            isInThinkingPhase = true
+            // Update message to indicate thinking phase
+            await ctx.runMutation(internal.messages.updateThinkingState, {
+              messageId,
+              isThinking: true,
+              hasThinkingContent: true,
+            })
+          }
+
+          // Accumulate thinking content
+          thinkingContent += chunk.text
+
+          // Update thinking content progressively
+          await ctx.runMutation(internal.messages.updateThinkingContent, {
+            messageId,
+            thinkingContent,
+          })
+        } else if (chunk.type === "finish-step" || chunk.type === "finish") {
+          // End of reasoning phase or stream completion
+          if (isInThinkingPhase && hasThinking) {
+            isInThinkingPhase = false
+            // Mark end of thinking phase
+            await ctx.runMutation(internal.messages.updateThinkingState, {
+              messageId,
+              isThinking: false,
+              hasThinkingContent: true,
+            })
+          }
+        }
       }
 
       console.log(
@@ -206,7 +296,7 @@ export const generateAIResponse = internalAction({
 
       if (fullContent.trim() === "") {
         throw new Error(
-          `${args.model} returned empty response - check API key and quota`,
+          `${provider} returned empty response - check API key and quota`,
         )
       }
 
@@ -220,24 +310,26 @@ export const generateAIResponse = internalAction({
         usage: finalUsage,
       })
     } catch (error) {
-      console.error(`Error generating ${args.model} response:`, error)
+      console.error("Error generating response:", error)
 
       // If we have a messageId, update it with error, otherwise create new error message
       if (messageId) {
         await ctx.runMutation(internal.messages.updateStreamingMessage, {
           messageId,
-          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your ${args.model} API key.`,
+          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
         })
         await ctx.runMutation(internal.messages.completeStreamingMessage, {
           messageId,
         })
       } else {
+        const provider = getProviderFromModelId(args.modelId as ModelId)
         const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         await ctx.runMutation(internal.messages.createErrorMessage, {
           threadId: args.threadId,
           streamId,
-          model: args.model,
-          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your ${args.model} API key.`,
+          provider,
+          modelId: args.modelId,
+          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
         })
       }
     }
@@ -279,7 +371,8 @@ export const createStreamingMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
     streamId: v.string(),
-    model: v.union(v.literal("openai"), v.literal("anthropic")),
+    provider: modelProviderValidator,
+    modelId: modelIdValidator,
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
@@ -289,11 +382,12 @@ export const createStreamingMessage = internalMutation({
       body: "", // Will be updated as chunks arrive
       timestamp: now,
       messageType: "assistant",
-      model: args.model,
+      model: args.provider,
       isStreaming: true,
       streamId: args.streamId,
       isComplete: false,
       thinkingStartedAt: now,
+      modelId: args.modelId,
     })
   },
 })
@@ -349,7 +443,7 @@ export const completeStreamingMessage = internalMutation({
       await updateThreadUsage(
         ctx,
         message.threadId,
-        message.model || "unknown",
+        message.modelId || message.model || "unknown",
         args.usage,
       )
     }
@@ -437,6 +531,12 @@ async function updateThreadUsage(
 
 // Helper to get full model ID for consistent tracking across providers
 function getFullModelId(model: string): string {
+  // If it's already a full model ID, return as-is
+  if (model.includes("-")) {
+    return model
+  }
+
+  // Otherwise, convert provider names to default model IDs
   switch (model) {
     case "anthropic":
       return "claude-sonnet-4-20250514"
@@ -452,7 +552,8 @@ export const createErrorMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
     streamId: v.string(),
-    model: v.union(v.literal("openai"), v.literal("anthropic")),
+    provider: modelProviderValidator,
+    modelId: v.optional(modelIdValidator),
     errorMessage: v.string(),
   },
   returns: v.null(),
@@ -463,19 +564,51 @@ export const createErrorMessage = internalMutation({
       body: args.errorMessage,
       timestamp: now,
       messageType: "assistant",
-      model: args.model,
+      model: args.provider,
+      modelId: args.modelId,
       isStreaming: false,
       streamId: args.streamId,
       isComplete: true,
       thinkingStartedAt: now,
-      thinkingCompletedAt: now, // Error occurred immediately
+      thinkingCompletedAt: now,
     })
 
     return null
   },
 })
 
-// Query to get thread-level token usage statistics (fast lookup from thread table)
+// Internal mutation to update thinking state
+export const updateThinkingState = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    isThinking: v.boolean(),
+    hasThinkingContent: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, {
+      isThinking: args.isThinking,
+      hasThinkingContent: args.hasThinkingContent,
+    })
+    return null
+  },
+})
+
+// Internal mutation to update thinking content
+export const updateThinkingContent = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    thinkingContent: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, {
+      thinkingContent: args.thinkingContent,
+    })
+    return null
+  },
+})
+
 export const getThreadUsage = query({
   args: {
     threadId: v.id("threads"),
