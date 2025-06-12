@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCurrentUser, isAuthenticated } from "@/lib/auth"
@@ -35,6 +35,13 @@ export default async function ProfilePage() {
           <CardHeader>
             <div className="flex items-center gap-4">
               <Avatar className="w-16 h-16">
+                {user.image && (
+                  <AvatarImage
+                    src={user.image}
+                    alt={user.name || "User"}
+                    className="object-cover"
+                  />
+                )}
                 <AvatarFallback className="text-lg">
                   <User className="w-8 h-8" />
                 </AvatarFallback>

@@ -21,5 +21,7 @@ export default defineSchema({
     isStreaming: v.optional(v.boolean()),
     streamId: v.optional(v.string()),
     isComplete: v.optional(v.boolean()),
+    thinkingStartedAt: v.optional(v.number()),
+    thinkingCompletedAt: v.optional(v.number()),
   }).index("by_thread", ["threadId"]),
 })

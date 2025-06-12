@@ -27,6 +27,8 @@ export const list = query({
       isStreaming: v.optional(v.boolean()),
       streamId: v.optional(v.string()),
       isComplete: v.optional(v.boolean()),
+      thinkingStartedAt: v.optional(v.number()),
+      thinkingCompletedAt: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -249,14 +251,16 @@ export const createStreamingMessage = internalMutation({
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
+    const now = Date.now()
     return await ctx.db.insert("messages", {
       threadId: args.threadId,
       body: "", // Will be updated as chunks arrive
-      timestamp: Date.now(),
+      timestamp: now,
       messageType: "assistant",
       isStreaming: true,
       streamId: args.streamId,
       isComplete: false,
+      thinkingStartedAt: now,
     })
   },
 })
@@ -287,6 +291,7 @@ export const completeStreamingMessage = internalMutation({
     await ctx.db.patch(args.messageId, {
       isStreaming: false,
       isComplete: true,
+      thinkingCompletedAt: Date.now(),
     })
 
     return null
@@ -302,14 +307,17 @@ export const createErrorMessage = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const now = Date.now()
     await ctx.db.insert("messages", {
       threadId: args.threadId,
       body: args.errorMessage,
-      timestamp: Date.now(),
+      timestamp: now,
       messageType: "assistant",
       isStreaming: false,
       streamId: args.streamId,
       isComplete: true,
+      thinkingStartedAt: now,
+      thinkingCompletedAt: now, // Error occurred immediately
     })
 
     return null

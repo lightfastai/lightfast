@@ -1,6 +1,6 @@
 "use client"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -59,6 +59,13 @@ export function UserDropdown({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className={`gap-2 h-10 ${className || ""}`}>
           <Avatar className="w-6 h-6">
+            {currentUser?.image && (
+              <AvatarImage
+                src={currentUser.image}
+                alt={displayName}
+                className="object-cover"
+              />
+            )}
             <AvatarFallback className="text-xs">
               <User className="w-3 h-3" />
             </AvatarFallback>
