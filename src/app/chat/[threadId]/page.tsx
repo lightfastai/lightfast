@@ -18,6 +18,7 @@ interface ChatThreadPageProps {
   }>
 }
 
+// Server component for specific thread - auth handled by layout
 export default async function ChatThreadPage({ params }: ChatThreadPageProps) {
   // Authentication is now handled by middleware
 

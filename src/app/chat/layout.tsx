@@ -1,5 +1,3 @@
-"use client"
-
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useQuery } from "convex/react"
 import { useOptimisticNavigation } from "@/hooks/useOptimisticNavigation"
@@ -11,7 +9,8 @@ interface ChatLayoutWrapperProps {
   children: React.ReactNode
 }
 
-export default function ChatLayoutWrapper({
+// Server component that handles auth once for entire chat section
+export default async function ChatLayoutWrapper({
   children,
 }: ChatLayoutWrapperProps) {
   const {

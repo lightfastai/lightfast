@@ -31,10 +31,6 @@ export const env = createEnv({
     // Convex URL for client-side connections
     // This is the only Convex variable our app actually needs
     NEXT_PUBLIC_CONVEX_URL: z.string().url(),
-    // // Vercel automatically provides this for Next.js apps
-    // NEXT_PUBLIC_VERCEL_ENV: z
-    //   .enum(["development", "preview", "production"])
-    //   .optional(),
   },
   /*
    * Shared environment variables, available on both client and server.
@@ -58,7 +54,6 @@ export const env = createEnv({
     JWKS: process.env.JWKS,
     // Client-side
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
-    // NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     // Shared
     NODE_ENV: process.env.NODE_ENV,
   },
