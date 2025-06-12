@@ -3,6 +3,7 @@ import { SimplifiedChatSidebar } from "./ChatSidebar"
 import { SidebarSkeleton } from "./SidebarSkeleton"
 import { ClientSidebar } from "./ClientSidebar"
 import { env } from "../../env"
+import { getAuthToken } from "../../lib/auth"
 
 // Server component wrapper for the sidebar that fetches threads
 export async function ServerSidebar() {
@@ -22,12 +23,20 @@ async function SidebarWithData() {
   }
 
   try {
+    // Get authentication token for server-side requests
+    const token = await getAuthToken()
+
+    // If no authentication token, fall back to client-side rendering
+    if (!token) {
+      return <SidebarFallback />
+    }
+
     // Import fetchQuery dynamically to avoid issues during build
     const { fetchQuery } = await import("convex/nextjs")
     const { api } = await import("../../../convex/_generated/api")
 
-    // Fetch threads on the server - this will be cached and streamed with PPR
-    const threads = await fetchQuery(api.threads.list)
+    // Fetch threads on the server with authentication - this will be cached and streamed with PPR
+    const threads = await fetchQuery(api.threads.list, {}, { token })
 
     return <SimplifiedChatSidebar threads={threads} />
   } catch (error) {
