@@ -1,6 +1,7 @@
 "use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Markdown } from "@/components/ui/markdown"
 import { type ModelProvider, getModelDisplayName } from "@/lib/ai"
 import { useQuery } from "convex/react"
 import { User } from "lucide-react"
@@ -154,12 +155,12 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
           {isStreaming && !displayText && !isAI ? (
             <span className="text-muted-foreground italic">Thinking</span>
           ) : displayText ? (
-            <p className="whitespace-pre-wrap">
-              {displayText}
+            <>
+              <Markdown className="text-sm">{displayText}</Markdown>
               {isTyping && (
                 <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1 opacity-70" />
               )}
-            </p>
+            </>
           ) : null}
         </div>
       </div>
