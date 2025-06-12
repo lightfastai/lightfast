@@ -162,19 +162,26 @@ export const generateAIResponse = internalAction({
       })
 
       let fullContent = ""
+      let chunkIndex = 0
 
       console.log("Starting to process stream chunks...")
 
       // Process each chunk as it arrives from the stream
       for await (const chunk of textStream) {
         console.log("Received chunk:", chunk)
-        fullContent += chunk
 
-        // Update the message body progressively
-        await ctx.runMutation(internal.messages.updateStreamingMessage, {
+        // Generate unique chunk ID
+        const chunkId = `chunk_${streamId}_${chunkIndex}_${Date.now()}`
+
+        // Append chunk using the new chunk-based approach
+        await ctx.runMutation(internal.messages.appendStreamChunk, {
           messageId,
-          content: fullContent,
+          chunk,
+          chunkId,
         })
+
+        fullContent += chunk
+        chunkIndex++
       }
 
       console.log(`Stream complete. Full content length: ${fullContent.length}`)
@@ -261,7 +268,43 @@ export const createStreamingMessage = internalMutation({
       streamId: args.streamId,
       isComplete: false,
       thinkingStartedAt: now,
+      streamChunks: [], // Initialize empty chunks array
+      streamVersion: 0, // Initialize version counter
     })
+  },
+})
+
+// Internal mutation to append a chunk and update the message
+export const appendStreamChunk = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    chunk: v.string(),
+    chunkId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const message = await ctx.db.get(args.messageId)
+    if (!message) return null
+
+    const currentChunks = message.streamChunks || []
+    const newChunk = {
+      id: args.chunkId,
+      content: args.chunk,
+      timestamp: Date.now(),
+    }
+
+    // Append chunk to array and update body
+    const updatedChunks = [...currentChunks, newChunk]
+    const updatedBody = message.body + args.chunk
+
+    await ctx.db.patch(args.messageId, {
+      body: updatedBody,
+      streamChunks: updatedChunks,
+      lastChunkId: args.chunkId,
+      streamVersion: (message.streamVersion || 0) + 1,
+    })
+
+    return null
   },
 })
 
@@ -273,8 +316,12 @@ export const updateStreamingMessage = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // For backward compatibility, we'll update the body directly
+    // but in the new streaming logic, use appendStreamChunk instead
     await ctx.db.patch(args.messageId, {
       body: args.content,
+      streamVersion:
+        ((await ctx.db.get(args.messageId))?.streamVersion || 0) + 1,
     })
 
     return null
@@ -321,5 +368,65 @@ export const createErrorMessage = internalMutation({
     })
 
     return null
+  },
+})
+
+// Add new query to get stream chunks since a specific chunk ID
+export const getStreamChunks = query({
+  args: {
+    streamId: v.string(),
+    sinceChunkId: v.optional(v.string()),
+  },
+  returns: v.object({
+    chunks: v.array(
+      v.object({
+        id: v.string(),
+        content: v.string(),
+        timestamp: v.number(),
+      }),
+    ),
+    isComplete: v.boolean(),
+    currentBody: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      return { chunks: [], isComplete: false, currentBody: "" }
+    }
+
+    // Find the message by streamId
+    const message = await ctx.db
+      .query("messages")
+      .withIndex("by_stream_id", (q) => q.eq("streamId", args.streamId))
+      .first()
+
+    if (!message) {
+      return { chunks: [], isComplete: false, currentBody: "" }
+    }
+
+    // Verify the user owns the thread
+    const thread = await ctx.db.get(message.threadId)
+    if (!thread || thread.userId !== userId) {
+      return { chunks: [], isComplete: false, currentBody: "" }
+    }
+
+    const allChunks = message.streamChunks || []
+    let chunks = allChunks
+
+    // If sinceChunkId is provided, only return chunks after that ID
+    if (args.sinceChunkId) {
+      const sinceIndex = allChunks.findIndex(
+        (chunk) => chunk.id === args.sinceChunkId,
+      )
+      if (sinceIndex !== -1) {
+        chunks = allChunks.slice(sinceIndex + 1)
+      }
+    }
+
+    return {
+      chunks,
+      isComplete: message.isComplete || false,
+      currentBody: message.body,
+    }
   },
 })

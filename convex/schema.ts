@@ -23,5 +23,18 @@ export default defineSchema({
     isComplete: v.optional(v.boolean()),
     thinkingStartedAt: v.optional(v.number()),
     thinkingCompletedAt: v.optional(v.number()),
-  }).index("by_thread", ["threadId"]),
+    streamChunks: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          content: v.string(),
+          timestamp: v.number(),
+        }),
+      ),
+    ),
+    lastChunkId: v.optional(v.string()),
+    streamVersion: v.optional(v.number()),
+  })
+    .index("by_thread", ["threadId"])
+    .index("by_stream_id", ["streamId"]),
 })

@@ -6,6 +6,7 @@ import { User } from "lucide-react"
 import { useEffect, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
+import { StreamingMessage } from "./StreamingMessage"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -32,7 +33,7 @@ function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
-type Message = Doc<"messages">
+type Message = Doc<"messages"> & { _streamId?: string | null }
 
 interface MessageDisplayProps {
   message: Message
@@ -48,14 +49,19 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   // Get current user for avatar display
   const currentUser = useQuery(api.users.current)
 
+  // Check if this message should use resumable streaming
+  const useResumableStream = message.isStreaming && message._streamId
+
   // Update display text when message body changes (via Convex reactivity)
   useEffect(() => {
-    setDisplayText(message.body)
-    setIsTyping(
-      Boolean(
-        message.isStreaming && !message.isComplete && message.body.length > 0,
-      ),
-    )
+    if (!useResumableStream) {
+      setDisplayText(message.body)
+      setIsTyping(
+        Boolean(
+          message.isStreaming && !message.isComplete && message.body.length > 0,
+        ),
+      )
+    }
 
     // Calculate thinking duration
     if (message.thinkingStartedAt && message.thinkingCompletedAt) {
@@ -72,6 +78,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
     message.isComplete,
     message.thinkingStartedAt,
     message.thinkingCompletedAt,
+    useResumableStream,
   ])
 
   const isAI = message.messageType === "assistant"
@@ -90,6 +97,56 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
     return `${minutes}m ${seconds}s`
   }
 
+  // If this message has a resumable stream, use the StreamingMessage component
+  if (useResumableStream) {
+    return (
+      <div
+        className={`flex gap-3 ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""}`}
+      >
+        <Avatar className="w-8 h-8 shrink-0 rounded-md">
+          {!isAI && currentUser?.image && (
+            <AvatarImage
+              src={currentUser.image}
+              alt={currentUser.name || userName}
+              className="object-cover"
+            />
+          )}
+          <AvatarFallback
+            className={`rounded-md ${isAI ? "bg-background text-primary" : "bg-secondary"}`}
+          >
+            {isAI ? (
+              <LightfastLogo className="w-4 h-4" />
+            ) : (
+              <User className="w-4 h-4" />
+            )}
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1">
+          {/* Show thinking indicators at the top for assistant messages */}
+          {isAI && (
+            <>
+              {/* Show final thinking duration for completed assistant messages */}
+              {!isStreaming && thinkingDuration && (
+                <div className="text-xs text-muted-foreground mb-2">
+                  <span className="font-mono">
+                    Thought for {formatDuration(thinkingDuration)}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+
+          <StreamingMessage
+            message={message}
+            className="text-sm leading-relaxed"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Original display logic for non-resumable messages
   return (
     <div
       className={`flex gap-3  ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""}`}
