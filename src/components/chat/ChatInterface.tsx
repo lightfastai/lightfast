@@ -1,6 +1,6 @@
 "use client"
 
-import type { ModelProvider } from "@/lib/ai"
+import { getProviderFromModelId } from "@/lib/ai"
 import { useMutation, useQuery } from "convex/react"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -71,8 +71,15 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     }
   }, [isNewChat])
 
-  const handleSendMessage = async (message: string, model: ModelProvider) => {
+  const handleSendMessage = async (message: string, modelId: string) => {
     if (!message.trim()) return
+
+    // Get the provider from model ID to maintain backend compatibility
+    const provider = getProviderFromModelId(modelId)
+    if (!provider) {
+      console.error("Invalid model ID:", modelId)
+      return
+    }
 
     try {
       if (isNewChat) {
@@ -81,11 +88,12 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
           title: "Generating title...",
         })
 
-        // Send the message to the new thread
+        // Send the message to the new thread with both model ID and provider
         await sendMessage({
           threadId: newThreadId,
           body: message,
-          model: model,
+          model: provider,
+          modelId: modelId, // Pass the full model ID as well
         })
 
         // Navigate to the new thread using replace for better UX
@@ -96,7 +104,8 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
         await sendMessage({
           threadId: currentThreadId,
           body: message,
-          model: model,
+          model: provider,
+          modelId: modelId, // Pass the full model ID as well
         })
       }
     } catch (error) {

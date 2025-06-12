@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -14,17 +16,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  DEFAULT_PROVIDER,
-  type ModelProvider,
-  getModelDisplayName,
-  getSupportedProviders,
-} from "@/lib/ai"
+import { DEFAULT_MODEL_ID, getAllModels, getModelById } from "@/lib/ai"
 import { Bot, Send } from "lucide-react"
 import { useState } from "react"
 
 interface ChatInputProps {
-  onSendMessage: (message: string, model: ModelProvider) => Promise<void> | void
+  onSendMessage: (message: string, modelId: string) => Promise<void> | void
   isLoading?: boolean
   placeholder?: string
   disabled?: boolean
@@ -42,17 +39,29 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
-  const [selectedModel, setSelectedModel] =
-    useState<ModelProvider>(DEFAULT_PROVIDER)
+  const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID)
 
-  const supportedProviders = getSupportedProviders()
+  const allModels = getAllModels()
+  const selectedModel = getModelById(selectedModelId)
+
+  // Group models by provider
+  const modelsByProvider = allModels.reduce(
+    (acc, model) => {
+      if (!acc[model.provider]) {
+        acc[model.provider] = []
+      }
+      acc[model.provider].push(model)
+      return acc
+    },
+    {} as Record<string, typeof allModels>,
+  )
 
   const handleSendMessage = async () => {
     if (!message.trim() || isSending || disabled) return
 
     setIsSending(true)
     try {
-      await onSendMessage(message, selectedModel)
+      await onSendMessage(message, selectedModelId)
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
@@ -106,22 +115,33 @@ export function ChatInput({
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2">
             <Bot className="w-4 h-4 text-muted-foreground" />
-            <Select
-              value={selectedModel}
-              onValueChange={(value: ModelProvider) => setSelectedModel(value)}
-            >
-              <SelectTrigger className="h-8 w-40 text-xs">
-                <SelectValue />
+            <Select value={selectedModelId} onValueChange={setSelectedModelId}>
+              <SelectTrigger className="h-8 w-[220px] text-xs">
+                <SelectValue>{selectedModel?.displayName}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {supportedProviders.map((provider) => (
-                  <SelectItem
-                    key={provider}
-                    value={provider}
-                    className="text-xs"
-                  >
-                    {getModelDisplayName(provider)}
-                  </SelectItem>
+                {Object.entries(modelsByProvider).map(([provider, models]) => (
+                  <SelectGroup key={provider}>
+                    <SelectLabel className="text-xs font-medium capitalize">
+                      {provider}
+                    </SelectLabel>
+                    {models.map((model) => (
+                      <SelectItem
+                        key={model.id}
+                        value={model.id}
+                        className="text-xs"
+                      >
+                        <div className="flex flex-col">
+                          <span>{model.displayName}</span>
+                          {model.features.thinking && (
+                            <span className="text-[10px] text-muted-foreground">
+                              Extended reasoning mode
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>

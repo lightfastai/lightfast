@@ -96,9 +96,16 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   }
 
   // Get model display name safely
-  const getModelName = (model: ModelProvider | undefined): string => {
-    if (!model) return "AI Assistant"
-    return getModelDisplayName(model)
+  const getModelName = (
+    modelId: string | undefined,
+    provider: ModelProvider | undefined,
+  ): string => {
+    if (modelId) {
+      return getModelDisplayName(modelId)
+    }
+    // Fallback to provider name for backward compatibility
+    if (!provider) return "AI Assistant"
+    return getModelDisplayName(provider)
   }
 
   return (
@@ -131,7 +138,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
             {/* Show model name and thinking duration for completed assistant messages */}
             {!isStreaming && (
               <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
-                <span>{getModelName(message.model)}</span>
+                <span>{getModelName(message.modelId, message.model)}</span>
                 {thinkingDuration && (
                   <>
                     <span>•</span>
@@ -146,7 +153,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
             {/* Show thinking indicator while streaming */}
             {isStreaming && (
               <div className="mb-2 text-xs text-muted-foreground flex items-center gap-2">
-                <span>{getModelName(message.model)}</span>
+                <span>{getModelName(message.modelId, message.model)}</span>
                 <span>•</span>
                 <span>{message.isThinking ? "Thinking" : "Responding"}</span>
               </div>

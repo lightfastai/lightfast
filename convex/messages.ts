@@ -26,6 +26,7 @@ export const list = query({
       timestamp: v.number(),
       messageType: v.union(v.literal("user"), v.literal("assistant")),
       model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
+      modelId: v.optional(v.string()),
       isStreaming: v.optional(v.boolean()),
       streamId: v.optional(v.string()),
       isComplete: v.optional(v.boolean()),
@@ -61,6 +62,7 @@ export const send = mutation({
     threadId: v.id("threads"),
     body: v.string(),
     model: v.optional(v.union(v.literal("openai"), v.literal("anthropic"))),
+    modelId: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -82,6 +84,7 @@ export const send = mutation({
       timestamp: Date.now(),
       messageType: "user",
       model: args.model,
+      modelId: args.modelId,
     })
 
     // Update thread's last message timestamp
@@ -94,6 +97,7 @@ export const send = mutation({
       threadId: args.threadId,
       userMessage: args.body,
       model: args.model || "anthropic", // Default to Claude Sonnet 4
+      modelId: args.modelId || "claude-sonnet-4-20250514", // Default to standard Claude 4
     })
 
     // Check if this is the first user message in the thread (for title generation)
@@ -121,6 +125,7 @@ export const generateAIResponse = internalAction({
     threadId: v.id("threads"),
     userMessage: v.string(),
     model: v.union(v.literal("openai"), v.literal("anthropic")),
+    modelId: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -136,6 +141,7 @@ export const generateAIResponse = internalAction({
           threadId: args.threadId,
           streamId,
           model: args.model,
+          modelId: args.modelId,
         },
       )
 
@@ -162,14 +168,18 @@ export const generateAIResponse = internalAction({
       ]
 
       console.log(
-        `Attempting to call ${args.model} with ${messages.length} messages`,
+        `Attempting to call ${args.model} with model ID ${args.modelId} and ${messages.length} messages`,
       )
 
-      // Choose the appropriate model using updated model IDs for v5
+      // Get the actual model name from modelId
+      const actualModelName = args.modelId.replace("-thinking", "")
+      const isThinkingMode = args.modelId.includes("-thinking")
+
+      // Choose the appropriate model using the actual model ID
       const selectedModel =
         args.model === "anthropic"
-          ? anthropic("claude-sonnet-4-20250514") // Claude Sonnet 4.0
-          : openai("gpt-4o-mini")
+          ? anthropic(actualModelName) // Use the actual model name
+          : openai(actualModelName)
 
       // Stream response using AI SDK v5 with full stream for reasoning support
       const streamOptions: Parameters<typeof streamText>[0] = {
@@ -178,8 +188,8 @@ export const generateAIResponse = internalAction({
         temperature: 0.7,
       }
 
-      // For Claude 4.0, enable thinking/reasoning mode
-      if (args.model === "anthropic") {
+      // For Claude 4.0 thinking mode, enable thinking/reasoning
+      if (args.model === "anthropic" && isThinkingMode) {
         // Claude 4.0 has native thinking support
         streamOptions.system =
           "You are a helpful AI assistant. For complex questions, show your reasoning process step by step before providing the final answer."
@@ -283,6 +293,7 @@ export const generateAIResponse = internalAction({
           threadId: args.threadId,
           streamId,
           model: args.model,
+          modelId: args.modelId,
           errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your ${args.model} API key.`,
         })
       }
@@ -326,6 +337,7 @@ export const createStreamingMessage = internalMutation({
     threadId: v.id("threads"),
     streamId: v.string(),
     model: v.union(v.literal("openai"), v.literal("anthropic")),
+    modelId: v.string(),
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
@@ -340,6 +352,7 @@ export const createStreamingMessage = internalMutation({
       streamId: args.streamId,
       isComplete: false,
       thinkingStartedAt: now,
+      modelId: args.modelId,
     })
   },
 })
@@ -383,6 +396,7 @@ export const createErrorMessage = internalMutation({
     threadId: v.id("threads"),
     streamId: v.string(),
     model: v.union(v.literal("openai"), v.literal("anthropic")),
+    modelId: v.optional(v.string()),
     errorMessage: v.string(),
   },
   returns: v.null(),
@@ -394,11 +408,12 @@ export const createErrorMessage = internalMutation({
       timestamp: now,
       messageType: "assistant",
       model: args.model,
+      modelId: args.modelId,
       isStreaming: false,
       streamId: args.streamId,
       isComplete: true,
       thinkingStartedAt: now,
-      thinkingCompletedAt: now, // Error occurred immediately
+      thinkingCompletedAt: now,
     })
 
     return null
