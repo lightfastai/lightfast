@@ -17,8 +17,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DEFAULT_MODEL_ID, getAllModels, getModelById } from "@/lib/ai"
-import { Bot, Send } from "lucide-react"
+import { Send } from "lucide-react"
 import { useState } from "react"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ChatInputProps {
   onSendMessage: (message: string, modelId: string) => Promise<void> | void
@@ -81,20 +82,69 @@ export function ChatInput({
   const canSend = message.trim() && !isSending && !disabled && !isLoading
 
   return (
-    <div className={`border-t p-4 flex-shrink-0 ${className}`}>
+    <div className={`p-4 flex-shrink-0 ${className}`}>
       <div className="max-w-3xl mx-auto">
         <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={placeholder}
-              className="min-h-[60px] resize-none pr-12"
-              rows={1}
-              maxLength={maxLength}
-              disabled={disabled || isSending}
-            />
+          <div className="flex-1 relative min-w-0">
+            <div className="relative w-full h-[200px] rounded-md border">
+              <ScrollArea className="w-full h-full" type="always">
+                <div className="w-full pr-12 pb-16">
+                  <Textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder={placeholder}
+                    className="w-full min-h-[184px] resize-none border-0 focus-visible:ring-0 whitespace-pre-wrap break-all overflow-hidden"
+                    maxLength={maxLength}
+                    disabled={disabled || isSending}
+                    style={{
+                      overflowWrap: "break-word",
+                      width: "100%",
+                    }}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Model Selector positioned inside textarea at bottom left */}
+            <div className="absolute left-2 bottom-2">
+              <Select
+                value={selectedModelId}
+                onValueChange={setSelectedModelId}
+              >
+                <SelectTrigger className="h-6 w-[140px] text-xs border-0 bg-background/80 backdrop-blur-sm">
+                  <SelectValue>{selectedModel?.displayName}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(modelsByProvider).map(
+                    ([provider, models]) => (
+                      <SelectGroup key={provider}>
+                        <SelectLabel className="text-xs font-medium capitalize">
+                          {provider}
+                        </SelectLabel>
+                        {models.map((model) => (
+                          <SelectItem
+                            key={model.id}
+                            value={model.id}
+                            className="text-xs"
+                          >
+                            <div className="flex flex-col">
+                              <span>{model.displayName}</span>
+                              {model.features.thinking && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  Extended reasoning mode
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -113,39 +163,10 @@ export function ChatInput({
           </div>
         </div>
 
+        {/* Bottom section for future features */}
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2">
-            <Bot className="w-4 h-4 text-muted-foreground" />
-            <Select value={selectedModelId} onValueChange={setSelectedModelId}>
-              <SelectTrigger className="h-8 w-[220px] text-xs">
-                <SelectValue>{selectedModel?.displayName}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(modelsByProvider).map(([provider, models]) => (
-                  <SelectGroup key={provider}>
-                    <SelectLabel className="text-xs font-medium capitalize">
-                      {provider}
-                    </SelectLabel>
-                    {models.map((model) => (
-                      <SelectItem
-                        key={model.id}
-                        value={model.id}
-                        className="text-xs"
-                      >
-                        <div className="flex flex-col">
-                          <span>{model.displayName}</span>
-                          {model.features.thinking && (
-                            <span className="text-[10px] text-muted-foreground">
-                              Extended reasoning mode
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Placeholder for future features like Deep Research */}
           </div>
           <div className="text-xs text-muted-foreground">
             {message.length}/{maxLength}
