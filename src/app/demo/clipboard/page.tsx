@@ -11,6 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import {
+  CopyFileReference,
+  CopyComponentReference,
+  FileMention,
+} from "@/components/ui/copy-file-reference"
 
 export default function ClipboardDemoPage() {
   const sampleCode = `import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard"
@@ -46,6 +51,72 @@ export function MyComponent() {
       </div>
 
       <Separator />
+
+      {/* File References Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>File References</CardTitle>
+          <CardDescription>
+            Components for copying file paths and component references.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Component references:</p>
+              <div className="flex flex-wrap gap-2">
+                <CopyComponentReference name="MessageDisplay" />
+                <CopyFileReference path="src/components/chat/MessageDisplay.tsx" />
+                <CopyFileReference
+                  path="components/ui/button.tsx"
+                  showAtSymbol={false}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Inline file mentions:</p>
+              <p className="text-sm text-muted-foreground">
+                Check out the <FileMention path="MessageDisplay.tsx" />{" "}
+                component for message rendering, or look at{" "}
+                <FileMention path="StreamingMessage.tsx" /> for streaming
+                support.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Custom styled references:</p>
+              <CopyFileReference
+                path="src/lib/use-copy-to-clipboard.ts"
+                className="bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                showIcon={false}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                Usage in chat or documentation:
+              </p>
+              <div className="bg-muted/30 p-4 rounded-lg space-y-2">
+                <p className="text-sm">
+                  "To implement message display, use the{" "}
+                  <CopyComponentReference name="MessageDisplay" />
+                  component. It handles both user and AI messages with streaming
+                  support."
+                </p>
+                <p className="text-sm">
+                  "You can find the implementation at{" "}
+                  <CopyFileReference
+                    path="src/components/chat/MessageDisplay.tsx"
+                    showIcon={false}
+                  />
+                  "
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Copy Button Variants */}
       <Card>

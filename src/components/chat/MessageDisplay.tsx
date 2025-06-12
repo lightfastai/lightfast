@@ -8,6 +8,8 @@ import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { StreamingMessage } from "./StreamingMessage"
 import { getModelDisplayName } from "@/lib/ai"
+import { CopyButton } from "@/components/ui/copy-button"
+import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -46,6 +48,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   const [thinkingDuration, setThinkingDuration] = React.useState<number | null>(
     null,
   )
+  const [isHovered, setIsHovered] = React.useState(false)
 
   // Get current user for avatar display
   const currentUser = useQuery(api.users.current)
@@ -70,7 +73,9 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   // Always use StreamingMessage for all messages
   return (
     <div
-      className={`flex gap-3 ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""}`}
+      className={`flex gap-3 ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""} group/message`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <Avatar className="w-8 h-8 shrink-0 rounded-md">
         {!isAI && currentUser?.image && (
@@ -91,7 +96,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <StreamingMessage
           message={message}
           className="text-sm leading-relaxed"
@@ -104,6 +109,19 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
           }
           thinkingDuration={thinkingDuration}
         />
+
+        {/* Copy button for message content */}
+        {message.body && (
+          <CopyButton
+            text={message.body}
+            size="icon"
+            variant="ghost"
+            className={`absolute top-0 right-0 h-7 w-7 opacity-0 transition-opacity ${
+              isHovered ? "group-hover/message:opacity-100" : ""
+            }`}
+            aria-label="Copy message"
+          />
+        )}
       </div>
     </div>
   )

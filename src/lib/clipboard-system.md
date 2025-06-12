@@ -205,3 +205,63 @@ function ClickToCopy({ children, text }: { children: ReactNode, text: string }) 
 ## Demo
 
 Visit `/demo/clipboard` to see all components in action with live examples.
+
+## MessageDisplay.tsx Integration
+
+The clipboard system has been integrated into the `MessageDisplay.tsx` component to provide easy copying of chat messages and component references.
+
+### Copy Message Content
+
+Each message in the chat now has a copy button that appears on hover:
+
+```tsx
+// The MessageDisplay component automatically adds a copy button for each message
+<MessageDisplay message={message} userName={userName} />
+```
+
+The copy button:
+- Appears on hover over the message
+- Copies the full message content (`message.body`)
+- Shows visual feedback when copied
+- Positioned at the top-right of the message
+
+### Copy Component References
+
+To easily copy references to `@MessageDisplay.tsx`:
+
+```tsx
+import { CopyComponentReference, CopyFileReference, FileMention } from "@/components/ui/copy-file-reference"
+
+// Copy as @MessageDisplay.tsx
+<CopyComponentReference name="MessageDisplay" />
+
+// Copy full file path
+<CopyFileReference path="src/components/chat/MessageDisplay.tsx" />
+
+// Inline mention with copy on click
+<FileMention path="MessageDisplay.tsx" />
+```
+
+### Common Use Cases
+
+1. **Reference in Documentation**:
+   ```tsx
+   <p>See <FileMention path="MessageDisplay.tsx" /> for the implementation.</p>
+   ```
+
+2. **Copy Import Statement**:
+   ```tsx
+   <CopyButton text="import { MessageDisplay } from '@/components/chat/MessageDisplay'" />
+   ```
+
+3. **Copy Multiple References**:
+   ```tsx
+   <CopyButton
+     text={`@MessageDisplay.tsx\nsrc/components/chat/MessageDisplay.tsx`}
+     label="Copy All References"
+   />
+   ```
+
+### Example Component
+
+See `src/components/chat/message-display-example.tsx` for a complete example of all the ways to copy MessageDisplay.tsx references.
