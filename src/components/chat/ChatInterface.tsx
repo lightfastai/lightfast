@@ -113,7 +113,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     if (isNewChat) {
       return "Start a conversation with our AI assistant. Messages stream in real-time!"
     }
-    return "Continue your conversation with the AI assistant."
+    return ""
   }
 
   return (
