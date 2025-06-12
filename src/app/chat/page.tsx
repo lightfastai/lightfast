@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   },
 }
 
-// Server component for new chat - auth handled by layout
+// Server component that handles chat routing logic
 export default function ChatPage() {
+  // Authentication is now handled by middleware
+  // This allows for instant client-side navigation
   return <ChatInterface />
 }

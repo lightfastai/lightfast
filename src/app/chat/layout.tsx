@@ -1,7 +1,9 @@
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { isAuthenticated } from "@/lib/auth"
-import { redirect } from "next/navigation"
-import { ChatLayoutClient } from "../../components/chat/ChatLayoutClient"
+import { useQuery } from "convex/react"
+import { useOptimisticNavigation } from "@/hooks/useOptimisticNavigation"
+import { api } from "../../../convex/_generated/api"
+import { ChatLayout } from "../../components/chat/ChatLayout"
+import type React from "react"
 
 interface ChatLayoutWrapperProps {
   children: React.ReactNode
@@ -11,15 +13,43 @@ interface ChatLayoutWrapperProps {
 export default async function ChatLayoutWrapper({
   children,
 }: ChatLayoutWrapperProps) {
-  // Check authentication once for entire chat section
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    redirect("/signin")
+  const {
+    navigateToThread,
+    navigateToNewChat,
+    prefetchThread,
+    currentThreadId,
+  } = useOptimisticNavigation()
+
+  // Get threads list with real-time updates
+  const threads = useQuery(api.threads.list) ?? []
+
+  // Get current thread for title display
+  const currentThread = useQuery(
+    api.threads.get,
+    currentThreadId === "new" || !currentThreadId
+      ? "skip"
+      : { threadId: currentThreadId },
+  )
+
+  const getTitle = () => {
+    if (!currentThreadId || currentThreadId === "new") {
+      return "New Chat"
+    }
+    return currentThread?.title || "Loading..."
   }
 
   return (
     <TooltipProvider>
-      <ChatLayoutClient>{children}</ChatLayoutClient>
+      <ChatLayout
+        threads={threads}
+        currentThreadId={currentThreadId || "new"}
+        title={getTitle()}
+        onNewChat={navigateToNewChat}
+        onThreadSelect={navigateToThread}
+        onThreadHover={prefetchThread}
+      >
+        {children}
+      </ChatLayout>
     </TooltipProvider>
   )
 }
