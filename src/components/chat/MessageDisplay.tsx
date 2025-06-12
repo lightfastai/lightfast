@@ -9,6 +9,7 @@ import type { Doc } from "../../../convex/_generated/dataModel"
 import { StreamingMessage } from "./StreamingMessage"
 import { getModelDisplayName } from "@/lib/ai"
 import { CopyButton } from "@/components/ui/copy-button"
+import { FeedbackButtons } from "./FeedbackButtons"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -109,17 +110,20 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
           thinkingDuration={thinkingDuration}
         />
 
-        {/* Copy button for message content */}
-        {message.body && (
-          <CopyButton
-            text={message.body}
-            size="icon"
-            variant="ghost"
-            className={`absolute top-0 right-0 h-7 w-7 opacity-0 transition-opacity ${
-              isHovered ? "group-hover/message:opacity-100" : ""
-            }`}
-            aria-label="Copy message"
-          />
+        {/* Show feedback and copy buttons for completed AI messages */}
+        {isAI && message.isComplete !== false && !message._streamId && (
+          <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/message:opacity-100">
+            <FeedbackButtons messageId={message._id} />
+            {message.body && (
+              <CopyButton
+                text={message.body}
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                aria-label="Copy message"
+              />
+            )}
+          </div>
         )}
       </div>
     </div>
