@@ -51,6 +51,15 @@ export const list = query({
       thinkingContent: v.optional(v.string()),
       isThinking: v.optional(v.boolean()),
       hasThinkingContent: v.optional(v.boolean()),
+      usage: v.optional(
+        v.object({
+          inputTokens: v.optional(v.number()),
+          outputTokens: v.optional(v.number()),
+          totalTokens: v.optional(v.number()),
+          reasoningTokens: v.optional(v.number()),
+          cachedInputTokens: v.optional(v.number()),
+        }),
+      ),
     }),
   ),
   handler: async (ctx, args) => {
@@ -223,7 +232,7 @@ export const generateAIResponse = internalAction({
         }
       }
 
-      const { fullStream } = await streamText(streamOptions)
+      const { fullStream, usage } = await streamText(streamOptions)
 
       let fullContent = ""
       let thinkingContent = ""
@@ -291,9 +300,14 @@ export const generateAIResponse = internalAction({
         )
       }
 
-      // Mark message as complete
+      // Get final usage data
+      const finalUsage = await usage
+      console.log("Final usage data:", finalUsage)
+
+      // Mark message as complete with usage data
       await ctx.runMutation(internal.messages.completeStreamingMessage, {
         messageId,
+        usage: finalUsage,
       })
     } catch (error) {
       console.error("Error generating response:", error)
@@ -394,22 +408,138 @@ export const updateStreamingMessage = internalMutation({
   },
 })
 
-// Internal mutation to mark streaming as complete
+// Internal mutation to mark streaming as complete and update thread usage
 export const completeStreamingMessage = internalMutation({
   args: {
     messageId: v.id("messages"),
+    usage: v.optional(
+      v.object({
+        inputTokens: v.optional(v.number()),
+        outputTokens: v.optional(v.number()),
+        totalTokens: v.optional(v.number()),
+        reasoningTokens: v.optional(v.number()),
+        cachedInputTokens: v.optional(v.number()),
+      }),
+    ),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // Get the message to find thread and model
+    const message = await ctx.db.get(args.messageId)
+    if (!message) {
+      throw new Error("Message not found")
+    }
+
+    // Update the message with completion status and usage
     await ctx.db.patch(args.messageId, {
       isStreaming: false,
       isComplete: true,
       thinkingCompletedAt: Date.now(),
+      usage: args.usage,
     })
+
+    // Update thread usage totals atomically if we have usage data
+    if (args.usage && message.threadId) {
+      await updateThreadUsage(
+        ctx,
+        message.threadId,
+        message.model || "unknown",
+        args.usage,
+      )
+    }
 
     return null
   },
 })
+
+// Helper function to update thread usage totals
+async function updateThreadUsage(
+  ctx: {
+    db: {
+      get: (id: Id<"threads">) => Promise<Doc<"threads"> | null>
+      patch: (
+        id: Id<"threads">,
+        fields: Partial<Doc<"threads">>,
+      ) => Promise<void>
+    }
+  },
+  threadId: Id<"threads">,
+  model: string,
+  messageUsage: {
+    inputTokens?: number
+    outputTokens?: number
+    totalTokens?: number
+    reasoningTokens?: number
+    cachedInputTokens?: number
+  },
+) {
+  const thread = await ctx.db.get(threadId)
+  if (!thread) return
+
+  const inputTokens = messageUsage.inputTokens || 0
+  const outputTokens = messageUsage.outputTokens || 0
+  const totalTokens = messageUsage.totalTokens || 0
+  const reasoningTokens = messageUsage.reasoningTokens || 0
+  const cachedInputTokens = messageUsage.cachedInputTokens || 0
+
+  // Get existing usage or initialize
+  const currentUsage = thread.usage || {
+    totalInputTokens: 0,
+    totalOutputTokens: 0,
+    totalTokens: 0,
+    totalReasoningTokens: 0,
+    totalCachedInputTokens: 0,
+    messageCount: 0,
+    modelStats: {},
+  }
+
+  // Get model-specific ID (e.g., "claude-sonnet-4-20250514" instead of just "anthropic")
+  const modelId = getFullModelId(model)
+
+  // Update totals
+  const newUsage = {
+    totalInputTokens: currentUsage.totalInputTokens + inputTokens,
+    totalOutputTokens: currentUsage.totalOutputTokens + outputTokens,
+    totalTokens: currentUsage.totalTokens + totalTokens,
+    totalReasoningTokens: currentUsage.totalReasoningTokens + reasoningTokens,
+    totalCachedInputTokens:
+      currentUsage.totalCachedInputTokens + cachedInputTokens,
+    messageCount: currentUsage.messageCount + 1,
+    modelStats: {
+      ...currentUsage.modelStats,
+      [modelId]: {
+        messageCount: (currentUsage.modelStats[modelId]?.messageCount || 0) + 1,
+        inputTokens:
+          (currentUsage.modelStats[modelId]?.inputTokens || 0) + inputTokens,
+        outputTokens:
+          (currentUsage.modelStats[modelId]?.outputTokens || 0) + outputTokens,
+        totalTokens:
+          (currentUsage.modelStats[modelId]?.totalTokens || 0) + totalTokens,
+        reasoningTokens:
+          (currentUsage.modelStats[modelId]?.reasoningTokens || 0) +
+          reasoningTokens,
+        cachedInputTokens:
+          (currentUsage.modelStats[modelId]?.cachedInputTokens || 0) +
+          cachedInputTokens,
+      },
+    },
+  }
+
+  // Update thread with new usage
+  await ctx.db.patch(threadId, { usage: newUsage })
+}
+
+// Helper to get full model ID for consistent tracking across providers
+function getFullModelId(model: string): string {
+  switch (model) {
+    case "anthropic":
+      return "claude-sonnet-4-20250514"
+    case "openai":
+      return "gpt-4o-mini"
+    default:
+      return model
+  }
+}
 
 // Internal mutation to create error message
 export const createErrorMessage = internalMutation({
@@ -470,5 +600,95 @@ export const updateThinkingContent = internalMutation({
       thinkingContent: args.thinkingContent,
     })
     return null
+  },
+})
+
+export const getThreadUsage = query({
+  args: {
+    threadId: v.id("threads"),
+  },
+  returns: v.object({
+    totalInputTokens: v.number(),
+    totalOutputTokens: v.number(),
+    totalTokens: v.number(),
+    totalReasoningTokens: v.number(),
+    totalCachedInputTokens: v.number(),
+    messageCount: v.number(),
+    modelStats: v.array(
+      v.object({
+        model: v.string(),
+        inputTokens: v.number(),
+        outputTokens: v.number(),
+        totalTokens: v.number(),
+        reasoningTokens: v.number(),
+        cachedInputTokens: v.number(),
+        messageCount: v.number(),
+      }),
+    ),
+  }),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      return {
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalTokens: 0,
+        totalReasoningTokens: 0,
+        totalCachedInputTokens: 0,
+        messageCount: 0,
+        modelStats: [],
+      }
+    }
+
+    // Verify the user owns this thread
+    const thread = await ctx.db.get(args.threadId)
+    if (!thread || thread.userId !== userId) {
+      return {
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalTokens: 0,
+        totalReasoningTokens: 0,
+        totalCachedInputTokens: 0,
+        messageCount: 0,
+        modelStats: [],
+      }
+    }
+
+    // Return usage from thread table (fast O(1) lookup!)
+    const usage = thread.usage
+    if (!usage) {
+      return {
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalTokens: 0,
+        totalReasoningTokens: 0,
+        totalCachedInputTokens: 0,
+        messageCount: 0,
+        modelStats: [],
+      }
+    }
+
+    // Convert modelStats record to array format
+    const modelStats = Object.entries(usage.modelStats).map(
+      ([model, stats]) => ({
+        model,
+        inputTokens: stats.inputTokens,
+        outputTokens: stats.outputTokens,
+        totalTokens: stats.totalTokens,
+        reasoningTokens: stats.reasoningTokens,
+        cachedInputTokens: stats.cachedInputTokens,
+        messageCount: stats.messageCount,
+      }),
+    )
+
+    return {
+      totalInputTokens: usage.totalInputTokens,
+      totalOutputTokens: usage.totalOutputTokens,
+      totalTokens: usage.totalTokens,
+      totalReasoningTokens: usage.totalReasoningTokens,
+      totalCachedInputTokens: usage.totalCachedInputTokens,
+      messageCount: usage.messageCount,
+      modelStats,
+    }
   },
 })
