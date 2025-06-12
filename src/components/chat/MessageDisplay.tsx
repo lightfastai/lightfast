@@ -8,8 +8,7 @@ import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { StreamingMessage } from "./StreamingMessage"
 import { getModelDisplayName } from "@/lib/ai"
-import { ClipboardButton } from "@/components/chat/ClipboardButton"
-import { FeedbackButtons } from "./FeedbackButtons"
+import { MessageActions } from "./MessageActions"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -98,28 +97,21 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
           message={message}
           className="text-sm leading-relaxed"
           modelName={
-            message.modelId
-              ? getModelDisplayName(message.modelId)
-              : message.model
-                ? getModelDisplayName(message.model)
-                : "AI Assistant"
+            isAI
+              ? message.modelId
+                ? getModelDisplayName(message.modelId)
+                : message.model
+                  ? getModelDisplayName(message.model)
+                  : "AI Assistant"
+              : undefined
           }
           thinkingDuration={thinkingDuration}
         />
 
         {/* Show feedback and copy buttons for completed AI messages */}
         {isAI && message.isComplete !== false && !message._streamId && (
-          <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/message:opacity-100">
-            <FeedbackButtons messageId={message._id} />
-            {message.body && (
-              <ClipboardButton
-                text={message.body}
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
-                aria-label="Copy message"
-              />
-            )}
+          <div className="opacity-0 transition-opacity group-hover/message:opacity-100">
+            <MessageActions message={message} />
           </div>
         )}
       </div>
