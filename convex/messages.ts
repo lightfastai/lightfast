@@ -60,6 +60,17 @@ export const list = query({
           cachedInputTokens: v.optional(v.number()),
         }),
       ),
+      lastChunkId: v.optional(v.string()),
+      streamChunks: v.optional(
+        v.array(
+          v.object({
+            id: v.string(),
+            content: v.string(),
+            timestamp: v.number(),
+          }),
+        ),
+      ),
+      streamVersion: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, args) => {
