@@ -1,12 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card"
+import { isDevelopment, isVercelPreview } from "@/env"
 import { Github, UserIcon } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { SignInButton } from "../../components/auth/SignInButton"
 import { redirect } from "next/navigation"
-import { isAuthenticated } from "../../lib/auth"
 import { AuthRedirectHandler } from "../../components/auth/AuthRedirectHandler"
-import { isDevelopment, isVercelPreview } from "@/env"
+import { SignInButton } from "../../components/auth/SignInButton"
+import { isAuthenticated } from "../../lib/auth"
 
 export const metadata: Metadata = {
   title: "Sign In - Lightfast",

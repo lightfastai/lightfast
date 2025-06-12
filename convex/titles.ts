@@ -24,7 +24,7 @@ export const generateTitle = internalAction({
         args.userMessage.substring(0, 100),
       )
 
-      // Use gpt-4o-mini for fast title generation
+      // Use gpt-4o-mini for fast title generation with AI SDK v5
       const { text } = await generateText({
         model: openai("gpt-4o-mini"),
         messages: [
@@ -43,7 +43,6 @@ Examples:
             content: args.userMessage,
           },
         ],
-        maxTokens: 20,
         temperature: 0.3, // Lower temperature for more consistent titles
       })
 

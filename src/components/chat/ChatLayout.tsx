@@ -1,11 +1,11 @@
-import { Suspense } from "react"
 import { Badge } from "@/components/ui/badge"
 import {
-  SidebarProvider,
   SidebarInset,
+  SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import dynamic from "next/dynamic"
+import { Suspense } from "react"
 import { ServerSidebar } from "./sidebar/ServerSidebar"
 
 const DynamicChatTitle = dynamic(
@@ -29,7 +29,7 @@ async function ChatHeader() {
       </div>
       <div className="flex items-center gap-2">
         <Badge variant="outline">Streaming</Badge>
-        <Badge variant="outline">GPT-4o-mini</Badge>
+        <Badge variant="outline">Claude Sonnet 4</Badge>
       </div>
     </header>
   )

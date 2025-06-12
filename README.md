@@ -1,6 +1,6 @@
 # Chat App with Convex
 
-A real-time chat application built with Next.js and Convex, featuring GitHub authentication, AI responses, and a v0.dev-inspired landing page.
+A real-time chat application built with Next.js and Convex, featuring GitHub authentication, AI responses with Claude Sonnet 4, and a v0.dev-inspired landing page.
 
 ## Environment Variables
 
@@ -14,8 +14,9 @@ Create a `.env.local` file in the root directory with the following variables:
 # Convex Configuration
 NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210  # For local development
 
-# OpenAI API (Required for AI responses)
+# AI API Keys (Required for AI responses)
 OPENAI_API_KEY=sk-your-openai-api-key-here
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here  # Required for Claude Sonnet 4 (default)
 
 # GitHub OAuth (Required for authentication)
 AUTH_GITHUB_ID=your-github-oauth-client-id
@@ -27,7 +28,7 @@ NODE_ENV=development
 
 ### Environment Variable Types
 
-- **Server-only variables**: `OPENAI_API_KEY`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `NODE_ENV`
+- **Server-only variables**: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `NODE_ENV`
   - These are only available on the server-side and will throw an error if accessed on the client
 - **Client-accessible variables**: `NEXT_PUBLIC_CONVEX_URL`
   - These are available on both server and client (must be prefixed with `NEXT_PUBLIC_`)
@@ -117,7 +118,7 @@ SKIP_ENV_VALIDATION=true npm run build
 
 - ✅ **v0.dev-inspired landing page** - Clean, modern design with centered textarea
 - ✅ **GitHub Authentication** - Secure login with Convex Auth
-- ✅ **Real-time AI Chat** - Streaming responses with GPT-4o-mini
+- ✅ **Real-time AI Chat** - Streaming responses with Claude Sonnet 4 (default) and GPT-4o-mini
 - ✅ **Thread Management** - Organized conversations with persistent history
 - ✅ **Real-time Updates** - Live message updates with Convex
 - ✅ **Type-safe Environment Variables** - Validated with `@t3-oss/env-nextjs`

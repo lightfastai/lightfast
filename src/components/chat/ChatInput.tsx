@@ -1,17 +1,30 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Send } from "lucide-react"
+import {
+  DEFAULT_PROVIDER,
+  type ModelProvider,
+  getModelDisplayName,
+  getSupportedProviders,
+} from "@/lib/ai"
+import { Bot, Send } from "lucide-react"
 import { useState } from "react"
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => Promise<void> | void
+  onSendMessage: (message: string, model: ModelProvider) => Promise<void> | void
   isLoading?: boolean
   placeholder?: string
   disabled?: boolean
@@ -29,13 +42,17 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [selectedModel, setSelectedModel] =
+    useState<ModelProvider>(DEFAULT_PROVIDER)
+
+  const supportedProviders = getSupportedProviders()
 
   const handleSendMessage = async () => {
     if (!message.trim() || isSending || disabled) return
 
     setIsSending(true)
     try {
-      await onSendMessage(message)
+      await onSendMessage(message, selectedModel)
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
@@ -87,10 +104,28 @@ export function ChatInput({
         </div>
 
         <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-muted-foreground">
-            AI responses are generated using Vercel AI SDK with real-time
-            streaming
-          </p>
+          <div className="flex items-center gap-2">
+            <Bot className="w-4 h-4 text-muted-foreground" />
+            <Select
+              value={selectedModel}
+              onValueChange={(value: ModelProvider) => setSelectedModel(value)}
+            >
+              <SelectTrigger className="h-8 w-40 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {supportedProviders.map((provider) => (
+                  <SelectItem
+                    key={provider}
+                    value={provider}
+                    className="text-xs"
+                  >
+                    {getModelDisplayName(provider)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="text-xs text-muted-foreground">
             {message.length}/{maxLength}
           </div>
