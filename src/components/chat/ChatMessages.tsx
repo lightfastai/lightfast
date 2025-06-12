@@ -31,7 +31,10 @@ export function ChatMessages({
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
   const [isNearBottom, setIsNearBottom] = useState(true)
+  const [isUserScrolling, setIsUserScrolling] = useState(false)
   const lastMessageCountRef = useRef(messages.length)
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastScrollPositionRef = useRef(0)
 
   // Check if user is near bottom of scroll area
   const checkIfNearBottom = useCallback(() => {
@@ -39,8 +42,8 @@ export function ChatMessages({
 
     const { scrollTop, scrollHeight, clientHeight } = viewportRef.current
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight
-    // Consider "near bottom" if within 100px of the bottom
-    return distanceFromBottom < 100
+    // Consider "near bottom" if within 50px of the bottom (reduced from 100px)
+    return distanceFromBottom < 50
   }, [])
 
   // Smooth scroll to bottom
@@ -63,13 +66,37 @@ export function ChatMessages({
       if (viewport instanceof HTMLDivElement) {
         viewportRef.current = viewport
 
-        // Set up scroll listener to track if user is near bottom
+        // Set up scroll listener to track if user is near bottom and detect user scrolling
         const handleScroll = () => {
+          const currentScrollTop = viewport.scrollTop
+          const scrollDelta = currentScrollTop - lastScrollPositionRef.current
+
+          // Detect if user is scrolling up (negative delta) or manually scrolling
+          if (scrollDelta < -5) {
+            setIsUserScrolling(true)
+
+            // Clear any existing timeout
+            if (scrollTimeoutRef.current) {
+              clearTimeout(scrollTimeoutRef.current)
+            }
+
+            // Reset user scrolling flag after 2 seconds of no scrolling
+            scrollTimeoutRef.current = setTimeout(() => {
+              setIsUserScrolling(false)
+            }, 2000)
+          }
+
+          lastScrollPositionRef.current = currentScrollTop
           setIsNearBottom(checkIfNearBottom())
         }
 
-        viewport.addEventListener("scroll", handleScroll)
-        return () => viewport.removeEventListener("scroll", handleScroll)
+        viewport.addEventListener("scroll", handleScroll, { passive: true })
+        return () => {
+          viewport.removeEventListener("scroll", handleScroll)
+          if (scrollTimeoutRef.current) {
+            clearTimeout(scrollTimeoutRef.current)
+          }
+        }
       }
     }
   }, [checkIfNearBottom])
@@ -87,13 +114,25 @@ export function ChatMessages({
     )
 
     // Auto-scroll if:
-    // 1. User is near bottom AND there's a new message
-    // 2. User is near bottom AND there's a streaming message
-    if (isNearBottom && (hasNewMessage || hasStreamingMessage)) {
+    // 1. User is NOT actively scrolling
+    // 2. User is near bottom
+    // 3. There's a new message OR streaming message
+    if (
+      !isUserScrolling &&
+      isNearBottom &&
+      (hasNewMessage || hasStreamingMessage)
+    ) {
       // Use instant scroll for new messages, smooth for streaming updates
       scrollToBottom(!hasNewMessage)
     }
-  }, [messages, isNearBottom, scrollToBottom])
+
+    // If there's a new message and user is scrolling, reset the user scrolling flag
+    // This ensures they see their own messages
+    if (hasNewMessage && messages[0]?.messageType === "user") {
+      setIsUserScrolling(false)
+      scrollToBottom(false)
+    }
+  }, [messages, isNearBottom, isUserScrolling, scrollToBottom])
 
   // Scroll to bottom on initial load
   useEffect(() => {
@@ -131,7 +170,10 @@ export function ChatMessages({
       {!isNearBottom && messages.length > 0 && (
         <button
           type="button"
-          onClick={() => scrollToBottom()}
+          onClick={() => {
+            setIsUserScrolling(false)
+            scrollToBottom()
+          }}
           className="absolute bottom-20 right-4 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
           aria-label="Scroll to bottom"
         >
