@@ -9,7 +9,6 @@ import type { Doc } from "../../../convex/_generated/dataModel"
 import { StreamingMessage } from "./StreamingMessage"
 import { getModelDisplayName } from "@/lib/ai"
 import { CopyButton } from "@/components/ui/copy-button"
-import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
