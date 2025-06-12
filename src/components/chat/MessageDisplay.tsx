@@ -8,6 +8,7 @@ import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { StreamingMessage } from "./StreamingMessage"
 import { getModelDisplayName } from "@/lib/ai"
+import { ClipboardButton } from "@/components/chat/ClipboardButton"
 import { FeedbackButtons } from "./FeedbackButtons"
 
 // Lightfast logo component
@@ -71,7 +72,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
   // Always use StreamingMessage for all messages
   return (
     <div
-      className={`flex gap-3 ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""}`}
+      className={`flex gap-3 ${isAI ? "mt-6" : "mt-4"} ${!isAI ? "items-center" : ""} group/message`}
     >
       <Avatar className="w-8 h-8 shrink-0 rounded-md">
         {!isAI && currentUser?.image && (
@@ -92,7 +93,7 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <StreamingMessage
           message={message}
           className="text-sm leading-relaxed"
@@ -105,9 +106,21 @@ export function MessageDisplay({ message, userName }: MessageDisplayProps) {
           }
           thinkingDuration={thinkingDuration}
         />
-        {/* Show feedback buttons only for completed AI messages */}
+
+        {/* Show feedback and copy buttons for completed AI messages */}
         {isAI && message.isComplete !== false && !message._streamId && (
-          <FeedbackButtons messageId={message._id} className="mt-2" />
+          <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/message:opacity-100">
+            <FeedbackButtons messageId={message._id} />
+            {message.body && (
+              <ClipboardButton
+                text={message.body}
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                aria-label="Copy message"
+              />
+            )}
+          </div>
         )}
       </div>
     </div>

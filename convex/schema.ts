@@ -105,5 +105,6 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_message", ["messageId"])
-    .index("by_user_message", ["userId", "messageId"]),
+    .index("by_user_message", ["userId", "messageId"])
+    .index("by_thread", ["threadId"]),
 })
