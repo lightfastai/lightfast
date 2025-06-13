@@ -2,7 +2,8 @@
 
 import { useMutation, useQuery } from "convex/react"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
+import { nanoid, isClientId } from "@/lib/nanoid"
 import { api } from "../../../convex/_generated/api"
 import type { Doc, Id } from "../../../convex/_generated/dataModel"
 import type { ModelId } from "@/lib/ai/types"
@@ -19,41 +20,59 @@ interface ChatInterfaceProps {
 export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const [hasCreatedThread, setHasCreatedThread] = useState(false)
 
   // Manage resumable streams
   const { activeStreams, startStream, endStream } = useResumableChat()
 
-  // Extract current thread ID from pathname with better parsing
-  const currentThreadId = useMemo(() => {
+  // Extract current thread info from pathname with clientId support
+  const pathInfo = useMemo(() => {
     if (pathname === "/chat") {
-      return "new"
+      return { type: "new", id: "new" }
     }
-    // More robust pathname parsing
+
     const match = pathname.match(/^\/chat\/(.+)$/)
-    return match ? (match[1] as Id<"threads">) : "new"
+    if (!match) {
+      return { type: "new", id: "new" }
+    }
+
+    const id = match[1]
+
+    // Check if it's a client-generated ID (nanoid)
+    if (isClientId(id)) {
+      return { type: "clientId", id }
+    }
+
+    // Otherwise it's a real Convex thread ID
+    return { type: "threadId", id: id as Id<"threads"> }
   }, [pathname])
 
-  const isNewChat = currentThreadId === "new"
+  const currentThreadId = pathInfo.type === "threadId" ? pathInfo.id : "new"
+  const currentClientId = pathInfo.type === "clientId" ? pathInfo.id : null
 
-  // Determine if we should skip queries (only skip if we're in new chat mode AND haven't created thread yet)
-  const shouldSkipQueries = isNewChat && !hasCreatedThread
+  const isNewChat = currentThreadId === "new" && !currentClientId
 
-  // Get the actual thread data with better error handling
-  const currentThread = useQuery(
-    api.threads.get,
-    shouldSkipQueries || currentThreadId === "new"
-      ? "skip"
-      : { threadId: currentThreadId as Id<"threads"> },
+  // Get thread by clientId if we have one
+  const threadByClientId = useQuery(
+    api.threads.getByClientId,
+    currentClientId ? { clientId: currentClientId } : "skip",
   )
 
-  // Get messages for current thread (leverages prefetched cache for instant loading)
+  // Get thread by ID for regular threads
+  const threadById = useQuery(
+    api.threads.get,
+    currentThreadId !== "new"
+      ? { threadId: currentThreadId as Id<"threads"> }
+      : "skip",
+  )
+
+  // Determine the actual thread to use
+  const currentThread = threadByClientId || threadById
+
+  // Get messages for current thread
   const messages =
     useQuery(
       api.messages.list,
-      shouldSkipQueries || currentThreadId === "new"
-        ? "skip"
-        : { threadId: currentThreadId as Id<"threads"> },
+      currentThread ? { threadId: currentThread._id } : "skip",
     ) ?? initialMessages
 
   // Track streaming messages
@@ -83,45 +102,67 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
 
   // Handle case where thread doesn't exist or user doesn't have access
   useEffect(() => {
-    if (currentThread === null && !isNewChat && !shouldSkipQueries) {
+    if (currentThread === null && !isNewChat && currentClientId === null) {
       // Thread doesn't exist or user doesn't have access, redirect to chat
       router.replace("/chat")
     }
-  }, [currentThread, isNewChat, shouldSkipQueries, router])
-
-  // Reset hasCreatedThread when navigating to new chat
-  useEffect(() => {
-    if (isNewChat) {
-      setHasCreatedThread(false)
-    }
-  }, [isNewChat])
+  }, [currentThread, isNewChat, currentClientId, router])
 
   const handleSendMessage = async (message: string, modelId: string) => {
     if (!message.trim()) return
 
     try {
       if (isNewChat) {
-        // First message in new chat - create thread first with placeholder title
+        // 🚀 Generate client ID instantly (2M ops/sec with nanoid)
+        const clientId = nanoid() // 21 chars default = "V1StGXR8_Z5jdHi6B-myT"
+
+        // 🚀 Navigate instantly (0ms delay!)
+        router.push(`/chat/${clientId}`)
+
+        // 🚀 Return immediately to allow UI to update
+        // Continue processing in background without blocking
+        setTimeout(async () => {
+          try {
+            // Create thread with client ID in background
+            const newThreadId = await createThread({
+              title: "Generating title...",
+              clientId: clientId,
+            })
+
+            // Send the message to the new thread
+            await sendMessage({
+              threadId: newThreadId,
+              body: message,
+              modelId: modelId as ModelId,
+            })
+          } catch (error) {
+            console.error("Background thread creation failed:", error)
+            // Could add toast notification here if needed
+          }
+        }, 0)
+
+        // Return immediately for instant UI feedback
+        return
+      }
+
+      if (currentClientId && !currentThread) {
+        // We have a clientId but thread doesn't exist yet, create it
         const newThreadId = await createThread({
           title: "Generating title...",
+          clientId: currentClientId,
         })
 
-        // Send the message to the new thread with just the modelId
         await sendMessage({
           threadId: newThreadId,
           body: message,
-          modelId: modelId as ModelId, // Type assertion for the validated modelId
+          modelId: modelId as ModelId,
         })
-
-        // Navigate to the new thread using replace for better UX
-        router.replace(`/chat/${newThreadId}`)
-        setHasCreatedThread(true)
-      } else {
-        // Normal message sending
+      } else if (currentThread) {
+        // Normal message sending to existing thread
         await sendMessage({
-          threadId: currentThreadId,
+          threadId: currentThread._id,
           body: message,
-          modelId: modelId as ModelId, // Type assertion for the validated modelId
+          modelId: modelId as ModelId,
         })
       }
     } catch (error) {
@@ -135,6 +176,9 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     if (isNewChat) {
       return "Welcome to AI Chat"
     }
+    if (currentClientId && !currentThread) {
+      return "Starting conversation..."
+    }
     return currentThread?.title || ""
   }
 
@@ -142,13 +186,18 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     if (isNewChat) {
       return "Start a conversation with our AI assistant. Messages stream in real-time!"
     }
+    if (currentClientId && !currentThread) {
+      return "Creating your conversation..."
+    }
     return ""
   }
 
   // Check if AI is currently generating (any message is streaming)
   const isAIGenerating = useMemo(() => {
-    return messages.some(msg => msg.isStreaming && !msg.isComplete) || 
-           activeStreams.size > 0
+    return (
+      messages.some((msg) => msg.isStreaming && !msg.isComplete) ||
+      activeStreams.size > 0
+    )
   }, [messages, activeStreams])
 
   // Enhance messages with streaming text
@@ -174,7 +223,7 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
       <ChatInput
         onSendMessage={handleSendMessage}
         placeholder="Message AI assistant..."
-        disabled={currentThread === null && !isNewChat}
+        disabled={currentThread === null && !isNewChat && !currentClientId}
         isLoading={isAIGenerating}
       />
     </div>

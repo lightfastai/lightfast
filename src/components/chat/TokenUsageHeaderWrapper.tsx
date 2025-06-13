@@ -2,20 +2,36 @@
 
 import { usePathname } from "next/navigation"
 import { useMemo } from "react"
+import { isClientId } from "@/lib/nanoid"
 import type { Id } from "../../../convex/_generated/dataModel"
 import { TokenUsageHeader } from "./TokenUsageHeader"
 
 export function TokenUsageHeaderWrapper() {
   const pathname = usePathname()
 
-  // Extract current thread ID from pathname
-  const currentThreadId = useMemo(() => {
+  // Extract current thread info from pathname with clientId support
+  const pathInfo = useMemo(() => {
     if (pathname === "/chat") {
-      return "new"
+      return { type: "new", id: "new" }
     }
+    
     const match = pathname.match(/^\/chat\/(.+)$/)
-    return match ? (match[1] as Id<"threads">) : "new"
+    if (!match) {
+      return { type: "new", id: "new" }
+    }
+    
+    const id = match[1]
+    
+    // Check if it's a client-generated ID (nanoid)
+    if (isClientId(id)) {
+      return { type: "clientId", id }
+    }
+    
+    // Otherwise it's a real Convex thread ID
+    return { type: "threadId", id: id as Id<"threads"> }
   }, [pathname])
+
+  const currentThreadId = pathInfo.type === "threadId" ? pathInfo.id : "new"
 
   return <TokenUsageHeader threadId={currentThreadId} />
 }
