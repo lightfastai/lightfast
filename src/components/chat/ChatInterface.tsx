@@ -13,9 +13,9 @@ interface ChatInterfaceProps {
   initialMessages?: Message[]
 }
 
-export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
+export function ChatInterface({}: ChatInterfaceProps) {
   // Use custom chat hook with optimistic updates
-  const { messages, currentThread, handleSendMessage, emptyState, isDisabled } =
+  const { messages, handleSendMessage, emptyState, isDisabled } =
     useChat()
 
   // Manage resumable streams

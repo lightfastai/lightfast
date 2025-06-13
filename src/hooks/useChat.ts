@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useMemo } from "react"
 import { nanoid, isClientId } from "@/lib/nanoid"
 import { api } from "../../convex/_generated/api"
-import type { Id } from "../../convex/_generated/dataModel"
+import type { Id, Doc } from "../../convex/_generated/dataModel"
 import type { ModelId } from "@/lib/ai/types"
 
 export function useChat() {
@@ -62,11 +62,40 @@ export function useChat() {
       currentThread ? { threadId: currentThread._id } : "skip",
     ) ?? []
 
-  // Mutations - using built-in Convex optimistic updates
+  // Mutations with proper Convex optimistic updates
   const createThread = useMutation(api.threads.create)
-  const sendMessage = useMutation(api.messages.send)
+  const sendMessage = useMutation(api.messages.send).withOptimisticUpdate(
+    (localStore, args) => {
+      const { threadId, body, modelId } = args
+      const existingMessages = localStore.getQuery(api.messages.list, {
+        threadId,
+      })
 
-  // Use messages directly - Convex handles optimistic updates automatically
+      // If we've loaded the messages for this thread, add optimistic message
+      if (existingMessages !== undefined) {
+        const now = Date.now()
+        const optimisticMessage: Doc<"messages"> = {
+          _id: crypto.randomUUID() as Id<"messages">,
+          _creationTime: now,
+          threadId,
+          body,
+          messageType: "user",
+          modelId,
+          timestamp: now,
+          isStreaming: false,
+          isComplete: true,
+        }
+
+        // Create new array with optimistic message
+        localStore.setQuery(api.messages.list, { threadId }, [
+          ...existingMessages,
+          optimisticMessage,
+        ])
+      }
+    },
+  )
+
+  // Use messages directly - Convex optimistic updates handle everything
   const allMessages = messages
 
   const handleSendMessage = async (message: string, modelId: string) => {
@@ -74,28 +103,22 @@ export function useChat() {
 
     try {
       if (isNewChat) {
-        // 🚀 Generate client ID instantly and navigate
+        // 🚀 Generate client ID and navigate instantly
         const clientId = nanoid()
         router.replace(`/chat/${clientId}`)
 
-        // Create thread with client ID in background
-        setTimeout(async () => {
-          try {
-            const newThreadId = await createThread({
-              title: "Generating title...",
-              clientId: clientId,
-            })
+        // Create thread immediately (no setTimeout needed)
+        const newThreadId = await createThread({
+          title: "Generating title...",
+          clientId: clientId,
+        })
 
-            // Send message with built-in optimistic update
-            await sendMessage({
-              threadId: newThreadId,
-              body: message,
-              modelId: modelId as ModelId,
-            })
-          } catch (error) {
-            console.error("Background thread creation failed:", error)
-          }
-        }, 0)
+        // Send message with Convex optimistic update
+        await sendMessage({
+          threadId: newThreadId,
+          body: message,
+          modelId: modelId as ModelId,
+        })
 
         return
       }
@@ -107,14 +130,14 @@ export function useChat() {
           clientId: currentClientId,
         })
 
-        // Send message with built-in optimistic update
+        // Send message with Convex optimistic update
         await sendMessage({
           threadId: newThreadId,
           body: message,
           modelId: modelId as ModelId,
         })
       } else if (currentThread) {
-        // Normal message sending with built-in optimistic update
+        // Normal message sending with Convex optimistic update
         await sendMessage({
           threadId: currentThread._id,
           body: message,

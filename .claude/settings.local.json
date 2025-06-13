@@ -12,7 +12,8 @@
       "Bash(pgrep:*)",
       "Bash(lsof:*)",
       "Bash(ps:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
