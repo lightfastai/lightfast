@@ -38,6 +38,10 @@ export const env = createEnv({
     // Convex URL for client-side connections
     // This is the only Convex variable our app actually needs
     NEXT_PUBLIC_CONVEX_URL: z.string().url(),
+    // Vercel environment for client-side deployment detection
+    NEXT_PUBLIC_VERCEL_ENV: z
+      .enum(["production", "preview", "development"])
+      .optional(),
   },
   /*
    * Shared environment variables, available on both client and server.
@@ -63,6 +67,7 @@ export const env = createEnv({
     JWKS: process.env.JWKS,
     // Client-side
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
+    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     // Shared
     NODE_ENV: process.env.NODE_ENV,
   },
@@ -88,8 +93,3 @@ export const isDevelopment = () => env.NODE_ENV === "development"
 export const isProduction = () => env.NODE_ENV === "production"
 export const isTest = () => env.NODE_ENV === "test"
 export const isNonProduction = () => env.NODE_ENV !== "production"
-
-// Vercel environment helpers
-export const isVercelPreview = () => env.VERCEL_ENV === "preview"
-export const isVercelProduction = () => env.VERCEL_ENV === "production"
-export const isVercelDevelopment = () => env.VERCEL_ENV === "development"
