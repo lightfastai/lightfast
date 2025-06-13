@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useAuthActions } from "@convex-dev/auth/react"
-import { isDevelopment, isProduction } from "@/env"
+import { env } from "@/env"
 import { Github, UserIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -41,7 +41,7 @@ export function SignInOptions({
   return (
     <div className={`space-y-3 ${className || ""}`}>
       {/* Hide GitHub login in Vercel previews */}
-      {isProduction() && (
+      {env.NEXT_PUBLIC_VERCEL_ENV === "production" && (
         <Button
           onClick={() => handleSignIn("github")}
           className={cn(
@@ -57,7 +57,7 @@ export function SignInOptions({
       )}
 
       {/* Show anonymous login in all non-production environments */}
-      {isDevelopment() && (
+      {env.NEXT_PUBLIC_VERCEL_ENV !== "production" && (
         <Button
           onClick={() => handleSignIn("anonymous")}
           className={cn(
