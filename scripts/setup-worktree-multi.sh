@@ -273,28 +273,28 @@ fi
 # Update package.json scripts for custom ports
 log_info "Updating package.json scripts for custom ports..."
 # Create a temporary script updater
-cat > update_package.js << 'EOF'
+cat > update_package.cjs << 'EOF'
 const fs = require('fs');
-const package = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 const nextPort = process.env.NEXT_PORT;
 const convexPort = process.env.CONVEX_PORT;
 
 // Update scripts with custom ports
-package.scripts.dev = `next dev -p ${nextPort}`;
-package.scripts["dev:all"] = `concurrently "pnpm dev" "pnpm convex:dev" --names "NEXT,CONVEX" --prefix-colors "blue,green"`;
+packageJson.scripts.dev = `next dev -p ${nextPort}`;
+packageJson.scripts["dev:all"] = `concurrently "pnpm dev" "pnpm convex:dev" --names "NEXT,CONVEX" --prefix-colors "blue,green"`;
 
 // Add worktree-specific scripts
-package.scripts["dev:local"] = `next dev -p ${nextPort}`;
-package.scripts["convex:dev:local"] = `convex dev --local`;
-package.scripts["dev:multi"] = `concurrently "next dev -p ${nextPort}" "convex dev" --names "NEXT:${nextPort},CONVEX:${convexPort}" --prefix-colors "blue,green"`;
+packageJson.scripts["dev:local"] = `next dev -p ${nextPort}`;
+packageJson.scripts["convex:dev:local"] = `convex dev --local`;
+packageJson.scripts["dev:multi"] = `concurrently "next dev -p ${nextPort}" "convex dev" --names "NEXT:${nextPort},CONVEX:${convexPort}" --prefix-colors "blue,green"`;
 
-fs.writeFileSync('package.json', JSON.stringify(package, null, 2));
+fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2));
 console.log(`Updated package.json with Next.js port ${nextPort} and Convex port ${convexPort}`);
 EOF
 
-NEXT_PORT=$NEXT_PORT CONVEX_PORT=$CONVEX_PORT node update_package.js
-rm update_package.js
+NEXT_PORT=$NEXT_PORT CONVEX_PORT=$CONVEX_PORT node update_package.cjs
+rm update_package.cjs
 
 # Set up Convex environment
 log_info "Setting up Convex configuration..."
