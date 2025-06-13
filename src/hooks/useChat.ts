@@ -147,7 +147,7 @@ export function useChat() {
       return "Welcome to AI Chat"
     }
     if (currentClientId && !currentThread) {
-      return "Starting conversation..."
+      return ""
     }
     return currentThread?.title || ""
   }
@@ -157,7 +157,7 @@ export function useChat() {
       return "Start a conversation with our AI assistant. Messages stream in real-time!"
     }
     if (currentClientId && !currentThread) {
-      return "Creating your conversation..."
+      return ""
     }
     return ""
   }

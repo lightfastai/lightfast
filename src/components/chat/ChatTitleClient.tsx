@@ -58,7 +58,7 @@ export function ChatTitleClient() {
       return "New Chat"
     }
     if (currentClientId && !currentThread) {
-      return "Starting conversation..."
+      return ""
     }
     return currentThread?.title || "Chat"
   }

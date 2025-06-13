@@ -146,8 +146,7 @@ export function ChatMessages({
           {!messages?.length && !isLoading && (
             <div className="text-center text-muted-foreground py-12">
               {emptyState.icon}
-              <h3 className="text-lg font-medium mb-2">{emptyState.title}</h3>
-              <p>{emptyState.description}</p>
+              {emptyState.description && <p>{emptyState.description}</p>}
             </div>
           )}
 
