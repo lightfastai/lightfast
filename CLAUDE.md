@@ -20,12 +20,17 @@ The development workflow integrates:
 
 ### 2. Git Worktree Setup
 ```bash
+# IMPORTANT: Start with up-to-date main branch
+git checkout main
+git pull origin main
+
 # Create worktree for feature development (use subdirectory due to Claude Code path restrictions)
 mkdir -p worktrees
 git worktree add worktrees/<feature_name> -b jeevanpillay/<feature_name>
 
 # Note: Claude Code can only access child directories of the working directory
 # Worktree will be created at: worktrees/<feature_name>/
+# New branch is based on current main, so main must be up-to-date
 ```
 
 ### 3. Development Cycle
@@ -105,9 +110,12 @@ git worktree remove worktrees/<feature_name>
 # 2. Delete local branch (if not auto-deleted)
 git branch -d jeevanpillay/<feature_name>
 
-# 3. Update main branch
+# 3. Update main branch with merged changes
 git checkout main
 git pull origin main
+
+# Verify the merge was successful
+git log --oneline -5  # Check recent commits include your feature
 
 # Close related issue if not auto-closed
 gh issue close <issue_number> --comment "✅ Completed in PR #<pr_number>"
@@ -119,9 +127,15 @@ gh issue close <issue_number> --comment "✅ Completed in PR #<pr_number>"
 # 1. ✅ PR merged and remote branch deleted
 # 2. ✅ Local worktree removed
 # 3. ✅ Local branch cleaned up
-# 4. ✅ Main branch updated
-# 5. ✅ Related issues closed
-# 6. ✅ Verify feature is live in production
+# 4. ✅ Main branch updated with git pull origin main
+# 5. ✅ Merged changes verified in local main
+# 6. ✅ Related issues closed
+# 7. ✅ Verify feature is live in production
+
+# CRITICAL: Always sync main branch after merge
+git checkout main
+git pull origin main
+git status  # Ensure clean working tree with latest changes
 
 # If deployment fails, iterate:
 # 1. Check vercel logs for errors
@@ -318,6 +332,31 @@ rm -rf worktrees/<feature_name>
 
 # Check merge status
 gh pr view <pr_number> --json state,merged
+
+# Main branch not up to date after merge
+# Solution: Always pull after merging
+git checkout main
+git pull origin main
+git log --oneline -5  # Verify your merged commit is present
+```
+
+### Main Branch Sync Issues
+```bash
+# Local main branch missing merged changes
+# Solution: Always pull after PR merge
+git checkout main
+git pull origin main
+
+# Diverged main branch
+# Check for local commits that weren't pushed
+git status
+git log --oneline origin/main..main  # Shows unpushed commits
+
+# If you have local commits, push them first
+git push origin main
+
+# Then pull to get merged changes
+git pull origin main
 ```
 
 ## Project Structure
