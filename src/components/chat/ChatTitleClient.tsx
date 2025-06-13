@@ -1,9 +1,9 @@
 "use client"
 
+import { isClientId } from "@/lib/nanoid"
 import { useQuery } from "convex/react"
 import { usePathname } from "next/navigation"
 import { useMemo } from "react"
-import { isClientId } from "@/lib/nanoid"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
 
@@ -16,19 +16,19 @@ export function ChatTitleClient() {
     if (pathname === "/chat") {
       return { type: "new", id: "new" }
     }
-    
+
     const match = pathname.match(/^\/chat\/(.+)$/)
     if (!match) {
       return { type: "new", id: "new" }
     }
-    
+
     const id = match[1]
-    
+
     // Check if it's a client-generated ID (nanoid)
     if (isClientId(id)) {
       return { type: "clientId", id }
     }
-    
+
     // Otherwise it's a real Convex thread ID
     return { type: "threadId", id: id as Id<"threads"> }
   }, [pathname])
@@ -39,13 +39,15 @@ export function ChatTitleClient() {
   // Get thread by clientId if we have one
   const threadByClientId = useQuery(
     api.threads.getByClientId,
-    currentClientId ? { clientId: currentClientId } : "skip"
+    currentClientId ? { clientId: currentClientId } : "skip",
   )
 
-  // Get thread by ID for regular threads  
+  // Get thread by ID for regular threads
   const threadById = useQuery(
     api.threads.get,
-    currentThreadId !== "new" ? { threadId: currentThreadId as Id<"threads"> } : "skip"
+    currentThreadId !== "new"
+      ? { threadId: currentThreadId as Id<"threads"> }
+      : "skip",
   )
 
   // Determine the actual thread to use

@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/tooltip"
 import { useQuery } from "convex/react"
 import { Activity, Brain } from "lucide-react"
-import type { Id } from "../../../convex/_generated/dataModel"
 import { api } from "../../../convex/_generated/api"
+import type { Id } from "../../../convex/_generated/dataModel"
 
 interface TokenUsageHeaderProps {
   threadId: Id<"threads"> | "new"

@@ -1,10 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useAuthActions } from "@convex-dev/auth/react"
 import { env } from "@/env"
-import { Github, UserIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuthActions } from "@convex-dev/auth/react"
+import { Github, UserIcon } from "lucide-react"
 
 interface SignInOptionsProps {
   onSignInComplete?: () => void

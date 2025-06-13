@@ -1,14 +1,14 @@
 "use client"
 
-import React from "react"
-import { ThumbsUp, ThumbsDown, ClipboardIcon, CheckIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard"
+import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "convex/react"
+import { CheckIcon, ClipboardIcon, ThumbsDown, ThumbsUp } from "lucide-react"
+import React from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
-import { cn } from "@/lib/utils"
 import { FeedbackModal } from "./FeedbackModal"
-import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard"
 
 interface MessageActionsProps {
   message: Doc<"messages">

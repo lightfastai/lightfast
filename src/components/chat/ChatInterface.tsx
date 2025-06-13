@@ -1,22 +1,17 @@
 "use client"
 
+import { useChat } from "@/hooks/useChat"
+import { useResumableChat } from "@/hooks/useResumableStream"
 import { useEffect, useMemo } from "react"
+import type { Doc } from "../../../convex/_generated/dataModel"
 import { ChatInput } from "./ChatInput"
 import { ChatMessages } from "./ChatMessages"
-import { useResumableChat } from "@/hooks/useResumableStream"
-import { useChat } from "@/hooks/useChat"
-import type { Doc } from "../../../convex/_generated/dataModel"
 
 type Message = Doc<"messages">
 
-interface ChatInterfaceProps {
-  initialMessages?: Message[]
-}
-
-export function ChatInterface({}: ChatInterfaceProps) {
+export function ChatInterface() {
   // Use custom chat hook with optimistic updates
-  const { messages, handleSendMessage, emptyState, isDisabled } =
-    useChat()
+  const { messages, handleSendMessage, emptyState, isDisabled } = useChat()
 
   // Manage resumable streams
   const { activeStreams, startStream, endStream } = useResumableChat()

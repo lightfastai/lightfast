@@ -17,8 +17,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DEFAULT_MODEL_ID, getAllModels, getModelById } from "@/lib/ai"
-import { Send, Loader2 } from "lucide-react"
-import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react"
+import { Loader2, Send } from "lucide-react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface ChatInputProps {
