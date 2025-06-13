@@ -45,7 +45,7 @@ export function ChatTitleClient() {
   // Get thread by ID for regular threads  
   const threadById = useQuery(
     api.threads.get,
-    currentThreadId !== "new" ? { threadId: currentThreadId } : "skip"
+    currentThreadId !== "new" ? { threadId: currentThreadId as Id<"threads"> } : "skip"
   )
 
   // Determine the actual thread to use

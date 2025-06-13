@@ -31,7 +31,7 @@ export function TokenUsageHeaderWrapper() {
     return { type: "threadId", id: id as Id<"threads"> }
   }, [pathname])
 
-  const currentThreadId = pathInfo.type === "threadId" ? pathInfo.id : "new"
+  const currentThreadId: Id<"threads"> | "new" = pathInfo.type === "threadId" ? pathInfo.id as Id<"threads"> : "new"
 
   return <TokenUsageHeader threadId={currentThreadId} />
 }

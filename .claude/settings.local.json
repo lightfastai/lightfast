@@ -11,7 +11,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(pgrep:*)",
       "Bash(lsof:*)",
-      "Bash(ps:*)"
+      "Bash(ps:*)",
+      "Bash(pnpm build:*)"
     ],
     "deny": []
   }
