@@ -37,6 +37,7 @@ export const list = query({
       createdAt: v.number(),
       lastMessageAt: v.number(),
       isTitleGenerating: v.optional(v.boolean()),
+      isGenerating: v.optional(v.boolean()),
       // Thread-level usage tracking (denormalized for performance)
       usage: v.optional(
         v.object({
@@ -90,6 +91,7 @@ export const get = query({
       createdAt: v.number(),
       lastMessageAt: v.number(),
       isTitleGenerating: v.optional(v.boolean()),
+      isGenerating: v.optional(v.boolean()),
       // Thread-level usage tracking (denormalized for performance)
       usage: v.optional(
         v.object({

@@ -6,6 +6,7 @@ import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { fonts } from "../lib/fonts"
+import { Toaster } from "sonner"
 
 export const metadata: Metadata = {
   title: "Chat App",
@@ -20,6 +21,7 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className={cn(fonts, "dark")}>
           <ConvexClientProvider>{children}</ConvexClientProvider>
+          <Toaster theme="dark" position="top-right" />
           <Analytics />
           <SpeedInsights />
         </body>

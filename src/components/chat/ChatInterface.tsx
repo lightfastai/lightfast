@@ -126,7 +126,8 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
       }
     } catch (error) {
       console.error("Error sending message:", error)
-      // Could add toast notification here for better UX
+      // Re-throw the error so ChatInput can handle the toast notifications
+      throw error
     }
   }
 

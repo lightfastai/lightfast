@@ -73,6 +73,7 @@ export default defineSchema({
           id: v.string(),
           content: v.string(),
           timestamp: v.number(),
+          sequence: v.optional(v.number()), // Add sequence for chunk ordering
         }),
       ),
     ),

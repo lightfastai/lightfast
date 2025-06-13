@@ -19,6 +19,7 @@ import {
 import { DEFAULT_MODEL_ID, getAllModels, getModelById } from "@/lib/ai"
 import { Send, Loader2 } from "lucide-react"
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react"
+import { toast } from "sonner"
 
 interface ChatInputProps {
   onSendMessage: (message: string, modelId: string) => Promise<void> | void
@@ -84,15 +85,26 @@ const ChatInputComponent = ({
     if (!message.trim() || isSending || disabled) return
 
     setIsSending(true)
+
     try {
       await onSendMessage(message, selectedModelId)
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
-      // If it's a generation conflict, show a user-friendly message
-      if (error instanceof Error && error.message.includes("Please wait for the current")) {
-        // You could add a toast notification here
-        console.log("Generation in progress, please wait...")
+      
+      // Handle specific error types gracefully with toast notifications
+      if (error instanceof Error) {
+        if (error.message.includes("Please wait for the current")) {
+          toast.error("AI is currently responding. Please wait for the response to complete before sending another message.")
+        } else if (error.message.includes("Thread not found")) {
+          toast.error("This conversation is no longer available.")
+        } else if (error.message.includes("User must be authenticated")) {
+          toast.error("Please sign in to continue chatting.")
+        } else {
+          toast.error("Failed to send message. Please try again.")
+        }
+      } else {
+        toast.error("An unexpected error occurred. Please try again.")
       }
     } finally {
       setIsSending(false)
@@ -131,7 +143,9 @@ const ChatInputComponent = ({
       <div className="max-w-3xl mx-auto">
         <div className="flex gap-2">
           <div className="flex-1 min-w-0">
-            <div className={`w-full rounded-md border flex flex-col ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}>
+            <div
+              className={`w-full rounded-md border flex flex-col ${isLoading ? "opacity-75 cursor-not-allowed" : ""}`}
+            >
               {/* Textarea area - grows with content up to max height */}
               <div
                 className="flex-1"

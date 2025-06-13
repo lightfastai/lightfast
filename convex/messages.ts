@@ -67,6 +67,7 @@ export const list = query({
             id: v.string(),
             content: v.string(),
             timestamp: v.number(),
+            sequence: v.optional(v.number()),
           }),
         ),
       ),
@@ -119,13 +120,19 @@ export const send = mutation({
       )
     }
 
+    // CRITICAL FIX: Set generation flag IMMEDIATELY to prevent race conditions
+    await ctx.db.patch(args.threadId, {
+      isGenerating: true,
+      lastMessageAt: Date.now(),
+    })
+
     // Use default model if none provided
     const modelId = args.modelId || "gpt-4o-mini"
 
     // Derive provider from modelId (type-safe)
     const provider = getProviderFromModelId(modelId as ModelId)
 
-    // Insert user message
+    // Insert user message after setting generation flag
     await ctx.db.insert("messages", {
       threadId: args.threadId,
       body: args.body,
@@ -133,12 +140,6 @@ export const send = mutation({
       messageType: "user",
       model: provider,
       modelId: modelId,
-    })
-
-    // Update thread's last message timestamp and set generation flag
-    await ctx.db.patch(args.threadId, {
-      lastMessageAt: Date.now(),
-      isGenerating: true,
     })
 
     // Schedule AI response using the modelId
@@ -340,31 +341,40 @@ export const generateAIResponse = internalAction({
     } catch (error) {
       console.error("Error generating response:", error)
 
-      // If we have a messageId, update it with error, otherwise create new error message
-      if (messageId) {
-        await ctx.runMutation(internal.messages.updateStreamingMessage, {
-          messageId,
-          content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
-        })
-        await ctx.runMutation(internal.messages.completeStreamingMessage, {
-          messageId,
-        })
-      } else {
-        const provider = getProviderFromModelId(args.modelId as ModelId)
-        const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        await ctx.runMutation(internal.messages.createErrorMessage, {
-          threadId: args.threadId,
-          streamId,
-          provider,
-          modelId: args.modelId,
-          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
-        })
+      try {
+        // If we have a messageId, update it with error, otherwise create new error message
+        if (messageId) {
+          await ctx.runMutation(internal.messages.updateStreamingMessage, {
+            messageId,
+            content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
+          })
+          await ctx.runMutation(internal.messages.completeStreamingMessage, {
+            messageId,
+          })
+        } else {
+          const provider = getProviderFromModelId(args.modelId as ModelId)
+          const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          await ctx.runMutation(internal.messages.createErrorMessage, {
+            threadId: args.threadId,
+            streamId,
+            provider,
+            modelId: args.modelId,
+            errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
+          })
+        }
+      } catch (errorHandlingError) {
+        console.error("Error during error handling:", errorHandlingError)
+      } finally {
+        // CRITICAL: Always clear generation flag, even if error handling fails
+        try {
+          await ctx.runMutation(internal.messages.clearGenerationFlag, {
+            threadId: args.threadId,
+          })
+        } catch (flagClearError) {
+          console.error("CRITICAL: Failed to clear generation flag:", flagClearError)
+          // This is a critical error that could leave the thread in a locked state
+        }
       }
-
-      // Clear generation flag on error as well
-      await ctx.runMutation(internal.messages.clearGenerationFlag, {
-        threadId: args.threadId,
-      })
     }
 
     return null
@@ -441,10 +451,19 @@ export const appendStreamChunk = internalMutation({
     if (!message) return null
 
     const currentChunks = message.streamChunks || []
+    const sequence = currentChunks.length // Use array length as sequence number
+    
     const newChunk = {
       id: args.chunkId,
       content: args.chunk,
       timestamp: Date.now(),
+      sequence: sequence, // Add sequence for ordering
+    }
+
+    // Check for duplicate chunks (race condition protection)
+    if (currentChunks.some(chunk => chunk.id === args.chunkId)) {
+      console.log(`Duplicate chunk detected: ${args.chunkId}`)
+      return null // Skip duplicate
     }
 
     // Append chunk to array and update body
@@ -547,8 +566,14 @@ async function updateThreadUsage(
     cachedInputTokens?: number
   },
 ) {
-  const thread = await ctx.db.get(threadId)
-  if (!thread) return
+  // RACE CONDITION FIX: Retry logic for concurrent updates
+  const maxRetries = 3
+  let retryCount = 0
+  
+  while (retryCount < maxRetries) {
+    try {
+      const thread = await ctx.db.get(threadId)
+      if (!thread) return
 
   const inputTokens = messageUsage.inputTokens || 0
   const outputTokens = messageUsage.outputTokens || 0
@@ -599,8 +624,23 @@ async function updateThreadUsage(
     },
   }
 
-  // Update thread with new usage
-  await ctx.db.patch(threadId, { usage: newUsage })
+      // Update thread with new usage
+      await ctx.db.patch(threadId, { usage: newUsage })
+      return // Success, exit retry loop
+      
+    } catch (error) {
+      retryCount++
+      console.log(`Usage update retry ${retryCount}/${maxRetries} for thread ${threadId}`)
+      
+      if (retryCount >= maxRetries) {
+        console.error(`Failed to update thread usage after ${maxRetries} retries:`, error)
+        throw error
+      }
+      
+      // Brief delay before retry
+      await new Promise(resolve => setTimeout(resolve, 10 * retryCount))
+    }
+  }
 }
 
 // Helper to get full model ID for consistent tracking across providers
@@ -785,6 +825,7 @@ export const getStreamChunks = query({
         id: v.string(),
         content: v.string(),
         timestamp: v.number(),
+        sequence: v.optional(v.number()),
       }),
     ),
     isComplete: v.boolean(),
