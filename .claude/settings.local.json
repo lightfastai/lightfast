@@ -15,7 +15,21 @@
       "Bash(pnpm build:*)",
       "Bash(npm run build:*)",
       "Bash(pnpm tsc:*)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "Bash(git worktree:*)",
+      "Bash(npx @anthropic-ai/mcp list:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx:*)",
+      "Bash(gh issue create:*)",
+      "Bash(mkdir:*)",
+      "Bash(git branch:*)",
+      "Bash(pnpm install:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(vercel ls:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh issue close:*)"
     ],
     "deny": []
   }
