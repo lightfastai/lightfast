@@ -24,6 +24,7 @@ export default defineSchema({
   ...authTables,
 
   threads: defineTable({
+    clientId: v.optional(v.string()), // Client-generated ID for instant navigation
     title: v.string(),
     userId: v.id("users"),
     createdAt: v.number(),
@@ -53,7 +54,10 @@ export default defineSchema({
         ),
       }),
     ),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_client_id", ["clientId"])
+    .index("by_user_client", ["userId", "clientId"]),
 
   messages: defineTable({
     threadId: v.id("threads"),

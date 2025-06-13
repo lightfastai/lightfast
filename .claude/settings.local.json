@@ -3,7 +3,19 @@
     "allow": [
       "Bash(grep:*)",
       "Bash(find:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(rg:*)",
+      "WebFetch(domain:docs.convex.dev)",
+      "WebFetch(domain:stack.convex.dev)",
+      "Bash(pnpm add:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(pgrep:*)",
+      "Bash(lsof:*)",
+      "Bash(ps:*)",
+      "Bash(pnpm build:*)",
+      "Bash(npm run build:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm lint:*)"
     ],
     "deny": []
   }

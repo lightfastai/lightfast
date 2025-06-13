@@ -1,14 +1,14 @@
 "use client"
 
-import React from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getModelDisplayName } from "@/lib/ai"
 import { useQuery } from "convex/react"
 import { User } from "lucide-react"
+import React from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
-import { StreamingMessage } from "./StreamingMessage"
-import { getModelDisplayName } from "@/lib/ai"
 import { MessageActions } from "./MessageActions"
+import { StreamingMessage } from "./StreamingMessage"
 
 // Lightfast logo component
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {

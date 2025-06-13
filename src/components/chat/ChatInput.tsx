@@ -17,8 +17,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DEFAULT_MODEL_ID, getAllModels, getModelById } from "@/lib/ai"
-import { Send, Loader2 } from "lucide-react"
-import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react"
+import { Loader2, Send } from "lucide-react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface ChatInputProps {
@@ -91,11 +91,13 @@ const ChatInputComponent = ({
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
-      
+
       // Handle specific error types gracefully with toast notifications
       if (error instanceof Error) {
         if (error.message.includes("Please wait for the current")) {
-          toast.error("AI is currently responding. Please wait for the response to complete before sending another message.")
+          toast.error(
+            "AI is currently responding. Please wait for the response to complete before sending another message.",
+          )
         } else if (error.message.includes("Thread not found")) {
           toast.error("This conversation is no longer available.")
         } else if (error.message.includes("User must be authenticated")) {

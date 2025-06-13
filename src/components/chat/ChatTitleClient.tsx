@@ -1,5 +1,6 @@
 "use client"
 
+import { isClientId } from "@/lib/nanoid"
 import { useQuery } from "convex/react"
 import { usePathname } from "next/navigation"
 import { useMemo } from "react"
@@ -10,28 +11,56 @@ import type { Id } from "../../../convex/_generated/dataModel"
 export function ChatTitleClient() {
   const pathname = usePathname()
 
-  // Extract current thread ID to show in header
-  const currentThreadId = useMemo(() => {
+  // Extract current thread info from pathname with clientId support
+  const pathInfo = useMemo(() => {
     if (pathname === "/chat") {
-      return "new"
+      return { type: "new", id: "new" }
     }
+
     const match = pathname.match(/^\/chat\/(.+)$/)
-    return match ? (match[1] as Id<"threads">) : "new"
+    if (!match) {
+      return { type: "new", id: "new" }
+    }
+
+    const id = match[1]
+
+    // Check if it's a client-generated ID (nanoid)
+    if (isClientId(id)) {
+      return { type: "clientId", id }
+    }
+
+    // Otherwise it's a real Convex thread ID
+    return { type: "threadId", id: id as Id<"threads"> }
   }, [pathname])
 
-  // Get current thread for title
-  const currentThread = useQuery(
-    api.threads.get,
-    currentThreadId === "new"
-      ? "skip"
-      : { threadId: currentThreadId as Id<"threads"> },
+  const currentThreadId = pathInfo.type === "threadId" ? pathInfo.id : "new"
+  const currentClientId = pathInfo.type === "clientId" ? pathInfo.id : null
+
+  // Get thread by clientId if we have one
+  const threadByClientId = useQuery(
+    api.threads.getByClientId,
+    currentClientId ? { clientId: currentClientId } : "skip",
   )
 
+  // Get thread by ID for regular threads
+  const threadById = useQuery(
+    api.threads.get,
+    currentThreadId !== "new"
+      ? { threadId: currentThreadId as Id<"threads"> }
+      : "skip",
+  )
+
+  // Determine the actual thread to use
+  const currentThread = threadByClientId || threadById
+
   const getTitle = () => {
-    if (currentThreadId === "new") {
+    if (pathInfo.type === "new") {
       return "New Chat"
     }
-    return currentThread?.title || ""
+    if (currentClientId && !currentThread) {
+      return ""
+    }
+    return currentThread?.title || "Chat"
   }
 
   return <h1 className="text-lg font-semibold">{getTitle()}</h1>

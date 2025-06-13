@@ -1,60 +1,20 @@
 "use client"
 
-import { useMutation, useQuery } from "convex/react"
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
-import { api } from "../../../convex/_generated/api"
-import type { Doc, Id } from "../../../convex/_generated/dataModel"
-import type { ModelId } from "@/lib/ai/types"
+import { useChat } from "@/hooks/useChat"
+import { useResumableChat } from "@/hooks/useResumableStream"
+import { useEffect, useMemo } from "react"
+import type { Doc } from "../../../convex/_generated/dataModel"
 import { ChatInput } from "./ChatInput"
 import { ChatMessages } from "./ChatMessages"
-import { useResumableChat } from "@/hooks/useResumableStream"
 
 type Message = Doc<"messages">
 
-interface ChatInterfaceProps {
-  initialMessages?: Message[]
-}
-
-export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const [hasCreatedThread, setHasCreatedThread] = useState(false)
+export function ChatInterface() {
+  // Use custom chat hook with optimistic updates
+  const { messages, handleSendMessage, emptyState, isDisabled } = useChat()
 
   // Manage resumable streams
   const { activeStreams, startStream, endStream } = useResumableChat()
-
-  // Extract current thread ID from pathname with better parsing
-  const currentThreadId = useMemo(() => {
-    if (pathname === "/chat") {
-      return "new"
-    }
-    // More robust pathname parsing
-    const match = pathname.match(/^\/chat\/(.+)$/)
-    return match ? (match[1] as Id<"threads">) : "new"
-  }, [pathname])
-
-  const isNewChat = currentThreadId === "new"
-
-  // Determine if we should skip queries (only skip if we're in new chat mode AND haven't created thread yet)
-  const shouldSkipQueries = isNewChat && !hasCreatedThread
-
-  // Get the actual thread data with better error handling
-  const currentThread = useQuery(
-    api.threads.get,
-    shouldSkipQueries || currentThreadId === "new"
-      ? "skip"
-      : { threadId: currentThreadId as Id<"threads"> },
-  )
-
-  // Get messages for current thread (leverages prefetched cache for instant loading)
-  const messages =
-    useQuery(
-      api.messages.list,
-      shouldSkipQueries || currentThreadId === "new"
-        ? "skip"
-        : { threadId: currentThreadId as Id<"threads"> },
-    ) ?? initialMessages
 
   // Track streaming messages
   const streamingMessages = useMemo(() => {
@@ -77,78 +37,12 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
     }
   }, [streamingMessages, messages, activeStreams, startStream, endStream])
 
-  // Mutations
-  const createThread = useMutation(api.threads.create)
-  const sendMessage = useMutation(api.messages.send)
-
-  // Handle case where thread doesn't exist or user doesn't have access
-  useEffect(() => {
-    if (currentThread === null && !isNewChat && !shouldSkipQueries) {
-      // Thread doesn't exist or user doesn't have access, redirect to chat
-      router.replace("/chat")
-    }
-  }, [currentThread, isNewChat, shouldSkipQueries, router])
-
-  // Reset hasCreatedThread when navigating to new chat
-  useEffect(() => {
-    if (isNewChat) {
-      setHasCreatedThread(false)
-    }
-  }, [isNewChat])
-
-  const handleSendMessage = async (message: string, modelId: string) => {
-    if (!message.trim()) return
-
-    try {
-      if (isNewChat) {
-        // First message in new chat - create thread first with placeholder title
-        const newThreadId = await createThread({
-          title: "Generating title...",
-        })
-
-        // Send the message to the new thread with just the modelId
-        await sendMessage({
-          threadId: newThreadId,
-          body: message,
-          modelId: modelId as ModelId, // Type assertion for the validated modelId
-        })
-
-        // Navigate to the new thread using replace for better UX
-        router.replace(`/chat/${newThreadId}`)
-        setHasCreatedThread(true)
-      } else {
-        // Normal message sending
-        await sendMessage({
-          threadId: currentThreadId,
-          body: message,
-          modelId: modelId as ModelId, // Type assertion for the validated modelId
-        })
-      }
-    } catch (error) {
-      console.error("Error sending message:", error)
-      // Re-throw the error so ChatInput can handle the toast notifications
-      throw error
-    }
-  }
-
-  const getEmptyStateTitle = () => {
-    if (isNewChat) {
-      return "Welcome to AI Chat"
-    }
-    return currentThread?.title || ""
-  }
-
-  const getEmptyStateDescription = () => {
-    if (isNewChat) {
-      return "Start a conversation with our AI assistant. Messages stream in real-time!"
-    }
-    return ""
-  }
-
   // Check if AI is currently generating (any message is streaming)
   const isAIGenerating = useMemo(() => {
-    return messages.some(msg => msg.isStreaming && !msg.isComplete) || 
-           activeStreams.size > 0
+    return (
+      messages.some((msg) => msg.isStreaming && !msg.isComplete) ||
+      activeStreams.size > 0
+    )
   }, [messages, activeStreams])
 
   // Enhance messages with streaming text
@@ -164,17 +58,11 @@ export function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <ChatMessages
-        messages={enhancedMessages}
-        emptyState={{
-          title: getEmptyStateTitle(),
-          description: getEmptyStateDescription(),
-        }}
-      />
+      <ChatMessages messages={enhancedMessages} emptyState={emptyState} />
       <ChatInput
         onSendMessage={handleSendMessage}
         placeholder="Message AI assistant..."
-        disabled={currentThread === null && !isNewChat}
+        disabled={isDisabled}
         isLoading={isAIGenerating}
       />
     </div>

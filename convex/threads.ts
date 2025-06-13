@@ -6,6 +6,7 @@ import { mutation, query } from "./_generated/server.js"
 export const create = mutation({
   args: {
     title: v.string(),
+    clientId: v.optional(v.string()), // Allow client-generated ID for instant navigation
   },
   returns: v.id("threads"),
   handler: async (ctx, args) => {
@@ -14,8 +15,21 @@ export const create = mutation({
       throw new Error("User must be authenticated")
     }
 
+    // Check for collision if clientId is provided (extremely rare with nanoid)
+    if (args.clientId) {
+      const existing = await ctx.db
+        .query("threads")
+        .withIndex("by_client_id", (q) => q.eq("clientId", args.clientId))
+        .first()
+
+      if (existing) {
+        throw new Error(`Thread with clientId ${args.clientId} already exists`)
+      }
+    }
+
     const now = Date.now()
     return await ctx.db.insert("threads", {
+      clientId: args.clientId,
       title: args.title,
       userId: userId,
       createdAt: now,
@@ -32,6 +46,7 @@ export const list = query({
     v.object({
       _id: v.id("threads"),
       _creationTime: v.number(),
+      clientId: v.optional(v.string()),
       title: v.string(),
       userId: v.id("users"),
       createdAt: v.number(),
@@ -86,6 +101,7 @@ export const get = query({
     v.object({
       _id: v.id("threads"),
       _creationTime: v.number(),
+      clientId: v.optional(v.string()),
       title: v.string(),
       userId: v.id("users"),
       createdAt: v.number(),
@@ -132,6 +148,64 @@ export const get = query({
     }
 
     return null
+  },
+})
+
+// Get a thread by clientId (for instant navigation)
+export const getByClientId = query({
+  args: {
+    clientId: v.string(),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.id("threads"),
+      _creationTime: v.number(),
+      clientId: v.optional(v.string()),
+      title: v.string(),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      lastMessageAt: v.number(),
+      isTitleGenerating: v.optional(v.boolean()),
+      isGenerating: v.optional(v.boolean()),
+      // Thread-level usage tracking (denormalized for performance)
+      usage: v.optional(
+        v.object({
+          totalInputTokens: v.number(),
+          totalOutputTokens: v.number(),
+          totalTokens: v.number(),
+          totalReasoningTokens: v.number(),
+          totalCachedInputTokens: v.number(),
+          messageCount: v.number(),
+          // Dynamic model tracking - scales to any number of models/providers
+          modelStats: v.record(
+            v.string(),
+            v.object({
+              messageCount: v.number(),
+              inputTokens: v.number(),
+              outputTokens: v.number(),
+              totalTokens: v.number(),
+              reasoningTokens: v.number(),
+              cachedInputTokens: v.number(),
+            }),
+          ),
+        }),
+      ),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      return null
+    }
+
+    const thread = await ctx.db
+      .query("threads")
+      .withIndex("by_client_id", (q) => q.eq("clientId", args.clientId))
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .first()
+
+    return thread
   },
 })
 

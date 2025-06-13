@@ -96,7 +96,7 @@ export function PreloadedThreadsList({
                       <SidebarMenuItem key={thread._id}>
                         <ActiveMenuItem
                           threadId={thread._id}
-                          href={`/chat/${thread._id}`}
+                          href={`/chat/${thread.clientId || thread._id}`}
                         >
                           <span
                             className={`truncate text-sm font-medium ${

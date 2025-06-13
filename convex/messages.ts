@@ -16,10 +16,10 @@ import {
 // Import shared types and utilities
 import {
   ALL_MODEL_IDS,
-  getProviderFromModelId,
-  getActualModelName,
-  isThinkingMode,
   type ModelId,
+  getActualModelName,
+  getProviderFromModelId,
+  isThinkingMode,
 } from "../src/lib/ai/types.js"
 
 // Create validators from the shared types
@@ -165,6 +165,74 @@ export const send = mutation({
     }
 
     return null
+  },
+})
+
+// Combined mutation for creating thread + sending first message (optimistic flow)
+export const createThreadAndSend = mutation({
+  args: {
+    title: v.string(),
+    clientId: v.string(),
+    body: v.string(),
+    modelId: v.optional(modelIdValidator),
+  },
+  returns: v.id("threads"),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      throw new Error("User must be authenticated")
+    }
+
+    // Check for collision if clientId is provided (extremely rare with nanoid)
+    const existing = await ctx.db
+      .query("threads")
+      .withIndex("by_client_id", (q) => q.eq("clientId", args.clientId))
+      .first()
+
+    if (existing) {
+      throw new Error(`Thread with clientId ${args.clientId} already exists`)
+    }
+
+    // Use default model if none provided
+    const modelId = args.modelId || "gpt-4o-mini"
+    const provider = getProviderFromModelId(modelId as ModelId)
+
+    // Create thread atomically with generation flag set
+    const now = Date.now()
+    const threadId = await ctx.db.insert("threads", {
+      clientId: args.clientId,
+      title: args.title,
+      userId: userId,
+      createdAt: now,
+      lastMessageAt: now,
+      isTitleGenerating: true,
+      isGenerating: true, // Set immediately to prevent race conditions
+    })
+
+    // Insert user message
+    await ctx.db.insert("messages", {
+      threadId,
+      body: args.body,
+      timestamp: now,
+      messageType: "user",
+      model: provider,
+      modelId: modelId,
+    })
+
+    // Schedule AI response
+    await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
+      threadId,
+      userMessage: args.body,
+      modelId: modelId,
+    })
+
+    // Schedule title generation (this is the first message)
+    await ctx.scheduler.runAfter(100, internal.titles.generateTitle, {
+      threadId,
+      userMessage: args.body,
+    })
+
+    return threadId
   },
 })
 
@@ -371,7 +439,10 @@ export const generateAIResponse = internalAction({
             threadId: args.threadId,
           })
         } catch (flagClearError) {
-          console.error("CRITICAL: Failed to clear generation flag:", flagClearError)
+          console.error(
+            "CRITICAL: Failed to clear generation flag:",
+            flagClearError,
+          )
           // This is a critical error that could leave the thread in a locked state
         }
       }
@@ -452,7 +523,7 @@ export const appendStreamChunk = internalMutation({
 
     const currentChunks = message.streamChunks || []
     const sequence = currentChunks.length // Use array length as sequence number
-    
+
     const newChunk = {
       id: args.chunkId,
       content: args.chunk,
@@ -461,7 +532,7 @@ export const appendStreamChunk = internalMutation({
     }
 
     // Check for duplicate chunks (race condition protection)
-    if (currentChunks.some(chunk => chunk.id === args.chunkId)) {
+    if (currentChunks.some((chunk) => chunk.id === args.chunkId)) {
       console.log(`Duplicate chunk detected: ${args.chunkId}`)
       return null // Skip duplicate
     }
@@ -569,76 +640,85 @@ async function updateThreadUsage(
   // RACE CONDITION FIX: Retry logic for concurrent updates
   const maxRetries = 3
   let retryCount = 0
-  
+
   while (retryCount < maxRetries) {
     try {
       const thread = await ctx.db.get(threadId)
       if (!thread) return
 
-  const inputTokens = messageUsage.inputTokens || 0
-  const outputTokens = messageUsage.outputTokens || 0
-  const totalTokens = messageUsage.totalTokens || 0
-  const reasoningTokens = messageUsage.reasoningTokens || 0
-  const cachedInputTokens = messageUsage.cachedInputTokens || 0
+      const inputTokens = messageUsage.inputTokens || 0
+      const outputTokens = messageUsage.outputTokens || 0
+      const totalTokens = messageUsage.totalTokens || 0
+      const reasoningTokens = messageUsage.reasoningTokens || 0
+      const cachedInputTokens = messageUsage.cachedInputTokens || 0
 
-  // Get existing usage or initialize
-  const currentUsage = thread.usage || {
-    totalInputTokens: 0,
-    totalOutputTokens: 0,
-    totalTokens: 0,
-    totalReasoningTokens: 0,
-    totalCachedInputTokens: 0,
-    messageCount: 0,
-    modelStats: {},
-  }
+      // Get existing usage or initialize
+      const currentUsage = thread.usage || {
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalTokens: 0,
+        totalReasoningTokens: 0,
+        totalCachedInputTokens: 0,
+        messageCount: 0,
+        modelStats: {},
+      }
 
-  // Get model-specific ID (e.g., "claude-sonnet-4-20250514" instead of just "anthropic")
-  const modelId = getFullModelId(model)
+      // Get model-specific ID (e.g., "claude-sonnet-4-20250514" instead of just "anthropic")
+      const modelId = getFullModelId(model)
 
-  // Update totals
-  const newUsage = {
-    totalInputTokens: currentUsage.totalInputTokens + inputTokens,
-    totalOutputTokens: currentUsage.totalOutputTokens + outputTokens,
-    totalTokens: currentUsage.totalTokens + totalTokens,
-    totalReasoningTokens: currentUsage.totalReasoningTokens + reasoningTokens,
-    totalCachedInputTokens:
-      currentUsage.totalCachedInputTokens + cachedInputTokens,
-    messageCount: currentUsage.messageCount + 1,
-    modelStats: {
-      ...currentUsage.modelStats,
-      [modelId]: {
-        messageCount: (currentUsage.modelStats[modelId]?.messageCount || 0) + 1,
-        inputTokens:
-          (currentUsage.modelStats[modelId]?.inputTokens || 0) + inputTokens,
-        outputTokens:
-          (currentUsage.modelStats[modelId]?.outputTokens || 0) + outputTokens,
-        totalTokens:
-          (currentUsage.modelStats[modelId]?.totalTokens || 0) + totalTokens,
-        reasoningTokens:
-          (currentUsage.modelStats[modelId]?.reasoningTokens || 0) +
-          reasoningTokens,
-        cachedInputTokens:
-          (currentUsage.modelStats[modelId]?.cachedInputTokens || 0) +
-          cachedInputTokens,
-      },
-    },
-  }
+      // Update totals
+      const newUsage = {
+        totalInputTokens: currentUsage.totalInputTokens + inputTokens,
+        totalOutputTokens: currentUsage.totalOutputTokens + outputTokens,
+        totalTokens: currentUsage.totalTokens + totalTokens,
+        totalReasoningTokens:
+          currentUsage.totalReasoningTokens + reasoningTokens,
+        totalCachedInputTokens:
+          currentUsage.totalCachedInputTokens + cachedInputTokens,
+        messageCount: currentUsage.messageCount + 1,
+        modelStats: {
+          ...currentUsage.modelStats,
+          [modelId]: {
+            messageCount:
+              (currentUsage.modelStats[modelId]?.messageCount || 0) + 1,
+            inputTokens:
+              (currentUsage.modelStats[modelId]?.inputTokens || 0) +
+              inputTokens,
+            outputTokens:
+              (currentUsage.modelStats[modelId]?.outputTokens || 0) +
+              outputTokens,
+            totalTokens:
+              (currentUsage.modelStats[modelId]?.totalTokens || 0) +
+              totalTokens,
+            reasoningTokens:
+              (currentUsage.modelStats[modelId]?.reasoningTokens || 0) +
+              reasoningTokens,
+            cachedInputTokens:
+              (currentUsage.modelStats[modelId]?.cachedInputTokens || 0) +
+              cachedInputTokens,
+          },
+        },
+      }
 
       // Update thread with new usage
       await ctx.db.patch(threadId, { usage: newUsage })
       return // Success, exit retry loop
-      
     } catch (error) {
       retryCount++
-      console.log(`Usage update retry ${retryCount}/${maxRetries} for thread ${threadId}`)
-      
+      console.log(
+        `Usage update retry ${retryCount}/${maxRetries} for thread ${threadId}`,
+      )
+
       if (retryCount >= maxRetries) {
-        console.error(`Failed to update thread usage after ${maxRetries} retries:`, error)
+        console.error(
+          `Failed to update thread usage after ${maxRetries} retries:`,
+          error,
+        )
         throw error
       }
-      
+
       // Brief delay before retry
-      await new Promise(resolve => setTimeout(resolve, 10 * retryCount))
+      await new Promise((resolve) => setTimeout(resolve, 10 * retryCount))
     }
   }
 }

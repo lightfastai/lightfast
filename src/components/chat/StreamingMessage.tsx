@@ -1,11 +1,11 @@
 "use client"
 
-import { useResumableStream } from "@/hooks/useResumableStream"
-import type { Doc } from "../../../convex/_generated/dataModel"
-import { cn } from "@/lib/utils"
 import { Markdown } from "@/components/ui/markdown"
+import { useResumableStream } from "@/hooks/useResumableStream"
+import { cn } from "@/lib/utils"
+import { Brain, ChevronDown, ChevronRight } from "lucide-react"
 import { useState } from "react"
-import { ChevronDown, ChevronRight, Brain } from "lucide-react"
+import type { Doc } from "../../../convex/_generated/dataModel"
 
 type Message = Doc<"messages"> & { _streamId?: string | null }
 

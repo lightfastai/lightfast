@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils"
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import { fonts } from "../lib/fonts"
 import { Toaster } from "sonner"
+import { fonts } from "../lib/fonts"
 
 export const metadata: Metadata = {
   title: "Chat App",
