@@ -145,24 +145,73 @@ git status  # Ensure clean working tree with latest changes
 # 5. Monitor new deployment
 ```
 
+## Project Specifics
+
+### Tech Stack
+- **Next.js 15 Canary** with App Router + Partial Prerendering (PPR)
+- **Convex** for real-time database & API
+- **Biome** for linting/formatting (not ESLint/Prettier)
+- **shadcn/ui** components (New York style)
+- **Tailwind CSS v4.x**
+- **AI SDK** with Claude Sonnet 4 + OpenAI
+- **TypeScript** strict mode
+- **pnpm** package manager (v10.11.0)
+
+### Code Style (Biome Configuration)
+- 2-space indentation, 80-character line width
+- Double quotes for JSX and strings
+- Arrow parentheses always required
+- Non-null assertions allowed in TypeScript
+- Import organization enabled
+- **IMPORTANT**: Uses Biome, not ESLint/Prettier
+
+### Component Structure
+```
+src/components/
+├── ui/           # shadcn/ui components
+├── chat/         # Chat-specific components
+└── auth/         # Authentication components
+```
+- Use TypeScript interfaces and Zod validation consistently
+- Follow shadcn/ui patterns for component composition
+
+### Project-Specific Features
+- **Resumable streams**: Custom implementation for surviving disconnections
+- **Feedback system**: v0.dev-inspired thumbs up/down with detailed feedback
+- **AI model management**: Multi-provider support with token tracking
+- **Thread-based chat**: Complex schema with resumable streaming chunks
+
 ## Development Commands
+
+### Essential Commands
+```bash
+# Use pnpm (not npm/yarn) - v10.11.0
+pnpm install
+
+# Concurrent development (runs both Next.js and Convex)
+pnpm dev:all
+
+# Individual development servers
+pnpm dev              # Next.js development server
+pnpm convex:dev       # Convex backend development server
+
+# Complete project setup with instructions
+pnpm setup
+```
 
 ### Build & Quality Checks
 ```bash
 # Build for production (required before every commit)
 pnpm build
 
-# Lint and fix code issues
+# Lint and fix code issues (Biome)
 pnpm lint
 
-# Format code
+# Format code (Biome)
 pnpm format
 
-# Run development server
-pnpm dev
-
-# Start Convex development server
-pnpm convex:dev
+# Build without environment validation (for CI/CD)
+SKIP_ENV_VALIDATION=true pnpm build
 ```
 
 ### Environment Management
@@ -170,8 +219,14 @@ pnpm convex:dev
 # Sync environment variables to Convex
 pnpm env:sync
 
+# Verify synced environment variables
+pnpm env:check
+
 # Deploy Convex functions
 pnpm convex:deploy
+
+# View Convex logs
+pnpm logs
 ```
 
 ### Vercel CLI Commands
@@ -274,15 +329,23 @@ vercel logs --follow <deployment_id>
 # - Runtime errors (check function logs)
 ```
 
-### Linting Issues
+### Linting Issues (Biome)
 ```bash
-# Auto-fix linting issues
+# Auto-fix linting issues (Biome)
 pnpm lint
 
+# Format code (Biome)
+pnpm format
+
 # Manual fixes may be needed for:
-# - Type errors
+# - TypeScript type errors
 # - Unused variables
-# - Import sorting
+# - Import organization (Biome handles automatically)
+# - Non-null assertions (allowed in this project)
+# - Exhaustive dependencies (disabled for React hooks)
+
+# Note: This project uses Biome, not ESLint/Prettier
+# Configuration in biome.json, not .eslintrc or .prettierrc
 ```
 
 ### Worktree Issues
@@ -376,13 +439,43 @@ git pull origin main
 └── README.md          # Project documentation
 ```
 
+## Development Workflow Specifics
+
+### Dual Server Development
+- **Requires two dev servers**: Next.js + Convex backend
+- Use `pnpm dev:all` for concurrent development or run in separate terminals
+- Convex provides real-time database updates and subscriptions
+- Environment variables must be synced between Next.js and Convex
+
+### Quality Assurance
+- **No testing framework configured** - relies on TypeScript + Biome
+- Quality gates: Biome linting, TypeScript strict mode, environment validation
+- Build validation prevents deployment with missing environment variables
+
+### Deployment Integration
+- Vercel deployment includes automatic Convex deployment
+- Custom build command integrates both Next.js and Convex builds
+- 30-second function timeout configured in vercel.json
+
 ## Environment Variables
 
-See `README.md` for complete environment setup. Key variables:
+Uses `@t3-oss/env-nextjs` for type-safe environment validation:
+
+### Required Variables
 - `ANTHROPIC_API_KEY` - Required for Claude Sonnet 4
-- `OPENAI_API_KEY` - Required for GPT models
-- `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` - GitHub OAuth
+- `OPENAI_API_KEY` - Required for GPT models  
 - `NEXT_PUBLIC_CONVEX_URL` - Convex backend URL
+
+### Optional Variables
+- `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` - GitHub OAuth
+- `JWT_PRIVATE_KEY` / `JWKS` - Authentication tokens
+- `SITE_URL` - Redirect handling
+
+### Environment Sync
+- Custom `./scripts/sync-env.sh` script validates and syncs variables
+- Run `pnpm env:sync` after environment changes
+- Use `pnpm env:check` to verify synced variables
+- Color-coded output with success/error logging
 
 ## Notes
 
