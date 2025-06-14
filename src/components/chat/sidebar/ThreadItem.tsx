@@ -1,6 +1,7 @@
 "use client"
 
-import { SidebarMenuItem, SidebarMenuButton, SidebarMenuAction } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { SidebarMenuItem } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { Pin } from "lucide-react"
 import { useCallback, useState } from "react"
@@ -19,6 +20,7 @@ interface ThreadItemProps {
 }
 
 export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
+  const [isHovered, setIsHovered] = useState(false)
   const [isPinning, setIsPinning] = useState(false)
 
   const handlePinClick = useCallback(
@@ -36,47 +38,53 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
   )
 
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton asChild>
-        <ActiveMenuItem
-          threadId={thread._id}
-          href={`/chat/${thread.clientId || thread._id}`}
-        >
-          <div className="flex-1 min-w-0 relative pr-6">
-            <span
-              className={cn(
-                "block text-sm font-medium overflow-hidden whitespace-nowrap",
-                thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
-              )}
-            >
-              {thread.title}
-            </span>
-            {/* Fade out overlay */}
-            <div className="absolute top-0 right-0 bottom-0 w-4 bg-gradient-to-l from-sidebar-background to-transparent pointer-events-none" />
-          </div>
-        </ActiveMenuItem>
-      </SidebarMenuButton>
-      <SidebarMenuAction
-        className={cn(
-          "transition-opacity",
-          thread.pinned
-            ? "opacity-100 text-primary"
-            : "opacity-0 group-hover/menu-item:opacity-100 hover:text-primary",
-        )}
-        onClick={handlePinClick}
-        disabled={isPinning}
+    <SidebarMenuItem
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <ActiveMenuItem
+        threadId={thread._id}
+        href={`/chat/${thread.clientId || thread._id}`}
+        className="w-full h-auto p-2.5 text-left flex items-center min-w-0"
       >
-        <Pin
-          className={cn(
-            "h-4 w-4",
-            thread.pinned && "fill-current",
-            isPinning && "animate-pulse",
-          )}
-        />
-        <span className="sr-only">
-          {thread.pinned ? "Unpin" : "Pin"} thread
-        </span>
-      </SidebarMenuAction>
+        <div className="flex-1 min-w-0 relative pr-2">
+          <span
+            className={cn(
+              "block text-sm font-medium overflow-hidden whitespace-nowrap",
+              thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
+            )}
+          >
+            {thread.title}
+          </span>
+          {/* Fade out overlay */}
+          <div className="absolute top-0 right-0 bottom-0 w-4 bg-gradient-to-l from-sidebar-background to-transparent pointer-events-none" />
+        </div>
+        <div className="flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-5 w-5 transition-opacity",
+              thread.pinned
+                ? "opacity-100 text-primary"
+                : isHovered
+                  ? "opacity-100 hover:text-primary"
+                  : "opacity-0",
+            )}
+            onClick={handlePinClick}
+            disabled={isPinning}
+          >
+            <Pin
+              className={cn(
+                "h-3 w-3",
+                thread.pinned && "fill-current",
+                isPinning && "animate-pulse",
+              )}
+            />
+          </Button>
+        </div>
+      </ActiveMenuItem>
     </SidebarMenuItem>
   )
 }
