@@ -35,7 +35,18 @@
       "cache": false
     }
   },
-  "globalEnv": ["PORT"],
+  "globalEnv": [
+    "PORT",
+    "CONVEX_DEPLOY_KEY",
+    "JWT_PRIVATE_KEY",
+    "JWKS",
+    "AUTH_GITHUB_SECRET",
+    "AUTH_GITHUB_ID",
+    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
+    "EXA_API_KEY",
+    "OPENROUTER_API_KEY"
+  ],
   "globalPassThroughEnv": [
     "NODE_ENV",
     "CI",
