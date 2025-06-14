@@ -54,13 +54,20 @@ This helps Claude Code navigate directly to relevant files when picking up an is
 
 #### Creating Issues via GitHub CLI
 ```bash
-# List available templates
-gh issue create --repo lightfastai/chat
+# List available templates and add to project
+gh issue create --repo lightfastai/chat --project 2
 
-# Create with specific template
-gh issue create --template feature_request.md
+# Create with specific template and add to project
+gh issue create --template feature_request.md --project 2
+
+# Create issue with automatic project assignment
+gh issue create --repo lightfastai/chat \
+  --title "feat: <feature_description>" \
+  --body "Description of the feature" \
+  --project 2
 
 # Or use GitHub web UI which will show template chooser
+# Note: Web UI won't automatically add to project
 ```
 
 **Task Planning & PR Description Management**:
@@ -162,9 +169,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 git push -u origin jeevanpillay/<feature_name>
 ```
 
-### 5. PR Creation
+### 5. PR Creation & GitHub Project Integration
 ```bash
-# Use GitHub MCP to create PR
+# Create PR and automatically add to lightfast-chat project
+gh pr create --repo lightfastai/chat --project 2
+
+# Or create PR with specific details
+gh pr create --title "feat: <feature_name>" \
+  --body "Closes #<issue_number>" \
+  --project 2
+
 # Link to original issue
 # Include test plan and deployment notes
 ```
@@ -178,6 +192,13 @@ git push -u origin jeevanpillay/<feature_name>
 - Add deployment notes and environment considerations
 - Link to related issues and maintain traceability
 - Update PR description continuously as development progresses
+
+**GitHub Project Management**:
+The repository uses the **lightfast-chat** project (ID: 2) for tracking all development work:
+- All new issues and PRs should be automatically added to the project
+- Issues start in "Todo" status
+- PRs typically move to "In Progress" when created
+- Use `--project 2` flag when creating issues/PRs via GitHub CLI
 
 ### 6. Deployment Monitoring
 ```bash
@@ -261,18 +282,18 @@ Here's a real example of the full workflow using issue templates:
    ```markdown
    ## What needs to be done?
    Add a dark mode toggle to the application that persists user preference
-   
+
    ## Success looks like
    - [ ] Toggle button in header next to user menu
    - [ ] Theme persists across page refreshes
    - [ ] Smooth transition between themes
    - [ ] All components properly styled for dark mode
-   
+
    ## Technical hints
    - Start with: @src/app/layout.tsx for theme provider
    - Related to: @src/components/ui components need dark variants
    - Uses: next-themes library (already in @package.json)
-   
+
    ## Browser testing required
    - [ ] Works on Chrome/Edge/Safari
    - [ ] No console errors
@@ -576,6 +597,57 @@ git push origin main
 git pull origin main
 ```
 
+## GitHub Project Management
+
+### lightfast-chat Project
+The repository is integrated with GitHub Projects for comprehensive issue and PR tracking:
+- **Project Name**: lightfast-chat
+- **Project ID**: 2
+- **Organization**: lightfastai
+
+### Managing Issues and PRs
+```bash
+# Add existing issue to project
+gh project item-add 2 --owner lightfastai --url https://github.com/lightfastai/chat/issues/<NUMBER>
+
+# Add existing PR to project
+gh project item-add 2 --owner lightfastai --url https://github.com/lightfastai/chat/pull/<NUMBER>
+
+# Create new issue with project linkage
+gh issue create --repo lightfastai/chat --project 2
+
+# Create new PR with project linkage
+gh pr create --repo lightfastai/chat --project 2
+
+# List all items in the project
+gh project item-list 2 --owner lightfastai
+
+# View project columns and statuses
+gh project field-list 2 --owner lightfastai
+```
+
+### Project Status Management
+The project uses three main statuses:
+- **Todo**: New issues and tasks not yet started
+- **In Progress**: Active PRs and issues being worked on
+- **Done**: Completed items
+
+### Bulk Operations
+To add multiple existing items to the project:
+```bash
+# Add all open issues
+gh issue list --repo lightfastai/chat --state open --json number --jq '.[].number' | \
+while read num; do
+  gh project item-add 2 --owner lightfastai --url "https://github.com/lightfastai/chat/issues/$num"
+done
+
+# Add all open PRs
+gh pr list --repo lightfastai/chat --state open --json number --jq '.[].number' | \
+while read num; do
+  gh project item-add 2 --owner lightfastai --url "https://github.com/lightfastai/chat/pull/$num"
+done
+```
+
 ## Issue Templates
 
 The project includes Claude Code-optimized issue templates designed for efficient AI-assisted development:
@@ -663,7 +735,7 @@ Uses `@t3-oss/env-nextjs` for type-safe environment validation:
 
 ### Required Variables
 - `ANTHROPIC_API_KEY` - Required for Claude Sonnet 4
-- `OPENAI_API_KEY` - Required for GPT models  
+- `OPENAI_API_KEY` - Required for GPT models
 - `NEXT_PUBLIC_CONVEX_URL` - Convex backend URL
 
 ### Optional Variables
