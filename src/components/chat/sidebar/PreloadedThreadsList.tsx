@@ -105,7 +105,7 @@ export function PreloadedThreadsList({
     )
 
     return (
-      <ScrollArea className="h-[calc(100vh-280px)] overflow-visible">
+      <ScrollArea className="h-[calc(100vh-280px)]" type="always">
         {threads.length === 0 ? (
           <div className="px-3 py-8 text-center text-muted-foreground">
             <p className="text-sm">No conversations yet</p>
