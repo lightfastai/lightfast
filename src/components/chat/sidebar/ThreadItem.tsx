@@ -57,9 +57,9 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
             </span>
             {/* Fade out overlay - covers the pr-8 padding area */}
             <div 
-              className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none"
+              className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none"
               style={{
-                background: 'linear-gradient(to left, var(--sidebar-background) 0%, var(--sidebar-background) 25%, transparent 100%)'
+                background: 'linear-gradient(to left, var(--sidebar-background) 0%, var(--sidebar-background) 20%, transparent 100%)'
               }}
             />
           </div>
