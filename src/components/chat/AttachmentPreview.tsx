@@ -10,7 +10,7 @@ interface AttachmentPreviewProps {
   attachmentIds: Id<"files">[]
 }
 
-type FileWithUrl = Doc<"files"> & { url?: string }
+type FileWithUrl = Doc<"files"> & { url: string | null }
 
 export function AttachmentPreview({ attachmentIds }: AttachmentPreviewProps) {
   const files = useQuery(api.files.getFiles, { fileIds: attachmentIds })
