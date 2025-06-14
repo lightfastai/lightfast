@@ -46,23 +46,14 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
           threadId={thread._id}
           href={`/chat/${thread.clientId || thread._id}`}
         >
-          <div className="relative flex-1 min-w-0">
-            <span
-              className={cn(
-                "block text-sm font-medium overflow-hidden whitespace-nowrap",
-                thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
-              )}
-            >
-              {thread.title}
-            </span>
-            {/* Fade out overlay - positioned to work with automatic pr-8 padding */}
-            <div 
-              className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none"
-              style={{
-                background: 'linear-gradient(to left, var(--sidebar-background) 0%, transparent 100%)'
-              }}
-            />
-          </div>
+          <span
+            className={cn(
+              "truncate text-sm font-medium",
+              thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
+            )}
+          >
+            {thread.title}
+          </span>
         </ActiveMenuItem>
       </SidebarMenuButton>
       <SidebarMenuAction
