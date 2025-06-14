@@ -782,6 +782,62 @@ Uses `@t3-oss/env-nextjs` for type-safe environment validation:
 - Color-coded output with success/error logging
 - Proper handling of multi-line JWT keys and complex values
 
+## Repository Analysis Workflow
+
+### Cloning External Repositories for Analysis
+
+When analyzing external repositories or codebases, use a temporary clone approach:
+
+```bash
+# Clone repository into tmp_repo directory for analysis
+git clone <repository_url> tmp_repo
+
+# Navigate to the cloned repository
+cd tmp_repo
+
+# Perform analysis tasks
+# - Read files and understand structure
+# - Search for patterns and dependencies
+# - Analyze code organization
+# - Extract insights
+
+# Return to main directory
+cd ..
+
+# Clean up after analysis
+rm -rf tmp_repo
+```
+
+**Important Guidelines**:
+- Always clone into `tmp_repo` directory (already in .gitignore)
+- Delete the temporary repository after analysis is complete
+- Use this approach for:
+  - Analyzing external codebases
+  - Comparing implementation patterns
+  - Extracting best practices
+  - Understanding project structures
+- Never commit files from tmp_repo to the main repository
+
+### Example Analysis Workflow
+```bash
+# Clone a repository to analyze its authentication implementation
+git clone https://github.com/example/auth-project tmp_repo
+cd tmp_repo
+
+# Search for authentication patterns
+rg "auth|login|session" --type ts
+
+# Examine specific files
+cat src/auth/provider.tsx
+
+# Extract insights and patterns
+# ... take notes on implementation ...
+
+# Clean up
+cd ..
+rm -rf tmp_repo
+```
+
 ## Notes
 
 - Always work in worktrees for feature development
@@ -789,3 +845,4 @@ Uses `@t3-oss/env-nextjs` for type-safe environment validation:
 - Use GitHub MCP for issue/PR management
 - Monitor deployments actively with Vercel CLI
 - Clean up worktrees after features are merged
+- Use tmp_repo for temporary repository analysis

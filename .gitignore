@@ -142,3 +142,6 @@ dist
 
 # Git worktrees
 worktrees/
+
+# Temporary repository clones for analysis
+tmp_repo/
