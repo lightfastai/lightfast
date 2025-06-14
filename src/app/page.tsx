@@ -1,6 +1,5 @@
 import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler"
 import { LandingChatInput } from "@/components/landing/LandingChatInput"
-import { Footer } from "@/components/layout/Footer"
 import { Button } from "@/components/ui/button"
 import { Zap } from "lucide-react"
 import type { Metadata } from "next"
@@ -117,11 +116,11 @@ function LandingHeader() {
 // Landing page component - fully SSR
 function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <LandingHeader />
 
       {/* Main content */}
-      <main className="flex-1 container mx-auto px-4 py-48">
+      <main className="container mx-auto px-4 py-48">
         <div className="max-w-4xl mx-auto">
           {/* Hero section */}
           <div className="text-center mb-12">
@@ -140,8 +139,6 @@ function LandingPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }
