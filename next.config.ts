@@ -1,8 +1,5 @@
 import type { NextConfig } from "next"
-import { createMDX } from "fumadocs-mdx/next"
 import "@/env"
-
-const withMDX = createMDX()
 
 const nextConfig: NextConfig = {
   // App Router is enabled by default in Next.js 13+
@@ -11,4 +8,4 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default withMDX(nextConfig)
+export default nextConfig
