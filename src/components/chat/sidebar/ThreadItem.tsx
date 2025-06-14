@@ -46,37 +46,44 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
       <ActiveMenuItem
         threadId={thread._id}
         href={`/chat/${thread.clientId || thread._id}`}
+        className="w-full h-auto p-2.5 text-left flex items-center min-w-0"
       >
-        <span
-          className={cn(
-            "truncate text-sm font-medium flex-1",
-            thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
-          )}
-        >
-          {thread.title}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-5 w-5 ml-2 transition-opacity",
-            thread.pinned
-              ? "opacity-100 text-primary"
-              : isHovered
-                ? "opacity-100 hover:text-primary"
-                : "opacity-0",
-          )}
-          onClick={handlePinClick}
-          disabled={isPinning}
-        >
-          <Pin
+        <div className="flex-1 min-w-0 relative pr-2">
+          <span
             className={cn(
-              "h-3 w-3",
-              thread.pinned && "fill-current",
-              isPinning && "animate-pulse",
+              "block text-sm font-medium overflow-hidden whitespace-nowrap",
+              thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
             )}
-          />
-        </Button>
+          >
+            {thread.title}
+          </span>
+          {/* Fade out overlay */}
+          <div className="absolute top-0 right-0 bottom-0 w-4 bg-gradient-to-l from-sidebar-background to-transparent pointer-events-none" />
+        </div>
+        <div className="flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-5 w-5 transition-opacity",
+              thread.pinned
+                ? "opacity-100 text-primary"
+                : isHovered
+                  ? "opacity-100 hover:text-primary"
+                  : "opacity-0",
+            )}
+            onClick={handlePinClick}
+            disabled={isPinning}
+          >
+            <Pin
+              className={cn(
+                "h-3 w-3",
+                thread.pinned && "fill-current",
+                isPinning && "animate-pulse",
+              )}
+            />
+          </Button>
+        </div>
       </ActiveMenuItem>
     </SidebarMenuItem>
   )
