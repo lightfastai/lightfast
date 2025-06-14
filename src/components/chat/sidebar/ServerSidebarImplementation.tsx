@@ -68,7 +68,6 @@ export function ServerSidebarImplementation({
                 <ActiveMenuItem
                   threadId="new"
                   href="/chat"
-                  className="h-10 w-full flex items-center gap-2"
                   size="default"
                 >
                   <Plus className="w-4 h-4" />
