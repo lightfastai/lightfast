@@ -21,6 +21,7 @@ import type * as setup from "../setup.js";
 import type * as threads from "../threads.js";
 import type * as titles from "../titles.js";
 import type * as users from "../users.js";
+import type * as webSearch from "../webSearch.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   threads: typeof threads;
   titles: typeof titles;
   users: typeof users;
+  webSearch: typeof webSearch;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
