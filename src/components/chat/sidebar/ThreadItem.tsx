@@ -40,8 +40,8 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
   )
 
   return (
-    <SidebarMenuItem className="overflow-visible">
-      <SidebarMenuButton asChild className="pr-8">
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild>
         <ActiveMenuItem
           threadId={thread._id}
           href={`/chat/${thread.clientId || thread._id}`}
@@ -55,11 +55,11 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
             >
               {thread.title}
             </span>
-            {/* Fade out overlay - covers the pr-8 padding area */}
+            {/* Fade out overlay - positioned to work with automatic pr-8 padding */}
             <div 
-              className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none"
+              className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none"
               style={{
-                background: 'linear-gradient(to left, var(--sidebar-background) 0%, var(--sidebar-background) 25%, transparent 100%)'
+                background: 'linear-gradient(to left, var(--sidebar-background) 0%, transparent 100%)'
               }}
             />
           </div>
@@ -67,7 +67,7 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
       </SidebarMenuButton>
       <SidebarMenuAction
         className={cn(
-          "transition-opacity z-10",
+          "transition-opacity",
           thread.pinned
             ? "opacity-100 text-primary"
             : "opacity-0 group-hover/menu-item:opacity-100 hover:text-primary",
