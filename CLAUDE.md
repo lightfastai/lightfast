@@ -132,7 +132,7 @@ bun install
 cp ../../.env.local .env.local
 
 # Sync environment variables to Convex
-bun env:sync
+bun run env:sync
 
 # Note: Claude Code can only access child directories of the working directory
 # Worktree will be created at: worktrees/<feature_name>/
@@ -149,14 +149,14 @@ cd worktrees/<feature_name>
 
 # Start development servers (choose one option):
 # Option 1: Background development (recommended for Claude Code)
-bun dev:bg                        # Runs both servers in background with logging
+bun run dev:bg                        # Runs both servers in background with logging
 
 # Option 2: Concurrent development (foreground)
-bun dev:all
+bun run dev:all
 
 # Option 3: Separate terminals
-# Terminal 1: bun dev              # Next.js development server
-# Terminal 2: bun convex:dev       # Convex backend development server
+# Terminal 1: bun run dev              # Next.js development server
+# Terminal 2: bun run convex:dev       # Convex backend development server
 
 # Check background servers status
 ps aux | grep -E "(next|convex)" | grep -v grep
@@ -173,12 +173,12 @@ pkill -f "convex dev"
 
 # Local validation - MUST pass before commit
 # Note: For build without environment variables, use:
-SKIP_ENV_VALIDATION=true bun build
+SKIP_ENV_VALIDATION=true bun run build
 # Or alternatively, pull environment variables:
 # vc env pull
 
-bun lint
-bun format
+bun run lint
+bun run format
 
 # Fix any issues found by build/lint
 # Repeat until all checks pass
@@ -294,7 +294,7 @@ git status  # Ensure clean working tree with latest changes
 # If deployment fails, iterate:
 # 1. Check vercel logs for errors
 # 2. Fix issues locally
-# 3. Run bun build + bun lint
+# 3. Run bun run build + bun run lint
 # 4. Commit and push
 # 5. Monitor new deployment
 ```
@@ -340,7 +340,7 @@ Here's a real example of the full workflow using issue templates:
    ```bash
    ./scripts/setup-worktree.sh jeevanpillay/add-dark-mode
    cd worktrees/add-dark-mode
-   bun dev:all
+   bun run dev:all
    # Implementation happens here...
    ```
 
@@ -430,50 +430,50 @@ The combination of Bun and Turborepo provides:
 bun install
 
 # Background development (recommended for Claude Code)
-bun dev:bg           # Runs both servers in background with logging to dev.log
+bun run dev:bg           # Runs both servers in background with logging to dev.log
 
 # Concurrent development (runs both Next.js and Convex in foreground)
-bun dev:all
+bun run dev:all
 
 # Individual development servers
-bun dev              # Next.js development server
-bun convex:dev       # Convex backend development server
+bun run dev              # Next.js development server
+bun run convex:dev       # Convex backend development server
 
 # Complete project setup with instructions
-bun setup
+bun run setup
 ```
 
 ### Build & Quality Checks
 ```bash
 # Build for production (required before every commit)
-bun build
+bun run build
 
 # Lint and fix code issues (Biome)
-bun lint
+bun run lint
 
 # Format code (Biome)
-bun format
+bun run format
 
 # Build without environment validation (for CI/CD)
-SKIP_ENV_VALIDATION=true bun build
+SKIP_ENV_VALIDATION=true bun run build
 
 # Run build with Turborepo for maximum performance
-bun turbo run build
+bun run turbo:build
 ```
 
 ### Environment Management
 ```bash
 # Sync environment variables to Convex
-bun env:sync
+bun run env:sync
 
 # Verify synced environment variables
-bun env:check
+bun run env:check
 
 # Deploy Convex functions
-bun convex:deploy
+bun run convex:deploy
 
 # View Convex logs
-bun logs
+bun run logs
 ```
 
 ### Vercel CLI Commands
@@ -529,9 +529,9 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 ## Quality Gates
 
 ### Before Every Commit
-1. ✅ `bun build` - Must pass without errors
-2. ✅ `bun lint` - Must pass without errors
-3. ✅ Code formatted with `bun format`
+1. ✅ `bun run build` - Must pass without errors
+2. ✅ `bun run lint` - Must pass without errors
+3. ✅ Code formatted with `bun run format`
 4. ✅ All changes tested locally
 
 ### Before PR Creation
@@ -551,7 +551,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 ### Build Failures
 ```bash
 # Environment variable errors during build
-SKIP_ENV_VALIDATION=true bun build
+SKIP_ENV_VALIDATION=true bun run build
 
 # Or pull environment variables from Vercel
 vc env pull
@@ -579,10 +579,10 @@ vercel logs --follow <deployment_id>
 ### Linting Issues (Biome)
 ```bash
 # Auto-fix linting issues (Biome)
-bun lint
+bun run lint
 
 # Format code (Biome)
-bun format
+bun run format
 
 # Manual fixes may be needed for:
 # - TypeScript type errors
@@ -787,7 +787,7 @@ This helps Claude Code quickly navigate to relevant files when working on the is
 
 ### Dual Server Development
 - **Requires two dev servers**: Next.js + Convex backend
-- Use `bun dev:all` for concurrent development or run in separate terminals
+- Use `bun run dev:all` for concurrent development or run in separate terminals
 - Convex provides real-time database updates and subscriptions
 - Environment variables must be synced between Next.js and Convex
 - Turborepo optimizes the build pipeline for both servers
@@ -818,8 +818,8 @@ Uses `@t3-oss/env-nextjs` for type-safe environment validation:
 
 ### Environment Sync
 - Custom `./scripts/sync-env.ts` script validates and syncs variables
-- Run `bun env:sync` after environment changes
-- Use `bun env:check` to verify synced variables
+- Run `bun run env:sync` after environment changes
+- Use `bun run env:check` to verify synced variables
 - Color-coded output with success/error logging
 - Proper handling of multi-line JWT keys and complex values
 
