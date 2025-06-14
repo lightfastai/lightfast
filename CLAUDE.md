@@ -254,19 +254,27 @@ gh pr view <pr_number>
 # Check PR merge readiness
 gh pr view <pr_number> --json state,mergeable,statusCheckRollup
 
-# Merge PR (squash commit with branch deletion)
-gh pr merge <pr_number> --squash --delete-branch
-
-# If merge fails due to worktree checkout, clean up first:
-# 1. Remove worktree (must be done before branch deletion)
+# IMPORTANT: Remove worktree BEFORE attempting to merge
+# This prevents "fatal: 'main' is already checked out" errors
 git worktree remove worktrees/<feature_name>
 
-# 2. Delete local branch (if not auto-deleted)
-git branch -d jeevanpillay/<feature_name>
+# Navigate back to main repository root (if currently in worktree)
+cd /path/to/main/repo
 
-# 3. Update main branch with merged changes
+# Method 1: Merge via GitHub CLI (preferred)
+gh pr merge <pr_number> --squash --delete-branch
+
+# Method 2: If GitHub CLI fails, use web interface
+# Visit the PR URL and click "Merge pull request" → "Squash and merge"
+
+# Method 3: Manual git merge (if needed)
 git checkout main
 git pull origin main
+git merge --squash jeevanpillay/<feature_name>
+git commit -m "feat: your feature description (#<pr_number>)"
+git push origin main
+git branch -d jeevanpillay/<feature_name>
+git push origin --delete jeevanpillay/<feature_name>
 
 # Verify the merge was successful
 git log --oneline -5  # Check recent commits include your feature
@@ -621,24 +629,43 @@ gh pr view <pr_number>  # Shows deployment links
 
 ### PR Merge & Cleanup Issues
 ```bash
-# "branch checked out at worktree" error during merge
-# Solution: Remove worktree first, then merge
+# "failed to run git: fatal: 'main' is already checked out" error during merge
+# MOST COMMON ISSUE: Worktree is still active when trying to merge
+# Solution: ALWAYS remove worktree before merging
+git worktree list  # Check active worktrees first
 git worktree remove worktrees/<feature_name>
+cd /path/to/main/repo  # Navigate out of worktree if currently inside
 gh pr merge <pr_number> --squash --delete-branch
+
+# Alternative if GitHub CLI fails: Use web interface
+# 1. Visit https://github.com/lightfastai/chat/pull/<pr_number>
+# 2. Click "Merge pull request" → "Squash and merge"
+# 3. Confirm merge and delete branch
 
 # "Cannot delete branch" error
 # Solution: Ensure you're not in the worktree directory
+pwd  # Check current directory
+cd /path/to/main/repo  # Navigate to main repo if needed
 git worktree remove worktrees/<feature_name>
 git branch -d jeevanpillay/<feature_name>
-
-# "failed to run git: fatal: 'main' is already checked out"
-# Solution: Remove worktree before merging
-git worktree list  # Check active worktrees
-git worktree remove worktrees/<feature_name>
 
 # Worktree directory still exists after removal
 # Solution: Manually remove directory if needed
 rm -rf worktrees/<feature_name>
+
+# GitHub CLI error during merge
+# Solution: Fall back to web interface or manual merge
+# Method 1: Web interface (recommended)
+echo "Visit: https://github.com/lightfastai/chat/pull/<pr_number>"
+
+# Method 2: Manual merge
+git checkout main
+git pull origin main
+git merge --squash jeevanpillay/<feature_name>
+git commit -m "feat: your feature description (#<pr_number>)"
+git push origin main
+git branch -d jeevanpillay/<feature_name>
+git push origin --delete jeevanpillay/<feature_name>
 
 # Check merge status
 gh pr view <pr_number> --json state,merged
