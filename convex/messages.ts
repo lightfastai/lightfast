@@ -1,5 +1,5 @@
-import { anthropic } from "@ai-sdk/anthropic"
-import { openai } from "@ai-sdk/openai"
+import { anthropic, createAnthropic } from "@ai-sdk/anthropic"
+import { createOpenAI, openai } from "@ai-sdk/openai"
 import { getAuthUserId } from "@convex-dev/auth/server"
 import { streamText, tool } from "ai"
 import { v } from "convex/values"
@@ -121,6 +121,7 @@ export const list = query({
       thinkingContent: v.optional(v.string()),
       isThinking: v.optional(v.boolean()),
       hasThinkingContent: v.optional(v.boolean()),
+      usedUserApiKey: v.optional(v.boolean()),
       usage: v.optional(
         v.object({
           inputTokens: v.optional(v.number()),
@@ -322,13 +323,32 @@ export const generateAIResponse = internalAction({
   handler: async (ctx, args) => {
     let messageId: Id<"messages"> | null = null
     try {
+      // Get thread and user information
+      const thread = await ctx.runQuery(internal.messages.getThreadById, {
+        threadId: args.threadId,
+      })
+      if (!thread) {
+        throw new Error("Thread not found")
+      }
+
       // Derive provider and other settings from modelId
       const provider = getProviderFromModelId(args.modelId as ModelId)
       const actualModelName = getActualModelName(args.modelId as ModelId)
       const isThinking = isThinkingMode(args.modelId as ModelId)
 
+      // Get user's API keys if available
+      const userApiKeys = await ctx.runMutation(
+        internal.userSettings.getDecryptedApiKeys,
+        { userId: thread.userId },
+      )
+
       // Generate unique stream ID
       const streamId = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+      // Determine if user's API key will be used
+      const willUseUserApiKey =
+        (provider === "anthropic" && userApiKeys && userApiKeys.anthropic) ||
+        (provider === "openai" && userApiKeys && userApiKeys.openai)
 
       // Create initial AI message placeholder
       messageId = await ctx.runMutation(
@@ -338,6 +358,7 @@ export const generateAIResponse = internalAction({
           streamId,
           provider,
           modelId: args.modelId,
+          usedUserApiKey: !!willUseUserApiKey,
         },
       )
 
@@ -369,11 +390,17 @@ export const generateAIResponse = internalAction({
       console.log(`Schema fix timestamp: ${Date.now()}`)
       console.log(`Web search enabled: ${args.webSearchEnabled}`)
 
-      // Choose the appropriate model using the actual model name
+      // Choose the appropriate model using user's API key if available, otherwise fall back to global
       const selectedModel =
         provider === "anthropic"
-          ? anthropic(actualModelName)
-          : openai(actualModelName)
+          ? userApiKeys?.anthropic
+            ? createAnthropic({ apiKey: userApiKeys.anthropic })(
+                actualModelName,
+              )
+            : anthropic(actualModelName)
+          : userApiKeys?.openai
+            ? createOpenAI({ apiKey: userApiKeys.openai })(actualModelName)
+            : openai(actualModelName)
 
       // Stream response using AI SDK v5 with full stream for reasoning support
       const streamOptions: Parameters<typeof streamText>[0] = {
@@ -763,6 +790,7 @@ export const createStreamingMessage = internalMutation({
     streamId: v.string(),
     provider: modelProviderValidator,
     modelId: modelIdValidator,
+    usedUserApiKey: v.optional(v.boolean()),
   },
   returns: v.id("messages"),
   handler: async (ctx, args) => {
@@ -781,6 +809,7 @@ export const createStreamingMessage = internalMutation({
       streamVersion: 0, // Initialize version counter
       lastChunkId: undefined, // Initialize last chunk ID
       modelId: args.modelId,
+      usedUserApiKey: args.usedUserApiKey,
     })
   },
 })
@@ -1258,5 +1287,50 @@ export const clearGenerationFlag = internalMutation({
     await ctx.db.patch(args.threadId, {
       isGenerating: false,
     })
+  },
+})
+
+// Internal query to get thread by ID
+export const getThreadById = internalQuery({
+  args: {
+    threadId: v.id("threads"),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.id("threads"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      clientId: v.optional(v.string()),
+      title: v.string(),
+      createdAt: v.number(),
+      lastMessageAt: v.number(),
+      isGenerating: v.optional(v.boolean()),
+      isTitleGenerating: v.optional(v.boolean()),
+      usage: v.optional(
+        v.object({
+          totalInputTokens: v.number(),
+          totalOutputTokens: v.number(),
+          totalTokens: v.number(),
+          totalReasoningTokens: v.number(),
+          totalCachedInputTokens: v.number(),
+          messageCount: v.number(),
+          modelStats: v.record(
+            v.string(),
+            v.object({
+              messageCount: v.number(),
+              inputTokens: v.number(),
+              outputTokens: v.number(),
+              totalTokens: v.number(),
+              reasoningTokens: v.number(),
+              cachedInputTokens: v.number(),
+            }),
+          ),
+        }),
+      ),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.threadId)
   },
 })

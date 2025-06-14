@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai"
+import { createOpenAI, openai } from "@ai-sdk/openai"
 import { generateText } from "ai"
 import { v } from "convex/values"
 import { internal } from "./_generated/api.js"
@@ -24,9 +24,29 @@ export const generateTitle = internalAction({
         args.userMessage.substring(0, 100),
       )
 
+      // Get thread to find user ID
+      const thread = await ctx.runQuery(internal.messages.getThreadById, {
+        threadId: args.threadId,
+      })
+
+      if (!thread) {
+        throw new Error("Thread not found")
+      }
+
+      // Get user's API keys if available
+      const userApiKeys = await ctx.runMutation(
+        internal.userSettings.getDecryptedApiKeys,
+        { userId: thread.userId },
+      )
+
+      // Use user's OpenAI key if available, otherwise fall back to global
+      const model = userApiKeys?.openai
+        ? createOpenAI({ apiKey: userApiKeys.openai })("gpt-4o-mini")
+        : openai("gpt-4o-mini")
+
       // Use gpt-4o-mini for fast title generation with AI SDK v5
       const { text } = await generateText({
-        model: openai("gpt-4o-mini"),
+        model,
         messages: [
           {
             role: "system",

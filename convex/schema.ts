@@ -23,6 +23,24 @@ const modelProviderValidator = v.union(
 export default defineSchema({
   ...authTables,
 
+  userSettings: defineTable({
+    userId: v.id("users"),
+    apiKeys: v.optional(
+      v.object({
+        openai: v.optional(v.string()), // Encrypted API key
+        anthropic: v.optional(v.string()), // Encrypted API key
+      }),
+    ),
+    preferences: v.optional(
+      v.object({
+        defaultModel: v.optional(modelIdValidator),
+        preferredProvider: v.optional(modelProviderValidator),
+      }),
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   threads: defineTable({
     clientId: v.optional(v.string()), // Client-generated ID for instant navigation
     title: v.string(),
@@ -71,6 +89,7 @@ export default defineSchema({
     isComplete: v.optional(v.boolean()),
     thinkingStartedAt: v.optional(v.number()),
     thinkingCompletedAt: v.optional(v.number()),
+    usedUserApiKey: v.optional(v.boolean()), // Track if user's own API key was used
     streamChunks: v.optional(
       v.array(
         v.object({
