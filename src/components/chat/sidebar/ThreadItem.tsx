@@ -45,7 +45,7 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
         threadId={thread._id}
         href={`/chat/${thread.clientId || thread._id}`}
       >
-        <div className="relative flex-1 min-w-0">
+        <div className="relative max-w-[calc(100%-3rem)]">
           <span
             className={cn(
               "block text-sm font-medium overflow-hidden whitespace-nowrap",
@@ -54,13 +54,8 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
           >
             {thread.title}
           </span>
-          {/* Fade out overlay - covers the action button area */}
-          <div 
-            className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none"
-            style={{
-              background: 'linear-gradient(to left, var(--sidebar-background) 0%, var(--sidebar-background) 25%, transparent 100%)'
-            }}
-          />
+          {/* Simple fade overlay at the end */}
+          <div className="absolute top-0 right-0 bottom-0 w-4 bg-gradient-to-l from-sidebar-background to-transparent pointer-events-none" />
         </div>
       </ActiveMenuItem>
       <SidebarMenuAction
