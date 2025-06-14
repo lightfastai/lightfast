@@ -57,14 +57,16 @@ This helps Claude Code navigate directly to relevant files when picking up an is
 # List available templates and add to project
 gh issue create --repo lightfastai/chat --project 2
 
-# Create with specific template and add to project
-gh issue create --template feature_request.md --project 2
+# Create with specific template (requires manual body input)
+gh issue create --template feature_request.md --repo lightfastai/chat
 
-# Create issue with automatic project assignment
+# Create issue with title and body (recommended approach)
 gh issue create --repo lightfastai/chat \
   --title "feat: <feature_description>" \
-  --body "Description of the feature" \
-  --project 2
+  --body "Description of the feature"
+
+# Then add to project separately
+gh project item-add 2 --owner lightfastai --url https://github.com/lightfastai/chat/issues/<issue_number>
 
 # Or use GitHub web UI which will show template chooser
 # Note: Web UI won't automatically add to project
@@ -774,10 +776,11 @@ Uses `@t3-oss/env-nextjs` for type-safe environment validation:
 - `SITE_URL` - Redirect handling
 
 ### Environment Sync
-- Custom `./scripts/sync-env.sh` script validates and syncs variables
+- Custom `./scripts/sync-env.ts` script validates and syncs variables
 - Run `pnpm env:sync` after environment changes
 - Use `pnpm env:check` to verify synced variables
 - Color-coded output with success/error logging
+- Proper handling of multi-line JWT keys and complex values
 
 ## Notes
 
