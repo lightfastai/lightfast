@@ -40,32 +40,34 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
   )
 
   return (
-    <SidebarMenuItem>
-      <ActiveMenuItem
-        threadId={thread._id}
-        href={`/chat/${thread.clientId || thread._id}`}
-      >
-        <div className="relative flex-1 min-w-0">
-          <span
-            className={cn(
-              "block text-sm font-medium overflow-hidden whitespace-nowrap",
-              thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
-            )}
-          >
-            {thread.title}
-          </span>
-          {/* Fade out overlay - covers the action button area */}
-          <div 
-            className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none"
-            style={{
-              background: 'linear-gradient(to left, var(--sidebar-background) 0%, var(--sidebar-background) 25%, transparent 100%)'
-            }}
-          />
-        </div>
-      </ActiveMenuItem>
+    <SidebarMenuItem className="overflow-visible">
+      <SidebarMenuButton asChild className="pr-8">
+        <ActiveMenuItem
+          threadId={thread._id}
+          href={`/chat/${thread.clientId || thread._id}`}
+        >
+          <div className="relative flex-1 min-w-0">
+            <span
+              className={cn(
+                "block text-sm font-medium overflow-hidden whitespace-nowrap",
+                thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
+              )}
+            >
+              {thread.title}
+            </span>
+            {/* Fade out overlay - covers the pr-8 padding area */}
+            <div 
+              className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none"
+              style={{
+                background: 'linear-gradient(to left, var(--sidebar-background) 0%, var(--sidebar-background) 20%, transparent 100%)'
+              }}
+            />
+          </div>
+        </ActiveMenuItem>
+      </SidebarMenuButton>
       <SidebarMenuAction
         className={cn(
-          "transition-opacity",
+          "transition-opacity z-10",
           thread.pinned
             ? "opacity-100 text-primary"
             : "opacity-0 group-hover/menu-item:opacity-100 hover:text-primary",
