@@ -52,7 +52,14 @@
       "Bash(git restore:*)",
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(gh project item-edit:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh issue view:*)",
+      "Bash(pkill:*)",
+      "Bash(SKIP_ENV_VALIDATION=true pnpm dev)",
+      "Bash(pnpm env:sync:*)"
     ],
     "deny": []
   }
