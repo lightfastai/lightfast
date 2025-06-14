@@ -1,6 +1,6 @@
 {
   "buildCommand": "bunx convex deploy --cmd 'bun run turbo:build' --preview-run 'setup:setupInitialData'",
-  "devCommand": "bun dev",
+  "devCommand": "bun run with-env next dev",
   "installCommand": "bun install",
   "framework": "nextjs",
   "functions": {
