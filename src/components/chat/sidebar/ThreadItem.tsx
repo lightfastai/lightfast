@@ -1,6 +1,10 @@
 "use client"
 
-import { SidebarMenuItem, SidebarMenuButton, SidebarMenuAction } from "@/components/ui/sidebar"
+import {
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuAction,
+} from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { Pin } from "lucide-react"
 import { useCallback, useState } from "react"
@@ -42,18 +46,14 @@ export function ThreadItem({ thread, onPinToggle }: ThreadItemProps) {
           threadId={thread._id}
           href={`/chat/${thread.clientId || thread._id}`}
         >
-          <div className="flex-1 min-w-0 relative pr-6">
-            <span
-              className={cn(
-                "block text-sm font-medium overflow-hidden whitespace-nowrap",
-                thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
-              )}
-            >
-              {thread.title}
-            </span>
-            {/* Fade out overlay */}
-            <div className="absolute top-0 right-0 bottom-0 w-4 bg-gradient-to-l from-sidebar-background to-transparent pointer-events-none" />
-          </div>
+          <span
+            className={cn(
+              "truncate text-sm font-medium",
+              thread.isTitleGenerating && "animate-pulse blur-[0.5px] opacity-70",
+            )}
+          >
+            {thread.title}
+          </span>
         </ActiveMenuItem>
       </SidebarMenuButton>
       <SidebarMenuAction
