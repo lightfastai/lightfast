@@ -79,6 +79,17 @@ gh issue create --repo lightfastai/chat \
 
 ### 2. Git Worktree Setup
 
+#### Check Existing Worktrees First (When Resuming Work)
+```bash
+# IMPORTANT: Always check if worktree already exists before creating
+git worktree list
+
+# If worktree exists for your feature, navigate to it:
+cd worktrees/<feature_name>
+
+# If worktree doesn't exist, proceed with setup below
+```
+
 #### Automated Setup (Recommended)
 ```bash
 # Use the automated setup script for complete worktree initialization
@@ -126,6 +137,9 @@ pnpm env:sync
 
 ### 3. Development Cycle
 ```bash
+# When resuming work, first check if worktree exists
+git worktree list
+
 # Navigate to your worktree (if not already there)
 cd worktrees/<feature_name>
 
