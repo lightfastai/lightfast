@@ -39,7 +39,10 @@
     "ANTHROPIC_API_KEY",
     "OPENAI_API_KEY",
     "EXA_API_KEY",
-    "OPENROUTER_API_KEY"
+    "OPENROUTER_API_KEY",
+    "NEXT_PUBLIC_CONVEX_URL",
+    "NEXT_PUBLIC_VERCEL_ENV",
+    "SITE_URL"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",
@@ -48,6 +51,7 @@
     "VERCEL_ENV",
     "VERCEL_URL",
     "npm_lifecycle_event",
-    "ENVIRONMENT"
+    "ENVIRONMENT",
+    "SKIP_ENV_VALIDATION"
   ]
 }
