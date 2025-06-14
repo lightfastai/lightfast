@@ -144,12 +144,25 @@ git worktree list
 cd worktrees/<feature_name>
 
 # Start development servers (choose one option):
-# Option 1: Concurrent development (recommended)
+# Option 1: Background development (recommended for Claude Code)
+pnpm dev:bg                        # Runs both servers in background with logging
+
+# Option 2: Concurrent development (foreground)
 pnpm dev:all
 
-# Option 2: Separate terminals
+# Option 3: Separate terminals
 # Terminal 1: pnpm dev              # Next.js development server
 # Terminal 2: pnpm convex:dev       # Convex backend development server
+
+# Check background servers status
+ps aux | grep -E "(next|convex)" | grep -v grep
+
+# View background server logs
+tail -f dev.log
+
+# Stop background servers
+pkill -f "next dev"
+pkill -f "convex dev"
 
 # Make code changes
 # ... implement feature ...
@@ -377,7 +390,10 @@ src/components/
 # Use pnpm (not npm/yarn) - v10.11.0
 pnpm install
 
-# Concurrent development (runs both Next.js and Convex)
+# Background development (recommended for Claude Code)
+pnpm dev:bg           # Runs both servers in background with logging to dev.log
+
+# Concurrent development (runs both Next.js and Convex in foreground)
 pnpm dev:all
 
 # Individual development servers
