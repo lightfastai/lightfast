@@ -22,9 +22,7 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className={cn(fonts, "dark", "flex min-h-screen flex-col")}>
           <RootProvider>
-            <ConvexClientProvider>
-              {children}
-            </ConvexClientProvider>
+            <ConvexClientProvider>{children}</ConvexClientProvider>
           </RootProvider>
           <Toaster theme="dark" position="top-right" />
           <Analytics />
