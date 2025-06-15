@@ -71,7 +71,11 @@
       "Bash(cat:*)",
       "Bash(SKIP_ENV_VALIDATION=true bun run build)",
       "Bash(bun run lint:*)",
-      "Bash(bun test:*)"
+      "Bash(bun test:*)",
+      "Bash(git rm:*)",
+      "Bash(SKIP_ENV_VALIDATION=true bun run build)",
+      "Bash(gh pr close:*)",
+      "Bash(bash -c:*)"
     ],
     "deny": []
   }

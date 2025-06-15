@@ -56,19 +56,20 @@ This helps Claude Code navigate directly to relevant files when picking up an is
 
 #### Creating Issues via GitHub CLI
 ```bash
-# List available templates and add to project
-gh issue create --repo lightfastai/chat --project 2
+# IMPORTANT: The --project flag may not work reliably with gh issue create
+# Recommended approach: Create issue first, then add to project
 
-# Create with specific template (requires manual body input)
-gh issue create --template feature_request.md --repo lightfastai/chat
-
-# Create issue with title and body (recommended approach)
+# Create issue with title and body
 gh issue create --repo lightfastai/chat \
   --title "feat: <feature_description>" \
   --body "Description of the feature"
 
-# Then add to project separately
+# Then add to project separately (use the issue number from the output)
+# Note: This command runs silently - no output means success
 gh project item-add 2 --owner lightfastai --url https://github.com/lightfastai/chat/issues/<issue_number>
+
+# Create with specific template (requires manual body input)
+gh issue create --template feature_request.md --repo lightfastai/chat
 
 # Or use GitHub web UI which will show template chooser
 # Note: Web UI won't automatically add to project
@@ -202,13 +203,19 @@ git push -u origin jeevanpillay/<feature_name>
 
 ### 5. PR Creation & GitHub Project Integration
 ```bash
-# Create PR and automatically add to lightfast-chat project
-gh pr create --repo lightfastai/chat --project 2
+# IMPORTANT: The --project flag may not work reliably with gh pr create
+# Recommended approach: Create PR first, then add to project
+
+# Create PR
+gh pr create --repo lightfastai/chat
 
 # Or create PR with specific details
 gh pr create --title "feat: <feature_name>" \
-  --body "Closes #<issue_number>" \
-  --project 2
+  --body "Closes #<issue_number>"
+
+# Then add PR to project separately (use the PR number from the output)
+# Note: This command runs silently - no output means success
+gh project item-add 2 --owner lightfastai --url https://github.com/lightfastai/chat/pull/<pr_number>
 
 # Link to original issue
 # Include test plan and deployment notes
@@ -308,6 +315,22 @@ git status  # Ensure clean working tree with latest changes
 ```
 
 ## Complete Workflow Example
+
+### Quick Example: Creating an Issue and Adding to Project
+```bash
+# Step 1: Create the issue
+ISSUE_URL=$(gh issue create --repo lightfastai/chat \
+  --title "feat: add dark mode toggle" \
+  --body "Add a toggle to switch between light and dark themes")
+
+# Step 2: Extract issue number from URL
+ISSUE_NUM=$(echo $ISSUE_URL | grep -oE "[0-9]+$")
+echo "Created issue #$ISSUE_NUM"
+
+# Step 3: Add to project (runs silently)
+gh project item-add 2 --owner lightfastai --url $ISSUE_URL
+echo "Added to lightfast-chat project"
+```
 
 Here's a real example of the full workflow using issue templates:
 
@@ -712,11 +735,11 @@ gh project item-add 2 --owner lightfastai --url https://github.com/lightfastai/c
 # Add existing PR to project
 gh project item-add 2 --owner lightfastai --url https://github.com/lightfastai/chat/pull/<NUMBER>
 
-# Create new issue with project linkage
-gh issue create --repo lightfastai/chat --project 2
+# Create new issue (then add to project - see issue creation section above)
+gh issue create --repo lightfastai/chat
 
-# Create new PR with project linkage
-gh pr create --repo lightfastai/chat --project 2
+# Create new PR (then add to project - see PR creation section above)
+gh pr create --repo lightfastai/chat
 
 # List all items in the project
 gh project item-list 2 --owner lightfastai
