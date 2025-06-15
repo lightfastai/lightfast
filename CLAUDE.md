@@ -82,6 +82,36 @@ gh issue create --template feature_request.md --repo lightfastai/chat
 - Link all tasks back to issue acceptance criteria
 - Update PR descriptions with progress, blockers, and completion status
 
+**Context Preservation Through GitHub Comments**:
+- **CRITICAL**: Create frequent GitHub comments to preserve work history
+- Post a comment when starting each new todo item from TodoWrite
+- Post a comment when completing each todo item
+- Include code snippets, decisions, and blockers in comments
+- This ensures context survives terminal crashes or session interruptions
+- Comments serve as a detailed activity log for the PR
+
+Example workflow:
+```bash
+# When starting a new todo task
+gh pr comment <pr_number> --body "🚀 Starting: Implement dark mode toggle component
+- Creating ThemeToggle.tsx in src/components/ui/
+- Will use next-themes for persistence"
+
+# When encountering issues
+gh pr comment <pr_number> --body "⚠️ Blocker: Theme flashing on page load
+- Issue: Initial theme loads after hydration
+- Solution: Adding theme script to prevent flash"
+
+# When completing a task
+gh pr comment <pr_number> --body "✅ Completed: Dark mode toggle implementation
+- Added ThemeToggle component
+- Integrated with header navigation
+- Theme persists across refreshes
+- No console errors
+
+Next: Style all UI components for dark mode"
+```
+
 ### 2. Git Worktree Setup
 
 #### Check Existing Worktrees First (When Resuming Work)
@@ -148,6 +178,42 @@ git worktree list
 # Navigate to your worktree (if not already there)
 cd worktrees/<feature_name>
 
+# Create or update context file in /tmp for session state
+# This file preserves todo state and context across sessions
+# Using /tmp ensures it's never accidentally committed
+CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+cat > "$CONTEXT_FILE" << 'EOF'
+# Claude Code Context - <feature_name>
+Last Updated: $(date)
+Working Directory: $(pwd)
+
+## Current PR
+- PR Number: #<pr_number>
+- Issue: #<issue_number>
+- Branch: jeevanpillay/<feature_name>
+
+## Todo State
+- [ ] Task 1 description
+- [x] Task 2 description (completed)
+- [ ] Task 3 description (in progress)
+
+## Current Focus
+Working on: <current_task>
+Next steps: <planned_next_steps>
+
+## Important Context
+- Decision: <key_decision_made>
+- Blocker: <any_current_blockers>
+- Files modified: <list_of_files>
+
+## Session Notes
+<any_additional_context>
+EOF
+
+# When resuming work, always check context file first
+echo "Context file: $CONTEXT_FILE"
+cat "$CONTEXT_FILE"
+
 # Start development servers (choose one option):
 # Option 1: Background development (recommended for Claude Code)
 bun run dev:bg                        # Runs both servers in background with logging
@@ -171,6 +237,26 @@ pkill -f "convex dev"
 
 # Make code changes
 # ... implement feature ...
+
+# IMPORTANT: Post GitHub comments frequently during development
+# This preserves context if terminal crashes or session is interrupted
+gh pr comment <pr_number> --body "🔧 Progress update:
+- Implemented feature X
+- Fixed issue Y
+- Currently working on Z"
+
+# When using TodoWrite, post comments for each todo state change
+# Starting a todo:
+gh pr comment <pr_number> --body "🚀 Starting: [Todo description]"
+# Completing a todo:
+gh pr comment <pr_number> --body "✅ Completed: [Todo description]"
+
+# IMPORTANT: Update context file when todo state changes
+# This provides backup context if GitHub is unavailable
+CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+echo "## Todo Update - $(date)" >> "$CONTEXT_FILE"
+echo "Completed: <task_description>" >> "$CONTEXT_FILE"
+echo "Starting: <next_task>" >> "$CONTEXT_FILE"
 
 # Local validation - MUST pass before commit
 # Note: For build without environment variables, use:
@@ -230,6 +316,80 @@ gh project item-add 2 --owner lightfastai --url https://github.com/lightfastai/c
 - Add deployment notes and environment considerations
 - Link to related issues and maintain traceability
 - Update PR description continuously as development progresses
+
+### Context Preservation Best Practices
+
+**Why This Matters**:
+Terminal crashes and session interruptions can cause loss of valuable context. Claude Code uses a dual-approach to preserve context:
+1. **GitHub PR comments** - Permanent record accessible from anywhere
+2. **Local .claude-context.md file** - Immediate context in the worktree
+
+**Local Context File (in /tmp)**:
+- Created in /tmp with unique name per worktree
+- File pattern: `/tmp/claude-context-<worktree-name>.md`
+- Contains current todo state, PR info, and session notes
+- Updated throughout development
+- Automatically excluded from git (in /tmp directory)
+- First file to check when resuming work
+- Persists across terminal sessions but not system reboots
+
+Example update commands:
+```bash
+# Set context file variable
+CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+
+# Update todo state in context file
+sed -i '' 's/\[ \] Task 1/\[x\] Task 1/' "$CONTEXT_FILE"
+
+# Add session note
+echo -e "\n### $(date '+%Y-%m-%d %H:%M') - Progress Note" >> "$CONTEXT_FILE"
+echo "- Implemented feature X" >> "$CONTEXT_FILE"
+echo "- Next: Work on feature Y" >> "$CONTEXT_FILE"
+
+# Quick view of current state
+cat "$CONTEXT_FILE" | grep -A5 "## Current Focus"
+```
+
+**Required Comment Patterns**:
+1. **Todo Start Comments**: Post when beginning any TodoWrite task
+   ```bash
+   gh pr comment <pr_number> --body "🚀 Starting: <task_description>
+   Files to modify: <file_list>
+   Approach: <brief_approach>"
+   ```
+
+2. **Progress Comments**: Post every 30-60 minutes or after significant changes
+   ```bash
+   gh pr comment <pr_number> --body "🔧 Progress:
+   - ✅ <completed_item>
+   - ✅ <completed_item>
+   - 🚧 <in_progress_item>
+   - 📋 <pending_item>"
+   ```
+
+3. **Completion Comments**: Post when finishing TodoWrite tasks
+   ```bash
+   gh pr comment <pr_number> --body "✅ Completed: <task_description>
+   Changes made:
+   - <change_1>
+   - <change_2>
+   Files modified: <file_list>"
+   ```
+
+4. **Blocker Comments**: Post immediately when encountering issues
+   ```bash
+   gh pr comment <pr_number> --body "⚠️ Blocker: <issue_description>
+   Error: <error_message>
+   Attempted solutions:
+   - <attempt_1>
+   - <attempt_2>
+   Next steps: <planned_approach>"
+   ```
+
+**Integration with TodoWrite**:
+- Every TodoWrite status change triggers a GitHub comment
+- Comments include the todo ID and description
+- This creates a permanent audit trail of work progress
 
 **GitHub Project Management**:
 The repository uses the **lightfast-chat** project (ID: 2) for tracking all development work:
@@ -929,6 +1089,51 @@ cd ..
 rm -rf tmp_repo
 ```
 
+## Quick Reference: Context Commands
+
+### GitHub Comment Commands
+```bash
+# Starting a todo task
+gh pr comment <pr_number> --body "🚀 Starting: <task_name>"
+
+# Progress update
+gh pr comment <pr_number> --body "🔧 Progress: <what_was_done>"
+
+# Completing a todo
+gh pr comment <pr_number> --body "✅ Completed: <task_name>"
+
+# Reporting a blocker
+gh pr comment <pr_number> --body "⚠️ Blocker: <issue_description>"
+
+# General status update
+gh pr comment <pr_number> --body "📊 Status: <current_status>"
+```
+
+### Local Context File Commands
+```bash
+# Set context file path (run this first in each session)
+CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+
+# View current context
+cat "$CONTEXT_FILE"
+
+# Update todo status
+sed -i '' 's/\[ \] <task>/\[x\] <task>/' "$CONTEXT_FILE"
+
+# Add progress note
+echo -e "\n### $(date '+%Y-%m-%d %H:%M')" >> "$CONTEXT_FILE"
+echo "- Progress: <what_was_done>" >> "$CONTEXT_FILE"
+
+# Update current focus
+sed -i '' 's/Working on:.*/Working on: <new_task>/' "$CONTEXT_FILE"
+
+# Quick status check
+grep -A3 "## Todo State" "$CONTEXT_FILE"
+
+# Check if context file exists from previous session
+ls -la /tmp/claude-context-*.md
+```
+
 ## Notes
 
 - Always work in worktrees for feature development
@@ -937,3 +1142,4 @@ rm -rf tmp_repo
 - Monitor deployments actively with Vercel CLI
 - Clean up worktrees after features are merged
 - Use tmp_repo for temporary repository analysis
+- **CRITICAL**: Post GitHub comments frequently to preserve context across sessions
