@@ -77,7 +77,12 @@
       "Bash(gh pr close:*)",
       "Bash(bash -c:*)",
       "Bash(gh pr comment:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(git clone:*)",
+      "Bash(bun add:*)",
+      "Bash(git reset:*)",
+      "Bash(bun run:*)",
+      "WebFetch(domain:discuss.codemirror.net)"
     ],
     "deny": []
   }
