@@ -79,6 +79,15 @@ export default defineSchema({
     isTitleGenerating: v.optional(v.boolean()),
     isGenerating: v.optional(v.boolean()),
     pinned: v.optional(v.boolean()),
+    // Share functionality
+    isPublic: v.optional(v.boolean()), // Whether the thread is publicly accessible
+    shareId: v.optional(v.string()), // Unique ID for share links
+    sharedAt: v.optional(v.number()), // Timestamp when first shared
+    shareSettings: v.optional(
+      v.object({
+        showThinking: v.optional(v.boolean()), // Show thinking content to viewers
+      }),
+    ),
     // Thread-level usage tracking (denormalized for performance)
     usage: v.optional(
       v.object({
@@ -105,7 +114,8 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_client_id", ["clientId"])
-    .index("by_user_client", ["userId", "clientId"]),
+    .index("by_user_client", ["userId", "clientId"])
+    .index("by_share_id", ["shareId"]),
 
   messages: defineTable({
     threadId: v.id("threads"),
@@ -164,4 +174,15 @@ export default defineSchema({
     .index("by_message", ["messageId"])
     .index("by_user_message", ["userId", "messageId"])
     .index("by_thread", ["threadId"]),
+
+  shareAccess: defineTable({
+    shareId: v.string(),
+    accessedAt: v.number(),
+    ipHash: v.optional(v.string()), // Hashed IP for rate limiting
+    userAgent: v.optional(v.string()),
+    success: v.boolean(), // Whether the access was successful
+  })
+    .index("by_share_id", ["shareId"])
+    .index("by_share_time", ["shareId", "accessedAt"])
+    .index("by_ip_time", ["ipHash", "accessedAt"]),
 })

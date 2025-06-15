@@ -1482,6 +1482,15 @@ export const getThreadById = internalQuery({
       isGenerating: v.optional(v.boolean()),
       isTitleGenerating: v.optional(v.boolean()),
       pinned: v.optional(v.boolean()),
+      // Share functionality
+      isPublic: v.optional(v.boolean()),
+      shareId: v.optional(v.string()),
+      sharedAt: v.optional(v.number()),
+      shareSettings: v.optional(
+        v.object({
+          showThinking: v.optional(v.boolean()),
+        }),
+      ),
       usage: v.optional(
         v.object({
           totalInputTokens: v.number(),

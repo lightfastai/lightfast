@@ -54,6 +54,15 @@ export const list = query({
       isTitleGenerating: v.optional(v.boolean()),
       isGenerating: v.optional(v.boolean()),
       pinned: v.optional(v.boolean()),
+      // Share functionality
+      isPublic: v.optional(v.boolean()),
+      shareId: v.optional(v.string()),
+      sharedAt: v.optional(v.number()),
+      shareSettings: v.optional(
+        v.object({
+          showThinking: v.optional(v.boolean()),
+        }),
+      ),
       // Thread-level usage tracking (denormalized for performance)
       usage: v.optional(
         v.object({
@@ -110,6 +119,15 @@ export const get = query({
       isTitleGenerating: v.optional(v.boolean()),
       isGenerating: v.optional(v.boolean()),
       pinned: v.optional(v.boolean()),
+      // Share functionality
+      isPublic: v.optional(v.boolean()),
+      shareId: v.optional(v.string()),
+      sharedAt: v.optional(v.number()),
+      shareSettings: v.optional(
+        v.object({
+          showThinking: v.optional(v.boolean()),
+        }),
+      ),
       // Thread-level usage tracking (denormalized for performance)
       usage: v.optional(
         v.object({
@@ -170,6 +188,15 @@ export const getByClientId = query({
       isTitleGenerating: v.optional(v.boolean()),
       isGenerating: v.optional(v.boolean()),
       pinned: v.optional(v.boolean()),
+      // Share functionality
+      isPublic: v.optional(v.boolean()),
+      shareId: v.optional(v.string()),
+      sharedAt: v.optional(v.number()),
+      shareSettings: v.optional(
+        v.object({
+          showThinking: v.optional(v.boolean()),
+        }),
+      ),
       // Thread-level usage tracking (denormalized for performance)
       usage: v.optional(
         v.object({
@@ -287,6 +314,19 @@ export const deleteThread = mutation({
     // Delete all messages
     for (const message of messages) {
       await ctx.db.delete(message._id)
+    }
+
+    // Clean up share access logs if thread was shared
+    if (thread.shareId) {
+      const shareAccessEntries = await ctx.db
+        .query("shareAccess")
+        .withIndex("by_share_id", (q) => q.eq("shareId", thread.shareId!))
+        .collect()
+
+      // Delete all share access logs for this thread
+      for (const entry of shareAccessEntries) {
+        await ctx.db.delete(entry._id)
+      }
     }
 
     // Finally delete the thread
