@@ -98,7 +98,7 @@ cd worktrees/<feature_name>
 #### Automated Setup (Recommended)
 ```bash
 # Use the automated setup script for complete worktree initialization
-./scripts/setup-worktree.sh <feature_name>
+./scripts/setup-worktree.sh jeevanpillay/<feature_name>
 
 # This script automatically:
 # - Ensures main branch is up-to-date
@@ -110,7 +110,7 @@ cd worktrees/<feature_name>
 # - Provides next steps guidance
 
 # Example:
-./scripts/setup-worktree.sh add-dark-mode
+./scripts/setup-worktree.sh jeevanpillay/add-dark-mode
 ```
 
 #### Manual Setup (Advanced)
