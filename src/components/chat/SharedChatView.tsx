@@ -1,16 +1,13 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { api } from "@/convex/_generated/api"
-import { cn } from "@/lib/utils"
+import { getModelDisplayName } from "@/lib/ai"
 import { useMutation, useQuery } from "convex/react"
-import { format } from "date-fns"
-import { AlertCircle, Loader2, Share2 } from "lucide-react"
+import { AlertCircle, Info, Loader2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+import { MessageItem } from "./shared"
 
 interface SharedChatViewProps {
   shareId: string
@@ -92,113 +89,49 @@ export function SharedChatView({ shareId }: SharedChatViewProps) {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center gap-3">
-          <Share2 className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <h1 className="text-lg font-semibold">{thread.title}</h1>
-            <p className="text-sm text-muted-foreground">
-              Shared by {owner?.name || "Anonymous"} on{" "}
-              {format(new Date(thread.createdAt), "MMM d, yyyy")}
-            </p>
-          </div>
-        </div>
-        <Badge variant="secondary">View Only</Badge>
+      {/* Simplified Header */}
+      <header className="px-4 py-2">
+        <h1 className="text-xs text-muted-foreground">{thread.title}</h1>
       </header>
 
       {/* Messages */}
       <ScrollArea className="flex-1">
-        <div className="max-w-4xl mx-auto p-6 space-y-6">
-          {messages.map((message) => (
-            <div
-              key={message._id}
-              className={cn(
-                "flex gap-3",
-                message.messageType === "assistant" && "flex-row-reverse",
-              )}
-            >
-              <Avatar className="h-8 w-8 shrink-0">
-                {message.messageType === "user" ? (
-                  <>
-                    <AvatarImage src={owner?.image} />
-                    <AvatarFallback>
-                      {owner?.name?.[0]?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </>
-                ) : (
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    AI
-                  </AvatarFallback>
-                )}
-              </Avatar>
+        <div className="p-4 pb-16">
+          <div className="space-y-6 max-w-3xl mx-auto">
+            {/* Disclaimer */}
+            <Alert className="mb-6">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                This is a copy of a chat between Lightfast and{" "}
+                {owner?.name || "a user"}. Content may include unverified or
+                unsafe content that do not represent the views of Lightfast.
+                Shared snapshot may contain attachments and data not displayed
+                here.
+              </AlertDescription>
+            </Alert>
+            {messages.map((message) => {
+              const isAI = message.messageType === "assistant"
+              const modelName = isAI
+                ? message.modelId
+                  ? getModelDisplayName(message.modelId)
+                  : message.model
+                    ? getModelDisplayName(message.model)
+                    : "AI Assistant"
+                : undefined
 
-              <div
-                className={cn(
-                  "flex-1 space-y-2",
-                  message.messageType === "assistant" && "text-right",
-                )}
-              >
-                <div
-                  className={cn(
-                    "inline-block rounded-lg px-4 py-2",
-                    message.messageType === "user"
-                      ? "bg-muted"
-                      : "bg-primary text-primary-foreground",
-                  )}
-                >
-                  {message.messageType === "user" ? (
-                    <p className="whitespace-pre-wrap">{message.body}</p>
-                  ) : (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          pre: ({ children }) => (
-                            <pre className="bg-muted rounded-md p-3 overflow-x-auto">
-                              {children}
-                            </pre>
-                          ),
-                          code: ({ children, ...props }) => {
-                            const isInline =
-                              !props.className?.includes("language-")
-                            return isInline ? (
-                              <code className="bg-muted px-1 py-0.5 rounded text-sm">
-                                {children}
-                              </code>
-                            ) : (
-                              <>{children}</>
-                            )
-                          },
-                        }}
-                      >
-                        {message.body}
-                      </ReactMarkdown>
-                    </div>
-                  )}
-                </div>
-
-                {/* Show thinking content if enabled */}
-                {thread.shareSettings?.showThinking &&
-                  message.thinkingContent && (
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-sm text-muted-foreground">
-                        View thinking process
-                      </summary>
-                      <div className="mt-2 p-3 bg-muted/50 rounded-md text-sm">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {message.thinkingContent}
-                        </ReactMarkdown>
-                      </div>
-                    </details>
-                  )}
-
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(message.timestamp), "h:mm a")}
-                </p>
-              </div>
-            </div>
-          ))}
+              return (
+                <MessageItem
+                  key={message._id}
+                  message={message}
+                  owner={owner || undefined}
+                  showThinking={thread.shareSettings?.showThinking}
+                  isReadOnly={true}
+                  showActions={false}
+                  modelName={modelName}
+                />
+              )
+            })}
+          </div>
         </div>
       </ScrollArea>
 
