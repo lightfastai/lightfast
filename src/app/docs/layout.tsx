@@ -3,6 +3,7 @@ import { RootToggle } from "fumadocs-ui/components/layout/root-toggle"
 import { DocsLayout } from "fumadocs-ui/layouts/docs"
 import { RootProvider } from "fumadocs-ui/provider"
 import type { ReactNode } from "react"
+import "../fumadocs.css"
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (

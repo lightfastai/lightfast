@@ -9,8 +9,8 @@ import {
   SidebarHeader,
 } from "../../../components/ui/sidebar"
 import { getAuthToken } from "../../../lib/auth"
-import { ServerSidebarImplementation } from "./ServerSidebarImplementation"
 import { SidebarSkeleton } from "./SidebarSkeleton"
+import { ServerSidebarImplementation } from "./ServerSidebarImplementation"
 
 // Lightfast logo component - server-rendered
 function LightfastLogo(props: React.SVGProps<SVGSVGElement>) {
@@ -74,7 +74,7 @@ async function SidebarWithPreloadedData() {
 // Component for unauthenticated state
 function SidebarUnauthenticated() {
   return (
-    <Sidebar variant="inset" className="w-64">
+    <Sidebar variant="inset">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3">

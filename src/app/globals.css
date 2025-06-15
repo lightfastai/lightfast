@@ -3,7 +3,6 @@
 @custom-variant dark (&:is(.dark *));
 
 @import "tailwindcss";
-@import "fumadocs-ui/style.css";
 
 @tailwind utilities;
 
