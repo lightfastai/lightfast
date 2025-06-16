@@ -1,7 +1,6 @@
 "use client"
 
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Zap } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { MessageDisplay } from "./MessageDisplay"
@@ -21,12 +20,6 @@ interface ChatMessagesProps {
 export function ChatMessages({
   messages,
   isLoading = false,
-  emptyState = {
-    icon: <Zap className="w-12 h-12 mx-auto mb-4 opacity-50" />,
-    title: "Welcome to AI Chat",
-    description:
-      "Start a conversation with our AI assistant. Messages stream in real-time!",
-  },
 }: ChatMessagesProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
@@ -143,12 +136,6 @@ export function ChatMessages({
     <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
       <div className="p-4 pb-16">
         <div className="space-y-6 max-w-3xl mx-auto">
-          {!messages?.length && !isLoading && (
-            <div className="text-center text-muted-foreground py-12">
-              {emptyState.icon}
-              {emptyState.description && <p>{emptyState.description}</p>}
-            </div>
-          )}
 
           {messages
             ?.slice()

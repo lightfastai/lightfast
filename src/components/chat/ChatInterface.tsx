@@ -2,8 +2,9 @@
 
 import { useChat } from "@/hooks/useChat"
 import { useResumableChat } from "@/hooks/useResumableStream"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import type { Doc } from "../../../convex/_generated/dataModel"
+import { CenteredChatStart } from "./CenteredChatStart"
 import { ChatInput } from "./ChatInput"
 import { ChatMessages } from "./ChatMessages"
 
@@ -11,8 +12,19 @@ type Message = Doc<"messages">
 
 export function ChatInterface() {
   // Use custom chat hook with optimistic updates
-  const { messages, currentThread, handleSendMessage, emptyState, isDisabled } =
-    useChat()
+  const { messages, currentThread, handleSendMessage, isDisabled, isNewChat } = useChat()
+
+  // Track if user has ever sent a message to prevent flicker
+  const hasEverSentMessage = useRef(false)
+  
+  // Reset when we're in a truly new chat, set when messages exist
+  useEffect(() => {
+    if (isNewChat && messages.length === 0) {
+      hasEverSentMessage.current = false
+    } else if (messages.length > 0) {
+      hasEverSentMessage.current = true
+    }
+  }, [isNewChat, messages.length])
 
   // Manage resumable streams
   const { activeStreams, startStream, endStream } = useResumableChat()
@@ -58,9 +70,20 @@ export function ChatInterface() {
     })
   }, [messages, activeStreams])
 
+  // Show centered layout only for truly new chats that have never had messages
+  if (isNewChat && !hasEverSentMessage.current) {
+    return (
+      <CenteredChatStart
+        onSendMessage={handleSendMessage}
+        disabled={isDisabled}
+        isLoading={isAIGenerating}
+      />
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <ChatMessages messages={enhancedMessages} emptyState={emptyState} />
+      <ChatMessages messages={enhancedMessages} />
       <ChatInput
         onSendMessage={handleSendMessage}
         placeholder="Message AI assistant..."
