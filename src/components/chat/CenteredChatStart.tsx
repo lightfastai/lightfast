@@ -3,9 +3,15 @@
 import { useAuth } from "@/hooks/useAuth"
 import { useTimeGreeting } from "@/hooks/useTimeGreeting"
 import { ChatInput } from "./ChatInput"
+import type { Id } from "../../../convex/_generated/dataModel"
 
 interface CenteredChatStartProps {
-  onSendMessage: (content: string) => void
+  onSendMessage: (
+    message: string,
+    modelId: string,
+    attachments?: Id<"files">[],
+    webSearchEnabled?: boolean,
+  ) => Promise<void> | void
   disabled?: boolean
   isLoading?: boolean
 }

@@ -12,7 +12,7 @@ type Message = Doc<"messages">
 
 export function ChatInterface() {
   // Use custom chat hook with optimistic updates
-  const { messages, handleSendMessage, emptyState, isDisabled } = useChat()
+  const { messages, handleSendMessage, isDisabled } = useChat()
 
   // Manage resumable streams
   const { activeStreams, startStream, endStream } = useResumableChat()
@@ -72,7 +72,7 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
-      <ChatMessages messages={enhancedMessages} emptyState={emptyState} />
+      <ChatMessages messages={enhancedMessages} />
       <ChatInput
         onSendMessage={handleSendMessage}
         placeholder="Message AI assistant..."
