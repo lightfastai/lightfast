@@ -156,8 +156,8 @@ export function ShareDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {shareInfo.isPublic ? (
+        <div className="space-y-4 ">
+          {shareInfo.isPublic && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="share-link">Share link</Label>
@@ -203,12 +203,6 @@ export function ShareDialog({
                 </div>
               </div>
             </>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Generate a link to share this chat with others.
-              </p>
-            </div>
           )}
         </div>
 
