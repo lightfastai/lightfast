@@ -17,12 +17,14 @@ export function ChatInterface() {
   // Track if user has ever sent a message to prevent flicker
   const hasEverSentMessage = useRef(false)
   
-  // Once a message is sent, lock in the normal layout
+  // Reset when we're in a truly new chat, set when messages exist
   useEffect(() => {
-    if (messages.length > 0) {
+    if (isNewChat && messages.length === 0) {
+      hasEverSentMessage.current = false
+    } else if (messages.length > 0) {
       hasEverSentMessage.current = true
     }
-  }, [messages.length])
+  }, [isNewChat, messages.length])
 
   // Manage resumable streams
   const { activeStreams, startStream, endStream } = useResumableChat()
