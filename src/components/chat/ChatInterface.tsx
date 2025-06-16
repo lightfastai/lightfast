@@ -2,7 +2,7 @@
 
 import { useChat } from "@/hooks/useChat"
 import { useResumableChat } from "@/hooks/useResumableStream"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { CenteredChatStart } from "./CenteredChatStart"
 import { ChatInput } from "./ChatInput"
@@ -12,7 +12,17 @@ type Message = Doc<"messages">
 
 export function ChatInterface() {
   // Use custom chat hook with optimistic updates
-  const { messages, handleSendMessage, isDisabled } = useChat()
+  const { messages, handleSendMessage, isDisabled, isNewChat } = useChat()
+
+  // Track if user has ever sent a message to prevent flicker
+  const hasEverSentMessage = useRef(false)
+  
+  // Once a message is sent, lock in the normal layout
+  useEffect(() => {
+    if (messages.length > 0) {
+      hasEverSentMessage.current = true
+    }
+  }, [messages.length])
 
   // Manage resumable streams
   const { activeStreams, startStream, endStream } = useResumableChat()
@@ -57,10 +67,8 @@ export function ChatInterface() {
     })
   }, [messages, activeStreams])
 
-  // Check if this is a new chat (no messages)
-  const isEmptyChat = messages.length === 0
-
-  if (isEmptyChat) {
+  // Show centered layout only for truly new chats that have never had messages
+  if (isNewChat && !hasEverSentMessage.current) {
     return (
       <CenteredChatStart
         onSendMessage={handleSendMessage}
