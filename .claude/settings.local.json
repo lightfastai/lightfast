@@ -82,7 +82,8 @@
       "Bash(bun add:*)",
       "Bash(git reset:*)",
       "Bash(bun run:*)",
-      "WebFetch(domain:discuss.codemirror.net)"
+      "WebFetch(domain:discuss.codemirror.net)",
+      "Bash(bun install:*)"
     ],
     "deny": []
   }
