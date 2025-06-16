@@ -7,8 +7,8 @@ This document outlines the complete development workflow for Claude Code when wo
 The development workflow integrates:
 - **GitHub MCP Server**: Issue tracking and PR management
 - **Git Worktrees**: Isolated feature development with `jeevanpillay/<feature_name>` branches
-- **Local Development**: Build validation and linting before commits
-- **Vercel CLI**: Deployment monitoring and troubleshooting
+- **Build Validation**: Local build and linting checks before pushing (no local dev servers)
+- **Vercel Testing**: All application testing done on Vercel preview deployments
 - **Turborepo**: Optimized monorepo builds with intelligent caching
 - **Bun**: Lightning-fast JavaScript runtime and package manager
 
@@ -214,26 +214,9 @@ EOF
 echo "Context file: $CONTEXT_FILE"
 cat "$CONTEXT_FILE"
 
-# Start development servers (choose one option):
-# Option 1: Background development (recommended for Claude Code)
-bun run dev:bg                        # Runs both servers in background with logging
-
-# Option 2: Concurrent development (foreground)
-bun run dev:all
-
-# Option 3: Separate terminals
-# Terminal 1: bun run dev              # Next.js development server
-# Terminal 2: bun run convex:dev       # Convex backend development server
-
-# Check background servers status
-ps aux | grep -E "(next|convex)" | grep -v grep
-
-# View background server logs
-tail -f dev.log
-
-# Stop background servers
-pkill -f "next dev"
-pkill -f "convex dev"
+# IMPORTANT: We do NOT run development servers locally
+# All testing is done on Vercel after pushing changes
+# We only use build command to validate code before pushing
 
 # Make code changes
 # ... implement feature ...
@@ -258,7 +241,7 @@ echo "## Todo Update - $(date)" >> "$CONTEXT_FILE"
 echo "Completed: <task_description>" >> "$CONTEXT_FILE"
 echo "Starting: <next_task>" >> "$CONTEXT_FILE"
 
-# Local validation - MUST pass before commit
+# Local validation - MUST pass before commit and push
 # Note: For build without environment variables, use:
 SKIP_ENV_VALIDATION=true bun run build
 # Or alternatively, pull environment variables:
@@ -269,6 +252,8 @@ bun run format
 
 # Fix any issues found by build/lint
 # Repeat until all checks pass
+
+# Once build passes, commit and push to test on Vercel
 ```
 
 ### 4. Commit & Push
@@ -398,19 +383,25 @@ The repository uses the **lightfast-chat** project (ID: 2) for tracking all deve
 - PRs typically move to "In Progress" when created
 - Use `--project 2` flag when creating issues/PRs via GitHub CLI
 
-### 6. Deployment Monitoring
+### 6. Testing on Vercel Preview
+
+Since we don't run development servers locally, all testing happens on Vercel:
+
 ```bash
+# After pushing changes, monitor deployment
+gh pr view <pr_number> --json statusCheckRollup
+
+# Get deployment URL from PR
+gh pr view <pr_number> --json url,body
+
 # Check deployment status (requires --yes flag)
 vercel ls --yes
-
-# Monitor deployment via GitHub PR status checks
-gh pr view <pr_number> --json statusCheckRollup
 
 # Alternative: Monitor deployment logs (if deployment ID known)
 vercel logs --follow <deployment_id>
 
-# Get deployment details via GitHub PR
-gh pr view <pr_number>
+# Once deployed, test features in browser using the Vercel preview URL
+# The URL format is typically: https://<project>-<pr-number>-<org>.vercel.app
 
 # Note: Vercel CLI requires confirmation for many commands
 # GitHub CLI integration provides better PR/deployment monitoring
@@ -531,8 +522,11 @@ Here's a real example of the full workflow using issue templates:
    ```bash
    ./scripts/setup-worktree.sh jeevanpillay/add-dark-mode
    cd worktrees/add-dark-mode
-   bun run dev:all
    # Implementation happens here...
+   # Run build to validate changes:
+   SKIP_ENV_VALIDATION=true bun run build
+   bun run lint
+   # Push and test on Vercel
    ```
 
 4. **Create PR with comprehensive description**
@@ -627,7 +621,7 @@ export default async function SettingsPage() {
 async function SettingsPageWithData() {
   const token = await getAuthToken()
   if (!token) return <ErrorState />
-  
+
   const preloadedData = await preloadQuery(api.query.name, args, { token })
   return <ClientComponent preloadedData={preloadedData} />
 }
@@ -694,18 +688,11 @@ The combination of Bun and Turborepo provides:
 # Use bun (not npm/yarn/pnpm) - v1.2.10
 bun install
 
-# Background development (recommended for Claude Code)
-bun run dev:bg           # Runs both servers in background with logging to dev.log
-
-# Concurrent development (runs both Next.js and Convex in foreground)
-bun run dev:all
-
-# Individual development servers
-bun run dev              # Next.js development server
-bun run convex:dev       # Convex backend development server
-
 # Complete project setup with instructions
 bun run setup
+
+# NOTE: We do NOT run development servers locally
+# All testing is done on Vercel preview deployments after pushing
 ```
 
 ### Build & Quality Checks
@@ -793,11 +780,11 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 ## Quality Gates
 
-### Before Every Commit
-1. ✅ `bun run build` - Must pass without errors
+### Before Every Push
+1. ✅ `SKIP_ENV_VALIDATION=true bun run build` - Must pass without errors
 2. ✅ `bun run lint` - Must pass without errors
 3. ✅ Code formatted with `bun run format`
-4. ✅ All changes tested locally
+4. ✅ Push to branch for Vercel preview deployment testing
 
 ### Before PR Creation
 1. ✅ Feature branch pushed to remote
@@ -1069,12 +1056,12 @@ This helps Claude Code quickly navigate to relevant files when working on the is
 
 ## Development Workflow Specifics
 
-### Dual Server Development
-- **Requires two dev servers**: Next.js + Convex backend
-- Use `bun run dev:all` for concurrent development or run in separate terminals
-- Convex provides real-time database updates and subscriptions
-- Environment variables must be synced between Next.js and Convex
-- Turborepo optimizes the build pipeline for both servers
+### Vercel-First Development
+- **No local dev servers**: All testing done on Vercel preview deployments
+- **Build validation only**: Run `SKIP_ENV_VALIDATION=true bun run build` locally
+- **Push to test**: Create PR and push changes to get Vercel preview URL
+- **Convex integration**: Automatically deployed with Vercel
+- **Environment variables**: Managed in Vercel project settings
 
 ### Quality Assurance
 - **No testing framework configured** - relies on TypeScript + Biome
@@ -1217,3 +1204,4 @@ ls -la /tmp/claude-context-*.md
 - Clean up worktrees after features are merged
 - Use tmp_repo for temporary repository analysis
 - **CRITICAL**: Post GitHub comments frequently to preserve context across sessions
+- **IMPORTANT**: We do NOT run dev servers locally - all testing happens on Vercel preview deployments
