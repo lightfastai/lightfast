@@ -4,6 +4,7 @@ import { useChat } from "@/hooks/useChat"
 import { useResumableChat } from "@/hooks/useResumableStream"
 import { useEffect, useMemo } from "react"
 import type { Doc } from "../../../convex/_generated/dataModel"
+import { CenteredChatStart } from "./CenteredChatStart"
 import { ChatInput } from "./ChatInput"
 import { ChatMessages } from "./ChatMessages"
 
@@ -55,6 +56,19 @@ export function ChatInterface() {
       }
     })
   }, [messages, activeStreams])
+
+  // Check if this is a new chat (no messages)
+  const isEmptyChat = messages.length === 0
+
+  if (isEmptyChat) {
+    return (
+      <CenteredChatStart
+        onSendMessage={handleSendMessage}
+        disabled={isDisabled}
+        isLoading={isAIGenerating}
+      />
+    )
+  }
 
   return (
     <div className="flex flex-col h-full">

@@ -143,12 +143,6 @@ export function ChatMessages({
     <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
       <div className="p-4 pb-16">
         <div className="space-y-6 max-w-3xl mx-auto">
-          {!messages?.length && !isLoading && (
-            <div className="text-center text-muted-foreground py-12">
-              {emptyState.icon}
-              {emptyState.description && <p>{emptyState.description}</p>}
-            </div>
-          )}
 
           {messages
             ?.slice()
