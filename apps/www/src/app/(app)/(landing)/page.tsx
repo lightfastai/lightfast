@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { ZapIcon } from "lucide-react";
 
 import { siteConfig } from "@repo/lightfast-config";
 import { Icons } from "@repo/ui/components/icons";
@@ -78,7 +79,7 @@ export default function HomePage() {
 
       <div
         className={cn(
-          "bg-white p-4 text-black sm:p-8",
+          "bg-background p-4 text-black sm:p-8",
           "border",
           "absolute z-20",
           "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
@@ -90,7 +91,7 @@ export default function HomePage() {
       >
         <div className="relative h-full w-full">
           <div className="absolute top-0 right-0 left-0">
-            <p className="max-w-sm text-2xl font-bold sm:text-3xl lg:text-4xl">
+            <p className="text-foreground max-w-sm text-2xl font-bold sm:text-3xl lg:text-4xl">
               Crafting tomorrow's AI backbone with open-source infrastructure.
             </p>
           </div>
@@ -110,7 +111,12 @@ export default function HomePage() {
           <div className="absolute right-0 bottom-0 left-0">
             <div className="flex justify-end">
               <Button asChild>
-                <Link target="_blank" href={siteConfig.links.chat.href}>
+                <Link
+                  className="text-foreground flex items-center"
+                  target="_blank"
+                  href={siteConfig.links.chat.href}
+                >
+                  <ZapIcon className="mr-1 h-4 w-4" />
                   Go to Chat App
                 </Link>
               </Button>

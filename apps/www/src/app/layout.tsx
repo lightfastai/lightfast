@@ -109,7 +109,7 @@ export default function RootLayout({
     <ClerkProvider waitlistUrl="/">
       <html lang="en" suppressHydrationWarning>
         <head />
-        <body className={cn("bg-background min-h-screen", fonts)}>
+        <body className={cn("bg-background dark min-h-screen", fonts)}>
           <PostHogProvider baseUrl={createBaseUrl()}>
             {children}
             <Toaster />
