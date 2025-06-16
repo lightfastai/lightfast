@@ -1,27 +1,28 @@
 import Link from "next/link";
+import { ZapIcon } from "lucide-react";
 
 import { Icons } from "@repo/ui/components/icons";
-import { Container } from "@repo/ui/components/ui/container";
+import { Button } from "@repo/ui/components/ui/button";
 
 export function SiteHeader() {
   return (
-    <header className="h-16 w-full">
-      <Container className="h-full">
-        <div className="flex h-full items-center justify-between">
-          <div className="flex-1" />
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <Icons.logo className="w-28" />
-            </Link>
-          </div>
-          {/* <div className="flex flex-1 items-center justify-end gap-4">
-            <span className="text-muted-foreground text-sm">Have access?</span>
-            <Button variant="default" size="sm" asChild>
-              <Link href="/sign-in">Sign in</Link>
-            </Button>
-          </div> */}
+    <header className="bg-background/80 supports-[backdrop-filter]:bg-background/60 backdrop-blur">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <Link href="/">
+            <Icons.logoShort className="text-foreground h-5 w-6" />
+          </Link>
         </div>
-      </Container>
+        <Button asChild variant="outline">
+          <Link
+            className="text-foreground flex items-center"
+            href="https://chat.lightfast.ai"
+          >
+            <ZapIcon className="mr-1 h-4 w-4" />
+            Go to Chat App
+          </Link>
+        </Button>
+      </div>
     </header>
   );
 }

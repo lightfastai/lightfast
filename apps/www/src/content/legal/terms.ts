@@ -1,15 +1,10 @@
----
-title: "Terms of Service"
-lastUpdated: "2024-12-17"
----
+export const termsContent = `# Lightfast Terms of Service
 
-# Lightfast Terms of Service
+Last Updated: June 17, 2025
 
-Last Updated: December 17, 2024
+Please read these Terms of Service ("Terms") and our Privacy Policy ("Privacy Policy") carefully because they govern your use of the website located at https://lightfast.ai/ (the "Site"), services offered in connection with Site, and application programming interfaces ("APIs"), software development kits ("SDKs"), and other resources (collectively, the "Services") offered by Lightfast, Inc. ("Lightfast," "we" and "us").
 
-Please read these Terms of Service ("Terms") and our Privacy Policy ("Privacy Policy") carefully because they govern your use of the website located at https://lightfast.co/ (the "Site"), services offered in connection with Site, and application programming interfaces ("APIs"), software development kits ("SDKs"), and other resources (collectively, the "Services") offered by Lightfast, Inc. ("Lightfast," "we" and "us").
-
-**IMPORTANT NOTICE REGARDING ARBITRATION FOR U.S. CUSTOMERS: WHEN YOU AGREE TO THESE TERMS YOU ARE AGREEING (WITH LIMITED EXCEPTION) TO RESOLVE ANY DISPUTE BETWEEN YOU AND LIGHTFAST THROUGH BINDING, INDIVIDUAL ARBITRATION RATHER THAN IN COURT. PLEASE REVIEW CAREFULLY SECTION 17 "DISPUTE RESOLUTION" BELOW FOR DETAILS REGARDING ARBITRATION.**
+**IMPORTANT NOTICE: THESE TERMS ARE GOVERNED BY AUSTRALIAN LAW. BY USING OUR SERVICES, YOU AGREE TO THE EXCLUSIVE JURISDICTION OF AUSTRALIAN COURTS FOR ANY DISPUTES ARISING FROM THESE TERMS, SUBJECT TO THE DISPUTE RESOLUTION PROCEDURES IN SECTION 17.**
 
 ## 1. Agreement to Terms
 
@@ -33,7 +28,7 @@ If you want to use certain features of the Services, you'll have to create an ac
 
 ## 5. Feedback
 
-We appreciate feedback, comments, and suggestions for improvements to the Services ("Feedback"). You can submit Feedback by emailing us at support@lightfast.co. You grant us a non-exclusive, transferable, worldwide, perpetual, irrevocable, fully-paid, royalty-free license, with the right to sublicense through multiple tiers, under any and all intellectual property rights that you own or control to use, copy, modify, create derivative works based upon and otherwise exploit the Feedback for any purpose, including, but not limited to, the improvement of the Services and our other products, services and technologies.
+We appreciate feedback, comments, and suggestions for improvements to the Services ("Feedback"). You can submit Feedback by emailing us at legal@lightfast.ai. You grant us a non-exclusive, transferable, worldwide, perpetual, irrevocable, fully-paid, royalty-free license, with the right to sublicense through multiple tiers, under any and all intellectual property rights that you own or control to use, copy, modify, create derivative works based upon and otherwise exploit the Feedback for any purpose, including, but not limited to, the improvement of the Services and our other products, services and technologies.
 
 ## 6. Payments
 
@@ -92,7 +87,7 @@ The Services (including the Lightfast API) may allow you to access third-party w
 
 ## 12. Termination
 
-We may suspend or terminate your access to and use of the Services, including suspending access to or terminating your account, at our sole discretion, at any time and without notice to you. You may cancel your account at any time by sending us an email at support@lightfast.co. Upon any termination, discontinuation or cancellation of the Services or your account, the following Sections will survive: 6, 9, 12, 13, 14, 15, 16, 17 and 18.
+We may suspend or terminate your access to and use of the Services, including suspending access to or terminating your account, at our sole discretion, at any time and without notice to you. You may cancel your account at any time by sending us an email at legal@lightfast.ai. Upon any termination, discontinuation or cancellation of the Services or your account, the following Sections will survive: 6, 9, 12, 13, 14, 15, 16, 17 and 18.
 
 ## 13. Warranty Disclaimers
 
@@ -115,32 +110,33 @@ THE EXCLUSIONS AND LIMITATIONS OF DAMAGES SET FORTH ABOVE ARE FUNDAMENTAL ELEMEN
 
 ## 16. Governing Law and Forum Choice
 
-These Terms and any action related thereto will be governed by the Federal Arbitration Act, federal arbitration law, and the laws of the State of California, without regard to its conflict of laws provisions. Except as otherwise expressly set forth in Section 17 "Dispute Resolution," the exclusive jurisdiction for all Disputes (defined below) that you and Lightfast are not required to arbitrate will be the state and federal courts located in the U.S, and you and Lightfast each waive any objection to jurisdiction and venue in such courts.
+These Terms and any action related thereto will be governed by the laws of the State of Victoria, Australia, without regard to its conflict of laws provisions. Except as otherwise expressly set forth in Section 17 "Dispute Resolution," the exclusive jurisdiction for all Disputes (defined below) will be the courts located in Victoria, Australia, and you and Lightfast each waive any objection to jurisdiction and venue in such courts.
 
 ## 17. Dispute Resolution
 
-### (a) Mandatory Arbitration of Disputes
-We each agree that any dispute, claim or controversy arising out of or relating to these Terms or the breach, termination, enforcement, interpretation or validity thereof or the use of the Services (collectively, "Disputes") will be resolved solely by binding, individual arbitration and not in a class, representative or consolidated action or proceeding. You and Lightfast agree that the U.S. Federal Arbitration Act governs the interpretation and enforcement of these Terms, and that you and Lightfast are each waiving the right to a trial by jury or to participate in a class action. This arbitration provision shall survive termination of these Terms.
+### (a) Good Faith Negotiation
+Before initiating any formal dispute resolution process, the parties agree to first attempt to resolve any dispute, claim or controversy arising out of or relating to these Terms or the use of the Services (collectively, "Disputes") through good faith negotiation. The party raising the dispute must provide written notice to the other party describing the nature and basis of the dispute and the relief sought. The parties will then attempt to resolve the dispute through direct discussion within thirty (30) days of the notice.
 
-### (b) Exceptions
-As limited exceptions to Section 17(a) above: (i) we both may seek to resolve a Dispute in small claims court if it qualifies; and (ii) we each retain the right to seek injunctive or other equitable relief from a court to prevent (or enjoin) the infringement or misappropriation of our intellectual property rights.
+### (b) Mediation
+If the parties cannot resolve the Dispute through negotiation, they agree to attempt to resolve the Dispute through mediation administered by the Australian Centre for International Commercial Arbitration (ACICA) or another mutually agreed mediator before pursuing any other remedy. The mediation shall take place in Melbourne, Victoria, Australia, unless the parties mutually agree to another location.
 
-### (c) Conducting Arbitration and Arbitration Rules
-The arbitration will be conducted by the American Arbitration Association ("AAA") under its Consumer Arbitration Rules (the "AAA Rules") then in effect, except as modified by these Terms. The AAA Rules are available at www.adr.org or by calling 1-800-778-7879. A party who wishes to start arbitration must submit a written Demand for Arbitration to AAA and give notice to the other party as specified in the AAA Rules. The AAA provides a form Demand for Arbitration at www.adr.org.
+### (c) Arbitration
+If mediation is unsuccessful, any Dispute shall be finally resolved by binding arbitration administered by ACICA in accordance with its Arbitration Rules. The arbitration shall be conducted by a single arbitrator mutually agreed upon by the parties, or if they cannot agree, appointed according to ACICA rules. The arbitration shall take place in Melbourne, Victoria, Australia, and shall be conducted in English. The arbitrator's decision shall be final and binding on both parties.
 
-Any arbitration hearings will take place in the county (or parish) where you live, unless we both agree to a different location. The parties agree that the arbitrator shall have exclusive authority to decide all issues relating to the interpretation, applicability, enforceability and scope of this arbitration agreement.
+### (d) Exceptions
+Notwithstanding the above, either party may seek urgent injunctive or other equitable relief from a court of competent jurisdiction to prevent irreparable harm, including but not limited to the protection of intellectual property rights, pending the outcome of arbitration.
 
-### (d) Arbitration Costs
-Payment of all filing, administration and arbitrator fees will be governed by the AAA Rules, and we won't seek to recover the administration and arbitrator fees we are responsible for paying, unless the arbitrator finds your Dispute frivolous. If we prevail in arbitration we'll pay all of our attorneys' fees and costs and won't seek to recover them from you. If you prevail in arbitration you will be entitled to an award of attorneys' fees and expenses to the extent provided under applicable law.
+### (e) Class Action Waiver
+YOU AND LIGHTFAST AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS OR REPRESENTATIVE PROCEEDING. The arbitrator may not consolidate more than one person's claims and may not otherwise preside over any form of a representative or class proceeding.
 
-### (e) Injunctive and Declaratory Relief
-Except as provided in Section 17(b) above, the arbitrator shall determine all issues of liability on the merits of any claim asserted by either party and may award declaratory or injunctive relief only in favor of the individual party seeking relief and only to the extent necessary to provide relief warranted by that party's individual claim. To the extent that you or we prevail on a claim and seek public injunctive relief (that is, injunctive relief that has the primary purpose and effect of prohibiting unlawful acts that threaten future injury to the public), the entitlement to and extent of such relief must be litigated in a civil court of competent jurisdiction and not in arbitration. The parties agree that litigation of any issues of public injunctive relief shall be stayed pending the outcome of the merits of any individual claims in arbitration.
+### (f) Costs
+Each party shall bear its own costs in any negotiation or mediation. The costs of arbitration, including the arbitrator's fees, shall be shared equally by the parties unless the arbitrator determines otherwise based on the merits of the case.
 
-### (f) Class Action Waiver
-YOU AND LIGHTFAST AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS OR REPRESENTATIVE PROCEEDING. Further, if the parties' Dispute is resolved through arbitration, the arbitrator may not consolidate another person's claims with your claims, and may not otherwise preside over any form of a representative or class proceeding. If this specific provision is found to be unenforceable, then the entirety of this Dispute Resolution section shall be null and void.
+### (g) Governing Law for Arbitration
+The arbitration agreement and any arbitration conducted pursuant to this Section 17 shall be governed by the Australian International Arbitration Act 1974 (Cth) and the ACICA Arbitration Rules.
 
-### (g) Severability
-With the exception of any of the provisions in Section 17(f) of these Terms ("Class Action Waiver"), if an arbitrator or court of competent jurisdiction decides that any part of these Terms is invalid or unenforceable, the other parts of these Terms will still apply.
+### (h) Severability
+If any provision of this Dispute Resolution section is found to be invalid or unenforceable, the remaining provisions shall continue in full force and effect.
 
 ## 18. General Terms
 
@@ -158,4 +154,11 @@ Lightfast's failure to enforce any right or provision of these Terms will not be
 
 ## 19. Contact Information
 
-If you have any questions about these Terms or the Services, please contact Lightfast at support@lightfast.co.
+If you have any questions about these Terms or the Services, please contact Lightfast at:
+
+Lightfast, Inc.  
+51 Grosvenor St  
+South Yarra, Melbourne  
+Australia
+
+Email: legal@lightfast.ai`;

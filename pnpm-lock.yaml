@@ -1247,12 +1247,18 @@ importers:
       react-hook-form:
         specifier: ^7.53.1
         version: 7.53.1(react@19.1.0)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.1.2)(react@19.1.0)
       react-resizable-panels:
         specifier: ^2.1.6
         version: 2.1.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       recharts:
         specifier: ^2.13.3
         version: 2.13.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      remark-gfm:
+        specifier: ^4.0.0
+        version: 4.0.0
       sonner:
         specifier: ^2.0.2
         version: 2.0.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)

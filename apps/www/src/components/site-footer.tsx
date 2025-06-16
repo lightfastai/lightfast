@@ -1,186 +1,116 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { cn } from "@repo/ui/lib/utils"
+import { Dot } from "lucide-react"
+import Link from "next/link"
 
-import { emailConfig, siteConfig } from "@repo/lightfast-config";
-import { Icons } from "@repo/ui/components/icons";
+interface FooterProps {
+  className?: string
+}
 
-export function SiteFooter() {
+export function SiteFooter({ className }: FooterProps) {
   return (
-    <footer className="bg-background relative h-screen w-full text-white">
-      {/* Section 1 - Logo and Services/Company (40vh) */}
-      <section className="flex h-[40vh] items-center">
-        <div className="mx-auto w-full px-8">
-          <div className="flex items-start justify-between">
-            {/* Left - Logo (fixed width for alignment) */}
-            <div className="w-1/2 flex-shrink-0">
-              <Icons.logo className="text-foreground w-32" />
-            </div>
-
-            {/* Right - Services and Company (fixed width for alignment) */}
-            <div className="w-1/2">
-              <div className="flex gap-24">
-                {/* Services Column */}
-                <div className="flex flex-col">
-                  <h3 className="text-muted-foreground mb-3 text-xl font-semibold">
-                    Services
-                  </h3>
-                  <nav className="flex flex-col gap-3">
-                    <Link
-                      href="#"
-                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
-                    >
-                      Copilot for Creatives
-                    </Link>
-                    <Link
-                      href="#"
-                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
-                    >
-                      Workflow Automation
-                    </Link>
-                    <Link
-                      href="#"
-                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
-                    >
-                      AI-powered Design
-                    </Link>
-                  </nav>
-                </div>
-
-                {/* Company Column */}
-                <div className="flex flex-col">
-                  <h3 className="text-muted-foreground mb-3 text-xl font-semibold">
-                    Links
-                  </h3>
-                  <nav className="flex flex-col gap-3">
-                    <Link
-                      href="/legal/terms"
-                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
-                    >
-                      Terms & Conditions
-                    </Link>
-                    <Link
-                      href="/legal/privacy"
-                      className="text-foreground hover:text-muted-foreground text-2xl font-bold transition-colors duration-200"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </nav>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 2 - Contact and Early Access (30vh) */}
-      <section className="flex h-[30vh] items-center">
-        <div className="mx-auto w-full px-8">
-          <div className="flex items-start">
-            {/* Left - Contact (fixed width for alignment) */}
-            <div className="flex w-1/2 flex-col">
-              <h3 className="text-foreground mb-1 text-lg font-semibold">
-                Have questions or want to chat?
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="text-foreground text-lg font-semibold">
-                  Drop us a line at &rarr;
-                </span>
-                <Link
-                  href={`mailto:${emailConfig.hello}`}
-                  className="text-primary hover:text-primary/80 text-lg font-medium transition-colors duration-200 hover:underline"
-                >
-                  {emailConfig.hello}
-                </Link>
-              </div>
-            </div>
-
-            {/* Right - Early Access (fixed width for alignment) */}
-            <div className="w-1/2 max-w-xs">
-              <div className="flex flex-col">
-                <h3 className="text-foreground text-md mb-4 font-semibold">
-                  Stay in the loop and be the first to know what's coming next
-                  for Lightfast, get industry expert analysis, and much more.
-                </h3>
-                <div className="flex flex-col gap-2">
-                  <Link
-                    href="#"
-                    className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-2 text-sm font-medium transition-colors duration-200 hover:underline"
-                  >
-                    Subscribe to Lightfast
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 3 - Copyright and Social (30vh) */}
-      <section className="flex h-[30vh] items-center">
-        <div className="mx-auto w-full px-8">
-          <div className="flex items-center justify-between">
-            {/* Left - Social Links (fixed width for alignment) */}
-            <div className="flex w-1/2 items-center gap-6">
+    <footer className={cn("w-full py-8", className)}>
+      <div className="mx-auto max-w-7xl">
+        <div className="pr-16">
+          <div className="text-muted-foreground flex flex-col items-center justify-between gap-4 text-sm md:flex-row">
+            <div className="flex items-center gap-4">
               <Link
-                target="_blank"
-                href={siteConfig.links.github.href}
+                href="https://github.com/lightfastai"
                 aria-label="GitHub"
-                className="group transition-all duration-300 hover:scale-110"
+                className="transition-transform duration-200 hover:scale-110"
               >
-                <Icons.gitHub className="text-muted-foreground group-hover:text-foreground size-6 transition-colors duration-300" />
+                <svg
+                  viewBox="0 0 24 24"
+                  className="hover:text-foreground size-4 transition-colors duration-200"
+                  role="img"
+                  aria-label="GitHub"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2"
+                  />
+                </svg>
               </Link>
               <Link
-                target="_blank"
-                href={siteConfig.links.discord.href}
+                href="https://discord.gg/YqPDfcar2C"
                 aria-label="Discord"
-                className="group transition-all duration-300 hover:scale-110"
+                className="transition-transform duration-200 hover:scale-110"
               >
-                <Icons.discord className="text-muted-foreground group-hover:text-foreground size-6 transition-colors duration-300" />
+                <svg
+                  viewBox="0 0 24 24"
+                  className="hover:text-foreground size-4 transition-colors duration-200"
+                  role="img"
+                  aria-label="Discord"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"
+                  />
+                </svg>
               </Link>
               <Link
-                target="_blank"
-                href={siteConfig.links.twitter.href}
+                href="https://x.com/lightfastai"
                 aria-label="Twitter"
-                className="group transition-all duration-300 hover:scale-110"
+                className="transition-transform duration-200 hover:scale-110"
               >
-                <Icons.twitter className="text-muted-foreground group-hover:text-foreground size-5 transition-colors duration-300" />
+                <svg
+                  viewBox="0 0 24 24"
+                  className="hover:text-foreground size-3 transition-colors duration-200"
+                  role="img"
+                  aria-label="Twitter"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+                  />
+                </svg>
               </Link>
             </div>
 
-            {/* Right - Copyright and Additional Info (fixed width for alignment) */}
-            <div className="w-1/2">
-              <div className="flex items-center gap-8 font-mono">
-                {/* Copyright */}
-                <div className="flex items-center">
-                  <span className="group text-muted-foreground relative cursor-default text-sm">
-                    <span className="group-hover:text-foreground relative inline-block transition-all duration-300 group-hover:-translate-y-1">
-                      {siteConfig.name}
-                    </span>
-                    <span className="group-hover:text-muted-foreground/60 relative mx-1 inline-block transition-all duration-300">
-                      Inc.
-                    </span>
-                    <span className="group-hover:text-muted-foreground/60 relative inline-block transition-all duration-300">
-                      ©
-                    </span>
-                    <span className="group-hover:text-foreground relative ml-1 inline-block transition-all duration-300 group-hover:-translate-y-1">
-                      {new Date().getFullYear()}
-                    </span>
-                    <span className="from-primary/40 via-primary to-primary/40 absolute bottom-0 left-0 h-[1px] w-0 bg-gradient-to-r transition-all duration-500 group-hover:w-full" />
-                  </span>
-                </div>
+            <div className="flex flex-col items-center gap-2">
+              <nav className="flex items-center gap-2 md:gap-4">
+                <Link
+                  href="/"
+                  className="hover:text-foreground text-xs transition-all duration-200 hover:underline hover:underline-offset-4"
+                >
+                  Home
+                </Link>
+                <Dot className="size-2" />
+                <Link
+                  href="/legal/privacy"
+                  className="hover:text-foreground text-xs transition-all duration-200 hover:underline hover:underline-offset-4"
+                >
+                  Privacy
+                </Link>
+                <Dot className="size-2" />
+                <Link
+                  href="/legal/terms"
+                  className="hover:text-foreground text-xs transition-all duration-200 hover:underline hover:underline-offset-4"
+                >
+                  Terms
+                </Link>
+              </nav>
+            </div>
 
-                {/* Additional Info */}
-                <div>
-                  <p className="text-muted-foreground text-xs">
-                    All rights reserved
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-center gap-4">
+              <span className="group relative cursor-default text-xs">
+                <span className="group-hover:text-foreground relative inline-block transition-all duration-300 group-hover:-translate-y-1">
+                  Lightfast
+                </span>
+                <span className="group-hover:text-primary relative mx-1 inline-block transition-all duration-300 group-hover:opacity-0">
+                  Inc.
+                </span>
+                <span className="group-hover:text-muted relative inline-block transition-all duration-300 group-hover:opacity-0">
+                  ©
+                </span>
+                <span className="group-hover:text-foreground relative ml-1 inline-block transition-all duration-300 group-hover:-translate-y-1">
+                  {new Date().getFullYear()}
+                </span>
+                <span className="from-primary/40 via-primary to-primary/40 absolute bottom-0 left-0 h-[1px] w-0 bg-gradient-to-r transition-all duration-500 group-hover:w-full" />
+              </span>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </footer>
-  );
+  )
 }
