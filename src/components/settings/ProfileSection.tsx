@@ -15,6 +15,11 @@ interface ProfileSectionProps {
     phoneVerificationTime?: number
     isAnonymous?: boolean
   }
+  userSettings: {
+    hasOpenAIKey: boolean
+    hasAnthropicKey: boolean
+    hasOpenRouterKey: boolean
+  } | null | undefined // Not used in ProfileSection but passed for consistency
 }
 
 export function ProfileSection({ user }: ProfileSectionProps) {
