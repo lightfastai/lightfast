@@ -107,7 +107,7 @@ export function MessageItem({
             {isStreaming && !isComplete && !thinkingDuration && (
               <>
                 {modelName && <span>•</span>}
-                <span>{isThinking ? "Thinking" : "Responding"}</span>
+                <span>{isThinking ? "Thinking" : ""}</span>
               </>
             )}
           </div>
@@ -125,9 +125,7 @@ export function MessageItem({
 
       {/* Message body - unified for both read-only and interactive modes */}
       <div className="text-sm leading-relaxed">
-        {isThinking && !displayText ? (
-          <span className="text-muted-foreground italic">Thinking</span>
-        ) : displayText ? (
+        {displayText ? (
           <>
             <Markdown className="text-sm">{displayText}</Markdown>
             {isStreaming && !isComplete && (

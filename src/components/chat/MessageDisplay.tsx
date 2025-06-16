@@ -3,7 +3,6 @@
 import { useResumableStream } from "@/hooks/useResumableStream"
 import { getModelDisplayName } from "@/lib/ai"
 import { useQuery } from "convex/react"
-import React from "react"
 import { api } from "../../../convex/_generated/api"
 import type { Doc } from "../../../convex/_generated/dataModel"
 import { AttachmentPreview } from "./AttachmentPreview"

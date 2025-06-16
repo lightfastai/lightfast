@@ -506,21 +506,6 @@ const ChatInputComponent = ({
             )}
           </div>
         </div>
-
-        {/* Bottom section for future features */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-2">
-            {isLoading && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                <span>AI is responding...</span>
-              </div>
-            )}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {message.length}/{maxLength}
-          </div>
-        </div>
       </div>
     </div>
   )
