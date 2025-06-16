@@ -110,7 +110,7 @@ export default function HomePage() {
 
           <div className="absolute right-0 bottom-0 left-0">
             <div className="flex justify-end">
-              <Button asChild>
+              <Button asChild variant="outline">
                 <Link
                   className="text-foreground flex items-center"
                   target="_blank"
