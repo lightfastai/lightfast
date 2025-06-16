@@ -81,7 +81,11 @@
       "WebFetch(domain:discuss.codemirror.net)",
       "Bash(bun install:*)",
       "Bash(kill:*)",
-      "WebFetch(domain:nextjs.org)"
+      "WebFetch(domain:nextjs.org)",
+      "Bash(if [ -f \"$CONTEXT_FILE\" ])",
+      "Bash(then echo \"📋 Resuming from existing context:\")",
+      "Bash(else echo \"🆕 Creating new context file: $CONTEXT_FILE\")",
+      "Bash(fi)"
     ],
     "deny": []
   }
