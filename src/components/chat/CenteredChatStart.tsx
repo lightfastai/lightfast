@@ -2,8 +2,9 @@
 
 import { useAuth } from "@/hooks/useAuth"
 import { useTimeGreeting } from "@/hooks/useTimeGreeting"
-import { ChatInput } from "./ChatInput"
 import type { Id } from "../../../convex/_generated/dataModel"
+import { ChatInput } from "./ChatInput"
+import { ZapIcon } from "lucide-react"
 
 interface CenteredChatStartProps {
   onSendMessage: (
@@ -28,19 +29,17 @@ export function CenteredChatStart({
 
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-0 px-4">
-      <div className="w-full max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-foreground mb-2">
+      <div className="w-full max-w-3xl mx-auto -mt-16">
+        <div className="text-center mb-4">
+          <h1 className="text-4xl font-semibold text-foreground mb-2 flex items-center justify-center gap-4">
+            <ZapIcon className="w-8 h-8 inline-block" />
             {greeting}, {userName}
           </h1>
-          <p className="text-muted-foreground">
-            What can I help you with today?
-          </p>
         </div>
-        
+
         <ChatInput
           onSendMessage={onSendMessage}
-          placeholder="Message AI assistant..."
+          placeholder="How can I help you today?"
           disabled={disabled}
           isLoading={isLoading}
         />

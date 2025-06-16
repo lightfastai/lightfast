@@ -12,11 +12,12 @@ type Message = Doc<"messages">
 
 export function ChatInterface() {
   // Use custom chat hook with optimistic updates
-  const { messages, currentThread, handleSendMessage, isDisabled, isNewChat } = useChat()
+  const { messages, currentThread, handleSendMessage, isDisabled, isNewChat } =
+    useChat()
 
   // Track if user has ever sent a message to prevent flicker
   const hasEverSentMessage = useRef(false)
-  
+
   // Reset when we're in a truly new chat, set when messages exist
   useEffect(() => {
     if (isNewChat && messages.length === 0) {
@@ -82,7 +83,7 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full ">
       <ChatMessages messages={enhancedMessages} />
       <ChatInput
         onSendMessage={handleSendMessage}

@@ -231,7 +231,7 @@ const ChatInputComponent = ({
   // Memoize event handlers
   const handleSendMessage = useCallback(async () => {
     if (!message.trim()) return
-    
+
     // Show visual indicator if submit is disabled
     if (isSubmitDisabled) {
       toast.info("Please wait for the current response to complete")
