@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(pnpm add:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pnpm --filter @lightfast/www build)",
+      "Bash(git add:*)"
     ]
   },
   "enableAllProjectMcpServers": false
