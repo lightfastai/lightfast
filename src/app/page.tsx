@@ -7,13 +7,13 @@ import type { Metadata } from "next"
 import Link from "next/link"
 
 export const metadata: Metadata = {
-  title: "Lightfast - Agent-first Chat Experience",
+  title: "Lightfast - Open Source Chat App",
   description:
-    "Experience the future of AI conversations with Lightfast. Our agent-first approach delivers intelligent, real-time chat interactions that understand context and provide meaningful responses.",
+    "Open source chat application designed for personal and internal business needs. Built for flexibility, privacy, and customization with intelligent AI conversations.",
   keywords: [
     "AI chat",
     "artificial intelligence",
-    "agent-first",
+    "open source",
     "real-time chat",
     "conversational AI",
     "intelligent chat",
@@ -34,24 +34,24 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://lightfast.ai",
-    title: "Lightfast - Agent-first Chat Experience",
+    title: "Lightfast - Open Source Chat App",
     description:
-      "Experience the future of AI conversations with Lightfast. Our agent-first approach delivers intelligent, real-time chat interactions.",
+      "Open source chat application designed for personal and internal business needs with intelligent AI conversations.",
     siteName: "Lightfast",
     images: [
       {
         url: "https://lightfast.ai/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Lightfast - Agent-first Chat Experience",
+        alt: "Lightfast - Open Source Chat App",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lightfast - Agent-first Chat Experience",
+    title: "Lightfast - Open Source Chat App",
     description:
-      "Experience the future of AI conversations with our agent-first approach to intelligent chat.",
+      "Open source chat application designed for personal and internal business needs with intelligent AI conversations.",
     images: ["https://lightfast.ai/og-image.png"],
     creator: "@lightfast_ai",
   },
@@ -127,10 +127,10 @@ function LandingPage() {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-muted/50 border rounded-full px-4 py-2 text-sm text-muted-foreground mb-6">
               <Zap className="w-4 h-4" />
-              Agent-first approach to chats.
+              Open source chat for personal & business needs.
             </div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
-              What makes a good chat?
+              What makes a good chat? You.
             </h1>
           </div>
 
