@@ -1,6 +1,12 @@
 import type { SiteConfig } from "@repo/ui/types/site";
 
-type SiteLinks = "twitter" | "github" | "discord" | "privacy" | "terms";
+type SiteLinks =
+  | "twitter"
+  | "github"
+  | "discord"
+  | "privacy"
+  | "terms"
+  | "chat";
 
 export const siteConfig: SiteConfig<SiteLinks> = {
   name: "Lightfast",
@@ -27,6 +33,10 @@ export const siteConfig: SiteConfig<SiteLinks> = {
     terms: {
       title: "Terms & Conditions",
       href: "https://lightfast.ai/legal/terms",
+    },
+    chat: {
+      title: "Chat",
+      href: "https://chat.lightfast.ai",
     },
   },
   location: "3141, Melbourne, VIC, Australia",
