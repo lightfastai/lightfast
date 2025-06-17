@@ -1,4 +1,5 @@
 import { SettingsContent } from "@/components/settings/SettingsContent"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { getAuthToken } from "@/lib/auth"
 import { preloadQuery } from "convex/nextjs"
 import type { Metadata } from "next"
@@ -16,9 +17,13 @@ export const metadata: Metadata = {
 
 export default async function SettingsPage() {
   return (
-    <Suspense fallback={<SettingsSkeleton />}>
-      <SettingsPageWithData />
-    </Suspense>
+    <ScrollArea className="h-full w-full">
+      <div className="min-h-full">
+        <Suspense fallback={<SettingsSkeleton />}>
+          <SettingsPageWithData />
+        </Suspense>
+      </div>
+    </ScrollArea>
   )
 }
 
@@ -62,7 +67,7 @@ function SkeletonRow({ controlWidth = "w-48" }: { controlWidth?: string }) {
 // Loading skeleton for settings
 function SettingsSkeleton() {
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 sm:space-y-12">
       {/* User Settings Skeleton */}
       <div>
         <div className="h-7 w-48 animate-pulse rounded bg-muted" />
@@ -101,7 +106,7 @@ function SettingsError() {
   return (
     <div className="space-y-4 text-center">
       <h2 className="text-2xl font-bold tracking-tight">Error</h2>
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-destructive">
+      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive sm:p-6">
         <p className="font-medium">Unable to load settings</p>
         <p className="text-sm">
           Something went wrong. Please try refreshing the page.
