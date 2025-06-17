@@ -296,6 +296,16 @@ export const createThreadAndSend = mutation({
       lastMessageAt: now,
       isTitleGenerating: true,
       isGenerating: true, // Set immediately to prevent race conditions
+      // Initialize usage field so header displays even with 0 tokens
+      usage: {
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalTokens: 0,
+        totalReasoningTokens: 0,
+        totalCachedInputTokens: 0,
+        messageCount: 0,
+        modelStats: {},
+      },
     })
 
     // Insert user message
@@ -837,6 +847,18 @@ export const generateAIResponse = internalAction({
       // Get final usage data
       const finalUsage = await usage
       console.log("Final usage data:", finalUsage)
+      
+      // AI SDK v5 returns LanguageModelV2Usage format
+      // Note: values can be undefined, so we need to handle that
+      const formattedUsage = finalUsage ? {
+        inputTokens: finalUsage.inputTokens ?? 0,
+        outputTokens: finalUsage.outputTokens ?? 0,
+        totalTokens: finalUsage.totalTokens ?? 0,
+        reasoningTokens: finalUsage.reasoningTokens ?? 0,
+        cachedInputTokens: finalUsage.cachedInputTokens ?? 0,
+      } : undefined
+      
+      console.log("Formatted usage:", formattedUsage)
 
       // Ensure we always have some content to complete with, even if just tool results
       if (fullContent.trim() === "" && toolCallsProcessed === 0) {
@@ -847,7 +869,7 @@ export const generateAIResponse = internalAction({
       // Mark message as complete with usage data
       await ctx.runMutation(internal.messages.completeStreamingMessage, {
         messageId,
-        usage: finalUsage,
+        usage: formattedUsage,
       })
 
       console.log(

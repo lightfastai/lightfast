@@ -61,10 +61,19 @@ export function TokenUsageHeader({ threadId }: TokenUsageHeaderProps) {
     threadId === "new" ? "skip" : { threadId },
   )
 
-  // For new chats or no usage data, show nothing
-  if (threadId === "new" || !usage || usage.totalTokens === 0) {
+
+  // For new chats, show nothing
+  if (threadId === "new") {
     return null
   }
+  
+  // If no usage data yet, show nothing (loading state handled by Suspense)
+  if (!usage) {
+    return null
+  }
+  
+  // Show usage even if 0, as long as we have the data structure
+  // This allows showing 0 tokens for new threads that haven't sent messages yet
 
   return (
     <TooltipProvider>
