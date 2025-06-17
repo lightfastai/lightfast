@@ -45,11 +45,6 @@ async function ChatHeader() {
       </div>
       <div className="flex items-center gap-2">
         <Suspense
-          fallback={<div className="h-8 w-16 bg-muted animate-pulse rounded" />}
-        >
-          <DynamicShareButton />
-        </Suspense>
-        <Suspense
           fallback={
             <div className="flex items-center gap-2">
               <div className="h-6 w-16 bg-muted animate-pulse rounded" />
@@ -58,6 +53,11 @@ async function ChatHeader() {
           }
         >
           <DynamicTokenUsageHeader />
+        </Suspense>
+        <Suspense
+          fallback={<div className="h-8 w-16 bg-muted animate-pulse rounded" />}
+        >
+          <DynamicShareButton />
         </Suspense>
       </div>
     </header>
