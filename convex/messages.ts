@@ -35,7 +35,7 @@ import {
 function createWebSearchTool() {
   return tool({
     description:
-      "Search the web for current information, news, and real-time data. Use this when you need up-to-date information beyond your knowledge cutoff.",
+      "Search the web for current information, news, and real-time data. Use this proactively when you need up-to-date information beyond your knowledge cutoff. After receiving search results, you must immediately analyze and explain the findings without waiting for additional prompting.",
     parameters: z.object({
       query: z
         .string()
@@ -55,12 +55,12 @@ function createWebSearchTool() {
         const searchOptions: RegularSearchOptions & ContentsOptions = {
           numResults,
           text: {
-            maxCharacters: 1000,
+            maxCharacters: 1500, // Increased for better context
             includeHtmlTags: false,
           },
           highlights: {
-            numSentences: 3,
-            highlightsPerUrl: 2,
+            numSentences: 4, // More highlights for better understanding
+            highlightsPerUrl: 3,
           },
         }
 
@@ -81,11 +81,23 @@ function createWebSearchTool() {
 
         console.log(`Web search found ${results.length} results`)
 
+        // Return structured data that helps the AI understand and explain
         return {
           success: true,
           query,
-          results: results.slice(0, 3), // Return top 3 results
-          totalResults: results.length,
+          searchIntent: `Web search for: "${query}"`,
+          resultCount: results.length,
+          results: results.slice(0, 3).map((r, idx) => ({
+            ...r,
+            relevanceRank: idx + 1,
+            summary: r.text
+              ? `${r.text.slice(0, 200)}...`
+              : "No preview available",
+          })),
+          searchMetadata: {
+            timestamp: new Date().toISOString(),
+            autoprompt: response.autopromptString,
+          },
         }
       } catch (error) {
         console.error("Web search error:", error)
@@ -94,7 +106,7 @@ function createWebSearchTool() {
           query,
           error: error instanceof Error ? error.message : "Unknown error",
           results: [],
-          totalResults: 0,
+          resultCount: 0,
         }
       }
     },
@@ -611,14 +623,38 @@ export const generateAIResponse = internalAction({
         streamOptions.tools = {
           web_search: createWebSearchTool(),
         }
+
+        // Enhanced agentic system prompt for web search
+        systemPrompt += `\n\nYou have web search capabilities. You should proactively search for information when needed to provide accurate, current answers.
+
+When you perform a web search, you MUST automatically continue with a thorough analysis following this exact pattern:
+
+1. **Search Intent** (before searching): Briefly state what specific information you're seeking and why it's relevant to the user's question.
+
+2. **Search Execution**: Perform the web search using the web_search tool.
+
+3. **Immediate Analysis** (after search results appear): Without waiting for further prompting, automatically provide:
+   - **Key Findings Summary**: Extract the most important information from each source
+   - **Cross-Source Analysis**: Identify patterns, consensus, or contradictions between sources
+   - **Information Quality**: Note the recency, credibility, and relevance of sources
+   - **Knowledge Gaps**: Identify what questions remain unanswered
+
+4. **Synthesis and Answer**: Conclude with a comprehensive response that:
+   - Directly addresses the user's original question
+   - Integrates search findings with your existing knowledge
+   - Uses [Source N] citations for specific claims
+   - Suggests follow-up searches if needed for completeness
+
+Remember: After search results appear, immediately continue analyzing and explaining them. Do not wait for the user to ask for analysis - be proactive and thorough in your response.`
+
         console.log("Web search tool created successfully")
       }
 
       // For Claude 4.0 thinking mode, enable thinking/reasoning
       if (provider === "anthropic" && isThinking) {
         // Claude 4.0 has native thinking support
-        streamOptions.system =
-          "You are a helpful AI assistant. For complex questions, show your reasoning process step by step before providing the final answer."
+        systemPrompt +=
+          " For complex questions, show your reasoning process step by step before providing the final answer."
         streamOptions.providerOptions = {
           anthropic: {
             thinking: {
@@ -628,6 +664,9 @@ export const generateAIResponse = internalAction({
           },
         }
       }
+
+      // Set the combined system prompt
+      streamOptions.system = systemPrompt
 
       console.log(
         `Final streamOptions for ${provider}:`,
@@ -679,109 +718,17 @@ export const generateAIResponse = internalAction({
             chunk: chunk.text,
             chunkId,
           })
-        } else if (
-          chunk.type === "tool-call" &&
-          chunk.toolName === "web_search"
-        ) {
-          // Handle web search tool calls
+        } else if (chunk.type === "tool-call") {
+          // Log tool calls for debugging (automatic execution via maxSteps)
           toolCallsProcessed++
           console.log(
-            `Processing tool call #${toolCallsProcessed} - web search with args:`,
+            `Tool call #${toolCallsProcessed} - ${chunk.toolName} with args:`,
             chunk.args,
           )
-
-          try {
-            // Perform web search directly using Exa
-            const exaApiKey = process.env.EXA_API_KEY
-            if (!exaApiKey) {
-              throw new Error("EXA_API_KEY not configured")
-            }
-
-            const exa = new Exa(exaApiKey)
-            const query = chunk.args.query as string
-            const numResults = 5 // Fixed to 5 results for simplicity
-            const includeText = true // Always include text for better results
-
-            const searchOptions: RegularSearchOptions & ContentsOptions = {
-              numResults,
-            }
-
-            if (includeText) {
-              searchOptions.text = {
-                maxCharacters: 1000,
-                includeHtmlTags: false,
-              }
-              searchOptions.highlights = {
-                numSentences: 3,
-                highlightsPerUrl: 2,
-              }
-            }
-
-            const response = await exa.search(query, searchOptions)
-
-            const searchResults = {
-              success: true,
-              results: response.results.map((result) => ({
-                id: result.id,
-                url: result.url,
-                title: result.title || "",
-                text: result.text,
-                highlights: (
-                  result as SearchResult<ContentsOptions> & {
-                    highlights?: string[]
-                  }
-                ).highlights,
-                publishedDate: result.publishedDate,
-                author: result.author,
-                score: result.score,
-              })),
-              autopromptString: response.autopromptString,
-            }
-
-            if (searchResults.success && searchResults.results) {
-              const searchSummary = `\n\n**🔍 Web Search Results for "${chunk.args.query}"**\n\n${searchResults.results
-                .slice(0, 3)
-                .map(
-                  (result, i) =>
-                    `**${i + 1}. ${result.title}**\n${result.url}\n${result.text ? `${result.text.slice(0, 250)}...` : "No preview available"}\n`,
-                )
-                .join("\n")}`
-
-              fullContent += searchSummary
-
-              // Generate unique chunk ID for the search results
-              const chunkId = `search_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-              // Append search results as a chunk
-              await ctx.runMutation(internal.messages.appendStreamChunk, {
-                messageId,
-                chunk: searchSummary,
-                chunkId,
-              })
-            } else {
-              const errorMessage =
-                "\n\n*❌ Web search failed: No results found*\n\n"
-              fullContent += errorMessage
-
-              const chunkId = `search_error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-              await ctx.runMutation(internal.messages.appendStreamChunk, {
-                messageId,
-                chunk: errorMessage,
-                chunkId,
-              })
-            }
-          } catch (error) {
-            console.error("Error executing web search:", error)
-            const errorMessage = `\n\n*❌ Web search error: ${error instanceof Error ? error.message : "Unknown error"}*\n\n`
-            fullContent += errorMessage
-
-            const chunkId = `search_error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-            await ctx.runMutation(internal.messages.appendStreamChunk, {
-              messageId,
-              chunk: errorMessage,
-              chunkId,
-            })
-          }
+        } else if (chunk.type === "tool-result") {
+          // Handle tool results from automatic execution
+          console.log(`Tool result for ${chunk.toolName}:`, chunk.result)
+          // Let the AI naturally analyze and format the results through the conversation
         } else if (chunk.type === "reasoning" && chunk.text) {
           // Claude 4.0 native reasoning tokens
           if (!hasThinking) {
