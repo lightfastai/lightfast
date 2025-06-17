@@ -13,13 +13,25 @@ import { ChatMessages } from "./ChatMessages"
 type Message = Doc<"messages">
 
 interface ChatInterfaceProps {
+  preloadedThreadById?: Preloaded<typeof api.threads.get>
+  preloadedThreadByClientId?: Preloaded<typeof api.threads.getByClientId>
+  preloadedMessages?: Preloaded<typeof api.messages.list>
   preloadedUser?: Preloaded<typeof api.users.current>
 }
 
-export function ChatInterface({ preloadedUser }: ChatInterfaceProps) {
-  // Use custom chat hook with optimistic updates
+export function ChatInterface({
+  preloadedThreadById,
+  preloadedThreadByClientId,
+  preloadedMessages,
+  preloadedUser,
+}: ChatInterfaceProps = {}) {
+  // Use custom chat hook with optimistic updates and preloaded data
   const { messages, currentThread, handleSendMessage, isDisabled, isNewChat } =
-    useChat()
+    useChat({
+      preloadedThreadById,
+      preloadedThreadByClientId,
+      preloadedMessages,
+    })
 
   // Track if user has ever sent a message to prevent flicker
   const hasEverSentMessage = useRef(false)

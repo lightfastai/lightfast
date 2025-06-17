@@ -3,36 +3,14 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import dynamic from "next/dynamic"
 import { Suspense } from "react"
+import { ChatTitleClient } from "./ChatTitleClient"
+import { ShareButtonWrapper } from "./ShareButtonWrapper"
+import { TokenUsageHeaderWrapper } from "./TokenUsageHeaderWrapper"
 import { ServerSidebar } from "./sidebar/ServerSidebar"
 
-const DynamicChatTitle = dynamic(
-  () => import("./ChatTitleClient").then((mod) => mod.ChatTitleClient),
-  {
-    ssr: true,
-  },
-)
-
-const DynamicTokenUsageHeader = dynamic(
-  () =>
-    import("./TokenUsageHeaderWrapper").then(
-      (mod) => mod.TokenUsageHeaderWrapper,
-    ),
-  {
-    ssr: true,
-  },
-)
-
-const DynamicShareButton = dynamic(
-  () => import("./ShareButtonWrapper").then((mod) => mod.ShareButtonWrapper),
-  {
-    ssr: true,
-  },
-)
-
 // Server component for chat header - can be static with PPR
-async function ChatHeader() {
+function ChatHeader() {
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 px-4">
       <SidebarTrigger className="-ml-1" />
@@ -40,7 +18,7 @@ async function ChatHeader() {
         <Suspense
           fallback={<div className="h-6 w-24 bg-muted animate-pulse rounded" />}
         >
-          <DynamicChatTitle />
+          <ChatTitleClient />
         </Suspense>
       </div>
       <div className="flex items-center gap-2">
@@ -52,12 +30,12 @@ async function ChatHeader() {
             </div>
           }
         >
-          <DynamicTokenUsageHeader />
+          <TokenUsageHeaderWrapper />
         </Suspense>
         <Suspense
           fallback={<div className="h-8 w-16 bg-muted animate-pulse rounded" />}
         >
-          <DynamicShareButton />
+          <ShareButtonWrapper />
         </Suspense>
       </div>
     </header>
