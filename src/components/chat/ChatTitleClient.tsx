@@ -1,6 +1,7 @@
 "use client"
 
 import { isClientId } from "@/lib/nanoid"
+import { cn } from "@/lib/utils"
 import { usePreloadedQuery, useQuery } from "convex/react"
 import { usePathname } from "next/navigation"
 import { useMemo } from "react"
@@ -91,9 +92,29 @@ export function ChatTitleClient() {
     return currentThread?.title || ""
   }
 
+  const title = getTitle()
+  const isGenerating = currentThread?.isTitleGenerating
+
+  // Show shadowy blob when title is empty and generating
+  if (!title && isGenerating) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="relative h-6 w-32 sm:w-40 overflow-hidden rounded">
+          <div className="absolute inset-0 bg-gradient-to-r from-muted/50 via-muted to-muted/50 animate-shimmer" />
+          <div className="absolute inset-0 bg-muted/20 backdrop-blur-[2px]" />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <h1 className="text-base sm:text-lg font-semibold truncate">
-      {getTitle()}
+    <h1
+      className={cn(
+        "text-base sm:text-lg font-semibold truncate",
+        isGenerating && "animate-pulse blur-[0.5px] opacity-70",
+      )}
+    >
+      {title || (isGenerating ? "Generating title..." : "")}
     </h1>
   )
 }
