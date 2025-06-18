@@ -57,11 +57,6 @@ export function ShareButtonWrapper() {
       : "skip",
   )
 
-  // Don't show share button on settings page
-  if (isSettingsPage) {
-    return null
-  }
-
   // Determine the actual Convex thread ID
   let threadId: Id<"threads"> | undefined
   const currentThread = preloadedThread || threadByClientId || threadById
@@ -89,6 +84,11 @@ export function ShareButtonWrapper() {
       ? { threadId }
       : "skip",
   )
+
+  // Don't show share button on settings page
+  if (isSettingsPage) {
+    return null
+  }
 
   // Get actual messages
   const messages =
