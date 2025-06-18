@@ -1,6 +1,26 @@
-# Chat App with Convex
+# Lightfast Chat
 
-A real-time chat application built with Next.js and Convex, featuring GitHub authentication, AI responses with Claude Sonnet 4, and a v0.dev-inspired landing page.
+[![License: FSL-1.1-Apache-2.0](https://img.shields.io/badge/License-FSL--1.1--Apache--2.0-blue.svg)](LICENSE.md)
+[![GitHub stars](https://img.shields.io/github/stars/lightfastai/chat)](https://github.com/lightfastai/chat/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/lightfastai/chat)](https://github.com/lightfastai/chat/issues)
+
+An open-source, production-ready AI chat application featuring Claude Sonnet 4, GPT-4o, real-time messaging, and modern UI. Built with Next.js 15, Convex, and TypeScript.
+
+🌐 **Live Demo**: [chat.lightfast.ai](https://chat.lightfast.ai)
+
+## About
+
+Lightfast Chat is a modern, open-source chat application that combines the best AI models with a seamless user experience. We host the application at [chat.lightfast.ai](https://chat.lightfast.ai), but you can also self-host it for your own needs.
+
+### Why Lightfast Chat?
+
+- ⚡ **Blazing Fast**: Built with Next.js 15, Convex for real-time updates
+- 🤖 **Multiple AI Models**: Claude Sonnet 4, GPT-4o-mini, and more
+- 🔒 **Privacy-First**: Self-hostable with your own API keys
+- 💼 **Production Ready**: Used in production at [chat.lightfast.ai](https://chat.lightfast.ai)
+- 🎨 **Modern UI**: Clean, responsive design with dark/light themes
+- 📱 **Real-time**: Instant message delivery and streaming responses
+- 🔐 **Secure**: GitHub OAuth authentication with Convex Auth
 
 ## Environment Variables
 
@@ -62,7 +82,7 @@ AUTH_GITHUB_SECRET=your_github_client_secret_here
 Run the sync script to push environment variables to Convex:
 
 ```bash
-pnpm env:sync
+bun run env:sync
 ```
 
 ### Usage
@@ -83,14 +103,14 @@ const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
 For Docker builds or CI/CD where environment validation might interfere, you can skip validation:
 
 ```bash
-SKIP_ENV_VALIDATION=true npm run build
+SKIP_ENV_VALIDATION=true bun run build
 ```
 
 ## Getting Started
 
 1. Install dependencies:
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. Set up your environment variables (create `.env.local` with the variables shown above)
@@ -99,39 +119,68 @@ SKIP_ENV_VALIDATION=true npm run build
 
 4. Sync environment variables to Convex:
    ```bash
-   pnpm env:sync
+   bun run env:sync
    ```
 
 5. Start the Convex development server:
    ```bash
-   pnpm convex:dev
+   bun run convex:dev
    ```
 
 6. In a new terminal, start the Next.js development server:
    ```bash
-   pnpm dev
+   bun run dev
    ```
 
 7. Open [http://localhost:3000](http://localhost:3000) and sign in with GitHub
 
-## Features
+## ✨ Features
 
-- ✅ **v0.dev-inspired landing page** - Clean, modern design with centered textarea
-- ✅ **GitHub Authentication** - Secure login with Convex Auth
-- ✅ **Real-time AI Chat** - Streaming responses with Claude Sonnet 4 (default) and GPT-4o-mini
-- ✅ **Thread Management** - Organized conversations with persistent history
-- ✅ **Real-time Updates** - Live message updates with Convex
-- ✅ **Type-safe Environment Variables** - Validated with `@t3-oss/env-nextjs`
-- ✅ **Next.js 15 Canary** - Latest features with App Router and PPR
-- ✅ **Modern UI** - Built with shadcn/ui and Tailwind CSS
+### 🤖 AI & Chat
+- **Multiple AI Models**: Claude Sonnet 4 (default), GPT-4o-mini, and more
+- **Streaming Responses**: Real-time AI response streaming
+- **Thread Management**: Organized conversations with persistent history
+- **Message Actions**: Copy, regenerate, and feedback on responses
+- **Token Usage Tracking**: Monitor your API usage and costs
 
-## Architecture
+### 🎨 User Experience
+- **Modern Landing Page**: v0.dev-inspired design with centered chat input
+- **Responsive Design**: Works seamlessly on desktop and mobile
+- **Dark/Light Themes**: Automatic theme switching support
+- **Real-time Updates**: Live message delivery with Convex
+- **File Attachments**: Support for image and document uploads
 
-- **Frontend**: Next.js 15 Canary with App Router + PPR
-- **Backend**: Convex for real-time database and API
-- **Type Safety**: TypeScript with validated environment variables
-- **Styling**: Tailwind CSS (configured via `@/components/ui`)
-- **Performance**: PPR for optimal static/dynamic content rendering
+### 🔧 Developer Experience
+- **Type-safe**: Full TypeScript with validated environment variables
+- **Modern Stack**: Next.js 15 with App Router and Partial Prerendering (PPR)
+- **Real-time Backend**: Convex for database, auth, and real-time updates
+- **Code Quality**: Biome for fast linting and formatting
+- **Git Workflows**: Automated worktree management and deployment
+
+### 🔐 Security & Auth
+- **GitHub OAuth**: Secure authentication with Convex Auth
+- **API Key Management**: Secure storage and validation of user API keys
+- **Privacy Controls**: Self-hostable with your own infrastructure
+
+## 🏗️ Architecture
+
+### Frontend
+- **Next.js 15**: Latest features with App Router and Partial Prerendering (PPR)
+- **React 19**: Cutting-edge React features and performance
+- **TypeScript**: Full type safety across the application
+- **Tailwind CSS v4**: Modern utility-first styling
+- **shadcn/ui**: High-quality, accessible UI components
+
+### Backend
+- **Convex**: Real-time database with built-in auth and functions
+- **Server Actions**: Type-safe server-side operations
+- **File Storage**: Built-in file upload and management
+- **Real-time**: WebSocket-based real-time updates
+
+### Infrastructure
+- **Vercel**: Production deployment and preview environments
+- **GitHub Actions**: Automated testing and deployment
+- **Turborepo**: Optimized build system and caching
 
 ## Environment Validation Benefits
 
@@ -141,23 +190,37 @@ SKIP_ENV_VALIDATION=true npm run build
 4. **Transform support**: Use Zod transforms and default values
 5. **Clear errors**: Descriptive error messages for debugging
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- **Next.js 15** - React framework with App Router
-- **Convex** - Real-time backend with database, auth, and functions
-- **Biome** - Fast formatter and linter
-- **Tailwind CSS** - Utility-first CSS framework
-- **TypeScript** - Type-safe JavaScript
+| Category | Technology | Purpose |
+|----------|------------|----------|
+| **Frontend** | Next.js 15 | React framework with App Router + PPR |
+| | React 19 | Latest React features and performance |
+| | TypeScript | Type safety and developer experience |
+| | Tailwind CSS v4 | Utility-first styling |
+| | shadcn/ui | High-quality UI components |
+| **Backend** | Convex | Real-time database and auth |
+| | Convex Auth | GitHub OAuth integration |
+| | Server Actions | Type-safe server operations |
+| **AI/ML** | Anthropic Claude | Claude Sonnet 4 integration |
+| | OpenAI | GPT-4o-mini integration |
+| | Vercel AI SDK | Streaming and AI utilities |
+| **DevOps** | Vercel | Deployment and hosting |
+| | GitHub Actions | CI/CD automation |
+| | Turborepo | Build optimization |
+| **Code Quality** | Biome | Fast linting and formatting |
+| | TypeScript | Static type checking |
+| | Zod | Runtime validation |
 
 ## Available Scripts
 
-- `npm run dev` - Start the Next.js development server
-- `npm run build` - Build the application for production
-- `npm run start` - Start the production server
-- `npm run lint` - Run Biome linter and fix issues
-- `npm run format` - Format code with Biome
-- `npm run convex:dev` - Start Convex development server
-- `npm run convex:deploy` - Deploy to Convex
+- `bun run dev` - Start the Next.js development server
+- `bun run build` - Build the application for production
+- `bun run start` - Start the production server
+- `bun run lint` - Run Biome linter and fix issues
+- `bun run format` - Format code with Biome
+- `bun run convex:dev` - Start Convex development server
+- `bun run convex:deploy` - Deploy to Convex
 
 ## Project Structure
 
@@ -179,24 +242,112 @@ The project uses Biome for code formatting and linting. Run these commands to ma
 
 ```bash
 # Format all files
-npm run format
+bun run format
 
 # Lint and fix issues
-npm run lint
+bun run lint
 ```
 
-## Deployment
+## 🚀 Deployment
 
-1. Deploy your Convex functions:
+### Option 1: Use Our Hosted Version
+Simply visit [chat.lightfast.ai](https://chat.lightfast.ai) and start chatting with your GitHub account.
+
+### Option 2: Self-Host
+
+#### Quick Deploy to Vercel
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lightfastai/chat)
+
+#### Manual Deployment
+
+1. **Fork and clone the repository**
    ```bash
-   npm run convex:deploy
+   git clone https://github.com/your-username/chat.git
+   cd chat
    ```
 
-2. Deploy your Next.js app to your preferred platform (Vercel, Netlify, etc.)
+2. **Install dependencies**
+   ```bash
+   bun install
+   ```
 
-## Learn More
+3. **Set up Convex**
+   ```bash
+   bunx convex dev  # Follow the setup prompts
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Convex Documentation](https://docs.convex.dev)
-- [Biome Documentation](https://biomejs.dev)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+4. **Configure environment variables**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your API keys
+   bun run env:sync
+   ```
+
+5. **Deploy Convex functions**
+   ```bash
+   bun run convex:deploy
+   ```
+
+6. **Deploy to Vercel**
+   ```bash
+   vercel --prod
+   ```
+
+### Environment Variables for Self-Hosting
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ANTHROPIC_API_KEY` | Yes | Claude API access |
+| `OPENAI_API_KEY` | Yes | GPT model access |
+| `AUTH_GITHUB_ID` | Yes | GitHub OAuth client ID |
+| `AUTH_GITHUB_SECRET` | Yes | GitHub OAuth client secret |
+| `NEXT_PUBLIC_CONVEX_URL` | Yes | Convex deployment URL |
+
+## 📚 Documentation
+
+- [**Getting Started Guide**](./docs/installation.mdx) - Detailed setup instructions
+- [**API Documentation**](./docs/api/overview.mdx) - Backend API reference
+- [**Authentication Setup**](./docs/authentication.mdx) - OAuth configuration
+- [**AI Models Guide**](./docs/ai-models.mdx) - Supported models and configuration
+- [**Chat Features**](./docs/chat.mdx) - Using the chat interface
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and test thoroughly
+4. Submit a pull request
+
+### Code Style
+- We use Biome for formatting and linting
+- Run `bun run lint` and `bun run format` before committing
+- Follow our TypeScript and React best practices
+
+## 📄 License
+
+This project is licensed under the [Functional Source License v1.1 with Apache 2.0 Future License](LICENSE.md).
+
+**TL;DR**: You can use this software for any purpose except creating a competing commercial product. After 2 years, it becomes Apache 2.0 licensed.
+
+## 🌟 Community
+
+- **Website**: [lightfast.ai](https://lightfast.ai)
+- **Chat Demo**: [chat.lightfast.ai](https://chat.lightfast.ai)
+- **GitHub**: [github.com/lightfastai/chat](https://github.com/lightfastai/chat)
+- **Discord**: [Join our community](https://discord.gg/YqPDfcar2C)
+- **Twitter**: [@lightfastai](https://x.com/lightfastai)
+
+## 💖 Support
+
+If you find this project helpful, please consider:
+- ⭐ Starring the repository
+- 🐛 Reporting bugs and issues
+- 💡 Suggesting new features
+- 🤝 Contributing code or documentation
+
+---
+
+**Built with ❤️ by the Lightfast team**
