@@ -363,10 +363,7 @@ const ChatInputComponent = ({
               } ${isLoading ? "opacity-75" : ""}`}
             >
               {/* Textarea area - grows with content up to max height */}
-              <div
-                className="flex-1"
-                style={{ maxHeight: "180px", overflowY: "auto" }}
-              >
+              <div className="flex-1 max-h-[180px] overflow-y-auto chat-input-scroll">
                 <Textarea
                   ref={textareaRef}
                   value={message}
