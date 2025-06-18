@@ -50,7 +50,7 @@ export function MessageActions({ message, className }: MessageActionsProps) {
       _id: tempThreadId,
       _creationTime: now,
       clientId,
-      title: originalThread?.title || "Branched conversation",
+      title: originalThread?.title || "",
       userId: "temp" as Id<"users">, // Temporary user ID
       createdAt: now,
       lastMessageAt: now,
@@ -125,31 +125,43 @@ export function MessageActions({ message, className }: MessageActionsProps) {
           threadId: tempThreadId, // Use the same tempThreadId as the thread
         }))
 
+        // Create optimistic assistant message placeholder for the new response
+        const optimisticAssistantMessage: Doc<"messages"> = {
+          _id: crypto.randomUUID() as Id<"messages">,
+          _creationTime: now + 1,
+          threadId: tempThreadId,
+          body: "", // Empty body for streaming
+          messageType: "assistant",
+          modelId: args.modelId,
+          timestamp: now + 1,
+          isStreaming: true,
+          isComplete: false,
+          streamId: `stream_${clientId}_${now}`,
+          thinkingStartedAt: now,
+        }
+
+        // Combine all messages: existing ones + new assistant placeholder
+        // Messages are in descending order (newest first)
+        const allOptimisticMessages = [
+          optimisticAssistantMessage, // New assistant message at the top
+          ...optimisticMessages, // All copied messages below
+        ]
+
         // CRITICAL: Set optimistic messages using the tempThreadId
         // This ensures useChat hook can find them immediately
         localStore.setQuery(
           api.messages.list,
           { threadId: tempThreadId },
-          optimisticMessages,
+          allOptimisticMessages,
         )
 
-        // DEBUG: Also log what we're setting for debugging
-        console.log("🚀 Optimistic branch - setting messages:", {
-          tempThreadId,
-          clientId,
-          originalMessageCount: originalMessages.length,
-          branchPointIndex,
-          lastUserMessageIndex,
-          sliceStart:
-            lastUserMessageIndex !== -1
-              ? lastUserMessageIndex
-              : branchPointIndex,
-          copiedMessageCount: optimisticMessages.length,
-          firstMessage: optimisticMessages[0]?.body?.slice(0, 50),
-          lastMessage: optimisticMessages[
-            optimisticMessages.length - 1
-          ]?.body?.slice(0, 50),
-        })
+        // CRITICAL: Also set messages by clientId for instant navigation
+        // This allows useChat to find messages before the thread is created
+        localStore.setQuery(
+          api.messages.listByClientId,
+          { clientId },
+          allOptimisticMessages,
+        )
       }
     }
   })
