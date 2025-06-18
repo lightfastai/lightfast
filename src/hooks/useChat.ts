@@ -1,6 +1,7 @@
 "use client"
 
 import type { ModelId } from "@/lib/ai/types"
+import { getProviderFromModelId } from "@/lib/ai/types"
 import { isClientId, nanoid } from "@/lib/nanoid"
 import {
   type Preloaded,
@@ -17,6 +18,7 @@ interface UseChatOptions {
   preloadedThreadById?: Preloaded<typeof api.threads.get>
   preloadedThreadByClientId?: Preloaded<typeof api.threads.getByClientId>
   preloadedMessages?: Preloaded<typeof api.messages.list>
+  preloadedUserSettings?: Preloaded<typeof api.userSettings.getUserSettings>
 }
 
 export function useChat(options: UseChatOptions = {}) {
@@ -126,6 +128,19 @@ export function useChat(options: UseChatOptions = {}) {
   const messages =
     preloadedMessages ?? messagesByClientId ?? messagesByThreadId ?? []
 
+  // Use preloaded user settings if available, otherwise query
+  const preloadedUserSettings = options.preloadedUserSettings
+    ? usePreloadedQuery(options.preloadedUserSettings)
+    : null
+
+  const userSettings = useQuery(
+    api.userSettings.getUserSettings,
+    preloadedUserSettings ? "skip" : {},
+  )
+
+  // Use whichever is available
+  const finalUserSettings = preloadedUserSettings ?? userSettings
+
   // Remove debug logging for production
   // Uncomment the following for debugging message queries
   // useEffect(() => {
@@ -210,19 +225,56 @@ export function useChat(options: UseChatOptions = {}) {
       isComplete: true,
     }
 
+    // Determine if user will use their own API key
+    const provider = getProviderFromModelId(modelId as ModelId)
+    const userSettingsData = localStore.getQuery(
+      api.userSettings.getUserSettings,
+      {},
+    )
+
+    // Default to false if settings not loaded yet
+    // The actual determination will happen server-side
+    let willUseUserApiKey = false
+
+    // Only determine API key usage if settings are loaded
+    if (userSettingsData !== undefined) {
+      if (provider === "anthropic" && userSettingsData?.hasAnthropicKey) {
+        willUseUserApiKey = true
+      } else if (provider === "openai" && userSettingsData?.hasOpenAIKey) {
+        willUseUserApiKey = true
+      } else if (
+        provider === "openrouter" &&
+        userSettingsData?.hasOpenRouterKey
+      ) {
+        willUseUserApiKey = true
+      }
+    }
+
+    // Log for debugging (can be removed in production)
+    if (process.env.NODE_ENV === "development") {
+      console.log("Optimistic update API key inference:", {
+        provider,
+        hasUserSettings: userSettingsData !== undefined,
+        willUseUserApiKey,
+      })
+    }
+
     // Create optimistic assistant message placeholder
+    // Important: Don't set thinkingStartedAt to avoid "Thinking" → "Thought for X.Xs" jump
     const optimisticAssistantMessage: Doc<"messages"> = {
       _id: crypto.randomUUID() as Id<"messages">,
       _creationTime: now + 1,
       threadId: optimisticThreadId,
       body: "", // Empty body for streaming
       messageType: "assistant",
+      model: provider, // Add model field to match server structure
       modelId,
       timestamp: now + 1,
       isStreaming: true,
       isComplete: false,
       streamId: `stream_${clientId}_${now}`,
-      thinkingStartedAt: now,
+      // Don't set thinkingStartedAt to prevent premature "Thinking" display
+      usedUserApiKey: willUseUserApiKey,
     }
 
     // Set optimistic messages for this thread
@@ -295,6 +347,15 @@ export function useChat(options: UseChatOptions = {}) {
     webSearchEnabled?: boolean,
   ) => {
     if (!message.trim()) return
+
+    // Ensure user settings are loaded before sending
+    // This helps ensure the optimistic update has the data it needs
+    if (finalUserSettings === undefined) {
+      console.warn("User settings not loaded yet, waiting...")
+      // In practice, this should rarely happen because we preload settings
+      // But this ensures we don't create incorrect optimistic updates
+      return
+    }
 
     try {
       if (isNewChat) {
@@ -374,5 +435,6 @@ export function useChat(options: UseChatOptions = {}) {
       description: getEmptyStateDescription(),
     },
     isDisabled: currentThread === null && !isNewChat && !currentClientId,
+    userSettings: finalUserSettings,
   }
 }
