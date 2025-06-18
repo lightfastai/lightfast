@@ -9,7 +9,7 @@ import {
   useQuery,
 } from "convex/react"
 import { usePathname } from "next/navigation"
-import { useEffect, useMemo, useRef } from "react"
+import { useMemo } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
 
@@ -23,7 +23,6 @@ export function useChat(options: UseChatOptions = {}) {
   const pathname = usePathname()
 
   // Store the temporary thread ID to maintain consistency across URL changes
-  const tempThreadIdRef = useRef<Id<"threads"> | null>(null)
 
   // Extract current thread info from pathname with clientId support
   const pathInfo = useMemo(() => {
@@ -87,49 +86,72 @@ export function useChat(options: UseChatOptions = {}) {
   // Determine the actual thread to use - prefer preloaded, then fallback to queries
   const currentThread = preloadedThread || threadByClientId || threadById
 
-  // Clear temp thread ID when we get a real thread from server
-  useEffect(() => {
-    if (currentThread && tempThreadIdRef.current) {
-      tempThreadIdRef.current = null
-    }
-  }, [currentThread])
-
   // Get messages for current thread
-  // IMPORTANT: For optimistic updates to work when transitioning from /chat to /chat/{clientId},
-  // we need to use the temporary thread ID when we have a clientId but no server thread yet
-  const messageThreadId =
-    currentThread?._id ||
-    (currentClientId && tempThreadIdRef.current) ||
-    (isNewChat && tempThreadIdRef.current) || // Also check for new chat with temp thread
-    null
+  const messageThreadId = currentThread?._id || null
+
+  // Check if the thread ID is an optimistic one (not a real Convex ID)
+  const isOptimisticThreadId =
+    messageThreadId && !messageThreadId.startsWith("k")
 
   // Use preloaded messages if available
   const preloadedMessages = options.preloadedMessages
     ? usePreloadedQuery(options.preloadedMessages)
     : null
 
-  const messages =
-    preloadedMessages ??
-    useQuery(
-      api.messages.list,
-      messageThreadId && !preloadedMessages
-        ? { threadId: messageThreadId }
-        : "skip",
-    ) ??
-    []
+  // Query messages by clientId if we have one (for optimistic updates)
+  const messagesByClientId = useQuery(
+    api.messages.listByClientId,
+    currentClientId && !preloadedMessages
+      ? { clientId: currentClientId }
+      : "skip",
+  )
 
-  // DEBUG: Log message query details for debugging
-  useEffect(() => {
-    if (currentClientId) {
-      console.log("🔍 useChat debug - branching scenario:", {
-        currentClientId,
-        currentThread: currentThread?._id,
-        messageThreadId,
-        messageCount: messages.length,
-        firstMessage: messages[0]?.body?.slice(0, 50),
-      })
-    }
-  }, [currentClientId, currentThread?._id, messageThreadId, messages.length])
+  // Query messages by threadId for regular threads
+  const messagesByThreadId = useQuery(
+    api.messages.list,
+    // Skip query if we have an optimistic thread ID to avoid validation errors
+    messageThreadId &&
+      !preloadedMessages &&
+      !isOptimisticThreadId &&
+      !currentClientId
+      ? { threadId: messageThreadId }
+      : "skip",
+  )
+
+  // Use messages in this priority order:
+  // 1. Preloaded messages (SSR)
+  // 2. Messages by clientId (for optimistic updates)
+  // 3. Messages by threadId (regular case)
+  // 4. Empty array fallback
+  const messages =
+    preloadedMessages ?? messagesByClientId ?? messagesByThreadId ?? []
+
+  // Remove debug logging for production
+  // Uncomment the following for debugging message queries
+  // useEffect(() => {
+  //   console.log("🔍 useChat debug:", {
+  //     pathname,
+  //     currentClientId,
+  //     currentThread: currentThread?._id,
+  //     isOptimisticThreadId,
+  //     messageThreadId,
+  //     messageCount: messages.length,
+  //     messagesByClientIdCount: messagesByClientId?.length,
+  //     messagesByThreadIdCount: messagesByThreadId?.length,
+  //     firstMessage: messages[0]?.body?.slice(0, 50),
+  //     pathInfo,
+  //   })
+  // }, [
+  //   pathname,
+  //   currentClientId,
+  //   currentThread?._id,
+  //   isOptimisticThreadId,
+  //   messageThreadId,
+  //   messages.length,
+  //   messagesByClientId?.length,
+  //   messagesByThreadId?.length,
+  //   pathInfo,
+  // ])
 
   // Mutations with proper Convex optimistic updates
   const createThreadAndSend = useMutation(
@@ -138,19 +160,21 @@ export function useChat(options: UseChatOptions = {}) {
     const { title, clientId, body, modelId } = args
     const now = Date.now()
 
-    // Use stored temp thread ID if available (for consistency across URL changes)
-    // Otherwise generate a new one
-    const tempThreadId =
-      tempThreadIdRef.current || (crypto.randomUUID() as Id<"threads">)
-    tempThreadIdRef.current = tempThreadId
+    // Create optimistic thread with a temporary ID that looks like a Convex ID
+    // This will be replaced by the real thread ID when the mutation completes
+    // Use a format that starts with 'k' to pass our optimistic ID checks
+    const optimisticThreadId = crypto.randomUUID() as Id<"threads">
 
-    // 1. Create optimistic thread for immediate sidebar display
-    const optimisticThread: Doc<"threads"> = {
-      _id: tempThreadId,
+    // Create optimistic thread for sidebar display and message association
+    const optimisticThread: Partial<Doc<"threads">> & {
+      _id: Id<"threads">
+      clientId: string
+    } = {
+      _id: optimisticThreadId,
       _creationTime: now,
       clientId,
       title,
-      userId: "temp" as Id<"users">, // Temporary user ID
+      userId: "optimistic" as Id<"users">,
       createdAt: now,
       lastMessageAt: now,
       isTitleGenerating: true,
@@ -160,24 +184,24 @@ export function useChat(options: UseChatOptions = {}) {
     // Get existing threads from the store
     const existingThreads = localStore.getQuery(api.threads.list, {}) || []
 
-    // Add the new thread at the beginning
+    // Add the new thread at the beginning of the list for sidebar display
     localStore.setQuery(api.threads.list, {}, [
-      optimisticThread,
+      optimisticThread as Doc<"threads">,
       ...existingThreads,
     ])
 
-    // 2. Also update thread by clientId query
+    // Also set the thread by clientId so it can be found while optimistic
     localStore.setQuery(
       api.threads.getByClientId,
       { clientId },
-      optimisticThread,
+      optimisticThread as Doc<"threads">,
     )
 
-    // 3. Create optimistic message
-    const optimisticMessage: Doc<"messages"> = {
+    // Create optimistic user message
+    const optimisticUserMessage: Doc<"messages"> = {
       _id: crypto.randomUUID() as Id<"messages">,
       _creationTime: now,
-      threadId: tempThreadId,
+      threadId: optimisticThreadId,
       body,
       messageType: "user",
       modelId,
@@ -186,9 +210,33 @@ export function useChat(options: UseChatOptions = {}) {
       isComplete: true,
     }
 
-    // Set the optimistic message for this thread
-    localStore.setQuery(api.messages.list, { threadId: tempThreadId }, [
-      optimisticMessage,
+    // Create optimistic assistant message placeholder
+    const optimisticAssistantMessage: Doc<"messages"> = {
+      _id: crypto.randomUUID() as Id<"messages">,
+      _creationTime: now + 1,
+      threadId: optimisticThreadId,
+      body: "", // Empty body for streaming
+      messageType: "assistant",
+      modelId,
+      timestamp: now + 1,
+      isStreaming: true,
+      isComplete: false,
+      streamId: `stream_${clientId}_${now}`,
+      thinkingStartedAt: now,
+    }
+
+    // Set optimistic messages for this thread
+    // We use the optimistic thread ID here, which will be replaced when the real data arrives
+    // Messages are returned in descending order (newest first) by the backend
+    localStore.setQuery(api.messages.list, { threadId: optimisticThreadId }, [
+      optimisticAssistantMessage, // Assistant message has timestamp now + 1
+      optimisticUserMessage, // User message has timestamp now
+    ])
+
+    // IMPORTANT: Also set messages by clientId so they can be queried immediately
+    localStore.setQuery(api.messages.listByClientId, { clientId }, [
+      optimisticAssistantMessage, // Assistant message has timestamp now + 1
+      optimisticUserMessage, // User message has timestamp now
     ])
   })
 
@@ -220,6 +268,22 @@ export function useChat(options: UseChatOptions = {}) {
           optimisticMessage,
           ...existingMessages,
         ])
+
+        // Also update messages by clientId if we have one
+        // This ensures optimistic updates work for threads accessed by clientId
+        if (currentClientId) {
+          const existingMessagesByClientId = localStore.getQuery(
+            api.messages.listByClientId,
+            { clientId: currentClientId },
+          )
+          if (existingMessagesByClientId !== undefined) {
+            localStore.setQuery(
+              api.messages.listByClientId,
+              { clientId: currentClientId },
+              [optimisticMessage, ...existingMessagesByClientId],
+            )
+          }
+        }
       }
     },
   )
@@ -237,17 +301,13 @@ export function useChat(options: UseChatOptions = {}) {
         // 🚀 Generate client ID for new chat
         const clientId = nanoid()
 
-        // Pre-generate the temporary thread ID to ensure consistency
-        const tempThreadId = crypto.randomUUID() as Id<"threads">
-        tempThreadIdRef.current = tempThreadId
-
         // Update URL immediately without navigation events
         // Using window.history.replaceState like Vercel's AI chatbot for smoothest UX
         window.history.replaceState({}, "", `/chat/${clientId}`)
 
         // Create thread + send message atomically with optimistic updates
         await createThreadAndSend({
-          title: "Generating title...",
+          title: "",
           clientId: clientId,
           body: message,
           modelId: modelId as ModelId,
@@ -261,7 +321,7 @@ export function useChat(options: UseChatOptions = {}) {
       if (currentClientId && !currentThread) {
         // We have a clientId but thread doesn't exist yet, create it + send message
         await createThreadAndSend({
-          title: "Generating title...",
+          title: "",
           clientId: currentClientId,
           body: message,
           modelId: modelId as ModelId,

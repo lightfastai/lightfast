@@ -121,6 +121,79 @@ const modelProviderValidator = v.union(
   v.literal("openrouter"),
 )
 
+export const listByClientId = query({
+  args: {
+    clientId: v.string(),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("messages"),
+      _creationTime: v.number(),
+      threadId: v.id("threads"),
+      body: v.string(),
+      timestamp: v.number(),
+      messageType: v.union(v.literal("user"), v.literal("assistant")),
+      model: v.optional(modelProviderValidator),
+      modelId: v.optional(v.string()),
+      isStreaming: v.optional(v.boolean()),
+      streamId: v.optional(v.string()),
+      isComplete: v.optional(v.boolean()),
+      thinkingStartedAt: v.optional(v.number()),
+      thinkingCompletedAt: v.optional(v.number()),
+      attachments: v.optional(v.array(v.id("files"))),
+      thinkingContent: v.optional(v.string()),
+      isThinking: v.optional(v.boolean()),
+      hasThinkingContent: v.optional(v.boolean()),
+      usedUserApiKey: v.optional(v.boolean()),
+      usage: v.optional(
+        v.object({
+          inputTokens: v.optional(v.number()),
+          outputTokens: v.optional(v.number()),
+          totalTokens: v.optional(v.number()),
+          reasoningTokens: v.optional(v.number()),
+          cachedInputTokens: v.optional(v.number()),
+        }),
+      ),
+      lastChunkId: v.optional(v.string()),
+      streamChunks: v.optional(
+        v.array(
+          v.object({
+            id: v.string(),
+            content: v.string(),
+            timestamp: v.number(),
+            sequence: v.optional(v.number()),
+          }),
+        ),
+      ),
+      streamVersion: v.optional(v.number()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      return []
+    }
+
+    // First get the thread by clientId
+    const thread = await ctx.db
+      .query("threads")
+      .withIndex("by_client_id", (q) => q.eq("clientId", args.clientId))
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .first()
+
+    if (!thread) {
+      return []
+    }
+
+    // Then get messages for this thread
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_thread", (q) => q.eq("threadId", thread._id))
+      .order("desc")
+      .take(50)
+  },
+})
+
 export const list = query({
   args: {
     threadId: v.id("threads"),
@@ -277,7 +350,11 @@ export const createThreadAndSend = mutation({
     attachments: v.optional(v.array(v.id("files"))), // Add attachments support
     webSearchEnabled: v.optional(v.boolean()),
   },
-  returns: v.id("threads"),
+  returns: v.object({
+    threadId: v.id("threads"),
+    userMessageId: v.id("messages"),
+    assistantMessageId: v.id("messages"),
+  }),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx)
     if (!userId) {
@@ -321,7 +398,7 @@ export const createThreadAndSend = mutation({
     })
 
     // Insert user message
-    await ctx.db.insert("messages", {
+    const userMessageId = await ctx.db.insert("messages", {
       threadId,
       body: args.body,
       timestamp: now,
@@ -331,14 +408,40 @@ export const createThreadAndSend = mutation({
       attachments: args.attachments,
     })
 
-    // Schedule AI response
-    await ctx.scheduler.runAfter(0, internal.messages.generateAIResponse, {
+    // Generate unique stream ID for assistant message
+    const streamId = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    // Create assistant message placeholder immediately
+    const assistantMessageId = await ctx.db.insert("messages", {
       threadId,
-      userMessage: args.body,
+      body: "", // Will be updated as chunks arrive
+      timestamp: now + 1, // Ensure it comes after user message
+      messageType: "assistant",
+      model: provider,
       modelId: modelId,
-      attachments: args.attachments,
-      webSearchEnabled: args.webSearchEnabled,
+      isStreaming: true,
+      streamId: streamId,
+      isComplete: false,
+      thinkingStartedAt: now,
+      streamChunks: [], // Initialize empty chunks array
+      streamVersion: 0, // Initialize version counter
+      lastChunkId: undefined, // Initialize last chunk ID
     })
+
+    // Schedule AI response with the pre-created message ID
+    await ctx.scheduler.runAfter(
+      0,
+      internal.messages.generateAIResponseWithMessage,
+      {
+        threadId,
+        userMessage: args.body,
+        modelId: modelId,
+        attachments: args.attachments,
+        webSearchEnabled: args.webSearchEnabled,
+        messageId: assistantMessageId,
+        streamId: streamId,
+      },
+    )
 
     // Schedule title generation (this is the first message)
     await ctx.scheduler.runAfter(100, internal.titles.generateTitle, {
@@ -346,7 +449,11 @@ export const createThreadAndSend = mutation({
       userMessage: args.body,
     })
 
-    return threadId
+    return {
+      threadId,
+      userMessageId,
+      assistantMessageId,
+    }
   },
 })
 
@@ -441,6 +548,277 @@ async function buildMessageContent(
 
   return content
 }
+
+// New action that uses pre-created message ID
+export const generateAIResponseWithMessage = internalAction({
+  args: {
+    threadId: v.id("threads"),
+    userMessage: v.string(),
+    modelId: modelIdValidator,
+    attachments: v.optional(v.array(v.id("files"))),
+    webSearchEnabled: v.optional(v.boolean()),
+    messageId: v.id("messages"), // Pre-created message ID
+    streamId: v.string(), // Pre-generated stream ID
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    try {
+      // Since this is called from createThreadAndSend, we know the thread exists
+      // We just need to get the userId for API key retrieval
+      const thread = await ctx.runQuery(internal.messages.getThreadById, {
+        threadId: args.threadId,
+      })
+      if (!thread) {
+        throw new Error("Thread not found")
+      }
+
+      // Derive provider and other settings from modelId
+      const provider = getProviderFromModelId(args.modelId as ModelId)
+      const actualModelName = getActualModelName(args.modelId as ModelId)
+
+      // Get user's API keys if available
+      const userApiKeys = await ctx.runMutation(
+        internal.userSettings.getDecryptedApiKeys,
+        { userId: thread.userId },
+      )
+
+      // Determine if user's API key will be used
+      const willUseUserApiKey =
+        (provider === "anthropic" && userApiKeys && userApiKeys.anthropic) ||
+        (provider === "openai" && userApiKeys && userApiKeys.openai) ||
+        (provider === "openrouter" && userApiKeys && userApiKeys.openrouter)
+
+      // Update the pre-created message with API key status
+      await ctx.runMutation(internal.messages.updateMessageApiKeyStatus, {
+        messageId: args.messageId,
+        usedUserApiKey: !!willUseUserApiKey,
+      })
+
+      // Get recent conversation context
+      const recentMessages = await ctx.runQuery(
+        internal.messages.getRecentContext,
+        { threadId: args.threadId },
+      )
+
+      // Prepare system prompt based on model capabilities
+      let systemPrompt =
+        "You are a helpful AI assistant in a chat conversation. Be concise and friendly."
+
+      // Check model capabilities
+      const modelConfig = getModelById(args.modelId)
+      const hasVisionSupport = modelConfig?.features.vision ?? false
+      const hasPdfSupport = modelConfig?.features.pdfSupport ?? false
+
+      if (hasVisionSupport) {
+        if (hasPdfSupport) {
+          // Claude models with both vision and PDF support
+          systemPrompt +=
+            " You can view and analyze images (JPEG, PNG, GIF, WebP) and PDF documents directly. For other file types, you'll receive a text description. When users ask about an attached file, provide detailed analysis of what you can see."
+        } else {
+          // GPT-4 models with vision but no PDF support
+          systemPrompt +=
+            " You can view and analyze images (JPEG, PNG, GIF, WebP) directly. For PDFs and other file types, you'll receive a text description. When asked about a PDF, politely explain that you can see it's attached but cannot analyze its contents - suggest using Claude models for PDF analysis. For images, provide detailed analysis of what you can see."
+        }
+      } else {
+        // Models without vision support (e.g., GPT-3.5 Turbo)
+        systemPrompt += ` IMPORTANT: You cannot view images or files directly with ${modelConfig?.displayName || "this model"}. When users share files and ask about them, you must clearly state: 'I can see you've uploaded [filename], but I'm unable to view or analyze images with ${modelConfig?.displayName || "this model"}. To analyze images or documents, please switch to GPT-4o, GPT-4o Mini, or any Claude model using the model selector below the input box.' Be helpful by acknowledging what files they've shared based on the descriptions you receive.`
+      }
+
+      // Prepare messages for AI SDK v5 with multimodal support
+      const messages: CoreMessage[] = [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+      ]
+
+      // Build conversation history with attachments
+      for (let i = 0; i < recentMessages.length; i++) {
+        const msg = recentMessages[i]
+        const isLastUserMessage =
+          i === recentMessages.length - 1 && msg.messageType === "user"
+
+        // For the last user message, include the current attachments
+        const attachmentsToUse =
+          isLastUserMessage && args.attachments
+            ? args.attachments
+            : msg.attachments
+
+        // Build message content with attachments
+        const content = await buildMessageContent(
+          ctx,
+          msg.body,
+          attachmentsToUse,
+          provider,
+          args.modelId,
+        )
+
+        messages.push({
+          role: msg.messageType === "user" ? "user" : "assistant",
+          content,
+        } as CoreMessage)
+      }
+
+      // Choose the appropriate model using user's API key if available, otherwise fall back to global
+      const ai =
+        provider === "anthropic"
+          ? userApiKeys?.anthropic
+            ? createAnthropic({ apiKey: userApiKeys.anthropic })
+            : anthropic
+          : provider === "openai"
+            ? userApiKeys?.openai
+              ? createOpenAI({ apiKey: userApiKeys.openai })
+              : openai
+            : provider === "openrouter"
+              ? userApiKeys?.openrouter
+                ? createOpenAI({
+                    apiKey: userApiKeys.openrouter,
+                    baseURL: "https://openrouter.ai/api/v1",
+                    headers: {
+                      "HTTP-Referer":
+                        process.env.SITE_URL || "http://localhost:3000",
+                      "X-Title": "Lightfast Chat",
+                    },
+                  })
+                : createOpenAI({
+                    apiKey: process.env.OPENROUTER_API_KEY!,
+                    baseURL: "https://openrouter.ai/api/v1",
+                    headers: {
+                      "HTTP-Referer":
+                        process.env.SITE_URL || "http://localhost:3000",
+                      "X-Title": "Lightfast Chat",
+                    },
+                  })
+              : (() => {
+                  throw new Error(`Unsupported provider: ${provider}`)
+                })()
+
+      // Update token usage function
+      const updateUsage = async (usage: {
+        promptTokens?: number
+        completionTokens?: number
+        totalTokens?: number
+        completionTokensDetails?: { reasoningTokens?: number }
+        promptTokensDetails?: { cachedTokens?: number }
+      }) => {
+        if (usage) {
+          await ctx.runMutation(internal.messages.updateThreadUsageMutation, {
+            threadId: args.threadId,
+            usage: {
+              promptTokens: usage.promptTokens || 0,
+              completionTokens: usage.completionTokens || 0,
+              totalTokens: usage.totalTokens || 0,
+              reasoningTokens:
+                usage.completionTokensDetails?.reasoningTokens || 0,
+              cachedTokens: usage.promptTokensDetails?.cachedTokens || 0,
+              modelId: args.modelId,
+            },
+          })
+        }
+      }
+
+      // Prepare generation options
+      const generationOptions: Parameters<typeof streamText>[0] = {
+        model: ai(actualModelName),
+        messages: messages,
+        onFinish: async (event) => {
+          await updateUsage(event.usage)
+        },
+      }
+
+      // Add web search tool if enabled
+      if (args.webSearchEnabled) {
+        generationOptions.tools = {
+          web_search: createWebSearchTool(),
+        }
+      }
+
+      // Use the AI SDK v5 streamText
+      const result = streamText(generationOptions)
+
+      let fullText = ""
+      let hasContent = false
+      let toolCallsInProgress = 0
+
+      // Process the stream
+      for await (const chunk of result.textStream) {
+        if (chunk) {
+          fullText += chunk
+          hasContent = true
+          const chunkId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+          await ctx.runMutation(internal.messages.appendStreamChunk, {
+            messageId: args.messageId,
+            chunk,
+            chunkId,
+          })
+        }
+      }
+
+      // Process tool calls if web search is enabled
+      if (args.webSearchEnabled) {
+        for await (const streamPart of result.fullStream) {
+          if (streamPart.type === "tool-call") {
+            toolCallsInProgress++
+          }
+
+          if (streamPart.type === "tool-result") {
+            // Tool results are handled by the AI SDK and included in the response
+            // We don't need to store them separately
+          }
+        }
+      }
+
+      // Get final usage with optional chaining
+      const finalUsage = await result.usage
+      if (finalUsage) {
+        await updateUsage(finalUsage)
+      }
+
+      // If we have streamed content, mark the message as complete
+      if (hasContent) {
+        await ctx.runMutation(internal.messages.completeStreamingMessage, {
+          messageId: args.messageId,
+          streamId: args.streamId,
+          fullText,
+        })
+      }
+
+      // Clear the generation flag on success
+      await ctx.runMutation(internal.messages.clearGenerationFlag, {
+        threadId: args.threadId,
+      })
+    } catch (error) {
+      console.error("Error in generateAIResponseWithMessage:", error)
+
+      // Try to create error message
+      try {
+        // Update the existing message to show error
+        await ctx.runMutation(internal.messages.updateMessageError, {
+          messageId: args.messageId,
+          errorMessage: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
+        })
+      } catch (errorHandlingError) {
+        console.error("Error during error handling:", errorHandlingError)
+      } finally {
+        // CRITICAL: Always clear generation flag, even if error handling fails
+        try {
+          await ctx.runMutation(internal.messages.clearGenerationFlag, {
+            threadId: args.threadId,
+          })
+        } catch (flagClearError) {
+          console.error(
+            "CRITICAL: Failed to clear generation flag:",
+            flagClearError,
+          )
+          // This is a critical error that could leave the thread in a locked state
+        }
+      }
+    }
+
+    return null
+  },
+})
 
 // Internal action to generate AI response using AI SDK v5
 export const generateAIResponse = internalAction({
@@ -719,7 +1097,8 @@ Remember: After search results appear, immediately continue analyzing and explai
             chunkId,
           })
         } else if (chunk.type === "tool-call") {
-          // Log tool calls for debugging (automatic execution via maxSteps)
+          // Tool calls are now handled automatically by the AI SDK
+          // We just track that a tool call occurred for logging
           toolCallsProcessed++
           console.log(
             `Tool call #${toolCallsProcessed} - ${chunk.toolName} with args:`,
@@ -816,7 +1195,7 @@ Remember: After search results appear, immediately continue analyzing and explai
       }
 
       // Mark message as complete with usage data
-      await ctx.runMutation(internal.messages.completeStreamingMessage, {
+      await ctx.runMutation(internal.messages.completeStreamingMessageLegacy, {
         messageId,
         usage: formattedUsage,
       })
@@ -871,9 +1250,12 @@ Remember: After search results appear, immediately continue analyzing and explai
             messageId,
             content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}. Please check your API keys.`,
           })
-          await ctx.runMutation(internal.messages.completeStreamingMessage, {
-            messageId,
-          })
+          await ctx.runMutation(
+            internal.messages.completeStreamingMessageLegacy,
+            {
+              messageId,
+            },
+          )
         } else {
           const provider = getProviderFromModelId(args.modelId as ModelId)
           const streamId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -1031,8 +1413,70 @@ export const updateStreamingMessage = internalMutation({
   },
 })
 
-// Internal mutation to mark streaming as complete and update thread usage
-export const completeStreamingMessage = internalMutation({
+// Internal mutation to update message API key status
+export const updateMessageApiKeyStatus = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    usedUserApiKey: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, {
+      usedUserApiKey: args.usedUserApiKey,
+    })
+    return null
+  },
+})
+
+// Internal mutation to update thread usage
+export const updateThreadUsageMutation = internalMutation({
+  args: {
+    threadId: v.id("threads"),
+    usage: v.object({
+      promptTokens: v.number(),
+      completionTokens: v.number(),
+      totalTokens: v.number(),
+      reasoningTokens: v.number(),
+      cachedTokens: v.number(),
+      modelId: v.string(),
+    }),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { threadId, usage } = args
+    const messageUsage = {
+      inputTokens: usage.promptTokens,
+      outputTokens: usage.completionTokens,
+      totalTokens: usage.totalTokens,
+      reasoningTokens: usage.reasoningTokens,
+      cachedInputTokens: usage.cachedTokens,
+    }
+
+    await updateThreadUsage(ctx, threadId, usage.modelId, messageUsage)
+    return null
+  },
+})
+
+// Internal mutation to update message with error
+export const updateMessageError = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    errorMessage: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, {
+      body: args.errorMessage,
+      isStreaming: false,
+      isComplete: true,
+      thinkingCompletedAt: Date.now(),
+    })
+    return null
+  },
+})
+
+// Internal mutation to mark streaming as complete (original version)
+export const completeStreamingMessageLegacy = internalMutation({
   args: {
     messageId: v.id("messages"),
     usage: v.optional(
@@ -1055,6 +1499,53 @@ export const completeStreamingMessage = internalMutation({
 
     // Update the message with completion status and usage
     await ctx.db.patch(args.messageId, {
+      isStreaming: false,
+      isComplete: true,
+      thinkingCompletedAt: Date.now(),
+      usage: args.usage,
+    })
+
+    // Update thread usage totals atomically if we have usage data
+    if (args.usage && message.threadId) {
+      await updateThreadUsage(
+        ctx,
+        message.threadId,
+        message.modelId || message.model || "unknown",
+        args.usage,
+      )
+    }
+
+    return null
+  },
+})
+
+// Internal mutation to mark streaming as complete and update thread usage
+export const completeStreamingMessage = internalMutation({
+  args: {
+    messageId: v.id("messages"),
+    streamId: v.string(),
+    fullText: v.string(),
+    usage: v.optional(
+      v.object({
+        inputTokens: v.optional(v.number()),
+        outputTokens: v.optional(v.number()),
+        totalTokens: v.optional(v.number()),
+        reasoningTokens: v.optional(v.number()),
+        cachedInputTokens: v.optional(v.number()),
+      }),
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Get the message to find thread and model
+    const message = await ctx.db.get(args.messageId)
+    if (!message) {
+      throw new Error("Message not found")
+    }
+
+    // Update the message with completion status and full text
+    await ctx.db.patch(args.messageId, {
+      body: args.fullText,
       isStreaming: false,
       isComplete: true,
       thinkingCompletedAt: Date.now(),
@@ -1168,8 +1659,8 @@ async function updateThreadUsage(
         throw error
       }
 
-      // Brief delay before retry
-      await new Promise((resolve) => setTimeout(resolve, 10 * retryCount))
+      // Note: In mutations, we can't use setTimeout for delays
+      // The retry will happen immediately, relying on Convex's internal conflict resolution
     }
   }
 }
