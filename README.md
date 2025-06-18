@@ -33,25 +33,58 @@ Create a `.env.local` file in the root directory with the following variables:
 ```bash
 # Convex Configuration
 NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210  # For local development
+CONVEX_DEPLOYMENT=your-convex-deployment-url   # For production
 
 # AI API Keys (Required for AI responses)
-OPENAI_API_KEY=sk-your-openai-api-key-here
 ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here  # Required for Claude Sonnet 4 (default)
+OPENAI_API_KEY=sk-your-openai-api-key-here            # Required for GPT models
+OPENROUTER_API_KEY=sk-or-your-openrouter-key-here     # Required for additional AI models
+EXA_API_KEY=your-exa-api-key-here                     # Required for web search functionality
 
-# GitHub OAuth (Required for authentication)
+# Authentication
 AUTH_GITHUB_ID=your-github-oauth-client-id
 AUTH_GITHUB_SECRET=your-github-oauth-client-secret
+JWT_PRIVATE_KEY=your-jwt-private-key                  # JWT signing key
+JWKS=your-jwks-string                                 # JWT verification keys
+SITE_URL=http://localhost:3000                        # Your site URL for redirects
+
+# Vercel Environment (optional)
+NEXT_PUBLIC_VERCEL_ENV=development                     # deployment environment
 
 # Node Environment
 NODE_ENV=development
 ```
 
-### Environment Variable Types
+### Environment Variable Categories
 
-- **Server-only variables**: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `NODE_ENV`
-  - These are only available on the server-side and will throw an error if accessed on the client
-- **Client-accessible variables**: `NEXT_PUBLIC_CONVEX_URL`
-  - These are available on both server and client (must be prefixed with `NEXT_PUBLIC_`)
+#### **🔒 Server-only Variables**
+These are only available on the server-side and will throw an error if accessed on the client:
+- `ANTHROPIC_API_KEY` - Claude Sonnet 4 API access
+- `OPENAI_API_KEY` - GPT models API access  
+- `OPENROUTER_API_KEY` - Additional AI models via OpenRouter
+- `EXA_API_KEY` - Web search functionality
+- `AUTH_GITHUB_ID` - GitHub OAuth client ID
+- `AUTH_GITHUB_SECRET` - GitHub OAuth client secret *(Note: check for typos like AUTH_GITHUB_SERCET)*
+- `JWT_PRIVATE_KEY` - JWT token signing
+- `JWKS` - JWT verification keys
+- `SITE_URL` - Authentication redirect URL
+
+#### **🌐 Client-accessible Variables**
+These are available on both server and client (must be prefixed with `NEXT_PUBLIC_`):
+- `NEXT_PUBLIC_CONVEX_URL` - Convex backend URL
+- `NEXT_PUBLIC_VERCEL_ENV` - Deployment environment detection
+
+#### **⚙️ Shared Variables**
+Available on both client and server:
+- `NODE_ENV` - Runtime environment (development/production)
+
+### 🔑 Getting API Keys
+
+- **Anthropic API**: Sign up at [console.anthropic.com](https://console.anthropic.com) for Claude access
+- **OpenAI API**: Get your key from [platform.openai.com](https://platform.openai.com/api-keys)
+- **OpenRouter API**: Register at [openrouter.ai](https://openrouter.ai) for additional model access
+- **Exa API**: Create account at [exa.ai](https://exa.ai) for web search capabilities
+- **GitHub OAuth**: Configure at [GitHub Developer Settings](https://github.com/settings/developers)
 
 ## Authentication Setup
 
@@ -297,11 +330,18 @@ Simply visit [chat.lightfast.ai](https://chat.lightfast.ai) and start chatting w
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Claude API access |
-| `OPENAI_API_KEY` | Yes | GPT model access |
+| `ANTHROPIC_API_KEY` | Yes | Claude Sonnet 4 API access |
+| `OPENAI_API_KEY` | Yes | GPT models API access |
+| `OPENROUTER_API_KEY` | Yes | Additional AI models via OpenRouter |
+| `EXA_API_KEY` | Yes | Web search functionality |
 | `AUTH_GITHUB_ID` | Yes | GitHub OAuth client ID |
 | `AUTH_GITHUB_SECRET` | Yes | GitHub OAuth client secret |
+| `JWT_PRIVATE_KEY` | Yes | JWT token signing key |
+| `JWKS` | Yes | JWT verification keys |
 | `NEXT_PUBLIC_CONVEX_URL` | Yes | Convex deployment URL |
+| `CONVEX_DEPLOYMENT` | Production | Convex deployment identifier |
+| `SITE_URL` | Recommended | Site URL for auth redirects |
+| `NEXT_PUBLIC_VERCEL_ENV` | Optional | Deployment environment detection |
 
 ## 📚 Documentation
 
