@@ -75,10 +75,19 @@ body:
         ---
         ### How to Use This Issue:
         
-        1. **Initial Creation**: Fill out the basic structure with your research question and initial findings
-        2. **Continuous Updates**: Edit the issue description to add new findings, refine understanding
-        3. **Major Updates**: Use comments for significant discoveries or direction changes
-        4. **Collaboration**: Others can comment with additional research, alternative perspectives
-        5. **Completion**: When research is sufficient, create implementation issues referencing this research
+        **Phase 1: Research & Discovery**
+        1. Fill out initial structure with research question and findings
+        2. Continuously edit description to add discoveries
+        3. Use comments for major updates or pivots
         
-        This is a living document - update it freely as you learn more!
+        **Phase 2: Implementation Planning**
+        1. Add "Implementation Plan" section via comment when ready to build
+        2. List specific tasks based on research conclusions
+        3. Create worktree and PR that reference this issue
+        
+        **Phase 3: Implementation Tracking**
+        1. Update task checkboxes as work progresses
+        2. Link all related PRs to this issue
+        3. Document implementation decisions and learnings
+        
+        This issue serves as both research document AND implementation tracker!
