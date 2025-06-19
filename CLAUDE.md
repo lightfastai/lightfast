@@ -134,6 +134,14 @@ cat "$CONTEXT_FILE" 2>/dev/null || echo "No existing context found"
 1. **Feature Request** - For new features
 2. **Bug Report** - For fixing issues
 3. **Quick Task** - For simple tasks
+4. **Research & Exploration** - For ongoing research and system design investigations
+
+#### Research & Exploration Issues
+Research issues are **living documents** for theoretical exploration:
+- **Purpose**: Document ongoing research without defining implementation
+- **Usage**: Continuously update, refine, and expand findings
+- **Structure**: Edit issue description for findings, use comments for major updates
+- **Completion**: Create implementation issues when research is sufficient
 
 **File References**: Use `@src/path/to/file.tsx` to help Claude navigate directly to relevant files.
 
