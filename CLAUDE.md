@@ -113,29 +113,12 @@ gh pr comment <pr_number> --body "⚠️ Blocker: <issue_description>"
 ### Example: Starting Implementation from Research
 
 ```bash
-# 1. First, post implementation plan to research issue
+# 1. When ready to implement, create worktree
 RESEARCH_ISSUE=204  # Your research issue number
-gh issue comment $RESEARCH_ISSUE --repo lightfastai/chat --body "## Implementation Plan
-
-Starting implementation of client-side text smoothing based on research findings.
-
-### Tasks:
-- [ ] Create useSmoothText hook with configurable speed
-- [ ] Integrate hook into MessageItem component
-- [ ] Add typewriter cursor animation
-- [ ] Test with different speeds (30-256 chars/sec)
-- [ ] Add configuration to user preferences
-
-### Approach:
-Implementing Phase 1 from research - client-only text smoothing for immediate UX improvement.
-
-Creating worktree and PR now..."
-
-# 2. Create worktree for the implementation
 ./scripts/setup-worktree.sh jeevanpillay/smooth-text-streaming
 cd worktrees/smooth-text-streaming
 
-# 3. Set up context with research issue reference
+# 2. Set up context with research issue reference
 mkdir -p tmp_context
 CONTEXT_FILE="./tmp_context/claude-context-smooth-text-streaming.md"
 cat > "$CONTEXT_FILE" << EOF
@@ -145,21 +128,14 @@ Research Issue: #$RESEARCH_ISSUE
 Branch: jeevanpillay/smooth-text-streaming
 Development Mode: Vercel Build Mode
 
-## Implementation Tasks (from #$RESEARCH_ISSUE)
-- [ ] Create useSmoothText hook
-- [ ] Integrate into MessageItem
-- [ ] Add typewriter cursor
-- [ ] Test different speeds
-- [ ] Add user preferences
-
-## Current Focus
-Implementing Phase 1 from research issue #$RESEARCH_ISSUE
+## Implementing Phase 1 from Research Issue #$RESEARCH_ISSUE
+Focus: Client-side text smoothing for immediate UX improvement
 EOF
 
-# 4. Start implementation...
+# 3. Start implementation...
 # ... make changes ...
 
-# 5. Create PR that links back to research issue
+# 4. Create PR that links back to research issue
 gh pr create --repo lightfastai/chat \
   --title "feat: add smooth text streaming for better UX" \
   --body "Implements Phase 1 findings from #$RESEARCH_ISSUE
@@ -180,24 +156,29 @@ Based on research in #$RESEARCH_ISSUE, this PR:
 
 Part of #$RESEARCH_ISSUE"
 
-# 6. Update research issue with PR link
-PR_URL=$(gh pr list --repo lightfastai/chat --author @me --limit 1 --json url --jq '.[0].url')
-gh issue comment $RESEARCH_ISSUE --repo lightfastai/chat --body "🚀 Implementation started in $PR_URL
+# 5. After PR is merged, update research issue
+gh pr merge <pr_number> --squash --delete-branch
+gh issue comment $RESEARCH_ISSUE --repo lightfastai/chat --body "## ✅ Phase 1 Implementation Complete
 
-Tracking progress:
-- [x] Create useSmoothText hook
-- [x] Integrate into MessageItem
-- [ ] Add typewriter cursor
-- [ ] Test different speeds
-- [ ] Add user preferences"
+PR #<pr_number> has been merged, implementing client-side text smoothing.
+
+### What was implemented:
+- useSmoothText hook with configurable speed (default: 50 chars/sec)
+- Typewriter cursor animation
+- Smooth text rendering in MessageItem component
+
+### Next phases to consider:
+- Phase 2: Streaming throttling (backend optimization)
+- Phase 3: Delta-based storage (if performance issues arise)
+
+Research remains open for future enhancements."
 ```
 
 ### Key Points for Research → Implementation:
-1. **Always reference the research issue** in PR descriptions
-2. **Update task checkboxes** in research issue comments as you progress
-3. **Link all PRs** to the research issue (don't close it if multi-phase)
-4. **Document decisions** that differ from original research
-5. **Keep research issue open** if planning multiple implementation phases
+1. **Reference research issue** in PR description with "Part of #<issue>"
+2. **Update research issue AFTER merge** with implementation summary
+3. **Keep research issues open** for multi-phase implementations
+4. **Document what was built** vs what remains for future phases
 
 ## End-to-End Workflow
 
@@ -237,52 +218,18 @@ Research issues are **living documents** that transition from exploration to imp
 - Update issue description continuously
 - Use comments for major discoveries
 
-**Phase 2: Implementation Planning** (Starting work)
-- Add "Implementation Plan" section to issue with tasks
-- Create worktree linked to research issue
-- Update issue with PR link when created
+**Phase 2: Implementation** (When ready to build)
+- Create worktree referencing research issue
+- Create PR with "Part of #<research_issue>"
+- Keep implementation focused on research findings
 
-**Phase 3: Implementation Tracking** (Active development)
-- Check off tasks as completed
-- Link all PRs to the research issue
-- Document implementation decisions
+**Phase 3: Completion** (After PR merge)
+- Update research issue with what was implemented
+- Document remaining phases for future work
+- Keep issue open if multi-phase
 
-**Workflow for Starting Implementation:**
-```bash
-# 1. Update research issue with implementation plan
-gh issue comment <issue_num> --repo lightfastai/chat --body "## Implementation Plan
-
-Starting implementation based on research findings.
-
-### Tasks:
-- [ ] Task 1: <description>
-- [ ] Task 2: <description>
-- [ ] Task 3: <description>
-
-### Approach:
-<describe the implementation approach based on research>
-
-Creating worktree and PR now..."
-
-# 2. Create worktree (links to research issue automatically)
-./scripts/setup-worktree.sh jeevanpillay/<feature_name>
-cd worktrees/<feature_name>
-
-# 3. Create PR that references the research issue
-gh pr create --repo lightfastai/chat \
-  --title "feat: <feature_name>" \
-  --body "Implements findings from #<research_issue_num>
-
-## Summary
-<brief summary>
-
-## Implementation
-Based on research in #<research_issue_num>, this PR implements:
-- <key change 1>
-- <key change 2>
-
-Closes #<research_issue_num>"
-```
+**Simple Workflow:**
+1. Research in issue → 2. Build in PR → 3. Update issue after merge
 
 **File References**: Use `@src/path/to/file.tsx` to help Claude navigate directly to relevant files.
 

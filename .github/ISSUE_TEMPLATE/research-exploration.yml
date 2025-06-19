@@ -80,14 +80,14 @@ body:
         2. Continuously edit description to add discoveries
         3. Use comments for major updates or pivots
         
-        **Phase 2: Implementation Planning**
-        1. Add "Implementation Plan" section via comment when ready to build
-        2. List specific tasks based on research conclusions
-        3. Create worktree and PR that reference this issue
+        **Phase 2: Implementation**
+        1. Create worktree and start building based on research
+        2. Create PR with "Part of #<this_issue_number>" in description
+        3. Keep implementation aligned with research findings
         
-        **Phase 3: Implementation Tracking**
-        1. Update task checkboxes as work progresses
-        2. Link all related PRs to this issue
-        3. Document implementation decisions and learnings
+        **Phase 3: Post-Merge Updates**
+        1. Update this issue after PR merges
+        2. Document what was implemented
+        3. Note remaining phases for future work
         
         This issue serves as both research document AND implementation tracker!
