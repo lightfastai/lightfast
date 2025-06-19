@@ -64,7 +64,8 @@ At the start of your session, tell Claude which mode to use:
 ### 1. Local Context File (First Priority)
 ```bash
 # ALWAYS set this variable at start of each session
-CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+mkdir -p tmp_context
+CONTEXT_FILE="./tmp_context/claude-context-$(basename $(pwd)).md"
 
 # Create or check existing context file
 if [ -f "$CONTEXT_FILE" ]; then
@@ -73,6 +74,20 @@ if [ -f "$CONTEXT_FILE" ]; then
 else
   echo "🆕 Creating new context file: $CONTEXT_FILE"
 fi
+```
+
+### Repository Cloning Guidelines
+**IMPORTANT**: When cloning external repositories for investigation:
+- **ALWAYS** clone to a subdirectory within the current repository (e.g., `tmp_repo/`)
+- **NEVER** attempt to `cd /tmp` or clone to `/tmp` - this is blocked for security
+- **DO NOT** add cloned repositories to git tracking (they should be in .gitignore)
+
+```bash
+# ✅ CORRECT - Clone to local subdirectory
+git clone https://github.com/example/repo.git tmp_repo/repo-name
+
+# ❌ WRONG - Never do this
+cd /tmp && git clone https://github.com/example/repo.git
 ```
 
 ### 2. GitHub Comments (Second Priority)
@@ -101,13 +116,14 @@ gh pr comment <pr_number> --body "⚠️ Blocker: <issue_description>"
 git worktree list
 
 # Check for existing context files
-ls -la /tmp/claude-context-*.md
+ls -la ./tmp_context/claude-context-*.md 2>/dev/null || echo "No context files found"
 
 # If worktree exists, navigate to it
 cd worktrees/<feature_name>
 
 # Load existing context
-CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+mkdir -p tmp_context
+CONTEXT_FILE="./tmp_context/claude-context-$(basename $(pwd)).md"
 cat "$CONTEXT_FILE" 2>/dev/null || echo "No existing context found"
 ```
 
@@ -156,7 +172,8 @@ bun run env:sync
 #### 🚀 Vercel Build Mode (Default)
 ```bash
 # 1. Set up context tracking
-CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+mkdir -p tmp_context
+CONTEXT_FILE="./tmp_context/claude-context-$(basename $(pwd)).md"
 cat > "$CONTEXT_FILE" << EOF
 # Claude Code Context - $(basename $(pwd))
 Last Updated: $(date)
@@ -207,7 +224,8 @@ echo "🔗 Test on Vercel: https://<project>-<pr-number>-<org>.vercel.app"
 # Terminal 1: bun dev:all
 
 # 2. Set up context tracking
-CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+mkdir -p tmp_context
+CONTEXT_FILE="./tmp_context/claude-context-$(basename $(pwd)).md"
 cat > "$CONTEXT_FILE" << EOF
 # Claude Code Context - $(basename $(pwd))
 Last Updated: $(date)
@@ -369,7 +387,8 @@ bun run env:sync
 ### Context Management
 ```bash
 # Set context file
-CONTEXT_FILE="/tmp/claude-context-$(basename $(pwd)).md"
+mkdir -p tmp_context
+CONTEXT_FILE="./tmp_context/claude-context-$(basename $(pwd)).md"
 
 # View context
 cat "$CONTEXT_FILE"
@@ -397,7 +416,7 @@ gh pr view <pr_number> --json statusCheckRollup
 ### Common Issues
 1. **Build failures**: Use `SKIP_ENV_VALIDATION=true bun run build`
 2. **Merge conflicts**: Remove worktree first: `git worktree remove worktrees/<feature_name>`
-3. **Context loss**: Check `/tmp/claude-context-*.md` files
+3. **Context loss**: Check `./tmp_context/claude-context-*.md` files
 4. **Deployment issues**: Monitor with `gh pr view <pr_number>`
 
 ### Quality Gate Failures
@@ -481,17 +500,17 @@ import { preloadQuery } from "convex/nextjs"
 import { api } from "@/convex/_generated/api"
 import { ChatInterface } from "@/components/chat/ChatInterface"
 
-export default async function ChatPage({ 
-  params 
-}: { 
-  params: { threadId: string } 
+export default async function ChatPage({
+  params
+}: {
+  params: { threadId: string }
 }) {
   const token = await getAuthToken()
-  
+
   // Preload both thread and messages
   const [preloadedThread, preloadedMessages] = await Promise.all([
     preloadQuery(
-      api.threads.get, 
+      api.threads.get,
       { threadId: params.threadId as Id<"threads"> },
       { token }
     ),
@@ -501,9 +520,9 @@ export default async function ChatPage({
       { token }
     )
   ])
-  
+
   return (
-    <ChatInterface 
+    <ChatInterface
       preloadedThread={preloadedThread}
       preloadedMessages={preloadedMessages}
     />
@@ -522,7 +541,7 @@ import { api } from "@/convex/_generated/api"
 export default async function SettingsPage() {
   const token = await getAuthToken()
   const user = await fetchQuery(api.users.current, {}, { token })
-  
+
   // Server-rendered, non-reactive
   return <SettingsForm defaultValues={user} />
 }
@@ -538,13 +557,13 @@ import { revalidatePath } from "next/cache"
 
 export async function sendMessage(threadId: Id<"threads">, content: string) {
   const token = await getAuthToken()
-  
+
   await fetchMutation(
     api.messages.send,
     { threadId, content },
     { token }
   )
-  
+
   revalidatePath(`/chat/${threadId}`)
 }
 ```
@@ -571,11 +590,11 @@ export function useOptimisticSendMessage() {
   return useMutation(api.messages.send).withOptimisticUpdate(
     (localStore, args) => {
       const { threadId, content } = args
-      
+
       // Get current messages
       const existingMessages = localStore.getQuery(api.messages.list, { threadId })
       if (existingMessages === undefined) return
-      
+
       // Create optimistic message
       const optimisticMessage = {
         _id: `temp_${crypto.randomUUID()}` as Id<"messages">,
@@ -586,11 +605,11 @@ export function useOptimisticSendMessage() {
         model: null,
         role: "user" as const,
       }
-      
+
       // Update local store (NEVER mutate, always create new array)
       localStore.setQuery(
-        api.messages.list, 
-        { threadId }, 
+        api.messages.list,
+        { threadId },
         [...existingMessages, optimisticMessage]
       )
     }
@@ -605,7 +624,7 @@ export function useChat(threadId: Id<"threads">) {
   const sendMessage = useMutation(api.messages.send).withOptimisticUpdate(
     (localStore, args) => {
       const { threadId, content } = args
-      
+
       // Update messages list
       const messages = localStore.getQuery(api.messages.list, { threadId })
       if (messages) {
@@ -622,7 +641,7 @@ export function useChat(threadId: Id<"threads">) {
           }
         ])
       }
-      
+
       // Update thread's last message
       const thread = localStore.getQuery(api.threads.get, { threadId })
       if (thread) {
@@ -634,7 +653,7 @@ export function useChat(threadId: Id<"threads">) {
       }
     }
   )
-  
+
   return { sendMessage }
 }
 ```
