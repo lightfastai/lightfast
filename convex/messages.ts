@@ -1,7 +1,7 @@
 import { anthropic, createAnthropic } from "@ai-sdk/anthropic"
 import { createOpenAI, openai } from "@ai-sdk/openai"
 import { getAuthUserId } from "@convex-dev/auth/server"
-import { type CoreMessage, streamText, tool, stepCountIs } from "ai"
+import { type CoreMessage, stepCountIs, streamText, tool } from "ai"
 import { v } from "convex/values"
 import Exa, {
   type RegularSearchOptions,
@@ -115,7 +115,8 @@ function createWebSearchTool() {
             timestamp: new Date().toISOString(),
             autoprompt: response.autopromptString,
           },
-          instructions: "Analyze these search results thoroughly and provide a comprehensive explanation of the findings.",
+          instructions:
+            "Analyze these search results thoroughly and provide a comprehensive explanation of the findings.",
         }
       } catch (error) {
         console.error("Web search error:", error)
@@ -677,12 +678,17 @@ export const generateAIResponseWithMessage = internalAction({
         promptTokensDetails?: { cachedTokens?: number }
       }) => {
         if (usage) {
+          const promptTokens = usage.promptTokens || 0
+          const completionTokens = usage.completionTokens || 0
+          const totalTokens =
+            usage.totalTokens || promptTokens + completionTokens
+
           await ctx.runMutation(internal.messages.updateThreadUsageMutation, {
             threadId: args.threadId,
             usage: {
-              promptTokens: usage.promptTokens || 0,
-              completionTokens: usage.completionTokens || 0,
-              totalTokens: usage.totalTokens || 0,
+              promptTokens,
+              completionTokens,
+              totalTokens,
               reasoningTokens:
                 usage.completionTokensDetails?.reasoningTokens || 0,
               cachedTokens: usage.promptTokensDetails?.cachedTokens || 0,
@@ -696,9 +702,7 @@ export const generateAIResponseWithMessage = internalAction({
       const generationOptions: Parameters<typeof streamText>[0] = {
         model: ai(actualModelName),
         messages: messages,
-        onFinish: async (event) => {
-          await updateUsage(event.usage)
-        },
+        // Usage will be updated after streaming completes
       }
 
       // Add web search tool if enabled
@@ -759,7 +763,9 @@ export const generateAIResponseWithMessage = internalAction({
           ? {
               inputTokens: finalUsage.inputTokens ?? 0,
               outputTokens: finalUsage.outputTokens ?? 0,
-              totalTokens: finalUsage.totalTokens ?? 0,
+              totalTokens:
+                finalUsage.totalTokens ??
+                (finalUsage.inputTokens ?? 0) + (finalUsage.outputTokens ?? 0),
               reasoningTokens: finalUsage.reasoningTokens ?? 0,
               cachedInputTokens: finalUsage.cachedInputTokens ?? 0,
             }
@@ -1174,13 +1180,35 @@ REMEMBER:
         ? {
             inputTokens: finalUsage.inputTokens ?? 0,
             outputTokens: finalUsage.outputTokens ?? 0,
-            totalTokens: finalUsage.totalTokens ?? 0,
+            totalTokens:
+              finalUsage.totalTokens ??
+              (finalUsage.inputTokens ?? 0) + (finalUsage.outputTokens ?? 0),
             reasoningTokens: finalUsage.reasoningTokens ?? 0,
             cachedInputTokens: finalUsage.cachedInputTokens ?? 0,
           }
         : undefined
 
       console.log("Formatted usage:", formattedUsage)
+
+      // Update thread usage if we have usage data
+      if (finalUsage) {
+        const promptTokens = finalUsage.inputTokens || 0
+        const completionTokens = finalUsage.outputTokens || 0
+        const totalTokens =
+          finalUsage.totalTokens || promptTokens + completionTokens
+
+        await ctx.runMutation(internal.messages.updateThreadUsageMutation, {
+          threadId: args.threadId,
+          usage: {
+            promptTokens,
+            completionTokens,
+            totalTokens,
+            reasoningTokens: finalUsage.reasoningTokens || 0,
+            cachedTokens: finalUsage.cachedInputTokens || 0,
+            modelId: args.modelId,
+          },
+        })
+      }
 
       // Ensure we always have some content to complete with, even if just tool results
       if (fullContent.trim() === "" && toolCallsProcessed === 0) {
@@ -1477,15 +1505,8 @@ export const completeStreamingMessageLegacy = internalMutation({
       usage: args.usage,
     })
 
-    // Update thread usage totals atomically if we have usage data
-    if (args.usage && message.threadId) {
-      await updateThreadUsage(
-        ctx,
-        message.threadId,
-        message.modelId || message.model || "unknown",
-        args.usage,
-      )
-    }
+    // Thread usage has already been updated via updateUsage during streaming
+    // No need to update again here to avoid double counting
 
     return null
   },
@@ -1516,15 +1537,8 @@ export const completeStreamingMessage = internalMutation({
       usage: args.usage,
     })
 
-    // Update thread usage totals atomically if we have usage data
-    if (args.usage && message.threadId) {
-      await updateThreadUsage(
-        ctx,
-        message.threadId,
-        message.modelId || message.model || "unknown",
-        args.usage,
-      )
-    }
+    // Thread usage has already been updated via updateUsage during streaming
+    // No need to update again here to avoid double counting
 
     return null
   },
@@ -1554,7 +1568,7 @@ async function updateThreadUsage(
 
       const inputTokens = messageUsage.inputTokens || 0
       const outputTokens = messageUsage.outputTokens || 0
-      const totalTokens = messageUsage.totalTokens || 0
+      const totalTokens = messageUsage.totalTokens || inputTokens + outputTokens
       const reasoningTokens = messageUsage.reasoningTokens || 0
       const cachedInputTokens = messageUsage.cachedInputTokens || 0
 
