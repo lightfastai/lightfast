@@ -22,6 +22,8 @@ This development workflow integrates:
 - **Context Preservation**: GitHub comments + local context files to survive session interruptions
 - **Turborepo + Bun**: Lightning-fast builds with intelligent caching
 
+**Current Context**: June 2025
+
 ## 📋 Development Modes
 
 Claude Code operates in two distinct modes based on your development setup:
