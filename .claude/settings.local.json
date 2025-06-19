@@ -84,7 +84,8 @@
       "Bash(if [ -f \"$CONTEXT_FILE\" ])",
       "Bash(fi)",
       "Bash(openssl rand:*)",
-      "Bash(bun remove:*)"
+      "Bash(bun remove:*)",
+      "Bash(bun update:*)"
     ],
     "deny": []
   }
