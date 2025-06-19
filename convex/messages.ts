@@ -24,12 +24,26 @@ import {
 import { getModelById } from "../src/lib/ai/models.js"
 // Import shared types and utilities
 import {
-  ALL_MODEL_IDS,
   type ModelId,
   getActualModelName,
   getProviderFromModelId,
   isThinkingMode,
 } from "../src/lib/ai/types.js"
+import { env } from "./env.js"
+import {
+  branchInfoValidator,
+  chunkIdValidator,
+  clientIdValidator,
+  messageTypeValidator,
+  modelIdValidator,
+  modelProviderValidator,
+  shareIdValidator,
+  shareSettingsValidator,
+  streamChunkValidator,
+  streamIdValidator,
+  threadUsageValidator,
+  tokenUsageValidator,
+} from "./validators.js"
 
 // Create web search tool using proper AI SDK v5 pattern
 function createWebSearchTool() {
@@ -44,10 +58,7 @@ function createWebSearchTool() {
     execute: async ({ query }) => {
       console.log(`Executing web search for: "${query}"`)
 
-      const exaApiKey = process.env.EXA_API_KEY
-      if (!exaApiKey) {
-        throw new Error("EXA_API_KEY not configured")
-      }
+      const exaApiKey = env.EXA_API_KEY
 
       try {
         const exa = new Exa(exaApiKey)
@@ -120,17 +131,9 @@ function createWebSearchTool() {
   })
 }
 
-// Create validators from the shared types
-const modelIdValidator = v.union(...ALL_MODEL_IDS.map((id) => v.literal(id)))
-const modelProviderValidator = v.union(
-  v.literal("openai"),
-  v.literal("anthropic"),
-  v.literal("openrouter"),
-)
-
 export const listByClientId = query({
   args: {
-    clientId: v.string(),
+    clientId: clientIdValidator,
   },
   returns: v.array(
     v.object({
@@ -139,11 +142,11 @@ export const listByClientId = query({
       threadId: v.id("threads"),
       body: v.string(),
       timestamp: v.number(),
-      messageType: v.union(v.literal("user"), v.literal("assistant")),
+      messageType: messageTypeValidator,
       model: v.optional(modelProviderValidator),
-      modelId: v.optional(v.string()),
+      modelId: v.optional(modelIdValidator),
       isStreaming: v.optional(v.boolean()),
-      streamId: v.optional(v.string()),
+      streamId: v.optional(streamIdValidator),
       isComplete: v.optional(v.boolean()),
       thinkingStartedAt: v.optional(v.number()),
       thinkingCompletedAt: v.optional(v.number()),
@@ -152,26 +155,9 @@ export const listByClientId = query({
       isThinking: v.optional(v.boolean()),
       hasThinkingContent: v.optional(v.boolean()),
       usedUserApiKey: v.optional(v.boolean()),
-      usage: v.optional(
-        v.object({
-          inputTokens: v.optional(v.number()),
-          outputTokens: v.optional(v.number()),
-          totalTokens: v.optional(v.number()),
-          reasoningTokens: v.optional(v.number()),
-          cachedInputTokens: v.optional(v.number()),
-        }),
-      ),
-      lastChunkId: v.optional(v.string()),
-      streamChunks: v.optional(
-        v.array(
-          v.object({
-            id: v.string(),
-            content: v.string(),
-            timestamp: v.number(),
-            sequence: v.optional(v.number()),
-          }),
-        ),
-      ),
+      usage: tokenUsageValidator,
+      lastChunkId: v.optional(chunkIdValidator),
+      streamChunks: v.optional(v.array(streamChunkValidator)),
       streamVersion: v.optional(v.number()),
     }),
   ),
@@ -213,11 +199,11 @@ export const list = query({
       threadId: v.id("threads"),
       body: v.string(),
       timestamp: v.number(),
-      messageType: v.union(v.literal("user"), v.literal("assistant")),
+      messageType: messageTypeValidator,
       model: v.optional(modelProviderValidator),
-      modelId: v.optional(v.string()), // Keep as string for flexibility but validate in handler
+      modelId: v.optional(modelIdValidator),
       isStreaming: v.optional(v.boolean()),
-      streamId: v.optional(v.string()),
+      streamId: v.optional(streamIdValidator),
       isComplete: v.optional(v.boolean()),
       thinkingStartedAt: v.optional(v.number()),
       thinkingCompletedAt: v.optional(v.number()),
@@ -226,26 +212,9 @@ export const list = query({
       isThinking: v.optional(v.boolean()),
       hasThinkingContent: v.optional(v.boolean()),
       usedUserApiKey: v.optional(v.boolean()),
-      usage: v.optional(
-        v.object({
-          inputTokens: v.optional(v.number()),
-          outputTokens: v.optional(v.number()),
-          totalTokens: v.optional(v.number()),
-          reasoningTokens: v.optional(v.number()),
-          cachedInputTokens: v.optional(v.number()),
-        }),
-      ),
-      lastChunkId: v.optional(v.string()),
-      streamChunks: v.optional(
-        v.array(
-          v.object({
-            id: v.string(),
-            content: v.string(),
-            timestamp: v.number(),
-            sequence: v.optional(v.number()),
-          }),
-        ),
-      ),
+      usage: tokenUsageValidator,
+      lastChunkId: v.optional(chunkIdValidator),
+      streamChunks: v.optional(v.array(streamChunkValidator)),
       streamVersion: v.optional(v.number()),
     }),
   ),
@@ -277,7 +246,9 @@ export const send = mutation({
     attachments: v.optional(v.array(v.id("files"))), // Add attachments support
     webSearchEnabled: v.optional(v.boolean()),
   },
-  returns: v.null(),
+  returns: v.object({
+    messageId: v.id("messages"),
+  }),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx)
     if (!userId) {
@@ -310,7 +281,7 @@ export const send = mutation({
     const provider = getProviderFromModelId(modelId as ModelId)
 
     // Insert user message after setting generation flag
-    await ctx.db.insert("messages", {
+    const messageId = await ctx.db.insert("messages", {
       threadId: args.threadId,
       body: args.body,
       timestamp: Date.now(),
@@ -344,7 +315,7 @@ export const send = mutation({
       })
     }
 
-    return null
+    return { messageId }
   },
 })
 
@@ -352,7 +323,7 @@ export const send = mutation({
 export const createThreadAndSend = mutation({
   args: {
     title: v.string(),
-    clientId: v.string(),
+    clientId: clientIdValidator,
     body: v.string(),
     modelId: v.optional(modelIdValidator),
     attachments: v.optional(v.array(v.id("files"))), // Add attachments support
@@ -566,7 +537,7 @@ export const generateAIResponseWithMessage = internalAction({
     attachments: v.optional(v.array(v.id("files"))),
     webSearchEnabled: v.optional(v.boolean()),
     messageId: v.id("messages"), // Pre-created message ID
-    streamId: v.string(), // Pre-generated stream ID
+    streamId: streamIdValidator, // Pre-generated stream ID
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -687,7 +658,7 @@ export const generateAIResponseWithMessage = internalAction({
                     },
                   })
                 : createOpenAI({
-                    apiKey: process.env.OPENROUTER_API_KEY!,
+                    apiKey: env.OPENROUTER_API_KEY,
                     baseURL: "https://openrouter.ai/api/v1",
                     headers: {
                       "X-Title": "Lightfast Chat",
@@ -984,7 +955,7 @@ export const generateAIResponse = internalAction({
                     },
                   })(actualModelName)
                 : createOpenAI({
-                    apiKey: process.env.OPENROUTER_API_KEY!,
+                    apiKey: env.OPENROUTER_API_KEY,
                     baseURL: "https://openrouter.ai/api/v1",
                     headers: {
                       "X-Title": "Lightfast Chat",
@@ -1006,10 +977,7 @@ export const generateAIResponse = internalAction({
         console.log(`Enabling web search tools for ${provider}`)
 
         // Check if EXA_API_KEY is available
-        const exaApiKey = process.env.EXA_API_KEY
-        if (!exaApiKey) {
-          console.error("EXA_API_KEY not found - web search will fail")
-        }
+        // Type-safe env check already handled by env validation
 
         console.log("Creating web_search tool...")
         streamOptions.tools = {
@@ -1252,22 +1220,8 @@ REMEMBER:
         }
       }
 
-      // Check for common API key issues
-      if (provider === "openai") {
-        const openaiKey = process.env.OPENAI_API_KEY
-        console.log(`OpenAI API key present: ${!!openaiKey}`)
-        console.log(
-          `OpenAI API key format valid: ${openaiKey?.startsWith("sk-") || false}`,
-        )
-      }
-
-      if (provider === "anthropic") {
-        const anthropicKey = process.env.ANTHROPIC_API_KEY
-        console.log(`Anthropic API key present: ${!!anthropicKey}`)
-        console.log(
-          `Anthropic API key format valid: ${anthropicKey?.startsWith("sk-ant-") || false}`,
-        )
-      }
+      // API key validation is handled at environment initialization
+      // Individual provider keys are managed through AI SDK initialization
 
       try {
         // If we have a messageId, update it with error, otherwise create new error message
@@ -1323,7 +1277,7 @@ export const getRecentContext = internalQuery({
   returns: v.array(
     v.object({
       body: v.string(),
-      messageType: v.union(v.literal("user"), v.literal("assistant")),
+      messageType: messageTypeValidator,
       attachments: v.optional(v.array(v.id("files"))),
     }),
   ),
@@ -1349,7 +1303,7 @@ export const getRecentContext = internalQuery({
 export const createStreamingMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
-    streamId: v.string(),
+    streamId: streamIdValidator,
     provider: modelProviderValidator,
     modelId: modelIdValidator,
     usedUserApiKey: v.optional(v.boolean()),
@@ -1381,7 +1335,7 @@ export const appendStreamChunk = internalMutation({
   args: {
     messageId: v.id("messages"),
     chunk: v.string(),
-    chunkId: v.string(),
+    chunkId: chunkIdValidator,
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -1464,7 +1418,7 @@ export const updateThreadUsageMutation = internalMutation({
       totalTokens: v.number(),
       reasoningTokens: v.number(),
       cachedTokens: v.number(),
-      modelId: v.string(),
+      modelId: modelIdValidator,
     }),
   },
   returns: v.null(),
@@ -1505,15 +1459,7 @@ export const updateMessageError = internalMutation({
 export const completeStreamingMessageLegacy = internalMutation({
   args: {
     messageId: v.id("messages"),
-    usage: v.optional(
-      v.object({
-        inputTokens: v.optional(v.number()),
-        outputTokens: v.optional(v.number()),
-        totalTokens: v.optional(v.number()),
-        reasoningTokens: v.optional(v.number()),
-        cachedInputTokens: v.optional(v.number()),
-      }),
-    ),
+    usage: tokenUsageValidator,
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -1549,17 +1495,9 @@ export const completeStreamingMessageLegacy = internalMutation({
 export const completeStreamingMessage = internalMutation({
   args: {
     messageId: v.id("messages"),
-    streamId: v.string(),
+    streamId: streamIdValidator,
     fullText: v.string(),
-    usage: v.optional(
-      v.object({
-        inputTokens: v.optional(v.number()),
-        outputTokens: v.optional(v.number()),
-        totalTokens: v.optional(v.number()),
-        reasoningTokens: v.optional(v.number()),
-        cachedInputTokens: v.optional(v.number()),
-      }),
-    ),
+    usage: tokenUsageValidator,
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -1713,7 +1651,7 @@ function getFullModelId(model: string): string {
 export const createErrorMessage = internalMutation({
   args: {
     threadId: v.id("threads"),
-    streamId: v.string(),
+    streamId: streamIdValidator,
     provider: modelProviderValidator,
     modelId: v.optional(modelIdValidator),
     errorMessage: v.string(),
@@ -1864,18 +1802,11 @@ export const getThreadUsage = query({
 // Query to get stream chunks for resumable streaming
 export const getStreamChunks = query({
   args: {
-    streamId: v.string(),
-    sinceChunkId: v.optional(v.string()),
+    streamId: streamIdValidator,
+    sinceChunkId: v.optional(chunkIdValidator),
   },
   returns: v.object({
-    chunks: v.array(
-      v.object({
-        id: v.string(),
-        content: v.string(),
-        timestamp: v.number(),
-        sequence: v.optional(v.number()),
-      }),
-    ),
+    chunks: v.array(streamChunkValidator),
     isComplete: v.boolean(),
     currentBody: v.string(),
     messageId: v.optional(v.id("messages")),
@@ -1963,7 +1894,7 @@ export const getThreadById = internalQuery({
       _id: v.id("threads"),
       _creationTime: v.number(),
       userId: v.id("users"),
-      clientId: v.optional(v.string()),
+      clientId: v.optional(clientIdValidator),
       title: v.string(),
       createdAt: v.number(),
       lastMessageAt: v.number(),
@@ -1971,43 +1902,13 @@ export const getThreadById = internalQuery({
       isTitleGenerating: v.optional(v.boolean()),
       pinned: v.optional(v.boolean()),
       // Branch information
-      branchedFrom: v.optional(
-        v.object({
-          threadId: v.id("threads"),
-          messageId: v.id("messages"),
-          timestamp: v.number(),
-        }),
-      ),
+      branchedFrom: branchInfoValidator,
       // Share functionality
       isPublic: v.optional(v.boolean()),
-      shareId: v.optional(v.string()),
+      shareId: v.optional(shareIdValidator),
       sharedAt: v.optional(v.number()),
-      shareSettings: v.optional(
-        v.object({
-          showThinking: v.optional(v.boolean()),
-        }),
-      ),
-      usage: v.optional(
-        v.object({
-          totalInputTokens: v.number(),
-          totalOutputTokens: v.number(),
-          totalTokens: v.number(),
-          totalReasoningTokens: v.number(),
-          totalCachedInputTokens: v.number(),
-          messageCount: v.number(),
-          modelStats: v.record(
-            v.string(),
-            v.object({
-              messageCount: v.number(),
-              inputTokens: v.number(),
-              outputTokens: v.number(),
-              totalTokens: v.number(),
-              reasoningTokens: v.number(),
-              cachedInputTokens: v.number(),
-            }),
-          ),
-        }),
-      ),
+      shareSettings: shareSettingsValidator,
+      usage: threadUsageValidator,
     }),
     v.null(),
   ),
