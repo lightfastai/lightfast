@@ -558,6 +558,7 @@ export const MODELS = {
       functionCalling: true,
       vision: true,
     },
+    hidden: true,
   }),
   "x-ai/grok-3-mini-beta": ModelConfigSchema.parse({
     id: "x-ai/grok-3-mini-beta",
@@ -588,6 +589,7 @@ export const MODELS = {
       functionCalling: true,
       vision: true,
     },
+    hidden: true,
   }),
   "google/gemini-2.5-flash-preview": ModelConfigSchema.parse({
     id: "google/gemini-2.5-flash-preview",
