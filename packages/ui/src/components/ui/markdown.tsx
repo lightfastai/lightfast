@@ -3,7 +3,7 @@
 import React, { memo } from "react"
 import ReactMarkdown, { type Components } from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { cn } from "../lib/utils"
+import { cn } from "../../lib/utils"
 import { CodeBlock } from "./code-block"
 
 // Properly typed component props based on react-markdown's actual types

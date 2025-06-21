@@ -46,6 +46,7 @@ export const Icons = {
     </svg>
   ),
   twitter: (props: IconProps) => (
+    // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
     <svg
       {...props}
       height="23"
@@ -60,6 +61,7 @@ export const Icons = {
     </svg>
   ),
   gitHub: (props: IconProps) => (
+    // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
     <svg viewBox="0 0 438.549 438.549" {...props}>
       <path
         fill="currentColor"
@@ -68,6 +70,7 @@ export const Icons = {
     </svg>
   ),
   discord: (props: IconProps) => (
+    // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
     <svg
       viewBox="0 0 126.644 96"
       {...props}

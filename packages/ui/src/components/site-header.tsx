@@ -1,8 +1,8 @@
 import Link from "next/link"
 import type * as React from "react"
 import { cn } from "../lib/utils"
-import { Button } from "./button"
-import { Icons } from "./icons"
+import { Button } from "./ui/button"
+import { Icons } from "./ui/icons"
 
 export interface SiteHeaderProps {
   className?: string
