@@ -1,13 +1,13 @@
 "use client"
 
 import { siteConfig } from "@/lib/site-config"
-import { Card, CardContent } from "@repo/ui/components/card"
+import { Card, CardContent } from "@repo/ui/components/ui/card"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
-} from "@repo/ui/components/dialog"
+} from "@repo/ui/components/ui/dialog"
 import Link from "next/link"
 import { SignInOptions } from "./sign-in-options"
 

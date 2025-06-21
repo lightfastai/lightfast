@@ -16,8 +16,8 @@
     "clean": "turbo run clean",
     "typecheck": "turbo run typecheck",
     "vercel-build": "cd apps/www && bunx convex deploy --cmd 'turbo build --filter=@lightfast/www'",
-    "ui:add": "bunx shadcn@latest add",
-    "ui:diff": "bunx shadcn@latest diff"
+    "ui:add": "bun --filter=@repo/ui ui:add",
+    "ui:diff": "bun --filter=@repo/ui ui:diff"
   },
   "repository": {
     "type": "git",
