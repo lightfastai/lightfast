@@ -41,7 +41,7 @@ import "@repo/ui/globals.css"
 From the root of the monorepo, you can add new shadcn components:
 
 ```bash
-bun run ui:add button
+pnpm run ui:add button
 ```
 
 This will install the component into the `packages/ui/src/components` directory.
@@ -50,9 +50,9 @@ This will install the component into the `packages/ui/src/components` directory.
 
 ### Scripts
 
-- `bun run lint` - Run biome linter
-- `bun run format` - Format code with biome
-- `bun run typecheck` - Run TypeScript type checking
+- `pnpm run lint` - Run biome linter
+- `pnpm run format` - Format code with biome
+- `pnpm run typecheck` - Run TypeScript type checking
 
 ### Structure
 

@@ -254,8 +254,8 @@ Reusable message display components:
 ## Development Workflow
 
 1. **Environment Setup**: Configure `.env.local` with required keys
-2. **Type Safety**: Run `bun run typecheck` for type validation
-3. **Code Quality**: Use `bun run lint` and `bun run format`
+2. **Type Safety**: Run `pnpm run typecheck` for type validation
+3. **Code Quality**: Use `pnpm run lint` and `pnpm run format`
 4. **Testing**: Vercel preview deployments for testing
 5. **Error Handling**: Comprehensive error boundaries
 

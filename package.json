@@ -3,21 +3,21 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint --cache-dir=.turbo/cache",
+    "format": "turbo run format --cache-dir=.turbo/cache",
+    "clean": "turbo run clean",
+    "clean:modules": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
+    "clean:turbo": "find . -name '.turbo' -type d -prune -exec rm -rf '{}' +",
+    "clean:deps": "pnpm run clean:modules && pnpm run clean:turbo",
     "dev:www": "turbo run dev --filter=@lightfast/www",
     "dev:docs": "turbo run dev --filter=@lightfast/docs",
-    "build": "turbo run build",
-    "build:www": "turbo run build --filter=@lightfast/www",
-    "build:docs": "turbo run build --filter=@lightfast/docs",
-    "lint": "turbo run lint",
-    "format": "turbo run format",
-    "clean": "turbo run clean",
+    "dev:app": "turbo run dev --filter=@lightfast/chat",
     "typecheck": "turbo run typecheck",
-    "vercel-build": "cd apps/www && bunx convex deploy --cmd 'turbo build --filter=@lightfast/www'",
-    "ui:add": "bun --filter=@repo/ui ui:add",
-    "ui:diff": "bun --filter=@repo/ui ui:diff"
+    "vercel-build": "cd apps/www && pnpx convex deploy --cmd 'turbo build --filter=@lightfast/www'",
+    "ui": "pnpm --filter=@lightfast/ui ui:add"
   },
   "repository": {
     "type": "git",
@@ -33,10 +33,15 @@
   "description": "Lightfast Chat - Turborepo Monorepo",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@turbo/gen": "^2.5.0",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   },
-  "packageManager": "bun@1.2.10",
+  "packageManager": "pnpm@10.5.2",
+  "engines": {
+    "node": ">=18",
+    "pnpm": "10.5.2"
+  },
   "trustedDependencies": [
     "@biomejs/biome",
     "@tailwindcss/oxide",

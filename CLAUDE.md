@@ -13,14 +13,14 @@
 
 **NO EXCEPTIONS**: If you're modifying code, you MUST be in a worktree.
 
-## Overvietw
+## Overview
 
 This development workflow integrates:
 - **GitHub MCP Server**: Issue tracking and PR management
 - **Git Worktrees**: Feature development with `jeevanpillay/<feature_name>` branches (MANDATORY for all work)
 - **Vercel-First Testing**: All application testing on Vercel preview deployments (NO local dev servers)
 - **Context Preservation**: GitHub comments + local context files to survive session interruptions
-- **Turborepo + Bun**: Lightning-fast builds with intelligent caching
+- **Turborepo + pnpm**: Lightning-fast builds with intelligent caching
 
 **Current Context**: June 2025
 
@@ -32,8 +32,8 @@ Claude Code operates in two distinct modes based on your development setup:
 Use this mode when you want Claude to handle the full development lifecycle:
 - **Claude Responsibilities**:
   - Makes code changes
-  - Runs `bun run build` iteratively to fix errors
-  - Runs `bun run lint` and `bun run format`
+  - Runs `pnpm run build` iteratively to fix errors
+  - Runs `pnpm run lint` and `pnpm run format`
   - Commits and pushes changes automatically
   - Provides Vercel preview URL for testing
 - **User Responsibilities**:
@@ -42,14 +42,14 @@ Use this mode when you want Claude to handle the full development lifecycle:
 - **When to Use**: Production-ready development, team collaboration, CI/CD workflows
 
 ### 🔧 Local Dev Mode
-Use this mode when you're already running `bun dev:all` locally:
+Use this mode when you're already running `pnpm run dev` locally:
 - **Claude Responsibilities**:
   - Acts as code generator only
   - Makes code changes
   - Asks user to test locally after changes
   - Does NOT commit or push automatically
 - **User Responsibilities**:
-  - Runs `bun dev:all` before starting
+  - Runs `pnpm run dev` before starting
   - Tests changes locally in real-time
   - Decides when to commit and push
 - **When to Use**: Rapid prototyping, debugging, exploratory development
@@ -57,7 +57,7 @@ Use this mode when you're already running `bun dev:all` locally:
 ### Setting Development Mode
 At the start of your session, tell Claude which mode to use:
 - "Use Vercel Build Mode" (default if not specified)
-- "Use Local Dev Mode - I'm running bun dev:all"
+- "Use Local Dev Mode - I'm running pnpm run dev"
 
 ## 🚀 Parallel Task Execution with Claude Code Subagents
 
@@ -345,9 +345,9 @@ git checkout main && git pull origin main
 mkdir -p worktrees
 git worktree add worktrees/<feature_name> -b jeevanpillay/<feature_name>
 cd worktrees/<feature_name>
-bun install
+pnpm install
 cp ../../.env.local apps/www/.env.local
-cd apps/www && bun run env:sync
+cd apps/www && pnpm run env:sync
 ```
 
 ### Step 4: Development Cycle
@@ -382,9 +382,9 @@ EOF
 # ... implement features ...
 
 # 3. Claude runs validation (iteratively fixing errors)
-SKIP_ENV_VALIDATION=true bun run build  # MUST pass
-bun run lint                             # MUST pass
-bun run format                          # MUST pass
+SKIP_ENV_VALIDATION=true pnpm run build  # MUST pass
+pnpm run lint                             # MUST pass
+pnpm run format                          # MUST pass
 
 # 4. Claude updates context and posts comments
 gh pr comment <pr_number> --body "🔧 Progress: <what_was_done>"
@@ -406,7 +406,7 @@ echo "🔗 Test on Vercel: https://<project>-<pr-number>-<org>.vercel.app"
 #### 🔧 Local Dev Mode
 ```bash
 # 1. User ensures dev server is running
-# Terminal 1: bun dev:all
+# Terminal 1: pnpm run dev
 
 # 2. Set up context tracking
 mkdir -p tmp_context
@@ -425,7 +425,7 @@ Development Mode: Local Dev Mode
 Working on: <current_task>
 
 ## Session Notes
-User is running bun dev:all locally
+User is running pnpm run dev locally
 <notes>
 EOF
 
@@ -485,13 +485,13 @@ git log --oneline -5  # Verify merge
 - **shadcn/ui** components (New York style)
 - **Tailwind CSS v4.x**
 - **TypeScript** strict mode
-- **Bun v1.2.10** runtime and package manager
+- **pnpm v9.x** package manager
 - **Turborepo** for optimized builds
 
 ### Code Standards
 - 2-space indentation, 80-character line width
 - Double quotes for JSX and strings
-- **YOU MUST** use Biome commands: `bun run lint`, `bun run format`
+- **YOU MUST** use Biome commands: `pnpm run lint`, `pnpm run format`
 - Follow shadcn/ui patterns for components
 
 ### Branch Naming
@@ -534,16 +534,16 @@ export function TabsComponent() {
 ### Quality Gates (MUST pass before commit)
 ```bash
 # Build validation (from root)
-bun run build:www
+pnpm run build:www
 # OR from apps/www
-cd apps/www && SKIP_ENV_VALIDATION=true bun run build
+cd apps/www && SKIP_ENV_VALIDATION=true pnpm run build
 
 # Code quality (from root)
-bun run lint
-bun run format
+pnpm run lint
+pnpm run format
 
 # Environment sync (from apps/www)
-cd apps/www && bun run env:sync
+cd apps/www && pnpm run env:sync
 ```
 
 ### Context Management
@@ -576,14 +576,14 @@ gh pr view <pr_number> --json statusCheckRollup
 ## Troubleshooting
 
 ### Common Issues
-1. **Build failures**: Use `SKIP_ENV_VALIDATION=true bun run build`
+1. **Build failures**: Use `SKIP_ENV_VALIDATION=true pnpm run build`
 2. **Merge conflicts**: Remove worktree first: `git worktree remove worktrees/<feature_name>`
 3. **Context loss**: Check `./tmp_context/claude-context-*.md` files
 4. **Deployment issues**: Monitor with `gh pr view <pr_number>`
 
 ### Quality Gate Failures
 - **TypeScript errors**: Fix type issues before commit
-- **Lint errors**: Run `bun run lint` to auto-fix
+- **Lint errors**: Run `pnpm run lint` to auto-fix
 - **Build errors**: Check imports and environment variables
 
 ## Monorepo Structure
@@ -621,23 +621,23 @@ This is a Turborepo monorepo with the following structure:
 ### Monorepo Commands
 ```bash
 # Development
-bun dev              # Run all apps in dev mode
-bun dev:www         # Run only www app
-bun dev:docs        # Run only docs app
+pnpm run dev             # Run all apps in dev mode
+pnpm run dev:www        # Run only www app
+pnpm run dev:docs       # Run only docs app
 
 # Building
-bun run build       # Build all apps
-bun run build:www   # Build only www app
-bun run build:docs  # Build only docs app
+pnpm run build          # Build all apps
+pnpm run build:www      # Build only www app
+pnpm run build:docs     # Build only docs app
 
 # UI Components
-bun run ui:add <component>  # Add new shadcn component
-bun run ui:diff            # Check for component updates
+pnpm run ui:add <component>  # Add new shadcn component
+pnpm run ui:diff            # Check for component updates
 
 # Quality
-bun run lint        # Lint all packages
-bun run format      # Format all packages
-bun run typecheck   # Type check all packages
+pnpm run lint           # Lint all packages
+pnpm run format         # Format all packages
+pnpm run typecheck      # Type check all packages
 ```
 
 ## Environment Variables
@@ -659,7 +659,7 @@ bun run typecheck   # Type check all packages
 4. **QUALITY GATES FIRST** - Build/lint must pass before commit
 5. **WORKTREE CLEANUP** - Remove before merging to prevent errors
 6. **USE TEMPLATES** - Always use issue templates with file references
-7. **BIOME NOT ESLINT** - Use `bun run lint`, not ESLint commands
+7. **BIOME NOT ESLINT** - Use `pnpm run lint`, not ESLint commands
 
 ## Technology-Specific Documentation
 

@@ -131,7 +131,7 @@ export const modelIdValidator = v.union(
 ```
 
 2. **Update Convex validators** - The direct import will automatically include deprecated models
-3. **Test build** to ensure no validation errors: `SKIP_ENV_VALIDATION=true bun run build`
+3. **Test build** to ensure no validation errors: `SKIP_ENV_VALIDATION=true pnpm run build`
 4. **Check production logs** before removing deprecated models entirely
 
 ## 🔄 Development Workflow
@@ -150,11 +150,11 @@ Always run these commands after model changes:
 
 ```bash
 # Build validation
-SKIP_ENV_VALIDATION=true bun run build
+SKIP_ENV_VALIDATION=true pnpm run build
 
 # Code quality
-bun run lint
-bun run format
+pnpm run lint
+pnpm run format
 ```
 
 ### Testing Model Capabilities

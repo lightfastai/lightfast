@@ -69,14 +69,14 @@ if (!token) redirect("/signin")
 ### Development Commands
 ```bash
 # From root
-bun dev:www         # Run dev server
-bun run build:www   # Build for production
+pnpm run dev:www         # Run dev server
+pnpm run build:www   # Build for production
 
 # From apps/www
-bun run dev         # Run dev server
-bun run build       # Build for production
-bun run convex:dev  # Run Convex dev server
-bun run env:sync    # Sync environment variables
+pnpm run dev         # Run dev server
+pnpm run build       # Build for production
+pnpm run convex:dev  # Run Convex dev server
+pnpm run env:sync    # Sync environment variables
 ```
 
 ### Deployment
@@ -172,15 +172,15 @@ Each `meta.json` defines:
 ### Development Commands
 ```bash
 # From root (recommended)
-bun dev:docs        # Run dev server on port 3002/docs
-bun run build:docs  # Build for production
+pnpm run dev:docs        # Run dev server on port 3002/docs
+pnpm run build:docs  # Build for production
 
 # From apps/docs
-bun run dev         # Run dev server
-bun run build       # Build (calls root build:docs)
-bun run start       # Run production server
-bun run lint        # Run Biome linter
-bun run format      # Format code
+pnpm run dev         # Run dev server
+pnpm run build       # Build (calls root build:docs)
+pnpm run start       # Run production server
+pnpm run lint        # Run Biome linter
+pnpm run format      # Format code
 ```
 
 ### Adding Documentation

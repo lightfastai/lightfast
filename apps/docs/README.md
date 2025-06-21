@@ -10,14 +10,14 @@ The documentation site is a separate Next.js application within the monorepo, co
 
 ```bash
 # From root directory (using Turborepo)
-bun dev:docs          # Runs on http://localhost:3002/docs
+pnpm run dev:docs          # Runs on http://localhost:3002/docs
 
 # From this directory
-bun run dev           # Runs on http://localhost:3002/docs
-bun run build         # Build for production
-bun run start         # Run production server
-bun run lint          # Run Biome linter
-bun run format        # Format code with Biome
+pnpm run dev           # Runs on http://localhost:3002/docs
+pnpm run build         # Build for production
+pnpm run start         # Run production server
+pnpm run lint          # Run Biome linter
+pnpm run format        # Format code with Biome
 ```
 
 ## Architecture
@@ -166,6 +166,6 @@ import { Callout } from 'fumadocs-ui/components/callout'
 2. **Add descriptions** - Include meta descriptions for better SEO
 3. **Organize logically** - Group related content in directories
 4. **Update navigation** - Always update `meta.json` when adding pages
-5. **Test locally** - Preview changes with `bun dev:docs` before deploying
+5. **Test locally** - Preview changes with `pnpm run dev:docs` before deploying
 6. **Use components** - Leverage Fumadocs UI components for rich content
 7. **Keep it simple** - Write clear, concise documentation

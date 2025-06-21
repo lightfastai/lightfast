@@ -102,7 +102,7 @@ import { Button } from "./button"
 #### 1. Using shadcn/ui CLI
 From the monorepo root:
 ```bash
-bun run ui:add <component-name>
+pnpm run ui:add <component-name>
 ```
 
 This will:
@@ -196,7 +196,7 @@ theme: {
 #### 1. Testing Changes
 ```bash
 # Run the app that uses the component
-bun dev:www
+pnpm run dev:www
 
 # Changes to UI package are automatically reflected
 ```
@@ -204,21 +204,21 @@ bun dev:www
 #### 2. Type Checking
 ```bash
 # From packages/ui
-bun run typecheck
+pnpm run typecheck
 
 # From root (checks everything)
-bun run typecheck
+pnpm run typecheck
 ```
 
 #### 3. Linting & Formatting
 ```bash
 # From packages/ui
-bun run lint
-bun run format
+pnpm run lint
+pnpm run format
 
 # From root (runs on all packages)
-bun run lint
-bun run format
+pnpm run lint
+pnpm run format
 ```
 
 ## Creating New Packages
