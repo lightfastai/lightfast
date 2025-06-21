@@ -1,5 +1,9 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar"
-import { Input } from "@repo/ui/components/input"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar"
+import { Input } from "@repo/ui/components/ui/input"
 import { User } from "lucide-react"
 import { SettingsHeader } from "./settings-header"
 import { SettingsRow } from "./settings-row"

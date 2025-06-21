@@ -76,8 +76,8 @@ The UI package uses explicit exports in `package.json`:
 #### In Apps
 ```tsx
 // Import components
-import { Button } from "@repo/ui/components/button"
-import { Card, CardContent } from "@repo/ui/components/card"
+import { Button } from "@repo/ui/components/ui/button"
+import { Card, CardContent } from "@repo/ui/components/ui/card"
 
 // Import utilities
 import { cn } from "@repo/ui/lib/utils"

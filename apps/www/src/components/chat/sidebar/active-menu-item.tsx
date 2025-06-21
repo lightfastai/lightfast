@@ -1,6 +1,6 @@
 "use client"
 
-import { SidebarMenuButton } from "@repo/ui/components/sidebar"
+import { SidebarMenuButton } from "@repo/ui/components/ui/sidebar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useMemo } from "react"

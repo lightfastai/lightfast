@@ -2,7 +2,7 @@
 
 import { validateApiKey } from "@/lib/ai/schemas"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Button } from "@repo/ui/components/button"
+import { Button } from "@repo/ui/components/ui/button"
 import {
   Form,
   FormControl,
@@ -10,8 +10,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@repo/ui/components/form"
-import { Input } from "@repo/ui/components/input"
+} from "@repo/ui/components/ui/form"
+import { Input } from "@repo/ui/components/ui/input"
 import { useMutation } from "convex/react"
 import { ExternalLink, Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"

@@ -1,12 +1,12 @@
 "use client"
 
-import { ScrollArea } from "@repo/ui/components/scroll-area"
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area"
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-} from "@repo/ui/components/sidebar"
+} from "@repo/ui/components/ui/sidebar"
 import { type Preloaded, useMutation, usePreloadedQuery } from "convex/react"
 import { useCallback } from "react"
 import { toast } from "sonner"

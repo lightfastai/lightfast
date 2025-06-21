@@ -1,7 +1,10 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar"
-import { Icons } from "@repo/ui/components/icons"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar"
+import { Icons } from "@repo/ui/components/ui/icons"
 import { User } from "lucide-react"
-import type React from "react"
 
 export interface MessageAvatarProps {
   messageType: "user" | "assistant" | "system"

@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@repo/ui/components/button"
-import { Checkbox } from "@repo/ui/components/checkbox"
+import { Button } from "@repo/ui/components/ui/button"
+import { Checkbox } from "@repo/ui/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/dialog"
-import { Label } from "@repo/ui/components/label"
-import { Textarea } from "@repo/ui/components/textarea"
+} from "@repo/ui/components/ui/dialog"
+import { Label } from "@repo/ui/components/ui/label"
+import { Textarea } from "@repo/ui/components/ui/textarea"
 import { useMutation } from "convex/react"
 import React from "react"
 import { api } from "../../../convex/_generated/api"

@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/card"
+} from "@repo/ui/components/ui/card"
 import { useQuery } from "convex/react"
 import { MessageSquare, ThumbsDown, ThumbsUp } from "lucide-react"
 import { api } from "../../../convex/_generated/api"

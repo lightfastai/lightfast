@@ -1,10 +1,10 @@
-import { Icons } from "@repo/ui/components/icons"
+import { Icons } from "@repo/ui/components/ui/icons"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "@repo/ui/components/sidebar"
+} from "@repo/ui/components/ui/sidebar"
 import { preloadQuery } from "convex/nextjs"
 import Link from "next/link"
 import { Suspense } from "react"

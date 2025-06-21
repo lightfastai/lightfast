@@ -2,8 +2,8 @@
 
 import { api } from "@/convex/_generated/api"
 import { getModelDisplayName } from "@/lib/ai"
-import { Alert, AlertDescription } from "@repo/ui/components/alert"
-import { ScrollArea } from "@repo/ui/components/scroll-area"
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert"
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area"
 import { useMutation, useQuery } from "convex/react"
 import { AlertCircle, Info, Loader2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"

@@ -33,7 +33,7 @@ apps/www/
 **YOU MUST** import UI components from `@repo/ui`:
 ```tsx
 // ✅ Correct
-import { Button } from "@repo/ui/components/button"
+import { Button } from "@repo/ui/components/ui/button"
 import { cn } from "@repo/ui/lib/utils"
 
 // ❌ Wrong

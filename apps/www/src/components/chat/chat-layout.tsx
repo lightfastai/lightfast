@@ -2,7 +2,7 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@repo/ui/components/sidebar"
+} from "@repo/ui/components/ui/sidebar"
 import { Suspense } from "react"
 import { ChatTitleClient } from "./chat-title-client"
 import { ShareButtonWrapper } from "./share-button-wrapper"

@@ -23,8 +23,8 @@ Add the dependency to your app's `package.json`:
 ### Importing components
 
 ```tsx
-import { Button } from "@repo/ui/components/button"
-import { Card } from "@repo/ui/components/card"
+import { Button } from "@repo/ui/components/ui/button"
+import { Card } from "@repo/ui/components/ui/card"
 import { cn } from "@repo/ui/lib/utils"
 ```
 

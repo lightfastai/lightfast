@@ -1,4 +1,4 @@
-import { Badge } from "@repo/ui/components/badge"
+import { Badge } from "@repo/ui/components/ui/badge"
 
 interface SettingsHeaderProps {
   title: string

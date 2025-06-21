@@ -1,6 +1,9 @@
 "use client"
 
-import { SidebarMenuAction, SidebarMenuItem } from "@repo/ui/components/sidebar"
+import {
+  SidebarMenuAction,
+  SidebarMenuItem,
+} from "@repo/ui/components/ui/sidebar"
 import { cn } from "@repo/ui/lib/utils"
 import { GitBranch, Pin } from "lucide-react"
 import { useCallback } from "react"

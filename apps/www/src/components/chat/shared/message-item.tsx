@@ -1,6 +1,6 @@
 "use client"
 
-import { Markdown } from "@repo/ui/components/markdown"
+import { Markdown } from "@repo/ui/components/ui/markdown"
 import { cn } from "@repo/ui/lib/utils"
 import React from "react"
 import type { Doc } from "../../../../convex/_generated/dataModel"

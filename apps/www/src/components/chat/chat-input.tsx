@@ -7,7 +7,7 @@ import {
   getModelConfig,
   getVisibleModels,
 } from "@/lib/ai"
-import { Button } from "@repo/ui/components/button"
+import { Button } from "@repo/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,13 +17,13 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@repo/ui/components/dropdown-menu"
-import { Textarea } from "@repo/ui/components/textarea"
+} from "@repo/ui/components/ui/dropdown-menu"
+import { Textarea } from "@repo/ui/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@repo/ui/components/tooltip"
+} from "@repo/ui/components/ui/tooltip"
 import { useMutation } from "convex/react"
 import {
   ChevronDown,

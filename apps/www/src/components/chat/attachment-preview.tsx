@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@repo/ui/components/button"
+import { Button } from "@repo/ui/components/ui/button"
 import { useQuery } from "convex/react"
 import { Download, ExternalLink, FileText, Image } from "lucide-react"
 import { api } from "../../../convex/_generated/api"

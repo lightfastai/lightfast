@@ -1,5 +1,5 @@
 import { siteConfig } from "@/lib/site-config"
-import { Icons } from "@repo/ui/components/icons"
+import { Icons } from "@repo/ui/components/ui/icons"
 import {
   Sidebar,
   SidebarContent,
@@ -9,7 +9,7 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-} from "@repo/ui/components/sidebar"
+} from "@repo/ui/components/ui/sidebar"
 import type { Preloaded } from "convex/react"
 import { Plus } from "lucide-react"
 import Link from "next/link"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuthActions } from "@convex-dev/auth/react"
-import { Button } from "@repo/ui/components/button"
+import { Button } from "@repo/ui/components/ui/button"
 import { useConvexAuth } from "convex/react"
 import { LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"

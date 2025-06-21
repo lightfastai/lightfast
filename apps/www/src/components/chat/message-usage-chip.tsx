@@ -1,12 +1,12 @@
 "use client"
 
-import { Badge } from "@repo/ui/components/badge"
+import { Badge } from "@repo/ui/components/ui/badge"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@repo/ui/components/tooltip"
+} from "@repo/ui/components/ui/tooltip"
 import { Cpu } from "lucide-react"
 
 interface MessageUsageChipProps {

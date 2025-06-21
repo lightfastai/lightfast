@@ -5,7 +5,7 @@ import { useMemo, useState } from "react"
 
 import type { ModelConfig, ModelId } from "@/lib/ai"
 import { getVisibleModels } from "@/lib/ai/schemas"
-import { Button } from "@repo/ui/components/button"
+import { Button } from "@repo/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@repo/ui/components/dropdown-menu"
+} from "@repo/ui/components/ui/dropdown-menu"
 
 interface ModelBranchDropdownProps {
   onBranch: (modelId: ModelId) => void

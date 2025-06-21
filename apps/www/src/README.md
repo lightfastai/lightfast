@@ -32,37 +32,37 @@ src/
 #### `/app` - Next.js App Router
 The application uses Next.js 15's App Router with the following structure:
 
-- **Root Layout** (`layout.tsx`): 
+- **Root Layout** (`layout.tsx`):
   - Provides `ConvexAuthNextjsServerProvider` for authentication
   - Wraps app with `ConvexClientProvider` for real-time data
   - Imports global styles from `@repo/ui/globals.css`
   - Sets up dark theme and Geist font family
-  
-- **Home Page** (`page.tsx`): 
+
+- **Home Page** (`page.tsx`):
   - Server component with SSR optimization
   - Checks authentication and redirects to `/chat` if signed in
   - Renders landing page with centered chat input
-  
+
 - **Chat Routes** (`/chat/*`):
   - `/chat/page.tsx`: New chat interface
   - `/chat/[threadId]/page.tsx`: Existing thread view with preloaded data
   - `/chat/layout.tsx`: Wraps chat pages with sidebar layout
   - `/chat/settings/page.tsx`: User settings (nested under chat for auth)
-  
-- **Share Routes** (`/share/[shareId]`): 
+
+- **Share Routes** (`/share/[shareId]`):
   - Public read-only chat sharing
   - No authentication required
   - Uses `SharedChatView` component
-  
-- **Sign In** (`/signin`): 
+
+- **Sign In** (`/signin`):
   - GitHub OAuth authentication flow
   - Handles redirect after successful login
-  
+
 - **Auth Loading** (`/auth/loading`):
   - Intermediate loading state during OAuth callback
   - Handles redirect with client-side navigation
-  
-- **Error Handling**: 
+
+- **Error Handling**:
   - `error.tsx`: Route-specific error boundaries
   - `global-error.tsx`: Global error boundary for unhandled errors
   - `not-found.tsx`: Custom 404 page
@@ -275,8 +275,8 @@ All UI components are imported from the `@repo/ui` package:
 
 ```typescript
 // ✅ Correct - Import from shared package
-import { Button } from "@repo/ui/components/button"
-import { Input } from "@repo/ui/components/input"
+import { Button } from "@repo/ui/components/ui/button"
+import { Input } from "@repo/ui/components/ui/input"
 import { cn } from "@repo/ui/lib/utils"
 
 // ❌ Wrong - Don't create local UI components

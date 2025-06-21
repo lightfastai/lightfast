@@ -2,8 +2,12 @@
 
 import { siteConfig } from "@/lib/site-config"
 import { useAuthActions } from "@convex-dev/auth/react"
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar"
-import { Button } from "@repo/ui/components/button"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar"
+import { Button } from "@repo/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +15,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@repo/ui/components/dropdown-menu"
+} from "@repo/ui/components/ui/dropdown-menu"
 import { cn } from "@repo/ui/lib/utils"
 import type { Preloaded } from "convex/react"
 import { usePreloadedQuery } from "convex/react"
