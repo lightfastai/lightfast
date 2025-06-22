@@ -13,12 +13,15 @@ const ENV_FILE = ".env.local"
 
 // Define environment variables that need to be synced to Convex
 // These are variables that Convex functions actually use
-const CONVEX_REQUIRED_VARS = ["EXA_API_KEY"] as const
-const OPTIONAL_VARS = [
-  "GOOGLE_API_KEY",
+const CONVEX_REQUIRED_VARS = [
+  "EXA_API_KEY",
+  "OPENROUTER_API_KEY",
+  "JWT_PRIVATE_KEY",
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
+  "JWKS",
   "AUTH_GITHUB_ID",
   "AUTH_GITHUB_SECRET",
-  "JWT_PRIVATE_KEY",
 ] as const
 
 const CONVEX_OPTIONAL_VARS = [
@@ -28,15 +31,7 @@ const CONVEX_OPTIONAL_VARS = [
 ] as const
 
 // Next.js requires these but they don't need to be synced to Convex
-const NEXTJS_ONLY_VARS = [
-  "OPENAI_API_KEY",
-  "ANTHROPIC_API_KEY",
-  "OPENROUTER_API_KEY",
-  "AUTH_GITHUB_ID",
-  "AUTH_GITHUB_SECRET",
-  "JWKS",
-  "NEXT_PUBLIC_CONVEX_URL",
-] as const
+const NEXTJS_ONLY_VARS = ["NEXT_PUBLIC_CONVEX_URL"] as const
 
 type ConvexRequiredVar = (typeof CONVEX_REQUIRED_VARS)[number]
 type ConvexOptionalVar = (typeof CONVEX_OPTIONAL_VARS)[number]
@@ -361,7 +356,12 @@ async function syncEnvironment(): Promise<void> {
     // Sync only Convex-specific optional variables
     log.info("Syncing optional Convex environment variables...")
     for (const varName of CONVEX_OPTIONAL_VARS) {
-      await syncVar(varName, envVars[varName], false)
+      // Force NODE_ENV to development when running sync
+      if (varName === "NODE_ENV") {
+        await syncVar(varName, "development", false)
+      } else {
+        await syncVar(varName, envVars[varName], false)
+      }
     }
 
     // Show info about Next.js-only variables

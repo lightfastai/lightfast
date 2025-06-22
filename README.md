@@ -42,11 +42,14 @@ OPENROUTER_API_KEY=sk-or-your-openrouter-key-here     # Required for additional 
 EXA_API_KEY=your-exa-api-key-here                     # Required for web search functionality
 
 # Authentication
-AUTH_GITHUB_ID=your-github-oauth-client-id
-AUTH_GITHUB_SECRET=your-github-oauth-client-secret
-JWT_PRIVATE_KEY=your-jwt-private-key                  # JWT signing key
-JWKS=your-jwks-string                                 # JWT verification keys
-SITE_URL=http://localhost:3000                        # Your site URL for redirects
+AUTH_GITHUB_ID=your-github-oauth-client-id             # Required for GitHub OAuth
+AUTH_GITHUB_SECRET=your-github-oauth-client-secret     # Required for GitHub OAuth
+JWT_PRIVATE_KEY=your-jwt-private-key                  # Required for API key encryption
+JWKS=your-jwks-json-string                            # Required for JWT verification (JSON format)
+ENCRYPTION_KEY=your-encryption-key                    # Optional fallback encryption key
+
+# Convex Configuration (optional)
+CONVEX_SITE_URL=https://your-site-url.com             # Optional for auth configuration
 
 # Vercel Environment (optional)
 NEXT_PUBLIC_VERCEL_ENV=development                     # deployment environment
@@ -59,15 +62,16 @@ NODE_ENV=development
 
 #### **🔒 Server-only Variables**
 These are only available on the server-side and will throw an error if accessed on the client:
-- `ANTHROPIC_API_KEY` - Claude Sonnet 4 API access
-- `OPENAI_API_KEY` - GPT models API access  
-- `OPENROUTER_API_KEY` - Additional AI models via OpenRouter
-- `EXA_API_KEY` - Web search functionality
-- `AUTH_GITHUB_ID` - GitHub OAuth client ID
-- `AUTH_GITHUB_SECRET` - GitHub OAuth client secret *(Note: check for typos like AUTH_GITHUB_SERCET)*
-- `JWT_PRIVATE_KEY` - JWT token signing
-- `JWKS` - JWT verification keys
-- `SITE_URL` - Authentication redirect URL
+- `ANTHROPIC_API_KEY` - Claude Sonnet 4 API access (required)
+- `OPENAI_API_KEY` - GPT models API access (required)
+- `OPENROUTER_API_KEY` - Additional AI models via OpenRouter (required)
+- `EXA_API_KEY` - Web search functionality (required)
+- `AUTH_GITHUB_ID` - GitHub OAuth client ID (required)
+- `AUTH_GITHUB_SECRET` - GitHub OAuth client secret (required)
+- `JWT_PRIVATE_KEY` - JWT token signing for API key encryption (required)
+- `JWKS` - JWT verification keys in JSON format (required)
+- `ENCRYPTION_KEY` - Fallback encryption key if JWT_PRIVATE_KEY unavailable (optional)
+- `CONVEX_SITE_URL` - Site URL for authentication configuration (optional)
 
 #### **🌐 Client-accessible Variables**
 These are available on both server and client (must be prefixed with `NEXT_PUBLIC_`):
@@ -85,6 +89,41 @@ Available on both client and server:
 - **OpenRouter API**: Register at [openrouter.ai](https://openrouter.ai) for additional model access
 - **Exa API**: Create account at [exa.ai](https://exa.ai) for web search capabilities
 - **GitHub OAuth**: Configure at [GitHub Developer Settings](https://github.com/settings/developers)
+
+### 🔐 Generating Cryptographic Keys
+
+#### JWT Private Key & JWKS Pair
+Generate a matching JWT private key and JWKS (public key) pair using this script:
+
+```javascript
+// save as generate-jwt-keys.js and run with: node generate-jwt-keys.js
+import { exportJWK, exportPKCS8, generateKeyPair } from "jose";
+
+const keys = await generateKeyPair("RS256", {
+  extractable: true,
+});
+const privateKey = await exportPKCS8(keys.privateKey);
+const publicKey = await exportJWK(keys.publicKey);
+const jwks = JSON.stringify({ keys: [{ use: "sig", ...publicKey }] });
+
+process.stdout.write(
+  `JWT_PRIVATE_KEY="${privateKey.trimEnd().replace(/\n/g, " ")}"`
+);
+process.stdout.write("\n");
+process.stdout.write(`JWKS=${jwks}`);
+process.stdout.write("\n");
+```
+
+Copy the output directly to your `.env.local` file.
+
+#### Encryption Key
+Generate a secure encryption key using Node.js:
+
+```bash
+node -e "console.log('ENCRYPTION_KEY=' + require('crypto').randomBytes(32).toString('base64'))"
+```
+
+This creates a cryptographically secure 256-bit key for fallback encryption.
 
 ## Authentication Setup
 
@@ -154,6 +193,11 @@ SKIP_ENV_VALIDATION=true bun run build
    ```bash
    bun run env:sync
    ```
+   
+   This command will:
+   - Validate all required environment variables
+   - Sync API keys and authentication settings to Convex
+   - Automatically set NODE_ENV=development for local development
 
 5. Start the Convex development server:
    ```bash
@@ -338,9 +382,9 @@ Simply visit [chat.lightfast.ai](https://chat.lightfast.ai) and start chatting w
 | `AUTH_GITHUB_SECRET` | Yes | GitHub OAuth client secret |
 | `JWT_PRIVATE_KEY` | Yes | JWT token signing key |
 | `JWKS` | Yes | JWT verification keys |
+| `ENCRYPTION_KEY` | Yes | Fallback encryption key if JWT_PRIVATE_KEY is not available
 | `NEXT_PUBLIC_CONVEX_URL` | Yes | Convex deployment URL |
 | `CONVEX_DEPLOYMENT` | Production | Convex deployment identifier |
-| `SITE_URL` | Recommended | Site URL for auth redirects |
 | `NEXT_PUBLIC_VERCEL_ENV` | Optional | Deployment environment detection |
 
 ## 📚 Documentation

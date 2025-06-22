@@ -513,7 +513,10 @@ gh pr view <pr_number> --json statusCheckRollup
 - `ANTHROPIC_API_KEY` - Claude Sonnet 4 (required)
 - `OPENAI_API_KEY` - GPT models (required)
 - `NEXT_PUBLIC_CONVEX_URL` - Backend URL (required)
-- Optional: GitHub OAuth, JWT keys, SITE_URL
+- `AUTH_GITHUB_ID` - GitHub OAuth client ID (required)
+- `AUTH_GITHUB_SECRET` - GitHub OAuth client secret (required)
+- `JWT_PRIVATE_KEY` - JWT private key for API key encryption (required)
+- `JWKS` - JWT verification keys (required)
 
 ## Key Reminders
 

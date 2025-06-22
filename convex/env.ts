@@ -9,12 +9,12 @@ export const env = createEnv({
       .string()
       .min(1)
       .describe("OpenRouter API key for AI models"),
-
-    // Authentication & Encryption
-    JWT_PRIVATE_KEY: z
+    ANTHROPIC_API_KEY: z
       .string()
       .min(1)
-      .describe("JWT private key for API key encryption"),
+      .describe("Anthropic API key for AI models"),
+    OPENAI_API_KEY: z.string().min(1).describe("OpenAI API key for AI models"),
+    // Authentication & Encryption
     ENCRYPTION_KEY: z
       .string()
       .optional()
@@ -24,7 +24,17 @@ export const env = createEnv({
       .url()
       .optional()
       .describe("Site URL for authentication configuration"),
-
+    // Auth
+    JWT_PRIVATE_KEY: z
+      .string()
+      .min(1)
+      .describe("JWT private key for API key encryption"),
+    AUTH_GITHUB_ID: z.string().min(1).describe("GitHub OAuth client ID"),
+    AUTH_GITHUB_SECRET: z
+      .string()
+      .min(1)
+      .describe("GitHub OAuth client secret"),
+    JWKS: z.string().min(1).describe("JWT verification keys"),
     // Environment
     NODE_ENV: z
       .enum(["development", "test", "production"])

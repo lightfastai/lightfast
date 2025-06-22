@@ -32,10 +32,13 @@
   "globalEnv": [
     "PORT",
     "CONVEX_DEPLOY_KEY",
+    "CONVEX_DEPLOYMENT",
+    "CONVEX_SITE_URL",
     "JWT_PRIVATE_KEY",
     "JWKS",
     "AUTH_GITHUB_SECRET",
     "AUTH_GITHUB_ID",
+    "ENCRYPTION_KEY",
     "ANTHROPIC_API_KEY",
     "OPENAI_API_KEY",
     "EXA_API_KEY",
