@@ -156,9 +156,9 @@ Lightfast's failure to enforce any right or provision of these Terms will not be
 
 If you have any questions about these Terms or the Services, please contact Lightfast at:
 
-Lightfast, Inc.  
-51 Grosvenor St  
-South Yarra, Melbourne  
+Lightfast Pty Ltd.
+51 Grosvenor St
+South Yarra, Melbourne
 Australia
 
 Email: legal@lightfast.ai`;
