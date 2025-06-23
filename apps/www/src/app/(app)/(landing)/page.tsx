@@ -37,19 +37,19 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-0 z-10">
         <div
           className="bg-border absolute h-px w-full"
-          style={{ top: "calc(var(--cc-visual-top) - 1px)" }}
+          style={{ top: "calc(var(--cc-visual-top) - 0.5px)" }}
         />
         <div
           className="bg-border absolute h-px w-full"
-          style={{ top: "calc(var(--cc-visual-bottom) + 0.5px)" }}
+          style={{ top: "calc(var(--cc-visual-bottom))" }}
         />
         <div
           className="bg-border absolute top-0 h-full w-px"
-          style={{ left: "calc(var(--cc-visual-left) - 1px)" }}
+          style={{ left: "calc(var(--cc-visual-left) - 0.5px)" }}
         />
         <div
           className="bg-border absolute top-0 h-full w-px"
-          style={{ left: "calc(var(--cc-visual-right) + 0.5px)" }}
+          style={{ left: "calc(var(--cc-visual-right))" }}
         />
         <div
           className="bg-border absolute h-px w-full"
@@ -85,8 +85,8 @@ export default function HomePage() {
           "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
         )}
         style={{
-          width: "var(--cc-current-width)",
-          height: "var(--cc-current-height)",
+          width: "calc(var(--cc-current-width) - var(--card-gap))",
+          height: "calc(var(--cc-current-height) - var(--card-gap))",
         }}
       >
         <div className="relative h-full w-full">
