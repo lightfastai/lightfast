@@ -1,6 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm run vercel-build",
-  "installCommand": "pnpm install",
-  "framework": null
+  "installCommand": "pnpm install --frozen-lockfile --strict-peer-dependencies=false",
+  "framework": null,
+  "functions": {
+    "apps/www/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
 }
