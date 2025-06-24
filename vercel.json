@@ -3,16 +3,5 @@
   "buildCommand": "cd apps/www && pnpx convex deploy --cmd 'pnpm run build' --preview-run 'setup:setupInitialData'",
   "installCommand": "pnpm install",
   "framework": "nextjs",
-  "outputDirectory": "apps/www/.next",
-  "functions": {
-    "apps/www/app/api/**/*.ts": {
-      "maxDuration": 30
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    }
-  ]
+  "outputDirectory": "apps/www/.next"
 }
