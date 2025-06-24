@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm run vercel-build",
-  "installCommand": "pnpm install --frozen-lockfile --strict-peer-dependencies=false",
-  "framework": null,
+  "buildCommand": "cd apps/www && pnpx convex deploy --cmd 'pnpm run build'",
+  "installCommand": "pnpm install --strict-peer-dependencies=false",
+  "framework": "nextjs",
+  "outputDirectory": "apps/www/.next",
   "functions": {
     "apps/www/app/api/**/*.ts": {
       "maxDuration": 30
