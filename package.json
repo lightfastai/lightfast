@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build:www": "turbo run build --filter=@lightfast/www",
+    "build:docs": "turbo run build --filter=@lightfast/docs",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint --cache-dir=.turbo/cache",
     "format": "turbo run format --cache-dir=.turbo/cache",

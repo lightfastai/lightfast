@@ -5,14 +5,14 @@
 	"type": "module",
 	"scripts": {
 		"dev": "pnpm run with-env next dev",
-		"build": "pnpm run next build",
+		"build": "next build",
 		"start": "next start",
 		"lint": "biome check --write .",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit",
 		"convex:dev": "convex dev",
 		"convex:deploy": "convex deploy",
-		"env:sync": "pnpm run ../../scripts/sync-env.ts",
+		"env:sync": "tsx ../../scripts/sync-env.ts",
 		"env:check": "pnpm exec convex env list",
 		"with-env": "dotenv -e ./.env.local --"
 	},
