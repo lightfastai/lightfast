@@ -61,7 +61,7 @@
 		"concurrently": "^9.0.1",
 		"dotenv-cli": "^7.4.2",
 		"postcss": "^8.5.5",
-		"tailwindcss": "^4.1.10",
+		"tailwindcss": "catalog:tailwind4",
 		"tsx": "^4.20.3",
 		"typescript": "^5.8.3"
 	}
