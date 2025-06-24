@@ -75,7 +75,7 @@
 		"@types/react": "^19.1.7",
 		"@types/react-dom": "^19.1.6",
 		"typescript": "^5.8.3",
-		"tailwindcss": "^4.1.10",
-		"@tailwindcss/postcss": "^4.1.10"
+		"tailwindcss": "catalog:tailwind4",
+		"@tailwindcss/postcss": "catalog:tailwind4"
 	}
 }
