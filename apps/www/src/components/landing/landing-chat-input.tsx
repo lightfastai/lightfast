@@ -32,7 +32,7 @@ export function LandingChatInput() {
 			<div className="relative">
 				<Textarea
 					placeholder="Ask anything..."
-					className="min-h-[120px] resize-none pr-16 text-lg transition-colors focus:border-primary"
+					className="min-h-[120px] resize-none pr-16 text-lg transition-colors focus:border-primary bg-transparent dark:bg-input/10 focus:bg-transparent dark:focus:bg-input/10 hover:bg-transparent dark:hover:bg-input/10 disabled:bg-transparent dark:disabled:bg-input/10"
 					rows={4}
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
