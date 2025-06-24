@@ -132,6 +132,8 @@
 	}
 }
 
+@tailwind utilities;
+
 /* Custom animations for chat streaming */
 @keyframes fade-in {
 	from {
