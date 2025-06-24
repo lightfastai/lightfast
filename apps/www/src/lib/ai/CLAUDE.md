@@ -141,7 +141,7 @@ export const modelIdValidator = v.union(
 1. **Edit `schemas.ts`** - Add/modify model configurations
 2. **Automatic propagation** - Changes flow to Convex validators via direct import
 3. **Test build** - Ensure TypeScript compilation succeeds
-4. **Run quality gates** - `bun run lint && bun run format`
+4. **Run quality gates** - `pnpm run lint && pnpm run format`
 5. **Test capabilities** - Verify model features work as expected
 
 ### Quality Gates
