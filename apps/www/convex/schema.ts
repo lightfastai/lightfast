@@ -3,7 +3,6 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
 	branchInfoValidator,
-	chunkIdValidator,
 	clientIdValidator,
 	commentValidator,
 	feedbackRatingValidator,
@@ -11,6 +10,7 @@ import {
 	fileMetadataValidator,
 	fileNameValidator,
 	ipHashValidator,
+	messagePartsValidator,
 	messageTypeValidator,
 	mimeTypeValidator,
 	modelIdValidator,
@@ -18,7 +18,6 @@ import {
 	shareIdValidator,
 	shareSettingsValidator,
 	storageIdValidator,
-	streamChunkValidator,
 	streamIdValidator,
 	threadUsageValidator,
 	titleValidator,
@@ -92,14 +91,15 @@ export default defineSchema({
 		thinkingStartedAt: v.optional(v.number()),
 		thinkingCompletedAt: v.optional(v.number()),
 		usedUserApiKey: v.optional(v.boolean()), // Track if user's own API key was used
-		streamChunks: v.optional(v.array(streamChunkValidator)),
-		lastChunkId: v.optional(chunkIdValidator),
 		streamVersion: v.optional(v.number()),
 		thinkingContent: v.optional(v.string()),
 		isThinking: v.optional(v.boolean()),
 		hasThinkingContent: v.optional(v.boolean()),
 		// Token usage tracking per message
 		usage: tokenUsageValidator,
+		// Message parts array following Vercel AI SDK v5 structure
+		// Stores text, tool calls, and tool results in chronological order
+		parts: v.optional(messagePartsValidator),
 	})
 		.index("by_thread", ["threadId"])
 		.index("by_stream_id", ["streamId"]),

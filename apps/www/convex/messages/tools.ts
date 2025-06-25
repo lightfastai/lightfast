@@ -56,7 +56,7 @@ export function createWebSearchTool() {
 				}));
 
 				console.log(`Web search found ${results.length} results`);
-
+				
 				// Return structured data that helps the AI understand and explain
 				return {
 					success: true,
