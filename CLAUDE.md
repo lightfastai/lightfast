@@ -341,7 +341,7 @@ echo "Created issue #$ISSUE_NUM and added to project"
 cd worktrees/<feature_name>
 
 # Manual setup (if script unavailable)
-git checkout main && git pull origin main
+git checkout staging && git pull origin staging
 mkdir -p worktrees
 git worktree add worktrees/<feature_name> -b jeevanpillay/<feature_name>
 cd worktrees/<feature_name>
@@ -470,9 +470,9 @@ cd /path/to/main/repo
 # Merge PR
 gh pr merge <pr_number> --squash --delete-branch
 
-# Sync main branch
-git checkout main
-git pull origin main
+# Sync staging branch
+git checkout staging
+git pull origin staging
 git log --oneline -5  # Verify merge
 ```
 

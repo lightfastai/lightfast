@@ -175,10 +175,10 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
-# Ensure main branch is up to date
-log_info "Ensuring main branch is up to date..."
-git checkout main
-git pull origin main
+# Ensure staging branch is up to date
+log_info "Ensuring staging branch is up to date..."
+git checkout staging
+git pull origin staging
 
 # Create worktrees directory if it doesn't exist
 mkdir -p "$WORKTREE_DIR"
