@@ -1,20 +1,16 @@
 "use client";
 
 import { SignInDialog } from "@/components/auth/sign-in-dialog";
+import { PromptSuggestions } from "@/components/chat/prompt-suggestions";
 import { Button } from "@lightfast/ui/components/ui/button";
 import { Textarea } from "@lightfast/ui/components/ui/textarea";
 import { ArrowUp } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export function LandingChatInput() {
 	const [showSignInDialog, setShowSignInDialog] = useState(false);
 	const [message, setMessage] = useState("");
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-	// Auto-focus the textarea when component mounts
-	useEffect(() => {
-		textareaRef.current?.focus();
-	}, []);
 
 	const handleSubmit = () => {
 		if (message.trim()) {
@@ -33,34 +29,60 @@ export function LandingChatInput() {
 		handleSubmit();
 	};
 
+	const handleSelectPrompt = useCallback((prompt: string) => {
+		setMessage(prompt);
+		// Focus the textarea after selecting a prompt
+		textareaRef.current?.focus();
+	}, []);
+
 	return (
 		<>
 			<div className="relative">
-				<Textarea
-					ref={textareaRef}
-					placeholder="Ask anything..."
-					className="min-h-[120px] resize-none pr-16 text-lg transition-colors focus:border-primary bg-transparent dark:bg-input/10 focus:bg-transparent dark:focus:bg-input/10 hover:bg-transparent dark:hover:bg-input/10 disabled:bg-transparent dark:disabled:bg-input/10"
-					rows={4}
-					value={message}
-					onChange={(e) => setMessage(e.target.value)}
-					onKeyDown={handleKeyDown}
-					autoComplete="off"
-					autoCorrect="off"
-					autoCapitalize="off"
-					spellCheck="true"
-					data-1p-ignore="true"
-					data-lpignore="true"
-					data-form-type="other"
-				/>
-				<Button
-					variant="ghost"
-					size="icon"
-					onClick={handleSendClick}
-					className="absolute right-3 bottom-3 h-8 w-8"
-					disabled={!message.trim()}
-				>
-					<ArrowUp className="w-4 h-4" />
-				</Button>
+				{/* Main input container - matching chat input styling */}
+				<div className="w-full border border-muted/30 rounded-xl overflow-hidden flex flex-col transition-all bg-transparent dark:bg-input/10">
+					{/* Textarea area */}
+					<div className="flex-1">
+						<Textarea
+							ref={textareaRef}
+							placeholder="Ask anything..."
+							className="w-full resize-none border-0 focus-visible:ring-0 whitespace-pre-wrap break-words p-3 bg-transparent dark:bg-input/10 focus:bg-transparent dark:focus:bg-input/10 hover:bg-transparent dark:hover:bg-input/10 disabled:bg-transparent dark:disabled:bg-input/10 text-sm"
+							value={message}
+							onChange={(e) => setMessage(e.target.value)}
+							onKeyDown={handleKeyDown}
+							autoComplete="off"
+							autoCorrect="off"
+							autoCapitalize="off"
+							spellCheck="true"
+							data-1p-ignore="true"
+							data-lpignore="true"
+							data-form-type="other"
+							style={{
+								lineHeight: "24px",
+								minHeight: "72px",
+							}}
+						/>
+					</div>
+
+					{/* Controls area - matching chat input */}
+					<div className="flex items-center justify-end p-2 bg-transparent dark:bg-input/10 transition-[color,box-shadow]">
+						<Button
+							variant="default"
+							size="icon"
+							onClick={handleSendClick}
+							className="h-8 w-8 p-0 rounded-full"
+							disabled={!message.trim()}
+						>
+							<ArrowUp className="w-4 h-4" />
+						</Button>
+					</div>
+				</div>
+
+				{/* Prompt suggestions positioned absolutely below chat input */}
+				{!message && (
+					<div className="absolute top-full left-0 right-0 z-10 mt-4 animate-in fade-in-0 duration-300">
+						<PromptSuggestions onSelectPrompt={handleSelectPrompt} />
+					</div>
+				)}
 			</div>
 
 			<SignInDialog
