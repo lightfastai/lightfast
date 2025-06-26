@@ -144,6 +144,11 @@ const ChatInputComponent = ({
 		adjustTextareaHeight();
 	}, [message, adjustTextareaHeight]);
 
+	// Auto-focus the textarea when component mounts
+	useEffect(() => {
+		textareaRef.current?.focus();
+	}, []);
+
 	// File upload handler
 	const handleFileUpload = useCallback(
 		async (files: FileList) => {
@@ -389,6 +394,13 @@ const ChatInputComponent = ({
 									className="w-full resize-none border-0 focus-visible:ring-0 whitespace-pre-wrap break-words p-3 bg-transparent dark:bg-input/10 focus:bg-transparent dark:focus:bg-input/10 hover:bg-transparent dark:hover:bg-input/10 disabled:bg-transparent dark:disabled:bg-input/10"
 									maxLength={maxLength}
 									disabled={disabled}
+									autoComplete="off"
+									autoCorrect="off"
+									autoCapitalize="off"
+									spellCheck="true"
+									data-1p-ignore="true"
+									data-lpignore="true"
+									data-form-type="other"
 									style={{
 										lineHeight: "24px",
 										minHeight: "72px",

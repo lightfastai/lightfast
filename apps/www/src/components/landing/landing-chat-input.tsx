@@ -4,11 +4,17 @@ import { SignInDialog } from "@/components/auth/sign-in-dialog";
 import { Button } from "@lightfast/ui/components/ui/button";
 import { Textarea } from "@lightfast/ui/components/ui/textarea";
 import { ArrowUp } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function LandingChatInput() {
 	const [showSignInDialog, setShowSignInDialog] = useState(false);
 	const [message, setMessage] = useState("");
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+	// Auto-focus the textarea when component mounts
+	useEffect(() => {
+		textareaRef.current?.focus();
+	}, []);
 
 	const handleSubmit = () => {
 		if (message.trim()) {
@@ -31,12 +37,20 @@ export function LandingChatInput() {
 		<>
 			<div className="relative">
 				<Textarea
+					ref={textareaRef}
 					placeholder="Ask anything..."
 					className="min-h-[120px] resize-none pr-16 text-lg transition-colors focus:border-primary bg-transparent dark:bg-input/10 focus:bg-transparent dark:focus:bg-input/10 hover:bg-transparent dark:hover:bg-input/10 disabled:bg-transparent dark:disabled:bg-input/10"
 					rows={4}
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					onKeyDown={handleKeyDown}
+					autoComplete="off"
+					autoCorrect="off"
+					autoCapitalize="off"
+					spellCheck="true"
+					data-1p-ignore="true"
+					data-lpignore="true"
+					data-form-type="other"
 				/>
 				<Button
 					size="icon"
