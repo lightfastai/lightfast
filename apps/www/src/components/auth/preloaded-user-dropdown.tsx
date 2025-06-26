@@ -88,8 +88,10 @@ export function PreloadedUserDropdown({
 							<User className="w-3 h-3" />
 						</AvatarFallback>
 					</Avatar>
-					<span className="hidden sm:inline">{displayName}</span>
-					<ChevronDown className="w-4 h-4" />
+					<span className="hidden sm:inline group-data-[collapsible=icon]:hidden">
+						{displayName}
+					</span>
+					<ChevronDown className="w-4 h-4 group-data-[collapsible=icon]:hidden" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-56">

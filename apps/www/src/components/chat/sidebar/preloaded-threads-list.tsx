@@ -138,7 +138,7 @@ export function PreloadedThreadsList({
 							{/* Pinned threads section */}
 							{pinned.length > 0 && (
 								<SidebarGroup className="w-58">
-									<SidebarGroupLabel className="text-xs font-medium text-muted-foreground">
+									<SidebarGroupLabel className="text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
 										Pinned
 									</SidebarGroupLabel>
 									<SidebarGroupContent className="w-full max-w-full overflow-hidden">
@@ -164,7 +164,7 @@ export function PreloadedThreadsList({
 
 								return (
 									<SidebarGroup key={category} className="w-58">
-										<SidebarGroupLabel className="text-xs font-medium text-muted-foreground">
+										<SidebarGroupLabel className="text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
 											{category}
 										</SidebarGroupLabel>
 										<SidebarGroupContent className="w-full max-w-full overflow-hidden">

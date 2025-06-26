@@ -30,7 +30,7 @@ export function ServerSidebarImplementation({
 	preloadedUser,
 }: ServerSidebarImplementationProps) {
 	return (
-		<Sidebar variant="inset" className="w-64 max-w-64">
+		<Sidebar variant="inset" collapsible="icon" className="w-64 max-w-64">
 			<SidebarHeader className="p-4">
 				<div className="flex items-center gap-3">
 					<Link
@@ -51,7 +51,9 @@ export function ServerSidebarImplementation({
 							<SidebarMenuItem>
 								<ActiveMenuItem threadId="new" href="/chat" size="default">
 									<Plus className="w-4 h-4" />
-									<span>New Chat</span>
+									<span className="group-data-[collapsible=icon]:hidden">
+										New Chat
+									</span>
 								</ActiveMenuItem>
 							</SidebarMenuItem>
 						</SidebarMenu>
