@@ -1557,7 +1557,7 @@ export const generateAIResponseWithMessage = internalAction({
 						break;
 
 					// Handle unknown part types (should never happen with proper AI SDK types)
-					default:
+					default: {
 						// This should be unreachable with proper TextStreamPart typing
 						const _exhaustiveCheck: never = part;
 						console.warn(
@@ -1566,6 +1566,7 @@ export const generateAIResponseWithMessage = internalAction({
 							_exhaustiveCheck,
 						);
 						break;
+					}
 				}
 			}
 
