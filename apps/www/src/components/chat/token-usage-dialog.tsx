@@ -102,7 +102,11 @@ export function TokenUsageDialog({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="icon" className="h-8 w-8">
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-8 w-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+					>
 						<MoreHorizontalIcon className="w-4 h-4" />
 					</Button>
 				</DropdownMenuTrigger>

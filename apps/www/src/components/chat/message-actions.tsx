@@ -281,7 +281,12 @@ export function MessageActions({
 					</Button>
 				)}
 
-				{/* Metadata displayed inline on hover - positioned between copy and branch */}
+				<ModelBranchDropdown
+					onBranch={handleBranch}
+					onOpenChange={setIsDropdownOpen}
+				/>
+
+				{/* Metadata displayed inline on hover - positioned after branch */}
 				<div className="opacity-0 group-hover/message:opacity-100 transition-opacity duration-200 flex items-center gap-2 text-xs text-muted-foreground ml-1">
 					{/* Model name */}
 					{modelName && <span>{modelName}</span>}
@@ -314,11 +319,6 @@ export function MessageActions({
 						</>
 					)}
 				</div>
-
-				<ModelBranchDropdown
-					onBranch={handleBranch}
-					onOpenChange={setIsDropdownOpen}
-				/>
 			</div>
 
 			{showFeedbackModal && (
