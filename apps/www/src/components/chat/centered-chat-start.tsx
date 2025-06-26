@@ -59,6 +59,7 @@ export function CenteredChatStart({
 					placeholder="How can I help you today?"
 					disabled={disabled}
 					isLoading={isLoading}
+					showDisclaimer={false}
 				/>
 			</div>
 		</div>

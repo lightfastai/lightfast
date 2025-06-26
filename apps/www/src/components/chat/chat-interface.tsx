@@ -76,7 +76,6 @@ export function ChatInterface({
 			<ChatMessages messages={messages} />
 			<ChatInput
 				onSendMessage={handleSendMessage}
-				placeholder="Message AI assistant..."
 				disabled={isDisabled}
 				isLoading={isAIGenerating}
 			/>

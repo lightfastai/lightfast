@@ -52,6 +52,7 @@ interface ChatInputProps {
 	disabled?: boolean;
 	maxLength?: number;
 	className?: string;
+	showDisclaimer?: boolean;
 }
 
 interface FileAttachment {
@@ -65,10 +66,11 @@ interface FileAttachment {
 const ChatInputComponent = ({
 	onSendMessage,
 	isLoading = false,
-	placeholder = "Message AI assistant...",
+	placeholder = "How can I help you today?",
 	disabled = false,
 	maxLength = 4000,
 	className = "",
+	showDisclaimer = true,
 }: ChatInputProps) => {
 	const [message, setMessage] = useState("");
 	const [isSending, setIsSending] = useState(false);
@@ -379,7 +381,7 @@ const ChatInputComponent = ({
 									disabled={disabled}
 									style={{
 										lineHeight: "24px",
-										minHeight: "64px",
+										minHeight: "72px",
 									}}
 								/>
 							</div>
@@ -387,6 +389,60 @@ const ChatInputComponent = ({
 							{/* Controls area - always at bottom */}
 							<div className="flex items-center justify-between p-2 bg-transparent dark:bg-input/10 transition-[color,box-shadow]">
 								<div className="flex items-center gap-2">
+									{/* File attachment button */}
+									<input
+										ref={fileInputRef}
+										type="file"
+										multiple
+										className="hidden"
+										onChange={handleFileInputChange}
+										accept="application/pdf,text/*,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+									/>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												onClick={() => fileInputRef.current?.click()}
+												disabled={disabled || isUploading}
+												className="h-8 w-8"
+											>
+												{isUploading ? (
+													<Loader2 className="w-4 h-4 animate-spin" />
+												) : (
+													<Paperclip className="w-4 h-4" />
+												)}
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent side="bottom">
+											<p>Attach files</p>
+										</TooltipContent>
+									</Tooltip>
+
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												onClick={handleWebSearchToggle}
+												variant={webSearchEnabled ? "default" : "ghost"}
+												size="icon"
+												className="h-8 w-8"
+												disabled={disabled}
+											>
+												<Globe className="w-4 h-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent side="bottom">
+											<p>
+												{webSearchEnabled
+													? "Web search enabled - AI can search the web for current information"
+													: "Enable web search for current information"}
+											</p>
+										</TooltipContent>
+									</Tooltip>
+								</div>
+
+								<div className="flex items-center gap-2">
+									{/* Model selector */}
 									<DropdownMenu
 										modal={false}
 										open={dropdownOpen}
@@ -405,7 +461,7 @@ const ChatInputComponent = ({
 												<ChevronDown className="h-3 w-3 opacity-50" />
 											</Button>
 										</DropdownMenuTrigger>
-										<DropdownMenuContent align="start" className="w-52">
+										<DropdownMenuContent align="end" className="w-52">
 											{Object.entries(modelsByProvider).map(
 												([provider, models]) => (
 													<DropdownMenuSub key={provider}>
@@ -436,73 +492,23 @@ const ChatInputComponent = ({
 										</DropdownMenuContent>
 									</DropdownMenu>
 
-									{/* File attachment button */}
-									<input
-										ref={fileInputRef}
-										type="file"
-										multiple
-										className="hidden"
-										onChange={handleFileInputChange}
-										accept="application/pdf,text/*,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-									/>
+									{/* Send button */}
 									<Tooltip>
 										<TooltipTrigger asChild>
 											<Button
-												variant="ghost"
-												size="sm"
-												onClick={() => fileInputRef.current?.click()}
-												disabled={disabled || isUploading}
-												className="h-6 w-6 p-0"
+												onClick={handleSendMessage}
+												disabled={!canSend}
+												size="icon"
+												className="h-8 w-8 p-0 rounded-full"
 											>
-												{isUploading ? (
-													<Loader2 className="w-3 h-3 animate-spin" />
-												) : (
-													<Paperclip className="w-3 h-3" />
-												)}
+												<ArrowUp className="w-4 h-4" />
 											</Button>
 										</TooltipTrigger>
 										<TooltipContent>
-											<p>Attach files</p>
-										</TooltipContent>
-									</Tooltip>
-
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Button
-												onClick={handleWebSearchToggle}
-												variant={webSearchEnabled ? "default" : "ghost"}
-												size="sm"
-												className="h-6 w-6 p-0"
-												disabled={disabled}
-											>
-												<Globe className="w-3 h-3" />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p>
-												{webSearchEnabled
-													? "Web search enabled - AI can search the web for current information"
-													: "Enable web search for current information"}
-											</p>
+											<p>Send message (Enter)</p>
 										</TooltipContent>
 									</Tooltip>
 								</div>
-
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											onClick={handleSendMessage}
-											disabled={!canSend}
-											size="icon"
-											className="h-8 w-8 p-0 rounded-full"
-										>
-											<ArrowUp className="w-4 h-4" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>
-										<p>Send message (Enter)</p>
-									</TooltipContent>
-								</Tooltip>
 							</div>
 						</div>
 
@@ -551,6 +557,13 @@ const ChatInputComponent = ({
 						)}
 					</div>
 				</div>
+				
+				{/* Disclaimer text */}
+				{showDisclaimer && (
+					<p className="text-center text-xs text-muted-foreground mt-4">
+						Lightfast may make mistakes. Please use with discretion.
+					</p>
+				)}
 			</div>
 		</div>
 	);
