@@ -325,6 +325,7 @@ const ChatInputComponent = ({
 		selectedModelId,
 		attachments,
 		webSearchEnabled,
+		setMessage,
 	]);
 
 	const handleKeyPress = useCallback(
@@ -341,7 +342,7 @@ const ChatInputComponent = ({
 		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
 			setMessage(e.target.value);
 		},
-		[],
+		[setMessage],
 	);
 
 	const [dropdownOpen, setDropdownOpen] = useState(false);
