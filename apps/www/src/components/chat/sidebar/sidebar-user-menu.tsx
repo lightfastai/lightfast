@@ -15,7 +15,10 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
-import { SidebarMenuButton } from "@lightfast/ui/components/ui/sidebar";
+import {
+	SidebarMenuButton,
+	useSidebar,
+} from "@lightfast/ui/components/ui/sidebar";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
 import {
@@ -27,6 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import type { api } from "../../../../convex/_generated/api";
 
 interface SidebarUserMenuProps {
@@ -37,6 +41,13 @@ export function SidebarUserMenu({ preloadedUser }: SidebarUserMenuProps) {
 	const { signOut } = useAuthActions();
 	const router = useRouter();
 	const currentUser = usePreloadedQuery(preloadedUser);
+	const { state } = useSidebar();
+	const [open, setOpen] = useState(false);
+
+	// Close dropdown when sidebar state changes
+	useEffect(() => {
+		setOpen(false);
+	}, [state]);
 
 	const handleSignOut = async () => {
 		await signOut();
@@ -47,11 +58,12 @@ export function SidebarUserMenu({ preloadedUser }: SidebarUserMenuProps) {
 	const displayEmail = currentUser?.email || "No email";
 
 	return (
-		<DropdownMenu>
+		<DropdownMenu open={open} onOpenChange={setOpen}>
 			<DropdownMenuTrigger asChild>
 				<SidebarMenuButton
 					size="default"
 					className="w-full group-data-[collapsible=icon]:!p-0 !p-0 overflow-visible"
+					data-state={open ? "open" : "closed"}
 				>
 					<div className="h-8 flex items-center w-full overflow-visible">
 						<div className="w-8 h-8 flex-shrink-0 overflow-visible">
@@ -78,11 +90,8 @@ export function SidebarUserMenu({ preloadedUser }: SidebarUserMenuProps) {
 			<DropdownMenuContent
 				align="end"
 				className="w-56"
-				side="top"
+				side="right"
 				sideOffset={8}
-				alignOffset={0}
-				collisionPadding={8}
-				avoidCollisions={true}
 			>
 				<DropdownMenuLabel>
 					<div className="flex flex-col space-y-1">

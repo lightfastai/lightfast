@@ -1,6 +1,7 @@
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarHeader,
@@ -14,8 +15,8 @@ import { Suspense } from "react";
 import type { api } from "../../../../convex/_generated/api";
 import { ActiveMenuItem } from "./active-menu-item";
 import { PreloadedThreadsList } from "./preloaded-threads-list";
-import { SidebarFooterWrapper } from "./sidebar-footer-wrapper";
 import { SidebarHoverExpand } from "./sidebar-hover-expand";
+import { SidebarUserMenu } from "./sidebar-user-menu";
 
 interface ServerSidebarImplementationProps {
 	preloadedThreads: Preloaded<typeof api.threads.list>;
@@ -75,7 +76,17 @@ export function ServerSidebarImplementation({
 				</div>
 			</SidebarContent>
 
-			<SidebarFooterWrapper preloadedUser={preloadedUser} />
+			<SidebarFooter className="p-0">
+				<SidebarGroup className="p-2">
+					<SidebarGroupContent>
+						<SidebarMenu>
+							<SidebarMenuItem className="overflow-visible">
+								<SidebarUserMenu preloadedUser={preloadedUser} />
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
+			</SidebarFooter>
 		</Sidebar>
 	);
 }
