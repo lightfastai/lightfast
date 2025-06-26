@@ -36,7 +36,7 @@ export function SiteHeader({
 				className,
 			)}
 		>
-			<div className="container mx-auto px-4 h-16 flex items-center justify-between">
+			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					{showLogo && (
 						<Link href={logoHref}>

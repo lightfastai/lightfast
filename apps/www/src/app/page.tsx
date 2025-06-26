@@ -3,7 +3,6 @@ import { LandingChatInput } from "@/components/landing/landing-chat-input";
 import { siteConfig, siteMetadata } from "@/lib/site-config";
 import { SiteFooter } from "@lightfast/ui/components/site-footer";
 import { SiteHeader } from "@lightfast/ui/components/site-header";
-import { Zap } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -73,32 +72,28 @@ export const metadata: Metadata = {
 function LandingPage() {
 	return (
 		<div className="flex flex-col min-h-screen bg-background">
-			<SiteHeader
-				githubUrl={siteConfig.links.github.href}
-				docsUrl={siteConfig.links.docs.href}
-			/>
+			<div className="px-8 py-4">
+				<SiteHeader showGitHub={false} showDocs={false} />
+			</div>
 
 			{/* Main content */}
-			<main className="flex-1 container mx-auto px-4 py-48">
-				<div className="max-w-4xl mx-auto">
+			<main className="flex-1 flex flex-col items-center justify-center container mx-auto px-4">
+				<div className="max-w-4xl mx-auto w-full -mt-20">
 					{/* Hero section */}
-					<div className="text-center mb-12">
-						<div className="inline-flex items-center gap-2 bg-muted/50 border rounded-full px-4 py-2 text-sm text-muted-foreground mb-6">
-							<Zap className="w-4 h-4" />
-							Open source chat for personal & business needs.
-						</div>
-						<h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+					<div className="text-center mb-8">
+						<h1 className="text-2xl sm:text-4xl font-semibold text-foreground">
 							What makes a good chat? You.
 						</h1>
 					</div>
 
 					{/* Chat input preview */}
-					<div className="max-w-4xl mx-auto">
+					<div className="w-full">
 						<LandingChatInput />
 					</div>
 				</div>
 			</main>
 
+<div className="px-8">
 			<SiteFooter
 				siteName={siteConfig.name}
 				homeUrl={siteConfig.url.replace("chat.", "")}
@@ -108,8 +103,10 @@ function LandingPage() {
 					twitter: siteConfig.links.twitter.href,
 					privacy: siteConfig.links.privacy.href,
 					terms: siteConfig.links.terms.href,
+					docs: siteConfig.links.docs.href,
 				}}
 			/>
+      </div>
 		</div>
 	);
 }
