@@ -101,6 +101,7 @@ const ChatInputComponent = ({
 	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const keyboardShortcuts = useKeyboardShortcutsContext();
 
 	const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 	const createFile = useMutation(api.files.createFile);
@@ -158,6 +159,19 @@ const ChatInputComponent = ({
 	useEffect(() => {
 		textareaRef.current?.focus();
 	}, []);
+
+	// Focus chat input callback
+	const focusChatInput = useCallback(() => {
+		textareaRef.current?.focus();
+	}, []);
+
+	// Register focus callback with keyboard shortcuts context
+	useEffect(() => {
+		keyboardShortcuts.registerChatInputFocus(focusChatInput);
+		return () => {
+			keyboardShortcuts.unregisterChatInputFocus();
+		};
+	}, [keyboardShortcuts, focusChatInput]);
 
 	// File upload handler
 	const handleFileUpload = useCallback(

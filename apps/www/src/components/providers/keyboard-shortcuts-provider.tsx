@@ -7,6 +7,8 @@ import { createContext, useContext, useRef } from "react";
 interface KeyboardShortcutsContextValue {
 	registerModelSelectorToggle: (callback: () => void) => void;
 	unregisterModelSelectorToggle: () => void;
+	registerChatInputFocus: (callback: () => void) => void;
+	unregisterChatInputFocus: () => void;
 }
 
 const KeyboardShortcutsContext =
@@ -29,6 +31,7 @@ export function KeyboardShortcutsProvider({
 }) {
 	const router = useRouter();
 	const modelSelectorToggleRef = useRef<(() => void) | null>(null);
+	const chatInputFocusRef = useRef<(() => void) | null>(null);
 
 	// Add keyboard shortcut for new chat (Cmd/Ctrl+Shift+O)
 	useKeyboardShortcut({
@@ -69,12 +72,28 @@ export function KeyboardShortcutsProvider({
 		},
 	});
 
+	// Add keyboard shortcut for focusing chat input (/)
+	useKeyboardShortcut({
+		key: "/",
+		callback: () => {
+			if (chatInputFocusRef.current) {
+				chatInputFocusRef.current();
+			}
+		},
+	});
+
 	const contextValue: KeyboardShortcutsContextValue = {
 		registerModelSelectorToggle: (callback: () => void) => {
 			modelSelectorToggleRef.current = callback;
 		},
 		unregisterModelSelectorToggle: () => {
 			modelSelectorToggleRef.current = null;
+		},
+		registerChatInputFocus: (callback: () => void) => {
+			chatInputFocusRef.current = callback;
+		},
+		unregisterChatInputFocus: () => {
+			chatInputFocusRef.current = null;
 		},
 	};
 
