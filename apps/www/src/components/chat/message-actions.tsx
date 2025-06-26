@@ -3,8 +3,8 @@
 import type { ModelId } from "@/lib/ai";
 import { nanoid } from "@/lib/nanoid";
 import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
-import { Button } from "@lightfast/ui/components/ui/button";
 import { Badge } from "@lightfast/ui/components/ui/badge";
+import { Button } from "@lightfast/ui/components/ui/button";
 import { cn } from "@lightfast/ui/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import {
@@ -18,8 +18,8 @@ import React from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { FeedbackModal } from "./feedback-modal";
-import { ModelBranchDropdown } from "./model-branch-dropdown";
 import { MessageUsageChip } from "./message-usage-chip";
+import { ModelBranchDropdown } from "./model-branch-dropdown";
 import { formatDuration } from "./shared/thinking-content";
 
 interface MessageActionsProps {
@@ -300,7 +300,9 @@ export function MessageActions({
 					{/* Usage chip */}
 					{message.usage && (
 						<>
-							{(modelName || message.usedUserApiKey || thinkingDuration) && <span>•</span>}
+							{(modelName || message.usedUserApiKey || thinkingDuration) && (
+								<span>•</span>
+							)}
 							<MessageUsageChip usage={message.usage} />
 						</>
 					)}

@@ -1,5 +1,3 @@
-import { siteConfig } from "@/lib/site-config";
-import { Icons } from "@lightfast/ui/components/ui/icons";
 import {
 	Sidebar,
 	SidebarContent,
@@ -9,15 +7,15 @@ import {
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuItem,
+	SidebarTrigger,
 } from "@lightfast/ui/components/ui/sidebar";
 import type { Preloaded } from "convex/react";
-import { Plus } from "lucide-react";
-import Link from "next/link";
+import { MessageSquarePlus } from "lucide-react";
 import { Suspense } from "react";
 import type { api } from "../../../../convex/_generated/api";
-import { PreloadedUserDropdown } from "../../auth/preloaded-user-dropdown";
 import { ActiveMenuItem } from "./active-menu-item";
 import { PreloadedThreadsList } from "./preloaded-threads-list";
+import { SidebarUserMenu } from "./sidebar-user-menu";
 
 interface ServerSidebarImplementationProps {
 	preloadedThreads: Preloaded<typeof api.threads.list>;
@@ -31,26 +29,19 @@ export function ServerSidebarImplementation({
 }: ServerSidebarImplementationProps) {
 	return (
 		<Sidebar variant="inset" collapsible="icon" className="w-64 max-w-64">
-			<SidebarHeader className="p-4">
-				<div className="flex items-center gap-3">
-					<Link
-						href={siteConfig.url.replace("chat.", "")}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="flex items-center gap-3"
-					>
-						<Icons.logo className="w-6 h-6 text-foreground" />
-					</Link>
-				</div>
+			<SidebarHeader className="p-0">
+				<SidebarGroup className="p-2">
+					<SidebarTrigger className="h-8 w-8" />
+				</SidebarGroup>
 			</SidebarHeader>
 
 			<SidebarContent>
-				<SidebarGroup>
+				<SidebarGroup className="p-2">
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
-								<ActiveMenuItem threadId="new" href="/chat" size="default">
-									<Plus className="w-4 h-4" />
+								<ActiveMenuItem threadId="new" href="/chat" size="default" tooltip="New Chat">
+									<MessageSquarePlus className="w-4 h-4" />
 									<span className="group-data-[collapsible=icon]:hidden">
 										New Chat
 									</span>
@@ -61,7 +52,7 @@ export function ServerSidebarImplementation({
 				</SidebarGroup>
 
 				{/* Only the threads list is a client component - everything else stays server-rendered */}
-				<div className="w-full min-w-0">
+				<div className="w-full min-w-0 group-data-[collapsible=icon]:hidden">
 					<Suspense
 						fallback={
 							<div className="px-3 py-8 text-center text-muted-foreground">
@@ -74,11 +65,16 @@ export function ServerSidebarImplementation({
 				</div>
 			</SidebarContent>
 
-			<SidebarFooter>
-				<PreloadedUserDropdown
-					preloadedUser={preloadedUser}
-					className="w-full justify-start"
-				/>
+			<SidebarFooter className="p-0">
+				<SidebarGroup className="p-2">
+					<SidebarGroupContent>
+						<SidebarMenu>
+							<SidebarMenuItem className="overflow-visible">
+								<SidebarUserMenu preloadedUser={preloadedUser} />
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
 			</SidebarFooter>
 		</Sidebar>
 	);

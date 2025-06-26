@@ -12,6 +12,7 @@ interface ActiveMenuItemProps {
 	children: React.ReactNode;
 	size?: "default" | "sm" | "lg";
 	prefetch?: boolean;
+	tooltip?: string;
 }
 
 // Client component that handles active state for individual menu items
@@ -21,6 +22,7 @@ export function ActiveMenuItem({
 	children,
 	size = "default",
 	prefetch = true,
+	tooltip,
 }: ActiveMenuItemProps) {
 	const pathname = usePathname();
 
@@ -55,6 +57,7 @@ export function ActiveMenuItem({
 			asChild
 			size={size}
 			isActive={isActive}
+			tooltip={tooltip}
 			className="w-full max-w-full min-w-0 overflow-hidden"
 		>
 			<Link

@@ -1,7 +1,6 @@
 import {
 	SidebarInset,
 	SidebarProvider,
-	SidebarTrigger,
 } from "@lightfast/ui/components/ui/sidebar";
 import { Suspense } from "react";
 import { ChatTitleClient } from "./chat-title-client";
@@ -13,7 +12,6 @@ import { TokenUsageHeaderWrapper } from "./token-usage-header-wrapper";
 function ChatHeader() {
 	return (
 		<header className="flex h-14 sm:h-16 shrink-0 items-center gap-2 px-2 sm:px-4">
-			<SidebarTrigger className="-ml-1" />
 			<div className="flex items-center gap-2 flex-1 min-w-0">
 				<Suspense
 					fallback={<div className="h-6 w-24 bg-muted animate-pulse rounded" />}

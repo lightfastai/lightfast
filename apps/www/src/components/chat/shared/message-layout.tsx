@@ -29,10 +29,12 @@ export function MessageLayout({
 				className,
 			)}
 		>
-			<div className={cn(
-				"flex-1 relative",
-				isUser && "border rounded-lg p-4 bg-muted/50"
-			)}>
+			<div
+				className={cn(
+					"flex-1 relative",
+					isUser && "border rounded-lg p-4 bg-muted/50",
+				)}
+			>
 				{content}
 				{timestamp && (
 					<div className="text-xs text-muted-foreground mt-1">{timestamp}</div>

@@ -218,7 +218,7 @@ export const generateAIResponseWithMessage = internalAction({
 					case "tool-result":
 						// The AI SDK uses 'output' field for tool results, not 'result'
 						const toolResult = part.output || part.result;
-						
+
 						// Update the tool call part with the result
 						await ctx.runMutation(internal.messages.updateToolCallPart, {
 							messageId: args.messageId,
@@ -254,7 +254,7 @@ export const generateAIResponseWithMessage = internalAction({
 						// Check if this event contains tool results (fallback for different SDK versions)
 						if ((part as any).toolResults) {
 							const toolResults = (part as any).toolResults;
-							
+
 							// Process each tool result
 							for (const toolResult of toolResults) {
 								if (toolResult.toolCallId && toolResult.result) {

@@ -3,28 +3,28 @@
 import { siteConfig } from "@/lib/site-config";
 import { useAuthActions } from "@convex-dev/auth/react";
 import {
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
 } from "@lightfast/ui/components/ui/avatar";
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { cn } from "@lightfast/ui/lib/utils";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
 import {
-	ChevronDown,
-	ExternalLink,
-	LogOut,
-	Settings,
-	User,
+  ChevronDown,
+  ExternalLink,
+  LogOut,
+  Settings,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -76,7 +76,7 @@ export function PreloadedUserDropdown({
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" className={cn("gap-2 h-10", className)}>
-					<Avatar className="w-6 h-6">
+					<Avatar className="w-6 h-6 flex-shrink-0">
 						{currentUser?.image && (
 							<AvatarImage
 								src={currentUser.image}
@@ -88,17 +88,17 @@ export function PreloadedUserDropdown({
 							<User className="w-3 h-3" />
 						</AvatarFallback>
 					</Avatar>
-					<span className="hidden sm:inline group-data-[collapsible=icon]:hidden">
+					<span className="truncate group-data-[collapsible=icon]:hidden">
 						{displayName}
 					</span>
-					<ChevronDown className="w-4 h-4 group-data-[collapsible=icon]:hidden" />
+					<ChevronDown className="w-4 h-4 flex-shrink-0 group-data-[collapsible=icon]:hidden" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-56">
 				<DropdownMenuLabel>
 					<div className="flex flex-col space-y-1">
 						<p className="text-sm font-medium leading-none">{displayName}</p>
-						{showEmail && (
+						{showEmail && displayEmail && (
 							<p className="text-xs leading-none text-muted-foreground">
 								{displayEmail}
 							</p>
