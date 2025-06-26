@@ -2,17 +2,17 @@
 
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
 } from "@lightfast/ui/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { ScrollArea } from "@lightfast/ui/components/ui/scroll-area";
 import { type Preloaded, usePreloadedQuery, useQuery } from "convex/react";
@@ -122,74 +122,77 @@ export function TokenUsageDialog({
 			</DropdownMenu>
 
 			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-			<DialogContent className="sm:max-w-[600px]">
-				<DialogHeader>
-					<DialogTitle>Token Usage</DialogTitle>
-					<DialogDescription>
-						Token consumption breakdown for this conversation
-					</DialogDescription>
-				</DialogHeader>
+				<DialogContent className="sm:max-w-[600px]">
+					<DialogHeader>
+						<DialogTitle>Token Usage</DialogTitle>
+						<DialogDescription>
+							Token consumption breakdown for this conversation
+						</DialogDescription>
+					</DialogHeader>
 
-				<div className="space-y-6">
-					{/* Summary */}
-					<div className="grid grid-cols-2 gap-4 text-sm">
-						<div className="p-3 border rounded-lg">
-							<div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-								Total Tokens
+					<div className="space-y-6">
+						{/* Summary */}
+						<div className="grid grid-cols-2 gap-4 text-sm">
+							<div className="p-3 border rounded-lg">
+								<div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+									Total Tokens
+								</div>
+								<div className="font-mono text-lg font-semibold">
+									{formatTokenCount(usage.totalTokens)}
+								</div>
 							</div>
-							<div className="font-mono text-lg font-semibold">
-								{formatTokenCount(usage.totalTokens)}
+							<div className="p-3 border rounded-lg">
+								<div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+									Messages
+								</div>
+								<div className="font-mono text-lg font-semibold">
+									{usage.messageCount}
+								</div>
 							</div>
 						</div>
-						<div className="p-3 border rounded-lg">
-							<div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-								Messages
-							</div>
-							<div className="font-mono text-lg font-semibold">
-								{usage.messageCount}
-							</div>
-						</div>
-					</div>
 
-					{/* Token Breakdown */}
-					<div className="space-y-3">
-						<h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-							Token Breakdown
-						</h3>
-						<div className="space-y-2">
-							<TokenRow label="Input" value={usage.totalInputTokens} />
-							<TokenRow label="Output" value={usage.totalOutputTokens} />
-							{usage.totalReasoningTokens > 0 && (
-								<TokenRow
-									label="Reasoning"
-									value={usage.totalReasoningTokens}
-								/>
-							)}
-							{usage.totalCachedInputTokens > 0 && (
-								<TokenRow label="Cached" value={usage.totalCachedInputTokens} />
-							)}
-						</div>
-					</div>
-
-					{/* Model Breakdown */}
-					<div className="space-y-3">
-						<h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-							By Model
-						</h3>
-						<ScrollArea className="h-[300px]">
-							<div className="space-y-2 pr-3">
-								{usage.modelStats.map((modelStat) => (
-									<ModelRow
-										key={modelStat.model}
-										model={modelStat.model}
-										stats={modelStat}
+						{/* Token Breakdown */}
+						<div className="space-y-3">
+							<h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+								Token Breakdown
+							</h3>
+							<div className="space-y-2">
+								<TokenRow label="Input" value={usage.totalInputTokens} />
+								<TokenRow label="Output" value={usage.totalOutputTokens} />
+								{usage.totalReasoningTokens > 0 && (
+									<TokenRow
+										label="Reasoning"
+										value={usage.totalReasoningTokens}
 									/>
-								))}
+								)}
+								{usage.totalCachedInputTokens > 0 && (
+									<TokenRow
+										label="Cached"
+										value={usage.totalCachedInputTokens}
+									/>
+								)}
 							</div>
-						</ScrollArea>
+						</div>
+
+						{/* Model Breakdown */}
+						<div className="space-y-3">
+							<h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+								By Model
+							</h3>
+							<ScrollArea className="h-[300px]">
+								<div className="space-y-2 pr-3">
+									{usage.modelStats.map((modelStat) => (
+										<ModelRow
+											key={modelStat.model}
+											model={modelStat.model}
+											stats={modelStat}
+										/>
+									))}
+								</div>
+							</ScrollArea>
+						</div>
 					</div>
-				</div>
-			</DialogContent>
+				</DialogContent>
 			</Dialog>
 		</>
 	);

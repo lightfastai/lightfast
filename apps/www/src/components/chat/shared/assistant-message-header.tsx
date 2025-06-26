@@ -32,21 +32,22 @@ export function AssistantMessageHeader({
 	const hasContent = (() => {
 		// First check streamingText
 		if (streamingText && streamingText.trim().length > 0) return true;
-		
+
 		// Check if message has parts with content
 		if (hasParts && message?.parts && message.parts.length > 0) {
-			return message.parts.some(part => 
-				(part.type === 'text' && part.text && part.text.trim().length > 0) ||
-				part.type === 'tool-call'
+			return message.parts.some(
+				(part) =>
+					(part.type === "text" && part.text && part.text.trim().length > 0) ||
+					part.type === "tool-call",
 			);
 		}
-		
+
 		// Check message body as fallback
 		if (message?.body && message.body.trim().length > 0) return true;
-		
+
 		return false;
 	})();
-	
+
 	// Only show "Thinking" when streaming but no content has appeared yet
 	if (isStreaming && !isComplete && !hasContent) {
 		return (

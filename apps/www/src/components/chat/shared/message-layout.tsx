@@ -35,7 +35,9 @@ export function MessageLayout({
 			<div
 				className={cn(
 					"relative",
-					isUser ? "max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30" : "flex-1",
+					isUser
+						? "max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30"
+						: "flex-1",
 				)}
 			>
 				{content}
@@ -43,10 +45,14 @@ export function MessageLayout({
 					<div className="text-xs text-muted-foreground mt-1">{timestamp}</div>
 				)}
 				{actions && (
-					<div className={cn(
-						"transition-opacity",
-						forceActionsVisible ? "opacity-100" : "opacity-0 group-hover/message:opacity-100"
-					)}>
+					<div
+						className={cn(
+							"transition-opacity",
+							forceActionsVisible
+								? "opacity-100"
+								: "opacity-0 group-hover/message:opacity-100",
+						)}
+					>
 						{actions}
 					</div>
 				)}

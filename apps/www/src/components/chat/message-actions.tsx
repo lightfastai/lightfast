@@ -243,33 +243,33 @@ export function MessageActions({
 					variant="ghost"
 					size="icon"
 					className={cn(
-						"h-7 w-7 transition-colors",
+						"h-8 w-8 transition-colors",
 						feedback?.rating === "thumbs_up" &&
 							"text-green-600 hover:text-green-700",
 					)}
 					onClick={() => handleFeedback("thumbs_up")}
 					aria-label="Like message"
 				>
-					<ThumbsUp className="h-3.5 w-3.5" />
+					<ThumbsUp className="h-4 w-4" />
 				</Button>
 				<Button
 					variant="ghost"
 					size="icon"
 					className={cn(
-						"h-7 w-7 transition-colors",
+						"h-8 w-8 transition-colors",
 						feedback?.rating === "thumbs_down" &&
 							"text-red-600 hover:text-red-700",
 					)}
 					onClick={() => handleFeedback("thumbs_down")}
 					aria-label="Dislike message"
 				>
-					<ThumbsDown className="h-3.5 w-3.5" />
+					<ThumbsDown className="h-4 w-4" />
 				</Button>
 				{message.body && (
 					<Button
 						variant="ghost"
 						size="icon"
-						className="h-7 w-7"
+						className="h-8 w-8"
 						onClick={handleCopy}
 						aria-label={isCopied ? "Copied" : "Copy message"}
 					>
@@ -280,8 +280,8 @@ export function MessageActions({
 						)}
 					</Button>
 				)}
-				<ModelBranchDropdown 
-					onBranch={handleBranch} 
+				<ModelBranchDropdown
+					onBranch={handleBranch}
 					onOpenChange={setIsDropdownOpen}
 				/>
 

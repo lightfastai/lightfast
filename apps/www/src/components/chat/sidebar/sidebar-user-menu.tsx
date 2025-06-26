@@ -81,7 +81,9 @@ export function SidebarUserMenu({ preloadedUser }: SidebarUserMenuProps) {
 							</Avatar>
 						</div>
 						<div className="flex items-center gap-2 px-2 flex-1 group-data-[collapsible=icon]:hidden">
-							<span className="flex-1 truncate text-left text-xs">{displayName}</span>
+							<span className="flex-1 truncate text-left text-xs">
+								{displayName}
+							</span>
 							<ChevronDown className="w-3 h-3" />
 						</div>
 					</div>

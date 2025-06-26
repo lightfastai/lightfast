@@ -53,12 +53,13 @@ export function LandingChatInput() {
 					data-form-type="other"
 				/>
 				<Button
+					variant="ghost"
 					size="icon"
 					onClick={handleSendClick}
-					className="absolute right-3 bottom-3"
+					className="absolute right-3 bottom-3 h-8 w-8"
 					disabled={!message.trim()}
 				>
-					<ArrowUp className="w-5 h-5" />
+					<ArrowUp className="w-4 h-4" />
 				</Button>
 			</div>
 

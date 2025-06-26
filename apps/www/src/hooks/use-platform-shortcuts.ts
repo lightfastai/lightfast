@@ -36,7 +36,11 @@ export function usePlatformShortcuts() {
 			case "newChat":
 				return {
 					mac: { modifier: "⌘⇧", key: "O", display: "⌘⇧O" },
-					windows: { modifier: "Ctrl+Shift", key: "O", display: "Ctrl+Shift+O" },
+					windows: {
+						modifier: "Ctrl+Shift",
+						key: "O",
+						display: "Ctrl+Shift+O",
+					},
 					linux: { modifier: "Ctrl+Shift", key: "O", display: "Ctrl+Shift+O" },
 				}[platform];
 			default:

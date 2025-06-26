@@ -1,12 +1,12 @@
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
+	Sidebar,
+	SidebarContent,
+	SidebarFooter,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarHeader,
+	SidebarMenu,
+	SidebarMenuItem,
 } from "@lightfast/ui/components/ui/sidebar";
 import type { Preloaded } from "convex/react";
 import { MessageSquarePlus } from "lucide-react";
@@ -41,11 +41,7 @@ export function ServerSidebarImplementation({
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
-								<ActiveMenuItem
-									threadId="new"
-									href="/chat"
-									size="default"
-								>
+								<ActiveMenuItem threadId="new" href="/chat" size="default">
 									<MessageSquarePlus className="w-4 h-4" />
 									<span className="group-data-[collapsible=icon]:hidden text-xs">
 										New Chat

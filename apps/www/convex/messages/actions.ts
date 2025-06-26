@@ -377,7 +377,7 @@ export const generateAIResponse = internalAction({
 			console.log(`Web search enabled: ${args.webSearchEnabled}`);
 
 			// Stream AI response using shared utility
-			const { usage: finalUsage } = await streamAIResponse(
+			const { fullText, usage: finalUsage } = await streamAIResponse(
 				ctx,
 				args.modelId as ModelId,
 				messages,
@@ -394,11 +394,13 @@ export const generateAIResponse = internalAction({
 				finalUsage,
 			);
 
-			// Mark message as complete with usage data
+			// Mark message as complete with usage data and full text
 			const formattedUsage = formatUsageData(finalUsage);
 
-			await ctx.runMutation(internal.messages.completeStreamingMessageLegacy, {
+			await ctx.runMutation(internal.messages.completeStreamingMessage, {
 				messageId,
+				streamId,
+				fullText,
 				usage: formattedUsage,
 			});
 

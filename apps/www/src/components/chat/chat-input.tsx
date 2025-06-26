@@ -2,40 +2,40 @@
 
 import { useFileDrop } from "@/hooks/use-file-drop";
 import {
-  DEFAULT_MODEL_ID,
-  type ModelId,
-  getModelConfig,
-  getVisibleModels,
+	DEFAULT_MODEL_ID,
+	type ModelId,
+	getModelConfig,
+	getVisibleModels,
 } from "@/lib/ai";
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuPortal,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { ScrollArea, ScrollBar } from "@lightfast/ui/components/ui/scroll-area";
 import { Textarea } from "@lightfast/ui/components/ui/textarea";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
 } from "@lightfast/ui/components/ui/tooltip";
 import { useMutation } from "convex/react";
 import {
-  ArrowUp,
-  ChevronDown,
-  FileIcon,
-  FileText,
-  Globe,
-  Image,
-  Loader2,
-  Paperclip,
-  X,
+	ArrowUp,
+	ChevronDown,
+	FileIcon,
+	FileText,
+	Globe,
+	Image,
+	Loader2,
+	Paperclip,
+	X,
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -82,7 +82,8 @@ const ChatInputComponent = ({
 
 	// Use controlled value if provided, otherwise use internal state
 	const message = value !== undefined ? value : internalMessage;
-	const setMessage = value !== undefined ? (onChange || (() => {})) : setInternalMessage;
+	const setMessage =
+		value !== undefined ? onChange || (() => {}) : setInternalMessage;
 	const [isSending, setIsSending] = useState(false);
 	const [selectedModelId, setSelectedModelId] =
 		useState<string>(DEFAULT_MODEL_ID);
@@ -360,7 +361,10 @@ const ChatInputComponent = ({
 	};
 
 	return (
-		<div className={`pb-2 md:pb-4 flex-shrink-0 ${className}`} {...dragHandlers}>
+		<div
+			className={`pb-2 md:pb-4 flex-shrink-0 ${className}`}
+			{...dragHandlers}
+		>
 			<div className="max-w-3xl mx-auto relative">
 				{/* Drag overlay */}
 				{isDragging && (
@@ -540,41 +544,41 @@ const ChatInputComponent = ({
 								<ScrollArea className="w-full">
 									<div className="flex gap-2 p-3">
 										{attachments.map((attachment) => {
-										const isImage = attachment.type.startsWith("image/");
-										const isPdf = attachment.type === "application/pdf";
+											const isImage = attachment.type.startsWith("image/");
+											const isPdf = attachment.type === "application/pdf";
 
-										return (
-											<div
-												key={attachment.id}
-												className="flex items-center gap-2 px-3 py-2 bg-background rounded-md border text-sm group hover:border-foreground/20 transition-colors flex-shrink-0"
-											>
-												{isImage ? (
-													<Image className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-												) : isPdf ? (
-													<FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-												) : (
-													<FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-												)}
-												<div className="min-w-0">
-													<p className="truncate max-w-[150px] font-medium">
-														{attachment.name}
-													</p>
-													<p className="text-xs text-muted-foreground whitespace-nowrap">
-														{formatFileSize(attachment.size)}
-													</p>
-												</div>
-												<button
-													type="button"
-													onClick={() => removeAttachment(attachment.id)}
-													className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 hover:bg-destructive/10 rounded"
-													disabled={disabled || isUploading}
-													aria-label={`Remove ${attachment.name}`}
+											return (
+												<div
+													key={attachment.id}
+													className="flex items-center gap-2 px-3 py-2 bg-background rounded-md border text-sm group hover:border-foreground/20 transition-colors flex-shrink-0"
 												>
-													<X className="w-3 h-3 text-destructive" />
-												</button>
-											</div>
-										);
-									})}
+													{isImage ? (
+														<Image className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+													) : isPdf ? (
+														<FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+													) : (
+														<FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+													)}
+													<div className="min-w-0">
+														<p className="truncate max-w-[150px] font-medium">
+															{attachment.name}
+														</p>
+														<p className="text-xs text-muted-foreground whitespace-nowrap">
+															{formatFileSize(attachment.size)}
+														</p>
+													</div>
+													<button
+														type="button"
+														onClick={() => removeAttachment(attachment.id)}
+														className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 hover:bg-destructive/10 rounded"
+														disabled={disabled || isUploading}
+														aria-label={`Remove ${attachment.name}`}
+													>
+														<X className="w-3 h-3 text-destructive" />
+													</button>
+												</div>
+											);
+										})}
 									</div>
 									<ScrollBar orientation="horizontal" />
 								</ScrollArea>
