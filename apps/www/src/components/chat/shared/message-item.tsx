@@ -48,11 +48,10 @@ export function MessageItem({
 	forceActionsVisible = false,
 }: MessageItemProps) {
 	const isAssistant = message.messageType === "assistant";
-	
+
 	// Check if message has reasoning parts (for completed messages)
-	const hasReasoningParts = message.parts?.some(
-		(part) => part.type === "reasoning"
-	) || false;
+	const hasReasoningParts =
+		message.parts?.some((part) => part.type === "reasoning") || false;
 
 	// Calculate thinking duration
 	const thinkingDuration = React.useMemo(() => {

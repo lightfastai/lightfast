@@ -30,10 +30,9 @@ export function AssistantMessageHeader({
 	message,
 }: AssistantMessageHeaderProps) {
 	// Check if message has reasoning parts
-	const hasReasoningParts = message?.parts?.some(
-		(part) => part.type === "reasoning"
-	) || false;
-	
+	const hasReasoningParts =
+		message?.parts?.some((part) => part.type === "reasoning") || false;
+
 	// Get reasoning content from parts
 	const reasoningContent = message?.parts
 		?.filter((part) => part.type === "reasoning")

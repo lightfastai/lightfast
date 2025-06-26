@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { api } from "../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { ThreadItem } from "./thread-item";
-import { useIncrementalThreads } from "./use-incremental-threads";
 
 type Thread = Doc<"threads">;
 type ThreadWithCategory = Thread & { dateCategory: string };
@@ -67,16 +66,89 @@ export function SimpleVirtualizedThreadsList({
 	const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
 
 	// Use preloaded data with reactivity
-	const initialThreads = usePreloadedQuery(preloadedThreads);
+	const allThreads = usePreloadedQuery(preloadedThreads);
 
 	// Get pinned threads separately (always show all)
 	const pinnedThreads = useQuery(api.threads.listPinned) ?? [];
 
-	// Use incremental loading for unpinned threads
-	const { threads, isLoadingMore, hasMoreData, loadMore } =
-		useIncrementalThreads({
-			initialThreads: initialThreads.filter((t) => !t.pinned),
-		});
+	// State for pagination
+	const [cursor, setCursor] = useState<string | undefined>(undefined);
+	const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+	// Get paginated threads for infinite scroll
+	const paginatedResult = useQuery(
+		api.threads.listPaginated,
+		cursor
+			? {
+					paginationOpts: {
+						cursor,
+						numItems: 20,
+					},
+				}
+			: "skip",
+	);
+
+	// Helper function to add date category to threads
+	const addDateCategory = useCallback((thread: Thread): ThreadWithCategory => {
+		const now = new Date();
+		const threadDate = new Date(thread._creationTime);
+		const diffDays = Math.floor(
+			(now.getTime() - threadDate.getTime()) / (1000 * 60 * 60 * 24),
+		);
+
+		let dateCategory: string;
+		if (diffDays === 0) {
+			dateCategory = "Today";
+		} else if (diffDays === 1) {
+			dateCategory = "Yesterday";
+		} else if (diffDays <= 7) {
+			dateCategory = "This Week";
+		} else if (diffDays <= 30) {
+			dateCategory = "This Month";
+		} else {
+			dateCategory = "Older";
+		}
+
+		return { ...thread, dateCategory };
+	}, []);
+
+	// Merge all threads (reactive + paginated)
+	const threads = useMemo(() => {
+		const allThreadsUnpinned = allThreads
+			.filter((t) => !t.pinned)
+			.map(addDateCategory);
+		if (!paginatedResult?.page) return allThreadsUnpinned;
+
+		// Merge and deduplicate by _id, keeping reactive data priority
+		const mergedThreads = [...allThreadsUnpinned];
+
+		// Add paginated threads that aren't already in reactive data
+		for (const paginatedThread of paginatedResult.page) {
+			const existingIndex = mergedThreads.findIndex(
+				(t) => t._id === paginatedThread._id,
+			);
+			if (existingIndex === -1) {
+				mergedThreads.push(addDateCategory(paginatedThread));
+			}
+		}
+
+		return mergedThreads;
+	}, [allThreads, paginatedResult?.page, addDateCategory]);
+
+	// Check if we can load more
+	const hasMoreData = paginatedResult ? !paginatedResult.isDone : true;
+
+	// Load more function
+	const loadMore = useCallback(() => {
+		if (!hasMoreData || isLoadingMore) return;
+
+		setIsLoadingMore(true);
+		// Set cursor to load next page
+		if (paginatedResult?.continueCursor) {
+			setCursor(paginatedResult.continueCursor);
+		}
+		setIsLoadingMore(false);
+	}, [hasMoreData, isLoadingMore, paginatedResult?.continueCursor]);
 
 	// Handle pin toggle with optimistic update
 	const handlePinToggle = useCallback(
@@ -185,7 +257,7 @@ export function SimpleVirtualizedThreadsList({
 	}, [scrollElement, hasMoreData, isLoadingMore, loadMore]);
 
 	// Show empty state if no threads
-	if (threads.length === 0 && pinnedThreads.length === 0) {
+	if (allThreads.length === 0) {
 		return (
 			<div className={className}>
 				<div className="px-3 py-8 text-center text-muted-foreground">
@@ -193,6 +265,89 @@ export function SimpleVirtualizedThreadsList({
 					<p className="text-xs mt-1 opacity-75">Start a new chat to begin</p>
 				</div>
 			</div>
+		);
+	}
+
+	// Component to render a group of threads
+	function ThreadGroup({
+		categoryName,
+		threads,
+		onPinToggle,
+	}: {
+		categoryName: string;
+		threads: ThreadWithCategory[];
+		onPinToggle: (threadId: Id<"threads">) => void;
+	}) {
+		return (
+			<SidebarGroup className="w-58">
+				<SidebarGroupLabel className="text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
+					{categoryName}
+				</SidebarGroupLabel>
+				<SidebarGroupContent className="w-full max-w-full overflow-hidden">
+					<SidebarMenu className="space-y-0.5">
+						{threads.map((thread) => (
+							<ThreadItem
+								key={thread._id}
+								thread={thread}
+								onPinToggle={onPinToggle}
+							/>
+						))}
+					</SidebarMenu>
+				</SidebarGroupContent>
+			</SidebarGroup>
+		);
+	}
+
+	// Show non-virtualized threads while scroll element initializes
+	if (!scrollElement) {
+		const groupedThreads = groupThreadsByCategory(threads);
+		const categoryOrder = [
+			"Today",
+			"Yesterday",
+			"This Week",
+			"This Month",
+			"Older",
+		];
+
+		return (
+			<ScrollArea ref={scrollAreaRef} className={className}>
+				<div className="w-full max-w-full min-w-0 overflow-hidden">
+					{pinnedThreads.length > 0 && (
+						<ThreadGroup
+							categoryName="Pinned"
+							threads={pinnedThreads.map((thread) => ({
+								...thread,
+								dateCategory: "Pinned",
+							}))}
+							onPinToggle={handlePinToggle}
+						/>
+					)}
+					{categoryOrder.map((category) => {
+						const categoryThreads = groupedThreads[category];
+						if (!categoryThreads || categoryThreads.length === 0) return null;
+						return (
+							<ThreadGroup
+								key={category}
+								categoryName={category}
+								threads={categoryThreads}
+								onPinToggle={handlePinToggle}
+							/>
+						);
+					})}
+					{hasMoreData && (
+						<div className="p-3">
+							<button
+								type="button"
+								onClick={loadMore}
+								disabled={isLoadingMore}
+								className="w-full py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+							>
+								{isLoadingMore ? "Loading..." : "Load More"}
+							</button>
+						</div>
+					)}
+				</div>
+			</ScrollArea>
 		);
 	}
 
@@ -206,61 +361,60 @@ export function SimpleVirtualizedThreadsList({
 						position: "relative",
 					}}
 				>
-					{scrollElement &&
-						virtualizer.getVirtualItems().map((virtualItem) => {
-							const item = virtualItems[virtualItem.index];
-							if (!item) return null;
+					{virtualizer.getVirtualItems().map((virtualItem) => {
+						const item = virtualItems[virtualItem.index];
+						if (!item) return null;
 
-							return (
-								<div
-									key={virtualItem.key}
-									style={{
-										position: "absolute",
-										top: 0,
-										left: 0,
-										width: "100%",
-										height: `${virtualItem.size}px`,
-										transform: `translateY(${virtualItem.start}px)`,
-									}}
-								>
-									{item.type === "category-header" ? (
-										<SidebarGroup className="w-58">
-											<SidebarGroupLabel className="text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
-												{item.categoryName}
-											</SidebarGroupLabel>
-										</SidebarGroup>
-									) : item.type === "thread" ? (
-										<SidebarGroup className="w-58">
-											<SidebarGroupContent className="w-full max-w-full overflow-hidden">
-												<SidebarMenu className="space-y-0.5">
-													<ThreadItem
-														thread={item.thread}
-														onPinToggle={handlePinToggle}
-													/>
-												</SidebarMenu>
-											</SidebarGroupContent>
-										</SidebarGroup>
-									) : item.type === "loading" ? (
-										<div className="px-3 py-4">
-											<div className="flex items-center justify-center space-x-2 text-muted-foreground">
-												<div className="w-2 h-2 rounded-full bg-current opacity-20 animate-pulse" />
-												<div
-													className="w-2 h-2 rounded-full bg-current opacity-40 animate-pulse"
-													style={{ animationDelay: "0.2s" }}
+						return (
+							<div
+								key={virtualItem.key}
+								style={{
+									position: "absolute",
+									top: 0,
+									left: 0,
+									width: "100%",
+									height: `${virtualItem.size}px`,
+									transform: `translateY(${virtualItem.start}px)`,
+								}}
+							>
+								{item.type === "category-header" ? (
+									<SidebarGroup className="w-58">
+										<SidebarGroupLabel className="text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
+											{item.categoryName}
+										</SidebarGroupLabel>
+									</SidebarGroup>
+								) : item.type === "thread" ? (
+									<SidebarGroup className="w-58">
+										<SidebarGroupContent className="w-full max-w-full overflow-hidden">
+											<SidebarMenu className="space-y-0.5">
+												<ThreadItem
+													thread={item.thread}
+													onPinToggle={handlePinToggle}
 												/>
-												<div
-													className="w-2 h-2 rounded-full bg-current opacity-60 animate-pulse"
-													style={{ animationDelay: "0.4s" }}
-												/>
-											</div>
-											<div className="text-xs text-center mt-2 text-muted-foreground">
-												Loading more...
-											</div>
+											</SidebarMenu>
+										</SidebarGroupContent>
+									</SidebarGroup>
+								) : item.type === "loading" ? (
+									<div className="px-3 py-4">
+										<div className="flex items-center justify-center space-x-2 text-muted-foreground">
+											<div className="w-2 h-2 rounded-full bg-current opacity-20 animate-pulse" />
+											<div
+												className="w-2 h-2 rounded-full bg-current opacity-40 animate-pulse"
+												style={{ animationDelay: "0.2s" }}
+											/>
+											<div
+												className="w-2 h-2 rounded-full bg-current opacity-60 animate-pulse"
+												style={{ animationDelay: "0.4s" }}
+											/>
 										</div>
-									) : null}
-								</div>
-							);
-						})}
+										<div className="text-xs text-center mt-2 text-muted-foreground">
+											Loading more...
+										</div>
+									</div>
+								) : null}
+							</div>
+						);
+					})}
 				</div>
 			</div>
 		</ScrollArea>
