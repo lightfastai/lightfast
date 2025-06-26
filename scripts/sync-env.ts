@@ -207,7 +207,7 @@ async function syncVar(
         const escapedValue = JSON.stringify(value)
         execSync(`npx convex env set ${varName} ${escapedValue}`, {
           stdio: ["inherit", "pipe", "pipe"],
-          encoding: "utf8",
+          encoding: "utf8"
         })
       }
       log.success(`Synced ${varName}`)
@@ -304,13 +304,11 @@ function validateEnvironmentVariables(envVars: Record<string, string>): {
  */
 function findEnvFile(): string {
   const possiblePaths = [
-    // Current working directory
+    // Current working directory (root)
     path.resolve(process.cwd(), ENV_FILE),
-    // apps/www directory (if running from root)
-    path.resolve(process.cwd(), "apps", "www", ENV_FILE),
-    // Parent directory (if running from apps/www)
+    // Parent directory (if running from subdirectory)
     path.resolve(process.cwd(), "..", ENV_FILE),
-    // Two levels up (if running from apps/www/convex)
+    // Two levels up (if running from nested subdirectory)
     path.resolve(process.cwd(), "..", "..", ENV_FILE),
   ]
 
@@ -338,9 +336,8 @@ async function syncEnvironment(): Promise<void> {
     if (!envPath) {
       log.error(`${ENV_FILE} file not found in any of the expected locations`)
       console.log("Expected locations:")
-      console.log("  - Current directory")
-      console.log("  - apps/www directory (if running from root)")
-      console.log("  - Parent directory (if running from apps/www)")
+      console.log("  - Current directory (root)")
+      console.log("  - Parent directory (if running from subdirectory)")
       console.log("")
       console.log(`Create ${ENV_FILE} with your environment variables`)
       console.log("Example:")

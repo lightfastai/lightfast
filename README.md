@@ -154,7 +154,7 @@ AUTH_GITHUB_SECRET=your_github_client_secret_here
 Run the sync script to push environment variables to Convex:
 
 ```bash
-pnpm run env:sync
+pnpm run env:sync  # Run from root with .env.local in root directory
 ```
 
 ### Usage
@@ -185,18 +185,23 @@ SKIP_ENV_VALIDATION=true pnpm run build
    pnpm install
    ```
 
-2. Set up your environment variables (create `.env.local` with the variables shown above)
+2. Copy the example environment file and configure it:
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your API keys and configuration
+   ```
 
 3. Set up GitHub OAuth (see Authentication Setup section above)
 
 4. Sync environment variables to Convex:
    ```bash
-   pnpm run env:sync
+   pnpm run env:sync  # Run from root with .env.local in root directory
    ```
    
    This command will:
    - Validate all required environment variables
    - Sync API keys and authentication settings to Convex
+   - Use the `.env.local` file from the root directory
    - Automatically set NODE_ENV=development for local development
 
 5. Start the development servers (Next.js + Convex concurrently):
@@ -212,7 +217,7 @@ SKIP_ENV_VALIDATION=true pnpm run build
    pnpm run convex:dev
    
    # Terminal 2: Start Next.js development server only
-   pnpm run dev:next
+   cd apps/www && pnpm run dev:next
    ```
 
 6. Open [http://localhost:3000](http://localhost:3000) and sign in with GitHub
@@ -312,10 +317,10 @@ SKIP_ENV_VALIDATION=true pnpm run build
 
 ### Development Servers
 - `pnpm run dev:www` - Start Next.js + Convex concurrently
-- `pnpm run dev:next` - Start Next.js development server only
-- `pnpm run convex:dev` - Start Convex development server only
-- `pnpm run convex:deploy` - Deploy to Convex
-- `pnpm run env:sync` - Sync environment variables to Convex
+- `pnpm run dev:next` - Start Next.js development server only (run from apps/www)
+- `pnpm run convex:dev` - Start Convex development server (run from root)
+- `pnpm run convex:deploy` - Deploy to Convex (run from apps/www)
+- `pnpm run env:sync` - Sync environment variables to Convex (run from root with .env.local in root)
 
 ### UI Components
 - `pnpm run ui:add <component>` - Add a new shadcn/ui component
@@ -393,7 +398,7 @@ Simply visit [chat.lightfast.ai](https://chat.lightfast.ai) and start chatting w
 
 3. **Set up Convex**
    ```bash
-   pnpm exec convex dev  # Follow the setup prompts
+   pnpm run convex:dev  # Follow the setup prompts
    ```
 
 4. **Configure environment variables**

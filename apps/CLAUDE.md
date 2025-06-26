@@ -23,8 +23,7 @@ apps/www/
 │   │   └── settings/    # Settings components
 │   └── lib/             # Utilities and helpers
 ├── convex/              # Backend (see convex/CLAUDE.md)
-├── public/              # Static assets
-└── .env.local          # Environment variables
+└── public/              # Static assets
 ```
 
 ### Key Patterns
@@ -76,7 +75,7 @@ pnpm run build:www   # Build for production
 pnpm run dev         # Run dev server
 pnpm run build       # Build for production
 pnpm run convex:dev  # Run Convex dev server
-pnpm run env:sync    # Sync environment variables
+pnpm run env:sync    # Sync environment variables (auto-detects .env.local location)
 ```
 
 ### Deployment
