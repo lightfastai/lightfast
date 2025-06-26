@@ -48,7 +48,7 @@ export function ServerSidebarImplementation({
 									tooltip="New Chat (⌘+Shift+O)"
 								>
 									<MessageSquarePlus className="w-4 h-4" />
-									<span className="group-data-[collapsible=icon]:hidden">
+									<span className="group-data-[collapsible=icon]:hidden text-xs">
 										New Chat
 									</span>
 								</ActiveMenuItem>
@@ -62,7 +62,7 @@ export function ServerSidebarImplementation({
 					<Suspense
 						fallback={
 							<div className="px-3 py-8 text-center text-muted-foreground">
-								<p className="text-sm">Loading conversations...</p>
+								<p className="text-xs">Loading conversations...</p>
 							</div>
 						}
 					>

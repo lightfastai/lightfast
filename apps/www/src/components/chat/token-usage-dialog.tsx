@@ -2,16 +2,22 @@
 
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@lightfast/ui/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@lightfast/ui/components/ui/dropdown-menu";
 import { ScrollArea } from "@lightfast/ui/components/ui/scroll-area";
 import { type Preloaded, usePreloadedQuery, useQuery } from "convex/react";
-import { Activity, ChevronRight } from "lucide-react";
+import { Activity, MoreHorizontalIcon } from "lucide-react";
+import { useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -62,6 +68,8 @@ export function TokenUsageDialog({
 	threadId,
 	preloadedThreadUsage,
 }: TokenUsageDialogProps) {
+	const [dialogOpen, setDialogOpen] = useState(false);
+
 	// Use preloaded usage data if available
 	const preloadedUsage = preloadedThreadUsage
 		? usePreloadedQuery(preloadedThreadUsage)
@@ -91,14 +99,29 @@ export function TokenUsageDialog({
 	}
 
 	return (
-		<Dialog>
-			<DialogTrigger asChild>
-				<Button variant="ghost" size="sm" className="gap-2">
-					<Activity className="w-4 h-4" />
-					{formatTokenCount(usage.totalTokens)}
-					<ChevronRight className="w-3 h-3" />
-				</Button>
-			</DialogTrigger>
+		<>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button variant="ghost" size="icon" className="h-8 w-8">
+						<MoreHorizontalIcon className="w-4 h-4" />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" className="w-48">
+					<DropdownMenuItem
+						onClick={() => setDialogOpen(true)}
+						className="gap-2"
+					>
+						<Activity className="w-3 h-3" />
+						<span className="text-xs">Usage</span>
+						<span className="text-xs text-muted-foreground ml-auto">
+							{formatTokenCount(usage.totalTokens)}
+						</span>
+					</DropdownMenuItem>
+					{/* Future menu items like Delete chat can be added here */}
+				</DropdownMenuContent>
+			</DropdownMenu>
+
+			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 			<DialogContent className="sm:max-w-[600px]">
 				<DialogHeader>
 					<DialogTitle>Token Usage</DialogTitle>
@@ -167,7 +190,8 @@ export function TokenUsageDialog({
 					</div>
 				</div>
 			</DialogContent>
-		</Dialog>
+			</Dialog>
+		</>
 	);
 }
 

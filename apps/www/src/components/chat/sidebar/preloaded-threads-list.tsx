@@ -130,8 +130,8 @@ export function PreloadedThreadsList({
 				<div className="w-full max-w-full min-w-0 overflow-hidden">
 					{threads.length === 0 ? (
 						<div className="px-3 py-8 text-center text-muted-foreground">
-							<p className="text-sm">No conversations yet</p>
-							<p className="text-xs mt-1">Start a new chat to begin</p>
+							<p className="text-xs">No conversations yet</p>
+							<p className="text-xs mt-1 opacity-75">Start a new chat to begin</p>
 						</div>
 					) : (
 						<>

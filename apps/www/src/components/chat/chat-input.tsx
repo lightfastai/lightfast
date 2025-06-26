@@ -18,6 +18,7 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
+import { ScrollArea, ScrollBar } from "@lightfast/ui/components/ui/scroll-area";
 import { Textarea } from "@lightfast/ui/components/ui/textarea";
 import {
 	Tooltip,
@@ -374,7 +375,7 @@ const ChatInputComponent = ({
 						{/* Main input container */}
 						<div
 							className={`w-full border border-muted/30 rounded-xl overflow-hidden flex flex-col transition-all bg-transparent dark:bg-input/10 ${
-								attachments.length > 0 ? "rounded-t-md" : "rounded-md"
+								attachments.length > 0 ? "rounded-b-none" : ""
 							} ${isLoading ? "opacity-75" : ""}`}
 						>
 							{/* Textarea area - grows with content up to max height */}
@@ -523,29 +524,30 @@ const ChatInputComponent = ({
 
 						{/* Attachments container - appears below input */}
 						{attachments.length > 0 && (
-							<div className="w-full border-l border-r border-b rounded-b-md bg-secondary/20 p-3 transition-all animate-in slide-in-from-top-1 duration-200">
-								<div className="flex flex-wrap gap-2">
-									{attachments.map((attachment) => {
+							<div className="w-full border border-t-0 border-muted/30 rounded-b-xl bg-transparent dark:bg-input/10 transition-all animate-in slide-in-from-top-1 duration-200">
+								<ScrollArea className="w-full">
+									<div className="flex gap-2 p-3">
+										{attachments.map((attachment) => {
 										const isImage = attachment.type.startsWith("image/");
 										const isPdf = attachment.type === "application/pdf";
 
 										return (
 											<div
 												key={attachment.id}
-												className="flex items-center gap-2 px-3 py-2 bg-background rounded-md border text-sm group hover:border-foreground/20 transition-colors"
+												className="flex items-center gap-2 px-3 py-2 bg-background rounded-md border text-sm group hover:border-foreground/20 transition-colors flex-shrink-0"
 											>
 												{isImage ? (
-													<Image className="w-4 h-4 text-muted-foreground" />
+													<Image className="w-4 h-4 text-muted-foreground flex-shrink-0" />
 												) : isPdf ? (
-													<FileText className="w-4 h-4 text-muted-foreground" />
+													<FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
 												) : (
-													<FileIcon className="w-4 h-4 text-muted-foreground" />
+													<FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
 												)}
-												<div className="flex-1 min-w-0">
+												<div className="min-w-0">
 													<p className="truncate max-w-[150px] font-medium">
 														{attachment.name}
 													</p>
-													<p className="text-xs text-muted-foreground">
+													<p className="text-xs text-muted-foreground whitespace-nowrap">
 														{formatFileSize(attachment.size)}
 													</p>
 												</div>
@@ -561,7 +563,9 @@ const ChatInputComponent = ({
 											</div>
 										);
 									})}
-								</div>
+									</div>
+									<ScrollBar orientation="horizontal" />
+								</ScrollArea>
 							</div>
 						)}
 					</div>

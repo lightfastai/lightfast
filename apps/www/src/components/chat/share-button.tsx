@@ -28,13 +28,12 @@ export function ShareButton({
 	const button = (
 		<Button
 			variant="ghost"
-			size="sm"
 			onClick={() => !isDisabled && threadId && setIsOpen(true)}
 			disabled={isDisabled}
-			className="gap-2"
+			className="h-8 px-2 gap-1.5"
 		>
-			<Share2 className="h-4 w-4" />
-			<span className="hidden sm:inline">Share</span>
+			<Share2 className="w-4 h-4" />
+			<span className="hidden sm:inline text-xs">Share</span>
 		</Button>
 	);
 
