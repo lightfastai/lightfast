@@ -1,6 +1,7 @@
 "use client";
 
 import type { Doc } from "../../../../convex/_generated/dataModel";
+import { ThinkingIndicator } from "./thinking-indicator";
 
 interface AssistantMessageHeaderProps {
 	modelName?: string;
@@ -51,8 +52,8 @@ export function AssistantMessageHeader({
 	// Only show "Thinking" when streaming but no content has appeared yet
 	if (isStreaming && !isComplete && !hasContent) {
 		return (
-			<div className="text-xs text-muted-foreground mb-2 flex items-center gap-2 min-h-5">
-				<span>Thinking...</span>
+			<div className="mb-2 flex items-center gap-2 min-h-5">
+				<ThinkingIndicator />
 			</div>
 		);
 	}
