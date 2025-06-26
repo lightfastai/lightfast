@@ -47,7 +47,7 @@ export function MessageLayout({
 				{actions && (
 					<div
 						className={cn(
-							"transition-opacity",
+							"mt-3 transition-opacity",
 							forceActionsVisible
 								? "opacity-100"
 								: "opacity-0 group-hover/message:opacity-100",
