@@ -2,38 +2,39 @@
 
 import { useFileDrop } from "@/hooks/use-file-drop";
 import {
-  DEFAULT_MODEL_ID,
-  type ModelId,
-  getModelConfig,
-  getVisibleModels,
+	DEFAULT_MODEL_ID,
+	type ModelId,
+	getModelConfig,
+	getVisibleModels,
 } from "@/lib/ai";
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuPortal,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { Textarea } from "@lightfast/ui/components/ui/textarea";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
 } from "@lightfast/ui/components/ui/tooltip";
 import { useMutation } from "convex/react";
 import {
-  ArrowUp,
-  ChevronDown,
-  FileIcon,
-  FileText,
-  Globe,
-  Image,
-  Loader2,
-  Paperclip, X
+	ArrowUp,
+	ChevronDown,
+	FileIcon,
+	FileText,
+	Globe,
+	Image,
+	Loader2,
+	Paperclip,
+	X,
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -53,6 +54,8 @@ interface ChatInputProps {
 	maxLength?: number;
 	className?: string;
 	showDisclaimer?: boolean;
+	value?: string;
+	onChange?: (value: string) => void;
 }
 
 interface FileAttachment {
@@ -71,8 +74,14 @@ const ChatInputComponent = ({
 	maxLength = 4000,
 	className = "",
 	showDisclaimer = true,
+	value,
+	onChange,
 }: ChatInputProps) => {
-	const [message, setMessage] = useState("");
+	const [internalMessage, setInternalMessage] = useState("");
+	
+	// Use controlled value if provided, otherwise use internal state
+	const message = value !== undefined ? value : internalMessage;
+	const setMessage = value !== undefined ? (onChange || (() => {})) : setInternalMessage;
 	const [isSending, setIsSending] = useState(false);
 	const [selectedModelId, setSelectedModelId] =
 		useState<string>(DEFAULT_MODEL_ID);
@@ -557,7 +566,7 @@ const ChatInputComponent = ({
 						)}
 					</div>
 				</div>
-				
+
 				{/* Disclaimer text */}
 				{showDisclaimer && (
 					<p className="text-center text-xs text-muted-foreground mt-4">

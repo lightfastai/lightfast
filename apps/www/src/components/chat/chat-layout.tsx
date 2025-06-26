@@ -1,6 +1,4 @@
-import {
-  SidebarProvider
-} from "@lightfast/ui/components/ui/sidebar";
+import { SidebarProvider } from "@lightfast/ui/components/ui/sidebar";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { ShareButtonWrapper } from "./share-button-wrapper";
