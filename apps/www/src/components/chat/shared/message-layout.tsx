@@ -26,13 +26,14 @@ export function MessageLayout({
 			className={cn(
 				"group/message",
 				isAssistant ? "mt-12" : isSystem ? "mt-2" : "mt-4",
+				isUser && "flex justify-end",
 				className,
 			)}
 		>
 			<div
 				className={cn(
-					"flex-1 relative",
-					isUser && "border rounded-lg p-4 bg-muted/50",
+					"relative",
+					isUser ? "max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30" : "flex-1",
 				)}
 			>
 				{content}

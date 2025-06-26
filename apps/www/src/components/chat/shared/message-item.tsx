@@ -77,8 +77,10 @@ export function MessageItem({
 					isComplete={isComplete}
 					thinkingStartedAt={message.thinkingStartedAt}
 					thinkingCompletedAt={message.thinkingCompletedAt}
-					streamingText={streamingText}
+					streamingText={displayText}
 					usage={message.usage}
+					hasParts={hasParts}
+					message={message}
 				/>
 			)}
 
