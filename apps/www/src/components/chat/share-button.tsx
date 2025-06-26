@@ -7,7 +7,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@lightfast/ui/components/ui/tooltip";
-import { Share2 } from "lucide-react";
+import { Share } from "lucide-react";
 import { useState } from "react";
 import { ShareDialog } from "./share-dialog";
 
@@ -32,7 +32,7 @@ export function ShareButton({
 			disabled={isDisabled}
 			className="h-8 px-2 gap-1.5"
 		>
-			<Share2 className="w-4 h-4" />
+			<Share className="w-4 h-4" />
 			<span className="hidden sm:inline text-xs">Share</span>
 		</Button>
 	);

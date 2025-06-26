@@ -85,8 +85,16 @@ const ChatInputComponent = ({
 	const setMessage =
 		value !== undefined ? onChange || (() => {}) : setInternalMessage;
 	const [isSending, setIsSending] = useState(false);
-	const [selectedModelId, setSelectedModelId] =
-		useState<string>(DEFAULT_MODEL_ID);
+
+	// Initialize selectedModelId from sessionStorage to persist across navigation
+	const [selectedModelId, setSelectedModelId] = useState<string>(() => {
+		if (typeof window !== "undefined") {
+			const storedModel = sessionStorage.getItem("selectedModelId");
+			return storedModel || DEFAULT_MODEL_ID;
+		}
+		return DEFAULT_MODEL_ID;
+	});
+
 	const [attachments, setAttachments] = useState<FileAttachment[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
 	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
@@ -340,6 +348,10 @@ const ChatInputComponent = ({
 
 	const handleModelChange = useCallback((value: string) => {
 		setSelectedModelId(value);
+		// Persist to sessionStorage to maintain selection across navigation
+		if (typeof window !== "undefined") {
+			sessionStorage.setItem("selectedModelId", value);
+		}
 		setDropdownOpen(false);
 	}, []);
 
