@@ -1,7 +1,7 @@
 "use client";
 
 import { GitBranch } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ModelConfig, ModelId } from "@/lib/ai";
 import { getVisibleModels } from "@/lib/ai/schemas";
@@ -20,13 +20,26 @@ import {
 interface ModelBranchDropdownProps {
 	onBranch: (modelId: ModelId) => void;
 	disabled?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
 export function ModelBranchDropdown({
 	onBranch,
 	disabled = false,
+	onOpenChange,
 }: ModelBranchDropdownProps) {
 	const [open, setOpen] = useState(false);
+	const buttonRef = useRef<HTMLButtonElement>(null);
+
+	// Notify parent when dropdown state changes
+	useEffect(() => {
+		onOpenChange?.(open);
+		
+		// Blur the button when dropdown closes to remove focus state
+		if (!open && buttonRef.current) {
+			buttonRef.current.blur();
+		}
+	}, [open, onOpenChange]);
 
 	// Group models by provider
 	const modelsByProvider = useMemo(() => {
@@ -59,16 +72,17 @@ export function ModelBranchDropdown({
 		<DropdownMenu open={open} onOpenChange={setOpen}>
 			<DropdownMenuTrigger asChild>
 				<Button
+					ref={buttonRef}
 					variant="ghost"
 					size="icon"
-					className="h-7 w-7"
+					className="h-7 w-7 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
 					aria-label="Branch from here"
 					disabled={disabled}
 				>
 					<GitBranch className="h-3.5 w-3.5" />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-52">
+			<DropdownMenuContent align="start" side="right" sideOffset={5} className="w-52">
 				{Object.entries(modelsByProvider).map(([provider, models]) => (
 					<DropdownMenuSub key={provider}>
 						<DropdownMenuSubTrigger>

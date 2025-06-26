@@ -31,6 +31,7 @@ export interface MessageItemProps {
 	isComplete?: boolean;
 	actions?: React.ReactNode;
 	className?: string;
+	forceActionsVisible?: boolean;
 }
 
 export function MessageItem({
@@ -44,6 +45,7 @@ export function MessageItem({
 	isComplete,
 	actions,
 	className,
+	forceActionsVisible = false,
 }: MessageItemProps) {
 	const isAssistant = message.messageType === "assistant";
 
@@ -169,6 +171,7 @@ export function MessageItem({
 			actions={messageActions}
 			messageType={message.messageType}
 			className={undefined}
+			forceActionsVisible={forceActionsVisible}
 		/>
 	);
 }

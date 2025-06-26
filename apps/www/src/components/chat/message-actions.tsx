@@ -27,6 +27,7 @@ interface MessageActionsProps {
 	className?: string;
 	modelName?: string;
 	thinkingDuration?: number | null;
+	onDropdownStateChange?: (isOpen: boolean) => void;
 }
 
 export function MessageActions({
@@ -34,9 +35,16 @@ export function MessageActions({
 	className,
 	modelName,
 	thinkingDuration,
+	onDropdownStateChange,
 }: MessageActionsProps) {
 	const [showFeedbackModal, setShowFeedbackModal] = React.useState(false);
+	const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
 	const { copy, isCopied } = useCopyToClipboard({ timeout: 2000 });
+
+	// Notify parent when dropdown state changes
+	React.useEffect(() => {
+		onDropdownStateChange?.(isDropdownOpen);
+	}, [isDropdownOpen, onDropdownStateChange]);
 
 	const feedback = useQuery(api.feedback.getUserFeedbackForMessage, {
 		messageId: message._id,
@@ -272,7 +280,10 @@ export function MessageActions({
 						)}
 					</Button>
 				)}
-				<ModelBranchDropdown onBranch={handleBranch} />
+				<ModelBranchDropdown 
+					onBranch={handleBranch} 
+					onOpenChange={setIsDropdownOpen}
+				/>
 
 				{/* Metadata displayed inline on hover - moved to right side */}
 				<div className="opacity-0 group-hover/message:opacity-100 transition-opacity duration-200 flex items-center gap-2 text-xs text-muted-foreground ml-auto">

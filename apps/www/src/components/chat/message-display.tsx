@@ -2,6 +2,7 @@
 
 import { getModelDisplayName } from "@/lib/ai";
 import { useQuery } from "convex/react";
+import { useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { AttachmentPreview } from "./attachment-preview";
@@ -19,6 +20,7 @@ interface MessageDisplayProps {
 export function MessageDisplay({ message }: MessageDisplayProps) {
 	// Get current user for avatar display
 	const currentUser = useQuery(api.users.current);
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
 	const isAI = message.messageType === "assistant";
 
@@ -57,6 +59,7 @@ export function MessageDisplay({ message }: MessageDisplayProps) {
 			message={message}
 			modelName={modelName}
 			thinkingDuration={thinkingDuration}
+			onDropdownStateChange={setIsDropdownOpen}
 		/>
 	);
 
@@ -73,6 +76,7 @@ export function MessageDisplay({ message }: MessageDisplayProps) {
 				isStreaming={!!message.isStreaming}
 				isComplete={message.isComplete !== false}
 				actions={actions}
+				forceActionsVisible={isDropdownOpen}
 			/>
 			{/* Show attachments if present */}
 			{message.attachments && message.attachments.length > 0 && (

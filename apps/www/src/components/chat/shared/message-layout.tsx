@@ -8,6 +8,7 @@ export interface MessageLayoutProps {
 	actions?: React.ReactNode;
 	messageType: "user" | "assistant" | "system";
 	className?: string;
+	forceActionsVisible?: boolean;
 }
 
 export function MessageLayout({
@@ -16,6 +17,7 @@ export function MessageLayout({
 	actions,
 	messageType,
 	className,
+	forceActionsVisible = false,
 }: MessageLayoutProps) {
 	const isAssistant = messageType === "assistant";
 	const isSystem = messageType === "system";
@@ -41,7 +43,10 @@ export function MessageLayout({
 					<div className="text-xs text-muted-foreground mt-1">{timestamp}</div>
 				)}
 				{actions && (
-					<div className="opacity-0 transition-opacity group-hover/message:opacity-100">
+					<div className={cn(
+						"transition-opacity",
+						forceActionsVisible ? "opacity-100" : "opacity-0 group-hover/message:opacity-100"
+					)}>
 						{actions}
 					</div>
 				)}
