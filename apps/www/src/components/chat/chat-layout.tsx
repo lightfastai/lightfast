@@ -11,30 +11,36 @@ import { TokenUsageHeaderWrapper } from "./token-usage-header-wrapper";
 // Server component for chat header - can be static with PPR
 function ChatHeader() {
 	return (
-		<header className="flex h-14 sm:h-16 shrink-0 items-center gap-2 px-2 sm:px-4">
-			<div className="flex items-center gap-2 flex-1 min-w-0">
-				<Suspense
-					fallback={<div className="h-6 w-24 bg-muted animate-pulse rounded" />}
-				>
-					<ChatTitleClient />
-				</Suspense>
-			</div>
-			<div className="flex items-center gap-1 sm:gap-2">
-				<Suspense
-					fallback={
-						<div className="flex items-center gap-2">
-							<div className="h-6 w-16 bg-muted animate-pulse rounded" />
-							<div className="h-6 w-20 bg-muted animate-pulse rounded" />
-						</div>
-					}
-				>
-					<TokenUsageHeaderWrapper />
-				</Suspense>
-				<Suspense
-					fallback={<div className="h-8 w-16 bg-muted animate-pulse rounded" />}
-				>
-					<ShareButtonWrapper />
-				</Suspense>
+		<header className="shrink-0 px-2 md:px-4 py-2">
+			<div className="flex items-center gap-2 h-8">
+				<div className="flex items-center gap-2 flex-1 min-w-0">
+					<Suspense
+						fallback={
+							<div className="h-6 w-24 bg-muted animate-pulse rounded" />
+						}
+					>
+						<ChatTitleClient />
+					</Suspense>
+				</div>
+				<div className="flex items-center gap-1 sm:gap-2">
+					<Suspense
+						fallback={
+							<div className="flex items-center gap-2">
+								<div className="h-6 w-16 bg-muted animate-pulse rounded" />
+								<div className="h-6 w-20 bg-muted animate-pulse rounded" />
+							</div>
+						}
+					>
+						<TokenUsageHeaderWrapper />
+					</Suspense>
+					<Suspense
+						fallback={
+							<div className="h-8 w-16 bg-muted animate-pulse rounded" />
+						}
+					>
+						<ShareButtonWrapper />
+					</Suspense>
+				</div>
 			</div>
 		</header>
 	);

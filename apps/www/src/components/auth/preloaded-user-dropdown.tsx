@@ -3,28 +3,28 @@
 import { siteConfig } from "@/lib/site-config";
 import { useAuthActions } from "@convex-dev/auth/react";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
 } from "@lightfast/ui/components/ui/avatar";
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { cn } from "@lightfast/ui/lib/utils";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
 import {
-  ChevronDown,
-  ExternalLink,
-  LogOut,
-  Settings,
-  User,
+	ChevronDown,
+	ExternalLink,
+	LogOut,
+	Settings,
+	User,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
