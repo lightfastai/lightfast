@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useKeyboardShortcut } from "@/hooks/use-keyboard-shortcut";
+import { useRouter } from "next/navigation";
 
 export function KeyboardShortcutsProvider({
 	children,

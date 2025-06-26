@@ -1,7 +1,6 @@
 import {
 	Sidebar,
 	SidebarContent,
-	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarHeader,
@@ -15,7 +14,8 @@ import { Suspense } from "react";
 import type { api } from "../../../../convex/_generated/api";
 import { ActiveMenuItem } from "./active-menu-item";
 import { PreloadedThreadsList } from "./preloaded-threads-list";
-import { SidebarUserMenu } from "./sidebar-user-menu";
+import { SidebarFooterWrapper } from "./sidebar-footer-wrapper";
+import { SidebarHoverExpand } from "./sidebar-hover-expand";
 
 interface ServerSidebarImplementationProps {
 	preloadedThreads: Preloaded<typeof api.threads.list>;
@@ -68,19 +68,14 @@ export function ServerSidebarImplementation({
 						<PreloadedThreadsList preloadedThreads={preloadedThreads} />
 					</Suspense>
 				</div>
+
+				{/* Hover expand zone - fills the space between threads and user menu */}
+				<div className="flex-1 relative group-data-[collapsible=icon]:block hidden">
+					<SidebarHoverExpand />
+				</div>
 			</SidebarContent>
 
-			<SidebarFooter className="p-0">
-				<SidebarGroup className="p-2">
-					<SidebarGroupContent>
-						<SidebarMenu>
-							<SidebarMenuItem className="overflow-visible">
-								<SidebarUserMenu preloadedUser={preloadedUser} />
-							</SidebarMenuItem>
-						</SidebarMenu>
-					</SidebarGroupContent>
-				</SidebarGroup>
-			</SidebarFooter>
+			<SidebarFooterWrapper preloadedUser={preloadedUser} />
 		</Sidebar>
 	);
 }

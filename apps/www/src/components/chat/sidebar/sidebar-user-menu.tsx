@@ -3,27 +3,27 @@
 import { siteConfig } from "@/lib/site-config";
 import { useAuthActions } from "@convex-dev/auth/react";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
 } from "@lightfast/ui/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@lightfast/ui/components/ui/sidebar";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
 import {
-  ChevronDown,
-  ExternalLink,
-  LogOut,
-  Settings,
-  User,
+	ChevronDown,
+	ExternalLink,
+	LogOut,
+	Settings,
+	User,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -75,7 +75,15 @@ export function SidebarUserMenu({ preloadedUser }: SidebarUserMenuProps) {
 					</div>
 				</SidebarMenuButton>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-56">
+			<DropdownMenuContent
+				align="end"
+				className="w-56"
+				side="top"
+				sideOffset={8}
+				alignOffset={0}
+				collisionPadding={8}
+				avoidCollisions={true}
+			>
 				<DropdownMenuLabel>
 					<div className="flex flex-col space-y-1">
 						<p className="text-sm font-medium leading-none">{displayName}</p>

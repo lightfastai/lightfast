@@ -41,7 +41,13 @@ export function useKeyboardShortcut(shortcut: KeyboardShortcut) {
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [shortcut.key, shortcut.ctrlKey, shortcut.metaKey, shortcut.shiftKey, shortcut.altKey]);
+	}, [
+		shortcut.key,
+		shortcut.ctrlKey,
+		shortcut.metaKey,
+		shortcut.shiftKey,
+		shortcut.altKey,
+	]);
 }
 
 // Helper to get OS-specific modifier key text

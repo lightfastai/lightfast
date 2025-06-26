@@ -1,6 +1,6 @@
 import {
-  SidebarInset,
-  SidebarProvider,
+	SidebarInset,
+	SidebarProvider,
 } from "@lightfast/ui/components/ui/sidebar";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
