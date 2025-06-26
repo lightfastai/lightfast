@@ -3,27 +3,27 @@
 import { siteConfig } from "@/lib/site-config";
 import { useAuthActions } from "@convex-dev/auth/react";
 import {
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
 } from "@lightfast/ui/components/ui/avatar";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@lightfast/ui/components/ui/sidebar";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
 import {
-	ChevronDown,
-	ExternalLink,
-	LogOut,
-	Settings,
-	User,
+  ChevronDown,
+  ExternalLink,
+  LogOut,
+  Settings,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -52,7 +52,6 @@ export function SidebarUserMenu({ preloadedUser }: SidebarUserMenuProps) {
 				<SidebarMenuButton
 					size="default"
 					className="w-full group-data-[collapsible=icon]:!p-0 !p-0 overflow-visible"
-					tooltip={displayName}
 				>
 					<div className="h-8 flex items-center w-full overflow-visible">
 						<div className="w-8 h-8 flex-shrink-0 overflow-visible">

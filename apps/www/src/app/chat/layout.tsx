@@ -1,4 +1,5 @@
 import { ChatLayout as ChatLayoutImplementation } from "@/components/chat/chat-layout";
+import { KeyboardShortcutsProvider } from "@/components/providers/keyboard-shortcuts-provider";
 import { TooltipProvider } from "@lightfast/ui/components/ui/tooltip";
 import type React from "react";
 
@@ -10,7 +11,9 @@ interface ChatLayoutProps {
 export default function ChatLayout({ children }: ChatLayoutProps) {
 	return (
 		<TooltipProvider>
-			<ChatLayoutImplementation>{children}</ChatLayoutImplementation>
+			<KeyboardShortcutsProvider>
+				<ChatLayoutImplementation>{children}</ChatLayoutImplementation>
+			</KeyboardShortcutsProvider>
 		</TooltipProvider>
 	);
 }

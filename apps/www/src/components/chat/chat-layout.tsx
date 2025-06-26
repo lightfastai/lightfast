@@ -1,9 +1,9 @@
 import {
-	SidebarInset,
-	SidebarProvider,
+  SidebarInset,
+  SidebarProvider,
 } from "@lightfast/ui/components/ui/sidebar";
+import { cookies } from "next/headers";
 import { Suspense } from "react";
-import { ChatTitleClient } from "./chat-title-client";
 import { ShareButtonWrapper } from "./share-button-wrapper";
 import { ServerSidebar } from "./sidebar/server-sidebar";
 import { TokenUsageHeaderWrapper } from "./token-usage-header-wrapper";
@@ -13,15 +13,7 @@ function ChatHeader() {
 	return (
 		<header className="shrink-0 px-2 md:px-4 py-2">
 			<div className="flex items-center gap-2 h-8">
-				<div className="flex items-center gap-2 flex-1 min-w-0">
-					<Suspense
-						fallback={
-							<div className="h-6 w-24 bg-muted animate-pulse rounded" />
-						}
-					>
-						<ChatTitleClient />
-					</Suspense>
-				</div>
+				<div className="flex-1" />
 				<div className="flex items-center gap-1 sm:gap-2">
 					<Suspense
 						fallback={
@@ -50,10 +42,15 @@ interface ChatLayoutProps {
 	children: React.ReactNode;
 }
 
-// Main server layout component
-export function ChatLayout({ children }: ChatLayoutProps) {
+// Main layout component - server component with PPR
+export async function ChatLayout({ children }: ChatLayoutProps) {
+	// Read sidebar state from cookies on server
+	const cookieStore = await cookies();
+	const sidebarState = cookieStore.get("sidebar_state")?.value;
+	const sidebarOpen = sidebarState === "true";
+
 	return (
-		<SidebarProvider>
+		<SidebarProvider defaultOpen={sidebarOpen}>
 			<div className="flex h-screen w-full">
 				<ServerSidebar />
 				<SidebarInset className="flex flex-col">

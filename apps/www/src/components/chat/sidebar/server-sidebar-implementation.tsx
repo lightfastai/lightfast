@@ -30,13 +30,13 @@ export function ServerSidebarImplementation({
 	return (
 		<Sidebar variant="inset" collapsible="icon" className="w-64 max-w-64">
 			<SidebarHeader className="p-0">
-				<SidebarGroup className="p-2 md:p-4">
+				<SidebarGroup className="p-2">
 					<SidebarTrigger className="h-8 w-8" />
 				</SidebarGroup>
 			</SidebarHeader>
 
 			<SidebarContent>
-				<SidebarGroup className="p-2 md:p-4">
+				<SidebarGroup className="p-2">
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
@@ -44,7 +44,7 @@ export function ServerSidebarImplementation({
 									threadId="new"
 									href="/chat"
 									size="default"
-									tooltip="New Chat"
+									tooltip="New Chat (⌘+Shift+O)"
 								>
 									<MessageSquarePlus className="w-4 h-4" />
 									<span className="group-data-[collapsible=icon]:hidden">
@@ -71,7 +71,7 @@ export function ServerSidebarImplementation({
 			</SidebarContent>
 
 			<SidebarFooter className="p-0">
-				<SidebarGroup className="p-2 md:p-4">
+				<SidebarGroup className="p-2">
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem className="overflow-visible">
