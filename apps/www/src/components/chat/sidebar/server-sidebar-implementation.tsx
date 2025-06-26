@@ -7,13 +7,13 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@lightfast/ui/components/ui/sidebar";
 import type { Preloaded } from "convex/react";
 import { MessageSquarePlus } from "lucide-react";
 import { Suspense } from "react";
 import type { api } from "../../../../convex/_generated/api";
 import { ActiveMenuItem } from "./active-menu-item";
+import { PlatformSidebarTrigger } from "./platform-sidebar-trigger";
 import { PreloadedThreadsList } from "./preloaded-threads-list";
 import { SidebarHoverExpand } from "./sidebar-hover-expand";
 import { SidebarUserMenu } from "./sidebar-user-menu";
@@ -32,7 +32,7 @@ export function ServerSidebarImplementation({
 		<Sidebar variant="inset" collapsible="icon" className="w-64 max-w-64">
 			<SidebarHeader className="p-0">
 				<SidebarGroup className="p-2">
-					<SidebarTrigger className="h-8 w-8" />
+					<PlatformSidebarTrigger />
 				</SidebarGroup>
 			</SidebarHeader>
 
@@ -45,7 +45,6 @@ export function ServerSidebarImplementation({
 									threadId="new"
 									href="/chat"
 									size="default"
-									tooltip="New Chat (⌘+Shift+O)"
 								>
 									<MessageSquarePlus className="w-4 h-4" />
 									<span className="group-data-[collapsible=icon]:hidden text-xs">

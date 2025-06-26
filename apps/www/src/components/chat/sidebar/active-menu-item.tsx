@@ -1,5 +1,6 @@
 "use client";
 
+import { usePlatformShortcuts } from "@/hooks/use-platform-shortcuts";
 import { SidebarMenuButton } from "@lightfast/ui/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,6 +26,7 @@ export function ActiveMenuItem({
 	tooltip,
 }: ActiveMenuItemProps) {
 	const pathname = usePathname();
+	const { getShortcut } = usePlatformShortcuts();
 
 	// Extract the ID from the current pathname
 	const currentUrlId = useMemo(() => {
@@ -52,12 +54,21 @@ export function ActiveMenuItem({
 		return currentUrlId === hrefId;
 	}, [pathname, href, threadId]);
 
+	// Get platform-specific tooltip for new chat
+	const displayTooltip = useMemo(() => {
+		if (threadId === "new" && !tooltip) {
+			const shortcut = getShortcut("newChat");
+			return `New Chat (${shortcut.display})`;
+		}
+		return tooltip;
+	}, [threadId, tooltip, getShortcut]);
+
 	return (
 		<SidebarMenuButton
 			asChild
 			size={size}
 			isActive={isActive}
-			tooltip={tooltip}
+			tooltip={displayTooltip}
 			className="w-full max-w-full min-w-0 overflow-hidden"
 		>
 			<Link

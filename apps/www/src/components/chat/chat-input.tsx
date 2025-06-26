@@ -2,40 +2,40 @@
 
 import { useFileDrop } from "@/hooks/use-file-drop";
 import {
-	DEFAULT_MODEL_ID,
-	type ModelId,
-	getModelConfig,
-	getVisibleModels,
+  DEFAULT_MODEL_ID,
+  type ModelId,
+  getModelConfig,
+  getVisibleModels,
 } from "@/lib/ai";
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuPortal,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { ScrollArea, ScrollBar } from "@lightfast/ui/components/ui/scroll-area";
 import { Textarea } from "@lightfast/ui/components/ui/textarea";
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@lightfast/ui/components/ui/tooltip";
 import { useMutation } from "convex/react";
 import {
-	ArrowUp,
-	ChevronDown,
-	FileIcon,
-	FileText,
-	Globe,
-	Image,
-	Loader2,
-	Paperclip,
-	X,
+  ArrowUp,
+  ChevronDown,
+  FileIcon,
+  FileText,
+  Globe,
+  Image,
+  Loader2,
+  Paperclip,
+  X,
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -79,7 +79,7 @@ const ChatInputComponent = ({
 	onChange,
 }: ChatInputProps) => {
 	const [internalMessage, setInternalMessage] = useState("");
-	
+
 	// Use controlled value if provided, otherwise use internal state
 	const message = value !== undefined ? value : internalMessage;
 	const setMessage = value !== undefined ? (onChange || (() => {})) : setInternalMessage;
@@ -355,7 +355,7 @@ const ChatInputComponent = ({
 	};
 
 	return (
-		<div className={`p-2 md:p-4 flex-shrink-0 ${className}`} {...dragHandlers}>
+		<div className={`pb-2 md:pb-4 flex-shrink-0 ${className}`} {...dragHandlers}>
 			<div className="max-w-3xl mx-auto relative">
 				{/* Drag overlay */}
 				{isDragging && (
