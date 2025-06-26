@@ -2,39 +2,38 @@
 
 import { useFileDrop } from "@/hooks/use-file-drop";
 import {
-	DEFAULT_MODEL_ID,
-	type ModelId,
-	getModelConfig,
-	getVisibleModels,
+  DEFAULT_MODEL_ID,
+  type ModelId,
+  getModelConfig,
+  getVisibleModels,
 } from "@/lib/ai";
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuPortal,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
 import { Textarea } from "@lightfast/ui/components/ui/textarea";
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@lightfast/ui/components/ui/tooltip";
 import { useMutation } from "convex/react";
 import {
-	ChevronDown,
-	FileIcon,
-	FileText,
-	Globe,
-	Image,
-	Loader2,
-	Paperclip,
-	Send,
-	X,
+  ArrowUp,
+  ChevronDown,
+  FileIcon,
+  FileText,
+  Globe,
+  Image,
+  Loader2,
+  Paperclip, X
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -363,7 +362,7 @@ const ChatInputComponent = ({
 					<div className="flex-1 min-w-0">
 						{/* Main input container */}
 						<div
-							className={`w-full border flex flex-col transition-all bg-transparent dark:bg-input/10 ${
+							className={`w-full border border-muted/30 rounded-xl overflow-hidden flex flex-col transition-all bg-transparent dark:bg-input/10 ${
 								attachments.length > 0 ? "rounded-t-md" : "rounded-md"
 							} ${isLoading ? "opacity-75" : ""}`}
 						>
@@ -380,7 +379,7 @@ const ChatInputComponent = ({
 									disabled={disabled}
 									style={{
 										lineHeight: "24px",
-										minHeight: "48px",
+										minHeight: "64px",
 									}}
 								/>
 							</div>
@@ -494,10 +493,10 @@ const ChatInputComponent = ({
 										<Button
 											onClick={handleSendMessage}
 											disabled={!canSend}
-											size="sm"
-											className="h-8 w-8 p-0"
+											size="icon"
+											className="h-8 w-8 p-0 rounded-full"
 										>
-											<Send className="w-4 h-4" />
+											<ArrowUp className="w-4 h-4" />
 										</Button>
 									</TooltipTrigger>
 									<TooltipContent>
