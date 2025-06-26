@@ -361,7 +361,6 @@ const ChatInputComponent = ({
 	);
 
 	const [dropdownOpen, setDropdownOpen] = useState(false);
-	const keyboardShortcuts = useKeyboardShortcutsContext();
 
 	const handleModelChange = useCallback((value: string) => {
 		setSelectedModelId(value);
