@@ -1,6 +1,5 @@
 import {
-	SidebarInset,
-	SidebarProvider,
+  SidebarProvider
 } from "@lightfast/ui/components/ui/sidebar";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
@@ -53,10 +52,10 @@ export async function ChatLayout({ children }: ChatLayoutProps) {
 		<SidebarProvider defaultOpen={sidebarOpen}>
 			<div className="flex h-screen w-full">
 				<ServerSidebar />
-				<SidebarInset className="flex flex-col">
+				<div className="flex border-l border-muted/30 flex-col w-full">
 					<ChatHeader />
 					<div className="flex-1 min-h-0 overflow-hidden">{children}</div>
-				</SidebarInset>
+				</div>
 			</div>
 		</SidebarProvider>
 	);

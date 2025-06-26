@@ -1,13 +1,13 @@
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuItem,
-	SidebarTrigger,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarTrigger,
 } from "@lightfast/ui/components/ui/sidebar";
 import type { Preloaded } from "convex/react";
 import { MessageSquarePlus } from "lucide-react";
