@@ -44,7 +44,7 @@ import {
 	Wrench,
 	X,
 } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -91,7 +91,7 @@ const CapabilityIcon = ({
 	return IconComponent ? <IconComponent className={className} /> : null;
 };
 
-const ChatInputComponent = ({
+const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
 	onSendMessage,
 	isLoading = false,
 	placeholder = "How can I help you today?",
@@ -101,7 +101,7 @@ const ChatInputComponent = ({
 	showDisclaimer = true,
 	value,
 	onChange,
-}: ChatInputProps) => {
+}, ref) => {
 	const [internalMessage, setInternalMessage] = useState("");
 
 	// Use controlled value if provided, otherwise use internal state
@@ -195,6 +195,9 @@ const ChatInputComponent = ({
 			keyboardShortcuts.unregisterChatInputFocus();
 		};
 	}, [keyboardShortcuts, focusChatInput]);
+
+	// Expose the textarea ref for parent components
+	useImperativeHandle(ref, () => textareaRef.current as HTMLTextAreaElement, []);
 
 	// File upload handler
 	const handleFileUpload = useCallback(
@@ -723,7 +726,10 @@ const ChatInputComponent = ({
 			</div>
 		</div>
 	);
-};
+});
+
+// Add display name for debugging
+ChatInputComponent.displayName = "ChatInput";
 
 // Memoize the entire component to prevent unnecessary re-renders
 export const ChatInput = memo(ChatInputComponent);
