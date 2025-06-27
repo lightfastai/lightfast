@@ -144,6 +144,7 @@ export const MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
+			thinking: true,
 		},
 	}),
 	"o4-mini": ModelConfigSchema.parse({
@@ -158,6 +159,7 @@ export const MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
+			thinking: true,
 		},
 	}),
 	"gpt-3.5-turbo": ModelConfigSchema.parse({
@@ -188,12 +190,8 @@ export const MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
-			thinking: true,
+			thinking: false, // Base model - use -thinking variant for visible reasoning
 			pdfSupport: true,
-		},
-		thinkingConfig: {
-			enabled: true,
-			defaultBudgetTokens: 20000,
 		},
 		hidden: true,
 	}),
@@ -209,12 +207,8 @@ export const MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
-			thinking: true,
+			thinking: false, // Base model - use -thinking variant for visible reasoning
 			pdfSupport: true,
-		},
-		thinkingConfig: {
-			enabled: true,
-			defaultBudgetTokens: 12000,
 		},
 	}),
 	"claude-3-7-sonnet-20250219": ModelConfigSchema.parse({
@@ -229,12 +223,8 @@ export const MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
-			thinking: true,
+			thinking: false, // Base model - use -thinking variant for visible reasoning
 			pdfSupport: true,
-		},
-		thinkingConfig: {
-			enabled: true,
-			defaultBudgetTokens: 12000,
 		},
 	}),
 	"claude-3-5-sonnet-20241022": ModelConfigSchema.parse({
@@ -545,6 +535,7 @@ export const MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: false,
+			pdfSupport: true, // Through Document AI API
 		},
 		hidden: true,
 		deprecated: true,
@@ -560,7 +551,9 @@ export const MODELS = {
 		features: {
 			streaming: true,
 			functionCalling: true,
-			vision: true,
+			vision: false, // Vision "coming soon" but not yet available
+			thinking: true,
+			pdfSupport: true,
 		},
 		hidden: true,
 	}),
@@ -576,7 +569,9 @@ export const MODELS = {
 		features: {
 			streaming: true,
 			functionCalling: true,
-			vision: true,
+			vision: false, // Vision "coming soon" but not yet available
+			thinking: true,
+			pdfSupport: true,
 		},
 	}),
 	"google/gemini-2.5-pro-preview": ModelConfigSchema.parse({
@@ -592,6 +587,7 @@ export const MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
+			thinking: true,
 		},
 		hidden: true,
 	}),
@@ -608,6 +604,7 @@ export const MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
+			thinking: true,
 		},
 	}),
 } as const;

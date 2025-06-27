@@ -4,8 +4,11 @@ import { useFileDrop } from "@/hooks/use-file-drop";
 import {
 	DEFAULT_MODEL_ID,
 	type ModelId,
+	getIncompatibilityMessage,
+	getModelCapabilities,
 	getModelConfig,
 	getVisibleModels,
+	validateAttachmentsForModel,
 } from "@/lib/ai";
 import { preprocessUserMessage } from "@/lib/message-preprocessing";
 import { Button } from "@lightfast/ui/components/ui/button";
@@ -29,13 +32,16 @@ import {
 import { useMutation } from "convex/react";
 import {
 	ArrowUp,
+	Brain,
 	ChevronDown,
+	Eye,
 	FileIcon,
 	FileText,
 	Globe,
 	Image,
 	Loader2,
 	Paperclip,
+	Wrench,
 	X,
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -68,6 +74,22 @@ interface FileAttachment {
 	type: string;
 	url?: string;
 }
+
+// Icon component mapper for capability icons
+const CapabilityIcon = ({
+	iconName,
+	className,
+}: { iconName: string; className?: string }) => {
+	const iconMap = {
+		Eye,
+		FileText,
+		Wrench,
+		Brain,
+	} as const;
+
+	const IconComponent = iconMap[iconName as keyof typeof iconMap];
+	return IconComponent ? <IconComponent className={className} /> : null;
+};
 
 const ChatInputComponent = ({
 	onSendMessage,
@@ -299,6 +321,24 @@ const ChatInputComponent = ({
 			return;
 		}
 
+		// Validate attachments against selected model capabilities
+		if (attachments.length > 0) {
+			const validation = validateAttachmentsForModel(
+				selectedModelId as ModelId,
+				attachments.map((att) => ({ type: att.type, name: att.name })),
+			);
+
+			if (!validation.isValid) {
+				const errorMessage = getIncompatibilityMessage(
+					selectedModel?.displayName || "This model",
+					validation.incompatibleAttachments,
+					validation.suggestedModels,
+				);
+				toast.error(errorMessage);
+				return;
+			}
+		}
+
 		setIsSending(true);
 
 		try {
@@ -344,6 +384,7 @@ const ChatInputComponent = ({
 		attachments,
 		webSearchEnabled,
 		setMessage,
+		selectedModel?.displayName,
 	]);
 
 	const handleKeyPress = useCallback(
@@ -559,21 +600,41 @@ const ChatInputComponent = ({
 															<span>{providerNames[provider] || provider}</span>
 														</DropdownMenuSubTrigger>
 														<DropdownMenuPortal>
-															<DropdownMenuSubContent className="w-64">
-																{models.map((model) => (
-																	<DropdownMenuItem
-																		key={model.id}
-																		onClick={() => handleModelChange(model.id)}
-																		className="flex flex-col items-start py-2"
-																	>
-																		<span className="font-medium">
-																			{model.displayName}
-																		</span>
-																		<span className="text-xs text-muted-foreground">
-																			{model.description}
-																		</span>
-																	</DropdownMenuItem>
-																))}
+															<DropdownMenuSubContent className="w-72">
+																{models.map((model) => {
+																	const capabilities = getModelCapabilities(
+																		model.id as ModelId,
+																	);
+																	return (
+																		<DropdownMenuItem
+																			key={model.id}
+																			onClick={() =>
+																				handleModelChange(model.id)
+																			}
+																			className="flex flex-col items-start py-3"
+																		>
+																			<div className="flex items-center justify-between w-full">
+																				<span className="font-medium">
+																					{model.displayName}
+																				</span>
+																				{capabilities.length > 0 && (
+																					<div className="flex items-center gap-1">
+																						{capabilities.map((cap) => (
+																							<CapabilityIcon
+																								key={cap.key}
+																								iconName={cap.icon}
+																								className="h-3 w-3"
+																							/>
+																						))}
+																					</div>
+																				)}
+																			</div>
+																			<span className="text-xs text-muted-foreground">
+																				{model.description}
+																			</span>
+																		</DropdownMenuItem>
+																	);
+																})}
 															</DropdownMenuSubContent>
 														</DropdownMenuPortal>
 													</DropdownMenuSub>
