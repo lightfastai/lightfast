@@ -1,18 +1,13 @@
 "use client";
 
-import {
-	getCombinedReasoningText,
-	getMessageParts,
-	hasReasoningContent,
-} from "@/lib/message-parts";
+import { getMessageParts } from "@/lib/message-parts";
 import { Markdown } from "@lightfast/ui/components/ui/markdown";
 import { cn } from "@lightfast/ui/lib/utils";
-import React from "react";
+import type React from "react";
 import type { Doc } from "../../../../convex/_generated/dataModel";
 import { ToolCallRenderer } from "../tools/tool-call-renderer";
 import { AssistantMessageHeader } from "./assistant-message-header";
 import { MessageLayout } from "./message-layout";
-import { ThinkingContent } from "./thinking-content";
 
 type Message = Doc<"messages">;
 
@@ -26,7 +21,6 @@ export interface MessageItemProps {
 		name?: string | null;
 		image?: string | null;
 	};
-	showThinking?: boolean;
 	showActions?: boolean;
 	isReadOnly?: boolean;
 	modelName?: string;
@@ -40,7 +34,6 @@ export interface MessageItemProps {
 
 export function MessageItem({
 	message,
-	showThinking = true,
 	showActions = true,
 	isReadOnly = false,
 	modelName,
@@ -52,14 +45,6 @@ export function MessageItem({
 	forceActionsVisible = false,
 }: MessageItemProps) {
 	const isAssistant = message.messageType === "assistant";
-
-	// Calculate thinking duration
-	const thinkingDuration = React.useMemo(() => {
-		if (message.thinkingStartedAt && message.thinkingCompletedAt) {
-			return message.thinkingCompletedAt - message.thinkingStartedAt;
-		}
-		return null;
-	}, [message.thinkingStartedAt, message.thinkingCompletedAt]);
 
 	// Avatar component - removed to clean up UI
 	const avatar = null;
@@ -80,7 +65,6 @@ export function MessageItem({
 					modelName={modelName}
 					usedUserApiKey={message.usedUserApiKey}
 					isStreaming={isStreaming}
-					isComplete={isComplete}
 					thinkingStartedAt={message.thinkingStartedAt}
 					thinkingCompletedAt={message.thinkingCompletedAt}
 					streamingText={displayText}
@@ -90,34 +74,7 @@ export function MessageItem({
 				/>
 			)}
 
-			{/* Thinking content - use parts-based reasoning content if available */}
-			{showThinking &&
-				(() => {
-					// First check if we have reasoning parts (new system)
-					if (hasReasoningContent(message)) {
-						const reasoningText = getCombinedReasoningText(message);
-						if (reasoningText) {
-							return (
-								<ThinkingContent
-									content={reasoningText}
-									duration={thinkingDuration}
-									isStreaming={isStreaming}
-								/>
-							);
-						}
-					}
-					// Fall back to legacy fields for backward compatibility
-					else if (message.hasThinkingContent && message.thinkingContent) {
-						return (
-							<ThinkingContent
-								content={message.thinkingContent}
-								duration={thinkingDuration}
-								isStreaming={isStreaming}
-							/>
-						);
-					}
-					return null;
-				})()}
+			{/* Reasoning content is now handled by AssistantMessageHeader via StreamingReasoningDisplay */}
 
 			{/* Message body - use parts-based rendering for streaming or final display */}
 			<div className="text-sm leading-relaxed">

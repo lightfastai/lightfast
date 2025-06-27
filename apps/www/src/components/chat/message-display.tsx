@@ -68,7 +68,6 @@ export function MessageDisplay({ message }: MessageDisplayProps) {
 			<MessageItem
 				message={message}
 				currentUser={currentUser || undefined}
-				showThinking={true}
 				showActions={true}
 				isReadOnly={false}
 				modelName={modelName}

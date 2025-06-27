@@ -124,7 +124,6 @@ export function SharedChatView({ shareId }: SharedChatViewProps) {
 									key={message._id}
 									message={message}
 									owner={owner || undefined}
-									showThinking={thread.shareSettings?.showThinking}
 									isReadOnly={true}
 									showActions={false}
 									modelName={modelName}

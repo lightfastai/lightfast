@@ -7,7 +7,6 @@ interface AssistantMessageHeaderProps {
 	modelName?: string;
 	usedUserApiKey?: boolean;
 	isStreaming?: boolean;
-	isComplete?: boolean;
 	thinkingStartedAt?: number;
 	thinkingCompletedAt?: number;
 	streamingText?: string;
@@ -24,20 +23,35 @@ interface AssistantMessageHeaderProps {
 
 export function AssistantMessageHeader({
 	isStreaming,
-	isComplete,
 	streamingText,
 	hasParts,
 	message,
 }: AssistantMessageHeaderProps) {
-	// Check if message has reasoning parts
-	const hasReasoningParts =
-		message?.parts?.some((part) => part.type === "reasoning") || false;
+	// Check if message has reasoning parts (including from legacy fields)
+	const hasReasoningParts = Boolean(
+		message?.parts?.some((part) => part.type === "reasoning") ||
+			(message?.hasThinkingContent && message?.thinkingContent),
+	);
 
-	// Get reasoning content from parts
-	const reasoningContent = message?.parts
-		?.filter((part) => part.type === "reasoning")
-		.map((part) => part.text)
-		.join("\n");
+	// Get reasoning content from parts or legacy fields
+	const reasoningContent = (() => {
+		// First try new parts-based system
+		const partsContent = message?.parts
+			?.filter((part) => part.type === "reasoning")
+			.map((part) => part.text)
+			.join("\n");
+
+		if (partsContent && partsContent.trim()) {
+			return partsContent;
+		}
+
+		// Fall back to legacy thinking content
+		if (message?.hasThinkingContent && message?.thinkingContent) {
+			return message.thinkingContent;
+		}
+
+		return undefined;
+	})();
 
 	// Check if message has any actual content
 	const hasContent = (() => {
@@ -63,7 +77,6 @@ export function AssistantMessageHeader({
 	return (
 		<StreamingReasoningDisplay
 			isStreaming={!!isStreaming}
-			isComplete={!!isComplete}
 			hasContent={hasContent}
 			reasoningContent={reasoningContent}
 			hasReasoningParts={hasReasoningParts}
