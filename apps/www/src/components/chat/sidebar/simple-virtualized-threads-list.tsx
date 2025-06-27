@@ -297,7 +297,7 @@ export function SimpleVirtualizedThreadsList({
 	});
 
 	// Show empty state if no threads
-	if (allThreads.length === 0) {
+	if (threads.length === 0) {
 		return (
 			<div className={className}>
 				<div className="px-3 py-8 text-center text-muted-foreground">
