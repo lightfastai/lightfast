@@ -90,7 +90,9 @@
       "Bash(git mv:*)",
       "Bash(mv:*)",
       "Bash(git stash:*)",
-      "Bash(pnpm -w run build:www)"
+      "Bash(pnpm -w run build:www)",
+      "Bash(SKIP_ENV_VALIDATION=true pnpm run build:www)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
