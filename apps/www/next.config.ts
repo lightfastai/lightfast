@@ -1,4 +1,3 @@
-import "./src/env.ts";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
@@ -8,12 +7,10 @@ const nextConfig: NextConfig = {
 		ppr: true,
 	},
 	async rewrites() {
-		const rewrites = [];
-
 		// Only add docs rewrites if DOCS_URL is available
 		const docsUrl = process.env.DOCS_URL;
 		if (docsUrl) {
-			rewrites.push(
+			return [
 				{
 					source: "/docs",
 					destination: `${docsUrl}/docs`,
@@ -22,30 +19,10 @@ const nextConfig: NextConfig = {
 					source: "/docs/:path*",
 					destination: `${docsUrl}/docs/:path*`,
 				},
-			);
+			];
 		}
-
-		// PostHog reverse proxy to avoid ad blockers
-		rewrites.push(
-			{
-				source: "/ingest/static/:path*",
-				destination: "https://us-assets.i.posthog.com/static/:path*",
-			},
-			{
-				source: "/ingest/decide",
-				destination: "https://us.i.posthog.com/decide",
-			},
-			{
-				source: "/ingest/:path*",
-				destination: "https://us.i.posthog.com/:path*",
-			},
-		);
-
-		return rewrites;
+		return [];
 	},
-
-	// Required for PostHog API calls
-	skipTrailingSlashRedirect: true,
 
 	transpilePackages: ["@lightfast/ui"],
 };

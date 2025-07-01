@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "@lightfast/ui/globals.css";
-import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { ConvexClientProvider } from "@/lib/convex-provider";
 import { siteConfig, siteMetadata } from "@/lib/site-config";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
@@ -88,9 +87,7 @@ export default function RootLayout({
 		<ConvexAuthNextjsServerProvider>
 			<html lang="en" suppressHydrationWarning>
 				<body className={cn(fonts, "dark", "flex min-h-screen flex-col")}>
-					<PostHogProvider>
-						<ConvexClientProvider>{children}</ConvexClientProvider>
-					</PostHogProvider>
+					<ConvexClientProvider>{children}</ConvexClientProvider>
 					<Toaster theme="dark" position="top-right" />
 					<Analytics />
 					<SpeedInsights />
