@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@/convex/_generated/api";
-import { getModelDisplayName } from "@/lib/ai";
 import { Alert, AlertDescription } from "@lightfast/ui/components/ui/alert";
 import { ScrollArea } from "@lightfast/ui/components/ui/scroll-area";
 import { useMutation, useQuery } from "convex/react";
@@ -73,7 +72,7 @@ export function SharedChatView({ shareId }: SharedChatViewProps) {
 	}
 
 	// Show error if access not allowed or data not found
-	if (!accessAllowed || sharedData === null) {
+	if (!accessAllowed || !sharedData) {
 		return (
 			<div className="flex flex-col items-center justify-center h-screen gap-4">
 				<AlertCircle className="h-12 w-12 text-muted-foreground" />
@@ -85,7 +84,7 @@ export function SharedChatView({ shareId }: SharedChatViewProps) {
 		);
 	}
 
-	const { thread, messages, owner } = sharedData!;
+	const { thread, messages, owner } = sharedData;
 
 	return (
 		<div className="flex flex-col h-screen">
@@ -110,23 +109,12 @@ export function SharedChatView({ shareId }: SharedChatViewProps) {
 							</AlertDescription>
 						</Alert>
 						{messages.map((message) => {
-							const isAI = message.messageType === "assistant";
-							const modelName = isAI
-								? message.modelId
-									? getModelDisplayName(message.modelId)
-									: message.model
-										? getModelDisplayName(message.model)
-										: "AI Assistant"
-								: undefined;
-
 							return (
 								<MessageItem
 									key={message._id}
 									message={message}
-									owner={owner || undefined}
 									isReadOnly={true}
 									showActions={false}
-									modelName={modelName}
 								/>
 							);
 						})}

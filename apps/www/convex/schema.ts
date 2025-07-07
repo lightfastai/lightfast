@@ -10,18 +10,18 @@ import {
 	fileMetadataValidator,
 	fileNameValidator,
 	ipHashValidator,
+	messageMetadataValidator,
 	messagePartsValidator,
-	messageTypeValidator,
+	messagesDeprecatedValidator,
+	messageStatusValidator,
 	mimeTypeValidator,
-	modelIdValidator,
-	modelProviderValidator,
+	roleValidator,
 	shareIdValidator,
 	shareSettingsValidator,
 	storageIdValidator,
-	streamIdValidator,
-	threadUsageValidator,
+	threadDeprecatedValidator,
+	threadMetadataValidator,
 	titleValidator,
-	tokenUsageValidator,
 	userAgentValidator,
 	userApiKeysValidator,
 	userPreferencesValidator,
@@ -56,20 +56,15 @@ export default defineSchema({
 		clientId: v.optional(clientIdValidator), // Client-generated ID for instant navigation
 		title: titleValidator,
 		userId: v.id("users"),
-		createdAt: v.number(),
-		lastMessageAt: v.number(),
-		isTitleGenerating: v.optional(v.boolean()),
-		isGenerating: v.optional(v.boolean()),
 		pinned: v.optional(v.boolean()),
-		// Branch information
 		branchedFrom: branchInfoValidator,
-		// Share functionality
 		isPublic: v.optional(v.boolean()), // Whether the thread is publicly accessible
 		shareId: v.optional(shareIdValidator), // Unique ID for share links
 		sharedAt: v.optional(v.number()), // Timestamp when first shared
 		shareSettings: shareSettingsValidator,
-		// Thread-level usage tracking (denormalized for performance)
-		usage: threadUsageValidator,
+		metadata: v.optional(threadMetadataValidator),
+		// @deprecated fields - Do not use in new code
+		...threadDeprecatedValidator.fields,
 	})
 		.index("by_user", ["userId"])
 		.index("by_client_id", ["clientId"])
@@ -77,32 +72,17 @@ export default defineSchema({
 		.index("by_share_id", ["shareId"]),
 
 	messages: defineTable({
+		// @V2 Schema.
 		threadId: v.id("threads"),
-		body: v.string(),
-		timestamp: v.number(),
-		messageType: messageTypeValidator,
-		model: v.optional(modelProviderValidator),
-		modelId: v.optional(modelIdValidator),
-		// Attachments - array of file IDs
-		attachments: v.optional(v.array(v.id("files"))),
-		isStreaming: v.optional(v.boolean()),
-		streamId: v.optional(streamIdValidator),
-		isComplete: v.optional(v.boolean()),
-		thinkingStartedAt: v.optional(v.number()),
-		thinkingCompletedAt: v.optional(v.number()),
-		usedUserApiKey: v.optional(v.boolean()), // Track if user's own API key was used
-		streamVersion: v.optional(v.number()),
-		thinkingContent: v.optional(v.string()),
-		isThinking: v.optional(v.boolean()),
-		hasThinkingContent: v.optional(v.boolean()),
-		// Token usage tracking per message
-		usage: tokenUsageValidator,
-		// Message parts array following Vercel AI SDK v5 structure
-		// Stores text, tool calls, and tool results in chronological order
 		parts: v.optional(messagePartsValidator),
-	})
-		.index("by_thread", ["threadId"])
-		.index("by_stream_id", ["streamId"]),
+		status: v.optional(messageStatusValidator),
+		role: v.optional(roleValidator),
+		attachments: v.optional(v.array(v.id("files"))),
+		// New metadata structure
+		metadata: v.optional(messageMetadataValidator),
+		// @deprecated fields - Do not use in new code
+		...messagesDeprecatedValidator.fields,
+	}).index("by_thread", ["threadId"]),
 
 	feedback: defineTable({
 		messageId: v.id("messages"),

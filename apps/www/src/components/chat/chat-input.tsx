@@ -2,15 +2,17 @@
 
 import { useFileDrop } from "@/hooks/use-file-drop";
 import {
-	DEFAULT_MODEL_ID,
-	type ModelId,
 	getIncompatibilityMessage,
 	getModelCapabilities,
+	validateAttachmentsForModel,
+} from "@/lib/ai/capabilities";
+import { preprocessUserMessage } from "@/lib/message-preprocessing";
+import {
+	DEFAULT_MODEL_ID,
+	type ModelId,
 	getModelConfig,
 	getVisibleModels,
-	validateAttachmentsForModel,
-} from "@/lib/ai";
-import { preprocessUserMessage } from "@/lib/message-preprocessing";
+} from "@lightfast/ai/providers";
 import { Button } from "@lightfast/ui/components/ui/button";
 import {
 	DropdownMenu,
@@ -56,17 +58,13 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
+import type { LightfastUIMessageOptions } from "../../hooks/convertDbMessagesToUIMessages";
 import { useKeyboardShortcutsContext } from "../providers/keyboard-shortcuts-provider";
 
 interface ChatInputProps {
-	onSendMessage: (
-		message: string,
-		modelId: string,
-		attachments?: Id<"files">[],
-		webSearchEnabled?: boolean,
-	) => Promise<void> | void;
-	isLoading?: boolean;
+	onSendMessage: (options: LightfastUIMessageOptions) => Promise<void> | void;
+	dbMessages?: Doc<"messages">[] | undefined;
 	placeholder?: string;
 	disabled?: boolean;
 	maxLength?: number;
@@ -74,6 +72,7 @@ interface ChatInputProps {
 	showDisclaimer?: boolean;
 	value?: string;
 	onChange?: (value: string) => void;
+	defaultModel?: ModelId;
 }
 
 interface FileAttachment {
@@ -104,7 +103,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 	(
 		{
 			onSendMessage,
-			isLoading = false,
+			dbMessages,
 			placeholder = "How can I help you today?",
 			disabled = false,
 			maxLength = 4000,
@@ -112,6 +111,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 			showDisclaimer = true,
 			value,
 			onChange,
+			defaultModel,
 		},
 		ref,
 	) => {
@@ -123,29 +123,51 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 			value !== undefined ? onChange || (() => {}) : setInternalMessage;
 		const [isSending, setIsSending] = useState(false);
 
-		// Initialize selectedModelId from sessionStorage to persist across navigation
-		const [selectedModelId, setSelectedModelId] = useState<string>(() => {
-			if (typeof window !== "undefined") {
-				const storedModel = sessionStorage.getItem("selectedModelId");
-				return storedModel || DEFAULT_MODEL_ID;
+		// Initialize selectedModelId - load from sessionStorage after mount to avoid hydration issues
+		const [selectedModelId, setSelectedModelId] = useState<ModelId>(
+			defaultModel || DEFAULT_MODEL_ID,
+		);
+
+		// Load persisted model selection after mount
+		useEffect(() => {
+			const storedModel = sessionStorage.getItem("selectedModelId");
+			if (storedModel) {
+				setSelectedModelId(storedModel as ModelId);
 			}
-			return DEFAULT_MODEL_ID;
-		});
+		}, []);
 
 		const [attachments, setAttachments] = useState<FileAttachment[]>([]);
 		const [isUploading, setIsUploading] = useState(false);
 		const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 		const textareaRef = useRef<HTMLTextAreaElement>(null);
+
 		const fileInputRef = useRef<HTMLInputElement>(null);
 		const keyboardShortcuts = useKeyboardShortcutsContext();
 
 		const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 		const createFile = useMutation(api.files.createFile);
 
+		// Get the most recent assistant message status from database
+		const lastAssistantMessageStatus = useMemo(() => {
+			if (!dbMessages || dbMessages.length === 0) return null;
+
+			// Find the most recent assistant message
+			// dbMessages is sorted oldest first, so reverse to get newest first
+			const recentAssistantMessage = [...dbMessages]
+				.reverse()
+				.find((msg) => msg.role === "assistant");
+
+			return recentAssistantMessage?.status || null;
+		}, [dbMessages]);
+
 		// Determine if submission should be disabled (but allow typing)
 		const isSubmitDisabled = useMemo(
-			() => disabled || isLoading || isSending,
-			[disabled, isLoading, isSending],
+			() =>
+				disabled ||
+				lastAssistantMessageStatus === "streaming" ||
+				lastAssistantMessageStatus === "submitted" ||
+				isSending,
+			[disabled, lastAssistantMessageStatus, isSending],
 		);
 
 		// Memoize expensive computations
@@ -187,6 +209,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 			textarea.style.height = `${textarea.scrollHeight}px`;
 		}, []);
 
+		// biome-ignore lint/correctness/useExhaustiveDependencies: message dependency is intentional for textarea height adjustment
 		useEffect(() => {
 			adjustTextareaHeight();
 		}, [message, adjustTextareaHeight]);
@@ -310,7 +333,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 		// Use the file drop hook
 		const { isDragging, dragHandlers } = useFileDrop({
 			onDrop: handleFileUpload,
-			disabled: isSubmitDisabled || isUploading,
+			disabled: disabled || isUploading,
 		});
 
 		const handleFileInputChange = useCallback(
@@ -363,20 +386,33 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 			setIsSending(true);
 
+			// Clear the input immediately to provide instant feedback
+			const currentMessage = message;
+			const currentAttachments = [...attachments];
+			setMessage("");
+			setAttachments([]);
+
 			try {
-				const attachmentIds = attachments.map((att) => att.id);
+				const attachmentIds = currentAttachments.map((att) => att.id);
 				// Preprocess message to automatically wrap code blocks
-				const processedMessage = preprocessUserMessage(message);
-				await onSendMessage(
-					processedMessage,
-					selectedModelId,
-					attachmentIds.length > 0 ? attachmentIds : undefined,
-					webSearchEnabled,
-				);
-				setMessage("");
-				setAttachments([]);
+				const processedMessage = preprocessUserMessage(currentMessage);
+
+				console.log("ChatInput: webSearchEnabled =", webSearchEnabled);
+
+				await onSendMessage({
+					message: processedMessage,
+					modelId: selectedModelId,
+					options: {
+						webSearchEnabled,
+						attachments: attachmentIds,
+					},
+				});
 			} catch (error) {
 				console.error("Error sending message:", error);
+
+				// Restore the message and attachments on error
+				setMessage(currentMessage);
+				setAttachments(currentAttachments);
 
 				// Handle specific error types gracefully with toast notifications
 				if (error instanceof Error) {
@@ -428,7 +464,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 		const [dropdownOpen, setDropdownOpen] = useState(false);
 
-		const handleModelChange = useCallback((value: string) => {
+		const handleModelChange = useCallback((value: ModelId) => {
 			setSelectedModelId(value);
 			// Persist to sessionStorage to maintain selection across navigation
 			if (typeof window !== "undefined") {
@@ -473,7 +509,15 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 		}, [keyboardShortcuts, toggleModelSelector]);
 
 		const handleWebSearchToggle = useCallback(() => {
-			setWebSearchEnabled((prev) => !prev);
+			setWebSearchEnabled((prev) => {
+				console.log(
+					"ChatInput: toggling webSearchEnabled from",
+					prev,
+					"to",
+					!prev,
+				);
+				return !prev;
+			});
 		}, []);
 
 		// Memoize computed values
@@ -514,7 +558,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 							<div
 								className={`w-full border border-muted/30 rounded-xl overflow-hidden flex flex-col transition-all bg-transparent dark:bg-input/10 ${
 									attachments.length > 0 ? "rounded-b-none" : ""
-								} ${isLoading ? "opacity-75" : ""}`}
+								}`}
 							>
 								{/* Textarea area - grows with content up to max height */}
 								<div className="flex-1 max-h-[180px] overflow-y-auto chat-input-scroll">
@@ -526,7 +570,6 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 										placeholder={placeholder}
 										className="w-full resize-none border-0 focus-visible:ring-0 whitespace-pre-wrap break-words p-3 bg-transparent dark:bg-input/10 focus:bg-transparent dark:focus:bg-input/10 hover:bg-transparent dark:hover:bg-input/10 disabled:bg-transparent dark:disabled:bg-input/10"
 										maxLength={maxLength}
-										disabled={disabled}
 										autoComplete="off"
 										autoCorrect="off"
 										autoCapitalize="off"
@@ -581,7 +624,6 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 													variant={webSearchEnabled ? "default" : "ghost"}
 													size="icon"
 													className="h-8 w-8"
-													disabled={disabled}
 												>
 													<Globe className="w-4 h-4" />
 												</Button>
@@ -608,7 +650,6 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 													variant="outline"
 													size="sm"
 													className="text-xs justify-between font-normal"
-													disabled={disabled}
 												>
 													<span className="truncate">
 														{selectedModel?.displayName}
@@ -635,7 +676,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 																			<DropdownMenuItem
 																				key={model.id}
 																				onClick={() =>
-																					handleModelChange(model.id)
+																					handleModelChange(model.id as ModelId)
 																				}
 																				className="flex flex-col items-start py-3"
 																			>
@@ -701,7 +742,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 												return (
 													<div
 														key={attachment.id}
-														className="flex items-center gap-2 px-3 py-2 bg-background rounded-md border text-sm group hover:border-foreground/20 transition-colors flex-shrink-0"
+														className="flex items-center gap-2 px-3 py-2 bg-background rounded-md border border-muted/30 text-sm group hover:border-muted/50 transition-colors flex-shrink-0"
 													>
 														{isImage ? (
 															<Image className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -718,15 +759,16 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 																{formatFileSize(attachment.size)}
 															</p>
 														</div>
-														<button
-															type="button"
+														<Button
+															variant="ghost"
+															size="icon"
 															onClick={() => removeAttachment(attachment.id)}
-															className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 hover:bg-destructive/10 rounded"
+															className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 hover:bg-destructive/10 rounded-sm h-6 w-6"
 															disabled={disabled || isUploading}
 															aria-label={`Remove ${attachment.name}`}
 														>
-															<X className="w-3 h-3 text-destructive" />
-														</button>
+															<X className="w-2 h-2 text-destructive" />
+														</Button>
 													</div>
 												);
 											})}

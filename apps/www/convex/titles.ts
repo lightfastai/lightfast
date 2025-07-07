@@ -3,26 +3,25 @@ import { type CoreMessage, generateText } from "ai";
 import { v } from "convex/values";
 import { internal } from "./_generated/api.js";
 import { internalAction, internalMutation } from "./_generated/server.js";
-import { titleValidator, validateTitle } from "./validators.js";
+import {
+	textPartValidator,
+	titleValidator,
+	validateTitle,
+} from "./validators.js";
 
 // Internal action to generate title using fast AI model
+// full rewrite to use the new ai sdk v5
 export const generateTitle = internalAction({
 	args: {
 		threadId: v.id("threads"),
-		userMessage: v.string(),
+		firstMessage: textPartValidator,
 	},
 	returns: v.null(),
 	handler: async (ctx, args) => {
 		try {
-			// Mark title as generating
-			await ctx.runMutation(internal.titles.setTitleGenerating, {
-				threadId: args.threadId,
-				isGenerating: true,
-			});
-
 			console.log(
 				"Generating title for message:",
-				args.userMessage.substring(0, 100),
+				args.firstMessage.text.substring(0, 100),
 			);
 
 			// Use gpt-4o-mini for fast title generation with AI SDK v5
@@ -37,7 +36,7 @@ export const generateTitle = internalAction({
 				},
 				{
 					role: "user",
-					content: args.userMessage,
+					content: args.firstMessage.text,
 				},
 			];
 
@@ -66,9 +65,9 @@ export const generateTitle = internalAction({
 				console.warn("Empty title generated, using fallback");
 				// Fallback to truncated message if AI fails
 				const fallbackTitle =
-					args.userMessage.length > 77
-						? `${args.userMessage.substring(0, 77)}...`
-						: args.userMessage;
+					args.firstMessage.text.length > 77
+						? `${args.firstMessage.text.substring(0, 77)}...`
+						: args.firstMessage.text;
 
 				await ctx.runMutation(internal.titles.updateThreadTitle, {
 					threadId: args.threadId,
@@ -80,9 +79,9 @@ export const generateTitle = internalAction({
 
 			// Fallback to truncated message on error
 			const fallbackTitle =
-				args.userMessage.length > 77
-					? `${args.userMessage.substring(0, 77)}...`
-					: args.userMessage;
+				args.firstMessage.text.length > 77
+					? `${args.firstMessage.text.substring(0, 77)}...`
+					: args.firstMessage.text;
 
 			await ctx.runMutation(internal.titles.updateThreadTitle, {
 				threadId: args.threadId,
@@ -109,22 +108,6 @@ export const updateThreadTitle = internalMutation({
 
 		await ctx.db.patch(args.threadId, {
 			title: args.title,
-			isTitleGenerating: false,
-		});
-		return null;
-	},
-});
-
-// Internal mutation to set title generating status
-export const setTitleGenerating = internalMutation({
-	args: {
-		threadId: v.id("threads"),
-		isGenerating: v.boolean(),
-	},
-	returns: v.null(),
-	handler: async (ctx, args) => {
-		await ctx.db.patch(args.threadId, {
-			isTitleGenerating: args.isGenerating,
 		});
 		return null;
 	},

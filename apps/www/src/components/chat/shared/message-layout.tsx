@@ -1,13 +1,12 @@
 import { cn } from "@lightfast/ui/lib/utils";
 import type React from "react";
+import type { DbMessageRole } from "../../../../convex/types";
 
 export interface MessageLayoutProps {
-	avatar: React.ReactNode;
 	content: React.ReactNode;
 	timestamp?: React.ReactNode;
 	actions?: React.ReactNode;
-	messageType: "user" | "assistant" | "system";
-	className?: string;
+	role?: DbMessageRole;
 	forceActionsVisible?: boolean;
 }
 
@@ -15,13 +14,13 @@ export function MessageLayout({
 	content,
 	timestamp,
 	actions,
-	messageType,
-	className,
+	role,
 	forceActionsVisible = false,
 }: MessageLayoutProps) {
-	const isAssistant = messageType === "assistant";
-	const isSystem = messageType === "system";
-	const isUser = messageType === "user";
+	// @todo quick hack to handle system messages using !role due to optional role
+	const isAssistant = role === "assistant" || !role;
+	const isSystem = role === "system";
+	const isUser = role === "user";
 
 	return (
 		<div
@@ -29,7 +28,6 @@ export function MessageLayout({
 				"group/message",
 				isAssistant ? "mt-12" : isSystem ? "mt-2" : "mt-4",
 				isUser && "flex justify-end",
-				className,
 			)}
 		>
 			<div

@@ -3,25 +3,22 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useTimeGreeting } from "@/hooks/use-time-greeting";
 import type { TimezoneData } from "@/lib/timezone-cookies";
+import type { ModelId } from "@lightfast/ai/providers";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
 import { ZapIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import type { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Doc } from "../../../convex/_generated/dataModel";
+import type { LightfastUIMessageOptions } from "../../hooks/convertDbMessagesToUIMessages";
 import { ChatInput } from "./chat-input";
 import { PromptSuggestions } from "./prompt-suggestions";
 
 interface CenteredChatStartProps {
-	onSendMessage: (
-		message: string,
-		modelId: string,
-		attachments?: Id<"files">[],
-		webSearchEnabled?: boolean,
-	) => Promise<void> | void;
-	disabled?: boolean;
-	isLoading?: boolean;
+	onSendMessage: (options: LightfastUIMessageOptions) => Promise<void> | void;
+	dbMessages?: Doc<"messages">[] | undefined;
 	preloadedUser?: Preloaded<typeof api.users.current>;
+	defaultModel?: ModelId;
 	serverTimezone?: TimezoneData | null;
 	ipEstimate?: string;
 	serverGreeting?: {
@@ -33,9 +30,9 @@ interface CenteredChatStartProps {
 
 export function CenteredChatStart({
 	onSendMessage,
-	disabled = false,
-	isLoading = false,
+	dbMessages,
 	preloadedUser,
+	defaultModel,
 	serverTimezone,
 	ipEstimate,
 	serverGreeting,
@@ -51,13 +48,7 @@ export function CenteredChatStart({
 
 	// Use preloaded user data if available, otherwise fall back to regular auth hook
 	const preloadedUserData = preloadedUser
-		? (() => {
-				try {
-					return usePreloadedQuery(preloadedUser);
-				} catch {
-					return null; // Fallback to regular auth hook if preloaded data fails
-				}
-			})()
+		? usePreloadedQuery(preloadedUser)
 		: null;
 
 	const userName =
@@ -93,11 +84,11 @@ export function CenteredChatStart({
 							ref={chatInputRef}
 							onSendMessage={onSendMessage}
 							placeholder="How can I help you today?"
-							disabled={disabled}
-							isLoading={isLoading}
+							dbMessages={dbMessages}
 							showDisclaimer={false}
 							value={message}
 							onChange={setMessage}
+							defaultModel={defaultModel}
 						/>
 
 						{/* Prompt suggestions positioned absolutely below chat input */}

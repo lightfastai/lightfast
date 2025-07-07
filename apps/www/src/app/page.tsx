@@ -1,4 +1,4 @@
-import { AuthRedirectHandler } from "@/components/auth/auth-redirect-handler";
+import { Suspense } from "react";
 import { LandingChatInput } from "@/components/landing/landing-chat-input";
 import { siteConfig, siteMetadata } from "@/lib/site-config";
 import { SiteFooter } from "@lightfast/ui/components/site-footer";
@@ -88,7 +88,9 @@ function LandingPage() {
 
 					{/* Chat input preview */}
 					<div className="w-full">
-						<LandingChatInput />
+						<Suspense fallback={<div>Loading...</div>}>
+							<LandingChatInput />
+						</Suspense>
 					</div>
 				</div>
 			</main>
@@ -111,15 +113,7 @@ function LandingPage() {
 	);
 }
 
-// Main server component - SSR landing page with client-side auth handling
+// Main server component - Static landing page (auth redirects handled by middleware)
 export default function Home() {
-	return (
-		<>
-			{/* Client component handles auth redirects without affecting SSR */}
-			<AuthRedirectHandler />
-
-			{/* Server-rendered landing page */}
-			<LandingPage />
-		</>
-	);
+	return <LandingPage />;
 }

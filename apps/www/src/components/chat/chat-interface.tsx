@@ -1,97 +1,69 @@
 "use client";
 
-import { useChat } from "@/hooks/use-chat";
-import type { TimezoneData } from "@/lib/timezone-cookies";
-import type { Preloaded } from "convex/react";
-import { useEffect, useMemo, useRef } from "react";
-import type { api } from "../../../convex/_generated/api";
+import { useQuery } from "convex/react";
+import { usePathname } from "next/navigation";
+import { useMemo } from "react";
+import { api } from "../../../convex/_generated/api";
+import { convertDbMessagesToUIMessages } from "../../hooks/convertDbMessagesToUIMessages";
+import { useChat } from "../../hooks/use-chat";
 import { CenteredChatStart } from "./centered-chat-start";
 import { ChatInput } from "./chat-input";
 import { ChatMessages } from "./chat-messages";
 
-interface ChatInterfaceProps {
-	preloadedThreadById?: Preloaded<typeof api.threads.get>;
-	preloadedThreadByClientId?: Preloaded<typeof api.threads.getByClientId>;
-	preloadedMessages?: Preloaded<typeof api.messages.list>;
-	preloadedUser?: Preloaded<typeof api.users.current>;
-	preloadedUserSettings?: Preloaded<typeof api.userSettings.getUserSettings>;
-	serverTimezone?: TimezoneData | null;
-	ipEstimate?: string;
-	serverGreeting?: {
-		greeting: string;
-		timezone: string;
-		source: "cookie" | "ip" | "fallback";
-	};
-}
+export function ChatInterface() {
+	const pathname = usePathname();
 
-export function ChatInterface({
-	preloadedThreadById,
-	preloadedThreadByClientId,
-	preloadedMessages,
-	preloadedUser,
-	preloadedUserSettings,
-	serverTimezone,
-	ipEstimate,
-	serverGreeting,
-}: ChatInterfaceProps = {}) {
-	// Use custom chat hook with optimistic updates and preloaded data
-	const { messages, currentThread, handleSendMessage, isDisabled, isNewChat } =
-		useChat({
-			preloadedThreadById,
-			preloadedThreadByClientId,
-			preloadedMessages,
-			preloadedUserSettings,
-		});
-
-	// Track if user has ever sent a message to prevent flicker
-	const hasEverSentMessage = useRef(false);
-
-	// Reset when we're in a truly new chat, set when messages exist
-	useEffect(() => {
-		if (isNewChat && messages.length === 0) {
-			hasEverSentMessage.current = false;
-		} else if (messages.length > 0) {
-			hasEverSentMessage.current = true;
-		}
-	}, [isNewChat, messages.length]);
-
-	// Check if AI is currently generating (any message is streaming or thread is generating)
-	const isAIGenerating = useMemo(() => {
-		// For new chats, only check if there are active messages streaming
-		// Don't check currentThread?.isGenerating to avoid carrying over state from previous threads
-		if (isNewChat) {
-			return messages.some((msg) => msg.isStreaming && !msg.isComplete);
+	const pathInfo = useMemo(() => {
+		if (pathname === "/chat") {
+			return { type: "new", id: "new" };
 		}
 
-		// For existing chats, check all conditions
-		return (
-			currentThread?.isGenerating ||
-			messages.some((msg) => msg.isStreaming && !msg.isComplete)
-		);
-	}, [currentThread, messages, isNewChat]);
+		const match = pathname.match(/^\/chat\/(.+)$/);
+		if (!match) {
+			return { type: "new", id: "new" };
+		}
 
-	// Show centered layout only for truly new chats that have never had messages
-	if (isNewChat && !hasEverSentMessage.current) {
+		const id = match[1];
+
+		// Handle special routes
+		if (id === "settings" || id.startsWith("settings/")) {
+			return { type: "settings", id: "settings" };
+		}
+
+		// Assume it's a client-generated ID for now
+		return { type: "clientId", id };
+	}, [pathname]);
+
+	const currentClientId = pathInfo.type === "clientId" ? pathInfo.id : null;
+
+	const dbMessages = useQuery(
+		api.messages.listByClientId,
+		currentClientId ? { clientId: currentClientId } : "skip",
+	);
+
+	const { messages, sendMessage, defaultModel } = useChat({
+		initialMessages: convertDbMessagesToUIMessages(dbMessages || []),
+		clientId: currentClientId,
+	});
+
+	// Show centered layout only for new chats with no messages
+	if (pathInfo.type === "new" && !dbMessages) {
 		return (
 			<CenteredChatStart
-				onSendMessage={handleSendMessage}
-				disabled={isDisabled}
-				isLoading={isAIGenerating}
-				preloadedUser={preloadedUser}
-				serverTimezone={serverTimezone}
-				ipEstimate={ipEstimate}
-				serverGreeting={serverGreeting}
+				onSendMessage={sendMessage}
+				dbMessages={dbMessages}
+				defaultModel={defaultModel}
 			/>
 		);
 	}
 
 	return (
-		<div className="flex flex-col h-full ">
-			<ChatMessages messages={messages} />
+		<div className="flex flex-col h-full">
+			<ChatMessages dbMessages={dbMessages} uiMessages={messages} />
 			<ChatInput
-				onSendMessage={handleSendMessage}
-				disabled={isDisabled}
-				isLoading={isAIGenerating}
+				onSendMessage={sendMessage}
+				dbMessages={dbMessages}
+				defaultModel={defaultModel}
 			/>
 		</div>
 	);

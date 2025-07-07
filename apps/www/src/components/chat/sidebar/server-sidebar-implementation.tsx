@@ -8,25 +8,16 @@ import {
 	SidebarMenu,
 	SidebarMenuItem,
 } from "@lightfast/ui/components/ui/sidebar";
-import type { Preloaded } from "convex/react";
 import { MessageSquarePlus } from "lucide-react";
-import type { api } from "../../../../convex/_generated/api";
 import { ActiveMenuItem } from "./active-menu-item";
+import { InfiniteScrollThreadsList } from "./infinite-scroll-threads-list";
 import { PlatformSidebarTrigger } from "./platform-sidebar-trigger";
-import { PreloadedThreadsList } from "./preloaded-threads-list";
 import { SidebarHoverExpand } from "./sidebar-hover-expand";
 import { SidebarUserMenu } from "./sidebar-user-menu";
-
-interface ServerSidebarImplementationProps {
-	preloadedThreads: Preloaded<typeof api.threads.list>;
-	preloadedUser: Preloaded<typeof api.users.current>;
-}
+import { ThreadsErrorBoundary } from "./threads-error-boundary";
 
 // Main server component - renders static parts with reactive threads list
-export function ServerSidebarImplementation({
-	preloadedThreads,
-	preloadedUser,
-}: ServerSidebarImplementationProps) {
+export function ServerSidebarImplementation() {
 	return (
 		<Sidebar variant="inset" collapsible="icon" className="w-64 max-w-64">
 			<SidebarHeader className="p-0">
@@ -53,7 +44,9 @@ export function ServerSidebarImplementation({
 
 				{/* Only the threads list is a client component - everything else stays server-rendered */}
 				<div className="w-full min-w-0 group-data-[collapsible=icon]:hidden">
-					<PreloadedThreadsList preloadedThreads={preloadedThreads} />
+					<ThreadsErrorBoundary>
+						<InfiniteScrollThreadsList className="h-[calc(100vh-280px)] w-full" />
+					</ThreadsErrorBoundary>
 				</div>
 
 				{/* Hover expand zone - fills the space between threads and user menu */}
@@ -67,7 +60,7 @@ export function ServerSidebarImplementation({
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem className="overflow-visible">
-								<SidebarUserMenu preloadedUser={preloadedUser} />
+								<SidebarUserMenu />
 							</SidebarMenuItem>
 						</SidebarMenu>
 					</SidebarGroupContent>

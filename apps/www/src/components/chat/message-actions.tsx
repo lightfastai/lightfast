@@ -1,7 +1,6 @@
 "use client";
 
-import type { ModelId } from "@/lib/ai";
-import { nanoid } from "@/lib/nanoid";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
 import { Badge } from "@lightfast/ui/components/ui/badge";
 import { Button } from "@lightfast/ui/components/ui/button";
@@ -16,17 +15,13 @@ import {
 } from "lucide-react";
 import React from "react";
 import { api } from "../../../convex/_generated/api";
-import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { FeedbackModal } from "./feedback-modal";
 import { MessageUsageChip } from "./message-usage-chip";
 import { ModelBranchDropdown } from "./model-branch-dropdown";
-import { formatDuration } from "./shared/thinking-content";
-
 interface MessageActionsProps {
 	message: Doc<"messages">;
 	className?: string;
 	modelName?: string;
-	thinkingDuration?: number | null;
 	onDropdownStateChange?: (isOpen: boolean) => void;
 }
 
@@ -34,7 +29,6 @@ export function MessageActions({
 	message,
 	className,
 	modelName,
-	thinkingDuration,
 	onDropdownStateChange,
 }: MessageActionsProps) {
 	const [showFeedbackModal, setShowFeedbackModal] = React.useState(false);
@@ -46,149 +40,153 @@ export function MessageActions({
 		onDropdownStateChange?.(isDropdownOpen);
 	}, [isDropdownOpen, onDropdownStateChange]);
 
+	// For Convex messages, we always have a valid ID
 	const feedback = useQuery(api.feedback.getUserFeedbackForMessage, {
 		messageId: message._id,
 	});
 
 	const submitFeedback = useMutation(api.feedback.submitFeedback);
 	const removeFeedback = useMutation(api.feedback.removeFeedback);
-	const branchThread = useMutation(
-		api.threads.branchFromMessage,
-	).withOptimisticUpdate((localStore, args) => {
-		const { clientId, originalThreadId } = args;
-		if (!clientId) return; // Only do optimistic updates with clientId
+	// const branchThread = useMutation(
+	// 	api.threads.branchFromMessage,
+	// ).withOptimisticUpdate((localStore, args) => {
+	// 	const { clientId, originalThreadId } = args;
+	// 	if (!clientId) return; // Only do optimistic updates with clientId
 
-		const now = Date.now();
+	// 	const now = Date.now();
 
-		// Get the original thread to copy its title
-		const originalThread = localStore.getQuery(api.threads.get, {
-			threadId: originalThreadId,
-		});
+	// 	// Get the original thread to copy its title
+	// 	const originalThread = localStore.getQuery(api.threads.get, {
+	// 		threadId: originalThreadId,
+	// 	});
 
-		// CRITICAL: Use a deterministic temp thread ID that can be referenced later
-		// This matches the pattern used in useChat.ts for createThreadAndSend
-		const tempThreadId = crypto.randomUUID() as Id<"threads">;
+	// 	// CRITICAL: Use a deterministic temp thread ID that can be referenced later
+	// 	// This matches the pattern used in useChat.ts for createThreadAndSend
+	// 	const tempThreadId = crypto.randomUUID() as Id<"threads">;
 
-		// Create optimistic branched thread for immediate sidebar display
-		const optimisticThread: Doc<"threads"> = {
-			_id: tempThreadId,
-			_creationTime: now,
-			clientId,
-			title: originalThread?.title || "",
-			userId: "temp" as Id<"users">, // Temporary user ID
-			createdAt: now,
-			lastMessageAt: now,
-			isGenerating: true, // Will show loading state
-			branchedFrom: {
-				threadId: originalThreadId,
-				messageId: args.branchFromMessageId,
-				timestamp: now,
-			},
-			usage: {
-				totalInputTokens: 0,
-				totalOutputTokens: 0,
-				totalTokens: 0,
-				totalReasoningTokens: 0,
-				totalCachedInputTokens: 0,
-				messageCount: 0,
-				modelStats: {},
-			},
-		};
+	// 	// Create optimistic branched thread for immediate sidebar display
+	// 	const optimisticThread: Doc<"threads"> = {
+	// 		_id: tempThreadId,
+	// 		_creationTime: now,
+	// 		clientId,
+	// 		title: originalThread?.title || "",
+	// 		userId: "temp" as Id<"users">, // Temporary user ID
+	// 		createdAt: now,
+	// 		branchedFrom: {
+	// 			threadId: originalThreadId,
+	// 			messageId: args.branchFromMessageId,
+	// 			timestamp: now,
+	// 		},
+	// 		usage: {
+	// 			totalInputTokens: 0,
+	// 			totalOutputTokens: 0,
+	// 			totalTokens: 0,
+	// 			totalReasoningTokens: 0,
+	// 			totalCachedInputTokens: 0,
+	// 			messageCount: 0,
+	// 			modelStats: {},
+	// 		},
+	// 	};
 
-		// Get existing threads from the store
-		const existingThreads = localStore.getQuery(api.threads.list, {}) || [];
+	// 	// Get existing threads from the store
+	// 	const existingThreads = localStore.getQuery(api.threads.list, {}) || [];
 
-		// Add the new branched thread at the beginning
-		localStore.setQuery(api.threads.list, {}, [
-			optimisticThread,
-			...existingThreads,
-		]);
+	// 	// Add the new branched thread at the beginning
+	// 	localStore.setQuery(api.threads.list, {}, [
+	// 		optimisticThread,
+	// 		...existingThreads,
+	// 	]);
 
-		// CRITICAL: Update thread by clientId query for instant routing
-		// This allows useChat hook to find the thread immediately
-		localStore.setQuery(
-			api.threads.getByClientId,
-			{ clientId },
-			optimisticThread,
-		);
+	// 	// CRITICAL: Update thread by clientId query for instant routing
+	// 	// This allows useChat hook to find the thread immediately
+	// 	localStore.setQuery(
+	// 		api.threads.getByClientId,
+	// 		{ clientId },
+	// 		optimisticThread,
+	// 	);
 
-		// Optimistically copy messages from original thread up to branch point
-		const originalMessages = localStore.getQuery(api.messages.list, {
-			threadId: originalThreadId,
-		});
-		if (originalMessages) {
-			// Find branch point message
-			const branchPointIndex = originalMessages.findIndex(
-				(msg) => msg._id === args.branchFromMessageId,
-			);
+	// 	// Optimistically copy messages from original thread up to branch point
+	// 	const originalMessages = localStore.getQuery(api.messages.list, {
+	// 		threadId: originalThreadId,
+	// 	});
+	// 	if (originalMessages) {
+	// 		// Find branch point message
+	// 		const branchPointIndex = originalMessages.findIndex(
+	// 			(msg) => msg._id === args.branchFromMessageId,
+	// 		);
 
-			if (branchPointIndex !== -1) {
-				// Find the user message that prompted the assistant response we're branching from
-				// Note: originalMessages is in descending order (newest first)
-				// So we search forward from the branch point to find the user message
-				let lastUserMessageIndex = -1;
-				for (let i = branchPointIndex; i < originalMessages.length; i++) {
-					if (originalMessages[i].messageType === "user") {
-						lastUserMessageIndex = i;
-						break;
-					}
-				}
+	// 		if (branchPointIndex !== -1) {
+	// 			// Find the user message that prompted the assistant response we're branching from
+	// 			// Note: originalMessages is in descending order (newest first)
+	// 			// So we search forward from the branch point to find the user message
+	// 			let lastUserMessageIndex = -1;
+	// 			for (let i = branchPointIndex; i < originalMessages.length; i++) {
+	// 				if (originalMessages[i].messageType === "user") {
+	// 					lastUserMessageIndex = i;
+	// 					break;
+	// 				}
+	// 			}
 
-				// Copy messages to match backend behavior
-				// Backend copies from oldest to user message (inclusive)
-				// Frontend has newest first, so we copy from user message to oldest (end of array)
-				const messagesToCopy =
-					lastUserMessageIndex !== -1
-						? originalMessages.slice(lastUserMessageIndex) // Copy from user message to end (includes all older messages)
-						: originalMessages.slice(branchPointIndex); // Fallback: copy from branch point to end
+	// 			// Copy messages to match backend behavior
+	// 			// Backend copies from oldest to user message (inclusive)
+	// 			// Frontend has newest first, so we copy from user message to oldest (end of array)
+	// 			const messagesToCopy =
+	// 				lastUserMessageIndex !== -1
+	// 					? originalMessages.slice(lastUserMessageIndex) // Copy from user message to end (includes all older messages)
+	// 					: originalMessages.slice(branchPointIndex); // Fallback: copy from branch point to end
 
-				// Create optimistic copies with the SAME tempThreadId
-				const optimisticMessages = messagesToCopy.map((msg) => ({
-					...msg,
-					_id: crypto.randomUUID() as Id<"messages">,
-					threadId: tempThreadId, // Use the same tempThreadId as the thread
-				}));
+	// 			// Create optimistic copies with the SAME tempThreadId
+	// 			const optimisticMessages = messagesToCopy.map((msg) => ({
+	// 				...msg,
+	// 				_id: crypto.randomUUID() as Id<"messages">,
+	// 				threadId: tempThreadId, // Use the same tempThreadId as the thread
+	// 			}));
 
-				// Create optimistic assistant message placeholder for the new response
-				const optimisticAssistantMessage: Doc<"messages"> = {
-					_id: crypto.randomUUID() as Id<"messages">,
-					_creationTime: now + 1,
-					threadId: tempThreadId,
-					body: "", // Empty body for streaming
-					messageType: "assistant",
-					modelId: args.modelId,
-					timestamp: now + 1,
-					isStreaming: true,
-					isComplete: false,
-					streamId: `stream_${clientId}_${now}`,
-					thinkingStartedAt: now,
-				};
+	// 			// Create optimistic assistant message placeholder for the new response
+	// 			const optimisticAssistantMessage: Doc<"messages"> = {
+	// 				_id: crypto.randomUUID() as Id<"messages">,
+	// 				_creationTime: now + 1,
+	// 				threadId: tempThreadId,
+	// 				parts: [], // Empty parts array for streaming
+	// 				messageType: "assistant",
+	// 				modelId: args.modelId,
+	// 				timestamp: now + 1,
+	// 				status: "submitted",
+	// 				thinkingStartedAt: now,
+	// 				usage: {
+	// 					inputTokens: 0,
+	// 					outputTokens: 0,
+	// 					totalTokens: 0,
+	// 					reasoningTokens: 0,
+	// 					cachedInputTokens: 0,
+	// 				},
+	// 			};
 
-				// Combine all messages: existing ones + new assistant placeholder
-				// Messages are in descending order (newest first)
-				const allOptimisticMessages = [
-					optimisticAssistantMessage, // New assistant message at the top
-					...optimisticMessages, // All copied messages below
-				];
+	// 			// Combine all messages: existing ones + new assistant placeholder
+	// 			// Messages are in descending order (newest first)
+	// 			const allOptimisticMessages = [
+	// 				optimisticAssistantMessage, // New assistant message at the top
+	// 				...optimisticMessages, // All copied messages below
+	// 			];
 
-				// CRITICAL: Set optimistic messages using the tempThreadId
-				// This ensures useChat hook can find them immediately
-				localStore.setQuery(
-					api.messages.list,
-					{ threadId: tempThreadId },
-					allOptimisticMessages,
-				);
+	// 			// CRITICAL: Set optimistic messages using the tempThreadId
+	// 			// This ensures useChat hook can find them immediately
+	// 			localStore.setQuery(
+	// 				api.messages.list,
+	// 				{ threadId: tempThreadId },
+	// 				allOptimisticMessages,
+	// 			);
 
-				// CRITICAL: Also set messages by clientId for instant navigation
-				// This allows useChat to find messages before the thread is created
-				localStore.setQuery(
-					api.messages.listByClientId,
-					{ clientId },
-					allOptimisticMessages,
-				);
-			}
-		}
-	});
+	// 			// CRITICAL: Also set messages by clientId for instant navigation
+	// 			// This allows useChat to find messages before the thread is created
+	// 			localStore.setQuery(
+	// 				api.messages.listByClientId,
+	// 				{ clientId },
+	// 				allOptimisticMessages,
+	// 			);
+	// 		}
+	// 	}
+	// });
 
 	const handleFeedback = async (rating: "thumbs_up" | "thumbs_down") => {
 		if (rating === "thumbs_down") {
@@ -209,32 +207,58 @@ export function MessageActions({
 	};
 
 	const handleCopy = () => {
-		if (message.body) {
-			copy(message.body);
+		// Extract text from message parts
+		let text = "";
+
+		if (message.parts && message.parts.length > 0) {
+			// Extract text from text and reasoning parts
+			const textParts = message.parts
+				.filter((part) => part.type === "text" || part.type === "reasoning")
+				.map((part) => {
+					if (part.type === "text" || part.type === "reasoning") {
+						return part.text;
+					}
+					return "";
+				})
+				.join("\n");
+
+			if (textParts) {
+				text = textParts;
+			}
+		}
+
+		if (text) {
+			copy(text);
 		}
 	};
 
-	const handleBranch = async (modelId: ModelId) => {
-		try {
-			// 🚀 Generate client ID for instant navigation (like new chat)
-			const clientId = nanoid();
+	// const handleBranch = async (modelId: ModelId) => {
+	// 	// Skip branching for streaming messages without valid Convex IDs
+	// 	if (!hasValidConvexId) {
+	// 		console.log("Branching not available for streaming messages");
+	// 		return;
+	// 	}
 
-			// Update URL immediately without navigation events
-			// Using window.history.replaceState like Vercel's AI chatbot for smoothest UX
-			window.history.replaceState({}, "", `/chat/${clientId}`);
+	// 	try {
+	// 		// 🚀 Generate client ID for instant navigation (like new chat)
+	// 		const clientId = nanoid();
 
-			// Create branch in background - the useChat hook will handle optimistic updates
-			await branchThread({
-				originalThreadId: message.threadId,
-				branchFromMessageId: message._id,
-				modelId,
-				clientId, // Pass clientId to backend
-			});
-		} catch (error) {
-			console.error("Failed to create branch:", error);
-			// TODO: Revert URL on error - could navigate back to original thread
-		}
-	};
+	// 		// Update URL immediately without navigation events
+	// 		// Using window.history.replaceState like Vercel's AI chatbot for smoothest UX
+	// 		window.history.replaceState({}, "", `/chat/${clientId}`);
+
+	// 		// Create branch in background - the useChat hook will handle optimistic updates
+	// 		await branchThread({
+	// 			originalThreadId: metadata.threadId as Id<"threads">,
+	// 			branchFromMessageId: message.id as Id<"messages">,
+	// 			modelId,
+	// 			clientId, // Pass clientId to backend
+	// 		});
+	// 	} catch (error) {
+	// 		console.error("Failed to create branch:", error);
+	// 		// TODO: Revert URL on error - could navigate back to original thread
+	// 	}
+	// };
 
 	return (
 		<>
@@ -265,7 +289,7 @@ export function MessageActions({
 				>
 					<ThumbsDown className="h-4 w-4" />
 				</Button>
-				{message.body && (
+				{message.parts && message.parts.length > 0 && (
 					<Button
 						variant="ghost"
 						size="icon"
@@ -282,7 +306,9 @@ export function MessageActions({
 				)}
 
 				<ModelBranchDropdown
-					onBranch={handleBranch}
+					onBranch={() => {
+						console.log("Branching");
+					}}
 					onOpenChange={setIsDropdownOpen}
 				/>
 
@@ -299,23 +325,11 @@ export function MessageActions({
 						</Badge>
 					)}
 
-					{/* Thinking duration */}
-					{thinkingDuration && (
+					{/* Usage chip */}
+					{message.metadata?.usage && (
 						<>
 							{(modelName || message.usedUserApiKey) && <span>•</span>}
-							<span className="font-mono">
-								Thought for {formatDuration(thinkingDuration)}
-							</span>
-						</>
-					)}
-
-					{/* Usage chip */}
-					{message.usage && (
-						<>
-							{(modelName || message.usedUserApiKey || thinkingDuration) && (
-								<span>•</span>
-							)}
-							<MessageUsageChip usage={message.usage} />
+							<MessageUsageChip usage={message.metadata.usage} />
 						</>
 					)}
 				</div>

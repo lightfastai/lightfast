@@ -3,13 +3,14 @@
 import { ScrollArea } from "@lightfast/ui/components/ui/scroll-area";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Doc } from "../../../convex/_generated/dataModel";
+import type { LightfastUIMessage } from "../../hooks/convertDbMessagesToUIMessages";
+import { useProcessedMessages } from "../../hooks/use-processed-messages";
+import { useStreamingMessageParts } from "../../hooks/use-streaming-message-parts";
 import { MessageDisplay } from "./message-display";
 
-type Message = Doc<"messages">;
-
 interface ChatMessagesProps {
-	messages: Message[];
-	isLoading?: boolean;
+	dbMessages: Doc<"messages">[] | null | undefined;
+	uiMessages: LightfastUIMessage[];
 	emptyState?: {
 		icon?: React.ReactNode;
 		title?: string;
@@ -17,15 +18,12 @@ interface ChatMessagesProps {
 	};
 }
 
-export function ChatMessages({
-	messages,
-	isLoading = false,
-}: ChatMessagesProps) {
+export function ChatMessages({ dbMessages, uiMessages }: ChatMessagesProps) {
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
 	const viewportRef = useRef<HTMLDivElement | null>(null);
 	const [isNearBottom, setIsNearBottom] = useState(true);
 	const [isUserScrolling, setIsUserScrolling] = useState(false);
-	const lastMessageCountRef = useRef(messages.length);
+	const lastMessageCountRef = useRef(dbMessages?.length || 0);
 	const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const lastScrollPositionRef = useRef(0);
 
@@ -96,63 +94,111 @@ export function ChatMessages({
 
 	// Auto-scroll when new messages arrive
 	useEffect(() => {
-		if (!messages.length) return;
+		if (!dbMessages || !dbMessages.length) return;
 
-		const hasNewMessage = messages.length > lastMessageCountRef.current;
-		lastMessageCountRef.current = messages.length;
+		const hasNewMessage = dbMessages.length > lastMessageCountRef.current;
+		lastMessageCountRef.current = dbMessages.length;
 
-		// Check if any message is currently streaming
-		const hasStreamingMessage = messages.some(
-			(msg) => msg.isStreaming && !msg.isComplete,
-		);
+		// Check if the last message is streaming
+		const lastMessage = dbMessages[dbMessages.length - 1];
+		const isStreaming =
+			lastMessage?.role === "assistant" && lastMessage?.status === "streaming";
 
 		// Auto-scroll if:
 		// 1. User is NOT actively scrolling
 		// 2. User is near bottom
-		// 3. There's a new message OR streaming message
-		if (
-			!isUserScrolling &&
-			isNearBottom &&
-			(hasNewMessage || hasStreamingMessage)
-		) {
+		// 3. There's a new message OR streaming
+		if (!isUserScrolling && isNearBottom && (hasNewMessage || isStreaming)) {
 			// Use instant scroll for new messages, smooth for streaming updates
 			scrollToBottom(!hasNewMessage);
 		}
 
 		// If there's a new message and user is scrolling, reset the user scrolling flag
 		// This ensures they see their own messages
-		if (hasNewMessage && messages[0]?.messageType === "user") {
+		if (hasNewMessage && dbMessages[dbMessages.length - 1]?.role === "user") {
 			setIsUserScrolling(false);
 			scrollToBottom(false);
 		}
-	}, [messages, isNearBottom, isUserScrolling, scrollToBottom]);
+	}, [dbMessages, isNearBottom, isUserScrolling, scrollToBottom]);
 
 	// Scroll to bottom on initial load
 	useEffect(() => {
 		scrollToBottom(false);
 	}, [scrollToBottom]);
 
+	// Find the streaming message from uiMessages
+	let streamingVercelMessage: LightfastUIMessage | undefined;
+	if (dbMessages && dbMessages.length > 0 && uiMessages.length > 0) {
+		// The last message in uiMessages should be the streaming one
+		const lastVercelMessage = uiMessages[
+			uiMessages.length - 1
+		] as LightfastUIMessage;
+		// Check if there's a matching database message that's streaming
+		const matchingDbMessage = dbMessages.find(
+			(msg) =>
+				msg._id === lastVercelMessage.metadata?.dbId &&
+				msg.status === "streaming",
+		);
+		if (matchingDbMessage) {
+			streamingVercelMessage = lastVercelMessage;
+		}
+	}
+
+	// Use the custom hook for efficient message processing
+	const processedMessages = useProcessedMessages(dbMessages);
+
+	// Use efficient streaming message parts conversion with caching
+	const streamingMessageParts = useStreamingMessageParts(
+		streamingVercelMessage,
+	);
+
+	// Handle empty state
+	if (!dbMessages || dbMessages.length === 0) {
+		return (
+			<ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+				<div className="p-2 md:p-4 pb-16">
+					<div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto">
+						{/* Empty state */}
+					</div>
+				</div>
+			</ScrollArea>
+		);
+	}
+
 	return (
 		<ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
 			<div className="p-2 md:p-4 pb-16">
 				<div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto">
-					{messages
-						?.slice()
-						.reverse()
-						.map((msg) => (
-							<MessageDisplay key={msg._id} message={msg} userName="User" />
-						))}
+					{dbMessages.map((message) => {
+						// For streaming messages, use memoized Vercel data directly
+						if (
+							message.status === "streaming" &&
+							streamingVercelMessage &&
+							streamingVercelMessage.metadata?.dbId === message._id &&
+							streamingMessageParts
+						) {
+							// Use memoized streaming data without reprocessing
+							const streamingMessage = {
+								...message,
+								parts: streamingMessageParts,
+							};
+							return (
+								<MessageDisplay key={message._id} message={streamingMessage} />
+							);
+						}
 
-					{isLoading && (
-						<div className="text-center text-muted-foreground py-4">
-							<div className="animate-pulse">Generating response...</div>
-						</div>
-					)}
+						// Use pre-processed message from cache
+						const processedMessage =
+							processedMessages.get(message._id) || message;
+						return (
+							<MessageDisplay key={message._id} message={processedMessage} />
+						);
+					})}
 				</div>
 			</div>
 
 			{/* Scroll to bottom button when user has scrolled up */}
-			{!isNearBottom && messages.length > 0 && (
+			{!isNearBottom && dbMessages.length > 0 && (
 				<button
 					type="button"
 					onClick={() => {

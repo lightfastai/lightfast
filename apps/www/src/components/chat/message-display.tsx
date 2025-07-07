@@ -1,64 +1,35 @@
 "use client";
 
-import { getModelDisplayName } from "@/lib/ai";
-import { useQuery } from "convex/react";
-import { useState } from "react";
-import { api } from "../../../convex/_generated/api";
-import type { Doc } from "../../../convex/_generated/dataModel";
+import type { Doc } from "@/convex/_generated/dataModel";
+import { getModelDisplayName } from "@lightfast/ai/providers";
+import { memo, useState } from "react";
 import { AttachmentPreview } from "./attachment-preview";
 import { MessageActions } from "./message-actions";
 import { MessageItem } from "./shared";
 
-type Message = Doc<"messages">;
-
 interface MessageDisplayProps {
-	message: Message;
-	userName: string;
+	message: Doc<"messages">;
 }
 
 // Component to display individual messages with streaming support
-export function MessageDisplay({ message }: MessageDisplayProps) {
-	// Get current user for avatar display
-	const currentUser = useQuery(api.users.current);
+export const MessageDisplay = memo(function MessageDisplay({
+	message,
+}: MessageDisplayProps) {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-	const isAI = message.messageType === "assistant";
+	const isAI = message.role === "assistant";
 
 	// Model name for AI messages
-	const modelName = isAI
-		? message.modelId
+	const modelName =
+		isAI && message.modelId
 			? getModelDisplayName(message.modelId)
-			: message.model
-				? getModelDisplayName(message.model)
-				: "AI Assistant"
-		: undefined;
-
-	// Debug logging for model display issues
-	if (isAI && process.env.NODE_ENV === "development") {
-		console.log("MessageDisplay debug:", {
-			messageId: message._id,
-			modelId: message.modelId,
-			model: message.model,
-			modelName,
-			isStreaming: message.isStreaming,
-			usedUserApiKey: message.usedUserApiKey,
-			hasThinkingContent: message.hasThinkingContent,
-			isComplete: message.isComplete,
-		});
-	}
-
-	// Calculate thinking duration
-	const thinkingDuration =
-		message.thinkingStartedAt && message.thinkingCompletedAt
-			? message.thinkingCompletedAt - message.thinkingStartedAt
-			: null;
+			: "AI Assistant";
 
 	// Actions component
 	const actions = (
 		<MessageActions
 			message={message}
 			modelName={modelName}
-			thinkingDuration={thinkingDuration}
 			onDropdownStateChange={setIsDropdownOpen}
 		/>
 	);
@@ -67,13 +38,8 @@ export function MessageDisplay({ message }: MessageDisplayProps) {
 		<>
 			<MessageItem
 				message={message}
-				currentUser={currentUser || undefined}
 				showActions={true}
 				isReadOnly={false}
-				modelName={modelName}
-				streamingText={message.body}
-				isStreaming={!!message.isStreaming}
-				isComplete={message.isComplete !== false}
 				actions={actions}
 				forceActionsVisible={isDropdownOpen}
 			/>
@@ -83,4 +49,4 @@ export function MessageDisplay({ message }: MessageDisplayProps) {
 			)}
 		</>
 	);
-}
+});

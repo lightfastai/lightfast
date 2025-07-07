@@ -5,6 +5,25 @@ settings:
   excludeLinksFromLockfile: false
 
 catalogs:
+  default:
+    '@ai-sdk/anthropic':
+      specifier: 2.0.0-beta.3
+      version: 2.0.0-beta.3
+    '@ai-sdk/openai':
+      specifier: 2.0.0-beta.3
+      version: 2.0.0-beta.3
+    '@ai-sdk/react':
+      specifier: 2.0.0-beta.5
+      version: 2.0.0-beta.5
+    ai:
+      specifier: 5.0.0-beta.5
+      version: 5.0.0-beta.5
+    typescript:
+      specifier: ^5.8.3
+      version: 5.8.3
+    zod:
+      specifier: ^3.25.58
+      version: 3.25.67
   tailwind4:
     '@tailwindcss/postcss':
       specifier: ^4.1.10
@@ -109,14 +128,14 @@ importers:
   apps/www:
     dependencies:
       '@ai-sdk/anthropic':
-        specifier: alpha
-        version: 2.0.0-alpha.15(zod@3.25.67)
+        specifier: 'catalog:'
+        version: 2.0.0-beta.3(zod@3.25.67)
       '@ai-sdk/openai':
-        specifier: alpha
-        version: 2.0.0-alpha.15(zod@3.25.67)
+        specifier: 'catalog:'
+        version: 2.0.0-beta.3(zod@3.25.67)
       '@ai-sdk/react':
-        specifier: alpha
-        version: 2.0.0-alpha.15(react@19.1.0)(zod@3.25.67)
+        specifier: 'catalog:'
+        version: 2.0.0-beta.5(react@19.1.0)(zod@3.25.67)
       '@auth/core':
         specifier: ^0.39.1
         version: 0.39.1
@@ -126,12 +145,18 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.1.1
         version: 5.1.1(react-hook-form@7.58.1(react@19.1.0))
+      '@lightfast/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@lightfast/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@mdx-js/react':
         specifier: ^3.1.0
         version: 3.1.0(@types/react@19.1.8)(react@19.1.0)
+      '@repo/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@sentry/nextjs':
         specifier: ^9.14.0
         version: 9.33.0(@opentelemetry/context-async-hooks@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(next@15.4.0-canary.77(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(webpack@5.99.9)
@@ -154,8 +179,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(next@15.4.0-canary.77(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       ai:
-        specifier: alpha
-        version: 5.0.0-alpha.15(zod@3.25.67)
+        specifier: 'catalog:'
+        version: 5.0.0-beta.5(zod@3.25.67)
       convex:
         specifier: ^1.24.8
         version: 1.24.8(react@19.1.0)
@@ -166,7 +191,7 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       exa-js:
-        specifier: ^1.8.11
+        specifier: ^1.8.17
         version: 1.8.17(zod@3.25.67)
       geist:
         specifier: ^1.4.2
@@ -216,6 +241,9 @@ importers:
       zod:
         specifier: ^3.25.58
         version: 3.25.67
+      zustand:
+        specifier: ^5.0.6
+        version: 5.0.6(@types/react@19.1.8)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
     devDependencies:
       '@repo/biome':
         specifier: workspace:*
@@ -255,6 +283,25 @@ importers:
         version: 4.20.3
       typescript:
         specifier: ^5.8.3
+        version: 5.8.3
+
+  packages/ai:
+    dependencies:
+      ai:
+        specifier: catalog:default
+        version: 5.0.0-beta.5(zod@3.25.67)
+      exa-js:
+        specifier: ^1.8.17
+        version: 1.8.17(zod@3.25.67)
+      zod:
+        specifier: catalog:default
+        version: 3.25.67
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.0.3
+      typescript:
+        specifier: catalog:default
         version: 5.8.3
 
   packages/ui:
@@ -426,6 +473,15 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
+  packages/utils:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.6
+        version: 22.16.0
+      typescript:
+        specifier: catalog:default
+        version: 5.8.3
+
   tooling/biome:
     dependencies:
       '@biomejs/biome':
@@ -440,36 +496,36 @@ importers:
 
 packages:
 
-  '@ai-sdk/anthropic@2.0.0-alpha.15':
-    resolution: {integrity: sha512-Xi8izqcqYAPUkoDklUljLlIkKItCtGr8zD1wbwYZYvAmDQIhWTfH0RKCDOY25tFaUDNHLJEvaHvJAniOluCefg==}
+  '@ai-sdk/anthropic@2.0.0-beta.3':
+    resolution: {integrity: sha512-0qjrDJ9cecfOv33zskOrau2qs0wuHoL78z/SsxFUrYNmwRiwt4ijXyJMY3ewsFKshHN8bgVa0Y2teDoKf9xYCw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.49
 
-  '@ai-sdk/gateway@1.0.0-alpha.15':
-    resolution: {integrity: sha512-3j1wn7pZdXLKDwEwHJu1SIdj89Fv7qDy1jISLbog+soXz3BqHEViQCqZ62wOXGkcCMZ7QZFbcvoZ5jNaec0y3A==}
+  '@ai-sdk/gateway@1.0.0-beta.3':
+    resolution: {integrity: sha512-g49gMSkXy94lYvl5LRh438OR/0JCG6ol0jV+iLot7cy5HLltZlGocEuauETBu4b10mDXOd7XIjTEZoQpYFMYLQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.49
 
-  '@ai-sdk/openai@2.0.0-alpha.15':
-    resolution: {integrity: sha512-AlJQ6kzS6ZM6O8yDjflRj7LcAwKVUm9I/4Zq9Bqtpg6zD7f8dVY2UaZXQCq6X+GbrJtCnJcxqdU9fOuP2Lj3jg==}
+  '@ai-sdk/openai@2.0.0-beta.3':
+    resolution: {integrity: sha512-WuYGy+Ng5WVe3Xsld+8w7o53xWIjXyBdOlmvzHlHr+9EOFzTNLNJaq0hrRUsXHf895ikt78HCJ2SoBGSGpDqIA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.49
 
-  '@ai-sdk/provider-utils@3.0.0-alpha.15':
-    resolution: {integrity: sha512-eYKNuMTtJ8/coTnCOBgZBuw20yzuc14idZuKmShLmfilIQP1fCeFfrItXDvOhJTmhDw9/RH+AYlhc9aaJUeQ6g==}
+  '@ai-sdk/provider-utils@3.0.0-beta.2':
+    resolution: {integrity: sha512-H4K+4weOVgWqrDDeAbQWoA4U5mN4WrQPHQFdH7ynQYcnhj/pzctU9Q6mGlR5ESMWxaXxazxlOblSITlXo9bahA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.49
 
-  '@ai-sdk/provider@2.0.0-alpha.15':
-    resolution: {integrity: sha512-LGy7lwIi2SiUojBl6cmnm+/QPOXbmPaegHeviEbrmN0yg/3EBGH5tzBXHgoGwpMUG5OfGFWj4kBRk1Z9VegLpg==}
+  '@ai-sdk/provider@2.0.0-beta.1':
+    resolution: {integrity: sha512-Z8SPncMtS3RsoXITmT7NVwrAq6M44dmw0DoUOYJqNNtCu8iMWuxB8Nxsoqpa0uEEy9R1V1ZThJAXTYgjTUxl3w==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@2.0.0-alpha.15':
-    resolution: {integrity: sha512-KsNo2ky2A+8xpvRnqg5lAqYLdvqlg1rvG5yso9NHZPJ/OtPvsj3c4vSrwwpBY5mj0bFPjWprJ2YiNU30c+8mIw==}
+  '@ai-sdk/react@2.0.0-beta.5':
+    resolution: {integrity: sha512-gMTBiA4hO3jk6lyHU30HJePusEyyX+PWvcsgl080cbjAycHo/Q71f0MxUGB1ohlEU3pr5sFxztUxqHzIloX9TQ==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -2775,6 +2831,9 @@ packages:
   '@types/node@20.19.1':
     resolution: {integrity: sha512-jJD50LtlD2dodAEO653i3YF04NWak6jN3ky+Ri3Em3mGR39/glWiboM/IePaRbgwSfqM1TpGXfAg8ohn/4dTgA==}
 
+  '@types/node@22.16.0':
+    resolution: {integrity: sha512-B2egV9wALML1JCpv3VQoQ+yesQKAmNMBIAY7OteVrikcOcAkWm+dGL6qpeCktPjAv6N1JLnhbNiqS35UpFyBsQ==}
+
   '@types/node@24.0.3':
     resolution: {integrity: sha512-R4I/kzCYAdRLzfiCabn9hxWfbuHS573x+r0dJMkkzThEa7pbrcDWK+9zu3e7aBOouf+rQAciqPFMnxwr0aWgKg==}
 
@@ -2949,8 +3008,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@5.0.0-alpha.15:
-    resolution: {integrity: sha512-4i4HFwYY32LzTjy6eWZuFHv9jTwbK3UKC5MRXikR3KzeA9w4RuLdfCTXmCwfluWqGbOJ9bz2CsSPt6FN8S5qkg==}
+  ai@5.0.0-beta.5:
+    resolution: {integrity: sha512-HUi2KEfq4/iF4tG+SLsHRqkar/VKvgvk093X/xI33sLBN5UcP8B7XTIJh/MpIiqXTByJ1k/yCBHye2cvNCEn3g==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.49
@@ -3533,9 +3592,9 @@ packages:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
 
-  eventsource-parser@3.0.2:
-    resolution: {integrity: sha512-6RxOBZ/cYgd8usLwsEl+EC09Au/9BcmCKYF2/xbml6DNczf7nv0MQb+7BA2F+li6//I+28VNlQR37XfQtcAJuA==}
-    engines: {node: '>=18.0.0'}
+  eventsource-parser@3.0.3:
+    resolution: {integrity: sha512-nVpZkTMM9rF6AQ9gPJpFsNAMt48wIzB5TQgiTLdHiuO8XEDhUgZEhqKlZWXbIzo9VmJ/HvysHqEaVeD5v9TPvA==}
+    engines: {node: '>=20.0.0'}
 
   exa-js@1.8.17:
     resolution: {integrity: sha512-yvUgUEjRFxpraVi9+4IbVOkzWqWgK37ydYB/8/yw/vmTgsZH1ZROao60s2MSRFXVyiOjDNyJ4N+bmmlq/pr2Hw==}
@@ -5500,45 +5559,63 @@ packages:
   zod@3.25.67:
     resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
 
+  zustand@5.0.6:
+    resolution: {integrity: sha512-ihAqNeUVhe0MAD+X8M5UzqyZ9k3FFZLBTtqo6JLPwV53cbRB/mJwBI0PxcIgqhBBHlEs8G45OTDTMq3gNcLq3A==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
 
-  '@ai-sdk/anthropic@2.0.0-alpha.15(zod@3.25.67)':
+  '@ai-sdk/anthropic@2.0.0-beta.3(zod@3.25.67)':
     dependencies:
-      '@ai-sdk/provider': 2.0.0-alpha.15
-      '@ai-sdk/provider-utils': 3.0.0-alpha.15(zod@3.25.67)
+      '@ai-sdk/provider': 2.0.0-beta.1
+      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.67)
       zod: 3.25.67
 
-  '@ai-sdk/gateway@1.0.0-alpha.15(zod@3.25.67)':
+  '@ai-sdk/gateway@1.0.0-beta.3(zod@3.25.67)':
     dependencies:
-      '@ai-sdk/provider': 2.0.0-alpha.15
-      '@ai-sdk/provider-utils': 3.0.0-alpha.15(zod@3.25.67)
+      '@ai-sdk/provider': 2.0.0-beta.1
+      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.67)
       zod: 3.25.67
 
-  '@ai-sdk/openai@2.0.0-alpha.15(zod@3.25.67)':
+  '@ai-sdk/openai@2.0.0-beta.3(zod@3.25.67)':
     dependencies:
-      '@ai-sdk/provider': 2.0.0-alpha.15
-      '@ai-sdk/provider-utils': 3.0.0-alpha.15(zod@3.25.67)
+      '@ai-sdk/provider': 2.0.0-beta.1
+      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.67)
       zod: 3.25.67
 
-  '@ai-sdk/provider-utils@3.0.0-alpha.15(zod@3.25.67)':
+  '@ai-sdk/provider-utils@3.0.0-beta.2(zod@3.25.67)':
     dependencies:
-      '@ai-sdk/provider': 2.0.0-alpha.15
+      '@ai-sdk/provider': 2.0.0-beta.1
       '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.2
+      eventsource-parser: 3.0.3
       zod: 3.25.67
       zod-to-json-schema: 3.24.5(zod@3.25.67)
 
-  '@ai-sdk/provider@2.0.0-alpha.15':
+  '@ai-sdk/provider@2.0.0-beta.1':
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@2.0.0-alpha.15(react@19.1.0)(zod@3.25.67)':
+  '@ai-sdk/react@2.0.0-beta.5(react@19.1.0)(zod@3.25.67)':
     dependencies:
-      '@ai-sdk/provider-utils': 3.0.0-alpha.15(zod@3.25.67)
-      ai: 5.0.0-alpha.15(zod@3.25.67)
+      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.67)
+      ai: 5.0.0-beta.5(zod@3.25.67)
       react: 19.1.0
       swr: 2.3.3(react@19.1.0)
       throttleit: 2.1.0
@@ -7742,6 +7819,10 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/node@22.16.0':
+    dependencies:
+      undici-types: 6.21.0
+
   '@types/node@24.0.3':
     dependencies:
       undici-types: 7.8.0
@@ -7903,11 +7984,11 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@5.0.0-alpha.15(zod@3.25.67):
+  ai@5.0.0-beta.5(zod@3.25.67):
     dependencies:
-      '@ai-sdk/gateway': 1.0.0-alpha.15(zod@3.25.67)
-      '@ai-sdk/provider': 2.0.0-alpha.15
-      '@ai-sdk/provider-utils': 3.0.0-alpha.15(zod@3.25.67)
+      '@ai-sdk/gateway': 1.0.0-beta.3(zod@3.25.67)
+      '@ai-sdk/provider': 2.0.0-beta.1
+      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.67)
       '@opentelemetry/api': 1.9.0
       zod: 3.25.67
 
@@ -8520,7 +8601,7 @@ snapshots:
 
   events@3.3.0: {}
 
-  eventsource-parser@3.0.2: {}
+  eventsource-parser@3.0.3: {}
 
   exa-js@1.8.17(zod@3.25.67):
     dependencies:
@@ -10923,5 +11004,11 @@ snapshots:
       zod: 3.25.67
 
   zod@3.25.67: {}
+
+  zustand@5.0.6(@types/react@19.1.8)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0)):
+    optionalDependencies:
+      '@types/react': 19.1.8
+      react: 19.1.0
+      use-sync-external-store: 1.5.0(react@19.1.0)
 
   zwitch@2.0.4: {}

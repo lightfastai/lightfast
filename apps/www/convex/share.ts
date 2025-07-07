@@ -4,17 +4,9 @@ import { nanoid } from "nanoid";
 import { mutation, query } from "./_generated/server";
 import {
 	ipHashValidator,
-	messageTypeValidator,
-	modelIdValidator,
-	modelProviderValidator,
 	shareIdValidator,
 	shareSettingsValidator,
-	streamIdValidator,
-	titleValidator,
-	tokenUsageValidator,
-	urlValidator,
 	userAgentValidator,
-	userNameValidator,
 } from "./validators";
 
 export const shareThread = mutation({
@@ -162,7 +154,7 @@ export const logShareAccess = mutation({
 			const recentAttempts = await ctx.db
 				.query("shareAccess")
 				.withIndex("by_ip_time", (q) =>
-					q.eq("ipHash", args.clientInfo!.ipHash).gte("accessedAt", hourAgo),
+					q.eq("ipHash", args.clientInfo?.ipHash).gte("accessedAt", hourAgo),
 				)
 				.collect();
 
@@ -205,49 +197,6 @@ export const getSharedThread = query({
 	args: {
 		shareId: shareIdValidator,
 	},
-	returns: v.union(
-		v.null(),
-		v.object({
-			thread: v.object({
-				_id: v.id("threads"),
-				title: titleValidator,
-				createdAt: v.number(),
-				lastMessageAt: v.number(),
-				shareSettings: shareSettingsValidator,
-			}),
-			messages: v.array(
-				v.object({
-					_id: v.id("messages"),
-					_creationTime: v.number(),
-					threadId: v.id("threads"),
-					body: v.string(),
-					timestamp: v.number(),
-					messageType: messageTypeValidator,
-					model: v.optional(modelProviderValidator),
-					modelId: v.optional(modelIdValidator),
-					isStreaming: v.optional(v.boolean()),
-					streamId: v.optional(streamIdValidator),
-					isComplete: v.optional(v.boolean()),
-					thinkingStartedAt: v.optional(v.number()),
-					thinkingCompletedAt: v.optional(v.number()),
-					attachments: v.optional(v.array(v.id("files"))),
-					thinkingContent: v.optional(v.string()),
-					isThinking: v.optional(v.boolean()),
-					hasThinkingContent: v.optional(v.boolean()),
-					usedUserApiKey: v.optional(v.boolean()),
-					usage: tokenUsageValidator,
-					streamVersion: v.optional(v.number()),
-				}),
-			),
-			owner: v.union(
-				v.null(),
-				v.object({
-					name: v.union(userNameValidator, v.null()),
-					image: v.union(urlValidator, v.null()),
-				}),
-			),
-		}),
-	),
 	handler: async (ctx, args) => {
 		// Find thread by shareId
 		const thread = await ctx.db
@@ -269,13 +218,12 @@ export const getSharedThread = query({
 		const filteredMessages = messages.map((msg) => {
 			if (
 				!thread.shareSettings?.showThinking &&
-				(msg.thinkingContent || msg.isThinking)
+				msg.parts?.some((part) => part.type === "reasoning")
 			) {
+				// Remove reasoning parts from message
 				return {
 					...msg,
-					thinkingContent: undefined,
-					isThinking: false,
-					hasThinkingContent: false,
+					parts: msg.parts?.filter((part) => part.type !== "reasoning"),
 				};
 			}
 			return msg;
@@ -289,7 +237,7 @@ export const getSharedThread = query({
 				_id: thread._id,
 				title: thread.title,
 				createdAt: thread.createdAt,
-				lastMessageAt: thread.lastMessageAt,
+				_creationTime: thread._creationTime,
 				shareSettings: thread.shareSettings,
 			},
 			messages: filteredMessages,

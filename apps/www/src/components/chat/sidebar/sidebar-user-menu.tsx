@@ -20,8 +20,7 @@ import {
 	SidebarMenuButton,
 	useSidebar,
 } from "@lightfast/ui/components/ui/sidebar";
-import type { Preloaded } from "convex/react";
-import { usePreloadedQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import {
 	ChevronDown,
 	ExternalLink,
@@ -32,23 +31,21 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { api } from "../../../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 
-interface SidebarUserMenuProps {
-	preloadedUser: Preloaded<typeof api.users.current>;
-}
-
-export function SidebarUserMenu({ preloadedUser }: SidebarUserMenuProps) {
+export function SidebarUserMenu() {
 	const { signOut } = useAuthActions();
 	const router = useRouter();
-	const currentUser = usePreloadedQuery(preloadedUser);
+	const currentUser = useQuery(api.users.current);
 	const { state } = useSidebar();
 	const [open, setOpen] = useState(false);
 	const { getShortcut } = usePlatformShortcuts();
 
 	// Close dropdown when sidebar state changes
 	useEffect(() => {
-		setOpen(false);
+		if (state === "collapsed") {
+			setOpen(false);
+		}
 	}, [state]);
 
 	const handleSignOut = async () => {

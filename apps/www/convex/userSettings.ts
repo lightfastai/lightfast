@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 
 // Import proper encryption utilities
-import { decrypt, encrypt } from "./lib/encryption.js";
+import { decrypt, encrypt } from "./lib/services/encryption";
 
 // Import validators
 import {
@@ -17,24 +17,6 @@ import {
 // Get user settings
 export const getUserSettings = query({
 	args: {},
-	returns: v.union(
-		v.null(),
-		v.object({
-			_id: v.id("userSettings"),
-			userId: v.id("users"),
-			preferences: v.optional(
-				v.object({
-					defaultModel: v.optional(modelIdValidator),
-					preferredProvider: v.optional(modelProviderValidator),
-				}),
-			),
-			createdAt: v.number(),
-			updatedAt: v.number(),
-			hasOpenAIKey: v.boolean(),
-			hasAnthropicKey: v.boolean(),
-			hasOpenRouterKey: v.boolean(),
-		}),
-	),
 	handler: async (ctx) => {
 		const userId = await getAuthUserId(ctx);
 		if (!userId) {
@@ -50,17 +32,7 @@ export const getUserSettings = query({
 			return null;
 		}
 
-		// Return settings without decrypted API keys for security
-		return {
-			_id: settings._id,
-			userId: settings.userId,
-			preferences: settings.preferences,
-			createdAt: settings.createdAt,
-			updatedAt: settings.updatedAt,
-			hasOpenAIKey: !!settings.apiKeys?.openai,
-			hasAnthropicKey: !!settings.apiKeys?.anthropic,
-			hasOpenRouterKey: !!settings.apiKeys?.openrouter,
-		};
+		return settings;
 	},
 });
 
@@ -183,7 +155,8 @@ export const removeApiKey = mutation({
 		provider: modelProviderValidator,
 	},
 	returns: v.object({ success: v.boolean() }),
-	handler: async (ctx, { provider }) => {
+	handler: async (ctx, args) => {
+		const provider = args.provider;
 		const userId = await getAuthUserId(ctx);
 		if (!userId) {
 			throw new ConvexError("Unauthorized");
@@ -199,7 +172,9 @@ export const removeApiKey = mutation({
 		}
 
 		const apiKeys = { ...existingSettings.apiKeys };
-		delete apiKeys[provider];
+		// TypeScript needs explicit type narrowing for the provider key
+		const key = provider as keyof typeof apiKeys;
+		delete apiKeys[key];
 
 		await ctx.db.patch(existingSettings._id, {
 			apiKeys,
