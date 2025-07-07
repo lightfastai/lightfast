@@ -101,11 +101,10 @@ export default defineSchema({
 	shareAccess: defineTable({
 		shareId: shareIdValidator,
 		accessedAt: v.number(),
-		ipHash: ipHashValidator, // Hashed IP for rate limiting
-		userAgent: userAgentValidator,
+		ipHash: v.optional(ipHashValidator), // Deprecated: Previously used for rate limiting
+		userAgent: v.optional(userAgentValidator), // Deprecated: Previously used for logging
 		success: v.boolean(), // Whether the access was successful
 	})
 		.index("by_share_id", ["shareId"])
-		.index("by_share_time", ["shareId", "accessedAt"])
-		.index("by_ip_time", ["ipHash", "accessedAt"]),
+		.index("by_share_time", ["shareId", "accessedAt"]),
 });

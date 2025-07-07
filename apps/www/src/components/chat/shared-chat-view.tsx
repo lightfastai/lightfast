@@ -5,42 +5,14 @@ import { Alert, AlertDescription } from "@lightfast/ui/components/ui/alert";
 import { ScrollArea } from "@lightfast/ui/components/ui/scroll-area";
 import { useMutation, useQuery } from "convex/react";
 import { AlertCircle, Info, Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageItem } from "./shared";
 
 interface SharedChatViewProps {
 	shareId: string;
 }
 
-function hashString(str: string): string {
-	let hash = 0;
-	for (let i = 0; i < str.length; i++) {
-		const char = str.charCodeAt(i);
-		hash = (hash << 5) - hash + char;
-		hash = hash & hash; // Convert to 32bit integer
-	}
-	return Math.abs(hash).toString(36);
-}
-
 export function SharedChatView({ shareId }: SharedChatViewProps) {
-	// Create a simple client fingerprint for rate limiting
-	const clientInfo = useMemo(() => {
-		if (typeof window === "undefined") return undefined;
-
-		// Create a basic fingerprint without tracking personal info
-		const fingerprint = [
-			navigator.userAgent,
-			screen.width,
-			screen.height,
-			new Date().getTimezoneOffset(),
-		].join("|");
-
-		return {
-			ipHash: hashString(fingerprint), // Client-side hash, not real IP
-			userAgent: navigator.userAgent.substring(0, 100), // Limit length
-		};
-	}, []);
-
 	const logAccess = useMutation(api.share.logShareAccess);
 	const [accessAllowed, setAccessAllowed] = useState<boolean | null>(null);
 
@@ -52,7 +24,7 @@ export function SharedChatView({ shareId }: SharedChatViewProps) {
 	// Log access attempt on component mount
 	useEffect(() => {
 		if (accessAllowed === null) {
-			logAccess({ shareId, clientInfo })
+			logAccess({ shareId })
 				.then((result) => {
 					setAccessAllowed(result.allowed);
 				})
@@ -60,7 +32,7 @@ export function SharedChatView({ shareId }: SharedChatViewProps) {
 					setAccessAllowed(false);
 				});
 		}
-	}, [shareId, clientInfo, logAccess, accessAllowed]);
+	}, [shareId, logAccess, accessAllowed]);
 
 	// Show loading while checking access or loading data
 	if (accessAllowed === null || (accessAllowed && sharedData === undefined)) {
