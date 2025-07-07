@@ -154,7 +154,7 @@ export function getTimezoneFromRequest(request: NextRequest): string | null {
 		if (acceptLanguage) {
 			// Extract country from language tags like "en-US", "fr-FR"
 			const match = acceptLanguage.match(/[a-z]{2}-([A-Z]{2})/);
-			if (match && match[1] && countryToTimezone[match[1]]) {
+			if (match?.[1] && countryToTimezone[match[1]]) {
 				return countryToTimezone[match[1]];
 			}
 		}
