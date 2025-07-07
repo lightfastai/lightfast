@@ -65,7 +65,12 @@
       "**/coverage/**",
       "**/.contentlayer/**",
       "**/out/**",
-      "**/.cache/**"
+      "**/.cache/**",
+      "**/tsconfig.tsbuildinfo",
+      "next-env.d.ts",
+      "**/bun.lock",
+      "pnpm-lock.yaml",
+      "dev.log"
     ]
   }
 }
