@@ -16,15 +16,12 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: false,
   },
 
-  // Experimental features for Next.js 15
-  experimental: {
-    // Enable Turbopack for faster builds (Next.js 15 feature)
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  // Turbopack configuration (stable in Next.js 15)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
