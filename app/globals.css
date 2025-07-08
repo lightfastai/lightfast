@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/* Tailwind v4 theme configuration with shadcn/ui CSS variables */
+@theme {
+  /* Colors */
+  --color-background: 0 0% 100%;
+  --color-foreground: 240 10% 3.9%;
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 240 10% 3.9%;
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 240 10% 3.9%;
+  --color-primary: 240 5.9% 10%;
+  --color-primary-foreground: 0 0% 98%;
+  --color-secondary: 240 4.8% 95.9%;
+  --color-secondary-foreground: 240 5.9% 10%;
+  --color-muted: 240 4.8% 95.9%;
+  --color-muted-foreground: 240 3.8% 46.1%;
+  --color-accent: 240 4.8% 95.9%;
+  --color-accent-foreground: 240 5.9% 10%;
+  --color-destructive: 0 84.2% 60.2%;
+  --color-destructive-foreground: 0 0% 98%;
+  --color-border: 240 5.9% 90%;
+  --color-input: 240 5.9% 90%;
+  --color-ring: 240 5.9% 10%;
+
+  /* Radius */
+  --radius: 0.5rem;
+}
+
+/* CSS variables for light mode */
+:root {
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
+  --card: var(--color-card);
+  --card-foreground: var(--color-card-foreground);
+  --popover: var(--color-popover);
+  --popover-foreground: var(--color-popover-foreground);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-primary-foreground);
+  --secondary: var(--color-secondary);
+  --secondary-foreground: var(--color-secondary-foreground);
+  --muted: var(--color-muted);
+  --muted-foreground: var(--color-muted-foreground);
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-accent-foreground);
+  --destructive: var(--color-destructive);
+  --destructive-foreground: var(--color-destructive-foreground);
+  --border: var(--color-border);
+  --input: var(--color-input);
+  --ring: var(--color-ring);
+  --radius: var(--radius);
+}
+
+/* Dark mode theme */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-background: 240 10% 3.9%;
+    --color-foreground: 0 0% 98%;
+    --color-card: 240 10% 3.9%;
+    --color-card-foreground: 0 0% 98%;
+    --color-popover: 240 10% 3.9%;
+    --color-popover-foreground: 0 0% 98%;
+    --color-primary: 0 0% 98%;
+    --color-primary-foreground: 240 5.9% 10%;
+    --color-secondary: 240 3.7% 15.9%;
+    --color-secondary-foreground: 0 0% 98%;
+    --color-muted: 240 3.7% 15.9%;
+    --color-muted-foreground: 240 5% 64.9%;
+    --color-accent: 240 3.7% 15.9%;
+    --color-accent-foreground: 0 0% 98%;
+    --color-destructive: 0 62.8% 30.6%;
+    --color-destructive-foreground: 0 0% 98%;
+    --color-border: 240 3.7% 15.9%;
+    --color-input: 240 3.7% 15.9%;
+    --color-ring: 240 4.9% 83.9%;
+  }
+}
+
+/* Base styles */
+body {
+  font-family: sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Layer for utilities */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Animations */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  .animate-accordion-down {
+    animation: accordion-down 0.2s ease-out;
+  }
+
+  .animate-accordion-up {
+    animation: accordion-up 0.2s ease-out;
+  }
+}

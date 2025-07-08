@@ -1,0 +1,102 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.1.1/schema.json",
+  "files": {
+    "ignoreUnknown": true,
+    "experimentalScannerIgnores": [
+      "node_modules/**",
+      ".next/**",
+      "dist/**",
+      "build/**",
+      "out/**",
+      ".vercel/**",
+      "coverage/**",
+      "public/**",
+      "*.min.js",
+      "*.d.ts",
+      "*.config.js",
+      "*.config.ts",
+      "*.config.mjs",
+      "postcss.config.mjs"
+    ]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "noBannedTypes": "error",
+        "noExtraBooleanCast": "error",
+        "noUselessConstructor": "error",
+        "noUselessRename": "error",
+        "noUselessThisAlias": "error",
+        "noUselessTypeConstraint": "error",
+        "useLiteralKeys": "error",
+        "noForEach": "off"
+      },
+      "correctness": {
+        "noConstAssign": "error",
+        "noConstantCondition": "error",
+        "noEmptyCharacterClassInRegex": "error",
+        "noEmptyPattern": "error",
+        "noGlobalObjectCalls": "error",
+        "noInvalidConstructorSuper": "error",
+        "noUndeclaredVariables": "error",
+        "noUnreachable": "error",
+        "noUnreachableSuper": "error",
+        "useExhaustiveDependencies": "warn",
+        "useHookAtTopLevel": "error"
+      },
+      "style": {
+        "useConst": "error",
+        "useAsConstAssertion": "warn",
+        "useBlockStatements": "off",
+        "useImportType": "warn",
+        "noNonNullAssertion": "off"
+      },
+      "suspicious": {
+        "noDuplicateCase": "error",
+        "noDuplicateClassMembers": "error",
+        "noDuplicateObjectKeys": "error",
+        "noDuplicateParameters": "error",
+        "noFunctionAssign": "error",
+        "noGlobalAssign": "error",
+        "noRedeclare": "error",
+        "noExplicitAny": "warn"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,
+    "attributePosition": "auto"
+  },
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false,
+      "quoteStyle": "single",
+      "attributePosition": "auto"
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["*.tsx", "*.jsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ]
+}
