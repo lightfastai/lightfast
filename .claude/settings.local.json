@@ -7,7 +7,8 @@
       "Bash(pnpm run:*)",
       "Bash(rm:*)",
       "Bash(mkdir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

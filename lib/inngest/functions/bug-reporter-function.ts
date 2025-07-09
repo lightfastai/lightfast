@@ -3,8 +3,8 @@ import ms from 'ms';
 import { anthropic } from '@ai-sdk/anthropic';
 import { inngest } from '../client';
 import { createSSEStep } from '../helpers/sse-wrapper';
-import { bugReporterNetwork } from '@/lib/agents';
-import type { BugReport, BugReporterNetworkState } from '@/lib/agents/types';
+import { bugReporterNetwork } from '@/lib/agent-kit/networks';
+import type { BugReport, BugReporterNetworkState } from '@/lib/agent-kit/types';
 
 export const bugReporterFunction = inngest.createFunction(
   {

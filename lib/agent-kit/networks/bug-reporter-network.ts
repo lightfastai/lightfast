@@ -1,9 +1,9 @@
 import { createNetwork, createState } from '@inngest/agent-kit';
 import { anthropic } from '@ai-sdk/anthropic';
-import type { BugReporterNetworkState } from './types';
-import { bugAnalysisAgent } from './bug-analysis-agent';
-import { securityAnalysisAgent } from './security-analysis-agent';
-import { codeFixAgent } from './code-fix-agent';
+import type { BugReporterNetworkState } from '../types';
+import { bugAnalysisAgent } from '../agents/bug-analysis-agent';
+import { securityAnalysisAgent } from '../agents/security-analysis-agent';
+import { codeFixAgent } from '../agents/code-fix-agent';
 
 export const bugReporterNetwork = createNetwork<BugReporterNetworkState>({
   name: 'Bug Reporter Network',

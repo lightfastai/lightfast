@@ -15,11 +15,11 @@ export const codeSearchAgent = inngest.createFunction(
   { event: 'investigation/search' },
   async ({ event, step }) => {
     const { sandboxId, repository, searchQuery, chatId, parentEventId } = event.data;
-    
+
     // Create SSE-wrapped step for automatic event emission
-    const sseStep = createSSEStep(step, { 
-      chatId, 
-      functionName: 'code-search-agent' 
+    const sseStep = createSSEStep(step, {
+      chatId,
+      functionName: 'code-search-agent',
     });
 
     // The Anthropic API key is validated at build time by T3 Env

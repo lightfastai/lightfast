@@ -1,7 +1,6 @@
 import { createAgent, createTool } from '@inngest/agent-kit';
-import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
-import type { BugAnalysis, BugReporterNetworkState } from './types';
+import type { BugAnalysis, BugReporterNetworkState } from '../types';
 import { Sandbox } from '@vercel/sandbox';
 
 export const bugAnalysisAgent = createAgent<BugReporterNetworkState>({
