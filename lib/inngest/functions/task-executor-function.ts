@@ -2,10 +2,10 @@ import { anthropic as anthropicProvider } from "@ai-sdk/anthropic";
 import { anthropic, createAgent, createNetwork, createState, createTool } from "@inngest/agent-kit";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { env } from "@/env";
 import type { TaskNetworkState } from "@/lib/agent-kit/types/task-network-types";
 import { SandboxExecutor } from "@/lib/sandbox/sandbox-executor";
 import { inngest } from "../client";
-import { wrapWithSSE } from "../helpers/sse-wrapper";
 import { taskExecutionChannel } from "../realtime";
 
 export const taskExecutorFunction = inngest.createFunction(
@@ -16,10 +16,6 @@ export const taskExecutorFunction = inngest.createFunction(
 	{ event: "task/execute" },
 	async ({ event, step, publish }) => {
 		const { taskDescription, chatId, constraints } = event.data;
-		const wrappedStep = wrapWithSSE(step, { chatId });
-
-		// Store the step context to use in agents
-		const inngestStep = step;
 
 		// Publish initial status
 		await publish(
@@ -33,7 +29,7 @@ export const taskExecutorFunction = inngest.createFunction(
 		const taskAnalyzerAgent = createAgent<TaskNetworkState>({
 			name: "Task Analyzer",
 			description: "Analyzes computational tasks",
-			system: `Analyze computational tasks and create detailed execution plans.`,
+			system: `Analyze computational tasks and create detailed execution plans. When given a task, use the analyze_task tool to process it.`,
 
 			tools: [
 				createTool({
@@ -43,6 +39,8 @@ export const taskExecutorFunction = inngest.createFunction(
 						taskDescription: z.string(),
 					}),
 					handler: async (params, { network }) => {
+						console.log("Analyze task handler called with params:", params);
+						
 						await publish(
 							taskExecutionChannel(chatId).messages({
 								id: crypto.randomUUID(),
@@ -52,13 +50,13 @@ export const taskExecutorFunction = inngest.createFunction(
 						);
 
 						const state = network.state.data;
+						console.log("Current state before update:", JSON.stringify(state, null, 2));
 						state.taskDescription = params.taskDescription;
 
-						// Use step.run to handle AI inference with structured output
-						const _result = await inngestStep.run("analyze-task", async () => {
-							return await generateObject({
-								model: anthropicProvider("claude-3-5-sonnet-20241022"),
-								prompt: `Analyze this task: ${params.taskDescription}
+						// Generate object directly without nested step
+						const _result = await generateObject({
+							model: anthropicProvider("claude-3-5-sonnet-20241022"),
+							prompt: `Analyze this task: ${params.taskDescription}
 Provide:
 1. Task type (computation/data-processing/api-integration/file-operation/analysis/other)
 2. Complexity (simple/moderate/complex)
@@ -66,36 +64,35 @@ Provide:
 4. Step-by-step execution plan
 5. Estimated duration
 6. Risk factors`,
-								schema: z.object({
-									taskType: z.enum([
-										"computation",
-										"data-processing",
-										"api-integration",
-										"file-operation",
-										"analysis",
-										"other",
-									]),
-									complexity: z.enum(["simple", "moderate", "complex"]),
-									dependencies: z.array(
-										z.object({
-											type: z.enum(["library", "api", "file", "system-tool", "data"]),
-											name: z.string(),
-											version: z.string().optional(),
-											required: z.boolean(),
-										}),
-									),
-									executionPlan: z.array(
-										z.object({
-											step: z.number(),
-											description: z.string(),
-											script: z.string().optional(),
-											dependencies: z.array(z.string()),
-										}),
-									),
-									estimatedDuration: z.string(),
-									riskFactors: z.array(z.string()),
-								}),
-							});
+							schema: z.object({
+								taskType: z.enum([
+									"computation",
+									"data-processing",
+									"api-integration",
+									"file-operation",
+									"analysis",
+									"other",
+								]),
+								complexity: z.enum(["simple", "moderate", "complex"]),
+								dependencies: z.array(
+									z.object({
+										type: z.enum(["library", "api", "file", "system-tool", "data"]),
+										name: z.string(),
+										version: z.string().optional(),
+										required: z.boolean(),
+									}),
+								),
+								executionPlan: z.array(
+									z.object({
+										step: z.number(),
+										description: z.string(),
+										script: z.string().optional(),
+										dependencies: z.array(z.string()),
+									}),
+								),
+								estimatedDuration: z.string(),
+								riskFactors: z.array(z.string()),
+							}),
 						});
 
 						await publish(
@@ -118,7 +115,16 @@ Provide:
 		const environmentSetupAgent = createAgent<TaskNetworkState>({
 			name: "Environment Setup",
 			description: "Sets up execution environment",
-			system: `Configure execution environments for computational tasks.`,
+			system: `Configure execution environments for computational tasks. When the task analysis is complete, use the setup_environment tool to configure the environment.
+
+Vercel Sandbox Specifications:
+- Base system: Amazon Linux 2023
+- Available runtimes: node22 (/vercel/runtimes/node22) with npm/pnpm, python3.13 (/vercel/runtimes/python) with pip/uv
+- Default working directory: /vercel/sandbox
+- User: vercel-sandbox (with sudo access)
+- Pre-installed packages: bind-utils bzip2 findutils git gzip iputils libicu libjpeg libpng ncurses-libs openssl openssl-libs procps tar unzip which whois zstd
+- Additional packages can be installed using 'dnf install -y <package>' with sudo
+- Sudo behavior: HOME set to /root, PATH unchanged, environment variables inherited`,
 
 			tools: [
 				createTool({
@@ -141,11 +147,10 @@ Provide:
 							return { success: false, error: "No task analysis found" };
 						}
 
-						// Use step.run to handle AI inference with structured output
-						const result = await inngestStep.run("setup-environment", async () => {
-							return await generateObject({
-								model: anthropicProvider("claude-3-5-sonnet-20241022"),
-								prompt: `Based on this task analysis, create environment setup:
+						// Generate object directly without nested step
+						const result = await generateObject({
+							model: anthropicProvider("claude-3-5-sonnet-20241022"),
+							prompt: `Based on this task analysis, create environment setup:
 ${JSON.stringify(analysis, null, 2)}
 
 Create:
@@ -153,16 +158,15 @@ Create:
 2. Setup script
 3. Environment variables
 4. System requirements`,
-								schema: z.object({
-									packageJson: z.object({
-										dependencies: z.record(z.string()),
-										devDependencies: z.record(z.string()).optional(),
-									}),
-									setupScript: z.string(),
-									environmentVariables: z.record(z.string()).optional(),
-									systemRequirements: z.array(z.string()).optional(),
+							schema: z.object({
+								packageJson: z.object({
+									dependencies: z.record(z.string()),
+									devDependencies: z.record(z.string()).optional(),
 								}),
-							});
+								setupScript: z.string(),
+								environmentVariables: z.record(z.string()).optional(),
+								systemRequirements: z.array(z.string()).optional(),
+							}),
 						});
 
 						await publish(
@@ -185,7 +189,18 @@ Create:
 		const scriptGeneratorAgent = createAgent<TaskNetworkState>({
 			name: "Script Generator",
 			description: "Generates executable scripts",
-			system: `Create executable JavaScript/Node.js scripts.`,
+			system: `Create executable JavaScript/Node.js scripts. When the environment is set up, use the generate_scripts tool to create the necessary scripts.
+
+Vercel Sandbox Specifications:
+- Base system: Amazon Linux 2023
+- Available runtimes: node22 (/vercel/runtimes/node22) with npm/pnpm, python3.13 (/vercel/runtimes/python) with pip/uv
+- Default working directory: /vercel/sandbox
+- User: vercel-sandbox (with sudo access)
+- Pre-installed packages: bind-utils bzip2 findutils git gzip iputils libicu libjpeg libpng ncurses-libs openssl openssl-libs procps tar unzip which whois zstd
+- Additional packages can be installed using 'dnf install -y <package>' with sudo
+- Sudo behavior: HOME set to /root, PATH unchanged, environment variables inherited
+
+Important: Scripts should be aware they're running in /vercel/sandbox with node22 available by default.`,
 
 			tools: [
 				createTool({
@@ -209,11 +224,10 @@ Create:
 							return { success: false, error: "Missing required state" };
 						}
 
-						// Use step.run to handle AI inference with structured output
-						const result = await inngestStep.run("generate-scripts", async () => {
-							return await generateObject({
-								model: anthropicProvider("claude-3-5-sonnet-20241022"),
-								prompt: `Generate scripts for this task:
+						// Generate object directly without nested step
+						const result = await generateObject({
+							model: anthropicProvider("claude-3-5-sonnet-20241022"),
+							prompt: `Generate scripts for this task:
 Analysis: ${JSON.stringify(analysis, null, 2)}
 Environment: ${JSON.stringify(environment, null, 2)}
 Original task: ${state.taskDescription}
@@ -223,20 +237,19 @@ Create:
 2. Main orchestration script
 3. Error handling
 4. Structured output`,
-								schema: z.object({
-									scripts: z.array(
-										z.object({
-											name: z.string(),
-											description: z.string(),
-											code: z.string(),
-											dependencies: z.array(z.string()),
-											order: z.number(),
-											retryable: z.boolean(),
-										}),
-									),
-									mainScript: z.string(),
-								}),
-							});
+							schema: z.object({
+								scripts: z.array(
+									z.object({
+										name: z.string(),
+										description: z.string(),
+										code: z.string(),
+										dependencies: z.array(z.string()),
+										order: z.number(),
+										retryable: z.boolean(),
+									}),
+								),
+								mainScript: z.string(),
+							}),
 						});
 
 						await publish(
@@ -259,7 +272,18 @@ Create:
 		const executionAgent = createAgent<TaskNetworkState>({
 			name: "Execution Agent",
 			description: "Executes scripts in sandbox",
-			system: `Execute scripts safely and collect results.`,
+			system: `Execute scripts safely and collect results. When scripts are generated, use the execute_scripts tool to run them.
+
+Vercel Sandbox Specifications:
+- Base system: Amazon Linux 2023
+- Available runtimes: node22 (/vercel/runtimes/node22) with npm/pnpm, python3.13 (/vercel/runtimes/python) with pip/uv
+- Default working directory: /vercel/sandbox
+- User: vercel-sandbox (with sudo access)
+- Pre-installed packages: bind-utils bzip2 findutils git gzip iputils libicu libjpeg libpng ncurses-libs openssl openssl-libs procps tar unzip which whois zstd
+- Additional packages can be installed using 'dnf install -y <package>' with sudo
+- Sudo behavior: HOME set to /root, PATH unchanged, environment variables inherited
+
+Scripts execute in /vercel/sandbox with access to node22 and python3.13.`,
 
 			tools: [
 				createTool({
@@ -381,6 +405,7 @@ Create:
 			defaultState: createState<TaskNetworkState>({
 				chatId,
 				status: "analyzing" as const,
+				taskDescription,
 			}),
 
 			defaultModel: anthropic({
@@ -388,11 +413,13 @@ Create:
 				defaultParameters: {
 					max_tokens: 4096,
 				},
+				apiKey: env.ANTHROPIC_API_KEY,
 			}),
 
 			router: async ({ network }) => {
 				const state = network.state.data;
-
+				console.log("Router state:", JSON.stringify(state, null, 2));
+				
 				switch (state.status) {
 					case "analyzing":
 						return taskAnalyzerAgent;
@@ -406,6 +433,7 @@ Create:
 					case "error":
 						return undefined;
 					default:
+						console.log("Router defaulting to taskAnalyzerAgent for status:", state.status);
 						return taskAnalyzerAgent;
 				}
 			},
@@ -414,36 +442,35 @@ Create:
 		});
 
 		// Run the task network
-		const result = await wrappedStep.run("execute-task-network", async () => {
-			try {
-				const networkResult = await taskNetwork.run(taskDescription, {
-					state: {
-						chatId,
-						status: "analyzing" as const,
-						taskDescription,
-					} as TaskNetworkState,
-				});
+		let result: {
+			success: boolean;
+			chatId: string;
+			results?: TaskNetworkState["executionResults"];
+			analysis?: TaskNetworkState["analysis"];
+			scripts?: TaskNetworkState["scripts"];
+		};
+		try {
+			const networkResult = await taskNetwork.run(taskDescription);
 
-				const finalState = networkResult.state.data as TaskNetworkState;
+			const finalState = networkResult.state.data as TaskNetworkState;
 
-				if (finalState?.status === "complete" && finalState.executionResults) {
-					return {
-						success: true,
-						chatId,
-						results: finalState.executionResults,
-						analysis: finalState.analysis,
-						scripts: finalState.scripts,
-					};
-				} else if (finalState?.status === "error") {
-					throw new Error(finalState.error || "Task execution failed");
-				} else {
-					throw new Error("Task did not complete successfully");
-				}
-			} catch (error) {
-				console.error("Task execution error:", error);
-				throw error;
+			if (finalState?.status === "complete" && finalState.executionResults) {
+				result = {
+					success: true,
+					chatId,
+					results: finalState.executionResults,
+					analysis: finalState.analysis,
+					scripts: finalState.scripts,
+				};
+			} else if (finalState?.status === "error") {
+				throw new Error(finalState.error || "Task execution failed");
+			} else {
+				throw new Error("Task did not complete successfully");
 			}
-		});
+		} catch (error) {
+			console.error("Task execution error:", error);
+			throw error;
+		}
 
 		// Publish completion status
 		await publish(

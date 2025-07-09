@@ -1,20 +1,20 @@
 {
-  "permissions": {
-    "allow": [
-      "WebFetch(domain:vercel.com)",
-      "Bash(pnpm add:*)",
-      "Bash(pnpm run lint:*)",
-      "Bash(pnpm run:*)",
-      "Bash(rm:*)",
-      "Bash(mkdir:*)",
-      "Bash(ls:*)",
-      "Bash(mv:*)",
-      "Bash(git add:*)",
-      "Bash(sed:*)",
-      "Bash(pnpm typecheck:*)",
-      "Bash(pnpm biome check:*)",
-      "Bash(pnpm biome check:*)"
-    ],
-    "deny": []
-  }
+	"permissions": {
+		"allow": [
+			"WebFetch(domain:vercel.com)",
+			"Bash(pnpm add:*)",
+			"Bash(pnpm run lint:*)",
+			"Bash(pnpm run:*)",
+			"Bash(rm:*)",
+			"Bash(mkdir:*)",
+			"Bash(ls:*)",
+			"Bash(mv:*)",
+			"Bash(git add:*)",
+			"Bash(sed:*)",
+			"Bash(pnpm typecheck:*)",
+			"Bash(pnpm biome check:*)",
+			"Bash(pnpm biome check:*)"
+		],
+		"deny": []
+	}
 }

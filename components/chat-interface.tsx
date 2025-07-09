@@ -93,7 +93,7 @@ export function ChatInterface() {
 			// Run the task executor and get chatId
 			const chatId = await runTaskExecutor(userMessage.content);
 
-			// Get subscription token
+			// Get subscription token for the chat channel
 			const token = await fetchSubscriptionToken(chatId);
 			setSubscriptionToken(token);
 		} catch (error) {

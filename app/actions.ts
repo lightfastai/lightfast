@@ -1,9 +1,19 @@
 "use server";
 
-import type { Realtime } from "@inngest/realtime";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
+import { getSubscriptionToken } from "@inngest/realtime";
 import { inngest } from "@/lib/inngest/client";
-import type { taskExecutionChannel } from "@/lib/inngest/realtime";
+import { taskExecutionChannel } from "@/lib/inngest/realtime";
+
+export async function fetchSubscriptionToken(chatId: string) {
+	console.log("fetching subscription token for chatId", chatId);
+	const token = await getSubscriptionToken(inngest, {
+		channel: taskExecutionChannel(chatId),
+		topics: ["messages", "status"],
+	});
+
+	return token;
+}
 
 export async function runTaskExecutor(taskDescription: string) {
 	const chatId = randomUUID();
@@ -14,29 +24,4 @@ export async function runTaskExecutor(taskDescription: string) {
 	});
 
 	return chatId;
-}
-
-export async function fetchSubscriptionToken(chatId: string) {
-	// For development, we'll use the Inngest dashboard's token generation
-	// In production, implement proper authentication and token generation
-	const response = await fetch(
-		`${process.env.NEXT_PUBLIC_INNGEST_BASE_URL || "http://localhost:8288"}/realtime/token`,
-		{
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				channelPatterns: [`task:${chatId}`],
-				expires: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-			}),
-		},
-	);
-
-	if (!response.ok) {
-		throw new Error("Failed to fetch subscription token");
-	}
-
-	const { token } = await response.json();
-	return token as Realtime.Token<typeof taskExecutionChannel, ["messages", "status"]>;
 }
