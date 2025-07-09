@@ -7,6 +7,7 @@ import type {
   InvestigationUpdateEvent,
   SandboxExecuteEvent,
   ScriptExecutionEvent,
+  SecurityAnalyzeEvent,
 } from '@/types/inngest';
 
 // Define type for the events
@@ -28,6 +29,9 @@ type Events = {
   };
   'investigation/update': {
     data: InvestigationUpdateEvent['data'];
+  };
+  'security/analyze': {
+    data: SecurityAnalyzeEvent['data'];
   };
 };
 

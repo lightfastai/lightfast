@@ -16,13 +16,19 @@ interface ChatMessage {
   metadata?: Record<string, unknown>;
 }
 
-export function InvestigationChat() {
+interface InvestigationChatProps {
+  onChatIdChange?: (chatId: string | null) => void;
+}
+
+export function InvestigationChat({ onChatIdChange }: InvestigationChatProps = {}) {
   const [repository, setRepository] = useState('https://github.com/get-convex/convex-js');
   const [query, setQuery] = useState('');
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [eventCount, setEventCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -31,14 +37,26 @@ export function InvestigationChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Notify parent when chatId changes
+  useEffect(() => {
+    onChatIdChange?.(chatId);
+  }, [chatId, onChatIdChange]);
+
   // Set up SSE connection when chatId is available
   useEffect(() => {
     if (!chatId) return;
 
+    setConnectionStatus('connecting');
     const eventSource = new EventSource(`/api/investigation/updates?chatId=${chatId}`);
     eventSourceRef.current = eventSource;
 
+    eventSource.onopen = () => {
+      setConnectionStatus('connected');
+      console.log('SSE connection established');
+    };
+
     eventSource.onmessage = (event) => {
+      setEventCount(prev => prev + 1);
       try {
         const data = JSON.parse(event.data);
 
@@ -63,12 +81,14 @@ export function InvestigationChat() {
 
     eventSource.onerror = (err) => {
       console.error('SSE error:', err);
+      setConnectionStatus('disconnected');
       setError('Lost connection to updates. Please refresh.');
     };
 
     return () => {
       eventSource.close();
       eventSourceRef.current = null;
+      setConnectionStatus('disconnected');
     };
   }, [chatId]);
 
@@ -131,10 +151,41 @@ export function InvestigationChat() {
     'How is authentication handled in this codebase?',
   ];
 
+  const securityQueries = [
+    'Perform a comprehensive security audit with TypeScript best practices',
+    'Find all instances of unsafe type assertions and any usage',
+    'Check for SQL injection, XSS, and other common vulnerabilities',
+    'Analyze authentication and authorization patterns for security issues',
+    'Identify hardcoded secrets and sensitive data exposure',
+  ];
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>Code Investigation Agent</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Code Investigation Agent</CardTitle>
+          {chatId && (
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className={`h-2 w-2 rounded-full ${
+                  connectionStatus === 'connected' ? 'bg-green-500' : 
+                  connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+                  'bg-red-500'
+                }`} />
+                <span className="text-muted-foreground">
+                  {connectionStatus === 'connected' ? 'Connected' : 
+                   connectionStatus === 'connecting' ? 'Connecting...' : 
+                   'Disconnected'}
+                </span>
+              </div>
+              {eventCount > 0 && (
+                <span className="text-muted-foreground">
+                  {eventCount} events
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -166,15 +217,39 @@ export function InvestigationChat() {
         </div>
 
         <div className="space-y-2">
+          <Label>🔒 Security Analysis (TypeScript Focus)</Label>
+          <div className="flex flex-wrap gap-2">
+            {securityQueries.map((example) => (
+              <button
+                key={example}
+                type="button"
+                onClick={() => setQuery(example)}
+                className="text-xs px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="query">Investigation Query</Label>
           <Textarea
             id="query"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              console.log('Query changed:', e.target.value);
+              setQuery(e.target.value);
+            }}
             placeholder="What would you like to investigate about this repository?"
             rows={3}
             className="w-full"
           />
+          {/* Debug info */}
+          <div className="text-xs text-muted-foreground">
+            Query length: {query.length} | Repository length: {repository.length} | 
+            Button should be: {isLoading || !query.trim() || !repository.trim() ? 'disabled' : 'enabled'}
+          </div>
         </div>
 
         {error && (
@@ -188,6 +263,7 @@ export function InvestigationChat() {
           onClick={startInvestigation}
           disabled={isLoading || !query.trim() || !repository.trim()}
           className="w-full"
+          title={`Loading: ${isLoading}, Query: '${query}' (${query.length} chars), Repository: '${repository}' (${repository.length} chars)`}
         >
           {isLoading ? (
             <>

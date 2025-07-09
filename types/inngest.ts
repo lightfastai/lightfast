@@ -59,13 +59,26 @@ export interface InvestigationUpdateEvent {
   };
 }
 
+// Security analysis events
+export interface SecurityAnalyzeEvent {
+  name: 'security/analyze';
+  data: {
+    sandboxId: string;
+    repository: string;
+    securityQuery?: string;
+    chatId: string;
+    parentEventId: string;
+  };
+}
+
 export type InngestEvents =
   | SandboxExecuteEvent
   | AgentQueryEvent
   | CodeInvestigationEvent
   | CodeSearchEvent
   | ScriptExecutionEvent
-  | InvestigationUpdateEvent;
+  | InvestigationUpdateEvent
+  | SecurityAnalyzeEvent;
 
 // Response types
 export interface SandboxExecutionResult {

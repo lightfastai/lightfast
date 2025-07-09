@@ -28,6 +28,11 @@ export default function Home() {
                 Code Investigation Agent
               </Button>
             </Link>
+            <Link href="/security">
+              <Button size="lg" variant="destructive">
+                🔒 Security Analysis
+              </Button>
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">

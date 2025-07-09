@@ -2,6 +2,7 @@ import { Sandbox } from '@vercel/sandbox';
 import ms from 'ms';
 import type { InvestigationResult } from '@/types/inngest';
 import { inngest } from '../client';
+import { createSSEStep } from '../helpers/sse-wrapper';
 
 export const investigationOrchestrator = inngest.createFunction(
   {
@@ -15,9 +16,15 @@ export const investigationOrchestrator = inngest.createFunction(
   { event: 'investigation/start' },
   async ({ event, step }) => {
     const { query, repository, userId, chatId } = event.data;
+    
+    // Create SSE-wrapped step for automatic event emission
+    const sseStep = createSSEStep(step, { 
+      chatId, 
+      functionName: 'investigation-orchestrator' 
+    });
 
     // Send initial update
-    await step.sendEvent('send-update', {
+    await sseStep.sendEvent('send-update', {
       name: 'investigation/update',
       data: {
         chatId,
@@ -27,7 +34,7 @@ export const investigationOrchestrator = inngest.createFunction(
     });
 
     // Step 1: Create and initialize sandbox
-    const sandboxId = await step.run('create-sandbox', async () => {
+    const sandboxId = await sseStep.run('create-sandbox', async () => {
       const sandbox = await Sandbox.create({
         timeout: ms('30m'), // Longer timeout for investigation
         runtime: 'node22',
@@ -40,7 +47,7 @@ export const investigationOrchestrator = inngest.createFunction(
     });
 
     // Step 2: Check for git and install if needed
-    const gitInstalled = await step.run('check-git', async () => {
+    const gitInstalled = await sseStep.run('check-git', async () => {
       const sandbox = await Sandbox.get({ sandboxId });
 
       try {
@@ -53,7 +60,7 @@ export const investigationOrchestrator = inngest.createFunction(
     });
 
     if (!gitInstalled) {
-      await step.sendEvent('send-git-install-update', {
+      await sseStep.sendEvent('send-git-install-update', {
         name: 'investigation/update',
         data: {
           chatId,
@@ -62,7 +69,7 @@ export const investigationOrchestrator = inngest.createFunction(
         },
       });
 
-      await step.run('install-git', async () => {
+      await sseStep.run('install-git', async () => {
         const sandbox = await Sandbox.get({ sandboxId });
         const installCmd = await sandbox.runCommand({
           cmd: 'dnf',
@@ -73,8 +80,7 @@ export const investigationOrchestrator = inngest.createFunction(
       });
     }
 
-    // Step 3: Clone the repository
-    const cloneResult = await step.run('clone-repository', async () => {
+    const cloneResult = await sseStep.run('clone-repository', async () => {
       const sandbox = await Sandbox.get({ sandboxId });
 
       // Clone the repository
@@ -96,8 +102,9 @@ export const investigationOrchestrator = inngest.createFunction(
         repoInfo,
       };
     });
+    // Step 3: Clone the repository
 
-    await step.sendEvent('send-clone-complete', {
+    await sseStep.sendEvent('send-clone-complete', {
       name: 'investigation/update',
       data: {
         chatId,
@@ -107,7 +114,7 @@ export const investigationOrchestrator = inngest.createFunction(
     });
 
     // Step 4: Initial repository analysis
-    await step.sendEvent('trigger-search', {
+    await sseStep.sendEvent('trigger-search', {
       name: 'investigation/search',
       data: {
         sandboxId,
@@ -123,10 +130,10 @@ export const investigationOrchestrator = inngest.createFunction(
     });
 
     // Wait for the analysis to complete
-    await step.sleep('wait-for-initial-analysis', ms('10s'));
+    await sseStep.sleep('wait-for-initial-analysis', ms('10s'));
 
     // Step 5: Deep investigation based on query
-    await step.sendEvent('trigger-deep-search', {
+    await sseStep.sendEvent('trigger-deep-search', {
       name: 'investigation/search',
       data: {
         sandboxId,
@@ -138,10 +145,32 @@ export const investigationOrchestrator = inngest.createFunction(
     });
 
     // Wait for investigation to complete
-    await step.sleep('wait-for-investigation', ms('20s'));
+    await sseStep.sleep('wait-for-investigation', ms('20s'));
+
+    // Step 5.5: Run security analysis if requested
+    const shouldRunSecurity =
+      query.toLowerCase().includes('security') ||
+      query.toLowerCase().includes('vulnerab') ||
+      query.toLowerCase().includes('safe');
+
+    if (shouldRunSecurity) {
+      await sseStep.sendEvent('trigger-security-analysis', {
+        name: 'security/analyze',
+        data: {
+          sandboxId,
+          repository,
+          securityQuery: query,
+          chatId,
+          parentEventId: event.id || 'orchestrator',
+        },
+      });
+
+      // Wait for security analysis to complete
+      await sseStep.sleep('wait-for-security-analysis', ms('15s'));
+    }
 
     // Step 6: Generate summary
-    const summary = await step.run('generate-summary', async () => {
+    const summary = await sseStep.run('generate-summary', async () => {
       const sandbox = await Sandbox.get({ sandboxId });
 
       // Collect all findings from the investigation
@@ -157,7 +186,7 @@ export const investigationOrchestrator = inngest.createFunction(
       ]);
       const findings = await findingsCmd.stdout();
 
-      await step.sendEvent('send-summary', {
+      await sseStep.sendEvent('send-summary', {
         name: 'investigation/update',
         data: {
           chatId,
@@ -173,7 +202,7 @@ export const investigationOrchestrator = inngest.createFunction(
     });
 
     // Cleanup
-    await step.run('cleanup', async () => {
+    await sseStep.run('cleanup', async () => {
       try {
         const sandbox = await Sandbox.get({ sandboxId });
         await sandbox.stop();

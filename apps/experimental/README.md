@@ -103,6 +103,7 @@ A modern Next.js 15 application showcasing integration with Inngest for backgrou
 - `/demo` - shadcn/ui component showcase
 - `/inngest-demo` - Inngest + Vercel Sandbox integration demo
 - `/investigation` - AI-powered code investigation chat
+- `/security` - TypeScript security best practices dashboard
 
 ## How It Works
 
@@ -110,6 +111,39 @@ A modern Next.js 15 application showcasing integration with Inngest for backgrou
 2. **Vercel Sandbox** - Code is executed in isolated Firecracker MicroVMs for security
 3. **AgentKit** - AI agents can be configured to assist with coding tasks
 4. **UI Components** - Built with shadcn/ui and Tailwind CSS v4 for a modern interface
+
+## Security Features
+
+The Code Security Agent focuses on TypeScript security best practices:
+
+### 🔒 Security Analysis Capabilities
+
+- **Type Safety Analysis**: Detects usage of `any`, unsafe type assertions, and weak typing patterns
+- **Vulnerability Detection**: Identifies SQL injection, XSS, CSRF, and other common vulnerabilities
+- **Authentication Auditing**: Reviews JWT implementation, session management, and access controls
+- **Data Validation**: Checks for proper input sanitization and schema validation
+- **Cryptography Review**: Identifies weak algorithms, hardcoded secrets, and insecure randomness
+
+### TypeScript Security Best Practices
+
+1. **Enable Strict Mode**: Use TypeScript's strict compiler options for maximum type safety
+2. **Avoid `any` Type**: Replace with specific types, `unknown`, or generics
+3. **Runtime Validation**: Use Zod or similar libraries for runtime type checking
+4. **Secure Error Handling**: Never expose internal error details to users
+5. **Type-Safe Middleware**: Create properly typed authentication and authorization middleware
+
+### Running Security Analysis
+
+To analyze a repository for security issues:
+
+1. Navigate to `/investigation`
+2. Enter the repository URL
+3. Use security-focused queries like:
+   - "Perform a comprehensive security audit with TypeScript best practices"
+   - "Find all instances of unsafe type assertions and any usage"
+   - "Check for SQL injection, XSS, and other vulnerabilities"
+
+The agent will generate custom security scanning scripts and provide actionable recommendations.
 
 ## Deployment
 

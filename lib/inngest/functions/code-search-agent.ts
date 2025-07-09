@@ -2,6 +2,7 @@ import { Sandbox } from '@vercel/sandbox';
 import { generateText } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
 import { inngest } from '../client';
+import { createSSEStep } from '../helpers/sse-wrapper';
 
 export const codeSearchAgent = inngest.createFunction(
   {
@@ -14,12 +15,18 @@ export const codeSearchAgent = inngest.createFunction(
   { event: 'investigation/search' },
   async ({ event, step }) => {
     const { sandboxId, repository, searchQuery, chatId, parentEventId } = event.data;
+    
+    // Create SSE-wrapped step for automatic event emission
+    const sseStep = createSSEStep(step, { 
+      chatId, 
+      functionName: 'code-search-agent' 
+    });
 
     // The Anthropic API key is validated at build time by T3 Env
     // No need to check it here since the app won't build without it
 
     // Step 1: Generate bash script for the search query
-    const scriptGeneration = await step.run('generate-search-script', async () => {
+    const scriptGeneration = await sseStep.run('generate-search-script', async () => {
       const { text } = await generateText({
         model: gateway('anthropic/claude-3-7-sonnet-20250219'),
         system: `You are a code investigation expert. Generate bash scripts to analyze repositories.
@@ -49,7 +56,7 @@ The repository is already cloned in the 'repo' directory.`,
     });
 
     // Step 2: Execute the generated script
-    const executionResult = await step.run('execute-search-script', async () => {
+    const executionResult = await sseStep.run('execute-search-script', async () => {
       const sandbox = await Sandbox.get({ sandboxId });
 
       // Save the script to a file
@@ -78,7 +85,7 @@ The repository is already cloned in the 'repo' directory.`,
     });
 
     // Step 3: Analyze results with LLM
-    const analysis = await step.run('analyze-results', async () => {
+    const analysis = await sseStep.run('analyze-results', async () => {
       const { text } = await generateText({
         model: gateway('anthropic/claude-3-7-sonnet-20250219'),
         system: `You are a code analysis expert. Analyze the output from bash scripts and provide clear, actionable insights.`,
@@ -98,7 +105,7 @@ Provide a clear, concise summary of the findings.`,
     });
 
     // Step 4: Save findings and send update
-    await step.run('save-and-update', async () => {
+    await sseStep.run('save-and-update', async () => {
       const sandbox = await Sandbox.get({ sandboxId });
 
       // Append findings to a file
@@ -122,7 +129,7 @@ ${analysis}
       ]);
 
       // Send update to chat
-      await step.sendEvent('send-findings', {
+      await sseStep.sendEvent('send-findings', {
         name: 'investigation/update',
         data: {
           chatId,
@@ -138,7 +145,7 @@ ${analysis}
     });
 
     // Step 5: Generate follow-up scripts if needed
-    const followUp = await step.run('generate-follow-up', async () => {
+    const followUp = await sseStep.run('generate-follow-up', async () => {
       const { text } = await generateText({
         model: gateway('anthropic/claude-3-7-sonnet-20250219'),
         system: `You are a code investigation expert. Based on the findings, determine if follow-up investigation is needed.
@@ -154,7 +161,7 @@ If yes, provide a specific follow-up query. If no, return "NONE".`,
 
       if (text.trim() !== 'NONE' && text.length > 10) {
         // Trigger follow-up investigation
-        await step.sendEvent('trigger-follow-up', {
+        await sseStep.sendEvent('trigger-follow-up', {
           name: 'investigation/search',
           data: {
             sandboxId,

@@ -1,5 +1,6 @@
 import { agentFunction } from './agent-function';
 import { codeSearchAgent } from './code-search-agent';
+import { codeSecurityAgent } from './code-security-agent';
 import { investigationOrchestrator } from './investigation-orchestrator';
 import { sandboxFunction } from './sandbox-function';
 import { updateHandler } from './update-handler';
@@ -10,5 +11,6 @@ export const functions = [
   agentFunction,
   investigationOrchestrator,
   codeSearchAgent,
+  codeSecurityAgent,
   updateHandler,
 ];

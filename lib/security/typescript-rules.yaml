@@ -1,0 +1,162 @@
+rules:
+  # Type Safety Rules
+  - id: typescript-any-usage
+    patterns:
+      - pattern: |
+          $X: any
+      - pattern: |
+          as any
+    message: "Avoid using 'any' type - it disables TypeScript's type checking"
+    severity: WARNING
+    languages: [typescript]
+    fix: "Use specific types, unknown, or generic types instead"
+
+  - id: unsafe-type-assertion
+    pattern: |
+      $X as $Y
+    message: "Type assertion detected - ensure this is safe and necessary"
+    severity: INFO
+    languages: [typescript]
+    metadata:
+      recommendation: "Use type guards or runtime validation instead"
+
+  - id: non-null-assertion
+    pattern: |
+      $X!
+    message: "Non-null assertion operator used - can cause runtime errors"
+    severity: WARNING
+    languages: [typescript]
+
+  # Security Vulnerabilities
+  - id: eval-usage
+    patterns:
+      - pattern: eval($X)
+      - pattern: new Function($X)
+    message: "eval() and Function() are dangerous and can lead to code injection"
+    severity: ERROR
+    languages: [typescript, javascript]
+
+  - id: hardcoded-secret
+    patterns:
+      - pattern-regex: '(api[_-]?key|secret|password|token)\s*[:=]\s*["''][^"'']+["'']'
+      - pattern-regex: 'process\.env\.(API_KEY|SECRET|PASSWORD|TOKEN)\s*\|\|\s*["''][^"'']+["'']'
+    message: "Potential hardcoded secret detected"
+    severity: ERROR
+    languages: [typescript, javascript]
+
+  - id: sql-injection-template-literal
+    patterns:
+      - pattern: |
+          `$SQL ${$USER_INPUT}`
+      - pattern: |
+          `SELECT $...QUERY WHERE $...CONDITION ${$USER_INPUT}`
+    message: "Potential SQL injection - use parameterized queries"
+    severity: ERROR
+    languages: [typescript]
+
+  - id: xss-innerhtml
+    patterns:
+      - pattern: |
+          $ELEMENT.innerHTML = $USER_INPUT
+      - pattern: |
+          dangerouslySetInnerHTML={{ __html: $USER_INPUT }}
+    message: "Potential XSS vulnerability - sanitize HTML content"
+    severity: ERROR
+    languages: [typescript, javascript, tsx, jsx]
+
+  # Input Validation
+  - id: missing-input-validation
+    patterns:
+      - pattern: |
+          req.body.$FIELD
+      - pattern: |
+          request.json().$FIELD
+    message: "Direct use of request body - add validation"
+    severity: WARNING
+    languages: [typescript]
+
+  - id: unsafe-json-parse
+    pattern: |
+      JSON.parse($USER_INPUT)
+    message: "Unsafe JSON.parse - wrap in try-catch and validate schema"
+    severity: WARNING
+    languages: [typescript, javascript]
+
+  # Authentication & Authorization
+  - id: jwt-decode-without-verify
+    pattern: |
+      jwt.decode($TOKEN)
+    message: "JWT decoded without verification - use jwt.verify() instead"
+    severity: ERROR
+    languages: [typescript, javascript]
+
+  - id: missing-auth-check
+    patterns:
+      - pattern: |
+          export async function $FUNC(req: Request) {
+            $...BODY
+          }
+    message: "API route without authentication check"
+    severity: INFO
+    languages: [typescript]
+    metadata:
+      note: "Ensure authentication is properly implemented"
+
+  # Cryptography
+  - id: weak-crypto-algorithm
+    patterns:
+      - pattern: |
+          crypto.createHash('md5')
+      - pattern: |
+          crypto.createHash('sha1')
+    message: "Weak hashing algorithm - use SHA-256 or stronger"
+    severity: ERROR
+    languages: [typescript, javascript]
+
+  - id: insecure-random
+    pattern: |
+      Math.random()
+    message: "Math.random() is not cryptographically secure"
+    severity: WARNING
+    languages: [typescript, javascript]
+    metadata:
+      fix: "Use crypto.randomBytes() or crypto.getRandomValues()"
+
+  # Error Handling
+  - id: exposed-error-details
+    patterns:
+      - pattern: |
+          res.json({ error: $ERROR.message })
+      - pattern: |
+          Response.json({ error: $ERROR.stack })
+    message: "Exposing internal error details to client"
+    severity: WARNING
+    languages: [typescript]
+
+  - id: empty-catch-block
+    pattern: |
+      try {
+        $...BODY
+      } catch ($ERR) {
+      }
+    message: "Empty catch block - errors should be handled"
+    severity: WARNING
+    languages: [typescript, javascript]
+
+  # Next.js Specific
+  - id: public-env-exposure
+    pattern: |
+      NEXT_PUBLIC_$VAR = $SECRET
+    message: "NEXT_PUBLIC_ variables are exposed to client - don't use for secrets"
+    severity: ERROR
+    languages: [typescript, javascript]
+
+  - id: unsafe-redirect
+    patterns:
+      - pattern: |
+          redirect($USER_INPUT)
+      - pattern: |
+          router.push($USER_INPUT)
+    message: "Potential open redirect vulnerability"
+    severity: WARNING
+    languages: [typescript]

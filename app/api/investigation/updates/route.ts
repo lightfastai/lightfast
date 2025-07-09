@@ -1,7 +1,14 @@
 import type { NextRequest } from 'next/server';
 
-// Store active connections
-const connections = new Map<string, ReadableStreamDefaultController>();
+// Store active connections with metadata
+interface Connection {
+  controller: ReadableStreamDefaultController;
+  startTime: number;
+  lastActivity: number;
+  eventCount: number;
+}
+
+const connections = new Map<string, Connection>();
 
 // Handle SSE connections for real-time updates
 export async function GET(request: NextRequest) {
@@ -15,8 +22,14 @@ export async function GET(request: NextRequest) {
 
   const stream = new ReadableStream({
     start(controller) {
-      // Store the controller for this chat
-      connections.set(chatId, controller);
+      // Store the connection with metadata
+      const connection: Connection = {
+        controller,
+        startTime: Date.now(),
+        lastActivity: Date.now(),
+        eventCount: 0,
+      };
+      connections.set(chatId, connection);
 
       // Send initial connection message
       controller.enqueue(
@@ -32,7 +45,11 @@ export async function GET(request: NextRequest) {
       // Set up heartbeat to keep connection alive
       const heartbeat = setInterval(() => {
         try {
-          controller.enqueue(encoder.encode(': heartbeat\n\n'));
+          const conn = connections.get(chatId);
+          if (conn) {
+            controller.enqueue(encoder.encode(': heartbeat\n\n'));
+            conn.lastActivity = Date.now();
+          }
         } catch {
           clearInterval(heartbeat);
           connections.delete(chatId);
@@ -63,8 +80,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { chatId, message, type, metadata } = body;
 
-    const controller = connections.get(chatId);
-    if (!controller) {
+    const connection = connections.get(chatId);
+    if (!connection) {
       return new Response('No active connection for this chat', { status: 404 });
     }
 
@@ -76,7 +93,9 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
 
-    controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+    connection.controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+    connection.lastActivity = Date.now();
+    connection.eventCount++;
 
     return new Response('Update sent', { status: 200 });
   } catch (error) {
