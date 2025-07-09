@@ -1,33 +1,17 @@
 import { EventSchemas, Inngest } from 'inngest';
 import { env } from '@/env';
-import type {
-  BugReportEvent,
-  CodeInvestigationEvent,
-  CodeSearchEvent,
-  InvestigationUpdateEvent,
-  ScriptExecutionEvent,
-  SecurityAnalyzeEvent,
-} from '@/types/inngest';
+import type { BugReportEvent, UpdateEvent, TaskExecuteEvent } from '@/types/inngest';
 
 // Define type for the events
 type Events = {
   'bug/report': {
     data: BugReportEvent['data'];
   };
-  'investigation/start': {
-    data: CodeInvestigationEvent['data'];
+  'updates/send': {
+    data: UpdateEvent['data'];
   };
-  'investigation/search': {
-    data: CodeSearchEvent['data'];
-  };
-  'investigation/execute': {
-    data: ScriptExecutionEvent['data'];
-  };
-  'investigation/update': {
-    data: InvestigationUpdateEvent['data'];
-  };
-  'security/analyze': {
-    data: SecurityAnalyzeEvent['data'];
+  'task/execute': {
+    data: TaskExecuteEvent['data'];
   };
 };
 

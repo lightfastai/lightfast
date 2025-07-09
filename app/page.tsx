@@ -15,19 +15,14 @@ export default function Home() {
           </p>
 
           <div className="mb-8 flex gap-4 flex-wrap">
-            <Link href="/investigation">
-              <Button size="lg" variant="outline">
-                Code Investigation Agent
-              </Button>
-            </Link>
-            <Link href="/security">
-              <Button size="lg" variant="destructive">
-                🔒 Security Analysis
-              </Button>
-            </Link>
             <Link href="/bug-reporter">
               <Button size="lg" variant="secondary">
                 🐛 Bug Reporter (AgentKit)
+              </Button>
+            </Link>
+            <Link href="/task-executor">
+              <Button size="lg" variant="default">
+                🚀 Universal Task Executor
               </Button>
             </Link>
           </div>

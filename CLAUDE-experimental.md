@@ -83,3 +83,32 @@ Note: The project uses Biome for linting and formatting. Files may be automatica
 - AgentKit is used for multi-agent AI systems
 - SSE (Server-Sent Events) for real-time updates
 - Vercel Sandbox for secure code execution
+
+## Architecture Overview
+
+### General-Purpose Task Execution System
+
+The project includes a universal task execution system that can handle any computational task by:
+
+1. **Task Analysis** - Analyzes the task to understand requirements
+2. **Environment Setup** - Configures dependencies and environment
+3. **Script Generation** - Creates executable scripts based on the analysis
+4. **Secure Execution** - Runs scripts in Vercel Sandbox with proper isolation
+
+#### Key Components:
+
+- **Task Network** (`/lib/agent-kit/networks/task-network.ts`) - Orchestrates the multi-agent workflow
+- **Agents**:
+  - Task Analyzer Agent - Understands and plans tasks
+  - Environment Setup Agent - Configures execution environment
+  - Script Generator Agent - Creates executable scripts
+  - Execution Agent - Runs scripts in Vercel Sandbox
+- **Sandbox Executor** (`/lib/sandbox/sandbox-executor.ts`) - Interfaces with Vercel Sandbox API
+
+#### Vercel Sandbox Notes:
+
+- Base system: Amazon Linux 2023 with Node.js 22 and Python 3.13
+- Working directory: `/vercel/sandbox`
+- User: `vercel-sandbox` with sudo access
+- Package managers: npm, pnpm, pip, uv
+- Additional packages can be installed via `dnf`

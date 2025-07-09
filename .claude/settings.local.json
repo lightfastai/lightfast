@@ -8,7 +8,8 @@
       "Bash(rm:*)",
       "Bash(mkdir:*)",
       "Bash(ls:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

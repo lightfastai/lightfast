@@ -22,7 +22,7 @@ export async function sseStep<T>(
   
   // Send start event
   await step.sendEvent(`sse-start-${stepName}`, {
-    name: 'investigation/update',
+    name: 'updates/send',
     data: {
       chatId,
       message: `⚙️ ${fullStepName.replace(/-/g, ' ')} started...`,
@@ -42,7 +42,7 @@ export async function sseStep<T>(
 
     // Send success event
     await step.sendEvent(`sse-success-${stepName}`, {
-      name: 'investigation/update',
+      name: 'updates/send',
       data: {
         chatId,
         message: `✅ ${fullStepName.replace(/-/g, ' ')} completed`,
@@ -60,7 +60,7 @@ export async function sseStep<T>(
   } catch (error) {
     // Send error event
     await step.sendEvent(`sse-error-${stepName}`, {
-      name: 'investigation/update',
+      name: 'updates/send',
       data: {
         chatId,
         message: `❌ Error in ${fullStepName.replace(/-/g, ' ')}: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -92,7 +92,7 @@ export async function sseSendEvent(
   
   // Log the event being sent
   await step.sendEvent(`sse-event-${eventName}`, {
-    name: 'investigation/update',
+    name: 'updates/send',
     data: {
       chatId,
       message: `📤 Sending event: ${payload.name}`,
@@ -122,7 +122,7 @@ export async function sseSleep(
   
   // Log the sleep
   await step.sendEvent(`sse-sleep-${sleepName}`, {
-    name: 'investigation/update',
+    name: 'updates/send',
     data: {
       chatId,
       message: `⏱️ Waiting ${duration}ms for ${sleepName.replace(/-/g, ' ')}...`,
@@ -151,4 +151,11 @@ export function createSSEStep(step: any, config: SSEStepConfig) {
     // Direct access to original step for edge cases
     raw: step,
   };
+}
+
+/**
+ * Wrapper function for backward compatibility
+ */
+export function wrapWithSSE(step: any, config: SSEStepConfig) {
+  return createSSEStep(step, config);
 }
