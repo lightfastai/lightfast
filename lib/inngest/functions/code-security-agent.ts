@@ -1,6 +1,6 @@
 import { Sandbox } from '@vercel/sandbox';
 import { generateText } from 'ai';
-import { gateway } from '@ai-sdk/gateway';
+import { anthropic } from '@ai-sdk/anthropic';
 import { inngest } from '../client';
 import { createSSEStep } from '../helpers/sse-wrapper';
 
@@ -31,7 +31,7 @@ export const codeSecurityAgent = inngest.createFunction(
     // Step 1: Generate security analysis script
     const scriptGeneration = await sseStep.run('generate-security-script', async () => {
       const { text } = await generateText({
-        model: gateway('anthropic/claude-3-7-sonnet-20250219'),
+        model: anthropic('claude-3-5-sonnet-20241022'),
         system: `You are a TypeScript security expert specializing in identifying vulnerabilities and security best practices.
 Generate bash scripts that analyze code for security issues focusing on:
 
@@ -185,7 +185,7 @@ EOF
     // Step 3: Analyze results with AI for TypeScript-specific insights
     const securityReport = await sseStep.run('generate-security-report', async () => {
       const { text } = await generateText({
-        model: gateway('anthropic/claude-3-7-sonnet-20250219'),
+        model: anthropic('claude-3-5-sonnet-20241022'),
         system: `You are a TypeScript security expert. Analyze security scan results and provide:
 1. Critical vulnerabilities that need immediate attention
 2. TypeScript-specific security issues and type safety problems
@@ -217,7 +217,7 @@ Provide a comprehensive security report with:
     // Step 4: Generate secure code patterns
     const securePatterns = await sseStep.run('generate-secure-patterns', async () => {
       const { text } = await generateText({
-        model: gateway('anthropic/claude-3-7-sonnet-20250219'),
+        model: anthropic('claude-3-5-sonnet-20241022'),
         system: `You are a TypeScript security expert. Generate secure code patterns and examples.`,
         prompt: `Based on the security findings, generate TypeScript code examples showing:
 
@@ -304,7 +304,7 @@ ${analysisResult.stdout}
     // Step 6: Check for critical issues requiring immediate action
     const criticalCheck = await sseStep.run('check-critical-issues', async () => {
       const { text } = await generateText({
-        model: gateway('anthropic/claude-3-7-sonnet-20250219'),
+        model: anthropic('claude-3-5-sonnet-20241022'),
         system: `Determine if there are critical security issues requiring immediate action.
 Return "CRITICAL" if immediate action needed, otherwise "NORMAL".`,
         prompt: `Based on this security report, are there critical issues?

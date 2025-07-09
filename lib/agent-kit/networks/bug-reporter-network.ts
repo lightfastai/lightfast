@@ -1,5 +1,4 @@
-import { createNetwork, createState } from '@inngest/agent-kit';
-import { anthropic } from '@ai-sdk/anthropic';
+import { createNetwork, createState, anthropic } from '@inngest/agent-kit';
 import type { BugReporterNetworkState } from '../types/types';
 import { bugAnalysisAgent } from '../agents/bug-analysis-agent';
 import { securityAnalysisAgent } from '../agents/security-analysis-agent';
@@ -15,7 +14,12 @@ export const bugReporterNetwork = createNetwork<BugReporterNetworkState>({
     status: 'analyzing' as const,
   }),
 
-  defaultModel: anthropic('claude-3-5-sonnet-20241022') as any,
+  defaultModel: anthropic({
+    model: 'claude-3-5-sonnet-20241022',
+    defaultParameters: {
+      max_tokens: 4096,
+    },
+  }),
 
   router: async ({ network, lastResult }) => {
     const state = network.state.data;

@@ -15,7 +15,7 @@ export const env = createEnv({
 
     // AI Gateway API Key
     AI_GATEWAY_API_KEY: z.string().min(1).optional(),
-
+    ANTHROPIC_API_KEY: z.string().min(1),
     // Node environment
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   },
@@ -39,6 +39,7 @@ export const env = createEnv({
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
     AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
 
     // Client

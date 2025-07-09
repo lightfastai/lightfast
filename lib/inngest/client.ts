@@ -1,24 +1,16 @@
 import { EventSchemas, Inngest } from 'inngest';
 import { env } from '@/env';
 import type {
-  AgentQueryEvent,
   BugReportEvent,
   CodeInvestigationEvent,
   CodeSearchEvent,
   InvestigationUpdateEvent,
-  SandboxExecuteEvent,
   ScriptExecutionEvent,
   SecurityAnalyzeEvent,
 } from '@/types/inngest';
 
 // Define type for the events
 type Events = {
-  'sandbox/execute': {
-    data: SandboxExecuteEvent['data'];
-  };
-  'agent/query': {
-    data: AgentQueryEvent['data'];
-  };
   'bug/report': {
     data: BugReportEvent['data'];
   };

@@ -1,6 +1,6 @@
 import { Sandbox } from '@vercel/sandbox';
 import { generateText } from 'ai';
-import { gateway } from '@ai-sdk/gateway';
+import { anthropic } from '@ai-sdk/anthropic';
 import { inngest } from '../client';
 import { createSSEStep } from '../helpers/sse-wrapper';
 
@@ -28,7 +28,7 @@ export const codeSearchAgent = inngest.createFunction(
     // Step 1: Generate bash script for the search query
     const scriptGeneration = await sseStep.run('generate-search-script', async () => {
       const { text } = await generateText({
-        model: gateway('anthropic/claude-3-7-sonnet-20250219'),
+        model: anthropic('claude-3-5-sonnet-20241022'),
         system: `You are a code investigation expert. Generate bash scripts to analyze repositories.
 Your scripts should:
 1. Use standard Unix tools (find, grep, awk, sed, etc.)
@@ -87,7 +87,7 @@ The repository is already cloned in the 'repo' directory.`,
     // Step 3: Analyze results with LLM
     const analysis = await sseStep.run('analyze-results', async () => {
       const { text } = await generateText({
-        model: gateway('anthropic/claude-3-7-sonnet-20250219'),
+        model: anthropic('claude-3-5-sonnet-20241022'),
         system: `You are a code analysis expert. Analyze the output from bash scripts and provide clear, actionable insights.`,
         prompt: `Analyze the following search results:
 
@@ -147,7 +147,7 @@ ${analysis}
     // Step 5: Generate follow-up scripts if needed
     const followUp = await sseStep.run('generate-follow-up', async () => {
       const { text } = await generateText({
-        model: gateway('anthropic/claude-3-7-sonnet-20250219'),
+        model: anthropic('claude-3-5-sonnet-20241022'),
         system: `You are a code investigation expert. Based on the findings, determine if follow-up investigation is needed.
 If yes, generate a specific follow-up query. If no, return "NONE".`,
         prompt: `Based on these findings, should we investigate further?
