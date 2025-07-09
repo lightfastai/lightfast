@@ -1,12 +1,9 @@
 import { EventSchemas, Inngest } from 'inngest';
 import { env } from '@/env';
-import type { BugReportEvent, UpdateEvent, TaskExecuteEvent } from '@/types/inngest';
+import type { UpdateEvent, TaskExecuteEvent } from '@/types/inngest';
 
 // Define type for the events
 type Events = {
-  'bug/report': {
-    data: BugReportEvent['data'];
-  };
   'updates/send': {
     data: UpdateEvent['data'];
   };

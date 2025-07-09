@@ -1,5 +1,4 @@
-import { bugReporterFunction } from './bug-reporter-function';
 import { taskExecutorFunction } from './task-executor-function';
 
 // Export all functions to be served by the Inngest API
-export const functions = [bugReporterFunction, taskExecutorFunction];
+export const functions = [taskExecutorFunction];

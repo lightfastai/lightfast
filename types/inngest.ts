@@ -11,32 +11,6 @@ export interface UpdateEvent {
   };
 }
 
-// Bug report event
-export interface BugReportEvent {
-  name: 'bug/report';
-  data: {
-    bugReport: {
-      id: string;
-      title: string;
-      description: string;
-      repository: string;
-      filePath?: string;
-      lineNumber?: number;
-      severity: 'critical' | 'high' | 'medium' | 'low';
-      category: 'security' | 'performance' | 'logic' | 'type-safety' | 'memory' | 'other';
-      language?: string;
-      codeSnippet?: string;
-      stackTrace?: string;
-      environment?: {
-        os?: string;
-        nodeVersion?: string;
-        dependencies?: Record<string, string>;
-      };
-    };
-    repository: string;
-    chatId: string;
-  };
-}
 
 // Task execution event
 export interface TaskExecuteEvent {
@@ -54,7 +28,6 @@ export interface TaskExecuteEvent {
 }
 
 export type InngestEvents =
-  | BugReportEvent
   | UpdateEvent
   | TaskExecuteEvent;
 
