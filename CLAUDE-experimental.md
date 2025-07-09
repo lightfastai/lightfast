@@ -13,6 +13,9 @@ pnpm build        # Build for production
 pnpm typecheck    # TypeScript check
 pnpm lint         # Run Biome linter
 pnpm inngest-dev  # Inngest dashboard
+
+# Check specific file for errors
+pnpm biome check --write lib/inngest/functions/task-executor-function.ts
 ```
 
 ## Import Convention

@@ -9,7 +9,11 @@
       "Bash(mkdir:*)",
       "Bash(ls:*)",
       "Bash(mv:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(sed:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm biome check:*)",
+      "Bash(pnpm biome check:*)"
     ],
     "deny": []
   }
