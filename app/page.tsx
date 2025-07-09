@@ -14,13 +14,18 @@ export default function Home() {
             Built with TypeScript, App Router, Tailwind CSS v4, and shadcn/ui
           </p>
 
-          <div className="mb-8 flex gap-4">
+          <div className="mb-8 flex gap-4 flex-wrap">
             <Link href="/demo">
               <Button size="lg">View shadcn/ui Demo</Button>
             </Link>
             <Link href="/inngest-demo">
               <Button size="lg" variant="outline">
                 View Inngest Integration
+              </Button>
+            </Link>
+            <Link href="/investigation">
+              <Button size="lg" variant="outline">
+                Code Investigation Agent
               </Button>
             </Link>
           </div>

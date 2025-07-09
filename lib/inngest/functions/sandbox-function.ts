@@ -26,29 +26,37 @@ export const sandboxFunction = inngest.createFunction(
         const sandbox = await Sandbox.get({ sandboxId: sandboxId! });
 
         if (language === 'js' || language === 'javascript') {
-          // Write the code to a file and execute it
+          // Write the code to a file in the current directory
+          const fileName = 'script.js';
           await sandbox.writeFiles([
             {
-              path: '/tmp/script.js',
+              path: fileName,
               content: Buffer.from(code),
             },
           ]);
-          const cmd = await sandbox.runCommand('node', ['/tmp/script.js']);
+
+          // Execute the script
+          const cmd = await sandbox.runCommand('node', [fileName]);
+
+          // Get output
           const stdout = await cmd.stdout();
           const stderr = await cmd.stderr();
+
           return {
-            stdout,
-            stderr,
+            stdout: stdout || '',
+            stderr: stderr || '',
             exitCode: cmd.exitCode,
           };
         } else if (language === 'bash') {
-          // Execute bash commands directly
+          // For bash, execute directly
           const cmd = await sandbox.runCommand('bash', ['-c', code]);
+
           const stdout = await cmd.stdout();
           const stderr = await cmd.stderr();
+
           return {
-            stdout,
-            stderr,
+            stdout: stdout || '',
+            stderr: stderr || '',
             exitCode: cmd.exitCode,
           };
         } else {
@@ -57,24 +65,32 @@ export const sandboxFunction = inngest.createFunction(
       });
 
       return {
-        success: true,
+        success: result.exitCode === 0,
         result: result.stdout,
-        error: result.stderr,
+        error:
+          result.stderr ||
+          (result.exitCode !== 0 ? `Process exited with code ${result.exitCode}` : ''),
         language,
         exitCode: result.exitCode,
       };
     } catch (error) {
+      console.error('Sandbox execution error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
         language,
+        result: '',
       };
     } finally {
       // Clean up the sandbox
       if (sandboxId) {
         await step.run('cleanup-sandbox', async () => {
-          const sandbox = await Sandbox.get({ sandboxId: sandboxId! });
-          await sandbox.stop();
+          try {
+            const sandbox = await Sandbox.get({ sandboxId: sandboxId! });
+            await sandbox.stop();
+          } catch (err) {
+            console.error('Error cleaning up sandbox:', err);
+          }
         });
       }
     }

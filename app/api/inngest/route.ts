@@ -1,4 +1,5 @@
 import { serve } from 'inngest/next';
+import { env } from '@/env';
 import { inngest } from '@/lib/inngest/client';
 import { functions } from '@/lib/inngest/functions';
 
@@ -6,4 +7,5 @@ import { functions } from '@/lib/inngest/functions';
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: functions,
+  signingKey: env.INNGEST_SIGNING_KEY,
 });

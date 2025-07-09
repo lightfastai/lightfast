@@ -11,6 +11,7 @@ A modern Next.js 15 application showcasing integration with Inngest for backgrou
 - **Vercel Sandbox** - Secure code execution
 - **Inngest AgentKit** - AI agent framework
 - **Biome.js** - Fast formatter and linter
+- **T3 Env** - Type-safe environment variables with Zod validation
 
 ## Features
 
@@ -19,16 +20,16 @@ A modern Next.js 15 application showcasing integration with Inngest for backgrou
 - 🧩 shadcn/ui components with dark mode
 - 🔧 Inngest functions for background processing
 - 🏗️ Vercel Sandbox for secure code execution
-- 🤖 AI coding assistant (requires OpenAI API key)
+- 🤖 AI coding assistant powered by Claude 3.7 Sonnet via Vercel AI Gateway
 - 📦 pnpm for fast package management
 - ✨ TypeScript for type safety
+- 🔐 Type-safe environment variables with T3 Env
 
 ## Prerequisites
 
 - Node.js 18+
 - pnpm
-- Vercel account (for Sandbox)
-- OpenAI API key (optional, for AI features)
+- Vercel account (required for Sandbox and AI Gateway)
 
 ## Getting Started
 
@@ -42,10 +43,13 @@ A modern Next.js 15 application showcasing integration with Inngest for backgrou
    cp .env.example .env.local
    ```
    
-   Add your keys:
+   Add your keys (optional):
    - `INNGEST_EVENT_KEY` - Your Inngest event key
-   - `OPENAI_API_KEY` - For AI agent features
-   - `VERCEL_OIDC_TOKEN` - For Vercel Sandbox authentication
+   - `INNGEST_SIGNING_KEY` - Your Inngest signing key
+   
+   - `AI_GATEWAY_API_KEY` - Your AI Gateway API key from Vercel dashboard
+   
+   Environment variables are validated at build time using T3 Env and Zod schemas.
 
 3. **Run Inngest Dev Server:**
    ```bash
@@ -68,16 +72,20 @@ A modern Next.js 15 application showcasing integration with Inngest for backgrou
 │   ├── api/               # API routes
 │   │   ├── inngest/       # Inngest webhook handler
 │   │   ├── execute/       # Sandbox execution endpoint
+│   │   ├── investigation/ # Investigation chat endpoints
 │   │   └── agent/         # AI agent endpoint
 │   ├── demo/              # shadcn/ui demo page
-│   └── inngest-demo/      # Inngest integration demo
+│   ├── inngest-demo/      # Inngest integration demo
+│   └── investigation/     # Code investigation chat UI
 ├── components/            # React components
 │   ├── ui/               # shadcn/ui components
 │   ├── sandbox-demo.tsx  # Code execution demo
-│   └── agent-demo.tsx    # AI assistant demo
+│   ├── agent-demo.tsx    # AI assistant demo
+│   └── investigation-chat.tsx # Investigation chat interface
 ├── lib/                   # Utilities and configuration
 │   └── inngest/          # Inngest functions
-└── types/                # TypeScript type definitions
+├── types/                # TypeScript type definitions
+└── env.ts                # T3 Env configuration with Zod schemas
 ```
 
 ## Available Scripts
@@ -94,6 +102,7 @@ A modern Next.js 15 application showcasing integration with Inngest for backgrou
 - `/` - Home page with project overview
 - `/demo` - shadcn/ui component showcase
 - `/inngest-demo` - Inngest + Vercel Sandbox integration demo
+- `/investigation` - AI-powered code investigation chat
 
 ## How It Works
 

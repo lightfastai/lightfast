@@ -16,7 +16,56 @@ export interface AgentQueryEvent {
   };
 }
 
-export type InngestEvents = SandboxExecuteEvent | AgentQueryEvent;
+// Code investigation events
+export interface CodeInvestigationEvent {
+  name: 'investigation/start';
+  data: {
+    query: string;
+    repository: string;
+    userId: string;
+    chatId: string;
+  };
+}
+
+export interface CodeSearchEvent {
+  name: 'investigation/search';
+  data: {
+    sandboxId: string;
+    repository: string;
+    searchQuery: string;
+    chatId: string;
+    parentEventId: string;
+  };
+}
+
+export interface ScriptExecutionEvent {
+  name: 'investigation/execute';
+  data: {
+    sandboxId: string;
+    script: string;
+    purpose: string;
+    chatId: string;
+    parentEventId: string;
+  };
+}
+
+export interface InvestigationUpdateEvent {
+  name: 'investigation/update';
+  data: {
+    chatId: string;
+    message: string;
+    type: 'info' | 'success' | 'error' | 'result';
+    metadata?: Record<string, unknown>;
+  };
+}
+
+export type InngestEvents =
+  | SandboxExecuteEvent
+  | AgentQueryEvent
+  | CodeInvestigationEvent
+  | CodeSearchEvent
+  | ScriptExecutionEvent
+  | InvestigationUpdateEvent;
 
 // Response types
 export interface SandboxExecutionResult {
@@ -31,6 +80,20 @@ export interface AgentQueryResult {
   response?: string;
   query: string;
   error?: string;
+}
+
+// Investigation result types
+export interface InvestigationResult {
+  chatId: string;
+  repository: string;
+  findings: string[];
+  scripts: Array<{
+    purpose: string;
+    script: string;
+    output?: string;
+    error?: string;
+  }>;
+  summary: string;
 }
 
 // API response types

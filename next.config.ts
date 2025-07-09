@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 
+import 'env';
+
 const nextConfig: NextConfig = {
   // Enable React Strict Mode for better development experience
   reactStrictMode: true,
