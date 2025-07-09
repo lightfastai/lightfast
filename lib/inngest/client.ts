@@ -2,6 +2,7 @@ import { EventSchemas, Inngest } from 'inngest';
 import { env } from '@/env';
 import type {
   AgentQueryEvent,
+  BugReportEvent,
   CodeInvestigationEvent,
   CodeSearchEvent,
   InvestigationUpdateEvent,
@@ -17,6 +18,9 @@ type Events = {
   };
   'agent/query': {
     data: AgentQueryEvent['data'];
+  };
+  'bug/report': {
+    data: BugReportEvent['data'];
   };
   'investigation/start': {
     data: CodeInvestigationEvent['data'];

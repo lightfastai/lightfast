@@ -16,11 +16,11 @@ export const investigationOrchestrator = inngest.createFunction(
   { event: 'investigation/start' },
   async ({ event, step }) => {
     const { query, repository, userId, chatId } = event.data;
-    
+
     // Create SSE-wrapped step for automatic event emission
-    const sseStep = createSSEStep(step, { 
-      chatId, 
-      functionName: 'investigation-orchestrator' 
+    const sseStep = createSSEStep(step, {
+      chatId,
+      functionName: 'investigation-orchestrator',
     });
 
     // Send initial update

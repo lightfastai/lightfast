@@ -33,6 +33,11 @@ export default function Home() {
                 🔒 Security Analysis
               </Button>
             </Link>
+            <Link href="/bug-reporter">
+              <Button size="lg" variant="secondary">
+                🐛 Bug Reporter (AgentKit)
+              </Button>
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">

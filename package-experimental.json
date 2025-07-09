@@ -29,6 +29,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "2.0.0-beta.4",
     "@ai-sdk/gateway": "1.0.0-beta.4",
     "@inngest/agent-kit": "^0.9.0",
     "@radix-ui/react-label": "^2.1.7",
