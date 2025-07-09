@@ -1,7 +1,7 @@
 import { createAgent, createTool } from '@inngest/agent-kit';
 import { z } from 'zod';
-import type { BugReporterNetworkState, SecurityIssue } from '../types';
 import { Sandbox } from '@vercel/sandbox';
+import type { BugReporterNetworkState, SecurityIssue } from '../types/types';
 
 export const securityAnalysisAgent = createAgent<BugReporterNetworkState>({
   name: 'Security Analysis Agent',

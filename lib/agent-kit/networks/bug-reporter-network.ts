@@ -1,6 +1,6 @@
 import { createNetwork, createState } from '@inngest/agent-kit';
 import { anthropic } from '@ai-sdk/anthropic';
-import type { BugReporterNetworkState } from '../types';
+import type { BugReporterNetworkState } from '../types/types';
 import { bugAnalysisAgent } from '../agents/bug-analysis-agent';
 import { securityAnalysisAgent } from '../agents/security-analysis-agent';
 import { codeFixAgent } from '../agents/code-fix-agent';
@@ -14,7 +14,7 @@ export const bugReporterNetwork = createNetwork<BugReporterNetworkState>({
     chatId: '',
     status: 'analyzing' as const,
   }),
-  
+
   defaultModel: anthropic('claude-3-5-sonnet-20241022') as any,
 
   router: async ({ network, lastResult }) => {

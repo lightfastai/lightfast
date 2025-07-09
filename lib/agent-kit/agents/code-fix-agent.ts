@@ -1,6 +1,6 @@
 import { createAgent, createTool } from '@inngest/agent-kit';
 import { z } from 'zod';
-import type { BugReporterNetworkState, CodeFix } from '../types';
+import type { BugReporterNetworkState, CodeFix } from '../types/types';
 import { Sandbox } from '@vercel/sandbox';
 
 export const codeFixAgent = createAgent<BugReporterNetworkState>({

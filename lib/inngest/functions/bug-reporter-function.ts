@@ -3,8 +3,8 @@ import ms from 'ms';
 import { anthropic } from '@ai-sdk/anthropic';
 import { inngest } from '../client';
 import { createSSEStep } from '../helpers/sse-wrapper';
-import { bugReporterNetwork } from '@/lib/agent-kit/networks';
-import type { BugReport, BugReporterNetworkState } from '@/lib/agent-kit/types';
+import { bugReporterNetwork } from '@/lib/agent-kit/networks/bug-reporter-network';
+import type { BugReport, BugReporterNetworkState } from '@/lib/agent-kit/types/types';
 
 export const bugReporterFunction = inngest.createFunction(
   {
@@ -153,12 +153,12 @@ ${bugReport.stackTrace ? `Stack Trace:\n${bugReport.stackTrace}` : ''}`,
 ${finalState.analysis?.rootCause || 'No root cause identified'}
 
 ## Security Issues Found
-${finalState.securityAnalysis?.map(issue => 
+${finalState.securityAnalysis?.map((issue) => 
   `- **${issue.type}** (${issue.severity}): ${issue.description}`
 ).join('\n') || 'No security issues found'}
 
 ## Suggested Fixes
-${finalState.suggestedFixes?.map((fix, i) => 
+${finalState.suggestedFixes?.map((fix: any, i: number) => 
   `### Fix ${i + 1}: ${fix.description}
 - **Confidence**: ${fix.confidence}
 - **File**: ${fix.filePath}

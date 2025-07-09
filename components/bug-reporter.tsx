@@ -1,14 +1,20 @@
 'use client';
 
-import { AlertCircle, Bug, FileCode, Loader2, Send, Shield } from 'lucide-react';
+import { AlertCircle, Bug, Loader2, Shield } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { ApiResponse } from '@/types/inngest';
-import type { BugReport } from '@/lib/agent-kit/types';
+import type { BugReport } from '@/lib/agent-kit/types/types';
 
 interface ChatMessage {
   id: string;
@@ -32,12 +38,14 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
   const [lineNumber, setLineNumber] = useState('');
   const [codeSnippet, setCodeSnippet] = useState('');
   const [stackTrace, setStackTrace] = useState('');
-  
+
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'disconnected' | 'connecting' | 'connected'
+  >('disconnected');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -111,7 +119,7 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
 
     // Generate a unique bug ID
     const bugId = `bug_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    
+
     // Add user message
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
@@ -151,7 +159,7 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
       if (data.data && typeof data.data === 'object' && 'chatId' in data.data) {
         setChatId(data.data.chatId as string);
       }
-      
+
       // Clear form
       setTitle('');
       setDescription('');
@@ -176,10 +184,26 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
   };
 
   const exampleBugs = [
-    { title: 'Type assertion bypasses null check', category: 'type-safety' as const, severity: 'high' as const },
-    { title: 'XSS vulnerability in user input', category: 'security' as const, severity: 'critical' as const },
-    { title: 'Memory leak in event listeners', category: 'memory' as const, severity: 'medium' as const },
-    { title: 'Race condition in async operations', category: 'logic' as const, severity: 'high' as const },
+    {
+      title: 'Type assertion bypasses null check',
+      category: 'type-safety' as const,
+      severity: 'high' as const,
+    },
+    {
+      title: 'XSS vulnerability in user input',
+      category: 'security' as const,
+      severity: 'critical' as const,
+    },
+    {
+      title: 'Memory leak in event listeners',
+      category: 'memory' as const,
+      severity: 'medium' as const,
+    },
+    {
+      title: 'Race condition in async operations',
+      category: 'logic' as const,
+      severity: 'high' as const,
+    },
   ];
 
   return (
@@ -192,15 +216,21 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
           </CardTitle>
           {chatId && (
             <div className="flex items-center gap-2 text-sm">
-              <div className={`h-2 w-2 rounded-full ${
-                connectionStatus === 'connected' ? 'bg-green-500' : 
-                connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-                'bg-red-500'
-              }`} />
+              <div
+                className={`h-2 w-2 rounded-full ${
+                  connectionStatus === 'connected'
+                    ? 'bg-green-500'
+                    : connectionStatus === 'connecting'
+                      ? 'bg-yellow-500 animate-pulse'
+                      : 'bg-red-500'
+                }`}
+              />
               <span className="text-muted-foreground">
-                {connectionStatus === 'connected' ? 'Connected' : 
-                 connectionStatus === 'connecting' ? 'Connecting...' : 
-                 'Disconnected'}
+                {connectionStatus === 'connected'
+                  ? 'Connected'
+                  : connectionStatus === 'connecting'
+                    ? 'Connecting...'
+                    : 'Disconnected'}
               </span>
             </div>
           )}
@@ -219,7 +249,7 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
               className="w-full px-3 py-2 border rounded-md"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="repository">Repository URL</Label>
             <input
@@ -236,7 +266,10 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as BugReport['category'])}>
+            <Select
+              value={category}
+              onValueChange={(value) => setCategory(value as BugReport['category'])}
+            >
               <SelectTrigger id="category">
                 <SelectValue />
               </SelectTrigger>
@@ -250,10 +283,13 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="severity">Severity</Label>
-            <Select value={severity} onValueChange={(value) => setSeverity(value as BugReport['severity'])}>
+            <Select
+              value={severity}
+              onValueChange={(value) => setSeverity(value as BugReport['severity'])}
+            >
               <SelectTrigger id="severity">
                 <SelectValue />
               </SelectTrigger>
@@ -290,7 +326,7 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
               className="w-full px-3 py-2 border rounded-md"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="lineNumber">Line Number (optional)</Label>
             <input
@@ -339,7 +375,9 @@ export function BugReporter({ onChatIdChange }: BugReporterProps = {}) {
                   setTitle(example.title);
                   setCategory(example.category);
                   setSeverity(example.severity);
-                  setDescription(`This is an example ${example.category} bug with ${example.severity} severity.`);
+                  setDescription(
+                    `This is an example ${example.category} bug with ${example.severity} severity.`,
+                  );
                 }}
                 className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 transition-colors"
               >
