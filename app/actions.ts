@@ -1,26 +1,27 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { getSubscriptionToken } from "@inngest/realtime";
-import { inngest } from "@/lib/inngest/client";
-import { taskExecutionChannel } from "@/lib/inngest/realtime";
+import { executeTaskWorkflow } from "@/lib/mastra/simple-executor";
 
 export async function fetchSubscriptionToken(chatId: string) {
 	console.log("fetching subscription token for chatId", chatId);
-	const token = await getSubscriptionToken(inngest, {
-		channel: taskExecutionChannel(chatId),
-		topics: ["messages", "status"],
-	});
-
-	return token;
+	// For Mastra, we'll return the SSE endpoint URL instead of a token
+	return {
+		url: `/api/mastra/subscribe/${chatId}`,
+		chatId,
+	};
 }
 
 export async function runTaskExecutor(taskDescription: string) {
 	const chatId = randomUUID();
 
-	await inngest.send({
-		name: "task/execute",
-		data: { taskDescription, chatId },
+	// Execute the workflow directly
+	// In a production setup, you might want to queue this
+	executeTaskWorkflow({
+		taskDescription,
+		chatId,
+	}).catch((error) => {
+		console.error("Error executing workflow:", error);
 	});
 
 	return chatId;

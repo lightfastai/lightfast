@@ -15,7 +15,10 @@
 			"Bash(pnpm biome check:*)",
 			"Bash(pnpm biome check:*)",
 			"Bash(pnpm tsx:*)",
-			"Bash(pnpm with-env:*)"
+			"Bash(pnpm with-env:*)",
+			"Bash(grep:*)",
+			"Bash(pnpm lint:*)",
+			"WebFetch(domain:mastra.ai)"
 		],
 		"deny": []
 	}

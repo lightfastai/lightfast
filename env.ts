@@ -20,7 +20,7 @@ export const env = createEnv({
 		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
 		// Databsae
-		DATABASE_URL: z.string().min(1),
+		DATABASE_URL: z.string().min(1).optional(),
 	},
 
 	/**

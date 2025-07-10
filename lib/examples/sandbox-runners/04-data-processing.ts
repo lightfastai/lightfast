@@ -109,7 +109,10 @@ export async function dataProcessingExamples() {
 	// Count log levels
 	console.log("   Log Level Summary:");
 
-	const countResult = await executor.executeScript(`cd /home/vercel-sandbox && awk '{print $3}' app.log | sort | uniq -c | sort -nr`, "bash");
+	const countResult = await executor.executeScript(
+		`cd /home/vercel-sandbox && awk '{print $3}' app.log | sort | uniq -c | sort -nr`,
+		"bash",
+	);
 	console.log(countResult.stdout);
 
 	// Extract errors

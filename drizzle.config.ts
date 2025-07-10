@@ -6,6 +6,6 @@ export default defineConfig({
 	out: "./lib/database/migrations",
 	dialect: "mysql",
 	dbCredentials: {
-		url: env.DATABASE_URL,
+		url: env.DATABASE_URL || "",
 	},
 });

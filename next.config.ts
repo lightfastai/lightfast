@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
 		ignoreDuringBuilds: false,
 	},
 
+	// Configure Mastra
+	serverExternalPackages: ["@mastra/*"],
+
 	// Turbopack configuration (stable in Next.js 15)
 	turbopack: {
 		rules: {

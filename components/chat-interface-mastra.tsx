@@ -1,7 +1,5 @@
 "use client";
 
-import type { Realtime } from "@inngest/realtime";
-import { useInngestSubscription } from "@inngest/realtime/hooks";
 import { Loader2, Send } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import type { taskExecutionChannel } from "@/lib/inngest/realtime";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -24,15 +21,8 @@ export function ChatInterface() {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const [subscriptionToken, setSubscriptionToken] = useState<
-		Realtime.Token<typeof taskExecutionChannel, ["messages", "status"]> | undefined
-	>(undefined);
+	const [eventSource, setEventSource] = useState<EventSource | null>(null);
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-	// Set up Inngest subscription
-	const { data } = useInngestSubscription({
-		token: subscriptionToken,
-	});
 
 	// Auto-scroll to bottom when new messages arrive
 	useEffect(() => {
@@ -41,39 +31,14 @@ export function ChatInterface() {
 		}
 	}, []);
 
-	// Handle incoming realtime messages
+	// Cleanup EventSource on unmount
 	useEffect(() => {
-		if (!data) return;
-
-		data.forEach((event) => {
-			if (event.topic === "messages") {
-				const messageData = event.data;
-
-				setMessages((prev) => {
-					// Check if message already exists
-					const exists = prev.some((msg) => msg.role === "assistant" && msg.content.includes(messageData.message));
-
-					if (!exists) {
-						return [
-							...prev,
-							{
-								id: messageData.id,
-								role: "assistant",
-								content: messageData.message,
-								timestamp: new Date(),
-							},
-						];
-					}
-
-					return prev;
-				});
-			} else if (event.topic === "status") {
-				if (event.data.status === "completed" || event.data.status === "error") {
-					setIsLoading(false);
-				}
+		return () => {
+			if (eventSource) {
+				eventSource.close();
 			}
-		});
-	}, [data]);
+		};
+	}, [eventSource]);
 
 	const handleSubmit = useCallback(async () => {
 		if (!input.trim() || isLoading) return;
@@ -93,9 +58,55 @@ export function ChatInterface() {
 			// Run the task executor and get chatId
 			const chatId = await runTaskExecutor(userMessage.content);
 
-			// Get subscription token for the chat channel
-			const token = await fetchSubscriptionToken(chatId);
-			setSubscriptionToken(token);
+			// Get subscription info
+			const subscriptionInfo = await fetchSubscriptionToken(chatId);
+
+			// Create EventSource for SSE
+			const source = new EventSource(subscriptionInfo.url);
+			setEventSource(source);
+
+			source.onmessage = (event) => {
+				try {
+					const data = JSON.parse(event.data);
+
+					if (data.type === "messages") {
+						const messageData = data.data;
+						setMessages((prev) => {
+							// Check if message already exists
+							const exists = prev.some((msg) => msg.role === "assistant" && msg.content.includes(messageData.message));
+
+							if (!exists) {
+								return [
+									...prev,
+									{
+										id: messageData.id,
+										role: "assistant",
+										content: messageData.message,
+										timestamp: new Date(),
+									},
+								];
+							}
+
+							return prev;
+						});
+					} else if (data.type === "status") {
+						if (data.data.status === "completed" || data.data.status === "error") {
+							setIsLoading(false);
+							source.close();
+							setEventSource(null);
+						}
+					}
+				} catch (error) {
+					console.error("Error parsing SSE data:", error);
+				}
+			};
+
+			source.onerror = (error) => {
+				console.error("SSE error:", error);
+				setIsLoading(false);
+				source.close();
+				setEventSource(null);
+			};
 		} catch (error) {
 			console.error("Error:", error);
 			setMessages((prev) => [
@@ -151,15 +162,15 @@ export function ChatInterface() {
 							</Card>
 							<Card
 								className="p-3 cursor-pointer hover:bg-accent"
-								onClick={() => setInput("Convert this CSV data to JSON: name,age\nJohn,30\nJane,25")}
+								onClick={() => setInput("Convert a CSV file to JSON format")}
 							>
 								Convert CSV to JSON
 							</Card>
 							<Card
 								className="p-3 cursor-pointer hover:bg-accent"
-								onClick={() => setInput("Create a simple bar chart visualization")}
+								onClick={() => setInput("Analyze the sentiment of product reviews")}
 							>
-								Create data visualization
+								Sentiment analysis
 							</Card>
 						</div>
 					</div>
@@ -174,42 +185,36 @@ export function ChatInterface() {
 									)}
 								>
 									<p className="whitespace-pre-wrap">{message.content}</p>
+									<p className="text-xs opacity-70 mt-1">{message.timestamp.toLocaleTimeString()}</p>
 								</div>
 							</div>
 						))}
-						{isLoading && (
-							<div className="flex justify-start">
-								<div className="bg-muted rounded-lg px-4 py-2">
-									<Loader2 className="h-4 w-4 animate-spin" />
-								</div>
-							</div>
-						)}
 					</div>
 				)}
 			</ScrollArea>
 
 			{/* Input Area */}
-			<form
-				onSubmit={(e) => {
-					e.preventDefault();
-					handleSubmit();
-				}}
-				className="border-t p-4"
-			>
+			<div className="border-t p-4 space-y-2">
 				<div className="flex gap-2">
 					<Textarea
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
-						placeholder="Describe a task you want me to execute..."
-						className="min-h-[60px] resize-none"
 						onKeyDown={onKeyDown}
+						placeholder="Describe a task you want me to execute..."
+						className="min-h-[80px] resize-none"
 						disabled={isLoading}
 					/>
-					<Button type="submit" disabled={!input.trim() || isLoading}>
+					<Button onClick={handleSubmit} disabled={isLoading || !input.trim()} size="lg">
 						{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
 					</Button>
 				</div>
-			</form>
+				{isLoading && (
+					<p className="text-sm text-muted-foreground flex items-center gap-2">
+						<Loader2 className="h-3 w-3 animate-spin" />
+						Processing your request...
+					</p>
+				)}
+			</div>
 		</div>
 	);
 }
