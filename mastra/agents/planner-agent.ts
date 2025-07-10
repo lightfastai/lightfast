@@ -27,7 +27,7 @@ export type TaskPlan = z.infer<typeof taskPlanSchema>;
 export const plannerAgent = new Agent({
 	name: "plannerAgent",
 	description: "Analyzes tasks and creates execution plans",
-	model: anthropic("claude-3-5-sonnet-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	instructions: `You are a task planning agent that breaks down user requests into exactly 3 concrete, executable steps.
 
 Your role is to:
@@ -58,7 +58,7 @@ When creating the plan, be specific about commands and expected outputs.`,
 // Helper function to generate a task plan
 export async function generateTaskPlan(taskDescription: string): Promise<TaskPlan> {
 	const result = await generateObject({
-		model: anthropic("claude-3-5-sonnet-20241022"),
+		model: anthropic("claude-4-sonnet-20250514"),
 		prompt: `Analyze this task and create an execution plan with exactly 3 steps: ${taskDescription}
 
 Remember:

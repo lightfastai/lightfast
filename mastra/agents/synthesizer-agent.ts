@@ -46,7 +46,7 @@ export type SynthesisOutput = z.infer<typeof synthesisOutputSchema>;
 export const synthesizerAgent = new Agent({
 	name: "synthesizerAgent",
 	description: "Synthesizes execution results into a coherent final report",
-	model: anthropic("claude-3-5-sonnet-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	instructions: `You are a synthesis agent that creates comprehensive reports from task execution results.
 
 Your role is to:
@@ -90,7 +90,7 @@ export async function synthesizeResults(
 
 	// Generate the synthesis
 	const synthesis = await generateObject({
-		model: anthropic("claude-3-5-sonnet-20241022"),
+		model: anthropic("claude-4-sonnet-20250514"),
 		prompt: `Synthesize these task execution results into a comprehensive report:
 
 Original Task: ${originalTask}

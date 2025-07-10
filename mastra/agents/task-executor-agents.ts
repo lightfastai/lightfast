@@ -73,7 +73,7 @@ let sharedSandbox: SandboxExecutor | null = null;
 export const taskAnalyzerAgent = new Agent({
 	name: "taskAnalyzerAgent",
 	description: "Analyzes computational tasks and creates execution plans",
-	model: anthropic("claude-3-5-sonnet-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	instructions: `Analyze computational tasks and create detailed execution plans for any type of task.
 
 You have access to a powerful sandbox environment with:
@@ -98,7 +98,7 @@ When given a task, analyze it thoroughly and provide a comprehensive execution p
 export const environmentSetupAgent = new Agent({
 	name: "environmentSetupAgent",
 	description: "Configures execution environment based on task requirements",
-	model: anthropic("claude-3-5-sonnet-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	instructions: `Configure execution environments for any type of computational task.
 
 You need to prepare the sandbox environment based on the task analysis. Consider:
@@ -122,7 +122,7 @@ Create a comprehensive environment setup plan based on the task analysis.`,
 export const scriptGeneratorAgent = new Agent({
 	name: "scriptGeneratorAgent",
 	description: "Generates executable scripts in appropriate languages",
-	model: anthropic("claude-3-5-sonnet-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	instructions: `Generate executable scripts in the appropriate language for the task.
 
 You can create scripts in:
@@ -146,7 +146,7 @@ Generate well-structured, maintainable scripts with clear documentation.`,
 export const executionAgent = new Agent({
 	name: "executionAgent",
 	description: "Executes scripts in sandbox and manages results",
-	model: anthropic("claude-3-5-sonnet-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	instructions: `Execute scripts safely in the sandbox environment and collect results.
 
 You will execute scripts that may be written in:
@@ -176,7 +176,7 @@ export async function analyzeTask(taskDescription: string, chatId: string) {
 	});
 
 	const result = await generateObject({
-		model: anthropic("claude-3-5-sonnet-20241022"),
+		model: anthropic("claude-4-sonnet-20250514"),
 		prompt: `Analyze this task: ${taskDescription}
 
 Consider that you have access to:
@@ -249,7 +249,7 @@ export async function setupEnvironment(analysis: TaskExecutionState["analysis"],
 	});
 
 	const result = await generateObject({
-		model: anthropic("claude-3-5-sonnet-20241022"),
+		model: anthropic("claude-4-sonnet-20250514"),
 		prompt: `Based on this task analysis, create environment setup:
 ${JSON.stringify(analysis, null, 2)}
 
@@ -297,7 +297,7 @@ export async function generateScripts(
 	});
 
 	const result = await generateObject({
-		model: anthropic("claude-3-5-sonnet-20241022"),
+		model: anthropic("claude-4-sonnet-20250514"),
 		prompt: `Generate scripts for this task:
 Analysis: ${JSON.stringify(analysis, null, 2)}
 Environment: ${JSON.stringify(environment, null, 2)}

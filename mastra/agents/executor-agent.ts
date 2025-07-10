@@ -39,7 +39,7 @@ export type StepExecutionResult = z.infer<typeof stepExecutionResultSchema>;
 export const executorAgent = new Agent({
 	name: "executorAgent",
 	description: "Executes individual steps in a sandbox environment",
-	model: anthropic("claude-3-5-sonnet-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	instructions: `You are a step execution agent that runs commands in a sandbox environment.
 
 Your role is to:
@@ -87,7 +87,7 @@ export async function executeStep(step: StepExecutionInput, sandbox?: SandboxExe
 
 		// Analyze the output to extract insights
 		const analysisResult = await generateObject({
-			model: anthropic("claude-3-5-sonnet-20241022"),
+			model: anthropic("claude-4-sonnet-20250514"),
 			prompt: `Analyze this command execution result:
 
 Command: ${step.command}

@@ -76,7 +76,7 @@ When given a task, use the analyze_task tool to process it.`,
 
 						// Generate object directly without nested step
 						const _result = await generateObject({
-							model: anthropicProvider("claude-3-5-sonnet-20241022"),
+							model: anthropicProvider("claude-4-sonnet-20250514"),
 							prompt: `Analyze this task: ${params.taskDescription}
 
 Consider that you have access to:
@@ -192,7 +192,7 @@ When the task analysis is complete, use the setup_environment tool to configure 
 
 						// Generate object directly without nested step
 						const result = await generateObject({
-							model: anthropicProvider("claude-3-5-sonnet-20241022"),
+							model: anthropicProvider("claude-4-sonnet-20250514"),
 							prompt: `Based on this task analysis, create environment setup:
 ${JSON.stringify(analysis, null, 2)}
 
@@ -279,7 +279,7 @@ When the environment is set up, use the generate_scripts tool to create the nece
 
 						// Generate object directly without nested step
 						const result = await generateObject({
-							model: anthropicProvider("claude-3-5-sonnet-20241022"),
+							model: anthropicProvider("claude-4-sonnet-20250514"),
 							prompt: `Generate scripts for this task:
 Analysis: ${JSON.stringify(analysis, null, 2)}
 Environment: ${JSON.stringify(environment, null, 2)}
@@ -574,7 +574,7 @@ When scripts are generated, use the execute_scripts tool to run them.`,
 			}),
 
 			defaultModel: anthropic({
-				model: "claude-3-5-sonnet-20241022",
+				model: "claude-4-sonnet-20250514",
 				defaultParameters: {
 					max_tokens: 4096,
 				},
