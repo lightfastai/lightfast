@@ -1,4 +1,5 @@
 import { Sandbox } from "@vercel/sandbox";
+import ms from "ms";
 
 export interface SandboxExecutionResult {
 	success: boolean;
@@ -13,7 +14,12 @@ export class SandboxExecutor {
 
 	async initialize(): Promise<void> {
 		if (!this.sandbox) {
-			this.sandbox = await Sandbox.create();
+			// Create sandbox with proper configuration
+			// VERCEL_OIDC_TOKEN is automatically inferred from environment
+			this.sandbox = await Sandbox.create({
+				timeout: ms("10m"), // 10 minute timeout
+				runtime: "node22",
+			});
 		}
 	}
 
@@ -23,47 +29,69 @@ export class SandboxExecutor {
 		try {
 			await this.initialize();
 
-			// Write package.json
-			await this.sandbox!.writeFiles([
-				{
-					path: "/vercel/sandbox/package.json",
-					content: Buffer.from(JSON.stringify(packageJson, null, 2)),
-				},
-			]);
-
-			// Install dependencies
-			const installResult = await this.sandbox!.runCommand({
-				cmd: "npm",
-				args: ["install"],
-				cwd: "/vercel/sandbox",
+			// Create directory structure first
+			await this.sandbox?.runCommand({
+				cmd: "mkdir",
+				args: ["-p", "/home/vercel-sandbox/project"],
 			});
 
-			if (installResult.exitCode !== 0) {
+			// Write package.json using Node.js
+			const packageJsonContent = JSON.stringify(packageJson, null, 2);
+			await this.sandbox?.runCommand({
+				cmd: "node",
+				args: [
+					"-e",
+					`require('fs').writeFileSync('/home/vercel-sandbox/project/package.json', ${JSON.stringify(packageJsonContent)})`,
+				],
+			});
+
+			// Install dependencies
+			const installResult = await this.sandbox?.runCommand({
+				cmd: "npm",
+				args: ["install"],
+				cwd: "/home/vercel-sandbox/project",
+			});
+
+			if (!installResult || installResult.exitCode !== 0) {
+				const stderr = installResult ? await installResult.stderr() : "No install result";
 				return {
 					success: false,
-					error: `Failed to install dependencies: ${await installResult.stderr()}`,
-					exitCode: installResult.exitCode,
+					error: `Failed to install dependencies: ${stderr}`,
+					exitCode: installResult?.exitCode,
 					duration: Date.now() - startTime,
 				};
 			}
 
-			// Write and execute setup script
-			await this.sandbox!.writeFiles([
-				{
-					path: "/vercel/sandbox/setup.js",
-					content: Buffer.from(setupScript),
-				},
-			]);
-			const setupResult = await this.sandbox!.runCommand({
+			// Write setup script using Node.js
+			await this.sandbox?.runCommand({
+				cmd: "node",
+				args: [
+					"-e",
+					`require('fs').writeFileSync('/home/vercel-sandbox/project/setup.js', ${JSON.stringify(setupScript)})`,
+				],
+			});
+			
+			const setupResult = await this.sandbox?.runCommand({
 				cmd: "node",
 				args: ["setup.js"],
-				cwd: "/vercel/sandbox",
+				cwd: "/home/vercel-sandbox/project",
 			});
+
+			if (!setupResult) {
+				return {
+					success: false,
+					error: "No setup result",
+					duration: Date.now() - startTime,
+				};
+			}
+
+			const stdout = await setupResult.stdout();
+			const stderr = await setupResult.stderr();
 
 			return {
 				success: setupResult.exitCode === 0,
-				output: await setupResult.stdout(),
-				error: (await setupResult.stderr()) || undefined,
+				output: stdout,
+				error: stderr || undefined,
 				exitCode: setupResult.exitCode,
 				duration: Date.now() - startTime,
 			};
@@ -82,25 +110,43 @@ export class SandboxExecutor {
 		try {
 			await this.initialize();
 
-			// Write script to sandbox
-			await this.sandbox!.writeFiles([
-				{
-					path: `/vercel/sandbox/${scriptName}`,
-					content: Buffer.from(scriptContent),
-				},
-			]);
+			// Ensure directory exists
+			await this.sandbox?.runCommand({
+				cmd: "mkdir",
+				args: ["-p", "/home/vercel-sandbox/project"],
+			});
+
+			// Write script using Node.js
+			await this.sandbox?.runCommand({
+				cmd: "node",
+				args: [
+					"-e",
+					`require('fs').writeFileSync('/home/vercel-sandbox/project/${scriptName}', ${JSON.stringify(scriptContent)})`,
+				],
+			});
 
 			// Execute script
-			const result = await this.sandbox!.runCommand({
+			const result = await this.sandbox?.runCommand({
 				cmd: "node",
 				args: [scriptName],
-				cwd: "/vercel/sandbox",
+				cwd: "/home/vercel-sandbox/project",
 			});
+
+			if (!result) {
+				return {
+					success: false,
+					error: "No execution result",
+					duration: Date.now() - startTime,
+				};
+			}
+
+			const stdout = await result.stdout();
+			const stderr = await result.stderr();
 
 			return {
 				success: result.exitCode === 0,
-				output: await result.stdout(),
-				error: (await result.stderr()) || undefined,
+				output: stdout,
+				error: stderr || undefined,
 				exitCode: result.exitCode,
 				duration: Date.now() - startTime,
 			};
@@ -115,7 +161,7 @@ export class SandboxExecutor {
 
 	async cleanup(): Promise<void> {
 		if (this.sandbox) {
-			// Sandbox is cleaned up automatically
+			// Sandbox is cleaned up automatically when dereferenced
 			this.sandbox = null;
 		}
 	}

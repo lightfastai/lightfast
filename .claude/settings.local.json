@@ -13,7 +13,9 @@
 			"Bash(sed:*)",
 			"Bash(pnpm typecheck:*)",
 			"Bash(pnpm biome check:*)",
-			"Bash(pnpm biome check:*)"
+			"Bash(pnpm biome check:*)",
+			"Bash(pnpm tsx:*)",
+			"Bash(pnpm with-env:*)"
 		],
 		"deny": []
 	}

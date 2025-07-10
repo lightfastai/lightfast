@@ -18,6 +18,9 @@ export const env = createEnv({
 		ANTHROPIC_API_KEY: z.string().min(1),
 		// Node environment
 		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+		// Databsae
+		DATABASE_URL: z.string().min(1),
 	},
 
 	/**
@@ -42,6 +45,7 @@ export const env = createEnv({
 		ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
 		NODE_ENV: process.env.NODE_ENV,
 
+		DATABASE_URL: process.env.DATABASE_URL,
 		// Client
 		// NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 	},

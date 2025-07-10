@@ -4,6 +4,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { env } from "@/env";
 import type { TaskNetworkState } from "@/lib/agent-kit/types/task-network-types";
+import { dbService } from "@/lib/database/db-service";
 import { SandboxExecutor } from "@/lib/sandbox/sandbox-executor";
 import { inngest } from "../client";
 import { taskExecutionChannel } from "../realtime";
@@ -16,6 +17,12 @@ export const taskExecutorFunction = inngest.createFunction(
 	{ event: "task/execute" },
 	async ({ event, step, publish }) => {
 		const { taskDescription, chatId, constraints } = event.data;
+
+		// Create thread if it doesn't exist
+		await dbService.createThread(chatId, { constraints });
+
+		// Create job for this task
+		const jobId = await dbService.createJob(chatId, taskDescription);
 
 		// Publish initial status
 		await publish(
@@ -40,6 +47,17 @@ export const taskExecutorFunction = inngest.createFunction(
 					}),
 					handler: async (params, { network }) => {
 						console.log("Analyze task handler called with params:", params);
+
+						// Track stage change
+						await dbService.addJobEvent(jobId, {
+							type: "stage_changed",
+							data: {
+								previousStage: "pending",
+								newStage: "analyzing",
+							},
+						});
+
+						const startTime = Date.now();
 
 						await publish(
 							taskExecutionChannel(chatId).messages({
@@ -106,6 +124,19 @@ Provide:
 						state.analysis = _result.object;
 						state.status = "environment-setup";
 
+						// Track agent execution
+						await dbService.addJobEvent(jobId, {
+							type: "agent_executed",
+							data: {
+								agentName: "Task Analyzer",
+								toolName: "analyze_task",
+								input: params,
+								output: _result.object,
+								success: true,
+								duration: Date.now() - startTime,
+							},
+						});
+
 						return { success: true, data: _result.object };
 					},
 				}),
@@ -132,6 +163,17 @@ Vercel Sandbox Specifications:
 					description: "Create environment configuration",
 					parameters: z.object({}),
 					handler: async (_params, { network }) => {
+						// Track stage change
+						await dbService.addJobEvent(jobId, {
+							type: "stage_changed",
+							data: {
+								previousStage: "analyzing",
+								newStage: "environment-setup",
+							},
+						});
+
+						const startTime = Date.now();
+
 						await publish(
 							taskExecutionChannel(chatId).messages({
 								id: crypto.randomUUID(),
@@ -180,6 +222,19 @@ Create:
 						state.environment = result.object;
 						state.status = "generating-scripts";
 
+						// Track agent execution
+						await dbService.addJobEvent(jobId, {
+							type: "agent_executed",
+							data: {
+								agentName: "Environment Setup",
+								toolName: "setup_environment",
+								input: _params,
+								output: result.object,
+								success: true,
+								duration: Date.now() - startTime,
+							},
+						});
+
 						return { success: true, data: result.object };
 					},
 				}),
@@ -208,6 +263,17 @@ Important: Scripts should be aware they're running in /vercel/sandbox with node2
 					description: "Generate executable scripts",
 					parameters: z.object({}),
 					handler: async (_params, { network }) => {
+						// Track stage change
+						await dbService.addJobEvent(jobId, {
+							type: "stage_changed",
+							data: {
+								previousStage: "environment-setup",
+								newStage: "generating-scripts",
+							},
+						});
+
+						const startTime = Date.now();
+
 						await publish(
 							taskExecutionChannel(chatId).messages({
 								id: crypto.randomUUID(),
@@ -263,6 +329,19 @@ Create:
 						state.scripts = result.object;
 						state.status = "executing";
 
+						// Track agent execution
+						await dbService.addJobEvent(jobId, {
+							type: "agent_executed",
+							data: {
+								agentName: "Script Generator",
+								toolName: "generate_scripts",
+								input: _params,
+								output: result.object,
+								success: true,
+								duration: Date.now() - startTime,
+							},
+						});
+
 						return { success: true, data: result.object };
 					},
 				}),
@@ -291,6 +370,17 @@ Scripts execute in /vercel/sandbox with access to node22 and python3.13.`,
 					description: "Execute generated scripts",
 					parameters: z.object({}),
 					handler: async (_params, { network }) => {
+						// Track stage change
+						await dbService.addJobEvent(jobId, {
+							type: "stage_changed",
+							data: {
+								previousStage: "generating-scripts",
+								newStage: "executing",
+							},
+						});
+
+						const startTime = Date.now();
+
 						await publish(
 							taskExecutionChannel(chatId).messages({
 								id: crypto.randomUUID(),
@@ -379,17 +469,47 @@ Scripts execute in /vercel/sandbox with access to node22 and python3.13.`,
 								}),
 							);
 
+							// Track agent execution
+							await dbService.addJobEvent(jobId, {
+								type: "agent_executed",
+								data: {
+									agentName: "Execution Agent",
+									toolName: "execute_scripts",
+									input: _params,
+									output: executionResults,
+									success: true,
+									duration: Date.now() - startTime,
+								},
+							});
+
 							return { success: true, data: executionResults };
 						} catch (error) {
 							await executor.cleanup();
+							const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
 							await publish(
 								taskExecutionChannel(chatId).messages({
 									id: crypto.randomUUID(),
-									message: `❌ Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+									message: `❌ Error: ${errorMessage}`,
 									role: "assistant",
 								}),
 							);
-							return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+
+							// Track agent execution with error
+							await dbService.addJobEvent(jobId, {
+								type: "agent_executed",
+								data: {
+									agentName: "Execution Agent",
+									toolName: "execute_scripts",
+									input: _params,
+									output: null,
+									success: false,
+									duration: Date.now() - startTime,
+									error: errorMessage,
+								},
+							});
+
+							return { success: false, error: errorMessage };
 						}
 					},
 				}),
@@ -449,6 +569,9 @@ Scripts execute in /vercel/sandbox with access to node22 and python3.13.`,
 			analysis?: TaskNetworkState["analysis"];
 			scripts?: TaskNetworkState["scripts"];
 		};
+
+		const jobStartTime = Date.now();
+
 		try {
 			const networkResult = await taskNetwork.run(taskDescription);
 
@@ -462,13 +585,67 @@ Scripts execute in /vercel/sandbox with access to node22 and python3.13.`,
 					analysis: finalState.analysis,
 					scripts: finalState.scripts,
 				};
+
+				// Track job completion
+				await dbService.addJobEvent(jobId, {
+					type: "job_completed",
+					data: {
+						success: true,
+						finalOutput: finalState.executionResults,
+						duration: Date.now() - jobStartTime,
+					},
+				});
+
+				// Update thread status
+				await dbService.updateThreadStatus(chatId, "completed");
 			} else if (finalState?.status === "error") {
+				// Track job failure
+				await dbService.addJobEvent(jobId, {
+					type: "job_completed",
+					data: {
+						success: false,
+						error: finalState.error || "Task execution failed",
+						duration: Date.now() - jobStartTime,
+					},
+				});
+
+				// Update thread status
+				await dbService.updateThreadStatus(chatId, "error");
+
 				throw new Error(finalState.error || "Task execution failed");
 			} else {
+				// Track job failure
+				await dbService.addJobEvent(jobId, {
+					type: "job_completed",
+					data: {
+						success: false,
+						error: "Task did not complete successfully",
+						duration: Date.now() - jobStartTime,
+					},
+				});
+
+				// Update thread status
+				await dbService.updateThreadStatus(chatId, "error");
+
 				throw new Error("Task did not complete successfully");
 			}
 		} catch (error) {
 			console.error("Task execution error:", error);
+			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+			// Track job failure
+			await dbService.addJobEvent(jobId, {
+				type: "job_completed",
+				data: {
+					success: false,
+					error: errorMessage,
+					duration: Date.now() - jobStartTime,
+				},
+			});
+
+			// Update thread status
+			await dbService.updateThreadStatus(chatId, "error");
+
 			throw error;
 		}
 
