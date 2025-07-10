@@ -16,3 +16,6 @@ export const mastra = new Mastra({
 		executionAgent,
 	},
 });
+
+// Export workflow
+export { taskExecutorWorkflow } from "./workflows/task-executor-workflow";
