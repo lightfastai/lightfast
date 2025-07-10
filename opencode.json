@@ -9,69 +9,7 @@
 		"playwright": {
 			"type": "local",
 			"command": ["npx", "-y", "@executeautomation/playwright-mcp-server"],
-			"enabled": true,
-			"env": {
-				"PLAYWRIGHT_HEADLESS": "true",
-				"PLAYWRIGHT_TIMEOUT": "30000"
-			}
-		}
-	},
-	"dependencies": {
-		"playwright": "^1.48.0",
-		"@playwright/test": "^1.48.0",
-		"@executeautomation/playwright-mcp-server": "latest"
-	},
-	"scripts": {
-		"playwright:install": "npx playwright install",
-		"playwright:install-deps": "npx playwright install-deps",
-		"test:e2e": "npx playwright test",
-		"test:e2e:ui": "npx playwright test --ui",
-		"test:e2e:headed": "npx playwright test --headed"
-	},
-	"setup": {
-		"postInstall": [
-			"npm install playwright @playwright/test @executeautomation/playwright-mcp-server",
-			"npx playwright install",
-			"npx playwright install-deps"
-		]
-	},
-	"config": {
-		"playwright": {
-			"testDir": "./tests/e2e",
-			"timeout": 30000,
-			"expect": {
-				"timeout": 5000
-			},
-			"fullyParallel": true,
-			"forbidOnly": true,
-			"retries": 2,
-			"workers": 4,
-			"reporter": "html",
-			"use": {
-				"baseURL": "http://localhost:3000",
-				"trace": "on-first-retry",
-				"screenshot": "only-on-failure"
-			},
-			"projects": [
-				{
-					"name": "chromium",
-					"use": {
-						"...devices": "Desktop Chrome"
-					}
-				},
-				{
-					"name": "firefox",
-					"use": {
-						"...devices": "Desktop Firefox"
-					}
-				},
-				{
-					"name": "webkit",
-					"use": {
-						"...devices": "Desktop Safari"
-					}
-				}
-			]
+			"enabled": true
 		}
 	}
 }

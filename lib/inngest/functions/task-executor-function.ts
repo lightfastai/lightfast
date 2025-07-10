@@ -3,7 +3,7 @@ import { anthropic, createAgent, createNetwork, createState, createTool } from "
 import { generateObject } from "ai";
 import { z } from "zod";
 import { env } from "@/env";
-import type { TaskNetworkState } from "@/lib/agent-kit/types/task-network-types";
+import type { TaskNetworkState } from "@/mastra/types/task-network-types";
 import { SandboxExecutor } from "@/lib/sandbox/sandbox-executor";
 import { inngest } from "../client";
 import { taskExecutionChannel } from "../realtime";

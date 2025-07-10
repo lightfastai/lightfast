@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { executeTaskWorkflow } from "@/lib/mastra/simple-executor";
+import { taskExecutionChannel } from "@/lib/mastra/realtime";
 
 export async function fetchSubscriptionToken(chatId: string) {
 	console.log("fetching subscription token for chatId", chatId);
@@ -12,17 +12,40 @@ export async function fetchSubscriptionToken(chatId: string) {
 	};
 }
 
-export async function runTaskExecutor(taskDescription: string) {
+export async function runTaskExecutor(_taskDescription: string) {
 	const chatId = randomUUID();
+	const _channel = taskExecutionChannel(chatId);
 
-	// Execute the workflow directly
+	// Execute the network
 	// In a production setup, you might want to queue this
-	executeTaskWorkflow({
-		taskDescription,
-		chatId,
-	}).catch((error) => {
-		console.error("Error executing workflow:", error);
-	});
+	// taskExecutorNetwork
+	// 	.execute({
+	// 		task: taskDescription,
+	// 		chatId,
+	// 		context: {
+	// 			environment: "sandbox",
+	// 			allowFileOperations: true,
+	// 			maxIterations: 10,
+	// 		},
+	// 	})
+	// 	.then((result) => {
+	// 		channel.messages({
+	// 			role: "assistant",
+	// 			message: result.finalOutput.summary,
+	// 			id: `msg-${Date.now()}`,
+	// 		});
+	// 		channel.status({
+	// 			status: "completed",
+	// 			message: "Task execution completed",
+	// 		});
+	// 	})
+	// 	.catch((error: Error) => {
+	// 		console.error("Error executing task:", error);
+	// 		channel.status({
+	// 			status: "error",
+	// 			message: error.message,
+	// 		});
+	// 	});
 
 	return chatId;
 }

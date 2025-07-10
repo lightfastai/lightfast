@@ -1,40 +1,12 @@
 import { Mastra } from "@mastra/core";
-import { executorAgent } from "./agents/executor-agent";
-import { plannerAgent } from "./agents/planner-agent";
-import { taskExecutorAgent } from "./agents/simple-task-agent";
-import { synthesizerAgent } from "./agents/synthesizer-agent";
-import {
-	environmentSetupAgent,
-	executionAgent,
-	scriptGeneratorAgent,
-	taskAnalyzerAgent,
-} from "./agents/task-executor-agents";
-import { taskPlannerNetwork } from "./networks/task-planner-network";
-import { taskExecutorWorkflow } from "./workflows/task-executor-workflow";
+import { planner } from "./agents/planner";
+import { searcher } from "./agents/searcher";
 
 export const mastra = new Mastra({
 	agents: {
-		// Original agents
-		taskExecutorAgent,
-		taskAnalyzerAgent,
-		environmentSetupAgent,
-		scriptGeneratorAgent,
-		executionAgent,
-		// Network agents
-		plannerAgent,
-		executorAgent,
-		synthesizerAgent,
+		planner,
+		searcher,
 	},
-	workflows: {
-		taskExecutorWorkflow,
-	},
-	vnext_networks: {
-		taskPlannerNetwork,
-	},
+	workflows: {},
+	vnext_networks: {},
 });
-
-// Export everything
-export { taskExecutorWorkflow };
-export { cleanupExecutorSandbox, executeStep, executorAgent } from "./agents/executor-agent";
-export { generateTaskPlan, plannerAgent } from "./agents/planner-agent";
-export { synthesizeResults, synthesizerAgent } from "./agents/synthesizer-agent";
