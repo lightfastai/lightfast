@@ -14,8 +14,11 @@
 		"format": "biome format --write .",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"with-env": "dotenv -e .env.local --",
-		"test:sandbox": "export $(cat .env.test 2>/dev/null | xargs) && pnpm exec tsx lib/sandbox/sandbox-executor.test.ts",
-		"test:sandbox:mock": "tsx lib/sandbox/sandbox-executor-mock.test.ts"
+		"test:sandbox": "set -a && source .env.test 2>/dev/null && set +a && pnpm exec tsx lib/sandbox/sandbox-executor.test.ts",
+		"test:sandbox:mock": "tsx lib/sandbox/sandbox-executor-mock.test.ts",
+		"test:sandbox:integration": "./lib/sandbox/run-integration-tests.sh",
+		"test:sandbox:scenarios": "set -a && source .env.test 2>/dev/null && set +a && pnpm exec tsx lib/sandbox/sandbox-executor-scenarios.test.ts",
+		"test:sandbox:all": "pnpm test:sandbox && pnpm test:sandbox:integration && pnpm test:sandbox:scenarios"
 	},
 	"keywords": [],
 	"author": "",

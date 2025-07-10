@@ -221,8 +221,12 @@ export class SandboxExecutor {
 	 * Download a file from URL
 	 */
 	async downloadFile(url: string, outputPath?: string): Promise<CommandResult> {
-		const args = outputPath ? [url, "-O", outputPath] : [url];
-		return this.runCommand("wget", args);
+		// Use curl instead of wget as it's more commonly available
+		if (outputPath) {
+			return this.runCommand("curl", ["-L", "-o", outputPath, url]);
+		} else {
+			return this.runCommand("curl", ["-L", "-O", url]);
+		}
 	}
 
 	/**
