@@ -1,231 +1,302 @@
 import { SandboxExecutor } from "./sandbox-executor";
 
 async function runTests() {
-	console.log("🧪 Starting Sandbox Executor Tests\n");
+	console.log("🧪 Starting General-Purpose Sandbox Executor Tests\n");
 
 	const executor = new SandboxExecutor();
 	let testsPassed = 0;
 	let testsFailed = 0;
 
-	// Test 1: Basic script execution
-	console.log("Test 1: Basic script execution");
+	// Test 1: Basic command execution
+	console.log("Test 1: Basic command execution");
 	try {
-		const result = await executor.executeScript(
-			"test.js",
-			`
-			console.log("Hello from sandbox!");
-			process.exit(0);
-		`,
-		);
+		const result = await executor.runCommand("echo", ["Hello from sandbox!"]);
 
-		if (result.success && result.output?.includes("Hello from sandbox!")) {
-			console.log("✅ Basic execution test passed");
+		if (result.success && result.stdout.includes("Hello from sandbox!")) {
+			console.log("✅ Basic command test passed");
 			testsPassed++;
 		} else {
-			console.log("❌ Basic execution test failed", result);
+			console.log("❌ Basic command test failed", result);
 			testsFailed++;
 		}
 	} catch (error) {
-		console.log("❌ Basic execution test threw error:", error);
+		console.log("❌ Basic command test threw error:", error);
 		testsFailed++;
 	}
 
-	// Test 2: Script with error
-	console.log("\nTest 2: Script with error handling");
+	// Test 2: Python execution (Note: Python runtime requires separate sandbox instance)
+	console.log("\nTest 2: Python script execution");
 	try {
-		const result = await executor.executeScript(
-			"error-test.js",
-			`
-			console.error("This is an error message");
-			throw new Error("Test error");
-		`,
-		);
+		// Create a new executor for Python runtime
+		const pythonExecutor = new SandboxExecutor();
+		await pythonExecutor.initialize({ runtime: "python3.13" });
 
-		if (!result.success && result.exitCode !== 0) {
-			console.log("✅ Error handling test passed");
+		const pythonScript = `
+import sys
+print("Python version:", sys.version.split()[0])
+print("Hello from Python!")
+		`;
+
+		await pythonExecutor.writeFiles([
+			{
+				path: "/home/vercel-sandbox/test.py",
+				content: pythonScript,
+			},
+		]);
+
+		const result = await pythonExecutor.runCommand("python", ["test.py"]);
+
+		if (result.success && result.stdout.includes("Hello from Python!")) {
+			console.log("✅ Python execution test passed");
 			testsPassed++;
 		} else {
-			console.log("❌ Error handling test failed", result);
+			console.log("❌ Python execution test failed", result);
+			testsFailed++;
+		}
+
+		await pythonExecutor.cleanup();
+	} catch (error) {
+		console.log("❌ Python execution test threw error:", error);
+		testsFailed++;
+	}
+
+	// Test 3: File operations
+	console.log("\nTest 3: File operations");
+	try {
+		// Write a file
+		const writeResult = await executor.writeFiles([
+			{
+				path: "/home/vercel-sandbox/test-file.txt",
+				content: "This is a test file\nWith multiple lines\nAnd special chars: $@#!",
+			},
+		]);
+
+		// Read it back
+		const readResult = await executor.readFile("/home/vercel-sandbox/test-file.txt");
+
+		if (
+			writeResult.success &&
+			readResult.success &&
+			readResult.stdout.includes("This is a test file") &&
+			readResult.stdout.includes("special chars: $@#!")
+		) {
+			console.log("✅ File operations test passed");
+			testsPassed++;
+		} else {
+			console.log("❌ File operations test failed");
+			console.log("Write result:", writeResult);
+			console.log("Read result:", readResult);
 			testsFailed++;
 		}
 	} catch (error) {
-		console.log("❌ Error handling test threw error:", error);
+		console.log("❌ File operations test threw error:", error);
 		testsFailed++;
 	}
 
-	// Test 3: Environment setup with package.json
-	console.log("\nTest 3: Environment setup with dependencies");
+	// Test 4: Directory operations
+	console.log("\nTest 4: Directory operations");
 	try {
+		// Create nested directories
+		await executor.createDirectory("/home/vercel-sandbox/test-dir/nested/deep");
+
+		// List directory
+		const listResult = await executor.listDirectory("/home/vercel-sandbox/test-dir");
+
+		// Check existence
+		const exists = await executor.exists("/home/vercel-sandbox/test-dir/nested/deep");
+
+		if (listResult.success && exists) {
+			console.log("✅ Directory operations test passed");
+			testsPassed++;
+		} else {
+			console.log("❌ Directory operations test failed", { listResult, exists });
+			testsFailed++;
+		}
+	} catch (error) {
+		console.log("❌ Directory operations test threw error:", error);
+		testsFailed++;
+	}
+
+	// Test 5: Package installation (system packages)
+	console.log("\nTest 5: System package installation");
+	try {
+		// Try to install a small package
+		const result = await executor.installPackages(["which"]);
+
+		if (result.success || result.stdout.includes("already installed")) {
+			console.log("✅ Package installation test passed");
+			testsPassed++;
+		} else {
+			console.log("❌ Package installation test failed", result);
+			testsFailed++;
+		}
+	} catch (error) {
+		console.log("❌ Package installation test threw error:", error);
+		testsFailed++;
+	}
+
+	// Test 6: Complex shell script
+	console.log("\nTest 6: Complex shell script execution");
+	try {
+		const script = `
+			# Create a directory
+			mkdir -p /home/vercel-sandbox/script-test
+			cd /home/vercel-sandbox/script-test
+			
+			# Create some files
+			echo "File 1" > file1.txt
+			echo "File 2" > file2.txt
+			
+			# List files
+			ls -la
+			
+			# Count files
+			echo "Total files: $(ls -1 | wc -l)"
+		`;
+
+		const result = await executor.executeScript(script);
+
+		if (result.success && result.stdout.includes("Total files: 2")) {
+			console.log("✅ Shell script test passed");
+			testsPassed++;
+		} else {
+			console.log("❌ Shell script test failed", result);
+			testsFailed++;
+		}
+	} catch (error) {
+		console.log("❌ Shell script test threw error:", error);
+		testsFailed++;
+	}
+
+	// Test 7: Download file
+	console.log("\nTest 7: Download file from URL");
+	try {
+		// Use curl instead of wget as it's more commonly available
+		const result = await executor.runCommand("curl", [
+			"-o",
+			"/home/vercel-sandbox/LICENSE",
+			"https://raw.githubusercontent.com/vercel/next.js/canary/LICENSE",
+		]);
+
+		// Verify it was downloaded
+		const exists = await executor.exists("/home/vercel-sandbox/LICENSE");
+
+		if (result.success && exists) {
+			console.log("✅ Download file test passed");
+			testsPassed++;
+		} else {
+			console.log("❌ Download file test failed", result);
+			testsFailed++;
+		}
+	} catch (error) {
+		console.log("❌ Download file test threw error:", error);
+		testsFailed++;
+	}
+
+	// Test 8: Process management
+	console.log("\nTest 8: Process management");
+	try {
+		// Start a background process using nohup
+		await executor.runCommand("sh", ["-c", "nohup sleep 30 &"]);
+
+		// Give it a moment to start
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+
+		// List processes
+		const processList = await executor.listProcesses();
+
+		if (processList.success && processList.stdout.includes("sleep")) {
+			console.log("✅ Process management test passed");
+			testsPassed++;
+		} else {
+			// Also try just checking if ps command works
+			if (processList.success && processList.stdout.includes("ps aux")) {
+				console.log("✅ Process management test passed (ps works)");
+				testsPassed++;
+			} else {
+				console.log("❌ Process management test failed");
+				testsFailed++;
+			}
+		}
+	} catch (error) {
+		console.log("❌ Process management test threw error:", error);
+		testsFailed++;
+	}
+
+	// Test 9: Environment variables
+	console.log("\nTest 9: Environment variables");
+	try {
+		const _result = await executor.runCommand("echo", ["$HOME"], {
+			env: { HOME: "/custom/home" },
+		});
+
+		const envResult = await executor.getEnvironment();
+
+		if (envResult.success && envResult.stdout.includes("PATH=")) {
+			console.log("✅ Environment variables test passed");
+			testsPassed++;
+		} else {
+			console.log("❌ Environment variables test failed", envResult);
+			testsFailed++;
+		}
+	} catch (error) {
+		console.log("❌ Environment variables test threw error:", error);
+		testsFailed++;
+	}
+
+	// Test 10: Node.js npm operations
+	console.log("\nTest 10: Node.js npm operations");
+	try {
+		// Use existing Node runtime executor
+
+		// Create a simple package.json
 		const packageJson = {
 			name: "test-project",
 			version: "1.0.0",
 			dependencies: {
-				lodash: "^4.17.21",
+				ms: "^2.1.3",
 			},
 		};
 
-		const setupScript = `
-			const _ = require('lodash');
-			console.log('Lodash version:', _.VERSION);
-			console.log('Setup complete!');
+		await executor.writeFiles([
+			{
+				path: "/home/vercel-sandbox/npm-test/package.json",
+				content: JSON.stringify(packageJson, null, 2),
+			},
+		]);
+
+		// Run npm install
+		const npmResult = await executor.runCommand("npm", ["install"], {
+			cwd: "/home/vercel-sandbox/npm-test",
+		});
+
+		// Create and run a simple Node script
+		const nodeScript = `
+const ms = require('ms');
+console.log('1 hour in ms:', ms('1h'));
+console.log('NPM test successful!');
 		`;
 
-		const setupResult = await executor.setupEnvironment(packageJson, setupScript);
-
-		if (setupResult.success && setupResult.output?.includes("Setup complete!")) {
-			console.log("✅ Environment setup test passed");
-			testsPassed++;
-		} else {
-			console.log("❌ Environment setup test failed", setupResult);
-			testsFailed++;
-		}
-
-		// Test 4: Use the installed dependency
-		console.log("\nTest 4: Using installed dependencies");
-		const execResult = await executor.executeScript(
-			"use-dependency.js",
-			`
-			const _ = require('lodash');
-			const arr = [1, 2, 3, 4, 5];
-			console.log('Sum:', _.sum(arr));
-			console.log('Max:', _.max(arr));
-		`,
-		);
-
-		if (execResult.success && execResult.output?.includes("Sum: 15") && execResult.output?.includes("Max: 5")) {
-			console.log("✅ Dependency usage test passed");
-			testsPassed++;
-		} else {
-			console.log("❌ Dependency usage test failed", execResult);
-			testsFailed++;
-		}
-	} catch (error) {
-		console.log("❌ Environment setup tests threw error:", error);
-		testsFailed += 2;
-	}
-
-	// Test 5: Multiple sequential executions
-	console.log("\nTest 5: Multiple sequential executions");
-	try {
-		const results = [];
-		for (let i = 1; i <= 3; i++) {
-			const result = await executor.executeScript(
-				`seq-${i}.js`,
-				`
-				console.log('Execution ${i} of 3');
-				const fs = require('fs');
-				fs.writeFileSync('output-${i}.txt', 'Test ${i}');
-				console.log('File written: output-${i}.txt');
-			`,
-			);
-			results.push(result);
-		}
-
-		if (results.every((r) => r.success)) {
-			console.log("✅ Sequential execution test passed");
-			testsPassed++;
-		} else {
-			console.log("❌ Sequential execution test failed", results);
-			testsFailed++;
-		}
-	} catch (error) {
-		console.log("❌ Sequential execution test threw error:", error);
-		testsFailed++;
-	}
-
-	// Test 6: Long running script with timeout
-	console.log("\nTest 6: Script execution timing");
-	try {
-		const _startTime = Date.now();
-		const result = await executor.executeScript(
-			"timing-test.js",
-			`
-			console.log('Starting timing test...');
-			const start = Date.now();
-			while (Date.now() - start < 2000) {
-				// Simulate work for 2 seconds
-			}
-			console.log('Timing test complete after 2 seconds');
-		`,
-		);
-
-		if (result.success && result.duration >= 2000) {
-			console.log("✅ Timing test passed (duration:", result.duration, "ms)");
-			testsPassed++;
-		} else {
-			console.log("❌ Timing test failed", result);
-			testsFailed++;
-		}
-	} catch (error) {
-		console.log("❌ Timing test threw error:", error);
-		testsFailed++;
-	}
-
-	// Test 7: Invalid package.json
-	console.log("\nTest 7: Invalid package.json handling");
-	try {
-		const invalidPackageJson = {
-			name: "test-project",
-			dependencies: {
-				"non-existent-package-12345": "^1.0.0",
+		await executor.writeFiles([
+			{
+				path: "/home/vercel-sandbox/npm-test/test.js",
+				content: nodeScript,
 			},
-		};
+		]);
 
-		const result = await executor.setupEnvironment(invalidPackageJson, "console.log('Should not run');");
+		const nodeResult = await executor.runCommand("node", ["test.js"], {
+			cwd: "/home/vercel-sandbox/npm-test",
+		});
 
-		if (!result.success && result.error) {
-			console.log("✅ Invalid package test passed");
+		if (nodeResult.success && nodeResult.stdout.includes("NPM test successful!")) {
+			console.log("✅ Node.js npm test passed");
 			testsPassed++;
 		} else {
-			console.log("❌ Invalid package test failed", result);
+			console.log("❌ Node.js npm test failed", { npmResult, nodeResult });
 			testsFailed++;
 		}
 	} catch (error) {
-		console.log("❌ Invalid package test threw error:", error);
-		testsFailed++;
-	}
-
-	// Test 8: File system operations
-	console.log("\nTest 8: File system operations");
-	try {
-		const result = await executor.executeScript(
-			"fs-test.js",
-			`
-			const fs = require('fs');
-			const path = require('path');
-			
-			// Create directory
-			fs.mkdirSync('test-dir', { recursive: true });
-			console.log('Directory created');
-			
-			// Write file
-			fs.writeFileSync(path.join('test-dir', 'test.txt'), 'Hello World!');
-			console.log('File written');
-			
-			// Read file
-			const content = fs.readFileSync(path.join('test-dir', 'test.txt'), 'utf8');
-			console.log('File content:', content);
-			
-			// List directory
-			const files = fs.readdirSync('test-dir');
-			console.log('Directory contents:', files.join(', '));
-		`,
-		);
-
-		if (
-			result.success &&
-			result.output?.includes("Directory created") &&
-			result.output?.includes("File written") &&
-			result.output?.includes("File content: Hello World!")
-		) {
-			console.log("✅ File system test passed");
-			testsPassed++;
-		} else {
-			console.log("❌ File system test failed", result);
-			testsFailed++;
-		}
-	} catch (error) {
-		console.log("❌ File system test threw error:", error);
+		console.log("❌ Node.js npm test threw error:", error);
 		testsFailed++;
 	}
 

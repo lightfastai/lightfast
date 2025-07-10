@@ -13,6 +13,7 @@
 		"typecheck": "tsc --noEmit",
 		"format": "biome format --write .",
 		"test": "echo \"Error: no test specified\" && exit 1",
+		"with-env": "dotenv -e .env.local --",
 		"test:sandbox": "export $(cat .env.test 2>/dev/null | xargs) && pnpm exec tsx lib/sandbox/sandbox-executor.test.ts",
 		"test:sandbox:mock": "tsx lib/sandbox/sandbox-executor-mock.test.ts"
 	},
@@ -51,6 +52,7 @@
 		"ai": "^4.3.17",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
+		"drizzle-kit": "^0.31.4",
 		"drizzle-orm": "^0.44.2",
 		"geist": "^1.4.2",
 		"inngest": "^3.40.1",

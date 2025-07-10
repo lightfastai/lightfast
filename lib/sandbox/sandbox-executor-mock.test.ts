@@ -46,7 +46,7 @@ class MockSandboxExecutor extends SandboxExecutor {
 		};
 	}
 
-	async executeScript(scriptName: string, scriptContent: string): Promise<any> {
+	async executeScript(_scriptName: string, scriptContent: string): Promise<any> {
 		const startTime = Date.now();
 
 		// Mock script execution based on content
@@ -267,7 +267,7 @@ async function runTests() {
 	// Test 6: Long running script with timeout
 	console.log("\nTest 6: Script execution timing");
 	try {
-		const startTime = Date.now();
+		const _startTime = Date.now();
 		const result = await executor.executeScript(
 			"timing-test.js",
 			`
