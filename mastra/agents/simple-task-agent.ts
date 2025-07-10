@@ -4,7 +4,7 @@ import { Agent } from "@mastra/core";
 export const taskExecutorAgent = new Agent({
 	name: "taskExecutorAgent",
 	description: "Analyzes and executes computational tasks",
-	model: anthropic("claude-3-5-sonnet-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	instructions: `You are a task execution agent that can analyze and execute any computational task.
 
 You have access to a sandbox environment with:
