@@ -27,6 +27,24 @@ const nextConfig: NextConfig = {
 			},
 		},
 	},
+
+	// Webpack configuration to suppress OpenTelemetry warnings
+	webpack: (config, { isServer }) => {
+		if (isServer) {
+			// Suppress warnings for OpenTelemetry instrumentation
+			config.ignoreWarnings = [
+				{
+					module: /require-in-the-middle/,
+					message: /Critical dependency/,
+				},
+				{
+					module: /@opentelemetry\/instrumentation/,
+					message: /Critical dependency/,
+				},
+			];
+		}
+		return config;
+	},
 };
 
 export default nextConfig;
