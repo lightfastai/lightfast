@@ -1,13 +1,9 @@
 import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
 import { commandPlanner } from "./agents/command-planner";
-import { contextAwareSandboxAgent } from "./agents/context-aware-sandbox";
 import { planner } from "./agents/planner";
-import { repoAnalyzer } from "./agents/repo-analyzer";
-import { repoCloner } from "./agents/repo-cloner";
-import { sandboxExecutor } from "./agents/sandbox-executor";
 import { searcher } from "./agents/searcher";
-import { simpleSandboxExecutor } from "./agents/simple-sandbox-executor";
+import { persistentSandboxAgent } from "./agents/persistent-sandbox-agent";
 import { e2bRunnerNetwork } from "./networks/e2b-runner";
 import { exampleNetwork } from "./networks/example";
 import { generalSandboxExecutorNetwork } from "./networks/general-sandbox-executor";
@@ -32,11 +28,7 @@ export const mastra = new Mastra({
 		planner,
 		searcher,
 		commandPlanner,
-		sandboxExecutor,
-		repoCloner,
-		repoAnalyzer,
-		contextAwareSandboxAgent,
-		simpleSandboxExecutor,
+		persistentSandboxAgent,
 	},
 	workflows: {
 		taskPlannerWorkflow,
