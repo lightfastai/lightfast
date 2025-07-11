@@ -19,7 +19,7 @@ const analyzeTaskTool = createTool({
 		try {
 			// Use Anthropic AI to analyze the task and generate steps
 			const result = await generateObject({
-				model: anthropic("claude-3-5-haiku-20241022"),
+				model: anthropic("claude-4-sonnet-20250514"),
 				prompt: `Break down this task into exactly 5 simple, actionable steps: "${taskDescription}"
 
 Return exactly 5 high-level steps that cover the main phases of completing this task. Each step should be:

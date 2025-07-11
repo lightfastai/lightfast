@@ -1,25 +1,26 @@
 {
-	"permissions": {
-		"allow": [
-			"WebFetch(domain:vercel.com)",
-			"Bash(pnpm add:*)",
-			"Bash(pnpm run lint:*)",
-			"Bash(pnpm run:*)",
-			"Bash(rm:*)",
-			"Bash(mkdir:*)",
-			"Bash(ls:*)",
-			"Bash(mv:*)",
-			"Bash(git add:*)",
-			"Bash(sed:*)",
-			"Bash(pnpm typecheck:*)",
-			"Bash(pnpm biome check:*)",
-			"Bash(pnpm biome check:*)",
-			"Bash(pnpm tsx:*)",
-			"Bash(pnpm with-env:*)",
-			"Bash(grep:*)",
-			"Bash(pnpm lint:*)",
-			"WebFetch(domain:mastra.ai)"
-		],
-		"deny": []
-	}
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:vercel.com)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(pnpm run:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(mv:*)",
+      "Bash(git add:*)",
+      "Bash(sed:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm biome check:*)",
+      "Bash(pnpm biome check:*)",
+      "Bash(pnpm tsx:*)",
+      "Bash(pnpm with-env:*)",
+      "Bash(grep:*)",
+      "Bash(pnpm lint:*)",
+      "WebFetch(domain:mastra.ai)",
+      "mcp__mastra-docs__mastraDocs"
+    ],
+    "deny": []
+  }
 }

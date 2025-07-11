@@ -155,7 +155,7 @@ SEARCH STRATEGIES:
 • Use domain filters to focus on authoritative sources when appropriate
 
 Always use the web_search tool to find information and provide clear, well-sourced answers based on the search results.`,
-	model: anthropic("claude-3-5-haiku-20241022"),
+	model: anthropic("claude-4-sonnet-20250514"),
 	tools: {
 		web_search: webSearchTool,
 	},
