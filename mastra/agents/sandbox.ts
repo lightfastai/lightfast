@@ -67,7 +67,7 @@ If sandboxId is not in your memory:
 				scope: "thread",
 				schema: sandboxMemorySchema,
 			},
-			lastMessages: 10,
+			lastMessages: 20,
 		},
 	}),
 	tools: {
@@ -75,9 +75,19 @@ If sandboxId is not in your memory:
 		execute_sandbox_command: executeSandboxCommandTool,
 	},
 	defaultGenerateOptions: {
-		maxSteps: 10,
+		maxSteps: 20,
+		maxRetries: 3,
+		maxTokens: 20000,
 	},
 	defaultStreamOptions: {
-		maxSteps: 10,
+		maxSteps: 40,
+		maxRetries: 3,
+		maxTokens: 20000,
+		onChunk: ({ chunk }) => {
+			console.log(chunk);
+		},
+		onFinish: (res) => {
+			console.log(res);
+		},
 	},
 });

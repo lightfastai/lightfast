@@ -19,7 +19,7 @@ export const createSandboxTool = createTool({
 		try {
 			const sandbox = await Sandbox.create({
 				runtime,
-				timeout: 600000, // 10 minutes
+				timeout: 300000, // 5 minutes
 			});
 
 			// Get the sandbox ID
