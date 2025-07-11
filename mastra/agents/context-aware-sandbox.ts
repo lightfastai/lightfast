@@ -1,30 +1,30 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
-import { Memory } from "@mastra/memory";
-import { z } from "zod";
+// import { Memory } from "@mastra/memory";
+// import { z } from "zod";
 import { enhancedExecuteCommandTool } from "../tools/enhanced-execute-command-tool";
 
 // Define the execution state schema for structured working memory
-const executionStateSchema = z.object({
-	environment: z.object({
-		workingDirectory: z.string().default("/home/vercel-sandbox"),
-		createdFiles: z.array(z.string()).default([]),
-		modifiedFiles: z.array(z.string()).default([]),
-		installedPackages: z.array(z.string()).default([]),
-	}),
-	discoveries: z.object({
-		keyPatterns: z.array(z.string()).default([]),
-		importantFiles: z.array(z.string()).default([]),
-		dependencies: z.array(z.string()).default([]),
-		insights: z.record(z.string()).default({}),
-	}),
-	taskProgress: z.object({
-		currentGoal: z.string().default(""),
-		completedSteps: z.array(z.string()).default([]),
-		nextActions: z.array(z.string()).default([]),
-		iterationCount: z.number().default(0),
-	}),
-});
+// const executionStateSchema = z.object({
+// 	environment: z.object({
+// 		workingDirectory: z.string().default("/home/vercel-sandbox"),
+// 		createdFiles: z.array(z.string()).default([]),
+// 		modifiedFiles: z.array(z.string()).default([]),
+// 		installedPackages: z.array(z.string()).default([]),
+// 	}),
+// 	discoveries: z.object({
+// 		keyPatterns: z.array(z.string()).default([]),
+// 		importantFiles: z.array(z.string()).default([]),
+// 		dependencies: z.array(z.string()).default([]),
+// 		insights: z.record(z.string()).default({}),
+// 	}),
+// 	taskProgress: z.object({
+// 		currentGoal: z.string().default(""),
+// 		completedSteps: z.array(z.string()).default([]),
+// 		nextActions: z.array(z.string()).default([]),
+// 		iterationCount: z.number().default(0),
+// 	}),
+// });
 
 export const contextAwareSandboxAgent = new Agent({
 	name: "Context-Aware Sandbox Explorer",
@@ -78,20 +78,21 @@ For "Create a Python script that generates data":
 
 Remember: Actions speak louder than words. Execute commands, don't just talk about them.`,
 	model: anthropic("claude-4-sonnet-20250514"),
-	memory: new Memory({
-		options: {
-			workingMemory: {
-				enabled: true,
-				scope: "thread", // Can be changed to 'resource' for cross-thread memory
-				schema: executionStateSchema,
-			},
-			lastMessages: 20, // Keep more command history for reference
-			// semanticRecall: {
-			// 	topK: 5, // Recall up to 5 relevant past commands/results
-			// 	messageRange: 2, // Include context around recalled messages
-			// },
-		},
-	}),
+	// Disable memory for now to avoid working memory tool interference
+	// memory: new Memory({
+	// 	options: {
+	// 		workingMemory: {
+	// 			enabled: true,
+	// 			scope: "thread", // Can be changed to 'resource' for cross-thread memory
+	// 			schema: executionStateSchema,
+	// 		},
+	// 		lastMessages: 20, // Keep more command history for reference
+	// 		// semanticRecall: {
+	// 		// 	topK: 5, // Recall up to 5 relevant past commands/results
+	// 		// 	messageRange: 2, // Include context around recalled messages
+	// 		// },
+	// 	},
+	// }),
 	tools: {
 		execute_command: enhancedExecuteCommandTool,
 	},

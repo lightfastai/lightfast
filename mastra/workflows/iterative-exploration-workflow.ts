@@ -136,6 +136,11 @@ Begin now by executing your first command using the execute_command tool.`;
 
 			// Extract discoveries and files from first response
 			extractDiscoveriesAndFiles(lastResponse, discoveries, createdFiles);
+			
+			// Also check for tool calls
+			if (response.toolCalls && response.toolCalls.length > 0) {
+				console.log(`[Iteration ${iteration}] Made ${response.toolCalls.length} tool calls`);
+			}
 
 			// Continue iterating until task is complete or max iterations reached
 			while (iteration < maxIterations) {
@@ -160,6 +165,11 @@ What's your next command?`;
 
 				// Extract discoveries and created files from response
 				extractDiscoveriesAndFiles(lastResponse, discoveries, createdFiles);
+				
+				// Also check for tool calls
+				if (response.toolCalls && response.toolCalls.length > 0) {
+					console.log(`[Iteration ${iteration}] Made ${response.toolCalls.length} tool calls`);
+				}
 			}
 
 			// Generate final summary

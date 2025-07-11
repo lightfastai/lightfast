@@ -7,6 +7,7 @@ import { repoAnalyzer } from "./agents/repo-analyzer";
 import { repoCloner } from "./agents/repo-cloner";
 import { sandboxExecutor } from "./agents/sandbox-executor";
 import { searcher } from "./agents/searcher";
+import { simpleSandboxExecutor } from "./agents/simple-sandbox-executor";
 import { e2bRunnerNetwork } from "./networks/e2b-runner";
 import { exampleNetwork } from "./networks/example";
 import { generalSandboxExecutorNetwork } from "./networks/general-sandbox-executor";
@@ -17,6 +18,7 @@ import { e2bRunnerWorkflow } from "./workflows/e2b-runner-workflow";
 import { generalSandboxWorkflow } from "./workflows/general-sandbox-workflow";
 import { iterativeExplorationWorkflow } from "./workflows/iterative-exploration-workflow";
 import { repoInvestigatorWorkflow } from "./workflows/repo-investigator-workflow";
+import { simpleSandboxWorkflow } from "./workflows/simple-sandbox-workflow";
 import { taskPlannerWorkflow } from "./workflows/task-planner-workflow";
 
 // Create LibSQL storage instance
@@ -34,6 +36,7 @@ export const mastra = new Mastra({
 		repoCloner,
 		repoAnalyzer,
 		contextAwareSandboxAgent,
+		simpleSandboxExecutor,
 	},
 	workflows: {
 		taskPlannerWorkflow,
@@ -41,6 +44,7 @@ export const mastra = new Mastra({
 		repoInvestigatorWorkflow,
 		generalSandboxWorkflow,
 		iterativeExplorationWorkflow,
+		simpleSandboxWorkflow,
 	},
 	vnext_networks: {
 		exampleNetwork,
