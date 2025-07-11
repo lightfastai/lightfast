@@ -1,6 +1,5 @@
 import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
-import { commandPlanner } from "./agents/command-planner";
 import { planner } from "./agents/planner";
 import { searcher } from "./agents/searcher";
 import { persistentSandboxAgent } from "./agents/persistent-sandbox-agent";
@@ -27,7 +26,6 @@ export const mastra = new Mastra({
 	agents: {
 		planner,
 		searcher,
-		commandPlanner,
 		persistentSandboxAgent,
 	},
 	workflows: {
