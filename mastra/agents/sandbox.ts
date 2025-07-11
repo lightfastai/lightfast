@@ -2,7 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { createSandboxTool, executeSandboxCommandTool } from "../tools/simple-sandbox-tool";
+import { createSandboxTool, executeSandboxCommandTool } from "../tools/sandbox-tools";
 
 // Schema for working memory
 const sandboxMemorySchema = z.object({
@@ -21,8 +21,8 @@ const sandboxMemorySchema = z.object({
 	installedPackages: z.array(z.string()).default([]),
 });
 
-export const persistentSandboxAgent = new Agent({
-	name: "Persistent Sandbox Agent",
+export const sandboxAgent = new Agent({
+	name: "Sandbox Agent",
 	description: "Creates a sandbox once and reuses it for all commands",
 	instructions: `You are a sandbox executor that maintains a persistent sandbox session.
 

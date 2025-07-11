@@ -2,7 +2,7 @@ import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
 import { planner } from "./agents/planner";
 import { searcher } from "./agents/searcher";
-import { persistentSandboxAgent } from "./agents/persistent-sandbox-agent";
+import { sandboxAgent } from "./agents/sandbox";
 import { e2bRunnerNetwork } from "./networks/e2b-runner";
 import { exampleNetwork } from "./networks/example";
 import { generalSandboxExecutorNetwork } from "./networks/general-sandbox-executor";
@@ -26,7 +26,7 @@ export const mastra = new Mastra({
 	agents: {
 		planner,
 		searcher,
-		persistentSandboxAgent,
+		sandboxAgent,
 	},
 	workflows: {
 		taskPlannerWorkflow,
