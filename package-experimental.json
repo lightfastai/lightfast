@@ -56,6 +56,8 @@
 		"@inngest/agent-kit": "^0.9.0",
 		"@inngest/realtime": "^0.3.1",
 		"@mastra/core": "^0.10.12",
+		"@mastra/libsql": "^0.11.0",
+		"@mastra/memory": "^0.11.2",
 		"@planetscale/database": "^1.19.0",
 		"@radix-ui/react-label": "^2.1.7",
 		"@radix-ui/react-scroll-area": "^1.2.9",
