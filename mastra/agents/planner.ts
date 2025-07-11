@@ -1,66 +1,42 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
-import { createTool } from "@mastra/core/tools";
-import { generateObject } from "ai";
-import { z } from "zod";
-
-const analyzeTaskTool = createTool({
-	id: "analyze_task",
-	description: "Break down a task into simple executable steps",
-	inputSchema: z.object({
-		taskDescription: z.string().describe("The task description to analyze"),
-	}),
-	outputSchema: z.object({
-		tasks: z.array(z.string().describe("Simple task description")),
-	}),
-	execute: async ({ context }) => {
-		const { taskDescription } = context;
-
-		try {
-			// Use Anthropic AI to analyze the task and generate steps
-			const result = await generateObject({
-				model: anthropic("claude-4-sonnet-20250514"),
-				prompt: `Break down this task into exactly 5 simple, actionable steps: "${taskDescription}"
-
-Return exactly 5 high-level steps that cover the main phases of completing this task. Each step should be:
-- Clear and actionable
-- High-level (not overly detailed)
-- Focused on the main actions needed
-- Suitable for execution in a development environment
-
-Keep the steps practical and straightforward. Do not exceed 5 steps.`,
-				schema: z.object({
-					tasks: z.array(z.string().describe("Simple task description")).length(5),
-				}),
-			});
-
-			return result.object;
-		} catch (error) {
-			// Fallback to basic task breakdown if AI fails
-			console.error("AI analysis failed, using fallback:", error);
-			return {
-				tasks: [
-					"Set up development environment",
-					"Research and plan approach",
-					"Implement core functionality",
-					"Test the implementation",
-					"Document and finalize",
-				],
-			};
-		}
-	},
-});
 
 export const planner = new Agent({
 	name: "Planner",
-	description: "Breaks down tasks into simple executable steps",
-	instructions: `You are the Planner agent. When given a task description, you MUST use the analyze_task tool to break it down into simple steps.
+	description: "Creates comprehensive execution plans for any type of computational task",
+	instructions: `You are an intelligent task planner. Your role is to create detailed, actionable plans for any computational task.
 
-Always call the analyze_task tool first, then return only the simple task list from the tool output. Do not provide additional explanations or detailed analysis.
+## Your Approach
 
-Your response should be a simple list of actionable steps based on the tool output.`,
-	model: anthropic("claude-3-5-haiku-20241022"),
-	tools: {
-		analyze_task: analyzeTaskTool,
-	},
+1. **Understand the Task**: Analyze what needs to be accomplished
+2. **Consider Context**: Use any provided context or analysis to inform your plan
+3. **Create Comprehensive Plans**: Break down complex tasks into clear, sequential steps
+4. **Be Flexible**: Adapt your planning to the specific task type and requirements
+
+## Plan Structure
+
+Your plans should include:
+- **Overview**: A clear summary of what will be accomplished
+- **Steps**: Detailed, actionable steps with:
+  - Unique IDs (step-1, step-2, etc.)
+  - Clear action names
+  - Descriptions of what each step does
+- **Requirements**: Any tools, dependencies, or resources needed
+
+## Guidelines
+
+- Make plans general enough to handle diverse tasks
+- Include research steps when information gathering would help
+- Include validation/testing steps for quality assurance
+- Consider both technical and non-technical aspects
+- Provide 3-7 steps depending on complexity
+- Each step should be independently valuable
+
+Remember: You're planning for execution in a powerful sandbox environment with access to:
+- Programming languages (Node.js, Python, etc.)
+- System tools (git, ffmpeg, ImageMagick, etc.)
+- Package managers (npm, pip, etc.)
+- Full file system and network access`,
+	model: anthropic("claude-4-sonnet-20250514"),
+	tools: {},
 });

@@ -7,9 +7,11 @@ import { sandboxExecutor } from "./agents/sandbox-executor";
 import { searcher } from "./agents/searcher";
 import { e2bRunnerNetwork } from "./networks/e2b-runner";
 import { exampleNetwork } from "./networks/example";
+import { generalSandboxExecutorNetwork } from "./networks/general-sandbox-executor";
 import { repoInvestigatorNetwork } from "./networks/repo-investigator";
 import { unifiedResearcherNetwork } from "./networks/unified-researcher";
 import { e2bRunnerWorkflow } from "./workflows/e2b-runner-workflow";
+import { generalSandboxWorkflow } from "./workflows/general-sandbox-workflow";
 import { repoInvestigatorWorkflow } from "./workflows/repo-investigator-workflow";
 import { taskPlannerWorkflow } from "./workflows/task-planner-workflow";
 
@@ -26,11 +28,13 @@ export const mastra = new Mastra({
 		taskPlannerWorkflow,
 		e2bRunnerWorkflow,
 		repoInvestigatorWorkflow,
+		generalSandboxWorkflow,
 	},
 	vnext_networks: {
 		exampleNetwork,
 		unifiedResearcherNetwork,
 		e2bRunnerNetwork,
 		repoInvestigatorNetwork,
+		generalSandboxExecutorNetwork,
 	},
 });

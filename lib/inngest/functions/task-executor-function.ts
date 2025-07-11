@@ -4,7 +4,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { env } from "@/env";
 import { SandboxExecutor } from "@/lib/sandbox/sandbox-executor";
-import type { TaskNetworkState } from "@/mastra/types/task-network-types";
+// TaskNetworkState type removed - using generic state type
 import { inngest } from "../client";
 import { taskExecutionChannel } from "../realtime";
 
@@ -29,7 +29,7 @@ export const taskExecutorFunction = inngest.createFunction(
 		);
 
 		// Define agents inside the function to access publish
-		const taskAnalyzerAgent = createAgent<TaskNetworkState>({
+		const taskAnalyzerAgent = createAgent<Record<string, any>>({
 			name: "Task Analyzer",
 			description: "Analyzes computational tasks",
 			system: `Analyze computational tasks and create detailed execution plans for any type of task.
@@ -147,7 +147,7 @@ Provide:
 			],
 		});
 
-		const environmentSetupAgent = createAgent<TaskNetworkState>({
+		const environmentSetupAgent = createAgent<Record<string, any>>({
 			name: "Environment Setup",
 			description: "Sets up execution environment",
 			system: `Configure execution environments for any type of computational task. 
@@ -233,7 +233,7 @@ Be flexible - not all tasks need package.json. Some might need pip requirements,
 			],
 		});
 
-		const scriptGeneratorAgent = createAgent<TaskNetworkState>({
+		const scriptGeneratorAgent = createAgent<Record<string, any>>({
 			name: "Script Generator",
 			description: "Generates executable scripts",
 			system: `Generate executable scripts in the appropriate language for the task.
@@ -330,7 +330,7 @@ Scripts can be .js, .py, .sh or any combination.`,
 			],
 		});
 
-		const executionAgent = createAgent<TaskNetworkState>({
+		const executionAgent = createAgent<Record<string, any>>({
 			name: "Execution Agent",
 			description: "Executes scripts in sandbox",
 			system: `Execute scripts safely in the sandbox environment and collect results.
