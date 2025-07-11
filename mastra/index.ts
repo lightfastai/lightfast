@@ -1,5 +1,6 @@
 import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
+import { browserAgent } from "./agents/browser";
 import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
 import { searcher } from "./agents/searcher";
@@ -17,6 +18,7 @@ export const mastra = new Mastra({
 		planner,
 		searcher,
 		sandboxAgent,
+		browserbaseAgent: browserAgent,
 	},
 	workflows: {},
 	vnext_networks: {

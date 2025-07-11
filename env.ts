@@ -21,6 +21,9 @@ export const env = createEnv({
 		EXA_API_KEY: z.string().min(1),
 		// Databsae
 		DATABASE_URL: z.string().min(1).optional(),
+		// Browserbase
+		BROWSERBASE_API_KEY: z.string().min(1),
+		BROWSERBASE_PROJECT_ID: z.string().min(1),
 	},
 
 	/**
@@ -46,6 +49,8 @@ export const env = createEnv({
 		NODE_ENV: process.env.NODE_ENV,
 		EXA_API_KEY: process.env.EXA_API_KEY,
 		DATABASE_URL: process.env.DATABASE_URL,
+		BROWSERBASE_API_KEY: process.env.BROWSERBASE_API_KEY,
+		BROWSERBASE_PROJECT_ID: process.env.BROWSERBASE_PROJECT_ID,
 		// Client
 		// NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 	},

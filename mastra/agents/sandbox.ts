@@ -22,7 +22,7 @@ const sandboxMemorySchema = z.object({
 });
 
 export const sandboxAgent = new Agent({
-	name: "Sandbox Agent",
+	name: "Sandbox",
 	description: "Creates a sandbox once and reuses it for all commands",
 	instructions: `You are a sandbox executor that maintains a persistent sandbox session.
 
