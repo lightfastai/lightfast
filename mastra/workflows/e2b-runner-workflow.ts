@@ -1,4 +1,4 @@
-import { createWorkflow, createStep } from "@mastra/core/workflows";
+import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 import { commandPlanner } from "../agents/command-planner";
 import { sandboxExecutor } from "../agents/sandbox-executor";
@@ -132,12 +132,7 @@ function extractOutput(text: string, type: string): string {
 }
 
 function extractExitCode(text: string): number {
-	const patterns = [
-		/exit\s*code:\s*(\d+)/i,
-		/exitCode:\s*(\d+)/i,
-		/returned\s*(\d+)/i,
-		/code\s*(\d+)/i,
-	];
+	const patterns = [/exit\s*code:\s*(\d+)/i, /exitCode:\s*(\d+)/i, /returned\s*(\d+)/i, /code\s*(\d+)/i];
 
 	for (const pattern of patterns) {
 		const match = text.match(pattern);
@@ -207,7 +202,7 @@ const formatOutputStep = createStep({
 			? `Task completed successfully.\n\nResult: ${mainOutput}\n\n${summary}`
 			: `Task partially completed with errors.\n\n${
 					mainOutput ? `Result: ${mainOutput}\n\n` : ""
-			  }${summary}\n\nErrors encountered:\n${results
+				}${summary}\n\nErrors encountered:\n${results
 					.filter((r) => !r.output.success)
 					.map((r) => `- ${r.description}: ${r.output.stderr}`)
 					.join("\n")}`;
