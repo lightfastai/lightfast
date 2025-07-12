@@ -5,6 +5,7 @@ import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
 import { searcher } from "./agents/searcher";
 import { exampleNetwork } from "./networks/example";
+import { unifiedExecutorNetwork } from "./networks/unified-executor";
 import { unifiedResearcherNetwork } from "./networks/unified-researcher";
 
 // Create LibSQL storage instance
@@ -24,5 +25,6 @@ export const mastra = new Mastra({
 	vnext_networks: {
 		exampleNetwork,
 		unifiedResearcherNetwork,
+		unifiedExecutorNetwork,
 	},
 });
