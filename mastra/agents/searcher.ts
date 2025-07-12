@@ -1,6 +1,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
+import { Memory } from "@mastra/memory";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
 import { env } from "@/env";
@@ -137,6 +138,22 @@ const webSearchTool = createTool({
 	},
 });
 
+// Schema for searcher working memory
+const searcherMemorySchema = z.object({
+	searchHistory: z.array(
+		z.object({
+			query: z.string(),
+			results: z.array(z.object({
+				title: z.string(),
+				url: z.string(),
+			})),
+			timestamp: z.string(),
+		}),
+	).default([]),
+	relevantFindings: z.record(z.string(), z.any()).default({}),
+	currentResearchTopic: z.string().nullable().default(null),
+});
+
 export const searcher = new Agent({
 	name: "Searcher",
 	description: "Performs advanced web searches using Exa to find current information",
@@ -156,6 +173,16 @@ SEARCH STRATEGIES:
 
 Always use the web_search tool to find information and provide clear, well-sourced answers based on the search results.`,
 	model: anthropic("claude-4-sonnet-20250514"),
+	memory: new Memory({
+		options: {
+			workingMemory: {
+				enabled: true,
+				scope: "thread",
+				schema: searcherMemorySchema,
+			},
+			lastMessages: 20,
+		},
+	}),
 	tools: {
 		web_search: webSearchTool,
 	},

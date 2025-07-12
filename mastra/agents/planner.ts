@@ -1,5 +1,22 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
+import { Memory } from "@mastra/memory";
+import { z } from "zod";
+
+// Schema for planner working memory
+const plannerMemorySchema = z.object({
+	currentPlan: z.object({
+		taskDescription: z.string(),
+		steps: z.array(z.object({
+			id: z.string(),
+			name: z.string(),
+			description: z.string(),
+			status: z.enum(["pending", "completed", "failed"]).default("pending"),
+		})),
+		createdAt: z.string(),
+	}).nullable().default(null),
+	planHistory: z.array(z.string()).default([]),
+});
 
 export const planner = new Agent({
 	name: "Planner",
@@ -38,5 +55,15 @@ Remember: You're planning for execution in a powerful sandbox environment with a
 - Package managers (npm, pip, etc.)
 - Full file system and network access`,
 	model: anthropic("claude-4-sonnet-20250514"),
+	memory: new Memory({
+		options: {
+			workingMemory: {
+				enabled: true,
+				scope: "thread",
+				schema: plannerMemorySchema,
+			},
+			lastMessages: 20,
+		},
+	}),
 	tools: {},
 });

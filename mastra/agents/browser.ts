@@ -1,6 +1,22 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
+import { Memory } from "@mastra/memory";
+import { z } from "zod";
 import { browserActTool, browserExtractTool, browserObserveTool } from "../tools/browser-tools";
+
+// Schema for browser working memory
+const browserMemorySchema = z.object({
+	sessionActive: z.boolean().default(false),
+	currentUrl: z.string().nullable().default(null),
+	pageHistory: z.array(
+		z.object({
+			url: z.string(),
+			timestamp: z.string(),
+			action: z.string(),
+		}),
+	).default([]),
+	extractedData: z.record(z.any()).default({}),
+});
 
 export const browserAgent = new Agent({
 	name: "Browser",
@@ -67,16 +83,16 @@ export const browserAgent = new Agent({
       Use the stagehandObserveTool to find elements on webpages.
 `,
 	model: anthropic("claude-4-sonnet-20250514"),
-	// memory: new Memory({
-	// 	options: {
-	// 		workingMemory: {
-	// 			enabled: true,
-	// 			scope: "thread",
-	// 			schema: browserMemorySchema,
-	// 		},
-	// 		lastMessages: 20,
-	// 	},
-	// }),
+	memory: new Memory({
+		options: {
+			workingMemory: {
+				enabled: true,
+				scope: "thread",
+				schema: browserMemorySchema,
+			},
+			lastMessages: 20,
+		},
+	}),
 	tools: {
 		browserActTool,
 		browserObserveTool,

@@ -8,6 +8,9 @@ import { planner } from "../agents/planner";
 import { sandboxAgent } from "../agents/sandbox";
 import { searcher } from "../agents/searcher";
 
+// Thread agent management - removed as agents handle their own memory
+// The agents themselves have thread-scoped memory configured
+
 // Shared context schema for all agents to access
 const sharedContextSchema = z.object({
 	taskDescription: z.string(),
@@ -22,6 +25,7 @@ const sharedContextSchema = z.object({
 	),
 	aggregatedResults: z.record(z.string(), z.unknown()),
 	currentPhase: z.enum(["analysis", "planning", "execution", "synthesis"]),
+	threadId: z.string(),
 });
 
 // Task analyzer agent that understands requirements
@@ -73,6 +77,7 @@ const analyzeTaskStep = createStep({
 	inputSchema: z.object({
 		task: z.string().describe("The task to analyze"),
 		context: z.string().optional().describe("Additional context"),
+		threadId: z.string().describe("Thread ID for maintaining context"),
 	}),
 	outputSchema: z.object({
 		analysis: z.object({
@@ -108,6 +113,7 @@ Determine what capabilities are needed and suggest an execution strategy.`;
 			executionHistory: [],
 			aggregatedResults: {},
 			currentPhase: "analysis" as const,
+			threadId: inputData.threadId,
 		};
 
 		return {
@@ -124,6 +130,7 @@ const adaptiveWorkflow = createWorkflow({
 	inputSchema: z.object({
 		task: z.string(),
 		context: z.string().optional(),
+		threadId: z.string().describe("Thread ID for maintaining context"),
 	}),
 	outputSchema: z.object({
 		finalResult: z.string(),
@@ -193,6 +200,8 @@ const adaptiveWorkflow = createWorkflow({
 				summary: z.string(),
 			}),
 			execute: async ({ inputData }) => {
+				const threadId = inputData.sharedContext.threadId;
+
 				if (inputData.executionPath === "simple") {
 					// Simple path - single agent execution
 					let response: { text: string };
@@ -200,16 +209,31 @@ const adaptiveWorkflow = createWorkflow({
 					
 					switch (capability) {
 						case "planning":
-							response = await planner.generate(inputData.task);
+							response = await planner.generate(inputData.task, { 
+								resourceId: threadId,
+								threadId 
+							});
 							break;
 						case "research":
-							response = await searcher.generate(inputData.task, { maxSteps: 5 });
+							response = await searcher.generate(inputData.task, { 
+								maxSteps: 5,
+								resourceId: threadId,
+								threadId 
+							});
 							break;
 						case "code":
-							response = await sandboxAgent.generate(inputData.task, { maxSteps: 10 });
+							response = await sandboxAgent.generate(inputData.task, { 
+								maxSteps: 10,
+								resourceId: threadId,
+								threadId 
+							});
 							break;
 						case "browser":
-							response = await browserAgent.generate(inputData.task, { maxSteps: 8 });
+							response = await browserAgent.generate(inputData.task, { 
+								maxSteps: 8,
+								resourceId: threadId,
+								threadId 
+							});
 							break;
 					}
 					
@@ -234,7 +258,10 @@ Summary: ${inputData.analysis.taskSummary}
 ${executionHistory.length > 0 ? `\nPrevious steps:\n${executionHistory.map(h => `- ${h.agent}: ${h.action}`).join("\n")}` : ""}
 
 Create a detailed execution plan.`;
-									const planResponse = await planner.generate(planPrompt);
+									const planResponse = await planner.generate(planPrompt, { 
+										resourceId: threadId,
+										threadId 
+									});
 									results.planning = planResponse.text;
 									executionHistory.push({
 										agent: "planner",
@@ -249,7 +276,11 @@ Create a detailed execution plan.`;
 ${results.planning ? `\nPlan:\n${results.planning}` : ""}
 
 Conduct thorough research and provide findings.`;
-									const researchResponse = await searcher.generate(researchPrompt, { maxSteps: 8 });
+									const researchResponse = await searcher.generate(researchPrompt, { 
+										maxSteps: 8,
+										resourceId: threadId,
+										threadId 
+									});
 									results.research = researchResponse.text;
 									executionHistory.push({
 										agent: "searcher",
@@ -265,7 +296,11 @@ ${results.planning ? `\nPlan:\n${results.planning}` : ""}
 ${results.research ? `\nResearch findings:\n${results.research}` : ""}
 
 Execute this task programmatically.`;
-									const codeResponse = await sandboxAgent.generate(codePrompt, { maxSteps: 15 });
+									const codeResponse = await sandboxAgent.generate(codePrompt, { 
+										maxSteps: 15,
+										resourceId: threadId,
+										threadId 
+									});
 									results.code = codeResponse.text;
 									executionHistory.push({
 										agent: "sandbox",
@@ -281,7 +316,11 @@ ${results.planning ? `\nPlan:\n${results.planning}` : ""}
 ${results.research ? `\nResearch:\n${results.research}` : ""}
 
 Perform necessary browser automation.`;
-									const browserResponse = await browserAgent.generate(browserPrompt, { maxSteps: 10 });
+									const browserResponse = await browserAgent.generate(browserPrompt, { 
+										maxSteps: 10,
+										resourceId: threadId,
+										threadId 
+									});
 									results.browser = browserResponse.text;
 									executionHistory.push({
 										agent: "browser",
@@ -336,6 +375,7 @@ const quickTaskWorkflow = createWorkflow({
 	description: "Direct execution for very simple tasks",
 	inputSchema: z.object({
 		task: z.string(),
+		threadId: z.string().describe("Thread ID for maintaining context"),
 	}),
 	outputSchema: z.object({
 		result: z.string(),
@@ -347,24 +387,26 @@ const quickTaskWorkflow = createWorkflow({
 			description: "Quick capability detection",
 			inputSchema: z.object({
 				task: z.string(),
+				threadId: z.string(),
 			}),
 			outputSchema: z.object({
 				capability: z.enum(["planning", "research", "code", "browser", "unknown"]),
+				threadId: z.string(),
 			}),
 			execute: async ({ inputData }) => {
 				const taskLower = inputData.task.toLowerCase();
 				
 				if (taskLower.includes("plan") || taskLower.includes("strategy") || taskLower.includes("steps")) {
-					return { capability: "planning" as const };
+					return { capability: "planning" as const, threadId: inputData.threadId };
 				} else if (taskLower.includes("search") || taskLower.includes("find") || taskLower.includes("research")) {
-					return { capability: "research" as const };
+					return { capability: "research" as const, threadId: inputData.threadId };
 				} else if (taskLower.includes("code") || taskLower.includes("script") || taskLower.includes("program")) {
-					return { capability: "code" as const };
+					return { capability: "code" as const, threadId: inputData.threadId };
 				} else if (taskLower.includes("browse") || taskLower.includes("web") || taskLower.includes("click")) {
-					return { capability: "browser" as const };
+					return { capability: "browser" as const, threadId: inputData.threadId };
 				}
 				
-				return { capability: "unknown" as const };
+				return { capability: "unknown" as const, threadId: inputData.threadId };
 			},
 		}),
 	)
@@ -374,16 +416,20 @@ const quickTaskWorkflow = createWorkflow({
 			description: "Execute quick task",
 			inputSchema: z.object({
 				capability: z.enum(["planning", "research", "code", "browser", "unknown"]),
+				threadId: z.string(),
 			}),
 			outputSchema: z.object({
 				result: z.string(),
 			}),
 			execute: async ({ inputData, getInitData }) => {
 				const initData = getInitData();
-				
 				if (inputData.capability === "unknown") {
 					// Fall back to research agent for general questions
-					const response = await searcher.generate(initData.task, { maxSteps: 3 });
+					const response = await searcher.generate(initData.task, { 
+						maxSteps: 3, 
+						resourceId: inputData.threadId,
+						threadId: inputData.threadId 
+					});
 					return { result: response.text };
 				}
 				
@@ -391,16 +437,31 @@ const quickTaskWorkflow = createWorkflow({
 				
 				switch (inputData.capability) {
 					case "planning":
-						response = await planner.generate(initData.task);
+						response = await planner.generate(initData.task, { 
+							resourceId: inputData.threadId,
+							threadId: inputData.threadId 
+						});
 						break;
 					case "research":
-						response = await searcher.generate(initData.task, { maxSteps: 5 });
+						response = await searcher.generate(initData.task, { 
+							maxSteps: 5, 
+							resourceId: inputData.threadId,
+							threadId: inputData.threadId 
+						});
 						break;
 					case "code":
-						response = await sandboxAgent.generate(initData.task, { maxSteps: 10 });
+						response = await sandboxAgent.generate(initData.task, { 
+							maxSteps: 10, 
+							resourceId: inputData.threadId,
+							threadId: inputData.threadId 
+						});
 						break;
 					case "browser":
-						response = await browserAgent.generate(initData.task, { maxSteps: 8 });
+						response = await browserAgent.generate(initData.task, { 
+							maxSteps: 8, 
+							resourceId: inputData.threadId,
+							threadId: inputData.threadId 
+						});
 						break;
 				}
 				
@@ -421,11 +482,12 @@ export const adaptiveExecutorNetwork = new NewAgentNetwork({
 2. **Dynamic Routing**: Adapt execution based on task requirements
 3. **Progressive Enhancement**: Start simple, add complexity only when needed
 4. **Context Awareness**: Share context between agents for better results
+5. **Memory Persistence**: Maintain agent memory within the same thread
 
 ## Capabilities:
 - **Planning**: Strategic thinking and task decomposition
 - **Research**: Information gathering and fact-finding
-- **Code**: Programming and computational tasks
+- **Code**: Programming and computational tasks (with persistent sandbox)
 - **Browser**: Web interaction and automation
 
 ## Execution Modes:
@@ -433,11 +495,17 @@ export const adaptiveExecutorNetwork = new NewAgentNetwork({
 2. **Adaptive Mode**: For tasks requiring dynamic analysis and routing
 3. **Complex Mode**: For multi-agent collaborative tasks
 
+## Important:
+- Always provide a threadId to maintain context across agent calls
+- Sandboxes and other stateful resources are preserved within the same thread
+- Use cleanupThread() when a conversation/task is complete
+
 You excel at:
 - Understanding user intent
 - Selecting the right tools for the job
 - Coordinating multiple agents when needed
 - Providing comprehensive results
+- Maintaining state across complex workflows
 
 Always aim for efficiency while ensuring task completion quality.`,
 	model: anthropic("claude-4-sonnet-20250514"),
