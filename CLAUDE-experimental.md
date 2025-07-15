@@ -19,6 +19,12 @@ pnpm biome check --write [filepath]
 
 ## Testing
 
+### Playwright MCP Setup
+```bash
+# Configured in .mcp.json with headless mode
+# No manual startup needed - auto-starts with Claude Code
+```
+
 ### Agent Testing (Playwright MCP)
 ```
 1. Navigate: mcp__playwright-mastra__browser_navigate → http://localhost:4111/agents/[agentName]

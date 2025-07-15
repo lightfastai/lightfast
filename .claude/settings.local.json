@@ -32,7 +32,8 @@
       "Bash(npm install:*)",
       "mcp__playwright-mastra__browser_press_key",
       "mcp__playwright-mastra__browser_type",
-      "mcp__playwright-mastra__browser_wait_for"
+      "mcp__playwright-mastra__browser_wait_for",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   },

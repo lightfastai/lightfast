@@ -2,7 +2,14 @@
 	"mcpServers": {
 		"playwright-mastra": {
 			"command": "npx",
-			"args": ["@playwright/mcp@latest"]
+			"args": [
+				"@playwright/mcp@latest",
+				"--headless",
+				"--browser", "chrome",
+				"--caps", "core,tabs,wait,files,testing",
+				"--isolated",
+				"--no-sandbox"
+			]
 		},
 		"mastra-docs": {
 			"command": "npx",
