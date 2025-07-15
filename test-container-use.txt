@@ -1,0 +1,5 @@
+This is a test file created in the container-use environment.
+Created at: 2025-01-15
+Environment ID: enabling-coral
+
+This demonstrates how container-use creates isolated development environments.
