@@ -1,7 +1,8 @@
+import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
-export const calculateTool = {
-	name: "calculate",
+export const calculateTool = createTool({
+	id: "calculate",
 	description: "Performs basic mathematical calculations",
 	inputSchema: z.object({
 		expression: z.string().describe("Mathematical expression to evaluate (e.g., '2 + 3 * 4', 'sqrt(16)', 'pow(2, 3)')"),
@@ -10,7 +11,8 @@ export const calculateTool = {
 		result: z.number().describe("The result of the calculation"),
 		expression: z.string().describe("The original expression"),
 	}),
-	run: async ({ expression }) => {
+	execute: async ({ context }) => {
+		const { expression } = context;
 		try {
 			// Safe evaluation using Function constructor for basic math
 			// This is a simplified implementation for demo purposes
@@ -47,10 +49,10 @@ export const calculateTool = {
 			throw new Error(`Invalid mathematical expression: ${expression}`);
 		}
 	},
-};
+});
 
-export const factorialTool = {
-	name: "factorial",
+export const factorialTool = createTool({
+	id: "factorial",
 	description: "Calculates the factorial of a number",
 	inputSchema: z.object({
 		number: z.number().min(0).max(20).describe("Number to calculate factorial for (0-20)"),
@@ -59,7 +61,8 @@ export const factorialTool = {
 		result: z.number().describe("The factorial result"),
 		number: z.number().describe("The original number"),
 	}),
-	run: async ({ number }) => {
+	execute: async ({ context }) => {
+		const { number } = context;
 		if (number < 0) {
 			throw new Error("Factorial is only defined for non-negative numbers");
 		}
@@ -74,10 +77,10 @@ export const factorialTool = {
 			number,
 		};
 	},
-};
+});
 
-export const fibonacciTool = {
-	name: "fibonacci",
+export const fibonacciTool = createTool({
+	id: "fibonacci",
 	description: "Calculates the Fibonacci sequence up to the nth term",
 	inputSchema: z.object({
 		n: z.number().min(1).max(50).describe("Number of terms to calculate (1-50)"),
@@ -86,7 +89,8 @@ export const fibonacciTool = {
 		sequence: z.array(z.number()).describe("The Fibonacci sequence"),
 		nth_term: z.number().describe("The nth term in the sequence"),
 	}),
-	run: async ({ n }) => {
+	execute: async ({ context }) => {
+		const { n } = context;
 		if (n < 1) {
 			throw new Error("n must be at least 1");
 		}
@@ -102,4 +106,4 @@ export const fibonacciTool = {
 			nth_term: sequence[n - 1],
 		};
 	},
-};
+});

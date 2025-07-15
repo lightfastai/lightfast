@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "concurrently \"pnpm dev:next\" \"pnpm dev:mastra\"",
 		"dev:next": "next dev",
-		"dev:mastra": "mastra dev",
+		"dev:mastra": "mastra dev --dir mastra",
 		"build:mastra": "mastra build --dir mastra",
 		"build": "next build",
 		"start": "next start",

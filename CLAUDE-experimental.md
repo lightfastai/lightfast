@@ -21,37 +21,20 @@ pnpm biome check --write [filepath]
 
 ### Agent Testing (Playwright MCP)
 ```
-1. Navigate: mcp__playwright-mastra__browser_navigate → http://localhost:4111
-2. Access: Click agent name → chat interface  
-3. Input: mcp__playwright-mastra__browser_type → enter test message
-4. Send: mcp__playwright-mastra__browser_click → Send button
-5. Close: mcp__playwright-mastra__browser_close (always)
+1. Navigate: mcp__playwright-mastra__browser_navigate → http://localhost:4111/agents/[agentName]
+2. Input: mcp__playwright-mastra__browser_type → enter test message
+3. Send: mcp__playwright-mastra__browser_click → Send button
+4. Close: mcp__playwright-mastra__browser_close (always)
 ```
 
-### Test Cases
-• **Basic calculation**: "Calculate 2 + 3 * 4"
-• **Factorial**: "What is 5 factorial?"
-• **Fibonacci**: "Generate first 8 Fibonacci numbers"
-
-## Import Convention
-```typescript
-// ❌ Wrong
-import { bugAnalysisAgent } from '@/lib/agent-kit/agents';
-
-// ✅ Correct
-import { bugAnalysisAgent } from '@/lib/agent-kit/agents/bug-analysis-agent';
-```
-
-## Architecture
-
-### General Task Executor
-Multi-agent system that analyzes, plans, and executes any computational task:
-1. Task Analyzer → Environment Setup → Script Generator → Execution Agent
-2. Runs in Vercel Sandbox (Node.js 22, `/vercel/sandbox`)
-
-### Tech Stack
-- Next.js 15 + TypeScript
-- Mastra (AI agents & workflows)
-- AgentKit (AI agents)
-- Vercel Sandbox (execution)
-- SSE (real-time updates)
+### Self-Healing Workflow
+**When creating/debugging agents:**
+• Navigate directly to `localhost:4111/agents/[agentName]`
+• Test with sample inputs → observe failures
+• **Common Issues & Fixes:**
+  - Missing tools property → Add `tools: { toolName: toolObject }`
+  - Wrong tool format → Use `createTool({ id, execute: async ({ context }) => ... })`
+  - maxSteps timeout → Check tool registration first, not limits
+  - Tool parameter mismatch → Use `{ context }` destructuring
+• Re-test → iterate until working
+• Commit fixes

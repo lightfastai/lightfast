@@ -55,5 +55,10 @@ Always be helpful and provide clear mathematical explanations.`,
 			lastMessages: 10,
 		},
 	}),
+	tools: {
+		calculate: calculateTool,
+		factorial: factorialTool,
+		fibonacci: fibonacciTool,
+	},
 });
 
