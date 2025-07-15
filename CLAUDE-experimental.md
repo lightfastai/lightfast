@@ -12,10 +12,9 @@ pnpm dev          # Start dev server
 pnpm build        # Build for production
 pnpm typecheck    # TypeScript check
 pnpm lint         # Run Biome linter
-pnpm inngest-dev  # Inngest dashboard
 
 # Check specific file for errors
-pnpm biome check --write lib/inngest/functions/task-executor-function.ts
+pnpm biome check --write [filepath]
 ```
 
 ## Import Convention
@@ -36,7 +35,7 @@ Multi-agent system that analyzes, plans, and executes any computational task:
 
 ### Tech Stack
 - Next.js 15 + TypeScript
-- Inngest (orchestration)
+- Mastra (AI agents & workflows)
 - AgentKit (AI agents)
 - Vercel Sandbox (execution)
 - SSE (real-time updates)

@@ -140,16 +140,20 @@ const webSearchTool = createTool({
 
 // Schema for searcher working memory
 const searcherMemorySchema = z.object({
-	searchHistory: z.array(
-		z.object({
-			query: z.string(),
-			results: z.array(z.object({
-				title: z.string(),
-				url: z.string(),
-			})),
-			timestamp: z.string(),
-		}),
-	).default([]),
+	searchHistory: z
+		.array(
+			z.object({
+				query: z.string(),
+				results: z.array(
+					z.object({
+						title: z.string(),
+						url: z.string(),
+					}),
+				),
+				timestamp: z.string(),
+			}),
+		)
+		.default([]),
 	relevantFindings: z.record(z.string(), z.any()).default({}),
 	currentResearchTopic: z.string().nullable().default(null),
 });

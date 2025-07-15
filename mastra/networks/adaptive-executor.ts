@@ -166,9 +166,8 @@ const adaptiveWorkflow = createWorkflow({
 			}),
 			execute: async ({ inputData, getInitData }) => {
 				const initData = getInitData();
-				const isSimple = 
-					inputData.analysis.complexity === "simple" && 
-					inputData.analysis.requiredCapabilities.length === 1;
+				const isSimple =
+					inputData.analysis.complexity === "simple" && inputData.analysis.requiredCapabilities.length === 1;
 
 				return {
 					executionPath: (isSimple ? "simple" : "complex") as "simple" | "complex",
@@ -206,37 +205,37 @@ const adaptiveWorkflow = createWorkflow({
 					// Simple path - single agent execution
 					let response: { text: string };
 					const capability = inputData.analysis.requiredCapabilities[0];
-					
+
 					switch (capability) {
 						case "planning":
-							response = await planner.generate(inputData.task, { 
+							response = await planner.generate(inputData.task, {
 								resourceId: threadId,
-								threadId 
+								threadId,
 							});
 							break;
 						case "research":
-							response = await searcher.generate(inputData.task, { 
+							response = await searcher.generate(inputData.task, {
 								maxSteps: 5,
 								resourceId: threadId,
-								threadId 
+								threadId,
 							});
 							break;
 						case "code":
-							response = await sandboxAgent.generate(inputData.task, { 
+							response = await sandboxAgent.generate(inputData.task, {
 								maxSteps: 10,
 								resourceId: threadId,
-								threadId 
+								threadId,
 							});
 							break;
 						case "browser":
-							response = await browserAgent.generate(inputData.task, { 
+							response = await browserAgent.generate(inputData.task, {
 								maxSteps: 8,
 								resourceId: threadId,
-								threadId 
+								threadId,
 							});
 							break;
 					}
-					
+
 					return {
 						finalResult: response.text,
 						summary: `Task completed using ${capability} agent.`,
@@ -249,18 +248,18 @@ const adaptiveWorkflow = createWorkflow({
 					// Execute based on suggested order
 					for (const capability of inputData.analysis.suggestedOrder) {
 						const timestamp = new Date().toISOString();
-						
+
 						try {
 							switch (capability) {
 								case "planning": {
 									const planPrompt = `Task: ${inputData.task}
 Summary: ${inputData.analysis.taskSummary}
-${executionHistory.length > 0 ? `\nPrevious steps:\n${executionHistory.map(h => `- ${h.agent}: ${h.action}`).join("\n")}` : ""}
+${executionHistory.length > 0 ? `\nPrevious steps:\n${executionHistory.map((h) => `- ${h.agent}: ${h.action}`).join("\n")}` : ""}
 
 Create a detailed execution plan.`;
-									const planResponse = await planner.generate(planPrompt, { 
+									const planResponse = await planner.generate(planPrompt, {
 										resourceId: threadId,
-										threadId 
+										threadId,
 									});
 									results.planning = planResponse.text;
 									executionHistory.push({
@@ -276,10 +275,10 @@ Create a detailed execution plan.`;
 ${results.planning ? `\nPlan:\n${results.planning}` : ""}
 
 Conduct thorough research and provide findings.`;
-									const researchResponse = await searcher.generate(researchPrompt, { 
+									const researchResponse = await searcher.generate(researchPrompt, {
 										maxSteps: 8,
 										resourceId: threadId,
-										threadId 
+										threadId,
 									});
 									results.research = researchResponse.text;
 									executionHistory.push({
@@ -296,10 +295,10 @@ ${results.planning ? `\nPlan:\n${results.planning}` : ""}
 ${results.research ? `\nResearch findings:\n${results.research}` : ""}
 
 Execute this task programmatically.`;
-									const codeResponse = await sandboxAgent.generate(codePrompt, { 
+									const codeResponse = await sandboxAgent.generate(codePrompt, {
 										maxSteps: 15,
 										resourceId: threadId,
-										threadId 
+										threadId,
 									});
 									results.code = codeResponse.text;
 									executionHistory.push({
@@ -316,10 +315,10 @@ ${results.planning ? `\nPlan:\n${results.planning}` : ""}
 ${results.research ? `\nResearch:\n${results.research}` : ""}
 
 Perform necessary browser automation.`;
-									const browserResponse = await browserAgent.generate(browserPrompt, { 
+									const browserResponse = await browserAgent.generate(browserPrompt, {
 										maxSteps: 10,
 										resourceId: threadId,
-										threadId 
+										threadId,
 									});
 									results.browser = browserResponse.text;
 									executionHistory.push({
@@ -345,7 +344,7 @@ Perform necessary browser automation.`;
 					const prompt = `Original task: ${inputData.task}
 
 Execution history:
-${executionHistory.map(h => `- ${h.agent} (${h.timestamp}): ${h.action} - ${h.result}`).join("\n")}
+${executionHistory.map((h) => `- ${h.agent} (${h.timestamp}): ${h.action} - ${h.result}`).join("\n")}
 
 Results from agents:
 ${Object.entries(results)
@@ -395,7 +394,7 @@ const quickTaskWorkflow = createWorkflow({
 			}),
 			execute: async ({ inputData }) => {
 				const taskLower = inputData.task.toLowerCase();
-				
+
 				if (taskLower.includes("plan") || taskLower.includes("strategy") || taskLower.includes("steps")) {
 					return { capability: "planning" as const, threadId: inputData.threadId };
 				} else if (taskLower.includes("search") || taskLower.includes("find") || taskLower.includes("research")) {
@@ -405,7 +404,7 @@ const quickTaskWorkflow = createWorkflow({
 				} else if (taskLower.includes("browse") || taskLower.includes("web") || taskLower.includes("click")) {
 					return { capability: "browser" as const, threadId: inputData.threadId };
 				}
-				
+
 				return { capability: "unknown" as const, threadId: inputData.threadId };
 			},
 		}),
@@ -425,46 +424,46 @@ const quickTaskWorkflow = createWorkflow({
 				const initData = getInitData();
 				if (inputData.capability === "unknown") {
 					// Fall back to research agent for general questions
-					const response = await searcher.generate(initData.task, { 
-						maxSteps: 3, 
+					const response = await searcher.generate(initData.task, {
+						maxSteps: 3,
 						resourceId: inputData.threadId,
-						threadId: inputData.threadId 
+						threadId: inputData.threadId,
 					});
 					return { result: response.text };
 				}
-				
+
 				let response: { text: string };
-				
+
 				switch (inputData.capability) {
 					case "planning":
-						response = await planner.generate(initData.task, { 
+						response = await planner.generate(initData.task, {
 							resourceId: inputData.threadId,
-							threadId: inputData.threadId 
+							threadId: inputData.threadId,
 						});
 						break;
 					case "research":
-						response = await searcher.generate(initData.task, { 
-							maxSteps: 5, 
+						response = await searcher.generate(initData.task, {
+							maxSteps: 5,
 							resourceId: inputData.threadId,
-							threadId: inputData.threadId 
+							threadId: inputData.threadId,
 						});
 						break;
 					case "code":
-						response = await sandboxAgent.generate(initData.task, { 
-							maxSteps: 10, 
+						response = await sandboxAgent.generate(initData.task, {
+							maxSteps: 10,
 							resourceId: inputData.threadId,
-							threadId: inputData.threadId 
+							threadId: inputData.threadId,
 						});
 						break;
 					case "browser":
-						response = await browserAgent.generate(initData.task, { 
-							maxSteps: 8, 
+						response = await browserAgent.generate(initData.task, {
+							maxSteps: 8,
 							resourceId: inputData.threadId,
-							threadId: inputData.threadId 
+							threadId: inputData.threadId,
 						});
 						break;
 				}
-				
+
 				return { result: response.text };
 			},
 		}),

@@ -9,10 +9,6 @@ export const env = createEnv({
 	 * This way you can ensure the app isn't built with invalid env vars.
 	 */
 	server: {
-		// Inngest configuration
-		INNGEST_EVENT_KEY: z.string().min(1).optional(),
-		INNGEST_SIGNING_KEY: z.string().min(1).optional(),
-
 		// AI Gateway API Key
 		AI_GATEWAY_API_KEY: z.string().min(1).optional(),
 		ANTHROPIC_API_KEY: z.string().min(1),
@@ -42,8 +38,6 @@ export const env = createEnv({
 	 */
 	runtimeEnv: {
 		// Server
-		INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
-		INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
 		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
 		ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
 		NODE_ENV: process.env.NODE_ENV,

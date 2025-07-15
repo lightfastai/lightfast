@@ -8,13 +8,15 @@ import { browserActTool, browserExtractTool, browserObserveTool } from "../tools
 const browserMemorySchema = z.object({
 	sessionActive: z.boolean().default(false),
 	currentUrl: z.string().nullable().default(null),
-	pageHistory: z.array(
-		z.object({
-			url: z.string(),
-			timestamp: z.string(),
-			action: z.string(),
-		}),
-	).default([]),
+	pageHistory: z
+		.array(
+			z.object({
+				url: z.string(),
+				timestamp: z.string(),
+				action: z.string(),
+			}),
+		)
+		.default([]),
 	extractedData: z.record(z.any()).default({}),
 });
 

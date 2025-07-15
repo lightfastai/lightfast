@@ -40,7 +40,9 @@ Test it with the numbers 5 and 10 to make sure it works correctly.`);
 				// In a real app, you'd poll for the result or use webhooks
 				// For demo purposes, we'll simulate the response
 				setTimeout(() => {
-					setResponse("Agent is processing your request! Check the Inngest dashboard for the full response.");
+					setResponse(
+						"Agent is processing your request! Response will be available via the configured workflow system.",
+					);
 					setIsLoading(false);
 				}, 2000);
 			} else {

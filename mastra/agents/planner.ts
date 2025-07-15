@@ -5,16 +5,21 @@ import { z } from "zod";
 
 // Schema for planner working memory
 const plannerMemorySchema = z.object({
-	currentPlan: z.object({
-		taskDescription: z.string(),
-		steps: z.array(z.object({
-			id: z.string(),
-			name: z.string(),
-			description: z.string(),
-			status: z.enum(["pending", "completed", "failed"]).default("pending"),
-		})),
-		createdAt: z.string(),
-	}).nullable().default(null),
+	currentPlan: z
+		.object({
+			taskDescription: z.string(),
+			steps: z.array(
+				z.object({
+					id: z.string(),
+					name: z.string(),
+					description: z.string(),
+					status: z.enum(["pending", "completed", "failed"]).default("pending"),
+				}),
+			),
+			createdAt: z.string(),
+		})
+		.nullable()
+		.default(null),
 	planHistory: z.array(z.string()).default([]),
 });
 
