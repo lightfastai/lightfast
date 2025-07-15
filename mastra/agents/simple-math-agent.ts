@@ -1,18 +1,20 @@
+import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { anthropic } from "@ai-sdk/anthropic";
 import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
 
 // Schema for math agent working memory
 const mathMemorySchema = z.object({
-	calculations: z.array(
-		z.object({
-			expression: z.string(),
-			result: z.number(),
-			timestamp: z.string(),
-		})
-	).default([]),
+	calculations: z
+		.array(
+			z.object({
+				expression: z.string(),
+				result: z.number(),
+				timestamp: z.string(),
+			}),
+		)
+		.default([]),
 	lastResult: z.number().nullable().default(null),
 });
 
@@ -33,13 +35,13 @@ Examples:
 - "Generate first 8 Fibonacci numbers" → Use fibonacci tool with n=8
 
 Be helpful and explain your calculations clearly.`,
-	
+
 	model: anthropic("claude-4-sonnet-20250514"),
-	
+
 	defaultStreamOptions: {
 		maxSteps: 5,
 	},
-	
+
 	memory: new Memory({
 		options: {
 			workingMemory: {
@@ -50,7 +52,7 @@ Be helpful and explain your calculations clearly.`,
 			lastMessages: 10,
 		},
 	}),
-	
+
 	tools: {
 		calculate: calculateTool,
 		factorial: factorialTool,

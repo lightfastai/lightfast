@@ -5,8 +5,10 @@
 			"args": [
 				"@playwright/mcp@latest",
 				"--headless",
-				"--browser", "chrome",
-				"--caps", "core,tabs,wait,files,testing",
+				"--browser",
+				"chrome",
+				"--caps",
+				"core,tabs,wait,files,testing",
 				"--isolated",
 				"--no-sandbox"
 			]

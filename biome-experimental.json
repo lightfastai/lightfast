@@ -5,21 +5,16 @@
 		"includes": [
 			"**",
 			"!**/node_modules/**",
-			"!**/.next/**",
 			"!**/dist/**",
 			"!**/build/**",
 			"!**/out/**",
 			"!**/.vercel/**",
 			"!**/coverage/**",
-			"!**/public/**",
 			"!**/*.min.js",
 			"!**/*.d.ts",
 			"!**/*.config.js",
 			"!**/*.config.ts",
-			"!**/*.config.mjs",
-			"!**/postcss.config.mjs",
-			"!**/*.css",
-			"!**/*.scss"
+			"!**/*.config.mjs"
 		]
 	},
 	"linter": {

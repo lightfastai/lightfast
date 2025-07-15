@@ -17,9 +17,9 @@ export const calculateTool = createTool({
 			// Safe evaluation using Function constructor for basic math
 			// This is a simplified implementation for demo purposes
 			const sanitizedExpression = expression
-				.replace(/[^0-9+\-*/().\s]/g, '') // Remove non-math characters
-				.replace(/\^/g, '**'); // Replace ^ with ** for exponentiation
-			
+				.replace(/[^0-9+\-*/().\s]/g, "") // Remove non-math characters
+				.replace(/\^/g, "**"); // Replace ^ with ** for exponentiation
+
 			// Basic math functions
 			const mathFunctions = {
 				sqrt: Math.sqrt,
@@ -38,11 +38,11 @@ export const calculateTool = createTool({
 			};
 
 			// Create a safe evaluation context
-			const safeEval = new Function('Math', `return ${sanitizedExpression}`);
+			const safeEval = new Function("Math", `return ${sanitizedExpression}`);
 			const result = safeEval(mathFunctions);
-			
+
 			return {
-				result: typeof result === 'number' ? result : Number(result),
+				result: typeof result === "number" ? result : Number(result),
 				expression,
 			};
 		} catch (error) {
@@ -66,12 +66,12 @@ export const factorialTool = createTool({
 		if (number < 0) {
 			throw new Error("Factorial is only defined for non-negative numbers");
 		}
-		
+
 		let result = 1;
 		for (let i = 2; i <= number; i++) {
 			result *= i;
 		}
-		
+
 		return {
 			result,
 			number,
@@ -94,13 +94,13 @@ export const fibonacciTool = createTool({
 		if (n < 1) {
 			throw new Error("n must be at least 1");
 		}
-		
+
 		const sequence = [0, 1];
-		
+
 		for (let i = 2; i < n; i++) {
 			sequence[i] = sequence[i - 1] + sequence[i - 2];
 		}
-		
+
 		return {
 			sequence: sequence.slice(0, n),
 			nth_term: sequence[n - 1],

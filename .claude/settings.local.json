@@ -33,7 +33,8 @@
       "mcp__playwright-mastra__browser_press_key",
       "mcp__playwright-mastra__browser_type",
       "mcp__playwright-mastra__browser_wait_for",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(find:*)"
     ],
     "deny": []
   },
