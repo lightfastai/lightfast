@@ -1,5 +1,7 @@
 # Next.js 15 + Inngest + Vercel Sandbox Demo
 
+> 🧪 Test change made in container-use environment: enabling-coral
+
 A modern Next.js 15 application showcasing integration with Inngest for background job processing, Vercel Sandbox for secure code execution, and Inngest AgentKit for AI-powered coding assistance.
 
 ## Tech Stack
@@ -9,152 +11,167 @@ A modern Next.js 15 application showcasing integration with Inngest for backgrou
 - **shadcn/ui** - Beautiful UI components
 - **Inngest** - Background job orchestration
 - **Vercel Sandbox** - Secure code execution
-- **Inngest AgentKit** - AI agent framework
-- **Biome.js** - Fast formatter and linter
-- **T3 Env** - Type-safe environment variables with Zod validation
+- **Inngest AgentKit** - AI assistance
+- **Vercel Postgres** - Database (optional)
 
 ## Features
 
-- 🚀 Next.js 15 with App Router
-- 🎨 Tailwind CSS v4 (no config file needed)
-- 🧩 shadcn/ui components with dark mode
-- 🔧 Inngest functions for background processing
-- 🏗️ Vercel Sandbox for secure code execution
-- 🤖 AI coding assistant powered by Claude 3.7 Sonnet via Vercel AI Gateway
-- 📦 pnpm for fast package management
-- ✨ TypeScript for type safety
-- 🔐 Type-safe environment variables with T3 Env
+### 🤖 AI Code Assistant
+- **Talk to Codebase**: Natural language interface to interact with your code
+- **Code Generation**: AI-powered code suggestions and generation
+- **Context-Aware**: Understands your project structure and dependencies
 
-## Prerequisites
+### 🔄 Background Jobs
+- **Scheduled Tasks**: Run jobs on a schedule
+- **Event-Driven**: Trigger jobs from API calls or other events
+- **Reliable Execution**: Built-in retries and error handling
+- **Real-time Monitoring**: Track job status in Inngest dashboard
 
-- Node.js 18+
-- pnpm
-- Vercel account (required for Sandbox and AI Gateway)
+### 🏖️ Vercel Sandbox
+- **Safe Execution**: Run untrusted code in isolated environments
+- **Multiple Runtimes**: Support for Node.js, Python, and more
+- **Resource Limits**: Control CPU, memory, and execution time
+- **File System Access**: Read/write files within the sandbox
 
 ## Getting Started
 
-1. **Clone and install dependencies:**
-   ```bash
-   pnpm install
-   ```
+### Prerequisites
 
-2. **Set up environment variables:**
-   ```bash
-   cp .env.example .env.local
-   ```
-   
-   Add your keys (optional):
-   - `INNGEST_EVENT_KEY` - Your Inngest event key
-   - `INNGEST_SIGNING_KEY` - Your Inngest signing key
-   
-   - `AI_GATEWAY_API_KEY` - Your AI Gateway API key from Vercel dashboard
-   
-   Environment variables are validated at build time using T3 Env and Zod schemas.
+- Node.js 18+ and npm/yarn/pnpm
+- Vercel account (for deployment)
+- Inngest account (free tier available)
 
-3. **Run Inngest Dev Server:**
-   ```bash
-   npx inngest-cli@latest dev
-   ```
+### Installation
 
-4. **Start the development server:**
-   ```bash
-   pnpm dev
-   ```
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd <project-directory>
+```
 
-5. **Open your browser:**
-   - App: http://localhost:3000
-   - Inngest Dashboard: http://localhost:8288
+2. Install dependencies:
+```bash
+pnpm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
+
+4. Configure your environment variables:
+```env
+# Inngest
+INNGEST_EVENT_KEY=your_event_key
+INNGEST_SIGNING_KEY=your_signing_key
+
+# OpenAI
+OPENAI_API_KEY=your_openai_api_key
+
+# Vercel Postgres (optional)
+POSTGRES_URL=your_postgres_url
+```
+
+### Development
+
+1. Start the Inngest dev server:
+```bash
+pnpm inngest:dev
+```
+
+2. In a new terminal, start the Next.js development server:
+```bash
+pnpm dev
+```
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Project Structure
 
 ```
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   │   ├── inngest/       # Inngest webhook handler
-│   │   ├── execute/       # Sandbox execution endpoint
-│   │   ├── investigation/ # Investigation chat endpoints
-│   │   └── agent/         # AI agent endpoint
-│   ├── demo/              # shadcn/ui demo page
-│   ├── inngest-demo/      # Inngest integration demo
-│   └── investigation/     # Code investigation chat UI
-├── components/            # React components
-│   ├── ui/               # shadcn/ui components
-│   ├── sandbox-demo.tsx  # Code execution demo
-│   ├── agent-demo.tsx    # AI assistant demo
-│   └── investigation-chat.tsx # Investigation chat interface
-├── lib/                   # Utilities and configuration
-│   └── inngest/          # Inngest functions
-├── types/                # TypeScript type definitions
-└── env.ts                # T3 Env configuration with Zod schemas
+├── app/                  # Next.js 15 app directory
+│   ├── api/             # API routes
+│   │   └── inngest/     # Inngest endpoint
+│   ├── (dashboard)/     # Dashboard routes
+│   └── layout.tsx       # Root layout
+├── components/          # React components
+├── inngest/            # Inngest functions
+│   ├── functions/      # Individual job definitions
+│   └── client.ts       # Inngest client setup
+├── lib/                # Utility functions
+└── public/             # Static assets
 ```
 
-## Available Scripts
+## Key Components
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build for production
-- `pnpm start` - Start production server
-- `pnpm lint` - Run Biome linter
-- `pnpm format` - Format code with Biome
-- `pnpm typecheck` - Run TypeScript type checking
+### Inngest Integration
 
-## Demo Pages
+The Inngest integration is set up in `app/api/inngest/route.ts`:
 
-- `/` - Home page with project overview
-- `/demo` - shadcn/ui component showcase
-- `/inngest-demo` - Inngest + Vercel Sandbox integration demo
-- `/investigation` - AI-powered code investigation chat
-- `/security` - TypeScript security best practices dashboard
+```typescript
+import { serve } from "inngest/next";
+import { inngest } from "@/inngest/client";
+import { functions } from "@/inngest/functions";
 
-## How It Works
+export const { GET, POST, PUT } = serve({
+  client: inngest,
+  functions,
+});
+```
 
-1. **Inngest Functions** - Background jobs are processed reliably using Inngest's event-driven architecture
-2. **Vercel Sandbox** - Code is executed in isolated Firecracker MicroVMs for security
-3. **AgentKit** - AI agents can be configured to assist with coding tasks
-4. **UI Components** - Built with shadcn/ui and Tailwind CSS v4 for a modern interface
+### Background Jobs
 
-## Security Features
+Example background job in `inngest/functions/example.ts`:
 
-The Code Security Agent focuses on TypeScript security best practices:
+```typescript
+export const exampleJob = inngest.createFunction(
+  { id: "example-job" },
+  { event: "example/job.triggered" },
+  async ({ event, step }) => {
+    // Your job logic here
+  }
+);
+```
 
-### 🔒 Security Analysis Capabilities
+### Vercel Sandbox Usage
 
-- **Type Safety Analysis**: Detects usage of `any`, unsafe type assertions, and weak typing patterns
-- **Vulnerability Detection**: Identifies SQL injection, XSS, CSRF, and other common vulnerabilities
-- **Authentication Auditing**: Reviews JWT implementation, session management, and access controls
-- **Data Validation**: Checks for proper input sanitization and schema validation
-- **Cryptography Review**: Identifies weak algorithms, hardcoded secrets, and insecure randomness
+Example sandbox execution:
 
-### TypeScript Security Best Practices
+```typescript
+import { Sandbox } from '@vercel/sandbox';
 
-1. **Enable Strict Mode**: Use TypeScript's strict compiler options for maximum type safety
-2. **Avoid `any` Type**: Replace with specific types, `unknown`, or generics
-3. **Runtime Validation**: Use Zod or similar libraries for runtime type checking
-4. **Secure Error Handling**: Never expose internal error details to users
-5. **Type-Safe Middleware**: Create properly typed authentication and authorization middleware
-
-### Running Security Analysis
-
-To analyze a repository for security issues:
-
-1. Navigate to `/investigation`
-2. Enter the repository URL
-3. Use security-focused queries like:
-   - "Perform a comprehensive security audit with TypeScript best practices"
-   - "Find all instances of unsafe type assertions and any usage"
-   - "Check for SQL injection, XSS, and other vulnerabilities"
-
-The agent will generate custom security scanning scripts and provide actionable recommendations.
+const sandbox = await Sandbox.create();
+const result = await sandbox.run('console.log("Hello from sandbox!")');
+```
 
 ## Deployment
 
-1. Deploy to Vercel:
-   ```bash
-   vercel
-   ```
+### Deploy to Vercel
 
-2. Set up environment variables in Vercel dashboard
+1. Push your code to GitHub
+2. Import the project in Vercel
+3. Configure environment variables
+4. Deploy!
 
-3. Configure Inngest webhook URL in production
+### Configure Inngest
+
+1. Sign up at [inngest.com](https://inngest.com)
+2. Create a new app
+3. Add your production URL + `/api/inngest` as the endpoint
+4. Update your environment variables with production keys
+
+## Development Tips
+
+- Use the Inngest dev UI at `http://localhost:8288` to test and debug functions
+- Check the Vercel Functions logs for API route debugging
+- Use the browser DevTools for frontend debugging
+
+## Learn More
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Inngest Documentation](https://www.inngest.com/docs)
+- [Vercel Sandbox Documentation](https://vercel.com/docs/functions/sandbox)
+- [Inngest AgentKit](https://www.inngest.com/docs/agent-kit)
 
 ## License
 
