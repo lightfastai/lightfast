@@ -17,6 +17,22 @@ pnpm lint         # Run Biome linter
 pnpm biome check --write [filepath]
 ```
 
+## Testing
+
+### Agent Testing (Playwright MCP)
+```
+1. Navigate: mcp__playwright-mastra__browser_navigate → http://localhost:4111
+2. Access: Click agent name → chat interface  
+3. Input: mcp__playwright-mastra__browser_type → enter test message
+4. Send: mcp__playwright-mastra__browser_click → Send button
+5. Close: mcp__playwright-mastra__browser_close (always)
+```
+
+### Test Cases
+• **Basic calculation**: "Calculate 2 + 3 * 4"
+• **Factorial**: "What is 5 factorial?"
+• **Fibonacci**: "Generate first 8 Fibonacci numbers"
+
 ## Import Convention
 ```typescript
 // ❌ Wrong
