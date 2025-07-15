@@ -6,13 +6,15 @@ import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools
 
 // Schema for math agent working memory
 const mathMemorySchema = z.object({
-	calculations: z.array(
-		z.object({
-			expression: z.string(),
-			result: z.number(),
-			timestamp: z.string(),
-		})
-	).default([]),
+	calculations: z
+		.array(
+			z.object({
+				expression: z.string(),
+				result: z.number(),
+				timestamp: z.string(),
+			}),
+		)
+		.default([]),
 	lastResult: z.number().nullable().default(null),
 });
 
@@ -40,11 +42,9 @@ export const mathAgent = new Agent({
 - "Generate first 10 Fibonacci numbers" → Use fibonacci tool with n=10
 
 Always be helpful and provide clear mathematical explanations.`,
-	
+
 	model: anthropic("claude-4-sonnet-20250514"),
-	
-	maxSteps: 5,
-	
+
 	memory: new Memory({
 		options: {
 			workingMemory: {
@@ -55,10 +55,5 @@ Always be helpful and provide clear mathematical explanations.`,
 			lastMessages: 10,
 		},
 	}),
-	
-	tools: {
-		calculate: calculateTool,
-		factorial: factorialTool,
-		fibonacci: fibonacciTool,
-	},
 });
+

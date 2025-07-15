@@ -1,9 +1,11 @@
 import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
 import { browserAgent } from "./agents/browser";
+import { mathAgent } from "./agents/math-agent";
 import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
 import { searcher } from "./agents/searcher";
+import { simpleMathAgent } from "./agents/simple-math-agent";
 import { adaptiveExecutorNetwork } from "./networks/adaptive-executor";
 import { exampleNetwork } from "./networks/example";
 import { unifiedExecutorNetwork } from "./networks/unified-executor";
@@ -21,6 +23,8 @@ export const mastra = new Mastra({
 		searcher,
 		sandboxAgent,
 		browserbaseAgent: browserAgent,
+		mathAgent,
+		simpleMathAgent,
 	},
 	workflows: {},
 	vnext_networks: {

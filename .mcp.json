@@ -1,0 +1,12 @@
+{
+	"mcpServers": {
+		"playwright-mastra": {
+			"command": "npx",
+			"args": ["@playwright/mcp@latest"]
+		},
+		"mastra-docs": {
+			"command": "npx",
+			"args": ["-y", "@mastra/mcp-docs-server"]
+		}
+	}
+}

@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "concurrently \"pnpm dev:next\" \"pnpm dev:mastra\"",
 		"dev:next": "next dev",
-		"dev:mastra": "mastra dev --dir mastra",
+		"dev:mastra": "mastra dev",
 		"build:mastra": "mastra build --dir mastra",
 		"build": "next build",
 		"start": "next start",
@@ -14,13 +14,7 @@
 		"typecheck": "tsc --noEmit",
 		"format": "biome format --write .",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"with-env": "dotenv -e .env.local --",
-		"playwright:install": "npx playwright install",
-		"playwright:install-deps": "npx playwright install-deps",
-		"test:e2e": "npx playwright test",
-		"test:e2e:ui": "npx playwright test --ui",
-		"test:e2e:headed": "npx playwright test --headed",
-		"test:e2e:debug": "npx playwright test --debug"
+		"with-env": "dotenv -e .env.local --"
 	},
 	"keywords": [],
 	"author": "",
@@ -28,7 +22,6 @@
 	"packageManager": "pnpm@10.5.2",
 	"devDependencies": {
 		"@biomejs/biome": "^2.1.1",
-		"@executeautomation/playwright-mcp-server": "^1.0.6",
 		"@playwright/test": "^1.54.0",
 		"@tailwindcss/postcss": "^4.1.11",
 		"@types/ms": "^2.1.0",
@@ -53,6 +46,7 @@
 		"@mastra/libsql": "^0.11.0",
 		"@mastra/memory": "^0.11.2",
 		"@planetscale/database": "^1.19.0",
+		"@playwright/mcp": "^0.0.30",
 		"@radix-ui/react-label": "^2.1.7",
 		"@radix-ui/react-scroll-area": "^1.2.9",
 		"@radix-ui/react-select": "^2.2.5",

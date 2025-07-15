@@ -1,29 +1,43 @@
 {
-	"permissions": {
-		"allow": [
-			"WebFetch(domain:vercel.com)",
-			"Bash(pnpm add:*)",
-			"Bash(pnpm run lint:*)",
-			"Bash(pnpm run:*)",
-			"Bash(rm:*)",
-			"Bash(mkdir:*)",
-			"Bash(ls:*)",
-			"Bash(mv:*)",
-			"Bash(git add:*)",
-			"Bash(sed:*)",
-			"Bash(pnpm typecheck:*)",
-			"Bash(pnpm biome check:*)",
-			"Bash(pnpm biome check:*)",
-			"Bash(pnpm tsx:*)",
-			"Bash(pnpm with-env:*)",
-			"Bash(grep:*)",
-			"Bash(pnpm lint:*)",
-			"WebFetch(domain:mastra.ai)",
-			"mcp__mastra-docs__mastraDocs",
-			"mcp__mastra-docs__mastraExamples",
-			"Bash(pnpm test:sandbox:mock:*)",
-			"Bash(git commit:*)"
-		],
-		"deny": []
-	}
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:vercel.com)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(pnpm run:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(mv:*)",
+      "Bash(git add:*)",
+      "Bash(sed:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm biome check:*)",
+      "Bash(pnpm tsx:*)",
+      "Bash(pnpm with-env:*)",
+      "Bash(grep:*)",
+      "Bash(pnpm lint:*)",
+      "WebFetch(domain:mastra.ai)",
+      "mcp__mastra-docs__mastraDocs",
+      "mcp__mastra-docs__mastraExamples",
+      "Bash(pnpm test:sandbox:mock:*)",
+      "Bash(git commit:*)",
+      "mcp__playwright-mastra__browser_navigate",
+      "Bash(npx playwright:*)",
+      "mcp__playwright-mastra__browser_snapshot",
+      "mcp__playwright-mastra__browser_click",
+      "mcp__playwright-mastra__browser_take_screenshot",
+      "mcp__playwright-mastra__browser_close",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "mcp__playwright-mastra__browser_press_key",
+      "mcp__playwright-mastra__browser_type",
+      "mcp__playwright-mastra__browser_wait_for"
+    ],
+    "deny": []
+  },
+  "enabledMcpjsonServers": [
+    "playwright-mastra",
+    "mastra-docs"
+  ]
 }

@@ -1,0 +1,52 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "isolated": true,
+    "launchOptions": {
+      "channel": "chrome",
+      "headless": false,
+      "args": [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-dev-shm-usage",
+        "--no-sandbox",
+        "--disable-web-security",
+        "--allow-running-insecure-content",
+        "--disable-features=VizDisplayCompositor",
+        "--disable-extensions-except",
+        "--disable-extensions",
+        "--disable-plugins"
+      ]
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "acceptDownloads": true
+    }
+  },
+  "server": {
+    "port": 3002,
+    "host": "localhost"
+  },
+  "capabilities": [
+    "core",
+    "tabs",
+    "wait",
+    "files",
+    "testing"
+  ],
+  "vision": false,
+  "outputDir": "./test-results",
+  "network": {
+    "allowedOrigins": [
+      "http://localhost:4111",
+      "http://localhost:4111/api",
+      "http://localhost:4111/openapi.json",
+      "http://localhost:4111/swagger-ui",
+      "http://127.0.0.1:4111",
+      "http://127.0.0.1:4111/api"
+    ]
+  },
+  "imageResponses": "allow"
+}

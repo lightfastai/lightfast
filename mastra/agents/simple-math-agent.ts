@@ -36,7 +36,9 @@ Be helpful and explain your calculations clearly.`,
 	
 	model: anthropic("claude-4-sonnet-20250514"),
 	
-	maxSteps: 5,
+	defaultStreamOptions: {
+		maxSteps: 5,
+	},
 	
 	memory: new Memory({
 		options: {

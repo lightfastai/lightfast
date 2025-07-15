@@ -2,21 +2,24 @@
 	"$schema": "https://biomejs.dev/schemas/2.1.1/schema.json",
 	"files": {
 		"ignoreUnknown": true,
-		"experimentalScannerIgnores": [
-			"node_modules/**",
-			".next/**",
-			"dist/**",
-			"build/**",
-			"out/**",
-			".vercel/**",
-			"coverage/**",
-			"public/**",
-			"*.min.js",
-			"*.d.ts",
-			"*.config.js",
-			"*.config.ts",
-			"*.config.mjs",
-			"postcss.config.mjs"
+		"includes": [
+			"**",
+			"!**/node_modules/**",
+			"!**/.next/**",
+			"!**/dist/**",
+			"!**/build/**",
+			"!**/out/**",
+			"!**/.vercel/**",
+			"!**/coverage/**",
+			"!**/public/**",
+			"!**/*.min.js",
+			"!**/*.d.ts",
+			"!**/*.config.js",
+			"!**/*.config.ts",
+			"!**/*.config.mjs",
+			"!**/postcss.config.mjs",
+			"!**/*.css",
+			"!**/*.scss"
 		]
 	},
 	"linter": {
