@@ -34,10 +34,17 @@
       "mcp__playwright-mastra__browser_type",
       "mcp__playwright-mastra__browser_wait_for",
       "WebFetch(domain:github.com)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "mcp__container-use__environment_file_write",
+      "mcp__container-use__environment_run_cmd",
+      "mcp__container-use__environment_config",
+      "mcp__container-use__environment_create",
+      "Bash(container-use config:*)",
+      "Bash(container-use delete:*)"
     ],
     "deny": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "playwright-mastra",
     "mastra-docs"

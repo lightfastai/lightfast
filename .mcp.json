@@ -16,6 +16,10 @@
 		"mastra-docs": {
 			"command": "npx",
 			"args": ["-y", "@mastra/mcp-docs-server"]
+		},
+		"container-use": {
+			"command": "container-use",
+			"args": ["stdio"]
 		}
 	}
 }

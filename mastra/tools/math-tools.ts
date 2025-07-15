@@ -64,7 +64,7 @@ export const factorialTool = createTool({
 	execute: async ({ context }) => {
 		const { number } = context;
 		if (number < 0) {
-			throw new Error("Factorial is only defined for non-negative numbers");
+			throw new Error("Factorial is only defined non-negative numbers");
 		}
 
 		let result = 1;
