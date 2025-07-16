@@ -1,7 +1,7 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
+import { openrouter, models } from "../lib/openrouter";
 import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
 
 // Schema for math agent working memory
@@ -43,7 +43,7 @@ export const mathAgent = new Agent({
 
 Always be helpful and provide clear mathematical explanations.`,
 
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 
 	memory: new Memory({
 		options: {
