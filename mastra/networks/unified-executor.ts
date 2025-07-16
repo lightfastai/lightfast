@@ -1,4 +1,3 @@
-import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
@@ -7,6 +6,7 @@ import { browserAgent } from "../agents/browser";
 import { planner } from "../agents/planner";
 import { sandboxAgent } from "../agents/sandbox";
 import { searcher } from "../agents/searcher";
+import { models, openrouter } from "../lib/openrouter";
 
 // Create a coordinator agent that decides which agents to use
 const coordinatorAgent = new Agent({

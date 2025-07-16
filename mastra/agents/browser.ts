@@ -1,7 +1,7 @@
-import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
+import { models, openrouter } from "../lib/openrouter";
 import { browserActTool, browserExtractTool, browserObserveTool } from "../tools/browser-tools";
 
 // Schema for browser working memory

@@ -1,7 +1,7 @@
-import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
+import { models, openrouter } from "../lib/openrouter";
 import { saveTodoTool } from "../tools/saveTodoTool";
 
 // Schema for planner working memory

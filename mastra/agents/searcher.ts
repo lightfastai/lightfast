@@ -1,10 +1,10 @@
-import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
 import { Memory } from "@mastra/memory";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
 import { env } from "@/env";
+import { models, openrouter } from "../lib/openrouter";
 
 const webSearchTool = createTool({
 	id: "web_search",

@@ -1,8 +1,8 @@
-import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
+import { models, openrouter } from "../lib/openrouter";
 
 const agentStep1 = createStep({
 	id: "agent-step",
