@@ -25,8 +25,6 @@ This project uses OpenRouter to access Claude models via Vercel AI SDK:
 **Environment Variables:**
 ```bash
 OPENROUTER_API_KEY=your-api-key-here
-OPENROUTER_REFERER=http://localhost:4111
-OPENROUTER_TITLE=Mastra AI Application
 ```
 
 **Model Configuration:**
