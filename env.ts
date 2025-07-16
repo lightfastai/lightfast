@@ -7,6 +7,8 @@ const envSchema = z.object({
 	OPENAI_API_KEY: z.string().optional(),
 	BROWSERBASE_API_KEY: z.string().optional(),
 	BROWSERBASE_PROJECT_ID: z.string().optional(),
+	OPENROUTER_API_KEY: z.string().optional(),
+	ELEVENLABS_API_KEY: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

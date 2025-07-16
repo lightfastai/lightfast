@@ -45,7 +45,8 @@
 			"mcp__container-use__environment_file_list",
 			"mcp__playwright-mastra__browser_console_messages",
 			"WebFetch(domain:ai-sdk.dev)",
-			"WebFetch(domain:v5.ai-sdk.dev)"
+			"WebFetch(domain:v5.ai-sdk.dev)",
+			"mcp__container-use__environment_file_read"
 		],
 		"deny": []
 	},

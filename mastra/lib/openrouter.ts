@@ -1,8 +1,9 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { env } from "../../env";
 
 export const openrouter = createOpenAI({
 	baseURL: "https://openrouter.ai/api/v1",
-	apiKey: process.env.OPENROUTER_API_KEY ?? "",
+	apiKey: env.OPENROUTER_API_KEY ?? "",
 });
 
 // Model aliases for easy migration
