@@ -2,7 +2,7 @@ import { Agent } from "@mastra/core";
 import { CompositeVoice } from "@mastra/core/voice";
 import { OpenAIVoice } from "@mastra/voice-openai";
 import { ElevenLabsVoice } from "@mastra/voice-elevenlabs";
-import { openrouter } from "../lib/openrouter";
+import { openrouter, models } from "../lib/openrouter";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
@@ -107,33 +107,18 @@ const voiceSettingsTool = createTool({
   },
 });
 
-// Initialize voice components with proper configuration
-const openAIVoice = new OpenAIVoice({
-  speechModel: {
-    apiKey: process.env.OPENROUTER_API_KEY || "",
-    baseURL: "https://openrouter.ai/api/v1",
-  },
-  listeningModel: {
-    apiKey: process.env.OPENROUTER_API_KEY || "",
-    baseURL: "https://openrouter.ai/api/v1",
-  },
-});
-
-const elevenLabsVoice = new ElevenLabsVoice({
-  speechModel: {
-    apiKey: process.env.ELEVENLABS_API_KEY || "",
-  },
-});
-
 // Create composite voice for both input and output
 const voice = new CompositeVoice({
-  input: openAIVoice, // For speech-to-text
-  output: elevenLabsVoice, // For text-to-speech
+  input: new OpenAIVoice(), // For speech-to-text
+  output: new ElevenLabsVoice({ // For text-to-speech
+    apiKey: process.env.ELEVENLABS_API_KEY!,
+  }),
 });
 
 // Create the voice agent
 export const voiceAgent = new Agent({
   name: "voiceAgent",
+  description: "A voice-enabled assistant with speech capabilities",
   instructions: `You are a helpful voice assistant with advanced speech capabilities. You can:
   
   1. Convert text to natural-sounding speech using multiple voice options
@@ -144,7 +129,7 @@ export const voiceAgent = new Agent({
   Keep your responses clear, concise, and natural for voice interaction.
   When users ask you to speak, use the speak tool to generate audio.
   When receiving audio input, use the transcribe tool to convert it to text.`,
-  model: openrouter,
+  model: openrouter(models.claude4Sonnet),
   tools: {
     speak: speakTool,
     transcribe: transcribeTool,
