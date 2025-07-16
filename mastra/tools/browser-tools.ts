@@ -1,6 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { stagehandManager, performWebAction, performWebObservation, performWebExtraction } from "../lib/stagehand-manager";
+import { stagehandManager } from "../lib/stagehand-manager";
 
 export const browserActTool = createTool({
 	id: "web-act",
@@ -15,7 +15,26 @@ export const browserActTool = createTool({
 	}),
 	execute: async ({ context }) => {
 		try {
-			return await performWebAction(context.url, context.action);
+			const stagehand = await stagehandManager.ensureStagehand();
+			
+			// Navigate to URL if provided
+			if (context.url) {
+				console.log(`Navigating to: ${context.url}`);
+				await stagehand.page.goto(context.url);
+			}
+			
+			// Perform action
+			if (context.action) {
+				console.log(`Performing action: ${context.action}`);
+				await stagehand.page.act({
+					action: context.action,
+				});
+			}
+			
+			return {
+				success: true,
+				message: context.action ? `Successfully performed action: ${context.action}` : "Navigation successful",
+			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Browser action failed:", errorMessage);
@@ -37,7 +56,23 @@ export const browserObserveTool = createTool({
 	outputSchema: z.array(z.any()).describe("Array of observable actions"),
 	execute: async ({ context }) => {
 		try {
-			return await performWebObservation(context.url, context.instruction);
+			const stagehand = await stagehandManager.ensureStagehand();
+			
+			// Navigate to URL if provided
+			if (context.url) {
+				console.log(`Navigating to: ${context.url}`);
+				await stagehand.page.goto(context.url);
+			}
+			
+			// Observe elements
+			if (context.instruction) {
+				console.log(`Observing: ${context.instruction}`);
+				return await stagehand.page.observe({
+					instruction: context.instruction,
+				});
+			}
+			
+			return [];
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Browser observation failed:", errorMessage);
@@ -61,16 +96,36 @@ export const browserExtractTool = createTool({
 	outputSchema: z.any().describe("Extracted data according to schema"),
 	execute: async ({ context }) => {
 		try {
-			// Create a default schema if none is provided
-			const defaultSchema = {
-				content: z.string(),
-			};
-
-			return await performWebExtraction(
-				context.url,
-				context.instruction,
-				context.schema || defaultSchema,
-			);
+			const stagehand = await stagehandManager.ensureStagehand();
+			
+			// Navigate to URL if provided
+			if (context.url) {
+				console.log(`Navigating to: ${context.url}`);
+				await stagehand.page.goto(context.url);
+			}
+			
+			// Extract data
+			if (context.instruction) {
+				console.log(`Extracting data: ${context.instruction}`);
+				
+				// Create a default schema if none is provided
+				const defaultSchema = {
+					content: z.string(),
+				};
+				
+				const finalSchema = context.schema || defaultSchema;
+				const schema = z.object(finalSchema);
+				
+				const result = await stagehand.page.extract({
+					instruction: context.instruction,
+					schema,
+					useTextExtract: context.useTextExtract,
+				});
+				
+				return result.extracted;
+			}
+			
+			return null;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Browser extraction failed:", errorMessage);
@@ -78,8 +133,6 @@ export const browserExtractTool = createTool({
 		}
 	},
 });
-
-// Functions now imported from shared stagehand-manager module
 
 // Add a navigation tool for convenience
 export const browserNavigateTool = createTool({
