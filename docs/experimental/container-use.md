@@ -76,16 +76,24 @@ mcp__playwright-mastra__browser_click
 ```
 
 ### 6. Merge to Main
+
+**Note:** `container-use checkout` switches you to the container branch automatically.
+
 ```bash
+# First, checkout the container branch (this creates/switches to cu-<environment-id> branch)
 container-use checkout <environment-id>
-git checkout main  
+
+# Switch back to main branch
+git checkout main
+
+# Merge the container branch
 git merge cu-<environment-id>
 ```
 
 ## View Your Work
 - **List active**: `container-use list`
 - **Logs**: `container-use log <env-id>`
-- **Checkout**: `container-use checkout <env-id>`
+- **Checkout**: `container-use checkout <env-id>` (switches to `cu-<env-id>` branch)
 - **Diff**: `container-use diff <env-id>`
 - **Delete**: `container-use delete <env-id>`
 
