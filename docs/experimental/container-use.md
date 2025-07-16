@@ -118,3 +118,183 @@ git merge cu-<environment-id>
 **Server Not Running**
 - Check background process started
 - Install dependencies first
+
+## Container Cleanup Workflow
+
+### Post-Feature Cleanup Steps
+
+After completing a feature and merging to main, follow these steps to clean up:
+
+#### 1. Verify Work is Saved
+```bash
+# Check if changes are merged to main
+git log --oneline | head -5
+git status
+
+# Verify container changes are committed
+container-use diff <environment-id>
+```
+
+#### 2. Safe Container Deletion
+```bash
+# List all containers to see what you have
+container-use list
+
+# Delete specific container (after work is merged)
+container-use delete <environment-id>
+
+# Example: Delete our test containers
+container-use delete deciding-macaque
+container-use delete tidy-seasnail
+```
+
+#### 3. Git Branch Cleanup
+```bash
+# List container-use branches
+git branch | grep cu-
+
+# Delete merged container branches
+git branch -d cu-<environment-id>
+
+# Force delete if needed (be careful!)
+git branch -D cu-<environment-id>
+```
+
+### Regular Maintenance Commands
+
+#### Weekly Cleanup Routine
+```bash
+# 1. List all active containers
+container-use list
+
+# 2. Check which ones are old/unused
+# Look for containers older than 1 week
+
+# 3. For each old container, check if work is saved
+container-use log <old-env-id>
+container-use diff <old-env-id>
+
+# 4. Delete unused containers
+container-use delete <old-env-id>
+```
+
+#### Bulk Cleanup Commands
+```bash
+# List all container branches
+git branch | grep cu- | wc -l
+
+# Delete all merged container branches
+git branch | grep cu- | xargs git branch -d
+
+# Clean up Docker resources (if needed)
+docker system prune -f
+```
+
+### Safety Checks Before Cleanup
+
+⚠️ **Always verify before deleting:**
+
+```bash
+# 1. Check for uncommitted changes
+container-use diff <env-id>
+
+# 2. Verify work is in main branch
+git log --grep="<feature-name>" --oneline
+
+# 3. Check if container has important files
+container-use checkout <env-id>
+git status
+git stash list
+```
+
+#### Pre-Cleanup Checklist
+- [ ] Feature is merged to main branch
+- [ ] All tests pass in main
+- [ ] No uncommitted changes in container
+- [ ] No important files left untracked
+- [ ] Documentation updated if needed
+
+### Container Lifecycle Management
+
+#### When to Keep Containers
+- **Active development** - Feature in progress
+- **Experimental work** - Prototype or research
+- **Reference** - Useful configuration or setup
+- **Debugging** - Issue reproduction environment
+
+#### When to Delete Containers
+- **Merged features** - Work is safely in main
+- **Failed experiments** - No longer needed
+- **Old branches** - Older than 2 weeks
+- **Duplicate work** - Same feature in multiple containers
+
+### Cleanup Best Practices
+
+#### 1. Descriptive Naming
+```bash
+# Good: Easy to identify purpose and age
+jeevanpillay/feature-openrouter-migration
+jeevanpillay/fix-vision-agent-2024-12-19
+
+# Bad: Hard to remember what it was for
+deciding-macaque
+tidy-seasnail
+```
+
+#### 2. Regular Cleanup Schedule
+- **Daily**: Check active containers (`container-use list`)
+- **Weekly**: Delete completed/merged containers
+- **Monthly**: Clean up old branches and Docker images
+
+#### 3. Documentation in Container Titles
+```bash
+# Include ticket numbers, dates, or status
+jeevanpillay/jira-123-user-auth-ready-to-merge
+jeevanpillay/hotfix-urgent-production-issue
+jeevanpillay/experiment-new-ai-model-2024-12
+```
+
+### Emergency Cleanup
+
+If you have too many containers and need to clean up quickly:
+
+```bash
+# 1. List all containers with details
+container-use list --verbose
+
+# 2. Check which branches exist in main
+git branch -r | grep origin
+
+# 3. Safe bulk delete (only merged work)
+for env in $(container-use list --format=id); do
+  if git branch -r | grep -q "origin/cu-$env"; then
+    echo "Branch cu-$env exists remotely, checking if merged..."
+    if git merge-base --is-ancestor cu-$env main; then
+      echo "Safe to delete: $env"
+      container-use delete $env
+    fi
+  fi
+done
+```
+
+### Real Example: Cleaning Up Our Test Containers
+
+From our agent testing session, we created containers that should be cleaned up:
+
+```bash
+# 1. Check what we created
+container-use list
+# Shows: deciding-macaque, tidy-seasnail
+
+# 2. Our work was merged to main, so safe to delete
+container-use delete deciding-macaque
+container-use delete tidy-seasnail
+
+# 3. Clean up the git branches
+git branch -d cu-deciding-macaque
+git branch -d cu-tidy-seasnail
+
+# 4. Verify cleanup
+container-use list  # Should be empty or only show active work
+git branch | grep cu-  # Should not show our test branches
+```
