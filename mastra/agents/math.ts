@@ -2,6 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
+import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
 import {
 	derivativeTool,
 	integralTool,
@@ -9,7 +10,6 @@ import {
 	quadraticSolverTool,
 	statisticsTool,
 } from "../tools/complex-math-tools";
-import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
 
 // Schema for unified math agent working memory
 const mathMemorySchema = z.object({
@@ -51,10 +51,10 @@ const mathMemorySchema = z.object({
 });
 
 export const mathAgent = new Agent({
-	name: "mathAgent",
+	name: "Math",
 	description: "A comprehensive mathematical agent capable of both basic and complex calculations",
 	model: anthropic("claude-4-sonnet-20250514"),
-
+	
 	memory: new Memory({
 		options: {
 			workingMemory: {
@@ -65,11 +65,11 @@ export const mathAgent = new Agent({
 			lastMessages: 15,
 		},
 	}),
-
+	
 	defaultStreamOptions: {
 		maxSteps: 5,
 	},
-
+	
 	tools: {
 		// Basic math tools
 		calculate: calculateTool,
@@ -82,7 +82,7 @@ export const mathAgent = new Agent({
 		derivative: derivativeTool,
 		integral: integralTool,
 	},
-
+	
 	instructions: `You are a comprehensive mathematical agent with capabilities ranging from basic arithmetic to advanced mathematics.
 
 ## Basic Operations
