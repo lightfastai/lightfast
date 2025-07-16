@@ -1,4 +1,4 @@
-import { Stagehand } from "@browserbase/stagehand";
+import { Stagehand } from "@browserbasehq/stagehand";
 import { env } from "@/env";
 
 export class StagehandSessionManager {
