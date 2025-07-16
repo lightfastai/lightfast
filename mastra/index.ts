@@ -1,13 +1,11 @@
 import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
 import { browserAgent } from "./agents/browser";
-import { complexMathAgent } from "./agents/complex-math-agent";
-import { mathAgent } from "./agents/math-agent";
+import { mathAgent } from "./agents/math";
 import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
 import { searcher } from "./agents/searcher";
-import { simpleMathAgent } from "./agents/simple-math-agent";
-import { visionAnalysisAgent } from "./agents/visionAnalysisAgent";
+import { visionAgent } from "./agents/vision";
 import { adaptiveExecutorNetwork } from "./networks/adaptive-executor";
 import { exampleNetwork } from "./networks/example";
 import { unifiedExecutorNetwork } from "./networks/unified-executor";
@@ -21,14 +19,12 @@ const storage = new LibSQLStore({
 export const mastra = new Mastra({
 	storage, // This will be used by all Memory instances in agents
 	agents: {
-		planner,
-		searcher,
-		sandboxAgent,
-		browserbaseAgent: browserAgent,
-		mathAgent,
-		simpleMathAgent,
-		complexMathAgent,
-		visionAnalysisAgent,
+		Planner: planner,
+		Searcher: searcher,
+		Sandbox: sandboxAgent,
+		Browser: browserAgent,
+		Math: mathAgent,
+		Vision: visionAgent,
 	},
 	workflows: {},
 	vnext_networks: {
