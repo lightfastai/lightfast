@@ -33,7 +33,7 @@ export const downloadFileTool = createTool({
 			let downloadId: string | null = null;
 
 			// Monitor for downloads
-			stagehand.page.on('download', (download) => {
+			stagehand.page.on('download', (download: any) => {
 				downloadDetected = true;
 				downloadId = download.url(); // This should give us the download identifier
 				console.log(`Download detected: ${downloadId}`);
@@ -103,7 +103,7 @@ export const downloadDirectFileTool = createTool({
 			
 			// Set up download tracking
 			let downloadDetected = false;
-			stagehand.page.on('download', (download) => {
+			stagehand.page.on('download', (download: any) => {
 				downloadDetected = true;
 				console.log(`Download detected for: ${context.fileUrl}`);
 			});
@@ -205,7 +205,7 @@ export const downloadImageTool = createTool({
 
 			// Set up download tracking
 			let downloadDetected = false;
-			stagehand.page.on('download', (download) => {
+			stagehand.page.on('download', (download: any) => {
 				downloadDetected = true;
 				console.log(`Image download detected: ${context.imageDescription}`);
 			});
