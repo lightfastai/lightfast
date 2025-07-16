@@ -3,7 +3,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 export const openrouter = createOpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY ?? "",
-  defaultHeaders: {
+  headers: {
     "HTTP-Referer": process.env.OPENROUTER_REFERER ?? "http://localhost:4111",
     "X-Title": process.env.OPENROUTER_TITLE ?? "Mastra AI Application",
   },
