@@ -7,6 +7,7 @@ import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
 import { searcher } from "./agents/searcher";
 import { simpleMathAgent } from "./agents/simple-math-agent";
+import { visionAnalysisAgent } from "./agents/visionAnalysisAgent";
 import { adaptiveExecutorNetwork } from "./networks/adaptive-executor";
 import { exampleNetwork } from "./networks/example";
 import { unifiedExecutorNetwork } from "./networks/unified-executor";
@@ -27,6 +28,7 @@ export const mastra = new Mastra({
 		mathAgent,
 		simpleMathAgent,
 		complexMathAgent,
+		visionAnalysisAgent,
 	},
 	workflows: {},
 	vnext_networks: {
