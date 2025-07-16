@@ -40,13 +40,13 @@ OPENROUTER_API_KEY=your-api-key-here
 # No manual startup needed - auto-starts with Claude Code
 ```
 
-### Agent Testing (Playwright MCP)
-```
-1. Navigate: mcp__playwright-mastra__browser_navigate → http://localhost:4111/agents/[agentName]
-2. Input: mcp__playwright-mastra__browser_type → enter test message
-3. Send: mcp__playwright-mastra__browser_click → Send button
-4. Close: mcp__playwright-mastra__browser_close (always)
-```
+### Agent Testing
+- **Full testing guide**: @docs/agent-testing.md
+- **Quick Playwright flow**:
+  1. Navigate: mcp__playwright-mastra__browser_navigate → http://localhost:4111/agents/[agentName]
+  2. Input: mcp__playwright-mastra__browser_type → enter test message
+  3. Send: mcp__playwright-mastra__browser_click → Send button
+  4. Close: mcp__playwright-mastra__browser_close (always)
 
 ### Self-Healing Workflow
 **When creating/debugging agents:**
@@ -105,6 +105,10 @@ container-use config import <environment-id>
 ```
 
 **Note:** Sensitive values (API keys, tokens) should be set manually using `container-use config env set` to avoid committing secrets.
+
+### Full Container-Use Guide
+For detailed container-use workflow documentation:
+@docs/container-use.md
 
 ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
 
