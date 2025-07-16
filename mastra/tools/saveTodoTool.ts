@@ -5,7 +5,6 @@ import path from "path";
 
 export const saveTodoTool = createTool({
 	id: "save-todo",
-	name: "Save Todo",
 	description: "Saves a todo plan as a markdown file to the local /tmp_content directory",
 	inputSchema: z.object({
 		filename: z.string().describe("The filename for the todo (without .md extension)"),
