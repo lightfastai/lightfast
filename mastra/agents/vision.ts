@@ -1,8 +1,7 @@
-import { openai } from "@ai-sdk/openai";
-import { Agent } from "@mastra/core";
-import { createTool } from "@mastra/core";
+import { Agent, createTool } from "@mastra/core";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { models, openrouter } from "../lib/openrouter";
 
 // Schema for vision analysis response
 const visionAnalysisSchema = z.object({
@@ -20,10 +19,7 @@ const analyzeVisualContent = createTool({
 	description: "Analyzes images or PDFs from provided URLs using vision capabilities",
 	inputSchema: z.object({
 		url: z.string().url().describe("URL of the image or PDF to analyze"),
-		analysisType: z
-			.enum(["general", "detailed", "text-extraction"])
-			.optional()
-			.describe("Type of analysis to perform"),
+		analysisType: z.enum(["general", "detailed", "text-extraction"]).optional().describe("Type of analysis to perform"),
 	}),
 	execute: async ({ context }) => {
 		const { url, analysisType = "general" } = context;
@@ -38,12 +34,13 @@ const analyzeVisualContent = createTool({
 					"Provide a detailed analysis of this image, including all visible elements, colors, composition, and any text present.";
 			} else if (analysisType === "text-extraction") {
 				systemPrompt = "You are a text extraction expert. Focus on identifying and extracting all text from images.";
-				userPrompt = "Extract and transcribe all text visible in this image or document. Focus primarily on text content.";
+				userPrompt =
+					"Extract and transcribe all text visible in this image or document. Focus primarily on text content.";
 			}
 
 			// Use generateObject with Vercel AI SDK
 			const result = await generateObject({
-				model: openai("gpt-4o-mini"),
+				model: openrouter(models.claude4Sonnet),
 				schema: visionAnalysisSchema,
 				messages: [
 					{
@@ -65,7 +62,7 @@ const analyzeVisualContent = createTool({
 				url,
 				analysisType,
 				analysis: result.object,
-				model: "gpt-4o-mini",
+				model: "anthropic/claude-sonnet-4",
 			};
 		} catch (error) {
 			console.error("Vision analysis error:", error);
@@ -114,8 +111,8 @@ const validateUrl = createTool({
 // Create the vision analysis agent
 export const visionAgent = new Agent({
 	name: "Vision",
-	description: "Analyzes images and PDFs from URLs using OpenAI GPT-4 mini vision capabilities",
-	model: openai("gpt-4o-mini"),
+	description: "Analyzes images and PDFs from URLs using Claude Sonnet 4 vision capabilities via OpenRouter",
+	model: openrouter(models.claude4Sonnet),
 	tools: {
 		analyzeVisualContent,
 		validateUrl,
@@ -124,7 +121,7 @@ export const visionAgent = new Agent({
 
 Your capabilities:
 1. Validate URLs to ensure they point to valid images or PDFs
-2. Analyze visual content using OpenAI's vision capabilities with structured output
+2. Analyze visual content using Claude Sonnet 4's vision capabilities with structured output
 3. Extract text from images and documents
 4. Provide detailed descriptions of visual content including objects, colors, and composition
 
