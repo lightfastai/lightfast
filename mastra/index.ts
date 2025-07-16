@@ -19,12 +19,12 @@ const storage = new LibSQLStore({
 export const mastra = new Mastra({
 	storage, // This will be used by all Memory instances in agents
 	agents: {
-		planner,
-		searcher,
-		sandboxAgent,
-		browserbaseAgent: browserAgent,
-		mathAgent,
-		visionAgent,
+		Planner: planner,
+		Searcher: searcher,
+		Sandbox: sandboxAgent,
+		Browser: browserAgent,
+		Math: mathAgent,
+		Vision: visionAgent,
 	},
 	workflows: {},
 	vnext_networks: {
