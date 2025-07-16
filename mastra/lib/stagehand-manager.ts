@@ -38,14 +38,14 @@ export class StagehandSessionManager {
 
 	private async createSession(): Promise<void> {
 		console.log("Creating new Stagehand session...");
-		
+
 		this.stagehand = new Stagehand({
 			env: "BROWSERBASE", // Use Browserbase environment
 			apiKey: env.BROWSERBASE_API_KEY,
 			projectId: env.BROWSERBASE_PROJECT_ID,
 			enableCaching: true,
 			logger: (logLine) => {
-				console.log(`[Stagehand ${logLine.level || 'info'}]: ${logLine.message}`);
+				console.log(`[Stagehand ${logLine.level || "info"}]: ${logLine.message}`);
 			},
 		});
 
@@ -108,16 +108,16 @@ export class StagehandSessionManager {
 export const stagehandManager = StagehandSessionManager.getInstance();
 
 // Cleanup on process exit
-process.on('exit', () => {
+process.on("exit", () => {
 	stagehandManager.cleanup();
 });
 
-process.on('SIGINT', async () => {
+process.on("SIGINT", async () => {
 	await stagehandManager.cleanup();
 	process.exit(0);
 });
 
-process.on('SIGTERM', async () => {
+process.on("SIGTERM", async () => {
 	await stagehandManager.cleanup();
 	process.exit(0);
 });

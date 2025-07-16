@@ -1,6 +1,5 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { env } from "@/env";
 import { stagehandManager } from "../lib/stagehand-manager";
 
 /**
@@ -11,7 +10,9 @@ export const downloadFileTool = createTool({
 	description: "Download a file from a webpage using Browserbase's download feature",
 	inputSchema: z.object({
 		url: z.string().describe("URL to navigate to"),
-		downloadAction: z.string().describe('Action to trigger download (e.g., "click download button", "right-click on image and save")'),
+		downloadAction: z
+			.string()
+			.describe('Action to trigger download (e.g., "click download button", "right-click on image and save")'),
 		filename: z.string().optional().describe("Optional filename hint for the downloaded file"),
 	}),
 	outputSchema: z.object({
@@ -28,47 +29,46 @@ export const downloadFileTool = createTool({
 			console.log(`Navigating to: ${context.url}`);
 			await stagehand.page.goto(context.url);
 
-			// Set up download tracking
-			let downloadDetected = false;
-			let downloadId: string | null = null;
-
-			// Monitor for downloads
-			stagehand.page.on('download', (download: any) => {
-				downloadDetected = true;
-				downloadId = download.url(); // This should give us the download identifier
-				console.log(`Download detected: ${downloadId}`);
+			// Configure download behavior using CDP
+			const client = await stagehand.page.context().newCDPSession(stagehand.page);
+			await client.send("Browser.setDownloadBehavior", {
+				behavior: "allow",
+				downloadPath: "downloads",
+				eventsEnabled: true,
 			});
 
-			// Trigger the download action
+			// Wait for download event and trigger the action
 			console.log(`Performing download action: ${context.downloadAction}`);
-			await stagehand.page.act({
-				action: context.downloadAction,
-			});
+			const [download] = await Promise.all([
+				stagehand.page.waitForEvent("download"),
+				stagehand.page.act({
+					action: context.downloadAction,
+				}),
+			]);
 
-			// Wait a bit for download to be detected
-			await new Promise(resolve => setTimeout(resolve, 2000));
-
-			if (downloadDetected && downloadId) {
-				// Get session ID from manager
-				const sessionId = stagehandManager.getSessionId();
-				if (!sessionId) {
-					throw new Error("No active session ID available");
-				}
-				const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
-
-				return {
-					success: true,
-					downloadUrl: browserbaseDownloadUrl,
-					filename: context.filename,
-					message: `Download initiated successfully. Access via Browserbase API: ${browserbaseDownloadUrl}`,
-				};
-			} else {
+			// Check for download errors
+			const downloadError = await download.failure();
+			if (downloadError !== null) {
+				console.error("Download error:", downloadError);
 				return {
 					success: false,
-					message: "No download was detected. The action may not have triggered a download.",
+					message: `Download failed: ${downloadError}`,
 				};
 			}
 
+			// Get session ID from manager
+			const sessionId = stagehandManager.getSessionId();
+			if (!sessionId) {
+				throw new Error("No active session ID available");
+			}
+			const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
+
+			return {
+				success: true,
+				downloadUrl: browserbaseDownloadUrl,
+				filename: context.filename || download.suggestedFilename(),
+				message: `Download initiated successfully. Access via Browserbase API: ${browserbaseDownloadUrl}`,
+			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Download failed:", errorMessage);
@@ -101,23 +101,36 @@ export const downloadDirectFileTool = createTool({
 		try {
 			const stagehand = await stagehandManager.ensureStagehand();
 
-			// Navigate to the file URL - this should trigger download automatically
-			console.log(`Navigating to file URL: ${context.fileUrl}`);
-			
-			// Set up download tracking
-			let downloadDetected = false;
-			stagehand.page.on('download', (download: any) => {
-				downloadDetected = true;
-				console.log(`Download detected for: ${context.fileUrl}`);
+			// Configure download behavior using CDP
+			const client = await stagehand.page.context().newCDPSession(stagehand.page);
+			await client.send("Browser.setDownloadBehavior", {
+				behavior: "allow",
+				downloadPath: "downloads",
+				eventsEnabled: true,
 			});
 
-			await stagehand.page.goto(context.fileUrl);
-			
-			// Wait for download to be detected
-			await new Promise(resolve => setTimeout(resolve, 3000));
+			// Set up download promise with timeout
+			const downloadPromise = stagehand.page.waitForEvent("download", { timeout: 10000 });
 
-			if (downloadDetected) {
-				// Get session ID from manager
+			// Navigate to the file URL
+			console.log(`Navigating to file URL: ${context.fileUrl}`);
+			try {
+				// Navigate but don't wait for 'load' event since PDFs/files might not trigger it
+				await stagehand.page.goto(context.fileUrl, {
+					waitUntil: "domcontentloaded",
+					timeout: 10000,
+				});
+			} catch (navError) {
+				// Navigation might fail for direct file downloads, but download might still work
+				console.log("Navigation completed (possible direct download):", navError);
+			}
+
+			// Wait for download with timeout
+			let download;
+			try {
+				download = await downloadPromise;
+			} catch (timeoutError) {
+				// If no download event was triggered, return with session info anyway
 				const sessionId = stagehandManager.getSessionId();
 				if (!sessionId) {
 					throw new Error("No active session ID available");
@@ -127,16 +140,34 @@ export const downloadDirectFileTool = createTool({
 				return {
 					success: true,
 					downloadUrl: browserbaseDownloadUrl,
-					filename: context.filename,
-					message: `Direct download initiated successfully. Access via Browserbase API: ${browserbaseDownloadUrl}`,
-				};
-			} else {
-				return {
-					success: false,
-					message: "No download was detected. The URL may not be a direct file link.",
+					filename: context.filename || "unknown",
+					message: `Navigation completed. If a download was triggered, access it via Browserbase API: ${browserbaseDownloadUrl}`,
 				};
 			}
 
+			// Check for download errors
+			const downloadError = await download.failure();
+			if (downloadError !== null) {
+				console.error("Download error:", downloadError);
+				return {
+					success: false,
+					message: `Download failed: ${downloadError}`,
+				};
+			}
+
+			// Get session ID from manager
+			const sessionId = stagehandManager.getSessionId();
+			if (!sessionId) {
+				throw new Error("No active session ID available");
+			}
+			const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
+
+			return {
+				success: true,
+				downloadUrl: browserbaseDownloadUrl,
+				filename: context.filename || download.suggestedFilename(),
+				message: `Direct download initiated successfully. Access via Browserbase API: ${browserbaseDownloadUrl}`,
+			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Direct download failed:", errorMessage);
@@ -163,6 +194,9 @@ export const listDownloadsTool = createTool({
 	}),
 	execute: async ({ context }) => {
 		try {
+			// Ensure we have an active Stagehand session first
+			await stagehandManager.ensureStagehand();
+
 			const sessionId = stagehandManager.getSessionId();
 			if (!sessionId) {
 				throw new Error("No active session ID available");
@@ -174,7 +208,6 @@ export const listDownloadsTool = createTool({
 				downloadUrl: browserbaseDownloadUrl,
 				message: `Use this URL to access downloads: ${browserbaseDownloadUrl}. You'll need to authenticate with your Browserbase API key.`,
 			};
-
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("List downloads failed:", errorMessage);
@@ -194,7 +227,9 @@ export const downloadImageTool = createTool({
 	description: "Download an image from a webpage using right-click save action",
 	inputSchema: z.object({
 		url: z.string().describe("URL to navigate to"),
-		imageDescription: z.string().describe('Description of image to download (e.g., "the main logo", "first product image", "profile picture")'),
+		imageDescription: z
+			.string()
+			.describe('Description of image to download (e.g., "the main logo", "first product image", "profile picture")'),
 		filename: z.string().optional().describe("Optional filename hint for the downloaded image"),
 	}),
 	outputSchema: z.object({
@@ -211,44 +246,47 @@ export const downloadImageTool = createTool({
 			console.log(`Navigating to: ${context.url}`);
 			await stagehand.page.goto(context.url);
 
-			// Set up download tracking
-			let downloadDetected = false;
-			stagehand.page.on('download', (download: any) => {
-				downloadDetected = true;
-				console.log(`Image download detected: ${context.imageDescription}`);
+			// Configure download behavior using CDP
+			const client = await stagehand.page.context().newCDPSession(stagehand.page);
+			await client.send("Browser.setDownloadBehavior", {
+				behavior: "allow",
+				downloadPath: "downloads",
+				eventsEnabled: true,
 			});
 
 			// Right-click on the image to save it
 			const downloadAction = `right-click on ${context.imageDescription} and save image`;
 			console.log(`Performing image download action: ${downloadAction}`);
-			await stagehand.page.act({
-				action: downloadAction,
-			});
+			const [download] = await Promise.all([
+				stagehand.page.waitForEvent("download"),
+				stagehand.page.act({
+					action: downloadAction,
+				}),
+			]);
 
-			// Wait for download to be detected
-			await new Promise(resolve => setTimeout(resolve, 3000));
-
-			if (downloadDetected) {
-				// Get session ID from manager
-				const sessionId = stagehandManager.getSessionId();
-				if (!sessionId) {
-					throw new Error("No active session ID available");
-				}
-				const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
-
-				return {
-					success: true,
-					downloadUrl: browserbaseDownloadUrl,
-					filename: context.filename,
-					message: `Image download initiated successfully. Access via Browserbase API: ${browserbaseDownloadUrl}`,
-				};
-			} else {
+			// Check for download errors
+			const downloadError = await download.failure();
+			if (downloadError !== null) {
+				console.error("Download error:", downloadError);
 				return {
 					success: false,
-					message: `No download was detected. Could not find or download image: ${context.imageDescription}`,
+					message: `Download failed: ${downloadError}`,
 				};
 			}
 
+			// Get session ID from manager
+			const sessionId = stagehandManager.getSessionId();
+			if (!sessionId) {
+				throw new Error("No active session ID available");
+			}
+			const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
+
+			return {
+				success: true,
+				downloadUrl: browserbaseDownloadUrl,
+				filename: context.filename || download.suggestedFilename(),
+				message: `Image download initiated successfully. Access via Browserbase API: ${browserbaseDownloadUrl}`,
+			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Image download failed:", errorMessage);

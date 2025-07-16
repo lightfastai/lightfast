@@ -16,13 +16,13 @@ export const browserActTool = createTool({
 	execute: async ({ context }) => {
 		try {
 			const stagehand = await stagehandManager.ensureStagehand();
-			
+
 			// Navigate to URL if provided
 			if (context.url) {
 				console.log(`Navigating to: ${context.url}`);
 				await stagehand.page.goto(context.url);
 			}
-			
+
 			// Perform action
 			if (context.action) {
 				console.log(`Performing action: ${context.action}`);
@@ -30,7 +30,7 @@ export const browserActTool = createTool({
 					action: context.action,
 				});
 			}
-			
+
 			return {
 				success: true,
 				message: context.action ? `Successfully performed action: ${context.action}` : "Navigation successful",
@@ -57,13 +57,13 @@ export const browserObserveTool = createTool({
 	execute: async ({ context }) => {
 		try {
 			const stagehand = await stagehandManager.ensureStagehand();
-			
+
 			// Navigate to URL if provided
 			if (context.url) {
 				console.log(`Navigating to: ${context.url}`);
 				await stagehand.page.goto(context.url);
 			}
-			
+
 			// Observe elements
 			if (context.instruction) {
 				console.log(`Observing: ${context.instruction}`);
@@ -71,7 +71,7 @@ export const browserObserveTool = createTool({
 					instruction: context.instruction,
 				});
 			}
-			
+
 			return [];
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
@@ -97,34 +97,34 @@ export const browserExtractTool = createTool({
 	execute: async ({ context }) => {
 		try {
 			const stagehand = await stagehandManager.ensureStagehand();
-			
+
 			// Navigate to URL if provided
 			if (context.url) {
 				console.log(`Navigating to: ${context.url}`);
 				await stagehand.page.goto(context.url);
 			}
-			
+
 			// Extract data
 			if (context.instruction) {
 				console.log(`Extracting data: ${context.instruction}`);
-				
+
 				// Create a default schema if none is provided
 				const defaultSchema = {
 					content: z.string(),
 				};
-				
+
 				const finalSchema = context.schema || defaultSchema;
 				const schema = z.object(finalSchema);
-				
+
 				const result = await stagehand.page.extract({
 					instruction: context.instruction,
 					schema,
 					useTextExtract: context.useTextExtract,
 				});
-				
+
 				return result.extracted;
 			}
-			
+
 			return null;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);

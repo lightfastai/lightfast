@@ -67,7 +67,12 @@ Remember: You're planning for execution in a powerful sandbox environment with a
 		onStepFinish: ({ text, toolCalls, toolResults }) => {
 			if (toolResults) {
 				toolResults.forEach((result, index) => {
-					if (result.type === 'tool-result' && result.result && typeof result.result === 'object' && 'error' in result.result) {
+					if (
+						result.type === "tool-result" &&
+						result.result &&
+						typeof result.result === "object" &&
+						"error" in result.result
+					) {
 						console.error(`[Planner] Tool ${index} error:`, result.result.error);
 					}
 				});
@@ -76,6 +81,6 @@ Remember: You're planning for execution in a powerful sandbox environment with a
 		},
 		onFinish: (result) => {
 			console.log(`[Planner] Generation finished:`, result);
-		}
-	}
+		},
+	},
 });

@@ -1,6 +1,11 @@
 import { Agent } from "@mastra/core/agent";
 import { models, openrouter } from "../lib/openrouter";
-import { downloadFileTool, downloadDirectFileTool, downloadImageTool, listDownloadsTool } from "../tools/download-tools";
+import {
+	downloadDirectFileTool,
+	downloadFileTool,
+	downloadImageTool,
+	listDownloadsTool,
+} from "../tools/download-tools";
 
 export const downloadAgent = new Agent({
 	name: "Download Agent",
@@ -101,7 +106,12 @@ Remember: You specialize in downloading files using Browserbase's capabilities. 
 		onStepFinish: ({ text, toolCalls, toolResults }) => {
 			if (toolResults) {
 				toolResults.forEach((result, index) => {
-					if (result.type === 'tool-result' && result.result && typeof result.result === 'object' && 'error' in result.result) {
+					if (
+						result.type === "tool-result" &&
+						result.result &&
+						typeof result.result === "object" &&
+						"error" in result.result
+					) {
 						console.error(`[Download Agent] Tool ${index} error:`, result.result.error);
 					}
 				});
@@ -110,6 +120,6 @@ Remember: You specialize in downloading files using Browserbase's capabilities. 
 		},
 		onFinish: (result) => {
 			console.log(`[Download Agent] Generation finished:`, result);
-		}
-	}
+		},
+	},
 });

@@ -132,24 +132,24 @@ const webSearchTool = createTool({
 			};
 		} catch (error) {
 			console.error("Web search error:", error);
-			
+
 			// Handle specific error types with user-friendly messages
 			if (error instanceof Error) {
-				if (error.message.includes('API key')) {
+				if (error.message.includes("API key")) {
 					throw new Error("Search service is temporarily unavailable. Please try again later.");
 				}
-				if (error.message.includes('rate limit')) {
+				if (error.message.includes("rate limit")) {
 					throw new Error("Search rate limit exceeded. Please wait a moment and try again.");
 				}
-				if (error.message.includes('timeout')) {
+				if (error.message.includes("timeout")) {
 					throw new Error("Search request timed out. Please try a simpler query.");
 				}
-				if (error.message.includes('network')) {
+				if (error.message.includes("network")) {
 					throw new Error("Network error occurred during search. Please check your connection.");
 				}
 				throw new Error(`Search failed: ${error.message}`);
 			}
-			
+
 			throw new Error("An unexpected error occurred during web search. Please try again.");
 		}
 	},
@@ -191,7 +191,12 @@ Always use the web_search tool to find information and provide clear, well-sourc
 		onStepFinish: ({ text, toolCalls, toolResults }) => {
 			if (toolResults) {
 				toolResults.forEach((result, index) => {
-					if (result.type === 'tool-result' && result.result && typeof result.result === 'object' && 'error' in result.result) {
+					if (
+						result.type === "tool-result" &&
+						result.result &&
+						typeof result.result === "object" &&
+						"error" in result.result
+					) {
 						console.error(`[Searcher] Tool ${index} error:`, result.result.error);
 					}
 				});
@@ -200,6 +205,6 @@ Always use the web_search tool to find information and provide clear, well-sourc
 		},
 		onFinish: (result) => {
 			console.log(`[Searcher] Generation finished:`, result);
-		}
-	}
+		},
+	},
 });

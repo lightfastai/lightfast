@@ -1,7 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { z } from "zod";
 import { models, openrouter } from "../lib/openrouter";
-import { browserActTool, browserExtractTool, browserObserveTool, browserNavigateTool } from "../tools/browser-tools";
+import { browserActTool, browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
 
 // Note: Working memory schemas moved to network level for proper context handling
 
@@ -96,7 +96,12 @@ export const browserAgent = new Agent({
 		onStepFinish: ({ text, toolCalls, toolResults }) => {
 			if (toolResults) {
 				toolResults.forEach((result, index) => {
-					if (result.type === 'tool-result' && result.result && typeof result.result === 'object' && 'error' in result.result) {
+					if (
+						result.type === "tool-result" &&
+						result.result &&
+						typeof result.result === "object" &&
+						"error" in result.result
+					) {
 						console.error(`[Browser] Tool ${index} error:`, result.result.error);
 					}
 				});
