@@ -6,6 +6,7 @@ import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
 import { searcher } from "./agents/searcher";
 import { visionAgent } from "./agents/vision";
+import { voiceAgent } from "./agents/voice";
 import { adaptiveExecutorNetwork } from "./networks/adaptive-executor";
 import { exampleNetwork } from "./networks/example";
 import { unifiedExecutorNetwork } from "./networks/unified-executor";
@@ -25,6 +26,7 @@ export const mastra = new Mastra({
 		Browser: browserAgent,
 		Math: mathAgent,
 		Vision: visionAgent,
+		Voice: voiceAgent,
 	},
 	workflows: {},
 	vnext_networks: {

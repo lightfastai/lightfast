@@ -1,7 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
 import { models, openrouter } from "../lib/openrouter";
 import {
 	derivativeTool,
@@ -10,6 +9,7 @@ import {
 	quadraticSolverTool,
 	statisticsTool,
 } from "../tools/complex-math-tools";
+import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
 
 // Schema for unified math agent working memory
 const mathMemorySchema = z.object({
@@ -64,11 +64,11 @@ export const mathAgent = new Agent({
 			lastMessages: 15,
 		},
 	}),
-	
+
 	defaultStreamOptions: {
 		maxSteps: 5,
 	},
-	
+
 	tools: {
 		// Basic math tools
 		calculate: calculateTool,
@@ -81,7 +81,7 @@ export const mathAgent = new Agent({
 		derivative: derivativeTool,
 		integral: integralTool,
 	},
-	
+
 	instructions: `You are a comprehensive mathematical agent with capabilities ranging from basic arithmetic to advanced mathematics.
 
 ## Basic Operations
