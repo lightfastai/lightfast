@@ -110,8 +110,10 @@ const voiceSettingsTool = createTool({
 // Create composite voice for both input and output
 const voice = new CompositeVoice({
   input: new OpenAIVoice(), // For speech-to-text
-  output: new ElevenLabsVoice({ // For text-to-speech
-    apiKey: process.env.ELEVENLABS_API_KEY!,
+  output: new ElevenLabsVoice({
+    speechModel: {
+      apiKey: process.env.ELEVENLABS_API_KEY!,
+    },
   }),
 });
 
