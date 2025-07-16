@@ -2,30 +2,26 @@ import { Agent } from "@mastra/core";
 import { CompositeVoice } from "@mastra/core/voice";
 import { OpenAIVoice } from "@mastra/voice-openai";
 import { ElevenLabsVoice } from "@mastra/voice-elevenlabs";
-import { openRouter } from "../lib/openrouter";
-import { createTool } from "@mastra/core";
+import { openrouter } from "../lib/openrouter";
+import { createTool } from "@mastra/core/tools";
+import { z } from "zod";
 
 // Create voice tools for the agent
 const speakTool = createTool({
   id: "speak",
-  name: "Speak Response",
   description: "Convert text to speech and play audio response",
-  inputSchema: {
-    type: "object",
-    properties: {
-      text: {
-        type: "string",
-        description: "The text to convert to speech",
-      },
-      voice: {
-        type: "string",
-        description: "Voice ID or name to use for synthesis",
-        enum: ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
-        default: "alloy",
-      },
-    },
-    required: ["text"],
-  },
+  inputSchema: z.object({
+    text: z.string().describe("The text to convert to speech"),
+    voice: z
+      .enum(["alloy", "echo", "fable", "onyx", "nova", "shimmer"])
+      .default("alloy")
+      .describe("Voice ID or name to use for synthesis"),
+  }),
+  outputSchema: z.object({
+    success: z.boolean(),
+    message: z.string(),
+    audioGenerated: z.boolean(),
+  }),
   execute: async ({ context }) => {
     const { text, voice = "alloy" } = context;
     return {
@@ -38,23 +34,21 @@ const speakTool = createTool({
 
 const transcribeTool = createTool({
   id: "transcribe",
-  name: "Transcribe Audio",
   description: "Convert audio input to text",
-  inputSchema: {
-    type: "object",
-    properties: {
-      audioData: {
-        type: "string",
-        description: "Base64 encoded audio data or audio file path",
-      },
-      language: {
-        type: "string",
-        description: "Language code for transcription (e.g., 'en' for English)",
-        default: "en",
-      },
-    },
-    required: ["audioData"],
-  },
+  inputSchema: z.object({
+    audioData: z
+      .string()
+      .describe("Base64 encoded audio data or audio file path"),
+    language: z
+      .string()
+      .default("en")
+      .describe("Language code for transcription (e.g., 'en' for English)"),
+  }),
+  outputSchema: z.object({
+    success: z.boolean(),
+    transcription: z.string(),
+    language: z.string(),
+  }),
   execute: async ({ context }) => {
     const { audioData, language = "en" } = context;
     return {
@@ -67,41 +61,43 @@ const transcribeTool = createTool({
 
 const voiceSettingsTool = createTool({
   id: "voiceSettings",
-  name: "Configure Voice Settings",
   description: "Adjust voice synthesis parameters",
-  inputSchema: {
-    type: "object",
-    properties: {
-      speed: {
-        type: "number",
-        description: "Speech speed (0.25 to 4.0)",
-        minimum: 0.25,
-        maximum: 4.0,
-        default: 1.0,
-      },
-      pitch: {
-        type: "number",
-        description: "Voice pitch adjustment",
-        minimum: -2.0,
-        maximum: 2.0,
-        default: 0,
-      },
-      stability: {
-        type: "number",
-        description: "Voice stability (0 to 1)",
-        minimum: 0,
-        maximum: 1,
-        default: 0.5,
-      },
-      similarityBoost: {
-        type: "number",
-        description: "Voice similarity boost (0 to 1)",
-        minimum: 0,
-        maximum: 1,
-        default: 0.5,
-      },
-    },
-  },
+  inputSchema: z.object({
+    speed: z
+      .number()
+      .min(0.25)
+      .max(4.0)
+      .default(1.0)
+      .describe("Speech speed (0.25 to 4.0)"),
+    pitch: z
+      .number()
+      .min(-2.0)
+      .max(2.0)
+      .default(0)
+      .describe("Voice pitch adjustment"),
+    stability: z
+      .number()
+      .min(0)
+      .max(1)
+      .default(0.5)
+      .describe("Voice stability (0 to 1)"),
+    similarityBoost: z
+      .number()
+      .min(0)
+      .max(1)
+      .default(0.5)
+      .describe("Voice similarity boost (0 to 1)"),
+  }),
+  outputSchema: z.object({
+    success: z.boolean(),
+    settings: z.object({
+      speed: z.number(),
+      pitch: z.number(),
+      stability: z.number(),
+      similarityBoost: z.number(),
+    }),
+    message: z.string(),
+  }),
   execute: async ({ context }) => {
     return {
       success: true,
@@ -111,14 +107,22 @@ const voiceSettingsTool = createTool({
   },
 });
 
-// Initialize voice components
+// Initialize voice components with proper configuration
 const openAIVoice = new OpenAIVoice({
-  apiKey: process.env.OPENROUTER_API_KEY || "",
-  baseURL: "https://openrouter.ai/api/v1",
+  speechModel: {
+    apiKey: process.env.OPENROUTER_API_KEY || "",
+    baseURL: "https://openrouter.ai/api/v1",
+  },
+  listeningModel: {
+    apiKey: process.env.OPENROUTER_API_KEY || "",
+    baseURL: "https://openrouter.ai/api/v1",
+  },
 });
 
 const elevenLabsVoice = new ElevenLabsVoice({
-  apiKey: process.env.ELEVENLABS_API_KEY || "",
+  speechModel: {
+    apiKey: process.env.ELEVENLABS_API_KEY || "",
+  },
 });
 
 // Create composite voice for both input and output
@@ -140,7 +144,7 @@ export const voiceAgent = new Agent({
   Keep your responses clear, concise, and natural for voice interaction.
   When users ask you to speak, use the speak tool to generate audio.
   When receiving audio input, use the transcribe tool to convert it to text.`,
-  model: openRouter,
+  model: openrouter,
   tools: {
     speak: speakTool,
     transcribe: transcribeTool,
