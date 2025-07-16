@@ -33,7 +33,7 @@ export const downloadFileTool = createTool({
 			let downloadId: string | null = null;
 
 			// Monitor for downloads
-			stagehand.page.on('download', (download) => {
+			stagehand.page.on('download', (download: any) => {
 				downloadDetected = true;
 				downloadId = download.url(); // This should give us the download identifier
 				console.log(`Download detected: ${downloadId}`);
@@ -49,8 +49,11 @@ export const downloadFileTool = createTool({
 			await new Promise(resolve => setTimeout(resolve, 2000));
 
 			if (downloadDetected && downloadId) {
-				// Get session ID from Stagehand
-				const sessionId = stagehand.sessionId;
+				// Get session ID from manager
+				const sessionId = stagehandManager.getSessionId();
+				if (!sessionId) {
+					throw new Error("No active session ID available");
+				}
 				const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
 
 				return {
@@ -103,7 +106,7 @@ export const downloadDirectFileTool = createTool({
 			
 			// Set up download tracking
 			let downloadDetected = false;
-			stagehand.page.on('download', (download) => {
+			stagehand.page.on('download', (download: any) => {
 				downloadDetected = true;
 				console.log(`Download detected for: ${context.fileUrl}`);
 			});
@@ -114,8 +117,11 @@ export const downloadDirectFileTool = createTool({
 			await new Promise(resolve => setTimeout(resolve, 3000));
 
 			if (downloadDetected) {
-				// Get session ID from Stagehand
-				const sessionId = stagehand.sessionId;
+				// Get session ID from manager
+				const sessionId = stagehandManager.getSessionId();
+				if (!sessionId) {
+					throw new Error("No active session ID available");
+				}
 				const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
 
 				return {
@@ -157,8 +163,10 @@ export const listDownloadsTool = createTool({
 	}),
 	execute: async ({ context }) => {
 		try {
-			const stagehand = await stagehandManager.ensureStagehand();
-			const sessionId = stagehand.sessionId;
+			const sessionId = stagehandManager.getSessionId();
+			if (!sessionId) {
+				throw new Error("No active session ID available");
+			}
 			const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
 
 			return {
@@ -205,7 +213,7 @@ export const downloadImageTool = createTool({
 
 			// Set up download tracking
 			let downloadDetected = false;
-			stagehand.page.on('download', (download) => {
+			stagehand.page.on('download', (download: any) => {
 				downloadDetected = true;
 				console.log(`Image download detected: ${context.imageDescription}`);
 			});
@@ -221,8 +229,11 @@ export const downloadImageTool = createTool({
 			await new Promise(resolve => setTimeout(resolve, 3000));
 
 			if (downloadDetected) {
-				// Get session ID from Stagehand
-				const sessionId = stagehand.sessionId;
+				// Get session ID from manager
+				const sessionId = stagehandManager.getSessionId();
+				if (!sessionId) {
+					throw new Error("No active session ID available");
+				}
 				const browserbaseDownloadUrl = `https://api.browserbase.com/v1/sessions/${sessionId}/downloads`;
 
 				return {
