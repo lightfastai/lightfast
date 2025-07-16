@@ -1,5 +1,6 @@
 import { openai } from "@ai-sdk/openai";
-import { Agent, createTool } from "@mastra/core";
+import { Agent } from "@mastra/core";
+import { createTool } from "@mastra/core";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -19,7 +20,10 @@ const analyzeVisualContent = createTool({
 	description: "Analyzes images or PDFs from provided URLs using vision capabilities",
 	inputSchema: z.object({
 		url: z.string().url().describe("URL of the image or PDF to analyze"),
-		analysisType: z.enum(["general", "detailed", "text-extraction"]).optional().describe("Type of analysis to perform"),
+		analysisType: z
+			.enum(["general", "detailed", "text-extraction"])
+			.optional()
+			.describe("Type of analysis to perform"),
 	}),
 	execute: async ({ context }) => {
 		const { url, analysisType = "general" } = context;
@@ -34,8 +38,7 @@ const analyzeVisualContent = createTool({
 					"Provide a detailed analysis of this image, including all visible elements, colors, composition, and any text present.";
 			} else if (analysisType === "text-extraction") {
 				systemPrompt = "You are a text extraction expert. Focus on identifying and extracting all text from images.";
-				userPrompt =
-					"Extract and transcribe all text visible in this image or document. Focus primarily on text content.";
+				userPrompt = "Extract and transcribe all text visible in this image or document. Focus primarily on text content.";
 			}
 
 			// Use generateObject with Vercel AI SDK
@@ -110,7 +113,7 @@ const validateUrl = createTool({
 
 // Create the vision analysis agent
 export const visionAgent = new Agent({
-	name: "visionAgent",
+	name: "Vision",
 	description: "Analyzes images and PDFs from URLs using OpenAI GPT-4 mini vision capabilities",
 	model: openai("gpt-4o-mini"),
 	tools: {
