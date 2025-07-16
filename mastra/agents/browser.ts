@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
@@ -84,7 +84,7 @@ export const browserAgent = new Agent({
       Use the stagehandActTool to perform actions on webpages.
       Use the stagehandObserveTool to find elements on webpages.
 `,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	memory: new Memory({
 		options: {
 			workingMemory: {

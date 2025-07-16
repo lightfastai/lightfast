@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
@@ -20,7 +20,7 @@ Format your response as JSON with the following structure:
   "steps": ["Step 1", "Step 2", "Step 3"],
   "searchQueries": ["Query 1", "Query 2", "Query 3"]
 }`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 });
 
 const researchAgent = new Agent({
@@ -33,7 +33,7 @@ const researchAgent = new Agent({
 4. Provide bullet-point summaries
 
 Be thorough but concise. Focus on facts and current information.`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	tools: searcher.tools, // Use the searcher agent's tools
 });
 
@@ -48,7 +48,7 @@ const synthesisAgent = new Agent({
 5. Include a brief executive summary
 
 The report should be professional, informative, and suitable for presentation.`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 });
 
 // Step 1: Planning step
@@ -251,7 +251,7 @@ const quickResearchStep = createStep({
 			name: "Quick Researcher",
 			description: "Performs quick searches for straightforward queries",
 			instructions: `You are a quick research specialist. Search for the requested information and provide a concise summary in 2-3 paragraphs. Be informative but brief.`,
-			model: anthropic("claude-4-sonnet-20250514"),
+			model: openrouter(models.claude4Sonnet),
 			tools: searcher.tools,
 		});
 
@@ -295,7 +295,7 @@ export const unifiedResearcherNetwork = new NewAgentNetwork({
 Always assess the complexity of the request and choose the appropriate workflow. For academic, technical, or multi-faceted topics, use the full workflow. For simple factual queries, use the quick workflow.
 
 IMPORTANT: Final reports must be written in full paragraphs without bullet points. Maintain a professional, informative tone throughout.`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	agents: {
 		plannerAgent,
 		researchAgent,

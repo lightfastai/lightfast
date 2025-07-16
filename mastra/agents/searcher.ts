@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
 import { Memory } from "@mastra/memory";
@@ -176,7 +176,7 @@ SEARCH STRATEGIES:
 • Use domain filters to focus on authoritative sources when appropriate
 
 Always use the web_search tool to find information and provide clear, well-sourced answers based on the search results.`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	memory: new Memory({
 		options: {
 			workingMemory: {

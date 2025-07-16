@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
@@ -59,7 +59,7 @@ If sandboxId is not in your memory:
 4. Examine package.json
 5. Check for lock files
 6. Provide detailed analysis with actual file contents`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	memory: new Memory({
 		options: {
 			workingMemory: {

@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
@@ -24,7 +24,7 @@ Format your response as JSON with the following structure:
   "executionPlan": ["Step 1", "Step 2", "Step 3"],
   "reasoning": "Brief explanation of your choices"
 }`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 });
 
 // Step 1: Task Analysis
@@ -511,7 +511,7 @@ Your role is to:
 - Provide comprehensive results
 
 Always choose the most efficient approach based on the task requirements. For simple tasks, use single-agent workflows. For complex tasks, orchestrate multiple agents to achieve the best results.`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	agents: {
 		coordinator: coordinatorAgent,
 		planner,

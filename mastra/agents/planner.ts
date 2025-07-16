@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
@@ -70,7 +70,7 @@ Remember: You're planning for execution in a powerful sandbox environment with a
 - System tools (git, ffmpeg, ImageMagick, etc.)
 - Package managers (npm, pip, etc.)
 - Full file system and network access`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	memory: new Memory({
 		options: {
 			workingMemory: {

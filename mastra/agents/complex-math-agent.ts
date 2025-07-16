@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { openrouter, models } from "../lib/openrouter";
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
@@ -53,7 +53,7 @@ export const complexMathAgent = new Agent({
 	name: "ComplexMathAgent",
 	description:
 		"An advanced mathematical agent capable of solving complex problems including quadratic equations, matrix operations, statistics, calculus, and more",
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	memory: new Memory({
 		options: {
 			workingMemory: {
