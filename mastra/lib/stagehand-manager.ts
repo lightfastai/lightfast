@@ -5,6 +5,7 @@ export class StagehandSessionManager {
 	private static instance: StagehandSessionManager;
 	private stagehand: Stagehand | null = null;
 	private initialized = false;
+	private sessionId: string | null = null;
 	private lastUsed = Date.now();
 	private readonly sessionTimeout = 10 * 60 * 1000; // 10 minutes
 
@@ -21,7 +22,7 @@ export class StagehandSessionManager {
 		this.lastUsed = Date.now();
 
 		// Check if we have a valid session
-		if (this.stagehand && this.initialized) {
+		if (this.stagehand && this.initialized && this.sessionId) {
 			// Check if session is still valid (not timed out)
 			if (Date.now() - this.lastUsed < this.sessionTimeout) {
 				return this.stagehand;
@@ -39,19 +40,21 @@ export class StagehandSessionManager {
 		console.log("Creating new Stagehand session...");
 		
 		this.stagehand = new Stagehand({
-			browserbaseAPIKey: env.BROWSERBASE_API_KEY,
-			browserbaseProjectId: env.BROWSERBASE_PROJECT_ID,
 			env: "BROWSERBASE", // Use Browserbase environment
+			apiKey: env.BROWSERBASE_API_KEY,
+			projectId: env.BROWSERBASE_PROJECT_ID,
 			headless: true,
 			enableCaching: true,
-			logger: (message: { type: string; message: string }) => {
-				console.log(`[Stagehand ${message.type}]: ${message.message}`);
+			logger: (logLine) => {
+				console.log(`[Stagehand ${logLine.level}]: ${logLine.message}`);
 			},
 		});
 
-		await this.stagehand.init();
+		// Initialize and get session information
+		const initResult = await this.stagehand.init();
+		this.sessionId = initResult.sessionId;
 		this.initialized = true;
-		console.log("Stagehand session created successfully");
+		console.log(`Stagehand session created successfully with ID: ${this.sessionId}`);
 	}
 
 	public async closeSession(): Promise<void> {
@@ -59,16 +62,17 @@ export class StagehandSessionManager {
 			console.log("Closing Stagehand session...");
 			await this.stagehand.close();
 			this.stagehand = null;
+			this.sessionId = null;
 			this.initialized = false;
 		}
 	}
 
 	public isSessionActive(): boolean {
-		return this.initialized && this.stagehand !== null;
+		return this.initialized && this.stagehand !== null && this.sessionId !== null;
 	}
 
 	public getSessionId(): string | null {
-		return this.stagehand?.sessionId || null;
+		return this.sessionId;
 	}
 
 	// Common browser actions
@@ -84,12 +88,15 @@ export class StagehandSessionManager {
 
 	public async observePage(instruction: string): Promise<string> {
 		const stagehand = await this.ensureStagehand();
-		return await stagehand.page.observe({ instruction });
+		const observations = await stagehand.page.observe({ instruction });
+		// Return the first observation or empty string if none
+		return observations.length > 0 ? observations[0].response : "";
 	}
 
 	public async extractFromPage(instruction: string, schema: any): Promise<any> {
 		const stagehand = await this.ensureStagehand();
-		return await stagehand.page.extract({ instruction, schema });
+		const result = await stagehand.page.extract({ instruction, schema });
+		return result.extracted;
 	}
 
 	// Cleanup method to be called on process exit
