@@ -56,6 +56,9 @@ importers:
       nanoid:
         specifier: ^5.1.5
         version: 5.1.5
+      openai:
+        specifier: ^5.9.2
+        version: 5.9.2(ws@8.18.3)(zod@3.25.76)
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -3355,7 +3358,6 @@ packages:
 
   libsql@0.5.14:
     resolution: {integrity: sha512-CjcQWCBTu7kSeq8YNXwABpHvJKd88MiRO/xxNJMR4Gcjii1bRHATJTwlhgJAwi3YTRn4EIH46Nq74Wyiy10mgw==}
-    cpu: [x64, arm64, wasm32, arm]
     os: [darwin, linux, win32]
 
   lodash.camelcase@4.3.0:
@@ -3558,8 +3560,8 @@ packages:
       zod:
         optional: true
 
-  openai@5.9.0:
-    resolution: {integrity: sha512-cmLC0pfqLLhBGxE4aZPyRPjydgYCncppV2ClQkKmW79hNjCvmzkfhz8rN5/YVDmjVQlFV+UsF1JIuNjNgeagyQ==}
+  openai@5.9.2:
+    resolution: {integrity: sha512-d7t/lRkwZpSwIk7GW3EHRSGAlsuoi1WL6VhCO02raEzZO2ahEVAbWn3WmOcpeh9zF6xF9weJXoVeDkWJRz+SHA==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -7933,7 +7935,7 @@ snapshots:
     dependencies:
       cross-fetch: 4.1.0
       dotenv: 16.4.7
-      openai: 5.9.0(ws@8.18.3)(zod@3.25.76)
+      openai: 5.9.2(ws@8.18.3)(zod@3.25.76)
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
     transitivePeerDependencies:
@@ -8641,7 +8643,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  openai@5.9.0(ws@8.18.3)(zod@3.25.76):
+  openai@5.9.2(ws@8.18.3)(zod@3.25.76):
     optionalDependencies:
       ws: 8.18.3
       zod: 3.25.76
