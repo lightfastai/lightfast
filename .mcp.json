@@ -19,7 +19,8 @@
 		},
 		"container-use": {
 			"command": "container-use",
-			"args": ["stdio"]
+			"args": ["stdio"],
+			"timeout": 1200000
 		}
 	}
 }
