@@ -1,4 +1,3 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
@@ -7,6 +6,7 @@ import { browserAgent } from "../agents/browser";
 import { planner } from "../agents/planner";
 import { sandboxAgent } from "../agents/sandbox";
 import { searcher } from "../agents/searcher";
+import { models, openrouter } from "../lib/openrouter";
 
 // Thread agent management - removed as agents handle their own memory
 // The agents themselves have thread-scoped memory configured
@@ -51,7 +51,7 @@ Output your analysis as JSON:
   "complexity": "simple|moderate|complex",
   "dependencies": ["step X needs output from step Y"]
 }`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 });
 
 // Result synthesizer that combines outputs from multiple agents
@@ -67,7 +67,7 @@ const resultSynthesizer = new Agent({
 5. **Provide Summary**: Create an executive summary when appropriate
 
 Consider the execution history and create a comprehensive response that addresses the original task.`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 });
 
 // Dynamic task analysis step
@@ -507,7 +507,7 @@ You excel at:
 - Maintaining state across complex workflows
 
 Always aim for efficiency while ensuring task completion quality.`,
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	agents: {
 		taskAnalyzer,
 		resultSynthesizer,

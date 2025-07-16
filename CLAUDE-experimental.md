@@ -17,6 +17,21 @@ pnpm lint         # Run Biome linter
 pnpm biome check --write [filepath]
 ```
 
+## AI Model Configuration
+
+### OpenRouter Setup
+This project uses OpenRouter to access Claude models via Vercel AI SDK:
+
+**Environment Variables:**
+```bash
+OPENROUTER_API_KEY=your-api-key-here
+```
+
+**Model Configuration:**
+- All agents use Claude 4 Sonnet via OpenRouter
+- Configuration: `mastra/lib/openrouter.ts`
+- Model ID: `anthropic/claude-4-sonnet-20250514`
+
 ## Testing
 
 ### Playwright MCP Setup
@@ -77,6 +92,7 @@ Container-use provides isolated environments for working on different features/b
 container-use config env set NODE_ENV development
 container-use config env set MASTRA_BASE_URL http://localhost:4111
 container-use config env set DATABASE_URL "your-connection-string"
+container-use config env set OPENROUTER_API_KEY "your-openrouter-api-key"
 
 # Option 2: Import from existing .env file
 # Run the container-use-env-setup.sh script from container branch
@@ -88,7 +104,9 @@ container-use config env list
 container-use config import <environment-id>
 ```
 
-**Note:** Sensitive values (API keys, tokens) should be set manually using `container-use config env set` to avoid committing secrets.ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
+**Note:** Sensitive values (API keys, tokens) should be set manually using `container-use config env set` to avoid committing secrets.
+
+ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
 
 DO NOT install or use the git cli with the environment_run_cmd tool. All environment tools will handle git operations for you. Changing ".git" yourself will compromise the integrity of your environment.
 

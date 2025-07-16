@@ -1,8 +1,8 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
+import { models, openrouter } from "../lib/openrouter";
 
 const agentStep1 = createStep({
 	id: "agent-step",
@@ -66,7 +66,7 @@ const agent1 = new Agent({
 		"This agent is used to do research, but not create full responses. Answer in bullet points only and be concise.",
 	description:
 		"This agent is used to do research, but not create full responses. Answer in bullet points only and be concise.",
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 });
 
 const agent2 = new Agent({
@@ -75,7 +75,7 @@ const agent2 = new Agent({
 		"This agent is used to do text synthesis on researched material. Write a full report based on the researched material. Writes reports in full paragraphs. Should be used to synthesize text from different sources together as a final report.",
 	instructions:
 		"This agent is used to do text synthesis on researched material. Write a full report based on the researched material. Do not use bullet points. Write full paragraphs. There should not be a single bullet point in the final report.",
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 });
 
 export const exampleNetwork = new NewAgentNetwork({
@@ -83,7 +83,7 @@ export const exampleNetwork = new NewAgentNetwork({
 	name: "Test Network",
 	instructions:
 		"You are a network of writers and researchers. The user will ask you to research a topic. You always need to answer with a full report. Bullet points are NOT a full report. WRITE FULL PARAGRAPHS like this is a blog post or something similar. You should not rely on partial information.",
-	model: anthropic("claude-4-sonnet-20250514"),
+	model: openrouter(models.claude4Sonnet),
 	agents: {
 		agent1,
 		agent2,
