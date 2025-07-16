@@ -1,6 +1,5 @@
 import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
-import { Memory } from "@mastra/memory";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
 import { env } from "@/env";
@@ -133,30 +132,30 @@ const webSearchTool = createTool({
 			};
 		} catch (error) {
 			console.error("Web search error:", error);
-			throw error;
+			
+			// Handle specific error types with user-friendly messages
+			if (error instanceof Error) {
+				if (error.message.includes('API key')) {
+					throw new Error("Search service is temporarily unavailable. Please try again later.");
+				}
+				if (error.message.includes('rate limit')) {
+					throw new Error("Search rate limit exceeded. Please wait a moment and try again.");
+				}
+				if (error.message.includes('timeout')) {
+					throw new Error("Search request timed out. Please try a simpler query.");
+				}
+				if (error.message.includes('network')) {
+					throw new Error("Network error occurred during search. Please check your connection.");
+				}
+				throw new Error(`Search failed: ${error.message}`);
+			}
+			
+			throw new Error("An unexpected error occurred during web search. Please try again.");
 		}
 	},
 });
 
-// Schema for searcher working memory
-const searcherMemorySchema = z.object({
-	searchHistory: z
-		.array(
-			z.object({
-				query: z.string(),
-				results: z.array(
-					z.object({
-						title: z.string(),
-						url: z.string(),
-					}),
-				),
-				timestamp: z.string(),
-			}),
-		)
-		.default([]),
-	relevantFindings: z.record(z.string(), z.any()).default({}),
-	currentResearchTopic: z.string().nullable().default(null),
-});
+// Note: Working memory schemas moved to network level for proper context handling
 
 export const searcher = new Agent({
 	name: "Searcher",
@@ -177,17 +176,30 @@ SEARCH STRATEGIES:
 
 Always use the web_search tool to find information and provide clear, well-sourced answers based on the search results.`,
 	model: openrouter(models.claude4Sonnet),
-	memory: new Memory({
-		options: {
-			workingMemory: {
-				enabled: true,
-				scope: "thread",
-				schema: searcherMemorySchema,
-			},
-			lastMessages: 20,
-		},
-	}),
+	// Note: Memory is handled at network level when used in networks
+	// Individual agent memory can cause context conflicts in network execution
 	tools: {
 		web_search: webSearchTool,
 	},
+	defaultStreamOptions: {
+		onChunk: ({ chunk }) => {
+			console.log(`[Searcher] Chunk:`, chunk);
+		},
+		onError: ({ error }) => {
+			console.error(`[Searcher] Stream error:`, error);
+		},
+		onStepFinish: ({ text, toolCalls, toolResults }) => {
+			if (toolResults) {
+				toolResults.forEach((result, index) => {
+					if (result.type === 'tool-result' && result.result && typeof result.result === 'object' && 'error' in result.result) {
+						console.error(`[Searcher] Tool ${index} error:`, result.result.error);
+					}
+				});
+			}
+			console.log(`[Searcher] Step completed`);
+		},
+		onFinish: (result) => {
+			console.log(`[Searcher] Generation finished:`, result);
+		}
+	}
 });

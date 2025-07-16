@@ -1,6 +1,7 @@
 import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
 import { browserAgent } from "./agents/browser";
+import { downloadAgent } from "./agents/download";
 import { mathAgent } from "./agents/math";
 import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
@@ -9,6 +10,7 @@ import { visionAgent } from "./agents/vision";
 import { voiceAgent } from "./agents/voice";
 import { adaptiveExecutorNetwork } from "./networks/adaptive-executor";
 import { exampleNetwork } from "./networks/example";
+import { plannerSearcherNetwork } from "./networks/planner-searcher";
 import { unifiedExecutorNetwork } from "./networks/unified-executor";
 import { unifiedResearcherNetwork } from "./networks/unified-researcher";
 
@@ -24,6 +26,7 @@ export const mastra = new Mastra({
 		Searcher: searcher,
 		Sandbox: sandboxAgent,
 		Browser: browserAgent,
+		Download: downloadAgent,
 		Math: mathAgent,
 		Vision: visionAgent,
 		Voice: voiceAgent,
@@ -34,5 +37,6 @@ export const mastra = new Mastra({
 		unifiedResearcherNetwork,
 		unifiedExecutorNetwork,
 		adaptiveExecutorNetwork,
+		plannerSearcherNetwork,
 	},
 });

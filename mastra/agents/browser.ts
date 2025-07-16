@@ -1,24 +1,9 @@
 import { Agent } from "@mastra/core/agent";
-import { Memory } from "@mastra/memory";
 import { z } from "zod";
 import { models, openrouter } from "../lib/openrouter";
-import { browserActTool, browserExtractTool, browserObserveTool } from "../tools/browser-tools";
+import { browserActTool, browserExtractTool, browserObserveTool, browserNavigateTool } from "../tools/browser-tools";
 
-// Schema for browser working memory
-const browserMemorySchema = z.object({
-	sessionActive: z.boolean().default(false),
-	currentUrl: z.string().nullable().default(null),
-	pageHistory: z
-		.array(
-			z.object({
-				url: z.string(),
-				timestamp: z.string(),
-				action: z.string(),
-			}),
-		)
-		.default([]),
-	extractedData: z.record(z.any()).default({}),
-});
+// Note: Working memory schemas moved to network level for proper context handling
 
 export const browserAgent = new Agent({
 	name: "Browser",
@@ -85,20 +70,13 @@ export const browserAgent = new Agent({
       Use the stagehandObserveTool to find elements on webpages.
 `,
 	model: openrouter(models.claude4Sonnet),
-	memory: new Memory({
-		options: {
-			workingMemory: {
-				enabled: true,
-				scope: "thread",
-				schema: browserMemorySchema,
-			},
-			lastMessages: 20,
-		},
-	}),
+	// Note: Memory is handled at network level when used in networks
+	// Individual agent memory can cause context conflicts in network execution
 	tools: {
 		browserActTool,
 		browserObserveTool,
 		browserExtractTool,
+		browserNavigateTool,
 	},
 	defaultGenerateOptions: {
 		maxSteps: 25,
@@ -110,10 +88,23 @@ export const browserAgent = new Agent({
 		maxRetries: 3,
 		maxTokens: 20000,
 		onChunk: ({ chunk }) => {
-			console.log(chunk);
+			console.log(`[Browser] Chunk:`, chunk);
 		},
-		onFinish: (res) => {
-			console.log(res);
+		onError: ({ error }) => {
+			console.error(`[Browser] Stream error:`, error);
+		},
+		onStepFinish: ({ text, toolCalls, toolResults }) => {
+			if (toolResults) {
+				toolResults.forEach((result, index) => {
+					if (result.type === 'tool-result' && result.result && typeof result.result === 'object' && 'error' in result.result) {
+						console.error(`[Browser] Tool ${index} error:`, result.result.error);
+					}
+				});
+			}
+			console.log(`[Browser] Step completed`);
+		},
+		onFinish: (result) => {
+			console.log(`[Browser] Generation finished:`, result);
 		},
 	},
 });
