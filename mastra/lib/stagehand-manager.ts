@@ -43,10 +43,9 @@ export class StagehandSessionManager {
 			env: "BROWSERBASE", // Use Browserbase environment
 			apiKey: env.BROWSERBASE_API_KEY,
 			projectId: env.BROWSERBASE_PROJECT_ID,
-			headless: true,
 			enableCaching: true,
 			logger: (logLine) => {
-				console.log(`[Stagehand ${logLine.level}]: ${logLine.message}`);
+				console.log(`[Stagehand ${logLine.level || 'info'}]: ${logLine.message}`);
 			},
 		});
 
@@ -89,8 +88,8 @@ export class StagehandSessionManager {
 	public async observePage(instruction: string): Promise<string> {
 		const stagehand = await this.ensureStagehand();
 		const observations = await stagehand.page.observe({ instruction });
-		// Return the first observation or empty string if none
-		return observations.length > 0 ? observations[0].response : "";
+		// Return the first observation description or empty string if none
+		return observations.length > 0 ? observations[0].description : "";
 	}
 
 	public async extractFromPage(instruction: string, schema: any): Promise<any> {
