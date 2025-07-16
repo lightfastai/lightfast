@@ -1,71 +1,82 @@
-import { Agent } from "@mastra/core/agent";
 import { anthropic } from "@ai-sdk/anthropic";
+import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
-import { 
-  quadraticSolverTool,
-  matrixOperationsTool,
-  statisticsTool,
-  derivativeTool,
-  integralTool
+import {
+	derivativeTool,
+	integralTool,
+	matrixOperationsTool,
+	quadraticSolverTool,
+	statisticsTool,
 } from "../tools/complex-math-tools";
+import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
 
 // Schema for complex math agent working memory
 const complexMathMemorySchema = z.object({
-  calculations: z
-    .array(
-      z.object({
-        type: z.string(),
-        input: z.any(),
-        result: z.any(),
-        timestamp: z.string(),
-      }),
-    )
-    .default([]),
-  lastResult: z.any().nullable().default(null),
-  equations: z.array(z.object({
-    equation: z.string(),
-    roots: z.array(z.union([z.number(), z.string()])),
-    type: z.string(),
-  })).default([]),
-  matrices: z.array(z.object({
-    operation: z.string(),
-    result: z.array(z.array(z.number())),
-  })).default([]),
-  statistics: z.object({
-    lastDataset: z.array(z.number()).optional(),
-    lastMeasures: z.record(z.union([z.number(), z.array(z.number())])).optional(),
-  }).default({}),
+	calculations: z
+		.array(
+			z.object({
+				type: z.string(),
+				input: z.any(),
+				result: z.any(),
+				timestamp: z.string(),
+			}),
+		)
+		.default([]),
+	lastResult: z.any().nullable().default(null),
+	equations: z
+		.array(
+			z.object({
+				equation: z.string(),
+				roots: z.array(z.union([z.number(), z.string()])),
+				type: z.string(),
+			}),
+		)
+		.default([]),
+	matrices: z
+		.array(
+			z.object({
+				operation: z.string(),
+				result: z.array(z.array(z.number())),
+			}),
+		)
+		.default([]),
+	statistics: z
+		.object({
+			lastDataset: z.array(z.number()).optional(),
+			lastMeasures: z.record(z.union([z.number(), z.array(z.number())])).optional(),
+		})
+		.default({}),
 });
 
 export const complexMathAgent = new Agent({
-  name: "ComplexMathAgent",
-  description: "An advanced mathematical agent capable of solving complex problems including quadratic equations, matrix operations, statistics, calculus, and more",
-  model: anthropic("claude-4-sonnet-20250514"),
-  memory: new Memory({
-    options: {
-      workingMemory: {
-        enabled: true,
-        scope: "thread",
-        schema: complexMathMemorySchema,
-      },
-      lastMessages: 15,
-    },
-  }),
-  tools: {
-    // Basic tools
-    calculate: calculateTool,
-    factorial: factorialTool,
-    fibonacci: fibonacciTool,
-    // Advanced tools
-    quadraticSolver: quadraticSolverTool,
-    matrixOperations: matrixOperationsTool,
-    statistics: statisticsTool,
-    derivative: derivativeTool,
-    integral: integralTool,
-  },
-  instructions: `You are an advanced mathematical agent with capabilities in:
+	name: "ComplexMathAgent",
+	description:
+		"An advanced mathematical agent capable of solving complex problems including quadratic equations, matrix operations, statistics, calculus, and more",
+	model: anthropic("claude-4-sonnet-20250514"),
+	memory: new Memory({
+		options: {
+			workingMemory: {
+				enabled: true,
+				scope: "thread",
+				schema: complexMathMemorySchema,
+			},
+			lastMessages: 15,
+		},
+	}),
+	tools: {
+		// Basic tools
+		calculate: calculateTool,
+		factorial: factorialTool,
+		fibonacci: fibonacciTool,
+		// Advanced tools
+		quadraticSolver: quadraticSolverTool,
+		matrixOperations: matrixOperationsTool,
+		statistics: statisticsTool,
+		derivative: derivativeTool,
+		integral: integralTool,
+	},
+	instructions: `You are an advanced mathematical agent with capabilities in:
 
 ## Basic Operations
 - Arithmetic calculations
