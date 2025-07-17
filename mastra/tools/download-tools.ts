@@ -11,7 +11,9 @@ export const downloadFileTool = createTool({
 	description: "Download a file from a webpage using Browserbase's download feature",
 	inputSchema: z.object({
 		url: z.string().describe("URL to navigate to"),
-		downloadAction: z.string().describe('Action to trigger download (e.g., "click download button", "right-click on image and save")'),
+		downloadAction: z
+			.string()
+			.describe('Action to trigger download (e.g., "click download button", "right-click on image and save")'),
 		filename: z.string().optional().describe("Optional filename hint for the downloaded file"),
 	}),
 	outputSchema: z.object({
@@ -33,7 +35,7 @@ export const downloadFileTool = createTool({
 			let downloadId: string | null = null;
 
 			// Monitor for downloads
-			stagehand.page.on('download', (download: any) => {
+			stagehand.page.on("download", (download: any) => {
 				downloadDetected = true;
 				downloadId = download.url(); // This should give us the download identifier
 				console.log(`Download detected: ${downloadId}`);
@@ -46,7 +48,7 @@ export const downloadFileTool = createTool({
 			});
 
 			// Wait a bit for download to be detected
-			await new Promise(resolve => setTimeout(resolve, 2000));
+			await new Promise((resolve) => setTimeout(resolve, 2000));
 
 			if (downloadDetected && downloadId) {
 				// Get session ID from manager
@@ -68,7 +70,6 @@ export const downloadFileTool = createTool({
 					message: "No download was detected. The action may not have triggered a download.",
 				};
 			}
-
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Download failed:", errorMessage);
@@ -103,18 +104,18 @@ export const downloadDirectFileTool = createTool({
 
 			// Navigate to the file URL - this should trigger download automatically
 			console.log(`Navigating to file URL: ${context.fileUrl}`);
-			
+
 			// Set up download tracking
 			let downloadDetected = false;
-			stagehand.page.on('download', (download: any) => {
+			stagehand.page.on("download", (download: any) => {
 				downloadDetected = true;
 				console.log(`Download detected for: ${context.fileUrl}`);
 			});
 
 			await stagehand.page.goto(context.fileUrl);
-			
+
 			// Wait for download to be detected
-			await new Promise(resolve => setTimeout(resolve, 3000));
+			await new Promise((resolve) => setTimeout(resolve, 3000));
 
 			if (downloadDetected) {
 				// Get session ID from manager
@@ -136,7 +137,6 @@ export const downloadDirectFileTool = createTool({
 					message: "No download was detected. The URL may not be a direct file link.",
 				};
 			}
-
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Direct download failed:", errorMessage);
@@ -174,7 +174,6 @@ export const listDownloadsTool = createTool({
 				downloadUrl: browserbaseDownloadUrl,
 				message: `Use this URL to access downloads: ${browserbaseDownloadUrl}. You'll need to authenticate with your Browserbase API key.`,
 			};
-
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("List downloads failed:", errorMessage);
@@ -194,7 +193,9 @@ export const downloadImageTool = createTool({
 	description: "Download an image from a webpage using right-click save action",
 	inputSchema: z.object({
 		url: z.string().describe("URL to navigate to"),
-		imageDescription: z.string().describe('Description of image to download (e.g., "the main logo", "first product image", "profile picture")'),
+		imageDescription: z
+			.string()
+			.describe('Description of image to download (e.g., "the main logo", "first product image", "profile picture")'),
 		filename: z.string().optional().describe("Optional filename hint for the downloaded image"),
 	}),
 	outputSchema: z.object({
@@ -213,7 +214,7 @@ export const downloadImageTool = createTool({
 
 			// Set up download tracking
 			let downloadDetected = false;
-			stagehand.page.on('download', (download: any) => {
+			stagehand.page.on("download", (download: any) => {
 				downloadDetected = true;
 				console.log(`Image download detected: ${context.imageDescription}`);
 			});
@@ -226,7 +227,7 @@ export const downloadImageTool = createTool({
 			});
 
 			// Wait for download to be detected
-			await new Promise(resolve => setTimeout(resolve, 3000));
+			await new Promise((resolve) => setTimeout(resolve, 3000));
 
 			if (downloadDetected) {
 				// Get session ID from manager
@@ -248,7 +249,6 @@ export const downloadImageTool = createTool({
 					message: `No download was detected. Could not find or download image: ${context.imageDescription}`,
 				};
 			}
-
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			console.error("Image download failed:", errorMessage);

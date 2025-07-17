@@ -7,7 +7,8 @@ import { saveCriticalInfoTool } from "../tools/save-critical-info";
 
 export const planner = new Agent({
 	name: "Planner",
-	description: "PRIMARY AGENT - ALWAYS CALL FIRST. Creates comprehensive execution plans and initializes the task list for any request.",
+	description:
+		"PRIMARY AGENT - ALWAYS CALL FIRST. Creates comprehensive execution plans and initializes the task list for any request.",
 	instructions: `You are an intelligent task planner. Your role is to create detailed, actionable plans for any computational task.
 
 IMPORTANT: When used in a network, you are the FIRST agent that should be called. You must:
@@ -98,7 +99,12 @@ Remember: You're planning for execution by specialized agents:
 		onStepFinish: ({ text, toolCalls, toolResults }) => {
 			if (toolResults) {
 				toolResults.forEach((result, index) => {
-					if (result.type === 'tool-result' && result.result && typeof result.result === 'object' && 'error' in result.result) {
+					if (
+						result.type === "tool-result" &&
+						result.result &&
+						typeof result.result === "object" &&
+						"error" in result.result
+					) {
 						console.error(`[Planner] Tool ${index} error:`, result.result.error);
 					}
 				});
@@ -107,6 +113,6 @@ Remember: You're planning for execution by specialized agents:
 		},
 		onFinish: (result) => {
 			console.log(`[Planner] Generation finished:`, result);
-		}
-	}
+		},
+	},
 });

@@ -1,10 +1,11 @@
 import { Agent } from "@mastra/core/agent";
 import { models, openrouter } from "../lib/openrouter";
-import { fileWriteTool, fileReadTool, fileDeleteTool } from "../tools/file-tools";
+import { fileDeleteTool, fileReadTool, fileWriteTool } from "../tools/file-tools";
 
 export const artifactAgent = new Agent({
 	name: "Artifact",
-	description: "Manages persistent file storage and retrieval for the network. Handles reading, writing, and organizing files in blob storage.",
+	description:
+		"Manages persistent file storage and retrieval for the network. Handles reading, writing, and organizing files in blob storage.",
 	instructions: `You are the Artifact Manager agent responsible for persistent file storage and retrieval.
 
 ## Your Role

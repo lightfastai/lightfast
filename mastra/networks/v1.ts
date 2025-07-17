@@ -1,11 +1,11 @@
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
-import { Memory } from "@mastra/memory";
 import { LibSQLStore } from "@mastra/libsql";
+import { Memory } from "@mastra/memory";
+import { artifactAgent } from "../agents/artifact";
 import { browserAgent } from "../agents/browser";
 import { planner } from "../agents/planner";
 import { searcher } from "../agents/searcher";
 import { visionAgent } from "../agents/vision";
-import { artifactAgent } from "../agents/artifact";
 import { models, openrouter } from "../lib/openrouter";
 
 // Create shared memory for the network with todo tracking template

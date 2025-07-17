@@ -1,6 +1,6 @@
 import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
 import { put } from "@vercel/blob";
+import { z } from "zod";
 import { env } from "../../env";
 
 /**
@@ -13,9 +13,7 @@ export const saveCriticalInfoTool = createTool({
 	inputSchema: z.object({
 		title: z.string().describe("Brief title for this information"),
 		content: z.string().describe("The critical information to save"),
-		category: z
-			.enum(["insight", "decision", "error", "result", "reference"])
-			.describe("Type of critical information"),
+		category: z.enum(["insight", "decision", "error", "result", "reference"]).describe("Type of critical information"),
 		tags: z.array(z.string()).optional().describe("Optional tags for organization"),
 	}),
 	outputSchema: z.object({
@@ -30,13 +28,11 @@ export const saveCriticalInfoTool = createTool({
 			const timestamp = new Date().toISOString().split("T")[0];
 			const safeTitle = context.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 			const agentName = resourceId || "unknown-agent";
-			
+
 			// Always organize by thread ID
 			const filename = `${context.category}-${agentName}-${safeTitle}.md`;
-			const path = threadId 
-				? `threads/${threadId}/${filename}`
-				: `threads/no-thread/${filename}`;
-			
+			const path = threadId ? `threads/${threadId}/${filename}` : `threads/no-thread/${filename}`;
+
 			// Format content with metadata
 			const formattedContent = `---
 title: ${context.title}
@@ -56,12 +52,6 @@ ${context.content}
 			const blob = await put(path, formattedContent, {
 				access: "public",
 				contentType: "text/markdown",
-				metadata: {
-					category: context.category,
-					agent: agentName,
-					threadId: threadId || "none",
-					tags: JSON.stringify(context.tags || []),
-				},
 				token: env.BLOB_READ_WRITE_TOKEN,
 			});
 

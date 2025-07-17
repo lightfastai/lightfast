@@ -1,6 +1,6 @@
 import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
 import { put } from "@vercel/blob";
+import { z } from "zod";
 
 /**
  * Thread-aware tool that saves todo lists with threadId in blob storage
@@ -95,7 +95,7 @@ export const getThreadTodoTool = createTool({
 			// Generate blob path
 			const filename = context.filename || `todo-${threadId}.md`;
 			const blobPath = `todos/${resourceId || "shared"}/${filename}`;
-			
+
 			// In a real implementation, you would fetch from blob storage
 			// For now, return a message about where the file would be stored
 			return {

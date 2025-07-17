@@ -1,19 +1,30 @@
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
-import { Memory } from "@mastra/memory";
-import { LibSQLStore } from "@mastra/libsql";
-import { models, openrouter } from "../lib/openrouter";
-
-// Import tools directly instead of agents
-import { fileWriteTool, fileReadTool, fileDeleteTool } from "../tools/file-tools";
-import { saveCriticalInfoTool } from "../tools/save-critical-info";
-import { browserActTool, browserExtractTool, browserObserveTool, browserNavigateTool } from "../tools/browser-tools";
-import { downloadFileTool, downloadDirectFileTool, downloadImageTool, listDownloadsTool } from "../tools/download-tools";
-
 // Import web search tool from searcher agent
 import { createTool } from "@mastra/core/tools";
+import { LibSQLStore } from "@mastra/libsql";
+import { Memory } from "@mastra/memory";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
 import { env } from "../../env";
+import { models, openrouter } from "../lib/openrouter";
+import { browserActTool, browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
+import {
+	downloadDirectFileTool,
+	downloadFileTool,
+	downloadImageTool,
+	listDownloadsTool,
+} from "../tools/download-tools";
+// Import tools directly instead of agents
+import {
+	fileDeleteTool,
+	fileFindByNameTool,
+	fileFindInContentTool,
+	fileReadTool,
+	fileStringReplaceTool,
+	fileWriteTool,
+} from "../tools/file-tools";
+import { saveCriticalInfoTool } from "../tools/save-critical-info";
+import { createSandboxTool, executeSandboxCommandTool } from "../tools/sandbox-tools";
 
 const webSearchTool = createTool({
 	id: "web_search",
@@ -90,7 +101,7 @@ const webSearchTool = createTool({
 			};
 		} catch (error) {
 			console.error("Web search error:", error);
-			throw new Error(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(`Search failed: ${error instanceof Error ? error.message : "Unknown error"}`);
 		}
 	},
 });
@@ -160,6 +171,9 @@ export const v11Network = new NewAgentNetwork({
 - **fileWrite**: Save content to files (markdown, JSON, text, etc.)
 - **fileRead**: Retrieve previously saved files
 - **fileDelete**: Clean up unnecessary files
+- **fileStringReplace**: Replace specific text in files with new content
+- **fileFindInContent**: Search for regex patterns within file content
+- **fileFindByName**: Find files by glob patterns (limited by blob storage)
 - **webSearch**: Web search for current information using Exa
 - **browserAct**: Perform browser actions (click, type, interact)
 - **browserExtract**: Extract structured data from web pages
@@ -169,6 +183,8 @@ export const v11Network = new NewAgentNetwork({
 - **downloadDirectFile**: Download files directly from URLs  
 - **downloadImage**: Download images using right-click save
 - **listDownloads**: List files downloaded in current session
+- **createSandbox**: Create isolated Vercel sandbox environments (Node.js/Python)
+- **executeSandboxCommand**: Execute shell commands in sandbox with full output
 - **saveCriticalInfo**: Store strategic decisions and key insights
 
 ## ADVANTAGES OF DIRECT TOOL USAGE:
@@ -186,6 +202,9 @@ Remember: You now have direct access to all capabilities without needing to rout
 		fileWrite: fileWriteTool,
 		fileRead: fileReadTool,
 		fileDelete: fileDeleteTool,
+		fileStringReplace: fileStringReplaceTool,
+		fileFindInContent: fileFindInContentTool,
+		fileFindByName: fileFindByNameTool,
 		saveCriticalInfo: saveCriticalInfoTool,
 		webSearch: webSearchTool,
 		browserAct: browserActTool,
@@ -196,6 +215,8 @@ Remember: You now have direct access to all capabilities without needing to rout
 		downloadDirectFile: downloadDirectFileTool,
 		downloadImage: downloadImageTool,
 		listDownloads: listDownloadsTool,
+		createSandbox: createSandboxTool,
+		executeSandboxCommand: executeSandboxCommandTool,
 	},
 	memory: networkMemory,
 });

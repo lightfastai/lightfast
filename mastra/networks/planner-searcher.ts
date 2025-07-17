@@ -1,13 +1,12 @@
 import { NewAgentNetwork } from "@mastra/core/network/vNext";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
-import { Memory } from "@mastra/memory";
 import { LibSQLStore } from "@mastra/libsql";
+import { Memory } from "@mastra/memory";
 import { z } from "zod";
 import { browserAgent } from "../agents/browser";
 import { planner } from "../agents/planner";
 import { searcher } from "../agents/searcher";
 import { models, openrouter } from "../lib/openrouter";
-
 
 // Create shared memory for the network
 const networkMemory = new Memory({
