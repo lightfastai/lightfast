@@ -39,3 +39,61 @@ next-env.d.ts
 .mastra
 mastra.db
 mastra.db-journal
+
+# env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# logs
+logs
+*.log
+pnpm-debug.log*
+lerna-debug.log*
+
+# editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+Thumbs.db
+
+# Next.js specific
+.next-env.d.ts.timestamp
+
+# PWA files
+**/public/sw.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/sw.js.map
+**/public/workbox-*.js.map
+**/public/worker-*.js.map
+
+# Sentry
+.sentryclirc
+
+# Storybook
+storybook-static
+
+# Turbo
+.turbo
+
+# Testing
+playwright-report/
+playwright/.cache/
+test-results/
+e2e-results/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+tmp/
+temp/
