@@ -12,10 +12,7 @@ export const fileWriteTool = createTool({
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to save (must end with .md, e.g., 'analysis.md', 'report.md')"),
 		content: z.string().describe("Markdown content to write to the file"),
-		contentType: z
-			.string()
-			.optional()
-			.describe("MIME type (defaults to text/markdown for .md files)"),
+		contentType: z.string().optional().describe("MIME type (defaults to text/markdown for .md files)"),
 		metadata: z.record(z.string()).optional().describe("Optional metadata to attach to the file"),
 	}),
 	outputSchema: z.object({

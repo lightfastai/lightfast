@@ -2,7 +2,8 @@ import { Agent } from "@mastra/core/agent";
 import { LibSQLStore } from "@mastra/libsql";
 import { Memory } from "@mastra/memory";
 import { models, openrouter } from "../lib/openrouter";
-import { browserActTool, browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
+import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
+import { granularBrowserTools } from "../tools/browser-tools-granular";
 import {
 	downloadDirectFileTool,
 	downloadFileTool,
@@ -135,7 +136,15 @@ You are V1 Agent, an AI assistant created by the Mastra team.
      <web_capabilities>
      - Use webSearch for current information via Exa search
      - Use browserNavigate to access specific URLs
-     - Use browserAct for interactive elements (click, type, select)
+     - Use browserView to see current page content
+     - Use browserClick for clicking elements
+     - Use browserType for typing text into inputs
+     - Use browserSelectOption for dropdown selections
+     - Use browserScroll for page navigation
+     - Use browserPressKey for keyboard interactions
+     - Use browserWait for page synchronization
+     - Use browserScreenshot for visual capture
+     - Use browserConsoleExec for JavaScript execution
      - Use browserExtract for structured data extraction
      - Use browserObserve to analyze page elements
      - Chain browser actions for complex automation flows
@@ -189,7 +198,13 @@ You are V1 Agent, an AI assistant created by the Mastra team.
 
      <browser_rules>
      - Navigate to URLs before attempting interactions
-     - Wait for page loads and dynamic content
+     - Use browserView to check current page state
+     - Use browserWait for page loads and dynamic content
+     - Use browserClick for element interactions
+     - Use browserType with clear option for form inputs
+     - Use browserSelectOption for dropdowns
+     - Use browserScroll to navigate long pages
+     - Use browserPressKey for keyboard shortcuts
      - Use browserObserve to understand page structure
      - Chain actions for complex workflows
      - Handle popups and navigation changes
@@ -296,11 +311,23 @@ You are V1 Agent, an AI assistant created by the Mastra team.
 		// Web research
 		webSearch: webSearchTool,
 
-		// Browser automation
-		browserAct: browserActTool,
+		// Browser automation - granular tools
+		browserNavigate: browserNavigateTool,
+		browserView: granularBrowserTools.browserView,
+		browserClick: granularBrowserTools.browserClick,
+		browserType: granularBrowserTools.browserType,
+		browserSelectOption: granularBrowserTools.browserSelectOption,
+		browserScroll: granularBrowserTools.browserScroll,
+		browserPressKey: granularBrowserTools.browserPressKey,
+		browserMoveMouse: granularBrowserTools.browserMoveMouse,
+		browserWait: granularBrowserTools.browserWait,
+		browserScreenshot: granularBrowserTools.browserScreenshot,
+		browserConsoleExec: granularBrowserTools.browserConsoleExec,
+		browserReload: granularBrowserTools.browserReload,
+		browserHistory: granularBrowserTools.browserHistory,
+		// Higher-level browser tools
 		browserExtract: browserExtractTool,
 		browserObserve: browserObserveTool,
-		browserNavigate: browserNavigateTool,
 
 		// Download capabilities
 		downloadFile: downloadFileTool,
@@ -316,4 +343,14 @@ You are V1 Agent, an AI assistant created by the Mastra team.
 		listSandboxRoutes: listSandboxRoutesTool,
 	},
 	memory: agentMemory,
+	defaultGenerateOptions: {
+		maxSteps: 40,
+		maxRetries: 3,
+		maxTokens: 20000,
+	},
+	defaultStreamOptions: {
+		maxSteps: 60,
+		maxRetries: 3,
+		maxTokens: 20000,
+	},
 });

@@ -54,8 +54,8 @@ importers:
         specifier: ^0.44.3
         version: 0.44.3(@libsql/client@0.15.10)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@upstash/redis@1.35.1)(pg@8.16.3)(postgres@3.4.7)
       exa-js:
-        specifier: ^1.8.20
-        version: 1.8.20(ws@8.18.3)
+        specifier: ^1.8.21
+        version: 1.8.21(ws@8.18.3)
       mastra:
         specifier: ^0.10.13
         version: 0.10.13(@mastra/core@0.10.15(openapi-types@12.1.3)(react@19.1.0)(zod@3.25.76))(@opentelemetry/api@1.9.0)(react@19.1.0)(typescript@5.8.3)
@@ -73,8 +73,8 @@ importers:
         version: 3.25.76
     devDependencies:
       '@biomejs/biome':
-        specifier: https://pkg.pr.new/biomejs/biome/@biomejs/biome@a6874f9
-        version: https://pkg.pr.new/biomejs/biome/@biomejs/biome@a6874f9
+        specifier: 2.1.1
+        version: 2.1.1
       '@playwright/test':
         specifier: ^1.54.1
         version: 1.54.1
@@ -282,58 +282,57 @@ packages:
     resolution: {integrity: sha512-x0LvFTekgSX+83TI28Y9wYPUfzrnl2aT5+5QLnO6v7mSJYtEEevuDRN0F0uSHRk1G1IWZC43o00Y0xDDrpBGPQ==}
     engines: {node: '>=6.9.0'}
 
-  '@biomejs/biome@https://pkg.pr.new/biomejs/biome/@biomejs/biome@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/biome@a6874f9}
-    version: 2.1.1
+  '@biomejs/biome@2.1.1':
+    resolution: {integrity: sha512-HFGYkxG714KzG+8tvtXCJ1t1qXQMzgWzfvQaUjxN6UeKv+KvMEuliInnbZLJm6DXFXwqVi6446EGI0sGBLIYng==}
     engines: {node: '>=14.21.3'}
     hasBin: true
 
-  '@biomejs/cli-darwin-arm64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-darwin-arm64@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/cli-darwin-arm64@a6874f9}
-    version: 2.1.1
+  '@biomejs/cli-darwin-arm64@2.1.1':
+    resolution: {integrity: sha512-2Muinu5ok4tWxq4nu5l19el48cwCY/vzvI7Vjbkf3CYIQkjxZLyj0Ad37Jv2OtlXYaLvv+Sfu1hFeXt/JwRRXQ==}
     engines: {node: '>=14.21.3'}
+    cpu: [arm64]
     os: [darwin]
 
-  '@biomejs/cli-darwin-x64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-darwin-x64@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/cli-darwin-x64@a6874f9}
-    version: 2.1.1
+  '@biomejs/cli-darwin-x64@2.1.1':
+    resolution: {integrity: sha512-cC8HM5lrgKQXLAK+6Iz2FrYW5A62pAAX6KAnRlEyLb+Q3+Kr6ur/sSuoIacqlp1yvmjHJqjYfZjPvHWnqxoEIA==}
     engines: {node: '>=14.21.3'}
+    cpu: [x64]
     os: [darwin]
 
-  '@biomejs/cli-linux-arm64-musl@https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-arm64-musl@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-arm64-musl@a6874f9}
-    version: 2.1.1
+  '@biomejs/cli-linux-arm64-musl@2.1.1':
+    resolution: {integrity: sha512-/7FBLnTswu4jgV9ttI3AMIdDGqVEPIZd8I5u2D4tfCoj8rl9dnjrEQbAIDlWhUXdyWlFSz8JypH3swU9h9P+2A==}
     engines: {node: '>=14.21.3'}
+    cpu: [arm64]
     os: [linux]
 
-  '@biomejs/cli-linux-arm64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-arm64@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-arm64@a6874f9}
-    version: 2.1.1
+  '@biomejs/cli-linux-arm64@2.1.1':
+    resolution: {integrity: sha512-tw4BEbhAUkWPe4WBr6IX04DJo+2jz5qpPzpW/SWvqMjb9QuHY8+J0M23V8EPY/zWU4IG8Ui0XESapR1CB49Q7g==}
     engines: {node: '>=14.21.3'}
+    cpu: [arm64]
     os: [linux]
 
-  '@biomejs/cli-linux-x64-musl@https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-x64-musl@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-x64-musl@a6874f9}
-    version: 2.1.1
+  '@biomejs/cli-linux-x64-musl@2.1.1':
+    resolution: {integrity: sha512-kUu+loNI3OCD2c12cUt7M5yaaSjDnGIksZwKnueubX6c/HWUyi/0mPbTBHR49Me3F0KKjWiKM+ZOjsmC+lUt9g==}
     engines: {node: '>=14.21.3'}
+    cpu: [x64]
     os: [linux]
 
-  '@biomejs/cli-linux-x64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-x64@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-x64@a6874f9}
-    version: 2.1.1
+  '@biomejs/cli-linux-x64@2.1.1':
+    resolution: {integrity: sha512-3WJ1GKjU7NzZb6RTbwLB59v9cTIlzjbiFLDB0z4376TkDqoNYilJaC37IomCr/aXwuU8QKkrYoHrgpSq5ffJ4Q==}
     engines: {node: '>=14.21.3'}
+    cpu: [x64]
     os: [linux]
 
-  '@biomejs/cli-win32-arm64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-win32-arm64@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/cli-win32-arm64@a6874f9}
-    version: 2.1.1
+  '@biomejs/cli-win32-arm64@2.1.1':
+    resolution: {integrity: sha512-vEHK0v0oW+E6RUWLoxb2isI3rZo57OX9ZNyyGH701fZPj6Il0Rn1f5DMNyCmyflMwTnIQstEbs7n2BxYSqQx4Q==}
     engines: {node: '>=14.21.3'}
+    cpu: [arm64]
     os: [win32]
 
-  '@biomejs/cli-win32-x64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-win32-x64@a6874f9':
-    resolution: {tarball: https://pkg.pr.new/biomejs/biome/@biomejs/cli-win32-x64@a6874f9}
-    version: 2.1.1
+  '@biomejs/cli-win32-x64@2.1.1':
+    resolution: {integrity: sha512-i2PKdn70kY++KEF/zkQFvQfX1e8SkA8hq4BgC+yE9dZqyLzB/XStY2MvwI3qswlRgnGpgncgqe0QYKVS1blksg==}
     engines: {node: '>=14.21.3'}
+    cpu: [x64]
     os: [win32]
 
   '@browserbasehq/sdk@2.6.0':
@@ -2473,8 +2472,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  electron-to-chromium@1.5.185:
-    resolution: {integrity: sha512-dYOZfUk57hSMPePoIQ1fZWl1Fkj+OshhEVuPacNKWzC1efe56OsHY3l/jCfiAgIICOU3VgOIdoq7ahg7r7n6MQ==}
+  electron-to-chromium@1.5.186:
+    resolution: {integrity: sha512-lur7L4BFklgepaJxj4DqPk7vKbTEl0pajNlg2QjE5shefmlmBLm2HvQ7PMf1R/GvlevT/581cop33/quQcfX3A==}
 
   elevenlabs@1.59.0:
     resolution: {integrity: sha512-OVKOd+lxNya8h4Rn5fcjv00Asd+DGWfTT6opGrQ16sTI+1HwdLn/kYtjl8tRMhDXbNmksD/9SBRKjb9neiUuVg==}
@@ -2561,8 +2560,8 @@ packages:
     resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
     engines: {node: '>=18.0.0'}
 
-  exa-js@1.8.20:
-    resolution: {integrity: sha512-FNxoaBOmGyfb4NoWn3Bf5QQGOeKGW7SZ0z4p7qRyoFueH8671XQ6VkYLLriaWSZQ42h7+7O9bAjLXBdYuQ2XMw==}
+  exa-js@1.8.21:
+    resolution: {integrity: sha512-W1yR4OifvKL/gIxUh4DusvdfGtCXngGEX+JpleAEWtDLZJlH9dq/TX7UDkIbuCgFHN9m6dMwdp/8nKvnfsmKbw==}
 
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
@@ -2669,8 +2668,8 @@ packages:
     resolution: {integrity: sha512-CKMFDglpbMi6PyN+brwB9Q/GOw0eAnsrEZDgcsH5Krhz5Od/haKHAX0NmQfha2zPPz0JpWzA7GJHGSnvCRLWsg==}
     engines: {node: '>= 6'}
 
-  form-data@4.0.3:
-    resolution: {integrity: sha512-qsITQPfmvMOSAdeyZ+12I1c+CKSstAFAwu+97zrnWAbIr5u8wfsExUzCesVLC8NgHuRUqNN4Zy6UPWUTRGslcA==}
+  form-data@4.0.4:
+    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
     engines: {node: '>= 6'}
 
   formdata-node@4.4.1:
@@ -4243,39 +4242,39 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@biomejs/biome@https://pkg.pr.new/biomejs/biome/@biomejs/biome@a6874f9':
+  '@biomejs/biome@2.1.1':
     optionalDependencies:
-      '@biomejs/cli-darwin-arm64': https://pkg.pr.new/biomejs/biome/@biomejs/cli-darwin-arm64@a6874f9
-      '@biomejs/cli-darwin-x64': https://pkg.pr.new/biomejs/biome/@biomejs/cli-darwin-x64@a6874f9
-      '@biomejs/cli-linux-arm64': https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-arm64@a6874f9
-      '@biomejs/cli-linux-arm64-musl': https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-arm64-musl@a6874f9
-      '@biomejs/cli-linux-x64': https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-x64@a6874f9
-      '@biomejs/cli-linux-x64-musl': https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-x64-musl@a6874f9
-      '@biomejs/cli-win32-arm64': https://pkg.pr.new/biomejs/biome/@biomejs/cli-win32-arm64@a6874f9
-      '@biomejs/cli-win32-x64': https://pkg.pr.new/biomejs/biome/@biomejs/cli-win32-x64@a6874f9
+      '@biomejs/cli-darwin-arm64': 2.1.1
+      '@biomejs/cli-darwin-x64': 2.1.1
+      '@biomejs/cli-linux-arm64': 2.1.1
+      '@biomejs/cli-linux-arm64-musl': 2.1.1
+      '@biomejs/cli-linux-x64': 2.1.1
+      '@biomejs/cli-linux-x64-musl': 2.1.1
+      '@biomejs/cli-win32-arm64': 2.1.1
+      '@biomejs/cli-win32-x64': 2.1.1
 
-  '@biomejs/cli-darwin-arm64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-darwin-arm64@a6874f9':
+  '@biomejs/cli-darwin-arm64@2.1.1':
     optional: true
 
-  '@biomejs/cli-darwin-x64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-darwin-x64@a6874f9':
+  '@biomejs/cli-darwin-x64@2.1.1':
     optional: true
 
-  '@biomejs/cli-linux-arm64-musl@https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-arm64-musl@a6874f9':
+  '@biomejs/cli-linux-arm64-musl@2.1.1':
     optional: true
 
-  '@biomejs/cli-linux-arm64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-arm64@a6874f9':
+  '@biomejs/cli-linux-arm64@2.1.1':
     optional: true
 
-  '@biomejs/cli-linux-x64-musl@https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-x64-musl@a6874f9':
+  '@biomejs/cli-linux-x64-musl@2.1.1':
     optional: true
 
-  '@biomejs/cli-linux-x64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-linux-x64@a6874f9':
+  '@biomejs/cli-linux-x64@2.1.1':
     optional: true
 
-  '@biomejs/cli-win32-arm64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-win32-arm64@a6874f9':
+  '@biomejs/cli-win32-arm64@2.1.1':
     optional: true
 
-  '@biomejs/cli-win32-x64@https://pkg.pr.new/biomejs/biome/@biomejs/cli-win32-x64@a6874f9':
+  '@biomejs/cli-win32-x64@2.1.1':
     optional: true
 
   '@browserbasehq/sdk@2.6.0':
@@ -6359,7 +6358,7 @@ snapshots:
   '@types/node-fetch@2.6.12':
     dependencies:
       '@types/node': 24.0.14
-      form-data: 4.0.3
+      form-data: 4.0.4
 
   '@types/node@18.19.119':
     dependencies:
@@ -6501,7 +6500,7 @@ snapshots:
   axios@1.10.0:
     dependencies:
       follow-redirects: 1.15.9
-      form-data: 4.0.3
+      form-data: 4.0.4
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -6536,7 +6535,7 @@ snapshots:
   browserslist@4.25.1:
     dependencies:
       caniuse-lite: 1.0.30001727
-      electron-to-chromium: 1.5.185
+      electron-to-chromium: 1.5.186
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.25.1)
 
@@ -6758,13 +6757,13 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  electron-to-chromium@1.5.185: {}
+  electron-to-chromium@1.5.186: {}
 
   elevenlabs@1.59.0:
     dependencies:
       command-exists: 1.2.9
       execa: 5.1.1
-      form-data: 4.0.3
+      form-data: 4.0.4
       form-data-encoder: 4.1.0
       formdata-node: 6.0.3
       node-fetch: 2.7.0
@@ -6882,7 +6881,7 @@ snapshots:
     dependencies:
       eventsource-parser: 3.0.3
 
-  exa-js@1.8.20(ws@8.18.3):
+  exa-js@1.8.21(ws@8.18.3):
     dependencies:
       cross-fetch: 4.1.0
       dotenv: 16.4.7
@@ -7037,7 +7036,7 @@ snapshots:
       combined-stream: 1.0.8
       mime-types: 2.1.35
 
-  form-data@4.0.3:
+  form-data@4.0.4:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8

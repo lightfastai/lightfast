@@ -1,7 +1,8 @@
 import { Agent } from "@mastra/core/agent";
 import { z } from "zod";
 import { models, openrouter } from "../lib/openrouter";
-import { browserActTool, browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
+import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
+import { granularBrowserTools } from "../tools/browser-tools-granular";
 
 // Note: Working memory schemas moved to network level for proper context handling
 
@@ -56,27 +57,48 @@ export const browserAgent = new Agent({
 	instructions: `You are a helpful web assistant that can navigate websites and extract information.
 
       Your primary functions are:
-      - Navigate to websites
-      - Observe elements on webpages
-      - Perform actions like clicking buttons or filling forms
-      - Extract data from webpages
+      - Navigate to websites using browserNavigate
+      - View current page content with browserView
+      - Click elements using browserClick
+      - Type text into inputs using browserType
+      - Select dropdown options using browserSelectOption
+      - Scroll pages using browserScroll
+      - Press keyboard keys using browserPressKey
+      - Wait for page elements using browserWait
+      - Take screenshots using browserScreenshot
+      - Execute JavaScript using browserConsoleExec
+      - Extract structured data using browserExtract
+      - Observe page elements using browserObserve
 
       When responding:
       - Ask for a specific URL if none is provided
+      - Use browserView to check current page state
       - Be specific about what actions to perform
+      - Chain actions logically for complex workflows
       - When extracting data, be clear about what information you need
-
-      Use the stagehandActTool to perform actions on webpages.
-      Use the stagehandObserveTool to find elements on webpages.
+      - Use browserWait to handle dynamic content
 `,
 	model: openrouter(models.claude4Sonnet),
 	// Note: Memory is handled at network level when used in networks
 	// Individual agent memory can cause context conflicts in network execution
 	tools: {
-		browserActTool,
-		browserObserveTool,
-		browserExtractTool,
-		browserNavigateTool,
+		// Granular browser tools
+		browserNavigate: browserNavigateTool,
+		browserView: granularBrowserTools.browserView,
+		browserClick: granularBrowserTools.browserClick,
+		browserType: granularBrowserTools.browserType,
+		browserSelectOption: granularBrowserTools.browserSelectOption,
+		browserScroll: granularBrowserTools.browserScroll,
+		browserPressKey: granularBrowserTools.browserPressKey,
+		browserMoveMouse: granularBrowserTools.browserMoveMouse,
+		browserWait: granularBrowserTools.browserWait,
+		browserScreenshot: granularBrowserTools.browserScreenshot,
+		browserConsoleExec: granularBrowserTools.browserConsoleExec,
+		browserReload: granularBrowserTools.browserReload,
+		browserHistory: granularBrowserTools.browserHistory,
+		// Higher-level browser tools
+		browserObserve: browserObserveTool,
+		browserExtract: browserExtractTool,
 	},
 	defaultGenerateOptions: {
 		maxSteps: 25,
