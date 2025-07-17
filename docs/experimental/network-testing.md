@@ -10,9 +10,13 @@ Navigate to networks using the v-next URL pattern:
 http://localhost:4111/networks/v-next/<network-id>/chat
 ```
 
-Example for v1 network:
+Examples:
 ```
+# V1 Network (agent-based)
 http://localhost:4111/networks/v-next/v1-network/chat
+
+# V1.1 Network (tool-based) 
+http://localhost:4111/networks/v-next/v1-1-network/chat
 ```
 
 ### API Testing
@@ -23,13 +27,40 @@ Networks use a different API structure than regular agents:
 curl -X POST http://localhost:4111/api/networks/v-next/<network-id>/stream \
   -H "Content-Type: application/json" \
   -d '{
-    "messages": [{"role": "user", "content": "Your message"}],
-    "threadId": "unique-thread-id",
-    "stream": true
+    "message": "Your message",
+    "resourceId": "<network-id>",
+    "stream": false
   }'
 ```
 
-## V1 Network Architecture
+**Important API Format Notes:**
+- Use `"message"` (singular) NOT `"messages"` (plural)
+- Include `"resourceId"` matching the network ID
+- Set `"stream": false` for easier testing (or `true` for streaming)
+- **ThreadId**: Network automatically generates and manages threadIds internally - do NOT provide external threadId
+
+## Network Architectures
+
+### V1.1 Network (Tool-Based) - RECOMMENDED
+Direct tool access bypassing threadId issues:
+
+**Architecture:**
+- **Direct Tool Access**: No agent delegation, tools called directly
+- **ThreadId Preservation**: Tools receive proper threadId from network context
+- **Available Tools**: fileWrite, fileRead, webSearch, browserAct, downloadFile, etc.
+
+**Testing V1.1:**
+```bash
+curl -X POST http://localhost:4111/api/networks/v-next/v1-1-network/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Save a test file with some content",
+    "resourceId": "v1-1-network",
+    "stream": false
+  }'
+```
+
+### V1 Network (Agent-Based)
 
 ### Agent Composition
 - **Planner** (PRIMARY - always called first)

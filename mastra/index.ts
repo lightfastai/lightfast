@@ -15,6 +15,7 @@ import { plannerSearcherNetwork } from "./networks/planner-searcher";
 import { unifiedExecutorNetwork } from "./networks/unified-executor";
 import { unifiedResearcherNetwork } from "./networks/unified-researcher";
 import { v1Network } from "./networks/v1";
+import { v11Network } from "./networks/v1-1";
 
 // Create LibSQL storage instance
 const storage = new LibSQLStore({
@@ -42,5 +43,6 @@ export const mastra = new Mastra({
 		adaptiveExecutorNetwork,
 		plannerSearcherNetwork,
 		v1Network,
+		v11Network,
 	},
 });
