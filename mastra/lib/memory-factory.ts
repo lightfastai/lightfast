@@ -1,6 +1,7 @@
 import { Memory } from "@mastra/memory";
 import { LibSQLStore } from "@mastra/libsql";
 import { UpstashStore } from "@mastra/upstash";
+import { env } from "../../env";
 
 /**
  * Factory function to create storage instances based on environment
@@ -8,15 +9,15 @@ import { UpstashStore } from "@mastra/upstash";
  */
 export function createEnvironmentStorage() {
 	// Auto-detect environment based on NODE_ENV and deployment context
-	const nodeEnv = process.env.NODE_ENV || "development";
-	const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV !== undefined;
+	const nodeEnv = env.NODE_ENV || "development";
+	const isVercel = env.VERCEL === "1" || env.VERCEL_ENV !== undefined;
 	const isProduction = nodeEnv === "production";
 
 	// Use Upstash for production/serverless deployments
 	if (isProduction || isVercel) {
 		return new UpstashStore({
-			url: process.env.UPSTASH_REDIS_REST_URL || "http://localhost:8089",
-			token: process.env.UPSTASH_REDIS_REST_TOKEN || "test_token",
+			url: env.UPSTASH_REDIS_REST_URL || "http://localhost:8089",
+			token: env.UPSTASH_REDIS_REST_TOKEN || "test_token",
 		});
 	}
 
@@ -55,11 +56,11 @@ export function createEnvironmentMemory(options: {
  * Creates a Memory instance with fixed storage (non-dynamic)
  */
 export function createStaticMemory(forceUpstash = false): Memory {
-	if (forceUpstash || process.env.NODE_ENV === "production") {
+	if (forceUpstash || env.NODE_ENV === "production") {
 		return new Memory({
 			storage: new UpstashStore({
-				url: process.env.UPSTASH_REDIS_REST_URL || "http://localhost:8089",
-				token: process.env.UPSTASH_REDIS_REST_TOKEN || "test_token",
+				url: env.UPSTASH_REDIS_REST_URL || "http://localhost:8089",
+				token: env.UPSTASH_REDIS_REST_TOKEN || "test_token",
 			}),
 			options: {
 				lastMessages: 50,
