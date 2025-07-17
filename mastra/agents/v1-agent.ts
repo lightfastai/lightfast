@@ -42,7 +42,7 @@ const agentMemory = createEnvironmentMemory({
 - Storage: [automatically selected based on environment]
 
 ## Current Session
-- **Date**: ${new Date().toISOString().split('T')[0]}
+- **Date**: ${new Date().toISOString().split("T")[0]}
 - **Task Management**: Available via taskManagement and autoTaskDetection tools
 - **Status**: Use tools to track tasks systematically
 

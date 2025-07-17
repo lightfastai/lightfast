@@ -1,5 +1,5 @@
-import { Memory } from "@mastra/memory";
 import { LibSQLStore } from "@mastra/libsql";
+import { Memory } from "@mastra/memory";
 import { UpstashStore } from "@mastra/upstash";
 import { env } from "../../env";
 
@@ -31,22 +31,22 @@ export function createEnvironmentStorage() {
  * Factory function to create Memory instances based on environment
  * Automatically selects storage backend based on environment variables
  */
-export function createEnvironmentMemory(options: {
-	prefix?: string;
-	workingMemoryTemplate?: string;
-	lastMessages?: number;
-} = {}): Memory {
+export function createEnvironmentMemory(
+	options: { prefix?: string; workingMemoryTemplate?: string; lastMessages?: number } = {},
+): Memory {
 	const { workingMemoryTemplate, lastMessages = 50 } = options;
 
 	return new Memory({
 		storage: createEnvironmentStorage(),
 		options: {
 			lastMessages,
-			workingMemory: workingMemoryTemplate ? {
-				enabled: true,
-				scope: "thread" as const,
-				template: workingMemoryTemplate,
-			} : undefined,
+			workingMemory: workingMemoryTemplate
+				? {
+						enabled: true,
+						scope: "thread" as const,
+						template: workingMemoryTemplate,
+					}
+				: undefined,
 		},
 	});
 }
@@ -71,7 +71,7 @@ export function createStaticMemory(forceUpstash = false): Memory {
 			},
 		});
 	}
-	
+
 	return new Memory({
 		storage: new LibSQLStore({
 			url: "file:./mastra.db",

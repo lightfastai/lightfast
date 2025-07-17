@@ -15,59 +15,71 @@ export const taskManagementTool = createTool({
 		priority: z.enum(["high", "medium", "low"]).optional().describe("Task priority - optional for add/update"),
 		status: z.enum(["active", "in_progress", "completed"]).optional().describe("Task status - optional for update"),
 		notes: z.string().optional().describe("Additional notes for the task"),
-		tasks: z.array(z.object({
-			description: z.string().describe("Task description"),
-			priority: z.enum(["high", "medium", "low"]).default("medium").describe("Task priority"),
-			notes: z.string().optional().describe("Additional notes for the task"),
-		})).optional().describe("Array of tasks for batch operations - required for add_batch"),
+		tasks: z
+			.array(
+				z.object({
+					description: z.string().describe("Task description"),
+					priority: z.enum(["high", "medium", "low"]).default("medium").describe("Task priority"),
+					notes: z.string().optional().describe("Additional notes for the task"),
+				}),
+			)
+			.optional()
+			.describe("Array of tasks for batch operations - required for add_batch"),
 	}),
 	outputSchema: z.object({
 		success: z.boolean(),
 		message: z.string(),
-		currentTasks: z.array(z.object({
-			id: z.string(),
-			description: z.string(),
-			priority: z.enum(["high", "medium", "low"]),
-			status: z.enum(["active", "in_progress", "completed"]),
-			notes: z.string().optional(),
-		})).optional(),
+		currentTasks: z
+			.array(
+				z.object({
+					id: z.string(),
+					description: z.string(),
+					priority: z.enum(["high", "medium", "low"]),
+					status: z.enum(["active", "in_progress", "completed"]),
+					notes: z.string().optional(),
+				}),
+			)
+			.optional(),
 	}),
 	execute: async ({ context, threadId, resourceId }) => {
 		const { action, taskId, description, priority, status, notes, tasks } = context;
 
 		try {
 			switch (action) {
-				case "add":
+				case "add": {
 					if (!description) {
 						return {
 							success: false,
 							message: "Description is required when adding a task",
 						};
 					}
-					
+
 					// Generate task ID if not provided
 					const newTaskId = taskId || `TASK-${Date.now().toString().slice(-6)}`;
-					
+
 					return {
 						success: true,
 						message: `Task ${newTaskId} added successfully`,
-						currentTasks: [{
-							id: newTaskId,
-							description,
-							priority: priority || "medium",
-							status: "active" as const,
-							notes,
-						}],
+						currentTasks: [
+							{
+								id: newTaskId,
+								description,
+								priority: priority || "medium",
+								status: "active" as const,
+								notes,
+							},
+						],
 					};
+				}
 
-				case "add_batch":
+				case "add_batch": {
 					if (!tasks || tasks.length === 0) {
 						return {
 							success: false,
 							message: "Tasks array is required when adding tasks in batch",
 						};
 					}
-					
+
 					// Generate unique task IDs for each task
 					const timestamp = Date.now();
 					const batchTasks = tasks.map((task, index) => ({
@@ -77,12 +89,13 @@ export const taskManagementTool = createTool({
 						status: "active" as const,
 						notes: task.notes,
 					}));
-					
+
 					return {
 						success: true,
 						message: `Successfully added ${batchTasks.length} tasks`,
 						currentTasks: batchTasks,
 					};
+				}
 
 				case "update":
 					if (!taskId) {
@@ -91,17 +104,19 @@ export const taskManagementTool = createTool({
 							message: "Task ID is required for updating",
 						};
 					}
-					
+
 					return {
 						success: true,
 						message: `Task ${taskId} updated successfully`,
-						currentTasks: [{
-							id: taskId,
-							description: description || "Task description updated",
-							priority: priority || "medium",
-							status: (status || "in_progress") as "active" | "in_progress" | "completed",
-							notes,
-						}],
+						currentTasks: [
+							{
+								id: taskId,
+								description: description || "Task description updated",
+								priority: priority || "medium",
+								status: (status || "in_progress") as "active" | "in_progress" | "completed",
+								notes,
+							},
+						],
 					};
 
 				case "complete":
@@ -111,17 +126,19 @@ export const taskManagementTool = createTool({
 							message: "Task ID is required for completing",
 						};
 					}
-					
+
 					return {
 						success: true,
 						message: `Task ${taskId} completed successfully`,
-						currentTasks: [{
-							id: taskId,
-							description: description || "Task completed",
-							priority: priority || "medium",
-							status: "completed" as const,
-							notes,
-						}],
+						currentTasks: [
+							{
+								id: taskId,
+								description: description || "Task completed",
+								priority: priority || "medium",
+								status: "completed" as const,
+								notes,
+							},
+						],
 					};
 
 				case "list":
@@ -168,12 +185,16 @@ export const autoTaskDetectionTool = createTool({
 	outputSchema: z.object({
 		shouldUseTaskManagement: z.boolean(),
 		reasoning: z.string(),
-		suggestedTasks: z.array(z.object({
-			description: z.string(),
-			priority: z.enum(["high", "medium", "low"]),
-			estimatedSteps: z.number(),
-			notes: z.string().optional(),
-		})).optional(),
+		suggestedTasks: z
+			.array(
+				z.object({
+					description: z.string(),
+					priority: z.enum(["high", "medium", "low"]),
+					estimatedSteps: z.number(),
+					notes: z.string().optional(),
+				}),
+			)
+			.optional(),
 	}),
 	execute: async ({ context }) => {
 		const { userRequest, currentContext } = context;
@@ -190,7 +211,7 @@ export const autoTaskDetectionTool = createTool({
 
 		const multiTaskIndicators = [
 			/\d+\.\s/g, // Numbered lists
-			/[-*]\s/g,  // Bullet points
+			/[-*]\s/g, // Bullet points
 			/\b(and|then|also|plus)\b/gi, // Conjunctions
 		];
 
@@ -212,13 +233,13 @@ export const autoTaskDetectionTool = createTool({
 				estimatedSteps: number;
 				notes?: string;
 			}> = [];
-			
+
 			// Extract numbered items
 			const numberedItems = userRequest.match(/\d+\.\s*([^.]+)/g);
 			if (numberedItems) {
 				numberedItems.forEach((item, index) => {
 					suggestedTasks.push({
-						description: item.replace(/^\d+\.\s*/, '').trim(),
+						description: item.replace(/^\d+\.\s*/, "").trim(),
 						priority: "medium" as const,
 						estimatedSteps: 1,
 					});
@@ -230,7 +251,7 @@ export const autoTaskDetectionTool = createTool({
 			if (bulletItems && suggestedTasks.length === 0) {
 				bulletItems.forEach((item, index) => {
 					suggestedTasks.push({
-						description: item.replace(/^[-*]\s*/, '').trim(),
+						description: item.replace(/^[-*]\s*/, "").trim(),
 						priority: "medium" as const,
 						estimatedSteps: 1,
 					});
