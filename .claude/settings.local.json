@@ -47,7 +47,8 @@
       "WebFetch(domain:ai-sdk.dev)",
       "WebFetch(domain:v5.ai-sdk.dev)",
       "mcp__container-use__environment_file_read",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(pnpm dlx:*)"
     ],
     "deny": []
   },
