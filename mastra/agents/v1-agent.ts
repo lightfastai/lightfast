@@ -1,6 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { LibSQLStore } from "@mastra/libsql";
-import { Memory } from "@mastra/memory";
+import { createEnvironmentMemory } from "../lib/memory-factory";
 import { models, openrouter } from "../lib/openrouter";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
 import { granularBrowserTools } from "../tools/browser-tools-granular";
@@ -29,17 +28,18 @@ import { saveCriticalInfoTool } from "../tools/save-critical-info";
 import { autoTaskDetectionTool, taskManagementTool } from "../tools/task-management";
 import { webSearchTool } from "../tools/web-search-tools";
 
-// Create agent-specific memory
-const agentMemory = new Memory({
-	storage: new LibSQLStore({
-		url: "file:./mastra.db",
-	}),
-	options: {
-		workingMemory: {
-			enabled: true,
-			scope: "thread",
-			template: `
+// Create environment-aware memory for V1 Agent
+// This will automatically use Upstash for production/Vercel deployments
+// and LibSQL for development/testing
+const agentMemory = createEnvironmentMemory({
+	prefix: "mastra:v1-agent:",
+	workingMemoryTemplate: `
 # V1 Agent Task Management
+
+## Environment Info
+- Environment: [auto-detected from NODE_ENV]
+- Deployment: [auto-detected from deployment context]
+- Storage: [automatically selected based on environment]
 
 ## Current Session
 - **Date**: ${new Date().toISOString().split('T')[0]}
@@ -63,10 +63,9 @@ const agentMemory = new Memory({
 - Update task status immediately after changes
 - All tools available: fileWrite, fileRead, webSearch, browserAction, download, saveCriticalInfo, sandbox operations, task management
 - Working memory persists across conversation - maintain context
+- Storage backend is automatically selected: Upstash for production/Vercel, LibSQL for development
 `,
-		},
-		lastMessages: 50,
-	},
+	lastMessages: 50,
 });
 
 export const v1Agent = new Agent({

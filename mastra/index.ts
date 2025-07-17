@@ -1,5 +1,6 @@
 import { Mastra } from "@mastra/core";
-import { LibSQLStore } from "@mastra/libsql";
+import { VercelDeployer } from "@mastra/deployer-vercel";
+import { createEnvironmentStorage } from "./lib/memory-factory";
 import { artifactAgent } from "./agents/artifact";
 import { browserAgent } from "./agents/browser";
 import { downloadAgent } from "./agents/download";
@@ -11,13 +12,14 @@ import { v1Agent } from "./agents/v1-agent";
 import { visionAgent } from "./agents/vision";
 import { voiceAgent } from "./agents/voice";
 
-// Create LibSQL storage instance
-const storage = new LibSQLStore({
-	url: "file:./mastra.db", // Local SQLite file for development
-});
+// Environment-aware storage configuration
+// This will automatically use Upstash for production/Vercel deployments
+// and LibSQL for development/testing
+const storage = createEnvironmentStorage();
 
 export const mastra = new Mastra({
-	storage, // This will be used by all Memory instances in agents
+	storage, // Environment-aware storage
+	deployer: new VercelDeployer(), // Vercel deployer for serverless deployment
 	agents: {
 		Artifact: artifactAgent,
 		Planner: planner,
