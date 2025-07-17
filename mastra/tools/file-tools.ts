@@ -8,14 +8,14 @@ import { env } from "../../env";
  */
 export const fileWriteTool = createTool({
 	id: "file-write",
-	description: "Write content to a file in blob storage",
+	description: "Write markdown content to a .md file in blob storage",
 	inputSchema: z.object({
-		filename: z.string().describe("Filename to save (e.g., 'analysis.md', 'config.json')"),
-		content: z.string().describe("Content to write to the file"),
+		filename: z.string().describe("Filename to save (must end with .md, e.g., 'analysis.md', 'report.md')"),
+		content: z.string().describe("Markdown content to write to the file"),
 		contentType: z
 			.string()
 			.optional()
-			.describe("MIME type (defaults based on extension: .md→text/markdown, .json→application/json, etc.)"),
+			.describe("MIME type (defaults to text/markdown for .md files)"),
 		metadata: z.record(z.string()).optional().describe("Optional metadata to attach to the file"),
 	}),
 	outputSchema: z.object({

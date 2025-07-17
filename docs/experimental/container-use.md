@@ -2,6 +2,8 @@
 
 Quick guide for isolated development with container-use + Claude Code MCP.
 
+**IMPORTANT:** Only use container-use when explicitly requested by the user. For normal development tasks, use standard file operations and tools unless the user specifically asks for an isolated container environment.
+
 ## What is Container-Use?
 - Docker containers + git worktree branches
 - Safe isolated development environments  

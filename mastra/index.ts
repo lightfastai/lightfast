@@ -7,6 +7,7 @@ import { mathAgent } from "./agents/math";
 import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
 import { searcher } from "./agents/searcher";
+import { v1Agent } from "./agents/v1-agent";
 import { visionAgent } from "./agents/vision";
 import { voiceAgent } from "./agents/voice";
 import { adaptiveExecutorNetwork } from "./networks/adaptive-executor";
@@ -34,6 +35,7 @@ export const mastra = new Mastra({
 		Math: mathAgent,
 		Vision: visionAgent,
 		Voice: voiceAgent,
+		V1Agent: v1Agent,
 	},
 	workflows: {},
 	vnext_networks: {
