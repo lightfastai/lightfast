@@ -48,7 +48,8 @@
       "WebFetch(domain:v5.ai-sdk.dev)",
       "mcp__container-use__environment_file_read",
       "Bash(cp:*)",
-      "Bash(pnpm dlx:*)"
+      "Bash(pnpm dlx:*)",
+      "WebFetch(domain:nextjs.org)"
     ],
     "deny": []
   },

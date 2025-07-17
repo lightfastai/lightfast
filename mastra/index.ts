@@ -1,5 +1,4 @@
 import { Mastra } from "@mastra/core";
-import { VercelDeployer } from "@mastra/deployer-vercel";
 import { createEnvironmentStorage } from "./lib/memory-factory";
 import { artifactAgent } from "./agents/artifact";
 import { browserAgent } from "./agents/browser";
@@ -19,7 +18,8 @@ const storage = createEnvironmentStorage();
 
 export const mastra = new Mastra({
 	storage, // Environment-aware storage
-	deployer: new VercelDeployer(), // Vercel deployer for serverless deployment
+	// Note: Deployer removed in favor of Next.js integration
+	// Next.js handles deployment through Vercel automatically
 	agents: {
 		Artifact: artifactAgent,
 		Planner: planner,
@@ -34,4 +34,9 @@ export const mastra = new Mastra({
 	},
 	workflows: {},
 	vnext_networks: {},
+	// Server configuration for Next.js integration
+	server: {
+		// Disable standalone server in favor of Next.js API routes
+		enabled: false,
+	},
 });
