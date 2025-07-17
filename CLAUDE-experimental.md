@@ -48,6 +48,16 @@ OPENROUTER_API_KEY=your-api-key-here
   3. Send: mcp__playwright-mastra__browser_click → Send button
   4. Close: mcp__playwright-mastra__browser_close (always)
 
+### Network Testing
+- **Full network testing guide**: @docs/network-testing.md
+- **Network URL pattern**: http://localhost:4111/networks/v-next/[network-id]/chat
+- **Example**: http://localhost:4111/networks/v-next/v1-network/chat
+- **Key features**:
+  - Planner-first enforcement
+  - Working memory task tracking
+  - Multi-agent coordination
+  - File operations via Artifact agent
+
 ### Self-Healing Workflow
 **When creating/debugging agents:**
 • Navigate directly to `localhost:4111/agents/[agentName]`
@@ -59,6 +69,139 @@ OPENROUTER_API_KEY=your-api-key-here
   - Tool parameter mismatch → Use `{ context }` destructuring
 • Re-test → iterate until working
 • Commit fixes
+
+## Mastra Network Best Practices
+
+### NewAgentNetwork Setup
+```typescript
+import { NewAgentNetwork } from "@mastra/core/network/vNext";
+import { Memory } from "@mastra/memory";
+import { LibSQLStore } from "@mastra/libsql";
+
+// 1. Create network memory (required for loop method)
+const networkMemory = new Memory({
+  storage: new LibSQLStore({ url: "file:./mastra.db" }),
+  options: {
+    workingMemory: {
+      enabled: true,
+      scope: "thread", // or "resource" for user-level persistence
+      template: "# Task List\n..." // or use schema: z.object({...})
+    },
+    lastMessages: 50
+  }
+});
+
+// 2. Create network
+const network = new NewAgentNetwork({
+  id: "network-id",
+  name: "Network Name",
+  instructions: "Network routing instructions...",
+  model: openrouter(models.claude4Sonnet),
+  agents: { agent1, agent2 },
+  workflows: { workflow1 }, // optional
+  memory: networkMemory
+});
+```
+
+### Key Network Concepts
+- **No direct callbacks** - Use streaming to track progress
+- **Memory is required** for `loop()` method
+- **Agents must not have individual memory** when used in networks
+- **Working memory** persists across agent calls within a thread
+
+### Streaming & Event Handling
+```typescript
+const { stream, getWorkflowState } = await network.stream("Task", {
+  threadId: "thread-123",
+  resourceId: "user-456"
+});
+
+for await (const event of stream) {
+  switch (event.type) {
+    case 'text-delta':
+      // Handle text chunks
+      break;
+    case 'step-suspended':
+    case 'step-waiting':
+      // Handle workflow states
+      break;
+  }
+}
+```
+
+### Routing Control
+- **Force first agent**: Use clear instructions and agent descriptions
+- **Agent descriptions matter**: Routing agent uses these for decisions
+- **Explicit routing**: "ALWAYS start with X agent" in instructions
+- **Task-specific routing**: Guide through user prompt
+
+### Working Memory Best Practices
+- **Use templates** for human-readable task tracking
+- **Use schemas** for structured data (with Zod)
+- **Update via <working_memory> tags** in agent responses
+- **No direct memory manipulation** in tools
+
+## Memory System Deep Dive
+
+### Tool Context Access
+Tools receive threadId and resourceId in their execution context:
+
+```typescript
+export const myTool = createTool({
+  id: "my-tool",
+  description: "Thread-aware tool",
+  inputSchema: z.object({ data: z.string() }),
+  execute: async ({ context, threadId, resourceId }) => {
+    // context: Validated input data
+    // threadId: Current conversation thread ID
+    // resourceId: User/resource ID
+    
+    // Use threadId for thread-scoped operations
+    const filename = `data-${threadId}.json`;
+    
+    // Use resourceId for user-scoped operations
+    const userPath = `users/${resourceId}/data`;
+    
+    return { success: true, threadId, resourceId };
+  }
+});
+```
+
+### Passing Context to Agents
+```typescript
+// New preferred approach (memory configuration)
+await agent.generate("Message", {
+  memory: {
+    thread: "thread-123",
+    resource: "user-456",
+    options: { /* memory config */ }
+  }
+});
+
+// Legacy approach (still supported)
+await agent.generate("Message", {
+  threadId: "thread-123",
+  resourceId: "user-456"
+});
+```
+
+### Thread-Aware Storage Pattern
+```typescript
+// Example: Saving thread-specific data
+const blobPath = `todos/${resourceId || "shared"}/${threadId}/todo.md`;
+const blob = await put(blobPath, content, {
+  access: "public",
+  contentType: "text/markdown",
+  metadata: { threadId, resourceId, timestamp }
+});
+```
+
+### Key Points
+- **threadId** identifies the conversation thread
+- **resourceId** identifies the user/resource
+- Both are optional but recommended for context
+- Tools automatically receive these from agent calls
+- Use for scoped storage, personalization, and tracking
 
 ## Container-Use Workflow
 

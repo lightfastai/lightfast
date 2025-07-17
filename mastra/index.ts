@@ -1,5 +1,6 @@
 import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
+import { artifactAgent } from "./agents/artifact";
 import { browserAgent } from "./agents/browser";
 import { downloadAgent } from "./agents/download";
 import { mathAgent } from "./agents/math";
@@ -13,6 +14,7 @@ import { exampleNetwork } from "./networks/example";
 import { plannerSearcherNetwork } from "./networks/planner-searcher";
 import { unifiedExecutorNetwork } from "./networks/unified-executor";
 import { unifiedResearcherNetwork } from "./networks/unified-researcher";
+import { v1Network } from "./networks/v1";
 
 // Create LibSQL storage instance
 const storage = new LibSQLStore({
@@ -22,6 +24,7 @@ const storage = new LibSQLStore({
 export const mastra = new Mastra({
 	storage, // This will be used by all Memory instances in agents
 	agents: {
+		Artifact: artifactAgent,
 		Planner: planner,
 		Searcher: searcher,
 		Sandbox: sandboxAgent,
@@ -38,5 +41,6 @@ export const mastra = new Mastra({
 		unifiedExecutorNetwork,
 		adaptiveExecutorNetwork,
 		plannerSearcherNetwork,
+		v1Network,
 	},
 });

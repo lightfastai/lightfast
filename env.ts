@@ -9,6 +9,7 @@ const envSchema = z.object({
 	BROWSERBASE_PROJECT_ID: z.string().optional(),
 	OPENROUTER_API_KEY: z.string().optional(),
 	ELEVENLABS_API_KEY: z.string().optional(),
+	BLOB_READ_WRITE_TOKEN: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
