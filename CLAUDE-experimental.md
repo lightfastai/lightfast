@@ -4,257 +4,54 @@
 - **NO index.ts files** - Always use direct imports
 - **Use pnpm** - Not npm or yarn
 - **Run tests** - `pnpm typecheck` and `pnpm lint` before commits
-- **Biome auto-formats** - Code is formatted on save via `@biomejs/biome`
+- **Biome auto-formats** - Code is formatted on save
 
 ## Commands
 ```bash
-pnpm dev          # Start dev server
-pnpm build        # Build for production
+pnpm dev          # Start Next.js dev server
+pnpm build        # Build Next.js for production
+pnpm start        # Start Next.js production server
 pnpm typecheck    # TypeScript check
 pnpm lint         # Run Biome linter
+
+# Run Next.js dev server in background
+pnpm dev > /tmp/nextjs-dev.log 2>&1 &
+
+# Check Next.js dev server logs
+cat /tmp/nextjs-dev.log
+
+# Kill background Next.js server
+pkill -f "next dev"
+
+# Mastra-specific commands
+pnpm dev:mastra   # Start Mastra dev server
+pnpm build:mastra # Build Mastra
 
 # Check specific file for errors
 pnpm biome check --write [filepath]
 ```
 
-## AI Model Configuration
-
-### OpenRouter Setup
-This project uses OpenRouter to access Claude models via Vercel AI SDK:
-
-**Environment Variables:**
+## Environment Variables
 ```bash
-OPENROUTER_API_KEY=your-api-key-here
+OPENROUTER_API_KEY=your-key-here
 ```
+See `.env.example` for all required variables.
 
-**Model Configuration:**
-- All agents use Claude 4 Sonnet via OpenRouter
-- Configuration: `mastra/lib/openrouter.ts`
-- Model ID: `anthropic/claude-4-sonnet-20250514`
+## Documentation
+- **Agent Testing**: @docs/agent-testing.md
+- **Memory System**: @docs/memory-system.md
+- **Container-Use**: @docs/container-use.md (for isolated development)
 
-## Testing
+## Quick References
+- Model: `anthropic/claude-4-sonnet-20250514` via OpenRouter
+- Next.js dev server: http://localhost:3000
+- Mastra dev server: http://localhost:4111
 
-### Playwright MCP Setup
-```bash
-# Configured in .mcp.json with headless mode
-# No manual startup needed - auto-starts with Claude Code
-```
+## Testing Checklist
+- [ ] Run `pnpm typecheck`
+- [ ] Run `pnpm lint`
+- [ ] Verify no console errors
 
-### Agent Testing
-- **Full testing guide**: @docs/agent-testing.md
-- **Quick Playwright flow**:
-  1. Navigate: mcp__playwright-mastra__browser_navigate → http://localhost:4111/agents/[agentName]
-  2. Input: mcp__playwright-mastra__browser_type → enter test message
-  3. Send: mcp__playwright-mastra__browser_click → Send button
-  4. Close: mcp__playwright-mastra__browser_close (always)
-
-### Network Testing
-- **Full network testing guide**: @docs/network-testing.md
-- **Network URL pattern**: http://localhost:4111/networks/v-next/[network-id]/chat
-- **Example**: http://localhost:4111/networks/v-next/v1-network/chat
-- **Key features**:
-  - Planner-first enforcement
-  - Working memory task tracking
-  - Multi-agent coordination
-  - File operations via Artifact agent
-
-### Self-Healing Workflow
-**When creating/debugging agents:**
-• Navigate directly to `localhost:4111/agents/[agentName]`
-• Test with sample inputs → observe failures
-• **Common Issues & Fixes:**
-  - Missing tools property → Add `tools: { toolName: toolObject }`
-  - Wrong tool format → Use `createTool({ id, execute: async ({ context }) => ... })`
-  - maxSteps timeout → Check tool registration first, not limits
-  - Tool parameter mismatch → Use `{ context }` destructuring
-• Re-test → iterate until working
-• Commit fixes
-
-## Mastra Network Best Practices
-
-### NewAgentNetwork Setup
-```typescript
-import { NewAgentNetwork } from "@mastra/core/network/vNext";
-import { Memory } from "@mastra/memory";
-import { LibSQLStore } from "@mastra/libsql";
-
-// 1. Create network memory (required for loop method)
-const networkMemory = new Memory({
-  storage: new LibSQLStore({ url: "file:./mastra.db" }),
-  options: {
-    workingMemory: {
-      enabled: true,
-      scope: "thread", // or "resource" for user-level persistence
-      template: "# Task List\n..." // or use schema: z.object({...})
-    },
-    lastMessages: 50
-  }
-});
-
-// 2. Create network
-const network = new NewAgentNetwork({
-  id: "network-id",
-  name: "Network Name",
-  instructions: "Network routing instructions...",
-  model: openrouter(models.claude4Sonnet),
-  agents: { agent1, agent2 },
-  workflows: { workflow1 }, // optional
-  memory: networkMemory
-});
-```
-
-### Key Network Concepts
-- **No direct callbacks** - Use streaming to track progress
-- **Memory is required** for `loop()` method
-- **Agents must not have individual memory** when used in networks
-- **Working memory** persists across agent calls within a thread
-
-### Streaming & Event Handling
-```typescript
-const { stream, getWorkflowState } = await network.stream("Task", {
-  threadId: "thread-123",
-  resourceId: "user-456"
-});
-
-for await (const event of stream) {
-  switch (event.type) {
-    case 'text-delta':
-      // Handle text chunks
-      break;
-    case 'step-suspended':
-    case 'step-waiting':
-      // Handle workflow states
-      break;
-  }
-}
-```
-
-### Routing Control
-- **Force first agent**: Use clear instructions and agent descriptions
-- **Agent descriptions matter**: Routing agent uses these for decisions
-- **Explicit routing**: "ALWAYS start with X agent" in instructions
-- **Task-specific routing**: Guide through user prompt
-
-### Working Memory Best Practices
-- **Use templates** for human-readable task tracking
-- **Use schemas** for structured data (with Zod)
-- **Update via <working_memory> tags** in agent responses
-- **No direct memory manipulation** in tools
-
-## Memory System Deep Dive
-
-### Tool Context Access
-Tools receive threadId and resourceId in their execution context:
-
-```typescript
-export const myTool = createTool({
-  id: "my-tool",
-  description: "Thread-aware tool",
-  inputSchema: z.object({ data: z.string() }),
-  execute: async ({ context, threadId, resourceId }) => {
-    // context: Validated input data
-    // threadId: Current conversation thread ID
-    // resourceId: User/resource ID
-    
-    // Use threadId for thread-scoped operations
-    const filename = `data-${threadId}.json`;
-    
-    // Use resourceId for user-scoped operations
-    const userPath = `users/${resourceId}/data`;
-    
-    return { success: true, threadId, resourceId };
-  }
-});
-```
-
-### Passing Context to Agents
-```typescript
-// New preferred approach (memory configuration)
-await agent.generate("Message", {
-  memory: {
-    thread: "thread-123",
-    resource: "user-456",
-    options: { /* memory config */ }
-  }
-});
-
-// Legacy approach (still supported)
-await agent.generate("Message", {
-  threadId: "thread-123",
-  resourceId: "user-456"
-});
-```
-
-### Thread-Aware Storage Pattern
-```typescript
-// Example: Saving thread-specific data
-const blobPath = `todos/${resourceId || "shared"}/${threadId}/todo.md`;
-const blob = await put(blobPath, content, {
-  access: "public",
-  contentType: "text/markdown",
-  metadata: { threadId, resourceId, timestamp }
-});
-```
-
-### Key Points
-- **threadId** identifies the conversation thread
-- **resourceId** identifies the user/resource
-- Both are optional but recommended for context
-- Tools automatically receive these from agent calls
-- Use for scoped storage, personalization, and tracking
-
-## Container-Use Workflow
-
-### Isolated Development Environments
-Container-use provides isolated environments for working on different features/branches:
-
-**When to use:**
-- Working on experimental features
-- Testing breaking changes
-- Parallel development on multiple features
-- Keeping main branch clean
-
-**How it works:**
-- Each task gets its own container + git worktree
-- Complete isolation from main codebase
-- Easy to review/merge or discard changes
-
-**Usage:**
-1. Request isolated environment: "Work on this in an isolated environment"
-2. Container-use automatically creates:
-   - New git worktree branch
-   - Isolated container with full dev setup
-   - Independent workspace
-3. Complete work normally
-4. Changes stay in branch until explicitly merged
-
-### Environment Variables
-**Setting up env vars for container-use:**
-```bash
-# Option 1: Manual setup (using .env.example as guide)
-container-use config env set NODE_ENV development
-container-use config env set MASTRA_BASE_URL http://localhost:4111
-container-use config env set DATABASE_URL "your-connection-string"
-container-use config env set OPENROUTER_API_KEY "your-openrouter-api-key"
-
-# Option 2: Import from existing .env file
-# Run the container-use-env-setup.sh script from container branch
-
-# List configured variables
-container-use config env list
-
-# Make config persistent (includes env vars)
-container-use config import <environment-id>
-```
-
-**Note:** Sensitive values (API keys, tokens) should be set manually using `container-use config env set` to avoid committing secrets.
-
-### Full Container-Use Guide
-For detailed container-use workflow documentation:
-@docs/container-use.md
-
-ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
-
-DO NOT install or use the git cli with the environment_run_cmd tool. All environment tools will handle git operations for you. Changing ".git" yourself will compromise the integrity of your environment.
-
-You MUST inform the user how to view your work using `container-use log <env_id>` AND `container-use checkout <env_id>`. Failure to do this will make your work inaccessible to others.
+IMPORTANT: When using container-use, always inform user how to view work:
+- `container-use log <env_id>`
+- `container-use checkout <env_id>`

@@ -4,14 +4,16 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"dev": "pnpm dev:mastra",
-		"dev:mastra": "mastra dev --dir mastra",
-		"build": "mastra build --dir mastra",
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
 		"lint": "biome check --write .",
 		"typecheck": "tsc --noEmit",
 		"format": "biome format --write .",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"with-env": "dotenv -e .env.local --"
+		"with-env": "dotenv -e .env.local --",
+		"dev:mastra": "mastra dev --dir mastra",
+		"build:mastra": "mastra build --dir mastra"
 	},
 	"keywords": [],
 	"author": "",
@@ -20,11 +22,15 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.1.1",
 		"@playwright/test": "^1.54.1",
+		"@tailwindcss/postcss": "^4.1.11",
 		"@types/ms": "^2.1.0",
 		"@types/node": "^24.0.14",
+		"@types/react": "^19.1.8",
+		"@types/react-dom": "^19.1.6",
 		"concurrently": "^9.2.0",
 		"dotenv-cli": "^8.0.0",
 		"playwright": "^1.54.1",
+		"tailwindcss": "^4.1.11",
 		"tsx": "^4.20.3",
 		"typescript": "^5.8.3"
 	},
@@ -50,7 +56,10 @@
 		"mastra": "^0.10.13",
 		"ms": "^2.1.3",
 		"nanoid": "^5.1.5",
+		"next": "^15.4.1",
 		"openai": "^5.10.1",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0",
 		"zod": "^3.25.76"
 	},
 	"pnpm": {
