@@ -38,6 +38,7 @@ OPENROUTER_API_KEY=your-key-here
 See `.env.example` for all required variables.
 
 ## Documentation
+- **Next.js Best Practices**: @docs/nextjs.md
 - **Agent Testing**: @docs/agent-testing.md
 - **Memory System**: @docs/memory-system.md
 - **Container-Use**: @docs/container-use.md (for isolated development)

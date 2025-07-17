@@ -1,5 +1,4 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { vercel } from "@t3-oss/env-core/presets";
 import { z } from "zod";
 
 export const env = createEnv({
@@ -23,8 +22,16 @@ export const env = createEnv({
     // Vercel Blob Storage
     BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
     
+    // Upstash Redis
+    UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+    
     // Node environment
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    
+    // Vercel environment variables
+    VERCEL: z.string().optional(),
+    VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
   },
 
   /**
@@ -70,8 +77,4 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 
-  /**
-   * Extend the Vercel environment variables preset
-   */
-  extends: [vercel()],
 });
