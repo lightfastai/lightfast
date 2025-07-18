@@ -1,7 +1,7 @@
 import { Agent, createTool } from "@mastra/core";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { models, openrouter } from "../lib/openrouter";
+import { anthropic, anthropicModels } from "../lib/anthropic";
 
 // Schema for vision analysis response
 const visionAnalysisSchema = z.object({
@@ -40,7 +40,7 @@ const analyzeVisualContent = createTool({
 
 			// Use generateObject with Vercel AI SDK
 			const result = await generateObject({
-				model: openrouter(models.claude4Sonnet),
+				model: anthropic(anthropicModels.claude4Sonnet),
 				schema: visionAnalysisSchema,
 				messages: [
 					{
@@ -112,7 +112,7 @@ const validateUrl = createTool({
 export const visionAgent = new Agent({
 	name: "Vision",
 	description: "Analyzes images and PDFs from URLs using Claude Sonnet 4 vision capabilities via OpenRouter",
-	model: openrouter(models.claude4Sonnet),
+	model: anthropic(anthropicModels.claude4Sonnet),
 	tools: {
 		analyzeVisualContent,
 		validateUrl,

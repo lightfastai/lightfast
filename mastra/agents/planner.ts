@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { z } from "zod";
-import { models, openrouter } from "../lib/openrouter";
+import { anthropic, anthropicModels } from "../lib/anthropic";
 import { saveCriticalInfoTool } from "../tools/save-critical-info";
 
 // Note: Working memory schemas moved to network level for proper context handling
@@ -83,7 +83,7 @@ Remember: You're planning for execution by specialized agents:
 - Vision: For image analysis
 - Artifact: For file management and persistent storage
 - Sandbox: For code execution (if available)`,
-	model: openrouter(models.claude4Sonnet),
+	model: anthropic(anthropicModels.claude4Sonnet),
 	// Note: Memory is handled at network level when used in networks
 	// Individual agent memory can cause context conflicts in network execution
 	tools: {
@@ -101,11 +101,11 @@ Remember: You're planning for execution by specialized agents:
 				toolResults.forEach((result, index) => {
 					if (
 						result.type === "tool-result" &&
-						result.result &&
-						typeof result.result === "object" &&
-						"error" in result.result
+						result.output &&
+						typeof result.output === "object" &&
+						"error" in result.output
 					) {
-						console.error(`[Planner] Tool ${index} error:`, result.result.error);
+						console.error(`[Planner] Tool ${index} error:`, result.output.error);
 					}
 				});
 			}

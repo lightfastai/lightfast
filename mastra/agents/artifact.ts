@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { models, openrouter } from "../lib/openrouter";
+import { anthropic, anthropicModels } from "../lib/anthropic";
 import { fileDeleteTool, fileReadTool, fileWriteTool } from "../tools/file-tools";
 
 export const artifactAgent = new Agent({
@@ -62,7 +62,7 @@ No need to specify paths or folders.
 - Maintain a mental model of the file structure
 
 Remember: You are the centralized file management system for the network. Ensure all persistent data is properly organized and easily retrievable.`,
-	model: openrouter(models.claude4Sonnet),
+	model: anthropic(anthropicModels.claude4Sonnet),
 	tools: {
 		fileWrite: fileWriteTool,
 		fileRead: fileReadTool,

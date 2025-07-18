@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { models, openrouter } from "../lib/openrouter";
+import { anthropic, anthropicModels } from "../lib/anthropic";
 import {
 	downloadDirectFileTool,
 	downloadFileTool,
@@ -86,7 +86,7 @@ Users can access their downloaded files by:
 - Fallback strategies for failed downloads
 
 Remember: You specialize in downloading files using Browserbase's capabilities. All downloads are stored in Browserbase's system and accessible via their API.`,
-	model: openrouter(models.claude4Sonnet),
+	model: anthropic(anthropicModels.claude4Sonnet),
 	tools: {
 		downloadFile: downloadFileTool,
 		downloadDirectFile: downloadDirectFileTool,
@@ -96,7 +96,6 @@ Remember: You specialize in downloading files using Browserbase's capabilities. 
 	defaultStreamOptions: {
 		maxSteps: 15,
 		maxRetries: 3,
-		maxTokens: 10000,
 		onChunk: ({ chunk }) => {
 			console.log(`[Download Agent] Chunk:`, chunk);
 		},
@@ -108,11 +107,11 @@ Remember: You specialize in downloading files using Browserbase's capabilities. 
 				toolResults.forEach((result, index) => {
 					if (
 						result.type === "tool-result" &&
-						result.result &&
-						typeof result.result === "object" &&
-						"error" in result.result
+						result.output &&
+						typeof result.output === "object" &&
+						"error" in result.output
 					) {
-						console.error(`[Download Agent] Tool ${index} error:`, result.result.error);
+						console.error(`[Download Agent] Tool ${index} error:`, result.output.error);
 					}
 				});
 			}

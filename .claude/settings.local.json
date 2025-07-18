@@ -51,7 +51,13 @@
 			"Bash(pnpm dlx:*)",
 			"WebFetch(domain:nextjs.org)",
 			"Bash(git merge:*)",
-			"Bash(git stash:*)"
+			"Bash(git stash:*)",
+			"Bash(pnpm update:*)",
+			"mcp__playwright-mastra__browser_network_requests",
+			"mcp__playwright-mastra__browser_evaluate",
+			"WebFetch(domain:v5.sdk.vercel.ai)",
+			"WebFetch(domain:sdk.vercel.ai)",
+			"Bash(pkill:*)"
 		],
 		"deny": []
 	},

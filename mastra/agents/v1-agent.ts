@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
+import { anthropic, anthropicModels } from "../lib/anthropic";
 import { createEnvironmentMemory } from "../lib/memory-factory";
-import { models, openrouter } from "../lib/openrouter";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
 import { granularBrowserTools } from "../tools/browser-tools-granular";
 import {
@@ -416,7 +416,7 @@ You are V1 Agent, an AI assistant created by the Mastra team.
      Remember: You have direct access to all tools needed for complex tasks. Execute efficiently, track progress
      systematically, and provide comprehensive results with proper documentation.
 `,
-	model: openrouter(models.claude4Sonnet),
+	model: anthropic(anthropicModels.claude4Sonnet),
 	tools: {
 		// File management tools
 		fileWrite: fileWriteTool,
@@ -467,15 +467,34 @@ You are V1 Agent, an AI assistant created by the Mastra team.
 		getSandboxDomain: getSandboxDomainTool,
 		listSandboxRoutes: listSandboxRoutesTool,
 	},
-	memory: agentMemory,
+	//	memory: agentMemory,
 	defaultGenerateOptions: {
 		maxSteps: 40,
 		maxRetries: 3,
-		maxTokens: 20000,
 	},
 	defaultStreamOptions: {
 		maxSteps: 60,
 		maxRetries: 3,
-		maxTokens: 20000,
+		onError: ({ error }) => {
+			console.error(`[V1Agent] Stream error:`, error);
+		},
+		onStepFinish: ({ text, toolCalls, toolResults }) => {
+			if (toolResults) {
+				toolResults.forEach((result, index) => {
+					if (
+						result.type === "tool-result" &&
+						result.output &&
+						typeof result.output === "object" &&
+						"error" in result.output
+					) {
+						console.error(`[V1Agent] Tool ${index} error:`, result.output.error);
+					}
+				});
+			}
+			console.log(`[V1Agent] Step completed`);
+		},
+		onFinish: (result) => {
+			console.log(`[V1Agent] Generation finished:`, result);
+		},
 	},
 });

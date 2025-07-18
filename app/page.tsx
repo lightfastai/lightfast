@@ -1,21 +1,36 @@
 "use client";
 
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
 import { Send } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useChatTransport } from "@/hooks/use-chat-transport";
 
 export default function Home() {
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
-	const threadId = useRef(`thread-${Date.now()}`);
-	const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-		api: `/api/chat/thread/${threadId.current}`,
-		body: {
-			stream: true,
+	const threadId = useRef(`thread-${Date.now()}`).current;
+
+	// Create transport for AI SDK v5
+	const transport = useChatTransport({ threadId });
+
+	// Use the chat hook with transport
+	const {
+		messages = [],
+		sendMessage: vercelSendMessage,
+		status,
+	} = useChat({
+		id: threadId,
+		transport,
+		initialMessages: [],
+		onError: (error) => {
+			console.error("Chat error:", error);
 		},
 	});
+
+	const [input, setInput] = useState("");
+	const isLoading = status === "streaming" || status === "submitted";
 
 	useEffect(() => {
 		if (scrollAreaRef.current) {
@@ -37,17 +52,28 @@ export default function Home() {
 							<p className="text-sm mt-2">Start a conversation by typing a message below</p>
 						</div>
 					)}
-					{messages.map((message) => (
-						<div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-							<div
-								className={`max-w-[80%] rounded-lg px-4 py-2 ${
-									message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-								}`}
-							>
-								<p className="whitespace-pre-wrap">{message.content}</p>
+					{messages.map((message) => {
+						// Extract text content from parts
+						const textContent =
+							message.parts
+								?.filter((part: any) => part.type === "text")
+								.map((part: any) => part.text)
+								.join("\n") ||
+							message.content ||
+							"";
+
+						return (
+							<div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+								<div
+									className={`max-w-[80%] rounded-lg px-4 py-2 ${
+										message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+									}`}
+								>
+									<p className="whitespace-pre-wrap">{textContent}</p>
+								</div>
 							</div>
-						</div>
-					))}
+						);
+					})}
 					{isLoading && (
 						<div className="flex justify-start">
 							<div className="bg-muted rounded-lg px-4 py-2">
@@ -62,11 +88,42 @@ export default function Home() {
 				</div>
 			</ScrollArea>
 
-			<form onSubmit={handleSubmit} className="border-t p-4">
+			<form
+				onSubmit={async (e) => {
+					e.preventDefault();
+					if (!input.trim() || isLoading) return;
+
+					try {
+						// Generate IDs for the messages
+						const userMessageId = `user-${Date.now()}`;
+						const assistantMessageId = `assistant-${Date.now()}`;
+
+						// Use vercelSendMessage with the correct AI SDK v5 format
+						await vercelSendMessage(
+							{
+								role: "user",
+								parts: [{ type: "text", text: input }],
+								id: userMessageId,
+							},
+							{
+								body: {
+									id: assistantMessageId,
+									userMessageId,
+									threadClientId: threadId,
+								},
+							},
+						);
+						setInput("");
+					} catch (error) {
+						console.error("Error sending message:", error);
+					}
+				}}
+				className="border-t p-4"
+			>
 				<div className="mx-auto max-w-2xl flex gap-4">
 					<Input
 						value={input}
-						onChange={handleInputChange}
+						onChange={(e) => setInput(e.target.value)}
 						placeholder="Type your message..."
 						disabled={isLoading}
 						className="flex-1"

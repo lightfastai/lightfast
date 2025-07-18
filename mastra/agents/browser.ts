@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { z } from "zod";
-import { models, openrouter } from "../lib/openrouter";
+import { anthropic, anthropicModels } from "../lib/anthropic";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
 import { granularBrowserTools } from "../tools/browser-tools-granular";
 
@@ -78,7 +78,7 @@ export const browserAgent = new Agent({
       - When extracting data, be clear about what information you need
       - Use browserWait to handle dynamic content
 `,
-	model: openrouter(models.claude4Sonnet),
+	model: anthropic(anthropicModels.claude4Sonnet),
 	// Note: Memory is handled at network level when used in networks
 	// Individual agent memory can cause context conflicts in network execution
 	tools: {
@@ -103,12 +103,10 @@ export const browserAgent = new Agent({
 	defaultGenerateOptions: {
 		maxSteps: 25,
 		maxRetries: 3,
-		maxTokens: 20000,
 	},
 	defaultStreamOptions: {
 		maxSteps: 40,
 		maxRetries: 3,
-		maxTokens: 20000,
 		onChunk: ({ chunk }) => {
 			console.log(`[Browser] Chunk:`, chunk);
 		},
@@ -120,11 +118,11 @@ export const browserAgent = new Agent({
 				toolResults.forEach((result, index) => {
 					if (
 						result.type === "tool-result" &&
-						result.result &&
-						typeof result.result === "object" &&
-						"error" in result.result
+						result.output &&
+						typeof result.output === "object" &&
+						"error" in result.output
 					) {
-						console.error(`[Browser] Tool ${index} error:`, result.result.error);
+						console.error(`[Browser] Tool ${index} error:`, result.output.error);
 					}
 				});
 			}

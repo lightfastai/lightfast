@@ -6,9 +6,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 		const { messages, stream = false } = await request.json();
 		const { id: threadId } = await params;
 
-		// For now, using the V1Agent as the default chat agent
+		// Using the ChatAgent for simple conversations without tools
 		// You can implement logic to select different agents based on thread context
-		const agent = mastra.getAgent("V1Agent");
+		const agent = mastra.getAgent("ChatAgent");
 
 		if (!agent) {
 			return Response.json({ error: "Chat agent not available" }, { status: 500 });
@@ -20,17 +20,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 			resourceId: threadId, // Using threadId as resourceId for now
 		};
 
-		if (stream) {
-			const result = await agent.stream(messages, options);
-			return result.toDataStreamResponse();
-		} else {
-			const result = await agent.generate(messages, options);
-			return Response.json({
-				text: result.text,
-				usage: result.usage,
-				threadId,
-			});
-		}
+		// Always use streaming with AI SDK v5
+		const result = await agent.stream(messages, options);
+		// Use the new v5 method toUIMessageStreamResponse
+		return result.toUIMessageStreamResponse();
 	} catch (error) {
 		console.error("Chat error:", error);
 		return Response.json({ error: "Internal server error" }, { status: 500 });

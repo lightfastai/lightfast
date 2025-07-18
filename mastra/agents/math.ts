@@ -1,7 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { models, openrouter } from "../lib/openrouter";
+import { anthropic, anthropicModels } from "../lib/anthropic";
 import {
 	derivativeTool,
 	integralTool,
@@ -53,7 +53,7 @@ const mathMemorySchema = z.object({
 export const mathAgent = new Agent({
 	name: "Math",
 	description: "A comprehensive mathematical agent capable of both basic and complex calculations",
-	model: openrouter(models.claude4Sonnet),
+	model: anthropic(anthropicModels.claude4Sonnet),
 	memory: new Memory({
 		options: {
 			workingMemory: {
