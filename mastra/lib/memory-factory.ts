@@ -50,6 +50,7 @@ export function createEnvironmentMemory(
 			enabled: true,
 			scope: "thread" as const,
 			schema: workingMemorySchema,
+			default: workingMemoryDefault,
 		};
 	} else if (workingMemoryTemplate) {
 		workingMemoryConfig = {

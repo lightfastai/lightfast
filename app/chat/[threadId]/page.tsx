@@ -69,11 +69,13 @@ export default function ChatPage({ params }: ChatPageProps) {
 							<h1 className="text-2xl font-medium mb-2">Hello.</h1>
 							<p className="text-2xl text-muted-foreground">What can I do for you?</p>
 						</div>
-						{/* Task Accordion for empty messages state */}
-						<div className="mb-6">
-							{console.log(`[UI] About to render TaskAccordion in empty state with tasks:`, tasks)}
-							<TaskAccordion tasks={tasks} />
-						</div>
+						{/* Task Accordion for empty messages state - only show when tasks exist */}
+						{tasks.length > 0 && (
+							<div className="mb-6">
+								{console.log(`[UI] About to render TaskAccordion in empty state with tasks:`, tasks)}
+								<TaskAccordion tasks={tasks} />
+							</div>
+						)}
 						<ChatInput
 							onSendMessage={async (message) => {
 								if (!message.trim() || isLoading) return;
@@ -127,11 +129,13 @@ export default function ChatPage({ params }: ChatPageProps) {
 						{/* Gradient fade overlay */}
 						<div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
 
-						{/* Task Accordion */}
-						<div className="relative bg-background">
-							{console.log(`[UI] About to render TaskAccordion with tasks:`, tasks)}
-							<TaskAccordion tasks={tasks} />
-						</div>
+						{/* Task Accordion - only show when tasks exist */}
+						{tasks.length > 0 && (
+							<div className="relative bg-background">
+								{console.log(`[UI] About to render TaskAccordion with tasks:`, tasks)}
+								<TaskAccordion tasks={tasks} />
+							</div>
+						)}
 
 						{/* Chat Input */}
 						<div className="relative bg-background pb-4">

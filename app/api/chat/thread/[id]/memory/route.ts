@@ -66,9 +66,21 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 						// Check for tool calls in content parts
 						if (part.type === 'tool-call' && part.toolName === 'updateWorkingMemory' && part.args?.memory) {
 							const memoryContent = part.args.memory;
-							console.log("Found working memory in tool call part:", memoryContent.substring(0, 200) + "...");
+							console.log("Found working memory in tool call part:", JSON.stringify(memoryContent).substring(0, 200) + "...");
 							
-							// Parse the markdown content into a tasks array
+							// Check if memory is already structured (JSON object with tasks array)
+							if (typeof memoryContent === 'object' && memoryContent.tasks && Array.isArray(memoryContent.tasks)) {
+								console.log("Found structured working memory with", memoryContent.tasks.length, "tasks");
+								workingMemory = {
+									tasks: memoryContent.tasks,
+									lastUpdated: memoryContent.lastUpdated || new Date().toISOString(),
+									content: memoryContent.summary || `Structured memory with ${memoryContent.tasks.length} tasks`
+								};
+								console.log("Successfully parsed structured working memory");
+								break;
+							}
+							
+							// Otherwise try to parse as markdown (legacy)
 							const tasks = parseTasksFromMarkdown(memoryContent);
 							workingMemory = {
 								tasks,
@@ -132,9 +144,21 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 					for (const toolCall of message.toolCalls) {
 						if (toolCall.toolName === "updateWorkingMemory" && toolCall.args?.memory) {
 							const memoryContent = toolCall.args.memory;
-							console.log("Found working memory in updateWorkingMemory tool call:", memoryContent.substring(0, 200) + "...");
+							console.log("Found working memory in updateWorkingMemory tool call:", JSON.stringify(memoryContent).substring(0, 200) + "...");
 							
-							// Parse the markdown content into a tasks array
+							// Check if memory is already structured (JSON object with tasks array)
+							if (typeof memoryContent === 'object' && memoryContent.tasks && Array.isArray(memoryContent.tasks)) {
+								console.log("Found structured working memory in toolCalls with", memoryContent.tasks.length, "tasks");
+								workingMemory = {
+									tasks: memoryContent.tasks,
+									lastUpdated: memoryContent.lastUpdated || new Date().toISOString(),
+									content: memoryContent.summary || `Structured memory with ${memoryContent.tasks.length} tasks`
+								};
+								console.log("Successfully parsed structured working memory from toolCalls");
+								break;
+							}
+							
+							// Otherwise try to parse as markdown (legacy)
 							const tasks = parseTasksFromMarkdown(memoryContent);
 							workingMemory = {
 								tasks,
@@ -155,6 +179,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 			console.log("[Memory] No working memory found, checking for taskManagement tool results...");
 			for (let i = messages.length - 1; i >= 0; i--) {
 				const message = messages[i];
+				
+				// Check for tool results in tool role messages
 				if (message.role === "tool" && message.content && Array.isArray(message.content)) {
 					for (const part of message.content) {
 						if (part.type === 'tool-result' && part.toolName === 'taskManagement' && part.result?.currentTasks) {
@@ -175,6 +201,48 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 							};
 							console.log("[Memory] Successfully parsed tasks from taskManagement tool result");
 							break;
+						}
+					}
+					if (workingMemory.tasks.length > 0) break;
+				}
+				
+				// Also check for taskManagement in assistant messages with content parts
+				if (message.role === "assistant" && message.content && Array.isArray(message.content)) {
+					console.log(`[Memory] Checking assistant message ${i} for taskManagement tool calls`);
+					for (const part of message.content) {
+						// Check for tool result outputs in text parts
+						if (part.type === 'text' && part.text) {
+							// Look for taskManagement output pattern
+							if (part.text.includes('"currentTasks"') && part.text.includes('"success": true')) {
+								try {
+									// Extract JSON from the output
+									const jsonMatch = part.text.match(/\{[\s\S]*"currentTasks"[\s\S]*\}/);
+									if (jsonMatch) {
+										const result = JSON.parse(jsonMatch[0]);
+										if (result.currentTasks && Array.isArray(result.currentTasks)) {
+											console.log("[Memory] Found taskManagement output in text with", result.currentTasks.length, "tasks");
+											const tasks = result.currentTasks.map((task: any) => ({
+												id: task.id,
+												description: task.description,
+												status: task.status,
+												priority: task.priority,
+												createdAt: new Date().toISOString(),
+												updatedAt: new Date().toISOString(),
+												notes: task.notes
+											}));
+											workingMemory = {
+												tasks,
+												lastUpdated: new Date().toISOString(),
+												content: `Found ${tasks.length} tasks from taskManagement tool output`
+											};
+											console.log("[Memory] Successfully parsed tasks from taskManagement output");
+											break;
+										}
+									}
+								} catch (e) {
+									console.log("[Memory] Error parsing taskManagement output:", e);
+								}
+							}
 						}
 					}
 					if (workingMemory.tasks.length > 0) break;

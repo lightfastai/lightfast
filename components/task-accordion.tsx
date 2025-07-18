@@ -63,11 +63,6 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 	);
 
 	console.log(`[TaskAccordion] Rendering with ${tasks.length} tasks:`, tasks);
-	
-	if (tasks.length === 0) {
-		console.log(`[TaskAccordion] No tasks, returning null`);
-		return null;
-	}
 
 	return (
 		<div className={cn("w-full max-w-3xl mx-auto mb-2", className)}>
@@ -92,43 +87,49 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 						</div>
 					</AccordionTrigger>
 					<AccordionContent className="px-4 pb-4">
-						<div className="space-y-3">
-							{/* In Progress Tasks */}
-							{groupedTasks.in_progress.length > 0 && (
-								<div>
-									<h4 className="text-xs font-semibold text-muted-foreground mb-2">IN PROGRESS</h4>
-									<div className="space-y-2">
-										{groupedTasks.in_progress.map((task) => (
-											<TaskItem key={task.id} task={task} />
-										))}
+						{tasks.length === 0 ? (
+							<div className="text-center py-4">
+								<p className="text-sm text-muted-foreground">No tasks yet. Start a conversation to see tasks appear here.</p>
+							</div>
+						) : (
+							<div className="space-y-3">
+								{/* In Progress Tasks */}
+								{groupedTasks.in_progress.length > 0 && (
+									<div>
+										<h4 className="text-xs font-semibold text-muted-foreground mb-2">IN PROGRESS</h4>
+										<div className="space-y-2">
+											{groupedTasks.in_progress.map((task) => (
+												<TaskItem key={task.id} task={task} />
+											))}
+										</div>
 									</div>
-								</div>
-							)}
+								)}
 
-							{/* Active Tasks */}
-							{groupedTasks.active.length > 0 && (
-								<div>
-									<h4 className="text-xs font-semibold text-muted-foreground mb-2">ACTIVE</h4>
-									<div className="space-y-2">
-										{groupedTasks.active.map((task) => (
-											<TaskItem key={task.id} task={task} />
-										))}
+								{/* Active Tasks */}
+								{groupedTasks.active.length > 0 && (
+									<div>
+										<h4 className="text-xs font-semibold text-muted-foreground mb-2">ACTIVE</h4>
+										<div className="space-y-2">
+											{groupedTasks.active.map((task) => (
+												<TaskItem key={task.id} task={task} />
+											))}
+										</div>
 									</div>
-								</div>
-							)}
+								)}
 
-							{/* Completed Tasks */}
-							{groupedTasks.completed.length > 0 && (
-								<div>
-									<h4 className="text-xs font-semibold text-muted-foreground mb-2">COMPLETED</h4>
-									<div className="space-y-2">
-										{groupedTasks.completed.map((task) => (
-											<TaskItem key={task.id} task={task} />
-										))}
+								{/* Completed Tasks */}
+								{groupedTasks.completed.length > 0 && (
+									<div>
+										<h4 className="text-xs font-semibold text-muted-foreground mb-2">COMPLETED</h4>
+										<div className="space-y-2">
+											{groupedTasks.completed.map((task) => (
+												<TaskItem key={task.id} task={task} />
+											))}
+										</div>
 									</div>
-								</div>
-							)}
-						</div>
+								)}
+							</div>
+						)}
 					</AccordionContent>
 				</AccordionItem>
 			</Accordion>
