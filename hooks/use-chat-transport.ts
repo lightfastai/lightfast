@@ -1,8 +1,9 @@
 "use client";
 
-import type { ChatTransport, UIMessage } from "ai";
+import type { ChatTransport } from "ai";
 import { DefaultChatTransport } from "ai";
 import { useMemo } from "react";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface UseChatTransportProps {
 	threadId: string;
@@ -11,9 +12,9 @@ interface UseChatTransportProps {
 /**
  * Hook that creates and configures a DefaultChatTransport for Mastra integration
  */
-export function useChatTransport({ threadId }: UseChatTransportProps): ChatTransport<UIMessage> {
+export function useChatTransport({ threadId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
-		return new DefaultChatTransport<UIMessage>({
+		return new DefaultChatTransport<LightfastUIMessage>({
 			api: `/api/chat/thread/${threadId}`,
 			headers: {
 				"Content-Type": "application/json",

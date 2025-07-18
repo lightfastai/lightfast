@@ -6,9 +6,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 		const { messages, stream = false } = await request.json();
 		const { id: threadId } = await params;
 
-		// Using the ChatAgent for simple conversations without tools
+		// Using the V1Agent which has comprehensive tools for all tasks
 		// You can implement logic to select different agents based on thread context
-		const agent = mastra.getAgent("ChatAgent");
+		const agent = mastra.getAgent("V1Agent");
 
 		if (!agent) {
 			return Response.json({ error: "Chat agent not available" }, { status: 500 });
