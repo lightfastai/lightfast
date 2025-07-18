@@ -98,7 +98,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 		const canSend = message.trim() && !disabled && !isSending;
 
 		return (
-			<div className={`pb-2 md:pb-4 flex-shrink-0 ${className}`}>
+			<div className={`flex-shrink-0 ${className}`}>
 				<div className="max-w-3xl mx-auto relative">
 					<div className="flex gap-2">
 						<div className="flex-1 min-w-0">
@@ -126,7 +126,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 								</div>
 
 								{/* Controls area - always at bottom */}
-								<div className="flex items-center justify-end p-2 bg-transparent dark:bg-input/10 transition-[color,box-shadow]">
+								<div className="flex items-center justify-end p-1 bg-transparent dark:bg-input/10 transition-[color,box-shadow]">
 									{/* Send button */}
 									<Button
 										type="button"
