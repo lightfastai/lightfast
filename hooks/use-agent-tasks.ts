@@ -16,7 +16,7 @@ export function useAgentTasks({ threadId, pollingInterval = 5000 }: UseAgentTask
 
 		async function fetchTasks() {
 			try {
-				const response = await fetch(`/api/agents/v1Agent/memory/${threadId}`);
+				const response = await fetch(`/api/chat/thread/${threadId}/memory`);
 				if (!response.ok) {
 					throw new Error("Failed to fetch tasks");
 				}

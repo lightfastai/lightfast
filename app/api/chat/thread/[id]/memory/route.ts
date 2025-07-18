@@ -3,17 +3,12 @@ import { mastra } from "@/mastra";
 
 export async function GET(
 	request: Request,
-	context: { params: Promise<{ agentName: string; threadId: string }> }
+	context: { params: Promise<{ id: string }> }
 ) {
 	try {
-		const { agentName, threadId } = await context.params;
+		const { id: threadId } = await context.params;
 
-		// For now, we only support v1Agent
-		if (agentName !== "v1Agent") {
-			return NextResponse.json({ error: "Agent not found" }, { status: 404 });
-		}
-
-		// Get the agent from Mastra
+		// Get the V1Agent from Mastra (our default agent for now)
 		const agent = mastra.getAgent("V1Agent");
 		if (!agent) {
 			return NextResponse.json({ error: "Agent not found" }, { status: 404 });
