@@ -52,12 +52,15 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 	}, [tasks]);
 
 	// Count tasks by status
-	const taskCounts = useMemo(() => ({
-		active: groupedTasks.active.length,
-		in_progress: groupedTasks.in_progress.length,
-		completed: groupedTasks.completed.length,
-		total: tasks.length,
-	}), [groupedTasks, tasks.length]);
+	const taskCounts = useMemo(
+		() => ({
+			active: groupedTasks.active.length,
+			in_progress: groupedTasks.in_progress.length,
+			completed: groupedTasks.completed.length,
+			total: tasks.length,
+		}),
+		[groupedTasks, tasks.length],
+	);
 
 	if (tasks.length === 0) {
 		return null;
@@ -72,9 +75,7 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 							<span className="text-sm font-medium">Tasks</span>
 							<div className="flex items-center gap-4 mr-2">
 								{taskCounts.active > 0 && (
-									<span className="text-xs text-blue-600 dark:text-blue-400">
-										{taskCounts.active} active
-									</span>
+									<span className="text-xs text-blue-600 dark:text-blue-400">{taskCounts.active} active</span>
 								)}
 								{taskCounts.in_progress > 0 && (
 									<span className="text-xs text-yellow-600 dark:text-yellow-400">
@@ -82,9 +83,7 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 									</span>
 								)}
 								{taskCounts.completed > 0 && (
-									<span className="text-xs text-green-600 dark:text-green-400">
-										{taskCounts.completed} completed
-									</span>
+									<span className="text-xs text-green-600 dark:text-green-400">{taskCounts.completed} completed</span>
 								)}
 							</div>
 						</div>
@@ -142,9 +141,7 @@ function TaskItem({ task }: { task: Task }) {
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex-1 min-w-0">
 					<p className={cn("text-sm break-words", styles.text)}>{task.description}</p>
-					{task.notes && (
-						<p className="text-xs text-muted-foreground mt-1">{task.notes}</p>
-					)}
+					{task.notes && <p className="text-xs text-muted-foreground mt-1">{task.notes}</p>}
 				</div>
 				<div className="flex items-center gap-2 flex-shrink-0">
 					<span className={cn("text-xs px-2 py-0.5 rounded-full", styles.bg, styles.text, styles.border, "border")}>
@@ -153,9 +150,7 @@ function TaskItem({ task }: { task: Task }) {
 				</div>
 			</div>
 			<div className="flex items-center gap-4 mt-2">
-				<span className="text-xs text-muted-foreground">
-					{task.id}
-				</span>
+				<span className="text-xs text-muted-foreground">{task.id}</span>
 				{task.completedAt && (
 					<span className="text-xs text-muted-foreground">
 						Completed: {new Date(task.completedAt).toLocaleTimeString()}

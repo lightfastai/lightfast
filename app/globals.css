@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "../src/components/chat-input.css";
+@import "../components/chat-input.css";
 
 @custom-variant dark (&:is(.dark *));
 
