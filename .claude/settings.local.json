@@ -57,7 +57,8 @@
 			"mcp__playwright-mastra__browser_evaluate",
 			"WebFetch(domain:v5.sdk.vercel.ai)",
 			"WebFetch(domain:sdk.vercel.ai)",
-			"Bash(pkill:*)"
+			"Bash(pkill:*)",
+			"Bash(git clone:*)"
 		],
 		"deny": []
 	},

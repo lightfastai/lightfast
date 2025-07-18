@@ -1,13 +1,11 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { Send } from "lucide-react";
-import { useEffect, useRef, useState, use } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { use, useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChatTransport } from "@/hooks/use-chat-transport";
-import type { LightfastUIMessage, LightfastUIMessagePart } from "@/types/lightfast-ui-messages";
+import { ChatInput } from "@/src/components/ChatInput";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
 
 interface ChatPageProps {
@@ -36,7 +34,6 @@ export default function ChatPage({ params }: ChatPageProps) {
 		},
 	});
 
-	const [input, setInput] = useState("");
 	const isLoading = status === "streaming" || status === "submitted";
 
 	// Debug: Log messages to see their structure
@@ -51,6 +48,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 		});
 	}, [messages]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: messages dependency is intentional for scrolling
 	useEffect(() => {
 		if (scrollAreaRef.current) {
 			scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -77,11 +75,12 @@ export default function ChatPage({ params }: ChatPageProps) {
 					{messages.map((message) => {
 						// For user messages, just show the text content
 						if (message.role === "user") {
-							const textContent = message.parts
-								?.filter(isTextPart)
-								.map((part) => part.text)
-								.join("\n") || "";
-							
+							const textContent =
+								message.parts
+									?.filter(isTextPart)
+									.map((part) => part.text)
+									.join("\n") || "";
+
 							return (
 								<div key={message.id} className="flex justify-end">
 									<div className="max-w-[80%] rounded-lg px-4 py-2 bg-primary text-primary-foreground">
@@ -105,78 +104,81 @@ export default function ChatPage({ params }: ChatPageProps) {
 											</div>
 										);
 									}
-									
+
 									// Tool part (e.g., "tool-webSearch", "tool-fileWrite")
 									if (isToolPart(part)) {
-										const toolName = part.type.replace('tool-', '');
+										const toolName = part.type.replace("tool-", "");
 										const toolPart = part as any; // Type assertion for now
-										
+
 										// Determine the state and styling based on it
 										const getStateStyles = () => {
 											switch (toolPart.state) {
-												case 'input-streaming':
+												case "input-streaming":
 													return {
-														bg: 'bg-yellow-50 dark:bg-yellow-950',
-														border: 'border-yellow-200 dark:border-yellow-800',
-														text: 'text-yellow-700 dark:text-yellow-300',
-														icon: 'text-yellow-600 dark:text-yellow-400',
-														label: 'Streaming...'
+														bg: "bg-yellow-50 dark:bg-yellow-950",
+														border: "border-yellow-200 dark:border-yellow-800",
+														text: "text-yellow-700 dark:text-yellow-300",
+														icon: "text-yellow-600 dark:text-yellow-400",
+														label: "Streaming...",
 													};
-												case 'input-available':
+												case "input-available":
 													return {
-														bg: 'bg-blue-50 dark:bg-blue-950',
-														border: 'border-blue-200 dark:border-blue-800',
-														text: 'text-blue-700 dark:text-blue-300',
-														icon: 'text-blue-600 dark:text-blue-400',
-														label: 'Calling'
+														bg: "bg-blue-50 dark:bg-blue-950",
+														border: "border-blue-200 dark:border-blue-800",
+														text: "text-blue-700 dark:text-blue-300",
+														icon: "text-blue-600 dark:text-blue-400",
+														label: "Calling",
 													};
-												case 'output-available':
+												case "output-available":
 													return {
-														bg: 'bg-green-50 dark:bg-green-950',
-														border: 'border-green-200 dark:border-green-800',
-														text: 'text-green-700 dark:text-green-300',
-														icon: 'text-green-600 dark:text-green-400',
-														label: 'Complete'
+														bg: "bg-green-50 dark:bg-green-950",
+														border: "border-green-200 dark:border-green-800",
+														text: "text-green-700 dark:text-green-300",
+														icon: "text-green-600 dark:text-green-400",
+														label: "Complete",
 													};
-												case 'output-error':
+												case "output-error":
 													return {
-														bg: 'bg-red-50 dark:bg-red-950',
-														border: 'border-red-200 dark:border-red-800',
-														text: 'text-red-700 dark:text-red-300',
-														icon: 'text-red-600 dark:text-red-400',
-														label: 'Error'
+														bg: "bg-red-50 dark:bg-red-950",
+														border: "border-red-200 dark:border-red-800",
+														text: "text-red-700 dark:text-red-300",
+														icon: "text-red-600 dark:text-red-400",
+														label: "Error",
 													};
 												default:
 													return {
-														bg: 'bg-gray-50 dark:bg-gray-950',
-														border: 'border-gray-200 dark:border-gray-800',
-														text: 'text-gray-700 dark:text-gray-300',
-														icon: 'text-gray-600 dark:text-gray-400',
-														label: 'Unknown'
+														bg: "bg-gray-50 dark:bg-gray-950",
+														border: "border-gray-200 dark:border-gray-800",
+														text: "text-gray-700 dark:text-gray-300",
+														icon: "text-gray-600 dark:text-gray-400",
+														label: "Unknown",
 													};
 											}
 										};
 
 										const styles = getStateStyles();
-										
+
 										return (
 											<div key={`${message.id}-part-${index}`} className="flex justify-start">
-												<div className={`max-w-[80%] ${styles.bg} border ${styles.border} rounded-lg px-3 py-2 text-sm`}>
+												<div
+													className={`max-w-[80%] ${styles.bg} border ${styles.border} rounded-lg px-3 py-2 text-sm`}
+												>
 													<div className="flex items-center gap-2">
 														<svg
 															className={`w-4 h-4 ${styles.icon}`}
 															fill="none"
 															stroke="currentColor"
 															viewBox="0 0 24 24"
+															aria-label={`Tool ${toolName} status: ${styles.label}`}
 														>
-															{toolPart.state === 'output-error' ? (
+															{toolPart.state === "output-error" ? (
 																<path
 																	strokeLinecap="round"
 																	strokeLinejoin="round"
 																	strokeWidth={2}
 																	d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
 																/>
-															) : toolPart.state === 'output-available' ? (
+															) : toolPart.state === "output-available" ? (
 																<path
 																	strokeLinecap="round"
 																	strokeLinejoin="round"
@@ -192,19 +194,13 @@ export default function ChatPage({ params }: ChatPageProps) {
 																/>
 															)}
 														</svg>
-														<span className={`font-medium ${styles.text}`}>
-															{toolName}
-														</span>
-														<span className={`text-xs ${styles.icon}`}>
-															{styles.label}
-														</span>
+														<span className={`font-medium ${styles.text}`}>{toolName}</span>
+														<span className={`text-xs ${styles.icon}`}>{styles.label}</span>
 														{toolPart.toolCallId && (
-															<span className={`text-xs ${styles.icon}`}>
-																#{toolPart.toolCallId}
-															</span>
+															<span className={`text-xs ${styles.icon}`}>#{toolPart.toolCallId}</span>
 														)}
 													</div>
-													
+
 													{/* Show input */}
 													{toolPart.input && (
 														<div className={`mt-1 text-xs ${styles.icon} font-mono overflow-x-auto`}>
@@ -212,17 +208,21 @@ export default function ChatPage({ params }: ChatPageProps) {
 															<pre>{JSON.stringify(toolPart.input, null, 2)}</pre>
 														</div>
 													)}
-													
+
 													{/* Show output if available */}
-													{toolPart.state === 'output-available' && toolPart.output && (
+													{toolPart.state === "output-available" && toolPart.output && (
 														<div className={`mt-2 text-xs ${styles.icon}`}>
 															<div className="font-semibold">Output:</div>
-															<pre className="mt-1">{typeof toolPart.output === 'string' ? toolPart.output : JSON.stringify(toolPart.output, null, 2)}</pre>
+															<pre className="mt-1">
+																{typeof toolPart.output === "string"
+																	? toolPart.output
+																	: JSON.stringify(toolPart.output, null, 2)}
+															</pre>
 														</div>
 													)}
-													
+
 													{/* Show error if available */}
-													{toolPart.state === 'output-error' && toolPart.errorText && (
+													{toolPart.state === "output-error" && toolPart.errorText && (
 														<div className={`mt-2 text-xs ${styles.icon}`}>
 															<div className="font-semibold">Error:</div>
 															<div className="mt-1">{toolPart.errorText}</div>
@@ -232,11 +232,10 @@ export default function ChatPage({ params }: ChatPageProps) {
 											</div>
 										);
 									}
-									
+
 									// Unknown part type
 									return null;
 								})}
-
 							</div>
 						);
 					})}
@@ -254,10 +253,9 @@ export default function ChatPage({ params }: ChatPageProps) {
 				</div>
 			</ScrollArea>
 
-			<form
-				onSubmit={async (e) => {
-					e.preventDefault();
-					if (!input.trim() || isLoading) return;
+			<ChatInput
+				onSendMessage={async (message) => {
+					if (!message.trim() || isLoading) return;
 
 					try {
 						// Generate IDs for the messages
@@ -268,7 +266,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 						await vercelSendMessage(
 							{
 								role: "user",
-								parts: [{ type: "text", text: input }],
+								parts: [{ type: "text", text: message }],
 								id: userMessageId,
 							},
 							{
@@ -279,26 +277,15 @@ export default function ChatPage({ params }: ChatPageProps) {
 								},
 							},
 						);
-						setInput("");
 					} catch (error) {
 						console.error("Error sending message:", error);
+						throw error; // Re-throw to let ChatInput handle error state
 					}
 				}}
-				className="border-t p-4"
-			>
-				<div className="mx-auto max-w-2xl flex gap-4">
-					<Input
-						value={input}
-						onChange={(e) => setInput(e.target.value)}
-						placeholder="Type your message..."
-						disabled={isLoading}
-						className="flex-1"
-					/>
-					<Button type="submit" disabled={isLoading || !input.trim()}>
-						<Send className="h-4 w-4" />
-					</Button>
-				</div>
-			</form>
+				placeholder="Type your message..."
+				disabled={isLoading}
+				className="border-t"
+			/>
 		</main>
 	);
 }
