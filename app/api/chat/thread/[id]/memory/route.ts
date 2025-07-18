@@ -22,14 +22,57 @@ export async function GET(
 
 		// Fetch the thread
 		const thread = await memory.getThreadById({ threadId });
+		
+		// If thread doesn't exist yet, return empty working memory
+		// This is normal for new conversations that haven't been started yet
 		if (!thread) {
-			return NextResponse.json({ error: "Thread not found" }, { status: 404 });
+			return NextResponse.json({
+				threadId,
+				workingMemory: { tasks: [], lastUpdated: new Date().toISOString() },
+				updatedAt: new Date(),
+			});
 		}
 
-		// Get working memory for this thread through the memory query
-		// Since workingMemory is not directly on thread, we need to fetch it differently
-		// For now, return empty tasks as we'll need to query the memory store directly
-		const workingMemory = { tasks: [], lastUpdated: new Date().toISOString() };
+		// For schema-based working memory, we need to look for the updateWorkingMemory tool calls
+		// The agent uses this tool to update the working memory
+		const { messages } = await memory.query({
+			threadId,
+			selectBy: {
+				last: 100, // Get more messages to find working memory updates
+			},
+		});
+
+		// Find the most recent working memory update
+		let workingMemory = { tasks: [], lastUpdated: new Date().toISOString() };
+		
+		// Look for updateWorkingMemory tool calls in reverse order (most recent first)
+		for (let i = messages.length - 1; i >= 0; i--) {
+			const message = messages[i];
+			if (message.role === 'assistant' && message.toolInvocations) {
+				for (const invocation of message.toolInvocations) {
+					if (invocation.toolName === 'updateWorkingMemory' && invocation.state === 'result') {
+						// The args should contain the working memory update
+						// The memory is passed as a JSON string in the 'memory' field
+						if (invocation.args && typeof invocation.args === 'object' && 'memory' in invocation.args) {
+							try {
+								const memoryString = (invocation.args as any).memory;
+								workingMemory = JSON.parse(memoryString);
+								// Ensure lastUpdated is set
+								if (!workingMemory.lastUpdated) {
+									workingMemory.lastUpdated = new Date().toISOString();
+								}
+								console.log("Found working memory:", workingMemory);
+								// Exit both loops once we found the working memory
+								i = -1;
+								break;
+							} catch (e) {
+								console.error("Failed to parse working memory:", e);
+							}
+						}
+					}
+				}
+			}
+		}
 
 		return NextResponse.json({
 			threadId,
