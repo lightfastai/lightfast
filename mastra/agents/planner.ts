@@ -1,4 +1,5 @@
 import { Agent } from "@mastra/core/agent";
+import { smoothStream } from "ai";
 import { z } from "zod";
 import { anthropic, anthropicModels } from "../lib/anthropic";
 import { saveCriticalInfoTool } from "../tools/save-critical-info";
@@ -90,6 +91,12 @@ Remember: You're planning for execution by specialized agents:
 		saveCriticalInfo: saveCriticalInfoTool,
 	},
 	defaultStreamOptions: {
+		experimental_transform: smoothStream({
+			// Medium delay for planning outputs
+			delayInMs: 20,
+			// Chunk by line for structured planning
+			chunking: "line",
+		}),
 		onChunk: ({ chunk }) => {
 			console.log(`[Planner] Chunk:`, chunk);
 		},

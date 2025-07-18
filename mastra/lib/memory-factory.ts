@@ -1,6 +1,7 @@
 import { LibSQLStore } from "@mastra/libsql";
 import { Memory } from "@mastra/memory";
 import { UpstashStore } from "@mastra/upstash";
+import type { z } from "zod";
 import { env } from "../../env";
 
 /**
@@ -32,21 +33,37 @@ export function createEnvironmentStorage() {
  * Automatically selects storage backend based on environment variables
  */
 export function createEnvironmentMemory(
-	options: { prefix?: string; workingMemoryTemplate?: string; lastMessages?: number } = {},
+	options: {
+		prefix?: string;
+		workingMemoryTemplate?: string;
+		workingMemorySchema?: z.ZodObject<any>;
+		workingMemoryDefault?: any;
+		lastMessages?: number;
+	} = {},
 ): Memory {
-	const { workingMemoryTemplate, lastMessages = 50 } = options;
+	const { workingMemoryTemplate, workingMemorySchema, workingMemoryDefault, lastMessages = 50 } = options;
+
+	// Prepare working memory config based on whether template or schema is provided
+	let workingMemoryConfig = undefined;
+	if (workingMemorySchema) {
+		workingMemoryConfig = {
+			enabled: true,
+			scope: "thread" as const,
+			schema: workingMemorySchema,
+		};
+	} else if (workingMemoryTemplate) {
+		workingMemoryConfig = {
+			enabled: true,
+			scope: "thread" as const,
+			template: workingMemoryTemplate,
+		};
+	}
 
 	return new Memory({
 		storage: createEnvironmentStorage(),
 		options: {
 			lastMessages,
-			workingMemory: workingMemoryTemplate
-				? {
-						enabled: true,
-						scope: "thread" as const,
-						template: workingMemoryTemplate,
-					}
-				: undefined,
+			workingMemory: workingMemoryConfig,
 		},
 	});
 }

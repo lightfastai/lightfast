@@ -1,6 +1,7 @@
 "use client";
 
-import React, { memo } from "react";
+import type React from "react";
+import { memo } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -26,13 +27,7 @@ const components: Partial<Components> = {
 		// Inline code styling
 		if (inline) {
 			return (
-				<code
-					className={cn(
-						"bg-muted/50 rounded-md px-1 py-0.5 text-xs font-mono",
-						className,
-					)}
-					{...props}
-				>
+				<code className={cn("bg-muted/50 rounded-md px-1 py-0.5 text-xs font-mono", className)} {...props}>
 					{children}
 				</code>
 			);
@@ -100,10 +95,7 @@ const components: Partial<Components> = {
 	// Heading components with consistent styling
 	h1({ children, ...props }: MarkdownComponentProps) {
 		return (
-			<h1
-				className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6 first:mt-0"
-				{...props}
-			>
+			<h1 className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6 first:mt-0" {...props}>
 				{children}
 			</h1>
 		);
@@ -111,10 +103,7 @@ const components: Partial<Components> = {
 
 	h2({ children, ...props }: MarkdownComponentProps) {
 		return (
-			<h2
-				className="scroll-m-20 text-xl font-semibold tracking-tight mb-3 mt-5"
-				{...props}
-			>
+			<h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3 mt-5" {...props}>
 				{children}
 			</h2>
 		);
@@ -122,10 +111,7 @@ const components: Partial<Components> = {
 
 	h3({ children, ...props }: MarkdownComponentProps) {
 		return (
-			<h3
-				className="scroll-m-20 text-lg font-semibold tracking-tight mb-2 mt-4"
-				{...props}
-			>
+			<h3 className="scroll-m-20 text-lg font-semibold tracking-tight mb-2 mt-4" {...props}>
 				{children}
 			</h3>
 		);
@@ -133,10 +119,7 @@ const components: Partial<Components> = {
 
 	h4({ children, ...props }: MarkdownComponentProps) {
 		return (
-			<h4
-				className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-3"
-				{...props}
-			>
+			<h4 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-3" {...props}>
 				{children}
 			</h4>
 		);
@@ -144,10 +127,7 @@ const components: Partial<Components> = {
 
 	h5({ children, ...props }: MarkdownComponentProps) {
 		return (
-			<h5
-				className="scroll-m-20 text-sm font-semibold tracking-tight mb-1 mt-2"
-				{...props}
-			>
+			<h5 className="scroll-m-20 text-sm font-semibold tracking-tight mb-1 mt-2" {...props}>
 				{children}
 			</h5>
 		);
@@ -155,10 +135,7 @@ const components: Partial<Components> = {
 
 	h6({ children, ...props }: MarkdownComponentProps) {
 		return (
-			<h6
-				className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2"
-				{...props}
-			>
+			<h6 className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2" {...props}>
 				{children}
 			</h6>
 		);
@@ -167,10 +144,7 @@ const components: Partial<Components> = {
 	// Paragraph with proper spacing
 	p({ children, ...props }: MarkdownComponentProps) {
 		return (
-			<p
-				className="leading-7 [&:not(:first-child)]:mt-3 break-words"
-				{...props}
-			>
+			<p className="leading-7 [&:not(:first-child)]:mt-3 break-words" {...props}>
 				{children}
 			</p>
 		);
@@ -179,10 +153,7 @@ const components: Partial<Components> = {
 	// List components
 	ul({ className, children, ...props }: MarkdownComponentProps) {
 		return (
-			<ul
-				className={cn("my-3 ml-6 list-disc [&>li]:mt-1", className)}
-				{...props}
-			>
+			<ul className={cn("my-3 ml-6 list-disc [&>li]:mt-1", className)} {...props}>
 				{children}
 			</ul>
 		);
@@ -190,10 +161,7 @@ const components: Partial<Components> = {
 
 	ol({ className, children, ...props }: MarkdownComponentProps) {
 		return (
-			<ol
-				className={cn("my-3 ml-6 list-decimal [&>li]:mt-1", className)}
-				{...props}
-			>
+			<ol className={cn("my-3 ml-6 list-decimal [&>li]:mt-1", className)} {...props}>
 				{children}
 			</ol>
 		);
@@ -216,10 +184,7 @@ const components: Partial<Components> = {
 	blockquote({ className, children, ...props }: MarkdownComponentProps) {
 		return (
 			<blockquote
-				className={cn(
-					"mt-3 border-l-4 border-border pl-4 italic text-muted-foreground",
-					className,
-				)}
+				className={cn("mt-3 border-l-4 border-border pl-4 italic text-muted-foreground", className)}
 				{...props}
 			>
 				{children}
@@ -256,13 +221,7 @@ const components: Partial<Components> = {
 
 	tr({ className, children, ...props }: MarkdownComponentProps) {
 		return (
-			<tr
-				className={cn(
-					"border-b transition-colors hover:bg-muted/50",
-					className,
-				)}
-				{...props}
-			>
+			<tr className={cn("border-b transition-colors hover:bg-muted/50", className)} {...props}>
 				{children}
 			</tr>
 		);
@@ -284,13 +243,7 @@ const components: Partial<Components> = {
 
 	td({ className, children, ...props }: MarkdownComponentProps) {
 		return (
-			<td
-				className={cn(
-					"p-2 align-middle [&:has([role=checkbox])]:pr-0 break-words",
-					className,
-				)}
-				{...props}
-			>
+			<td className={cn("p-2 align-middle [&:has([role=checkbox])]:pr-0 break-words", className)} {...props}>
 				{children}
 			</td>
 		);
@@ -324,10 +277,7 @@ const NonMemoizedMarkdown = ({ children, className }: MarkdownProps) => {
  * Memoized Markdown component for better performance
  * Only re-renders when the markdown content changes
  */
-export const Markdown = memo(
-	NonMemoizedMarkdown,
-	(prevProps, nextProps) => prevProps.children === nextProps.children,
-);
+export const Markdown = memo(NonMemoizedMarkdown, (prevProps, nextProps) => prevProps.children === nextProps.children);
 
 // Export the non-memoized version for cases where memoization isn't needed
 export { NonMemoizedMarkdown };

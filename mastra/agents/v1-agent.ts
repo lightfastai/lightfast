@@ -1,6 +1,8 @@
 import { Agent } from "@mastra/core/agent";
+import { smoothStream } from "ai";
 import { anthropic, anthropicModels } from "../lib/anthropic";
 import { createEnvironmentMemory } from "../lib/memory-factory";
+import { TaskMemorySchema } from "../lib/task-schema";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
 import { granularBrowserTools } from "../tools/browser-tools-granular";
 import {
@@ -28,43 +30,10 @@ import { saveCriticalInfoTool } from "../tools/save-critical-info";
 import { autoTaskDetectionTool, taskManagementTool } from "../tools/task-management";
 import { webSearchTool } from "../tools/web-search-tools";
 
-// Create environment-aware memory for V1 Agent
-// This will automatically use Upstash for production/Vercel deployments
-// and LibSQL for development/testing
+// Create environment-aware memory for V1 Agent with schema-based task tracking
 const agentMemory = createEnvironmentMemory({
 	prefix: "mastra:v1-agent:",
-	workingMemoryTemplate: `
-# V1 Agent Task Management
-
-## Environment Info
-- Environment: [auto-detected from NODE_ENV]
-- Deployment: [auto-detected from deployment context]
-- Storage: [automatically selected based on environment]
-
-## Current Session
-- **Date**: ${new Date().toISOString().split("T")[0]}
-- **Task Management**: Available via taskManagement and autoTaskDetection tools
-- **Status**: Use tools to track tasks systematically
-
-## Active Tasks
-- Use taskManagement tool to add tasks here
-- Format: [TASK-ID] Description (Priority: high/medium/low)
-
-## In Progress
-- Only one task should be in progress at a time
-- Update status using taskManagement tool
-
-## Completed Tasks
-- Mark completed tasks here using taskManagement tool
-- Include completion notes and results
-
-## Session Notes
-- Use autoTaskDetection for complex requests
-- Update task status immediately after changes
-- All tools available: fileWrite, fileRead, webSearch, browserAction, download, saveCriticalInfo, sandbox operations, task management
-- Working memory persists across conversation - maintain context
-- Storage backend is automatically selected: Upstash for production/Vercel, LibSQL for development
-`,
+	workingMemorySchema: TaskMemorySchema,
 	lastMessages: 50,
 });
 
@@ -467,7 +436,7 @@ You are V1 Agent, an AI assistant created by the Mastra team.
 		getSandboxDomain: getSandboxDomainTool,
 		listSandboxRoutes: listSandboxRoutesTool,
 	},
-	//	memory: agentMemory,
+	memory: agentMemory,
 	defaultGenerateOptions: {
 		maxSteps: 40,
 		maxRetries: 3,
@@ -475,6 +444,12 @@ You are V1 Agent, an AI assistant created by the Mastra team.
 	defaultStreamOptions: {
 		maxSteps: 60,
 		maxRetries: 3,
+		experimental_transform: smoothStream({
+			// Delay between chunks in milliseconds
+			delayInMs: 25,
+			// Chunk by word for natural streaming
+			chunking: "word",
+		}),
 		onError: ({ error }) => {
 			console.error(`[V1Agent] Stream error:`, error);
 		},

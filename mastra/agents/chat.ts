@@ -1,4 +1,5 @@
 import { Agent } from "@mastra/core/agent";
+import { smoothStream } from "ai";
 import { anthropic, anthropicModels } from "../lib/anthropic";
 
 export const chatAgent = new Agent({
@@ -24,6 +25,12 @@ Key guidelines:
 	defaultStreamOptions: {
 		// maxSteps: 1, // Single response, no tool calls
 		maxRetries: 3,
+		experimental_transform: smoothStream({
+			// Faster delay for more responsive chat
+			delayInMs: 15,
+			// Chunk by word for natural conversation
+			chunking: "word",
+		}),
 		onError: ({ error }) => {
 			console.error(`[ChatAgent] Stream error:`, error);
 		},
