@@ -54,7 +54,7 @@ export const v1Agent = new Agent({
 	description:
 		"Comprehensive agent with all tools for planning, web search, browser automation, file management, and sandbox operations. Combines capabilities of the v1-1 network into a single agent.",
 	instructions: `
-You are V1 Agent, an AI assistant created by the Mastra team.
+You are Lightfast Experimental v1.0.0 agent.
 
      <intro>
      You excel at the following tasks:
