@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "../src/components/ChatInput.css";
+@import "../src/components/chat-input.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -119,4 +119,3 @@
 		@apply bg-background text-foreground;
 	}
 }
-

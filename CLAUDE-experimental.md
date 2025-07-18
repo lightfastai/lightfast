@@ -5,6 +5,10 @@
 - **Use pnpm** - Not npm or yarn
 - **Run tests** - `pnpm typecheck` and `pnpm lint` before commits
 - **Biome auto-formats** - Code is formatted on save
+- **NEVER create .md files** - Unless explicitly requested by user
+- **NEVER use "any" type** - Always investigate node_modules for correct types
+- **Super strict TypeScript** - Full type safety, no shortcuts
+- **Always use shadcn/ui components** - Import from @/components/ui/*
 
 ## Commands
 ```bash
@@ -13,6 +17,12 @@ pnpm build        # Build Next.js for production
 pnpm start        # Start Next.js production server
 pnpm typecheck    # TypeScript check
 pnpm lint         # Run Biome linter
+
+# Install new shadcn/ui components
+pnpm dlx shadcn@latest add <component-name>
+# Example: pnpm dlx shadcn@latest add button
+# Example: pnpm dlx shadcn@latest add dialog
+# Available components: https://ui.shadcn.com/docs/components
 
 # Run Next.js dev server in background
 pnpm dev > /tmp/nextjs-dev.log 2>&1 &

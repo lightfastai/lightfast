@@ -1,18 +1,20 @@
 import type { z } from "zod";
-import { v1Agent } from "@/mastra/agents/v1-agent";
+import type { v1Agent } from "@/mastra/agents/v1-agent";
 
 // Extract the tools type from v1Agent
 type V1AgentTools = typeof v1Agent.tools;
 
 // Utility type to extract tool schemas from a tools object
 type ExtractToolSchemas<TTools> = {
-  [K in keyof TTools]: TTools[K] extends {
-    inputSchema: infer Input extends z.ZodSchema;
-    outputSchema: infer Output extends z.ZodSchema;
-  } ? {
-    input: z.infer<Input>;
-    output: z.infer<Output>;
-  } : never;
+	[K in keyof TTools]: TTools[K] extends {
+		inputSchema: infer Input extends z.ZodSchema;
+		outputSchema: infer Output extends z.ZodSchema;
+	}
+		? {
+				input: z.infer<Input>;
+				output: z.infer<Output>;
+			}
+		: never;
 };
 
 // Create the extracted type for V1Agent's tools

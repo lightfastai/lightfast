@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { use, useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChatTransport } from "@/hooks/use-chat-transport";
-import { ChatInput } from "@/src/components/ChatInput";
+import { ChatInput } from "@/src/components/chat-input";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
 
@@ -57,22 +57,60 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 	return (
 		<main className="flex h-screen flex-col">
-			<header className="border-b px-6 py-4">
+			<header className="px-6 py-4">
 				<div className="flex items-center justify-between">
-					<h1 className="text-2xl font-bold">HAL9000 - Mastra AI Assistant</h1>
-					<p className="text-sm text-muted-foreground">Thread: {threadId}</p>
+					<h1 className="text-xs text-muted-foreground">This is an experiment by Lightfast. Use with discretion.</h1>
 				</div>
 			</header>
 
-			<ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
-				<div className="mx-auto max-w-2xl space-y-4">
-					{messages.length === 0 && (
-						<div className="text-center text-muted-foreground py-8">
-							<p className="text-lg">Welcome to HAL9000</p>
-							<p className="text-sm mt-2">Start a conversation by typing a message below</p>
+			{messages.length === 0 ? (
+				// Center the chat input when no messages
+				<div className="flex-1 flex items-center justify-center p-6">
+					<div className="w-full max-w-3xl">
+						<div className="mb-6">
+							<h1 className="text-3xl font-medium mb-2">Hello.</h1>
+							<p className="text-3xl text-muted-foreground">What can I do for you?</p>
 						</div>
-					)}
-					{messages.map((message) => {
+						<ChatInput
+							onSendMessage={async (message) => {
+								if (!message.trim() || isLoading) return;
+
+								try {
+									// Generate IDs for the messages
+									const userMessageId = `user-${Date.now()}`;
+									const assistantMessageId = `assistant-${Date.now()}`;
+
+									// Use vercelSendMessage with the correct AI SDK v5 format
+									await vercelSendMessage(
+										{
+											role: "user",
+											parts: [{ type: "text", text: message }],
+											id: userMessageId,
+										},
+										{
+											body: {
+												id: assistantMessageId,
+												userMessageId,
+												threadClientId: threadId,
+											},
+										},
+									);
+								} catch (error) {
+									console.error("Error sending message:", error);
+									throw error; // Re-throw to let ChatInput handle error state
+								}
+							}}
+							placeholder="Type your message..."
+							disabled={isLoading}
+						/>
+					</div>
+				</div>
+			) : (
+				// Normal layout with messages and bottom input
+				<>
+					<ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
+						<div className="mx-auto max-w-4xl space-y-4">
+							{messages.map((message) => {
 						// For user messages, just show the text content
 						if (message.role === "user") {
 							const textContent =
@@ -108,7 +146,8 @@ export default function ChatPage({ params }: ChatPageProps) {
 									// Tool part (e.g., "tool-webSearch", "tool-fileWrite")
 									if (isToolPart(part)) {
 										const toolName = part.type.replace("tool-", "");
-										const toolPart = part as any; // Type assertion for now
+										// biome-ignore lint/suspicious/noExplicitAny: Tool part types are complex and evolving
+										const toolPart = part as any;
 
 										// Determine the state and styling based on it
 										const getStateStyles = () => {
@@ -169,6 +208,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 															fill="none"
 															stroke="currentColor"
 															viewBox="0 0 24 24"
+															role="img"
 															aria-label={`Tool ${toolName} status: ${styles.label}`}
 														>
 															{toolPart.state === "output-error" ? (
@@ -250,42 +290,43 @@ export default function ChatPage({ params }: ChatPageProps) {
 							</div>
 						</div>
 					)}
-				</div>
-			</ScrollArea>
+						</div>
+					</ScrollArea>
 
-			<ChatInput
-				onSendMessage={async (message) => {
-					if (!message.trim() || isLoading) return;
+					<ChatInput
+						onSendMessage={async (message) => {
+							if (!message.trim() || isLoading) return;
 
-					try {
-						// Generate IDs for the messages
-						const userMessageId = `user-${Date.now()}`;
-						const assistantMessageId = `assistant-${Date.now()}`;
+							try {
+								// Generate IDs for the messages
+								const userMessageId = `user-${Date.now()}`;
+								const assistantMessageId = `assistant-${Date.now()}`;
 
-						// Use vercelSendMessage with the correct AI SDK v5 format
-						await vercelSendMessage(
-							{
-								role: "user",
-								parts: [{ type: "text", text: message }],
-								id: userMessageId,
-							},
-							{
-								body: {
-									id: assistantMessageId,
-									userMessageId,
-									threadClientId: threadId,
-								},
-							},
-						);
-					} catch (error) {
-						console.error("Error sending message:", error);
-						throw error; // Re-throw to let ChatInput handle error state
-					}
-				}}
-				placeholder="Type your message..."
-				disabled={isLoading}
-				className="border-t"
-			/>
+								// Use vercelSendMessage with the correct AI SDK v5 format
+								await vercelSendMessage(
+									{
+										role: "user",
+										parts: [{ type: "text", text: message }],
+										id: userMessageId,
+									},
+									{
+										body: {
+											id: assistantMessageId,
+											userMessageId,
+											threadClientId: threadId,
+										},
+									},
+								);
+							} catch (error) {
+								console.error("Error sending message:", error);
+								throw error; // Re-throw to let ChatInput handle error state
+							}
+						}}
+						placeholder="Type your message..."
+						disabled={isLoading}
+					/>
+				</>
+			)}
 		</main>
 	);
 }

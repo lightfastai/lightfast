@@ -2,6 +2,8 @@
 
 import { ArrowUp } from "lucide-react";
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ChatInputProps {
 	onSendMessage: (message: string) => Promise<void> | void;
@@ -97,24 +99,24 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 		return (
 			<div className={`pb-2 md:pb-4 flex-shrink-0 ${className}`}>
-				<div className="max-w-3xl mx-auto relative">
+				<div className="max-w-4xl mx-auto relative">
 					<div className="flex gap-2">
 						<div className="flex-1 min-w-0">
 							{/* Main input container */}
 							<div className="w-full border border-border/30 rounded-xl overflow-hidden flex flex-col transition-all bg-transparent dark:bg-input/10">
 								{/* Textarea area - grows with content up to max height */}
 								<div className="flex-1 max-h-[180px] overflow-y-auto chat-input-scroll">
-									<textarea
+									<Textarea
 										ref={textareaRef}
 										value={message}
 										onChange={handleMessageChange}
 										onKeyPress={handleKeyPress}
 										placeholder={placeholder}
-										className="w-full resize-none border-0 focus-visible:ring-0 whitespace-pre-wrap break-words p-3 bg-transparent dark:bg-input/10 focus:bg-transparent dark:focus:bg-input/10 hover:bg-transparent dark:hover:bg-input/10 disabled:bg-transparent dark:disabled:bg-input/10 outline-none"
+										className="w-full resize-none border-0 focus-visible:ring-0 whitespace-pre-wrap break-words p-3 bg-transparent dark:bg-input/10 focus:bg-transparent dark:focus:bg-input/10 hover:bg-transparent dark:hover:bg-input/10 disabled:bg-transparent dark:disabled:bg-input/10 outline-none min-h-0"
 										maxLength={maxLength}
 										autoComplete="off"
 										autoCorrect="off"
-										autoCapitalize="off"
+										autoCapitalize="none"
 										spellCheck="true"
 										style={{
 											lineHeight: "24px",
@@ -126,14 +128,15 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 								{/* Controls area - always at bottom */}
 								<div className="flex items-center justify-end p-2 bg-transparent dark:bg-input/10 transition-[color,box-shadow]">
 									{/* Send button */}
-									<button
+									<Button
 										type="button"
 										onClick={handleSendMessage}
 										disabled={!canSend}
-										className="h-8 w-8 p-0 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center"
+										size="icon"
+										className="h-8 w-8 rounded-full"
 									>
 										<ArrowUp className="w-4 h-4" />
-									</button>
+									</Button>
 								</div>
 							</div>
 						</div>
