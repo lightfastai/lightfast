@@ -20,6 +20,8 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 	// Fetch agent tasks
 	const { tasks } = useAgentTasks({ threadId, pollingInterval: 3000 });
+	console.log(`[UI] Tasks in component:`, tasks);
+	console.log(`[UI] Tasks length in component:`, tasks.length);
 
 	// Create transport for AI SDK v5
 	const transport = useChatTransport({ threadId });
@@ -41,6 +43,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 	// Debug: Log messages to see their structure
 	useEffect(() => {
+		console.log(`[UI] Thread ID: ${threadId}`);
 		console.log("Messages:", messages);
 		messages.forEach((msg, index) => {
 			console.log(`Message ${index}:`, {
@@ -49,7 +52,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 				parts: msg.parts,
 			});
 		});
-	}, [messages]);
+	}, [messages, threadId]);
 
 	return (
 		<main className="flex h-screen flex-col relative">
@@ -66,6 +69,11 @@ export default function ChatPage({ params }: ChatPageProps) {
 							<h1 className="text-2xl font-medium mb-2">Hello.</h1>
 							<p className="text-2xl text-muted-foreground">What can I do for you?</p>
 						</div>
+						{/* Task Accordion for empty messages state */}
+						<div className="mb-6">
+							{console.log(`[UI] About to render TaskAccordion in empty state with tasks:`, tasks)}
+							<TaskAccordion tasks={tasks} />
+						</div>
 						<ChatInput
 							onSendMessage={async (message) => {
 								if (!message.trim() || isLoading) return;
@@ -74,6 +82,10 @@ export default function ChatPage({ params }: ChatPageProps) {
 									// Generate IDs for the messages
 									const userMessageId = `user-${Date.now()}`;
 									const assistantMessageId = `assistant-${Date.now()}`;
+
+									console.log(`[UI] Sending message with threadId: ${threadId}`);
+									console.log(`[UI] User message ID: ${userMessageId}`);
+									console.log(`[UI] Assistant message ID: ${assistantMessageId}`);
 
 									// Use vercelSendMessage with the correct AI SDK v5 format
 									await vercelSendMessage(
@@ -117,6 +129,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 						{/* Task Accordion */}
 						<div className="relative bg-background">
+							{console.log(`[UI] About to render TaskAccordion with tasks:`, tasks)}
 							<TaskAccordion tasks={tasks} />
 						</div>
 
@@ -130,6 +143,10 @@ export default function ChatPage({ params }: ChatPageProps) {
 										// Generate IDs for the messages
 										const userMessageId = `user-${Date.now()}`;
 										const assistantMessageId = `assistant-${Date.now()}`;
+
+										console.log(`[UI] Sending message with threadId: ${threadId}`);
+										console.log(`[UI] User message ID: ${userMessageId}`);
+										console.log(`[UI] Assistant message ID: ${assistantMessageId}`);
 
 										// Use vercelSendMessage with the correct AI SDK v5 format
 										await vercelSendMessage(

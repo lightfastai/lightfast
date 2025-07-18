@@ -16,16 +16,21 @@ export function useAgentTasks({ threadId, pollingInterval = 5000 }: UseAgentTask
 
 		async function fetchTasks() {
 			try {
+				console.log(`[TASKS] Fetching tasks for thread: ${threadId}`);
 				const response = await fetch(`/api/chat/thread/${threadId}/memory`);
 				if (!response.ok) {
 					throw new Error("Failed to fetch tasks");
 				}
 
 				const data = await response.json();
+				console.log(`[TASKS] Memory API response:`, data);
+				
 				// Extract tasks from the working memory
 				if (data.workingMemory?.tasks) {
+					console.log(`[TASKS] Found ${data.workingMemory.tasks.length} tasks`);
 					setTasks(data.workingMemory.tasks);
 				} else {
+					console.log(`[TASKS] No tasks found in working memory`);
 					setTasks([]);
 				}
 				setError(null);

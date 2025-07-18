@@ -44,7 +44,7 @@ export function createEnvironmentMemory(
 	const { workingMemoryTemplate, workingMemorySchema, workingMemoryDefault, lastMessages = 50 } = options;
 
 	// Prepare working memory config based on whether template or schema is provided
-	let workingMemoryConfig = undefined;
+	let workingMemoryConfig;
 	if (workingMemorySchema) {
 		workingMemoryConfig = {
 			enabled: true,

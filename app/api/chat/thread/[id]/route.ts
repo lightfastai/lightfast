@@ -3,8 +3,17 @@ import { mastra } from "@/mastra";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	try {
-		const { messages, stream = false } = await request.json();
-		const { id: threadId } = await params;
+		const requestBody = await request.json();
+		const { messages, stream = false, threadId: bodyThreadId } = requestBody;
+		const { id: paramsThreadId } = await params;
+
+		console.log(`[API] URL param threadId: ${paramsThreadId}`);
+		console.log(`[API] Request body threadId: ${bodyThreadId}`);
+		console.log(`[API] Request body keys:`, Object.keys(requestBody));
+
+		// Use the threadId from request body if available, otherwise use URL param
+		const threadId = bodyThreadId || paramsThreadId;
+		console.log(`[API] Final threadId: ${threadId}`);
 
 		// Using the V1Agent which has comprehensive tools for all tasks
 		// You can implement logic to select different agents based on thread context
@@ -19,6 +28,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 			threadId,
 			resourceId: threadId, // Using threadId as resourceId for now
 		};
+
+		console.log(`[API] Agent options:`, options);
 
 		// Always use streaming with AI SDK v5
 		const result = await agent.stream(messages, options);

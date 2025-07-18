@@ -62,7 +62,10 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 		[groupedTasks, tasks.length],
 	);
 
+	console.log(`[TaskAccordion] Rendering with ${tasks.length} tasks:`, tasks);
+	
 	if (tasks.length === 0) {
+		console.log(`[TaskAccordion] No tasks, returning null`);
 		return null;
 	}
 

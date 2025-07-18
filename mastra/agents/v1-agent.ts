@@ -2,7 +2,6 @@ import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { anthropic, anthropicModels } from "../lib/anthropic";
 import { createEnvironmentMemory } from "../lib/memory-factory";
-import { TaskMemorySchema } from "../lib/task-schema";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
 import { granularBrowserTools } from "../tools/browser-tools-granular";
 import {
@@ -30,10 +29,23 @@ import { saveCriticalInfoTool } from "../tools/save-critical-info";
 import { autoTaskDetectionTool, taskManagementTool } from "../tools/task-management";
 import { webSearchTool } from "../tools/web-search-tools";
 
-// Create environment-aware memory for V1 Agent with schema-based task tracking
+// Create environment-aware memory for V1 Agent with template-based task tracking
 const agentMemory = createEnvironmentMemory({
 	prefix: "mastra:v1-agent:",
-	workingMemorySchema: TaskMemorySchema,
+	workingMemoryTemplate: `# Task Management
+
+## Active Tasks
+<!-- List active tasks here with format: - [TASK-ID] Description (Priority: high/medium/low) -->
+
+## In Progress Tasks  
+<!-- List tasks currently being worked on -->
+
+## Completed Tasks
+<!-- List completed tasks -->
+
+## Notes
+<!-- Any additional context or notes about task progress -->
+`,
 	lastMessages: 50,
 });
 
@@ -94,9 +106,10 @@ You are V1 Agent, an AI assistant created by the Mastra team.
 
      <planning_module>
      - Break complex tasks into clear, numbered steps
-     - Use working memory template for task tracking
+     - Use <working_memory> tags to update task tracking template
      - Update task status as you progress (Active/In Progress/Completed)
      - Maintain task format: [TASK-ID] Description (Priority: high/medium/low)
+     - Always use <working_memory> tags to save task progress in every response
      - Adapt plans based on intermediate results
      </planning_module>
 
@@ -185,25 +198,35 @@ You are V1 Agent, an AI assistant created by the Mastra team.
      <task_management_system>
      ## When to Use Task Management
      - **Always** use autoTaskDetection for complex requests to determine if task management is needed
-     - Use taskManagement for requests with 3+ steps or complex workflows
+     - Use working memory template for requests with 3+ steps or complex workflows
      - Use for multi-step processes like development, analysis, or automation
      - Use when user provides numbered lists or bullet points
      - Skip for simple, single-step requests
      
      ## Task Management Workflow
      1. **Detection**: Use autoTaskDetection to analyze the user request
-     2. **Batch Initialization**: If task management is recommended, use taskManagement with "add_batch" action to create all tasks efficiently in one call
+     2. **Initialization**: If task management is recommended, create initial task list in <working_memory> tags
      3. **Execution**: Work through tasks systematically, updating status as you progress
-     4. **Updates**: Use taskManagement to update tasks from "active" → "in_progress" → "completed"
+     4. **Updates**: Use <working_memory> tags to update tasks from "active" → "in_progress" → "completed"
      5. **Tracking**: Maintain clear task IDs (TASK-001, TASK-002, etc.) for reference
      
-     ## Task Management Commands
-     - taskManagement(action: "add", description: "...", priority: "high/medium/low") - Add single task
-     - taskManagement(action: "add_batch", tasks: [{description: "...", priority: "high"}, ...]) - Add multiple tasks efficiently
-     - taskManagement(action: "update", taskId: "TASK-001", status: "in_progress") - Update task status
-     - taskManagement(action: "complete", taskId: "TASK-001") - Mark task as completed
-     - taskManagement(action: "list") - List all current tasks
-     - taskManagement(action: "clear") - Clear all tasks (use sparingly)
+     ## Working Memory Format
+     Use this exact format in <working_memory> tags:
+     
+     # Task Management
+     
+     ## Active Tasks
+     - [TASK-001] First task description (Priority: high)
+     - [TASK-002] Second task description (Priority: medium)
+     
+     ## In Progress Tasks
+     - [TASK-003] Currently working on this task (Priority: high)
+     
+     ## Completed Tasks
+     - [TASK-004] This task is done (Priority: low)
+     
+     ## Notes
+     Additional context about task progress
      
      ## Task Lifecycle
      - **Active**: Task is defined and ready to start
@@ -211,13 +234,12 @@ You are V1 Agent, an AI assistant created by the Mastra team.
      - **Completed**: Task is finished and verified
      
      ## Best Practices
-     - **Use batch operations**: Always use "add_batch" when creating multiple tasks to minimize tool calls
-     - Always mark tasks as "in_progress" before starting work
+     - Always use <working_memory> tags to save task progress in EVERY response
      - Only have one task "in_progress" at a time
-     - Update task status immediately after completion
+     - Move tasks between sections as status changes
      - Include meaningful task descriptions and priorities
-     - Use working memory to maintain context between task updates
      - Add new tasks if discovered during execution
+     - Use autoTaskDetection to determine when task management is needed
      </task_management_system>
 
      <file_rules>
