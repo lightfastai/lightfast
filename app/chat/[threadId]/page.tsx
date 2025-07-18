@@ -65,11 +65,11 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 			{messages.length === 0 ? (
 				// Center the chat input when no messages
-				<div className="flex-1 flex items-center justify-center p-6">
-					<div className="w-full max-w-3xl">
+				<div className="flex-1 flex items-center p-6">
+					<div className="w-full max-w-3xl mx-auto relative -top-12">
 						<div className="mb-6">
-							<h1 className="text-3xl font-medium mb-2">Hello.</h1>
-							<p className="text-3xl text-muted-foreground">What can I do for you?</p>
+							<h1 className="text-2xl font-medium mb-2">Hello.</h1>
+							<p className="text-2xl text-muted-foreground">What can I do for you?</p>
 						</div>
 						<ChatInput
 							onSendMessage={async (message) => {
@@ -109,7 +109,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 				// Normal layout with messages and bottom input
 				<>
 					<ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
-						<div className="mx-auto max-w-4xl space-y-4">
+						<div className="mx-auto max-w-3xl space-y-4">
 							{messages.map((message) => {
 						// For user messages, just show the text content
 						if (message.role === "user") {

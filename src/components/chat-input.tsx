@@ -99,7 +99,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 		return (
 			<div className={`pb-2 md:pb-4 flex-shrink-0 ${className}`}>
-				<div className="max-w-4xl mx-auto relative">
+				<div className="max-w-3xl mx-auto relative">
 					<div className="flex gap-2">
 						<div className="flex-1 min-w-0">
 							{/* Main input container */}
