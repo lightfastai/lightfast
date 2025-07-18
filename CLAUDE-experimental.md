@@ -48,6 +48,16 @@ See `.env.example` for all required variables.
 - Next.js dev server: http://localhost:3000
 - Mastra dev server: http://localhost:4111
 
+## Repository Analysis
+Use `/tmp/repo/...` for quickly cloning and analyzing repositories:
+```bash
+# Clone a repository for analysis
+git clone https://github.com/user/repo.git /tmp/repo/repo-name
+
+# Analyze repository structure
+find /tmp/repo/repo-name -type f -name "*.ts" | head -20
+```
+
 ## Testing Checklist
 - [ ] Run `pnpm typecheck`
 - [ ] Run `pnpm lint`
