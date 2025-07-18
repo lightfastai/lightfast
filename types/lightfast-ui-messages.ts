@@ -1,59 +1,89 @@
-import type { UIMessage } from "@ai-sdk/ui-utils";
+import type { UIMessage } from "ai";
 
 // Custom data types for message parts (empty for now)
-export interface LightfastUICustomDataTypes {}
+export interface LightfastUICustomDataTypes {
+  [key: string]: any; // Index signature required by UIDataTypes
+}
 
 // Tool schemas based on V1Agent's tools
 export type LightfastToolSchemas = {
   // File management tools
-  'tool-fileWrite': {
-    args: {
+  fileWrite: {
+    input: {
       path: string;
       content: string;
     };
-  };
-  'tool-fileRead': {
-    args: {
-      path: string;
+    output: {
+      success: boolean;
+      message?: string;
     };
   };
-  'tool-fileDelete': {
-    args: {
+  fileRead: {
+    input: {
       path: string;
     };
+    output: {
+      content: string;
+    };
   };
-  'tool-fileStringReplace': {
-    args: {
+  fileDelete: {
+    input: {
+      path: string;
+    };
+    output: {
+      success: boolean;
+    };
+  };
+  fileStringReplace: {
+    input: {
       path: string;
       searchString: string;
       replaceString: string;
     };
+    output: {
+      success: boolean;
+      replacements?: number;
+    };
   };
-  'tool-fileFindInContent': {
-    args: {
+  fileFindInContent: {
+    input: {
       pattern: string;
       directory?: string;
     };
+    output: {
+      matches: Array<{
+        path: string;
+        line: number;
+        content: string;
+      }>;
+    };
   };
-  'tool-fileFindByName': {
-    args: {
+  fileFindByName: {
+    input: {
       pattern: string;
       directory?: string;
+    };
+    output: {
+      files: string[];
     };
   };
 
   // Information storage
-  'tool-saveCriticalInfo': {
-    args: {
+  saveCriticalInfo: {
+    input: {
       title: string;
       content: string;
       tags?: string[];
     };
+    output: {
+      success: boolean;
+      id?: string;
+    };
   };
 
   // Task management
-  'tool-taskManagement': {
-    args: {
+  taskManagement: {
+    input: {
       action: 'add' | 'add_batch' | 'update' | 'complete' | 'list' | 'clear';
       description?: string;
       priority?: 'high' | 'medium' | 'low';
@@ -64,157 +94,262 @@ export type LightfastToolSchemas = {
         priority: 'high' | 'medium' | 'low';
       }>;
     };
+    output: {
+      success: boolean;
+      tasks?: any[];
+      taskId?: string;
+    };
   };
-  'tool-autoTaskDetection': {
-    args: {
+  autoTaskDetection: {
+    input: {
       userRequest: string;
+    };
+    output: {
+      shouldUseTasks: boolean;
+      suggestedTasks?: any[];
     };
   };
 
   // Web research
-  'tool-webSearch': {
-    args: {
+  webSearch: {
+    input: {
       query: string;
       maxResults?: number;
+    };
+    output: {
+      results: Array<{
+        title: string;
+        url: string;
+        snippet?: string;
+      }>;
     };
   };
 
   // Browser automation - navigation and viewing
-  'tool-browserNavigate': {
-    args: {
+  browserNavigate: {
+    input: {
       url: string;
     };
+    output: {
+      success: boolean;
+      url?: string;
+    };
   };
-  'tool-browserView': {
-    args: {
+  browserView: {
+    input: {
       selector?: string;
     };
-  };
-  'tool-browserClick': {
-    args: {
-      selector: string;
+    output: {
+      content: string;
     };
   };
-  'tool-browserType': {
-    args: {
+  browserClick: {
+    input: {
+      selector: string;
+    };
+    output: {
+      success: boolean;
+    };
+  };
+  browserType: {
+    input: {
       selector: string;
       text: string;
       clear?: boolean;
     };
+    output: {
+      success: boolean;
+    };
   };
-  'tool-browserSelectOption': {
-    args: {
+  browserSelectOption: {
+    input: {
       selector: string;
       value: string;
     };
+    output: {
+      success: boolean;
+    };
   };
-  'tool-browserScroll': {
-    args: {
+  browserScroll: {
+    input: {
       direction: 'up' | 'down' | 'left' | 'right';
       amount?: number;
     };
-  };
-  'tool-browserPressKey': {
-    args: {
-      key: string;
+    output: {
+      success: boolean;
     };
   };
-  'tool-browserMoveMouse': {
-    args: {
+  browserPressKey: {
+    input: {
+      key: string;
+    };
+    output: {
+      success: boolean;
+    };
+  };
+  browserMoveMouse: {
+    input: {
       x: number;
       y: number;
     };
+    output: {
+      success: boolean;
+    };
   };
-  'tool-browserWait': {
-    args: {
+  browserWait: {
+    input: {
       selector?: string;
       timeout?: number;
     };
+    output: {
+      success: boolean;
+    };
   };
-  'tool-browserScreenshot': {
-    args: {
+  browserScreenshot: {
+    input: {
       path?: string;
       fullPage?: boolean;
     };
+    output: {
+      success: boolean;
+      path?: string;
+    };
   };
-  'tool-browserConsoleExec': {
-    args: {
+  browserConsoleExec: {
+    input: {
       script: string;
     };
+    output: {
+      result: any;
+    };
   };
-  'tool-browserReload': {
-    args: {};
+  browserReload: {
+    input: {};
+    output: {
+      success: boolean;
+    };
   };
-  'tool-browserHistory': {
-    args: {
+  browserHistory: {
+    input: {
       action: 'back' | 'forward';
     };
-  };
-  'tool-browserExtract': {
-    args: {
-      selectors: Record<string, string>;
+    output: {
+      success: boolean;
     };
   };
-  'tool-browserObserve': {
-    args: {
+  browserExtract: {
+    input: {
+      selectors: Record<string, string>;
+    };
+    output: {
+      data: Record<string, string>;
+    };
+  };
+  browserObserve: {
+    input: {
       instruction?: string;
+    };
+    output: {
+      observation: string;
     };
   };
 
   // Download tools
-  'tool-downloadFile': {
-    args: {
+  downloadFile: {
+    input: {
       url: string;
       filename?: string;
     };
+    output: {
+      success: boolean;
+      path?: string;
+    };
   };
-  'tool-downloadDirectFile': {
-    args: {
+  downloadDirectFile: {
+    input: {
       url: string;
       filename?: string;
     };
+    output: {
+      success: boolean;
+      path?: string;
+    };
   };
-  'tool-downloadImage': {
-    args: {
+  downloadImage: {
+    input: {
       selector: string;
       filename?: string;
     };
+    output: {
+      success: boolean;
+      path?: string;
+    };
   };
-  'tool-listDownloads': {
-    args: {};
+  listDownloads: {
+    input: {};
+    output: {
+      downloads: Array<{
+        filename: string;
+        path: string;
+        size?: number;
+      }>;
+    };
   };
 
   // Sandbox operations
-  'tool-createSandbox': {
-    args: {
+  createSandbox: {
+    input: {
       runtime: 'node22' | 'python3.13';
       timeout?: number;
     };
+    output: {
+      sandboxId: string;
+      success: boolean;
+    };
   };
-  'tool-createSandboxWithPorts': {
-    args: {
+  createSandboxWithPorts: {
+    input: {
       runtime: 'node22' | 'python3.13';
       ports: number[];
       timeout?: number;
     };
+    output: {
+      sandboxId: string;
+      success: boolean;
+      urls?: Record<number, string>;
+    };
   };
-  'tool-executeSandboxCommand': {
-    args: {
+  executeSandboxCommand: {
+    input: {
       sandboxId: string;
       command: string;
       cwd?: string;
       background?: boolean;
     };
+    output: {
+      stdout: string;
+      stderr: string;
+      exitCode: number;
+    };
   };
-  'tool-getSandboxDomain': {
-    args: {
+  getSandboxDomain: {
+    input: {
       sandboxId: string;
       port: number;
     };
+    output: {
+      url: string;
+    };
   };
-  'tool-listSandboxRoutes': {
-    args: {
+  listSandboxRoutes: {
+    input: {
       sandboxId: string;
+    };
+    output: {
+      routes: Array<{
+        port: number;
+        url: string;
+      }>;
     };
   };
 };
@@ -234,17 +369,13 @@ export function isTextPart(part: LightfastUIMessagePart): part is Extract<Lightf
   return part.type === 'text';
 }
 
-export function isToolCallPart(part: LightfastUIMessagePart): part is Extract<LightfastUIMessagePart, { type: keyof LightfastToolSchemas }> {
+export function isToolPart(part: LightfastUIMessagePart): boolean {
   return typeof part.type === 'string' && part.type.startsWith('tool-');
-}
-
-export function isToolResultPart(part: LightfastUIMessagePart): part is Extract<LightfastUIMessagePart, { type: 'tool-result' }> {
-  return part.type === 'tool-result';
 }
 
 
 // Utility type to extract tool names
 export type LightfastToolName = keyof LightfastToolSchemas;
 
-// Utility type to get args for a specific tool
-export type LightfastToolArgs<T extends LightfastToolName> = LightfastToolSchemas[T]['args'];
+// Utility type to get input for a specific tool
+export type LightfastToolInput<T extends LightfastToolName> = LightfastToolSchemas[T]['input'];
