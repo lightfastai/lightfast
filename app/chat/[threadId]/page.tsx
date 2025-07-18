@@ -58,12 +58,11 @@ export default function ChatPage({ params }: ChatPageProps) {
 	}, [messages]);
 
 	return (
-		<main className="flex h-screen flex-col">
-			<header className="px-6 py-4 flex-shrink-0">
-				<div className="flex items-center justify-between">
-					<h1 className="text-xs text-muted-foreground">This is an experiment by Lightfast. Use with discretion.</h1>
-				</div>
-			</header>
+		<main className="flex h-screen flex-col relative">
+			{/* Header text positioned absolutely */}
+			<div className="absolute top-4 left-6 z-20">
+				<p className="text-xs text-muted-foreground">This is an experiment by Lightfast. Use with discretion.</p>
+			</div>
 
 			{messages.length === 0 ? (
 				// Center the chat input when no messages
@@ -109,10 +108,9 @@ export default function ChatPage({ params }: ChatPageProps) {
 				</div>
 			) : (
 				// Normal layout with messages and bottom input
-				<>
-					<div className="flex-1 relative overflow-hidden">
-						<ScrollArea className="h-full overflow-y-auto px-6 pt-6 pb-32" ref={scrollAreaRef}>
-							<div className="mx-auto max-w-3xl space-y-12 pb-20">
+				<div className="flex-1 flex flex-col relative overflow-hidden">
+					<ScrollArea className="flex-1 overflow-y-auto px-6 pt-6 pb-32" ref={scrollAreaRef}>
+						<div className="mx-auto max-w-3xl space-y-12 pb-20">
 								{messages.map((message) => {
 									// For user messages, just show the text content
 									if (message.role === "user") {
@@ -341,8 +339,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 								disabled={isLoading}
 							/>
 						</div>
-					</div>
-				</>
+				</div>
 			)}
 		</main>
 	);
