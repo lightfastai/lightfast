@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { GenericToolDisplay } from "./generic-tool-display";
+import { UpdateWorkingMemoryTool } from "./update-working-memory-tool";
 import { WebSearchTool } from "./web-search-tool";
 
 export interface ToolCallRendererProps {
@@ -14,6 +15,8 @@ export const ToolCallRenderer = memo(function ToolCallRenderer({ toolPart, toolN
 	switch (toolName) {
 		case "webSearch":
 			return <WebSearchTool toolPart={toolPart} />;
+		case "updateWorkingMemory":
+			return <UpdateWorkingMemoryTool toolPart={toolPart} />;
 		// Add more tool renderers here as tools are added to the system
 		// case "fileWrite":
 		//     return <FileWriteTool toolPart={toolPart} />;
