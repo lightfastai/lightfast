@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
-import { anthropic, anthropicModels } from "../lib/anthropic";
-import { fileDeleteTool, fileReadTool, fileWriteTool } from "../tools/file-tools";
+import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { fileDeleteTool, fileReadTool, fileWriteTool } from "../../tools/file-tools";
 
 export const artifactAgent = new Agent({
 	name: "Artifact",

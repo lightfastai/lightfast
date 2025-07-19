@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { anthropic, anthropicModels } from "../lib/anthropic";
+import { anthropic, anthropicModels } from "../../lib/anthropic";
 
 export const chatAgent = new Agent({
 	name: "ChatAgent",

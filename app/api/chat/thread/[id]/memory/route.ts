@@ -7,8 +7,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
 		console.log(`[MEMORY] Request for thread ID: ${threadId}`);
 
-		// Get the V1Agent from Mastra (our default agent for now)
-		const agent = mastra.getAgent("V1Agent");
+		// Get the V010 agent from Mastra (our default agent for now)
+		const agent = mastra.getAgent("V010");
 		if (!agent) {
 			console.log(`[MEMORY] Agent not found`);
 			return NextResponse.json({ error: "Agent not found" }, { status: 404 });

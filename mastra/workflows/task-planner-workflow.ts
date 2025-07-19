@@ -1,7 +1,7 @@
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
-import { planner } from "../agents/planner";
-import { searcher } from "../agents/searcher";
+import { planner } from "../agents/standalone/planner";
+import { searcher } from "../agents/standalone/searcher";
 
 // Define shared schemas
 const planSchema = z.object({

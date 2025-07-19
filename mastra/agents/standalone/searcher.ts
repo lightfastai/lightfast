@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
-import { openai, openaiModels } from "../lib/openai";
-import { webSearchTool } from "../tools/web-search-tools";
+import { openai, openaiModels } from "../../lib/openai";
+import { webSearchTool } from "../../tools/web-search-tools";
 
 // Note: Working memory schemas moved to network level for proper context handling
 

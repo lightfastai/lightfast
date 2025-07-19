@@ -1,15 +1,15 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "../lib/anthropic";
+import { anthropic, anthropicModels } from "../../lib/anthropic";
 import {
 	derivativeTool,
 	integralTool,
 	matrixOperationsTool,
 	quadraticSolverTool,
 	statisticsTool,
-} from "../tools/complex-math-tools";
-import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
+} from "../../tools/complex-math-tools";
+import { calculateTool, factorialTool, fibonacciTool } from "../../tools/math-tools";
 
 // Schema for unified math agent working memory
 const mathMemorySchema = z.object({

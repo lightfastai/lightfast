@@ -1,8 +1,17 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { anthropic, anthropicModels } from "../lib/anthropic";
-import { createEnvironmentMemory } from "../lib/memory-factory";
-import { taskWorkingMemorySchema } from "../lib/task-schema-v2";
+import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { createEnvironmentMemory } from "../../lib/memory-factory";
+import { taskWorkingMemorySchema } from "../../lib/task-schema-v2";
+import {
+	logAgentInteraction,
+	createStepEvaluation,
+	evaluateResponseQuality,
+	extractMessageContent,
+	createProjectConfig,
+	type AgentEvaluationInput,
+	type AgentEvaluationOutput
+} from "../../lib/braintrust-utils";
 import {
 	AnswerRelevancyMetric,
 	BiasMetric,
@@ -16,14 +25,14 @@ import {
 	KeywordCoverageMetric,
 	ToneConsistencyMetric,
 } from "@mastra/evals/nlp";
-import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
-import { granularBrowserTools } from "../tools/browser-tools-granular";
+import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
+import { granularBrowserTools } from "../../tools/browser-tools-granular";
 import {
 	downloadDirectFileTool,
 	downloadFileTool,
 	downloadImageTool,
 	listDownloadsTool,
-} from "../tools/download-tools";
+} from "../../tools/download-tools";
 import {
 	fileDeleteTool,
 	fileFindByNameTool,
@@ -31,17 +40,17 @@ import {
 	fileReadTool,
 	fileStringReplaceTool,
 	fileWriteTool,
-} from "../tools/file-tools";
+} from "../../tools/file-tools";
 import {
 	createSandboxTool,
 	createSandboxWithPortsTool,
 	executeSandboxCommandTool,
 	getSandboxDomainTool,
 	listSandboxRoutesTool,
-} from "../tools/sandbox-tools";
-import { saveCriticalInfoTool } from "../tools/save-critical-info";
-// import { autoTaskDetectionTool, taskManagementTool } from "../tools/task-management";
-import { webSearchTool } from "../tools/web-search-tools";
+} from "../../tools/sandbox-tools";
+import { saveCriticalInfoTool } from "../../tools/save-critical-info";
+// import { autoTaskDetectionTool, taskManagementTool } from "../../tools/task-management";
+import { webSearchTool } from "../../tools/web-search-tools";
 
 // Create environment-aware memory for V1 Agent with structured task tracking
 const agentMemory = createEnvironmentMemory({
@@ -58,7 +67,7 @@ const agentMemory = createEnvironmentMemory({
 // Model for eval judgments
 const evalModel = anthropic("claude-3-5-haiku-20241022");
 
-export const v1Agent = new Agent({
+export const v010 = new Agent({
 	name: "V1Agent",
 	description:
 		"Comprehensive agent with all tools for planning, web search, browser automation, file management, and sandbox operations. Combines capabilities of the v1-1 network into a single agent.",
@@ -456,7 +465,7 @@ You are Lightfast Experimental v1.0.0 agent.
 		onError: ({ error }) => {
 			console.error(`[V1Agent] Stream error:`, error);
 		},
-		onStepFinish: ({ text, toolCalls, toolResults }) => {
+		onStepFinish: async ({ text, toolCalls, toolResults, messages }) => {
 			if (toolResults) {
 				toolResults.forEach((result, index) => {
 					if (
@@ -470,9 +479,91 @@ You are Lightfast Experimental v1.0.0 agent.
 				});
 			}
 			console.log(`[V1Agent] Step completed`);
+
+			// Enhanced Braintrust logging
+			try {
+				const braintrustScores = await createStepEvaluation(text, toolCalls, toolResults);
+				
+				// Get the last user message for context
+				const lastUserMessage = messages?.findLast(m => m.role === "user");
+				const userInput = lastUserMessage ? extractMessageContent(lastUserMessage) : "";
+
+				// Log step to Braintrust
+				await logAgentInteraction(
+					{
+						messages: messages || [],
+						agentName: "V1Agent",
+						tools: toolCalls?.map(call => call.toolName) || [],
+						context: {
+							step_type: "tool_execution",
+							tools_used: toolCalls?.length || 0,
+						}
+					},
+					{
+						response: text,
+						tool_calls: toolCalls?.map((call, index) => ({
+							name: call.toolName,
+							result: toolResults?.[index],
+							success: toolResults?.[index] !== null,
+						})) || [],
+						metadata: {
+							tools_count: toolCalls?.length || 0,
+							step_timestamp: new Date().toISOString(),
+						}
+					},
+					{
+						...braintrustScores,
+						// Enhanced scoring with response quality
+						response_quality: await evaluateResponseQuality(text),
+					},
+					{
+						agent_step: true,
+						v010_experimental: true,
+					}
+				);
+			} catch (error) {
+				console.warn("[V1Agent] Braintrust logging failed:", error);
+			}
 		},
-		onFinish: (result) => {
+		onFinish: async (result) => {
 			console.log(`[V1Agent] Generation finished:`, result);
+
+			// Log complete conversation to Braintrust
+			try {
+				const finalResponse = result.text || "";
+				const messages = result.messages || [];
+				
+				await logAgentInteraction(
+					{
+						messages,
+						agentName: "V1Agent",
+						context: {
+							conversation_type: "complete",
+							total_steps: result.steps?.length || 0,
+						}
+					},
+					{
+						response: finalResponse,
+						metadata: {
+							conversation_finished: true,
+							completion_timestamp: new Date().toISOString(),
+							total_tokens: result.usage?.totalTokens || 0,
+							steps_count: result.steps?.length || 0,
+						}
+					},
+					{
+						task_completion: 1, // Assume completion if onFinish is called
+						response_quality: await evaluateResponseQuality(finalResponse),
+					},
+					{
+						conversation_complete: true,
+						v010_experimental: true,
+						final_result: true,
+					}
+				);
+			} catch (error) {
+				console.warn("[V1Agent] Braintrust conversation logging failed:", error);
+			}
 		},
 	},
 	evals: {

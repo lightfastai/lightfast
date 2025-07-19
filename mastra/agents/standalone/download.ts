@@ -1,11 +1,11 @@
 import { Agent } from "@mastra/core/agent";
-import { anthropic, anthropicModels } from "../lib/anthropic";
+import { anthropic, anthropicModels } from "../../lib/anthropic";
 import {
 	downloadDirectFileTool,
 	downloadFileTool,
 	downloadImageTool,
 	listDownloadsTool,
-} from "../tools/download-tools";
+} from "../../tools/download-tools";
 
 export const downloadAgent = new Agent({
 	name: "Download Agent",

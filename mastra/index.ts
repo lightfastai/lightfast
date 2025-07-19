@@ -1,17 +1,17 @@
 import { Mastra } from "@mastra/core";
 import { env } from "../env";
-import { artifactAgent } from "./agents/artifact";
-import { browserAgent } from "./agents/browser";
-import { chatAgent } from "./agents/chat";
-import { downloadAgent } from "./agents/download";
-import { mathAgent } from "./agents/math";
-import { planner } from "./agents/planner";
-import { sandboxAgent } from "./agents/sandbox";
-import { searcher } from "./agents/searcher";
-import { v1Agent } from "./agents/v1-agent";
-import { v1_1Agent } from "./agents/v1-1-agent";
-import { visionAgent } from "./agents/vision";
-import { voiceAgent } from "./agents/voice";
+import { artifactAgent } from "./agents/standalone/artifact";
+import { browserAgent } from "./agents/standalone/browser";
+import { chatAgent } from "./agents/pure/chat";
+import { downloadAgent } from "./agents/standalone/download";
+import { mathAgent } from "./agents/standalone/math";
+import { planner } from "./agents/standalone/planner";
+import { sandboxAgent } from "./agents/standalone/sandbox";
+import { searcher } from "./agents/standalone/searcher";
+import { v010 } from "./agents/experimental/v010";
+import { v011 } from "./agents/experimental/v011";
+import { visionAgent } from "./agents/standalone/vision";
+import { voiceAgent } from "./agents/standalone/voice";
 import { createEnvironmentStorage } from "./lib/memory-factory";
 
 // Environment-aware storage configuration
@@ -30,8 +30,8 @@ export const mastra = new Mastra({
 		Math: mathAgent,
 		Vision: visionAgent,
 		Voice: voiceAgent,
-		V1Agent: v1Agent,
-		V1_1Agent: v1_1Agent,
+		V010: v010,
+		V011: v011,
 		ChatAgent: chatAgent,
 	},
 	storage: storage,

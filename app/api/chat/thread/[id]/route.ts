@@ -1,5 +1,12 @@
 import type { NextRequest } from "next/server";
 import { mastra } from "@/mastra";
+import {
+	logConversationEvaluation,
+	evaluateTaskCompletion,
+	evaluateResponseQuality,
+	extractMessageContent,
+	type ConversationEvaluationData
+} from "@/mastra/lib/braintrust-utils";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	try {
@@ -15,9 +22,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 		const threadId = bodyThreadId || paramsThreadId;
 		console.log(`[API] Final threadId: ${threadId}`);
 
-		// Using the V1Agent which has comprehensive tools for all tasks
+		// Using the V010 agent which has comprehensive tools for all tasks
 		// You can implement logic to select different agents based on thread context
-		const agent = mastra.getAgent("V1Agent");
+		const agent = mastra.getAgent("V010");
 
 		if (!agent) {
 			return Response.json({ error: "Chat agent not available" }, { status: 500 });
@@ -34,8 +41,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
 		console.log(`[API] Agent options:`, options);
 
+		// Track conversation start time for performance evaluation
+		const startTime = Date.now();
+
 		// Always use streaming with AI SDK v5
 		const result = await agent.stream(messages, options);
+
+		// Log conversation-level evaluation to Braintrust (fire and forget)
+		const endTime = Date.now();
+		logConversationEvaluation({
+			messages,
+			final_response: result.text || "",
+			thread_id: threadId,
+			agent_name: "V010",
+			duration: endTime - startTime,
+			tool_calls_count: result.steps?.reduce((acc, step) => 
+				acc + (step.toolCalls?.length || 0), 0) || 0,
+			success: true,
+		}).catch(error => {
+			console.warn("[API] Braintrust conversation logging failed:", error);
+		});
+
 		// Use the new v5 method toUIMessageStreamResponse
 		return result.toUIMessageStreamResponse();
 	} catch (error) {

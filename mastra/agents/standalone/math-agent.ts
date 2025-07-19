@@ -1,8 +1,8 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "../lib/anthropic";
-import { calculateTool, factorialTool, fibonacciTool } from "../tools/math-tools";
+import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { calculateTool, factorialTool, fibonacciTool } from "../../tools/math-tools";
 
 // Schema for math agent working memory
 const mathMemorySchema = z.object({

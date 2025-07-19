@@ -1,12 +1,12 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { anthropic, anthropicModels } from "../lib/anthropic";
-import { createEnvironmentMemory } from "../lib/memory-factory";
-import { taskLedWorkingMemorySchema } from "../lib/task-schema-v1-1";
-import { browserExtractTool, browserNavigateTool } from "../tools/browser-tools";
-import { fileWriteTool } from "../tools/file-tools";
-import { taskExecutorTool } from "../tools/task-executor";
-import { webSearchTool } from "../tools/web-search-tools";
+import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { createEnvironmentMemory } from "../../lib/memory-factory";
+import { taskLedWorkingMemorySchema } from "../../lib/task-schema-v1-1";
+import { browserExtractTool, browserNavigateTool } from "../../tools/browser-tools";
+import { fileWriteTool } from "../../tools/file-tools";
+import { taskExecutorTool } from "../../tools/task-executor";
+import { webSearchTool } from "../../tools/web-search-tools";
 
 // Create task-led memory for V1.1 Agent
 const agentMemory = createEnvironmentMemory({
@@ -21,7 +21,7 @@ const agentMemory = createEnvironmentMemory({
 	lastMessages: 50,
 });
 
-export const v1_1Agent = new Agent({
+export const v011 = new Agent({
 	name: "V1_1Agent",
 	description: "Task-led workflow agent that decomposes requests into tasks and links tool calls to specific tasks",
 	instructions: `

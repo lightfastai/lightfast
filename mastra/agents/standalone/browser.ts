@@ -1,8 +1,8 @@
 import { Agent } from "@mastra/core/agent";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "../lib/anthropic";
-import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
-import { granularBrowserTools } from "../tools/browser-tools-granular";
+import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
+import { granularBrowserTools } from "../../tools/browser-tools-granular";
 
 // Note: Working memory schemas moved to network level for proper context handling
 
