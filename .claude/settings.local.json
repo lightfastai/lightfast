@@ -61,7 +61,8 @@
       "Bash(git clone:*)",
       "Bash(git mv:*)",
       "Bash(node:*)",
-      "Bash(npx ts-node:*)"
+      "Bash(npx ts-node:*)",
+      "Bash(source .env)"
     ],
     "deny": []
   },

@@ -2,11 +2,11 @@
 
 import { useChat } from "@ai-sdk/react";
 import { use, useEffect } from "react";
-import { useAgentTasks } from "@/hooks/use-agent-tasks";
-import { useChatTransport } from "@/hooks/use-chat-transport";
 import { ChatInput } from "@/components/chat-input";
 import { TaskAccordion } from "@/components/task-accordion";
 import { VirtuosoChat } from "@/components/virtuoso-chat";
+import { useAgentTasks } from "@/hooks/use-agent-tasks";
+import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface ChatPageProps {

@@ -23,12 +23,12 @@ export function useChatTransport({ threadId }: UseChatTransportProps): ChatTrans
 				// Transform the messages to the format expected by our API
 				// The body contains metadata passed from sendMessage
 				const finalThreadId = body?.threadClientId || threadId;
-				
+
 				console.log(`[TRANSPORT] Preparing request for thread: ${finalThreadId}`);
 				console.log(`[TRANSPORT] API endpoint: ${api}`);
 				console.log(`[TRANSPORT] Body threadClientId: ${body?.threadClientId}`);
 				console.log(`[TRANSPORT] Hook threadId: ${threadId}`);
-				
+
 				return {
 					api,
 					headers,

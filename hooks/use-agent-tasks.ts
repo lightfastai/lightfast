@@ -24,7 +24,7 @@ export function useAgentTasks({ threadId, pollingInterval = 5000 }: UseAgentTask
 
 				const data = await response.json();
 				console.log(`[TASKS] Memory API response:`, data);
-				
+
 				// Extract tasks from the working memory
 				if (data.workingMemory?.tasks) {
 					console.log(`[TASKS] Found ${data.workingMemory.tasks.length} tasks`);

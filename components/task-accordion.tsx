@@ -89,7 +89,9 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 					<AccordionContent className="px-4 pb-4">
 						{tasks.length === 0 ? (
 							<div className="text-center py-4">
-								<p className="text-sm text-muted-foreground">No tasks yet. Start a conversation to see tasks appear here.</p>
+								<p className="text-sm text-muted-foreground">
+									No tasks yet. Start a conversation to see tasks appear here.
+								</p>
 							</div>
 						) : (
 							<div className="space-y-3">
