@@ -53,7 +53,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 		// Look for working memory in assistant messages (template-based working memory)
 		for (let i = messages.length - 1; i >= 0; i--) {
 			const message = messages[i];
-			console.log(`[Memory] Message ${i}: role=${message.role}, hasContent=${!!message.content}, hasToolCalls=${!!message.toolCalls}`);
+			const hasToolCalls = 'toolCalls' in message && !!(message as any).toolCalls;
+			console.log(`[Memory] Message ${i}: role=${message.role}, hasContent=${!!message.content}, hasToolCalls=${hasToolCalls}`);
 			if (message.content && typeof message.content === 'string') {
 				console.log(`[Memory] Message ${i} content preview:`, message.content.substring(0, 300) + "...");
 			}
@@ -63,6 +64,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 					console.log(`[Memory] Message ${i} has ${message.content.length} content parts`);
 					
 					for (const part of message.content) {
+						console.log(`[Memory] Part type: ${part.type}, toolName: ${part.toolName || 'N/A'}`);
+						
 						// Check for tool calls in content parts
 						if (part.type === 'tool-call' && part.toolName === 'updateWorkingMemory' && part.args?.memory) {
 							const memoryContent = part.args.memory;
@@ -140,8 +143,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 				}
 				
 				// Also check for updateWorkingMemory tool calls in the legacy toolCalls property
-				if (message.toolCalls) {
-					for (const toolCall of message.toolCalls) {
+				if ('toolCalls' in message && (message as any).toolCalls) {
+					for (const toolCall of (message as any).toolCalls) {
 						if (toolCall.toolName === "updateWorkingMemory" && toolCall.args?.memory) {
 							const memoryContent = toolCall.args.memory;
 							console.log("Found working memory in updateWorkingMemory tool call:", JSON.stringify(memoryContent).substring(0, 200) + "...");

@@ -22,6 +22,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 		if (!agent) {
 			return Response.json({ error: "Chat agent not available" }, { status: 500 });
 		}
+		
+		// Log available tools for debugging
+		console.log(`[API] Agent tools:`, Object.keys(agent.tools || {}));
 
 		// Include threadId in the agent call for proper memory/context handling
 		const options = {

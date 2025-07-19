@@ -27,7 +27,7 @@ import {
 	listSandboxRoutesTool,
 } from "../tools/sandbox-tools";
 import { saveCriticalInfoTool } from "../tools/save-critical-info";
-import { autoTaskDetectionTool, taskManagementTool } from "../tools/task-management";
+// import { autoTaskDetectionTool, taskManagementTool } from "../tools/task-management";
 import { webSearchTool } from "../tools/web-search-tools";
 
 // Create environment-aware memory for V1 Agent with structured task tracking
@@ -422,9 +422,9 @@ You are Lightfast Experimental v1.0.0 agent.
 		// Information storage
 		saveCriticalInfo: saveCriticalInfoTool,
 
-		// Task management
-		taskManagement: taskManagementTool,
-		autoTaskDetection: autoTaskDetectionTool,
+		// Task management (commented out - Mastra memory handles this)
+		// taskManagement: taskManagementTool,
+		// autoTaskDetection: autoTaskDetectionTool,
 
 		// Web research
 		webSearch: webSearchTool,
