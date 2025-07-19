@@ -13,11 +13,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"with-env": "dotenv -e .env.local --",
 		"dev:mastra": "mastra dev --dir mastra",
-		"build:mastra": "mastra build --dir mastra",
-		"test:v1-agent": "pnpm with-env tsx mastra/agents/v1-agent-with-evals.ts",
-		"eval:manual": "pnpm with-env tsx mastra/evals/manual-eval-runner.ts",
-		"eval:run": "tsx mastra/evals/run-evals.ts",
-		"eval:test": "tsx mastra/evals/test-v1-agent.ts"
+		"build:mastra": "mastra build --dir mastra"
 	},
 	"keywords": [],
 	"author": "",
@@ -47,7 +43,7 @@
 		"@browserbasehq/stagehand": "^2.4.1",
 		"@mastra/core": "0.0.0-ai-v5-20250710191716",
 		"@mastra/deployer-vercel": "0.0.0-ai-v5-20250710191716",
-		"@mastra/evals": "^0.10.5",
+		"@mastra/evals": "0.0.0-ai-v5-20250710191716",
 		"@mastra/libsql": "0.0.0-ai-v5-20250710191716",
 		"@mastra/memory": "0.0.0-ai-v5-20250710191716",
 		"@mastra/upstash": "0.0.0-ai-v5-20250710191716",

@@ -3,6 +3,19 @@ import { smoothStream } from "ai";
 import { anthropic, anthropicModels } from "../lib/anthropic";
 import { createEnvironmentMemory } from "../lib/memory-factory";
 import { taskWorkingMemorySchema } from "../lib/task-schema-v2";
+import {
+	AnswerRelevancyMetric,
+	BiasMetric,
+	PromptAlignmentMetric,
+	SummarizationMetric,
+	ToxicityMetric,
+} from "@mastra/evals/llm";
+import {
+	CompletenessMetric,
+	ContentSimilarityMetric,
+	KeywordCoverageMetric,
+	ToneConsistencyMetric,
+} from "@mastra/evals/nlp";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../tools/browser-tools";
 import { granularBrowserTools } from "../tools/browser-tools-granular";
 import {
@@ -36,11 +49,14 @@ const agentMemory = createEnvironmentMemory({
 	workingMemorySchema: taskWorkingMemorySchema,
 	workingMemoryDefault: {
 		tasks: [],
-		summary: "No tasks yet",
+		summary: "No tasks yet. Starting fresh.",
 		lastUpdated: new Date().toISOString(),
 	},
 	lastMessages: 50,
 });
+
+// Model for eval judgments
+const evalModel = anthropic("claude-3-5-haiku-20241022");
 
 export const v1Agent = new Agent({
 	name: "V1Agent",
@@ -458,5 +474,43 @@ You are Lightfast Experimental v1.0.0 agent.
 		onFinish: (result) => {
 			console.log(`[V1Agent] Generation finished:`, result);
 		},
+	},
+	evals: {
+		// Accuracy and Reliability Metrics
+		answerRelevancy: new AnswerRelevancyMetric(evalModel, {
+			uncertaintyWeight: 0.3,
+			scale: 1,
+		}),
+		completeness: new CompletenessMetric(),
+
+		// Output Quality Metrics
+		promptAlignment: new PromptAlignmentMetric(evalModel, {
+			scale: 1,
+			instructions: [
+				"Provide helpful and accurate responses",
+				"Be concise but comprehensive",
+				"Use proper technical terminology when applicable",
+			],
+		}),
+		toxicity: new ToxicityMetric(evalModel, {
+			scale: 1,
+		}),
+		bias: new BiasMetric(evalModel, {
+			scale: 1,
+		}),
+		// Note: SummarizationMetric requires both original text and summary
+		// It will fail on general conversational interactions
+		// Consider using conditionally based on the type of interaction
+		// summarization: new SummarizationMetric(evalModel, {
+		// 	scale: 1,
+		// }),
+
+		// Text Quality Metrics
+		tone: new ToneConsistencyMetric(),
+		contentSimilarity: new ContentSimilarityMetric({
+			ignoreCase: true,
+			ignoreWhitespace: true,
+		}),
+		keywordCoverage: new KeywordCoverageMetric(),
 	},
 });

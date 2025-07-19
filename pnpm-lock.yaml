@@ -27,8 +27,8 @@ importers:
         specifier: 0.0.0-ai-v5-20250710191716
         version: 0.0.0-ai-v5-20250710191716(@mastra/core@0.0.0-ai-v5-20250710191716(openapi-types@12.1.3)(zod@3.25.76))(rollup@4.45.1)(typescript@5.8.3)
       '@mastra/evals':
-        specifier: ^0.10.5
-        version: 0.10.5(@mastra/core@0.0.0-ai-v5-20250710191716(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.23(zod@3.25.76))
+        specifier: 0.0.0-ai-v5-20250710191716
+        version: 0.0.0-ai-v5-20250710191716(@mastra/core@0.0.0-ai-v5-20250710191716(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.23(zod@3.25.76))
       '@mastra/libsql':
         specifier: 0.0.0-ai-v5-20250710191716
         version: 0.0.0-ai-v5-20250710191716(@mastra/core@0.0.0-ai-v5-20250710191716(openapi-types@12.1.3)(zod@3.25.76))
@@ -1182,11 +1182,11 @@ packages:
     peerDependencies:
       '@mastra/core': 0.0.0-ai-v5-20250710191716
 
-  '@mastra/evals@0.10.5':
-    resolution: {integrity: sha512-x/9ZTiKi7xvKiB3ahM3nmlD9JailMiLUU0SAdqSUT6s6yivUA4TdgTZSn9g7vBLiq5MkCiBeP/8UghTKzkfscw==}
+  '@mastra/evals@0.0.0-ai-v5-20250710191716':
+    resolution: {integrity: sha512-OAd1mSV3cghpd9oH7NL6I94KM1EXw4MN90KqQ8nEZqE6MZJ/woJMGsrwPHK/UPz2PDSEIb/yJgUz3LFBScdaiA==}
     peerDependencies:
-      '@mastra/core': ^0.10.1-alpha.0
-      ai: ^4.0.0
+      '@mastra/core': 0.0.0-ai-v5-20250710191716
+      ai: 5.0.0-beta.14
 
   '@mastra/libsql@0.0.0-ai-v5-20250710191716':
     resolution: {integrity: sha512-3Hvbh+lptJxg8/C8NONIAB2eHzfbl9lPXQouH0D4xfZbyI5vkPFzB7US5pVsDXPkWnTJ35CCusBtFwdi+ejJ3g==}
@@ -6827,7 +6827,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@mastra/evals@0.10.5(@mastra/core@0.0.0-ai-v5-20250710191716(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.23(zod@3.25.76))':
+  '@mastra/evals@0.0.0-ai-v5-20250710191716(@mastra/core@0.0.0-ai-v5-20250710191716(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.23(zod@3.25.76))':
     dependencies:
       '@mastra/core': 0.0.0-ai-v5-20250710191716(openapi-types@12.1.3)(zod@3.25.76)
       ai: 5.0.0-beta.23(zod@3.25.76)

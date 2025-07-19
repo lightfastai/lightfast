@@ -15,7 +15,7 @@ export const taskWorkingMemorySchema = z.object({
 			}),
 		)
 		.default([]),
-	summary: z.string().optional().describe("Overall progress summary or context"),
+	summary: z.string().describe("Overall progress summary or context"),
 	lastUpdated: z.string().optional().describe("ISO timestamp of last update"),
 });
 

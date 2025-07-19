@@ -9,6 +9,7 @@ import { planner } from "./agents/planner";
 import { sandboxAgent } from "./agents/sandbox";
 import { searcher } from "./agents/searcher";
 import { v1Agent } from "./agents/v1-agent";
+import { v1_1Agent } from "./agents/v1-1-agent";
 import { visionAgent } from "./agents/vision";
 import { voiceAgent } from "./agents/voice";
 import { createEnvironmentStorage } from "./lib/memory-factory";
@@ -30,7 +31,9 @@ export const mastra = new Mastra({
 		Vision: visionAgent,
 		Voice: voiceAgent,
 		V1Agent: v1Agent,
+		V1_1Agent: v1_1Agent,
 		ChatAgent: chatAgent,
 	},
+	storage: storage,
 	aiSdkCompat: "v4",
 });
