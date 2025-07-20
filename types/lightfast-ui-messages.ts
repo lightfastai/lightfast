@@ -1,13 +1,13 @@
 import type { UIMessage } from "ai";
-import type { V1AgentToolSchemas } from "./agent-tool-extraction";
+import type { ExperimentalAgentToolSchemas } from "@/mastra/agents/experimental";
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {
 	[key: string]: any; // Index signature required by UIDataTypes
 }
 
-// Tool schemas extracted from V1Agent
-export type LightfastToolSchemas = V1AgentToolSchemas;
+// Tool schemas extracted from all experimental agents (a010, a011, etc.)
+export type LightfastToolSchemas = ExperimentalAgentToolSchemas;
 
 // Main UIMessage type with our custom generics
 export type LightfastUIMessage = UIMessage<

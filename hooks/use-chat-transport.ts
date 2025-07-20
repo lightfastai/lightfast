@@ -7,15 +7,17 @@ import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface UseChatTransportProps {
 	threadId: string;
+	agentId?: string;
 }
 
 /**
  * Hook that creates and configures a DefaultChatTransport for Mastra integration
  */
-export function useChatTransport({ threadId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
+export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
+		const apiEndpoint = agentId ? `/api/chat/${agentId}/thread/${threadId}` : `/api/chat/thread/${threadId}`;
 		return new DefaultChatTransport<LightfastUIMessage>({
-			api: `/api/chat/thread/${threadId}`,
+			api: apiEndpoint,
 			headers: {
 				"Content-Type": "application/json",
 			},
@@ -42,7 +44,7 @@ export function useChatTransport({ threadId }: UseChatTransportProps): ChatTrans
 				};
 			},
 		});
-	}, [threadId]);
+	}, [threadId, agentId]);
 
 	return transport;
 }

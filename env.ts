@@ -11,16 +11,18 @@ export const env = createEnv({
 		DATABASE_URL: z.string().url().optional(),
 
 		// API Keys
-		ANTHROPIC_API_KEY: z.string().min(1).optional(),
-		EXA_API_KEY: z.string().min(1).optional(),
-		OPENAI_API_KEY: z.string().min(1).optional(),
-		BROWSERBASE_API_KEY: z.string().min(1).optional(),
-		BROWSERBASE_PROJECT_ID: z.string().min(1).optional(),
-		OPENROUTER_API_KEY: z.string().min(1).optional(),
+		ANTHROPIC_API_KEY: z.string().min(1),
+		EXA_API_KEY: z.string().min(1),
+		OPENAI_API_KEY: z.string().min(1),
+		BROWSERBASE_API_KEY: z.string().min(1),
+		BROWSERBASE_PROJECT_ID: z.string().min(1),
+		OPENROUTER_API_KEY: z.string().min(1),
 		ELEVENLABS_API_KEY: z.string().min(1).optional(),
+		BRAINTRUST_API_KEY: z.string().min(1),
+		BRAINTRUST_PROJECT_ID: z.string().min(1),
 
 		// Vercel Blob Storage
-		BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
+		BLOB_READ_WRITE_TOKEN: z.string().min(1),
 
 		// Upstash Redis
 		UPSTASH_REDIS_REST_URL: z.string().url().optional(),
@@ -59,6 +61,8 @@ export const env = createEnv({
 		BROWSERBASE_PROJECT_ID: process.env.BROWSERBASE_PROJECT_ID,
 		OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
 		ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
+		BRAINTRUST_API_KEY: process.env.BRAINTRUST_API_KEY,
+		BRAINTRUST_PROJECT_ID: process.env.BRAINTRUST_PROJECT_ID,
 		BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
 
 		// Upstash Redis

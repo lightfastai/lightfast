@@ -2,6 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
 import { env } from "../../env";
+import { logToolExecution, type ToolEvaluationData } from "../lib/braintrust-utils";
 
 /**
  * Advanced web search tool using Exa API
@@ -45,7 +46,8 @@ export const webSearchTool = createTool({
 		autopromptString: z.string().optional(),
 		tokensEstimate: z.number().describe("Estimated tokens used for content retrieval"),
 	}),
-	execute: async ({ context }) => {
+	execute: async ({ context, threadId, resourceId }) => {
+		const startTime = Date.now();
 		try {
 			const exa = new Exa(env.EXA_API_KEY);
 
@@ -126,14 +128,61 @@ export const webSearchTool = createTool({
 				};
 			});
 
-			return {
+			const result = {
 				results,
 				query: context.query,
 				autopromptString: response.autopromptString,
 				tokensEstimate: Math.ceil(totalCharacters / 4),
 			};
+
+			// Log successful execution to Braintrust
+			const duration = Date.now() - startTime;
+			logToolExecution({
+				tool_name: "web_search",
+				input: {
+					query: context.query,
+					contentType: context.contentType,
+					numResults: context.numResults,
+				},
+				output: {
+					results_count: results.length,
+					tokens_estimate: result.tokensEstimate,
+					total_characters: totalCharacters,
+				},
+				success: true,
+				duration,
+				context: {
+					threadId,
+					resourceId,
+					agentName: "V1Agent",
+				},
+			}).catch(error => console.warn("Braintrust tool logging failed:", error));
+
+			return result;
 		} catch (error) {
 			console.error("Web search error:", error);
+
+			// Log failed execution to Braintrust
+			const duration = Date.now() - startTime;
+			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			
+			logToolExecution({
+				tool_name: "web_search",
+				input: {
+					query: context.query,
+					contentType: context.contentType,
+					numResults: context.numResults,
+				},
+				output: null,
+				success: false,
+				duration,
+				error: errorMessage,
+				context: {
+					threadId,
+					resourceId,
+					agentName: "V1Agent",
+				},
+			}).catch(braintrustError => console.warn("Braintrust tool logging failed:", braintrustError));
 
 			// Handle specific error types with user-friendly messages
 			if (error instanceof Error) {

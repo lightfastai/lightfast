@@ -1,17 +1,24 @@
 import { Mastra } from "@mastra/core";
 import { env } from "../env";
+
+// Experimental agents - Latest versions under active development
+import { a010 } from "./agents/experimental/a010";
+import { a011 } from "./agents/experimental/a011";
+
+// Pure agents - General purpose conversational agents
+import { c010 } from "./agents/pure/c010";
+
+// Standalone agents - Specialized single-purpose agents
 import { artifactAgent } from "./agents/standalone/artifact";
 import { browserAgent } from "./agents/standalone/browser";
-import { chatAgent } from "./agents/pure/chat";
 import { downloadAgent } from "./agents/standalone/download";
 import { mathAgent } from "./agents/standalone/math";
 import { planner } from "./agents/standalone/planner";
 import { sandboxAgent } from "./agents/standalone/sandbox";
 import { searcher } from "./agents/standalone/searcher";
-import { v010 } from "./agents/experimental/v010";
-import { v011 } from "./agents/experimental/v011";
 import { visionAgent } from "./agents/standalone/vision";
 import { voiceAgent } from "./agents/standalone/voice";
+
 import { createEnvironmentStorage } from "./lib/memory-factory";
 
 // Environment-aware storage configuration
@@ -21,18 +28,23 @@ const storage = createEnvironmentStorage();
 
 export const mastra = new Mastra({
 	agents: {
+		// Experimental Agents - Latest experimental versions
+		A010: a010,
+		A011: a011,
+
+		// Pure Agents - General purpose
+		C010: c010,
+
+		// Standalone Agents - Specialized tools
 		Artifact: artifactAgent,
-		Planner: planner,
-		Searcher: searcher,
-		Sandbox: sandboxAgent,
 		Browser: browserAgent,
 		Download: downloadAgent,
 		Math: mathAgent,
+		Planner: planner,
+		Sandbox: sandboxAgent,
+		Searcher: searcher,
 		Vision: visionAgent,
 		Voice: voiceAgent,
-		V010: v010,
-		V011: v011,
-		ChatAgent: chatAgent,
 	},
 	storage: storage,
 	aiSdkCompat: "v4",

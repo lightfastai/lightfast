@@ -2,8 +2,8 @@ import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { anthropic, anthropicModels } from "../../lib/anthropic";
 
-export const chatAgent = new Agent({
-	name: "ChatAgent",
+export const c010 = new Agent({
+	name: "c010",
 	description: "A simple conversational agent without tools for general chat interactions",
 	instructions: `
 You are Claude, an AI assistant created by Anthropic. You communicate clearly and concisely, 
@@ -32,13 +32,13 @@ Key guidelines:
 			chunking: "word",
 		}),
 		onError: ({ error }) => {
-			console.error(`[ChatAgent] Stream error:`, error);
+			console.error(`[c010] Stream error:`, error);
 		},
 		onStepFinish: ({ text }) => {
-			console.log(`[ChatAgent] Step completed`);
+			console.log(`[c010] Step completed`);
 		},
 		onFinish: (result) => {
-			console.log(`[ChatAgent] Generation finished`);
+			console.log(`[c010] Generation finished`);
 		},
 	},
 });

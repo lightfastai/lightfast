@@ -8,23 +8,25 @@ import { VirtuosoChat } from "@/components/virtuoso-chat";
 import { useAgentTasks } from "@/hooks/use-agent-tasks";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
+import type { ExperimentalAgentId } from "@/mastra/agents/experimental";
 
 interface ChatPageProps {
 	params: Promise<{
+		agentId: ExperimentalAgentId;
 		threadId: string;
 	}>;
 }
 
 export default function ChatPage({ params }: ChatPageProps) {
-	const { threadId } = use(params);
+	const { agentId, threadId } = use(params);
 
-	// Fetch agent tasks
-	const { tasks } = useAgentTasks({ threadId, pollingInterval: 3000 });
+	// Fetch agent tasks with agentId
+	const { tasks } = useAgentTasks({ threadId, agentId, pollingInterval: 3000 });
 	console.log(`[UI] Tasks in component:`, tasks);
 	console.log(`[UI] Tasks length in component:`, tasks.length);
 
-	// Create transport for AI SDK v5
-	const transport = useChatTransport({ threadId });
+	// Create transport for AI SDK v5 with agentId
+	const transport = useChatTransport({ threadId, agentId });
 
 	// Use the chat hook with transport and LightfastUIMessage type
 	const {

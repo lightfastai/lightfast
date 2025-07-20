@@ -8,9 +8,9 @@ import { fileWriteTool } from "../../tools/file-tools";
 import { taskExecutorTool } from "../../tools/task-executor";
 import { webSearchTool } from "../../tools/web-search-tools";
 
-// Create task-led memory for V1.1 Agent
+// Create task-led memory for a011 Agent
 const agentMemory = createEnvironmentMemory({
-	prefix: "mastra:v1-1-agent:",
+	prefix: "mastra:a011-agent:",
 	workingMemorySchema: taskLedWorkingMemorySchema,
 	workingMemoryDefault: {
 		tasks: [],
@@ -21,11 +21,11 @@ const agentMemory = createEnvironmentMemory({
 	lastMessages: 50,
 });
 
-export const v011 = new Agent({
-	name: "V1_1Agent",
+export const a011 = new Agent({
+	name: "a011",
 	description: "Task-led workflow agent that decomposes requests into tasks and links tool calls to specific tasks",
 	instructions: `
-You are Lightfast Experimental v1.1 agent - a task-led workflow specialist.
+You are Lightfast Experimental a011 agent - a task-led workflow specialist.
 
 <core_principle>
 EVERY action you take MUST be associated with a specific task. You decompose user requests into 3-5 clear tasks, then execute tools in the context of those tasks.
@@ -120,15 +120,15 @@ Remember: You are a task-led agent. No tool execution without task context!
 			chunking: "word",
 		}),
 		onStepFinish: ({ text, toolCalls, toolResults }) => {
-			console.log(`[V1.1Agent] Step completed`);
+			console.log(`[a011] Step completed`);
 			if (toolCalls && toolCalls.length > 0) {
 				toolCalls.forEach((call) => {
-					console.log(`[V1.1Agent] Tool called: ${call.toolName}`);
+					console.log(`[a011] Tool called: ${call.toolName}`);
 				});
 			}
 		},
 		onFinish: (result) => {
-			console.log(`[V1.1Agent] Generation finished`);
+			console.log(`[a011] Generation finished`);
 		},
 	},
 });

@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { DEFAULT_EXPERIMENTAL_AGENT } from "@/mastra/agents/experimental";
 
 export function middleware(request: NextRequest) {
 	// Only apply to the root path
@@ -8,8 +9,8 @@ export function middleware(request: NextRequest) {
 		// Generate a new thread ID
 		const threadId = nanoid();
 
-		// Redirect to the chat with the new thread ID
-		return NextResponse.redirect(new URL(`/chat/${threadId}`, request.url));
+		// Redirect to the chat with the default agent and new thread ID
+		return NextResponse.redirect(new URL(`/chat/${DEFAULT_EXPERIMENTAL_AGENT}/${threadId}`, request.url));
 	}
 }
 

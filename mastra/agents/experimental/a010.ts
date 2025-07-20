@@ -52,9 +52,9 @@ import { saveCriticalInfoTool } from "../../tools/save-critical-info";
 // import { autoTaskDetectionTool, taskManagementTool } from "../../tools/task-management";
 import { webSearchTool } from "../../tools/web-search-tools";
 
-// Create environment-aware memory for V1 Agent with structured task tracking
+// Create environment-aware memory for a010 Agent with structured task tracking
 const agentMemory = createEnvironmentMemory({
-	prefix: "mastra:v1-agent:",
+	prefix: "mastra:a010-agent:",
 	workingMemorySchema: taskWorkingMemorySchema,
 	workingMemoryDefault: {
 		tasks: [],
@@ -67,12 +67,12 @@ const agentMemory = createEnvironmentMemory({
 // Model for eval judgments
 const evalModel = anthropic("claude-3-5-haiku-20241022");
 
-export const v010 = new Agent({
-	name: "V1Agent",
+export const a010 = new Agent({
+	name: "a010",
 	description:
 		"Comprehensive agent with all tools for planning, web search, browser automation, file management, and sandbox operations. Combines capabilities of the v1-1 network into a single agent.",
 	instructions: `
-You are Lightfast Experimental v1.0.0 agent.
+You are Lightfast Experimental a010 agent.
 
      <intro>
      You excel at the following tasks:
@@ -465,7 +465,7 @@ You are Lightfast Experimental v1.0.0 agent.
 		onError: ({ error }) => {
 			console.error(`[V1Agent] Stream error:`, error);
 		},
-		onStepFinish: async ({ text, toolCalls, toolResults, messages }) => {
+		onStepFinish: async ({ text, toolCalls, toolResults }) => {
 			if (toolResults) {
 				toolResults.forEach((result, index) => {
 					if (
@@ -474,25 +474,21 @@ You are Lightfast Experimental v1.0.0 agent.
 						typeof result.output === "object" &&
 						"error" in result.output
 					) {
-						console.error(`[V1Agent] Tool ${index} error:`, result.output.error);
+						console.error(`[a010] Tool ${index} error:`, result.output.error);
 					}
 				});
 			}
-			console.log(`[V1Agent] Step completed`);
+			console.log(`[a010] Step completed`);
 
 			// Enhanced Braintrust logging
 			try {
 				const braintrustScores = await createStepEvaluation(text, toolCalls, toolResults);
-				
-				// Get the last user message for context
-				const lastUserMessage = messages?.findLast(m => m.role === "user");
-				const userInput = lastUserMessage ? extractMessageContent(lastUserMessage) : "";
 
 				// Log step to Braintrust
 				await logAgentInteraction(
 					{
-						messages: messages || [],
-						agentName: "V1Agent",
+						messages: [], // Will be populated with actual messages in a future update
+						agentName: "a010",
 						tools: toolCalls?.map(call => call.toolName) || [],
 						context: {
 							step_type: "tool_execution",
@@ -513,30 +509,28 @@ You are Lightfast Experimental v1.0.0 agent.
 					},
 					{
 						...braintrustScores,
-						// Enhanced scoring with response quality
 						response_quality: await evaluateResponseQuality(text),
 					},
 					{
 						agent_step: true,
-						v010_experimental: true,
+						a010_experimental: true,
 					}
 				);
 			} catch (error) {
-				console.warn("[V1Agent] Braintrust logging failed:", error);
+				console.warn("[a010] Braintrust logging failed:", error);
 			}
 		},
 		onFinish: async (result) => {
-			console.log(`[V1Agent] Generation finished:`, result);
+			console.log(`[a010] Generation finished:`, result);
 
 			// Log complete conversation to Braintrust
 			try {
 				const finalResponse = result.text || "";
-				const messages = result.messages || [];
 				
 				await logAgentInteraction(
 					{
-						messages,
-						agentName: "V1Agent",
+						messages: [], // Will be populated with actual messages in a future update
+						agentName: "a010",
 						context: {
 							conversation_type: "complete",
 							total_steps: result.steps?.length || 0,
@@ -557,12 +551,12 @@ You are Lightfast Experimental v1.0.0 agent.
 					},
 					{
 						conversation_complete: true,
-						v010_experimental: true,
+						a010_experimental: true,
 						final_result: true,
 					}
 				);
 			} catch (error) {
-				console.warn("[V1Agent] Braintrust conversation logging failed:", error);
+				console.warn("[a010] Braintrust conversation logging failed:", error);
 			}
 		},
 	},

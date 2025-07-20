@@ -3,10 +3,11 @@ import type { Task } from "@/mastra/lib/task-schema";
 
 interface UseAgentTasksOptions {
 	threadId: string;
+	agentId?: string;
 	pollingInterval?: number;
 }
 
-export function useAgentTasks({ threadId, pollingInterval = 5000 }: UseAgentTasksOptions) {
+export function useAgentTasks({ threadId, agentId, pollingInterval = 5000 }: UseAgentTasksOptions) {
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -17,7 +18,8 @@ export function useAgentTasks({ threadId, pollingInterval = 5000 }: UseAgentTask
 		async function fetchTasks() {
 			try {
 				console.log(`[TASKS] Fetching tasks for thread: ${threadId}`);
-				const response = await fetch(`/api/chat/thread/${threadId}/memory`);
+				const apiEndpoint = agentId ? `/api/chat/${agentId}/thread/${threadId}/memory` : `/api/chat/thread/${threadId}/memory`;
+				const response = await fetch(apiEndpoint);
 				if (!response.ok) {
 					throw new Error("Failed to fetch tasks");
 				}
@@ -51,7 +53,7 @@ export function useAgentTasks({ threadId, pollingInterval = 5000 }: UseAgentTask
 		return () => {
 			clearInterval(intervalId);
 		};
-	}, [threadId, pollingInterval]);
+	}, [threadId, agentId, pollingInterval]);
 
 	return { tasks, isLoading, error };
 }

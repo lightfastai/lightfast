@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { mastra } from "@/mastra";
+import { experimentalAgents, type ExperimentalAgentId } from "@/mastra/agents/experimental";
 import {
 	logConversationEvaluation,
 	evaluateTaskCompletion,
@@ -8,32 +9,50 @@ import {
 	type ConversationEvaluationData
 } from "@/mastra/lib/braintrust-utils";
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+	request: NextRequest, 
+	{ params }: { params: Promise<{ agentId: string; id: string }> }
+) {
 	try {
 		const requestBody = await request.json();
 		const { messages, stream = false, threadId: bodyThreadId } = requestBody;
-		const { id: paramsThreadId } = await params;
+		const { agentId, id: paramsThreadId } = await params;
 
+		console.log(`[API] URL param agentId: ${agentId}`);
 		console.log(`[API] URL param threadId: ${paramsThreadId}`);
 		console.log(`[API] Request body threadId: ${bodyThreadId}`);
-		console.log(`[API] Request body keys:`, Object.keys(requestBody));
+
+		// Validate agentId
+		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
+			return Response.json({ 
+				error: `Invalid agent ID: ${agentId}. Valid agents: ${Object.keys(experimentalAgents).join(", ")}` 
+			}, { status: 400 });
+		}
 
 		// Use the threadId from request body if available, otherwise use URL param
 		const threadId = bodyThreadId || paramsThreadId;
 		console.log(`[API] Final threadId: ${threadId}`);
 
-		// Using the A010 agent which has comprehensive tools for all tasks
-		// You can implement logic to select different agents based on thread context
-		const agent = mastra.getAgent("A010");
+		// Get the specific agent based on agentId
+		// Map from experimental agent names to mastra registry keys
+		const agentMap = {
+			a010: "A010",
+			a011: "A011"
+		} as const;
+
+		const mastraAgentKey = agentMap[agentId as ExperimentalAgentId];
+		const agent = mastra.getAgent(mastraAgentKey as keyof typeof mastra["agents"]);
 
 		if (!agent) {
-			return Response.json({ error: "Chat agent not available" }, { status: 500 });
+			return Response.json({ 
+				error: `Agent ${agentId} (${mastraAgentKey}) not available` 
+			}, { status: 500 });
 		}
 
-		// Log available tools for debugging
+		console.log(`[API] Using agent: ${agentId} (${mastraAgentKey})`);
 		console.log(`[API] Agent tools:`, Object.keys(agent.tools || {}));
 
-		// Include threadId in the agent call for proper memory/context handling
+		// Include threadId and agentId in the agent call for proper memory/context handling
 		const options = {
 			threadId,
 			resourceId: threadId, // Using threadId as resourceId for now
@@ -54,7 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 				messages,
 				final_response: streamResult.text || "",
 				thread_id: threadId,
-				agent_name: "A010",
+				agent_name: agentId,
 				duration: endTime - startTime,
 				tool_calls_count: streamResult.steps?.reduce((acc, step) => 
 					acc + (step.toolCalls?.length || 0), 0) || 0,
@@ -74,15 +93,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 	}
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+	request: NextRequest, 
+	{ params }: { params: Promise<{ agentId: string; id: string }> }
+) {
 	try {
-		const { id: threadId } = await params;
+		const { agentId, id: threadId } = await params;
+
+		// Validate agentId
+		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
+			return Response.json({ 
+				error: `Invalid agent ID: ${agentId}` 
+			}, { status: 400 });
+		}
 
 		// This could be used to retrieve thread history or metadata
 		// For now, just return thread info
 		return Response.json({
+			agentId,
 			threadId,
-			message: "Thread endpoint active",
+			message: "Agent thread endpoint active",
 		});
 	} catch (error) {
 		console.error("Thread info error:", error);

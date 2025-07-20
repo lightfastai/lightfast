@@ -1,28 +1,46 @@
 import { NextResponse } from "next/server";
 import { mastra } from "@/mastra";
+import { experimentalAgents, type ExperimentalAgentId } from "@/mastra/agents/experimental";
 
-export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function GET(
+	request: Request, 
+	context: { params: Promise<{ agentId: string; id: string }> }
+) {
 	try {
-		const { id: threadId } = await context.params;
+		const { agentId, id: threadId } = await context.params;
 
-		console.log(`[MEMORY] Request for thread ID: ${threadId}`);
+		console.log(`[MEMORY] Request for agent: ${agentId}, thread ID: ${threadId}`);
 
-		// Get the A010 agent from Mastra (our default agent for now)
-		const agent = mastra.getAgent("A010");
+		// Validate agentId
+		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
+			return NextResponse.json({ 
+				error: `Invalid agent ID: ${agentId}. Valid agents: ${Object.keys(experimentalAgents).join(", ")}` 
+			}, { status: 400 });
+		}
+
+		// Map from experimental agent names to mastra registry keys
+		const agentMap = {
+			a010: "A010",
+			a011: "A011"
+		} as const;
+
+		const mastraAgentKey = agentMap[agentId as ExperimentalAgentId];
+		const agent = mastra.getAgent(mastraAgentKey as keyof typeof mastra["agents"]);
+
 		if (!agent) {
-			console.log(`[MEMORY] Agent not found`);
+			console.log(`[MEMORY] Agent ${agentId} (${mastraAgentKey}) not found`);
 			return NextResponse.json({ error: "Agent not found" }, { status: 404 });
 		}
 
 		// Get the agent's memory
 		const memory = agent.getMemory();
 		if (!memory) {
-			console.log(`[MEMORY] Agent memory not configured`);
+			console.log(`[MEMORY] Agent memory not configured for ${agentId}`);
 			return NextResponse.json({ error: "Agent memory not configured" }, { status: 404 });
 		}
 
 		// Fetch the thread
-		console.log(`[MEMORY] Fetching thread: ${threadId}`);
+		console.log(`[MEMORY] Fetching thread: ${threadId} for agent: ${agentId}`);
 		const thread = await memory.getThreadById({ threadId });
 		console.log(`[MEMORY] Thread found:`, !!thread);
 
@@ -30,6 +48,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 		// This is normal for new conversations that haven't been started yet
 		if (!thread) {
 			return NextResponse.json({
+				agentId,
 				threadId,
 				workingMemory: { tasks: [], lastUpdated: new Date().toISOString() },
 				updatedAt: new Date(),
@@ -48,7 +67,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 		// Find the most recent working memory update
 		let workingMemory = { tasks: [], lastUpdated: new Date().toISOString() };
 
-		console.log(`[Memory] Processing ${messages.length} messages for thread ${threadId}`);
+		console.log(`[Memory] Processing ${messages.length} messages for thread ${threadId} agent ${agentId}`);
 
 		// Look for working memory in assistant messages (template-based working memory)
 		for (let i = messages.length - 1; i >= 0; i--) {
@@ -308,6 +327,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 		}
 
 		return NextResponse.json({
+			agentId,
 			threadId,
 			workingMemory,
 			updatedAt: thread.updatedAt,
