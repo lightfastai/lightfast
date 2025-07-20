@@ -56,3 +56,53 @@ export type ExperimentalAgentToolInput<T extends ExperimentalAgentToolName> =
 
 export type ExperimentalAgentToolOutput<T extends ExperimentalAgentToolName> = 
 	ExperimentalAgentToolSchemas[T]["output"];
+
+/**
+ * Working Memory Schema Extraction for Task Management
+ */
+
+// Import the working memory types from agents
+import type { TaskWorkingMemory as A010WorkingMemory } from "./a010";
+import type { TaskLedWorkingMemory as A011WorkingMemory } from "./a011";
+
+// Map agent IDs to their working memory types
+export interface ExperimentalAgentWorkingMemoryMap {
+	a010: A010WorkingMemory;
+	a011: A011WorkingMemory;
+}
+
+// Extract working memory type for a specific agent
+export type ExperimentalAgentWorkingMemory<T extends ExperimentalAgentId> = 
+	ExperimentalAgentWorkingMemoryMap[T];
+
+// Extract task type for a specific agent
+export type ExperimentalAgentTask<T extends ExperimentalAgentId> = 
+	ExperimentalAgentWorkingMemoryMap[T]["tasks"][number];
+
+// Union of all possible task types
+export type ExperimentalAgentTaskUnion = {
+	[K in ExperimentalAgentId]: ExperimentalAgentTask<K>
+}[ExperimentalAgentId];
+
+// Base task properties that all experimental agents share
+export interface BaseExperimentalTask {
+	id: string;
+	description: string;
+	status: string;
+	priority: "high" | "medium" | "low";
+	notes?: string;
+	createdAt?: string;
+	completedAt?: string;
+}
+
+// Type guard to check if object has task-like properties
+export function isExperimentalTask(obj: unknown): obj is BaseExperimentalTask {
+	return (
+		typeof obj === "object" &&
+		obj !== null &&
+		"id" in obj &&
+		"description" in obj &&
+		"status" in obj &&
+		"priority" in obj
+	);
+}

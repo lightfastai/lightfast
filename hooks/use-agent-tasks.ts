@@ -1,14 +1,39 @@
 import { useEffect, useState } from "react";
-import type { Task } from "@/mastra/agents/types/task";
+import type { 
+	ExperimentalAgentId, 
+	ExperimentalAgentTask,
+	ExperimentalAgentTaskUnion 
+} from "@/mastra/agents/experimental";
 
-interface UseAgentTasksOptions {
+interface UseAgentTasksOptions<T extends ExperimentalAgentId = ExperimentalAgentId> {
 	threadId: string;
-	agentId?: string;
+	agentId?: T;
 	pollingInterval?: number;
 }
 
-export function useAgentTasks({ threadId, agentId, pollingInterval = 5000 }: UseAgentTasksOptions) {
-	const [tasks, setTasks] = useState<Task[]>([]);
+// Overloaded function signatures for better type inference
+export function useAgentTasks<T extends ExperimentalAgentId>(
+	options: UseAgentTasksOptions<T> & { agentId: T }
+): {
+	tasks: ExperimentalAgentTask<T>[];
+	isLoading: boolean;
+	error: string | null;
+};
+
+export function useAgentTasks(
+	options: UseAgentTasksOptions
+): {
+	tasks: ExperimentalAgentTaskUnion[];
+	isLoading: boolean;
+	error: string | null;
+};
+
+export function useAgentTasks<T extends ExperimentalAgentId = ExperimentalAgentId>({ 
+	threadId, 
+	agentId, 
+	pollingInterval = 5000 
+}: UseAgentTasksOptions<T>) {
+	const [tasks, setTasks] = useState<ExperimentalAgentTaskUnion[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 

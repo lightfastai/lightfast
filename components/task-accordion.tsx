@@ -3,15 +3,15 @@
 import { memo, useMemo } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import type { Task, TaskStatusType } from "@/mastra/lib/task-schema";
+import type { ExperimentalAgentTaskUnion } from "@/mastra/agents/experimental";
 
 interface TaskAccordionProps {
-	tasks: Task[];
+	tasks: ExperimentalAgentTaskUnion[];
 	className?: string;
 }
 
-// Status styling configuration
-const statusStyles: Record<TaskStatusType, { bg: string; text: string; border: string }> = {
+// Status styling configuration with support for different agent status types
+const statusStyles: Record<string, { bg: string; text: string; border: string }> = {
 	active: {
 		bg: "bg-blue-50 dark:bg-blue-950/30",
 		text: "text-blue-700 dark:text-blue-300",
@@ -27,6 +27,23 @@ const statusStyles: Record<TaskStatusType, { bg: string; text: string; border: s
 		text: "text-green-700 dark:text-green-300",
 		border: "border-green-200 dark:border-green-800",
 	},
+	pending: {
+		bg: "bg-gray-50 dark:bg-gray-950/30",
+		text: "text-gray-700 dark:text-gray-300",
+		border: "border-gray-200 dark:border-gray-800",
+	},
+	failed: {
+		bg: "bg-red-50 dark:bg-red-950/30",
+		text: "text-red-700 dark:text-red-300",
+		border: "border-red-200 dark:border-red-800",
+	},
+};
+
+// Default style for unknown statuses
+const defaultStatusStyle = {
+	bg: "bg-gray-50 dark:bg-gray-950/30",
+	text: "text-gray-700 dark:text-gray-300",
+	border: "border-gray-200 dark:border-gray-800",
 };
 
 const priorityLabels = {
@@ -36,15 +53,14 @@ const priorityLabels = {
 };
 
 function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
-	// Group tasks by status
+	// Group tasks by status dynamically
 	const groupedTasks = useMemo(() => {
-		const groups = {
-			active: [] as Task[],
-			in_progress: [] as Task[],
-			completed: [] as Task[],
-		};
+		const groups: Record<string, ExperimentalAgentTaskUnion[]> = {};
 
 		tasks.forEach((task) => {
+			if (!groups[task.status]) {
+				groups[task.status] = [];
+			}
 			groups[task.status].push(task);
 		});
 
@@ -53,11 +69,12 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 
 	// Count tasks by status
 	const taskCounts = useMemo(
-		() => ({
-			active: groupedTasks.active.length,
-			in_progress: groupedTasks.in_progress.length,
-			completed: groupedTasks.completed.length,
-			total: tasks.length,
+		() => {
+			const counts: Record<string, number> = { total: tasks.length };
+			Object.entries(groupedTasks).forEach(([status, taskList]) => {
+				counts[status] = taskList.length;
+			});
+			return counts;
 		}),
 		[groupedTasks, tasks.length],
 	);
@@ -72,17 +89,16 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 						<div className="flex items-center justify-between w-full">
 							<span className="text-sm font-medium">Tasks</span>
 							<div className="flex items-center gap-4 mr-2">
-								{taskCounts.active > 0 && (
-									<span className="text-xs text-blue-600 dark:text-blue-400">{taskCounts.active} active</span>
-								)}
-								{taskCounts.in_progress > 0 && (
-									<span className="text-xs text-yellow-600 dark:text-yellow-400">
-										{taskCounts.in_progress} in progress
-									</span>
-								)}
-								{taskCounts.completed > 0 && (
-									<span className="text-xs text-green-600 dark:text-green-400">{taskCounts.completed} completed</span>
-								)}
+								{Object.entries(taskCounts)
+									.filter(([status, count]) => status !== "total" && count > 0)
+									.map(([status, count]) => {
+										const style = statusStyles[status] || defaultStatusStyle;
+										return (
+											<span key={status} className={cn("text-xs", style.text)}>
+												{count} {status.replace("_", " ")}
+											</span>
+										);
+									})}
 							</div>
 						</div>
 					</AccordionTrigger>
@@ -95,41 +111,37 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 							</div>
 						) : (
 							<div className="space-y-3">
-								{/* In Progress Tasks */}
-								{groupedTasks.in_progress.length > 0 && (
-									<div>
-										<h4 className="text-xs font-semibold text-muted-foreground mb-2">IN PROGRESS</h4>
-										<div className="space-y-2">
-											{groupedTasks.in_progress.map((task) => (
-												<TaskItem key={task.id} task={task} />
-											))}
+								{/* Render task groups in priority order */}
+								{["in_progress", "active", "pending", "failed", "completed"]
+									.filter(status => groupedTasks[status]?.length > 0)
+									.map(status => (
+										<div key={status}>
+											<h4 className="text-xs font-semibold text-muted-foreground mb-2">
+												{status.toUpperCase().replace("_", " ")}
+											</h4>
+											<div className="space-y-2">
+												{groupedTasks[status].map((task) => (
+													<TaskItem key={task.id} task={task} />
+												))}
+											</div>
 										</div>
-									</div>
-								)}
-
-								{/* Active Tasks */}
-								{groupedTasks.active.length > 0 && (
-									<div>
-										<h4 className="text-xs font-semibold text-muted-foreground mb-2">ACTIVE</h4>
-										<div className="space-y-2">
-											{groupedTasks.active.map((task) => (
-												<TaskItem key={task.id} task={task} />
-											))}
+									))}
+								
+								{/* Other statuses not in priority list */}
+								{Object.entries(groupedTasks)
+									.filter(([status]) => !["in_progress", "active", "pending", "failed", "completed"].includes(status))
+									.map(([status, statusTasks]) => (
+										<div key={status}>
+											<h4 className="text-xs font-semibold text-muted-foreground mb-2">
+												{status.toUpperCase().replace("_", " ")}
+											</h4>
+											<div className="space-y-2">
+												{statusTasks.map((task) => (
+													<TaskItem key={task.id} task={task} />
+												))}
+											</div>
 										</div>
-									</div>
-								)}
-
-								{/* Completed Tasks */}
-								{groupedTasks.completed.length > 0 && (
-									<div>
-										<h4 className="text-xs font-semibold text-muted-foreground mb-2">COMPLETED</h4>
-										<div className="space-y-2">
-											{groupedTasks.completed.map((task) => (
-												<TaskItem key={task.id} task={task} />
-											))}
-										</div>
-									</div>
-								)}
+									))}
 							</div>
 						)}
 					</AccordionContent>
@@ -139,8 +151,8 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 	);
 }
 
-function TaskItem({ task }: { task: Task }) {
-	const styles = statusStyles[task.status];
+function TaskItem({ task }: { task: ExperimentalAgentTaskUnion }) {
+	const styles = statusStyles[task.status] || defaultStatusStyle;
 
 	return (
 		<div className={cn("p-3 rounded-md border", styles.bg, styles.border)}>
