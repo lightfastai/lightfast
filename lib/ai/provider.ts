@@ -29,19 +29,12 @@ export const anthropicModels = {
 
 // Model aliases for OpenAI
 export const openaiModels = {
-	gpt4: "gpt-4",
-	gpt4Turbo: "gpt-4-turbo",
-	gpt35Turbo: "gpt-3.5-turbo",
-	gpt4o: "gpt-4o",
 	gpt4oMini: "gpt-4o-mini",
 } as const;
 
 // Model aliases for OpenRouter
 export const openrouterModels = {
 	claude4Sonnet: "anthropic/claude-sonnet-4",
-	claude35Sonnet: "anthropic/claude-3.5-sonnet",
-	claude35SonnetLatest: "anthropic/claude-3.5-sonnet-20241022",
-	gpt4o: "openai/gpt-4o",
 	gpt4oMini: "openai/gpt-4o-mini",
 } as const;
 

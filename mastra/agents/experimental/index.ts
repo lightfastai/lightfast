@@ -83,26 +83,3 @@ export type ExperimentalAgentTask<T extends ExperimentalAgentId> =
 export type ExperimentalAgentTaskUnion = {
 	[K in ExperimentalAgentId]: ExperimentalAgentTask<K>
 }[ExperimentalAgentId];
-
-// Base task properties that all experimental agents share
-export interface BaseExperimentalTask {
-	id: string;
-	description: string;
-	status: string;
-	priority: "high" | "medium" | "low";
-	notes?: string;
-	createdAt?: string;
-	completedAt?: string;
-}
-
-// Type guard to check if object has task-like properties
-export function isExperimentalTask(obj: unknown): obj is BaseExperimentalTask {
-	return (
-		typeof obj === "object" &&
-		obj !== null &&
-		"id" in obj &&
-		"description" in obj &&
-		"status" in obj &&
-		"priority" in obj
-	);
-}
