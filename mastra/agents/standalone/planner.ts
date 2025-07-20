@@ -1,7 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { anthropic, anthropicModels } from "@/lib/ai/provider";
 import { saveCriticalInfoTool } from "../../tools/save-critical-info";
 
 // Note: Working memory schemas moved to network level for proper context handling

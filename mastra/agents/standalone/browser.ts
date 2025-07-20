@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { anthropic, anthropicModels } from "@/lib/ai/provider";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
 import { granularBrowserTools } from "../../tools/browser-tools-granular";
 

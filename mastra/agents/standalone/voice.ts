@@ -3,7 +3,7 @@ import { CompositeVoice } from "@mastra/core/voice";
 import { ElevenLabsVoice } from "@mastra/voice-elevenlabs";
 import { OpenAIVoice } from "@mastra/voice-openai";
 import { env } from "../../../env";
-import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { anthropic, anthropicModels } from "@/lib/ai/provider";
 
 // Create voice configuration only if API keys are available
 let voice: CompositeVoice | undefined;

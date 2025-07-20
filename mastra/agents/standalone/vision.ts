@@ -1,7 +1,7 @@
 import { Agent, createTool } from "@mastra/core";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { anthropic, anthropicModels } from "@/lib/ai/provider";
 
 // Schema for vision analysis response
 const visionAnalysisSchema = z.object({

@@ -1,7 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "../../lib/anthropic";
+import { anthropic, anthropicModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
 import { browserExtractTool, browserNavigateTool } from "../../tools/browser-tools";
 import { fileWriteTool } from "../../tools/file-tools";
