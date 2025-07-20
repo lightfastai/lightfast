@@ -68,16 +68,13 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 	}, [tasks]);
 
 	// Count tasks by status
-	const taskCounts = useMemo(
-		() => {
-			const counts: Record<string, number> = { total: tasks.length };
-			Object.entries(groupedTasks).forEach(([status, taskList]) => {
-				counts[status] = taskList.length;
-			});
-			return counts;
-		}),
-		[groupedTasks, tasks.length],
-	);
+	const taskCounts = useMemo(() => {
+		const counts: Record<string, number> = { total: tasks.length };
+		Object.entries(groupedTasks).forEach(([status, taskList]) => {
+			counts[status] = taskList.length;
+		});
+		return counts;
+	}, [groupedTasks, tasks.length]);
 
 	console.log(`[TaskAccordion] Rendering with ${tasks.length} tasks:`, tasks);
 
@@ -113,8 +110,8 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 							<div className="space-y-3">
 								{/* Render task groups in priority order */}
 								{["in_progress", "active", "pending", "failed", "completed"]
-									.filter(status => groupedTasks[status]?.length > 0)
-									.map(status => (
+									.filter((status) => groupedTasks[status]?.length > 0)
+									.map((status) => (
 										<div key={status}>
 											<h4 className="text-xs font-semibold text-muted-foreground mb-2">
 												{status.toUpperCase().replace("_", " ")}
@@ -126,7 +123,7 @@ function TaskAccordionComponent({ tasks, className }: TaskAccordionProps) {
 											</div>
 										</div>
 									))}
-								
+
 								{/* Other statuses not in priority list */}
 								{Object.entries(groupedTasks)
 									.filter(([status]) => !["in_progress", "active", "pending", "failed", "completed"].includes(status))

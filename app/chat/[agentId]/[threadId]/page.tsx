@@ -7,8 +7,8 @@ import { TaskAccordion } from "@/components/task-accordion";
 import { VirtuosoChat } from "@/components/virtuoso-chat";
 import { useAgentTasks } from "@/hooks/use-agent-tasks";
 import { useChatTransport } from "@/hooks/use-chat-transport";
-import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface ChatPageProps {
 	params: Promise<{
@@ -74,7 +74,6 @@ export default function ChatPage({ params }: ChatPageProps) {
 						{/* Task Accordion for empty messages state - only show when tasks exist */}
 						{tasks.length > 0 && (
 							<div className="mb-6">
-								{console.log(`[UI] About to render TaskAccordion in empty state with tasks:`, tasks)}
 								<TaskAccordion tasks={tasks} />
 							</div>
 						)}
@@ -134,7 +133,6 @@ export default function ChatPage({ params }: ChatPageProps) {
 						{/* Task Accordion - only show when tasks exist */}
 						{tasks.length > 0 && (
 							<div className="relative bg-background">
-								{console.log(`[UI] About to render TaskAccordion with tasks:`, tasks)}
 								<TaskAccordion tasks={tasks} />
 							</div>
 						)}

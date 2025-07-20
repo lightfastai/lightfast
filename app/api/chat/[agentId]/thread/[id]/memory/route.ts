@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { mastra } from "@/mastra";
-import { experimentalAgents, type ExperimentalAgentId } from "@/mastra/agents/experimental";
+import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
 
-export async function GET(
-	request: Request, 
-	context: { params: Promise<{ agentId: string; id: string }> }
-) {
+export async function GET(request: Request, context: { params: Promise<{ agentId: string; id: string }> }) {
 	try {
 		const { agentId, id: threadId } = await context.params;
 
@@ -13,19 +10,22 @@ export async function GET(
 
 		// Validate agentId
 		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
-			return NextResponse.json({ 
-				error: `Invalid agent ID: ${agentId}. Valid agents: ${Object.keys(experimentalAgents).join(", ")}` 
-			}, { status: 400 });
+			return NextResponse.json(
+				{
+					error: `Invalid agent ID: ${agentId}. Valid agents: ${Object.keys(experimentalAgents).join(", ")}`,
+				},
+				{ status: 400 },
+			);
 		}
 
 		// Map from experimental agent names to mastra registry keys
 		const agentMap = {
 			a010: "A010",
-			a011: "A011"
+			a011: "A011",
 		} as const;
 
 		const mastraAgentKey = agentMap[agentId as ExperimentalAgentId];
-		const agent = mastra.getAgent(mastraAgentKey as keyof typeof mastra["agents"]);
+		const agent = mastra.getAgent(mastraAgentKey);
 
 		if (!agent) {
 			console.log(`[MEMORY] Agent ${agentId} (${mastraAgentKey}) not found`);
@@ -85,11 +85,12 @@ export async function GET(
 					console.log(`[Memory] Message ${i} has ${message.content.length} content parts`);
 
 					for (const part of message.content) {
-						console.log(`[Memory] Part type: ${part.type}, toolName: ${part.toolName || "N/A"}`);
+						const anyPart = part as any;
+						console.log(`[Memory] Part type: ${part.type}, toolName: ${anyPart.toolName || "N/A"}`);
 
 						// Check for tool calls in content parts
-						if (part.type === "tool-call" && part.toolName === "updateWorkingMemory" && part.args?.memory) {
-							const memoryContent = part.args.memory;
+						if (part.type === "tool-call" && anyPart.toolName === "updateWorkingMemory" && anyPart.args?.memory) {
+							const memoryContent = anyPart.args.memory;
 							console.log(
 								"Found working memory in tool call part:",
 								JSON.stringify(memoryContent).substring(0, 200) + "...",
@@ -213,9 +214,17 @@ export async function GET(
 				// Check for tool results in tool role messages
 				if (message.role === "tool" && message.content && Array.isArray(message.content)) {
 					for (const part of message.content) {
-						if (part.type === "tool-result" && part.toolName === "taskManagement" && part.result?.currentTasks) {
-							console.log("[Memory] Found taskManagement result with", part.result.currentTasks.length, "tasks");
-							const tasks = part.result.currentTasks.map((task: any) => ({
+						if (
+							part.type === "tool-result" &&
+							(part as any).toolName === "taskManagement" &&
+							(part as any).result?.currentTasks
+						) {
+							console.log(
+								"[Memory] Found taskManagement result with",
+								(part as any).result.currentTasks.length,
+								"tasks",
+							);
+							const tasks = (part as any).result.currentTasks.map((task: any) => ({
 								id: task.id,
 								description: task.description,
 								status: task.status,

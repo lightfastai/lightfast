@@ -7,7 +7,7 @@ import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface UseChatTransportProps {
 	threadId: string;
-	agentId?: string;
+	agentId: string;
 }
 
 /**
@@ -15,7 +15,7 @@ interface UseChatTransportProps {
  */
 export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
-		const apiEndpoint = agentId ? `/api/chat/${agentId}/thread/${threadId}` : `/api/chat/thread/${threadId}`;
+		const apiEndpoint = `/api/chat/${agentId}/thread/${threadId}`;
 		return new DefaultChatTransport<LightfastUIMessage>({
 			api: apiEndpoint,
 			headers: {

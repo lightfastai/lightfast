@@ -1,18 +1,15 @@
 import type { NextRequest } from "next/server";
 import { mastra } from "@/mastra";
-import { experimentalAgents, type ExperimentalAgentId } from "@/mastra/agents/experimental";
+import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
 import {
-	logConversationEvaluation,
-	evaluateTaskCompletion,
+	type ConversationEvaluationData,
 	evaluateResponseQuality,
+	evaluateTaskCompletion,
 	extractMessageContent,
-	type ConversationEvaluationData
+	logConversationEvaluation,
 } from "@/mastra/lib/braintrust-utils";
 
-export async function POST(
-	request: NextRequest, 
-	{ params }: { params: Promise<{ agentId: string; id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ agentId: string; id: string }> }) {
 	try {
 		const requestBody = await request.json();
 		const { messages, stream = false, threadId: bodyThreadId } = requestBody;
@@ -24,9 +21,12 @@ export async function POST(
 
 		// Validate agentId
 		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
-			return Response.json({ 
-				error: `Invalid agent ID: ${agentId}. Valid agents: ${Object.keys(experimentalAgents).join(", ")}` 
-			}, { status: 400 });
+			return Response.json(
+				{
+					error: `Invalid agent ID: ${agentId}. Valid agents: ${Object.keys(experimentalAgents).join(", ")}`,
+				},
+				{ status: 400 },
+			);
 		}
 
 		// Use the threadId from request body if available, otherwise use URL param
@@ -37,16 +37,19 @@ export async function POST(
 		// Map from experimental agent names to mastra registry keys
 		const agentMap = {
 			a010: "A010",
-			a011: "A011"
+			a011: "A011",
 		} as const;
 
 		const mastraAgentKey = agentMap[agentId as ExperimentalAgentId];
-		const agent = mastra.getAgent(mastraAgentKey as keyof typeof mastra["agents"]);
+		const agent = mastra.getAgent(mastraAgentKey);
 
 		if (!agent) {
-			return Response.json({ 
-				error: `Agent ${agentId} (${mastraAgentKey}) not available` 
-			}, { status: 500 });
+			return Response.json(
+				{
+					error: `Agent ${agentId} (${mastraAgentKey}) not available`,
+				},
+				{ status: 500 },
+			);
 		}
 
 		console.log(`[API] Using agent: ${agentId} (${mastraAgentKey})`);
@@ -68,21 +71,18 @@ export async function POST(
 
 		// Log conversation-level evaluation to Braintrust (fire and forget)
 		const endTime = Date.now();
-		result.then(streamResult => {
-			logConversationEvaluation({
-				messages,
-				final_response: streamResult.text || "",
-				thread_id: threadId,
-				agent_name: agentId,
-				duration: endTime - startTime,
-				tool_calls_count: streamResult.steps?.reduce((acc, step) => 
-					acc + (step.toolCalls?.length || 0), 0) || 0,
-				success: true,
-			}).catch(error => {
-				console.warn("[API] Braintrust conversation logging failed:", error);
-			});
-		}).catch(error => {
-			console.warn("[API] Failed to access stream result for logging:", error);
+		// Note: Streaming results don't provide text or steps in the same way
+		// Log basic metrics for now
+		logConversationEvaluation({
+			messages,
+			final_response: "",
+			thread_id: threadId,
+			agent_name: agentId,
+			duration: endTime - startTime,
+			tool_calls_count: 0,
+			success: true,
+		}).catch((error: Error) => {
+			console.warn("[API] Braintrust conversation logging failed:", error);
 		});
 
 		// Use the new v5 method toUIMessageStreamResponse
@@ -93,18 +93,18 @@ export async function POST(
 	}
 }
 
-export async function GET(
-	request: NextRequest, 
-	{ params }: { params: Promise<{ agentId: string; id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ agentId: string; id: string }> }) {
 	try {
 		const { agentId, id: threadId } = await params;
 
 		// Validate agentId
 		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
-			return Response.json({ 
-				error: `Invalid agent ID: ${agentId}` 
-			}, { status: 400 });
+			return Response.json(
+				{
+					error: `Invalid agent ID: ${agentId}`,
+				},
+				{ status: 400 },
+			);
 		}
 
 		// This could be used to retrieve thread history or metadata

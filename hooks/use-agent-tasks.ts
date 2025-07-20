@@ -1,37 +1,29 @@
 import { useEffect, useState } from "react";
-import type { 
-	ExperimentalAgentId, 
+import type {
+	ExperimentalAgentId,
 	ExperimentalAgentTask,
-	ExperimentalAgentTaskUnion 
+	ExperimentalAgentTaskUnion,
 } from "@/mastra/agents/experimental";
 
 interface UseAgentTasksOptions<T extends ExperimentalAgentId = ExperimentalAgentId> {
 	threadId: string;
-	agentId?: T;
+	agentId: T;
 	pollingInterval?: number;
 }
 
-// Overloaded function signatures for better type inference
+// Type-safe function signature with required agentId
 export function useAgentTasks<T extends ExperimentalAgentId>(
-	options: UseAgentTasksOptions<T> & { agentId: T }
+	options: UseAgentTasksOptions<T>,
 ): {
 	tasks: ExperimentalAgentTask<T>[];
 	isLoading: boolean;
 	error: string | null;
 };
 
-export function useAgentTasks(
-	options: UseAgentTasksOptions
-): {
-	tasks: ExperimentalAgentTaskUnion[];
-	isLoading: boolean;
-	error: string | null;
-};
-
-export function useAgentTasks<T extends ExperimentalAgentId = ExperimentalAgentId>({ 
-	threadId, 
-	agentId, 
-	pollingInterval = 5000 
+export function useAgentTasks<T extends ExperimentalAgentId = ExperimentalAgentId>({
+	threadId,
+	agentId,
+	pollingInterval = 5000,
 }: UseAgentTasksOptions<T>) {
 	const [tasks, setTasks] = useState<ExperimentalAgentTaskUnion[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +35,7 @@ export function useAgentTasks<T extends ExperimentalAgentId = ExperimentalAgentI
 		async function fetchTasks() {
 			try {
 				console.log(`[TASKS] Fetching tasks for thread: ${threadId}`);
-				const apiEndpoint = agentId ? `/api/chat/${agentId}/thread/${threadId}/memory` : `/api/chat/thread/${threadId}/memory`;
+				const apiEndpoint = `/api/chat/${agentId}/thread/${threadId}/memory`;
 				const response = await fetch(apiEndpoint);
 				if (!response.ok) {
 					throw new Error("Failed to fetch tasks");

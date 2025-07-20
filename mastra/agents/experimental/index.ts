@@ -51,10 +51,9 @@ export type ExperimentalAgentToolSchemas = A010Tools & A011Tools;
 // Utility types for working with tools
 export type ExperimentalAgentToolName = keyof ExperimentalAgentToolSchemas;
 
-export type ExperimentalAgentToolInput<T extends ExperimentalAgentToolName> = 
-	ExperimentalAgentToolSchemas[T]["input"];
+export type ExperimentalAgentToolInput<T extends ExperimentalAgentToolName> = ExperimentalAgentToolSchemas[T]["input"];
 
-export type ExperimentalAgentToolOutput<T extends ExperimentalAgentToolName> = 
+export type ExperimentalAgentToolOutput<T extends ExperimentalAgentToolName> =
 	ExperimentalAgentToolSchemas[T]["output"];
 
 /**
@@ -72,14 +71,13 @@ export interface ExperimentalAgentWorkingMemoryMap {
 }
 
 // Extract working memory type for a specific agent
-export type ExperimentalAgentWorkingMemory<T extends ExperimentalAgentId> = 
-	ExperimentalAgentWorkingMemoryMap[T];
+export type ExperimentalAgentWorkingMemory<T extends ExperimentalAgentId> = ExperimentalAgentWorkingMemoryMap[T];
 
 // Extract task type for a specific agent
-export type ExperimentalAgentTask<T extends ExperimentalAgentId> = 
+export type ExperimentalAgentTask<T extends ExperimentalAgentId> =
 	ExperimentalAgentWorkingMemoryMap[T]["tasks"][number];
 
 // Union of all possible task types
 export type ExperimentalAgentTaskUnion = {
-	[K in ExperimentalAgentId]: ExperimentalAgentTask<K>
+	[K in ExperimentalAgentId]: ExperimentalAgentTask<K>;
 }[ExperimentalAgentId];

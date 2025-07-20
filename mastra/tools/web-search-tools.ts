@@ -156,7 +156,7 @@ export const webSearchTool = createTool({
 					resourceId,
 					agentName: "V1Agent",
 				},
-			}).catch(error => console.warn("Braintrust tool logging failed:", error));
+			}).catch((error) => console.warn("Braintrust tool logging failed:", error));
 
 			return result;
 		} catch (error) {
@@ -165,7 +165,7 @@ export const webSearchTool = createTool({
 			// Log failed execution to Braintrust
 			const duration = Date.now() - startTime;
 			const errorMessage = error instanceof Error ? error.message : "Unknown error";
-			
+
 			logToolExecution({
 				tool_name: "web_search",
 				input: {
@@ -182,7 +182,7 @@ export const webSearchTool = createTool({
 					resourceId,
 					agentName: "V1Agent",
 				},
-			}).catch(braintrustError => console.warn("Braintrust tool logging failed:", braintrustError));
+			}).catch((braintrustError) => console.warn("Braintrust tool logging failed:", braintrustError));
 
 			// Handle specific error types with user-friendly messages
 			if (error instanceof Error) {

@@ -1,17 +1,4 @@
 import { Agent } from "@mastra/core/agent";
-import { smoothStream } from "ai";
-import { z } from "zod";
-import { anthropic, anthropicModels } from "@/lib/ai/provider";
-import { createEnvironmentMemory } from "../../lib/memory-factory";
-import {
-	logAgentInteraction,
-	createStepEvaluation,
-	evaluateResponseQuality,
-	extractMessageContent,
-	createProjectConfig,
-	type AgentEvaluationInput,
-	type AgentEvaluationOutput
-} from "../../lib/braintrust-utils";
 import {
 	AnswerRelevancyMetric,
 	BiasMetric,
@@ -25,6 +12,19 @@ import {
 	KeywordCoverageMetric,
 	ToneConsistencyMetric,
 } from "@mastra/evals/nlp";
+import { smoothStream } from "ai";
+import { z } from "zod";
+import { anthropic, anthropicModels } from "@/lib/ai/provider";
+import {
+	type AgentEvaluationInput,
+	type AgentEvaluationOutput,
+	createProjectConfig,
+	createStepEvaluation,
+	evaluateResponseQuality,
+	extractMessageContent,
+	logAgentInteraction,
+} from "../../lib/braintrust-utils";
+import { createEnvironmentMemory } from "../../lib/memory-factory";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
 import { granularBrowserTools } from "../../tools/browser-tools-granular";
 import {
@@ -510,23 +510,24 @@ You are Lightfast Experimental a010 agent.
 					{
 						messages: [], // Will be populated with actual messages in a future update
 						agentName: "a010",
-						tools: toolCalls?.map(call => call.toolName) || [],
+						tools: toolCalls?.map((call) => call.toolName) || [],
 						context: {
 							step_type: "tool_execution",
 							tools_used: toolCalls?.length || 0,
-						}
+						},
 					},
 					{
 						response: text,
-						tool_calls: toolCalls?.map((call, index) => ({
-							name: call.toolName,
-							result: toolResults?.[index],
-							success: toolResults?.[index] !== null,
-						})) || [],
+						tool_calls:
+							toolCalls?.map((call, index) => ({
+								name: call.toolName,
+								result: toolResults?.[index],
+								success: toolResults?.[index] !== null,
+							})) || [],
 						metadata: {
 							tools_count: toolCalls?.length || 0,
 							step_timestamp: new Date().toISOString(),
-						}
+						},
 					},
 					{
 						...braintrustScores,
@@ -535,7 +536,7 @@ You are Lightfast Experimental a010 agent.
 					{
 						agent_step: true,
 						a010_experimental: true,
-					}
+					},
 				);
 			} catch (error) {
 				console.warn("[a010] Braintrust logging failed:", error);
@@ -547,7 +548,7 @@ You are Lightfast Experimental a010 agent.
 			// Log complete conversation to Braintrust
 			try {
 				const finalResponse = result.text || "";
-				
+
 				await logAgentInteraction(
 					{
 						messages: [], // Will be populated with actual messages in a future update
@@ -555,7 +556,7 @@ You are Lightfast Experimental a010 agent.
 						context: {
 							conversation_type: "complete",
 							total_steps: result.steps?.length || 0,
-						}
+						},
 					},
 					{
 						response: finalResponse,
@@ -564,7 +565,7 @@ You are Lightfast Experimental a010 agent.
 							completion_timestamp: new Date().toISOString(),
 							total_tokens: result.usage?.totalTokens || 0,
 							steps_count: result.steps?.length || 0,
-						}
+						},
 					},
 					{
 						task_completion: 1, // Assume completion if onFinish is called
@@ -574,7 +575,7 @@ You are Lightfast Experimental a010 agent.
 						conversation_complete: true,
 						a010_experimental: true,
 						final_result: true,
-					}
+					},
 				);
 			} catch (error) {
 				console.warn("[a010] Braintrust conversation logging failed:", error);
