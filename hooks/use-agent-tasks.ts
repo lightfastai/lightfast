@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Task } from "@/mastra/lib/task-schema";
+import type { Task } from "@/mastra/agents/types/task";
 
 interface UseAgentTasksOptions {
 	threadId: string;

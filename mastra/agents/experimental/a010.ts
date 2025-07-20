@@ -1,8 +1,8 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
+import { z } from "zod";
 import { anthropic, anthropicModels } from "../../lib/anthropic";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
-import { taskWorkingMemorySchema } from "../../lib/task-schema-v2";
 import {
 	logAgentInteraction,
 	createStepEvaluation,
@@ -51,6 +51,27 @@ import {
 import { saveCriticalInfoTool } from "../../tools/save-critical-info";
 // import { autoTaskDetectionTool, taskManagementTool } from "../../tools/task-management";
 import { webSearchTool } from "../../tools/web-search-tools";
+
+// Schema for structured task management in working memory
+const taskWorkingMemorySchema = z.object({
+	tasks: z
+		.array(
+			z.object({
+				id: z.string().describe("Unique task identifier (e.g., TASK-001)"),
+				description: z.string().describe("Clear description of what needs to be done"),
+				status: z.enum(["active", "in_progress", "completed"]).describe("Current status of the task"),
+				priority: z.enum(["high", "medium", "low"]).describe("Task priority level"),
+				notes: z.string().optional().describe("Additional context or progress notes"),
+				createdAt: z.string().optional().describe("ISO timestamp when task was created"),
+				completedAt: z.string().optional().describe("ISO timestamp when task was completed"),
+			}),
+		)
+		.default([]),
+	summary: z.string().describe("Overall progress summary or context"),
+	lastUpdated: z.string().optional().describe("ISO timestamp of last update"),
+});
+
+export type TaskWorkingMemory = z.infer<typeof taskWorkingMemorySchema>;
 
 // Create environment-aware memory for a010 Agent with structured task tracking
 const agentMemory = createEnvironmentMemory({
