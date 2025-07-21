@@ -1,11 +1,11 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { UserButton } from "@clerk/nextjs";
 import { use, useEffect } from "react";
 import { AgentSelector } from "@/components/agent-selector";
 import { ChatInput } from "@/components/chat-input";
 import { VirtuosoChat } from "@/components/virtuoso-chat";
+import { UserDropdown } from "@/components/user-dropdown";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
@@ -56,13 +56,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 			{/* Top bar with agent selector and user button */}
 			<div className="absolute top-4 left-6 right-6 z-20 flex items-center justify-between">
 				<AgentSelector />
-				<UserButton
-					appearance={{
-						elements: {
-							avatarBox: "h-8 w-8",
-						},
-					}}
-				/>
+				<UserDropdown />
 			</div>
 
 			{messages.length === 0 ? (

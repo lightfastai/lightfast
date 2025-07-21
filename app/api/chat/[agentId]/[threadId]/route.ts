@@ -1,5 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
+import { JsonToSseTransformStream } from "ai";
 import type { NextRequest } from "next/server";
+import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-context";
 import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
 
@@ -67,10 +69,43 @@ export async function POST(
 
 		console.log(`[API] Agent options:`, options);
 
+		// Get resumable stream context
+		const streamContext = getStreamContext();
+		const streamId = generateStreamId(agentId, threadId);
+
 		// Always use streaming with AI SDK v5
 		const result = await agent.stream(messages, options);
 
-		// Use the new v5 method toUIMessageStreamResponse
+		// If resumable streams are available, use them
+		if (streamContext) {
+			// Get the UI message stream response first
+			const response = result.toUIMessageStreamResponse();
+
+			// Extract the readable stream from the response body
+			if (response.body) {
+				// Transform the byte stream to text stream for resumable-stream
+				const textStream = response.body.pipeThrough(new TextDecoderStream());
+
+				// Create resumable stream
+				const resumableStream = await streamContext.resumableStream(streamId, () => textStream);
+
+				if (resumableStream) {
+					// Convert back to byte stream for Response
+					const byteStream = resumableStream.pipeThrough(new TextEncoderStream());
+
+					return new Response(byteStream, {
+						headers: {
+							"Content-Type": "text/event-stream",
+							"Cache-Control": "no-cache",
+							Connection: "keep-alive",
+							"X-Stream-Id": streamId, // Include stream ID in response header
+						},
+					});
+				}
+			}
+		}
+
+		// Fallback to regular streaming if resumable streams aren't available
 		return result.toUIMessageStreamResponse();
 	} catch (error) {
 		console.error("Chat error:", error);
