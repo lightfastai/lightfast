@@ -1,14 +1,16 @@
+import type { Agent } from "@mastra/core";
 import type { z } from "zod";
 import { a010 } from "./a010";
 import { a011 } from "./a011";
 
 /**
  * All experimental agents with their exports
+ * Strongly typed for better IDE support and type inference
  */
 export const experimentalAgents = {
 	a010,
 	a011,
-} as const;
+} as const satisfies Record<string, Agent<any, any, any>>;
 
 /**
  * Type representing all available experimental agent IDs
@@ -64,6 +66,10 @@ export type ExperimentalAgentToolOutput<T extends ExperimentalAgentToolName> =
 import type { TaskWorkingMemory as A010WorkingMemory } from "./a010";
 import type { SimplifiedWorkingMemory as A011WorkingMemory } from "./a011";
 
+// Re-export working memory types for external use
+export type { TaskWorkingMemory as A010WorkingMemory } from "./a010";
+export type { SimplifiedWorkingMemory as A011WorkingMemory } from "./a011";
+
 // Map agent IDs to their working memory types
 export interface ExperimentalAgentWorkingMemoryMap {
 	a010: A010WorkingMemory;
@@ -80,3 +86,22 @@ export type ExperimentalAgentTask<T extends ExperimentalAgentId> = T extends "a0
 
 // Union of all possible task types (only from agents that have tasks)
 export type ExperimentalAgentTaskUnion = ExperimentalAgentTask<"a010">;
+
+/**
+ * Agent Instance Types for Runtime Type Safety
+ */
+export type A010Agent = typeof a010;
+export type A011Agent = typeof a011;
+
+// Get the tools type from an agent
+export type AgentTools<T extends ExperimentalAgentId> = (typeof experimentalAgents)[T]["tools"];
+
+// Get generate options type for a specific agent
+export type AgentGenerateOptionsFor<T extends ExperimentalAgentId> = Parameters<
+	(typeof experimentalAgents)[T]["generate"]
+>[1];
+
+// Get the result type from agent.generate()
+export type AgentGenerateResult<T extends ExperimentalAgentId> = Awaited<
+	ReturnType<(typeof experimentalAgents)[T]["generate"]>
+>;

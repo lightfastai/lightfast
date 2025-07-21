@@ -442,7 +442,6 @@ export const a010 = new Agent({
 		// Web research
 		webSearch: webSearchTool,
 
-
 		// Download capabilities
 		downloadFile: downloadFileTool,
 		downloadDirectFile: downloadDirectFileTool,
