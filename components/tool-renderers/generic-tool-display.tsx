@@ -4,6 +4,8 @@ import { AlertCircle, CheckCircle2, Loader2, Settings, Sparkles } from "lucide-r
 import { memo } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 
 export interface GenericToolDisplayProps {
 	toolPart: any;
@@ -86,13 +88,8 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 				<AccordionItem value={accordionValue}>
 					<AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50 items-center">
 						<div className="flex items-center gap-2 flex-1">
-							{getIcon()}
 							<div className="text-left flex-1">
 								<div className="font-medium text-xs text-muted-foreground">{toolName}</div>
-								<div className="text-xs text-muted-foreground/70">
-									{getStatusLabel()}
-									{toolPart.toolCallId && <span className="ml-1">• #{toolPart.toolCallId}</span>}
-								</div>
 							</div>
 						</div>
 					</AccordionTrigger>
@@ -101,8 +98,17 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 						{toolPart.input && (
 							<div className="pt-3">
 								<h4 className="text-xs font-medium text-muted-foreground mb-2">Input Parameters</h4>
-								<div className="bg-muted/50 rounded-md p-3 overflow-x-auto">
-									<pre className="text-xs font-mono whitespace-pre">{JSON.stringify(toolPart.input, null, 2)}</pre>
+								<div className="bg-muted/50 rounded-md overflow-hidden">
+									<ScrollAreaPrimitive.Root className="relative max-h-[300px] overflow-hidden">
+										<ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+											<pre className="text-xs font-mono whitespace-pre p-3">
+												{JSON.stringify(toolPart.input, null, 2)}
+											</pre>
+										</ScrollAreaPrimitive.Viewport>
+										<ScrollBar orientation="vertical" />
+										<ScrollBar orientation="horizontal" />
+										<ScrollAreaPrimitive.Corner />
+									</ScrollAreaPrimitive.Root>
 								</div>
 							</div>
 						)}
@@ -111,10 +117,17 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 						{state === "output-available" && toolPart.output && (
 							<div className="pt-3">
 								<h4 className="text-xs font-medium text-muted-foreground mb-2">Output</h4>
-								<div className="bg-muted/50 rounded-md p-3 overflow-x-auto">
-									<pre className="text-xs font-mono whitespace-pre">
-										{typeof toolPart.output === "string" ? toolPart.output : JSON.stringify(toolPart.output, null, 2)}
-									</pre>
+								<div className="bg-muted/50 rounded-md overflow-hidden">
+									<ScrollAreaPrimitive.Root className="relative max-h-[300px] overflow-hidden">
+										<ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+											<pre className="text-xs font-mono whitespace-pre p-3">
+												{typeof toolPart.output === "string" ? toolPart.output : JSON.stringify(toolPart.output, null, 2)}
+											</pre>
+										</ScrollAreaPrimitive.Viewport>
+										<ScrollBar orientation="vertical" />
+										<ScrollBar orientation="horizontal" />
+										<ScrollAreaPrimitive.Corner />
+									</ScrollAreaPrimitive.Root>
 								</div>
 							</div>
 						)}

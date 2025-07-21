@@ -5,9 +5,10 @@ import { use, useEffect } from "react";
 import { ChatInput } from "@/components/chat-input";
 import { TaskAccordion } from "@/components/task-accordion";
 import { VirtuosoChat } from "@/components/virtuoso-chat";
+import { AgentSelector } from "@/components/agent-selector";
 import { useAgentTasks } from "@/hooks/use-agent-tasks";
 import { useChatTransport } from "@/hooks/use-chat-transport";
-import type { ExperimentalAgentId } from "@/mastra/agents/experimental";
+import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface ChatPageProps {
@@ -58,9 +59,9 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 	return (
 		<main className="flex h-screen flex-col relative">
-			{/* Header text positioned absolutely */}
+			{/* Agent selector positioned absolutely */}
 			<div className="absolute top-4 left-6 z-20">
-				<p className="text-xs text-muted-foreground">This is an experiment by Lightfast. Use with discretion.</p>
+				<AgentSelector />
 			</div>
 
 			{messages.length === 0 ? (
@@ -175,6 +176,9 @@ export default function ChatPage({ params }: ChatPageProps) {
 								placeholder="Type your message..."
 								disabled={isLoading}
 							/>
+							<p className="text-xs text-muted-foreground text-center mt-2">
+								This is an experiment by Lightfast. Use with discretion.
+							</p>
 						</div>
 					</div>
 				</div>
