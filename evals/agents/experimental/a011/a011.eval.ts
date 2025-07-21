@@ -4,15 +4,27 @@
  */
 
 import type { CoreMessage, GenerateTextResult, StepResult, ToolCallUnion, ToolSet } from "ai";
-import { Eval, type EvalScorer, type EvalScorerArgs, type BaseMetadata, type DefaultMetadataType } from "braintrust";
+import { type BaseMetadata, type DefaultMetadataType, Eval, type EvalScorer, type EvalScorerArgs } from "braintrust";
 import type { z } from "zod";
+import { type ExperimentResult, ExperimentTracker } from "../../../lib/experiment-tracker";
 
 // Define Score type based on braintrust's expected format
 type Score = { name: string; score: number | null };
+
 import type { SimplifiedWorkingMemory } from "../../../../mastra/agents/experimental/a011";
 import { a011 } from "../../../../mastra/agents/experimental/a011";
 
-console.log("🎯 a011 Type-Safe Mastra Integration Evaluation\n");
+// Experiment configuration
+const EXPERIMENT_NAME = process.env.EXPERIMENT_NAME || "a011-" + new Date().toISOString().split("T")[0];
+const GIT_COMMIT = process.env.GIT_COMMIT || "25fa02e";
+const SET_BASELINE = process.env.SET_BASELINE === "true";
+
+// Initialize experiment tracker
+const tracker = new ExperimentTracker("a011");
+
+console.log("🎯 a011 Type-Safe Mastra Integration Evaluation");
+console.log("📊 Experiment: " + EXPERIMENT_NAME);
+console.log("🔖 Git Commit: " + GIT_COMMIT + "\n");
 
 // Type-safe test scenario interface
 interface TestScenario {
@@ -141,7 +153,10 @@ async function executeA011Agent(input: string, scenario?: TestScenario): Promise
 		};
 
 		// Execute with full type safety
-		const result = await a011.generate(messages, generateOptions as Parameters<typeof a011.generate>[1]) as GenerateTextResult<ToolSet, unknown>;
+		const result = (await a011.generate(
+			messages,
+			generateOptions as Parameters<typeof a011.generate>[1],
+		)) as GenerateTextResult<ToolSet, unknown>;
 
 		const duration = Date.now() - startTime;
 
@@ -391,8 +406,40 @@ function calculateTaskManagementScore(result: ExecutionResult, metadata?: TestSc
 	return 0.3;
 }
 
+// Calculate aggregate score from all dimensions
+function calculateAggregateScore(scores: ScoringResult): number {
+	// Weighted average of all scores
+	const weights = {
+		task_completion: 0.25,
+		output_quality: 0.15,
+		relevancy: 0.15,
+		error_handling: 0.1,
+		tool_usage_accuracy: 0.15,
+		performance: 0.1,
+		task_management: 0.1,
+	};
+
+	let weightedSum = 0;
+	let totalWeight = 0;
+
+	for (const [dimension, weight] of Object.entries(weights)) {
+		const score = scores[dimension as keyof ScoringResult];
+		if (typeof score === "number" && !isNaN(score)) {
+			weightedSum += score * weight;
+			totalWeight += weight;
+		}
+	}
+
+	return totalWeight > 0 ? weightedSum / totalWeight : 0;
+}
+
+// Store scores for experiment tracking
+const collectedScores: Record<string, Record<string, number>> = {};
+const collectedAggregates: Record<string, number> = {};
+let testCaseIndex = 0;
+
 // Main Braintrust evaluation with type safety
-Eval("a011-typesafe-mastra-integration", {
+Eval(EXPERIMENT_NAME, {
 	data: a011TestScenarios,
 
 	task: async (testCase: TestScenario | string): Promise<{ output: string; metrics: ExecutionResult }> => {
@@ -421,13 +468,21 @@ Eval("a011-typesafe-mastra-integration", {
 	},
 
 	scores: [
-		(args: EvalScorerArgs<TestScenario | string, { output: string; metrics: ExecutionResult }, string, BaseMetadata>) => {
+		(
+			args: EvalScorerArgs<TestScenario | string, { output: string; metrics: ExecutionResult }, string, BaseMetadata>,
+		) => {
 			const { input: testCase, output: taskOutput } = args;
 			console.log(`\n[SCORE] ====== Scoring Test Case ======`);
 
 			// Extract the actual result from task output
-			const output = typeof taskOutput === 'object' && taskOutput !== null && 'output' in taskOutput ? taskOutput.output : taskOutput;
-			const metrics: ExecutionResult | undefined = typeof taskOutput === 'object' && taskOutput !== null && 'metrics' in taskOutput ? taskOutput.metrics : undefined;
+			const output =
+				typeof taskOutput === "object" && taskOutput !== null && "output" in taskOutput
+					? taskOutput.output
+					: taskOutput;
+			const metrics: ExecutionResult | undefined =
+				typeof taskOutput === "object" && taskOutput !== null && "metrics" in taskOutput
+					? taskOutput.metrics
+					: undefined;
 
 			if (!output || typeof output !== "string") {
 				console.log(`[SCORE] Invalid output format, returning zero scores`);
@@ -465,27 +520,44 @@ Eval("a011-typesafe-mastra-integration", {
 			};
 
 			const scores = scoreA011Performance(testCase, result);
-			console.log(`[SCORE] ====== Scoring Complete ======\n`);
+			const aggregateScore = calculateAggregateScore(scores);
+
+			console.log("[SCORE] Aggregate Score: " + aggregateScore.toFixed(3));
+			console.log("[SCORE] ====== Scoring Complete ======\n");
+
+			// Collect scores for experiment tracking
+			const testCaseName = "test_" + testCaseIndex++;
+			collectedScores[testCaseName] = { ...scores }; // Spread to ensure it's a plain object
+			collectedAggregates[testCaseName] = aggregateScore;
 
 			// Convert to Braintrust Score format - return an array of score objects
-			return Object.entries(scores).map(([name, score]) => ({
+			const scoreArray: Score[] = Object.entries(scores).map(([name, score]) => ({
 				name,
 				score,
 			}));
+
+			// Add aggregate score to the array
+			scoreArray.push({ name: "aggregate", score: aggregateScore });
+
+			return scoreArray;
 		},
 	],
 
 	metadata: {
 		description: "Type-safe Mastra integration evaluation for a011 task management agent",
-		version: "2.0.0",
+		version: "2.1.0",
 		agent: "a011",
 		framework: "mastra",
+		experimentName: EXPERIMENT_NAME,
+		gitCommit: GIT_COMMIT,
 		features: [
 			"Full type safety with Mastra types",
 			"Thread and resource ID tracking",
 			"Comprehensive tool usage metrics",
 			"Detailed scoring across 7 dimensions",
 			"Memory integration support",
+			"Aggregate scoring",
+			"Performance tracking over time",
 		],
 		timestamp: new Date().toISOString(),
 	},
@@ -513,3 +585,50 @@ Features:
 
 Run: pnpm eval:a011:dev
 `);
+
+// After evaluation completes, save results and compare
+setTimeout(() => {
+	// Calculate overall aggregate
+	const overallAggregate =
+		Object.values(collectedAggregates).length > 0
+			? Object.values(collectedAggregates).reduce((sum, score) => sum + score, 0) /
+				Object.values(collectedAggregates).length
+			: 0;
+
+	const experimentResult: ExperimentResult = {
+		experimentName: EXPERIMENT_NAME,
+		gitCommit: GIT_COMMIT,
+		timestamp: new Date().toISOString(),
+		agent: "a011",
+		scores: collectedScores,
+		aggregateScores: collectedAggregates,
+		overallAggregate,
+		metadata: {
+			version: "2.1.0",
+			framework: "mastra",
+			testCases: a011TestScenarios.length,
+		},
+	};
+
+	// Save results
+	tracker.saveResults(experimentResult);
+
+	// Set as baseline if requested
+	if (SET_BASELINE) {
+		tracker.setBaseline(EXPERIMENT_NAME);
+		console.log("\n✅ This experiment has been set as the baseline for future comparisons");
+	} else {
+		// Compare to baseline
+		const comparison = tracker.compareToBaseline(experimentResult);
+		tracker.printComparison(comparison);
+	}
+
+	// Show recent experiments
+	console.log("\n📈 Recent Experiments:");
+	const recent = tracker.getRecentExperiments(5);
+	for (const exp of recent) {
+		console.log(
+			"   " + exp.experimentName + " - Aggregate: " + exp.overallAggregate.toFixed(3) + " (" + exp.timestamp + ")",
+		);
+	}
+}, 5000); // Wait 5 seconds for evaluation to complete

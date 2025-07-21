@@ -2,7 +2,7 @@
  * Type-safe utilities for agent evaluations with Mastra integration
  */
 
-import type { Agent, Metric } from "@mastra/core";
+import type { Agent, Metric, ToolAction } from "@mastra/core";
 import type { CoreMessage, GenerateTextResult, StepResult, ToolCallUnion, ToolSet } from "ai";
 import type { z } from "zod";
 
@@ -58,16 +58,19 @@ export interface BaseExecutionResult {
 /**
  * Extract tool names from an agent's tools
  */
-export type ExtractToolNames<TTools> = TTools extends Record<string, unknown> ? keyof TTools & string : never;
+export type ExtractToolNames<TTools extends ToolsInput> = keyof TTools & string;
 
 /**
  * Create a type-safe agent executor
  */
+// Type aliases for Mastra's input types
+type ToolsInput = Record<string, ToolAction<any, any, any>>;
+type MetricsInput = Record<string, Metric>;
+
 // The Agent type from Mastra has complex generic constraints for tools (ToolAction) and metrics
-// Rather than importing all internal types, we use a simplified constraint that maintains type safety
-// while being compatible with the actual agent instances
+// We use proper type aliases to match Mastra's expectations
 export function createAgentExecutor<
-	TAgent extends Agent<string, Record<string, unknown>, Record<string, unknown>>,
+	TAgent extends Agent<string, ToolsInput, MetricsInput>,
 	TResult extends BaseExecutionResult = BaseExecutionResult,
 >(agent: TAgent) {
 	return async function executeAgent(
@@ -106,7 +109,7 @@ export function createAgentExecutor<
 			} satisfies Partial<AgentGenerateOptions>;
 
 			// Execute agent with proper typing
-			const result = await agent.generate(messages, generateOptions) as GenerateTextResult<ToolSet, unknown>;
+			const result = (await agent.generate(messages, generateOptions)) as GenerateTextResult<ToolSet, unknown>;
 			const duration = Date.now() - startTime;
 
 			// Extract results

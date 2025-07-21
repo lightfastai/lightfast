@@ -17,7 +17,11 @@
 		"clean": "rm -rf .next .mastra node_modules tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
 		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
 		"eval:a011": "pnpm with-env npx braintrust eval --no-send-logs evals/agents/experimental/a011/a011.eval.ts",
-		"eval:a011:dev": "pnpm with-env npx braintrust eval --dev --dev-port 8300 evals/agents/experimental/a011/a011.eval.ts"
+		"eval:a011:dev": "pnpm with-env npx braintrust eval --dev --dev-port 8300 evals/agents/experimental/a011/a011.eval.ts",
+		"eval:a011:baseline": "SET_BASELINE=true pnpm eval:a011:dev",
+		"eval:experiments": "tsx evals/scripts/experiment-cli.ts",
+		"eval:list": "tsx evals/scripts/experiment-cli.ts a011 list",
+		"eval:baseline": "tsx evals/scripts/experiment-cli.ts a011 baseline"
 	},
 	"keywords": [],
 	"author": "",
