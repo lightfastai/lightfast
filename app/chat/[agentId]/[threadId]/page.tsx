@@ -1,20 +1,10 @@
-"use client";
-
-import { useChat } from "@ai-sdk/react";
-import { use, useEffect } from "react";
-import { Info } from "lucide-react";
-import { AgentSelector } from "@/components/agent-selector";
-import { ChatInput } from "@/components/chat-input";
-import { VirtuosoChat } from "@/components/virtuoso-chat";
-import { UserDropdown } from "@/components/user-dropdown";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { useChatTransport } from "@/hooks/use-chat-transport";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { ChatInterface } from "@/components/chat/chat-interface";
+import { ChatLayout } from "@/components/chat/chat-layout";
+import { ChatSkeleton } from "@/components/chat/chat-skeleton";
+import { experimentalAgents } from "@/mastra/agents/experimental";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
-import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface ChatPageProps {
 	params: Promise<{
@@ -23,168 +13,19 @@ interface ChatPageProps {
 	}>;
 }
 
-export default function ChatPage({ params }: ChatPageProps) {
-	const { agentId, threadId } = use(params);
+export default async function ChatPage({ params }: ChatPageProps) {
+	const { agentId, threadId } = await params;
 
-	// Create transport for AI SDK v5 with agentId
-	const transport = useChatTransport({ threadId, agentId });
-
-	// Use the chat hook with transport and LightfastUIMessage type
-	const {
-		messages = [],
-		sendMessage: vercelSendMessage,
-		status,
-	} = useChat<LightfastUIMessage>({
-		id: threadId,
-		transport,
-		onError: (error) => {
-			console.error("Chat error:", error);
-		},
-	});
-
-	const isLoading = status === "streaming" || status === "submitted";
-
-	// Debug: Log messages to see their structure
-	useEffect(() => {
-		console.log(`[UI] Thread ID: ${threadId}`);
-		console.log("Messages:", messages);
-		messages.forEach((msg, index) => {
-			console.log(`Message ${index}:`, {
-				id: msg.id,
-				role: msg.role,
-				parts: msg.parts,
-			});
-		});
-	}, [messages, threadId]);
+	// Validate agentId on the server
+	if (!experimentalAgents[agentId as ExperimentalAgentId]) {
+		notFound();
+	}
 
 	return (
-		<main className="flex h-screen flex-col relative">
-			{/* Top bar with agent selector and user button */}
-			<div className="absolute top-4 left-6 right-6 z-20 flex items-center justify-between">
-				<AgentSelector />
-				<UserDropdown />
-			</div>
-
-			{messages.length === 0 ? (
-				// Center the chat input when no messages
-				<div className="flex-1 flex items-center p-6 overflow-hidden">
-					<div className="w-full max-w-3xl mx-auto relative -top-12">
-						<div className="mb-6">
-							<div className="flex items-center gap-1 mb-2">
-								<h1 className="font-mono text-xs text-muted-foreground">Experimental</h1>
-								<Popover>
-									<PopoverTrigger asChild>
-										<button className="hover:opacity-70 transition-opacity">
-											<Info className="h-3 w-3 text-muted-foreground" />
-										</button>
-									</PopoverTrigger>
-									<PopoverContent side="right" className="w-80">
-										<p className="text-sm">
-											This is an experimental feature. We don't persist any chat threads for users at this time.
-										</p>
-									</PopoverContent>
-								</Popover>
-							</div>
-							<p className="text-2xl">What can I do for you?</p>
-						</div>
-						<ChatInput
-							onSendMessage={async (message) => {
-								if (!message.trim() || isLoading) return;
-
-								try {
-									// Generate IDs for the messages
-									const userMessageId = `user-${Date.now()}`;
-									const assistantMessageId = `assistant-${Date.now()}`;
-
-									console.log(`[UI] Sending message with threadId: ${threadId}`);
-									console.log(`[UI] User message ID: ${userMessageId}`);
-									console.log(`[UI] Assistant message ID: ${assistantMessageId}`);
-
-									// Use vercelSendMessage with the correct AI SDK v5 format
-									await vercelSendMessage(
-										{
-											role: "user",
-											parts: [{ type: "text", text: message }],
-											id: userMessageId,
-										},
-										{
-											body: {
-												id: assistantMessageId,
-												userMessageId,
-												threadClientId: threadId,
-											},
-										},
-									);
-								} catch (error) {
-									console.error("Error sending message:", error);
-									throw error; // Re-throw to let ChatInput handle error state
-								}
-							}}
-							placeholder="Type your message..."
-							disabled={isLoading}
-						/>
-					</div>
-				</div>
-			) : (
-				// Normal layout with messages and bottom input
-				<div className="flex-1 flex flex-col relative">
-					{/* Message area with Virtuoso */}
-					<div className="flex-1 relative min-h-0">
-						<div className="absolute inset-0 pt-6">
-							<VirtuosoChat messages={messages} isLoading={isLoading} />
-						</div>
-					</div>
-
-					{/* Fixed bottom section with gradient, tasks, and input */}
-					<div className="relative">
-						{/* Gradient fade overlay */}
-						<div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
-
-						{/* Chat Input */}
-						<div className="relative bg-background pb-4">
-							<ChatInput
-								onSendMessage={async (message) => {
-									if (!message.trim() || isLoading) return;
-
-									try {
-										// Generate IDs for the messages
-										const userMessageId = `user-${Date.now()}`;
-										const assistantMessageId = `assistant-${Date.now()}`;
-
-										console.log(`[UI] Sending message with threadId: ${threadId}`);
-										console.log(`[UI] User message ID: ${userMessageId}`);
-										console.log(`[UI] Assistant message ID: ${assistantMessageId}`);
-
-										// Use vercelSendMessage with the correct AI SDK v5 format
-										await vercelSendMessage(
-											{
-												role: "user",
-												parts: [{ type: "text", text: message }],
-												id: userMessageId,
-											},
-											{
-												body: {
-													id: assistantMessageId,
-													userMessageId,
-													threadClientId: threadId,
-												},
-											},
-										);
-									} catch (error) {
-										console.error("Error sending message:", error);
-										throw error; // Re-throw to let ChatInput handle error state
-									}
-								}}
-								placeholder="Type your message..."
-								disabled={isLoading}
-							/>
-							<p className="text-xs text-muted-foreground text-center mt-2">
-								This is an experiment by Lightfast. Use with discretion.
-							</p>
-						</div>
-					</div>
-				</div>
-			)}
-		</main>
+		<ChatLayout>
+			<Suspense fallback={<ChatSkeleton />}>
+				<ChatInterface agentId={agentId} threadId={threadId} />
+			</Suspense>
+		</ChatLayout>
 	);
 }

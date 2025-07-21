@@ -1,0 +1,102 @@
+"use client";
+
+import { useChat } from "@ai-sdk/react";
+import { useEffect } from "react";
+import { ChatInput } from "@/components/chat-input";
+import { useChatTransport } from "@/hooks/use-chat-transport";
+import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
+import { ChatBottomSection } from "./chat-bottom-section";
+import { ChatMessages } from "./chat-messages";
+import { EmptyState } from "./empty-state";
+
+interface ChatInterfaceProps {
+	agentId: ExperimentalAgentId;
+	threadId: string;
+}
+
+export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
+	// Create transport for AI SDK v5 with agentId
+	const transport = useChatTransport({ threadId, agentId });
+
+	// Use the chat hook with transport and LightfastUIMessage type
+	const {
+		messages = [],
+		sendMessage: vercelSendMessage,
+		status,
+	} = useChat<LightfastUIMessage>({
+		id: threadId,
+		transport,
+		onError: (error) => {
+			console.error("Chat error:", error);
+		},
+	});
+
+	const isLoading = status === "streaming" || status === "submitted";
+
+	// Debug: Log messages to see their structure
+	useEffect(() => {
+		console.log(`[UI] Thread ID: ${threadId}`);
+		console.log("Messages:", messages);
+		messages.forEach((msg, index) => {
+			console.log(`Message ${index}:`, {
+				id: msg.id,
+				role: msg.role,
+				parts: msg.parts,
+			});
+		});
+	}, [messages, threadId]);
+
+	const handleSendMessage = async (message: string) => {
+		if (!message.trim() || isLoading) return;
+
+		try {
+			// Generate IDs for the messages
+			const userMessageId = `user-${Date.now()}`;
+			const assistantMessageId = `assistant-${Date.now()}`;
+
+			console.log(`[UI] Sending message with threadId: ${threadId}`);
+			console.log(`[UI] User message ID: ${userMessageId}`);
+			console.log(`[UI] Assistant message ID: ${assistantMessageId}`);
+
+			// Use vercelSendMessage with the correct AI SDK v5 format
+			await vercelSendMessage(
+				{
+					role: "user",
+					parts: [{ type: "text", text: message }],
+					id: userMessageId,
+				},
+				{
+					body: {
+						id: assistantMessageId,
+						userMessageId,
+						threadClientId: threadId,
+					},
+				},
+			);
+		} catch (error) {
+			console.error("Error sending message:", error);
+			throw error; // Re-throw to let ChatInput handle error state
+		}
+	};
+
+	if (messages.length === 0) {
+		return (
+			<div className="flex-1 flex items-center p-6 overflow-hidden">
+				<div className="w-full max-w-3xl mx-auto relative -top-12">
+					<EmptyState />
+					<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="flex-1 flex flex-col relative">
+			<ChatMessages messages={messages} isLoading={isLoading} />
+			<ChatBottomSection>
+				<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
+			</ChatBottomSection>
+		</div>
+	);
+}
