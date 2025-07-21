@@ -31,11 +31,6 @@ interface TestScenario {
 // Simple test scenarios
 const localTestScenarios: TestScenario[] = [
 	{
-		agent: "Math",
-		query: "What is 15 * 7?",
-		expectedAnswer: "105",
-	},
-	{
 		agent: "C010",
 		query: "Explain what Mastra is in one sentence",
 		expectedKeywords: ["framework", "agent", "AI"],
@@ -59,7 +54,6 @@ async function runLocalEvaluation(scenario: TestScenario) {
 		// Get the agent
 		const agent = mastra.getAgent(
 			scenario.agent as
-				| "Math"
 				| "C010"
 				| "A010"
 				| "A011"

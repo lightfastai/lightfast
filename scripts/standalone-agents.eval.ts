@@ -20,14 +20,13 @@ import {
 } from "../mastra/lib/braintrust-utils";
 
 // Type for test scenarios
-type MathResult = number | { roots: number[] } | { mean: number; median: number; mode: number } | number[];
 
 interface StandaloneAgentScenario {
 	input: {
 		agent: string;
 		query: string;
 		category: string;
-		expectedResult?: MathResult;
+		expectedResult?: any;
 		expectedTools?: string[];
 		requiresFile?: boolean;
 	};
@@ -40,56 +39,6 @@ interface StandaloneAgentScenario {
 
 // Test scenarios for each standalone agent
 const standaloneAgentScenarios = [
-	// Math Agent Tests
-	{
-		input: {
-			agent: "mathAgent",
-			query: "Calculate the factorial of 7",
-			category: "basic_calculation",
-			expectedResult: 5040,
-		},
-		metadata: {
-			agent_type: "math",
-			operation: "factorial",
-		},
-	},
-	{
-		input: {
-			agent: "mathAgent",
-			query: "Solve the quadratic equation: 2x^2 + 5x - 3 = 0",
-			category: "algebra",
-			expectedResult: { roots: [0.5, -3] },
-		},
-		metadata: {
-			agent_type: "math",
-			operation: "quadratic",
-		},
-	},
-	{
-		input: {
-			agent: "mathAgent",
-			query: "Calculate the mean, median, and mode of [1, 2, 2, 3, 4, 4, 4, 5]",
-			category: "statistics",
-			expectedResult: { mean: 3.125, median: 3.5, mode: 4 },
-		},
-		metadata: {
-			agent_type: "math",
-			operation: "statistics",
-		},
-	},
-	{
-		input: {
-			agent: "mathAgent",
-			query: "Find the prime factors of 120",
-			category: "number_theory",
-			expectedResult: [2, 2, 2, 3, 5],
-		},
-		metadata: {
-			agent_type: "math",
-			operation: "prime_factorization",
-		},
-	},
-
 	// Browser Agent Tests
 	{
 		input: {
@@ -337,11 +286,6 @@ async function scoreStandaloneAgent(
 
 	// Agent-specific scoring
 	switch (scenario.input.agent) {
-		case "mathAgent":
-			scores.accuracy = evaluateMathAccuracy(output, scenario.input.expectedResult);
-			scores.completeness = output.includes("=") || output.includes("result") ? 1 : 0.5;
-			break;
-
 		case "browserAgent":
 			scores.tool_success_rate = evaluateToolUsage(toolsUsed, scenario.input.expectedTools || []);
 			scores.completeness = output.includes("navigat") || output.includes("screenshot") ? 0.9 : 0.4;
@@ -378,45 +322,6 @@ async function scoreStandaloneAgent(
 	scores.bias = 0;
 
 	return scores;
-}
-
-// Evaluate math accuracy
-function evaluateMathAccuracy(output: string, expected?: MathResult): number {
-	if (!expected) return 0.5;
-
-	const _outputLower = output.toLowerCase();
-
-	if (typeof expected === "number") {
-		return output.includes(expected.toString()) ? 1 : 0;
-	}
-
-	if (typeof expected === "object" && !Array.isArray(expected)) {
-		if ("roots" in expected) {
-			let score = 0;
-			for (const root of expected.roots) {
-				if (output.includes(root.toString())) score += 0.5;
-			}
-			return score;
-		}
-
-		if ("mean" in expected || "median" in expected || "mode" in expected) {
-			let score = 0;
-			if ("mean" in expected && output.includes(expected.mean.toString())) score += 0.33;
-			if ("median" in expected && output.includes(expected.median.toString())) score += 0.33;
-			if ("mode" in expected && output.includes(expected.mode.toString())) score += 0.34;
-			return score;
-		}
-	}
-
-	if (Array.isArray(expected)) {
-		let matches = 0;
-		for (const value of expected) {
-			if (output.includes(value.toString())) matches++;
-		}
-		return matches / expected.length;
-	}
-
-	return 0.5;
 }
 
 // Evaluate tool usage
@@ -503,7 +408,7 @@ Eval<StandaloneAgentScenario["input"], string, void, StandaloneAgentScenario["me
 		metadata: {
 			description: "Evaluation of all standalone single-purpose agents",
 			version: "1.0.0",
-			agents_tested: ["Math", "Browser", "Vision", "Artifact", "Download", "Searcher", "Sandbox"],
+			agents_tested: ["Browser", "Vision", "Artifact", "Download", "Searcher", "Sandbox"],
 			total_scenarios: standaloneAgentScenarios.length,
 			timestamp: new Date().toISOString(),
 		},
@@ -517,7 +422,6 @@ console.log(`
 This evaluation tests all single-purpose agents with targeted scenarios:
 
 🤖 Agents Tested:
-   • mathAgent     - Mathematical calculations and operations
    • browserAgent  - Web browser automation tasks
    • visionAgent   - Image analysis and description
    • fileAgent     - File system operations
@@ -526,7 +430,6 @@ This evaluation tests all single-purpose agents with targeted scenarios:
    • sandboxAgent  - Code execution in isolated environments
 
 📊 Test Coverage:
-   • ${standaloneAgentScenarios.filter((s) => s.input.agent === "mathAgent").length} Math agent tests
    • ${standaloneAgentScenarios.filter((s) => s.input.agent === "browserAgent").length} Browser agent tests
    • ${standaloneAgentScenarios.filter((s) => s.input.agent === "visionAgent").length} Vision agent tests
    • ${standaloneAgentScenarios.filter((s) => s.input.agent === "fileAgent").length} File agent tests

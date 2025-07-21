@@ -11,7 +11,6 @@ import { c010 } from "./agents/pure/c010";
 import { artifactAgent } from "./agents/standalone/artifact";
 import { browserAgent } from "./agents/standalone/browser";
 import { downloadAgent } from "./agents/standalone/download";
-import { mathAgent } from "./agents/standalone/math";
 import { planner } from "./agents/standalone/planner";
 import { sandboxAgent } from "./agents/standalone/sandbox";
 import { searcher } from "./agents/standalone/searcher";
@@ -38,7 +37,6 @@ export const mastra = new Mastra({
 		Artifact: artifactAgent,
 		Browser: browserAgent,
 		Download: downloadAgent,
-		Math: mathAgent,
 		Planner: planner,
 		Sandbox: sandboxAgent,
 		Searcher: searcher,
