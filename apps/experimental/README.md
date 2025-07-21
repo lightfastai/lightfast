@@ -1,6 +1,6 @@
 # lightfast-experimental
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: FSL-1.1-Apache-2.0](https://img.shields.io/badge/License-FSL--1.1--Apache--2.0-blue.svg)](LICENSE.md)
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/experimental)](https://github.com/lightfastai/experimental/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/lightfastai/experimental)](https://github.com/lightfastai/experimental/issues)
 
@@ -312,7 +312,9 @@ We welcome contributions! Please see our development workflow:
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Functional Source License v1.1 with Apache 2.0 Future License](LICENSE.md).
+
+**TL;DR**: You can use this software for any purpose except creating a competing commercial product. After 2 years, it becomes Apache 2.0 licensed.
 
 ## 🌟 Community
 
