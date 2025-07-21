@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { UserButton } from "@clerk/nextjs";
 import { use, useEffect } from "react";
 import { AgentSelector } from "@/components/agent-selector";
 import { ChatInput } from "@/components/chat-input";
@@ -52,9 +53,16 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 	return (
 		<main className="flex h-screen flex-col relative">
-			{/* Agent selector positioned absolutely */}
-			<div className="absolute top-4 left-6 z-20">
+			{/* Top bar with agent selector and user button */}
+			<div className="absolute top-4 left-6 right-6 z-20 flex items-center justify-between">
 				<AgentSelector />
+				<UserButton
+					appearance={{
+						elements: {
+							avatarBox: "h-8 w-8",
+						},
+					}}
+				/>
 			</div>
 
 			{messages.length === 0 ? (

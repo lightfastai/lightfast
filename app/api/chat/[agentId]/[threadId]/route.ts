@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import type { NextRequest } from "next/server";
 import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
@@ -7,6 +8,12 @@ export async function POST(
 	{ params }: { params: Promise<{ agentId: string; threadId: string }> },
 ) {
 	try {
+		// Check authentication
+		const { userId } = await auth();
+		if (!userId) {
+			return Response.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
 		const requestBody = await request.json();
 		const { messages, threadId: bodyThreadId } = requestBody;
 		const { agentId, threadId: paramsThreadId } = await params;
@@ -14,6 +21,7 @@ export async function POST(
 		console.log(`[API] URL param agentId: ${agentId}`);
 		console.log(`[API] URL param threadId: ${paramsThreadId}`);
 		console.log(`[API] Request body threadId: ${bodyThreadId}`);
+		console.log(`[API] Authenticated userId: ${userId}`);
 
 		// Validate agentId
 		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
@@ -51,10 +59,10 @@ export async function POST(
 		console.log(`[API] Using agent: ${agentId} (${mastraAgentKey})`);
 		console.log(`[API] Agent tools:`, Object.keys(agent.tools || {}));
 
-		// Include threadId and agentId in the agent call for proper memory/context handling
+		// Include threadId, agentId, and userId in the agent call for proper memory/context handling
 		const options = {
 			threadId,
-			resourceId: threadId, // Using threadId as resourceId for now
+			resourceId: userId, // Use Clerk userId as resourceId
 		};
 
 		console.log(`[API] Agent options:`, options);
@@ -75,6 +83,12 @@ export async function GET(
 	{ params }: { params: Promise<{ agentId: string; threadId: string }> },
 ) {
 	try {
+		// Check authentication
+		const { userId } = await auth();
+		if (!userId) {
+			return Response.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
 		const { agentId, threadId } = await params;
 
 		// Validate agentId
@@ -92,6 +106,7 @@ export async function GET(
 		return Response.json({
 			agentId,
 			threadId,
+			userId,
 			message: "Agent thread endpoint active",
 		});
 	} catch (error) {
