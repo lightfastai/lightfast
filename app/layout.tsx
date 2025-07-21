@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "HAL9000 - Mastra AI Assistant",
-	description: "Advanced AI assistant powered by Mastra",
+	title: "lightfast-experimental",
+	description: "",
 };
 
 export default function RootLayout({

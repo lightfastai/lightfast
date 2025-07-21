@@ -17,7 +17,7 @@
 
 import { Eval } from "braintrust";
 
-// Sample evaluation data for HAL9000 agents
+// Sample evaluation data for lightfast-experimental agents
 const evaluationData = [
 	{
 		input: { query: "What is 2 + 2?", agent: "Math" },
@@ -88,7 +88,7 @@ function scoreResponse(input: any, output: string, expected: string): Record<str
 }
 
 // Main evaluation function
-Eval("hal9000-local-evaluation", {
+Eval("lightfast-experimental-local-evaluation", {
 	data: () => evaluationData,
 	task: async (input) => {
 		console.log(`[EVAL] Testing ${input.agent} agent with query: "${input.query}"`);
@@ -109,7 +109,7 @@ Eval("hal9000-local-evaluation", {
 		},
 	],
 	metadata: {
-		description: "Local evaluation of HAL9000 agents",
+		description: "Local evaluation of lightfast-experimental agents",
 		version: "1.0.0",
 		environment: "local",
 		timestamp: new Date().toISOString(),
@@ -117,7 +117,7 @@ Eval("hal9000-local-evaluation", {
 });
 
 console.log(`
-🧪 HAL9000 Local Evaluation Started
+🧪 lightfast-experimental Local Evaluation Started
 
 This script demonstrates local Braintrust evaluation capabilities:
 

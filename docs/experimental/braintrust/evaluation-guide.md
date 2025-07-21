@@ -34,7 +34,7 @@ The utilities provide:
 ```bash
 # For production (optional)
 BRAINTRUST_API_KEY=your-api-key
-BRAINTRUST_PROJECT_ID=hal9000-agents
+BRAINTRUST_PROJECT_ID=lightfast-experimental-agents
 
 # For local development (no API key needed)
 NODE_ENV=development

@@ -1,4 +1,4 @@
-# HAL9000 - Advanced AI Agent Platform
+# lightfast-experimental - Advanced AI Agent Platform
 
 An advanced AI agent platform built with Mastra, featuring multiple specialized agents, secure sandbox execution, and comprehensive task management capabilities.
 
@@ -46,7 +46,7 @@ An advanced AI agent platform built with Mastra, featuring multiple specialized 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd hal9000
+cd lightfast-experimental
 ```
 
 2. Install dependencies:

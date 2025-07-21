@@ -255,10 +255,10 @@ return {
 }
 ```
 
-## Comparison with hal9000 Tools
+## Comparison with lightfast-experimental Tools
 
 ### Similar Tools
-| OpenCode | hal9000 | Notes |
+| OpenCode | lightfast-experimental | Notes |
 |----------|---------|-------|
 | `read` | `Read` | Similar functionality |
 | `write` | `Write` | Similar functionality |
@@ -267,9 +267,9 @@ return {
 | `glob` | `Glob` | Similar functionality |
 | `grep` | `Grep` | Similar functionality |
 | `webfetch` | `WebFetch` | Similar functionality |
-| `todowrite/todoread` | `TodoWrite` | hal9000 has single tool |
+| `todowrite/todoread` | `TodoWrite` | lightfast-experimental has single tool |
 
-### hal9000 Unique Tools
+### lightfast-experimental Unique Tools
 - `MultiEdit` - Batch editing (OpenCode has it disabled)
 - `NotebookRead/NotebookEdit` - Jupyter notebook support
 - `WebSearch` - Web search functionality
@@ -281,7 +281,7 @@ return {
 - LSP tools (disabled)
 - More sophisticated file access tracking
 
-## Key Takeaways for hal9000
+## Key Takeaways for lightfast-experimental
 
 1. **Context Awareness**: OpenCode tools are highly context-aware with session/message tracking
 2. **Safety Features**: File access tracking and validation before overwriting

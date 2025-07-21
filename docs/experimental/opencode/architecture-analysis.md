@@ -1,7 +1,7 @@
 # OpenCode Architecture Analysis
 
 ## Overview
-OpenCode is a TypeScript CLI tool by SST that provides an AI-powered coding assistant. This analysis examines their tool call structure and memory system to inform improvements to the hal9000 project.
+OpenCode is a TypeScript CLI tool by SST that provides an AI-powered coding assistant. This analysis examines their tool call structure and memory system to inform improvements to the lightfast-experimental project.
 
 ## Repository Structure
 ```
@@ -207,7 +207,7 @@ const state = App.state("todo-tool", () => {
 3. **Batch Operations**: Multiple updates can be batched
 4. **Event Coalescing**: Rapid updates are debounced
 
-## Recommendations for hal9000
+## Recommendations for lightfast-experimental
 
 1. **Adopt Context Pattern**: Pass threadId and resourceId through tool context
 2. **Implement Storage Layer**: Use atomic writes for reliability

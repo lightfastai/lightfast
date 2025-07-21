@@ -1,7 +1,7 @@
-# OpenCode Implementation Guide for hal9000
+# OpenCode Implementation Guide for lightfast-experimental
 
 ## Overview
-This guide provides step-by-step instructions for implementing OpenCode's tool context and memory patterns in the hal9000 project.
+This guide provides step-by-step instructions for implementing OpenCode's tool context and memory patterns in the lightfast-experimental project.
 
 ## Phase 1: Tool Context Enhancement
 

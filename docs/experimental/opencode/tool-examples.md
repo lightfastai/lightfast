@@ -348,9 +348,9 @@ Key patterns:
 6. **Support cancellation**: Respect abort signals
 7. **Update in real-time**: Use metadata callback for progress updates
 
-## Comparison with hal9000 Current Implementation
+## Comparison with lightfast-experimental Current Implementation
 
-### Current hal9000 Pattern:
+### Current lightfast-experimental Pattern:
 ```typescript
 export const myTool = createTool({
   id: "my-tool",
@@ -361,7 +361,7 @@ export const myTool = createTool({
 })
 ```
 
-### Proposed hal9000 Pattern (OpenCode-inspired):
+### Proposed lightfast-experimental Pattern (OpenCode-inspired):
 ```typescript
 export const myTool = createToolWithContext({
   id: "my-tool",

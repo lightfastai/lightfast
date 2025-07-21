@@ -6,7 +6,7 @@ import { env } from "../../env";
 const isDevelopment = env.NODE_ENV === "development";
 
 const braintrust = initLogger({
-	projectName: "hal9000-agents",
+	projectName: "lightfast-experimental-agents",
 	apiKey: env.BRAINTRUST_API_KEY,
 });
 
@@ -370,10 +370,10 @@ export function extractMessageContent(message: CoreMessage): string {
  */
 export function createProjectConfig(projectName: string, experimentName?: string): BraintrustConfig {
 	return {
-		project: `hal9000-${projectName}`,
+		project: `lightfast-experimental-${projectName}`,
 		experiment: experimentName || `experiment-${Date.now()}`,
 		metadata: {
-			platform: "hal9000",
+			platform: "lightfast-experimental",
 			framework: "mastra",
 			model: "claude-4-sonnet",
 			timestamp: new Date().toISOString(),

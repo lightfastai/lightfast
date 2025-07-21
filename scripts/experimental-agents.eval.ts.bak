@@ -189,7 +189,7 @@ function scoreExperimentalAgent(input: { agent: string; category: string; comple
 }
 
 // Main evaluation setup
-Eval("hal9000-experimental-agents", {
+Eval("lightfast-experimental-agents", {
 	data: experimentalAgentScenarios.map(scenario => {
 		// Convert inconsistent structure to standard Braintrust format
 		if ('input' in scenario) {
@@ -256,7 +256,7 @@ Eval("hal9000-experimental-agents", {
 		},
 	],
 	metadata: {
-		description: "Evaluation of HAL9000 experimental agents (v010 and v011)",
+		description: "Evaluation of lightfast-experimental agents (v010 and v011)",
 		version: "1.0.0",
 		focus: "agent_specific_capabilities",
 		agents_tested: ["v010", "v011"],
@@ -265,7 +265,7 @@ Eval("hal9000-experimental-agents", {
 });
 
 console.log(`
-🧪 HAL9000 Experimental Agent Evaluation
+🧪 lightfast-experimental Agent Evaluation
 
 This script evaluates the experimental agents with scenarios designed for their specific capabilities:
 

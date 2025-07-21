@@ -26,7 +26,7 @@ export async function autoDetectProvider(): Promise<ProviderConfig> {
 }
 ```
 
-**Benefits for hal9000:**
+**Benefits for lightfast-experimental:**
 - Reduce configuration complexity
 - Better developer experience
 - Automatic failover between providers
@@ -411,7 +411,7 @@ export class MetricsCollector {
 }
 ```
 
-## Key Implementation Recommendations for hal9000
+## Key Implementation Recommendations for lightfast-experimental
 
 ### 1. High Priority
 - **Provider Auto-Detection**: Reduce configuration complexity
@@ -428,4 +428,4 @@ export class MetricsCollector {
 - **Metrics Collection**: Performance monitoring
 - **Dynamic Prompts**: Context-aware prompt engineering
 
-These patterns would significantly enhance hal9000's robustness, developer experience, and maintainability while building on the existing strong foundation.
+These patterns would significantly enhance lightfast-experimental's robustness, developer experience, and maintainability while building on the existing strong foundation.

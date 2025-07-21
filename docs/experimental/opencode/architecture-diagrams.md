@@ -304,7 +304,7 @@ graph TD
 - Migration system for schema evolution
 - Graceful degradation if storage fails
 
-## Implementation Order for hal9000
+## Implementation Order for lightfast-experimental
 
 Based on this architecture analysis, here's the recommended implementation order:
 

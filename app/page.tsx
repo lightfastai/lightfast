@@ -4,7 +4,7 @@ export default function Home() {
 	return (
 		<main className="flex h-screen items-center justify-center">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold mb-2">HAL9000</h1>
+				<h1 className="text-2xl font-bold mb-2">lightfast-experimental</h1>
 				<p className="text-muted-foreground">Redirecting to chat...</p>
 			</div>
 		</main>

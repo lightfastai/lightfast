@@ -18,7 +18,7 @@ export const openrouter = createOpenAI({
 	apiKey: env.OPENROUTER_API_KEY,
 	headers: {
 		"HTTP-Referer": "http://localhost:3000", // Update this to your production URL
-		"X-Title": "HAL9000 AI Assistant", // Your app name
+		"X-Title": "lightfast-experimental AI Assistant", // Your app name
 	},
 });
 
