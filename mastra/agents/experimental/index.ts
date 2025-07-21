@@ -62,7 +62,7 @@ export type ExperimentalAgentToolOutput<T extends ExperimentalAgentToolName> =
 
 // Import the working memory types from agents
 import type { TaskWorkingMemory as A010WorkingMemory } from "./a010";
-import type { TaskLedWorkingMemory as A011WorkingMemory } from "./a011";
+import type { SimplifiedWorkingMemory as A011WorkingMemory } from "./a011";
 
 // Map agent IDs to their working memory types
 export interface ExperimentalAgentWorkingMemoryMap {
@@ -73,11 +73,10 @@ export interface ExperimentalAgentWorkingMemoryMap {
 // Extract working memory type for a specific agent
 export type ExperimentalAgentWorkingMemory<T extends ExperimentalAgentId> = ExperimentalAgentWorkingMemoryMap[T];
 
-// Extract task type for a specific agent
-export type ExperimentalAgentTask<T extends ExperimentalAgentId> =
-	ExperimentalAgentWorkingMemoryMap[T]["tasks"][number];
+// Extract task type for a specific agent (only for agents that have tasks)
+export type ExperimentalAgentTask<T extends ExperimentalAgentId> = T extends "a010"
+	? ExperimentalAgentWorkingMemoryMap[T]["tasks"][number]
+	: never;
 
-// Union of all possible task types
-export type ExperimentalAgentTaskUnion = {
-	[K in ExperimentalAgentId]: ExperimentalAgentTask<K>;
-}[ExperimentalAgentId];
+// Union of all possible task types (only from agents that have tasks)
+export type ExperimentalAgentTaskUnion = ExperimentalAgentTask<"a010">;
