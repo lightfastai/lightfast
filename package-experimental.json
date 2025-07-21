@@ -5,9 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "next dev",
-		"build": "npm run build:exclude-dirs",
-		"build:exclude-dirs": "mv evals ../temp_evals 2>/dev/null || true && mv scripts ../temp_scripts 2>/dev/null || true && next build && mv ../temp_evals evals 2>/dev/null || true && mv ../temp_scripts scripts 2>/dev/null || true",
-		"build:original": "next build",
+		"build": "next build",
 		"start": "next start",
 		"lint": "biome check --write .",
 		"typecheck": "tsc --noEmit",
@@ -18,11 +16,8 @@
 		"build:mastra": "mastra build --dir mastra",
 		"clean": "rm -rf .next .mastra node_modules tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
 		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
-		"eval:all": "tsx evals/run-all.ts",
-		"eval:a011": "npx braintrust eval --no-send-logs evals/agents/experimental/a011/task-management.eval.ts",
-		"eval:a011:dev": "npx braintrust eval --dev --dev-port 8300 evals/agents/experimental/a011/task-management.eval.ts",
-		"eval:experimental": "tsx evals/run-all.ts -- --category experimental",
-		"eval:standalone": "tsx evals/run-all.ts -- --category standalone"
+		"eval:a011": "pnpm with-env npx braintrust eval --no-send-logs evals/agents/experimental/a011/a011.eval.ts",
+		"eval:a011:dev": "pnpm with-env npx braintrust eval --dev --dev-port 8300 evals/agents/experimental/a011/a011.eval.ts"
 	},
 	"keywords": [],
 	"author": "",
@@ -49,7 +44,7 @@
 		"@ai-sdk/anthropic": "2.0.0-beta.7",
 		"@ai-sdk/openai": "2.0.0-beta.10",
 		"@ai-sdk/react": "2.0.0-beta.23",
-		"@browserbasehq/stagehand": "^2.4.1",
+		"@browserbasehq/stagehand": "^2.3.1",
 		"@mastra/core": "0.0.0-ai-v5-20250710191716",
 		"@mastra/deployer-vercel": "0.0.0-ai-v5-20250710191716",
 		"@mastra/evals": "0.0.0-ai-v5-20250710191716",

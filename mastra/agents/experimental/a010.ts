@@ -10,8 +10,6 @@ import { smoothStream } from "ai";
 import { z } from "zod";
 import { anthropic, anthropicModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
-import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
-import { granularBrowserTools } from "../../tools/browser-tools-granular";
 import {
 	downloadDirectFileTool,
 	downloadFileTool,
@@ -71,7 +69,7 @@ const evalModel = anthropic("claude-3-5-haiku-20241022");
 export const a010 = new Agent({
 	name: "a010",
 	description:
-		"Comprehensive agent with all tools for planning, web search, browser automation, file management, and sandbox operations. Combines capabilities of the v1-1 network into a single agent.",
+		"Comprehensive agent with tools for planning, web search, file management, and sandbox operations. Combines capabilities for research, development, and task automation.",
 	instructions: `
 <system>
   <role>
@@ -444,23 +442,6 @@ export const a010 = new Agent({
 		// Web research
 		webSearch: webSearchTool,
 
-		// Browser automation - granular tools
-		browserNavigate: browserNavigateTool,
-		browserView: granularBrowserTools.browserView,
-		browserClick: granularBrowserTools.browserClick,
-		browserType: granularBrowserTools.browserType,
-		browserSelectOption: granularBrowserTools.browserSelectOption,
-		browserScroll: granularBrowserTools.browserScroll,
-		browserPressKey: granularBrowserTools.browserPressKey,
-		browserMoveMouse: granularBrowserTools.browserMoveMouse,
-		browserWait: granularBrowserTools.browserWait,
-		browserScreenshot: granularBrowserTools.browserScreenshot,
-		browserConsoleExec: granularBrowserTools.browserConsoleExec,
-		browserReload: granularBrowserTools.browserReload,
-		browserHistory: granularBrowserTools.browserHistory,
-		// Higher-level browser tools
-		browserExtract: browserExtractTool,
-		browserObserve: browserObserveTool,
 
 		// Download capabilities
 		downloadFile: downloadFileTool,

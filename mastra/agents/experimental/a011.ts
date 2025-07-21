@@ -3,7 +3,6 @@ import { smoothStream } from "ai";
 import { z } from "zod";
 import { anthropic, anthropicModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
-import { browserExtractTool, browserNavigateTool } from "../../tools/browser-tools";
 import { fileWriteTool } from "../../tools/file-tools";
 import { todoClearTool, todoReadTool, todoWriteTool } from "../../tools/task-tools";
 import { webSearchTool } from "../../tools/web-search-tools";
@@ -69,8 +68,6 @@ export const a011 = new Agent({
       <principles>Execute tasks systematically with appropriate tools</principles>
       <tools>
         - webSearch: Research and information gathering
-        - browserNavigate: Navigate to specific web resources
-        - browserExtract: Extract content from web pages
         - fileWrite: Create and modify files
       </tools>
       <practices>Use tools in logical sequence. Verify results before proceeding.</practices>
@@ -201,8 +198,6 @@ CRITICAL: Always use todoWrite tool to plan and track complex multi-step tasks t
 
 		// Core tools for task execution
 		webSearch: webSearchTool,
-		browserNavigate: browserNavigateTool,
-		browserExtract: browserExtractTool,
 		fileWrite: fileWriteTool,
 	},
 	memory: agentMemory,
