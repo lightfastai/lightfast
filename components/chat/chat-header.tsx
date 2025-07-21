@@ -1,5 +1,5 @@
-import { NewChatButton } from "./new-chat-button";
 import { UserDropdown } from "@/components/user-dropdown";
+import { NewChatButton } from "./new-chat-button";
 
 export function ChatHeader() {
 	return (

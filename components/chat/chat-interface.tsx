@@ -6,6 +6,7 @@ import { ChatInput } from "@/components/chat-input";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
+import { AgentVersionIndicator } from "./agent-version-indicator";
 import { ChatBottomSection } from "./chat-bottom-section";
 import { ChatMessages } from "./chat-messages";
 import { EmptyState } from "./empty-state";
@@ -87,6 +88,7 @@ export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
 					<EmptyState />
 					<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
 				</div>
+				<AgentVersionIndicator agentId={agentId} />
 			</div>
 		);
 	}
@@ -97,6 +99,7 @@ export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
 			<ChatBottomSection>
 				<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
 			</ChatBottomSection>
+			<AgentVersionIndicator agentId={agentId} />
 		</div>
 	);
 }
