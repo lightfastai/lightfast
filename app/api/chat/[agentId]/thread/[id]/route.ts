@@ -1,18 +1,11 @@
 import type { NextRequest } from "next/server";
 import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
-import {
-	type ConversationEvaluationData,
-	evaluateResponseQuality,
-	evaluateTaskCompletion,
-	extractMessageContent,
-	logConversationEvaluation,
-} from "@/mastra/lib/braintrust-utils";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ agentId: string; id: string }> }) {
 	try {
 		const requestBody = await request.json();
-		const { messages, stream = false, threadId: bodyThreadId } = requestBody;
+		const { messages, threadId: bodyThreadId } = requestBody;
 		const { agentId, id: paramsThreadId } = await params;
 
 		console.log(`[API] URL param agentId: ${agentId}`);
@@ -63,27 +56,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
 		console.log(`[API] Agent options:`, options);
 
-		// Track conversation start time for performance evaluation
-		const startTime = Date.now();
-
 		// Always use streaming with AI SDK v5
 		const result = await agent.stream(messages, options);
-
-		// Log conversation-level evaluation to Braintrust (fire and forget)
-		const endTime = Date.now();
-		// Note: Streaming results don't provide text or steps in the same way
-		// Log basic metrics for now
-		logConversationEvaluation({
-			messages,
-			final_response: "",
-			thread_id: threadId,
-			agent_name: agentId,
-			duration: endTime - startTime,
-			tool_calls_count: 0,
-			success: true,
-		}).catch((error: Error) => {
-			console.warn("[API] Braintrust conversation logging failed:", error);
-		});
 
 		// Use the new v5 method toUIMessageStreamResponse
 		return result.toUIMessageStreamResponse();
@@ -93,7 +67,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 	}
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ agentId: string; id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ agentId: string; id: string }> }) {
 	try {
 		const { agentId, id: threadId } = await params;
 

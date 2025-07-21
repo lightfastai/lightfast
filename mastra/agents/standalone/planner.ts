@@ -1,6 +1,5 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { z } from "zod";
 import { anthropic, anthropicModels } from "@/lib/ai/provider";
 import { saveCriticalInfoTool } from "../../tools/save-critical-info";
 
@@ -103,9 +102,9 @@ Remember: You're planning for execution by specialized agents:
 		onError: ({ error }) => {
 			console.error(`[Planner] Stream error:`, error);
 		},
-		onStepFinish: ({ text, toolCalls, toolResults }) => {
-			if (toolResults) {
-				toolResults.forEach((result, index) => {
+		onStepFinish: (step) => {
+			if (step.toolResults) {
+				step.toolResults.forEach((result, index) => {
 					if (
 						result.type === "tool-result" &&
 						result.output &&

@@ -120,7 +120,9 @@ export const statisticsTool = createTool({
 
 		if (measures.includes("mode")) {
 			const counts: Record<number, number> = {};
-			data.forEach((num) => (counts[num] = (counts[num] || 0) + 1));
+			data.forEach((num) => {
+				counts[num] = (counts[num] || 0) + 1;
+			});
 			const maxCount = Math.max(...Object.values(counts));
 			results.mode = Object.keys(counts)
 				.filter((key) => counts[Number(key)] === maxCount)

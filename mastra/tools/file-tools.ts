@@ -251,7 +251,7 @@ export const fileStringReplaceTool = createTool({
 
 			// Write the modified content back
 			const contentType = getContentType(context.filename) || "text/plain";
-			const blob = await put(fullPath, content, {
+			const _blob = await put(fullPath, content, {
 				access: "public",
 				contentType,
 				token: env.BLOB_READ_WRITE_TOKEN,
@@ -323,7 +323,7 @@ export const fileFindInContentTool = createTool({
 
 			// Create regex with appropriate flags
 			const flags = context.caseSensitive ? "g" : "gi";
-			const regex = new RegExp(context.regex, flags);
+			const _regex = new RegExp(context.regex, flags);
 
 			const matches: Array<{
 				match: string;
@@ -336,9 +336,10 @@ export const fileFindInContentTool = createTool({
 			lines.forEach((line, lineIndex) => {
 				if (matches.length >= context.maxMatches) return;
 
-				let match;
+				let match: RegExpExecArray | null;
 				const lineRegex = new RegExp(context.regex, flags);
-				while ((match = lineRegex.exec(line)) !== null && matches.length < context.maxMatches) {
+				match = lineRegex.exec(line);
+				while (match !== null && matches.length < context.maxMatches) {
 					matches.push({
 						match: match[0],
 						lineNumber: lineIndex + 1,
@@ -348,6 +349,7 @@ export const fileFindInContentTool = createTool({
 
 					// Prevent infinite loop on global regex
 					if (!lineRegex.global) break;
+					match = lineRegex.exec(line);
 				}
 			});
 
@@ -446,10 +448,10 @@ export const fileFindByNameTool = createTool({
 								const content = await response.text();
 								fileInfo.contentPreview =
 									content.length > context.maxContentChars
-										? content.substring(0, context.maxContentChars) + "..."
+										? `${content.substring(0, context.maxContentChars)}...`
 										: content;
 							}
-						} catch (contentError) {
+						} catch (_contentError) {
 							// Ignore content fetch errors, just skip the preview
 							fileInfo.contentPreview = "[Content preview unavailable]";
 						}

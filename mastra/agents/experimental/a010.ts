@@ -1,11 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import {
-	AnswerRelevancyMetric,
-	BiasMetric,
-	PromptAlignmentMetric,
-	SummarizationMetric,
-	ToxicityMetric,
-} from "@mastra/evals/llm";
+import { AnswerRelevancyMetric, BiasMetric, PromptAlignmentMetric, ToxicityMetric } from "@mastra/evals/llm";
 import {
 	CompletenessMetric,
 	ContentSimilarityMetric,
@@ -15,15 +9,6 @@ import {
 import { smoothStream } from "ai";
 import { z } from "zod";
 import { anthropic, anthropicModels } from "@/lib/ai/provider";
-import {
-	type AgentEvaluationInput,
-	type AgentEvaluationOutput,
-	createProjectConfig,
-	createStepEvaluation,
-	evaluateResponseQuality,
-	extractMessageContent,
-	logAgentInteraction,
-} from "../../lib/braintrust-utils";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
 import { granularBrowserTools } from "../../tools/browser-tools-granular";
@@ -521,86 +506,9 @@ export const a010 = new Agent({
 				});
 			}
 			console.log(`[a010] Step completed`);
-
-			// Enhanced Braintrust logging
-			try {
-				const braintrustScores = await createStepEvaluation(text, toolCalls, toolResults);
-
-				// Log step to Braintrust
-				await logAgentInteraction(
-					{
-						messages: [], // Will be populated with actual messages in a future update
-						agentName: "a010",
-						tools: toolCalls?.map((call) => call.toolName) || [],
-						context: {
-							step_type: "tool_execution",
-							tools_used: toolCalls?.length || 0,
-						},
-					},
-					{
-						response: text,
-						tool_calls:
-							toolCalls?.map((call, index) => ({
-								name: call.toolName,
-								result: toolResults?.[index],
-								success: toolResults?.[index] !== null,
-							})) || [],
-						metadata: {
-							tools_count: toolCalls?.length || 0,
-							step_timestamp: new Date().toISOString(),
-						},
-					},
-					{
-						...braintrustScores,
-						response_quality: await evaluateResponseQuality(text),
-					},
-					{
-						agent_step: true,
-						a010_experimental: true,
-					},
-				);
-			} catch (error) {
-				console.warn("[a010] Braintrust logging failed:", error);
-			}
 		},
 		onFinish: async (result) => {
 			console.log(`[a010] Generation finished:`, result);
-
-			// Log complete conversation to Braintrust
-			try {
-				const finalResponse = result.text || "";
-
-				await logAgentInteraction(
-					{
-						messages: [], // Will be populated with actual messages in a future update
-						agentName: "a010",
-						context: {
-							conversation_type: "complete",
-							total_steps: result.steps?.length || 0,
-						},
-					},
-					{
-						response: finalResponse,
-						metadata: {
-							conversation_finished: true,
-							completion_timestamp: new Date().toISOString(),
-							total_tokens: result.usage?.totalTokens || 0,
-							steps_count: result.steps?.length || 0,
-						},
-					},
-					{
-						task_completion: 1, // Assume completion if onFinish is called
-						response_quality: await evaluateResponseQuality(finalResponse),
-					},
-					{
-						conversation_complete: true,
-						a010_experimental: true,
-						final_result: true,
-					},
-				);
-			} catch (error) {
-				console.warn("[a010] Braintrust conversation logging failed:", error);
-			}
 		},
 	},
 	evals: {

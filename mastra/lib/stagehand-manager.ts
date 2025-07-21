@@ -33,7 +33,10 @@ export class StagehandSessionManager {
 
 		// Create new session
 		await this.createSession();
-		return this.stagehand!;
+		if (!this.stagehand) {
+			throw new Error("Failed to create Stagehand session");
+		}
+		return this.stagehand;
 	}
 
 	private async createSession(): Promise<void> {
@@ -92,10 +95,13 @@ export class StagehandSessionManager {
 		return observations.length > 0 ? observations[0].description : "";
 	}
 
-	public async extractFromPage(instruction: string, schema: any): Promise<any> {
+	public async extractFromPage<T = unknown>(instruction: string): Promise<T> {
 		const stagehand = await this.ensureStagehand();
-		const result = await stagehand.page.extract({ instruction, schema });
-		return result.extracted;
+		const result = await stagehand.page.extract(instruction);
+		if (result && typeof result === "object" && "extracted" in result) {
+			return (result as { extracted: T }).extracted;
+		}
+		return result as T;
 	}
 
 	// Cleanup method to be called on process exit

@@ -11,14 +11,14 @@ const braintrust = initLogger({
 });
 
 // Local logging fallback for development
-const localLog = (data: any) => {
+const localLog = (data: Record<string, unknown>) => {
 	if (isDevelopment && !env.BRAINTRUST_API_KEY) {
 		console.log("[BRAINTRUST LOCAL]", JSON.stringify(data, null, 2));
 	}
 };
 
 // Enhanced logging wrapper that supports local development
-const safeBraintrustLog = async (data: any) => {
+const safeBraintrustLog = async (data: Record<string, unknown>) => {
 	try {
 		// In development without API key, use local logging
 		if (isDevelopment && !env.BRAINTRUST_API_KEY) {
@@ -133,7 +133,7 @@ export interface ConversationEvaluationData {
 /**
  * Creates a new Braintrust evaluation session for agent testing
  */
-export async function createAgentEvaluation(config: BraintrustConfig) {
+export async function createAgentEvaluation(_config: BraintrustConfig) {
 	// With initLogger, we don't need to create separate evaluations
 	// The logger handles all the logging automatically
 	return braintrust;

@@ -2,11 +2,9 @@
 
 import { useChat } from "@ai-sdk/react";
 import { use, useEffect } from "react";
-import { ChatInput } from "@/components/chat-input";
-import { TaskAccordion } from "@/components/task-accordion";
-import { VirtuosoChat } from "@/components/virtuoso-chat";
 import { AgentSelector } from "@/components/agent-selector";
-import { useAgentTasks } from "@/hooks/use-agent-tasks";
+import { ChatInput } from "@/components/chat-input";
+import { VirtuosoChat } from "@/components/virtuoso-chat";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
@@ -20,11 +18,6 @@ interface ChatPageProps {
 
 export default function ChatPage({ params }: ChatPageProps) {
 	const { agentId, threadId } = use(params);
-
-	// Fetch agent tasks with agentId
-	const { tasks } = useAgentTasks({ threadId, agentId, pollingInterval: 3000 });
-	console.log(`[UI] Tasks in component:`, tasks);
-	console.log(`[UI] Tasks length in component:`, tasks.length);
 
 	// Create transport for AI SDK v5 with agentId
 	const transport = useChatTransport({ threadId, agentId });
@@ -72,12 +65,6 @@ export default function ChatPage({ params }: ChatPageProps) {
 							<h1 className="text-2xl font-medium mb-2">Hello.</h1>
 							<p className="text-2xl text-muted-foreground">What can I do for you?</p>
 						</div>
-						{/* Task Accordion for empty messages state - only show when tasks exist */}
-						{tasks.length > 0 && (
-							<div className="mb-6">
-								<TaskAccordion tasks={tasks} />
-							</div>
-						)}
 						<ChatInput
 							onSendMessage={async (message) => {
 								if (!message.trim() || isLoading) return;
@@ -130,13 +117,6 @@ export default function ChatPage({ params }: ChatPageProps) {
 					<div className="relative">
 						{/* Gradient fade overlay */}
 						<div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
-
-						{/* Task Accordion - only show when tasks exist */}
-						{tasks.length > 0 && (
-							<div className="relative bg-background">
-								<TaskAccordion tasks={tasks} />
-							</div>
-						)}
 
 						{/* Chat Input */}
 						<div className="relative bg-background pb-4">

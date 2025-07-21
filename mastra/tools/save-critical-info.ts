@@ -25,7 +25,7 @@ export const saveCriticalInfoTool = createTool({
 	execute: async ({ context, threadId, resourceId }) => {
 		try {
 			// Generate organized path
-			const timestamp = new Date().toISOString().split("T")[0];
+			const _timestamp = new Date().toISOString().split("T")[0];
 			const safeTitle = context.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 			const agentName = resourceId || "unknown-agent";
 

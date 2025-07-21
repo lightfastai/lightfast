@@ -38,11 +38,13 @@ export const browserViewTool = createTool({
 				});
 
 				const textNodes = [];
-				let node;
-				while ((node = walker.nextNode())) {
+				let node: Node | null;
+				node = walker.nextNode();
+				while (node !== null) {
 					if (node.nodeValue?.trim()) {
 						textNodes.push(node.nodeValue.trim());
 					}
+					node = walker.nextNode();
 				}
 				return textNodes.join(" ");
 			});
@@ -494,7 +496,7 @@ export const browserScreenshotTool = createTool({
 				path: context.path,
 				base64: context.path ? undefined : screenshot.toString("base64"),
 			};
-		} catch (error) {
+		} catch (_error) {
 			return {
 				success: false,
 				path: undefined,

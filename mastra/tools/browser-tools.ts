@@ -162,10 +162,10 @@ export const browserNavigateTool = createTool({
 				title,
 				currentUrl,
 			};
-		} catch (error: any) {
+		} catch (error) {
 			return {
 				success: false,
-				message: `Navigation failed: ${error.message}`,
+				message: `Navigation failed: ${error instanceof Error ? error.message : String(error)}`,
 			};
 		}
 	},

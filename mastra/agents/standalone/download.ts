@@ -102,9 +102,9 @@ Remember: You specialize in downloading files using Browserbase's capabilities. 
 		onError: ({ error }) => {
 			console.error(`[Download Agent] Stream error:`, error);
 		},
-		onStepFinish: ({ text, toolCalls, toolResults }) => {
-			if (toolResults) {
-				toolResults.forEach((result, index) => {
+		onStepFinish: (step) => {
+			if (step.toolResults) {
+				step.toolResults.forEach((result, index) => {
 					if (
 						result.type === "tool-result" &&
 						result.output &&

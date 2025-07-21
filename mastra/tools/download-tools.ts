@@ -1,6 +1,5 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { env } from "@/env";
 import { stagehandManager } from "../lib/stagehand-manager";
 
 /**
@@ -107,7 +106,7 @@ export const downloadDirectFileTool = createTool({
 
 			// Set up download tracking
 			let downloadDetected = false;
-			stagehand.page.on("download", (download: any) => {
+			stagehand.page.on("download", (_download: any) => {
 				downloadDetected = true;
 				console.log(`Download detected for: ${context.fileUrl}`);
 			});
@@ -214,7 +213,7 @@ export const downloadImageTool = createTool({
 
 			// Set up download tracking
 			let downloadDetected = false;
-			stagehand.page.on("download", (download: any) => {
+			stagehand.page.on("download", (_download: any) => {
 				downloadDetected = true;
 				console.log(`Image download detected: ${context.imageDescription}`);
 			});

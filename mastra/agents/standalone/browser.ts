@@ -1,5 +1,4 @@
 import { Agent } from "@mastra/core/agent";
-import { z } from "zod";
 import { anthropic, anthropicModels } from "@/lib/ai/provider";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
 import { granularBrowserTools } from "../../tools/browser-tools-granular";
@@ -113,9 +112,9 @@ export const browserAgent = new Agent({
 		onError: ({ error }) => {
 			console.error(`[Browser] Stream error:`, error);
 		},
-		onStepFinish: ({ text, toolCalls, toolResults }) => {
-			if (toolResults) {
-				toolResults.forEach((result, index) => {
+		onStepFinish: (step) => {
+			if (step.toolResults) {
+				step.toolResults.forEach((result, index) => {
 					if (
 						result.type === "tool-result" &&
 						result.output &&

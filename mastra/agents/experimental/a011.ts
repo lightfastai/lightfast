@@ -173,15 +173,15 @@ Remember: You are a task-led agent. No tool execution without task context!
 			delayInMs: 25,
 			chunking: "word",
 		}),
-		onStepFinish: ({ text, toolCalls, toolResults }) => {
+		onStepFinish: (step) => {
 			console.log(`[a011] Step completed`);
-			if (toolCalls && toolCalls.length > 0) {
-				toolCalls.forEach((call) => {
+			if (step.toolCalls && step.toolCalls.length > 0) {
+				step.toolCalls.forEach((call) => {
 					console.log(`[a011] Tool called: ${call.toolName}`);
 				});
 			}
 		},
-		onFinish: (result) => {
+		onFinish: (_result) => {
 			console.log(`[a011] Generation finished`);
 		},
 	},

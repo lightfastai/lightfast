@@ -3,7 +3,7 @@ import type { ExperimentalAgentToolSchemas } from "@/mastra/agents/experimental"
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {
-	[key: string]: any; // Index signature required by UIDataTypes
+	[key: string]: unknown; // Index signature required by UIDataTypes
 }
 
 // Tool schemas extracted from all experimental agents (a010, a011, etc.)
@@ -11,7 +11,7 @@ export type LightfastToolSchemas = ExperimentalAgentToolSchemas;
 
 // Main UIMessage type with our custom generics
 export type LightfastUIMessage = UIMessage<
-	{}, // No custom metadata needed
+	Record<string, never>, // No custom metadata needed
 	LightfastUICustomDataTypes,
 	LightfastToolSchemas
 >;

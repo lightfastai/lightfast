@@ -1,10 +1,11 @@
 "use client";
 
+import type { ToolUIPart } from "ai";
 import { memo } from "react";
 import { GenericToolDisplay } from "./generic-tool-display";
 
 export interface ToolCallRendererProps {
-	toolPart: any; // Tool part from the message
+	toolPart: ToolUIPart;
 	toolName: string;
 }
 

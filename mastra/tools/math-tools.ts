@@ -11,7 +11,7 @@ export const calculateTool = createTool({
 		result: z.number().describe("The result of the calculation"),
 		expression: z.string().describe("The original expression"),
 	}),
-	execute: async ({ context, threadId, resourceId }) => {
+	execute: async ({ context }) => {
 		const { expression } = context;
 		try {
 			// Safe evaluation using Function constructor for basic math
@@ -45,7 +45,7 @@ export const calculateTool = createTool({
 				result: typeof result === "number" ? result : Number(result),
 				expression,
 			};
-		} catch (error) {
+		} catch (_error) {
 			throw new Error(`Invalid mathematical expression: ${expression}`);
 		}
 	},
@@ -61,7 +61,7 @@ export const factorialTool = createTool({
 		result: z.number().describe("The factorial result"),
 		number: z.number().describe("The original number"),
 	}),
-	execute: async ({ context, threadId, resourceId }) => {
+	execute: async ({ context }) => {
 		const { number } = context;
 		if (number < 0) {
 			throw new Error("Factorial is only defined non-negative numbers");
@@ -89,7 +89,7 @@ export const fibonacciTool = createTool({
 		sequence: z.array(z.number()).describe("The Fibonacci sequence"),
 		nth_term: z.number().describe("The nth term in the sequence"),
 	}),
-	execute: async ({ context, threadId, resourceId }) => {
+	execute: async ({ context }) => {
 		const { n } = context;
 		if (n < 1) {
 			throw new Error("n must be at least 1");

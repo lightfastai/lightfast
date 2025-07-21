@@ -35,9 +35,9 @@ Always use the web_search tool to find information and provide clear, well-sourc
 		onError: ({ error }) => {
 			console.error(`[Searcher] Stream error:`, error);
 		},
-		onStepFinish: ({ text, toolCalls, toolResults }) => {
-			if (toolResults) {
-				toolResults.forEach((result, index) => {
+		onStepFinish: (step) => {
+			if (step.toolResults) {
+				step.toolResults.forEach((result, index) => {
 					if (
 						result.type === "tool-result" &&
 						result.output &&

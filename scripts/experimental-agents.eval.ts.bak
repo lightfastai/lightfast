@@ -10,7 +10,6 @@
  */
 
 import { Eval } from "braintrust";
-import { mastra } from "../mastra";
 
 // Test scenarios specifically designed for experimental agents
 const experimentalAgentScenarios = [
@@ -98,7 +97,7 @@ const experimentalAgentScenarios = [
 ];
 
 // Agent response simulation based on their actual capabilities
-async function simulateAgentResponse(agentName: string, scenario: any): Promise<string> {
+async function simulateAgentResponse(agentName: string, scenario: { category: string; complexity: string }): Promise<string> {
 	console.log(`[EVAL] Testing ${agentName} with scenario: ${scenario.category}`);
 
 	// Simulate realistic response time
@@ -115,10 +114,8 @@ async function simulateAgentResponse(agentName: string, scenario: any): Promise<
 			development_and_testing:
 				"Creating Node.js sandbox environment... Setting up calculator application with basic arithmetic operations. Writing calculator.js with functions for add, subtract, multiply, divide. Testing functionality with sample calculations. All tests pass - calculator working correctly in sandbox environment.",
 		};
-		return (
-			responses[scenario.category] ||
-			"I'll handle this comprehensive request using multiple tools and systematic approach."
-		);
+		const response = responses[scenario.category as keyof typeof responses];
+		return response || "I'll handle this comprehensive request using multiple tools and systematic approach.";
 	}
 
 	if (agentName === "v011") {
@@ -131,17 +128,15 @@ async function simulateAgentResponse(agentName: string, scenario: any): Promise<
 			project_initialization:
 				"Creating structured project setup workflow:\n\nTASK-001: Define project architecture and requirements\nTASK-002: Create directory structure and core files\nTASK-003: Set up development environment and dependencies\n\nExecuting tasks systematically... Project structure created with organized directories, configuration files, and development setup completed.",
 		};
-		return (
-			responses[scenario.category] ||
-			"I'll decompose this request into 3-5 clear tasks and execute them systematically with proper task tracking."
-		);
+		const response = responses[scenario.category as keyof typeof responses];
+		return response || "I'll decompose this request into 3-5 clear tasks and execute them systematically with proper task tracking.";
 	}
 
 	return "Simulated agent response";
 }
 
 // Scoring function specifically for experimental agents
-function scoreExperimentalAgent(scenario: any, output: string): Record<string, number> {
+function scoreExperimentalAgent(input: { agent: string; category: string; complexity: string }, output: string): Record<string, number> {
 	const scores: Record<string, number> = {};
 	const outputStr = output || "";
 	const outputLower = outputStr.toLowerCase();
@@ -151,7 +146,7 @@ function scoreExperimentalAgent(scenario: any, output: string): Record<string, n
 	scores.clarity = outputStr.includes("task") || outputStr.includes("search") || outputStr.includes("create") ? 1 : 0.7;
 
 	// Agent-specific scoring
-	if (scenario.agent === "v010") {
+	if (input.agent === "v010") {
 		// V010 should demonstrate comprehensive tool usage
 		scores.tool_utilization = 0;
 		if (outputLower.includes("search")) scores.tool_utilization += 0.3;
@@ -163,7 +158,7 @@ function scoreExperimentalAgent(scenario: any, output: string): Record<string, n
 			(outputLower.match(/\b(search|file|sandbox|browser)\b/g) || []).length >= 2 ? 1 : 0.5;
 	}
 
-	if (scenario.agent === "v011") {
+	if (input.agent === "v011") {
 		// V011 should demonstrate task decomposition and workflow
 		scores.task_decomposition = outputLower.includes("task-") || outputLower.includes("breaking down") ? 1 : 0;
 		scores.workflow_structure = outputLower.includes("executing") && outputLower.includes("task") ? 1 : 0.5;
@@ -175,7 +170,7 @@ function scoreExperimentalAgent(scenario: any, output: string): Record<string, n
 	}
 
 	// Category-specific scoring
-	switch (scenario.category) {
+	switch (input.category) {
 		case "research_and_documentation":
 		case "research_and_storage":
 		case "task_led_research":
@@ -195,18 +190,46 @@ function scoreExperimentalAgent(scenario: any, output: string): Record<string, n
 
 // Main evaluation setup
 Eval("hal9000-experimental-agents", {
-	data: () => experimentalAgentScenarios,
-	task: async (scenario) => {
+	data: experimentalAgentScenarios.map(scenario => {
+		// Convert inconsistent structure to standard Braintrust format
+		if ('input' in scenario) {
+			return scenario; // Already in correct format
+		} else {
+			// Convert old format to new format
+			return {
+				input: {
+					agent: scenario.agent,
+					query: scenario.query,
+					category: scenario.category,
+					complexity: scenario.complexity
+				},
+				expected: {
+					tools_used: scenario.expected_tools || [],
+					outcome: scenario.expected_outcome || "",
+					quality_indicators: []
+				},
+				metadata: {
+					test_type: scenario.category,
+					agent: scenario.agent
+				}
+			};
+		}
+	}),
+	task: async (input) => {
 		const startTime = Date.now();
 
-		// Braintrust passes the input object directly
-		const agentName = scenario.agent;
-		const category = scenario.category;
-		const complexity = scenario.complexity;
+		if (!input) {
+			throw new Error("No input provided to task");
+		}
+
+		// Extract data from standardized input format
+		const agentName = input.agent;
+		const category = input.category;
+		const complexity = input.complexity;
 
 		console.log(`[EVAL] Testing ${agentName} agent - ${category} (${complexity} complexity)`);
 
-		const output = await simulateAgentResponse(agentName, scenario);
+		const output = await simulateAgentResponse(agentName, { category, complexity });
 		const duration = Date.now() - startTime;
 
 		console.log(`[EVAL] ${agentName} completed in ${duration}ms`);
@@ -215,10 +238,14 @@ Eval("hal9000-experimental-agents", {
 		return output;
 	},
 	scores: [
-		(scenario, output) => {
-			const agentName = scenario.agent;
-			const category = scenario.category;
-			const scores = scoreExperimentalAgent(scenario, output);
+		({ input, output }) => {
+			if (!input) {
+				return { error: 0 };
+			}
+			
+			const agentName = input.agent;
+			const category = input.category;
+			const scores = scoreExperimentalAgent(input, output as string);
 			console.log(
 				`[EVAL] Scores for ${agentName} (${category}):`,
 				Object.entries(scores)

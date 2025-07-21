@@ -103,7 +103,7 @@ const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"
 export function VirtuosoChat({ messages, isLoading, licenseKey = "" }: VirtuosoChatProps) {
 	const virtuoso = React.useRef<VirtuosoMessageListMethods<VirtuosoMessage>>(null);
 	const prevMessagesLength = React.useRef(0);
-	const [isAtBottom, setIsAtBottom] = React.useState(true);
+	const [isAtBottom, _setIsAtBottom] = React.useState(true);
 
 	// Auto-scroll to bottom when new messages are added
 	React.useEffect(() => {

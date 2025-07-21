@@ -32,19 +32,22 @@ export function createEnvironmentStorage() {
  * Factory function to create Memory instances based on environment
  * Automatically selects storage backend based on environment variables
  */
-export function createEnvironmentMemory(
+export function createEnvironmentMemory<T extends z.ZodRawShape>(
 	options: {
 		prefix?: string;
 		workingMemoryTemplate?: string;
-		workingMemorySchema?: z.ZodObject<any>;
-		workingMemoryDefault?: any;
+		workingMemorySchema?: z.ZodObject<T>;
+		workingMemoryDefault?: z.infer<z.ZodObject<T>>;
 		lastMessages?: number;
 	} = {},
 ): Memory {
 	const { workingMemoryTemplate, workingMemorySchema, workingMemoryDefault, lastMessages = 50 } = options;
 
 	// Prepare working memory config based on whether template or schema is provided
-	let workingMemoryConfig;
+	let workingMemoryConfig:
+		| { enabled: true; scope: "thread"; schema: z.ZodObject<T>; default?: z.infer<z.ZodObject<T>> }
+		| { enabled: true; scope: "thread"; template: string }
+		| undefined;
 	if (workingMemorySchema) {
 		workingMemoryConfig = {
 			enabled: true,

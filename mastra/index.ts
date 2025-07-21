@@ -1,5 +1,4 @@
 import { Mastra } from "@mastra/core";
-import { env } from "../env";
 
 // Experimental agents - Latest versions under active development
 import { a010 } from "./agents/experimental/a010";

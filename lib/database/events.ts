@@ -12,7 +12,7 @@ export interface JobStartedEvent extends BaseEvent {
 	type: "job_started";
 	data: {
 		taskDescription: string;
-		constraints?: any;
+		constraints?: Record<string, unknown>;
 	};
 }
 
@@ -22,7 +22,7 @@ export interface StageChangedEvent extends BaseEvent {
 	data: {
 		previousStage: string;
 		newStage: string;
-		metadata?: any;
+		metadata?: Record<string, unknown>;
 	};
 }
 
@@ -32,8 +32,8 @@ export interface AgentExecutedEvent extends BaseEvent {
 	data: {
 		agentName: string;
 		toolName: string;
-		input: any;
-		output: any;
+		input: Record<string, unknown>;
+		output: Record<string, unknown>;
 		success: boolean;
 		duration: number;
 		error?: string;
@@ -45,7 +45,7 @@ export interface JobCompletedEvent extends BaseEvent {
 	type: "job_completed";
 	data: {
 		success: boolean;
-		finalOutput?: any;
+		finalOutput?: Record<string, unknown>;
 		error?: string;
 		duration: number;
 	};

@@ -34,10 +34,10 @@ Key guidelines:
 		onError: ({ error }) => {
 			console.error(`[c010] Stream error:`, error);
 		},
-		onStepFinish: ({ text }) => {
+		onStepFinish: (_step) => {
 			console.log(`[c010] Step completed`);
 		},
-		onFinish: (result) => {
+		onFinish: (_result) => {
 			console.log(`[c010] Generation finished`);
 		},
 	},

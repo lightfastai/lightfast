@@ -102,7 +102,7 @@ Eval("hal9000-local-evaluation", {
 		return output;
 	},
 	scores: [
-		(input, output, expected) => {
+		({ input, output, expected }) => {
 			const scores = scoreResponse(input, output, expected);
 			console.log(`[EVAL] Scores for ${input.agent}:`, scores);
 			return scores;

@@ -20,7 +20,7 @@ export const taskExecutorTool = createTool({
 		currentTaskId: z.string().optional(),
 		message: z.string(),
 	}),
-	execute: async ({ context, threadId, resourceId }) => {
+	execute: async ({ context }) => {
 		const { action, taskId, toolName, toolResult, notes } = context;
 
 		// In a real implementation, this would update the working memory

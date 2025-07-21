@@ -3,9 +3,11 @@ import { db } from "./client";
 import type { JobEvent } from "./events";
 import { jobs, type NewJob, threads } from "./schema";
 
+type ThreadMetadata = Record<string, unknown>;
+
 export class DbService {
 	// Thread operations
-	async createThread(id: string, metadata?: any): Promise<string> {
+	async createThread(id: string, metadata?: ThreadMetadata): Promise<string> {
 		await db.insert(threads).values({
 			id,
 			metadata,
