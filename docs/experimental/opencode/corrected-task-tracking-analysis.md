@@ -134,8 +134,96 @@ The key insight is OpenCode's **smart usage guidelines** that prevent over-track
 4. **Add TodoRead tool** - for better state visibility
 5. **Consider App.state() pattern** - for cleaner state management
 
+## OpenCode's Task Tracking Prompt Engineering
+
+### Core Prompt Strategy
+
+OpenCode embeds task tracking instructions directly in their main system prompt (`anthropic.txt`):
+
+```
+# Task Management
+You have access to the TodoWrite and TodoRead tools to help you manage and plan tasks. Use these tools VERY frequently to ensure that you are tracking your tasks and giving the user visibility into your progress.
+These tools are also EXTREMELY helpful for planning tasks, and for breaking down larger complex tasks into smaller steps. If you do not use this tool when planning, you may forget to do important tasks - and that is unacceptable.
+
+It is critical that you mark todos as completed as soon as you are done with a task. Do not batch up multiple tasks before marking them as completed.
+```
+
+### Key Prompt Engineering Techniques
+
+#### 1. Strong Language for Importance
+- **"VERY frequently"** - emphasizes high usage
+- **"EXTREMELY helpful"** - reinforces value
+- **"unacceptable"** - creates consequence for not using
+
+#### 2. Specific Usage Examples
+Provides detailed examples showing the expected flow:
+
+```
+<example>
+user: Run the build and fix any type errors
+assistant: I'm going to use the TodoWrite tool to write the following items to the todo list: 
+- Run the build
+- Fix any type errors
+
+I'm now going to run the build using Bash.
+
+Looks like I found 10 type errors. I'm going to use the TodoWrite tool to write 10 items to the todo list.
+
+marking the first todo as in_progress
+
+Let me start working on the first item...
+
+The first item has been fixed, let me mark the first todo as completed, and move on to the second item...
+</example>
+```
+
+#### 3. Behavioral Requirements
+- **"mark todos as completed as soon as you are done"**
+- **"Do not batch up multiple tasks"**
+- **"giving the user visibility into your progress"**
+
+#### 4. Workflow Integration
+Embeds todo usage into standard task workflow:
+
+```
+# Doing tasks
+The user will primarily request you perform software engineering tasks...
+- Use the TodoWrite tool to plan the task if required
+- Use the available search tools to understand the codebase
+- Implement the solution using all tools available to you
+- Verify the solution if possible with tests
+```
+
+#### 5. Mandatory Usage Declaration
+At the end of the prompt:
+
+```
+IMPORTANT: Always use the TodoWrite tool to plan and track tasks throughout the conversation.
+```
+
+### Beast Mode Enhancement
+
+In `beast.txt`, OpenCode adds even stronger task tracking requirements:
+
+```
+You MUST iterate and keep going until the problem is solved.
+
+Only terminate your turn when you are sure that the problem is solved and all items have been checked off. Use the TodoWrite and TodoRead tools to track and manage steps.
+
+You MUST use the ToolRead tool to verify that all steps are complete or cancelled before ending your turn. If any steps are incomplete, you MUST continue working on them until they are all complete.
+```
+
+### Prompt Engineering Lessons
+
+1. **Embed in main prompt** - Don't rely on separate instructions
+2. **Use strong emotional language** - "unacceptable", "critical", "MUST"
+3. **Provide concrete examples** - Show expected interaction patterns
+4. **Integrate with workflows** - Make it part of standard procedures
+5. **Add verification requirements** - Force checking completion state
+6. **Repeat key messages** - Multiple reinforcement points
+
 ## Corrected Conclusion
 
-OpenCode **does use tool calls** for task tracking via TodoWrite/TodoRead tools, just like hal9000. The difference is they're **smarter about when to use them** based on task complexity, not the mechanism itself.
+OpenCode **does use tool calls** for task tracking via TodoWrite/TodoRead tools, just like hal9000. The difference is they're **smarter about when to use them** based on task complexity, plus they use **stronger prompt engineering** to ensure consistent usage.
 
-The architectural pattern is validated - tool-based task tracking works well when combined with intelligent usage decisions.
+The architectural pattern is validated - tool-based task tracking works well when combined with intelligent usage decisions and effective prompt engineering techniques.
