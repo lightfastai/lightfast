@@ -2,11 +2,11 @@ import type { NextRequest } from "next/server";
 import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ agentId: string; id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ agentId: string; threadId: string }> }) {
 	try {
 		const requestBody = await request.json();
 		const { messages, threadId: bodyThreadId } = requestBody;
-		const { agentId, id: paramsThreadId } = await params;
+		const { agentId, threadId: paramsThreadId } = await params;
 
 		console.log(`[API] URL param agentId: ${agentId}`);
 		console.log(`[API] URL param threadId: ${paramsThreadId}`);
@@ -67,9 +67,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 	}
 }
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ agentId: string; id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ agentId: string; threadId: string }> }) {
 	try {
-		const { agentId, id: threadId } = await params;
+		const { agentId, threadId } = await params;
 
 		// Validate agentId
 		if (!experimentalAgents[agentId as ExperimentalAgentId]) {

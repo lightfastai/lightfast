@@ -15,7 +15,7 @@ interface UseChatTransportProps {
  */
 export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
-		const apiEndpoint = `/api/chat/${agentId}/thread/${threadId}`;
+		const apiEndpoint = `/api/chat/${agentId}/${threadId}`;
 		return new DefaultChatTransport<LightfastUIMessage>({
 			api: apiEndpoint,
 			headers: {
