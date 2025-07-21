@@ -529,7 +529,7 @@ Eval(EXPERIMENT_NAME, {
 			const testCaseName = "test_" + testCaseIndex++;
 			collectedScores[testCaseName] = { ...scores }; // Spread to ensure it's a plain object
 			collectedAggregates[testCaseName] = aggregateScore;
-			
+
 			console.log("[SCORE] Collected scores for " + testCaseName);
 
 			// Convert to Braintrust Score format - return an array of score objects
@@ -595,7 +595,7 @@ let resultsSaved = false;
 const saveResults = () => {
 	if (resultsSaved) return;
 	resultsSaved = true;
-	
+
 	console.log("\n[EVAL] Saving experiment results...");
 	console.log("[EVAL] Collected scores: " + Object.keys(collectedScores).length + " test cases");
 	// Calculate overall aggregate
@@ -644,12 +644,12 @@ const saveResults = () => {
 };
 
 // Try to save results on different exit conditions
-process.on('exit', saveResults);
-process.on('SIGINT', () => {
+process.on("exit", saveResults);
+process.on("SIGINT", () => {
 	saveResults();
 	process.exit(0);
 });
-process.on('SIGTERM', () => {
+process.on("SIGTERM", () => {
 	saveResults();
 	process.exit(0);
 });

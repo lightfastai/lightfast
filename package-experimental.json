@@ -49,6 +49,7 @@
 		"@ai-sdk/openai": "2.0.0-beta.10",
 		"@ai-sdk/react": "2.0.0-beta.23",
 		"@browserbasehq/stagehand": "^2.3.1",
+		"@clerk/elements": "^0.23.43",
 		"@clerk/nextjs": "^6.25.4",
 		"@clerk/themes": "^2.3.3",
 		"@mastra/core": "0.0.0-ai-v5-20250710191716",

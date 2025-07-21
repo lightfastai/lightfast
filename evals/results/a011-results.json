@@ -1,102 +1,102 @@
 [
-  {
-    "experimentName": "a011-2025-07-21",
-    "gitCommit": "25fa02e",
-    "timestamp": "2025-07-21T11:16:54.067Z",
-    "agent": "a011",
-    "scores": {},
-    "aggregateScores": {},
-    "overallAggregate": 0,
-    "metadata": {
-      "version": "2.1.0",
-      "framework": "mastra",
-      "testCases": 5
-    }
-  },
-  {
-    "experimentName": "a011-2025-07-21",
-    "gitCommit": "25fa02e",
-    "timestamp": "2025-07-21T11:20:33.726Z",
-    "agent": "a011",
-    "scores": {
-      "test_0": {
-        "task_completion": 0.7,
-        "output_quality": 0.3,
-        "relevancy": 0,
-        "error_handling": 1,
-        "tool_usage_accuracy": 0.8,
-        "performance": 0.5,
-        "task_management": 0.5
-      },
-      "test_1": {
-        "task_completion": 0.7,
-        "output_quality": 1,
-        "relevancy": 0,
-        "error_handling": 1,
-        "tool_usage_accuracy": 0.8,
-        "performance": 0.5,
-        "task_management": 0.5
-      }
-    },
-    "aggregateScores": {
-      "test_0": 0.5399999999999999,
-      "test_1": 0.645
-    },
-    "overallAggregate": 0.5925,
-    "metadata": {
-      "version": "2.1.0",
-      "framework": "mastra",
-      "testCases": 5
-    }
-  },
-  {
-    "experimentName": "a011-test-comparison",
-    "gitCommit": "25fa02e",
-    "timestamp": "2025-07-21T11:32:06.654Z",
-    "agent": "a011",
-    "scores": {},
-    "aggregateScores": {},
-    "overallAggregate": 0,
-    "metadata": {
-      "version": "2.1.0",
-      "framework": "mastra",
-      "testCases": 5
-    }
-  },
-  {
-    "experimentName": "a011-improved-version",
-    "gitCommit": "abc123",
-    "timestamp": "2025-07-21T11:41:02.070Z",
-    "agent": "a011",
-    "scores": {
-      "test_0": {
-        "task_completion": 0.9,
-        "output_quality": 0.5,
-        "relevancy": 0.3,
-        "error_handling": 1,
-        "tool_usage_accuracy": 0.9,
-        "performance": 0.7,
-        "task_management": 1
-      },
-      "test_1": {
-        "task_completion": 0.8,
-        "output_quality": 0.9,
-        "relevancy": 0.4,
-        "error_handling": 1,
-        "tool_usage_accuracy": 0.7,
-        "performance": 0.6,
-        "task_management": 0.8
-      }
-    },
-    "aggregateScores": {
-      "test_0": 0.771,
-      "test_1": 0.743
-    },
-    "overallAggregate": 0.757,
-    "metadata": {
-      "version": "2.2.0",
-      "framework": "mastra",
-      "testCases": 2
-    }
-  }
+	{
+		"experimentName": "a011-2025-07-21",
+		"gitCommit": "25fa02e",
+		"timestamp": "2025-07-21T11:16:54.067Z",
+		"agent": "a011",
+		"scores": {},
+		"aggregateScores": {},
+		"overallAggregate": 0,
+		"metadata": {
+			"version": "2.1.0",
+			"framework": "mastra",
+			"testCases": 5
+		}
+	},
+	{
+		"experimentName": "a011-2025-07-21",
+		"gitCommit": "25fa02e",
+		"timestamp": "2025-07-21T11:20:33.726Z",
+		"agent": "a011",
+		"scores": {
+			"test_0": {
+				"task_completion": 0.7,
+				"output_quality": 0.3,
+				"relevancy": 0,
+				"error_handling": 1,
+				"tool_usage_accuracy": 0.8,
+				"performance": 0.5,
+				"task_management": 0.5
+			},
+			"test_1": {
+				"task_completion": 0.7,
+				"output_quality": 1,
+				"relevancy": 0,
+				"error_handling": 1,
+				"tool_usage_accuracy": 0.8,
+				"performance": 0.5,
+				"task_management": 0.5
+			}
+		},
+		"aggregateScores": {
+			"test_0": 0.5399999999999999,
+			"test_1": 0.645
+		},
+		"overallAggregate": 0.5925,
+		"metadata": {
+			"version": "2.1.0",
+			"framework": "mastra",
+			"testCases": 5
+		}
+	},
+	{
+		"experimentName": "a011-test-comparison",
+		"gitCommit": "25fa02e",
+		"timestamp": "2025-07-21T11:32:06.654Z",
+		"agent": "a011",
+		"scores": {},
+		"aggregateScores": {},
+		"overallAggregate": 0,
+		"metadata": {
+			"version": "2.1.0",
+			"framework": "mastra",
+			"testCases": 5
+		}
+	},
+	{
+		"experimentName": "a011-improved-version",
+		"gitCommit": "abc123",
+		"timestamp": "2025-07-21T11:41:02.070Z",
+		"agent": "a011",
+		"scores": {
+			"test_0": {
+				"task_completion": 0.9,
+				"output_quality": 0.5,
+				"relevancy": 0.3,
+				"error_handling": 1,
+				"tool_usage_accuracy": 0.9,
+				"performance": 0.7,
+				"task_management": 1
+			},
+			"test_1": {
+				"task_completion": 0.8,
+				"output_quality": 0.9,
+				"relevancy": 0.4,
+				"error_handling": 1,
+				"tool_usage_accuracy": 0.7,
+				"performance": 0.6,
+				"task_management": 0.8
+			}
+		},
+		"aggregateScores": {
+			"test_0": 0.771,
+			"test_1": 0.743
+		},
+		"overallAggregate": 0.757,
+		"metadata": {
+			"version": "2.2.0",
+			"framework": "mastra",
+			"testCases": 2
+		}
+	}
 ]
