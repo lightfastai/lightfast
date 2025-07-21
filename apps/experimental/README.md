@@ -1,106 +1,207 @@
-# lightfast-experimental - Advanced AI Agent Platform
+# lightfast-experimental
 
-An advanced AI agent platform built with Mastra, featuring multiple specialized agents, secure sandbox execution, and comprehensive task management capabilities.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/lightfastai/experimental)](https://github.com/lightfastai/experimental/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/lightfastai/experimental)](https://github.com/lightfastai/experimental/issues)
 
-## Tech Stack
+An open-source, production-ready AI agent platform featuring multiple specialized agents, secure sandbox execution, and comprehensive task management capabilities. Built with Next.js 15, Mastra, and TypeScript.
 
-- **Next.js 15** - App Router with TypeScript
-- **Mastra** - AI agent orchestration framework
-- **Tailwind CSS v4** - Modern styling
-- **shadcn/ui** - UI component library
-- **Vercel Sandbox** - Secure code execution
-- **AI SDK** - Multi-provider AI integration (Anthropic, OpenAI, OpenRouter)
-- **Drizzle ORM** - Type-safe database interactions
-- **LibSQL/Upstash** - Flexible storage options
+## About
 
-## Features
+Lightfast Experimental is a modern AI agent platform that combines multiple specialized AI agents with a comprehensive development toolkit. This platform serves as both a working application and a research environment for exploring advanced AI agent architectures and capabilities.
 
-### 🤖 Specialized AI Agents
-- **Math Agent**: Complex mathematical calculations, statistics, and matrix operations
-- **Vision Agent**: Image analysis and understanding
-- **Voice Agent**: Voice interaction capabilities with ElevenLabs and OpenAI
-- **Browser Agent**: Web automation and scraping with Playwright
-- **Sandbox Agent**: Secure code execution in isolated environments
-- **Chat Agent**: General-purpose conversational AI
-- **Download Agent**: File downloading and management
-- **Planner Agent**: Task planning and decomposition
-- **Searcher Agent**: Web search integration with Exa
-- **Artifact Agent**: Code and document artifact creation
+### Why Lightfast Experimental?
 
-### 🔧 Advanced Capabilities
-- **Memory System**: Persistent conversation memory with thread and resource scoping
-- **Task Management**: Schema-based task tracking with UI components
-- **Tool Integration**: Extensible tool system for agent capabilities
-- **Workflow Support**: Complex multi-step task execution
-- **Type Safety**: Strict TypeScript with Zod schemas throughout
+- ⚡ **Blazing Fast**: Built with Next.js 15, real-time agent interactions
+- 🤖 **Multiple Specialized Agents**: Vision, voice, browser automation, code execution, and more
+- 🔒 **Secure Sandbox**: Safe code execution with Vercel Sandbox
+- 💼 **Production Ready**: Used for research and development at Lightfast
+- 🎨 **Modern UI**: Clean, responsive design with shadcn/ui components
+- 📱 **Real-time**: Instant message delivery and streaming responses
+- 🧠 **Memory System**: Persistent conversation context and thread management
+- 🔧 **Extensible**: Easy to add new agents and tools
+
+## Environment Variables
+
+This project uses `@t3-oss/env-nextjs` for type-safe environment variable validation. The environment configuration is defined in `env.ts`.
+
+### Required Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```bash
+# AI API Keys (Required - choose at least one provider)
+OPENROUTER_API_KEY=sk-or-your-openrouter-key-here     # Recommended: Access to multiple models
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here  # For Claude Sonnet 4 (primary model)
+OPENAI_API_KEY=sk-your-openai-api-key-here            # For GPT models
+
+# Optional Service APIs
+EXA_API_KEY=your-exa-api-key-here                     # For web search functionality
+BROWSERBASE_API_KEY=your-browserbase-key              # For browser automation
+BROWSERBASE_PROJECT_ID=your-project-id
+ELEVENLABS_API_KEY=your-elevenlabs-key               # For voice synthesis
+BLOB_READ_WRITE_TOKEN=your-vercel-blob-token         # For file storage
+
+# Database Configuration (optional - defaults to local SQLite)
+DATABASE_URL=file:./mastra.db                         # Local SQLite (default)
+# DATABASE_URL=your-postgresql-url                    # For production PostgreSQL
+
+# Memory Storage (optional - for production scaling)
+UPSTASH_REDIS_REST_URL=your-upstash-url              # Redis for memory storage
+UPSTASH_REDIS_REST_TOKEN=your-upstash-token
+
+# Evaluation and Analytics (optional)
+BRAINTRUST_API_KEY=your-braintrust-api-key           # For agent evaluation
+BRAINTRUST_PROJECT_ID=lightfast-experimental-agents
+
+# Node Environment
+NODE_ENV=development
+```
+
+### Environment Variable Categories
+
+#### **🔒 Server-only Variables**
+These are only available on the server-side and ensure secure API key handling:
+- `OPENROUTER_API_KEY` - Multi-model API access via OpenRouter (recommended)
+- `ANTHROPIC_API_KEY` - Claude Sonnet 4 API access
+- `OPENAI_API_KEY` - GPT models API access
+- `EXA_API_KEY` - Web search functionality
+- `BROWSERBASE_API_KEY` - Browser automation service
+- `ELEVENLABS_API_KEY` - Voice synthesis
+- `BLOB_READ_WRITE_TOKEN` - File storage
+- `DATABASE_URL` - Database connection
+- `UPSTASH_REDIS_REST_URL` - Redis memory storage
+- `UPSTASH_REDIS_REST_TOKEN` - Redis authentication
+
+#### **⚙️ Shared Variables**
+Available on both client and server:
+- `NODE_ENV` - Runtime environment (development/production)
+
+### 🔑 Getting API Keys
+
+- **OpenRouter API**: Sign up at [openrouter.ai](https://openrouter.ai) for access to multiple AI models
+- **Anthropic API**: Register at [console.anthropic.com](https://console.anthropic.com) for Claude access
+- **OpenAI API**: Get your key from [platform.openai.com](https://platform.openai.com/api-keys)
+- **Exa API**: Create account at [exa.ai](https://exa.ai) for web search capabilities
+- **BrowserBase**: Sign up at [browserbase.com](https://browserbase.com) for browser automation
+- **ElevenLabs**: Register at [elevenlabs.io](https://elevenlabs.io) for voice synthesis
 
 ## Getting Started
 
-### Prerequisites
+1. **Install dependencies:**
+   ```bash
+   pnpm install
+   ```
 
-- Node.js 18+ and pnpm
-- API keys for AI providers (see Environment Variables)
+2. **Set up environment variables** (create `.env.local` with the variables shown above)
 
-### Installation
+3. **Start the Mastra development server** (optional, for agent playground):
+   ```bash
+   pnpm dev:mastra
+   ```
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd lightfast-experimental
-```
+4. **Start the Next.js development server:**
+   ```bash
+   pnpm dev
+   ```
 
-2. Install dependencies:
-```bash
-pnpm install
-```
+5. **Open [http://localhost:3000](http://localhost:3000)** and start chatting with agents
 
-3. Set up environment variables:
-```bash
-cp .env.example .env.local
-```
+## ✨ Features
 
-4. Configure your environment variables:
-```env
-# Required: Choose at least one AI provider
-OPENROUTER_API_KEY=your_openrouter_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key  # Optional
-OPENAI_API_KEY=your_openai_api_key        # Optional
+### 🤖 AI Agents & Chat
+- **Multiple Specialized Agents**: Each optimized for specific tasks
+  - **A010/A011**: Advanced experimental agents with comprehensive toolsets
+  - **C010**: General-purpose conversational agent
+  - **Vision Agent**: Image analysis and understanding
+  - **Voice Agent**: Text-to-speech and speech-to-text capabilities
+  - **Browser Agent**: Web automation and scraping with Playwright
+  - **Sandbox Agent**: Secure code execution in isolated environments
+  - **Download Agent**: File downloading and management
+  - **Planner Agent**: Task planning and decomposition
+  - **Searcher Agent**: Web search integration with Exa
+  - **Artifact Agent**: Code and document artifact creation
 
-# Optional services
-EXA_API_KEY=your_exa_api_key              # For web search
-BROWSERBASE_API_KEY=your_browserbase_key   # For browser automation
-BROWSERBASE_PROJECT_ID=your_project_id
-ELEVENLABS_API_KEY=your_elevenlabs_key    # For voice
-BLOB_READ_WRITE_TOKEN=your_vercel_blob    # For file storage
+- **Streaming Responses**: Real-time AI response streaming
+- **Thread Management**: Organized conversations with persistent history
+- **Memory System**: Context-aware conversations with thread and resource scoping
+- **Task Management**: Schema-based task tracking with UI components
 
-# Database (optional - defaults to local SQLite)
-DATABASE_URL=your_database_url
+### 🎨 User Experience
+- **Modern UI**: Built with shadcn/ui components and Tailwind CSS v4
+- **Responsive Design**: Works seamlessly on desktop and mobile
+- **Real-time Updates**: Live message delivery and agent interactions
+- **Agent Selector**: Easy switching between different AI agents
+- **Tool Integration**: Rich tool ecosystem for enhanced agent capabilities
 
-# Upstash Redis (optional - for production memory)
-UPSTASH_REDIS_REST_URL=your_upstash_url
-UPSTASH_REDIS_REST_TOKEN=your_upstash_token
-```
+### 🔧 Developer Experience
+- **Type-safe**: Full TypeScript with validated environment variables
+- **Modern Stack**: Next.js 15 with App Router and latest React features
+- **Agent Framework**: Mastra for AI agent orchestration and management
+- **Code Quality**: Biome for fast linting and formatting
+- **Extensible Architecture**: Easy to add new agents and tools
 
-### Development
+### 🔐 Security & Sandbox
+- **Secure Code Execution**: Vercel Sandbox for safe code running
+- **API Key Management**: Secure storage and validation of API keys
+- **Memory Isolation**: Thread and resource-scoped memory management
+- **Self-hostable**: Complete control over your data and infrastructure
 
-1. Start the Mastra dev server (optional, for agent playground):
-```bash
-pnpm dev:mastra
-```
+## 🏗️ Architecture
 
-2. Start the Next.js development server:
-```bash
-pnpm dev
-```
+### Frontend
+- **Next.js 15**: Latest features with App Router and modern React
+- **React 19**: Cutting-edge React features and performance
+- **TypeScript**: Full type safety across the application
+- **Tailwind CSS v4**: Modern utility-first styling
+- **shadcn/ui**: High-quality, accessible UI components
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+### Backend & AI
+- **Mastra**: AI agent orchestration framework
+- **Vercel AI SDK**: Streaming and AI utilities
+- **Drizzle ORM**: Type-safe database interactions
+- **LibSQL/Upstash**: Flexible storage options
+- **Vercel Sandbox**: Secure code execution environment
 
-### Running Tests
+### Infrastructure
+- **Vercel**: Production deployment and preview environments
+- **Database**: SQLite (development) / PostgreSQL (production)
+- **Memory**: In-memory (development) / Redis (production)
+- **File Storage**: Vercel Blob for file uploads and management
 
-```bash
-pnpm typecheck    # TypeScript type checking
-pnpm lint         # Run Biome linter
-```
+## 🛠️ Tech Stack
+
+| Category | Technology | Purpose |
+|----------|------------|----------|
+| **Frontend** | Next.js 15 | React framework with App Router |
+| | React 19 | Latest React features and performance |
+| | TypeScript | Type safety and developer experience |
+| | Tailwind CSS v4 | Utility-first styling |
+| | shadcn/ui | High-quality UI components |
+| **AI/Agents** | Mastra | AI agent orchestration framework |
+| | Vercel AI SDK | Streaming and AI utilities |
+| | Anthropic Claude | Claude Sonnet 4 integration |
+| | OpenAI | GPT models integration |
+| | OpenRouter | Multi-model API access |
+| **Backend** | Drizzle ORM | Type-safe database operations |
+| | LibSQL | Lightweight SQLite for development |
+| | Upstash Redis | Production memory storage |
+| | Vercel Sandbox | Secure code execution |
+| **DevOps** | Vercel | Deployment and hosting |
+| | pnpm | Fast, efficient package management |
+| **Code Quality** | Biome | Fast linting and formatting |
+| | TypeScript | Static type checking |
+| | Zod | Runtime validation |
+
+## Available Scripts
+
+- `pnpm dev` - Start the Next.js development server
+- `pnpm build` - Build the application for production
+- `pnpm start` - Start the production server
+- `pnpm lint` - Run Biome linter and fix issues
+- `pnpm typecheck` - Run TypeScript type checking
+- `pnpm dev:mastra` - Start Mastra development server
+- `pnpm build:mastra` - Build Mastra agent system
 
 ## Project Structure
 
@@ -111,164 +212,123 @@ pnpm lint         # Run Biome linter
 │   ├── chat/            # Chat UI routes
 │   └── layout.tsx       # Root layout
 ├── components/          # React components
-│   └── ui/              # shadcn/ui components
+│   ├── ui/              # shadcn/ui components
+│   └── tool-renderers/  # Agent tool displays
 ├── mastra/              # Mastra AI framework
 │   ├── agents/          # AI agent definitions
+│   │   ├── experimental/ # A010, A011 agents
+│   │   ├── pure/        # C010 conversational agent
+│   │   └── standalone/  # Specialized agents
 │   ├── tools/           # Tool implementations
-│   ├── workflows/       # Multi-step workflows
 │   └── lib/             # Utilities and providers
 ├── lib/                 # Shared utilities
 │   ├── database/        # Database client and schema
-│   └── sandbox/         # Sandbox execution
+│   ├── sandbox/         # Sandbox execution
+│   └── ai/              # AI provider configurations
 ├── docs/                # Documentation
 ├── hooks/               # React hooks
 └── types/               # TypeScript type definitions
 ```
 
-## Key Components
+## 🚀 Deployment
 
-### Agent System
+### Quick Deploy to Vercel
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lightfastai/experimental)
 
-Agents are defined in `mastra/agents/` with specific capabilities:
+### Manual Deployment
 
-```typescript
-// Example: Math Agent with multiple tools
-export const mathAgent = new Agent({
-  name: "Math",
-  description: "Advanced mathematical computation agent",
-  instructions: "You are a mathematical expert...",
-  model: anthropic("claude-3-5-sonnet-20241022"),
-  tools: {
-    calculate: calculateTool,
-    factorial: factorialTool,
-    fibonacci: fibonacciTool,
-    quadraticSolver: quadraticSolverTool,
-    statistics: statisticsTool,
-    matrixOperations: matrixOperationsTool,
-    derivative: derivativeTool,
-    integral: integralTool,
-  },
-});
-```
+1. **Fork and clone the repository**
+   ```bash
+   git clone https://github.com/lightfastai/experimental.git
+   cd experimental
+   ```
 
-### Memory System
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
 
-Thread-aware memory with context:
+3. **Configure environment variables**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your API keys
+   ```
 
-```typescript
-// Tools automatically receive threadId and resourceId
-export const myTool = createTool({
-  id: "thread-aware-tool",
-  execute: async ({ context, threadId, resourceId }) => {
-    // Use threadId for conversation context
-    // Use resourceId for user-specific data
-  }
-});
-```
+4. **Build the application**
+   ```bash
+   pnpm build
+   ```
 
-### Sandbox Execution
+5. **Deploy to Vercel**
+   ```bash
+   vercel --prod
+   ```
 
-Secure code execution with Vercel Sandbox:
+### Environment Variables for Production
 
-```typescript
-import { Sandbox } from '@vercel/sandbox';
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENROUTER_API_KEY` | Recommended | Multi-model API access |
+| `ANTHROPIC_API_KEY` | Yes | Claude Sonnet 4 API access |
+| `OPENAI_API_KEY` | Optional | GPT models API access |
+| `EXA_API_KEY` | Optional | Web search functionality |
+| `BROWSERBASE_API_KEY` | Optional | Browser automation |
+| `ELEVENLABS_API_KEY` | Optional | Voice synthesis |
+| `BLOB_READ_WRITE_TOKEN` | Optional | File storage |
+| `DATABASE_URL` | Production | PostgreSQL connection string |
+| `UPSTASH_REDIS_REST_URL` | Production | Redis memory storage |
+| `UPSTASH_REDIS_REST_TOKEN` | Production | Redis authentication |
 
-const sandbox = await Sandbox.create();
-const result = await sandbox.run({
-  code: 'console.log("Hello from sandbox!")',
-  language: 'javascript'
-});
-```
+## 📚 Documentation
 
-## Usage
+- [**Agent Development Guide**](./docs/agent-testing.md) - Creating and testing agents
+- [**Memory System Guide**](./docs/memory-system.md) - Understanding context management
+- [**Container Development**](./docs/container-use.md) - Isolated development environments
+- [**Next.js Best Practices**](./docs/nextjs.md) - Framework guidelines
+- [**OpenCode Analysis**](./docs/opencode/) - Research and implementation insights
 
-### Chat Interface
+## 🤝 Contributing
 
-The main interface is available at `http://localhost:3000`. You'll be redirected to a new chat thread where you can interact with the agents.
+We welcome contributions! Please see our development workflow:
 
-### Available Agents
-
-1. **Math Agent** - Advanced calculations, statistics, calculus
-   - Example: "Calculate the derivative of x^2 + 3x - 5"
-   - Example: "Find the mean and standard deviation of [1,2,3,4,5]"
-
-2. **Sandbox Agent** - Execute code safely
-   - Example: "Run a Python script that generates fibonacci numbers"
-   - Example: "Create and run a Node.js HTTP server"
-
-3. **Browser Agent** - Web automation
-   - Example: "Navigate to example.com and take a screenshot"
-   - Example: "Search for 'AI agents' and get the results"
-
-4. **Vision Agent** - Analyze images
-   - Example: "Describe this image: [upload image]"
-   - Example: "What text is in this screenshot?"
-
-5. **Voice Agent** - Voice interactions
-   - Supports text-to-speech and speech-to-text
-
-### API Usage
-
-```bash
-# Direct agent API call
-curl -X POST http://localhost:4111/api/agents/mathAgent/stream \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": "Calculate 15 * 7"}],
-    "threadId": "test-thread",
-    "resourceId": "mathAgent",
-    "stream": true
-  }'
-```
-
-## Development Guidelines
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and test thoroughly
+4. Run `pnpm typecheck` and `pnpm lint`
+5. Submit a pull request
 
 ### Code Style
-
-- **Strict TypeScript** - No `any` types
-- **Direct imports** - No index.ts re-exports
-- **Biome formatting** - Auto-formats on save
-- **Zod schemas** - For all data validation
+- We use Biome for formatting and linting
+- Strict TypeScript with no `any` types
+- Direct imports (no index.ts re-exports)
+- Zod schemas for all data validation
 
 ### Adding New Agents
-
 1. Create agent file in `mastra/agents/`
 2. Define tools in `mastra/tools/`
 3. Register in `mastra/index.ts`
-4. Follow patterns in AGENTS.md
+4. Follow existing patterns and documentation
 
-## Deployment
+## 📄 License
 
-### Deploy to Vercel
+This project is licensed under the [MIT License](LICENSE).
 
-```bash
-vercel deploy
-```
+## 🌟 Community
 
-Environment variables are automatically picked up from your Vercel project settings.
+- **Website**: [lightfast.ai](https://lightfast.ai)
+- **GitHub**: [github.com/lightfastai/experimental](https://github.com/lightfastai/experimental)
+- **Discord**: [Join our community](https://discord.gg/YqPDfcar2C)
+- **Twitter**: [@lightfastai](https://x.com/lightfastai)
 
-### Production Considerations
+## 💖 Support
 
-- Use Upstash for production memory storage
-- Configure appropriate API rate limits
-- Set up proper error monitoring
-- Review agent permissions and sandboxing
+If you find this project helpful, please consider:
+- ⭐ Starring the repository
+- 🐛 Reporting bugs and issues
+- 💡 Suggesting new features
+- 🤝 Contributing code or documentation
 
-## Documentation
+---
 
-- [Agent Development Guide](./docs/agent-testing.md)
-- [Memory System Guide](./docs/memory-system.md)
-- [Container Development](./docs/container-use.md)
-- [Next.js Best Practices](./docs/nextjs.md)
-- [Mastra Best Practices](./AGENTS.md)
-
-## Learn More
-
-- [Mastra Documentation](https://mastra.ai/docs)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Vercel AI SDK](https://sdk.vercel.ai/docs)
-- [Anthropic Claude](https://docs.anthropic.com)
-
-## License
-
-MIT
+**Built with ❤️ by the Lightfast team**
