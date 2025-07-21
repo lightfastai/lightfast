@@ -3,11 +3,7 @@ import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
 // Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
-	"/sign-in(.*)",
-	"/sign-up(.*)",
-	"/api/webhooks(.*)",
-]);
+const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/api/webhooks(.*)"]);
 
 // Hardcode the default agent to avoid loading any agent code in middleware
 const DEFAULT_EXPERIMENTAL_AGENT = "a011";
