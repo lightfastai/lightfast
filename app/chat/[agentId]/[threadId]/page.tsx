@@ -2,10 +2,16 @@
 
 import { useChat } from "@ai-sdk/react";
 import { use, useEffect } from "react";
+import { Info } from "lucide-react";
 import { AgentSelector } from "@/components/agent-selector";
 import { ChatInput } from "@/components/chat-input";
 import { VirtuosoChat } from "@/components/virtuoso-chat";
 import { UserDropdown } from "@/components/user-dropdown";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
@@ -64,8 +70,22 @@ export default function ChatPage({ params }: ChatPageProps) {
 				<div className="flex-1 flex items-center p-6 overflow-hidden">
 					<div className="w-full max-w-3xl mx-auto relative -top-12">
 						<div className="mb-6">
-							<h1 className="text-2xl font-medium mb-2">Hello.</h1>
-							<p className="text-2xl text-muted-foreground">What can I do for you?</p>
+							<div className="flex items-center gap-1 mb-2">
+								<h1 className="font-mono text-xs text-muted-foreground">Experimental</h1>
+								<Popover>
+									<PopoverTrigger asChild>
+										<button className="hover:opacity-70 transition-opacity">
+											<Info className="h-3 w-3 text-muted-foreground" />
+										</button>
+									</PopoverTrigger>
+									<PopoverContent side="right" className="w-80">
+										<p className="text-sm">
+											This is an experimental feature. We don't persist any chat threads for users at this time.
+										</p>
+									</PopoverContent>
+								</Popover>
+							</div>
+							<p className="text-2xl">What can I do for you?</p>
 						</div>
 						<ChatInput
 							onSendMessage={async (message) => {
