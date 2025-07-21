@@ -1,7 +1,9 @@
 import { nanoid } from "nanoid";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { DEFAULT_EXPERIMENTAL_AGENT } from "@/mastra/agents/experimental";
+
+// Hardcode the default agent to avoid loading any agent code in middleware
+const DEFAULT_EXPERIMENTAL_AGENT = "a011";
 
 export function middleware(request: NextRequest) {
 	// Only apply to the root path
