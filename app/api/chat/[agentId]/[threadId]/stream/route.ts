@@ -4,6 +4,7 @@ import { differenceInSeconds } from "date-fns";
 import type { NextRequest } from "next/server";
 import { getStreamContext } from "@/lib/resumable-stream-context";
 import { getStreamRecordsByThreadId } from "@/lib/stream-storage-redis";
+import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
@@ -76,29 +77,70 @@ export async function GET(
 
 			// Only attempt restoration if the message was created within 15 seconds (matches Vercel)
 			if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) <= 15) {
-				// TODO: Implement actual message restoration from agent memory
-				// This would involve:
-				// 1. Getting conversation history from Mastra agent memory
-				// 2. Finding the most recent assistant message
-				// 3. Using data-appendMessage to restore it
+				try {
+					// Get agent and attempt to retrieve the last assistant message
+					const agentMap = {
+						a010: "A010",
+						a011: "A011",
+					} as const;
 
-				// For now, create a placeholder restoration stream
-				const restoredStream = createUIMessageStream<LightfastUIMessage>({
-					execute: ({ writer: _writer }) => {
-						// Placeholder for actual message restoration
-						// In a complete implementation, you would:
-						// const lastAssistantMessage = await getLastAssistantMessage(threadId, userId);
-						// if (lastAssistantMessage) {
-						//   _writer.write({
-						//     type: 'data-appendMessage',
-						//     data: JSON.stringify(lastAssistantMessage),
-						//     transient: true,
-						//   });
-						// }
-					},
-				});
+					const mastraAgentKey = agentMap[agentId as ExperimentalAgentId];
+					const agent = mastra.getAgent(mastraAgentKey);
 
-				return new Response(restoredStream.pipeThrough(new JsonToSseTransformStream()), { status: 200 });
+					if (agent) {
+						const memory = agent.getMemory();
+						if (memory) {
+							// Query for the last few messages to find the most recent assistant message
+							const result = await memory.query({
+								threadId,
+								selectBy: {
+									last: 10, // Get last 10 messages to find the most recent assistant message
+								},
+							});
+
+							// Find the most recent assistant message
+							const lastAssistantMessage = result.uiMessages
+								.reverse() // Most recent first
+								.find((msg: any) => msg.role === "assistant");
+
+							if (lastAssistantMessage) {
+								console.log(`[RESTORE] Found assistant message to restore for thread ${threadId}:`, lastAssistantMessage.id);
+
+								// Convert the Mastra message to LightfastUIMessage format
+								const convertedMessage: LightfastUIMessage = {
+									id: lastAssistantMessage.id || crypto.randomUUID(),
+									role: "assistant" as const,
+									parts: lastAssistantMessage.parts || [
+										{
+											type: "text" as const,
+											text: lastAssistantMessage.content || "",
+										},
+									],
+								};
+
+								// Create restoration stream with data-appendMessage
+								const restoredStream = createUIMessageStream<LightfastUIMessage>({
+									execute: ({ writer }) => {
+										writer.write({
+											type: 'data-appendMessage',
+											data: JSON.stringify(convertedMessage),
+											transient: true,
+										});
+									},
+								});
+
+								return new Response(
+									restoredStream.pipeThrough(new JsonToSseTransformStream()),
+									{ status: 200 },
+								);
+							} else {
+								console.log(`[RESTORE] No assistant message found to restore for thread ${threadId}`);
+							}
+						}
+					}
+				} catch (error) {
+					console.error("Error during message restoration:", error);
+				}
 			}
 		}
 

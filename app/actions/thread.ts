@@ -28,11 +28,13 @@ export async function checkThreadOwnership(
 		const agent = mastra.getAgent(mastraAgentKey);
 
 		if (!agent) {
+			console.log(`[OWNERSHIP] Agent not found: ${mastraAgentKey} for thread ${threadId}`);
 			return { exists: false, isOwner: false };
 		}
 
 		const memory = agent.getMemory();
 		if (!memory) {
+			console.log(`[OWNERSHIP] No memory found for agent ${mastraAgentKey}, thread ${threadId}`);
 			return { exists: false, isOwner: false };
 		}
 
@@ -44,8 +46,14 @@ export async function checkThreadOwnership(
 			},
 		});
 
+		console.log(`[OWNERSHIP] Thread ${threadId} query result:`, {
+			messageCount: result.uiMessages.length,
+			messages: result.uiMessages.map((m: any) => ({ role: m.role, id: m.id }))
+		});
+
 		if (result.uiMessages.length === 0) {
 			// Thread has no messages yet - new thread
+			console.log(`[OWNERSHIP] Thread ${threadId} has no messages - treating as new thread`);
 			return { exists: true, isOwner: true };
 		}
 
@@ -53,6 +61,7 @@ export async function checkThreadOwnership(
 		const firstMessage = result.uiMessages[0] as unknown as MastraUIMessage;
 		const isOwner = !firstMessage.metadata?.resourceId || firstMessage.metadata.resourceId === userId;
 
+		console.log(`[OWNERSHIP] Thread ${threadId} exists, isOwner: ${isOwner}`);
 		return { exists: true, isOwner };
 	} catch (error) {
 		console.error("Error checking thread ownership:", error);
@@ -88,9 +97,28 @@ export async function getThreadMessages(threadId: string, agentId?: Experimental
 			},
 		});
 
+		console.log(`[GET_MESSAGES] Thread ${threadId} query result:`, {
+			messageCount: result.uiMessages.length,
+			messages: result.uiMessages.map((m: any) => ({ 
+				role: m.role, 
+				id: m.id,
+				content: typeof m.content === 'string' ? m.content.substring(0, 50) + '...' : 'non-string',
+				parts: m.parts ? `${m.parts.length} parts` : 'no parts'
+			}))
+		});
+
 		// Convert Mastra messages to proper UI format
 		// Cast as MastraUIMessage[] since the actual type from Mastra has compatible structure
 		const convertedMessages = convertMastraToUIMessages(result.uiMessages as unknown as MastraUIMessage[]);
+
+		console.log(`[GET_MESSAGES] Thread ${threadId} converted messages:`, {
+			count: convertedMessages.length,
+			messages: convertedMessages.map(m => ({ 
+				role: m.role, 
+				id: m.id,
+				partsCount: m.parts?.length || 0
+			}))
+		});
 
 		return {
 			messages: result.messages,
