@@ -1,7 +1,13 @@
+import { vercel } from "@t3-oss/env-core/presets-zod";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
+	/**
+	 * Extend from T3-OSS Vercel preset
+	 */
+	extends: [vercel()],
+
 	/**
 	 * Specify your server-side environment variables schema here.
 	 * This way you can ensure the app isn't built with invalid env vars.
@@ -9,6 +15,19 @@ export const env = createEnv({
 	server: {
 		// Database
 		DATABASE_URL: z.string().url().optional(),
+
+		// Node environment
+		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+		// Upstash Redis
+		UPSTASH_REDIS_URL: z.string().url(),
+		UPSTASH_KV_URL: z.string().url(),
+		UPSTASH_KV_REST_API_URL: z.string().url(),
+		UPSTASH_KV_REST_API_TOKEN: z.string().min(1),
+		UPSTASH_KV_REST_API_READ_ONLY_TOKEN: z.string().min(1),
+
+		// Vercel Blob Storage
+		BLOB_READ_WRITE_TOKEN: z.string().min(1),
 
 		// API Keys
 		ANTHROPIC_API_KEY: z.string().min(1),
@@ -21,22 +40,8 @@ export const env = createEnv({
 		BRAINTRUST_API_KEY: z.string().min(1),
 		BRAINTRUST_PROJECT_ID: z.string().min(1),
 
-		// Vercel Blob Storage
-		BLOB_READ_WRITE_TOKEN: z.string().min(1),
-
-		// Upstash Redis
-		UPSTASH_REDIS_URL: z.string().url(),
-		UPSTASH_KV_URL: z.string().url(),
-		UPSTASH_KV_REST_API_URL: z.string().url(),
-		UPSTASH_KV_REST_API_TOKEN: z.string().min(1),
-		UPSTASH_KV_REST_API_READ_ONLY_TOKEN: z.string().min(1),
-
-		// Node environment
-		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-
-		// Vercel environment variables
-		VERCEL: z.string().optional(),
-		VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
+		// Clerk Authentication
+		CLERK_SECRET_KEY: z.string().min(1),
 	},
 
 	/**
@@ -44,7 +49,7 @@ export const env = createEnv({
 	 * For them to be exposed to the client, prefix them with `NEXT_PUBLIC_`.
 	 */
 	client: {
-		// NEXT_PUBLIC_EXAMPLE: z.string().min(1),
+		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
 	},
 
 	/**
@@ -52,9 +57,21 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	runtimeEnv: {
-		// Server
+		// Database
 		DATABASE_URL: process.env.DATABASE_URL,
+
+		// Node
 		NODE_ENV: process.env.NODE_ENV,
+
+		// Upstash Redis
+		UPSTASH_REDIS_URL: process.env.UPSTASH_REDIS_URL,
+		UPSTASH_KV_URL: process.env.UPSTASH_KV_URL,
+		UPSTASH_KV_REST_API_URL: process.env.UPSTASH_KV_REST_API_URL,
+		UPSTASH_KV_REST_API_TOKEN: process.env.UPSTASH_KV_REST_API_TOKEN,
+		UPSTASH_KV_REST_API_READ_ONLY_TOKEN: process.env.UPSTASH_KV_REST_API_READ_ONLY_TOKEN,
+
+		// Vercel Blob
+		BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
 
 		// API Keys
 		ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
@@ -66,21 +83,10 @@ export const env = createEnv({
 		ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
 		BRAINTRUST_API_KEY: process.env.BRAINTRUST_API_KEY,
 		BRAINTRUST_PROJECT_ID: process.env.BRAINTRUST_PROJECT_ID,
-		BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
-
-		// Upstash Redis
-		UPSTASH_REDIS_URL: process.env.UPSTASH_REDIS_URL,
-		UPSTASH_KV_URL: process.env.UPSTASH_KV_URL,
-		UPSTASH_KV_REST_API_URL: process.env.UPSTASH_KV_REST_API_URL,
-		UPSTASH_KV_REST_API_TOKEN: process.env.UPSTASH_KV_REST_API_TOKEN,
-		UPSTASH_KV_REST_API_READ_ONLY_TOKEN: process.env.UPSTASH_KV_REST_API_READ_ONLY_TOKEN,
-
-		// Vercel
-		VERCEL: process.env.VERCEL,
-		VERCEL_ENV: process.env.VERCEL_ENV,
+		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
 
 		// Client
-		// NEXT_PUBLIC_EXAMPLE: process.env.NEXT_PUBLIC_EXAMPLE,
+		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
 	},
 
 	/**
