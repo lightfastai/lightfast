@@ -17,8 +17,8 @@ export function NewChatButton({ variant = "default" }: NewChatButtonProps) {
 
 	if (variant === "mobile") {
 		return (
-			<Button variant="outline" size="icon" onClick={handleNewChat} className="h-9 w-9">
-				<Plus className="h-5 w-5" />
+			<Button variant="outline" size="icon" onClick={handleNewChat} className="h-8 w-8">
+				<Plus className="h-4 w-4" />
 			</Button>
 		);
 	}
