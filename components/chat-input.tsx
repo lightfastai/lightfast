@@ -70,7 +70,6 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 			try {
 				await onSendMessage(currentMessage);
 			} catch (error) {
-				console.error("Error sending message:", error);
 				// Restore the message on error
 				setMessage(currentMessage);
 			} finally {

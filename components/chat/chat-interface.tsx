@@ -35,18 +35,6 @@ export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
 
 	const isLoading = status === "streaming" || status === "submitted";
 
-	// Debug: Log messages to see their structure
-	useEffect(() => {
-		console.log(`[UI] Thread ID: ${threadId}`);
-		console.log("Messages:", messages);
-		messages.forEach((msg, index) => {
-			console.log(`Message ${index}:`, {
-				id: msg.id,
-				role: msg.role,
-				parts: msg.parts,
-			});
-		});
-	}, [messages, threadId]);
 
 	const handleSendMessage = async (message: string) => {
 		if (!message.trim() || isLoading) return;
@@ -55,10 +43,6 @@ export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
 			// Generate IDs for the messages
 			const userMessageId = `user-${Date.now()}`;
 			const assistantMessageId = `assistant-${Date.now()}`;
-
-			console.log(`[UI] Sending message with threadId: ${threadId}`);
-			console.log(`[UI] User message ID: ${userMessageId}`);
-			console.log(`[UI] Assistant message ID: ${assistantMessageId}`);
 
 			// Use vercelSendMessage with the correct AI SDK v5 format
 			await vercelSendMessage(

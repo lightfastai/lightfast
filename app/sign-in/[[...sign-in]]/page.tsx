@@ -64,9 +64,10 @@ export default function SignInPage() {
 							</div>
 
 							{/* Resend option */}
-							<div className="text-center">
-								<SignIn.Action resend className="text-sm text-primary hover:text-primary/80">
-									Didn't receive a code? Resend
+							<div className="text-center text-sm">
+								<span className="text-muted-foreground">Didn't receive a code? </span>
+								<SignIn.Action resend className="text-primary hover:text-primary/80 cursor-pointer">
+									Resend
 								</SignIn.Action>
 							</div>
 						</div>

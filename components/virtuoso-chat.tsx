@@ -12,6 +12,7 @@ import { ThinkingAnimation } from "@/components/thinking-animation";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
 import { ToolCallRenderer } from "./tool-renderers/tool-call-renderer";
+import { env } from "@/env";
 
 interface VirtuosoMessage {
 	key: string;
@@ -23,7 +24,6 @@ interface VirtuosoMessage {
 interface VirtuosoChatProps {
 	messages: LightfastUIMessage[];
 	isLoading: boolean;
-	licenseKey?: string;
 }
 
 const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"] = ({ data }) => {
@@ -100,7 +100,7 @@ const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"
 	);
 };
 
-export function VirtuosoChat({ messages, isLoading, licenseKey = "" }: VirtuosoChatProps) {
+export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
 	const virtuoso = React.useRef<VirtuosoMessageListMethods<VirtuosoMessage>>(null);
 	const prevMessagesLength = React.useRef(0);
 	const [isAtBottom, _setIsAtBottom] = React.useState(true);
@@ -153,7 +153,7 @@ export function VirtuosoChat({ messages, isLoading, licenseKey = "" }: VirtuosoC
 	}, [messages, isLoading, isAtBottom]);
 
 	return (
-		<VirtuosoMessageListLicense licenseKey={licenseKey}>
+		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY}>
 			<VirtuosoMessageList<VirtuosoMessage, null>
 				ref={virtuoso}
 				className="h-full w-full"
