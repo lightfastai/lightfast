@@ -11,7 +11,7 @@ export function ChatBottomSection({ children }: { children: React.ReactNode }) {
 				</div>
 
 				{children}
-				<div className="max-w-3xl mx-auto">
+				<div className="max-w-3xl mx-auto px-4">
 					<p className="text-xs text-muted-foreground text-center mt-2">
 						This is an experiment by Lightfast. Use with discretion.
 					</p>

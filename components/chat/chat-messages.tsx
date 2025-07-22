@@ -11,7 +11,7 @@ interface ChatMessagesProps {
 export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
 	return (
 		<div className="flex-1 relative min-h-0">
-			<div className="absolute inset-0 pt-6">
+			<div className="absolute inset-0 pt-2 sm:pt-4 lg:pt-6">
 				<VirtuosoChat messages={messages} isLoading={isLoading} />
 			</div>
 		</div>
