@@ -100,16 +100,13 @@ const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"
 };
 
 export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
-	const [data, setData] = React.useState<VirtuosoMessageListProps<VirtuosoMessage, null>["data"]>(() => ({
-		data: [],
-	}));
-
 	// Track previous messages to detect changes
 	const prevMessagesRef = React.useRef<LightfastUIMessage[]>([]);
+	const [hasInitialized, setHasInitialized] = React.useState(false);
 
-	React.useEffect(() => {
-		// Convert messages to Virtuoso format
-		const virtuosoMessages = messages.map((message, index) => {
+	// Convert messages to Virtuoso format
+	const virtuosoMessages = React.useMemo(() => 
+		messages.map((message, index) => {
 			const isLastAssistantMessage = message.role === "assistant" && messages[messages.length - 1]?.id === message.id;
 			const isLastMessage = index === messages.length - 1;
 
@@ -119,7 +116,19 @@ export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
 				isLoading: isLastAssistantMessage && isLoading,
 				isLastMessage,
 			};
-		});
+		}), [messages, isLoading]
+	);
+
+	const [data, setData] = React.useState<VirtuosoMessageListProps<VirtuosoMessage, null>["data"]>(() => ({
+		data: virtuosoMessages,
+	}));
+
+	React.useEffect(() => {
+		// Skip first render, let initialLocation handle it
+		if (!hasInitialized && messages.length > 0) {
+			setHasInitialized(true);
+			return;
+		}
 
 		// Check if a new user message was added (new question)
 		const prevLength = prevMessagesRef.current.length;
@@ -164,7 +173,7 @@ export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
 		}
 
 		prevMessagesRef.current = [...messages];
-	}, [messages, isLoading]);
+	}, [virtuosoMessages, messages, hasInitialized]);
 
 	return (
 		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY || ""}>
@@ -173,6 +182,7 @@ export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
 				data={data}
 				computeItemKey={({ data }) => data.key}
 				ItemContent={ItemContent}
+				initialLocation={messages.length > 0 ? { index: 'LAST', align: 'end' } : undefined}
 			/>
 		</VirtuosoMessageListLicense>
 	);
