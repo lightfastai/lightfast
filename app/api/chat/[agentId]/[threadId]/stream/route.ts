@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createUIMessageStream, JsonToSseTransformStream } from "ai";
 import type { NextRequest } from "next/server";
 import { getStreamContext } from "@/lib/resumable-stream-context";
-import { getStreamRecordsByThreadId } from "@/lib/stream-storage";
+import { getStreamRecordsByThreadId } from "@/lib/stream-storage-redis";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
