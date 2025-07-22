@@ -5,8 +5,8 @@ import {
 	VirtuosoMessageListLicense,
 	type VirtuosoMessageListProps,
 } from "@virtuoso.dev/message-list";
-import type { ToolUIPart } from "ai";
-import { useEffect, useRef, useState } from "react";
+import type { ChatStatus, ToolUIPart } from "ai";
+import { useMemo, useRef } from "react";
 import { Markdown } from "@/components/markdown";
 import { env } from "@/env";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
@@ -15,6 +15,7 @@ import { ToolCallRenderer } from "./tool-renderers/tool-call-renderer";
 
 interface VirtuosoChatProps {
 	messages: LightfastUIMessage[];
+	status: ChatStatus;
 }
 
 const ItemContent: VirtuosoMessageListProps<LightfastUIMessage, null>["ItemContent"] = ({ data }) => {
@@ -72,48 +73,70 @@ const ItemContent: VirtuosoMessageListProps<LightfastUIMessage, null>["ItemConte
 	);
 };
 
-export function VirtuosoChat({ messages }: VirtuosoChatProps) {
-	const [data, setData] = useState<VirtuosoMessageListProps<LightfastUIMessage, null>["data"]>({
-		data: messages,
-	});
+export function VirtuosoChat({ messages, status }: VirtuosoChatProps) {
 	const prevMessageLength = useRef<number>(0);
+	const lastStreamingMessageId = useRef<string | null>(null);
 
-	useEffect(() => {
-		// Always update data with current messages (for streaming content updates)
-		// But only add scroll modifier when length changes (new messages)
-		const hasNewMessages = messages.length !== prevMessageLength.current;
+	// Compute data with minimal dependencies
+	const virtuosoData = useMemo(() => {
 		const lastMessage = messages[messages.length - 1];
+		const hasNewMessage = messages.length !== prevMessageLength.current;
 
-		if (hasNewMessages && lastMessage?.role === "user") {
-			// Apply scroll modifier only for new user messages
-			setData({
-				data: messages,
-				scrollModifier: {
-					type: "auto-scroll-to-bottom",
-					autoScroll: ({ scrollInProgress, atBottom }) => {
-						return {
-							index: "LAST",
-							align: "start",
-							behavior: atBottom || scrollInProgress ? "smooth" : "auto",
-						};
-					},
-				},
-			});
-			prevMessageLength.current = messages.length;
-		} else {
-			// Just update data without scroll modifier (for assistant messages or content streaming)
-			setData({ data: messages });
-			if (hasNewMessages) {
-				prevMessageLength.current = messages.length;
+		// Track if we're streaming a new message
+		if (status === "streaming" && lastMessage?.role === "assistant") {
+			if (lastMessage.id !== lastStreamingMessageId.current) {
+				lastStreamingMessageId.current = lastMessage.id;
 			}
 		}
-	}, [messages.length]); // Keep as messages.length to avoid re-running during streaming
+
+		// New user message: auto-scroll
+		if (hasNewMessage && lastMessage?.role === "user") {
+			prevMessageLength.current = messages.length;
+			return {
+				data: messages,
+				scrollModifier: {
+					type: "auto-scroll-to-bottom" as const,
+					autoScroll: ({ atBottom, scrollInProgress }: { atBottom: boolean; scrollInProgress: boolean }) => ({
+						index: "LAST" as const,
+						align: "start" as const,
+						behavior: (atBottom || scrollInProgress ? "smooth" : "auto") as "smooth" | "auto",
+					}),
+				},
+			};
+		}
+
+		// New assistant message: no scroll
+		if (hasNewMessage && lastMessage?.role === "assistant") {
+			prevMessageLength.current = messages.length;
+			return { data: messages };
+		}
+
+		// Streaming content: items-change (only when actively streaming)
+		if (status === "streaming" && lastMessage?.id === lastStreamingMessageId.current) {
+			return {
+				data: messages,
+				scrollModifier: {
+					type: "items-change" as const,
+					behavior: "smooth" as const,
+				},
+			};
+		}
+
+		// Default: just update data
+		return { data: messages };
+	}, [
+		messages,
+		status,
+		// Note: We use the full messages array but useMemo will only
+		// recompute when the reference changes, which is less frequent
+		// than content updates during streaming
+	]);
 
 	return (
 		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY || ""}>
 			<VirtuosoMessageList<LightfastUIMessage, null>
 				style={{ flex: 1, height: "100%" }}
-				data={data}
+				data={virtuosoData}
 				computeItemKey={({ data }) => data.id || `message-${data}`}
 				ItemContent={ItemContent}
 				initialLocation={messages.length > 0 ? { index: "LAST", align: "end" } : undefined}
