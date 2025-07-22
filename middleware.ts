@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { nanoid } from "@/lib/nanoid";
 import { NextResponse } from "next/server";
+import { nanoid } from "@/lib/nanoid";
 
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/api/webhooks(.*)"]);

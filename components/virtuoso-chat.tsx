@@ -3,7 +3,6 @@
 import {
 	VirtuosoMessageList,
 	VirtuosoMessageListLicense,
-	type VirtuosoMessageListMethods,
 	type VirtuosoMessageListProps,
 } from "@virtuoso.dev/message-list";
 import * as React from "react";
@@ -101,14 +100,14 @@ const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"
 };
 
 export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
-	const virtuoso = React.useRef<VirtuosoMessageListMethods<VirtuosoMessage>>(null);
-	const prevMessagesLength = React.useRef(0);
-	const [isAtBottom, _setIsAtBottom] = React.useState(true);
+	const [data, setData] = React.useState<VirtuosoMessageListProps<VirtuosoMessage, null>["data"]>(() => ({
+		data: [],
+	}));
 
-	// Auto-scroll to bottom when new messages are added
+	// Track previous messages to detect changes
+	const prevMessagesRef = React.useRef<LightfastUIMessage[]>([]);
+
 	React.useEffect(() => {
-		if (!virtuoso.current) return;
-
 		// Convert messages to Virtuoso format
 		const virtuosoMessages = messages.map((message, index) => {
 			const isLastAssistantMessage = message.role === "assistant" && messages[messages.length - 1]?.id === message.id;
@@ -122,41 +121,56 @@ export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
 			};
 		});
 
-		// If this is the first load or messages were cleared, set initial data
-		if (prevMessagesLength.current === 0 && virtuosoMessages.length > 0) {
-			virtuoso.current.data.replace(virtuosoMessages);
-		}
-		// If new messages were added, append them
-		else if (virtuosoMessages.length > prevMessagesLength.current) {
-			const newMessages = virtuosoMessages.slice(prevMessagesLength.current);
-			virtuoso.current.data.append(newMessages, ({ scrollInProgress, atBottom }) => {
-				// Only auto-scroll if user is at bottom or scrolling
-				if (atBottom || scrollInProgress || isAtBottom) {
-					return {
-						index: "LAST",
-						align: "start",
-						behavior: "smooth",
-					};
-				}
-				return false;
+		// Check if a new user message was added (new question)
+		const prevLength = prevMessagesRef.current.length;
+		const newLength = messages.length;
+		const isNewUserMessage = newLength > prevLength && messages[newLength - 1]?.role === "user";
+
+		// Check if we're streaming an assistant response
+		const lastMessage = messages[messages.length - 1];
+		const prevLastMessage = prevMessagesRef.current[prevMessagesRef.current.length - 1];
+		const isStreamingAssistant =
+			lastMessage?.role === "assistant" && (lastMessage.id === prevLastMessage?.id || newLength > prevLength);
+
+		if (isNewUserMessage) {
+			// New user message - scroll to top to preallocate space for answer
+			setData({
+				data: virtuosoMessages,
+				scrollModifier: {
+					type: "auto-scroll-to-bottom",
+					autoScroll: ({ scrollInProgress, atBottom }) => {
+						return {
+							index: "LAST",
+							align: "start",
+							behavior: atBottom || scrollInProgress ? "smooth" : "auto",
+						};
+					},
+				},
+			});
+		} else if (isStreamingAssistant) {
+			// Streaming assistant response - smooth scroll for content changes
+			setData({
+				data: virtuosoMessages,
+				scrollModifier: {
+					type: "items-change",
+					behavior: "smooth",
+				},
+			});
+		} else {
+			// Other updates (e.g., loading state changes)
+			setData({
+				data: virtuosoMessages,
 			});
 		}
-		// If messages were modified (e.g., loading state changed), update them
-		else if (virtuosoMessages.length === prevMessagesLength.current) {
-			virtuoso.current.data.map((message) => {
-				const updated = virtuosoMessages.find((m) => m.key === message.key);
-				return updated || message;
-			}, "smooth");
-		}
 
-		prevMessagesLength.current = virtuosoMessages.length;
-	}, [messages, isLoading, isAtBottom]);
+		prevMessagesRef.current = [...messages];
+	}, [messages, isLoading]);
 
 	return (
 		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY || ""}>
 			<VirtuosoMessageList<VirtuosoMessage, null>
-				ref={virtuoso}
-				className="h-full w-full"
+				style={{ flex: 1, height: '100%' }}
+				data={data}
 				computeItemKey={({ data }) => data.key}
 				ItemContent={ItemContent}
 			/>
