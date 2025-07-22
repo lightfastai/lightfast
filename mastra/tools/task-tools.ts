@@ -44,6 +44,8 @@ export const todoWriteTool = createTool({
 			const blobPath = `todos/${resourceId || "shared"}/${threadId}/todo.md`;
 			const blob = await put(blobPath, todoContent, {
 				access: "public",
+				contentType: "text/markdown",
+				allowOverwrite: true,
 			});
 
 			const completedCount = tasks.filter((t) => t.status === "completed").length;
