@@ -4,12 +4,24 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export function NewChatButton() {
+interface NewChatButtonProps {
+	variant?: "default" | "mobile";
+}
+
+export function NewChatButton({ variant = "default" }: NewChatButtonProps) {
 	const router = useRouter();
 
 	const handleNewChat = () => {
 		router.push("/");
 	};
+
+	if (variant === "mobile") {
+		return (
+			<Button variant="outline" size="icon" onClick={handleNewChat} className="h-9 w-9">
+				<Plus className="h-5 w-5" />
+			</Button>
+		);
+	}
 
 	return (
 		<Button variant="outline" size="sm" onClick={handleNewChat} className="h-8 gap-1">

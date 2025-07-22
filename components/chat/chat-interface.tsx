@@ -1,7 +1,6 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useEffect } from "react";
 import { ChatInput } from "@/components/chat-input";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
@@ -14,20 +13,22 @@ import { EmptyState } from "./empty-state";
 interface ChatInterfaceProps {
 	agentId: ExperimentalAgentId;
 	threadId: string;
+	initialMessages?: LightfastUIMessage[];
 }
 
-export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
+export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatInterfaceProps) {
 	// Create transport for AI SDK v5 with agentId
 	const transport = useChatTransport({ threadId, agentId });
 
 	// Use the chat hook with transport and LightfastUIMessage type
 	const {
-		messages = [],
+		messages,
 		sendMessage: vercelSendMessage,
 		status,
 	} = useChat<LightfastUIMessage>({
 		id: threadId,
 		transport,
+		messages: initialMessages,
 		onError: (error) => {
 			console.error("Chat error:", error);
 		},
@@ -71,7 +72,10 @@ export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
 					<EmptyState />
 					<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
 				</div>
-				<AgentVersionIndicator agentId={agentId} />
+				{/* Only show on desktop */}
+				<div className="hidden lg:block">
+					<AgentVersionIndicator agentId={agentId} />
+				</div>
 			</div>
 		);
 	}
@@ -82,7 +86,10 @@ export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
 			<ChatBottomSection>
 				<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
 			</ChatBottomSection>
-			<AgentVersionIndicator agentId={agentId} />
+			{/* Only show on desktop */}
+			<div className="hidden lg:block">
+				<AgentVersionIndicator agentId={agentId} />
+			</div>
 		</div>
 	);
 }
