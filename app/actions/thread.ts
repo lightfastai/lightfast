@@ -48,7 +48,7 @@ export async function checkThreadOwnership(
 
 		console.log(`[OWNERSHIP] Thread ${threadId} query result:`, {
 			messageCount: result.uiMessages.length,
-			messages: result.uiMessages.map((m: any) => ({ role: m.role, id: m.id }))
+			messages: result.uiMessages.map((m: any) => ({ role: m.role, id: m.id })),
 		});
 
 		if (result.uiMessages.length === 0) {
@@ -99,12 +99,12 @@ export async function getThreadMessages(threadId: string, agentId?: Experimental
 
 		console.log(`[GET_MESSAGES] Thread ${threadId} query result:`, {
 			messageCount: result.uiMessages.length,
-			messages: result.uiMessages.map((m: any) => ({ 
-				role: m.role, 
+			messages: result.uiMessages.map((m: any) => ({
+				role: m.role,
 				id: m.id,
-				content: typeof m.content === 'string' ? m.content.substring(0, 50) + '...' : 'non-string',
-				parts: m.parts ? `${m.parts.length} parts` : 'no parts'
-			}))
+				content: typeof m.content === "string" ? m.content.substring(0, 50) + "..." : "non-string",
+				parts: m.parts ? `${m.parts.length} parts` : "no parts",
+			})),
 		});
 
 		// Convert Mastra messages to proper UI format
@@ -113,11 +113,11 @@ export async function getThreadMessages(threadId: string, agentId?: Experimental
 
 		console.log(`[GET_MESSAGES] Thread ${threadId} converted messages:`, {
 			count: convertedMessages.length,
-			messages: convertedMessages.map(m => ({ 
-				role: m.role, 
+			messages: convertedMessages.map((m) => ({
+				role: m.role,
 				id: m.id,
-				partsCount: m.parts?.length || 0
-			}))
+				partsCount: m.parts?.length || 0,
+			})),
 		});
 
 		return {

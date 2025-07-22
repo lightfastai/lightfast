@@ -1,6 +1,6 @@
+import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { anthropic, AnthropicProviderOptions } from '@ai-sdk/anthropic';
 import { gatewayModels } from "@/lib/ai/provider";
 
 export const c010 = new Agent({
@@ -24,7 +24,7 @@ Key guidelines:
 		maxRetries: 3,
 		providerOptions: {
 			anthropic: {
-				thinking: { type: 'enabled', budgetTokens: 12000 },
+				thinking: { type: "enabled", budgetTokens: 12000 },
 			} satisfies AnthropicProviderOptions,
 		},
 	},

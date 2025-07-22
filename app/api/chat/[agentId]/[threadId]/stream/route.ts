@@ -2,11 +2,12 @@ import { auth } from "@clerk/nextjs/server";
 import { createUIMessageStream, JsonToSseTransformStream } from "ai";
 import { differenceInSeconds } from "date-fns";
 import type { NextRequest } from "next/server";
+import { convertMastraToUIMessages } from "@/lib/convert-messages";
 import { getStreamContext } from "@/lib/resumable-stream-context";
 import { getStreamRecordsByThreadId } from "@/lib/stream-storage-redis";
 import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
-import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
+import type { LightfastUIMessage, MastraUIMessage } from "@/types/lightfast-ui-messages";
 
 export async function GET(
 	_request: NextRequest,
@@ -104,35 +105,29 @@ export async function GET(
 								.find((msg: any) => msg.role === "assistant");
 
 							if (lastAssistantMessage) {
-								console.log(`[RESTORE] Found assistant message to restore for thread ${threadId}:`, lastAssistantMessage.id);
+								console.log(
+									`[RESTORE] Found assistant message to restore for thread ${threadId}:`,
+									lastAssistantMessage.id,
+								);
 
-								// Convert the Mastra message to LightfastUIMessage format
-								const convertedMessage: LightfastUIMessage = {
-									id: lastAssistantMessage.id || crypto.randomUUID(),
-									role: "assistant" as const,
-									parts: lastAssistantMessage.parts || [
-										{
-											type: "text" as const,
-											text: lastAssistantMessage.content || "",
-										},
-									],
-								};
+								// Convert the Mastra message to LightfastUIMessage format using existing conversion function
+								// Cast as MastraUIMessage since the structure is compatible
+								const mastraMessage = lastAssistantMessage as any as MastraUIMessage;
+								const convertedMessages = convertMastraToUIMessages([mastraMessage]);
+								const convertedMessage = convertedMessages[0];
 
 								// Create restoration stream with data-appendMessage
 								const restoredStream = createUIMessageStream<LightfastUIMessage>({
 									execute: ({ writer }) => {
 										writer.write({
-											type: 'data-appendMessage',
+											type: "data-appendMessage",
 											data: JSON.stringify(convertedMessage),
 											transient: true,
 										});
 									},
 								});
 
-								return new Response(
-									restoredStream.pipeThrough(new JsonToSseTransformStream()),
-									{ status: 200 },
-								);
+								return new Response(restoredStream.pipeThrough(new JsonToSseTransformStream()), { status: 200 });
 							} else {
 								console.log(`[RESTORE] No assistant message found to restore for thread ${threadId}`);
 							}
