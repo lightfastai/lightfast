@@ -9,10 +9,10 @@ import {
 import * as React from "react";
 import { Markdown } from "@/components/markdown";
 import { ThinkingAnimation } from "@/components/thinking-animation";
+import { env } from "@/env";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
 import { ToolCallRenderer } from "./tool-renderers/tool-call-renderer";
-import { env } from "@/env";
 
 interface VirtuosoMessage {
 	key: string;

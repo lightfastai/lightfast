@@ -94,30 +94,23 @@ export async function POST(
 
 		// If resumable streams are available, use them
 		if (streamContext) {
-			// Get the UI message stream response first
-			const response = result.toUIMessageStreamResponse();
+			// Convert to UI message stream and then to SSE format
+			const uiStream = result.toUIMessageStream();
 
-			// Extract the readable stream from the response body
-			if (response.body) {
-				// Transform the byte stream to text stream for resumable-stream
-				const textStream = response.body.pipeThrough(new TextDecoderStream());
+			// Create resumable stream with SSE transformation
+			const resumableStream = await streamContext.resumableStream(streamId, () =>
+				uiStream.pipeThrough(new JsonToSseTransformStream()),
+			);
 
-				// Create resumable stream
-				const resumableStream = await streamContext.resumableStream(streamId, () => textStream);
-
-				if (resumableStream) {
-					// Convert back to byte stream for Response
-					const byteStream = resumableStream.pipeThrough(new TextEncoderStream());
-
-					return new Response(byteStream, {
-						headers: {
-							"Content-Type": "text/event-stream",
-							"Cache-Control": "no-cache",
-							Connection: "keep-alive",
-							"X-Stream-Id": streamId, // Include stream ID in response header
-						},
-					});
-				}
+			if (resumableStream) {
+				return new Response(resumableStream, {
+					headers: {
+						"Content-Type": "text/event-stream",
+						"Cache-Control": "no-cache",
+						Connection: "keep-alive",
+						"X-Stream-Id": streamId, // Include stream ID in response header
+					},
+				});
 			}
 		}
 

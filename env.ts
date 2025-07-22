@@ -51,6 +51,7 @@ export const env = createEnv({
 	client: {
 		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
 		NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY: z.string().min(1).optional(),
+		NEXT_PUBLIC_VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
 	},
 
 	/**
@@ -89,6 +90,7 @@ export const env = createEnv({
 		// Client
 		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
 		NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY: process.env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY,
+		NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
 	},
 
 	/**

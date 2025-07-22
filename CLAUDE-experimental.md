@@ -49,6 +49,7 @@ See `.env.example` for all required variables.
 - **Agent Testing**: @docs/agent-testing.md
 - **Memory System**: @docs/memory-system.md
 - **Container-Use**: @docs/container-use.md (for isolated development)
+- **Authentication Testing**: @docs/auth-login-process.md (test credentials for Playwright)
 
 ## Quick References
 - Model: `anthropic/claude-4-sonnet` via Vercel AI Gateway

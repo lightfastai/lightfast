@@ -48,16 +48,13 @@ export async function GET(
 			execute: () => {},
 		});
 
-		// Try to resume the stream
-		const stream = await streamContext.resumeExistingStream(recentStream.streamId);
+		// Try to resume the stream using resumableStream method (like Vercel's implementation)
+		const stream = await streamContext.resumableStream(recentStream.streamId, () =>
+			emptyDataStream.pipeThrough(new JsonToSseTransformStream()),
+		);
 
-		// If stream is not found (undefined)
-		if (stream === undefined) {
-			return Response.json({ error: "Stream not found" }, { status: 404 });
-		}
-
-		// If stream has already completed (null)
-		if (stream === null) {
+		// If stream has already completed or not found
+		if (!stream) {
 			// Check if this is a recent completion (within 15 seconds)
 			const streamAge = differenceInSeconds(resumeRequestedAt, recentStream.createdAt);
 
@@ -86,10 +83,8 @@ export async function GET(
 			});
 		}
 
-		// Stream is active and resumable - convert to SSE format
-		const sseStream = stream.pipeThrough(new TextEncoderStream()).pipeThrough(new JsonToSseTransformStream());
-
-		return new Response(sseStream, {
+		// Stream is active and resumable
+		return new Response(stream, {
 			status: 200,
 			headers: {
 				"Content-Type": "text/event-stream",

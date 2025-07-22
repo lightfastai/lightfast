@@ -75,7 +75,10 @@ export class ResumableStreamClient {
 		try {
 			this.abortController = new AbortController();
 
-			const response = await fetch(`/api/chat/resume/${this.streamId}`, {
+			// Extract agentId and threadId from streamId format: agentId-threadId-nanoId
+			const [agentId, threadId] = this.streamId.split("-");
+
+			const response = await fetch(`/api/chat/${agentId}/${threadId}/stream`, {
 				signal: this.abortController.signal,
 			});
 

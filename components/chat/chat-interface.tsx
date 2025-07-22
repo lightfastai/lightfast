@@ -35,7 +35,6 @@ export function ChatInterface({ agentId, threadId }: ChatInterfaceProps) {
 
 	const isLoading = status === "streaming" || status === "submitted";
 
-
 	const handleSendMessage = async (message: string) => {
 		if (!message.trim() || isLoading) return;
 
