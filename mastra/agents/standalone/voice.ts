@@ -8,12 +8,12 @@ import { env } from "../../../env";
 // Create voice configuration only if API keys are available
 let voice: CompositeVoice | undefined;
 
-if (env.OPENROUTER_API_KEY && env.ELEVENLABS_API_KEY) {
+if (env.OPENAI_API_KEY && env.ELEVENLABS_API_KEY) {
 	try {
 		voice = new CompositeVoice({
 			input: new OpenAIVoice({
 				speechModel: {
-					apiKey: env.OPENROUTER_API_KEY,
+					apiKey: env.OPENAI_API_KEY,
 				},
 			}),
 			output: new ElevenLabsVoice({

@@ -8,15 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@ai-sdk/anthropic':
-        specifier: 2.0.0-beta.7
-        version: 2.0.0-beta.7(zod@3.25.76)
       '@ai-sdk/gateway':
         specifier: 1.0.0-beta.11
         version: 1.0.0-beta.11(zod@3.25.76)
-      '@ai-sdk/openai':
-        specifier: 2.0.0-beta.10
-        version: 2.0.0-beta.10(zod@3.25.76)
       '@ai-sdk/react':
         specifier: 2.0.0-beta.23
         version: 2.0.0-beta.23(react@19.1.0)(zod@3.25.76)
@@ -216,12 +210,6 @@ packages:
     peerDependencies:
       zod: ^3.0.0
 
-  '@ai-sdk/anthropic@2.0.0-beta.7':
-    resolution: {integrity: sha512-Z4hHKnLgwlwvQ37GntZq2v+lozzIVVqxBWcFpTMI9XtN2Tgv+Re/3IdS63GDR4Vq3D0tbEP4ZCXu5VasdeRs3g==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4
-
   '@ai-sdk/azure@1.3.24':
     resolution: {integrity: sha512-6zOG8mwmd8esSL/L9oYFZSyZWORRTxuG6on9A3RdPe7MRJ607Q6BWsuvul79kecbLf5xQ4bfP7LzXaBizsd8OA==}
     engines: {node: '>=18'}
@@ -287,12 +275,6 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
-
-  '@ai-sdk/openai@2.0.0-beta.10':
-    resolution: {integrity: sha512-Arrd6rwughV76lGvmoR+Nns5X6QTBOFN7IBUoC9zozekVGln09cQRn8Lo4KEE8coFtN85/668S4NI3Z7xV/mBw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4
 
   '@ai-sdk/perplexity@1.1.9':
     resolution: {integrity: sha512-Ytolh/v2XupXbTvjE18EFBrHLoNMH0Ueji3lfSPhCoRUfkwrgZ2D9jlNxvCNCCRiGJG5kfinSHvzrH5vGDklYA==}
@@ -6142,12 +6124,6 @@ snapshots:
       zod: 3.25.76
     optional: true
 
-  '@ai-sdk/anthropic@2.0.0-beta.7(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0-beta.1
-      '@ai-sdk/provider-utils': 3.0.0-beta.4(zod@3.25.76)
-      zod: 3.25.76
-
   '@ai-sdk/azure@1.3.24(zod@3.25.76)':
     dependencies:
       '@ai-sdk/openai': 1.3.23(zod@3.25.76)
@@ -6224,12 +6200,6 @@ snapshots:
       '@ai-sdk/provider-utils': 2.2.8(zod@3.25.76)
       zod: 3.25.76
     optional: true
-
-  '@ai-sdk/openai@2.0.0-beta.10(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0-beta.1
-      '@ai-sdk/provider-utils': 3.0.0-beta.4(zod@3.25.76)
-      zod: 3.25.76
 
   '@ai-sdk/perplexity@1.1.9(zod@3.25.76)':
     dependencies:

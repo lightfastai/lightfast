@@ -42,9 +42,6 @@ pnpm biome check --write [filepath]
 ```
 
 ## Environment Variables
-```bash
-OPENROUTER_API_KEY=your-key-here
-```
 See `.env.example` for all required variables.
 
 ## Documentation
@@ -54,7 +51,7 @@ See `.env.example` for all required variables.
 - **Container-Use**: @docs/container-use.md (for isolated development)
 
 ## Quick References
-- Model: `anthropic/claude-4-sonnet-20250514` via OpenRouter
+- Model: `anthropic/claude-4-sonnet` via Vercel AI Gateway
 - Next.js dev server: http://localhost:3000
 - Mastra dev server: http://localhost:4111
 

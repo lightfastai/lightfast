@@ -8,7 +8,7 @@ import {
 } from "@mastra/evals/nlp";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { anthropic, gatewayModels } from "@/lib/ai/provider";
+import { gatewayModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
 import {
 	downloadDirectFileTool,
@@ -64,7 +64,7 @@ const agentMemory = createEnvironmentMemory({
 });
 
 // Model for eval judgments
-const evalModel = anthropic("claude-3-5-haiku-20241022");
+const evalModel = gatewayModels.claude4Sonnet;
 
 export const a010 = new Agent({
 	name: "a010",

@@ -31,8 +31,8 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```bash
 # AI API Keys (Required - choose at least one provider)
-OPENROUTER_API_KEY=sk-or-your-openrouter-key-here     # Recommended: Access to multiple models
-ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here  # For Claude Sonnet 4 (primary model)
+AI_GATEWAY_API_KEY=your-vercel-ai-gateway-key         # For Vercel AI Gateway access
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here  # Required for AI models
 OPENAI_API_KEY=sk-your-openai-api-key-here            # For GPT models
 
 # Optional Service APIs
@@ -62,7 +62,7 @@ NODE_ENV=development
 
 #### **🔒 Server-only Variables**
 These are only available on the server-side and ensure secure API key handling:
-- `OPENROUTER_API_KEY` - Multi-model API access via OpenRouter (recommended)
+- `AI_GATEWAY_API_KEY` - Vercel AI Gateway access (optional on Vercel deployments)
 - `ANTHROPIC_API_KEY` - Claude Sonnet 4 API access
 - `OPENAI_API_KEY` - GPT models API access
 - `EXA_API_KEY` - Web search functionality
@@ -79,7 +79,7 @@ Available on both client and server:
 
 ### 🔑 Getting API Keys
 
-- **OpenRouter API**: Sign up at [openrouter.ai](https://openrouter.ai) for access to multiple AI models
+- **Vercel AI Gateway**: Get your key from [vercel.com/dashboard/ai](https://vercel.com/dashboard/ai)
 - **Anthropic API**: Register at [console.anthropic.com](https://console.anthropic.com) for Claude access
 - **OpenAI API**: Get your key from [platform.openai.com](https://platform.openai.com/api-keys)
 - **Exa API**: Create account at [exa.ai](https://exa.ai) for web search capabilities
@@ -182,7 +182,7 @@ Available on both client and server:
 | | Vercel AI SDK | Streaming and AI utilities |
 | | Anthropic Claude | Claude Sonnet 4 integration |
 | | OpenAI | GPT models integration |
-| | OpenRouter | Multi-model API access |
+| | Vercel AI Gateway | Unified AI model access |
 | **Backend** | Drizzle ORM | Type-safe database operations |
 | | LibSQL | Lightweight SQLite for development |
 | | Upstash Redis | Production memory storage |
@@ -268,7 +268,7 @@ Available on both client and server:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENROUTER_API_KEY` | Recommended | Multi-model API access |
+| `AI_GATEWAY_API_KEY` | Optional | Vercel AI Gateway (auto-configured on Vercel) |
 | `ANTHROPIC_API_KEY` | Yes | Claude Sonnet 4 API access |
 | `OPENAI_API_KEY` | Optional | GPT models API access |
 | `EXA_API_KEY` | Optional | Web search functionality |
