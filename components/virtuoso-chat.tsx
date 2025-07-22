@@ -6,6 +6,7 @@ import {
 	type VirtuosoMessageListProps,
 } from "@virtuoso.dev/message-list";
 import type { ToolUIPart } from "ai";
+import { useEffect, useRef, useState } from "react";
 import { Markdown } from "@/components/markdown";
 import { env } from "@/env";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
@@ -72,11 +73,46 @@ const ItemContent: VirtuosoMessageListProps<LightfastUIMessage, null>["ItemConte
 };
 
 export function VirtuosoChat({ messages }: VirtuosoChatProps) {
+	const [data, setData] = useState<VirtuosoMessageListProps<LightfastUIMessage, null>["data"]>(() => ({
+		data: messages,
+	}));
+	const prevMessageLength = useRef<number>(0);
+
+	useEffect(() => {
+		// First load - data is already initialized with messages
+		if (prevMessageLength.current === 0 && messages.length > 0) {
+			prevMessageLength.current = messages.length;
+			return;
+		}
+
+		// If messages.length changed, append new items
+		if (messages.length !== prevMessageLength.current) {
+			const newMessages = messages.slice(prevMessageLength.current);
+
+			setData((currentData) => ({
+				...currentData,
+				data: [...(currentData?.data || []), ...newMessages],
+				scrollModifier: {
+					type: "auto-scroll-to-bottom",
+					autoScroll: ({ scrollInProgress, atBottom }) => {
+						return {
+							index: "LAST",
+							align: "start",
+							behavior: atBottom || scrollInProgress ? "smooth" : "auto",
+						};
+					},
+				},
+			}));
+
+			prevMessageLength.current = messages.length;
+		}
+	}, [messages.length]);
+
 	return (
 		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY || ""}>
 			<VirtuosoMessageList<LightfastUIMessage, null>
 				style={{ flex: 1, height: "100%" }}
-				data={{ data: messages }}
+				data={data}
 				computeItemKey={({ data }) => data.id || `message-${data}`}
 				ItemContent={ItemContent}
 				initialLocation={messages.length > 0 ? { index: "LAST", align: "end" } : undefined}
