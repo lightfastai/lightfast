@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { ChatInput } from "@/components/chat-input";
 import { useChatTransport } from "@/hooks/use-chat-transport";
+import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { AgentVersionIndicator } from "./agent-version-indicator";
@@ -25,10 +26,21 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		messages,
 		sendMessage: vercelSendMessage,
 		status,
+		resumeStream,
+		setMessages,
 	} = useChat<LightfastUIMessage>({
 		id: threadId,
 		transport,
 		messages: initialMessages,
+	});
+
+	// Enable auto-resume when there are initial messages
+	// This will resume streaming if the last message was from the user
+	useAutoResume({
+		autoResume: initialMessages.length > 0,
+		initialMessages,
+		resumeStream,
+		setMessages,
 	});
 
 	const handleSendMessage = async (message: string) => {
