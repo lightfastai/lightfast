@@ -59,8 +59,7 @@ export async function POST(
 			resourceId: userId, // Use Clerk userId as resourceId
 		};
 
-		// Get resumable stream context
-		const streamContext = getStreamContext();
+		// Generate stream ID for this chat session
 		const streamId = generateStreamId(agentId, threadId);
 
 		// Store the stream ID for later retrieval
@@ -81,30 +80,19 @@ export async function POST(
 		// Always use streaming with AI SDK v5
 		const result = await agent.stream(messages, options);
 
+		// Convert to UI message stream and then to SSE format
+		const stream = result.toUIMessageStream().pipeThrough(new JsonToSseTransformStream());
+
+		// Get resumable stream context
+		const streamContext = getStreamContext();
+
 		// If resumable streams are available, use them
 		if (streamContext) {
-			// Convert to UI message stream and then to SSE format
-			const uiStream = result.toUIMessageStream();
-
-			// Create resumable stream with SSE transformation
-			const resumableStream = await streamContext.resumableStream(streamId, () =>
-				uiStream.pipeThrough(new JsonToSseTransformStream()),
-			);
-
-			if (resumableStream) {
-				return new Response(resumableStream, {
-					headers: {
-						"Content-Type": "text/event-stream",
-						"Cache-Control": "no-cache",
-						Connection: "keep-alive",
-						"X-Stream-Id": streamId, // Include stream ID in response header
-					},
-				});
-			}
+			return new Response(await streamContext.resumableStream(streamId, () => stream));
+		} else {
+			// Fallback to regular streaming if resumable streams aren't available
+			return new Response(stream);
 		}
-
-		// Fallback to regular streaming if resumable streams aren't available
-		return result.toUIMessageStreamResponse();
 	} catch (error) {
 		console.error("Chat error:", error);
 		return Response.json({ error: "Internal server error" }, { status: 500 });

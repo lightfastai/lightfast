@@ -35,9 +35,8 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		if (!message.trim() || status === "streaming" || status === "submitted") return;
 
 		try {
-			// Generate IDs for the messages
-			const userMessageId = `user-${Date.now()}`;
-			const assistantMessageId = `assistant-${Date.now()}`;
+			// Generate UUID for the user message
+			const userMessageId = crypto.randomUUID();
 
 			// Use vercelSendMessage with the correct AI SDK v5 format
 			await vercelSendMessage(
@@ -48,7 +47,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 				},
 				{
 					body: {
-						id: assistantMessageId,
 						userMessageId,
 						threadClientId: threadId,
 					},

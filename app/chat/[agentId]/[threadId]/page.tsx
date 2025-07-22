@@ -40,6 +40,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
 	// Fetch all thread messages
 	const { uiMessages } = await getThreadMessages(threadId, agentId);
 
+	console.log(uiMessages);
 	return (
 		<ChatLayout agentId={agentId}>
 			<Suspense fallback={<ChatSkeleton />}>

@@ -128,9 +128,6 @@ importers:
       mastra:
         specifier: 0.0.0-ai-v5-20250710191716
         version: 0.0.0-ai-v5-20250710191716(@mastra/core@0.0.0-ai-v5-20250710191716(openapi-types@12.1.3)(zod@3.25.76))(@opentelemetry/api@1.9.0)(react@19.1.0)(typescript@5.8.3)
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
       next:
         specifier: ^15.4.2
         version: 15.4.2(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
