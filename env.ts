@@ -19,12 +19,12 @@ export const env = createEnv({
 		// Node environment
 		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
-		// Upstash Redis
-		UPSTASH_REDIS_URL: z.string().url(),
-		UPSTASH_KV_URL: z.string().url(),
-		UPSTASH_KV_REST_API_URL: z.string().url(),
-		UPSTASH_KV_REST_API_TOKEN: z.string().min(1),
-		UPSTASH_KV_REST_API_READ_ONLY_TOKEN: z.string().min(1),
+		// Redis & KV Store
+		REDIS_URL: z.string().url(),
+		KV_URL: z.string().url(),
+		KV_REST_API_URL: z.string().url(),
+		KV_REST_API_TOKEN: z.string().min(1),
+		KV_REST_API_READ_ONLY_TOKEN: z.string().min(1),
 
 		// Vercel Blob Storage
 		BLOB_READ_WRITE_TOKEN: z.string().min(1),
@@ -65,12 +65,12 @@ export const env = createEnv({
 		// Node
 		NODE_ENV: process.env.NODE_ENV,
 
-		// Upstash Redis
-		UPSTASH_REDIS_URL: process.env.UPSTASH_REDIS_URL,
-		UPSTASH_KV_URL: process.env.UPSTASH_KV_URL,
-		UPSTASH_KV_REST_API_URL: process.env.UPSTASH_KV_REST_API_URL,
-		UPSTASH_KV_REST_API_TOKEN: process.env.UPSTASH_KV_REST_API_TOKEN,
-		UPSTASH_KV_REST_API_READ_ONLY_TOKEN: process.env.UPSTASH_KV_REST_API_READ_ONLY_TOKEN,
+		// Redis & KV Store
+		REDIS_URL: process.env.REDIS_URL,
+		KV_URL: process.env.KV_URL,
+		KV_REST_API_URL: process.env.KV_REST_API_URL,
+		KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+		KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
 
 		// Vercel Blob
 		BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,

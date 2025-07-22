@@ -17,8 +17,8 @@ export function createEnvironmentStorage() {
 	// Use Upstash for production/serverless deployments
 	if (isProduction || isVercel) {
 		return new UpstashStore({
-			url: env.UPSTASH_KV_REST_API_URL,
-			token: env.UPSTASH_KV_REST_API_TOKEN,
+			url: env.KV_REST_API_URL,
+			token: env.KV_REST_API_TOKEN,
 		});
 	}
 
