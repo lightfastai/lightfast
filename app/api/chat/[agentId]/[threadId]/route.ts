@@ -2,7 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { JsonToSseTransformStream } from "ai";
 import type { NextRequest } from "next/server";
 import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-context";
-import { cleanupOldStreamIds, createStreamId } from "@/lib/stream-storage";
+// Use Redis for much faster stream ID storage
+import { createStreamId } from "@/lib/stream-storage-redis";
 import { isValidUUID } from "@/lib/uuid-utils";
 import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
@@ -11,16 +12,24 @@ export async function POST(
 	request: NextRequest,
 	{ params }: { params: Promise<{ agentId: string; threadId: string }> },
 ) {
+	const startTime = Date.now();
+	const timings: Record<string, number> = {};
+
 	try {
 		// Check authentication
+		const authStart = Date.now();
 		const { userId } = await auth();
+		timings.auth = Date.now() - authStart;
+
 		if (!userId) {
 			return Response.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
+		const parseStart = Date.now();
 		const requestBody = await request.json();
 		const { messages, threadId: bodyThreadId, userMessageId } = requestBody;
 		const { agentId, threadId: paramsThreadId } = await params;
+		timings.parsing = Date.now() - parseStart;
 
 		// Validate agentId
 		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
@@ -62,6 +71,7 @@ export async function POST(
 			a011: "A011",
 		} as const;
 
+		const agentStart = Date.now();
 		const mastraAgentKey = agentMap[agentId as ExperimentalAgentId];
 		const agent = mastra.getAgent(mastraAgentKey);
 
@@ -73,6 +83,7 @@ export async function POST(
 				{ status: 500 },
 			);
 		}
+		timings.agentInit = Date.now() - agentStart;
 
 		// Include threadId, agentId, and userId in the agent call for proper memory/context handling
 		const options = {
@@ -83,28 +94,37 @@ export async function POST(
 		// Generate stream ID for this chat session
 		const streamId = generateStreamId(agentId, threadId);
 
-		// Store the stream ID for later retrieval
-		await createStreamId({
+		// Only pass the last user message since the agent has memory of previous messages
+		// This prevents duplicate message processing
+		const lastUserMessage = messages[messages.length - 1];
+
+		// Start streaming immediately - this is the critical path
+		const streamStart = Date.now();
+		const result = await agent.stream([lastUserMessage], options);
+		timings.streamInit = Date.now() - streamStart;
+
+		// Convert to UI message stream and then to SSE format
+		const stream = result.toUIMessageStream().pipeThrough(new JsonToSseTransformStream());
+
+		// Log total time to stream start
+		timings.totalToStream = Date.now() - startTime;
+		console.log(`[PERF] Stream timing for ${agentId}/${threadId}:`, timings);
+
+		// Store the stream ID in the background
+		// Cleanup is now handled by a cron job for better performance
+		const backgroundStart = Date.now();
+
+		createStreamId({
 			streamId,
 			agentId,
 			threadId,
 			userId,
-		});
-
-		// Clean up old stream IDs (keep only the most recent 5)
-		await cleanupOldStreamIds({
-			threadId,
-			userId,
-			keepCount: 5,
-		});
-
-		// Only pass the last user message since the agent has memory of previous messages
-		// This prevents duplicate message processing
-		const lastUserMessage = messages[messages.length - 1];
-		const result = await agent.stream([lastUserMessage], options);
-
-		// Convert to UI message stream and then to SSE format
-		const stream = result.toUIMessageStream().pipeThrough(new JsonToSseTransformStream());
+		})
+			.then(() => {
+				const backgroundTime = Date.now() - backgroundStart;
+				console.log(`[PERF] Stream ID stored for ${agentId}/${threadId} in ${backgroundTime}ms`);
+			})
+			.catch((err) => console.error("Failed to create stream ID:", err));
 
 		// Get resumable stream context
 		const streamContext = getStreamContext();

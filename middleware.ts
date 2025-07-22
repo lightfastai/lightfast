@@ -2,7 +2,11 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/api/webhooks(.*)"]);
+const isPublicRoute = createRouteMatcher([
+	"/sign-in(.*)", 
+	"/api/webhooks(.*)",
+	"/api/cron(.*)"  // Allow cron jobs to run without auth
+]);
 
 // Hardcode the default agent to avoid loading any agent code in middleware
 const DEFAULT_EXPERIMENTAL_AGENT = "a011";

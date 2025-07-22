@@ -3,5 +3,11 @@
 	"buildCommand": "pnpm build",
 	"devCommand": "pnpm dev",
 	"installCommand": "pnpm install",
-	"outputDirectory": ".next"
+	"outputDirectory": ".next",
+	"crons": [
+		{
+			"path": "/api/cron/cleanup-streams",
+			"schedule": "*/5 * * * *"
+		}
+	]
 }
