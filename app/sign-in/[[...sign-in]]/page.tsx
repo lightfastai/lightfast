@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 export default function SignInPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background px-4">
-			<div className="w-full max-w-md rounded-2xl border bg-background p-8">
+			<div className="w-full max-w-md rounded-2xl border border-border/50 bg-background p-8">
 				<SignIn.Root>
 					<SignIn.Step name="start">
 						<div className="space-y-6">
@@ -35,16 +35,7 @@ export default function SignInPage() {
 
 							{/* Footer */}
 							<div className="space-y-2">
-								<p className="text-center text-sm text-muted-foreground">
-									This platform is invite-only
-								</p>
-								<p className="text-center text-xs text-muted-foreground">
-									Contact{" "}
-									<a href="mailto:support@lightfast.ai" className="font-medium text-primary hover:text-primary/80">
-										support@lightfast.ai
-									</a>{" "}
-									to request access
-								</p>
+								<p className="text-center text-xs text-muted-foreground">This platform is invite-only</p>
 							</div>
 						</div>
 					</SignIn.Step>
