@@ -14,6 +14,7 @@ export interface LightfastUIMessageMetadata {
 	createdAt?: string;
 	threadId?: string;
 	resourceId?: string;
+	status?: "thinking" | "streaming" | "done";
 }
 
 // Main UIMessage type with our custom generics
