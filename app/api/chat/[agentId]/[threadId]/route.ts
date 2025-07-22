@@ -19,7 +19,7 @@ export async function POST(
 		}
 
 		const requestBody = await request.json();
-		const { messages, threadId: bodyThreadId, userMessageId, threadClientId } = requestBody;
+		const { messages, threadId: bodyThreadId, userMessageId } = requestBody;
 		const { agentId, threadId: paramsThreadId } = await params;
 
 		// Validate agentId
@@ -98,8 +98,10 @@ export async function POST(
 			keepCount: 5,
 		});
 
-		// Always use streaming with AI SDK v5
-		const result = await agent.stream(messages, options);
+		// Only pass the last user message since the agent has memory of previous messages
+		// This prevents duplicate message processing
+		const lastUserMessage = messages[messages.length - 1];
+		const result = await agent.stream([lastUserMessage], options);
 
 		// Convert to UI message stream and then to SSE format
 		const stream = result.toUIMessageStream().pipeThrough(new JsonToSseTransformStream());

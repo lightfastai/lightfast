@@ -24,15 +24,15 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
 			prepareSendMessagesRequest: ({ body, headers, messages, api }) => {
 				// Transform the messages to the format expected by our API
 				// The body contains metadata passed from sendMessage
-				const finalThreadId = body?.threadClientId || threadId;
 
 				return {
 					api,
 					headers,
 					body: {
-						messages: messages,
+						// Only send the latest message to prevent duplicates
+						messages: [messages[messages.length - 1]],
 						stream: true,
-						threadId: finalThreadId,
+						threadId: threadId,
 						// Include any additional metadata from the body
 						...body,
 					},

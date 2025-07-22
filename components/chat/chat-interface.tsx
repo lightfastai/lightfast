@@ -48,7 +48,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 				{
 					body: {
 						userMessageId,
-						threadClientId: threadId,
 					},
 				},
 			);
