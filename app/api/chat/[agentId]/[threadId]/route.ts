@@ -3,6 +3,7 @@ import { JsonToSseTransformStream } from "ai";
 import type { NextRequest } from "next/server";
 import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-context";
 import { cleanupOldStreamIds, createStreamId } from "@/lib/stream-storage";
+import { isValidUUID } from "@/lib/uuid-utils";
 import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
 
@@ -18,7 +19,7 @@ export async function POST(
 		}
 
 		const requestBody = await request.json();
-		const { messages, threadId: bodyThreadId } = requestBody;
+		const { messages, threadId: bodyThreadId, userMessageId, threadClientId } = requestBody;
 		const { agentId, threadId: paramsThreadId } = await params;
 
 		// Validate agentId
@@ -33,6 +34,26 @@ export async function POST(
 
 		// Use the threadId from request body if available, otherwise use URL param
 		const threadId = bodyThreadId || paramsThreadId;
+
+		// Validate threadId is a valid UUID
+		if (!isValidUUID(threadId)) {
+			return Response.json(
+				{
+					error: `Invalid thread ID format: ${threadId}. Thread ID must be a valid UUID.`,
+				},
+				{ status: 400 },
+			);
+		}
+
+		// Validate userMessageId if provided
+		if (userMessageId && !isValidUUID(userMessageId)) {
+			return Response.json(
+				{
+					error: `Invalid user message ID format: ${userMessageId}. User message ID must be a valid UUID.`,
+				},
+				{ status: 400 },
+			);
+		}
 
 		// Get the specific agent based on agentId
 		// Map from experimental agent names to mastra registry keys

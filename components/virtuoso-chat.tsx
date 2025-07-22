@@ -82,8 +82,10 @@ export function VirtuosoChat({ messages }: VirtuosoChatProps) {
 		// Always update data with current messages (for streaming content updates)
 		// But only add scroll modifier when length changes (new messages)
 		const hasNewMessages = messages.length !== prevMessageLength.current;
+		const lastMessage = messages[messages.length - 1];
 
-		if (hasNewMessages) {
+		if (hasNewMessages && lastMessage?.role === "user") {
+			// Apply scroll modifier only for new user messages
 			setData({
 				data: messages,
 				scrollModifier: {
@@ -99,10 +101,13 @@ export function VirtuosoChat({ messages }: VirtuosoChatProps) {
 			});
 			prevMessageLength.current = messages.length;
 		} else {
-			// Just update data without scroll modifier (for content streaming)
+			// Just update data without scroll modifier (for assistant messages or content streaming)
 			setData({ data: messages });
+			if (hasNewMessages) {
+				prevMessageLength.current = messages.length;
+			}
 		}
-	}, [messages.length]);
+	}, [messages.length]); // Keep as messages.length to avoid re-running during streaming
 
 	return (
 		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY || ""}>
