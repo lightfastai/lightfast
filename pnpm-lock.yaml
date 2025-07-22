@@ -83,12 +83,18 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.8.3)(zod@3.25.76)
+      '@vercel/analytics':
+        specifier: ^1.5.0
+        version: 1.5.0(next@15.4.2(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       '@vercel/blob':
         specifier: ^1.1.1
         version: 1.1.1
       '@vercel/sandbox':
         specifier: ^0.0.13
         version: 0.0.13
+      '@vercel/speed-insights':
+        specifier: ^1.2.0
+        version: 1.2.0(next@15.4.2(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       '@virtuoso.dev/message-list':
         specifier: ^1.13.1
         version: 1.13.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -3359,6 +3365,32 @@ packages:
   '@upstash/vector@1.2.2':
     resolution: {integrity: sha512-ptQ9xnxtKqmpNK52PCcHCszlPOLxIBfjsv7ty8RoF95pkjctS9rSjTQ3Pl9bx5VFbpDj+0dMXw88WLt6swDkgQ==}
 
+  '@vercel/analytics@1.5.0':
+    resolution: {integrity: sha512-MYsBzfPki4gthY5HnYN7jgInhAZ7Ac1cYDoRWFomwGHWEX7odTEzbtg9kf/QSo7XEsEAqlQugA6gJ2WS2DEa3g==}
+    peerDependencies:
+      '@remix-run/react': ^2
+      '@sveltejs/kit': ^1 || ^2
+      next: '>= 13'
+      react: ^18 || ^19 || ^19.0.0-rc
+      svelte: '>= 4'
+      vue: ^3
+      vue-router: ^4
+    peerDependenciesMeta:
+      '@remix-run/react':
+        optional: true
+      '@sveltejs/kit':
+        optional: true
+      next:
+        optional: true
+      react:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+      vue-router:
+        optional: true
+
   '@vercel/blob@1.1.1':
     resolution: {integrity: sha512-heiJGj2qt5qTv6yiShH9f6KRAoZGj+lz61GQ+lBRL4lhvUmKI9A51KYlQTnsUd9ymdFlKHBlvmPeG+yGz2Qsbg==}
     engines: {node: '>=16.14'}
@@ -3374,6 +3406,29 @@ packages:
 
   '@vercel/sandbox@0.0.13':
     resolution: {integrity: sha512-ZxDYrIs37VMMcdTfPeoWgFfx2a9QcK1StCuT1Ph+ymmHuwsV/m7DXPGHQTEnAGmDmm74gbPYfsgb1mqfoc2ODw==}
+
+  '@vercel/speed-insights@1.2.0':
+    resolution: {integrity: sha512-y9GVzrUJ2xmgtQlzFP2KhVRoCglwfRQgjyfY607aU0hh0Un6d0OUyrJkjuAlsV18qR4zfoFPs/BiIj9YDS6Wzw==}
+    peerDependencies:
+      '@sveltejs/kit': ^1 || ^2
+      next: '>= 13'
+      react: ^18 || ^19 || ^19.0.0-rc
+      svelte: '>= 4'
+      vue: ^3
+      vue-router: ^4
+    peerDependenciesMeta:
+      '@sveltejs/kit':
+        optional: true
+      next:
+        optional: true
+      react:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+      vue-router:
+        optional: true
 
   '@virtuoso.dev/gurx@1.1.0':
     resolution: {integrity: sha512-Z2mOKEgmMPnkf7hb3JaqJCVuvBD7qaK9KuI95BMBzOioHvPqhI79UcC6dHCprz9aZef/YaZ5ZwcYRRGVtfLU0g==}
@@ -10128,6 +10183,11 @@ snapshots:
 
   '@upstash/vector@1.2.2': {}
 
+  '@vercel/analytics@1.5.0(next@15.4.2(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)':
+    optionalDependencies:
+      next: 15.4.2(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react: 19.1.0
+
   '@vercel/blob@1.1.1':
     dependencies:
       async-retry: 1.3.3
@@ -10152,6 +10212,11 @@ snapshots:
       zod: 3.24.4
     transitivePeerDependencies:
       - encoding
+
+  '@vercel/speed-insights@1.2.0(next@15.4.2(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)':
+    optionalDependencies:
+      next: 15.4.2(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react: 19.1.0
 
   '@virtuoso.dev/gurx@1.1.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
