@@ -63,9 +63,11 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 
 	if (messages.length === 0) {
 		return (
-			<div className="flex-1 flex items-center p-6 overflow-hidden">
-				<div className="w-full max-w-3xl mx-auto relative -top-12">
-					<EmptyState />
+			<div className="flex-1 flex items-center overflow-hidden">
+				<div className="w-full relative -top-12">
+					<div className="chat-container">
+						<EmptyState />
+					</div>
 					<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
 				</div>
 				{/* Only show on desktop */}

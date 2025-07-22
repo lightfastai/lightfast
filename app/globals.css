@@ -119,3 +119,9 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+@layer utilities {
+	.chat-container {
+		@apply max-w-3xl mx-auto px-4;
+	}
+}
