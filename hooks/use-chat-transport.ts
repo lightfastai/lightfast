@@ -26,7 +26,6 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
 				// The body contains metadata passed from sendMessage
 				const finalThreadId = body?.threadClientId || threadId;
 
-
 				return {
 					api,
 					headers,

@@ -4,7 +4,6 @@ import type { LightfastUIMessage, MastraUIMessage } from "@/types/lightfast-ui-m
  * Convert Mastra memory UI messages to the format expected by Vercel AI SDK's useChat
  */
 export function convertMastraToUIMessages(mastraMessages: MastraUIMessage[]): LightfastUIMessage[] {
-
 	const mergedMessages: LightfastUIMessage[] = [];
 
 	for (let i = 0; i < mastraMessages.length; i++) {

@@ -21,7 +21,6 @@ export async function POST(
 		const { messages, threadId: bodyThreadId } = requestBody;
 		const { agentId, threadId: paramsThreadId } = await params;
 
-
 		// Validate agentId
 		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
 			return Response.json(
@@ -54,13 +53,11 @@ export async function POST(
 			);
 		}
 
-
 		// Include threadId, agentId, and userId in the agent call for proper memory/context handling
 		const options = {
 			threadId,
 			resourceId: userId, // Use Clerk userId as resourceId
 		};
-
 
 		// Get resumable stream context
 		const streamContext = getStreamContext();

@@ -3,7 +3,6 @@
 import { ChatLayout } from "@/components/chat/chat-layout";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-
 	return (
 		<ChatLayout>
 			<div className="flex h-full items-center justify-center p-6">

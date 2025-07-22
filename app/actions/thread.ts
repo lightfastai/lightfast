@@ -7,7 +7,6 @@ import type { MastraUIMessage } from "@/types/lightfast-ui-messages";
 
 export async function getThreadMessages(threadId: string, agentId?: ExperimentalAgentId) {
 	try {
-
 		// Map experimental agent ID to Mastra agent key
 		const agentMap: Record<ExperimentalAgentId, "A010" | "A011"> = {
 			a010: "A010",
@@ -33,7 +32,6 @@ export async function getThreadMessages(threadId: string, agentId?: Experimental
 				last: 50,
 			},
 		});
-
 
 		// Convert Mastra messages to proper UI format
 		// Cast as MastraUIMessage[] since the actual type from Mastra has compatible structure
