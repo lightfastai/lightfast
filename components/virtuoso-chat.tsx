@@ -153,7 +153,7 @@ export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
 	}, [messages, isLoading, isAtBottom]);
 
 	return (
-		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY}>
+		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY || ""}>
 			<VirtuosoMessageList<VirtuosoMessage, null>
 				ref={virtuoso}
 				className="h-full w-full"
