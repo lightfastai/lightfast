@@ -1,4 +1,5 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { gateway } from "@ai-sdk/gateway";
 import { createOpenAI } from "@ai-sdk/openai";
 import { env } from "../../env";
 
@@ -40,3 +41,23 @@ export const openrouterModels = {
 
 // Re-export the models object for backward compatibility with openrouter
 export const models = openrouterModels;
+
+// Vercel AI Gateway Configuration
+// Option 1: Direct gateway usage (recommended)
+export const gatewayModels = {
+	claude4Sonnet: gateway("anthropic/claude-4-sonnet"),
+	gpt4o: gateway("openai/gpt-4o"),
+	gpt4oMini: gateway("openai/gpt-4o-mini"),
+} as const;
+
+// Option 2: Configure Anthropic provider to use Vercel AI Gateway
+export const anthropicViaGateway = createAnthropic({
+	baseURL: "https://ai-gateway.vercel.sh/v1/ai/anthropic",
+	apiKey: env.AI_GATEWAY_API_KEY || env.ANTHROPIC_API_KEY,
+});
+
+// Option 3: Configure OpenAI provider to use Vercel AI Gateway
+export const openaiViaGateway = createOpenAI({
+	baseURL: "https://ai-gateway.vercel.sh/v1/ai/openai",
+	apiKey: env.AI_GATEWAY_API_KEY || env.OPENAI_API_KEY,
+});

@@ -1,7 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "@/lib/ai/provider";
+import { gatewayModels } from "@/lib/ai/provider";
 import { createSandboxTool, executeSandboxCommandTool } from "../../tools/sandbox-tools";
 
 // Schema for working memory
@@ -59,7 +59,7 @@ If sandboxId is not in your memory:
 4. Examine package.json
 5. Check for lock files
 6. Provide detailed analysis with actual file contents`,
-	model: anthropic(anthropicModels.claude4Sonnet),
+	model: gatewayModels.claude4Sonnet,
 	memory: new Memory({
 		options: {
 			workingMemory: {

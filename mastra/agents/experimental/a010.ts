@@ -8,7 +8,7 @@ import {
 } from "@mastra/evals/nlp";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "@/lib/ai/provider";
+import { anthropic, gatewayModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
 import {
 	downloadDirectFileTool,
@@ -422,7 +422,7 @@ export const a010 = new Agent({
     </resource_management>
   </best_practices>
 </system>`,
-	model: anthropic(anthropicModels.claude4Sonnet),
+	model: gatewayModels.claude4Sonnet,
 	tools: {
 		// File management tools
 		fileWrite: fileWriteTool,

@@ -2,7 +2,7 @@ import { Agent } from "@mastra/core";
 import { CompositeVoice } from "@mastra/core/voice";
 import { ElevenLabsVoice } from "@mastra/voice-elevenlabs";
 import { OpenAIVoice } from "@mastra/voice-openai";
-import { anthropic, anthropicModels } from "@/lib/ai/provider";
+import { gatewayModels } from "@/lib/ai/provider";
 import { env } from "../../../env";
 
 // Create voice configuration only if API keys are available
@@ -37,6 +37,6 @@ export const voiceAgent = new Agent({
   Speak in a friendly, conversational tone that works well when converted to speech.
   
   Note: This agent has voice capabilities that can convert text to speech and transcribe audio to text.`,
-	model: anthropic(anthropicModels.claude4Sonnet),
+	model: gatewayModels.claude4Sonnet,
 	...(voice && { voice }),
 });

@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { anthropic, anthropicModels } from "@/lib/ai/provider";
+import { gatewayModels } from "@/lib/ai/provider";
 import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
 import { granularBrowserTools } from "../../tools/browser-tools-granular";
 
@@ -77,7 +77,7 @@ export const browserAgent = new Agent({
       - When extracting data, be clear about what information you need
       - Use browserWait to handle dynamic content
 `,
-	model: anthropic(anthropicModels.claude4Sonnet),
+	model: gatewayModels.claude4Sonnet,
 	// Note: Memory is handled at network level when used in networks
 	// Individual agent memory can cause context conflicts in network execution
 	tools: {

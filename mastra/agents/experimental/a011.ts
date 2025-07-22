@@ -1,7 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { anthropic, anthropicModels } from "@/lib/ai/provider";
+import { gatewayModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
 import { fileWriteTool } from "../../tools/file-tools";
 import { todoClearTool, todoReadTool, todoWriteTool } from "../../tools/task-tools";
@@ -189,7 +189,7 @@ export const a011 = new Agent({
 
 CRITICAL: Always use todoWrite tool to plan and track complex multi-step tasks throughout the conversation. When in doubt about complexity, use task tracking - being proactive demonstrates attentiveness and ensures comprehensive execution.
 `,
-	model: anthropic(anthropicModels.claude4Sonnet),
+	model: gatewayModels.claude4Sonnet,
 	tools: {
 		// Task management with blob storage
 		todoWrite: todoWriteTool,

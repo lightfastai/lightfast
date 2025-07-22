@@ -37,6 +37,7 @@ export const env = createEnv({
 		BROWSERBASE_PROJECT_ID: z.string().min(1),
 		OPENROUTER_API_KEY: z.string().min(1),
 		ELEVENLABS_API_KEY: z.string().min(1).optional(),
+		AI_GATEWAY_API_KEY: z.string().min(1).optional(),
 		BRAINTRUST_API_KEY: z.string().min(1),
 		BRAINTRUST_PROJECT_ID: z.string().min(1),
 
@@ -81,6 +82,7 @@ export const env = createEnv({
 		BROWSERBASE_PROJECT_ID: process.env.BROWSERBASE_PROJECT_ID,
 		OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
 		ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
+		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
 		BRAINTRUST_API_KEY: process.env.BRAINTRUST_API_KEY,
 		BRAINTRUST_PROJECT_ID: process.env.BRAINTRUST_PROJECT_ID,
 		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
