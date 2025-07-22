@@ -17,8 +17,8 @@ export function createEnvironmentStorage() {
 	// Use Upstash for production/serverless deployments
 	if (isProduction || isVercel) {
 		return new UpstashStore({
-			url: env.UPSTASH_REDIS_REST_URL || "http://localhost:8089",
-			token: env.UPSTASH_REDIS_REST_TOKEN || "test_token",
+			url: env.UPSTASH_KV_REST_API_URL,
+			token: env.UPSTASH_KV_REST_API_TOKEN,
 		});
 	}
 
@@ -68,41 +68,6 @@ export function createEnvironmentMemory<T extends z.ZodRawShape>(
 		options: {
 			lastMessages,
 			workingMemory: workingMemoryConfig,
-		},
-	});
-}
-
-/**
- * Legacy function for backward compatibility
- * Creates a Memory instance with fixed storage (non-dynamic)
- */
-export function createStaticMemory(forceUpstash = false): Memory {
-	if (forceUpstash || env.NODE_ENV === "production") {
-		return new Memory({
-			storage: new UpstashStore({
-				url: env.UPSTASH_REDIS_REST_URL || "http://localhost:8089",
-				token: env.UPSTASH_REDIS_REST_TOKEN || "test_token",
-			}),
-			options: {
-				lastMessages: 50,
-				workingMemory: {
-					enabled: true,
-					scope: "thread",
-				},
-			},
-		});
-	}
-
-	return new Memory({
-		storage: new LibSQLStore({
-			url: "file:./mastra.db",
-		}),
-		options: {
-			lastMessages: 50,
-			workingMemory: {
-				enabled: true,
-				scope: "thread",
-			},
 		},
 	});
 }

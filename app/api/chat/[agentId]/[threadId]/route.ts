@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { JsonToSseTransformStream } from "ai";
 import type { NextRequest } from "next/server";
 import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-context";
+import { cleanupOldStreamIds, createStreamId } from "@/lib/stream-storage";
 import { mastra } from "@/mastra";
 import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
 
@@ -72,6 +73,21 @@ export async function POST(
 		// Get resumable stream context
 		const streamContext = getStreamContext();
 		const streamId = generateStreamId(agentId, threadId);
+
+		// Store the stream ID for later retrieval
+		await createStreamId({
+			streamId,
+			agentId,
+			threadId,
+			userId,
+		});
+
+		// Clean up old stream IDs (keep only the most recent 5)
+		await cleanupOldStreamIds({
+			threadId,
+			userId,
+			keepCount: 5,
+		});
 
 		// Always use streaming with AI SDK v5
 		const result = await agent.stream(messages, options);
