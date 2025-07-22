@@ -1,5 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
+import { anthropic, AnthropicProviderOptions } from '@ai-sdk/anthropic';
 import { z } from "zod";
 import { gatewayModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
@@ -204,6 +205,11 @@ CRITICAL: Always use todoWrite tool to plan and track complex multi-step tasks t
 	defaultGenerateOptions: {
 		maxSteps: 30,
 		maxRetries: 3,
+		providerOptions: {
+			anthropic: {
+				thinking: { type: 'enabled', budgetTokens: 12000 },
+			} satisfies AnthropicProviderOptions,
+		},
 	},
 	defaultStreamOptions: {
 		maxSteps: 40,

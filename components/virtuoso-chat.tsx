@@ -61,9 +61,7 @@ const ItemContent: VirtuosoMessageListProps<VirtuosoUIMessage, null>["ItemConten
 		<div className="pb-12">
 			<div className="mx-auto max-w-3xl px-4 space-y-4">
 				{/* Show thinking animation at top of assistant message based on runtime status */}
-				{message.runtimeStatus && (
-					<ThinkingMessage status={message.runtimeStatus} show={true} className="mb-2" />
-				)}
+				{message.runtimeStatus && <ThinkingMessage status={message.runtimeStatus} show={true} className="mb-2" />}
 				{message.parts?.map((part, index) => {
 					// Text part
 					if (isTextPart(part)) {
@@ -113,12 +111,12 @@ export function VirtuosoChat({ messages, status }: VirtuosoChatProps) {
 		// Process messages with runtime status
 		const processedMessages: VirtuosoUIMessage[] = messages.map((msg, index) => {
 			const isLastMessage = index === messages.length - 1;
-			
+
 			// Last user message when submitted shows "thinking"
 			if (isLastMessage && msg.role === "user" && status === "submitted") {
 				return { ...msg, runtimeStatus: "thinking" as const };
 			}
-			
+
 			// Assistant messages
 			if (msg.role === "assistant") {
 				if (isLastMessage) {
@@ -130,7 +128,7 @@ export function VirtuosoChat({ messages, status }: VirtuosoChatProps) {
 				// All assistant messages (including last when not streaming) show "done"
 				return { ...msg, runtimeStatus: "done" as const };
 			}
-			
+
 			return msg;
 		});
 
@@ -176,7 +174,6 @@ export function VirtuosoChat({ messages, status }: VirtuosoChatProps) {
 		// recompute when the reference changes, which is less frequent
 		// than content updates during streaming
 	]);
-
 
 	return (
 		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY || ""}>

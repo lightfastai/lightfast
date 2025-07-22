@@ -2,8 +2,9 @@
 
 import { useChat } from "@ai-sdk/react";
 import { ChatInput } from "@/components/chat-input";
-import { useChatTransport } from "@/hooks/use-chat-transport";
+import { useDataStream } from "@/components/data-stream-provider";
 import { useAutoResume } from "@/hooks/use-auto-resume";
+import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { AgentVersionIndicator } from "./agent-version-indicator";
@@ -20,6 +21,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatInterfaceProps) {
 	// Create transport for AI SDK v5 with agentId
 	const transport = useChatTransport({ threadId, agentId });
+	const { setDataStream } = useDataStream();
 
 	// Use the chat hook with transport and LightfastUIMessage type
 	const {
@@ -32,6 +34,10 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		id: threadId,
 		transport,
 		messages: initialMessages,
+		// Handle data stream parts - matches Vercel's implementation exactly
+		onData: (dataPart) => {
+			setDataStream((ds) => (ds ? [...ds, dataPart] : []));
+		},
 	});
 
 	// Enable auto-resume when there are initial messages
