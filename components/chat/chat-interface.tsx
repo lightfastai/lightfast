@@ -52,7 +52,7 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 				},
 			);
 		} catch (error) {
-			throw error; // Re-throw to let ChatInput handle error state
+			console.error("Failed to send message:", error);
 		}
 	};
 
