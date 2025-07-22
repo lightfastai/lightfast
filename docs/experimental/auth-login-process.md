@@ -14,12 +14,10 @@ The application uses different authentication methods based on the environment:
 ### Production Environment
 - **Method**: Email verification only
 - **Process**: Enter email → Receive verification code → Enter code to sign in
-- **Sign-up**: Disabled in production
 
 ### Development/Preview Environment
 - **Method**: Email + Password authentication
 - **Process**: Enter email and password → Sign in directly
-- **Sign-up**: Available at `/sign-up`
 
 ## Playwright Authentication Example
 

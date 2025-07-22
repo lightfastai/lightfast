@@ -1,10 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
-import { env } from "@/env";
 
 // Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/api/webhooks(.*)"]);
+const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/api/webhooks(.*)"]);
 
 // Hardcode the default agent to avoid loading any agent code in middleware
 const DEFAULT_EXPERIMENTAL_AGENT = "a011";
@@ -12,13 +11,6 @@ const DEFAULT_EXPERIMENTAL_AGENT = "a011";
 export default clerkMiddleware(async (auth, req) => {
 	// Check if the route is public
 	if (isPublicRoute(req)) {
-		// Block sign-up in production
-		if (req.nextUrl.pathname.startsWith("/sign-up")) {
-			const isProduction = env.VERCEL_ENV === "production";
-			if (isProduction) {
-				return NextResponse.redirect(new URL("/sign-in", req.url));
-			}
-		}
 		return NextResponse.next();
 	}
 
