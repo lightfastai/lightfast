@@ -14,7 +14,6 @@ export function getStreamContext() {
 			});
 		} catch (error: any) {
 			if (error.message.includes("REDIS_URL")) {
-				console.log(" > Resumable streams are disabled due to missing REDIS_URL");
 			} else {
 				console.error("Failed to create resumable stream context:", error);
 			}

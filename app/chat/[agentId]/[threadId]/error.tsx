@@ -1,12 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import { ChatLayout } from "@/components/chat/chat-layout";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-	useEffect(() => {
-		console.error("Chat error:", error);
-	}, [error]);
 
 	return (
 		<ChatLayout>

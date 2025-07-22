@@ -70,7 +70,6 @@ export async function getStreamIdsByThreadId({
 
 		return streamRecords;
 	} catch (error) {
-		console.error("Error fetching stream IDs:", error);
 		return [];
 	}
 }

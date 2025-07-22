@@ -46,7 +46,6 @@ export class ResumableStreamClient {
 		} catch (error) {
 			if (error instanceof Error) {
 				if (error.name === "AbortError") {
-					console.log("Stream aborted");
 					return;
 				}
 
@@ -67,7 +66,6 @@ export class ResumableStreamClient {
 		}
 
 		this.retryCount++;
-		console.log(`Attempting to resume stream (attempt ${this.retryCount}/${this.options.maxRetries})`);
 
 		// Wait before retrying
 		await new Promise((resolve) => setTimeout(resolve, this.options.retryDelay));

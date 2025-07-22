@@ -32,14 +32,14 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 				setTimeout(() => setCopiedOutput(false), 2000);
 			}
 		} catch (err) {
-			console.error("Failed to copy:", err);
+			// Silent fail for copy
 		}
 	};
 
 	// For all non-output states, show a non-expandable view with loading
 	if (state !== "output-available" && state !== "output-error") {
 		return (
-			<div className="my-6 border rounded-lg w-full">
+			<div className="my-6 border rounded-lg w-full cursor-not-allowed">
 				<div className="py-3 px-4 flex items-center gap-2">
 					<div className="text-left flex-1">
 						<div className="font-medium text-xs text-muted-foreground">{toolName}</div>

@@ -29,9 +29,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		id: threadId,
 		transport,
 		messages: initialMessages,
-		onError: (error) => {
-			console.error("Chat error:", error);
-		},
 	});
 
 	const isLoading = status === "streaming" || status === "submitted";
@@ -60,7 +57,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 				},
 			);
 		} catch (error) {
-			console.error("Error sending message:", error);
 			throw error; // Re-throw to let ChatInput handle error state
 		}
 	};

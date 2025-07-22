@@ -38,7 +38,7 @@ const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"
 				.join("\n") || "";
 
 		return (
-			<div className={`px-6 ${isLastMessage ? "pb-20" : "pb-12"}`}>
+			<div className={isLastMessage ? "pb-20" : "pb-12"}>
 				<div className="mx-auto max-w-3xl flex justify-end">
 					<div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
 						<p className="whitespace-pre-wrap">{textContent}</p>
@@ -50,7 +50,7 @@ const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"
 
 	// For assistant messages, render parts in order
 	return (
-		<div className={`px-6 ${isLastMessage ? "pb-20" : "pb-12"}`}>
+		<div className={isLastMessage ? "pb-20" : "pb-12"}>
 			<div className="mx-auto max-w-3xl space-y-4">
 				{/* Show thinking/done indicator at the top of assistant messages */}
 				{message.role === "assistant" && (

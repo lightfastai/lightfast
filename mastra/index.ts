@@ -17,13 +17,6 @@ import { searcher } from "./agents/standalone/searcher";
 import { visionAgent } from "./agents/standalone/vision";
 import { voiceAgent } from "./agents/standalone/voice";
 
-import { createEnvironmentStorage } from "./lib/memory-factory";
-
-// Environment-aware storage configuration
-// This will automatically use Upstash for production/Vercel deployments
-// and LibSQL for development/testing
-const storage = createEnvironmentStorage();
-
 export const mastra = new Mastra({
 	agents: {
 		// Experimental Agents - Latest experimental versions
@@ -43,6 +36,5 @@ export const mastra = new Mastra({
 		Vision: visionAgent,
 		Voice: voiceAgent,
 	},
-	storage: storage,
 	aiSdkCompat: "v4",
 });

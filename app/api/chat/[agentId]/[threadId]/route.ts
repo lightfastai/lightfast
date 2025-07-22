@@ -21,10 +21,6 @@ export async function POST(
 		const { messages, threadId: bodyThreadId } = requestBody;
 		const { agentId, threadId: paramsThreadId } = await params;
 
-		console.log(`[API] URL param agentId: ${agentId}`);
-		console.log(`[API] URL param threadId: ${paramsThreadId}`);
-		console.log(`[API] Request body threadId: ${bodyThreadId}`);
-		console.log(`[API] Authenticated userId: ${userId}`);
 
 		// Validate agentId
 		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
@@ -38,7 +34,6 @@ export async function POST(
 
 		// Use the threadId from request body if available, otherwise use URL param
 		const threadId = bodyThreadId || paramsThreadId;
-		console.log(`[API] Final threadId: ${threadId}`);
 
 		// Get the specific agent based on agentId
 		// Map from experimental agent names to mastra registry keys
@@ -59,8 +54,6 @@ export async function POST(
 			);
 		}
 
-		console.log(`[API] Using agent: ${agentId} (${mastraAgentKey})`);
-		console.log(`[API] Agent tools:`, Object.keys(agent.tools || {}));
 
 		// Include threadId, agentId, and userId in the agent call for proper memory/context handling
 		const options = {
@@ -68,7 +61,6 @@ export async function POST(
 			resourceId: userId, // Use Clerk userId as resourceId
 		};
 
-		console.log(`[API] Agent options:`, options);
 
 		// Get resumable stream context
 		const streamContext = getStreamContext();
