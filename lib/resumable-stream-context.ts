@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { nanoid } from "@/lib/nanoid";
 import { after } from "next/server";
 import { createResumableStreamContext, type ResumableStreamContext } from "resumable-stream";
 

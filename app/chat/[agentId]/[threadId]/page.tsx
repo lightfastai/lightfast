@@ -1,6 +1,7 @@
+import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getThreadMessages } from "@/app/actions/thread";
+import { checkThreadOwnership, getThreadMessages } from "@/app/actions/thread";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { ChatSkeleton } from "@/components/chat/chat-skeleton";
@@ -18,12 +19,25 @@ interface ChatPageProps {
 export default async function ChatPage({ params }: ChatPageProps) {
 	const { agentId, threadId } = await params;
 
+	// Get current user
+	const { userId } = await auth();
+	if (!userId) {
+		notFound();
+	}
+
 	// Validate agentId on the server
 	if (!experimentalAgents[agentId as ExperimentalAgentId]) {
 		notFound();
 	}
 
-	// Fetch thread messages
+	// Check thread ownership using mastra.memory
+	const { exists, isOwner } = await checkThreadOwnership(threadId, userId, agentId);
+
+	if (!exists || !isOwner) {
+		notFound();
+	}
+
+	// Fetch all thread messages
 	const { uiMessages } = await getThreadMessages(threadId, agentId);
 
 	return (

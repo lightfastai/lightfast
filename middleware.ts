@@ -1,5 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { nanoid } from "nanoid";
+import { nanoid } from "@/lib/nanoid";
 import { NextResponse } from "next/server";
 
 // Define public routes that don't require authentication
@@ -29,6 +29,7 @@ export default clerkMiddleware(async (auth, req) => {
 		const threadId = nanoid();
 
 		// Redirect to the chat with the default agent and new thread ID
+		// Thread ownership will be established when the user sends their first message
 		return NextResponse.redirect(new URL(`/chat/${DEFAULT_EXPERIMENTAL_AGENT}/${threadId}`, req.url));
 	}
 

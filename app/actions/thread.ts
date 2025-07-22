@@ -5,6 +5,61 @@ import { mastra } from "@/mastra";
 import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
 import type { MastraUIMessage } from "@/types/lightfast-ui-messages";
 
+/**
+ * Check if a thread exists and belongs to a specific user
+ * @param threadId - The thread ID to check
+ * @param userId - The user ID to verify ownership
+ * @param agentId - The experimental agent ID
+ * @returns Object with exists flag and isOwner flag
+ */
+export async function checkThreadOwnership(
+	threadId: string,
+	userId: string,
+	agentId: ExperimentalAgentId,
+): Promise<{ exists: boolean; isOwner: boolean }> {
+	try {
+		// Map experimental agent ID to Mastra agent key
+		const agentMap: Record<ExperimentalAgentId, "A010" | "A011"> = {
+			a010: "A010",
+			a011: "A011",
+		};
+
+		const mastraAgentKey = agentMap[agentId];
+		const agent = mastra.getAgent(mastraAgentKey);
+
+		if (!agent) {
+			return { exists: false, isOwner: false };
+		}
+
+		const memory = agent.getMemory();
+		if (!memory) {
+			return { exists: false, isOwner: false };
+		}
+
+		// Query memory for this thread to check if it exists
+		const result = await memory.query({
+			threadId,
+			selectBy: {
+				last: 1, // Just check if thread exists
+			},
+		});
+
+		if (result.uiMessages.length === 0) {
+			// Thread has no messages yet - new thread
+			return { exists: true, isOwner: true };
+		}
+
+		// Check ownership
+		const firstMessage = result.uiMessages[0] as unknown as MastraUIMessage;
+		const isOwner = !firstMessage.metadata?.resourceId || firstMessage.metadata.resourceId === userId;
+
+		return { exists: true, isOwner };
+	} catch (error) {
+		console.error("Error checking thread ownership:", error);
+		return { exists: false, isOwner: false };
+	}
+}
+
 export async function getThreadMessages(threadId: string, agentId?: ExperimentalAgentId) {
 	try {
 		// Map experimental agent ID to Mastra agent key
