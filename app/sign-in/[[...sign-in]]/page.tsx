@@ -2,7 +2,6 @@
 
 import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -35,12 +34,18 @@ export default function SignInPage() {
 							</div>
 
 							{/* Footer */}
-							<p className="text-center text-sm text-muted-foreground">
-								Don't have an account?{" "}
-								<Link href="/sign-up" className="font-medium text-primary hover:text-primary/80">
-									Sign up
-								</Link>
-							</p>
+							<div className="space-y-2">
+								<p className="text-center text-sm text-muted-foreground">
+									This platform is invite-only
+								</p>
+								<p className="text-center text-xs text-muted-foreground">
+									Contact{" "}
+									<a href="mailto:support@lightfast.ai" className="font-medium text-primary hover:text-primary/80">
+										support@lightfast.ai
+									</a>{" "}
+									to request access
+								</p>
+							</div>
 						</div>
 					</SignIn.Step>
 
