@@ -5,6 +5,7 @@ import {
 	VirtuosoMessageListLicense,
 	type VirtuosoMessageListProps,
 } from "@virtuoso.dev/message-list";
+import type { ChatStatus } from "ai";
 import * as React from "react";
 import { Markdown } from "@/components/markdown";
 import { ThinkingAnimation } from "@/components/thinking-animation";
@@ -22,7 +23,7 @@ interface VirtuosoMessage {
 
 interface VirtuosoChatProps {
 	messages: LightfastUIMessage[];
-	isLoading: boolean;
+	status: ChatStatus;
 }
 
 const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"] = ({ data }) => {
@@ -99,24 +100,27 @@ const ItemContent: VirtuosoMessageListProps<VirtuosoMessage, null>["ItemContent"
 	);
 };
 
-export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
+export function VirtuosoChat({ messages, status }: VirtuosoChatProps) {
+	const isLoading = status === "streaming" || status === "submitted";
 	// Track previous messages to detect changes
 	const prevMessagesRef = React.useRef<LightfastUIMessage[]>([]);
 	const [hasInitialized, setHasInitialized] = React.useState(false);
 
 	// Convert messages to Virtuoso format
-	const virtuosoMessages = React.useMemo(() => 
-		messages.map((message, index) => {
-			const isLastAssistantMessage = message.role === "assistant" && messages[messages.length - 1]?.id === message.id;
-			const isLastMessage = index === messages.length - 1;
+	const virtuosoMessages = React.useMemo(
+		() =>
+			messages.map((message, index) => {
+				const isLastAssistantMessage = message.role === "assistant" && messages[messages.length - 1]?.id === message.id;
+				const isLastMessage = index === messages.length - 1;
 
-			return {
-				key: message.id || `message-${index}`,
-				message,
-				isLoading: isLastAssistantMessage && isLoading,
-				isLastMessage,
-			};
-		}), [messages, isLoading]
+				return {
+					key: message.id || `message-${index}`,
+					message,
+					isLoading: isLastAssistantMessage && (status === "streaming" || status === "submitted"),
+					isLastMessage,
+				};
+			}),
+		[messages, status],
 	);
 
 	const [data, setData] = React.useState<VirtuosoMessageListProps<VirtuosoMessage, null>["data"]>(() => ({
@@ -178,11 +182,11 @@ export function VirtuosoChat({ messages, isLoading }: VirtuosoChatProps) {
 	return (
 		<VirtuosoMessageListLicense licenseKey={env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY || ""}>
 			<VirtuosoMessageList<VirtuosoMessage, null>
-				style={{ flex: 1, height: '100%' }}
+				style={{ flex: 1, height: "100%" }}
 				data={data}
 				computeItemKey={({ data }) => data.key}
 				ItemContent={ItemContent}
-				initialLocation={messages.length > 0 ? { index: 'LAST', align: 'end' } : undefined}
+				initialLocation={messages.length > 0 ? { index: "LAST", align: "end" } : undefined}
 			/>
 		</VirtuosoMessageListLicense>
 	);

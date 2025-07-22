@@ -1,19 +1,20 @@
 "use client";
 
+import type { ChatStatus } from "ai";
 import { VirtuosoChat } from "@/components/virtuoso-chat";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface ChatMessagesProps {
 	messages: LightfastUIMessage[];
-	isLoading: boolean;
+	status: ChatStatus;
 }
 
-export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
+export function ChatMessages({ messages, status }: ChatMessagesProps) {
 	return (
 		<div className="flex-1 relative min-h-0 overflow-hidden">
 			<div className="absolute inset-0 pt-2 sm:pt-4 lg:pt-6 pb-2">
 				<div className="h-full">
-					<VirtuosoChat messages={messages} isLoading={isLoading} />
+					<VirtuosoChat messages={messages} status={status} />
 				</div>
 			</div>
 		</div>

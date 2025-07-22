@@ -31,10 +31,8 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		messages: initialMessages,
 	});
 
-	const isLoading = status === "streaming" || status === "submitted";
-
 	const handleSendMessage = async (message: string) => {
-		if (!message.trim() || isLoading) return;
+		if (!message.trim() || status === "streaming" || status === "submitted") return;
 
 		try {
 			// Generate IDs for the messages
@@ -68,7 +66,11 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 					<div className="chat-container">
 						<EmptyState />
 					</div>
-					<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
+					<ChatInput
+						onSendMessage={handleSendMessage}
+						placeholder="Type your message..."
+						disabled={status === "streaming" || status === "submitted"}
+					/>
 				</div>
 				{/* Only show on desktop */}
 				<div className="hidden lg:block">
@@ -80,9 +82,13 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 
 	return (
 		<div className="flex-1 flex flex-col relative">
-			<ChatMessages messages={messages} isLoading={isLoading} />
+			<ChatMessages messages={messages} status={status} />
 			<ChatBottomSection>
-				<ChatInput onSendMessage={handleSendMessage} placeholder="Type your message..." disabled={isLoading} />
+				<ChatInput
+					onSendMessage={handleSendMessage}
+					placeholder="Type your message..."
+					disabled={status === "streaming" || status === "submitted"}
+				/>
 			</ChatBottomSection>
 			{/* Only show on desktop */}
 			<div className="hidden lg:block">
