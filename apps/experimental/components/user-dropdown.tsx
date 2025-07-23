@@ -24,7 +24,7 @@ export function UserDropdown({ className }: UserDropdownProps) {
 		try {
 			await signOut();
 			router.push("/");
-		} catch (error) {
+		} catch (_error) {
 			// Handle sign out error silently
 		}
 	};

@@ -2,7 +2,7 @@ import type { LightfastUIMessage, MastraUIMessage } from "@lightfast/types";
 
 /**
  * Convert Mastra memory UI messages to the format expected by Vercel AI SDK's useChat
- * 
+ *
  * Mastra's memory system stores messages in a format that's very close to the Vercel AI SDK format.
  * This function handles any necessary conversions and ensures type safety.
  */
@@ -18,7 +18,7 @@ export function convertMastraToUIMessages(mastraMessages: MastraUIMessage[]): Li
 		// Check if we should merge with the previous assistant message
 		if (msg.role === "assistant" && result.length > 0) {
 			const lastMessage = result[result.length - 1];
-			
+
 			// If the last message exists and is also from assistant, merge parts
 			if (lastMessage?.role === "assistant") {
 				// Safely merge parts by spreading and type assertion

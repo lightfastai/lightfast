@@ -31,7 +31,7 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 				setCopiedOutput(true);
 				setTimeout(() => setCopiedOutput(false), 2000);
 			}
-		} catch (err) {
+		} catch (_err) {
 			// Silent fail for copy
 		}
 	};

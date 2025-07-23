@@ -26,12 +26,9 @@
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
-			"@clerk/shared",
-			"@tailwindcss/oxide",
 			"@vercel/speed-insights",
 			"better-sqlite3",
 			"esbuild",
-			"protobufjs",
 			"sharp"
 		]
 	}

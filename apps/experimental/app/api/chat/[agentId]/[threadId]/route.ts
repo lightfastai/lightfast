@@ -8,7 +8,6 @@ export async function POST(
 	request: NextRequest,
 	{ params }: { params: Promise<{ agentId: ExperimentalAgentId; threadId: string }> },
 ) {
-
 	try {
 		// Check authentication
 		const { userId } = await auth();

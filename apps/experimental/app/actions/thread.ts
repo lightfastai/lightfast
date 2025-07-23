@@ -85,7 +85,7 @@ export async function getThreadMessages(threadId: string, agentId: ExperimentalA
 			messages: result.messages,
 			uiMessages: convertedMessages,
 		};
-	} catch (error) {
+	} catch (_error) {
 		return { messages: [], uiMessages: [] };
 	}
 }

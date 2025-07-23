@@ -8,7 +8,7 @@ import {
 	type VirtuosoMessageListProps,
 } from "@virtuoso.dev/message-list";
 import type { ChatStatus, ToolUIPart } from "ai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { Markdown } from "@/components/markdown";
 import { ThinkingMessage } from "@/components/thinking-message";
 import { env } from "@/env";
@@ -98,7 +98,7 @@ export function VirtuosoChat({ messages, status }: VirtuosoChatProps) {
 	// Compute data with minimal dependencies
 	const virtuosoData = useMemo(() => {
 		const lastMessage = messages[messages.length - 1];
-		const secondLastMessage = messages[messages.length - 2];
+		const _secondLastMessage = messages[messages.length - 2];
 		const hasNewMessage = messages.length !== prevMessageLength.current;
 
 		// Track if we're streaming a new message

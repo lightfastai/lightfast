@@ -39,6 +39,7 @@ class StagehandSessionManager {
 					apiKey: env.BROWSERBASE_API_KEY,
 					projectId: env.BROWSERBASE_PROJECT_ID,
 					env: "BROWSERBASE",
+					disablePino: true,
 				});
 
 				try {
@@ -71,6 +72,7 @@ class StagehandSessionManager {
 						apiKey: env.BROWSERBASE_API_KEY,
 						projectId: env.BROWSERBASE_PROJECT_ID,
 						env: "BROWSERBASE",
+						disablePino: true,
 					});
 					await this.stagehand.init();
 					this.initialized = true;

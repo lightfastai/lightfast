@@ -31,7 +31,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		// Handle data stream parts - matches Vercel's implementation exactly
 	});
 
-
 	const handleSendMessage = async (message: string) => {
 		if (!message.trim() || status === "streaming" || status === "submitted") return;
 
