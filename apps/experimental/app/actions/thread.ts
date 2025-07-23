@@ -2,83 +2,108 @@
 
 import { mastraServer as mastra } from "@lightfast/ai/server";
 import type { ExperimentalAgentId, MastraUIMessage } from "@lightfast/types";
+import { cache } from "react";
 import { convertMastraToUIMessages } from "@/lib/convert-messages";
 
+// Cache agent instances at request level to avoid repeated instantiation
+const getCachedAgent = cache((agentId: ExperimentalAgentId) => {
+	return mastra.getAgent(agentId);
+});
+
+// Cache agent memory instances at request level
+const getCachedAgentMemory = cache(async (agentId: ExperimentalAgentId) => {
+	const agent = getCachedAgent(agentId);
+	if (!agent) return null;
+	return await agent.getMemory();
+});
+
 /**
- * Check if a thread exists and belongs to a specific user
- * @param threadId - The thread ID to check
- * @param userId - The user ID to verify ownership
- * @param agentId - The experimental agent ID
- * @returns Object with exists flag and isOwner flag
+ * Optimized server action that checks thread ownership and fetches messages in parallel
+ * This eliminates the data fetching waterfall by combining both operations
+ */
+export async function getThreadDataWithOwnership(
+	threadId: string,
+	userId: string,
+	agentId: ExperimentalAgentId,
+): Promise<{
+	exists: boolean;
+	isOwner: boolean;
+	messages: unknown[];
+	uiMessages: unknown[];
+}> {
+	try {
+		const memory = await getCachedAgentMemory(agentId);
+
+		if (!memory) {
+			// Allow access for agents without memory (they can still function)
+			return { exists: true, isOwner: true, messages: [], uiMessages: [] };
+		}
+
+		// Parallel fetch: both ownership check and full messages in single memory query
+		const [ownershipResult, messagesResult] = await Promise.all([
+			// Query for ownership check (first message only)
+			memory.query({
+				threadId,
+				selectBy: { last: 1 },
+			}),
+			// Query for full message history
+			memory.query({
+				threadId,
+				selectBy: { last: 50 },
+			}),
+		]);
+
+		// Check ownership from first query
+		let isOwner = true;
+		if (ownershipResult.uiMessages.length > 0) {
+			const firstMessage = ownershipResult.uiMessages[0] as unknown as MastraUIMessage;
+			isOwner = !firstMessage.metadata?.resourceId || firstMessage.metadata.resourceId === userId;
+		}
+
+		// Process messages from second query
+		const convertedMessages = convertMastraToUIMessages(messagesResult.uiMessages as unknown as MastraUIMessage[]);
+
+		return {
+			exists: true,
+			isOwner,
+			messages: messagesResult.messages,
+			uiMessages: convertedMessages,
+		};
+	} catch (error) {
+		console.error("Error getting thread data:", error);
+		return { exists: false, isOwner: false, messages: [], uiMessages: [] };
+	}
+}
+
+/**
+ * Legacy function - Check if a thread exists and belongs to a specific user
+ * @deprecated Use getThreadDataWithOwnership for better performance
  */
 export async function checkThreadOwnership(
 	threadId: string,
 	userId: string,
 	agentId: ExperimentalAgentId,
 ): Promise<{ exists: boolean; isOwner: boolean }> {
-	try {
-		// Agent ID is now consistent between types and Mastra config
-		const agent = mastra.getAgent(agentId);
-
-		if (!agent) {
-			return { exists: false, isOwner: false };
-		}
-
-		const memory = await agent.getMemory();
-		if (!memory) {
-			// Allow access for agents without memory (they can still function)
-			return { exists: true, isOwner: true };
-		}
-
-		// Query memory for this thread to check if it exists
-		const result = await memory.query({
-			threadId,
-			selectBy: {
-				last: 1, // Just check if thread exists
-			},
-		});
-
-		if (result.uiMessages.length === 0) {
-			// Thread has no messages yet - new thread
-			return { exists: true, isOwner: true };
-		}
-
-		// Check ownership
-		const firstMessage = result.uiMessages[0] as unknown as MastraUIMessage;
-		const isOwner = !firstMessage.metadata?.resourceId || firstMessage.metadata.resourceId === userId;
-
-		return { exists: true, isOwner };
-	} catch (error) {
-		console.error("Error checking thread ownership:", error);
-		return { exists: false, isOwner: false };
-	}
+	const result = await getThreadDataWithOwnership(threadId, userId, agentId);
+	return { exists: result.exists, isOwner: result.isOwner };
 }
 
+/**
+ * Legacy function - Get thread messages
+ * @deprecated Use getThreadDataWithOwnership for better performance
+ */
 export async function getThreadMessages(threadId: string, agentId: ExperimentalAgentId) {
 	try {
-		// Use agentId directly since it's now consistent with Mastra config
-		const agentKey = agentId;
-
-		// Try to get the agent's memory instance
-		const agent = mastra.getAgent(agentKey);
-		if (!agent) {
-			return { messages: [], uiMessages: [] };
-		}
-
-		const memory = await agent.getMemory();
+		const memory = await getCachedAgentMemory(agentId);
 		if (!memory) {
 			return { messages: [], uiMessages: [] };
 		}
 
 		const result = await memory.query({
 			threadId,
-			selectBy: {
-				last: 50,
-			},
+			selectBy: { last: 50 },
 		});
 
-		// Convert Mastra messages to proper UI format
-		// Cast as MastraUIMessage[] since the actual type from Mastra has compatible structure
 		const convertedMessages = convertMastraToUIMessages(result.uiMessages as unknown as MastraUIMessage[]);
 
 		return {

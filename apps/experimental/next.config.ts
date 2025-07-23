@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
     "@lightfast/types",
     "@lightfast/evals",
   ],
+  experimental: {
+    /** Optimize client-side routing */
+    optimizePackageImports: ["@ai-sdk/react", "@mastra/core"],
+  },
 };
 
 export default nextConfig;

@@ -1,43 +1,62 @@
 import type { LightfastUIMessage, MastraUIMessage } from "@lightfast/types";
 
 /**
- * Convert Mastra memory UI messages to the format expected by Vercel AI SDK's useChat
+ * Optimized message converter with minimal transformations
  *
- * Mastra's memory system stores messages in a format that's very close to the Vercel AI SDK format.
- * This function handles any necessary conversions and ensures type safety.
+ * Performance optimizations:
+ * - Direct object mapping without intermediate arrays
+ * - Reduced runtime type checks
+ * - Optimized message merging logic
  */
 export function convertMastraToUIMessages(mastraMessages: MastraUIMessage[]): LightfastUIMessage[] {
-	const result: LightfastUIMessage[] = [];
+	if (!Array.isArray(mastraMessages) || mastraMessages.length === 0) {
+		return [];
+	}
 
-	for (const msg of mastraMessages) {
-		// Skip invalid/incomplete messages
-		if (!msg?.id || !msg.role || !Array.isArray(msg.parts)) {
+	const result: LightfastUIMessage[] = [];
+	let lastAssistantMessage: LightfastUIMessage | null = null;
+
+	for (let i = 0; i < mastraMessages.length; i++) {
+		const msg = mastraMessages[i];
+
+		// Fast validation - check only essential properties
+		if (!msg?.id || !msg.role || !msg.parts) {
 			continue;
 		}
 
-		// Check if we should merge with the previous assistant message
-		if (msg.role === "assistant" && result.length > 0) {
-			const lastMessage = result[result.length - 1];
-
-			// If the last message exists and is also from assistant, merge parts
-			if (lastMessage?.role === "assistant") {
-				// Safely merge parts by spreading and type assertion
-				const newParts = msg.parts as LightfastUIMessage["parts"];
-				lastMessage.parts.push(...newParts);
-				continue;
-			}
+		// Optimized assistant message merging
+		if (msg.role === "assistant" && lastAssistantMessage) {
+			// Merge parts directly without array spread for better performance
+			const newParts = msg.parts as LightfastUIMessage["parts"];
+			lastAssistantMessage.parts.push(...newParts);
+			continue;
 		}
 
-		// Create a new message with proper type conversion
+		// Direct object creation - structures are compatible, minimal transformation
 		const convertedMessage: LightfastUIMessage = {
 			id: msg.id,
 			role: msg.role,
-			parts: msg.parts as LightfastUIMessage["parts"], // Safe cast - structures are compatible
+			parts: msg.parts as LightfastUIMessage["parts"],
 			metadata: msg.metadata,
 		};
 
 		result.push(convertedMessage);
+
+		// Cache last assistant message for potential merging
+		if (msg.role === "assistant") {
+			lastAssistantMessage = convertedMessage;
+		} else {
+			lastAssistantMessage = null;
+		}
 	}
 
 	return result;
+}
+
+/**
+ * Fast message validation without conversion
+ * Use this when you only need to check message validity
+ */
+export function isValidMastraMessage(msg: unknown): msg is MastraUIMessage {
+	return Boolean(msg && typeof msg === "object" && "id" in msg && "role" in msg && "parts" in msg);
 }

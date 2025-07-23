@@ -69,7 +69,8 @@
       "Bash(pnpm eval:a011:simple:dev:*)",
       "mcp__container-use__environment_add_service",
       "Bash(git checkout:*)",
-      "Bash(pnpm remove:*)"
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm dev:*)"
     ],
     "deny": []
   },

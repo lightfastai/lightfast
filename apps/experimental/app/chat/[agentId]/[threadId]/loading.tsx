@@ -1,10 +1,10 @@
-import { ChatLayout } from "@/components/chat/chat-layout";
 import { ChatSkeleton } from "@/components/chat/chat-skeleton";
 
-export default function Loading() {
-	return (
-		<ChatLayout>
-			<ChatSkeleton />
-		</ChatLayout>
-	);
+/**
+ * Loading state for thread-level routes
+ * Shows while thread data and messages are being fetched
+ * Layout is already rendered at agent level, so we only show content skeleton
+ */
+export default function ThreadLoading() {
+	return <ChatSkeleton />;
 }

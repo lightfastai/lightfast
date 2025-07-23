@@ -1,11 +1,8 @@
-"use client";
-
-import { useChat } from "@ai-sdk/react";
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
-import { ChatInput } from "@/components/chat-input";
-import { useChatTransport } from "@/hooks/use-chat-transport";
+import type { ChatStatus } from "ai";
+import { Suspense } from "react";
 import { AgentVersionIndicator } from "./agent-version-indicator";
-import { ChatBottomSection } from "./chat-bottom-section";
+import { ChatInputSection } from "./chat-input-section";
 import { ChatMessages } from "./chat-messages";
 import { EmptyState } from "./empty-state";
 
@@ -15,79 +12,20 @@ interface ChatInterfaceProps {
 	initialMessages?: LightfastUIMessage[];
 }
 
+/**
+ * ChatInterface with optimized server/client boundaries
+ * Server-renders static content and progressively enhances with client features
+ */
 export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatInterfaceProps) {
-	// Create transport for AI SDK v5 with agentId
-	const transport = useChatTransport({ threadId, agentId });
-
-	// Use the chat hook with transport and LightfastUIMessage type
-	const {
-		messages,
-		sendMessage: vercelSendMessage,
-		status,
-	} = useChat<LightfastUIMessage>({
-		id: threadId,
-		transport,
-		messages: initialMessages,
-		// Handle data stream parts - matches Vercel's implementation exactly
-	});
-
-	const handleSendMessage = async (message: string) => {
-		if (!message.trim() || status === "streaming" || status === "submitted") return;
-
-		try {
-			// Generate UUID for the user message
-			const userMessageId = crypto.randomUUID();
-
-			// Use vercelSendMessage with the correct AI SDK v5 format
-			await vercelSendMessage(
-				{
-					role: "user",
-					parts: [{ type: "text", text: message }],
-					id: userMessageId,
-				},
-				{
-					body: {
-						userMessageId,
-					},
-				},
-			);
-		} catch (error) {
-			console.error("Failed to send message:", error);
-		}
-	};
-
-	if (messages.length === 0) {
-		return (
-			<div className="flex-1 flex items-center overflow-hidden">
-				<div className="w-full relative -top-12">
-					<div className="chat-container">
-						<EmptyState />
-					</div>
-					<ChatInput
-						onSendMessage={handleSendMessage}
-						placeholder="Type your message..."
-						disabled={status === "streaming" || status === "submitted"}
-					/>
-				</div>
-				{/* Only show on desktop */}
-				<div className="hidden lg:block">
-					<AgentVersionIndicator agentId={agentId} />
-				</div>
-			</div>
-		);
-	}
-
+	// Always use the client component for the full chat experience
+	// This ensures real-time updates work properly
 	return (
 		<div className="flex-1 flex flex-col relative">
-			<ChatMessages messages={messages} status={status} />
-			<ChatBottomSection>
-				<ChatInput
-					onSendMessage={handleSendMessage}
-					placeholder="Type your message..."
-					disabled={status === "streaming" || status === "submitted"}
-				/>
-			</ChatBottomSection>
-			{/* Only show on desktop */}
+			<Suspense fallback={<div className="flex-1" />}>
+				<ChatInputSection agentId={agentId} threadId={threadId} initialMessages={initialMessages} />
+			</Suspense>
+
+			{/* Server-rendered agent version */}
 			<div className="hidden lg:block">
 				<AgentVersionIndicator agentId={agentId} />
 			</div>

@@ -2,42 +2,23 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import type { ExperimentalAgentId } from "@lightfast/types";
 import { NextResponse } from "next/server";
 
-// Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
-	"/sign-in(.*)",
-	"/api/webhooks(.*)",
-	"/api/cron(.*)", // Allow cron jobs to run without auth
-]);
+// Define protected routes - everything except public routes
+const isProtectedRoute = createRouteMatcher(["/((?!sign-in|api/webhooks|api/cron).*)"]);
 
-// Default agent - using string literal to avoid loading agent code in middleware
+// Default agent
 const DEFAULT_AGENT: ExperimentalAgentId = "a011";
 
 export default clerkMiddleware(async (auth, req) => {
-	// Check if the route is public
-	if (isPublicRoute(req)) {
-		return NextResponse.next();
-	}
-
-	// Protect all other routes
-	const { userId } = await auth();
-	if (!userId) {
-		// Redirect to sign-in if not authenticated
-		const signInUrl = new URL("/sign-in", req.url);
-		signInUrl.searchParams.set("redirect_url", req.url);
-		return NextResponse.redirect(signInUrl);
+	// Protect routes using Clerk's built-in protection
+	if (isProtectedRoute(req)) {
+		await auth.protect();
 	}
 
 	// Handle root path redirect for authenticated users
 	if (req.nextUrl.pathname === "/") {
-		// Generate a new thread ID using UUID
-		const threadId = crypto.randomUUID();
-
-		// Redirect to the chat with the default agent and new thread ID
-		// Thread ownership will be established when the user sends their first message
-		return NextResponse.redirect(new URL(`/chat/${DEFAULT_AGENT}/${threadId}`, req.url));
+		// Redirect to default agent chat (new chat)
+		return NextResponse.redirect(new URL(`/chat/${DEFAULT_AGENT}`, req.url));
 	}
-
-	return NextResponse.next();
 });
 
 // Configure which paths the middleware should run on

@@ -1,0 +1,95 @@
+"use client";
+
+import { useChat } from "@ai-sdk/react";
+import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
+import { ChatInput } from "@/components/chat-input";
+import { useChatTransport } from "@/hooks/use-chat-transport";
+import { ChatBottomSection } from "./chat-bottom-section";
+import { ChatMessages } from "./chat-messages";
+import { EmptyState } from "./empty-state";
+
+interface ChatInputSectionProps {
+	agentId: ExperimentalAgentId;
+	threadId: string;
+	initialMessages?: LightfastUIMessage[];
+}
+
+/**
+ * Client component that handles chat interactivity
+ * Isolated from server-rendered content for better performance
+ */
+export function ChatInputSection({ agentId, threadId, initialMessages = [] }: ChatInputSectionProps) {
+	// Create transport for AI SDK v5 with agentId
+	const transport = useChatTransport({ threadId, agentId });
+
+	// Use the chat hook with transport and LightfastUIMessage type
+	const {
+		messages,
+		sendMessage: vercelSendMessage,
+		status,
+	} = useChat<LightfastUIMessage>({
+		id: threadId,
+		transport,
+		messages: initialMessages,
+	});
+
+	const handleSendMessage = async (message: string) => {
+		if (!message.trim() || status === "streaming" || status === "submitted") return;
+
+		// Update URL to include chat ID - following Vercel's pattern
+		window.history.replaceState({}, "", `/chat/${agentId}/${threadId}`);
+
+		try {
+			// Generate UUID for the user message
+			const userMessageId = crypto.randomUUID();
+
+			// Use vercelSendMessage with the correct AI SDK v5 format
+			await vercelSendMessage(
+				{
+					role: "user",
+					parts: [{ type: "text", text: message }],
+					id: userMessageId,
+				},
+				{
+					body: {
+						userMessageId,
+					},
+				},
+			);
+		} catch (error) {
+			console.error("Failed to send message:", error);
+		}
+	};
+
+	// Always render the full chat interface if we have messages
+	if (messages.length > 0) {
+		return (
+			<>
+				<ChatMessages messages={messages} status={status} />
+				<ChatBottomSection>
+					<ChatInput
+						onSendMessage={handleSendMessage}
+						placeholder="Type your message..."
+						disabled={status === "streaming" || status === "submitted"}
+					/>
+				</ChatBottomSection>
+			</>
+		);
+	}
+
+	// For empty state, center the content in the middle of the page
+	return (
+		<div className="flex-1 flex items-center justify-center">
+			<div className="w-full max-w-3xl px-4">
+				<div className="px-4">
+					<EmptyState />
+				</div>
+				<ChatInput
+					onSendMessage={handleSendMessage}
+					placeholder="Type your message..."
+					disabled={status === "streaming" || status === "submitted"}
+				/>
+			</div>
+		</div>
+	);
+}
