@@ -2,37 +2,24 @@ import type { z } from "zod";
 
 /**
  * Factory function to create storage instances based on environment
- * Automatically selects storage backend based on environment variables
+ * Uses Upstash Redis for all environments
  *
  * NOTE: This function is intended for server-side use only.
  * It dynamically imports storage dependencies to avoid client-side bundling.
  */
 export async function createEnvironmentStorage() {
-	const { LibSQLStore } = await import("@mastra/libsql");
 	const { UpstashStore } = await import("@mastra/upstash");
 	const { env } = await import("../../env");
-	// Auto-detect environment based on NODE_ENV and deployment context
-	const nodeEnv = env.NODE_ENV || "development";
-	const isVercel = env.VERCEL === "1" || env.VERCEL_ENV !== undefined;
-	const isProduction = nodeEnv === "production";
 
-	// Use Upstash for production/serverless deployments
-	if (isProduction || isVercel) {
-		return new UpstashStore({
-			url: env.KV_REST_API_URL,
-			token: env.KV_REST_API_TOKEN,
-		});
-	}
-
-	// Use LibSQL for development and testing
-	return new LibSQLStore({
-		url: nodeEnv === "test" ? ":memory:" : "file:./mastra.db",
+	// Use Upstash Redis for all environments
+	return new UpstashStore({
+		url: env.KV_REST_API_URL,
+		token: env.KV_REST_API_TOKEN,
 	});
 }
 
 /**
- * Factory function to create Memory instances based on environment
- * Automatically selects storage backend based on environment variables
+ * Factory function to create Memory instances using Upstash Redis storage
  *
  * NOTE: This function is intended for server-side use only.
  * It dynamically imports Memory to avoid client-side bundling.

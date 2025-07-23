@@ -3,8 +3,7 @@ import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { z } from "zod";
 import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
-// Temporarily disabled to fix libsql client-side bundling issue
-// import { createEnvironmentMemory } from "../../lib/memory-factory";
+import { createEnvironmentMemory } from "../../lib/memory-factory";
 import {
 	stagehandActTool,
 	stagehandExtractTool,
@@ -27,18 +26,18 @@ const simplifiedWorkingMemorySchema = z.object({
 export type SimplifiedWorkingMemory = z.infer<typeof simplifiedWorkingMemorySchema>;
 
 // Create simplified memory for a011 Agent (tasks stored in blob storage)
-// Temporarily disabled to fix libsql client-side bundling issue
-// const agentMemory = createEnvironmentMemory({
-// 	prefix: "mastra:a011-agent:",
-// 	workingMemorySchema: simplifiedWorkingMemorySchema,
-// 	workingMemoryDefault: {
-// 		summary: "Ready for task-led execution. Tasks will be stored in thread-scoped blob storage.",
-// 		lastUpdated: new Date().toISOString(),
-// 		sandboxId: null,
-// 		sandboxDirectory: "/home/vercel-sandbox",
-// 	},
-// 	lastMessages: 50,
-// });
+const agentMemory = () =>
+	createEnvironmentMemory({
+		prefix: "mastra:a011-agent:",
+		workingMemorySchema: simplifiedWorkingMemorySchema,
+		workingMemoryDefault: {
+			summary: "Ready for task-led execution. Tasks will be stored in thread-scoped blob storage.",
+			lastUpdated: new Date().toISOString(),
+			sandboxId: null,
+			sandboxDirectory: "/home/vercel-sandbox",
+		},
+		lastMessages: 50,
+	});
 
 export const a011 = new Agent({
 	name: "a011",
@@ -301,7 +300,7 @@ This is a mandatory requirement - never omit file location information from your
 		createSandbox: createSandboxTool,
 		executeSandboxCommand: executeSandboxCommandTool,
 	},
-	// memory: agentMemory, // Temporarily disabled for libsql bundling fix
+	memory: agentMemory,
 	defaultGenerateOptions: {
 		maxSteps: 30,
 		maxRetries: 3,
