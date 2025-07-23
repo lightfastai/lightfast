@@ -38,16 +38,16 @@
 	},
 	"dependencies": {
 		"@lightfast/ai": "workspace:*",
-		"@mastra/core": "0.0.0-ai-v5-20250718021026",
-		"@mastra/evals": "0.0.0-ai-v5-20250710191716",
-		"ai": "5.0.0-beta.14",
-		"braintrust": "^0.1.1",
-		"zod": "^3.25.76"
+		"@mastra/core": "catalog:",
+		"@mastra/evals": "catalog:",
+		"ai": "catalog:",
+		"braintrust": "catalog:",
+		"zod": "catalog:"
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.15",
 		"dotenv-cli": "^8.0.0",
 		"tsx": "^4.20.3",
-		"typescript": "^5.8.3"
+		"typescript": "catalog:"
 	}
 }

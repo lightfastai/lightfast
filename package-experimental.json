@@ -17,9 +17,9 @@
 		"build:mastra": "turbo run build:mastra --filter=@lightfast/ai"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.1.1",
-		"turbo": "^2.5.5",
-		"typescript": "^5.8.3"
+		"@biomejs/biome": "catalog:",
+		"turbo": "catalog:",
+		"typescript": "catalog:"
 	},
 	"engines": {
 		"node": ">=22.0.0"
