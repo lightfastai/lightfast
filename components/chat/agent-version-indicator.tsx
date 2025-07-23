@@ -22,9 +22,9 @@ export function AgentVersionIndicator({ agentId, variant = "default" }: AgentVer
 					</PopoverTrigger>
 					<PopoverContent className="w-80" side="bottom" align="start">
 						<div className="space-y-2">
-							<p className="text-sm font-medium">Current Agent Version</p>
 							<p className="text-sm text-muted-foreground">
-								This is the current agent version ({agentId}) that you are using for this conversation.
+								This is the current agent version that you are using for this conversation. It will change as we upgrade
+								the agent capabilities.
 							</p>
 						</div>
 					</PopoverContent>
@@ -44,9 +44,9 @@ export function AgentVersionIndicator({ agentId, variant = "default" }: AgentVer
 				</PopoverTrigger>
 				<PopoverContent className="w-80" side="top" align="end">
 					<div className="space-y-2">
-						<p className="text-sm font-medium">Current Agent Version</p>
 						<p className="text-sm text-muted-foreground">
-							This is the current agent version ({agentId}) that you are using for this conversation.
+							This is the current agent version that you are using for this conversation. It will change as we upgrade
+							the agent capabilities.
 						</p>
 					</div>
 				</PopoverContent>
