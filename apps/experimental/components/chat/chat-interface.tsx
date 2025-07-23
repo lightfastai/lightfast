@@ -1,6 +1,5 @@
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
 import type { ChatStatus } from "ai";
-import { Suspense } from "react";
 import { AgentVersionIndicator } from "./agent-version-indicator";
 import { ChatInputSection } from "./chat-input-section";
 import { ChatMessages } from "./chat-messages";
@@ -21,9 +20,7 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 	// This ensures real-time updates work properly
 	return (
 		<div className="flex-1 flex flex-col relative">
-			<Suspense fallback={<div className="flex-1" />}>
-				<ChatInputSection agentId={agentId} threadId={threadId} initialMessages={initialMessages} />
-			</Suspense>
+			<ChatInputSection agentId={agentId} threadId={threadId} initialMessages={initialMessages} />
 
 			{/* Server-rendered agent version */}
 			<div className="hidden lg:block">
