@@ -1,15 +1,15 @@
 {
-  "extends": "../../tooling/typescript/library.json",
-  "compilerOptions": {
-    "rootDir": "./src",
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./dist",
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "noEmit": false,
-    "emitDeclarationOnly": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+	"extends": "../../tooling/typescript/library.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"outDir": "./dist",
+		"tsBuildInfoFile": "./dist/.tsbuildinfo",
+		"noEmit": false,
+		"emitDeclarationOnly": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
 }

@@ -3,10 +3,10 @@
  * Leverages Mastra's type system for comprehensive testing
  */
 
+import { type ExperimentResult, ExperimentTracker } from "@lightfast/evals/lib/experiment-tracker";
 import type { CoreMessage, GenerateTextResult, StepResult, ToolCallUnion, ToolSet } from "ai";
 import { type BaseMetadata, type DefaultMetadataType, Eval, type EvalScorer, type EvalScorerArgs } from "braintrust";
 import type { z } from "zod";
-import { type ExperimentResult, ExperimentTracker } from "@lightfast/evals/lib/experiment-tracker";
 
 // Define Score type based on braintrust's expected format
 type Score = { name: string; score: number | null };

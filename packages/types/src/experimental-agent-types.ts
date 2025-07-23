@@ -47,5 +47,3 @@ export type ExperimentalAgentTask<T extends ExperimentalAgentId> = T extends "a0
 
 // Union of all possible task types (only from agents that have tasks)
 export type ExperimentalAgentTaskUnion = ExperimentalAgentTask<"a010">;
-
-

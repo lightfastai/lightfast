@@ -3,8 +3,6 @@
 import { useChat } from "@ai-sdk/react";
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
 import { ChatInput } from "@/components/chat-input";
-import { useDataStream } from "@/components/data-stream-provider";
-import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import { AgentVersionIndicator } from "./agent-version-indicator";
 import { ChatBottomSection } from "./chat-bottom-section";
@@ -20,33 +18,19 @@ interface ChatInterfaceProps {
 export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatInterfaceProps) {
 	// Create transport for AI SDK v5 with agentId
 	const transport = useChatTransport({ threadId, agentId });
-	const { setDataStream } = useDataStream();
 
 	// Use the chat hook with transport and LightfastUIMessage type
 	const {
 		messages,
 		sendMessage: vercelSendMessage,
 		status,
-		resumeStream,
-		setMessages,
 	} = useChat<LightfastUIMessage>({
 		id: threadId,
 		transport,
 		messages: initialMessages,
 		// Handle data stream parts - matches Vercel's implementation exactly
-		onData: (dataPart) => {
-			setDataStream((ds) => (ds ? [...ds, dataPart] : []));
-		},
 	});
 
-	// Enable auto-resume when there are initial messages
-	// This will resume streaming if the last message was from the user
-	useAutoResume({
-		autoResume: initialMessages.length > 0,
-		initialMessages,
-		resumeStream,
-		setMessages,
-	});
 
 	const handleSendMessage = async (message: string) => {
 		if (!message.trim() || status === "streaming" || status === "submitted") return;

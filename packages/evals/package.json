@@ -1,53 +1,53 @@
 {
-  "name": "@lightfast/evals",
-  "version": "1.0.0",
-  "description": "Evaluation framework for Lightfast AI agents",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./agents/*": {
-      "types": "./src/agents/*.ts",
-      "default": "./src/agents/*.ts"
-    },
-    "./lib/*": {
-      "types": "./src/lib/*.ts",
-      "default": "./src/lib/*.ts"
-    },
-    "./scripts/*": {
-      "types": "./src/scripts/*.ts",
-      "default": "./src/scripts/*.ts"
-    }
-  },
-  "scripts": {
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "build": "tsc",
-    "dev": "tsc",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "biome check --write .",
-    "eval:a011": "pnpm with-env npx braintrust eval --no-send-logs src/agents/experimental/a011/a011.eval.ts",
-    "eval:a011:dev": "pnpm with-env npx braintrust eval --dev --dev-port 8300 src/agents/experimental/a011/a011.eval.ts",
-    "eval:a011:baseline": "SET_BASELINE=true pnpm eval:a011:dev",
-    "eval:experiments": "tsx src/scripts/experiment-cli.ts",
-    "eval:list": "tsx src/scripts/experiment-cli.ts a011 list",
-    "eval:baseline": "tsx src/scripts/experiment-cli.ts a011 baseline",
-    "with-env": "dotenv -e ../../apps/web/.env.local --"
-  },
-  "dependencies": {
-    "@lightfast/ai": "workspace:*",
-    "@mastra/core": "0.0.0-ai-v5-20250718021026",
-    "@mastra/evals": "0.0.0-ai-v5-20250710191716",
-    "ai": "5.0.0-beta.14",
-    "braintrust": "^0.1.1",
-    "zod": "^3.25.76"
-  },
-  "devDependencies": {
-    "@types/node": "^24.0.15",
-    "dotenv-cli": "^8.0.0",
-    "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
-  }
+	"name": "@lightfast/evals",
+	"version": "1.0.0",
+	"description": "Evaluation framework for Lightfast AI agents",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
+		},
+		"./agents/*": {
+			"types": "./src/agents/*.ts",
+			"default": "./src/agents/*.ts"
+		},
+		"./lib/*": {
+			"types": "./src/lib/*.ts",
+			"default": "./src/lib/*.ts"
+		},
+		"./scripts/*": {
+			"types": "./src/scripts/*.ts",
+			"default": "./src/scripts/*.ts"
+		}
+	},
+	"scripts": {
+		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"build": "tsc",
+		"dev": "tsc",
+		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
+		"lint": "biome check --write .",
+		"eval:a011": "pnpm with-env npx braintrust eval --no-send-logs src/agents/experimental/a011/a011.eval.ts",
+		"eval:a011:dev": "pnpm with-env npx braintrust eval --dev --dev-port 8300 src/agents/experimental/a011/a011.eval.ts",
+		"eval:a011:baseline": "SET_BASELINE=true pnpm eval:a011:dev",
+		"eval:experiments": "tsx src/scripts/experiment-cli.ts",
+		"eval:list": "tsx src/scripts/experiment-cli.ts a011 list",
+		"eval:baseline": "tsx src/scripts/experiment-cli.ts a011 baseline",
+		"with-env": "dotenv -e ../../apps/web/.env.local --"
+	},
+	"dependencies": {
+		"@lightfast/ai": "workspace:*",
+		"@mastra/core": "0.0.0-ai-v5-20250718021026",
+		"@mastra/evals": "0.0.0-ai-v5-20250710191716",
+		"ai": "5.0.0-beta.14",
+		"braintrust": "^0.1.1",
+		"zod": "^3.25.76"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.15",
+		"dotenv-cli": "^8.0.0",
+		"tsx": "^4.20.3",
+		"typescript": "^5.8.3"
+	}
 }

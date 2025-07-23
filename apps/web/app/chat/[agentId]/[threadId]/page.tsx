@@ -2,12 +2,10 @@ import { auth } from "@clerk/nextjs/server";
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { checkThreadOwnership, getThreadMessages } from "@/app/actions/thread";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { ChatSkeleton } from "@/components/chat/chat-skeleton";
-import { DataStreamHandler } from "@/components/data-stream-handler";
-import { DataStreamProvider } from "@/components/data-stream-provider";
-import { checkThreadOwnership, getThreadMessages } from "@/lib/api/thread";
 
 interface ChatPageProps {
 	params: Promise<{
@@ -42,13 +40,10 @@ export default async function ChatPage({ params }: ChatPageProps) {
 	const { uiMessages } = await getThreadMessages(threadId, agentId);
 
 	return (
-		<DataStreamProvider>
-			<ChatLayout agentId={agentId}>
-				<Suspense fallback={<ChatSkeleton />}>
-					<ChatInterface agentId={agentId} threadId={threadId} initialMessages={uiMessages as LightfastUIMessage[]} />
-				</Suspense>
-				<DataStreamHandler />
-			</ChatLayout>
-		</DataStreamProvider>
+		<ChatLayout agentId={agentId}>
+			<Suspense fallback={<ChatSkeleton />}>
+				<ChatInterface agentId={agentId} threadId={threadId} initialMessages={uiMessages as LightfastUIMessage[]} />
+			</Suspense>
+		</ChatLayout>
 	);
 }

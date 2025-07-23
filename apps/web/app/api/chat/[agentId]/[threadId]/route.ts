@@ -1,35 +1,25 @@
 import { auth } from "@clerk/nextjs/server";
 import { mastraServer as mastra } from "@lightfast/ai/server";
 import type { ExperimentalAgentId } from "@lightfast/types";
-import { JsonToSseTransformStream } from "ai";
 import type { NextRequest } from "next/server";
-import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-context";
-// Use Redis for much faster stream ID storage
-import { createStreamId } from "@/lib/stream-storage-redis";
 import { isValidUUID } from "@/lib/uuid-utils";
 
 export async function POST(
 	request: NextRequest,
 	{ params }: { params: Promise<{ agentId: ExperimentalAgentId; threadId: string }> },
 ) {
-	const startTime = Date.now();
-	const timings: Record<string, number> = {};
 
 	try {
 		// Check authentication
-		const authStart = Date.now();
 		const { userId } = await auth();
-		timings.auth = Date.now() - authStart;
 
 		if (!userId) {
 			return Response.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		const parseStart = Date.now();
 		const requestBody = await request.json();
 		const { messages, threadId: bodyThreadId, userMessageId } = requestBody;
 		const { agentId, threadId: paramsThreadId } = await params;
-		timings.parsing = Date.now() - parseStart;
 
 		// Validate agentId
 		const validAgentIds: ExperimentalAgentId[] = ["a010", "a011"];
@@ -66,7 +56,6 @@ export async function POST(
 		}
 
 		// Get the specific agent based on agentId
-		const agentStart = Date.now();
 		const agent = mastra.getAgent(agentId);
 
 		if (!agent) {
@@ -77,7 +66,6 @@ export async function POST(
 				{ status: 500 },
 			);
 		}
-		timings.agentInit = Date.now() - agentStart;
 
 		// Include threadId, agentId, and userId in the agent call for proper memory/context handling
 		const options = {
@@ -85,51 +73,16 @@ export async function POST(
 			resourceId: userId, // Use Clerk userId as resourceId
 		};
 
-		// Generate stream ID for this chat session
-		const streamId = generateStreamId(agentId, threadId);
-
 		// Only pass the last user message since the agent has memory of previous messages
 		// This prevents duplicate message processing
 		const lastUserMessage = messages[messages.length - 1];
 
-		// Start streaming immediately - this is the critical path
-		const streamStart = Date.now();
+		// Start streaming
 		const result = await agent.stream([lastUserMessage], options);
-		timings.streamInit = Date.now() - streamStart;
 
-		// Convert to UI message stream and then to SSE format
-		const stream = result.toUIMessageStream().pipeThrough(new JsonToSseTransformStream());
-
-		// Log total time to stream start
-		timings.totalToStream = Date.now() - startTime;
-		console.log(`[PERF] Stream timing for ${agentId}/${threadId}:`, timings);
-
-		// Store the stream ID in the background
-		// Cleanup is now handled by a cron job for better performance
-		const backgroundStart = Date.now();
-
-		createStreamId({
-			streamId,
-			agentId,
-			threadId,
-			userId,
-		})
-			.then(() => {
-				const backgroundTime = Date.now() - backgroundStart;
-				console.log(`[PERF] Stream ID stored for ${agentId}/${threadId} in ${backgroundTime}ms`);
-			})
-			.catch((err) => console.error("Failed to create stream ID:", err));
-
-		// Get resumable stream context
-		const streamContext = getStreamContext();
-
-		// If resumable streams are available, use them
-		if (streamContext) {
-			return new Response(await streamContext.resumableStream(streamId, () => stream));
-		} else {
-			// Fallback to regular streaming if resumable streams aren't available
-			return new Response(stream);
-		}
+		// Convert to UI message stream response
+		// This automatically handles SSE format and returns a proper Response object
+		return result.toUIMessageStreamResponse();
 	} catch (error) {
 		console.error("Chat error:", error);
 		return Response.json({ error: "Internal server error" }, { status: 500 });

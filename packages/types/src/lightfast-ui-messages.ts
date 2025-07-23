@@ -6,10 +6,13 @@ export interface LightfastUICustomDataTypes {
 }
 
 // Tool schemas - simplified generic type
-export type LightfastToolSchemas = Record<string, {
-	input: unknown;
-	output: unknown;
-}>;
+export type LightfastToolSchemas = Record<
+	string,
+	{
+		input: unknown;
+		output: unknown;
+	}
+>;
 
 // Metadata type for our messages
 export interface LightfastUIMessageMetadata {
