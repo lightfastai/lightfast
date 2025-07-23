@@ -3,11 +3,12 @@
 import type { ChatTransport } from "ai";
 import { DefaultChatTransport } from "ai";
 import { useMemo } from "react";
+import type { ExperimentalAgentId } from "@lightfast/types";
 import type { LightfastUIMessage } from "@lightfast/types";
 
 interface UseChatTransportProps {
 	threadId: string;
-	agentId: string;
+	agentId: ExperimentalAgentId;
 }
 
 /**

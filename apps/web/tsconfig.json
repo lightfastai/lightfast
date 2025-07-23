@@ -28,12 +28,5 @@
   "exclude": [
     "node_modules"
   ],
-  "references": [
-    {
-      "path": "../../packages/ai"
-    },
-    {
-      "path": "../../packages/types"
-    }
-  ]
+  "references": []
 }

@@ -1,5 +1,6 @@
 import { after } from "next/server";
 import { createResumableStreamContext, type ResumableStreamContext } from "resumable-stream";
+import type { ExperimentalAgentId } from "@lightfast/types";
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -23,7 +24,7 @@ export function getStreamContext() {
 	return globalStreamContext;
 }
 
-export function generateStreamId(agentId: string, threadId: string): string {
+export function generateStreamId(agentId: ExperimentalAgentId, threadId: string): string {
 	// Generate a unique stream ID with UUID for better uniqueness
 	// Format: agentId-threadId-uuid
 	return `${agentId}-${threadId}-${crypto.randomUUID()}`;

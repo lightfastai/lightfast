@@ -6,11 +6,11 @@ import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-conte
 import { createStreamId } from "@/lib/stream-storage-redis";
 import { isValidUUID } from "@/lib/uuid-utils";
 import { mastra, experimentalAgents } from "@lightfast/ai";
-import type { ExperimentalAgentId } from "@lightfast/ai";
+import type { ExperimentalAgentId } from "@lightfast/types";
 
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: Promise<{ agentId: string; threadId: string }> },
+	{ params }: { params: Promise<{ agentId: ExperimentalAgentId; threadId: string }> },
 ) {
 	const startTime = Date.now();
 	const timings: Record<string, number> = {};
@@ -65,20 +65,13 @@ export async function POST(
 		}
 
 		// Get the specific agent based on agentId
-		// Map from experimental agent names to mastra registry keys
-		const agentMap = {
-			a010: "A010",
-			a011: "A011",
-		} as const;
-
 		const agentStart = Date.now();
-		const mastraAgentKey = agentMap[agentId as ExperimentalAgentId];
-		const agent = mastra.getAgent(mastraAgentKey);
+		const agent = mastra.getAgent(agentId);
 
 		if (!agent) {
 			return Response.json(
 				{
-					error: `Agent ${agentId} (${mastraAgentKey}) not available`,
+					error: `Agent ${agentId} not available`,
 				},
 				{ status: 500 },
 			);
@@ -144,7 +137,7 @@ export async function POST(
 
 export async function GET(
 	_request: NextRequest,
-	{ params }: { params: Promise<{ agentId: string; threadId: string }> },
+	{ params }: { params: Promise<{ agentId: ExperimentalAgentId; threadId: string }> },
 ) {
 	try {
 		// Check authentication

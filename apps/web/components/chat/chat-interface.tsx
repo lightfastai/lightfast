@@ -5,7 +5,7 @@ import { ChatInput } from "@/components/chat-input";
 import { useDataStream } from "@/components/data-stream-provider";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatTransport } from "@/hooks/use-chat-transport";
-import type { ExperimentalAgentId } from "@lightfast/ai";
+import type { ExperimentalAgentId } from "@lightfast/types";
 import type { LightfastUIMessage } from "@lightfast/types";
 import { AgentVersionIndicator } from "./agent-version-indicator";
 import { ChatBottomSection } from "./chat-bottom-section";

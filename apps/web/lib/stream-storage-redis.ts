@@ -1,5 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { env } from "@/env";
+import type { ExperimentalAgentId } from "@lightfast/types";
 
 // Initialize Redis client
 const redis = new Redis({
@@ -9,7 +10,7 @@ const redis = new Redis({
 
 export interface StreamRecord {
 	streamId: string;
-	agentId: string;
+	agentId: ExperimentalAgentId;
 	threadId: string;
 	userId: string;
 	createdAt: Date;
@@ -29,7 +30,7 @@ export async function createStreamId({
 	userId,
 }: {
 	streamId: string;
-	agentId: string;
+	agentId: ExperimentalAgentId;
 	threadId: string;
 	userId: string;
 }) {

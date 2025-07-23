@@ -1,13 +1,15 @@
 import type { UIMessage } from "ai";
-import type { ExperimentalAgentToolSchemas } from "./experimental-agent-types";
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {
 	[key: string]: unknown; // Index signature required by UIDataTypes
 }
 
-// Tool schemas extracted from all experimental agents (a010, a011, etc.)
-export type LightfastToolSchemas = ExperimentalAgentToolSchemas;
+// Tool schemas - simplified generic type
+export type LightfastToolSchemas = Record<string, {
+	input: unknown;
+	output: unknown;
+}>;
 
 // Metadata type for our messages
 export interface LightfastUIMessageMetadata {

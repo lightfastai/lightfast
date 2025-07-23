@@ -1,4 +1,4 @@
-import type { ExperimentalAgentId } from "@lightfast/ai";
+import type { ExperimentalAgentId } from "@lightfast/types";
 import { ChatHeader } from "./chat-header";
 
 interface ChatLayoutProps {

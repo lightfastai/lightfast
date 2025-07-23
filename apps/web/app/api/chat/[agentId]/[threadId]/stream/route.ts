@@ -6,12 +6,12 @@ import { convertMastraToUIMessages } from "@/lib/convert-messages";
 import { getStreamContext } from "@/lib/resumable-stream-context";
 import { getStreamRecordsByThreadId } from "@/lib/stream-storage-redis";
 import { mastra, experimentalAgents } from "@lightfast/ai";
-import type { ExperimentalAgentId } from "@lightfast/ai";
+import type { ExperimentalAgentId } from "@lightfast/types";
 import type { LightfastUIMessage, MastraUIMessage } from "@lightfast/types";
 
 export async function GET(
 	_request: NextRequest,
-	{ params }: { params: Promise<{ agentId: string; threadId: string }> },
+	{ params }: { params: Promise<{ agentId: ExperimentalAgentId; threadId: string }> },
 ) {
 	const { agentId, threadId } = await params;
 
@@ -80,13 +80,7 @@ export async function GET(
 			if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) <= 15) {
 				try {
 					// Get agent and attempt to retrieve the last assistant message
-					const agentMap = {
-						a010: "A010",
-						a011: "A011",
-					} as const;
-
-					const mastraAgentKey = agentMap[agentId as ExperimentalAgentId];
-					const agent = mastra.getAgent(mastraAgentKey);
+					const agent = mastra.getAgent(agentId);
 
 					if (agent) {
 						const memory = agent.getMemory();

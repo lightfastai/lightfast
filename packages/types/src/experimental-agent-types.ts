@@ -1,6 +1,3 @@
-import type { Agent } from "@mastra/core";
-import type { z } from "zod";
-
 /**
  * Type representing all available experimental agent IDs
  * This provides TypeScript inference throughout the application
@@ -11,37 +8,6 @@ export type ExperimentalAgentId = "a010" | "a011";
  * Default experimental agent ID
  */
 export const DEFAULT_EXPERIMENTAL_AGENT: ExperimentalAgentId = "a011";
-
-/**
- * Tool Schema Extraction for UI Type System
- */
-
-// Utility type to extract tool schemas from a tools object
-type ExtractToolSchemas<TTools> = {
-	[K in keyof TTools]: TTools[K] extends {
-		inputSchema: infer Input extends z.ZodSchema;
-		outputSchema: infer Output extends z.ZodSchema;
-	}
-		? {
-				input: z.infer<Input>;
-				output: z.infer<Output>;
-			}
-		: never;
-};
-
-// Generic experimental agent tool schemas type
-export type ExperimentalAgentToolSchemas = Record<string, {
-	input: unknown;
-	output: unknown;
-}>;
-
-// Utility types for working with tools
-export type ExperimentalAgentToolName = keyof ExperimentalAgentToolSchemas;
-
-export type ExperimentalAgentToolInput<T extends ExperimentalAgentToolName> = ExperimentalAgentToolSchemas[T]["input"];
-
-export type ExperimentalAgentToolOutput<T extends ExperimentalAgentToolName> =
-	ExperimentalAgentToolSchemas[T]["output"];
 
 /**
  * Working Memory Schema Types

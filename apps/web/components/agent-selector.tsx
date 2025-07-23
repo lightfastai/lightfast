@@ -9,7 +9,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { ExperimentalAgentId } from "@lightfast/ai";
+import type { ExperimentalAgentId } from "@lightfast/types";
 
 // Define the available agent IDs here
 const EXPERIMENTAL_AGENT_IDS: ExperimentalAgentId[] = ["a010", "a011"];
