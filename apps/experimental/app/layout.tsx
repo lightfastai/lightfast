@@ -89,7 +89,7 @@ export default function RootLayout({
 	return (
 		<ClerkProvider
 			signInUrl="/sign-in"
-			afterSignInUrl="/"
+			fallbackRedirectUrl="/"
 			appearance={{
 				baseTheme: dark,
 				variables: {
