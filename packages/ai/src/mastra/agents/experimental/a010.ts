@@ -33,7 +33,6 @@ import {
 	getSandboxDomainTool,
 	listSandboxRoutesTool,
 } from "../../tools/sandbox-tools";
-import { saveCriticalInfoTool } from "../../tools/save-critical-info";
 // import { autoTaskDetectionTool, taskManagementTool } from "../../tools/task-management";
 import { webSearchTool } from "../../tools/web-search-tools";
 
@@ -272,13 +271,6 @@ export const a010 = new Agent({
         </system_management>
       </sandbox_operations>
 
-      <information_management>
-        <critical_storage>
-          - saveCriticalInfo: Store strategic decisions
-          - Document key insights and findings
-          - Maintain context across task phases
-        </critical_storage>
-      </information_management>
     </tool_usage>
 
     <workflow_patterns>
@@ -434,9 +426,6 @@ export const a010 = new Agent({
 		fileStringReplace: fileStringReplaceTool,
 		fileFindInContent: fileFindInContentTool,
 		fileFindByName: fileFindByNameTool,
-
-		// Information storage
-		saveCriticalInfo: saveCriticalInfoTool,
 
 		// Task management (commented out - Mastra memory handles this)
 		// taskManagement: taskManagementTool,

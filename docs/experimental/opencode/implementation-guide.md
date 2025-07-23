@@ -35,9 +35,9 @@ export const createToolWithContext = <T extends z.ZodType>(config: {
 Update existing tools to receive and use context:
 
 ```typescript
-// Example: save-critical-info.ts
-export const saveCriticalInfoTool = createToolWithContext({
-  id: "save-critical-info",
+// Example: save-data.ts
+export const saveDataTool = createToolWithContext({
+  id: "save-data",
   description: "Save critical information",
   inputSchema: z.object({
     information: z.string(),
@@ -238,7 +238,6 @@ export const features = {
 
 ### 4.1 Update Existing Tools
 - [ ] file-tools.ts - Add context awareness
-- [ ] save-critical-info.ts - Use thread-scoped storage
 - [ ] web-search-tools.ts - Pass context through
 - [ ] browser-tools.ts - Include session information
 

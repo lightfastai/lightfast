@@ -1,7 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
-import { saveCriticalInfoTool } from "../../tools/save-critical-info";
 
 // Note: Working memory schemas moved to network level for proper context handling
 
@@ -35,15 +34,9 @@ Your plans should include:
   - Descriptions of what each step does
 - **Requirements**: Any tools, dependencies, or resources needed
 
-## Saving Critical Information
+## Saving Information
 
-You have access to the saveCriticalInfo tool for preserving important:
-- Strategic decisions or insights
-- Complex plans that should be persisted
-- Key results or discoveries
-- Error patterns or important references
-
-For detailed file operations, delegate to the Artifact agent.
+For saving important information and detailed file operations, delegate to the Artifact agent.
 
 ## Guidelines
 
@@ -86,9 +79,7 @@ Remember: You're planning for execution by specialized agents:
 	model: GatewayClaude4Sonnet(),
 	// Note: Memory is handled at network level when used in networks
 	// Individual agent memory can cause context conflicts in network execution
-	tools: {
-		saveCriticalInfo: saveCriticalInfoTool,
-	},
+	tools: {},
 	defaultStreamOptions: {
 		experimental_transform: smoothStream({
 			// Medium delay for planning outputs
