@@ -1,6 +1,6 @@
 # Container-Use Development Workflow
 
-Quick guide for isolated development with container-use + Claude Code MCP.
+Quick guide for isolated development with container-use + Claude Code MCP in the lightfast-experimental monorepo.
 
 **IMPORTANT:** Only use container-use when explicitly requested by the user. For normal development tasks, use standard file operations and tools unless the user specifically asks for an isolated container environment.
 
@@ -20,7 +20,7 @@ Quick guide for isolated development with container-use + Claude Code MCP.
 ```
 mcp__container-use__environment_create
 - title: "Your feature name"  # This shows in container-use list!
-- environment_source: "/path/to/project"
+- environment_source: "/Users/jeevanpillay/Code/@lightfastai/hal9000"
 ```
 → Returns environment ID (e.g., `enabling-coral`)
 
@@ -52,32 +52,55 @@ Example Node.js config:
 }
 ```
 
-### 3. Start Development Server
-```
+### 3. Start Development Servers
+```bash  
+# Start Mastra server (background mode)
 mcp__container-use__environment_run_cmd
-- command: "cd /workdir && pnpm dev"
+- command: "cd /workdir && pnpm dev:mastra > /tmp/mastra.log 2>&1 &"
 - background: true
 - ports: [4111]
+
+# Start web application (background mode)  
+mcp__container-use__environment_run_cmd
+- command: "cd /workdir && pnpm dev:www > /tmp/web.log 2>&1 &"
+- background: true
+- ports: [3000]
 ```
 → Returns:
-- `environment_internal`: tcp://abc123:4111
-- `host_external`: tcp://127.0.0.1:61439
+- `environment_internal`: tcp://abc123:3000, tcp://abc123:4111
+- `host_external`: tcp://127.0.0.1:61439, tcp://127.0.0.1:61440
 
 ### 4. Make Changes
 - **Write**: `mcp__container-use__environment_file_write`
 - **Read**: `mcp__container-use__environment_file_read`
 - **Run**: `mcp__container-use__environment_run_cmd`
 
-### 5. Test with Playwright MCP
-```
+### 5. Test Applications
+```bash
+# Test web application
 mcp__playwright-mastra__browser_navigate
-→ http://127.0.0.1:61439/your-app
+→ http://127.0.0.1:61439 (web app)
 
+# Test Mastra playground
+mcp__playwright-mastra__browser_navigate  
+→ http://127.0.0.1:61440/agents/a011 (Mastra playground)
+
+# Interact with interfaces
 mcp__playwright-mastra__browser_type
 mcp__playwright-mastra__browser_click
 ```
 
-### 6. Merge to Main
+### 6. Check Logs
+```bash
+# Check server logs
+mcp__container-use__environment_run_cmd
+- command: "tail -f /tmp/mastra.log"
+
+mcp__container-use__environment_run_cmd
+- command: "tail -f /tmp/web.log"
+```
+
+### 7. Merge to Main
 
 **Note:** `container-use checkout` switches you to the container branch automatically.
 

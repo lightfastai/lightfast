@@ -1,6 +1,6 @@
 # Next.js 15 Best Practices Guide
 
-This guide covers best practices for Next.js 15 App Router, focusing on Server-Side Rendering (SSR), Suspense, loading states, and error handling.
+Best practices for Next.js 15 App Router in the lightfast-experimental web application (`apps/www/`), focusing on Server-Side Rendering (SSR), Suspense, loading states, and error handling.
 
 ## Core Principles
 

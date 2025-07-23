@@ -287,7 +287,7 @@ Available on both client and server:
 - [**Memory System Guide**](./docs/memory-system.md) - Understanding context management
 - [**Container Development**](./docs/container-use.md) - Isolated development environments
 - [**Next.js Best Practices**](./docs/nextjs.md) - Framework guidelines
-- [**OpenCode Analysis**](./docs/opencode/) - Research and implementation insights
+- [**Authentication Testing**](./docs/auth-login-process.md) - Login process and test credentials
 
 ## 🤝 Contributing
 

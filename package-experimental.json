@@ -1,38 +1,39 @@
 {
-  "name": "lightfast-experimental",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Lightfast experimental monorepo",
-  "packageManager": "pnpm@10.5.2",
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "build:packages": "turbo run build --filter=./packages/*",
-    "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint",
-    "clean": "turbo run clean",
-    "dev:web": "turbo run dev --filter=@lightfast/www",
-    "dev:mastra": "turbo run dev:mastra --filter=@lightfast/ai",
-    "build:web": "turbo run build --filter=@lightfast/www",
-    "build:mastra": "turbo run build:mastra --filter=@lightfast/ai"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.1.1",
-    "turbo": "^2.5.5",
-    "typescript": "^5.8.3"
-  },
-  "engines": {
-    "node": ">=22.0.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@clerk/shared",
-      "@tailwindcss/oxide",
-      "@vercel/speed-insights",
-      "better-sqlite3",
-      "esbuild",
-      "protobufjs",
-      "sharp"
-    ]
-  }
+	"name": "lightfast-experimental",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Lightfast experimental monorepo",
+	"packageManager": "pnpm@10.5.2",
+	"scripts": {
+		"dev": "turbo run dev",
+		"build": "turbo run build",
+		"build:packages": "turbo run build --filter=./packages/*",
+		"typecheck": "turbo run typecheck",
+		"lint": "turbo run lint",
+		"clean": "turbo run clean",
+		"dev:web": "turbo run dev --filter=@lightfast/www",
+		"dev:mastra": "turbo run dev:mastra --filter=@lightfast/ai",
+		"build:web": "turbo run build --filter=@lightfast/www",
+		"build:mastra": "turbo run build:mastra --filter=@lightfast/ai"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.1.1",
+		"turbo": "^2.5.5",
+		"typescript": "^5.8.3"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@clerk/shared",
+			"@tailwindcss/oxide",
+			"@vercel/speed-insights",
+			"better-sqlite3",
+			"esbuild",
+			"protobufjs",
+			"sharp"
+		]
+	}
 }
+
