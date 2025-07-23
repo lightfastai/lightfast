@@ -1,13 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
+import { mastraServer as mastra } from "@lightfast/ai/server";
+import type { ExperimentalAgentId, LightfastUIMessage, MastraUIMessage } from "@lightfast/types";
 import { createUIMessageStream, JsonToSseTransformStream } from "ai";
 import { differenceInSeconds } from "date-fns";
 import type { NextRequest } from "next/server";
 import { convertMastraToUIMessages } from "@/lib/convert-messages";
 import { getStreamContext } from "@/lib/resumable-stream-context";
 import { getStreamRecordsByThreadId } from "@/lib/stream-storage-redis";
-import { mastraServer as mastra } from "@lightfast/ai/server";
-import type { ExperimentalAgentId } from "@lightfast/types";
-import type { LightfastUIMessage, MastraUIMessage } from "@lightfast/types";
 
 export async function GET(
 	_request: NextRequest,
@@ -84,7 +83,7 @@ export async function GET(
 					const agent = mastra.getAgent(agentId);
 
 					if (agent) {
-						const memory = agent.getMemory();
+						const memory = await agent.getMemory();
 						if (memory) {
 							// Query for the last few messages to find the most recent assistant message
 							const result = await memory.query({

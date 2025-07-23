@@ -1,5 +1,6 @@
 "use client";
 
+import type { ExperimentalAgentId } from "@lightfast/types";
 import { Ghost } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,6 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { ExperimentalAgentId } from "@lightfast/types";
 
 // Define the available agent IDs here
 const EXPERIMENTAL_AGENT_IDS: ExperimentalAgentId[] = ["a010", "a011"];

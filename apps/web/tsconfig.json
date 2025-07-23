@@ -1,33 +1,20 @@
 {
-  "extends": "../../tooling/typescript/nextjs.json",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@/mastra/*": [
-        "../../packages/ai/src/mastra/*"
-      ],
-      "@/types/*": [
-        "../../packages/types/src/*"
-      ]
-    },
-    "composite": true,
-    "tsBuildInfoFile": "./.next/.tsbuildinfo"
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
-  "references": [
-    { "path": "../../packages/ai" },
-    { "path": "../../packages/types" },
-    { "path": "../../packages/evals" }
-  ]
+	"extends": "../../tooling/typescript/nextjs.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./*"],
+			"@/mastra/*": ["../../packages/ai/src/mastra/*"],
+			"@/types/*": ["../../packages/types/src/*"]
+		},
+		"composite": true,
+		"tsBuildInfoFile": "./.next/.tsbuildinfo"
+	},
+	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+	"exclude": ["node_modules"],
+	"references": [
+		{ "path": "../../packages/ai" },
+		{ "path": "../../packages/types" },
+		{ "path": "../../packages/evals" }
+	]
 }

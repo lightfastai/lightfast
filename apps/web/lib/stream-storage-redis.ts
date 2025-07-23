@@ -1,6 +1,6 @@
+import type { ExperimentalAgentId } from "@lightfast/types";
 import { Redis } from "@upstash/redis";
 import { env } from "@/env";
-import type { ExperimentalAgentId } from "@lightfast/types";
 
 // Initialize Redis client
 const redis = new Redis({

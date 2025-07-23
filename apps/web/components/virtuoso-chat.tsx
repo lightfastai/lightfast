@@ -1,5 +1,7 @@
 "use client";
 
+import type { LightfastUIMessage } from "@lightfast/types";
+import { isTextPart, isToolPart } from "@lightfast/types";
 import {
 	VirtuosoMessageList,
 	VirtuosoMessageListLicense,
@@ -10,8 +12,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Markdown } from "@/components/markdown";
 import { ThinkingMessage } from "@/components/thinking-message";
 import { env } from "@/env";
-import type { LightfastUIMessage } from "@lightfast/types";
-import { isTextPart, isToolPart } from "@lightfast/types";
 import { ToolCallRenderer } from "./tool-renderers/tool-call-renderer";
 
 interface VirtuosoChatProps {

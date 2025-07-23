@@ -1,6 +1,6 @@
+import type { ExperimentalAgentId } from "@lightfast/types";
 import { after } from "next/server";
 import { createResumableStreamContext, type ResumableStreamContext } from "resumable-stream";
-import type { ExperimentalAgentId } from "@lightfast/types";
 
 let globalStreamContext: ResumableStreamContext | null = null;
 

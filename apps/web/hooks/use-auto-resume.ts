@@ -1,9 +1,9 @@
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type { LightfastUIMessage } from "@lightfast/types";
 import { useEffect } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
-import type { LightfastUIMessage } from "@lightfast/types";
 
 export interface UseAutoResumeParams {
 	autoResume: boolean;

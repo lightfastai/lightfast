@@ -1,8 +1,8 @@
 "use client";
 
+import type { ExperimentalAgentId } from "@lightfast/types";
 import { Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { ExperimentalAgentId } from "@lightfast/types";
 
 interface AgentVersionIndicatorProps {
 	agentId: ExperimentalAgentId;

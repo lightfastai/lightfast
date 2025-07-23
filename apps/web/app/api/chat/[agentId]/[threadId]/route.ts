@@ -1,12 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
+import { mastraServer as mastra } from "@lightfast/ai/server";
+import type { ExperimentalAgentId } from "@lightfast/types";
 import { JsonToSseTransformStream } from "ai";
 import type { NextRequest } from "next/server";
 import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-context";
 // Use Redis for much faster stream ID storage
 import { createStreamId } from "@/lib/stream-storage-redis";
 import { isValidUUID } from "@/lib/uuid-utils";
-import { mastraServer as mastra } from "@lightfast/ai/server";
-import type { ExperimentalAgentId } from "@lightfast/types";
 
 export async function POST(
 	request: NextRequest,

@@ -1,14 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
+import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { checkThreadOwnership, getThreadMessages } from "@/app/actions/thread";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { ChatSkeleton } from "@/components/chat/chat-skeleton";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DataStreamProvider } from "@/components/data-stream-provider";
-import type { ExperimentalAgentId } from "@lightfast/types";
-import type { LightfastUIMessage } from "@lightfast/types";
+import { checkThreadOwnership, getThreadMessages } from "@/lib/api/thread";
 
 interface ChatPageProps {
 	params: Promise<{

@@ -1,9 +1,9 @@
 "use client";
 
+import type { CustomUIDataTypes } from "@lightfast/types";
 import type { DataUIPart } from "ai";
 import type React from "react";
 import { createContext, useContext, useMemo, useState } from "react";
-import type { CustomUIDataTypes } from "@lightfast/types";
 
 interface DataStreamContextValue {
 	dataStream: DataUIPart<CustomUIDataTypes>[];
