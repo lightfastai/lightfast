@@ -1,0 +1,50 @@
+{
+  "name": "@lightfast/ai",
+  "version": "1.0.0",
+  "description": "AI agents, tools, and workflows for Lightfast",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./agents": {
+      "types": "./src/mastra/agents/index.ts",
+      "default": "./src/mastra/agents/index.ts"
+    },
+    "./agents/experimental": {
+      "types": "./src/mastra/agents/experimental/index.ts",
+      "default": "./src/mastra/agents/experimental/index.ts"
+    },
+    "./tools": {
+      "types": "./src/mastra/tools/index.ts",
+      "default": "./src/mastra/tools/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check --write ."
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "2.0.0-beta.8",
+    "@browserbasehq/stagehand": "^2.3.1",
+    "@mastra/core": "0.0.0-ai-v5-20250710191716",
+    "@mastra/evals": "0.0.0-ai-v5-20250710191716",
+    "@mastra/memory": "0.0.0-ai-v5-20250710191716",
+    "@mastra/upstash": "0.0.0-ai-v5-20250710191716",
+    "@mastra/voice-elevenlabs": "0.0.0-ai-v5-20250710191716",
+    "@mastra/voice-openai": "0.0.0-ai-v5-20250710191716",
+    "@mastra/voice-openai-realtime": "0.0.0-ai-v5-20250710191716",
+    "@upstash/redis": "^1.35.1",
+    "@vercel/blob": "^1.1.1",
+    "@vercel/sandbox": "^0.0.13",
+    "ai": "5.0.0-beta.23",
+    "exa-js": "^1.8.22",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@lightfast/types": "workspace:*",
+    "typescript": "^5.8.3"
+  }
+}
