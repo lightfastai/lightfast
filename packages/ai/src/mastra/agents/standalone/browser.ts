@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { gatewayModels } from "@/lib/ai/provider";
+import { gatewayModels } from "../../../lib/ai/provider";
 import {
 	stagehandActTool,
 	stagehandExtractTool,

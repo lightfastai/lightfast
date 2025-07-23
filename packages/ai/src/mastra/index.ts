@@ -9,7 +9,8 @@ import { c010 } from "./agents/pure/c010";
 
 // Standalone agents - Specialized single-purpose agents
 import { artifactAgent } from "./agents/standalone/artifact";
-import { browserAgent } from "./agents/standalone/browser";
+// Temporarily disabled browser agent to fix playwright client-side bundling
+// import { browserAgent } from "./agents/standalone/browser";
 // Download agent removed - use browser or file tools instead
 // import { downloadAgent } from "./agents/standalone/download";
 import { planner } from "./agents/standalone/planner";
@@ -21,21 +22,21 @@ import { voiceAgent } from "./agents/standalone/voice";
 export const mastra = new Mastra({
 	agents: {
 		// Experimental Agents - Latest experimental versions
-		A010: a010,
-		A011: a011,
+		a010: a010,
+		a011: a011,
 
 		// Pure Agents - General purpose
-		C010: c010,
+		c010: c010,
 
 		// Standalone Agents - Specialized tools
-		Artifact: artifactAgent,
-		Browser: browserAgent,
-		// Download: downloadAgent, // Removed - use browser or file tools instead
-		Planner: planner,
-		Sandbox: sandboxAgent,
-		Searcher: searcher,
-		Vision: visionAgent,
-		Voice: voiceAgent,
+		artifact: artifactAgent,
+		// browser: browserAgent, // Temporarily disabled for playwright bundling fix
+		// download: downloadAgent, // Removed - use browser or file tools instead
+		planner: planner,
+		sandbox: sandboxAgent,
+		searcher: searcher,
+		vision: visionAgent,
+		voice: voiceAgent,
 	},
 	aiSdkCompat: "v4",
 });

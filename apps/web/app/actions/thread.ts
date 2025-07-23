@@ -18,23 +18,17 @@ export async function checkThreadOwnership(
 	agentId: ExperimentalAgentId,
 ): Promise<{ exists: boolean; isOwner: boolean }> {
 	try {
-		// Map experimental agent ID to Mastra agent key
-		const agentMap: Record<ExperimentalAgentId, "A010" | "A011"> = {
-			a010: "A010",
-			a011: "A011",
-		};
-
-		const mastraAgentKey = agentMap[agentId];
-		const agent = mastra.getAgent(mastraAgentKey);
+		// Agent ID is now consistent between types and Mastra config
+		const agent = mastra.getAgent(agentId);
 
 		if (!agent) {
-			console.log(`[OWNERSHIP] Agent not found: ${mastraAgentKey} for thread ${threadId}`);
+			console.log(`[OWNERSHIP] Agent not found: ${agentId} for thread ${threadId}`);
 			return { exists: false, isOwner: false };
 		}
 
 		const memory = agent.getMemory();
 		if (!memory) {
-			console.log(`[OWNERSHIP] No memory found for agent ${mastraAgentKey}, thread ${threadId}`);
+			console.log(`[OWNERSHIP] No memory found for agent ${agentId}, thread ${threadId}`);
 			return { exists: false, isOwner: false };
 		}
 
@@ -71,16 +65,11 @@ export async function checkThreadOwnership(
 
 export async function getThreadMessages(threadId: string, agentId?: ExperimentalAgentId) {
 	try {
-		// Map experimental agent ID to Mastra agent key
-		const agentMap: Record<ExperimentalAgentId, "A010" | "A011"> = {
-			a010: "A010",
-			a011: "A011",
-		};
-
-		const mastraAgentKey = agentId ? agentMap[agentId] : "A011";
+		// Use agentId directly since it's now consistent with Mastra config
+		const agentKey = agentId || "a011";
 
 		// Try to get the agent's memory instance
-		const agent = mastra.getAgent(mastraAgentKey);
+		const agent = mastra.getAgent(agentKey);
 		if (!agent) {
 			return { messages: [], uiMessages: [] };
 		}

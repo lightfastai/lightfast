@@ -9,7 +9,8 @@ import {
 import { smoothStream } from "ai";
 import { z } from "zod";
 import { gatewayModels } from "../../../lib/ai/provider";
-import { createEnvironmentMemory } from "../../lib/memory-factory";
+// Temporarily disabled to fix libsql client-side bundling issue
+// import { createEnvironmentMemory } from "../../lib/memory-factory";
 // Download tools removed - use browser tools or file tools instead
 // import {
 // 	downloadDirectFileTool,
@@ -53,16 +54,17 @@ const taskWorkingMemorySchema = z.object({
 export type TaskWorkingMemory = z.infer<typeof taskWorkingMemorySchema>;
 
 // Create environment-aware memory for a010 Agent with structured task tracking
-const agentMemory = createEnvironmentMemory({
-	prefix: "mastra:a010-agent:",
-	workingMemorySchema: taskWorkingMemorySchema,
-	workingMemoryDefault: {
-		tasks: [],
-		summary: "No tasks yet. Starting fresh.",
-		lastUpdated: new Date().toISOString(),
-	},
-	lastMessages: 50,
-});
+// Temporarily disabled to fix libsql client-side bundling issue
+// const agentMemory = createEnvironmentMemory({
+// 	prefix: "mastra:a010-agent:",
+// 	workingMemorySchema: taskWorkingMemorySchema,
+// 	workingMemoryDefault: {
+// 		tasks: [],
+// 		summary: "No tasks yet. Starting fresh.",
+// 		lastUpdated: new Date().toISOString(),
+// 	},
+// 	lastMessages: 50,
+// });
 
 // Model for eval judgments
 const evalModel = gatewayModels.claude4Sonnet;
@@ -456,7 +458,7 @@ export const a010 = new Agent({
 		getSandboxDomain: getSandboxDomainTool,
 		listSandboxRoutes: listSandboxRoutesTool,
 	},
-	memory: agentMemory,
+	// memory: agentMemory, // Temporarily disabled for libsql bundling fix
 	defaultGenerateOptions: {
 		maxSteps: 40,
 		maxRetries: 3,

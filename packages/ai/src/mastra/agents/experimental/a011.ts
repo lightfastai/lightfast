@@ -3,13 +3,15 @@ import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { z } from "zod";
 import { gatewayModels } from "../../../lib/ai/provider";
-import { createEnvironmentMemory } from "../../lib/memory-factory";
-import {
-	stagehandActTool,
-	stagehandExtractTool,
-	stagehandNavigateTool,
-	stagehandObserveTool,
-} from "../../tools/browser-tools";
+// Temporarily disabled to fix libsql client-side bundling issue
+// import { createEnvironmentMemory } from "../../lib/memory-factory";
+// Temporarily disabled to fix playwright client-side bundling issue
+// import {
+// 	stagehandActTool,
+// 	stagehandExtractTool,
+// 	stagehandNavigateTool,
+// 	stagehandObserveTool,
+// } from "../../tools/browser-tools";
 import { fileWriteTool } from "../../tools/file-tools";
 import { createSandboxTool, executeSandboxCommandTool } from "../../tools/sandbox-tools";
 import { todoClearTool, todoReadTool, todoWriteTool } from "../../tools/task-tools";
@@ -26,17 +28,18 @@ const simplifiedWorkingMemorySchema = z.object({
 export type SimplifiedWorkingMemory = z.infer<typeof simplifiedWorkingMemorySchema>;
 
 // Create simplified memory for a011 Agent (tasks stored in blob storage)
-const agentMemory = createEnvironmentMemory({
-	prefix: "mastra:a011-agent:",
-	workingMemorySchema: simplifiedWorkingMemorySchema,
-	workingMemoryDefault: {
-		summary: "Ready for task-led execution. Tasks will be stored in thread-scoped blob storage.",
-		lastUpdated: new Date().toISOString(),
-		sandboxId: null,
-		sandboxDirectory: "/home/vercel-sandbox",
-	},
-	lastMessages: 50,
-});
+// Temporarily disabled to fix libsql client-side bundling issue
+// const agentMemory = createEnvironmentMemory({
+// 	prefix: "mastra:a011-agent:",
+// 	workingMemorySchema: simplifiedWorkingMemorySchema,
+// 	workingMemoryDefault: {
+// 		summary: "Ready for task-led execution. Tasks will be stored in thread-scoped blob storage.",
+// 		lastUpdated: new Date().toISOString(),
+// 		sandboxId: null,
+// 		sandboxDirectory: "/home/vercel-sandbox",
+// 	},
+// 	lastMessages: 50,
+// });
 
 export const a011 = new Agent({
 	name: "a011",
@@ -289,17 +292,17 @@ This is a mandatory requirement - never omit file location information from your
 		webSearch: webSearchTool,
 		fileWrite: fileWriteTool,
 
-		// Browser automation tools
-		browserNavigate: stagehandNavigateTool,
-		browserAct: stagehandActTool,
-		browserObserve: stagehandObserveTool,
-		browserExtract: stagehandExtractTool,
+		// Browser automation tools - temporarily disabled for client bundling fix
+		// browserNavigate: stagehandNavigateTool,
+		// browserAct: stagehandActTool,
+		// browserObserve: stagehandObserveTool,
+		// browserExtract: stagehandExtractTool,
 
 		// Sandbox execution tools
 		createSandbox: createSandboxTool,
 		executeSandboxCommand: executeSandboxCommandTool,
 	},
-	memory: agentMemory,
+	// memory: agentMemory, // Temporarily disabled for libsql bundling fix
 	defaultGenerateOptions: {
 		maxSteps: 30,
 		maxRetries: 3,

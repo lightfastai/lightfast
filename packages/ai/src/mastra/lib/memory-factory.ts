@@ -1,14 +1,16 @@
-import { LibSQLStore } from "@mastra/libsql";
-import { Memory } from "@mastra/memory";
-import { UpstashStore } from "@mastra/upstash";
 import type { z } from "zod";
-import { env } from "../../env";
 
 /**
  * Factory function to create storage instances based on environment
  * Automatically selects storage backend based on environment variables
+ * 
+ * NOTE: This function is intended for server-side use only.
+ * It dynamically imports storage dependencies to avoid client-side bundling.
  */
-export function createEnvironmentStorage() {
+export async function createEnvironmentStorage() {
+	const { LibSQLStore } = await import("@mastra/libsql");
+	const { UpstashStore } = await import("@mastra/upstash");
+	const { env } = await import("../../env");
 	// Auto-detect environment based on NODE_ENV and deployment context
 	const nodeEnv = env.NODE_ENV || "development";
 	const isVercel = env.VERCEL === "1" || env.VERCEL_ENV !== undefined;
@@ -31,8 +33,11 @@ export function createEnvironmentStorage() {
 /**
  * Factory function to create Memory instances based on environment
  * Automatically selects storage backend based on environment variables
+ * 
+ * NOTE: This function is intended for server-side use only.
+ * It dynamically imports Memory to avoid client-side bundling.
  */
-export function createEnvironmentMemory<T extends z.ZodRawShape>(
+export async function createEnvironmentMemory<T extends z.ZodRawShape>(
 	options: {
 		prefix?: string;
 		workingMemoryTemplate?: string;
@@ -40,7 +45,8 @@ export function createEnvironmentMemory<T extends z.ZodRawShape>(
 		workingMemoryDefault?: z.infer<z.ZodObject<T>>;
 		lastMessages?: number;
 	} = {},
-): Memory {
+) {
+	const { Memory } = await import("@mastra/memory");
 	const { workingMemoryTemplate, workingMemorySchema, workingMemoryDefault, lastMessages = 50 } = options;
 
 	// Prepare working memory config based on whether template or schema is provided
@@ -64,7 +70,7 @@ export function createEnvironmentMemory<T extends z.ZodRawShape>(
 	}
 
 	return new Memory({
-		storage: createEnvironmentStorage(),
+		storage: await createEnvironmentStorage(),
 		options: {
 			lastMessages,
 			workingMemory: workingMemoryConfig,

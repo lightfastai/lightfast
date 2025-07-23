@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { gatewayModels } from "@/lib/ai/provider";
+import { gatewayModels } from "../../../lib/ai/provider";
 import { webSearchTool } from "../../tools/web-search-tools";
 
 // Note: Working memory schemas moved to network level for proper context handling

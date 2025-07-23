@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { ExperimentalAgentId } from "@lightfast/types";
 
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -8,8 +9,8 @@ const isPublicRoute = createRouteMatcher([
 	"/api/cron(.*)", // Allow cron jobs to run without auth
 ]);
 
-// Hardcode the default agent to avoid loading any agent code in middleware
-const DEFAULT_EXPERIMENTAL_AGENT = "a011";
+// Default agent - using string literal to avoid loading agent code in middleware
+const DEFAULT_AGENT: ExperimentalAgentId = "a011";
 
 export default clerkMiddleware(async (auth, req) => {
 	// Check if the route is public
@@ -33,7 +34,7 @@ export default clerkMiddleware(async (auth, req) => {
 
 		// Redirect to the chat with the default agent and new thread ID
 		// Thread ownership will be established when the user sends their first message
-		return NextResponse.redirect(new URL(`/chat/${DEFAULT_EXPERIMENTAL_AGENT}/${threadId}`, req.url));
+		return NextResponse.redirect(new URL(`/chat/${DEFAULT_AGENT}/${threadId}`, req.url));
 	}
 
 	return NextResponse.next();

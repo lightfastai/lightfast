@@ -1,7 +1,7 @@
 import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { gatewayModels } from "@/lib/ai/provider";
+import { gatewayModels } from "../../../lib/ai/provider";
 
 export const c010 = new Agent({
 	name: "c010",

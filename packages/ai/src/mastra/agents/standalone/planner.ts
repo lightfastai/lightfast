@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { gatewayModels } from "@/lib/ai/provider";
+import { gatewayModels } from "../../../lib/ai/provider";
 import { saveCriticalInfoTool } from "../../tools/save-critical-info";
 
 // Note: Working memory schemas moved to network level for proper context handling
