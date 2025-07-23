@@ -8,18 +8,23 @@ const isProtectedRoute = createRouteMatcher(["/((?!sign-in|api/webhooks|api/cron
 // Default agent
 const DEFAULT_AGENT: ExperimentalAgentId = "a011";
 
-export default clerkMiddleware(async (auth, req) => {
-	// Protect routes using Clerk's built-in protection
-	if (isProtectedRoute(req)) {
-		await auth.protect();
-	}
+export default clerkMiddleware(
+	async (auth, req) => {
+		// Protect routes using Clerk's built-in protection
+		if (isProtectedRoute(req)) {
+			await auth.protect();
+		}
 
-	// Handle root path redirect for authenticated users
-	if (req.nextUrl.pathname === "/") {
-		// Redirect to default agent chat (new chat)
-		return NextResponse.redirect(new URL(`/chat/${DEFAULT_AGENT}`, req.url));
-	}
-});
+		// Handle root path redirect for authenticated users
+		if (req.nextUrl.pathname === "/") {
+			// Redirect to default agent chat (new chat)
+			return NextResponse.redirect(new URL(`/chat/${DEFAULT_AGENT}`, req.url));
+		}
+	},
+	{
+		signInUrl: "/sign-in",
+	},
+);
 
 // Configure which paths the middleware should run on
 export const config = {
