@@ -4,14 +4,14 @@
 	"description": "Lightfast experimental web application",
 	"private": true,
 	"scripts": {
-		"dev": "next dev --turbo",
-		"build": "next build",
+		"dev": "pnpm with-env next dev --turbo",
+		"build": "pnpm with-env next build",
 		"start": "next start",
 		"lint": "biome check --write .",
 		"typecheck": "tsc --noEmit",
 		"format": "biome format --write .",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"with-env": "dotenv -e .env.local --",
+		"with-env": "dotenv -e ./.vercel/.env.development.local --",
 		"clean": "rm -rf .next .mastra node_modules tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
 		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune"
 	},
