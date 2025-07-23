@@ -1,7 +1,7 @@
 # Development Guidelines
 
 ## Monorepo Structure
-- **apps/web** - Next.js application
+- **apps/www** - Next.js application
 - **packages/ai** - AI agents, tools, and workflows (@lightfast/ai)
 - **packages/types** - Shared TypeScript types (@lightfast/types)
 - **packages/evals** - Evaluation framework with Braintrust (@lightfast/evals)
@@ -29,7 +29,7 @@ pnpm dev:web      # Run only web app dev server
 pnpm build:web    # Build only web app
 ```
 
-### Web App Commands (from apps/web)
+### Web App Commands (from apps/www)
 ```bash
 pnpm dev          # Start Next.js dev server
 pnpm build        # Build Next.js for production
@@ -37,7 +37,7 @@ pnpm start        # Start Next.js production server
 pnpm typecheck    # TypeScript check
 pnpm lint         # Run Biome linter
 
-# Install new shadcn/ui components (from apps/web)
+# Install new shadcn/ui components (from apps/www)
 pnpm dlx shadcn@latest add <component-name>
 # Example: pnpm dlx shadcn@latest add button
 # Example: pnpm dlx shadcn@latest add dialog

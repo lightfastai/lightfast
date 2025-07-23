@@ -10,7 +10,7 @@
     { "path": "./packages/types" },
     { "path": "./packages/ai" },
     { "path": "./packages/evals" },
-    { "path": "./apps/web" },
+    { "path": "./apps/www" },
     { "path": "./tooling/typescript" }
   ]
 }

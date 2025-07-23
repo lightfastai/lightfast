@@ -1,5 +1,5 @@
 {
-	"name": "@lightfast/web",
+	"name": "@lightfast/www",
 	"version": "1.0.0",
 	"description": "Lightfast experimental web application",
 	"private": true,

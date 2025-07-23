@@ -5,7 +5,7 @@ Quick reference for testing Mastra agents via API and UI.
 ## Monorepo Structure
 - Agents are in `packages/ai/src/mastra/agents/`
 - Tools are in `packages/ai/src/mastra/tools/`
-- Run from web app: `cd apps/web && pnpm dev:mastra`
+- Run from web app: `cd apps/www && pnpm dev:mastra`
 
 ## API Testing (Direct)
 

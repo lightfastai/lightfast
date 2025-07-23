@@ -34,7 +34,7 @@
 		"eval:experiments": "tsx src/scripts/experiment-cli.ts",
 		"eval:list": "tsx src/scripts/experiment-cli.ts a011 list",
 		"eval:baseline": "tsx src/scripts/experiment-cli.ts a011 baseline",
-		"with-env": "dotenv -e ../../apps/web/.env.local --"
+		"with-env": "dotenv -e ../../apps/www/.env.local --"
 	},
 	"dependencies": {
 		"@lightfast/ai": "workspace:*",

@@ -11,9 +11,9 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
-    "dev:web": "turbo run dev --filter=@lightfast/web",
+    "dev:web": "turbo run dev --filter=@lightfast/www",
     "dev:mastra": "turbo run dev:mastra --filter=@lightfast/ai",
-    "build:web": "turbo run build --filter=@lightfast/web",
+    "build:web": "turbo run build --filter=@lightfast/www",
     "build:mastra": "turbo run build:mastra --filter=@lightfast/ai"
   },
   "devDependencies": {
