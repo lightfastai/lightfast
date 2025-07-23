@@ -98,7 +98,7 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 							typeof toolPart.input === "object" && (
 								<div className="pt-3">
 									<div className="bg-muted/50 rounded-md overflow-hidden">
-										<div className="flex items-center justify-between px-3 py-2 pb-0">
+										<div className="flex items-center justify-between px-3 pb-0">
 											<h4 className="text-xs font-medium text-muted-foreground flex items-center">Input</h4>
 											<Button
 												size="sm"
@@ -135,7 +135,7 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 							typeof toolPart.output === "object" && (
 								<div className="pt-3">
 									<div className="bg-muted/50 rounded-md overflow-hidden">
-										<div className="flex items-center justify-between p-3 pb-0">
+										<div className="flex items-center justify-between px-3 pb-0">
 											<h4 className="text-xs font-medium text-muted-foreground flex items-center">Output</h4>
 											<Button
 												size="sm"

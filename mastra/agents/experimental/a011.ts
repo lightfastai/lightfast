@@ -4,6 +4,7 @@ import { smoothStream } from "ai";
 import { z } from "zod";
 import { gatewayModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
+import { browserActTool, browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
 import { fileWriteTool } from "../../tools/file-tools";
 import { todoClearTool, todoReadTool, todoWriteTool } from "../../tools/task-tools";
 import { webSearchTool } from "../../tools/web-search-tools";
@@ -40,6 +41,7 @@ export const a011 = new Agent({
       - Real-time progress tracking with persistent storage
       - Software engineering task execution
       - Web research and content extraction
+      - Browser automation and web interaction
     </core_competencies>
     <expertise_level>Expert in structured task execution with intelligent complexity assessment</expertise_level>
   </role>
@@ -70,6 +72,10 @@ export const a011 = new Agent({
       <tools>
         - webSearch: Research and information gathering
         - fileWrite: Create and modify files
+        - browserNavigate: Navigate to specific URLs in the browser
+        - browserAct: Interact with web pages using natural language commands
+        - browserObserve: Observe and identify elements on a webpage for planning actions
+        - browserExtract: Extract structured data from web pages
       </tools>
       <practices>Use tools in logical sequence. Verify results before proceeding.</practices>
     </execution_tools>
@@ -128,6 +134,19 @@ export const a011 = new Agent({
         6. Provide progress updates throughout
       </steps>
     </complex_task_example>
+
+    <browser_automation_example>
+      <scenario>User: "Visit example.com, extract product prices, and click the sign up button"</scenario>
+      <steps>
+        1. Use todoWrite to plan: navigate, extract data, click sign up
+        2. Mark navigation task as in_progress
+        3. Use browserNavigate to go to example.com
+        4. Use browserObserve to identify product price elements
+        5. Use browserExtract to get structured price data
+        6. Use browserAct to click the sign up button
+        7. Update tasks to completed as each step finishes
+      </steps>
+    </browser_automation_example>
 
     <simple_task_example>
       <scenario>User: "What's 2+2?"</scenario>
@@ -200,6 +219,12 @@ CRITICAL: Always use todoWrite tool to plan and track complex multi-step tasks t
 		// Core tools for task execution
 		webSearch: webSearchTool,
 		fileWrite: fileWriteTool,
+		
+		// Browser automation tools
+		browserNavigate: browserNavigateTool,
+		browserAct: browserActTool,
+		browserObserve: browserObserveTool,
+		browserExtract: browserExtractTool,
 	},
 	memory: agentMemory,
 	defaultGenerateOptions: {
