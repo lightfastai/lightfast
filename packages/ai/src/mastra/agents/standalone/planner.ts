@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { gatewayModels } from "../../../lib/ai/provider";
+import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
 import { saveCriticalInfoTool } from "../../tools/save-critical-info";
 
 // Note: Working memory schemas moved to network level for proper context handling
@@ -83,7 +83,7 @@ Remember: You're planning for execution by specialized agents:
 - Vision: For image analysis
 - Artifact: For file management and persistent storage
 - Sandbox: For code execution (if available)`,
-	model: gatewayModels.claude4Sonnet,
+	model: GatewayClaude4Sonnet(),
 	// Note: Memory is handled at network level when used in networks
 	// Individual agent memory can cause context conflicts in network execution
 	tools: {

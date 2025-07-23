@@ -1,7 +1,7 @@
 import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
-import { gatewayModels } from "../../../lib/ai/provider";
+import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
 
 export const c010 = new Agent({
 	name: "c010",
@@ -17,7 +17,7 @@ Key guidelines:
 - Admit when you don't know something
 - Keep responses focused and relevant
 `,
-	model: gatewayModels.claude4Sonnet,
+	model: GatewayClaude4Sonnet(),
 	tools: {}, // No tools for this agent
 	defaultGenerateOptions: {
 		maxSteps: 1, // Single response, no tool calls

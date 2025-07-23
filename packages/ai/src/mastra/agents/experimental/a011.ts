@@ -2,16 +2,15 @@ import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { gatewayModels } from "../../../lib/ai/provider";
+import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
 // Temporarily disabled to fix libsql client-side bundling issue
 // import { createEnvironmentMemory } from "../../lib/memory-factory";
-// Temporarily disabled to fix playwright client-side bundling issue
-// import {
-// 	stagehandActTool,
-// 	stagehandExtractTool,
-// 	stagehandNavigateTool,
-// 	stagehandObserveTool,
-// } from "../../tools/browser-tools";
+import {
+	stagehandActTool,
+	stagehandExtractTool,
+	stagehandNavigateTool,
+	stagehandObserveTool,
+} from "../../tools/browser-tools";
 import { fileWriteTool } from "../../tools/file-tools";
 import { createSandboxTool, executeSandboxCommandTool } from "../../tools/sandbox-tools";
 import { todoClearTool, todoReadTool, todoWriteTool } from "../../tools/task-tools";
@@ -281,7 +280,7 @@ You MUST include BOTH of these in your response to the user, formatted clearly a
 
 This is a mandatory requirement - never omit file location information from your responses.
 `,
-	model: gatewayModels.claude4Sonnet,
+	model: GatewayClaude4Sonnet(),
 	tools: {
 		// Task management with blob storage
 		todoWrite: todoWriteTool,
@@ -292,11 +291,11 @@ This is a mandatory requirement - never omit file location information from your
 		webSearch: webSearchTool,
 		fileWrite: fileWriteTool,
 
-		// Browser automation tools - temporarily disabled for client bundling fix
-		// browserNavigate: stagehandNavigateTool,
-		// browserAct: stagehandActTool,
-		// browserObserve: stagehandObserveTool,
-		// browserExtract: stagehandExtractTool,
+		// Browser automation tools
+		browserNavigate: stagehandNavigateTool,
+		browserAct: stagehandActTool,
+		browserObserve: stagehandObserveTool,
+		browserExtract: stagehandExtractTool,
 
 		// Sandbox execution tools
 		createSandbox: createSandboxTool,

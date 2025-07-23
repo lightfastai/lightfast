@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 import { convertMastraToUIMessages } from "@/lib/convert-messages";
 import { getStreamContext } from "@/lib/resumable-stream-context";
 import { getStreamRecordsByThreadId } from "@/lib/stream-storage-redis";
-import { mastra, experimentalAgents } from "@lightfast/ai";
+import { mastraServer as mastra } from "@lightfast/ai/server";
 import type { ExperimentalAgentId } from "@lightfast/types";
 import type { LightfastUIMessage, MastraUIMessage } from "@lightfast/types";
 
@@ -30,7 +30,8 @@ export async function GET(
 	}
 
 	// Validate agentId
-	if (!experimentalAgents[agentId as ExperimentalAgentId]) {
+	const validAgentIds: ExperimentalAgentId[] = ["a010", "a011"];
+	if (!validAgentIds.includes(agentId)) {
 		return Response.json(
 			{
 				error: `Invalid agent ID: ${agentId}`,

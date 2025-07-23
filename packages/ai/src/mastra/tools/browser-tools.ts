@@ -1,7 +1,7 @@
 import { Stagehand } from "@browserbasehq/stagehand";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { env } from "@/env";
+import { env } from "../../env";
 
 class StagehandSessionManager {
 	private static instance: StagehandSessionManager;

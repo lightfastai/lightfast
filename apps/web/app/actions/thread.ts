@@ -1,7 +1,7 @@
 "use server";
 
 import { convertMastraToUIMessages } from "@/lib/convert-messages";
-import { mastra } from "@lightfast/ai";
+import { mastraServer as mastra } from "@lightfast/ai/server";
 import type { ExperimentalAgentId } from "@lightfast/types";
 import type { MastraUIMessage } from "@lightfast/types";
 

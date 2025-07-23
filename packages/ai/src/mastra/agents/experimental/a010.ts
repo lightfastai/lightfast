@@ -8,7 +8,7 @@ import {
 } from "@mastra/evals/nlp";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { gatewayModels } from "../../../lib/ai/provider";
+import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
 // Temporarily disabled to fix libsql client-side bundling issue
 // import { createEnvironmentMemory } from "../../lib/memory-factory";
 // Download tools removed - use browser tools or file tools instead
@@ -67,7 +67,7 @@ export type TaskWorkingMemory = z.infer<typeof taskWorkingMemorySchema>;
 // });
 
 // Model for eval judgments
-const evalModel = gatewayModels.claude4Sonnet;
+const evalModel = GatewayClaude4Sonnet();
 
 export const a010 = new Agent({
 	name: "a010",
@@ -425,7 +425,7 @@ export const a010 = new Agent({
     </resource_management>
   </best_practices>
 </system>`,
-	model: gatewayModels.claude4Sonnet,
+	model: GatewayClaude4Sonnet(),
 	tools: {
 		// File management tools
 		fileWrite: fileWriteTool,

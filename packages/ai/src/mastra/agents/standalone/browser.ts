@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { gatewayModels } from "../../../lib/ai/provider";
+import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
 import {
 	stagehandActTool,
 	stagehandExtractTool,
@@ -72,7 +72,7 @@ export const browserAgent = new Agent({
       - Chain actions logically for complex workflows
       - When extracting data, be clear about what information you need
 `,
-	model: gatewayModels.claude4Sonnet,
+	model: GatewayClaude4Sonnet(),
 	// Note: Memory is handled at network level when used in networks
 	// Individual agent memory can cause context conflicts in network execution
 	tools: {

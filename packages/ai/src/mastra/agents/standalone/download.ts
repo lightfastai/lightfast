@@ -3,7 +3,7 @@
 
 /*
 import { Agent } from "@mastra/core/agent";
-import { gatewayModels } from "../../../lib/ai/provider";
+import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
 import {
 	downloadDirectFileTool,
 	downloadFileTool,
@@ -90,7 +90,7 @@ Users can access their downloaded files by:
 - Fallback strategies for failed downloads
 
 Remember: You specialize in downloading files using Browserbase's capabilities. All downloads are stored in Browserbase's system and accessible via their API.`,
-	model: gatewayModels.claude4Sonnet,
+	model: GatewayClaude4Sonnet(),
 	tools: {
 		downloadFile: downloadFileTool,
 		downloadDirectFile: downloadDirectFileTool,

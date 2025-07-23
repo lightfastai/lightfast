@@ -5,7 +5,7 @@ import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-conte
 // Use Redis for much faster stream ID storage
 import { createStreamId } from "@/lib/stream-storage-redis";
 import { isValidUUID } from "@/lib/uuid-utils";
-import { mastra, experimentalAgents } from "@lightfast/ai";
+import { mastraServer as mastra } from "@lightfast/ai/server";
 import type { ExperimentalAgentId } from "@lightfast/types";
 
 export async function POST(
@@ -32,10 +32,11 @@ export async function POST(
 		timings.parsing = Date.now() - parseStart;
 
 		// Validate agentId
-		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
+		const validAgentIds: ExperimentalAgentId[] = ["a010", "a011"];
+		if (!validAgentIds.includes(agentId)) {
 			return Response.json(
 				{
-					error: `Invalid agent ID: ${agentId}. Valid agents: ${Object.keys(experimentalAgents).join(", ")}`,
+					error: `Invalid agent ID: ${agentId}. Valid agents: ${validAgentIds.join(", ")}`,
 				},
 				{ status: 400 },
 			);
@@ -149,7 +150,8 @@ export async function GET(
 		const { agentId, threadId } = await params;
 
 		// Validate agentId
-		if (!experimentalAgents[agentId as ExperimentalAgentId]) {
+		const validAgentIds: ExperimentalAgentId[] = ["a010", "a011"];
+		if (!validAgentIds.includes(agentId)) {
 			return Response.json(
 				{
 					error: `Invalid agent ID: ${agentId}`,

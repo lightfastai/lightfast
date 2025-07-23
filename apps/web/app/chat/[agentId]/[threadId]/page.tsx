@@ -7,7 +7,6 @@ import { ChatLayout } from "@/components/chat/chat-layout";
 import { ChatSkeleton } from "@/components/chat/chat-skeleton";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DataStreamProvider } from "@/components/data-stream-provider";
-import { experimentalAgents } from "@lightfast/ai";
 import type { ExperimentalAgentId } from "@lightfast/types";
 import type { LightfastUIMessage } from "@lightfast/types";
 
@@ -27,8 +26,9 @@ export default async function ChatPage({ params }: ChatPageProps) {
 		notFound();
 	}
 
-	// Validate agentId on the server
-	if (!experimentalAgents[agentId as ExperimentalAgentId]) {
+	// Validate agentId is a valid type
+	const validAgentIds: ExperimentalAgentId[] = ["a010", "a011"];
+	if (!validAgentIds.includes(agentId)) {
 		notFound();
 	}
 

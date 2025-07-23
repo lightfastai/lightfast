@@ -103,3 +103,6 @@ temp/
 # SQLite database files
 mastra.db-shm
 mastra.db-wal
+
+
+**/dist

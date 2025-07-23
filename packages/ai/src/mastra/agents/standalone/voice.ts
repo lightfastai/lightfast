@@ -2,8 +2,8 @@ import { Agent } from "@mastra/core";
 import { CompositeVoice } from "@mastra/core/voice";
 import { ElevenLabsVoice } from "@mastra/voice-elevenlabs";
 import { OpenAIVoice } from "@mastra/voice-openai";
-import { gatewayModels } from "../../../lib/ai/provider";
 import { env } from "../../../env";
+import { GatewayClaude4Sonnet } from "../../../lib/ai/provider";
 
 // Create voice configuration only if API keys are available
 let voice: CompositeVoice | undefined;
@@ -37,6 +37,6 @@ export const voiceAgent = new Agent({
   Speak in a friendly, conversational tone that works well when converted to speech.
   
   Note: This agent has voice capabilities that can convert text to speech and transcribe audio to text.`,
-	model: gatewayModels.claude4Sonnet,
+	model: GatewayClaude4Sonnet(),
 	...(voice && { voice }),
 });
