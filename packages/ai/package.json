@@ -30,6 +30,7 @@
 	},
 	"scripts": {
 		"clean": "rm -rf node_modules .turbo dist",
+		"build": "tsc",
 		"typecheck": "tsc --noEmit",
 		"tsc": "tsc",
 		"lint": "biome check --write ."

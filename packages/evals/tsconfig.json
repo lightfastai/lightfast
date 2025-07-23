@@ -1,22 +1,14 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tooling/typescript/base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "commonjs",
-    "lib": ["ES2022"],
-    "outDir": "./dist",
     "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "allowJs": true,
-    "resolveJsonModule": true,
+    "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "noEmit": true
+    "outDir": "./dist",
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "noEmit": false,
+    "emitDeclarationOnly": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],

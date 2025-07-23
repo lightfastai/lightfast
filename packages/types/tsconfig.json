@@ -1,11 +1,12 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tooling/typescript/base.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist",
     "composite": true,
     "declaration": true,
     "declarationMap": true,
+    "outDir": "./dist",
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "noEmit": false
   },
   "include": ["src/**/*"],

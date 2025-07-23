@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tooling/typescript/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -13,11 +13,8 @@
         "../../packages/types/src/*"
       ]
     },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    "composite": true,
+    "tsBuildInfoFile": "./.next/.tsbuildinfo"
   },
   "include": [
     "next-env.d.ts",
@@ -28,5 +25,9 @@
   "exclude": [
     "node_modules"
   ],
-  "references": []
+  "references": [
+    { "path": "../../packages/ai" },
+    { "path": "../../packages/types" },
+    { "path": "../../packages/evals" }
+  ]
 }

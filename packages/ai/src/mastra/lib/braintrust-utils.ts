@@ -252,7 +252,7 @@ export async function evaluateRelevancy(question: string, response: string): Pro
  * Evaluates task completion based on response content
  */
 export async function evaluateTaskCompletion(messages: CoreMessage[], response: string): Promise<number> {
-	const lastUserMessage = messages.findLast((m) => m.role === "user")?.content;
+	const lastUserMessage = messages.findLast((m: CoreMessage) => m.role === "user")?.content;
 	if (!lastUserMessage || typeof lastUserMessage !== "string") return 0;
 
 	// Check for completion indicators

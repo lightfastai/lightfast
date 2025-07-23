@@ -24,6 +24,7 @@
   },
   "scripts": {
     "clean": "rm -rf node_modules .turbo dist",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "biome check --write .",
     "eval:a011": "pnpm with-env npx braintrust eval --no-send-logs src/agents/experimental/a011/a011.eval.ts",
@@ -36,6 +37,7 @@
   },
   "dependencies": {
     "@lightfast/ai": "workspace:*",
+    "@mastra/core": "0.0.0-ai-v5-20250718021026",
     "@mastra/evals": "0.0.0-ai-v5-20250710191716",
     "ai": "5.0.0-beta.14",
     "braintrust": "^0.1.1",

@@ -315,21 +315,27 @@ function parseTodoMarkdown(content: string): Task[] {
 			// Parse created date
 			const createdMatch = line.match(/\*\*Created:\*\* (.+)/);
 			if (createdMatch) {
-				currentTask.createdAt = new Date(createdMatch[1]).toISOString();
+				if (createdMatch[1]) {
+					currentTask.createdAt = new Date(createdMatch[1]).toISOString();
+				}
 				continue;
 			}
 
 			// Parse started date
 			const startedMatch = line.match(/\*\*Started:\*\* (.+)/);
 			if (startedMatch) {
-				currentTask.startedAt = new Date(startedMatch[1]).toISOString();
+				if (startedMatch[1]) {
+					currentTask.startedAt = new Date(startedMatch[1]).toISOString();
+				}
 				continue;
 			}
 
 			// Parse completed date
 			const completedMatch = line.match(/\*\*Completed:\*\* (.+)/);
 			if (completedMatch) {
-				currentTask.completedAt = new Date(completedMatch[1]).toISOString();
+				if (completedMatch[1]) {
+					currentTask.completedAt = new Date(completedMatch[1]).toISOString();
+				}
 				continue;
 			}
 
@@ -370,11 +376,14 @@ function parseTodoMarkdown(content: string): Task[] {
 		// When we hit a task header, assign the current status
 		if (line.match(/^### [⏳🔄✅❌📋]/u)) {
 			if (tasks[taskIndex]) {
-				finalTasks.push({
-					...tasks[taskIndex],
-					status: currentStatus,
-				});
-				taskIndex++;
+				const task = tasks[taskIndex];
+				if (task) {
+					finalTasks.push({
+						...task,
+						status: currentStatus,
+					});
+					taskIndex++;
+				}
 			}
 		}
 	}

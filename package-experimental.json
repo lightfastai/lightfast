@@ -7,13 +7,14 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "build:packages": "turbo run build --filter=./packages/*",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "dev:web": "turbo run dev --filter=@lightfast/web",
-    "dev:mastra": "turbo run dev:mastra --filter=@lightfast/web",
+    "dev:mastra": "mastra dev --dir packages/ai/src/mastra",
     "build:web": "turbo run build --filter=@lightfast/web",
-    "build:mastra": "turbo run build:mastra --filter=@lightfast/web"
+    "build:mastra": "mastra build --dir packages/ai/src/mastra"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",
