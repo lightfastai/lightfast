@@ -28,6 +28,60 @@
     "build:mastra": {
       "dependsOn": ["^build"],
       "outputs": [".mastra/**"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "clean:all": {
+      "cache": false
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "persistent": true,
+      "cache": false
+    },
+    "format": {
+      "outputs": []
+    },
+    "test": {
+      "outputs": [],
+      "cache": false
+    },
+    "with-env": {
+      "cache": false
+    },
+    "eval:a011": {
+      "cache": false,
+      "env": [
+        "BRAINTRUST_*",
+        "ANTHROPIC_API_KEY"
+      ]
+    },
+    "eval:a011:dev": {
+      "cache": false,
+      "persistent": true,
+      "env": [
+        "BRAINTRUST_*",
+        "ANTHROPIC_API_KEY",
+        "SET_BASELINE"
+      ]
+    },
+    "eval:a011:baseline": {
+      "cache": false,
+      "env": [
+        "BRAINTRUST_*",
+        "ANTHROPIC_API_KEY",
+        "SET_BASELINE"
+      ]
+    },
+    "eval:experiments": {
+      "cache": false
+    },
+    "eval:list": {
+      "cache": false
+    },
+    "eval:baseline": {
+      "cache": false
     }
   }
 }
