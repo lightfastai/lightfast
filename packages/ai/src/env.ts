@@ -36,8 +36,8 @@ export const env = createEnv({
 		// Vercel Blob Storage
 		BLOB_READ_WRITE_TOKEN: z.string().min(1),
 
-		// AI Gateway (optional)
-		AI_GATEWAY_API_KEY: z.string().min(1).optional(),
+		// AI Gateway (required)
+		AI_GATEWAY_API_KEY: z.string().min(1),
 	},
 
 	/**
