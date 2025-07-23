@@ -10,12 +10,13 @@ import { smoothStream } from "ai";
 import { z } from "zod";
 import { gatewayModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
-import {
-	downloadDirectFileTool,
-	downloadFileTool,
-	downloadImageTool,
-	listDownloadsTool,
-} from "../../tools/download-tools";
+// Download tools removed - use browser tools or file tools instead
+// import {
+// 	downloadDirectFileTool,
+// 	downloadFileTool,
+// 	downloadImageTool,
+// 	listDownloadsTool,
+// } from "../../tools/download-tools";
 import {
 	fileDeleteTool,
 	fileFindByNameTool,
@@ -442,11 +443,11 @@ export const a010 = new Agent({
 		// Web research
 		webSearch: webSearchTool,
 
-		// Download capabilities
-		downloadFile: downloadFileTool,
-		downloadDirectFile: downloadDirectFileTool,
-		downloadImage: downloadImageTool,
-		listDownloads: listDownloadsTool,
+		// Download capabilities removed - use browser or file tools instead
+		// downloadFile: downloadFileTool,
+		// downloadDirectFile: downloadDirectFileTool,
+		// downloadImage: downloadImageTool,
+		// listDownloads: listDownloadsTool,
 
 		// Sandbox operations
 		createSandbox: createSandboxTool,

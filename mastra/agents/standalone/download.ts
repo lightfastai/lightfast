@@ -1,3 +1,7 @@
+// Download agent removed - download-tools have been deprecated
+// Use browser tools or file tools for downloading functionality
+
+/*
 import { Agent } from "@mastra/core/agent";
 import { gatewayModels } from "@/lib/ai/provider";
 import {
@@ -122,3 +126,4 @@ Remember: You specialize in downloading files using Browserbase's capabilities. 
 		},
 	},
 });
+*/

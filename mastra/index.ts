@@ -10,7 +10,8 @@ import { c010 } from "./agents/pure/c010";
 // Standalone agents - Specialized single-purpose agents
 import { artifactAgent } from "./agents/standalone/artifact";
 import { browserAgent } from "./agents/standalone/browser";
-import { downloadAgent } from "./agents/standalone/download";
+// Download agent removed - use browser or file tools instead
+// import { downloadAgent } from "./agents/standalone/download";
 import { planner } from "./agents/standalone/planner";
 import { sandboxAgent } from "./agents/standalone/sandbox";
 import { searcher } from "./agents/standalone/searcher";
@@ -29,7 +30,7 @@ export const mastra = new Mastra({
 		// Standalone Agents - Specialized tools
 		Artifact: artifactAgent,
 		Browser: browserAgent,
-		Download: downloadAgent,
+		// Download: downloadAgent, // Removed - use browser or file tools instead
 		Planner: planner,
 		Sandbox: sandboxAgent,
 		Searcher: searcher,

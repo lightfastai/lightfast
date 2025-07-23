@@ -114,9 +114,9 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 												)}
 											</Button>
 										</div>
-										<ScrollAreaPrimitive.Root className="relative max-h-[300px] overflow-hidden">
+										<ScrollAreaPrimitive.Root className="relative max-h-[300px] w-full">
 											<ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
-												<pre className="text-xs font-mono whitespace-pre p-3 pt-1">
+												<pre className="text-xs font-mono whitespace-pre overflow-auto p-3 pt-1">
 													{JSON.stringify(toolPart.input as Record<string, unknown>, null, 2)}
 												</pre>
 											</ScrollAreaPrimitive.Viewport>
@@ -156,9 +156,9 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 												)}
 											</Button>
 										</div>
-										<ScrollAreaPrimitive.Root className="relative max-h-[300px] overflow-hidden">
+										<ScrollAreaPrimitive.Root className="relative max-h-[300px] w-full">
 											<ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
-												<pre className="text-xs font-mono whitespace-pre p-3 pt-1">
+												<pre className="text-xs font-mono whitespace-pre overflow-auto p-3 pt-1">
 													{typeof toolPart.output === "string"
 														? toolPart.output
 														: JSON.stringify(toolPart.output as Record<string, unknown>, null, 2)}

@@ -1,7 +1,11 @@
 import { Agent } from "@mastra/core/agent";
 import { gatewayModels } from "@/lib/ai/provider";
-import { browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
-import { granularBrowserTools } from "../../tools/browser-tools-granular";
+import {
+	stagehandActTool,
+	stagehandExtractTool,
+	stagehandNavigateTool,
+	stagehandObserveTool,
+} from "../../tools/browser-tools";
 
 // Note: Working memory schemas moved to network level for proper context handling
 
@@ -57,47 +61,26 @@ export const browserAgent = new Agent({
 
       Your primary functions are:
       - Navigate to websites using browserNavigate
-      - View current page content with browserView
-      - Click elements using browserClick
-      - Type text into inputs using browserType
-      - Select dropdown options using browserSelectOption
-      - Scroll pages using browserScroll
-      - Press keyboard keys using browserPressKey
-      - Wait for page elements using browserWait
-      - Take screenshots using browserScreenshot
-      - Execute JavaScript using browserConsoleExec
+      - Perform actions on pages using browserAct (click, type, submit forms, etc.)
       - Extract structured data using browserExtract
       - Observe page elements using browserObserve
 
       When responding:
       - Ask for a specific URL if none is provided
-      - Use browserView to check current page state
-      - Be specific about what actions to perform
+      - Use browserObserve to understand the page structure
+      - Use browserAct to interact with page elements
       - Chain actions logically for complex workflows
       - When extracting data, be clear about what information you need
-      - Use browserWait to handle dynamic content
 `,
 	model: gatewayModels.claude4Sonnet,
 	// Note: Memory is handled at network level when used in networks
 	// Individual agent memory can cause context conflicts in network execution
 	tools: {
-		// Granular browser tools
-		browserNavigate: browserNavigateTool,
-		browserView: granularBrowserTools.browserView,
-		browserClick: granularBrowserTools.browserClick,
-		browserType: granularBrowserTools.browserType,
-		browserSelectOption: granularBrowserTools.browserSelectOption,
-		browserScroll: granularBrowserTools.browserScroll,
-		browserPressKey: granularBrowserTools.browserPressKey,
-		browserMoveMouse: granularBrowserTools.browserMoveMouse,
-		browserWait: granularBrowserTools.browserWait,
-		browserScreenshot: granularBrowserTools.browserScreenshot,
-		browserConsoleExec: granularBrowserTools.browserConsoleExec,
-		browserReload: granularBrowserTools.browserReload,
-		browserHistory: granularBrowserTools.browserHistory,
-		// Higher-level browser tools
-		browserObserve: browserObserveTool,
-		browserExtract: browserExtractTool,
+		// Browser automation tools
+		browserNavigate: stagehandNavigateTool,
+		browserAct: stagehandActTool,
+		browserObserve: stagehandObserveTool,
+		browserExtract: stagehandExtractTool,
 	},
 	defaultGenerateOptions: {
 		maxSteps: 25,

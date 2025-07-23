@@ -4,7 +4,12 @@ import { smoothStream } from "ai";
 import { z } from "zod";
 import { gatewayModels } from "@/lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
-import { browserActTool, browserExtractTool, browserNavigateTool, browserObserveTool } from "../../tools/browser-tools";
+import {
+	stagehandActTool,
+	stagehandExtractTool,
+	stagehandNavigateTool,
+	stagehandObserveTool,
+} from "../../tools/browser-tools";
 import { fileWriteTool } from "../../tools/file-tools";
 import { createSandboxTool, executeSandboxCommandTool } from "../../tools/sandbox-tools";
 import { todoClearTool, todoReadTool, todoWriteTool } from "../../tools/task-tools";
@@ -285,10 +290,10 @@ This is a mandatory requirement - never omit file location information from your
 		fileWrite: fileWriteTool,
 
 		// Browser automation tools
-		browserNavigate: browserNavigateTool,
-		browserAct: browserActTool,
-		browserObserve: browserObserveTool,
-		browserExtract: browserExtractTool,
+		browserNavigate: stagehandNavigateTool,
+		browserAct: stagehandActTool,
+		browserObserve: stagehandObserveTool,
+		browserExtract: stagehandExtractTool,
 
 		// Sandbox execution tools
 		createSandbox: createSandboxTool,
