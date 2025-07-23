@@ -5,7 +5,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "pnpm with-env next dev --turbo",
-		"build": "next build",
+		"build": "pnpm with-env next build",
 		"start": "next start",
 		"lint": "biome check --write .",
 		"typecheck": "tsc --noEmit",
@@ -75,6 +75,8 @@
 		"mastra": "0.0.0-ai-v5-20250710191716",
 		"next": "^15.4.2",
 		"openai": "^5.10.1",
+		"playwright": "^1.54.1",
+		"playwright-core": "^1.54.1",
 		"react": "^19.1.0",
 		"react-dom": "^19.1.0",
 		"react-markdown": "^10.1.0",
