@@ -8,7 +8,7 @@ import {
 } from "@mastra/evals/nlp";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { gatewayModels } from "@/lib/ai/provider";
+import { gatewayModels } from "../../../lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
 // Download tools removed - use browser tools or file tools instead
 // import {

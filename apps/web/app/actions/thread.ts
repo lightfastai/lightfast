@@ -1,9 +1,9 @@
 "use server";
 
 import { convertMastraToUIMessages } from "@/lib/convert-messages";
-import { mastra } from "@/mastra";
-import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
-import type { MastraUIMessage } from "@/types/lightfast-ui-messages";
+import { mastra } from "@lightfast/ai";
+import type { ExperimentalAgentId } from "@lightfast/ai";
+import type { MastraUIMessage } from "@lightfast/types";
 
 /**
  * Check if a thread exists and belongs to a specific user

@@ -1,5 +1,5 @@
 import type { UIMessage } from "ai";
-import type { ExperimentalAgentToolSchemas } from "@/mastra/agents/experimental";
+import type { ExperimentalAgentToolSchemas } from "@lightfast/ai/agents/experimental";
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {

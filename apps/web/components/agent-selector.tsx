@@ -9,7 +9,10 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { EXPERIMENTAL_AGENT_IDS, type ExperimentalAgentId } from "@/mastra/agents/experimental/types";
+import type { ExperimentalAgentId } from "@lightfast/ai";
+
+// Define the available agent IDs here
+const EXPERIMENTAL_AGENT_IDS: ExperimentalAgentId[] = ["a010", "a011"];
 
 const agentDisplayNames: Record<ExperimentalAgentId, string> = {
 	a010: "a010",

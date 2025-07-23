@@ -16,12 +16,7 @@
 		"build:mastra": "mastra build --dir mastra",
 		"clean": "rm -rf .next .mastra node_modules tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
 		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
-		"eval:a011": "pnpm with-env npx braintrust eval --no-send-logs evals/agents/experimental/a011/a011.eval.ts",
-		"eval:a011:dev": "pnpm with-env npx braintrust eval --dev --dev-port 8300 evals/agents/experimental/a011/a011.eval.ts",
-		"eval:a011:baseline": "SET_BASELINE=true pnpm eval:a011:dev",
-		"eval:experiments": "tsx evals/scripts/experiment-cli.ts",
-		"eval:list": "tsx evals/scripts/experiment-cli.ts a011 list",
-		"eval:baseline": "tsx evals/scripts/experiment-cli.ts a011 baseline"
+		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune"
 	},
 	"keywords": [],
 	"author": "",
@@ -38,13 +33,13 @@
 		"concurrently": "^9.2.0",
 		"dotenv-cli": "^8.0.0",
 		"tailwindcss": "^4.1.11",
-		"tsx": "^4.20.3",
 		"tw-animate-css": "^1.3.5",
 		"typescript": "^5.8.3"
 	},
 	"dependencies": {
 		"@lightfast/ai": "workspace:*",
 		"@lightfast/types": "workspace:*",
+		"@lightfast/evals": "workspace:*",
 		"@ai-sdk/anthropic": "2.0.0-beta.8",
 		"@ai-sdk/gateway": "1.0.0-beta.11",
 		"@ai-sdk/react": "2.0.0-beta.23",
@@ -75,7 +70,6 @@
 		"@vercel/speed-insights": "^1.2.0",
 		"@virtuoso.dev/message-list": "^1.13.1",
 		"ai": "5.0.0-beta.23",
-		"braintrust": "^0.1.1",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"date-fns": "^4.1.0",
@@ -93,16 +87,5 @@
 		"resumable-stream": "^2.2.1",
 		"tailwind-merge": "^3.3.1",
 		"zod": "^3.25.76"
-	},
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"@clerk/shared",
-			"@tailwindcss/oxide",
-			"@vercel/speed-insights",
-			"better-sqlite3",
-			"esbuild",
-			"protobufjs",
-			"sharp"
-		]
 	}
 }

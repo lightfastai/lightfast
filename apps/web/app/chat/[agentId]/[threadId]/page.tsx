@@ -7,9 +7,9 @@ import { ChatLayout } from "@/components/chat/chat-layout";
 import { ChatSkeleton } from "@/components/chat/chat-skeleton";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DataStreamProvider } from "@/components/data-stream-provider";
-import { experimentalAgents } from "@/mastra/agents/experimental";
-import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
-import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
+import { experimentalAgents } from "@lightfast/ai/agents/experimental";
+import type { ExperimentalAgentId } from "@lightfast/ai";
+import type { LightfastUIMessage } from "@lightfast/types";
 
 interface ChatPageProps {
 	params: Promise<{

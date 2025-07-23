@@ -6,13 +6,13 @@
 import type { CoreMessage, GenerateTextResult, StepResult, ToolCallUnion, ToolSet } from "ai";
 import { type BaseMetadata, type DefaultMetadataType, Eval, type EvalScorer, type EvalScorerArgs } from "braintrust";
 import type { z } from "zod";
-import { type ExperimentResult, ExperimentTracker } from "../../../lib/experiment-tracker";
+import { type ExperimentResult, ExperimentTracker } from "@lightfast/evals/lib/experiment-tracker";
 
 // Define Score type based on braintrust's expected format
 type Score = { name: string; score: number | null };
 
-import type { SimplifiedWorkingMemory } from "../../../../mastra/agents/experimental/a011";
-import { a011 } from "../../../../mastra/agents/experimental/a011";
+import type { SimplifiedWorkingMemory } from "@lightfast/ai/agents/experimental/a011";
+import { a011 } from "@lightfast/ai/agents/experimental/a011";
 
 // Experiment configuration
 const EXPERIMENT_NAME = process.env.EXPERIMENT_NAME || "a011-" + new Date().toISOString().split("T")[0];

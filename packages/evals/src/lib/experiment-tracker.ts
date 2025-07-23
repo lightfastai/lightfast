@@ -37,7 +37,7 @@ export class ExperimentTracker {
 	private baselineFile: string;
 
 	constructor(agent: string) {
-		this.resultsDir = join(process.cwd(), "evals", "results");
+		this.resultsDir = join(process.cwd(), "packages", "evals", "src", "results");
 		this.resultsFile = join(this.resultsDir, `${agent}-results.json`);
 		this.baselineFile = join(this.resultsDir, `${agent}-baseline.json`);
 

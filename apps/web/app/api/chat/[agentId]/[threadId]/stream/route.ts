@@ -5,9 +5,9 @@ import type { NextRequest } from "next/server";
 import { convertMastraToUIMessages } from "@/lib/convert-messages";
 import { getStreamContext } from "@/lib/resumable-stream-context";
 import { getStreamRecordsByThreadId } from "@/lib/stream-storage-redis";
-import { mastra } from "@/mastra";
-import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
-import type { LightfastUIMessage, MastraUIMessage } from "@/types/lightfast-ui-messages";
+import { mastra, experimentalAgents } from "@lightfast/ai";
+import type { ExperimentalAgentId } from "@lightfast/ai";
+import type { LightfastUIMessage, MastraUIMessage } from "@lightfast/types";
 
 export async function GET(
 	_request: NextRequest,

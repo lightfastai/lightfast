@@ -17,10 +17,21 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",
-    "turbo": "^2.0.0",
+    "turbo": "^2.5.5",
     "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "@tailwindcss/oxide",
+      "@vercel/speed-insights",
+      "better-sqlite3",
+      "esbuild",
+      "protobufjs",
+      "sharp"
+    ]
   }
 }

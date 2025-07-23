@@ -5,8 +5,8 @@ import { generateStreamId, getStreamContext } from "@/lib/resumable-stream-conte
 // Use Redis for much faster stream ID storage
 import { createStreamId } from "@/lib/stream-storage-redis";
 import { isValidUUID } from "@/lib/uuid-utils";
-import { mastra } from "@/mastra";
-import { type ExperimentalAgentId, experimentalAgents } from "@/mastra/agents/experimental";
+import { mastra, experimentalAgents } from "@lightfast/ai";
+import type { ExperimentalAgentId } from "@lightfast/ai";
 
 export async function POST(
 	request: NextRequest,

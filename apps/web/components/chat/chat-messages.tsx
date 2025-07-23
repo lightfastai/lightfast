@@ -2,7 +2,7 @@
 
 import type { ChatStatus } from "ai";
 import { VirtuosoChat } from "@/components/virtuoso-chat";
-import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
+import type { LightfastUIMessage } from "@lightfast/types";
 
 interface ChatMessagesProps {
 	messages: LightfastUIMessage[];

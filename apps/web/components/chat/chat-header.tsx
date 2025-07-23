@@ -1,7 +1,7 @@
 "use client";
 
 import { UserDropdown } from "@/components/user-dropdown";
-import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
+import type { ExperimentalAgentId } from "@lightfast/ai";
 import { AgentVersionIndicator } from "./agent-version-indicator";
 import { NewChatButton } from "./new-chat-button";
 

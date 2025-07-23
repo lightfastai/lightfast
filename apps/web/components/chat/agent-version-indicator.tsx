@@ -2,7 +2,7 @@
 
 import { Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
+import type { ExperimentalAgentId } from "@lightfast/ai";
 
 interface AgentVersionIndicatorProps {
 	agentId: ExperimentalAgentId;

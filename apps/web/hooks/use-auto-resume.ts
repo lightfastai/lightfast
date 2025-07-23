@@ -3,7 +3,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useEffect } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
-import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
+import type { LightfastUIMessage } from "@lightfast/types";
 
 export interface UseAutoResumeParams {
 	autoResume: boolean;

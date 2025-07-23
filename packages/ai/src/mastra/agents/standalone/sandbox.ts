@@ -1,7 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { z } from "zod";
-import { gatewayModels } from "@/lib/ai/provider";
+import { gatewayModels } from "../../../lib/ai/provider";
 import { createSandboxTool, executeSandboxCommandTool } from "../../tools/sandbox-tools";
 
 // Schema for working memory

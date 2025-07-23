@@ -1,4 +1,4 @@
-import type { LightfastUIMessage, MastraUIMessage } from "@/types/lightfast-ui-messages";
+import type { LightfastUIMessage, MastraUIMessage } from "@lightfast/types";
 
 /**
  * Convert Mastra memory UI messages to the format expected by Vercel AI SDK's useChat

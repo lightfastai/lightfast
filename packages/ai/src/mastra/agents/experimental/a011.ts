@@ -2,7 +2,7 @@ import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
 import { Agent } from "@mastra/core/agent";
 import { smoothStream } from "ai";
 import { z } from "zod";
-import { gatewayModels } from "@/lib/ai/provider";
+import { gatewayModels } from "../../../lib/ai/provider";
 import { createEnvironmentMemory } from "../../lib/memory-factory";
 import {
 	stagehandActTool,

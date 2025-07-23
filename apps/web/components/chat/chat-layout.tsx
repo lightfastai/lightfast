@@ -1,4 +1,4 @@
-import type { ExperimentalAgentId } from "@/mastra/agents/experimental/types";
+import type { ExperimentalAgentId } from "@lightfast/ai";
 import { ChatHeader } from "./chat-header";
 
 interface ChatLayoutProps {
