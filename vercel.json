@@ -1,9 +1,10 @@
 {
 	"framework": "nextjs",
-	"buildCommand": "pnpm build",
-	"devCommand": "pnpm dev",
+	"buildCommand": "pnpm build:web",
+	"devCommand": "pnpm dev:web",
 	"installCommand": "pnpm install",
-	"outputDirectory": ".next",
+	"outputDirectory": "apps/web/.next",
+	"rootDirectory": "apps/web",
 	"crons": [
 		{
 			"path": "/api/cron/cleanup-streams",
