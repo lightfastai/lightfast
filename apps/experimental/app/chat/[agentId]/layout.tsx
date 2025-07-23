@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
 import type { ExperimentalAgentId } from "@lightfast/types";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -13,12 +12,6 @@ interface AgentLayoutProps {
 
 export default async function AgentLayout({ children, params }: AgentLayoutProps) {
 	const { agentId } = await params;
-
-	// Single auth check for the entire agent section
-	const { userId } = await auth();
-	if (!userId) {
-		notFound();
-	}
 
 	// Validate agentId is a valid type
 	const validAgentIds: ExperimentalAgentId[] = ["a010", "a011"];
