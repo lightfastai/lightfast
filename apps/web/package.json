@@ -15,7 +15,6 @@
 		"dev:mastra": "mastra dev --dir mastra",
 		"build:mastra": "mastra build --dir mastra",
 		"clean": "rm -rf .next .mastra node_modules tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
-		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
 		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune"
 	},
 	"keywords": [],

@@ -2,6 +2,11 @@
 
 Quick reference for testing Mastra agents via API and UI.
 
+## Monorepo Structure
+- Agents are in `packages/ai/src/mastra/agents/`
+- Tools are in `packages/ai/src/mastra/tools/`
+- Run from web app: `cd apps/web && pnpm dev:mastra`
+
 ## API Testing (Direct)
 
 ### Basic Command
@@ -72,5 +77,17 @@ Navigate → Type "Calculate 15 * 7" → Send → Wait
 ## Debug Tips
 - Check server logs: `container-use log <env-id>`
 - Test API first, then UI
-- Verify agent in `mastra/index.ts`
+- Verify agent in `packages/ai/src/mastra/index.ts`
 - Confirm tools registered in agent file
+- Agent files: `packages/ai/src/mastra/agents/`
+
+## Evaluation Testing
+
+For comprehensive agent testing with metrics:
+
+```bash
+cd packages/evals
+pnpm eval:a011:dev  # Run evaluation with Braintrust UI
+```
+
+See evaluation results in `packages/evals/src/results/`

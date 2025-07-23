@@ -2,6 +2,8 @@
 
 This guide provides a comprehensive overview of how to set up and run evaluations for Mastra agents using Braintrust.
 
+**Note**: Evaluation code has been moved to the `packages/evals` package in the monorepo structure.
+
 ## Overview
 
 Braintrust is an evaluation framework that helps measure agent performance, track improvements, and ensure quality. Your project has Braintrust integrated with:
@@ -13,7 +15,9 @@ Braintrust is an evaluation framework that helps measure agent performance, trac
 
 ## Key Components
 
-### 1. Braintrust Utilities (`mastra/lib/braintrust-utils.ts`)
+### 1. Braintrust Utilities
+
+**Location**: Previously in `mastra/lib/braintrust-utils.ts`, now part of `packages/evals`
 
 The utilities provide:
 - **Local Development Mode**: Logs to console when no API key is present
@@ -21,11 +25,14 @@ The utilities provide:
 - **Tool Execution Tracking**: Success rates, performance metrics
 - **Conversation-Level Evaluation**: End-to-end conversation quality
 
-### 2. Evaluation Scripts (`scripts/`)
+### 2. Evaluation Scripts
 
-- `experimental-agents.eval.ts`: Evaluates a010 and a011 agents
-- `braintrust-local.eval.ts`: Demonstrates local evaluation
-- `experimental-agents-fixed.eval.ts`: Alternative evaluation scenarios
+**Location**: `packages/evals/src/`
+
+- `agents/experimental/a011/a011.eval.ts`: Evaluates a011 agent with comprehensive metrics
+- `lib/agent-eval-utils.ts`: Reusable evaluation utilities
+- `lib/experiment-tracker.ts`: Track and compare experiments over time
+- `scripts/experiment-cli.ts`: CLI for managing experiments
 
 ## Setting Up Evaluations
 
@@ -49,14 +56,21 @@ pnpm install braintrust @mastra/evals
 ### 3. Running Evaluations
 
 ```bash
+# Navigate to the evals package
+cd packages/evals
+
 # Local mode (no Braintrust cloud)
-npx braintrust eval --no-send-logs scripts/experimental-agents.eval.ts
+pnpm eval:a011
 
 # Development mode with UI
-npx braintrust eval --dev --dev-port 8300 scripts/experimental-agents.eval.ts
+pnpm eval:a011:dev
 
-# Production mode (requires API key)
-npx braintrust eval scripts/experimental-agents.eval.ts
+# Set baseline for comparisons
+pnpm eval:a011:baseline
+
+# View experiment results
+pnpm eval:list
+pnpm eval:baseline
 ```
 
 ## Creating Agent Evaluations
@@ -65,7 +79,7 @@ npx braintrust eval scripts/experimental-agents.eval.ts
 
 ```typescript
 import { Eval } from "braintrust";
-import { mastra } from "../mastra";
+import { a011 } from "@lightfast/ai/agents/experimental/a011";
 
 Eval("agent-evaluation-name", {
   data: () => [
@@ -156,7 +170,7 @@ When `BRAINTRUST_API_KEY` is not set, the system automatically falls back to loc
 
 ```typescript
 // In your evaluation script
-import { logAgentInteraction } from "../mastra/lib/braintrust-utils";
+import { createAgentExecutor } from "@lightfast/evals";
 
 // This will log to console in development
 await logAgentInteraction(
@@ -304,8 +318,11 @@ jobs:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
       - run: pnpm install
-      - run: npx braintrust eval --no-send-logs scripts/experimental-agents.eval.ts
-      - run: npx braintrust eval --no-send-logs scripts/standalone-agents.eval.ts
+      - name: Run evaluations
+        working-directory: packages/evals
+        run: |
+          pnpm eval:a011
+          pnpm eval:experiments a011 compare a011-latest
 ```
 
 ## Analyzing Results
@@ -353,5 +370,6 @@ jobs:
 
 - [Braintrust Documentation](https://docs.braintrust.com)
 - [Mastra Evaluation Framework](https://mastra.ai/docs/evals)
-- Project evaluation scripts: `scripts/*.eval.ts`
-- Braintrust utilities: `mastra/lib/braintrust-utils.ts`
+- Project evaluation package: `packages/evals/`
+- Agent implementations: `packages/ai/src/mastra/agents/`
+- Evaluation utilities: `packages/evals/src/lib/`
