@@ -206,28 +206,30 @@ Available on both client and server:
 ## Project Structure
 
 ```
-├── app/                  # Next.js 15 app directory
-│   ├── api/             # API routes
-│   │   └── chat/        # Chat thread endpoints
-│   ├── chat/            # Chat UI routes
-│   └── layout.tsx       # Root layout
-├── components/          # React components
-│   ├── ui/              # shadcn/ui components
-│   └── tool-renderers/  # Agent tool displays
-├── mastra/              # Mastra AI framework
-│   ├── agents/          # AI agent definitions
-│   │   ├── experimental/ # A010, A011 agents
-│   │   ├── pure/        # C010 conversational agent
-│   │   └── standalone/  # Specialized agents
-│   ├── tools/           # Tool implementations
-│   └── lib/             # Utilities and providers
-├── lib/                 # Shared utilities
-│   ├── database/        # Database client and schema
-│   ├── sandbox/         # Sandbox execution
-│   └── ai/              # AI provider configurations
+├── apps/
+│   └── www/              # Next.js 15 web application
+│       │   ├── api/      # API routes
+│       │   │   └── chat/ # Chat thread endpoints
+│       │   ├── chat/     # Chat UI routes
+│       │   └── layout.tsx # Root layout
+│       ├── components/   # React components
+│       │   ├── ui/       # shadcn/ui components
+│       │   └── tool-renderers/ # Agent tool displays
+│       ├── lib/          # Client utilities
+│       └── hooks/        # React hooks
+├── packages/
+│   ├── ai/               # AI agents and tools (@lightfast/ai)
+│   │   └── src/mastra/   # Mastra AI framework
+│   │       ├── agents/   # AI agent definitions
+│   │       │   ├── experimental/ # A010, A011 agents
+│   │       │   ├── pure/ # C010 conversational agent
+│   │       │   └── standalone/ # Specialized agents
+│   │       ├── tools/    # Tool implementations
+│   │       └── lib/      # Utilities and providers
+│   ├── types/            # Shared TypeScript types (@lightfast/types)
+│   └── evals/            # Evaluation framework (@lightfast/evals)
 ├── docs/                # Documentation
-├── hooks/               # React hooks
-└── types/               # TypeScript type definitions
+└── tooling/             # Development tooling and configuration
 ```
 
 ## 🚀 Deployment
