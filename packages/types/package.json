@@ -2,18 +2,17 @@
   "name": "@lightfast/types",
   "version": "1.0.0",
   "description": "Shared TypeScript types for Lightfast",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
     }
   },
   "scripts": {
-    "clean": "rm -rf node_modules .turbo dist",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "dev": "tsc",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "biome check --write ."
   },
   "dependencies": {

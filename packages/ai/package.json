@@ -29,11 +29,13 @@
 		}
 	},
 	"scripts": {
-		"clean": "rm -rf node_modules .turbo dist",
+		"clean": "git clean -xdf .cache .turbo dist node_modules",
 		"build": "tsc",
-		"typecheck": "tsc --noEmit",
-		"tsc": "tsc",
-		"lint": "biome check --write ."
+		"dev": "tsc",
+		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
+		"lint": "biome check --write .",
+		"dev:mastra": "mastra dev --dir src/mastra",
+		"build:mastra": "mastra build --dir src/mastra"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "2.0.0-beta.8",
@@ -59,6 +61,7 @@
 	},
 	"devDependencies": {
 		"@lightfast/types": "workspace:*",
+		"mastra": "0.0.0-ai-v5-20250718021026",
 		"typescript": "^5.8.3"
 	}
 }

@@ -23,9 +23,10 @@
     }
   },
   "scripts": {
-    "clean": "rm -rf node_modules .turbo dist",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "dev": "tsc",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "biome check --write .",
     "eval:a011": "pnpm with-env npx braintrust eval --no-send-logs src/agents/experimental/a011/a011.eval.ts",
     "eval:a011:dev": "pnpm with-env npx braintrust eval --dev --dev-port 8300 src/agents/experimental/a011/a011.eval.ts",

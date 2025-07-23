@@ -12,9 +12,9 @@
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "dev:web": "turbo run dev --filter=@lightfast/web",
-    "dev:mastra": "mastra dev --dir packages/ai/src/mastra",
+    "dev:mastra": "turbo run dev:mastra --filter=@lightfast/ai",
     "build:web": "turbo run build --filter=@lightfast/web",
-    "build:mastra": "mastra build --dir packages/ai/src/mastra"
+    "build:mastra": "turbo run build:mastra --filter=@lightfast/ai"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",
