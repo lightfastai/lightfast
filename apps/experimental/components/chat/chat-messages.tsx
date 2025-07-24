@@ -47,12 +47,9 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 		initialMessageCount.current = messages.length;
 	}
 
-	// Add runtime status to messages
-	const messagesWithStatus: MessageWithRuntimeStatus[] = messages.map((msg, index) => {
+	// Add runtime status to messages and inject thinking placeholder
+	let messagesWithStatus: MessageWithRuntimeStatus[] = messages.map((msg, index) => {
 		if (index === messages.length - 1) {
-			if (msg.role === "user" && status === "submitted") {
-				return { ...msg, runtimeStatus: "thinking" };
-			}
 			if (msg.role === "assistant" && status === "streaming") {
 				return { ...msg, runtimeStatus: "streaming" };
 			}
@@ -62,6 +59,16 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 		}
 		return msg;
 	});
+
+	// Add a placeholder assistant message when submitted
+	if (status === "submitted" && messages[messages.length - 1]?.role === "user") {
+		messagesWithStatus.push({
+			id: "thinking-placeholder",
+			role: "assistant",
+			parts: [],
+			runtimeStatus: "thinking",
+		});
+	}
 
 	return (
 		<div className="flex-1 relative min-h-0 overflow-hidden">
@@ -90,23 +97,13 @@ function MessageItem({ message, hasScrollAnchor }: { message: MessageWithRuntime
 				.join("\n") || "";
 
 		return (
-			<>
-				<div className={cn("pb-12", hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]")}>
-					<div className="mx-auto max-w-3xl px-4 flex justify-end">
-						<div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
-							<p className="whitespace-pre-wrap">{textContent}</p>
-						</div>
+			<div className={cn("pb-12", hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]")}>
+				<div className="mx-auto max-w-3xl px-4 flex justify-end">
+					<div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
+						<p className="whitespace-pre-wrap">{textContent}</p>
 					</div>
 				</div>
-				{/* Show thinking animation at assistant message position */}
-				{message.runtimeStatus && (
-					<div className="pb-12">
-						<div className="mx-auto max-w-3xl px-4 space-y-4">
-							<ThinkingMessage status={message.runtimeStatus} show={true} />
-						</div>
-					</div>
-				)}
-			</>
+			</div>
 		);
 	}
 
