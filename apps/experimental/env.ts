@@ -14,9 +14,6 @@ export const env = createEnv({
 	 * This way you can ensure the app isn't built with invalid env vars.
 	 */
 	server: {
-		// Database
-		DATABASE_URL: z.string().url().optional(),
-
 		// Redis & KV Store (additional to AI package)
 		REDIS_URL: z.string().url(),
 		KV_URL: z.string().url(),
@@ -41,9 +38,6 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	runtimeEnv: {
-		// Database
-		DATABASE_URL: process.env.DATABASE_URL,
-
 		// Redis & KV Store (additional to AI package)
 		REDIS_URL: process.env.REDIS_URL,
 		KV_URL: process.env.KV_URL,

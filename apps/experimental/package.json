@@ -12,8 +12,8 @@
 		"format": "biome format --write .",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"with-env": "dotenv -e ./.vercel/.env.development.local --",
-		"clean": "rm -rf .next .mastra node_modules tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune",
-		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo mastra.db mastra.db-shm mastra.db-wal && pnpm store prune"
+		"clean": "rm -rf .next .mastra node_modules tsconfig.tsbuildinfo && pnpm store prune",
+		"clean:all": "rm -rf .next .mastra node_modules tmp .vercel tsconfig.tsbuildinfo && pnpm store prune"
 	},
 	"keywords": [],
 	"author": "",
@@ -26,7 +26,6 @@
 		"@types/react": "^19.1.8",
 		"@types/react-dom": "^19.1.6",
 		"autoprefixer": "^10.4.21",
-		"better-sqlite3": "^12.2.0",
 		"dotenv-cli": "^8.0.0",
 		"tailwindcss": "^4.1.11",
 		"typescript": "catalog:"
@@ -44,7 +43,6 @@
 		"@mastra/core": "catalog:",
 		"@mastra/deployer-vercel": "catalog:",
 		"@mastra/evals": "catalog:",
-		"@mastra/libsql": "catalog:",
 		"@mastra/memory": "catalog:",
 		"@mastra/upstash": "catalog:",
 		"@mastra/voice-elevenlabs": "catalog:",

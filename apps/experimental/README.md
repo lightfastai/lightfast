@@ -42,10 +42,6 @@ BROWSERBASE_PROJECT_ID=your-project-id
 ELEVENLABS_API_KEY=your-elevenlabs-key               # For voice synthesis
 BLOB_READ_WRITE_TOKEN=your-vercel-blob-token         # For file storage
 
-# Database Configuration (optional - defaults to local SQLite)
-DATABASE_URL=file:./mastra.db                         # Local SQLite (default)
-# DATABASE_URL=your-postgresql-url                    # For production PostgreSQL
-
 # Memory Storage (optional - for production scaling)
 UPSTASH_REDIS_REST_URL=your-upstash-url              # Redis for memory storage
 UPSTASH_REDIS_REST_TOKEN=your-upstash-token
@@ -159,13 +155,11 @@ Available on both client and server:
 ### Backend & AI
 - **Mastra**: AI agent orchestration framework
 - **Vercel AI SDK**: Streaming and AI utilities
-- **Drizzle ORM**: Type-safe database interactions
-- **LibSQL/Upstash**: Flexible storage options
+- **Upstash Redis**: Memory storage and caching
 - **Vercel Sandbox**: Secure code execution environment
 
 ### Infrastructure
 - **Vercel**: Production deployment and preview environments
-- **Database**: SQLite (development) / PostgreSQL (production)
 - **Memory**: In-memory (development) / Redis (production)
 - **File Storage**: Vercel Blob for file uploads and management
 
@@ -183,8 +177,6 @@ Available on both client and server:
 | | Anthropic Claude | Claude Sonnet 4 integration |
 | | OpenAI | GPT models integration |
 | | Vercel AI Gateway | Unified AI model access |
-| **Backend** | Drizzle ORM | Type-safe database operations |
-| | LibSQL | Lightweight SQLite for development |
 | | Upstash Redis | Production memory storage |
 | | Vercel Sandbox | Secure code execution |
 | **DevOps** | Vercel | Deployment and hosting |
@@ -277,7 +269,6 @@ Available on both client and server:
 | `BROWSERBASE_API_KEY` | Optional | Browser automation |
 | `ELEVENLABS_API_KEY` | Optional | Voice synthesis |
 | `BLOB_READ_WRITE_TOKEN` | Optional | File storage |
-| `DATABASE_URL` | Production | PostgreSQL connection string |
 | `UPSTASH_REDIS_REST_URL` | Production | Redis memory storage |
 | `UPSTASH_REDIS_REST_TOKEN` | Production | Redis authentication |
 

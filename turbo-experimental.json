@@ -75,7 +75,6 @@
     }
   },
   "globalEnv": [
-    "DATABASE_URL",
     "REDIS_URL",
     "KV_URL",
     "KV_REST_API_URL",
