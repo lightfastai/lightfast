@@ -75,10 +75,19 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 			<StickToBottom className="absolute inset-0 overflow-y-auto" resize="smooth" initial="instant" role="log">
 				<StickToBottom.Content className="flex w-full flex-col">
 					{messagesWithStatus.map((message, index) => {
+						const isFirst = index === 0;
 						const isLast = index === messagesWithStatus.length - 1;
 						const hasScrollAnchor =
 							isLast && initialMessageCount.current !== null && messagesWithStatus.length > initialMessageCount.current;
-						return <MessageItem key={message.id} message={message} hasScrollAnchor={hasScrollAnchor} />;
+						return (
+							<MessageItem
+								key={message.id}
+								message={message}
+								hasScrollAnchor={hasScrollAnchor}
+								isFirst={isFirst}
+								isLast={isLast}
+							/>
+						);
 					})}
 				</StickToBottom.Content>
 				<ScrollButton />
@@ -87,7 +96,17 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 	);
 }
 
-function MessageItem({ message, hasScrollAnchor }: { message: MessageWithRuntimeStatus; hasScrollAnchor?: boolean }) {
+function MessageItem({
+	message,
+	hasScrollAnchor,
+	isFirst,
+	isLast,
+}: {
+	message: MessageWithRuntimeStatus;
+	hasScrollAnchor?: boolean;
+	isFirst?: boolean;
+	isLast?: boolean;
+}) {
 	// For user messages
 	if (message.role === "user") {
 		const textContent =
@@ -97,7 +116,14 @@ function MessageItem({ message, hasScrollAnchor }: { message: MessageWithRuntime
 				.join("\n") || "";
 
 		return (
-			<div className={cn("pb-12", hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]")}>
+			<div
+				className={cn(
+					"pb-12",
+					hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]",
+					isFirst && "pt-3",
+					isLast && "pb-6",
+				)}
+			>
 				<div className="mx-auto max-w-3xl px-4 flex justify-end">
 					<div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
 						<p className="whitespace-pre-wrap">{textContent}</p>
@@ -109,7 +135,14 @@ function MessageItem({ message, hasScrollAnchor }: { message: MessageWithRuntime
 
 	// For assistant messages, render parts in order
 	return (
-		<div className={cn("pb-12", hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]")}>
+		<div
+			className={cn(
+				"pb-12",
+				hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]",
+				isFirst && "pt-3",
+				isLast && "pb-20",
+			)}
+		>
 			<div className="mx-auto max-w-3xl px-4 space-y-4">
 				{/* Show thinking animation at top of assistant message based on runtime status */}
 				{message.runtimeStatus && <ThinkingMessage status={message.runtimeStatus} show={true} className="mb-2" />}
