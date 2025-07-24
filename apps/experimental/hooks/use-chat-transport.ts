@@ -8,13 +8,19 @@ import { useMemo } from "react";
 interface UseChatTransportProps {
 	threadId: string;
 	agentId: ExperimentalAgentId;
+	userId: string;
 }
 
 /**
  * Hook that creates and configures a DefaultChatTransport for Mastra integration
  */
-export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
+export function useChatTransport({
+	threadId,
+	agentId,
+	userId,
+}: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
+		// Use the (ai) route group structure with agentId and threadId
 		const apiEndpoint = `/api/chat/${agentId}/${threadId}`;
 		return new DefaultChatTransport<LightfastUIMessage>({
 			api: apiEndpoint,
@@ -22,24 +28,27 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
 				"Content-Type": "application/json",
 			},
 			prepareSendMessagesRequest: ({ body, headers, messages, api }) => {
-				// Transform the messages to the format expected by our API
-				// The body contains metadata passed from sendMessage
-
 				return {
 					api,
 					headers,
 					body: {
-						// Only send the latest message to prevent duplicates
-						messages: [messages[messages.length - 1]],
-						stream: true,
-						threadId: threadId,
+						// Send all messages
+						messages: messages,
+						userId: userId,
 						// Include any additional metadata from the body
 						...body,
 					},
 				};
 			},
+			prepareReconnectToStreamRequest: ({ api, headers }) => {
+				// No need for query parameters, the route handles agentId and threadId
+				return {
+					api,
+					headers,
+				};
+			},
 		});
-	}, [threadId, agentId]);
+	}, [threadId, agentId, userId]);
 
 	return transport;
 }

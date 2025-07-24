@@ -17,22 +17,16 @@ export function useAutoResume({
   setMessages,
 }: UseAutoResumeParams) {
   const { dataStream } = useDataStream();
-  const hasResumed = useRef(false);
 
   useEffect(() => {
-    if (!autoResume || hasResumed.current) return;
-
-    const mostRecentMessage = initialMessages.at(-1);
-
-    if (mostRecentMessage?.role === 'user') {
-      console.log('Auto-resume: Calling resumeStream for user message');
-      hasResumed.current = true;
+    if (autoResume) {
+      // resumeStream should use the transport's API endpoint
+      // The transport configuration handles the URL construction
       resumeStream();
     }
-
-    // we intentionally run this once
+    // We want to disable the exhaustive deps rule here because we only want to run this effect once
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoResume]); // Only depend on autoResume to prevent double calls
+  }, []);
 
   useEffect(() => {
     if (!dataStream) return;
@@ -40,8 +34,8 @@ export function useAutoResume({
 
     const dataPart = dataStream[0];
 
-    if (dataPart.type === 'data-appendMessage') {
-      const message = JSON.parse(dataPart.data);
+    if (dataPart && dataPart.type === 'data-appendMessage') {
+      const message = JSON.parse(dataPart.data as string);
       setMessages([...initialMessages, message]);
     }
   }, [dataStream, initialMessages, setMessages]);

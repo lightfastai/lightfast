@@ -16,8 +16,8 @@ catalogs:
       specifier: 2.0.0-beta.1
       version: 2.0.0-beta.1
     '@ai-sdk/react':
-      specifier: 2.0.0-beta.23
-      version: 2.0.0-beta.23
+      specifier: 2.0.0-beta.24
+      version: 2.0.0-beta.24
     '@biomejs/biome':
       specifier: 2.1.1
       version: 2.1.1
@@ -61,8 +61,8 @@ catalogs:
       specifier: ^0.0.13
       version: 0.0.13
     ai:
-      specifier: 5.0.0-beta.14
-      version: 5.0.0-beta.14
+      specifier: 5.0.0-beta.24
+      version: 5.0.0-beta.24
     braintrust:
       specifier: ^0.1.1
       version: 0.1.1
@@ -115,7 +115,7 @@ importers:
         version: 1.0.0-beta.11(zod@3.25.76)
       '@ai-sdk/react':
         specifier: 'catalog:'
-        version: 2.0.0-beta.23(react@19.1.0)(zod@3.25.76)
+        version: 2.0.0-beta.24(react@19.1.0)(zod@3.25.76)
       '@clerk/elements':
         specifier: ^0.23.43
         version: 0.23.43(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(next@15.4.3(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -142,7 +142,7 @@ importers:
         version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(rollup@4.44.2)(typescript@5.8.3)
       '@mastra/evals':
         specifier: 'catalog:'
-        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.14(zod@3.25.76))
+        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.24(zod@3.25.76))
       '@mastra/memory':
         specifier: 'catalog:'
         version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))
@@ -185,9 +185,6 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.8.3)(zod@3.25.76)
-      '@types/uuid':
-        specifier: ^10.0.0
-        version: 10.0.0
       '@upstash/redis':
         specifier: 'catalog:'
         version: 1.35.1
@@ -208,7 +205,7 @@ importers:
         version: 1.13.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       ai:
         specifier: 'catalog:'
-        version: 5.0.0-beta.14(zod@3.25.76)
+        version: 5.0.0-beta.24(zod@3.25.76)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -276,6 +273,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.1.6
         version: 19.1.6(@types/react@19.1.8)
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
       autoprefixer:
         specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.6)
@@ -308,7 +308,7 @@ importers:
         version: 0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76)
       '@mastra/evals':
         specifier: 'catalog:'
-        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.14(zod@3.25.76))
+        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.24(zod@3.25.76))
       '@mastra/memory':
         specifier: 'catalog:'
         version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))
@@ -338,7 +338,7 @@ importers:
         version: 0.0.13
       ai:
         specifier: 'catalog:'
-        version: 5.0.0-beta.14(zod@3.25.76)
+        version: 5.0.0-beta.24(zod@3.25.76)
       braintrust:
         specifier: 'catalog:'
         version: 0.1.1(@aws-sdk/credential-provider-web-identity@3.848.0)(zod@3.25.76)
@@ -375,10 +375,10 @@ importers:
         version: 0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76)
       '@mastra/evals':
         specifier: 'catalog:'
-        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.14(zod@3.25.76))
+        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.24(zod@3.25.76))
       ai:
         specifier: 'catalog:'
-        version: 5.0.0-beta.14(zod@3.25.76)
+        version: 5.0.0-beta.24(zod@3.25.76)
       braintrust:
         specifier: 'catalog:'
         version: 0.1.1(@aws-sdk/credential-provider-web-identity@3.848.0)(zod@3.25.76)
@@ -444,6 +444,12 @@ packages:
     peerDependencies:
       zod: ^3.0.0
 
+  '@ai-sdk/gateway@1.0.0-beta.10':
+    resolution: {integrity: sha512-v+LXXm8INLYAdxHnNMVAJ/B7k+Nejn5dCQMg/F8SRetB5dEQ4sbfimE+b6rawILJznnsy2fugUO1oFFXlUS5Yg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4
+
   '@ai-sdk/gateway@1.0.0-beta.11':
     resolution: {integrity: sha512-dnRUPzSLvp3xvIx6M4FIz4ht8dfL8JkPKwH+akj10im4zbxUii3c3TQ3BJLRdx2Gq/SeljE9H0dX7PDtVyIrbQ==}
     engines: {node: '>=18'}
@@ -455,12 +461,6 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.49
-
-  '@ai-sdk/gateway@1.0.0-beta.9':
-    resolution: {integrity: sha512-lr0pmit6oAXPKkyN1QsxHOESiWiIb/jheiO+xiZnidjoZz2V7Se0drW1FH7sinheyK5EjmFMLW+0gBERyo33Ng==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4
 
   '@ai-sdk/google@1.2.22':
     resolution: {integrity: sha512-Ppxu3DIieF1G9pyQ5O1Z646GYR0gkC57YdBqXJ82qvCdhEhZHu0TWhmnOoeIWe2olSbuDeoOY+MfJrW8dzS3Hw==}
@@ -510,12 +510,6 @@ packages:
     peerDependencies:
       zod: ^3.25.49
 
-  '@ai-sdk/provider-utils@3.0.0-beta.4':
-    resolution: {integrity: sha512-6/ldkUlM7qZCe7sUD/YzgR6dRADjp68whGODikuh9L2HJJElKrOetRD3wE6fA0/TYGcG8g3gUVmiXj+dGhYiFA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4
-
   '@ai-sdk/provider-utils@3.0.0-beta.5':
     resolution: {integrity: sha512-4Dv/wiGZrvO6fI7P0yMLa4XZru0XW8LPibTObbkHBdweLUVGIze7aCfxxQeY44Uqcbl/h6/yBTkx2XmPtwf/Ow==}
     engines: {node: '>=18'}
@@ -540,8 +534,8 @@ packages:
       zod:
         optional: true
 
-  '@ai-sdk/react@2.0.0-beta.23':
-    resolution: {integrity: sha512-ftZy4bk46v1lSsHtGGszI99Ua/BJrCUR8VxJrbH47jKLw/xA523F8jSSo/4yj/WI7a93WQYMYYpSGU1JwbOlvg==}
+  '@ai-sdk/react@2.0.0-beta.24':
+    resolution: {integrity: sha512-Hfgb+z7MteHMaSdQ3G8hhTDridmUk2fkuRa17OaFlsfySYaFQd/exC0EBJlT+05ljcJPInyurdrxbgZLtsoPpg==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -3459,8 +3453,8 @@ packages:
     peerDependencies:
       zod: ^3.25.49
 
-  ai@5.0.0-beta.23:
-    resolution: {integrity: sha512-cG+aeaqcYz/twJkjgQnctG+2jM16OyXGdgKYwCCVz00VzPmGj0vHRda+vTKhOIvqsO0+SttnTHQ+JyUO5I1jfg==}
+  ai@5.0.0-beta.24:
+    resolution: {integrity: sha512-glQIA+PGEP+UEPB+thdqNZi9Ot4Yjiqsl071S1KPaRTGHmBIg/c8OYb2mXCRM+3cNCFGVnCTudZoYUVNwBpFxg==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -6015,6 +6009,12 @@ snapshots:
       zod: 3.25.76
     optional: true
 
+  '@ai-sdk/gateway@1.0.0-beta.10(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0-beta.1
+      '@ai-sdk/provider-utils': 3.0.0-beta.5(zod@3.25.76)
+      zod: 3.25.76
+
   '@ai-sdk/gateway@1.0.0-beta.11(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0-beta.1
@@ -6025,12 +6025,6 @@ snapshots:
     dependencies:
       '@ai-sdk/provider': 2.0.0-beta.1
       '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.76)
-      zod: 3.25.76
-
-  '@ai-sdk/gateway@1.0.0-beta.9(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0-beta.1
-      '@ai-sdk/provider-utils': 3.0.0-beta.4(zod@3.25.76)
       zod: 3.25.76
 
   '@ai-sdk/google@1.2.22(zod@3.25.76)':
@@ -6090,14 +6084,6 @@ snapshots:
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
 
-  '@ai-sdk/provider-utils@3.0.0-beta.4(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0-beta.1
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.3
-      zod: 3.25.76
-      zod-to-json-schema: 3.24.6(zod@3.25.76)
-
   '@ai-sdk/provider-utils@3.0.0-beta.5(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0-beta.1
@@ -6124,10 +6110,10 @@ snapshots:
     optionalDependencies:
       zod: 3.25.76
 
-  '@ai-sdk/react@2.0.0-beta.23(react@19.1.0)(zod@3.25.76)':
+  '@ai-sdk/react@2.0.0-beta.24(react@19.1.0)(zod@3.25.76)':
     dependencies:
-      '@ai-sdk/provider-utils': 3.0.0-beta.4(zod@3.25.76)
-      ai: 5.0.0-beta.23(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.0-beta.5(zod@3.25.76)
+      ai: 5.0.0-beta.24(zod@3.25.76)
       react: 19.1.0
       swr: 2.3.4(react@19.1.0)
       throttleit: 2.1.0
@@ -7266,10 +7252,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@mastra/evals@0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.14(zod@3.25.76))':
+  '@mastra/evals@0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.24(zod@3.25.76))':
     dependencies:
       '@mastra/core': 0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76)
-      ai: 5.0.0-beta.14(zod@3.25.76)
+      ai: 5.0.0-beta.24(zod@3.25.76)
       compromise: 14.14.4
       difflib: 0.2.4
       fs-extra: 11.3.0
@@ -9919,11 +9905,11 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  ai@5.0.0-beta.23(zod@3.25.76):
+  ai@5.0.0-beta.24(zod@3.25.76):
     dependencies:
-      '@ai-sdk/gateway': 1.0.0-beta.9(zod@3.25.76)
+      '@ai-sdk/gateway': 1.0.0-beta.10(zod@3.25.76)
       '@ai-sdk/provider': 2.0.0-beta.1
-      '@ai-sdk/provider-utils': 3.0.0-beta.4(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.0-beta.5(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 

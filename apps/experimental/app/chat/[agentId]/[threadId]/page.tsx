@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getThreadDataWithOwnership } from "@/app/actions/thread";
+import { getThread, getMessages, convertToLightfastMessages } from "@/lib/db";
 import { ChatInterface } from "@/components/chat/chat-interface";
 
 interface ChatPageProps {
@@ -22,16 +22,21 @@ export default async function ChatPage({ params }: ChatPageProps) {
 		notFound();
 	}
 
-	// Use the optimized server action that combines ownership check and message fetching
-	const { exists, isOwner, uiMessages } = await getThreadDataWithOwnership(threadId, userId, agentId);
+	// Get thread metadata
+	const thread = await getThread(threadId);
 
-	if (!exists || !isOwner) {
+	// If thread doesn't exist or user doesn't own it, return 404
+	if (!thread || thread.userId !== userId) {
 		notFound();
 	}
 
+	// Get messages for the thread
+	const messages = await getMessages(threadId);
+	const uiMessages = convertToLightfastMessages(messages);
+
 	return (
 		<Suspense fallback={null}>
-			<ChatInterface agentId={agentId} threadId={threadId} initialMessages={uiMessages as LightfastUIMessage[]} />
+			<ChatInterface agentId={agentId} threadId={threadId} userId={userId} initialMessages={uiMessages as LightfastUIMessage[]} />
 		</Suspense>
 	);
 }
