@@ -1,9 +1,5 @@
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
-import type { ChatStatus } from "ai";
-import { AgentVersionIndicator } from "./agent-version-indicator";
 import { ChatInputSection } from "./chat-input-section";
-import { ChatMessages } from "./chat-messages";
-import { EmptyState } from "./empty-state";
 
 interface ChatInterfaceProps {
 	agentId: ExperimentalAgentId;
@@ -21,11 +17,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 	return (
 		<div className="flex-1 flex flex-col relative">
 			<ChatInputSection agentId={agentId} threadId={threadId} initialMessages={initialMessages} />
-
-			{/* Server-rendered agent version */}
-			<div className="hidden lg:block">
-				<AgentVersionIndicator agentId={agentId} />
-			</div>
 		</div>
 	);
 }

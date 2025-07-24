@@ -1,7 +1,7 @@
 import type { ExperimentalAgentId } from "@lightfast/types";
 import { Suspense } from "react";
+import { AgentInfoModal } from "@/components/agent-info-modal";
 import { UserDropdown } from "@/components/user-dropdown";
-import { AgentVersionIndicator } from "./agent-version-indicator";
 import { NewChatButton } from "./new-chat-button";
 
 interface ChatHeaderProps {
@@ -20,9 +20,10 @@ export function ChatHeader({ agentId }: ChatHeaderProps) {
 				<Suspense fallback={<div className="h-8 w-20" />}>
 					<NewChatButton />
 				</Suspense>
-				<Suspense fallback={<div className="h-8 w-8" />}>
+				<div className="flex items-center gap-2">
+					<AgentInfoModal agentId={agentId} />
 					<UserDropdown />
-				</Suspense>
+				</div>
 			</div>
 
 			{/* Mobile/Tablet header - visible on tablets and below */}
@@ -31,17 +32,11 @@ export function ChatHeader({ agentId }: ChatHeaderProps) {
 					<Suspense fallback={<div className="h-8 w-8" />}>
 						<NewChatButton variant="mobile" />
 					</Suspense>
-					{agentId && (
-						<div className="flex items-center">
-							<Suspense fallback={<div className="h-4 w-16" />}>
-								<AgentVersionIndicator agentId={agentId} variant="mobile" />
-							</Suspense>
-						</div>
-					)}
 				</div>
-				<Suspense fallback={<div className="h-8 w-8" />}>
+				<div className="flex items-center gap-2">
+					<AgentInfoModal agentId={agentId} />
 					<UserDropdown />
-				</Suspense>
+				</div>
 			</header>
 		</>
 	);
