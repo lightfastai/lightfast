@@ -1,11 +1,9 @@
 "use client";
 
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import type React from "react";
 import { memo } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 // Properly typed component props based on react-markdown's actual types
@@ -46,16 +44,17 @@ const components: Partial<Components> = {
 	pre({ children, className, ...props }: MarkdownComponentProps) {
 		return (
 			<div className="flex flex-col my-4">
-				<ScrollAreaPrimitive.Root className="relative w-full rounded-md border border-border bg-muted/50 dark:bg-muted/20">
-					<ScrollAreaPrimitive.Viewport className="max-h-[500px] w-full rounded-[inherit]">
-						<pre className={cn("text-foreground", "p-3", "text-xs font-mono leading-relaxed", className)} {...props}>
-							{children}
-						</pre>
-					</ScrollAreaPrimitive.Viewport>
-					<ScrollBar orientation="vertical" />
-					<ScrollBar orientation="horizontal" />
-					<ScrollAreaPrimitive.Corner />
-				</ScrollAreaPrimitive.Root>
+				<pre
+					className={cn(
+						"relative w-full rounded-md border border-border bg-muted/50 dark:bg-muted/20",
+						"text-foreground p-3 text-xs font-mono leading-relaxed",
+						"overflow-auto",
+						className,
+					)}
+					{...props}
+				>
+					{children}
+				</pre>
 			</div>
 		);
 	},
