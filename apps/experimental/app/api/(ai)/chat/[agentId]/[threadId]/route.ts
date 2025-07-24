@@ -1,18 +1,19 @@
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
+import { gateway } from "@ai-sdk/gateway";
+import { auth } from "@clerk/nextjs/server";
+import type { LightfastUIMessage } from "@lightfast/types";
 import {
 	convertToModelMessages,
 	createUIMessageStream,
-	streamText,
-	UIMessage,
 	JsonToSseTransformStream,
 	smoothStream,
+	streamText,
+	type UIMessage,
 } from "ai";
-import { createResumableStreamContext } from "resumable-stream";
-import { gateway } from "@ai-sdk/gateway";
-import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { after } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { createResumableStreamContext } from "resumable-stream";
+import { createMessages, createStream, createThread, getMessages, getThread, getThreadStreams } from "@/lib/db";
 import { uuidv4 } from "@/lib/uuidv4";
-import { getThread, createThread, createMessages, getMessages, createStream, getThreadStreams } from "@/lib/db";
 
 // Create the resumable stream context
 const streamContext = createResumableStreamContext({
@@ -28,7 +29,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		}
 
 		const { agentId, threadId } = await params;
-		const { messages }: { messages: UIMessage[] } = await request.json();
+		const { messages }: { messages: LightfastUIMessage[] } = await request.json();
 
 		if (!messages) {
 			return new Response("messages are required", { status: 400 });
@@ -45,7 +46,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		// Create thread if it doesn't exist, or update timestamp if it does
 		await createThread({ threadId, userId, agentId });
 
-		// Create initial messages (including user message) immediately before streaming
+		// Save initial messages (including user message) immediately before streaming
 		// This ensures the user message is persisted even if streaming fails
 		await createMessages({ threadId, messages });
 		console.log(`[POST] Created initial messages for threadId: ${threadId}, message count: ${messages.length}`);
@@ -54,7 +55,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		await createStream({ threadId, streamId });
 
 		// Build the data stream that will emit tokens
-		const stream = createUIMessageStream({
+		const stream = createUIMessageStream<LightfastUIMessage>({
 			execute: ({ writer: dataStream }) => {
 				const result = streamText({
 					model: gateway("anthropic/claude-4-sonnet"),
@@ -77,7 +78,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 
 				// Merge the result into the data stream
 				dataStream.merge(
-					result.toUIMessageStream({
+					result.toUIMessageStream<LightfastUIMessage>({
 						// Enable sending reasoning steps if using o1 model
 						sendReasoning: true,
 					}),
@@ -86,9 +87,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 			generateId: uuidv4,
 			onFinish: async ({ messages: newMessages }) => {
 				console.log("Creating assistant response!");
+				// onFinish receives UIMessage[] but we cast to LightfastUIMessage[]
 				// Fetch existing messages and append new ones
 				const existingMessages = await getMessages(threadId);
-				const allMessages = [...(existingMessages.length > 0 ? existingMessages : messages), ...newMessages];
+				const allMessages = [
+					...(existingMessages.length > 0 ? existingMessages : messages),
+					...(newMessages as LightfastUIMessage[]),
+				];
 				await createMessages({ threadId, messages: allMessages });
 			},
 			onError: (error) => {
@@ -145,7 +150,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ agen
 			return new Response("No recent stream found", { status: 404 });
 		}
 
-		const emptyDataStream = createUIMessageStream({
+		const emptyDataStream = createUIMessageStream<LightfastUIMessage>({
 			execute: () => {},
 		});
 
@@ -173,4 +178,3 @@ export async function GET(request: Request, { params }: { params: Promise<{ agen
 		});
 	}
 }
-

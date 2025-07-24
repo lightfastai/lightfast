@@ -25,7 +25,7 @@ export const REDIS_KEYS = {
 	threadMetadata: (threadId: string) => `thread:${threadId}:metadata`,
 	threadMessages: (threadId: string) => `thread:${threadId}:messages`,
 	threadStreams: (threadId: string) => `thread:${threadId}:streams`,
-	
+
 	// Stream keys
 	stream: (streamId: string) => `stream:${streamId}`,
 } as const;

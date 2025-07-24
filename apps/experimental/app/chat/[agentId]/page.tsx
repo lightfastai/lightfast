@@ -1,9 +1,9 @@
+import { auth } from "@clerk/nextjs/server";
 import type { ExperimentalAgentId } from "@lightfast/types";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { uuidv4 } from "@/lib/uuidv4";
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 
 interface NewChatPageProps {
 	params: Promise<{

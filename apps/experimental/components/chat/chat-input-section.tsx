@@ -3,13 +3,13 @@
 import { useChat } from "@ai-sdk/react";
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
 import { ChatInput } from "@/components/chat-input";
-import { useChatTransport } from "@/hooks/use-chat-transport";
-import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useDataStream } from "@/components/data-stream-provider";
+import { useAutoResume } from "@/hooks/use-auto-resume";
+import { useChatTransport } from "@/hooks/use-chat-transport";
+import { uuidv4 } from "@/lib/uuidv4";
 import { ChatBottomSection } from "./chat-bottom-section";
 import { ChatMessages } from "./chat-messages";
 import { EmptyState } from "./empty-state";
-import { uuidv4 } from "@/lib/uuidv4";
 
 interface ChatInputSectionProps {
 	agentId: ExperimentalAgentId;
