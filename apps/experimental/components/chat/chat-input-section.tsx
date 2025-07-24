@@ -29,9 +29,11 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 		messages,
 		sendMessage: vercelSendMessage,
 		status,
+		resumeStream,
 	} = useChat<LightfastUIMessage>({
 		id: `${agentId}-${threadId}`,
 		transport,
+		resume: initialMessages && initialMessages.length > 0,
 		messages: initialMessages,
 	});
 
@@ -39,6 +41,8 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 		if (!message.trim() || status === "streaming" || status === "submitted") return;
 
 		// Update URL to include chat ID - following Vercel's pattern
+		// Note: There may be a race condition where navigation happens before
+		// messages are persisted by Mastra, causing empty initial state on refresh
 		window.history.replaceState({}, "", `/chat/${agentId}/${threadId}`);
 
 		try {

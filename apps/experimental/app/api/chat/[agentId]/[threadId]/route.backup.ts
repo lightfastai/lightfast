@@ -151,46 +151,18 @@ export async function POST(
 		// Create stream ID in Redis
 		await createStreamId({ streamId, chatId: threadId });
 
-		/**
-		 * HACK: Manual Message Persistence Workaround
-		 * 
-		 * Mastra's default behavior only persists messages to the database AFTER 
-		 * the entire stream completes. This creates several issues:
-		 * 
-		 * 1. Race Condition: If user refreshes immediately after sending a message,
-		 *    the page shows 0 messages because nothing is in the database yet
-		 * 
-		 * 2. Lost Context: If the stream is interrupted (network issues, user refresh),
-		 *    both the user message and partial AI response are lost
-		 * 
-		 * 3. UI/DB Mismatch: The UI shows messages that aren't actually persisted,
-		 *    creating a false sense of data safety
-		 * 
-		 * Our Workaround:
-		 * - Manually get the agent's memory
-		 * - Convert the UI message to Mastra's internal v3 format
-		 * - Save the user message to the database BEFORE streaming
-		 * - Stream with an empty array since the message is already in memory
-		 * 
-		 * Limitations:
-		 * - Only the user message is saved upfront
-		 * - The AI response is still not persisted until completion
-		 * - We have to maintain the message format conversion logic
-		 * 
-		 * Why the v3 format:
-		 * Mastra internally uses a different message format than what the UI sends.
-		 * The UI sends: { id, role, parts: [{type, text}] }
-		 * Mastra expects: { id, resourceId, threadId, createdAt, role, 
-		 *                   content: { format: 2, parts, content }, type: "v3", _index }
-		 */
+		// Get the agent's memory and manually add the user message
+		// This ensures immediate persistence before streaming
 		const memory = await agent.getMemory();
 		
 		// First, check if thread exists, create if it doesn't
 		const existingThread = await memory.getThreadById({ threadId });
+		console.log("Existing thread check:", { threadId, exists: !!existingThread });
 		
 		if (!existingThread) {
 			// Create the thread since it doesn't exist
-			await memory.createThread({
+			console.log("Creating new thread:", threadId);
+			const newThread = await memory.createThread({
 				threadId,
 				resourceId: userId,
 				title: `Chat with ${agentId}`,
@@ -199,32 +171,47 @@ export async function POST(
 					createdAt: new Date().toISOString(),
 				},
 			});
+			console.log("Thread created:", newThread);
+			
+			// Verify thread was created
+			const verifyThread = await memory.getThreadById({ threadId });
+			console.log("Thread verification after creation:", { threadId, exists: !!verifyThread });
 		}
 		
-		// Convert UI message to Mastra's internal v3 format
-		// This format was discovered by inspecting what Mastra saves to the database
-		const mastraMessage = {
-			id: lastUserMessage.id,
-			resourceId: userId,
-			threadId,
-			createdAt: new Date().toISOString(),
-			role: lastUserMessage.role,
-			content: {
-				format: 2,
-				parts: lastUserMessage.parts,
-				content: lastUserMessage.parts.find(p => p.type === "text")?.text || "",
-			},
-			type: "v3",
-			_index: 0,
+		// Add threadId as a direct property of the message (required by Mastra)
+		const messageWithThreadId = {
+			...lastUserMessage,
+			threadId, // Required at the top level of the message
+			resourceId: userId, // Also add resourceId at the top level
 		};
 		
 		// Save the message to memory before streaming
-		await memory.saveMessages({
-			messages: [mastraMessage],
+		console.log("Saving message to memory:", { 
+			messageId: messageWithThreadId.id,
+			threadId: messageWithThreadId.threadId,
+			resourceId: messageWithThreadId.resourceId,
+			role: messageWithThreadId.role
+		});
+		
+		const savedMessages = await memory.saveMessages({
+			messages: [messageWithThreadId],
+		});
+		
+		console.log("Messages saved:", savedMessages.length);
+		
+		// Verify messages were saved by querying them back
+		const memoryQuery = await memory.query({
+			threadId,
+			selectBy: { last: 10 },
+		});
+		console.log("Messages in memory after save:", {
+			count: memoryQuery.messages.length,
+			lastMessage: memoryQuery.messages[memoryQuery.messages.length - 1]
 		});
 		
 		// Now stream with empty array since message is already in memory
 		// The agent will retrieve all messages from memory using the threadId
+		console.log("Streaming with empty array, threadId:", threadId);
 		const result = await agent.stream([], options);
 
 		// Get the stream context for resumable streams
