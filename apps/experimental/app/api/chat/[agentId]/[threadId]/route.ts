@@ -55,7 +55,7 @@ async function createStreamId({ streamId, chatId }: { streamId: string; chatId: 
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
-function getStreamContext() {
+export function getStreamContext() {
 	if (!globalStreamContext) {
 		try {
 			globalStreamContext = createResumableStreamContext({
