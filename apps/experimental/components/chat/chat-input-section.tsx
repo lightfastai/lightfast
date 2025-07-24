@@ -23,12 +23,14 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 	const transport = useChatTransport({ threadId, agentId });
 
 	// Use the chat hook with transport and LightfastUIMessage type
+	// The key is to use a stable ID that includes both agentId and threadId
+	// This ensures the hook creates a fresh instance for each new chat
 	const {
 		messages,
 		sendMessage: vercelSendMessage,
 		status,
 	} = useChat<LightfastUIMessage>({
-		id: threadId,
+		id: `${agentId}-${threadId}`,
 		transport,
 		messages: initialMessages,
 	});
