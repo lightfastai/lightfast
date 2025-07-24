@@ -38,14 +38,6 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
 					},
 				};
 			},
-			prepareReconnectToStreamRequest: ({ api, headers, credentials }) => {
-				// For reconnecting to streams, use the /stream endpoint
-				return {
-					api: `${apiEndpoint}/stream`,
-					headers,
-					credentials,
-				};
-			},
 		});
 	}, [threadId, agentId]);
 

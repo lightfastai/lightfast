@@ -1,4 +1,5 @@
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
+import { DataStreamProvider } from "@/components/data-stream-provider";
 import { ChatInputSection } from "./chat-input-section";
 
 interface ChatInterfaceProps {
@@ -16,13 +17,15 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 	// This ensures real-time updates work properly
 	// Use key prop to force complete remount when threadId changes
 	return (
-		<div className="flex-1 flex flex-col relative">
-			<ChatInputSection
-				key={`${agentId}-${threadId}`}
-				agentId={agentId}
-				threadId={threadId}
-				initialMessages={initialMessages}
-			/>
-		</div>
+		<DataStreamProvider>
+			<div className="flex-1 flex flex-col relative">
+				<ChatInputSection
+					key={`${agentId}-${threadId}`}
+					agentId={agentId}
+					threadId={threadId}
+					initialMessages={initialMessages}
+				/>
+			</div>
+		</DataStreamProvider>
 	);
 }

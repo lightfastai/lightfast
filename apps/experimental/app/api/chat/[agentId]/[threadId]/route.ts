@@ -8,7 +8,7 @@ import { env as aiEnv } from "@lightfast/ai/env";
 import { v4 as uuidv4 } from "uuid";
 import { after } from "next/server";
 import { createResumableStreamContext, type ResumableStreamContext } from "resumable-stream";
-import { JsonToSseTransformStream } from "ai";
+import { JsonToSseTransformStream, createUIMessageStream } from "ai";
 
 // Initialize Redis client with REST API URL from AI env
 const redis = new Redis({
@@ -54,23 +54,177 @@ async function createStreamId({ streamId, chatId }: { streamId: string; chatId: 
 }
 
 let globalStreamContext: ResumableStreamContext | null = null;
+let contextCreatedAt: number = 0;
+const CONTEXT_TTL = 5 * 60 * 1000; // 5 minutes
 
 export function getStreamContext() {
-	if (!globalStreamContext) {
+	const now = Date.now();
+	
+	// Recreate context if it's too old or doesn't exist
+	if (!globalStreamContext || (now - contextCreatedAt) > CONTEXT_TTL) {
 		try {
+			if (globalStreamContext) {
+				console.log("Recreating stream context due to age");
+			}
+			
 			globalStreamContext = createResumableStreamContext({
 				waitUntil: after,
 			});
+			contextCreatedAt = now;
 		} catch (error: any) {
 			if (error.message.includes("REDIS_URL")) {
 				console.log(" > Resumable streams are disabled due to missing REDIS_URL");
 			} else {
-				console.error(error);
+				console.error("Error creating stream context:", error);
 			}
+			return null;
 		}
 	}
 
 	return globalStreamContext;
+}
+
+export async function GET(
+	request: NextRequest,
+	{ params }: { params: Promise<{ agentId: ExperimentalAgentId; threadId: string }> },
+) {
+	const { agentId, threadId } = await params;
+	
+	// Get chatId from query params (v5 pattern)
+	const chatId = request.nextUrl.searchParams.get('chatId');
+	
+	// Use chatId if provided, otherwise use threadId for backward compatibility
+	const streamThreadId = chatId || threadId;
+	
+	// Validate threadId
+	if (!isValidUUID(streamThreadId)) {
+		return Response.json(
+			{ error: `Invalid thread ID format: ${streamThreadId}` },
+			{ status: 400 },
+		);
+	}
+
+	const streamContext = getStreamContext();
+	const resumeRequestedAt = new Date();
+	
+	if (!streamContext) {
+		return new Response(null, { status: 204 });
+	}
+
+	// Check authentication
+	const { userId } = await auth();
+	if (!userId) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	try {
+		// Get the list of streamIds for this thread from Redis
+		const streamIds = await redis.lrange(`chat:${streamThreadId}:streams`, 0, 0);
+		
+		if (!streamIds || streamIds.length === 0) {
+			console.log("No stream IDs found for thread:", streamThreadId);
+			return new Response(null, { status: 204 });
+		}
+
+		// Get the most recent streamId
+		const recentStreamId = streamIds[0];
+		console.log(`Attempting to resume stream: ${recentStreamId}`);
+
+		// Create an empty data stream for fallback
+		const emptyDataStream = createUIMessageStream({
+			execute: () => {},
+		});
+
+		// Attempt to resume the stream
+		const stream = await streamContext.resumableStream(recentStreamId, () =>
+			emptyDataStream.pipeThrough(new JsonToSseTransformStream()),
+		);
+
+		/*
+		 * For when the generation is streaming during SSR
+		 * but the resumable stream has concluded at this point.
+		 */
+		if (!stream) {
+			// Get the agent to access memory and fetch recent messages
+			const agent = mastra.getAgent(agentId);
+			if (!agent) {
+				return new Response(emptyDataStream.pipeThrough(new JsonToSseTransformStream()), { 
+					status: 200,
+					headers: {
+						"Content-Type": "text/event-stream",
+						"Cache-Control": "no-cache",
+						"Connection": "keep-alive",
+					},
+				});
+			}
+
+			const memory = await agent.getMemory();
+			const messages = await memory.query({
+				threadId: streamThreadId,
+				selectBy: { last: 10 },
+			});
+
+			const mostRecentMessage = messages.uiMessages?.at(-1);
+			
+			if (!mostRecentMessage || mostRecentMessage.role !== 'assistant') {
+				return new Response(emptyDataStream.pipeThrough(new JsonToSseTransformStream()), { 
+					status: 200,
+					headers: {
+						"Content-Type": "text/event-stream",
+						"Cache-Control": "no-cache",
+						"Connection": "keep-alive",
+					},
+				});
+			}
+
+			// Check if message was created within last 15 seconds
+			const messageCreatedAt = new Date(mostRecentMessage.createdAt || Date.now());
+			const secondsDiff = Math.abs((resumeRequestedAt.getTime() - messageCreatedAt.getTime()) / 1000);
+			
+			if (secondsDiff > 15) {
+				return new Response(emptyDataStream.pipeThrough(new JsonToSseTransformStream()), { 
+					status: 200,
+					headers: {
+						"Content-Type": "text/event-stream",
+						"Cache-Control": "no-cache",
+						"Connection": "keep-alive",
+					},
+				});
+			}
+
+			// Restore the recent assistant message
+			const restoredStream = createUIMessageStream({
+				execute: ({ writer }) => {
+					writer.write({
+						type: 'data-appendMessage',
+						data: JSON.stringify(mostRecentMessage),
+						transient: true,
+					});
+				},
+			});
+
+			return new Response(restoredStream.pipeThrough(new JsonToSseTransformStream()), {
+				status: 200,
+				headers: {
+					"Content-Type": "text/event-stream",
+					"Cache-Control": "no-cache",
+					"Connection": "keep-alive",
+				},
+			});
+		}
+
+		return new Response(stream, { 
+			status: 200,
+			headers: {
+				"Content-Type": "text/event-stream",
+				"Cache-Control": "no-cache",
+				"Connection": "keep-alive",
+			},
+		});
+	} catch (error) {
+		console.error("Error resuming stream:", error);
+		return Response.json({ error: "Failed to resume stream" }, { status: 500 });
+	}
 }
 
 export async function POST(

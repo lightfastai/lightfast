@@ -4,6 +4,8 @@ import { useChat } from "@ai-sdk/react";
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
 import { ChatInput } from "@/components/chat-input";
 import { useChatTransport } from "@/hooks/use-chat-transport";
+import { useAutoResume } from "@/hooks/use-auto-resume";
+import { useDataStream } from "@/components/data-stream-provider";
 import { ChatBottomSection } from "./chat-bottom-section";
 import { ChatMessages } from "./chat-messages";
 import { EmptyState } from "./empty-state";
@@ -19,6 +21,8 @@ interface ChatInputSectionProps {
  * Isolated from server-rendered content for better performance
  */
 export function ChatInputSection({ agentId, threadId, initialMessages = [] }: ChatInputSectionProps) {
+	const { setDataStream } = useDataStream();
+
 	// Create transport for AI SDK v5 with agentId
 	const transport = useChatTransport({ threadId, agentId });
 
@@ -29,12 +33,24 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 		messages,
 		sendMessage: vercelSendMessage,
 		status,
+		setMessages,
 		resumeStream,
 	} = useChat<LightfastUIMessage>({
 		id: `${agentId}-${threadId}`,
 		transport,
-		resume: initialMessages && initialMessages.length > 0,
 		messages: initialMessages,
+		experimental_throttle: 100,
+		onData: (dataPart) => {
+			setDataStream((ds) => (ds ? [...ds, dataPart] : [dataPart]));
+		},
+	});
+
+	// Auto-resume interrupted streams if the last message was from user
+	useAutoResume({
+		autoResume: initialMessages && initialMessages.length > 0,
+		initialMessages,
+		resumeStream,
+		setMessages,
 	});
 
 	const handleSendMessage = async (message: string) => {
