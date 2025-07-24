@@ -57,6 +57,7 @@
 		"@radix-ui/react-slot": "^1.2.3",
 		"@t3-oss/env-core": "catalog:",
 		"@t3-oss/env-nextjs": "^0.12.0",
+		"@types/uuid": "^10.0.0",
 		"@upstash/redis": "catalog:",
 		"@vercel/analytics": "^1.5.0",
 		"@vercel/blob": "catalog:",
@@ -76,8 +77,10 @@
 		"react-markdown": "^10.1.0",
 		"redis": "catalog:",
 		"remark-gfm": "^4.0.1",
+		"resumable-stream": "^2.0.0",
 		"tailwind-merge": "^3.3.1",
 		"use-stick-to-bottom": "1.1.1",
+		"uuid": "^11.1.0",
 		"zod": "catalog:"
 	}
 }
