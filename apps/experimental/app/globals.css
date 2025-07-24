@@ -74,6 +74,13 @@
 	--sidebar-accent-foreground: oklch(0.205 0 0);
 	--sidebar-border: oklch(0.922 0 0);
 	--sidebar-ring: oklch(0.708 0 0);
+
+	/* Scroll anchor variables for chat */
+	--spacing-input-area: 4rem; /* Approximate height of chat input area */
+	--spacing-app-header: 3.5rem; /* Approximate height of app header */
+	--spacing-scroll-area: calc(-1 * (var(--spacing-input-area) + var(--spacing-app-header)));
+	--spacing-scroll-anchor-offset: 140px;
+	--spacing-scroll-anchor: calc(var(--spacing-scroll-area) - var(--spacing-scroll-anchor-offset) + 100dvh);
 }
 
 .dark {

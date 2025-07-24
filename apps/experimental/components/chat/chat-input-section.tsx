@@ -69,7 +69,7 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 				<ChatBottomSection>
 					<ChatInput
 						onSendMessage={handleSendMessage}
-						placeholder="Type your message..."
+						placeholder="Ask Lightfast"
 						disabled={status === "streaming" || status === "submitted"}
 					/>
 				</ChatBottomSection>
@@ -86,7 +86,7 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 				</div>
 				<ChatInput
 					onSendMessage={handleSendMessage}
-					placeholder="Type your message..."
+					placeholder="Ask Lightfast"
 					disabled={status === "streaming" || status === "submitted"}
 				/>
 			</div>

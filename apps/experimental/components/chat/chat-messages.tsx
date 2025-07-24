@@ -4,6 +4,7 @@ import type { LightfastUIMessage } from "@lightfast/types";
 import { isTextPart, isToolPart } from "@lightfast/types";
 import type { ChatStatus, ToolUIPart } from "ai";
 import { ArrowDown } from "lucide-react";
+import { useRef } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { Markdown } from "@/components/markdown";
 import { ThinkingMessage } from "@/components/thinking-message";
@@ -40,6 +41,12 @@ function ScrollButton() {
 }
 
 export function ChatMessages({ messages, status }: ChatMessagesProps) {
+	// Track initial message count for scroll anchor
+	const initialMessageCount = useRef<number | null>(null);
+	if (initialMessageCount.current === null) {
+		initialMessageCount.current = messages.length;
+	}
+
 	// Add runtime status to messages
 	const messagesWithStatus: MessageWithRuntimeStatus[] = messages.map((msg, index) => {
 		if (index === messages.length - 1) {
@@ -60,12 +67,12 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 		<div className="flex-1 relative min-h-0 overflow-hidden">
 			<StickToBottom className="absolute inset-0 overflow-y-auto" resize="smooth" initial="instant" role="log">
 				<StickToBottom.Content className="flex w-full flex-col">
-					{messagesWithStatus.map((message) => (
-						<MessageItem
-							key={message.id}
-							message={message}
-						/>
-					))}
+					{messagesWithStatus.map((message, index) => {
+						const isLast = index === messagesWithStatus.length - 1;
+						const hasScrollAnchor =
+							isLast && initialMessageCount.current !== null && messagesWithStatus.length > initialMessageCount.current;
+						return <MessageItem key={message.id} message={message} hasScrollAnchor={hasScrollAnchor} />;
+					})}
 				</StickToBottom.Content>
 				<ScrollButton />
 			</StickToBottom>
@@ -73,7 +80,7 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 	);
 }
 
-function MessageItem({ message }: { message: MessageWithRuntimeStatus }) {
+function MessageItem({ message, hasScrollAnchor }: { message: MessageWithRuntimeStatus; hasScrollAnchor?: boolean }) {
 	// For user messages
 	if (message.role === "user") {
 		const textContent =
@@ -84,7 +91,7 @@ function MessageItem({ message }: { message: MessageWithRuntimeStatus }) {
 
 		return (
 			<>
-				<div className={cn("pb-12")}>
+				<div className={cn("pb-12", hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]")}>
 					<div className="mx-auto max-w-3xl px-4 flex justify-end">
 						<div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
 							<p className="whitespace-pre-wrap">{textContent}</p>
@@ -105,7 +112,7 @@ function MessageItem({ message }: { message: MessageWithRuntimeStatus }) {
 
 	// For assistant messages, render parts in order
 	return (
-		<div className={cn("pb-12")}>
+		<div className={cn("pb-12", hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]")}>
 			<div className="mx-auto max-w-3xl px-4 space-y-4">
 				{/* Show thinking animation at top of assistant message based on runtime status */}
 				{message.runtimeStatus && <ThinkingMessage status={message.runtimeStatus} show={true} className="mb-2" />}
