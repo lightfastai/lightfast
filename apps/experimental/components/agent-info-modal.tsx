@@ -27,13 +27,7 @@ export function AgentInfoModal({ agentId }: AgentInfoModalProps) {
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[600px] overflow-hidden p-0">
 				<div className="relative w-full h-[200px]">
-					<Image
-						src="/og.jpg"
-						alt="Lightfast AI"
-						fill
-						className="object-cover"
-						priority
-					/>
+					<Image src="/og.jpg" alt="Lightfast AI" fill className="object-cover" priority />
 				</div>
 				<div className="p-6">
 					<DialogTitle className="sr-only">About Lightfast AI</DialogTitle>

@@ -1,4 +1,5 @@
 import type { ExperimentalAgentId } from "@lightfast/types";
+import { Suspense } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { generateUUID } from "@/lib/utils";
 
@@ -19,6 +20,10 @@ export default async function NewChatPage({ params }: NewChatPageProps) {
 	// Generate a new thread ID server-side
 	const threadId = generateUUID();
 
-	// Render chat interface with generated ID
-	return <ChatInterface agentId={agentId} threadId={threadId} initialMessages={[]} />;
+	// Wrap in Suspense to ensure proper hydration timing
+	return (
+		<Suspense fallback={null}>
+			<ChatInterface agentId={agentId} threadId={threadId} initialMessages={[]} />
+		</Suspense>
+	);
 }

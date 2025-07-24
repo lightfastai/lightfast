@@ -48,7 +48,7 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 	}
 
 	// Add runtime status to messages and inject thinking placeholder
-	let messagesWithStatus: MessageWithRuntimeStatus[] = messages.map((msg, index) => {
+	const messagesWithStatus: MessageWithRuntimeStatus[] = messages.map((msg, index) => {
 		if (index === messages.length - 1) {
 			if (msg.role === "assistant" && status === "streaming") {
 				return { ...msg, runtimeStatus: "streaming" };
