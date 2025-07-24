@@ -4,7 +4,7 @@ import type { ExperimentalAgentId } from "@lightfast/types";
 import type { NextRequest } from "next/server";
 import { isValidUUID } from "@/lib/uuid-utils";
 import { Redis } from "@upstash/redis";
-import { env } from "@/env";
+import { env as aiEnv } from "@lightfast/ai/env";
 import { v4 as uuidv4 } from "uuid";
 import { after } from "next/server";
 import {
@@ -13,10 +13,10 @@ import {
 } from "resumable-stream";
 import { JsonToSseTransformStream } from "ai";
 
-// Initialize Redis client
+// Initialize Redis client with REST API URL from AI env
 const redis = new Redis({
-	url: env.KV_URL,
-	token: env.KV_REST_API_READ_ONLY_TOKEN,
+	url: aiEnv.KV_REST_API_URL,
+	token: aiEnv.KV_REST_API_TOKEN,
 });
 
 // Custom error class for chat SDK errors
@@ -67,7 +67,7 @@ async function createStreamId({
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
-export function getStreamContext() {
+function getStreamContext() {
 	if (!globalStreamContext) {
 		try {
 			globalStreamContext = createResumableStreamContext({
@@ -179,7 +179,8 @@ export async function POST(
 			);
 		} else {
 			// Fall back to regular streaming
-			return result.toUIMessageStreamResponse();
+			const stream = result.toUIMessageStream();
+			return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
 		}
 	} catch (error) {
 		console.error("Chat error:", error);
