@@ -12,7 +12,15 @@ import {
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
-import { appendMessages, createMessages, createStream, createThread, getMessages, getThread, getThreadStreams } from "@/lib/db";
+import {
+	appendMessages,
+	createMessages,
+	createStream,
+	createThread,
+	getMessages,
+	getThread,
+	getThreadStreams,
+} from "@/lib/db";
 import { uuidv4 } from "@/lib/uuidv4";
 
 // Create the resumable stream context
@@ -48,7 +56,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 
 		// Handle messages based on whether thread is new or existing
 		let allMessages: LightfastUIMessage[];
-		
+
 		if (!existingThread) {
 			// New thread - create with initial messages
 			await createMessages({ threadId, messages });
@@ -57,19 +65,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		} else {
 			// Existing thread - need to determine which messages are actually new
 			const existingMessages = await getMessages(threadId);
-			
+
 			// Find messages that don't exist in the database yet
 			// This handles the case where the client sends all messages
-			const existingIds = new Set(existingMessages.map(m => m.id));
-			const newMessages = messages.filter(m => !existingIds.has(m.id));
-			
+			const existingIds = new Set(existingMessages.map((m) => m.id));
+			const newMessages = messages.filter((m) => !existingIds.has(m.id));
+
 			if (newMessages.length > 0) {
 				await appendMessages({ threadId, messages: newMessages });
-				console.log(`[POST] Appended ${newMessages.length} new messages to thread ${threadId} (client sent ${messages.length} total)`);
+				console.log(
+					`[POST] Appended ${newMessages.length} new messages to thread ${threadId} (client sent ${messages.length} total)`,
+				);
 			} else {
 				console.log(`[POST] No new messages to append to thread ${threadId}`);
 			}
-			
+
 			// Use all messages from client for context (they may have local state we don't)
 			allMessages = messages;
 		}
@@ -112,11 +122,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 				console.log("Appending assistant response!");
 				// onFinish receives the assistant's response message(s)
 				// Filter to only get assistant messages (not user messages)
-				const assistantMessages = newMessages.filter(msg => msg.role === "assistant") as LightfastUIMessage[];
+				const assistantMessages = newMessages.filter((msg) => msg.role === "assistant") as LightfastUIMessage[];
 				if (assistantMessages.length > 0) {
-					await appendMessages({ 
-						threadId, 
-						messages: assistantMessages
+					await appendMessages({
+						threadId,
+						messages: assistantMessages,
 					});
 				}
 			},
