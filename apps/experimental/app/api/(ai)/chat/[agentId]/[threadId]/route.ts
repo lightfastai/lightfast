@@ -2,7 +2,7 @@ import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
 import type { LightfastUIMessage, LightfastToolSet } from "@lightfast/types";
-import { convertToModelMessages, smoothStream, streamText } from "ai";
+import { convertToModelMessages, smoothStream, streamText, stepCountIs } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import {
@@ -96,6 +96,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 			},
 			model: gateway("anthropic/claude-4-sonnet"),
 			messages: convertToModelMessages(allMessages),
+			stopWhen: stepCountIs(30),
 			system: `
 <system>
   <role>
