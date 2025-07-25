@@ -1,4 +1,4 @@
-import type { UIMessage, InferUITools } from "ai";
+import type { UIMessage, InferUITools, InferToolInput, InferToolOutput, InferUITool } from "ai";
 import type {
 	fileTool,
 	fileReadTool,
@@ -23,28 +23,25 @@ export interface LightfastUICustomDataTypes {
 	[key: string]: unknown; // Index signature required by UIDataTypes
 }
 
-// Define the tool set type based on our actual tools - this represents the structure
-// that matches what we pass to streamText() in the route
+// Define the tool set type using InferUITool for each tool
+// This matches the structure passed to streamText() in route.ts
 export type LightfastToolSet = {
-	file: ReturnType<typeof fileTool>;
-	fileRead: ReturnType<typeof fileReadTool>;
-	fileDelete: ReturnType<typeof fileDeleteTool>;
-	fileStringReplace: ReturnType<typeof fileStringReplaceTool>;
-	fileFindInContent: ReturnType<typeof fileFindInContentTool>;
-	fileFindByName: ReturnType<typeof fileFindByNameTool>;
-	webSearch: ReturnType<typeof webSearchTool>;
-	createSandbox: ReturnType<typeof createSandboxTool>;
-	executeSandboxCommand: ReturnType<typeof executeSandboxCommandTool>;
-	createSandboxWithPorts: ReturnType<typeof createSandboxWithPortsTool>;
-	getSandboxDomain: ReturnType<typeof getSandboxDomainTool>;
-	listSandboxRoutes: ReturnType<typeof listSandboxRoutesTool>;
-	todoWrite: ReturnType<typeof todoWriteTool>;
-	todoRead: ReturnType<typeof todoReadTool>;
-	todoClear: ReturnType<typeof todoClearTool>;
+	file: InferUITool<ReturnType<typeof fileTool>>;
+	fileRead: InferUITool<ReturnType<typeof fileReadTool>>;
+	fileDelete: InferUITool<ReturnType<typeof fileDeleteTool>>;
+	fileStringReplace: InferUITool<ReturnType<typeof fileStringReplaceTool>>;
+	fileFindInContent: InferUITool<ReturnType<typeof fileFindInContentTool>>;
+	fileFindByName: InferUITool<ReturnType<typeof fileFindByNameTool>>;
+	webSearch: InferUITool<ReturnType<typeof webSearchTool>>;
+	createSandbox: InferUITool<ReturnType<typeof createSandboxTool>>;
+	executeSandboxCommand: InferUITool<ReturnType<typeof executeSandboxCommandTool>>;
+	createSandboxWithPorts: InferUITool<ReturnType<typeof createSandboxWithPortsTool>>;
+	getSandboxDomain: InferUITool<ReturnType<typeof getSandboxDomainTool>>;
+	listSandboxRoutes: InferUITool<ReturnType<typeof listSandboxRoutesTool>>;
+	todoWrite: InferUITool<ReturnType<typeof todoWriteTool>>;
+	todoRead: InferUITool<ReturnType<typeof todoReadTool>>;
+	todoClear: InferUITool<ReturnType<typeof todoClearTool>>;
 };
-
-// Properly infer tool schemas from our actual tools using AI SDK's utility
-export type LightfastToolSchemas = InferUITools<LightfastToolSet>;
 
 // Metadata type for our messages
 export interface LightfastUIMessageMetadata {
@@ -58,28 +55,9 @@ export interface LightfastUIMessageMetadata {
 export type LightfastUIMessage = UIMessage<
 	LightfastUIMessageMetadata,
 	LightfastUICustomDataTypes,
-	LightfastToolSchemas
+	LightfastToolSet
 >;
 
-// Type for the parts in Mastra messages (simplified for now)
-export interface MastraMessagePart {
-	type: string;
-	text?: string;
-	state?: string;
-	[key: string]: unknown;
-}
-
-// Mastra memory message type (what we actually receive from memory.query().uiMessages)
-export interface MastraUIMessage {
-	id: string;
-	role: "user" | "assistant" | "system";
-	parts: MastraMessagePart[];
-	metadata?: {
-		createdAt: string; // ISO string date
-		threadId: string;
-		resourceId: string;
-	};
-}
 
 // Helper type for message parts
 export type LightfastUIMessagePart = LightfastUIMessage["parts"][number];
@@ -94,7 +72,8 @@ export function isToolPart(part: LightfastUIMessagePart): boolean {
 }
 
 // Utility type to extract tool names
-export type LightfastToolName = keyof LightfastToolSchemas;
+export type LightfastToolName = keyof LightfastToolSet;
 
 // Utility type to get input for a specific tool
-export type LightfastToolInput<T extends LightfastToolName> = LightfastToolSchemas[T]["input"];
+export type LightfastToolInput<T extends LightfastToolName> = LightfastToolSet[T]["input"];
+

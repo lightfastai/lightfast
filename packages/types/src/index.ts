@@ -6,6 +6,4 @@
  */
 
 // Export all type definitions
-export * from "./custom-ui-data-types";
-export * from "./experimental-agent-types";
 export * from "./lightfast-ui-messages";

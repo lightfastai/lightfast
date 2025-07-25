@@ -33,6 +33,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
 	// Get messages for the thread
 	const messages = await getMessages(threadId);
 
+	console.log(messages);
 	return (
 		<Suspense fallback={null}>
 			<ChatInterface agentId={agentId} threadId={threadId} userId={userId} initialMessages={messages} />

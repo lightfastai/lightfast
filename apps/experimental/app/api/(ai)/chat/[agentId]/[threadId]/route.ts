@@ -390,6 +390,7 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 
 		return result.toUIMessageStreamResponse<LightfastUIMessage>({
 			// originalMessages: messages,
+			generateMessageId: () => uuidv4(),
 			onFinish: async ({ messages: finishedMessages }) => {
 				// Only save the new assistant message (last message should be the assistant's response)
 				console.log("all", finishedMessages);
