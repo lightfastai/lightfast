@@ -8,189 +8,161 @@ export interface HandlerContext {
 	resourceId: string;
 }
 
-export interface CreateHandlerOptions<
+export interface AgentHandlerContext {
+	resourceId: string;
+}
+
+export interface AgentHandlerOptions<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
 	TRuntimeContext extends RuntimeContext = RuntimeContext,
 > {
 	createAgent: (context: HandlerContext) => Agent<TMessage, TTools, TRuntimeContext>;
-	auth: (request: Request) => Promise<{ userId: string } | null>;
 	generateId?: () => string;
-	enableResume?: boolean; // Optional flag to enable resumable streams
+	enableResume?: boolean;
+}
+
+export interface AgentHandlerParams {
+	req: Request;
+	params: { agentId: string; threadId: string };
+	createContext: () => AgentHandlerContext;
 }
 
 /**
- * Creates Next.js API route handlers for an agent
- *
- * @param options.enableResume - When true, creates both GET and POST handlers with resumable stream support.
- *                              When false, only creates POST handler for simple streaming.
+ * Creates an agent handler function that can be called from route handlers
  *
  * @example
- * // With resume support (creates GET and POST)
- * export const { GET, POST } = agentHandler({
- *   createAgent: ({ resourceId }) => new Agent({ name: "my-agent", resourceId, ... }),
- *   auth: async () => ({ resourceId: "123" }),
+ * ```typescript
+ * const agentHandler = createAgentHandler({
+ *   createAgent: ({ resourceId, threadId }) => new Agent({ ... }),
+ *   generateId: uuidv4,
  *   enableResume: true
  * });
  *
- * @example
- * // Without resume support (creates POST only)
- * export const { POST } = agentHandler({
- *   createAgent: ({ resourceId }) => new Agent({ name: "my-agent", resourceId, ... }),
- *   auth: async () => ({ resourceId: "123" }),
- *   enableResume: false
- * });
+ * const handler = async (req, { params }) => {
+ *   const { userId } = await auth();
+ *   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+ *
+ *   return agentHandler({
+ *     req,
+ *     params: await params,
+ *     createContext: () => ({ resourceId: userId })
+ *   });
+ * };
+ *
+ * export { handler as GET, handler as POST };
+ * ```
  */
 export function createAgentHandler<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
 	TRuntimeContext extends RuntimeContext = RuntimeContext,
->(options: CreateHandlerOptions<TMessage, TTools, TRuntimeContext>) {
-	const { createAgent, auth, generateId } = options;
+>(options: AgentHandlerOptions<TMessage, TTools, TRuntimeContext>) {
+	const { createAgent, generateId, enableResume } = options;
 
-	async function POST(request: Request, { params }: { params: Promise<{ agentId: string; threadId: string }> }) {
-		try {
-			// Check authentication
-			const authResult = await auth(request);
-			if (!authResult) {
-				return Response.json({ error: "Unauthorized" }, { status: 401 });
-			}
+	return async ({ req, params, createContext }: AgentHandlerParams): Promise<Response> => {
+		const { threadId } = params;
+		const context = createContext();
 
-			const { threadId } = await params;
-			const { messages }: { messages: TMessage[] } = await request.json();
+		if (req.method === "POST") {
+			try {
+				const { messages }: { messages: TMessage[] } = await req.json();
 
-			// Create agent instance with context
-			const agent = createAgent({ threadId, resourceId: authResult.userId });
+				// Create agent instance with context
+				const agent = createAgent({ threadId, resourceId: context.resourceId });
 
-			// Stream the response
-			const { result, streamId, threadId: tid, uiStreamOptions } = await agent.stream({ threadId, messages });
+				// Stream the response
+				const { result, streamId, threadId: tid, uiStreamOptions } = await agent.stream({ threadId, messages });
 
-			// Create UI message stream response with proper options
-			const streamOptions: UIMessageStreamOptions<TMessage> = {
-				...uiStreamOptions,
-				generateMessageId: generateId,
-				onFinish: async ({ messages: finishedMessages, responseMessage, isContinuation }) => {
-					// Save the assistant's response to memory
-					if (responseMessage && responseMessage.role === "assistant") {
-						const memory = agent.getMemory();
-						await memory.appendMessages({
-							threadId: tid,
-							messages: [responseMessage],
-						});
-					}
+				// Create UI message stream response with proper options
+				const streamOptions: UIMessageStreamOptions<TMessage> = {
+					...uiStreamOptions,
+					generateMessageId: generateId,
+					onFinish: async ({ messages: finishedMessages, responseMessage, isContinuation }) => {
+						// Save the assistant's response to memory
+						if (responseMessage && responseMessage.role === "assistant") {
+							const memory = agent.getMemory();
+							await memory.appendMessages({
+								threadId: tid,
+								messages: [responseMessage],
+							});
+						}
 
-					// Call user's onFinish if provided
-					if (uiStreamOptions?.onFinish) {
-						await uiStreamOptions.onFinish({
-							messages: finishedMessages,
-							responseMessage,
-							isContinuation,
-							isAborted: false,
-						});
-					}
-				},
-			};
-
-			// Return response with optional resume support
-			if (options.enableResume) {
-				return result.toUIMessageStreamResponse<TMessage>({
-					...streamOptions,
-					async consumeSseStream({ stream }) {
-						// Send the SSE stream into a resumable stream sink
-						const streamContext = createResumableStreamContext({ waitUntil: (promise) => promise });
-						await streamContext.createNewResumableStream(streamId, () => stream);
+						// Call user's onFinish if provided
+						if (uiStreamOptions?.onFinish) {
+							await uiStreamOptions.onFinish({
+								messages: finishedMessages,
+								responseMessage,
+								isContinuation,
+								isAborted: false,
+							});
+						}
 					},
-				});
-			} else {
-				return result.toUIMessageStreamResponse<TMessage>(streamOptions);
-			}
-		} catch (error) {
-			console.error("Error in POST handler:", error);
-			return new Response(JSON.stringify({ error: "Internal server error" }), {
-				status: 500,
-				headers: { "Content-Type": "application/json" },
-			});
-		}
-	}
+				};
 
-	// Only create GET handler if resume is enabled
-	const GET = options.enableResume
-		? async function GET(_request: Request, { params }: { params: Promise<{ agentId: string; threadId: string }> }) {
-				const { threadId } = await params;
-
-				if (!threadId) {
-					return new Response("threadId is required", { status: 400 });
-				}
-
-				// Check authentication
-				const authResult = await auth(_request);
-				if (!authResult) {
-					return Response.json({ error: "Unauthorized" }, { status: 401 });
-				}
-
-				try {
-					// Create agent instance with context
-					const agent = createAgent({ threadId, resourceId: authResult.userId });
-
-					// Get stream metadata from agent
-					await agent.getStreamMetadata(threadId);
-
-					// Get thread streams
-					const memory = agent.getMemory();
-					const streamIds = await memory.getThreadStreams(threadId);
-
-					if (!streamIds.length) {
-						return new Response(null, { status: 204 });
-					}
-
-					const recentStreamId = streamIds[0]; // Redis LPUSH puts newest first
-
-					if (!recentStreamId) {
-						return new Response(null, { status: 204 });
-					}
-
-					// Resume the stream using resumable-stream context
-					const streamContext = createResumableStreamContext({
-						waitUntil: (promise) => promise,
+				// Return response with optional resume support
+				if (enableResume) {
+					return result.toUIMessageStreamResponse<TMessage>({
+						...streamOptions,
+						async consumeSseStream({ stream }) {
+							// Send the SSE stream into a resumable stream sink
+							const streamContext = createResumableStreamContext({ waitUntil: (promise) => promise });
+							await streamContext.createNewResumableStream(streamId, () => stream);
+						},
 					});
-
-					const resumedStream = await streamContext.resumeExistingStream(recentStreamId);
-
-					return new Response(resumedStream);
-				} catch (error) {
-					if (error instanceof Error && error.message.includes("not found")) {
-						return Response.json({ error: "Not found" }, { status: 404 });
-					}
-					throw error;
+				} else {
+					return result.toUIMessageStreamResponse<TMessage>(streamOptions);
 				}
+			} catch (error) {
+				console.error("Error in POST handler:", error);
+				return new Response(JSON.stringify({ error: "Internal server error" }), {
+					status: 500,
+					headers: { "Content-Type": "application/json" },
+				});
 			}
-		: undefined;
+		} else if (req.method === "GET" && enableResume) {
+			if (!threadId) {
+				return new Response("threadId is required", { status: 400 });
+			}
 
-	// Return handlers based on what's enabled
-	if (options.enableResume) {
-		return { GET, POST };
-	} else {
-		// TypeScript requires explicit typing when GET might be undefined
-		return { POST } as { GET?: typeof GET; POST: typeof POST };
-	}
-}
+			try {
+				// Create agent instance with context
+				const agent = createAgent({ threadId, resourceId: context.resourceId });
 
-/**
- * Higher-order function that adds resumable stream support
- * @deprecated Use enableResume option in createAgentHandler instead
- */
-export function resumeHandler<T extends { GET?: Function; POST: Function }>(handlers: T): T {
-	// The handlers already include resumable stream support via createResumableStreamContext
-	return handlers;
-}
+				// Get stream metadata from agent
+				await agent.getStreamMetadata(threadId);
 
-/**
- * Convenience function to create handlers with resumable support
- */
-export function agentHandler<
-	TMessage extends UIMessage = UIMessage,
-	TTools extends ToolSet = ToolSet,
-	TRuntimeContext extends RuntimeContext = RuntimeContext,
->(options: CreateHandlerOptions<TMessage, TTools, TRuntimeContext>) {
-	return resumeHandler(createAgentHandler(options));
+				// Get thread streams
+				const memory = agent.getMemory();
+				const streamIds = await memory.getThreadStreams(threadId);
+
+				if (!streamIds.length) {
+					return new Response(null, { status: 204 });
+				}
+
+				const recentStreamId = streamIds[0]; // Redis LPUSH puts newest first
+
+				if (!recentStreamId) {
+					return new Response(null, { status: 204 });
+				}
+
+				// Resume the stream using resumable-stream context
+				const streamContext = createResumableStreamContext({
+					waitUntil: (promise) => promise,
+				});
+
+				const resumedStream = await streamContext.resumeExistingStream(recentStreamId);
+
+				return new Response(resumedStream);
+			} catch (error) {
+				if (error instanceof Error && error.message.includes("not found")) {
+					return Response.json({ error: "Not found" }, { status: 404 });
+				}
+				throw error;
+			}
+		}
+
+		// Method not allowed
+		return new Response("Method not allowed", { status: 405 });
+	};
 }
