@@ -31,32 +31,29 @@ const handler = async (
 
 	const resolvedParams = await params;
 
-	// Create the agent with the resourceId
-	const agent = new Agent<LightfastUIMessage, A011Tools>({
-		name: "a011",
-		resourceId: userId, // In our implementation, we use userId as resourceId
-		memory,
-		system: A011_SYSTEM_PROMPT,
-		tools: createA011Tools,
-		model: gateway("anthropic/claude-4-sonnet"),
-		experimental_transform: smoothStream({
-			delayInMs: 25,
-			chunking: "word",
-		}),
-		stopWhen: stepCountIs(30),
-		_internal: {
-			generateId: uuidv4,
-		},
-		// UI stream options for reasoning and sources
-		uiStreamOptions: {
-			sendReasoning: true,
-			sendSources: false,
-		},
-	});
-
 	// Call fetchRequestHandler with the agent
 	return fetchRequestHandler({
-		agent,
+		agent: new Agent<LightfastUIMessage, A011Tools>({
+			name: "a011",
+			resourceId: userId, // In our implementation, we use userId as resourceId
+			memory,
+			system: A011_SYSTEM_PROMPT,
+			tools: createA011Tools,
+			model: gateway("anthropic/claude-4-sonnet"),
+			experimental_transform: smoothStream({
+				delayInMs: 25,
+				chunking: "word",
+			}),
+			stopWhen: stepCountIs(30),
+			_internal: {
+				generateId: uuidv4,
+			},
+			// UI stream options for reasoning and sources
+			uiStreamOptions: {
+				sendReasoning: true,
+				sendSources: false,
+			},
+		}),
 		req,
 		params: resolvedParams,
 		createContext: () => ({
