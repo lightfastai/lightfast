@@ -126,13 +126,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		// Use resumable stream if context is available
 		return new Response(
 			await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
-			{
-				headers: {
-					"Content-Type": "text/event-stream",
-					"Cache-Control": "no-cache",
-					Connection: "keep-alive",
-				},
-			},
 		);
 	} catch (error) {
 		console.error("Error in POST /api/chat/[agentId]/[threadId]:", error);
@@ -184,13 +177,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ agen
 			return new Response(null, { status: 204 });
 		}
 
-		return new Response(stream, {
-			headers: {
-				"Content-Type": "text/event-stream",
-				"Cache-Control": "no-cache",
-				Connection: "keep-alive",
-			},
-		});
+		return new Response(stream);
 	} catch (error) {
 		console.error("Error in GET /api/chat/[agentId]/[threadId]:", error);
 		return new Response(JSON.stringify({ error: "Internal server error" }), {
