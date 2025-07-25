@@ -10,6 +10,14 @@
 		"./env": {
 			"types": "./src/env.ts",
 			"default": "./src/env.ts"
+		},
+		"./agent": {
+			"types": "./src/lib/ai/agent.ts",
+			"default": "./src/lib/ai/agent.ts"
+		},
+		"./providers": {
+			"types": "./src/lib/ai/provider.ts",
+			"default": "./src/lib/ai/provider.ts"
 		}
 	},
 	"scripts": {
@@ -33,6 +41,7 @@
 		"exa-js": "catalog:",
 		"playwright": "catalog:",
 		"playwright-core": "catalog:",
+		"resumable-stream": "catalog:",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
