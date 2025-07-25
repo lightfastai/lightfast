@@ -1,6 +1,7 @@
 import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
 import type { Agent } from "../../agent";
+import type { Memory } from "../../memory";
 import type { HandlerContext } from "./types";
 
 export interface FetchRequestHandlerOptions<
@@ -9,6 +10,7 @@ export interface FetchRequestHandlerOptions<
 	TRuntimeContext = any,
 > {
 	agents: Agent<TMessage, TTools, TRuntimeContext>[];
+	memory: Memory<TMessage>;
 	req: Request;
 	params: { agentId: string; threadId: string };
 	createContext: () => { resourceId: string };
@@ -25,8 +27,6 @@ export interface FetchRequestHandlerOptions<
  * const agents = [
  *   new Agent({
  *     name: "a011",
- *     resourceId,
- *     memory,
  *     system: A011_SYSTEM_PROMPT,
  *     tools: createA011Tools,
  *     // ... other config
@@ -34,12 +34,18 @@ export interface FetchRequestHandlerOptions<
  *   // ... more agents
  * ];
  *
+ * const memory = new RedisMemory({
+ *   url: env.KV_REST_API_URL,
+ *   token: env.KV_REST_API_TOKEN,
+ * });
+ *
  * const handler = async (req, { params }) => {
  *   const { userId } = await auth();
  *   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
  *
  *   return fetchRequestHandler({
  *     agents,
+ *     memory,
  *     req,
  *     params: await params,
  *     createContext: () => ({ resourceId: userId }),
@@ -57,7 +63,7 @@ export async function fetchRequestHandler<
 	TTools extends ToolSet = ToolSet,
 	TRuntimeContext = any,
 >(options: FetchRequestHandlerOptions<TMessage, TTools, TRuntimeContext>): Promise<Response> {
-	const { agents, req, params, createContext, generateId, enableResume, onError } = options;
+	const { agents, memory, req, params, createContext, generateId, enableResume, onError } = options;
 	const { threadId } = params;
 	const context = createContext();
 
@@ -69,9 +75,10 @@ export async function fetchRequestHandler<
 		return Response.json({ error: `Agent '${params.agentId}' not found` }, { status: 404 });
 	}
 
-	// Verify agent resourceId matches context resourceId
-	if (agent.config.resourceId !== context.resourceId) {
-		const error = new Error("Agent resourceId does not match context resourceId");
+	// Check if thread exists and validate ownership
+	const existingThread = await memory.getThread(threadId);
+	if (existingThread && existingThread.resourceId !== context.resourceId) {
+		const error = new Error("Forbidden: Thread belongs to another user");
 		onError?.({ error, path: `${params.agentId}/${params.threadId}` });
 		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
@@ -80,8 +87,43 @@ export async function fetchRequestHandler<
 		try {
 			const { messages }: { messages: TMessage[] } = await req.json();
 
+			// Get the most recent user message
+			const recentUserMessage = messages.filter((message) => message.role === "user").at(-1);
+			if (!recentUserMessage) {
+				throw new Error("No recent user message found");
+			}
+
+			// Create thread if it doesn't exist
+			await memory.createThread({
+				threadId,
+				resourceId: context.resourceId,
+				agentId: agent.config.name,
+			});
+
+			// Handle messages based on whether thread is new or existing
+			let allMessages: TMessage[];
+
+			if (!existingThread) {
+				// New thread - create with initial messages
+				await memory.createMessages({ threadId, messages });
+				allMessages = messages;
+			} else {
+				// Existing thread - append only the recent user message
+				await memory.appendMessages({ threadId, messages: [recentUserMessage] });
+				// Fetch all messages from memory for full context
+				allMessages = await memory.getMessages(threadId);
+			}
+
 			// Stream the response
-			const { result, streamId, threadId: tid } = await agent.stream({ threadId, messages });
+			const { result, streamId, threadId: tid } = await agent.stream({ 
+				threadId, 
+				messages: allMessages,
+				memory,
+				resourceId: context.resourceId
+			});
+
+			// Store stream ID for resumption
+			await memory.createStream({ threadId, streamId });
 
 			// Create UI message stream response with proper options
 			const streamOptions: UIMessageStreamOptions<TMessage> = {
@@ -89,7 +131,6 @@ export async function fetchRequestHandler<
 				onFinish: async ({ messages: finishedMessages, responseMessage }) => {
 					// Save the assistant's response to memory
 					if (responseMessage && responseMessage.role === "assistant") {
-						const memory = agent.getMemory();
 						await memory.appendMessages({
 							threadId: tid,
 							messages: [responseMessage],
@@ -125,11 +166,13 @@ export async function fetchRequestHandler<
 		}
 
 		try {
-			// Get stream metadata from agent
-			await agent.getStreamMetadata(threadId);
+			// Check authentication and ownership
+			const thread = await memory.getThread(threadId);
+			if (!thread || thread.resourceId !== context.resourceId) {
+				return Response.json({ error: "Thread not found or unauthorized" }, { status: 404 });
+			}
 
 			// Get thread streams
-			const memory = agent.getMemory();
 			const streamIds = await memory.getThreadStreams(threadId);
 
 			if (!streamIds.length) {

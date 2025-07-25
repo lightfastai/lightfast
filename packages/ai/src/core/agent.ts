@@ -1,6 +1,5 @@
 import { convertToModelMessages, streamText, type ToolSet, type UIMessage } from "ai";
 import type { Memory } from "./memory";
-import type { HandlerContext } from "./server/adapters/types";
 
 // Utility function for generating UUIDs
 function uuidv4() {
@@ -19,16 +18,16 @@ export interface AgentConfig<TMessage extends UIMessage = UIMessage>
 	extends Omit<StreamTextConfig, "messages" | "tools" | "model"> {
 	// Agent-specific required fields
 	name: string;
-	resourceId: string;
-	memory: Memory<TMessage>;
 
 	// Optional streamText configuration (defaults provided in constructor)
 	model?: StreamTextConfig["model"];
 }
 
-export interface StreamOptions<TMessage = any> {
+export interface StreamOptions<TMessage extends UIMessage = UIMessage> {
 	threadId: string;
 	messages: TMessage[];
+	memory: Memory<TMessage>;
+	resourceId: string;
 }
 
 export interface AgentOptions<
@@ -48,14 +47,12 @@ export class Agent<
 	TRuntimeContext = any,
 > {
 	public readonly config: AgentConfig<TMessage>;
-	private memory: Memory<TMessage>;
 	private generateId: () => string;
 	private createTools: (context: TRuntimeContext) => TTools;
 	private system: string;
 
 	constructor(options: AgentOptions<TMessage, TTools, TRuntimeContext>) {
 		const { system, tools, ...config } = options;
-		this.memory = config.memory;
 		this.createTools = tools;
 		this.system = system;
 		this.generateId = uuidv4;
@@ -67,56 +64,19 @@ export class Agent<
 		};
 	}
 
-	async stream({ threadId, messages }: StreamOptions<TMessage>) {
+	async stream({ threadId, messages, memory, resourceId }: StreamOptions<TMessage>) {
 		if (!messages || messages.length === 0) {
 			throw new Error("At least one message is required");
 		}
 
-		// Check if thread exists and validate ownership
-		const existingThread = await this.memory.getThread(threadId);
-		if (existingThread && existingThread.resourceId !== this.config.resourceId) {
-			throw new Error("Forbidden: Thread belongs to another user");
-		}
-
 		const streamId = this.generateId();
-
-		// Get the most recent user message
-		const recentUserMessage = messages.filter((message) => message.role === "user").at(-1);
-
-		if (!recentUserMessage) {
-			throw new Error("No recent user message found");
-		}
-
-		// Create thread if it doesn't exist
-		await this.memory.createThread({
-			threadId,
-			resourceId: this.config.resourceId,
-			agentId: this.config.name, // Using name as agentId for database compatibility
-		});
-
-		// Handle messages based on whether thread is new or existing
-		let allMessages: TMessage[];
-
-		if (!existingThread) {
-			// New thread - create with initial messages
-			await this.memory.createMessages({ threadId, messages });
-			allMessages = messages;
-		} else {
-			// Existing thread - append only the recent user message
-			await this.memory.appendMessages({ threadId, messages: [recentUserMessage] });
-			// Fetch all messages from memory for full context
-			allMessages = await this.memory.getMessages(threadId);
-		}
-
-		// Store stream ID for resumption
-		await this.memory.createStream({ threadId, streamId });
 
 		// Create runtime context and tools for this specific request
 		const runtimeContext = { threadId } as TRuntimeContext;
 		const tools = this.createTools(runtimeContext);
 
 		// Stream the response with properly typed config
-		const { memory, name, resourceId, ...streamTextConfig } = this.config;
+		const { name, ...streamTextConfig } = this.config;
 
 		// Ensure model is set
 		if (!streamTextConfig.model) {
@@ -132,7 +92,7 @@ export class Agent<
 					...streamTextConfig._internal,
 					generateId: this.generateId,
 				},
-				messages: convertToModelMessages(allMessages, { tools }),
+				messages: convertToModelMessages(messages, { tools }),
 				tools,
 			}),
 			streamId,
@@ -140,20 +100,4 @@ export class Agent<
 		};
 	}
 
-	async getStreamMetadata(threadId: string) {
-		// Check authentication and ownership
-		const thread = await this.memory.getThread(threadId);
-		if (!thread || thread.resourceId !== this.config.resourceId) {
-			throw new Error("Thread not found or unauthorized");
-		}
-
-		return {
-			memory: this.memory,
-			generateId: this.generateId,
-		};
-	}
-
-	getMemory(): Memory<TMessage> {
-		return this.memory;
-	}
 }

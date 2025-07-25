@@ -34,12 +34,13 @@ const handler = async (
 		return Response.json({ error: "Invalid path: expected /v/[agentId]/[threadId]" }, { status: 400 });
 	}
 
-	// Create all available agents with the current userId as resourceId
-	const agents = createAgents({ resourceId: userId, memory });
+	// Create all available agents
+	const agents = createAgents();
 
-	// Call fetchRequestHandler with the agents array
+	// Call fetchRequestHandler with the agents array and memory
 	return fetchRequestHandler({
 		agents,
+		memory,
 		req,
 		params: { agentId, threadId },
 		createContext: () => ({

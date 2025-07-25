@@ -1,25 +1,16 @@
 import { gateway } from "@ai-sdk/gateway";
 import { Agent } from "@lightfast/ai/agent";
-import type { Memory } from "@lightfast/ai/agent/memory";
 import type { LightfastUIMessage } from "@lightfast/types";
 import { smoothStream, stepCountIs } from "ai";
 import { A011_SYSTEM_PROMPT, type A011Tools, createA011Tools } from "./a011";
 
 /**
- * Creates all available agents for a given resourceId and memory instance
+ * Creates all available agents
  */
-export function createAgents({
-	resourceId,
-	memory,
-}: {
-	resourceId: string;
-	memory: Memory<LightfastUIMessage>;
-}) {
+export function createAgents() {
 	return [
 		new Agent<LightfastUIMessage, A011Tools>({
 			name: "a011",
-			resourceId,
-			memory,
 			system: A011_SYSTEM_PROMPT,
 			tools: createA011Tools,
 			model: gateway("anthropic/claude-4-sonnet"),
@@ -32,8 +23,6 @@ export function createAgents({
 		// Future agents can be added here
 		// new Agent({
 		//   name: "vision",
-		//   resourceId,
-		//   memory,
 		//   system: VISION_SYSTEM_PROMPT,
 		//   tools: createVisionTools,
 		//   model: gateway("anthropic/claude-4-vision"),
