@@ -31,18 +31,6 @@ export function webSearchTool(context: RuntimeContext) {
 			includeDomains: z.array(z.string()).optional().describe("Domains to include in search results"),
 			excludeDomains: z.array(z.string()).optional().describe("Domains to exclude from search results"),
 		}),
-		outputSchema: z.object({
-			results: z.array(z.object({
-				title: z.string(),
-				url: z.string(),
-				content: z.string(),
-				contentType: z.string(),
-				score: z.number().optional(),
-			})),
-			query: z.string(),
-			autopromptString: z.string().optional(),
-			tokensEstimate: z.number(),
-		}),
 		execute: async ({ query, useAutoprompt, numResults, contentType, maxCharacters, summaryQuery, includeDomains, excludeDomains }) => {
 			try {
 				const exa = new Exa(env.EXA_API_KEY);
@@ -93,6 +81,15 @@ export function webSearchTool(context: RuntimeContext) {
 							text: {
 								maxCharacters,
 							},
+						} as const;
+						response = await exa.searchAndContents(query, searchOptions);
+						break;
+					}
+					default: {
+						// This should never happen due to the enum type
+						const searchOptions = {
+							...baseOptions,
+							highlights: true,
 						} as const;
 						response = await exa.searchAndContents(query, searchOptions);
 						break;

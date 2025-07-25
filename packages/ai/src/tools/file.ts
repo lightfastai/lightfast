@@ -16,14 +16,6 @@ export function fileTool(context: RuntimeContext) {
 			contentType: z.string().optional().describe("MIME type (defaults to text/markdown for .md files)"),
 			metadata: z.record(z.string()).optional().describe("Optional metadata to attach to the file"),
 		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			url: z.string().optional(),
-			path: z.string().optional(),
-			size: z.number().optional(),
-			threadId: z.string(),
-			message: z.string(),
-		}),
 		execute: async ({ filename, content, contentType, metadata }) => {
 			try {
 				// Always organize files by thread ID
@@ -69,15 +61,6 @@ export function fileReadTool(context: RuntimeContext) {
 		inputSchema: z.object({
 			filename: z.string().describe("Filename to read (e.g., 'analysis.md')"),
 			url: z.string().optional().describe("Direct blob URL (alternative to path)"),
-		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			content: z.string().optional(),
-			metadata: z.record(z.string()).optional(),
-			size: z.number().optional(),
-			contentType: z.string().optional(),
-			threadId: z.string(),
-			message: z.string(),
 		}),
 		execute: async ({ filename, url: directUrl }) => {
 			try {
@@ -150,10 +133,6 @@ export function fileDeleteTool(context: RuntimeContext) {
 			filename: z.string().describe("Filename to delete (e.g., 'analysis.md')"),
 			url: z.string().optional().describe("Direct blob URL (alternative to path)"),
 		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			message: z.string(),
-		}),
 		execute: async ({ filename, url: directUrl }) => {
 			try {
 				if (directUrl) {
@@ -200,12 +179,6 @@ export function fileStringReplaceTool(context: RuntimeContext) {
 				.boolean()
 				.default(false)
 				.describe("Whether to replace all occurrences (default: false, replaces first only)"),
-		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			replacements: z.number(),
-			threadId: z.string(),
-			message: z.string(),
 		}),
 		execute: async ({ filename, oldString, newString, replaceAll }) => {
 			try {
@@ -286,18 +259,6 @@ export function fileFindInContentTool(context: RuntimeContext) {
 			caseSensitive: z.boolean().default(true).describe("Whether search should be case sensitive"),
 			maxMatches: z.number().default(10).describe("Maximum number of matches to return"),
 		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			matches: z.array(z.object({
-				match: z.string(),
-				lineNumber: z.number(),
-				lineContent: z.string(),
-				index: z.number(),
-			})),
-			totalMatches: z.number(),
-			threadId: z.string(),
-			message: z.string(),
-		}),
 		execute: async ({ filename, regex, caseSensitive, maxMatches }) => {
 			try {
 				// Build the full path based on thread ID
@@ -329,12 +290,12 @@ export function fileFindInContentTool(context: RuntimeContext) {
 
 				// Search through each line
 				lines.forEach((line, lineIndex) => {
-					if (matches.length >= maxMatches) return;
+					if (matches.length >= maxMatches!) return;
 
 					let match: RegExpExecArray | null;
 					const lineRegex = new RegExp(regex, flags);
 					match = lineRegex.exec(line);
-					while (match !== null && matches.length < maxMatches) {
+					while (match !== null && matches.length < maxMatches!) {
 						matches.push({
 							match: match[0],
 							lineNumber: lineIndex + 1,
@@ -379,20 +340,6 @@ export function fileFindByNameTool(context: RuntimeContext) {
 			globPattern: z.string().describe("Glob pattern to match filenames (e.g., '*.md', 'config.*', 'data-*.json')"),
 			includeContent: z.boolean().default(false).describe("Whether to include file content preview in results"),
 			maxContentChars: z.number().default(200).describe("Maximum characters to include in content preview"),
-		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			files: z.array(z.object({
-				filename: z.string(),
-				path: z.string(),
-				url: z.string(),
-				size: z.number().optional(),
-				uploadedAt: z.string().optional(),
-				contentPreview: z.string().optional(),
-			})),
-			totalFiles: z.number(),
-			threadId: z.string(),
-			message: z.string(),
 		}),
 		execute: async ({ globPattern, includeContent, maxContentChars }) => {
 			try {
@@ -439,8 +386,8 @@ export function fileFindByNameTool(context: RuntimeContext) {
 								if (response.ok) {
 									const content = await response.text();
 									fileInfo.contentPreview =
-										content.length > maxContentChars
-											? `${content.substring(0, maxContentChars)}...`
+										content.length > maxContentChars!
+											? `${content.substring(0, maxContentChars!)}...`
 											: content;
 								}
 							} catch {

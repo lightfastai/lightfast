@@ -1,11 +1,11 @@
-import type { ExperimentalAgentId } from "@lightfast/types";
+
 import { Suspense } from "react";
 import { AgentInfoModal } from "@/components/agent-info-modal";
 import { UserDropdown } from "@/components/user-dropdown";
 import { NewChatButton } from "./new-chat-button";
 
 interface ChatHeaderProps {
-	agentId?: ExperimentalAgentId;
+	agentId?: string;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
+import type { LightfastUIMessage } from "@lightfast/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";
@@ -7,7 +7,7 @@ import { getMessages, getThread } from "@/lib/db";
 
 interface ChatPageProps {
 	params: Promise<{
-		agentId: ExperimentalAgentId;
+		agentId: string;
 		threadId: string;
 	}>;
 }
@@ -35,7 +35,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
 
 	return (
 		<Suspense fallback={null}>
-			<ChatInterface agentId={agentId} threadId={threadId} userId={userId} initialMessages={messages} />
+			<ChatInterface agentId={agentId} threadId={threadId} initialMessages={messages} />
 		</Suspense>
 	);
 }

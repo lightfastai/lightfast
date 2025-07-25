@@ -1,6 +1,6 @@
 "use client";
 
-import type { ExperimentalAgentId } from "@lightfast/types";
+
 import { Ghost } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // Define the available agent IDs here
-const EXPERIMENTAL_AGENT_IDS: ExperimentalAgentId[] = ["a010", "a011"];
+const EXPERIMENTAL_AGENT_IDS: string[] = ["a010", "a011"];
 
-const agentDisplayNames: Record<ExperimentalAgentId, string> = {
+const agentDisplayNames: Record<string, string> = {
 	a010: "a010",
 	a011: "a011",
 };
@@ -22,10 +22,10 @@ const agentDisplayNames: Record<ExperimentalAgentId, string> = {
 export function AgentSelector() {
 	const router = useRouter();
 	const params = useParams();
-	const currentAgentId = params.agentId as ExperimentalAgentId;
+	const currentAgentId = params.agentId as string;
 	const threadId = params.threadId as string;
 
-	const handleAgentChange = (agentId: ExperimentalAgentId) => {
+	const handleAgentChange = (agentId: string) => {
 		// Navigate to the same thread with the new agent
 		router.push(`/chat/${agentId}/${threadId}`);
 	};

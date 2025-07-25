@@ -12,10 +12,6 @@ export function createSandboxTool(context: RuntimeContext) {
 		inputSchema: z.object({
 			runtime: z.enum(["node22", "python3.13"]).default("node22").describe("Runtime environment"),
 		}),
-		outputSchema: z.object({
-			sandboxId: z.string(),
-			message: z.string(),
-		}),
 		execute: async ({ runtime }) => {
 			try {
 				const sandbox = await Sandbox.create({
@@ -50,13 +46,6 @@ export function executeSandboxCommandTool(context: RuntimeContext) {
 			cwd: z.string().default("/home/vercel-sandbox").describe("Working directory"),
 			background: z.boolean().default(false).describe("Run command in background (append &)"),
 		}),
-		outputSchema: z.object({
-			stdout: z.string(),
-			stderr: z.string(),
-			exitCode: z.number(),
-			isBackgroundProcess: z.boolean(),
-			message: z.string(),
-		}),
 		execute: async ({ sandboxId, command, args, cwd, background }) => {
 			try {
 				// Get the sandbox instance using the ID
@@ -69,7 +58,7 @@ export function executeSandboxCommandTool(context: RuntimeContext) {
 				if (background) {
 					// Use shell to run command in background
 					actualCommand = "sh";
-					actualArgs = ["-c", `${command} ${args.join(" ")} &`];
+					actualArgs = ["-c", `${command} ${args!.join(" ")} &`];
 				}
 
 				// Execute the command
@@ -94,7 +83,7 @@ export function executeSandboxCommandTool(context: RuntimeContext) {
 					stdout: background ? `Process started in background\n${stdout}` : stdout,
 					stderr,
 					exitCode: result.exitCode,
-					commandLine: `$ ${command} ${args.join(" ")}${backgroundNote}`.trim(),
+					commandLine: `$ ${command} ${args!.join(" ")}${backgroundNote}`.trim(),
 				};
 			} catch (error) {
 				const backgroundNote = background ? " (running in background)" : "";
@@ -103,7 +92,7 @@ export function executeSandboxCommandTool(context: RuntimeContext) {
 					stdout: "",
 					stderr: error instanceof Error ? error.message : "Unknown error",
 					exitCode: -1,
-					commandLine: `$ ${command} ${args.join(" ")}${backgroundNote}`.trim(),
+					commandLine: `$ ${command} ${args!.join(" ")}${backgroundNote}`.trim(),
 				};
 			}
 		}
@@ -127,15 +116,6 @@ export function createSandboxWithPortsTool(context: RuntimeContext) {
 				})
 				.optional()
 				.describe("Optional source code to clone"),
-		}),
-		outputSchema: z.object({
-			sandboxId: z.string(),
-			routes: z.array(z.object({
-				port: z.number(),
-				url: z.string(),
-				subdomain: z.string(),
-			})),
-			message: z.string(),
 		}),
 		execute: async ({ runtime, ports, source }) => {
 			try {
@@ -178,12 +158,6 @@ export function getSandboxDomainTool(context: RuntimeContext) {
 			sandboxId: z.string().describe("The sandbox ID"),
 			port: z.number().describe("Port number to get domain for"),
 		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			url: z.string().optional(),
-			port: z.number(),
-			message: z.string(),
-		}),
 		execute: async ({ sandboxId, port }) => {
 			try {
 				// Get the sandbox instance using the ID
@@ -217,15 +191,6 @@ export function listSandboxRoutesTool(context: RuntimeContext) {
 		description: "List all exposed ports and their public URLs for a sandbox",
 		inputSchema: z.object({
 			sandboxId: z.string().describe("The sandbox ID"),
-		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			routes: z.array(z.object({
-				port: z.number(),
-				url: z.string(),
-				subdomain: z.string(),
-			})).optional(),
-			message: z.string(),
 		}),
 		execute: async ({ sandboxId }) => {
 			try {

@@ -1,13 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
-import type { ExperimentalAgentId } from "@lightfast/types";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { uuidv4 } from "@/lib/uuidv4";
 
 interface NewChatPageProps {
 	params: Promise<{
-		agentId: ExperimentalAgentId;
+		agentId: string;
 	}>;
 }
 
@@ -18,11 +15,6 @@ interface NewChatPageProps {
  */
 export default async function NewChatPage({ params }: NewChatPageProps) {
 	const { agentId } = await params;
-	const { userId } = await auth();
-
-	if (!userId) {
-		redirect("/sign-in");
-	}
 
 	// Generate a new thread ID server-side
 	const threadId = uuidv4();
@@ -30,7 +22,7 @@ export default async function NewChatPage({ params }: NewChatPageProps) {
 	// Wrap in Suspense to ensure proper hydration timing
 	return (
 		<Suspense fallback={null}>
-			<ChatInterface agentId={agentId} threadId={threadId} userId={userId} initialMessages={[]} />
+			<ChatInterface agentId={agentId} threadId={threadId} initialMessages={[]} />
 		</Suspense>
 	);
 }

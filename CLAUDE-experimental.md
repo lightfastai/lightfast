@@ -52,9 +52,6 @@ cat /tmp/nextjs-dev.log
 # Kill background Next.js server
 pkill -f "next dev"
 
-# Mastra-specific commands
-pnpm dev:mastra   # Start Mastra dev server
-pnpm build:mastra # Build Mastra
 
 # Check specific file for errors
 pnpm biome check --write [filepath]
@@ -75,8 +72,6 @@ See `.env.example` for all required variables.
 
 ## Documentation
 - **Next.js Best Practices**: @docs/nextjs.md
-- **Agent Testing**: @docs/agent-testing.md
-- **Memory System**: @docs/memory-system.md
 - **Container-Use**: @docs/container-use.md (for isolated development)
 - **Authentication Testing**: @docs/auth-login-process.md (test credentials for Playwright)
 - **Braintrust Evaluations**: @docs/braintrust/ (evaluation framework docs)
@@ -84,7 +79,6 @@ See `.env.example` for all required variables.
 ## Quick References
 - Model: `anthropic/claude-4-sonnet` via Vercel AI Gateway
 - Next.js dev server: http://localhost:3000
-- Mastra dev server: http://localhost:4111
 - Workspace packages:
   - `@lightfast/ai` - AI agents and tools
   - `@lightfast/types` - Shared TypeScript types

@@ -4,7 +4,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/experimental)](https://github.com/lightfastai/experimental/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/lightfastai/experimental)](https://github.com/lightfastai/experimental/issues)
 
-An open-source, production-ready AI agent platform featuring multiple specialized agents, secure sandbox execution, and comprehensive task management capabilities. Built with Next.js 15, Mastra, and TypeScript.
+An open-source, production-ready AI agent platform featuring multiple specialized agents, secure sandbox execution, and comprehensive task management capabilities. Built with Next.js 15 and TypeScript.
 
 ## About
 
@@ -91,12 +91,7 @@ Available on both client and server:
 
 2. **Set up environment variables** (create `.env.local` with the variables shown above)
 
-3. **Start the Mastra development server** (optional, for agent playground):
-   ```bash
-   pnpm dev:mastra
-   ```
-
-4. **Start the Next.js development server:**
+3. **Start the Next.js development server:**
    ```bash
    pnpm dev
    ```
@@ -133,7 +128,6 @@ Available on both client and server:
 ### 🔧 Developer Experience
 - **Type-safe**: Full TypeScript with validated environment variables
 - **Modern Stack**: Next.js 15 with App Router and latest React features
-- **Agent Framework**: Mastra for AI agent orchestration and management
 - **Code Quality**: Biome for fast linting and formatting
 - **Extensible Architecture**: Easy to add new agents and tools
 
@@ -153,7 +147,6 @@ Available on both client and server:
 - **shadcn/ui**: High-quality, accessible UI components
 
 ### Backend & AI
-- **Mastra**: AI agent orchestration framework
 - **Vercel AI SDK**: Streaming and AI utilities
 - **Upstash Redis**: Memory storage and caching
 - **Vercel Sandbox**: Secure code execution environment
@@ -172,7 +165,6 @@ Available on both client and server:
 | | TypeScript | Type safety and developer experience |
 | | Tailwind CSS v4 | Utility-first styling |
 | | shadcn/ui | High-quality UI components |
-| **AI/Agents** | Mastra | AI agent orchestration framework |
 | | Vercel AI SDK | Streaming and AI utilities |
 | | Anthropic Claude | Claude Sonnet 4 integration |
 | | OpenAI | GPT models integration |
@@ -192,8 +184,6 @@ Available on both client and server:
 - `pnpm start` - Start the production server
 - `pnpm lint` - Run Biome linter and fix issues
 - `pnpm typecheck` - Run TypeScript type checking
-- `pnpm dev:mastra` - Start Mastra development server
-- `pnpm build:mastra` - Build Mastra agent system
 
 ## Project Structure
 
@@ -211,13 +201,8 @@ Available on both client and server:
 │       └── hooks/        # React hooks
 ├── packages/
 │   ├── ai/               # AI agents and tools (@lightfast/ai)
-│   │   └── src/mastra/   # Mastra AI framework
-│   │       ├── agents/   # AI agent definitions
-│   │       │   ├── experimental/ # A010, A011 agents
-│   │       │   ├── pure/ # C010 conversational agent
-│   │       │   └── standalone/ # Specialized agents
-│   │       ├── tools/    # Tool implementations
-│   │       └── lib/      # Utilities and providers
+│   │   └── src/
+│   │       └── tools/    # Tool implementations
 │   ├── types/            # Shared TypeScript types (@lightfast/types)
 │   └── evals/            # Evaluation framework (@lightfast/evals)
 ├── docs/                # Documentation
@@ -274,8 +259,6 @@ Available on both client and server:
 
 ## 📚 Documentation
 
-- [**Agent Development Guide**](./docs/agent-testing.md) - Creating and testing agents
-- [**Memory System Guide**](./docs/memory-system.md) - Understanding context management
 - [**Container Development**](./docs/container-use.md) - Isolated development environments
 - [**Next.js Best Practices**](./docs/nextjs.md) - Framework guidelines
 - [**Authentication Testing**](./docs/auth-login-process.md) - Login process and test credentials
@@ -297,11 +280,6 @@ We welcome contributions! Please see our development workflow:
 - Direct imports (no index.ts re-exports)
 - Zod schemas for all data validation
 
-### Adding New Agents
-1. Create agent file in `mastra/agents/`
-2. Define tools in `mastra/tools/`
-3. Register in `mastra/index.ts`
-4. Follow existing patterns and documentation
 
 ## 📄 License
 

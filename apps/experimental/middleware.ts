@@ -1,12 +1,12 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import type { ExperimentalAgentId } from "@lightfast/types";
+
 import { NextResponse } from "next/server";
 
 // Define protected routes - everything except public routes
 const isProtectedRoute = createRouteMatcher(["/((?!sign-in|api/webhooks|api/cron).*)"]);
 
 // Default agent
-const DEFAULT_AGENT: ExperimentalAgentId = "a011";
+const DEFAULT_AGENT: string = "a011";
 
 export default clerkMiddleware(
 	async (auth, req) => {

@@ -1,18 +1,16 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
+import type { LightfastUIMessage } from "@lightfast/types";
 import { ChatInput } from "@/components/chat-input";
-import { useDataStream } from "@/components/data-stream-provider";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import { ChatBottomSection } from "./chat-bottom-section";
 import { ChatMessages } from "./chat-messages";
 import { EmptyState } from "./empty-state";
 
 interface ChatInputSectionProps {
-	agentId: ExperimentalAgentId;
+	agentId: string;
 	threadId: string;
-	userId: string;
 	initialMessages?: LightfastUIMessage[];
 }
 
@@ -20,11 +18,9 @@ interface ChatInputSectionProps {
  * Client component that handles chat interactivity
  * Isolated from server-rendered content for better performance
  */
-export function ChatInputSection({ agentId, threadId, userId, initialMessages = [] }: ChatInputSectionProps) {
-	const { setDataStream } = useDataStream();
-
+export function ChatInputSection({ agentId, threadId, initialMessages = [] }: ChatInputSectionProps) {
 	// Create transport for AI SDK v5 with agentId
-	const transport = useChatTransport({ threadId, agentId, userId });
+	const transport = useChatTransport({ threadId, agentId });
 
 	// Auto-resume interrupted streams if the last message was from user
 	const shouldAutoResume = initialMessages.length > 0 && initialMessages[initialMessages.length - 1]?.role === "user";
@@ -40,9 +36,6 @@ export function ChatInputSection({ agentId, threadId, userId, initialMessages = 
 		id: `${agentId}-${threadId}`,
 		transport,
 		messages: initialMessages,
-		onData: (dataPart) => {
-			setDataStream((ds) => (ds ? [...ds, dataPart] : [dataPart]));
-		},
 		onError: (error) => {
 			console.error("Error streaming text:", error);
 		},
@@ -54,7 +47,7 @@ export function ChatInputSection({ agentId, threadId, userId, initialMessages = 
 
 		// Update URL to include chat ID - following Vercel's pattern
 		// Note: There may be a race condition where navigation happens before
-		// messages are persisted by Mastra, causing empty initial state on refresh
+		// messages are persisted, causing empty initial state on refresh
 		window.history.replaceState({}, "", `/chat/${agentId}/${threadId}`);
 
 		try {

@@ -23,24 +23,28 @@ export interface LightfastUICustomDataTypes {
 	[key: string]: unknown; // Index signature required by UIDataTypes
 }
 
-// Define the tool set type using InferUITool for each tool
+// Helper type to extract the tool type from a tool factory function
+// This handles the RuntimeContext injection pattern
+type ExtractToolType<T> = T extends (context: RuntimeContext) => infer R ? R : never;
+
+// Define the tool set type using the helper
 // This matches the structure passed to streamText() in route.ts
 export type LightfastToolSet = {
-	file: InferUITool<ReturnType<typeof fileTool>>;
-	fileRead: InferUITool<ReturnType<typeof fileReadTool>>;
-	fileDelete: InferUITool<ReturnType<typeof fileDeleteTool>>;
-	fileStringReplace: InferUITool<ReturnType<typeof fileStringReplaceTool>>;
-	fileFindInContent: InferUITool<ReturnType<typeof fileFindInContentTool>>;
-	fileFindByName: InferUITool<ReturnType<typeof fileFindByNameTool>>;
-	webSearch: InferUITool<ReturnType<typeof webSearchTool>>;
-	createSandbox: InferUITool<ReturnType<typeof createSandboxTool>>;
-	executeSandboxCommand: InferUITool<ReturnType<typeof executeSandboxCommandTool>>;
-	createSandboxWithPorts: InferUITool<ReturnType<typeof createSandboxWithPortsTool>>;
-	getSandboxDomain: InferUITool<ReturnType<typeof getSandboxDomainTool>>;
-	listSandboxRoutes: InferUITool<ReturnType<typeof listSandboxRoutesTool>>;
-	todoWrite: InferUITool<ReturnType<typeof todoWriteTool>>;
-	todoRead: InferUITool<ReturnType<typeof todoReadTool>>;
-	todoClear: InferUITool<ReturnType<typeof todoClearTool>>;
+	file: InferUITool<ExtractToolType<typeof fileTool>>;
+	fileRead: InferUITool<ExtractToolType<typeof fileReadTool>>;
+	fileDelete: InferUITool<ExtractToolType<typeof fileDeleteTool>>;
+	fileStringReplace: InferUITool<ExtractToolType<typeof fileStringReplaceTool>>;
+	fileFindInContent: InferUITool<ExtractToolType<typeof fileFindInContentTool>>;
+	fileFindByName: InferUITool<ExtractToolType<typeof fileFindByNameTool>>;
+	webSearch: InferUITool<ExtractToolType<typeof webSearchTool>>;
+	createSandbox: InferUITool<ExtractToolType<typeof createSandboxTool>>;
+	executeSandboxCommand: InferUITool<ExtractToolType<typeof executeSandboxCommandTool>>;
+	createSandboxWithPorts: InferUITool<ExtractToolType<typeof createSandboxWithPortsTool>>;
+	getSandboxDomain: InferUITool<ExtractToolType<typeof getSandboxDomainTool>>;
+	listSandboxRoutes: InferUITool<ExtractToolType<typeof listSandboxRoutesTool>>;
+	todoWrite: InferUITool<ExtractToolType<typeof todoWriteTool>>;
+	todoRead: InferUITool<ExtractToolType<typeof todoReadTool>>;
+	todoClear: InferUITool<ExtractToolType<typeof todoClearTool>>;
 };
 
 // Metadata type for our messages
@@ -57,7 +61,6 @@ export type LightfastUIMessage = UIMessage<
 	LightfastUICustomDataTypes,
 	LightfastToolSet
 >;
-
 
 // Helper type for message parts
 export type LightfastUIMessagePart = LightfastUIMessage["parts"][number];

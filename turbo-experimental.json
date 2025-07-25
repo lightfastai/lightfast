@@ -40,39 +40,6 @@
     "with-env": {
       "cache": false
     },
-    "dev:mastra": {
-      "cache": false,
-      "persistent": true
-    },
-    "build:mastra": {
-      "dependsOn": ["^build"],
-      "outputs": [".mastra/**"]
-    },
-    "eval:a011": {
-      "cache": false,
-      "interactive": true
-    },
-    "eval:a011:dev": {
-      "cache": false,
-      "persistent": true,
-      "interactive": true
-    },
-    "eval:a011:baseline": {
-      "cache": false,
-      "interactive": true
-    },
-    "eval:experiments": {
-      "cache": false,
-      "interactive": true
-    },
-    "eval:list": {
-      "cache": false,
-      "interactive": true
-    },
-    "eval:baseline": {
-      "cache": false,
-      "interactive": true
-    }
   },
   "globalEnv": [
     "REDIS_URL",

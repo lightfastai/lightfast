@@ -1,9 +1,9 @@
-import type { ExperimentalAgentId } from "@lightfast/types";
+
 import { ChatHeader } from "./chat-header";
 
 interface ChatLayoutProps {
 	children: React.ReactNode;
-	agentId?: ExperimentalAgentId;
+	agentId?: string;
 }
 
 export function ChatLayout({ children, agentId }: ChatLayoutProps) {

@@ -28,18 +28,10 @@
 		"dev": "tsc",
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
 		"lint": "biome check --write .",
-		"eval:a011": "pnpm with-env npx braintrust eval --no-send-logs src/agents/experimental/a011/a011.eval.ts",
-		"eval:a011:dev": "pnpm with-env npx braintrust eval --dev --dev-port 8300 src/agents/experimental/a011/a011.eval.ts",
-		"eval:a011:baseline": "SET_BASELINE=true pnpm eval:a011:dev",
-		"eval:experiments": "tsx src/scripts/experiment-cli.ts",
-		"eval:list": "tsx src/scripts/experiment-cli.ts a011 list",
-		"eval:baseline": "tsx src/scripts/experiment-cli.ts a011 baseline",
 		"with-env": "dotenv -e ../../apps/www/.env.local --"
 	},
 	"dependencies": {
 		"@lightfast/ai": "workspace:*",
-		"@mastra/core": "catalog:",
-		"@mastra/evals": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
 		"zod": "catalog:"

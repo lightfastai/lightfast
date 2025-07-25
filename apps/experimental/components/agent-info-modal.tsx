@@ -1,6 +1,6 @@
 "use client";
 
-import type { ExperimentalAgentId } from "@lightfast/types";
+
 import { Info } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 
 interface AgentInfoModalProps {
-	agentId?: ExperimentalAgentId;
+	agentId?: string;
 }
 
 export function AgentInfoModal({ agentId }: AgentInfoModalProps) {

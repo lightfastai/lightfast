@@ -1,23 +1,21 @@
 "use client";
 
-import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
+import type { LightfastUIMessage } from "@lightfast/types";
 import type { ChatTransport } from "ai";
 import { DefaultChatTransport } from "ai";
 import { useMemo } from "react";
 
 interface UseChatTransportProps {
 	threadId: string;
-	agentId: ExperimentalAgentId;
-	userId: string;
+	agentId: string;
 }
 
 /**
- * Hook that creates and configures a DefaultChatTransport for Mastra integration
+ * Hook that creates and configures a DefaultChatTransport for AI integration
  */
 export function useChatTransport({
 	threadId,
 	agentId,
-	userId,
 }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
 		// Use the (ai) route group structure with agentId and threadId
@@ -35,7 +33,6 @@ export function useChatTransport({
 						// Send only the latest user message
 						// Server will validate and return 400 if no messages
 						messages: messages.length > 0 ? [messages[messages.length - 1]] : [],
-						userId: userId,
 						// Include any additional metadata from the body
 						...body,
 					},
@@ -49,7 +46,7 @@ export function useChatTransport({
 				};
 			},
 		});
-	}, [threadId, agentId, userId]);
+	}, [threadId, agentId]);
 
 	return transport;
 }

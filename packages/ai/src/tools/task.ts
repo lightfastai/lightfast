@@ -26,18 +26,6 @@ export function todoWriteTool(context: RuntimeContext) {
 		inputSchema: z.object({
 			tasks: z.array(taskSchema).describe("The updated task list"),
 		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			message: z.string(),
-			blobUrl: z.string().optional(),
-			taskSummary: z.object({
-				total: z.number(),
-				pending: z.number(),
-				inProgress: z.number(),
-				completed: z.number(),
-				cancelled: z.number(),
-			}).optional(),
-		}),
 		execute: async ({ tasks }) => {
 			try {
 				// Generate markdown content
@@ -85,18 +73,6 @@ export function todoReadTool(context: RuntimeContext) {
 	return tool({
 		description: "Read the current todo list for this conversation thread",
 		inputSchema: z.object({}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			message: z.string(),
-			tasks: z.array(taskSchema),
-			taskSummary: z.object({
-				total: z.number(),
-				pending: z.number(),
-				inProgress: z.number(),
-				completed: z.number(),
-				cancelled: z.number(),
-			}).optional(),
-		}),
 		execute: async () => {
 			try {
 				const blobPath = `todos/shared/${context.threadId}/todo.md`;
@@ -152,10 +128,6 @@ export function todoClearTool(context: RuntimeContext) {
 	return tool({
 		description: "Clear the todo list for the current conversation thread",
 		inputSchema: z.object({}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			message: z.string(),
-		}),
 		execute: async () => {
 			try {
 				const blobPath = `todos/shared/${context.threadId}/todo.md`;

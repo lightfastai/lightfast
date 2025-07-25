@@ -134,10 +134,6 @@ export function stagehandActTool(context: RuntimeContext) {
 			url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
 			action: z.string().describe('Action to perform (e.g., "click sign in button", "type hello in search field")'),
 		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			message: z.string(),
-		}),
 		execute: async ({ url, action }) => {
 			return await performWebAction(url, action);
 		}
@@ -322,11 +318,6 @@ export function stagehandNavigateTool(context: RuntimeContext) {
 		description: "Navigate to a URL in the browser",
 		inputSchema: z.object({
 			url: z.string().describe("URL to navigate to"),
-		}),
-		outputSchema: z.object({
-			success: z.boolean(),
-			title: z.string().optional(),
-			currentUrl: z.string().optional(),
 		}),
 		execute: async ({ url }) => {
 			try {

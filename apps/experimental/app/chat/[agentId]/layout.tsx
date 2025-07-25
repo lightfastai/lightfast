@@ -1,4 +1,4 @@
-import type { ExperimentalAgentId } from "@lightfast/types";
+
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ChatLayout } from "@/components/chat/chat-layout";
@@ -6,7 +6,7 @@ import { ChatLayout } from "@/components/chat/chat-layout";
 interface AgentLayoutProps {
 	children: ReactNode;
 	params: Promise<{
-		agentId: ExperimentalAgentId;
+		agentId: string;
 	}>;
 }
 
@@ -14,7 +14,7 @@ export default async function AgentLayout({ children, params }: AgentLayoutProps
 	const { agentId } = await params;
 
 	// Validate agentId is a valid type
-	const validAgentIds: ExperimentalAgentId[] = ["a010", "a011"];
+	const validAgentIds: string[] = ["a010", "a011"];
 	if (!validAgentIds.includes(agentId)) {
 		notFound();
 	}

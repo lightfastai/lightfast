@@ -3,29 +3,9 @@
 	"version": "1.0.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
 	"exports": {
-		"./server": {
-			"types": "./src/mastra/index.ts",
-			"default": "./src/mastra/index.ts"
-		},
-		"./agents": {
-			"types": "./src/mastra/agents/index.ts",
-			"default": "./src/mastra/agents/index.ts"
-		},
-		"./agents/experimental": {
-			"types": "./src/mastra/agents/experimental/index.ts",
-			"default": "./src/mastra/agents/experimental/index.ts"
-		},
-		"./agents/experimental/a011": {
-			"types": "./src/mastra/agents/experimental/a011.ts",
-			"default": "./src/mastra/agents/experimental/a011.ts"
-		},
 		"./tools": {
 			"types": "./src/tools/index.ts",
 			"default": "./src/tools/index.ts"
-		},
-		"./tools/mastra": {
-			"types": "./src/mastra/tools/index.ts",
-			"default": "./src/mastra/tools/index.ts"
 		},
 		"./env": {
 			"types": "./src/env.ts",
@@ -37,22 +17,13 @@
 		"build": "tsc",
 		"dev": "tsc",
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
-		"lint": "biome check --write .",
-		"dev:mastra": "mastra dev --dir src/mastra",
-		"build:mastra": "mastra build --dir src/mastra"
+		"lint": "biome check --write ."
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "catalog:",
 		"@ai-sdk/gateway": "catalog:",
 		"@ai-sdk/provider": "catalog:",
 		"@browserbasehq/stagehand": "catalog:",
-		"@mastra/core": "catalog:",
-		"@mastra/evals": "catalog:",
-		"@mastra/memory": "catalog:",
-		"@mastra/upstash": "catalog:",
-		"@mastra/voice-elevenlabs": "catalog:",
-		"@mastra/voice-openai": "catalog:",
-		"@mastra/voice-openai-realtime": "catalog:",
 		"@t3-oss/env-core": "catalog:",
 		"@upstash/redis": "catalog:",
 		"@vercel/blob": "catalog:",
@@ -65,7 +36,6 @@
 		"zod": "catalog:"
 	},
 	"devDependencies": {
-		"mastra": "catalog:",
 		"typescript": "catalog:"
 	}
 }

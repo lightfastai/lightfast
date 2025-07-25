@@ -12,9 +12,8 @@
 		"lint": "turbo run lint",
 		"clean": "turbo run clean",
 		"dev:www": "turbo run dev --filter=@lightfast/www",
-		"dev:mastra": "turbo run dev:mastra --filter=@lightfast/ai",
 		"build:www": "turbo run build --filter=@lightfast/www",
-		"build:mastra": "turbo run build:mastra --filter=@lightfast/ai"
+		"build:packages": "turbo run build --filter=./packages/*"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",

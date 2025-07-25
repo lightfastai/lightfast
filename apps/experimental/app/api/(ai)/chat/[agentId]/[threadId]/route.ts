@@ -90,7 +90,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		const runtimeContext = { threadId };
 
 		// Stream the response
-		const result = streamText<LightfastToolSet>({
+		const result = streamText({
 			_internal: {
 				generateId: () => uuidv4(),
 			},

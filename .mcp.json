@@ -1,6 +1,6 @@
 {
 	"mcpServers": {
-		"playwright-mastra": {
+		"playwright": {
 			"command": "npx",
 			"args": [
 				"@playwright/mcp@latest",
@@ -12,10 +12,6 @@
 				"--isolated",
 				"--no-sandbox"
 			]
-		},
-		"mastra-docs": {
-			"command": "npx",
-			"args": ["-y", "@mastra/mcp-docs-server"]
 		},
 		"container-use": {
 			"command": "container-use",
