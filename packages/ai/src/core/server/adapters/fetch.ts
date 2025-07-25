@@ -64,34 +64,33 @@ export async function fetchRequestHandler<
 	const { agents, memory, req, createContext, generateId, enableResume, onError } = options;
 	const context = createContext();
 
-	let agentId: string;
-	let threadId: string;
+	// Extract agentId and threadId from URL path
+	const url = new URL(req.url);
+	const pathSegments = url.pathname.split('/').filter(Boolean);
+	
+	// Find the index of 'v' in the path
+	const vIndex = pathSegments.indexOf('v');
+	if (vIndex === -1 || vIndex + 2 >= pathSegments.length) {
+		return Response.json({ error: "Invalid path: expected /api/v/[agentId]/[threadId]" }, { status: 400 });
+	}
+
+	// Extract agentId and threadId from path
+	const agentId = pathSegments[vIndex + 1];
+	const threadId = pathSegments[vIndex + 2];
+
+	if (!agentId || !threadId) {
+		return Response.json({ error: "Missing agentId or threadId in path" }, { status: 400 });
+	}
+
 	let body: any;
-
-	// Extract agentId and threadId based on request method
-	if (req.method === "GET") {
-		// For GET requests (resume), get from query params
-		const url = new URL(req.url);
-		agentId = url.searchParams.get("agentId") || "";
-		threadId = url.searchParams.get("threadId") || "";
-
-		if (!agentId || !threadId) {
-			return Response.json({ error: "Missing agentId or threadId in query params" }, { status: 400 });
-		}
-	} else if (req.method === "POST") {
-		// For POST requests, extract from body
+	if (req.method === "POST") {
+		// For POST requests, parse body
 		try {
 			body = await req.json();
-			agentId = body.agentId;
-			threadId = body.threadId;
-
-			if (!agentId || !threadId) {
-				return Response.json({ error: "Missing agentId or threadId in request body" }, { status: 400 });
-			}
 		} catch (error) {
 			return Response.json({ error: "Invalid JSON body" }, { status: 400 });
 		}
-	} else {
+	} else if (req.method !== "GET") {
 		return new Response("Method not allowed", { status: 405 });
 	}
 

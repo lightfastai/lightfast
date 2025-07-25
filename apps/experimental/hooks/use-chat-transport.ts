@@ -15,8 +15,8 @@ interface UseChatTransportProps {
  */
 export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
-		// Use the v API endpoint
-		const apiEndpoint = `/api/v`;
+		// Use the v API endpoint with agentId and threadId in the path
+		const apiEndpoint = `/api/v/${agentId}/${threadId}`;
 		return new DefaultChatTransport<LightfastUIMessage>({
 			api: apiEndpoint,
 			headers: {
@@ -27,9 +27,6 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
 					api,
 					headers,
 					body: {
-						// Send agentId and threadId in the body
-						agentId,
-						threadId,
 						// Send only the latest user message
 						// Server will validate and return 400 if no messages
 						messages: messages.length > 0 ? [messages[messages.length - 1]] : [],
@@ -39,10 +36,9 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
 				};
 			},
 			prepareReconnectToStreamRequest: ({ api, headers }) => {
-				// For GET requests (resume), append agentId and threadId as query params
-				// GET requests cannot have a body according to HTTP standards
+				// For GET requests (resume), use the same path
 				return {
-					api: `${api}?agentId=${agentId}&threadId=${threadId}`,
+					api,
 					headers,
 				};
 			},
