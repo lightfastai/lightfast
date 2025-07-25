@@ -50,7 +50,7 @@ export class Agent<
 	TTools extends ToolSet = ToolSet,
 	TRuntimeContext extends RuntimeContext = RuntimeContext,
 > {
-	private config: AgentConfig<TMessage>;
+	public readonly config: AgentConfig<TMessage>;
 	private memory: Memory<TMessage>;
 	private generateId: () => string;
 	private createTools: (context: TRuntimeContext) => TTools;
