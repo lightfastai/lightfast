@@ -16,7 +16,7 @@ export interface GenericToolDisplayProps {
 
 export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, toolName }: GenericToolDisplayProps) {
 	const state = toolPart.state;
-	const error = toolPart.errorText;
+	const error = toolPart.state === "output-error" ? toolPart.errorText : undefined;
 	const accordionValue = `tool-${toolName}-${toolPart.toolCallId}`;
 	const [copiedInput, setCopiedInput] = useState(false);
 	const [copiedOutput, setCopiedOutput] = useState(false);

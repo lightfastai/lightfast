@@ -79,9 +79,7 @@ export async function appendMessages({
 	if (!exists) {
 		// This should never happen in our flow - appendMessages should only be called
 		// for existing threads. If this happens, it indicates a bug in the calling code.
-		throw new Error(
-			`Cannot append messages to non-existent thread ${threadId}. Use createMessages for new threads.`
-		);
+		throw new Error(`Cannot append messages to non-existent thread ${threadId}. Use createMessages for new threads.`);
 	}
 
 	// Use JSON.ARRAPPEND to append each message to the messages array

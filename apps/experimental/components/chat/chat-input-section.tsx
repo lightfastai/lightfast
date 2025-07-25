@@ -4,9 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import type { ExperimentalAgentId, LightfastUIMessage } from "@lightfast/types";
 import { ChatInput } from "@/components/chat-input";
 import { useDataStream } from "@/components/data-stream-provider";
-import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatTransport } from "@/hooks/use-chat-transport";
-import { uuidv4 } from "@/lib/uuidv4";
 import { ChatBottomSection } from "./chat-bottom-section";
 import { ChatMessages } from "./chat-messages";
 import { EmptyState } from "./empty-state";
@@ -28,6 +26,9 @@ export function ChatInputSection({ agentId, threadId, userId, initialMessages = 
 	// Create transport for AI SDK v5 with agentId
 	const transport = useChatTransport({ threadId, agentId, userId });
 
+	// Auto-resume interrupted streams if the last message was from user
+	const shouldAutoResume = initialMessages.length > 0 && initialMessages[initialMessages.length - 1]?.role === "user";
+
 	// Use the chat hook with transport and LightfastUIMessage type
 	// The key is to use a stable ID that includes both agentId and threadId
 	// This ensures the hook creates a fresh instance for each new chat
@@ -35,8 +36,6 @@ export function ChatInputSection({ agentId, threadId, userId, initialMessages = 
 		messages,
 		sendMessage: vercelSendMessage,
 		status,
-		setMessages,
-		resumeStream,
 	} = useChat<LightfastUIMessage>({
 		id: `${agentId}-${threadId}`,
 		transport,
@@ -44,16 +43,10 @@ export function ChatInputSection({ agentId, threadId, userId, initialMessages = 
 		onData: (dataPart) => {
 			setDataStream((ds) => (ds ? [...ds, dataPart] : [dataPart]));
 		},
-	});
-
-	// Auto-resume interrupted streams if the last message was from user
-	const shouldAutoResume = initialMessages.length > 0 && initialMessages[initialMessages.length - 1]?.role === "user";
-
-	useAutoResume({
-		autoResume: shouldAutoResume,
-		initialMessages,
-		resumeStream,
-		setMessages,
+		onError: (error) => {
+			console.error("Error streaming text:", error);
+		},
+		resume: shouldAutoResume,
 	});
 
 	const handleSendMessage = async (message: string) => {
@@ -66,7 +59,7 @@ export function ChatInputSection({ agentId, threadId, userId, initialMessages = 
 
 		try {
 			// Generate UUID for the user message
-			const userMessageId = uuidv4();
+			const userMessageId = crypto.randomUUID();
 
 			// Use vercelSendMessage with the correct AI SDK v5 format
 			await vercelSendMessage(
