@@ -75,29 +75,18 @@ export async function fetchRequestHandler<
 			const { messages }: { messages: TMessage[] } = await req.json();
 
 			// Stream the response
-			const { result, streamId, threadId: tid, uiStreamOptions } = await agent.stream({ threadId, messages });
+			const { result, streamId, threadId: tid } = await agent.stream({ threadId, messages });
 
 			// Create UI message stream response with proper options
 			const streamOptions: UIMessageStreamOptions<TMessage> = {
-				...uiStreamOptions,
 				generateMessageId: generateId,
-				onFinish: async ({ messages: finishedMessages, responseMessage, isContinuation }) => {
+				onFinish: async ({ messages: finishedMessages, responseMessage }) => {
 					// Save the assistant's response to memory
 					if (responseMessage && responseMessage.role === "assistant") {
 						const memory = agent.getMemory();
 						await memory.appendMessages({
 							threadId: tid,
 							messages: [responseMessage],
-						});
-					}
-
-					// Call user's onFinish if provided
-					if (uiStreamOptions?.onFinish) {
-						await uiStreamOptions.onFinish({
-							messages: finishedMessages,
-							responseMessage,
-							isContinuation,
-							isAborted: false,
 						});
 					}
 				},

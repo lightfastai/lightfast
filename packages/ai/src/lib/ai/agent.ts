@@ -1,5 +1,5 @@
 import type { RuntimeContext } from "@lightfast/ai/tools";
-import { convertToModelMessages, streamText, type ToolSet, type UIMessage, type UIMessageStreamOptions } from "ai";
+import { convertToModelMessages, streamText, type ToolSet, type UIMessage } from "ai";
 import type { Memory } from "./memory";
 
 // Utility function for generating UUIDs
@@ -24,9 +24,6 @@ export interface AgentConfig<TMessage extends UIMessage = UIMessage>
 
 	// Optional streamText configuration (defaults provided in constructor)
 	model?: StreamTextConfig["model"];
-
-	// UI message stream options
-	uiStreamOptions?: Omit<UIMessageStreamOptions<TMessage>, "consumeSseStream">;
 }
 
 export interface StreamOptions<TMessage = any> {
@@ -61,7 +58,7 @@ export class Agent<
 		this.memory = config.memory;
 		this.createTools = tools;
 		this.system = system;
-		this.generateId = config._internal?.generateId || uuidv4;
+		this.generateId = uuidv4;
 
 		// Store configuration with system prompt
 		this.config = {
@@ -119,7 +116,7 @@ export class Agent<
 		const tools = this.createTools(runtimeContext);
 
 		// Stream the response with properly typed config
-		const { memory, name, resourceId, uiStreamOptions, ...streamTextConfig } = this.config;
+		const { memory, name, resourceId, ...streamTextConfig } = this.config;
 
 		// Ensure model is set
 		if (!streamTextConfig.model) {
@@ -140,7 +137,6 @@ export class Agent<
 			}),
 			streamId,
 			threadId,
-			uiStreamOptions,
 		};
 	}
 
@@ -154,7 +150,6 @@ export class Agent<
 		return {
 			memory: this.memory,
 			generateId: this.generateId,
-			uiStreamOptions: this.config.uiStreamOptions,
 		};
 	}
 

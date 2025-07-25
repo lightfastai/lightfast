@@ -45,14 +45,6 @@ const handler = async (
 				chunking: "word",
 			}),
 			stopWhen: stepCountIs(30),
-			_internal: {
-				generateId: uuidv4,
-			},
-			// UI stream options for reasoning and sources
-			uiStreamOptions: {
-				sendReasoning: true,
-				sendSources: false,
-			},
 		}),
 		req,
 		params: resolvedParams,
