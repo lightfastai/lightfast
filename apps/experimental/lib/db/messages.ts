@@ -12,6 +12,7 @@ import { getRedis, REDIS_KEYS } from "./redis";
 interface ThreadMessagesData {
 	threadId: string;
 	messages: LightfastUIMessage[]; // Store LightfastUIMessage directly
+	createdAt: string;
 	updatedAt: string;
 }
 
@@ -28,10 +29,12 @@ export async function createMessages({
 	const redis = getRedis();
 	const key = REDIS_KEYS.threadMessages(threadId);
 
+	const now = new Date().toISOString();
 	const data: ThreadMessagesData = {
 		threadId,
 		messages,
-		updatedAt: new Date().toISOString(),
+		createdAt: now,
+		updatedAt: now,
 	};
 
 	// Use JSON.SET to store as a JSON document
