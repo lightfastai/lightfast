@@ -12,7 +12,7 @@ import {
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
-import { createMessages, createStream, createThread, getMessages, getThread, getThreadStreams } from "@/lib/db";
+import { appendMessages, createMessages, createStream, createThread, getMessages, getThread, getThreadStreams } from "@/lib/db";
 import { uuidv4 } from "@/lib/uuidv4";
 
 // Create the resumable stream context
@@ -46,10 +46,33 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		// Create thread if it doesn't exist, or update timestamp if it does
 		await createThread({ threadId, userId, agentId });
 
-		// Save initial messages (including user message) immediately before streaming
-		// This ensures the user message is persisted even if streaming fails
-		await createMessages({ threadId, messages });
-		console.log(`[POST] Created initial messages for threadId: ${threadId}, message count: ${messages.length}`);
+		// Handle messages based on whether thread is new or existing
+		let allMessages: LightfastUIMessage[];
+		
+		if (!existingThread) {
+			// New thread - create with initial messages
+			await createMessages({ threadId, messages });
+			console.log(`[POST] Created new thread ${threadId} with ${messages.length} messages`);
+			allMessages = messages;
+		} else {
+			// Existing thread - need to determine which messages are actually new
+			const existingMessages = await getMessages(threadId);
+			
+			// Find messages that don't exist in the database yet
+			// This handles the case where the client sends all messages
+			const existingIds = new Set(existingMessages.map(m => m.id));
+			const newMessages = messages.filter(m => !existingIds.has(m.id));
+			
+			if (newMessages.length > 0) {
+				await appendMessages({ threadId, messages: newMessages });
+				console.log(`[POST] Appended ${newMessages.length} new messages to thread ${threadId} (client sent ${messages.length} total)`);
+			} else {
+				console.log(`[POST] No new messages to append to thread ${threadId}`);
+			}
+			
+			// Use all messages from client for context (they may have local state we don't)
+			allMessages = messages;
+		}
 
 		// Create this new stream so we can resume later
 		await createStream({ threadId, streamId });
@@ -59,7 +82,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 			execute: ({ writer: dataStream }) => {
 				const result = streamText({
 					model: gateway("anthropic/claude-4-sonnet"),
-					messages: convertToModelMessages(messages),
+					messages: convertToModelMessages(allMessages),
 					providerOptions: {
 						anthropic: {
 							thinking: { type: "enabled", budgetTokens: 12000 },
@@ -86,15 +109,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 			},
 			generateId: uuidv4,
 			onFinish: async ({ messages: newMessages }) => {
-				console.log("Creating assistant response!");
-				// onFinish receives UIMessage[] but we cast to LightfastUIMessage[]
-				// Fetch existing messages and append new ones
-				const existingMessages = await getMessages(threadId);
-				const allMessages = [
-					...(existingMessages.length > 0 ? existingMessages : messages),
-					...(newMessages as LightfastUIMessage[]),
-				];
-				await createMessages({ threadId, messages: allMessages });
+				console.log("Appending assistant response!");
+				// onFinish receives the assistant's response message(s)
+				// Filter to only get assistant messages (not user messages)
+				const assistantMessages = newMessages.filter(msg => msg.role === "assistant") as LightfastUIMessage[];
+				if (assistantMessages.length > 0) {
+					await appendMessages({ 
+						threadId, 
+						messages: assistantMessages
+					});
+				}
 			},
 			onError: (error) => {
 				console.error("Stream error:", error);

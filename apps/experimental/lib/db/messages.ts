@@ -34,7 +34,11 @@ export async function createMessages({
 		updatedAt: new Date().toISOString(),
 	};
 
-	await redis.setex(key, REDIS_TTL.MESSAGES, JSON.stringify(data));
+	// Use JSON.SET to store as a JSON document, not a string
+	// This enables JSON operations like JSON.ARRAPPEND
+	await redis.json.set(key, "$", data);
+	// Set TTL separately
+	await redis.expire(key, REDIS_TTL.MESSAGES);
 }
 
 /**
@@ -43,25 +47,36 @@ export async function createMessages({
 export async function getMessages(threadId: string): Promise<LightfastUIMessage[]> {
 	const redis = getRedis();
 	const key = REDIS_KEYS.threadMessages(threadId);
-	const data = await redis.get(key);
-
-	if (!data) return [];
-
-	// Handle both string and already-parsed data
-	if (typeof data === "object" && data !== null) {
-		return (data as ThreadMessagesData).messages || [];
-	}
-
-	if (typeof data === "string") {
-		const parsed = JSON.parse(data) as ThreadMessagesData;
-		return parsed.messages || [];
+	
+	try {
+		// Try JSON.GET first for new JSON-stored data
+		const jsonData = await redis.json.get(key, "$") as ThreadMessagesData[] | null;
+		if (jsonData && jsonData.length > 0) {
+			return jsonData[0].messages || [];
+		}
+	} catch (error) {
+		// Fall back to regular GET for legacy string-stored data
+		const data = await redis.get(key);
+		
+		if (!data) return [];
+		
+		// Handle both string and already-parsed data
+		if (typeof data === "object" && data !== null) {
+			return (data as ThreadMessagesData).messages || [];
+		}
+		
+		if (typeof data === "string") {
+			const parsed = JSON.parse(data) as ThreadMessagesData;
+			return parsed.messages || [];
+		}
 	}
 
 	return [];
 }
 
 /**
- * Append messages to existing thread
+ * Append messages to existing thread using Redis JSON.ARRAPPEND
+ * Much more efficient than fetching all messages when we only need to append
  */
 export async function appendMessages({
 	threadId,
@@ -70,9 +85,50 @@ export async function appendMessages({
 	threadId: string;
 	messages: LightfastUIMessage[];
 }): Promise<void> {
-	const existingMessages = await getMessages(threadId);
-	const allMessages = [...existingMessages, ...messages];
-	await createMessages({ threadId, messages: allMessages });
+	if (messages.length === 0) return;
+	
+	const redis = getRedis();
+	const key = REDIS_KEYS.threadMessages(threadId);
+	
+	// Check if the key exists first
+	const exists = await redis.exists(key);
+	
+	if (!exists) {
+		// If no existing messages, just create new
+		await createMessages({ threadId, messages });
+		return;
+	}
+	
+	try {
+		// First, check if this is a JSON document or legacy string storage
+		const type = await redis.type(key);
+		
+		if (type === "string") {
+			// Legacy string storage - need to migrate to JSON
+			console.log(`Migrating thread ${threadId} from string to JSON storage`);
+			const existingMessages = await getMessages(threadId);
+			const allMessages = [...existingMessages, ...messages];
+			// Delete the old string key
+			await redis.del(key);
+			// Create as JSON document
+			await createMessages({ threadId, messages: allMessages });
+			return;
+		}
+		
+		// Use JSON.ARRAPPEND to append each message to the messages array
+		for (const message of messages) {
+			await redis.json.arrappend(key, "$.messages", message);
+		}
+		
+		// Update the timestamp
+		await redis.json.set(key, "$.updatedAt", new Date().toISOString());
+	} catch (error) {
+		// If JSON operations fail for any reason, fall back to the traditional method
+		console.error("JSON.ARRAPPEND failed, falling back to traditional append:", error);
+		const existingMessages = await getMessages(threadId);
+		const allMessages = [...existingMessages, ...messages];
+		await createMessages({ threadId, messages: allMessages });
+	}
 }
 
 /**
