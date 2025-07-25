@@ -1,13 +1,14 @@
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import { del, head, list, put } from "@vercel/blob";
 import { z } from "zod";
+import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
-import type { RuntimeContext } from "./types";
 
 /**
  * Create file write tool with injected runtime context
  */
-export const fileTool = createTool<RuntimeContext>((context) => ({
+export const fileTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Write markdown content to a .md file in blob storage",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to save (must end with .md, e.g., 'analysis.md', 'report.md')"),
@@ -53,7 +54,7 @@ export const fileTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create file read tool with injected runtime context
  */
-export const fileReadTool = createTool<RuntimeContext>((context) => ({
+export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Read content from a file in blob storage",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to read (e.g., 'analysis.md')"),
@@ -122,7 +123,7 @@ export const fileReadTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create file delete tool with injected runtime context
  */
-export const fileDeleteTool = createTool<RuntimeContext>((context) => ({
+export const fileDeleteTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Delete a file from blob storage",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to delete (e.g., 'analysis.md')"),
@@ -162,7 +163,7 @@ export const fileDeleteTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create string replacement tool with injected runtime context
  */
-export const fileStringReplaceTool = createTool<RuntimeContext>((context) => ({
+export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Replace specified string in a file with new content",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to modify (e.g., 'config.json')"),
@@ -242,7 +243,7 @@ export const fileStringReplaceTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create find in content tool with injected runtime context
  */
-export const fileFindInContentTool = createTool<RuntimeContext>((context) => ({
+export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Search for text patterns within file content using regex",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to search in (e.g., 'config.json')"),
@@ -323,7 +324,7 @@ export const fileFindInContentTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create find by name tool with injected runtime context
  */
-export const fileFindByNameTool = createTool<RuntimeContext>((context) => ({
+export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Find files by name pattern within the current thread's file storage",
 	inputSchema: z.object({
 		globPattern: z.string().describe("Glob pattern to match filenames (e.g., '*.md', 'config.*', 'data-*.json')"),

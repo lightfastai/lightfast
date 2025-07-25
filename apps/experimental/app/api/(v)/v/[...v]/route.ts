@@ -1,9 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createAgents } from "@/app/ai/agents";
 import type { A011Tools } from "@/app/ai/agents/a011";
-import type { RuntimeContext } from "@/app/ai/tools/types";
+import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
@@ -29,17 +30,19 @@ const handler = async (req: Request) => {
 	}
 
 	// Pass everything to fetchRequestHandler
-	return fetchRequestHandler<LightfastUIMessage, A011Tools, RuntimeContext>({
+	return fetchRequestHandler<LightfastUIMessage, A011Tools<RuntimeContext<AppRuntimeContext>>, AppRuntimeContext>({
 		agents,
 		memory,
 		req,
-		createContext: () => ({
-			resourceId: userId,
-		}),
-		createRuntimeContext: ({ threadId, resourceId }) => ({
-			threadId,
-			// Runtime context is fully typed according to RuntimeContext interface
-		}),
+		resourceId: userId,
+		createRuntimeContext: ({ threadId, resourceId }) => {
+			// Return user-defined context fields
+			// The system will automatically add threadId and resourceId
+			const userContext: AppRuntimeContext = {
+				// Add any custom fields here
+			};
+			return userContext;
+		},
 		generateId: uuidv4,
 		enableResume: true,
 		onError({ error, path }) {

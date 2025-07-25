@@ -1,13 +1,14 @@
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
+import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
-import type { RuntimeContext } from "./types";
 
 /**
  * Create web search tool with injected runtime context
  */
-export const webSearchTool = createTool<RuntimeContext>((context) => ({
+export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Advanced web search with optimized content retrieval using Exa",
 	inputSchema: z.object({
 		query: z.string().describe("The search query"),

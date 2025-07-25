@@ -1,8 +1,9 @@
 import { Stagehand } from "@browserbasehq/stagehand";
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import { z } from "zod";
+import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
-import type { RuntimeContext } from "./types";
 
 class StagehandSessionManager {
 	private static instance: StagehandSessionManager;
@@ -127,7 +128,7 @@ class StagehandSessionManager {
 // Get the singleton instance
 const sessionManager = StagehandSessionManager.getInstance();
 
-export const stagehandActTool = createTool<RuntimeContext>((context) => ({
+export const stagehandActTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Take an action on a webpage using Stagehand",
 	inputSchema: z.object({
 		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
@@ -138,7 +139,7 @@ export const stagehandActTool = createTool<RuntimeContext>((context) => ({
 	},
 }));
 
-export const stagehandObserveTool = createTool<RuntimeContext>((context) => ({
+export const stagehandObserveTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Observe elements on a webpage using Stagehand to plan actions",
 	inputSchema: z.object({
 		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
@@ -150,7 +151,7 @@ export const stagehandObserveTool = createTool<RuntimeContext>((context) => ({
 	},
 }));
 
-export const stagehandExtractTool = createTool<RuntimeContext>((context) => ({
+export const stagehandExtractTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Extract data from a webpage using Stagehand",
 	inputSchema: z.object({
 		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
@@ -302,7 +303,7 @@ const performWebExtraction = async (
 };
 
 // Add a navigation tool for convenience
-export const stagehandNavigateTool = createTool<RuntimeContext>((context) => ({
+export const stagehandNavigateTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Navigate to a URL in the browser",
 	inputSchema: z.object({
 		url: z.string().describe("URL to navigate to"),

@@ -1,8 +1,9 @@
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import { del, put } from "@vercel/blob";
 import { z } from "zod";
+import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
-import type { RuntimeContext } from "./types";
 
 const taskSchema = z.object({
 	id: z.string().describe("Unique task identifier (e.g., TASK-001)"),
@@ -20,7 +21,7 @@ type Task = z.infer<typeof taskSchema>;
 /**
  * Create todo write tool with injected runtime context
  */
-export const todoWriteTool = createTool<RuntimeContext>((context) => ({
+export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description:
 		"Create and update a todo list for the current conversation thread. Use this tool to plan multi-step tasks, track progress, and ensure nothing is forgotten.",
 	inputSchema: z.object({
@@ -68,7 +69,7 @@ export const todoWriteTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create todo read tool with injected runtime context
  */
-export const todoReadTool = createTool<RuntimeContext>((context) => ({
+export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Read the current todo list for this conversation thread",
 	inputSchema: z.object({}),
 	execute: async () => {
@@ -121,7 +122,7 @@ export const todoReadTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create todo clear tool with injected runtime context
  */
-export const todoClearTool = createTool<RuntimeContext>((context) => ({
+export const todoClearTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Clear the todo list for the current conversation thread",
 	inputSchema: z.object({}),
 	execute: async () => {

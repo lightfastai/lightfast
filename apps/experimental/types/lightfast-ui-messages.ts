@@ -1,3 +1,4 @@
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import type { InferToolInput, InferToolOutput, InferUITool, InferUITools, UIMessage } from "ai";
 import type {
 	createSandboxTool,
@@ -16,7 +17,7 @@ import type {
 	todoWriteTool,
 	webSearchTool,
 } from "@/app/ai/tools";
-import type { RuntimeContext } from "@/app/ai/tools/types";
+import type { AppRuntimeContext } from "@/app/ai/types";
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {
@@ -25,7 +26,7 @@ export interface LightfastUICustomDataTypes {
 
 // Helper type to extract the tool type from a tool factory function
 // This handles the RuntimeContext injection pattern
-type ExtractToolType<T> = T extends (context: RuntimeContext) => infer R ? R : never;
+type ExtractToolType<T> = T extends (context: RuntimeContext<AppRuntimeContext>) => infer R ? R : never;
 
 // Define the tool set type using the helper
 // This matches the structure passed to streamText() in route.ts

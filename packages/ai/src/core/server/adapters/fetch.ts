@@ -2,18 +2,18 @@ import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
-import type { HandlerContext } from "./types";
+import type { RuntimeContext } from "./types";
 
 export interface FetchRequestHandlerOptions<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext = unknown,
+	TUserContext = {},
 > {
-	agents: Agent<TMessage, TTools, TRuntimeContext>[];
+	agents: Agent<TMessage, TTools, RuntimeContext<TUserContext>>[];
 	memory: Memory<TMessage>;
 	req: Request;
-	createContext: () => { resourceId: string };
-	createRuntimeContext: (params: { threadId: string; resourceId: string }) => TRuntimeContext;
+	resourceId: string;
+	createRuntimeContext: (params: { threadId: string; resourceId: string }) => TUserContext;
 	generateId?: () => string;
 	enableResume?: boolean;
 	onError?: (error: { error: Error; path?: string }) => void;
@@ -47,7 +47,11 @@ export interface FetchRequestHandlerOptions<
  *     agents,
  *     memory,
  *     req,
- *     createContext: () => ({ resourceId: userId }),
+ *     resourceId: userId,
+ *     createRuntimeContext: ({ threadId, resourceId }) => ({
+ *       threadId,
+ *       // Add your runtime context properties here
+ *     }),
  *     onError({ error, path }) {
  *       console.error(`Agent error on '${path}':`, error);
  *     }
@@ -60,10 +64,9 @@ export interface FetchRequestHandlerOptions<
 export async function fetchRequestHandler<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext = unknown,
->(options: FetchRequestHandlerOptions<TMessage, TTools, TRuntimeContext>): Promise<Response> {
-	const { agents, memory, req, createContext, createRuntimeContext, generateId, enableResume, onError } = options;
-	const context = createContext();
+	TUserContext = {},
+>(options: FetchRequestHandlerOptions<TMessage, TTools, TUserContext>): Promise<Response> {
+	const { agents, memory, req, resourceId, createRuntimeContext, generateId, enableResume, onError } = options;
 
 	// Extract agentId and threadId from URL path
 	const url = new URL(req.url);
@@ -97,7 +100,7 @@ export async function fetchRequestHandler<
 
 	// Check if thread exists and validate ownership
 	const existingThread = await memory.getThread(threadId);
-	if (existingThread && existingThread.resourceId !== context.resourceId) {
+	if (existingThread && existingThread.resourceId !== resourceId) {
 		const error = new Error("Forbidden: Thread belongs to another user");
 		onError?.({ error, path: `${agentId}/${threadId}` });
 		return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -117,7 +120,7 @@ export async function fetchRequestHandler<
 			// Create thread if it doesn't exist
 			await memory.createThread({
 				threadId,
-				resourceId: context.resourceId,
+				resourceId: resourceId,
 				agentId: agent.config.name,
 			});
 
@@ -136,10 +139,17 @@ export async function fetchRequestHandler<
 			}
 
 			// Create runtime context for this request
-			const runtimeContext = createRuntimeContext({
+			const userContext = createRuntimeContext({
 				threadId,
-				resourceId: context.resourceId,
+				resourceId: resourceId,
 			});
+
+			// Merge system and user contexts
+			const runtimeContext: RuntimeContext<TUserContext> = {
+				threadId,
+				resourceId,
+				...userContext,
+			};
 
 			// Stream the response
 			const {
@@ -150,7 +160,7 @@ export async function fetchRequestHandler<
 				threadId,
 				messages: allMessages,
 				memory,
-				resourceId: context.resourceId,
+				resourceId: resourceId,
 				runtimeContext,
 			});
 
@@ -200,7 +210,7 @@ export async function fetchRequestHandler<
 		try {
 			// Check authentication and ownership
 			const thread = await memory.getThread(threadId);
-			if (!thread || thread.resourceId !== context.resourceId) {
+			if (!thread || thread.resourceId !== resourceId) {
 				return Response.json({ error: "Thread not found or unauthorized" }, { status: 404 });
 			}
 

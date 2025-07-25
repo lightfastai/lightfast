@@ -1,12 +1,13 @@
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import { Sandbox } from "@vercel/sandbox";
 import { z } from "zod";
-import type { RuntimeContext } from "./types";
+import type { AppRuntimeContext } from "@/app/ai/types";
 
 /**
  * Create sandbox tool with injected runtime context
  */
-export const createSandboxTool = createTool<RuntimeContext>((context) => ({
+export const createSandboxTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Create a new Vercel sandbox and return its ID",
 	inputSchema: z.object({
 		runtime: z.enum(["node22", "python3.13"]).default("node22").describe("Runtime environment"),
@@ -34,7 +35,7 @@ export const createSandboxTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create sandbox command execution tool with injected runtime context
  */
-export const executeSandboxCommandTool = createTool<RuntimeContext>((context) => ({
+export const executeSandboxCommandTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description:
 		"Execute a command in the sandbox and return full output. Use background=true for long-running processes like servers.",
 	inputSchema: z.object({
@@ -99,7 +100,7 @@ export const executeSandboxCommandTool = createTool<RuntimeContext>((context) =>
 /**
  * Create sandbox with ports tool with injected runtime context
  */
-export const createSandboxWithPortsTool = createTool<RuntimeContext>((context) => ({
+export const createSandboxWithPortsTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Create a new Vercel sandbox with exposed ports for web applications",
 	inputSchema: z.object({
 		runtime: z.enum(["node22", "python3.13"]).default("node22").describe("Runtime environment"),
@@ -146,7 +147,7 @@ export const createSandboxWithPortsTool = createTool<RuntimeContext>((context) =
 /**
  * Create sandbox domain tool with injected runtime context
  */
-export const getSandboxDomainTool = createTool<RuntimeContext>((context) => ({
+export const getSandboxDomainTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "Get the public domain URL for a specific port in a sandbox",
 	inputSchema: z.object({
 		sandboxId: z.string().describe("The sandbox ID"),
@@ -179,7 +180,7 @@ export const getSandboxDomainTool = createTool<RuntimeContext>((context) => ({
 /**
  * Create list sandbox routes tool with injected runtime context
  */
-export const listSandboxRoutesTool = createTool<RuntimeContext>((context) => ({
+export const listSandboxRoutesTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
 	description: "List all exposed ports and their public URLs for a sandbox",
 	inputSchema: z.object({
 		sandboxId: z.string().describe("The sandbox ID"),

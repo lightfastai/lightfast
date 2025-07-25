@@ -271,13 +271,17 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 - "Creating a file to store the results..." [file]
 `;
 
-import type { RuntimeContext } from "../tools/types";
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
+import type { AppRuntimeContext } from "@/app/ai/types";
 
 // Type for the a011 agent tools
-export type A011Tools = ReturnType<typeof createA011Tools>;
+export type A011Tools<TContext extends RuntimeContext<AppRuntimeContext> = RuntimeContext<AppRuntimeContext>> =
+	ReturnType<typeof createA011Tools<TContext>>;
 
 // Tool creation function for the a011 agent
-export function createA011Tools(runtimeContext: RuntimeContext) {
+export function createA011Tools<TContext extends RuntimeContext<AppRuntimeContext> = RuntimeContext<AppRuntimeContext>>(
+	runtimeContext: TContext,
+) {
 	return {
 		// File operations
 		file: fileTool(runtimeContext),
