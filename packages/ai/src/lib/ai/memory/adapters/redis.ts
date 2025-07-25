@@ -1,6 +1,6 @@
 import { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
-import type { Memory } from "./";
+import type { Memory } from "../";
 
 interface ThreadMessagesData<TMessage> {
 	threadId: string;

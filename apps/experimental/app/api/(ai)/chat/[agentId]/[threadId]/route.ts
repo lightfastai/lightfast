@@ -2,7 +2,7 @@ import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
 import { Agent } from "@lightfast/ai/agent";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
-import { RedisMemory } from "@lightfast/ai/agent/memory/redis";
+import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
 import { A011_SYSTEM_PROMPT, type A011Tools, createA011Tools } from "@lightfast/ai/agents/a011";
 import type { LightfastUIMessage } from "@lightfast/types";
 import { smoothStream, stepCountIs } from "ai";

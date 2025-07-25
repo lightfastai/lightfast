@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { RedisMemory } from "@lightfast/ai/agent/memory/redis";
+import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
 import type { LightfastUIMessage } from "@lightfast/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
