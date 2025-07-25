@@ -12,44 +12,44 @@
 			"default": "./src/env.ts"
 		},
 		"./agent": {
-			"types": "./src/lib/ai/agent.ts",
-			"default": "./src/lib/ai/agent.ts"
+			"types": "./src/core/agent.ts",
+			"default": "./src/core/agent.ts"
 		},
 		"./agent/handlers": {
-			"types": "./src/lib/ai/server/adapters/fetch.ts",
-			"default": "./src/lib/ai/server/adapters/fetch.ts"
+			"types": "./src/core/server/adapters/fetch.ts",
+			"default": "./src/core/server/adapters/fetch.ts"
 		},
 		"./agent/server/adapters/fetch": {
-			"types": "./src/lib/ai/server/adapters/fetch.ts",
-			"default": "./src/lib/ai/server/adapters/fetch.ts"
+			"types": "./src/core/server/adapters/fetch.ts",
+			"default": "./src/core/server/adapters/fetch.ts"
 		},
 		"./agent/server/adapters/types": {
-			"types": "./src/lib/ai/server/adapters/types.ts",
-			"default": "./src/lib/ai/server/adapters/types.ts"
+			"types": "./src/core/server/adapters/types.ts",
+			"default": "./src/core/server/adapters/types.ts"
 		},
 		"./agent/memory": {
-			"types": "./src/lib/ai/memory/index.ts",
-			"default": "./src/lib/ai/memory/index.ts"
+			"types": "./src/core/memory/index.ts",
+			"default": "./src/core/memory/index.ts"
 		},
 		"./agent/memory/adapters/redis": {
-			"types": "./src/lib/ai/memory/adapters/redis.ts",
-			"default": "./src/lib/ai/memory/adapters/redis.ts"
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
 		},
 		"./agent/memory/redis": {
-			"types": "./src/lib/ai/memory/adapters/redis.ts",
-			"default": "./src/lib/ai/memory/adapters/redis.ts"
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
 		},
 		"./agent/redis-memory": {
-			"types": "./src/lib/ai/memory/adapters/redis.ts",
-			"default": "./src/lib/ai/memory/adapters/redis.ts"
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
 		},
 		"./agents/a011": {
 			"types": "./src/agents/a011.ts",
 			"default": "./src/agents/a011.ts"
 		},
 		"./providers": {
-			"types": "./src/lib/ai/provider.ts",
-			"default": "./src/lib/ai/provider.ts"
+			"types": "./src/utils/providers.ts",
+			"default": "./src/utils/providers.ts"
 		}
 	},
 	"scripts": {
