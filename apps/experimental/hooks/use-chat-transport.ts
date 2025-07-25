@@ -32,8 +32,8 @@ export function useChatTransport({
 					api,
 					headers,
 					body: {
-						// Send all messages
-						messages: messages,
+						// Send only the latest user message
+						messages: messages.length > 0 ? [messages[messages.length - 1]] : [],
 						userId: userId,
 						// Include any additional metadata from the body
 						...body,

@@ -58,30 +58,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		let allMessages: LightfastUIMessage[];
 
 		if (!existingThread) {
-			// New thread - create with initial messages
+			// New thread - create with initial messages (should only be one message)
 			await createMessages({ threadId, messages });
 			console.log(`[POST] Created new thread ${threadId} with ${messages.length} messages`);
 			allMessages = messages;
 		} else {
-			// Existing thread - need to determine which messages are actually new
-			const existingMessages = await getMessages(threadId);
-
-			// Find messages that don't exist in the database yet
-			// This handles the case where the client sends all messages
-			const existingIds = new Set(existingMessages.map((m) => m.id));
-			const newMessages = messages.filter((m) => !existingIds.has(m.id));
-
-			if (newMessages.length > 0) {
-				await appendMessages({ threadId, messages: newMessages });
-				console.log(
-					`[POST] Appended ${newMessages.length} new messages to thread ${threadId} (client sent ${messages.length} total)`,
-				);
-			} else {
-				console.log(`[POST] No new messages to append to thread ${threadId}`);
+			// Existing thread - append the new message(s) from client
+			if (messages.length > 0) {
+				await appendMessages({ threadId, messages });
+				console.log(`[POST] Appended ${messages.length} new messages to thread ${threadId}`);
 			}
-
-			// Use all messages from client for context (they may have local state we don't)
-			allMessages = messages;
+			
+			// Fetch all messages from database for full context
+			allMessages = await getMessages(threadId);
 		}
 
 		// Create this new stream so we can resume later
