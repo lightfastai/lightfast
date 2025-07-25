@@ -32,6 +32,5 @@ export const REDIS_KEYS = {
 
 export const REDIS_TTL = {
 	STREAM: 86400, // 24 hours for streams
-	THREAD: 86400 * 7, // 7 days for threads
-	MESSAGES: 86400 * 7, // 7 days for messages
+	// Threads and messages are persisted forever - no TTL
 } as const;

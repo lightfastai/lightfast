@@ -1,4 +1,4 @@
-import { getRedis, REDIS_KEYS, REDIS_TTL } from "./redis";
+import { getRedis, REDIS_KEYS } from "./redis";
 
 export interface ThreadMetadata {
 	threadId: string;
@@ -43,7 +43,8 @@ export async function createThread({
 		updatedAt: new Date().toISOString(),
 	};
 
-	await redis.setex(key, REDIS_TTL.THREAD, JSON.stringify(metadata));
+	// Threads are persisted forever - no TTL
+	await redis.set(key, JSON.stringify(metadata));
 }
 
 /**
@@ -73,6 +74,7 @@ export async function updateThreadTimestamp(threadId: string): Promise<void> {
 
 	if (existing) {
 		existing.updatedAt = new Date().toISOString();
-		await redis.setex(key, REDIS_TTL.THREAD, JSON.stringify(existing));
+		// Threads are persisted forever - no TTL
+		await redis.set(key, JSON.stringify(existing));
 	}
 }

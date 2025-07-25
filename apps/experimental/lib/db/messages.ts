@@ -7,7 +7,7 @@
  */
 
 import type { LightfastUIMessage, LightfastUIMessageMetadata } from "@lightfast/types";
-import { getRedis, REDIS_KEYS, REDIS_TTL } from "./redis";
+import { getRedis, REDIS_KEYS } from "./redis";
 
 interface ThreadMessagesData {
 	threadId: string;
@@ -37,8 +37,7 @@ export async function createMessages({
 	// Use JSON.SET to store as a JSON document
 	// This enables JSON operations like JSON.ARRAPPEND
 	await redis.json.set(key, "$", data as unknown as Record<string, unknown>);
-	// Set TTL separately
-	await redis.expire(key, REDIS_TTL.MESSAGES);
+	// Messages are persisted forever - no TTL
 }
 
 /**
