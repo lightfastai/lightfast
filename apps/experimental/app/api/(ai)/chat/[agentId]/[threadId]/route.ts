@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { Agent } from "@lightfast/ai/agent";
+import { Agent, type DatabaseOperations } from "@lightfast/ai/agent";
 import type { LightfastUIMessage } from "@lightfast/types";
 import {
 	appendMessages,
@@ -10,6 +10,7 @@ import {
 	getThread,
 	getThreadStreams,
 } from "@/lib/db";
+import { uuidv4 } from "@/lib/uuidv4";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -25,8 +26,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		const { agentId, threadId } = await params;
 		const { messages }: { messages: LightfastUIMessage[] } = await request.json();
 
-		// Create database operations object
-		const dbOperations = {
+		// Create properly typed database operations object
+		const dbOperations: DatabaseOperations<LightfastUIMessage> = {
 			appendMessages,
 			createMessages,
 			createStream,
@@ -36,11 +37,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 			getThreadStreams,
 		};
 
-		// Create agent instance
+		// Create agent instance with enhanced configuration
 		const agent = new Agent<LightfastUIMessage>({
 			agentId,
 			userId,
 			db: dbOperations,
+			generateId: uuidv4,
+			// Enable reasoning for the experimental agent
+			sendReasoning: true,
+			sendSources: false,
 		});
 
 		// Stream the response
@@ -67,8 +72,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ age
 		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
-	// Create database operations object
-	const dbOperations = {
+	// Create properly typed database operations object
+	const dbOperations: DatabaseOperations<LightfastUIMessage> = {
 		appendMessages,
 		createMessages,
 		createStream,
@@ -78,11 +83,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ age
 		getThreadStreams,
 	};
 
-	// Create agent instance
+	// Create agent instance with consistent configuration
 	const agent = new Agent<LightfastUIMessage>({
 		agentId,
 		userId,
 		db: dbOperations,
+		generateId: uuidv4,
 	});
 
 	try {

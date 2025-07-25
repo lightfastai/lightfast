@@ -52,6 +52,15 @@ export interface AgentConfig<TMessage = any> {
 	experimental_transform?: any; // Type not exported from 'ai' package
 	maxSteps?: number;
 	db: DatabaseOperations<TMessage>;
+	generateId?: () => string;
+	messageMetadata?: (options: { part: any }) => any;
+	onFinish?: (options: {
+		messages: TMessage[];
+		responseMessage: TMessage;
+		isContinuation: boolean;
+	}) => Promise<void> | void;
+	sendReasoning?: boolean;
+	sendSources?: boolean;
 }
 
 export interface StreamOptions<TMessage = any> {
@@ -62,6 +71,7 @@ export interface StreamOptions<TMessage = any> {
 export class Agent<TMessage = any> {
 	private config: AgentConfig<TMessage>;
 	private db: DatabaseOperations<TMessage>;
+	private generateId: () => string;
 	private defaultSystem = `
 <system>
   <role>
@@ -319,6 +329,7 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 
 	constructor(config: AgentConfig<TMessage>) {
 		this.db = config.db;
+		this.generateId = config.generateId || uuidv4;
 		this.config = {
 			...config,
 			model: config.model || gateway("anthropic/claude-4-sonnet"),
@@ -335,6 +346,8 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 					chunking: "word",
 				}),
 			maxSteps: config.maxSteps || 30,
+			sendReasoning: config.sendReasoning ?? true,
+			sendSources: config.sendSources ?? false,
 		};
 	}
 
@@ -349,7 +362,7 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 			throw new Error("Forbidden: Thread belongs to another user");
 		}
 
-		const streamId = uuidv4();
+		const streamId = this.generateId();
 
 		// Get the most recent user message
 		const recentUserMessage = messages.filter((message: any) => message.role === "user").at(-1);
@@ -414,7 +427,7 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 		// Stream the response
 		const result = streamText({
 			_internal: {
-				generateId: () => uuidv4(),
+				generateId: this.generateId,
 			},
 			model: this.config.model!,
 			messages: convertToModelMessages(allMessages as any),
@@ -429,15 +442,26 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 		});
 
 		return result.toUIMessageStreamResponse({
-			generateMessageId: () => uuidv4(),
-			onFinish: async ({ messages: finishedMessages }) => {
+			generateMessageId: this.generateId,
+			messageMetadata: this.config.messageMetadata,
+			sendReasoning: this.config.sendReasoning,
+			sendSources: this.config.sendSources,
+			onFinish: async ({ messages: finishedMessages, responseMessage, isContinuation }) => {
 				// Only save the new assistant message (last message should be the assistant's response)
 				console.log("all", finishedMessages);
-				const lastMessage = finishedMessages[finishedMessages.length - 1];
-				if (lastMessage && lastMessage.role === "assistant") {
+				if (responseMessage && responseMessage.role === "assistant") {
 					await this.db.appendMessages({
 						threadId,
-						messages: [lastMessage as TMessage],
+						messages: [responseMessage as TMessage],
+					});
+				}
+
+				// Call user's onFinish if provided
+				if (this.config.onFinish) {
+					await this.config.onFinish({
+						messages: finishedMessages as TMessage[],
+						responseMessage: responseMessage as TMessage,
+						isContinuation,
 					});
 				}
 			},
@@ -475,5 +499,33 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 		const resumedStream = await streamContext.resumeExistingStream(recentStreamId);
 
 		return resumedStream;
+	}
+
+	// Helper method to get properly typed tools
+	private getTools(runtimeContext: { threadId: string }) {
+		return {
+			// File operations
+			file: fileTool(runtimeContext),
+			fileRead: fileReadTool(runtimeContext),
+			fileDelete: fileDeleteTool(runtimeContext),
+			fileStringReplace: fileStringReplaceTool(runtimeContext),
+			fileFindInContent: fileFindInContentTool(runtimeContext),
+			fileFindByName: fileFindByNameTool(runtimeContext),
+
+			// Web search
+			webSearch: webSearchTool(runtimeContext),
+
+			// Sandbox operations
+			createSandbox: createSandboxTool(runtimeContext),
+			executeSandboxCommand: executeSandboxCommandTool(runtimeContext),
+			createSandboxWithPorts: createSandboxWithPortsTool(runtimeContext),
+			getSandboxDomain: getSandboxDomainTool(runtimeContext),
+			listSandboxRoutes: listSandboxRoutesTool(runtimeContext),
+
+			// Task management
+			todoWrite: todoWriteTool(runtimeContext),
+			todoRead: todoReadTool(runtimeContext),
+			todoClear: todoClearTool(runtimeContext),
+		};
 	}
 }
