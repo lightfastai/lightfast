@@ -1,6 +1,7 @@
 import { gateway } from "@ai-sdk/gateway";
 import { Agent } from "@lightfast/ai/agent";
 import { smoothStream, stepCountIs } from "ai";
+import type { RuntimeContext } from "@/app/ai/tools/types";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { A011_SYSTEM_PROMPT, type A011Tools, createA011Tools } from "./a011";
 
@@ -9,7 +10,7 @@ import { A011_SYSTEM_PROMPT, type A011Tools, createA011Tools } from "./a011";
  */
 export function createAgents() {
 	return [
-		new Agent<LightfastUIMessage, A011Tools>({
+		new Agent<LightfastUIMessage, A011Tools, RuntimeContext>({
 			name: "a011",
 			system: A011_SYSTEM_PROMPT,
 			tools: createA011Tools,

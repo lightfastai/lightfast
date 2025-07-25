@@ -23,17 +23,18 @@ export interface AgentConfig<TMessage extends UIMessage = UIMessage>
 	model?: StreamTextConfig["model"];
 }
 
-export interface StreamOptions<TMessage extends UIMessage = UIMessage> {
+export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRuntimeContext = unknown> {
 	threadId: string;
 	messages: TMessage[];
 	memory: Memory<TMessage>;
 	resourceId: string;
+	runtimeContext: TRuntimeContext;
 }
 
 export interface AgentOptions<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext = any,
+	TRuntimeContext = unknown,
 > extends AgentConfig<TMessage> {
 	// Required: system prompt for the agent
 	system: string;
@@ -41,7 +42,11 @@ export interface AgentOptions<
 	tools: (context: TRuntimeContext) => TTools;
 }
 
-export class Agent<TMessage extends UIMessage = UIMessage, TTools extends ToolSet = ToolSet, TRuntimeContext = any> {
+export class Agent<
+	TMessage extends UIMessage = UIMessage,
+	TTools extends ToolSet = ToolSet,
+	TRuntimeContext = unknown,
+> {
 	public readonly config: AgentConfig<TMessage>;
 	private generateId: () => string;
 	private createTools: (context: TRuntimeContext) => TTools;
@@ -60,15 +65,14 @@ export class Agent<TMessage extends UIMessage = UIMessage, TTools extends ToolSe
 		};
 	}
 
-	async stream({ threadId, messages, memory, resourceId }: StreamOptions<TMessage>) {
+	async stream({ threadId, messages, memory, resourceId, runtimeContext }: StreamOptions<TMessage, TRuntimeContext>) {
 		if (!messages || messages.length === 0) {
 			throw new Error("At least one message is required");
 		}
 
 		const streamId = this.generateId();
 
-		// Create runtime context and tools for this specific request
-		const runtimeContext = { threadId } as TRuntimeContext;
+		// Create tools with the provided runtime context
 		const tools = this.createTools(runtimeContext);
 
 		// Stream the response with properly typed config

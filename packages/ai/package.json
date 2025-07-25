@@ -7,6 +7,10 @@
 			"types": "./src/core/primitives/agent.ts",
 			"default": "./src/core/primitives/agent.ts"
 		},
+		"./tool": {
+			"types": "./src/core/primitives/tool.ts",
+			"default": "./src/core/primitives/tool.ts"
+		},
 		"./agent/handlers": {
 			"types": "./src/core/server/adapters/fetch.ts",
 			"default": "./src/core/server/adapters/fetch.ts"

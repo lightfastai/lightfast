@@ -1,5 +1,5 @@
+import { createTool } from "@lightfast/ai/tool";
 import { del, put } from "@vercel/blob";
-import { tool } from "ai";
 import { z } from "zod";
 import { env } from "@/env";
 import type { RuntimeContext } from "./types";
@@ -20,135 +20,129 @@ type Task = z.infer<typeof taskSchema>;
 /**
  * Create todo write tool with injected runtime context
  */
-export function todoWriteTool(context: RuntimeContext) {
-	return tool({
-		description:
-			"Create and update a todo list for the current conversation thread. Use this tool to plan multi-step tasks, track progress, and ensure nothing is forgotten.",
-		inputSchema: z.object({
-			tasks: z.array(taskSchema).describe("The updated task list"),
-		}),
-		execute: async ({ tasks }) => {
-			try {
-				// Generate markdown content
-				const todoContent = generateTodoMarkdown(tasks);
+export const todoWriteTool = createTool<RuntimeContext>((context) => ({
+	description:
+		"Create and update a todo list for the current conversation thread. Use this tool to plan multi-step tasks, track progress, and ensure nothing is forgotten.",
+	inputSchema: z.object({
+		tasks: z.array(taskSchema).describe("The updated task list"),
+	}),
+	execute: async ({ tasks }) => {
+		try {
+			// Generate markdown content
+			const todoContent = generateTodoMarkdown(tasks);
 
-				// Store in blob with thread-scoped path
-				const blobPath = `todos/shared/${context.threadId}/todo.md`;
-				const blob = await put(blobPath, todoContent, {
-					access: "public",
-					contentType: "text/markdown",
-					allowOverwrite: true,
-					token: env.BLOB_READ_WRITE_TOKEN,
-				});
+			// Store in blob with thread-scoped path
+			const blobPath = `todos/shared/${context.threadId}/todo.md`;
+			const blob = await put(blobPath, todoContent, {
+				access: "public",
+				contentType: "text/markdown",
+				allowOverwrite: true,
+				token: env.BLOB_READ_WRITE_TOKEN,
+			});
 
-				const completedCount = tasks.filter((t) => t.status === "completed").length;
-				const pendingCount = tasks.filter((t) => t.status === "pending").length;
-				const inProgressCount = tasks.filter((t) => t.status === "in_progress").length;
+			const completedCount = tasks.filter((t: Task) => t.status === "completed").length;
+			const pendingCount = tasks.filter((t: Task) => t.status === "pending").length;
+			const inProgressCount = tasks.filter((t: Task) => t.status === "in_progress").length;
 
-				return {
-					success: true,
-					message: `Todo list updated: ${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed`,
-					blobUrl: blob.url,
-					taskSummary: {
-						total: tasks.length,
-						pending: pendingCount,
-						inProgress: inProgressCount,
-						completed: completedCount,
-						cancelled: tasks.filter((t) => t.status === "cancelled").length,
-					},
-				};
-			} catch (error) {
-				return {
-					success: false,
-					message: `Failed to update todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
-				};
-			}
-		},
-	});
-}
+			return {
+				success: true,
+				message: `Todo list updated: ${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed`,
+				blobUrl: blob.url,
+				taskSummary: {
+					total: tasks.length,
+					pending: pendingCount,
+					inProgress: inProgressCount,
+					completed: completedCount,
+					cancelled: tasks.filter((t: Task) => t.status === "cancelled").length,
+				},
+			};
+		} catch (error) {
+			return {
+				success: false,
+				message: `Failed to update todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
+			};
+		}
+	},
+}));
 
 /**
  * Create todo read tool with injected runtime context
  */
-export function todoReadTool(context: RuntimeContext) {
-	return tool({
-		description: "Read the current todo list for this conversation thread",
-		inputSchema: z.object({}),
-		execute: async () => {
-			try {
-				const blobPath = `todos/shared/${context.threadId}/todo.md`;
+export const todoReadTool = createTool<RuntimeContext>((context) => ({
+	description: "Read the current todo list for this conversation thread",
+	inputSchema: z.object({}),
+	execute: async () => {
+		try {
+			const blobPath = `todos/shared/${context.threadId}/todo.md`;
 
-				// Try to fetch the blob
-				const response = await fetch(`https://vercel.blob.store/${blobPath}`);
+			// Try to fetch the blob
+			const response = await fetch(`https://vercel.blob.store/${blobPath}`);
 
-				if (!response.ok) {
-					if (response.status === 404) {
-						return {
-							success: true,
-							message: "No todo list found for this thread",
-							tasks: [],
-						};
-					}
-					throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			if (!response.ok) {
+				if (response.status === 404) {
+					return {
+						success: true,
+						message: "No todo list found for this thread",
+						tasks: [],
+					};
 				}
-
-				const todoContent = await response.text();
-				const tasks = parseTodoMarkdown(todoContent);
-
-				const completedCount = tasks.filter((t) => t.status === "completed").length;
-				const pendingCount = tasks.filter((t) => t.status === "pending").length;
-				const inProgressCount = tasks.filter((t) => t.status === "in_progress").length;
-
-				return {
-					success: true,
-					message: `Todo list loaded: ${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed`,
-					tasks,
-					taskSummary: {
-						total: tasks.length,
-						pending: pendingCount,
-						inProgress: inProgressCount,
-						completed: completedCount,
-						cancelled: tasks.filter((t) => t.status === "cancelled").length,
-					},
-				};
-			} catch (error) {
-				return {
-					success: false,
-					message: `Failed to read todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
-					tasks: [],
-				};
+				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 			}
-		},
-	});
-}
+
+			const todoContent = await response.text();
+			const tasks = parseTodoMarkdown(todoContent);
+
+			const completedCount = tasks.filter((t: Task) => t.status === "completed").length;
+			const pendingCount = tasks.filter((t: Task) => t.status === "pending").length;
+			const inProgressCount = tasks.filter((t: Task) => t.status === "in_progress").length;
+
+			return {
+				success: true,
+				message: `Todo list loaded: ${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed`,
+				tasks,
+				taskSummary: {
+					total: tasks.length,
+					pending: pendingCount,
+					inProgress: inProgressCount,
+					completed: completedCount,
+					cancelled: tasks.filter((t: Task) => t.status === "cancelled").length,
+				},
+			};
+		} catch (error) {
+			return {
+				success: false,
+				message: `Failed to read todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
+				tasks: [],
+			};
+		}
+	},
+}));
 
 /**
  * Create todo clear tool with injected runtime context
  */
-export function todoClearTool(context: RuntimeContext) {
-	return tool({
-		description: "Clear the todo list for the current conversation thread",
-		inputSchema: z.object({}),
-		execute: async () => {
-			try {
-				const blobPath = `todos/shared/${context.threadId}/todo.md`;
-				await del(blobPath, {
-					token: env.BLOB_READ_WRITE_TOKEN,
-				});
+export const todoClearTool = createTool<RuntimeContext>((context) => ({
+	description: "Clear the todo list for the current conversation thread",
+	inputSchema: z.object({}),
+	execute: async () => {
+		try {
+			const blobPath = `todos/shared/${context.threadId}/todo.md`;
+			await del(blobPath, {
+				token: env.BLOB_READ_WRITE_TOKEN,
+			});
 
-				return {
-					success: true,
-					message: "Todo list cleared for this thread",
-				};
-			} catch (error) {
-				return {
-					success: false,
-					message: `Failed to clear todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
-				};
-			}
-		},
-	});
-}
+			return {
+				success: true,
+				message: "Todo list cleared for this thread",
+			};
+		} catch (error) {
+			return {
+				success: false,
+				message: `Failed to clear todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
+			};
+		}
+	},
+}));
 
 /**
  * Generate markdown content from tasks array

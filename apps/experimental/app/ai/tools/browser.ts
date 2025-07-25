@@ -1,5 +1,5 @@
 import { Stagehand } from "@browserbasehq/stagehand";
-import { tool } from "ai";
+import { createTool } from "@lightfast/ai/tool";
 import { z } from "zod";
 import { env } from "@/env";
 import type { RuntimeContext } from "./types";
@@ -127,56 +127,50 @@ class StagehandSessionManager {
 // Get the singleton instance
 const sessionManager = StagehandSessionManager.getInstance();
 
-export function stagehandActTool(context: RuntimeContext) {
-	return tool({
-		description: "Take an action on a webpage using Stagehand",
-		inputSchema: z.object({
-			url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
-			action: z.string().describe('Action to perform (e.g., "click sign in button", "type hello in search field")'),
-		}),
-		execute: async ({ url, action }) => {
-			return await performWebAction(url, action);
-		},
-	});
-}
+export const stagehandActTool = createTool<RuntimeContext>((context) => ({
+	description: "Take an action on a webpage using Stagehand",
+	inputSchema: z.object({
+		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
+		action: z.string().describe('Action to perform (e.g., "click sign in button", "type hello in search field")'),
+	}),
+	execute: async ({ url, action }) => {
+		return await performWebAction(url, action);
+	},
+}));
 
-export function stagehandObserveTool(context: RuntimeContext) {
-	return tool({
-		description: "Observe elements on a webpage using Stagehand to plan actions",
-		inputSchema: z.object({
-			url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
-			instruction: z.string().describe('What to observe (e.g., "find the sign in button")'),
-		}),
-		outputSchema: z.array(z.any()).describe("Array of observable actions"),
-		execute: async ({ url, instruction }) => {
-			return await performWebObservation(url, instruction);
-		},
-	});
-}
+export const stagehandObserveTool = createTool<RuntimeContext>((context) => ({
+	description: "Observe elements on a webpage using Stagehand to plan actions",
+	inputSchema: z.object({
+		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
+		instruction: z.string().describe('What to observe (e.g., "find the sign in button")'),
+	}),
+	outputSchema: z.array(z.unknown()).describe("Array of observable actions"),
+	execute: async ({ url, instruction }) => {
+		return await performWebObservation(url, instruction);
+	},
+}));
 
-export function stagehandExtractTool(context: RuntimeContext) {
-	return tool({
-		description: "Extract data from a webpage using Stagehand",
-		inputSchema: z.object({
-			url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
-			instruction: z.string().describe('What to extract (e.g., "extract all product prices")'),
-			schema: z.record(z.any()).optional().describe("Zod schema definition for data extraction"),
-			useTextExtract: z
-				.boolean()
-				.optional()
-				.describe("Set true for larger-scale extractions, false for small extractions"),
-		}),
-		outputSchema: z.any().describe("Extracted data according to schema"),
-		execute: async ({ url, instruction, schema, useTextExtract }) => {
-			// Create a default schema if none is provided
-			const defaultSchema = {
-				content: z.string(),
-			};
+export const stagehandExtractTool = createTool<RuntimeContext>((context) => ({
+	description: "Extract data from a webpage using Stagehand",
+	inputSchema: z.object({
+		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
+		instruction: z.string().describe('What to extract (e.g., "extract all product prices")'),
+		schema: z.record(z.unknown()).optional().describe("Zod schema definition for data extraction"),
+		useTextExtract: z
+			.boolean()
+			.optional()
+			.describe("Set true for larger-scale extractions, false for small extractions"),
+	}),
+	outputSchema: z.unknown().describe("Extracted data according to schema"),
+	execute: async ({ url, instruction, schema, useTextExtract }) => {
+		// Create a default schema if none is provided
+		const defaultSchema = {
+			content: z.string(),
+		};
 
-			return await performWebExtraction(url, instruction, schema || defaultSchema, useTextExtract);
-		},
-	});
-}
+		return await performWebExtraction(url, instruction, schema || defaultSchema, useTextExtract);
+	},
+}));
 
 const performWebAction = async (url?: string, action?: string) => {
 	const stagehand = await sessionManager.ensureStagehand();
@@ -197,8 +191,8 @@ const performWebAction = async (url?: string, action?: string) => {
 			success: true,
 			message: `Successfully performed: ${action}`,
 		};
-	} catch (error: any) {
-		throw new Error(`Stagehand action failed: ${error.message}`);
+	} catch (error) {
+		throw new Error(`Stagehand action failed: ${error instanceof Error ? error.message : String(error)}`);
 	}
 };
 
@@ -244,7 +238,7 @@ const performWebObservation = async (url?: string, instruction?: string) => {
 			console.error("Error in page operation:", pageError);
 			throw pageError;
 		}
-	} catch (error: any) {
+	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		console.error(`Full stack trace for observation error:`, error);
 		throw new Error(`Stagehand observation failed: ${errorMessage}`);
@@ -254,7 +248,7 @@ const performWebObservation = async (url?: string, instruction?: string) => {
 const performWebExtraction = async (
 	url?: string,
 	instruction?: string,
-	schemaObj?: Record<string, any>,
+	schemaObj?: Record<string, z.ZodTypeAny>,
 	useTextExtract?: boolean,
 ) => {
 	console.log(`Starting extraction${url ? ` for ${url}` : ""} with instruction: ${instruction}`);
@@ -300,7 +294,7 @@ const performWebExtraction = async (
 			console.error("Error in page operation:", pageError);
 			throw pageError;
 		}
-	} catch (error: any) {
+	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		console.error(`Full stack trace for extraction error:`, error);
 		throw new Error(`Stagehand extraction failed: ${errorMessage}`);
@@ -308,34 +302,32 @@ const performWebExtraction = async (
 };
 
 // Add a navigation tool for convenience
-export function stagehandNavigateTool(context: RuntimeContext) {
-	return tool({
-		description: "Navigate to a URL in the browser",
-		inputSchema: z.object({
-			url: z.string().describe("URL to navigate to"),
-		}),
-		execute: async ({ url }) => {
-			try {
-				const stagehand = await sessionManager.ensureStagehand();
+export const stagehandNavigateTool = createTool<RuntimeContext>((context) => ({
+	description: "Navigate to a URL in the browser",
+	inputSchema: z.object({
+		url: z.string().describe("URL to navigate to"),
+	}),
+	execute: async ({ url }) => {
+		try {
+			const stagehand = await sessionManager.ensureStagehand();
 
-				// Navigate to the URL
-				await stagehand.page.goto(url);
+			// Navigate to the URL
+			await stagehand.page.goto(url);
 
-				// Get page title and current URL
-				const title = await stagehand.page.evaluate(() => document.title);
-				const currentUrl = await stagehand.page.evaluate(() => window.location.href);
+			// Get page title and current URL
+			const title = await stagehand.page.evaluate(() => document.title);
+			const currentUrl = await stagehand.page.evaluate(() => window.location.href);
 
-				return {
-					success: true,
-					title,
-					currentUrl,
-				};
-			} catch (error: any) {
-				return {
-					success: false,
-					message: `Navigation failed: ${error.message}`,
-				};
-			}
-		},
-	});
-}
+			return {
+				success: true,
+				title,
+				currentUrl,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				message: `Navigation failed: ${error instanceof Error ? error.message : String(error)}`,
+			};
+		}
+	},
+}));

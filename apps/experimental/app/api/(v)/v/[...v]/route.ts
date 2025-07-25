@@ -2,6 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
 import { createAgents } from "@/app/ai/agents";
+import type { A011Tools } from "@/app/ai/agents/a011";
+import type { RuntimeContext } from "@/app/ai/tools/types";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
@@ -27,12 +29,16 @@ const handler = async (req: Request) => {
 	}
 
 	// Pass everything to fetchRequestHandler
-	return fetchRequestHandler({
+	return fetchRequestHandler<LightfastUIMessage, A011Tools, RuntimeContext>({
 		agents,
 		memory,
 		req,
 		createContext: () => ({
 			resourceId: userId,
+		}),
+		createRuntimeContext: ({ threadId, resourceId }) => ({
+			threadId,
+			// Runtime context is fully typed according to RuntimeContext interface
 		}),
 		generateId: uuidv4,
 		enableResume: true,

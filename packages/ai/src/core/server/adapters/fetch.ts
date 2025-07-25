@@ -7,12 +7,13 @@ import type { HandlerContext } from "./types";
 export interface FetchRequestHandlerOptions<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext = any,
+	TRuntimeContext = unknown,
 > {
 	agents: Agent<TMessage, TTools, TRuntimeContext>[];
 	memory: Memory<TMessage>;
 	req: Request;
 	createContext: () => { resourceId: string };
+	createRuntimeContext: (params: { threadId: string; resourceId: string }) => TRuntimeContext;
 	generateId?: () => string;
 	enableResume?: boolean;
 	onError?: (error: { error: Error; path?: string }) => void;
@@ -59,9 +60,9 @@ export interface FetchRequestHandlerOptions<
 export async function fetchRequestHandler<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext = any,
+	TRuntimeContext = unknown,
 >(options: FetchRequestHandlerOptions<TMessage, TTools, TRuntimeContext>): Promise<Response> {
-	const { agents, memory, req, createContext, generateId, enableResume, onError } = options;
+	const { agents, memory, req, createContext, createRuntimeContext, generateId, enableResume, onError } = options;
 	const context = createContext();
 
 	// Extract agentId and threadId from URL path
@@ -134,6 +135,12 @@ export async function fetchRequestHandler<
 				allMessages = await memory.getMessages(threadId);
 			}
 
+			// Create runtime context for this request
+			const runtimeContext = createRuntimeContext({
+				threadId,
+				resourceId: context.resourceId,
+			});
+
 			// Stream the response
 			const {
 				result,
@@ -144,6 +151,7 @@ export async function fetchRequestHandler<
 				messages: allMessages,
 				memory,
 				resourceId: context.resourceId,
+				runtimeContext,
 			});
 
 			// Store stream ID for resumption
