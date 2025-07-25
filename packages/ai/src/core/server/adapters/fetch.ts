@@ -1,6 +1,6 @@
 import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
-import type { Agent } from "../../agent";
+import type { Agent } from "../../primitives/agent";
 import type { Memory } from "../../memory";
 import type { HandlerContext } from "./types";
 

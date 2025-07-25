@@ -8,8 +8,8 @@
 			"default": "./src/env.ts"
 		},
 		"./agent": {
-			"types": "./src/core/agent.ts",
-			"default": "./src/core/agent.ts"
+			"types": "./src/core/primitives/agent.ts",
+			"default": "./src/core/primitives/agent.ts"
 		},
 		"./agent/handlers": {
 			"types": "./src/core/server/adapters/fetch.ts",

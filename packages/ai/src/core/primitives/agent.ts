@@ -1,5 +1,5 @@
 import { convertToModelMessages, streamText, type ToolSet, type UIMessage } from "ai";
-import type { Memory } from "./memory";
+import type { Memory } from "../memory";
 
 // Utility function for generating UUIDs
 function uuidv4() {
