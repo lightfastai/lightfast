@@ -1,6 +1,7 @@
 import type { RuntimeContext } from "@lightfast/ai/tools";
 import { convertToModelMessages, streamText, type ToolSet, type UIMessage } from "ai";
 import type { Memory } from "./memory";
+import type { HandlerContext } from "./server/adapters/types";
 
 // Utility function for generating UUIDs
 function uuidv4() {

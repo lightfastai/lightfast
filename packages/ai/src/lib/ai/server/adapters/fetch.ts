@@ -1,12 +1,8 @@
 import type { RuntimeContext } from "@lightfast/ai/tools";
 import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
-import type { Agent } from "./agent";
-
-export interface HandlerContext {
-	threadId: string;
-	resourceId: string;
-}
+import type { Agent } from "../../agent";
+import type { HandlerContext } from "./types";
 
 export interface FetchRequestHandlerOptions<
 	TMessage extends UIMessage = UIMessage,

@@ -16,8 +16,16 @@
 			"default": "./src/lib/ai/agent.ts"
 		},
 		"./agent/handlers": {
-			"types": "./src/lib/ai/handlers.ts",
-			"default": "./src/lib/ai/handlers.ts"
+			"types": "./src/lib/ai/server/adapters/fetch.ts",
+			"default": "./src/lib/ai/server/adapters/fetch.ts"
+		},
+		"./agent/server/adapters/fetch": {
+			"types": "./src/lib/ai/server/adapters/fetch.ts",
+			"default": "./src/lib/ai/server/adapters/fetch.ts"
+		},
+		"./agent/server/adapters/types": {
+			"types": "./src/lib/ai/server/adapters/types.ts",
+			"default": "./src/lib/ai/server/adapters/types.ts"
 		},
 		"./agent/memory": {
 			"types": "./src/lib/ai/memory.ts",
