@@ -1,18 +1,50 @@
-import type { UIMessage } from "ai";
+import type { UIMessage, InferUITools } from "ai";
+import type {
+	fileTool,
+	fileReadTool,
+	fileDeleteTool,
+	fileStringReplaceTool,
+	fileFindInContentTool,
+	fileFindByNameTool,
+	webSearchTool,
+	createSandboxTool,
+	executeSandboxCommandTool,
+	createSandboxWithPortsTool,
+	getSandboxDomainTool,
+	listSandboxRoutesTool,
+	todoWriteTool,
+	todoReadTool,
+	todoClearTool,
+} from "@lightfast/ai/tools";
+import type { RuntimeContext } from "@lightfast/ai/tools";
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {
 	[key: string]: unknown; // Index signature required by UIDataTypes
 }
 
-// Tool schemas - simplified generic type
-export type LightfastToolSchemas = Record<
-	string,
-	{
-		input: unknown;
-		output: unknown;
-	}
->;
+// Define the tool set type based on our actual tools - this represents the structure
+// that matches what we pass to streamText() in the route
+export type LightfastToolSet = {
+	file: ReturnType<typeof fileTool>;
+	fileRead: ReturnType<typeof fileReadTool>;
+	fileDelete: ReturnType<typeof fileDeleteTool>;
+	fileStringReplace: ReturnType<typeof fileStringReplaceTool>;
+	fileFindInContent: ReturnType<typeof fileFindInContentTool>;
+	fileFindByName: ReturnType<typeof fileFindByNameTool>;
+	webSearch: ReturnType<typeof webSearchTool>;
+	createSandbox: ReturnType<typeof createSandboxTool>;
+	executeSandboxCommand: ReturnType<typeof executeSandboxCommandTool>;
+	createSandboxWithPorts: ReturnType<typeof createSandboxWithPortsTool>;
+	getSandboxDomain: ReturnType<typeof getSandboxDomainTool>;
+	listSandboxRoutes: ReturnType<typeof listSandboxRoutesTool>;
+	todoWrite: ReturnType<typeof todoWriteTool>;
+	todoRead: ReturnType<typeof todoReadTool>;
+	todoClear: ReturnType<typeof todoClearTool>;
+};
+
+// Properly infer tool schemas from our actual tools using AI SDK's utility
+export type LightfastToolSchemas = InferUITools<LightfastToolSet>;
 
 // Metadata type for our messages
 export interface LightfastUIMessageMetadata {

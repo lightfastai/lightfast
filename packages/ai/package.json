@@ -20,6 +20,10 @@
 			"default": "./src/mastra/agents/experimental/a011.ts"
 		},
 		"./tools": {
+			"types": "./src/tools/index.ts",
+			"default": "./src/tools/index.ts"
+		},
+		"./tools/mastra": {
 			"types": "./src/mastra/tools/index.ts",
 			"default": "./src/mastra/tools/index.ts"
 		},
@@ -61,7 +65,6 @@
 		"zod": "catalog:"
 	},
 	"devDependencies": {
-		"@lightfast/types": "workspace:*",
 		"mastra": "catalog:",
 		"typescript": "catalog:"
 	}

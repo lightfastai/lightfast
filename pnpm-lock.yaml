@@ -16,8 +16,8 @@ catalogs:
       specifier: 2.0.0-beta.1
       version: 2.0.0-beta.1
     '@ai-sdk/react':
-      specifier: 2.0.0-beta.6
-      version: 2.0.0-beta.6
+      specifier: 2.0.0-beta.26
+      version: 2.0.0-beta.26
     '@biomejs/biome':
       specifier: 2.1.1
       version: 2.1.1
@@ -61,8 +61,8 @@ catalogs:
       specifier: ^0.0.13
       version: 0.0.13
     ai:
-      specifier: 5.0.0-beta.6
-      version: 5.0.0-beta.6
+      specifier: 5.0.0-beta.26
+      version: 5.0.0-beta.26
     braintrust:
       specifier: ^0.1.1
       version: 0.1.1
@@ -115,7 +115,7 @@ importers:
         version: 1.0.0-beta.11(zod@3.25.76)
       '@ai-sdk/react':
         specifier: 'catalog:'
-        version: 2.0.0-beta.6(react@19.1.0)(zod@3.25.76)
+        version: 2.0.0-beta.26(react@19.1.0)(zod@3.25.76)
       '@clerk/elements':
         specifier: ^0.23.43
         version: 0.23.43(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(next@15.4.3(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -142,7 +142,7 @@ importers:
         version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(rollup@4.44.2)(typescript@5.8.3)
       '@mastra/evals':
         specifier: 'catalog:'
-        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.6(zod@3.25.76))
+        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.26(zod@3.25.76))
       '@mastra/memory':
         specifier: 'catalog:'
         version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))
@@ -205,7 +205,7 @@ importers:
         version: 1.13.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       ai:
         specifier: 'catalog:'
-        version: 5.0.0-beta.6(zod@3.25.76)
+        version: 5.0.0-beta.26(zod@3.25.76)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -308,7 +308,7 @@ importers:
         version: 0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76)
       '@mastra/evals':
         specifier: 'catalog:'
-        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.6(zod@3.25.76))
+        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.26(zod@3.25.76))
       '@mastra/memory':
         specifier: 'catalog:'
         version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))
@@ -338,7 +338,7 @@ importers:
         version: 0.0.13
       ai:
         specifier: 'catalog:'
-        version: 5.0.0-beta.6(zod@3.25.76)
+        version: 5.0.0-beta.26(zod@3.25.76)
       braintrust:
         specifier: 'catalog:'
         version: 0.1.1(@aws-sdk/credential-provider-web-identity@3.848.0)(zod@3.25.76)
@@ -355,9 +355,6 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
     devDependencies:
-      '@lightfast/types':
-        specifier: workspace:*
-        version: link:../types
       mastra:
         specifier: 'catalog:'
         version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(@opentelemetry/api@1.9.0)(react@19.1.0)(typescript@5.8.3)
@@ -375,10 +372,10 @@ importers:
         version: 0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76)
       '@mastra/evals':
         specifier: 'catalog:'
-        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.6(zod@3.25.76))
+        version: 0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.26(zod@3.25.76))
       ai:
         specifier: 'catalog:'
-        version: 5.0.0-beta.6(zod@3.25.76)
+        version: 5.0.0-beta.26(zod@3.25.76)
       braintrust:
         specifier: 'catalog:'
         version: 0.1.1(@aws-sdk/credential-provider-web-identity@3.848.0)(zod@3.25.76)
@@ -401,9 +398,12 @@ importers:
 
   packages/types:
     dependencies:
+      '@lightfast/ai':
+        specifier: workspace:*
+        version: link:../ai
       ai:
         specifier: 'catalog:'
-        version: 5.0.0-beta.6(zod@3.25.76)
+        version: 5.0.0-beta.26(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^24.0.15
@@ -450,11 +450,11 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/gateway@1.0.0-beta.3':
-    resolution: {integrity: sha512-g49gMSkXy94lYvl5LRh438OR/0JCG6ol0jV+iLot7cy5HLltZlGocEuauETBu4b10mDXOd7XIjTEZoQpYFMYLQ==}
+  '@ai-sdk/gateway@1.0.0-beta.12':
+    resolution: {integrity: sha512-XEkyDxQ5CXXeebwkc0dI4aCr5BIJ1RGntK0eorG5nzKbuDrCokQGr9xQoqpqWAXVUnRx5iVLKa+UadBZt49Ysw==}
     engines: {node: '>=18'}
     peerDependencies:
-      zod: ^3.25.49
+      zod: ^3.25.76 || ^4
 
   '@ai-sdk/gateway@1.0.0-beta.5':
     resolution: {integrity: sha512-+SgaqoxfFRpFQwgvCK5rh4kznz09x//n9Xtm/l3sjJwlUPLrj+wOeKCCJRWdp1Lpl5cbfdz9qWXrK7Ul+qfUJg==}
@@ -534,12 +534,12 @@ packages:
       zod:
         optional: true
 
-  '@ai-sdk/react@2.0.0-beta.6':
-    resolution: {integrity: sha512-Wc1lgdhWEZ9RlEgtrXT2NdMUVf7TuH8XVT57zcjRtowedwd6WcSX5a+geyPEwp5F4U/A3xfh6Jk12zK6oRUUDA==}
+  '@ai-sdk/react@2.0.0-beta.26':
+    resolution: {integrity: sha512-Ju2F/T7lp8Uwq3L2RYJdLMUysUsN1h8A6u+JeeTn8u4SVled0u5DVSv4XPvOkp5quwsEYw6ph36gNbtqSArqpw==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
-      zod: ^3.25.49
+      zod: ^3.25.76 || ^4
     peerDependenciesMeta:
       zod:
         optional: true
@@ -3453,11 +3453,12 @@ packages:
     peerDependencies:
       zod: ^3.25.49
 
-  ai@5.0.0-beta.6:
-    resolution: {integrity: sha512-0VqcqbWiF2XwWBgNfrEr05QrB0bJqctwLyuk7xfy7g8OBSqyJ4OV95HGTzrBvN8/iU/4u+eNTlF5nAG5Qx3utw==}
+  ai@5.0.0-beta.26:
+    resolution: {integrity: sha512-1qhuBLblDHQW0iOcOzo+36Xn9uJvcDoKsEk0oMHe8m65qFgRISvCgLYAU4TmCPv38d7CW1rbOiNa1SXB0DYrgg==}
     engines: {node: '>=18'}
+    hasBin: true
     peerDependencies:
-      zod: ^3.25.49
+      zod: ^3.25.76 || ^4
 
   ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
@@ -6014,10 +6015,10 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.0-beta.5(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/gateway@1.0.0-beta.3(zod@3.25.76)':
+  '@ai-sdk/gateway@1.0.0-beta.12(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0-beta.1
-      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.0-beta.5(zod@3.25.76)
       zod: 3.25.76
 
   '@ai-sdk/gateway@1.0.0-beta.5(zod@3.25.76)':
@@ -6109,10 +6110,10 @@ snapshots:
     optionalDependencies:
       zod: 3.25.76
 
-  '@ai-sdk/react@2.0.0-beta.6(react@19.1.0)(zod@3.25.76)':
+  '@ai-sdk/react@2.0.0-beta.26(react@19.1.0)(zod@3.25.76)':
     dependencies:
-      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.76)
-      ai: 5.0.0-beta.6(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.0-beta.5(zod@3.25.76)
+      ai: 5.0.0-beta.26(zod@3.25.76)
       react: 19.1.0
       swr: 2.3.4(react@19.1.0)
       throttleit: 2.1.0
@@ -7251,10 +7252,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@mastra/evals@0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.6(zod@3.25.76))':
+  '@mastra/evals@0.0.0-ai-v5-20250718021026(@mastra/core@0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76))(ai@5.0.0-beta.26(zod@3.25.76))':
     dependencies:
       '@mastra/core': 0.0.0-ai-v5-20250718021026(openapi-types@12.1.3)(zod@3.25.76)
-      ai: 5.0.0-beta.6(zod@3.25.76)
+      ai: 5.0.0-beta.26(zod@3.25.76)
       compromise: 14.14.4
       difflib: 0.2.4
       fs-extra: 11.3.0
@@ -9904,11 +9905,11 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  ai@5.0.0-beta.6(zod@3.25.76):
+  ai@5.0.0-beta.26(zod@3.25.76):
     dependencies:
-      '@ai-sdk/gateway': 1.0.0-beta.3(zod@3.25.76)
+      '@ai-sdk/gateway': 1.0.0-beta.12(zod@3.25.76)
       '@ai-sdk/provider': 2.0.0-beta.1
-      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.0-beta.5(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
