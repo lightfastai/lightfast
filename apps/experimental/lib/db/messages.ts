@@ -68,8 +68,6 @@ export async function appendMessages({
 	threadId: string;
 	messages: LightfastUIMessage[];
 }): Promise<void> {
-	if (messages.length === 0) return;
-
 	const redis = getRedis();
 	const key = REDIS_KEYS.threadMessages(threadId);
 

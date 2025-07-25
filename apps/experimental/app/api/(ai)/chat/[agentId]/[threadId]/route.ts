@@ -39,8 +39,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		const { agentId, threadId } = await params;
 		const { messages }: { messages: LightfastUIMessage[] } = await request.json();
 
-		if (!messages) {
-			return new Response("messages are required", { status: 400 });
+		if (!messages || messages.length === 0) {
+			return new Response("At least one message is required", { status: 400 });
 		}
 
 		// Check if thread exists and validate ownership
@@ -64,11 +64,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 			allMessages = messages;
 		} else {
 			// Existing thread - append the new message(s) from client
-			if (messages.length > 0) {
-				await appendMessages({ threadId, messages });
-				console.log(`[POST] Appended ${messages.length} new messages to thread ${threadId}`);
-			}
-			
+			await appendMessages({ threadId, messages });
+			console.log(`[POST] Appended ${messages.length} new messages to thread ${threadId}`);
+
 			// Fetch all messages from database for full context
 			allMessages = await getMessages(threadId);
 		}

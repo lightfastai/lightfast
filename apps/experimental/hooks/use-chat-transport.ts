@@ -33,6 +33,7 @@ export function useChatTransport({
 					headers,
 					body: {
 						// Send only the latest user message
+						// Server will validate and return 400 if no messages
 						messages: messages.length > 0 ? [messages[messages.length - 1]] : [],
 						userId: userId,
 						// Include any additional metadata from the body
