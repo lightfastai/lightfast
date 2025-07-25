@@ -7,6 +7,11 @@ import type { z } from "zod";
 export type ToolFactory<TRuntimeContext = unknown> = (context: TRuntimeContext) => AiTool;
 
 /**
+ * Type for a collection of tool factories
+ */
+export type ToolFactorySet<TRuntimeContext = unknown> = Record<string, ToolFactory<TRuntimeContext>>;
+
+/**
  * Creates a tool that injects runtime context
  *
  * This wrapper allows tools to access runtime context (like threadId, userId, etc.)

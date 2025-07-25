@@ -3,13 +3,14 @@ import { createResumableStreamContext } from "resumable-stream";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
 import type { RuntimeContext } from "./types";
+import type { ToolFactorySet } from "../../primitives/tool";
 
 export interface FetchRequestHandlerOptions<
 	TMessage extends UIMessage = UIMessage,
-	TTools extends ToolSet = ToolSet,
 	TUserContext = {},
+	TToolFactories extends ToolFactorySet<RuntimeContext<TUserContext>> = ToolFactorySet<RuntimeContext<TUserContext>>,
 > {
-	agents: Agent<TMessage, TTools, RuntimeContext<TUserContext>>[];
+	agents: Agent<TMessage, RuntimeContext<TUserContext>, TToolFactories>[];
 	memory: Memory<TMessage>;
 	req: Request;
 	resourceId: string;
@@ -63,9 +64,9 @@ export interface FetchRequestHandlerOptions<
  */
 export async function fetchRequestHandler<
 	TMessage extends UIMessage = UIMessage,
-	TTools extends ToolSet = ToolSet,
 	TUserContext = {},
->(options: FetchRequestHandlerOptions<TMessage, TTools, TUserContext>): Promise<Response> {
+	TToolFactories extends ToolFactorySet<RuntimeContext<TUserContext>> = ToolFactorySet<RuntimeContext<TUserContext>>,
+>(options: FetchRequestHandlerOptions<TMessage, TUserContext, TToolFactories>): Promise<Response> {
 	const { agents, memory, req, resourceId, createRuntimeContext, generateId, enableResume, onError } = options;
 
 	// Extract agentId and threadId from URL path

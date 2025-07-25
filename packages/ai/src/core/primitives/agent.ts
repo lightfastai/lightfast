@@ -1,5 +1,6 @@
 import { convertToModelMessages, streamText, type ToolSet, type UIMessage } from "ai";
 import type { Memory } from "../memory";
+import type { ToolFactory, ToolFactorySet } from "./tool";
 
 // Utility function for generating UUIDs
 function uuidv4() {
@@ -31,30 +32,35 @@ export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRuntimeC
 	runtimeContext: TRuntimeContext;
 }
 
+// Helper type to convert tool factories to actual tools
+type ResolveToolFactories<T extends ToolFactorySet<any>> = {
+	[K in keyof T]: T[K] extends ToolFactory<any> ? ReturnType<T[K]> : never;
+};
+
 export interface AgentOptions<
 	TMessage extends UIMessage = UIMessage,
-	TTools extends ToolSet = ToolSet,
 	TRuntimeContext = unknown,
+	TToolFactories extends ToolFactorySet<TRuntimeContext> = ToolFactorySet<TRuntimeContext>,
 > extends AgentConfig<TMessage> {
 	// Required: system prompt for the agent
 	system: string;
-	// Required: function that creates tools with runtime context
-	tools: (context: TRuntimeContext) => TTools;
+	// Required: collection of tool factories that will be automatically injected with runtime context
+	tools: TToolFactories;
 }
 
 export class Agent<
 	TMessage extends UIMessage = UIMessage,
-	TTools extends ToolSet = ToolSet,
 	TRuntimeContext = unknown,
+	TToolFactories extends ToolFactorySet<TRuntimeContext> = ToolFactorySet<TRuntimeContext>,
 > {
 	public readonly config: AgentConfig<TMessage>;
 	private generateId: () => string;
-	private createTools: (context: TRuntimeContext) => TTools;
+	private toolFactories: TToolFactories;
 	private system: string;
 
-	constructor(options: AgentOptions<TMessage, TTools, TRuntimeContext>) {
+	constructor(options: AgentOptions<TMessage, TRuntimeContext, TToolFactories>) {
 		const { system, tools, ...config } = options;
-		this.createTools = tools;
+		this.toolFactories = tools;
 		this.system = system;
 		this.generateId = uuidv4;
 
@@ -72,8 +78,13 @@ export class Agent<
 
 		const streamId = this.generateId();
 
-		// Create tools with the provided runtime context
-		const tools = this.createTools(runtimeContext);
+		// Automatically inject runtime context into tool factories
+		const tools = Object.fromEntries(
+			Object.entries(this.toolFactories).map(([name, factory]) => [
+				name,
+				factory(runtimeContext)
+			])
+		) as ResolveToolFactories<TToolFactories>;
 
 		// Stream the response with properly typed config
 		const { name, ...streamTextConfig } = this.config;

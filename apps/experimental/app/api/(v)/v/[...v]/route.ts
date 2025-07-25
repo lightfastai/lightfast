@@ -2,8 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
 import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
-import { createAgents } from "@/app/ai/agents";
-import type { A011Tools } from "@/app/ai/agents/a011";
+import { createAgents, type A011Tools } from "@/app/ai/agents";
 import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
@@ -30,7 +29,7 @@ const handler = async (req: Request) => {
 	}
 
 	// Pass everything to fetchRequestHandler
-	return fetchRequestHandler<LightfastUIMessage, A011Tools<RuntimeContext<AppRuntimeContext>>, AppRuntimeContext>({
+	return fetchRequestHandler<LightfastUIMessage, AppRuntimeContext, A011Tools>({
 		agents,
 		memory,
 		req,
