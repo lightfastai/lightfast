@@ -30,11 +30,12 @@ const dbOperations: DatabaseOperations<LightfastUIMessage> = {
 	getThreadStreams,
 };
 
-// Export handlers using the agentHandler wrapper with resume enabled
-export const { GET, POST } = agentHandler({
+// Export handlers WITHOUT resume functionality
+// This demonstrates a simpler agent that doesn't support stream resumption
+export const { POST } = agentHandler({
 	createAgent: ({ resourceId }) => {
 		return new Agent<LightfastUIMessage, A011Tools>({
-			name: "a011",
+			name: "a011-simple",
 			resourceId,
 			db: dbOperations,
 			system: A011_SYSTEM_PROMPT,
@@ -61,5 +62,5 @@ export const { GET, POST } = agentHandler({
 		return { resourceId: authResult.userId };
 	},
 	generateId: uuidv4,
-	enableResume: true, // Enable resumable streams for this agent
+	enableResume: false, // Disable resumable streams - no GET handler will be created
 });

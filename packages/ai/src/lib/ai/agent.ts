@@ -28,8 +28,8 @@ type StreamTextConfig = Parameters<typeof streamText>[0];
 export interface AgentConfig<TMessage extends UIMessage = UIMessage>
 	extends Omit<StreamTextConfig, "messages" | "tools" | "model"> {
 	// Agent-specific required fields
-	agentId: string;
-	userId: string;
+	name: string;
+	resourceId: string;
 	db: DatabaseOperations<TMessage>;
 
 	// Optional streamText configuration (defaults provided in constructor)
@@ -87,7 +87,7 @@ export class Agent<
 
 		// Check if thread exists and validate ownership
 		const existingThread = await this.db.getThread(threadId);
-		if (existingThread && existingThread.userId !== this.config.userId) {
+		if (existingThread && existingThread.userId !== this.config.resourceId) {
 			throw new Error("Forbidden: Thread belongs to another user");
 		}
 
@@ -103,8 +103,8 @@ export class Agent<
 		// Create thread if it doesn't exist
 		await this.db.createThread({
 			threadId,
-			userId: this.config.userId,
-			agentId: this.config.agentId,
+			userId: this.config.resourceId,
+			agentId: this.config.name, // Using name as agentId for database compatibility
 		});
 
 		// Handle messages based on whether thread is new or existing
@@ -129,7 +129,7 @@ export class Agent<
 		const tools = this.createTools(runtimeContext);
 
 		// Stream the response with properly typed config
-		const { db, agentId, userId, uiStreamOptions, ...streamTextConfig } = this.config;
+		const { db, name, resourceId, uiStreamOptions, ...streamTextConfig } = this.config;
 
 		// Ensure model is set
 		if (!streamTextConfig.model) {
@@ -157,7 +157,7 @@ export class Agent<
 	async getStreamMetadata(threadId: string) {
 		// Check authentication and ownership
 		const thread = await this.db.getThread(threadId);
-		if (!thread || thread.userId !== this.config.userId) {
+		if (!thread || thread.userId !== this.config.resourceId) {
 			throw new Error("Thread not found or unauthorized");
 		}
 
@@ -166,5 +166,9 @@ export class Agent<
 			generateId: this.generateId,
 			uiStreamOptions: this.config.uiStreamOptions,
 		};
+	}
+
+	getDb(): DatabaseOperations<TMessage> {
+		return this.db;
 	}
 }
