@@ -40,6 +40,7 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
 			},
 			prepareReconnectToStreamRequest: ({ api, headers }) => {
 				// For GET requests (resume), append agentId and threadId as query params
+				// GET requests cannot have a body according to HTTP standards
 				return {
 					api: `${api}?agentId=${agentId}&threadId=${threadId}`,
 					headers,
