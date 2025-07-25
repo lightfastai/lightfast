@@ -1,7 +1,7 @@
 import { del, put } from "@vercel/blob";
 import { tool } from "ai";
 import { z } from "zod";
-import { env } from "../env";
+import { env } from "@/env";
 import type { RuntimeContext } from "./types";
 
 const taskSchema = z.object({

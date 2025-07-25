@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
-import { env } from "../env";
+import { env } from "@/env";
 import type { RuntimeContext } from "./types";
 
 /**

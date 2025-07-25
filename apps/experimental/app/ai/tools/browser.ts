@@ -1,7 +1,7 @@
 import { Stagehand } from "@browserbasehq/stagehand";
 import { tool } from "ai";
 import { z } from "zod";
-import { env } from "../env";
+import { env } from "@/env";
 import type { RuntimeContext } from "./types";
 
 class StagehandSessionManager {
