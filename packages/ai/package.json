@@ -15,6 +15,10 @@
 			"types": "./src/lib/ai/agent.ts",
 			"default": "./src/lib/ai/agent.ts"
 		},
+		"./agents/a011": {
+			"types": "./src/agents/a011.ts",
+			"default": "./src/agents/a011.ts"
+		},
 		"./providers": {
 			"types": "./src/lib/ai/provider.ts",
 			"default": "./src/lib/ai/provider.ts"

@@ -1,5 +1,5 @@
-import { tool } from "ai";
 import { Stagehand } from "@browserbasehq/stagehand";
+import { tool } from "ai";
 import { z } from "zod";
 import { env } from "../env";
 import type { RuntimeContext } from "./types";
@@ -136,7 +136,7 @@ export function stagehandActTool(context: RuntimeContext) {
 		}),
 		execute: async ({ url, action }) => {
 			return await performWebAction(url, action);
-		}
+		},
 	});
 }
 
@@ -150,7 +150,7 @@ export function stagehandObserveTool(context: RuntimeContext) {
 		outputSchema: z.array(z.any()).describe("Array of observable actions"),
 		execute: async ({ url, instruction }) => {
 			return await performWebObservation(url, instruction);
-		}
+		},
 	});
 }
 
@@ -173,13 +173,8 @@ export function stagehandExtractTool(context: RuntimeContext) {
 				content: z.string(),
 			};
 
-			return await performWebExtraction(
-				url,
-				instruction,
-				schema || defaultSchema,
-				useTextExtract,
-			);
-		}
+			return await performWebExtraction(url, instruction, schema || defaultSchema, useTextExtract);
+		},
 	});
 }
 
@@ -341,6 +336,6 @@ export function stagehandNavigateTool(context: RuntimeContext) {
 					message: `Navigation failed: ${error.message}`,
 				};
 			}
-		}
+		},
 	});
 }

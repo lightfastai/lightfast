@@ -1,22 +1,22 @@
-import type { UIMessage, InferUITools, InferToolInput, InferToolOutput, InferUITool } from "ai";
 import type {
-	fileTool,
-	fileReadTool,
-	fileDeleteTool,
-	fileStringReplaceTool,
-	fileFindInContentTool,
-	fileFindByNameTool,
-	webSearchTool,
 	createSandboxTool,
-	executeSandboxCommandTool,
 	createSandboxWithPortsTool,
+	executeSandboxCommandTool,
+	fileDeleteTool,
+	fileFindByNameTool,
+	fileFindInContentTool,
+	fileReadTool,
+	fileStringReplaceTool,
+	fileTool,
 	getSandboxDomainTool,
 	listSandboxRoutesTool,
-	todoWriteTool,
-	todoReadTool,
+	RuntimeContext,
 	todoClearTool,
+	todoReadTool,
+	todoWriteTool,
+	webSearchTool,
 } from "@lightfast/ai/tools";
-import type { RuntimeContext } from "@lightfast/ai/tools";
+import type { InferToolInput, InferToolOutput, InferUITool, InferUITools, UIMessage } from "ai";
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {
@@ -56,11 +56,7 @@ export interface LightfastUIMessageMetadata {
 }
 
 // Main UIMessage type with our custom generics
-export type LightfastUIMessage = UIMessage<
-	LightfastUIMessageMetadata,
-	LightfastUICustomDataTypes,
-	LightfastToolSet
->;
+export type LightfastUIMessage = UIMessage<LightfastUIMessageMetadata, LightfastUICustomDataTypes, LightfastToolSet>;
 
 // Helper type for message parts
 export type LightfastUIMessagePart = LightfastUIMessage["parts"][number];
@@ -79,4 +75,3 @@ export type LightfastToolName = keyof LightfastToolSet;
 
 // Utility type to get input for a specific tool
 export type LightfastToolInput<T extends LightfastToolName> = LightfastToolSet[T]["input"];
-

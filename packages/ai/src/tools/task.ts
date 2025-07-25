@@ -1,5 +1,5 @@
-import { tool } from "ai";
 import { del, put } from "@vercel/blob";
+import { tool } from "ai";
 import { z } from "zod";
 import { env } from "../env";
 import type { RuntimeContext } from "./types";
@@ -22,7 +22,8 @@ type Task = z.infer<typeof taskSchema>;
  */
 export function todoWriteTool(context: RuntimeContext) {
 	return tool({
-		description: "Create and update a todo list for the current conversation thread. Use this tool to plan multi-step tasks, track progress, and ensure nothing is forgotten.",
+		description:
+			"Create and update a todo list for the current conversation thread. Use this tool to plan multi-step tasks, track progress, and ensure nothing is forgotten.",
 		inputSchema: z.object({
 			tasks: z.array(taskSchema).describe("The updated task list"),
 		}),
@@ -62,7 +63,7 @@ export function todoWriteTool(context: RuntimeContext) {
 					message: `Failed to update todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -117,7 +118,7 @@ export function todoReadTool(context: RuntimeContext) {
 					tasks: [],
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -145,7 +146,7 @@ export function todoClearTool(context: RuntimeContext) {
 					message: `Failed to clear todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
 				};
 			}
-		}
+		},
 	});
 }
 

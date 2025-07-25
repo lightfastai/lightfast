@@ -1,5 +1,5 @@
-import { tool } from "ai";
 import { Sandbox } from "@vercel/sandbox";
+import { tool } from "ai";
 import { z } from "zod";
 import type { RuntimeContext } from "./types";
 
@@ -29,7 +29,7 @@ export function createSandboxTool(context: RuntimeContext) {
 			} catch (error) {
 				throw new Error(`Failed to create sandbox: ${error instanceof Error ? error.message : "Unknown error"}`);
 			}
-		}
+		},
 	});
 }
 
@@ -38,7 +38,8 @@ export function createSandboxTool(context: RuntimeContext) {
  */
 export function executeSandboxCommandTool(context: RuntimeContext) {
 	return tool({
-		description: "Execute a command in the sandbox and return full output. Use background=true for long-running processes like servers.",
+		description:
+			"Execute a command in the sandbox and return full output. Use background=true for long-running processes like servers.",
 		inputSchema: z.object({
 			sandboxId: z.string().describe("The sandbox ID stored in memory"),
 			command: z.string().describe("Command to execute"),
@@ -95,7 +96,7 @@ export function executeSandboxCommandTool(context: RuntimeContext) {
 					commandLine: `$ ${command} ${args!.join(" ")}${backgroundNote}`.trim(),
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -144,7 +145,7 @@ export function createSandboxWithPortsTool(context: RuntimeContext) {
 					`Failed to create sandbox with ports: ${error instanceof Error ? error.message : "Unknown error"}`,
 				);
 			}
-		}
+		},
 	});
 }
 
@@ -179,7 +180,7 @@ export function getSandboxDomainTool(context: RuntimeContext) {
 					message: error instanceof Error ? error.message : "Unknown error",
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -215,6 +216,6 @@ export function listSandboxRoutesTool(context: RuntimeContext) {
 					message: error instanceof Error ? error.message : "Unknown error",
 				};
 			}
-		}
+		},
 	});
 }

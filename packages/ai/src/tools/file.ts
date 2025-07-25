@@ -1,5 +1,5 @@
-import { tool } from "ai";
 import { del, head, list, put } from "@vercel/blob";
+import { tool } from "ai";
 import { z } from "zod";
 import { env } from "../env";
 import type { RuntimeContext } from "./types";
@@ -48,7 +48,7 @@ export function fileTool(context: RuntimeContext) {
 					message: `Failed to write file: ${errorMessage}`,
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -119,7 +119,7 @@ export function fileReadTool(context: RuntimeContext) {
 					message: `Failed to read file: ${errorMessage}`,
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -161,7 +161,7 @@ export function fileDeleteTool(context: RuntimeContext) {
 					message: `Failed to delete file: ${errorMessage}`,
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -243,7 +243,7 @@ export function fileStringReplaceTool(context: RuntimeContext) {
 					message: `Failed to replace string in file: ${errorMessage}`,
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -326,7 +326,7 @@ export function fileFindInContentTool(context: RuntimeContext) {
 					message: `Failed to search in file: ${errorMessage}`,
 				};
 			}
-		}
+		},
 	});
 }
 
@@ -386,9 +386,7 @@ export function fileFindByNameTool(context: RuntimeContext) {
 								if (response.ok) {
 									const content = await response.text();
 									fileInfo.contentPreview =
-										content.length > maxContentChars!
-											? `${content.substring(0, maxContentChars!)}...`
-											: content;
+										content.length > maxContentChars! ? `${content.substring(0, maxContentChars!)}...` : content;
 								}
 							} catch {
 								// Ignore content fetch errors, just skip the preview
@@ -417,7 +415,7 @@ export function fileFindByNameTool(context: RuntimeContext) {
 					message: `Failed to search files by pattern: ${errorMessage}`,
 				};
 			}
-		}
+		},
 	});
 }
 

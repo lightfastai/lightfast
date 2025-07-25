@@ -31,7 +31,16 @@ export function webSearchTool(context: RuntimeContext) {
 			includeDomains: z.array(z.string()).optional().describe("Domains to include in search results"),
 			excludeDomains: z.array(z.string()).optional().describe("Domains to exclude from search results"),
 		}),
-		execute: async ({ query, useAutoprompt, numResults, contentType, maxCharacters, summaryQuery, includeDomains, excludeDomains }) => {
+		execute: async ({
+			query,
+			useAutoprompt,
+			numResults,
+			contentType,
+			maxCharacters,
+			summaryQuery,
+			includeDomains,
+			excludeDomains,
+		}) => {
 			try {
 				const exa = new Exa(env.EXA_API_KEY);
 
@@ -149,6 +158,6 @@ export function webSearchTool(context: RuntimeContext) {
 
 				throw new Error("An unexpected error occurred during web search. Please try again.");
 			}
-		}
+		},
 	});
 }

@@ -1,4 +1,3 @@
-
 import { ChatHeader } from "./chat-header";
 
 interface ChatLayoutProps {

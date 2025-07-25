@@ -54,6 +54,9 @@ catalogs:
     redis:
       specifier: ^5.6.0
       version: 5.6.0
+    resumable-stream:
+      specifier: ^2.0.0
+      version: 2.2.1
     turbo:
       specifier: ^2.5.5
       version: 2.5.5
@@ -276,6 +279,9 @@ importers:
       playwright-core:
         specifier: 'catalog:'
         version: 1.54.1
+      resumable-stream:
+        specifier: 'catalog:'
+        version: 2.2.1
       zod:
         specifier: 'catalog:'
         version: 3.25.76

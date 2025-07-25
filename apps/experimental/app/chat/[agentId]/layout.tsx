@@ -1,4 +1,3 @@
-
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ChatLayout } from "@/components/chat/chat-layout";

@@ -13,10 +13,7 @@ interface UseChatTransportProps {
 /**
  * Hook that creates and configures a DefaultChatTransport for AI integration
  */
-export function useChatTransport({
-	threadId,
-	agentId,
-}: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
+export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
 		// Use the (ai) route group structure with agentId and threadId
 		const apiEndpoint = `/api/chat/${agentId}/${threadId}`;
