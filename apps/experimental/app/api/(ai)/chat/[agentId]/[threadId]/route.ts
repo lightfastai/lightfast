@@ -11,7 +11,7 @@ import {
 	type UIMessage,
 } from "ai";
 import { after } from "next/server";
-import { createResumableStreamContext } from "resumable-stream";
+import { createResumableStreamContext, type ResumableStreamContext } from "resumable-stream";
 import {
 	appendMessages,
 	createMessages,
@@ -23,10 +23,29 @@ import {
 } from "@/lib/db";
 import { uuidv4 } from "@/lib/uuidv4";
 
-// Create the resumable stream context
-const streamContext = createResumableStreamContext({
-	waitUntil: after,
-});
+// Global resumable stream context instance
+let globalStreamContext: ResumableStreamContext | null = null;
+
+/**
+ * Get or create the resumable stream context
+ * Handles graceful fallback when Redis is not available
+ */
+function getStreamContext(): ResumableStreamContext | null {
+	if (!globalStreamContext) {
+		try {
+			globalStreamContext = createResumableStreamContext({
+				waitUntil: after,
+			});
+		} catch (error: any) {
+			if (error.message?.includes("REDIS") || error.message?.includes("KV_REST_API")) {
+				console.log(" > Resumable streams are disabled due to missing Redis configuration");
+			} else {
+				console.error("Failed to create resumable stream context:", error);
+			}
+		}
+	}
+	return globalStreamContext;
+}
 
 export async function POST(request: Request, { params }: { params: Promise<{ agentId: string; threadId: string }> }) {
 	try {
@@ -72,6 +91,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 		}
 
 		// Create this new stream so we can resume later
+		// Note: We store streamId in Redis list for thread, not a separate database
+		// This keeps all thread-related data in one place
 		await createStream({ threadId, streamId });
 
 		// Build the data stream that will emit tokens
@@ -123,10 +144,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ age
 			},
 		});
 
-		// Use resumable stream if context is available
-		return new Response(
-			await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
-		);
+		// Get stream context (may be null if Redis not configured)
+		const streamContext = getStreamContext();
+
+		// Use resumable stream if available, otherwise fallback to regular streaming
+		if (streamContext) {
+			return new Response(
+				await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
+			);
+		} else {
+			// Fallback to non-resumable streaming
+			return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
+		}
 	} catch (error) {
 		console.error("Error in POST /api/chat/[agentId]/[threadId]:", error);
 		return new Response(JSON.stringify({ error: "Internal server error" }), {
@@ -162,6 +191,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ agen
 
 		if (!recentStreamId) {
 			return new Response("No recent stream found", { status: 404 });
+		}
+
+		// Get stream context (may be null if Redis not configured)
+		const streamContext = getStreamContext();
+
+		if (!streamContext) {
+			// No resumable stream support
+			return new Response(null, { status: 204 });
 		}
 
 		const emptyDataStream = createUIMessageStream<LightfastUIMessage>({
