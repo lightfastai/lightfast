@@ -82,15 +82,7 @@ export async function fetchRequestHandler<
 		return Response.json({ error: "Missing agentId or threadId in path" }, { status: 400 });
 	}
 
-	let body: any;
-	if (req.method === "POST") {
-		// For POST requests, parse body
-		try {
-			body = await req.json();
-		} catch (error) {
-			return Response.json({ error: "Invalid JSON body" }, { status: 400 });
-		}
-	} else if (req.method !== "GET") {
+	if (req.method !== "POST" && req.method !== "GET") {
 		return new Response("Method not allowed", { status: 405 });
 	}
 
@@ -112,7 +104,8 @@ export async function fetchRequestHandler<
 
 	if (req.method === "POST") {
 		try {
-			const { messages } = body as { messages: TMessage[]; agentId: string; threadId: string };
+			const body = await req.json();
+			const { messages } = body as { messages: TMessage[] };
 
 			// Get the most recent user message
 			const recentUserMessage = messages.filter((message) => message.role === "user").at(-1);
