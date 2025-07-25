@@ -12,7 +12,6 @@ export interface FetchRequestHandlerOptions<
 	agents: Agent<TMessage, TTools, TRuntimeContext>[];
 	memory: Memory<TMessage>;
 	req: Request;
-	params: { agentId: string; threadId: string };
 	createContext: () => { resourceId: string };
 	generateId?: () => string;
 	enableResume?: boolean;
@@ -39,7 +38,7 @@ export interface FetchRequestHandlerOptions<
  *   token: env.KV_REST_API_TOKEN,
  * });
  *
- * const handler = async (req, { params }) => {
+ * const handler = async (req) => {
  *   const { userId } = await auth();
  *   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
  *
@@ -47,7 +46,6 @@ export interface FetchRequestHandlerOptions<
  *     agents,
  *     memory,
  *     req,
- *     params: await params,
  *     createContext: () => ({ resourceId: userId }),
  *     onError({ error, path }) {
  *       console.error(`Agent error on '${path}':`, error);
@@ -63,29 +61,59 @@ export async function fetchRequestHandler<
 	TTools extends ToolSet = ToolSet,
 	TRuntimeContext = any,
 >(options: FetchRequestHandlerOptions<TMessage, TTools, TRuntimeContext>): Promise<Response> {
-	const { agents, memory, req, params, createContext, generateId, enableResume, onError } = options;
-	const { threadId } = params;
+	const { agents, memory, req, createContext, generateId, enableResume, onError } = options;
 	const context = createContext();
 
+	let agentId: string;
+	let threadId: string;
+	let body: any;
+
+	// Extract agentId and threadId based on request method
+	if (req.method === "GET") {
+		// For GET requests (resume), get from query params
+		const url = new URL(req.url);
+		agentId = url.searchParams.get("agentId") || "";
+		threadId = url.searchParams.get("threadId") || "";
+
+		if (!agentId || !threadId) {
+			return Response.json({ error: "Missing agentId or threadId in query params" }, { status: 400 });
+		}
+	} else if (req.method === "POST") {
+		// For POST requests, extract from body
+		try {
+			body = await req.json();
+			agentId = body.agentId;
+			threadId = body.threadId;
+
+			if (!agentId || !threadId) {
+				return Response.json({ error: "Missing agentId or threadId in request body" }, { status: 400 });
+			}
+		} catch (error) {
+			return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+		}
+	} else {
+		return new Response("Method not allowed", { status: 405 });
+	}
+
 	// Find the agent by name
-	const agent = agents.find(a => a.config.name === params.agentId);
+	const agent = agents.find(a => a.config.name === agentId);
 	if (!agent) {
-		const error = new Error(`Agent '${params.agentId}' not found`);
-		onError?.({ error, path: `${params.agentId}/${params.threadId}` });
-		return Response.json({ error: `Agent '${params.agentId}' not found` }, { status: 404 });
+		const error = new Error(`Agent '${agentId}' not found`);
+		onError?.({ error, path: `${agentId}/${threadId}` });
+		return Response.json({ error: `Agent '${agentId}' not found` }, { status: 404 });
 	}
 
 	// Check if thread exists and validate ownership
 	const existingThread = await memory.getThread(threadId);
 	if (existingThread && existingThread.resourceId !== context.resourceId) {
 		const error = new Error("Forbidden: Thread belongs to another user");
-		onError?.({ error, path: `${params.agentId}/${params.threadId}` });
+		onError?.({ error, path: `${agentId}/${threadId}` });
 		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 
 	if (req.method === "POST") {
 		try {
-			const { messages }: { messages: TMessage[] } = await req.json();
+			const { messages } = body as { messages: TMessage[]; agentId: string; threadId: string };
 
 			// Get the most recent user message
 			const recentUserMessage = messages.filter((message) => message.role === "user").at(-1);
@@ -154,7 +182,7 @@ export async function fetchRequestHandler<
 			}
 		} catch (error) {
 			const err = error instanceof Error ? error : new Error(String(error));
-			onError?.({ error: err, path: `${params.agentId}/${params.threadId}` });
+			onError?.({ error: err, path: `${agentId}/${threadId}` });
 			return new Response(JSON.stringify({ error: "Internal server error" }), {
 				status: 500,
 				headers: { "Content-Type": "application/json" },
@@ -198,7 +226,7 @@ export async function fetchRequestHandler<
 			if (err.message.includes("not found")) {
 				return Response.json({ error: "Not found" }, { status: 404 });
 			}
-			onError?.({ error: err, path: `${params.agentId}/${params.threadId}` });
+			onError?.({ error: err, path: `${agentId}/${threadId}` });
 			throw err;
 		}
 	}

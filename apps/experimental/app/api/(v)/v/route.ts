@@ -15,34 +15,22 @@ const memory = new RedisMemory<LightfastUIMessage>({
 	token: env.KV_REST_API_TOKEN,
 });
 
+// Create all available agents
+const agents = createAgents();
+
 // Handler function that handles auth and calls fetchRequestHandler
-const handler = async (
-	req: Request,
-	{ params }: { params: Promise<{ v: string[] }> }
-) => {
+const handler = async (req: Request) => {
 	// Handle authentication
 	const { userId } = await auth();
 	if (!userId) {
 		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
-	const resolvedParams = await params;
-	const [agentId, threadId] = resolvedParams.v;
-
-	// Validate params
-	if (!agentId || !threadId) {
-		return Response.json({ error: "Invalid path: expected /v/[agentId]/[threadId]" }, { status: 400 });
-	}
-
-	// Create all available agents
-	const agents = createAgents();
-
-	// Call fetchRequestHandler with the agents array and memory
+	// Pass everything to fetchRequestHandler
 	return fetchRequestHandler({
 		agents,
 		memory,
 		req,
-		params: { agentId, threadId },
 		createContext: () => ({
 			resourceId: userId,
 		}),
