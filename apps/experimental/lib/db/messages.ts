@@ -75,9 +75,11 @@ export async function appendMessages({
 	const exists = await redis.exists(key);
 
 	if (!exists) {
-		// If no existing messages, just create new
-		await createMessages({ threadId, messages });
-		return;
+		// This should never happen in our flow - appendMessages should only be called
+		// for existing threads. If this happens, it indicates a bug in the calling code.
+		throw new Error(
+			`Cannot append messages to non-existent thread ${threadId}. Use createMessages for new threads.`
+		);
 	}
 
 	// Use JSON.ARRAPPEND to append each message to the messages array
