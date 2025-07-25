@@ -19,6 +19,14 @@
 			"types": "./src/lib/ai/handlers.ts",
 			"default": "./src/lib/ai/handlers.ts"
 		},
+		"./agent/memory": {
+			"types": "./src/lib/ai/memory.ts",
+			"default": "./src/lib/ai/memory.ts"
+		},
+		"./agent/redis-memory": {
+			"types": "./src/lib/ai/redis-memory.ts",
+			"default": "./src/lib/ai/redis-memory.ts"
+		},
 		"./agents/a011": {
 			"types": "./src/agents/a011.ts",
 			"default": "./src/agents/a011.ts"

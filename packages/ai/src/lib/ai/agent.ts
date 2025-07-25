@@ -1,16 +1,6 @@
 import type { RuntimeContext } from "@lightfast/ai/tools";
 import { convertToModelMessages, streamText, type ToolSet, type UIMessage, type UIMessageStreamOptions } from "ai";
-
-// Database operations interface
-export interface DatabaseOperations<TMessage = any> {
-	appendMessages: (params: { threadId: string; messages: TMessage[] }) => Promise<void>;
-	createMessages: (params: { threadId: string; messages: TMessage[] }) => Promise<void>;
-	createStream: (params: { threadId: string; streamId: string }) => Promise<void>;
-	createThread: (params: { threadId: string; userId: string; agentId: string }) => Promise<void>;
-	getMessages: (threadId: string) => Promise<TMessage[]>;
-	getThread: (threadId: string) => Promise<{ userId: string } | null>;
-	getThreadStreams: (threadId: string) => Promise<string[]>;
-}
+import type { Memory } from "./memory";
 
 // Utility function for generating UUIDs
 function uuidv4() {
@@ -30,7 +20,7 @@ export interface AgentConfig<TMessage extends UIMessage = UIMessage>
 	// Agent-specific required fields
 	name: string;
 	resourceId: string;
-	db: DatabaseOperations<TMessage>;
+	memory: Memory<TMessage>;
 
 	// Optional streamText configuration (defaults provided in constructor)
 	model?: StreamTextConfig["model"];
@@ -61,14 +51,14 @@ export class Agent<
 	TRuntimeContext extends RuntimeContext = RuntimeContext,
 > {
 	private config: AgentConfig<TMessage>;
-	private db: DatabaseOperations<TMessage>;
+	private memory: Memory<TMessage>;
 	private generateId: () => string;
 	private createTools: (context: TRuntimeContext) => TTools;
 	private system: string;
 
 	constructor(options: AgentOptions<TMessage, TTools, TRuntimeContext>) {
 		const { system, tools, ...config } = options;
-		this.db = config.db;
+		this.memory = config.memory;
 		this.createTools = tools;
 		this.system = system;
 		this.generateId = config._internal?.generateId || uuidv4;
@@ -86,8 +76,8 @@ export class Agent<
 		}
 
 		// Check if thread exists and validate ownership
-		const existingThread = await this.db.getThread(threadId);
-		if (existingThread && existingThread.userId !== this.config.resourceId) {
+		const existingThread = await this.memory.getThread(threadId);
+		if (existingThread && existingThread.resourceId !== this.config.resourceId) {
 			throw new Error("Forbidden: Thread belongs to another user");
 		}
 
@@ -101,9 +91,9 @@ export class Agent<
 		}
 
 		// Create thread if it doesn't exist
-		await this.db.createThread({
+		await this.memory.createThread({
 			threadId,
-			userId: this.config.resourceId,
+			resourceId: this.config.resourceId,
 			agentId: this.config.name, // Using name as agentId for database compatibility
 		});
 
@@ -112,24 +102,24 @@ export class Agent<
 
 		if (!existingThread) {
 			// New thread - create with initial messages
-			await this.db.createMessages({ threadId, messages });
+			await this.memory.createMessages({ threadId, messages });
 			allMessages = messages;
 		} else {
 			// Existing thread - append only the recent user message
-			await this.db.appendMessages({ threadId, messages: [recentUserMessage] });
-			// Fetch all messages from database for full context
-			allMessages = await this.db.getMessages(threadId);
+			await this.memory.appendMessages({ threadId, messages: [recentUserMessage] });
+			// Fetch all messages from memory for full context
+			allMessages = await this.memory.getMessages(threadId);
 		}
 
 		// Store stream ID for resumption
-		await this.db.createStream({ threadId, streamId });
+		await this.memory.createStream({ threadId, streamId });
 
 		// Create runtime context and tools for this specific request
 		const runtimeContext = { threadId } as TRuntimeContext;
 		const tools = this.createTools(runtimeContext);
 
 		// Stream the response with properly typed config
-		const { db, name, resourceId, uiStreamOptions, ...streamTextConfig } = this.config;
+		const { memory, name, resourceId, uiStreamOptions, ...streamTextConfig } = this.config;
 
 		// Ensure model is set
 		if (!streamTextConfig.model) {
@@ -156,19 +146,19 @@ export class Agent<
 
 	async getStreamMetadata(threadId: string) {
 		// Check authentication and ownership
-		const thread = await this.db.getThread(threadId);
-		if (!thread || thread.userId !== this.config.resourceId) {
+		const thread = await this.memory.getThread(threadId);
+		if (!thread || thread.resourceId !== this.config.resourceId) {
 			throw new Error("Thread not found or unauthorized");
 		}
 
 		return {
-			db: this.db,
+			memory: this.memory,
 			generateId: this.generateId,
 			uiStreamOptions: this.config.uiStreamOptions,
 		};
 	}
 
-	getDb(): DatabaseOperations<TMessage> {
-		return this.db;
+	getMemory(): Memory<TMessage> {
+		return this.memory;
 	}
 }

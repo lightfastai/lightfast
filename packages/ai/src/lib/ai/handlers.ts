@@ -1,7 +1,7 @@
 import type { RuntimeContext } from "@lightfast/ai/tools";
 import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
-import type { Agent, DatabaseOperations } from "./agent";
+import type { Agent } from "./agent";
 
 export interface HandlerContext {
 	threadId: string;
@@ -14,7 +14,7 @@ export interface CreateHandlerOptions<
 	TRuntimeContext extends RuntimeContext = RuntimeContext,
 > {
 	createAgent: (context: HandlerContext) => Agent<TMessage, TTools, TRuntimeContext>;
-	auth: (request: Request) => Promise<{ resourceId: string } | null>;
+	auth: (request: Request) => Promise<{ userId: string } | null>;
 	generateId?: () => string;
 	enableResume?: boolean; // Optional flag to enable resumable streams
 }
@@ -60,7 +60,7 @@ export function createAgentHandler<
 			const { messages }: { messages: TMessage[] } = await request.json();
 
 			// Create agent instance with context
-			const agent = createAgent({ threadId, resourceId: authResult.resourceId });
+			const agent = createAgent({ threadId, resourceId: authResult.userId });
 
 			// Stream the response
 			const { result, streamId, threadId: tid, uiStreamOptions } = await agent.stream({ threadId, messages });
@@ -70,10 +70,10 @@ export function createAgentHandler<
 				...uiStreamOptions,
 				generateMessageId: generateId,
 				onFinish: async ({ messages: finishedMessages, responseMessage, isContinuation }) => {
-					// Save the assistant's response to database
+					// Save the assistant's response to memory
 					if (responseMessage && responseMessage.role === "assistant") {
-						const db = agent.getDb();
-						await db.appendMessages({
+						const memory = agent.getMemory();
+						await memory.appendMessages({
 							threadId: tid,
 							messages: [responseMessage],
 						});
@@ -130,14 +130,14 @@ export function createAgentHandler<
 
 				try {
 					// Create agent instance with context
-					const agent = createAgent({ threadId, resourceId: authResult.resourceId });
+					const agent = createAgent({ threadId, resourceId: authResult.userId });
 
 					// Get stream metadata from agent
 					await agent.getStreamMetadata(threadId);
 
 					// Get thread streams
-					const db = agent.getDb();
-					const streamIds = await db.getThreadStreams(threadId);
+					const memory = agent.getMemory();
+					const streamIds = await memory.getThreadStreams(threadId);
 
 					if (!streamIds.length) {
 						return new Response(null, { status: 204 });

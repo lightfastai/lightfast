@@ -1,34 +1,22 @@
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
-import { Agent, type DatabaseOperations } from "@lightfast/ai/agent";
+import { Agent } from "@lightfast/ai/agent";
 import { agentHandler } from "@lightfast/ai/agent/handlers";
+import { RedisMemory } from "@lightfast/ai/agent/redis-memory";
 import { A011_SYSTEM_PROMPT, type A011Tools, createA011Tools } from "@lightfast/ai/agents/a011";
 import type { LightfastUIMessage } from "@lightfast/types";
 import { smoothStream, stepCountIs } from "ai";
-import {
-	appendMessages,
-	createMessages,
-	createStream,
-	createThread,
-	getMessages,
-	getThread,
-	getThreadStreams,
-} from "@/lib/db";
+import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-// Create database operations object
-const dbOperations: DatabaseOperations<LightfastUIMessage> = {
-	appendMessages,
-	createMessages,
-	createStream,
-	createThread,
-	getMessages,
-	getThread,
-	getThreadStreams,
-};
+// Create Redis memory instance
+const memory = new RedisMemory<LightfastUIMessage>({
+	url: env.KV_REST_API_URL,
+	token: env.KV_REST_API_TOKEN,
+});
 
 // Export handlers using the agentHandler wrapper with resume enabled
 export const { GET, POST } = agentHandler({
@@ -36,7 +24,7 @@ export const { GET, POST } = agentHandler({
 		return new Agent<LightfastUIMessage, A011Tools>({
 			name: "a011",
 			resourceId,
-			db: dbOperations,
+			memory,
 			system: A011_SYSTEM_PROMPT,
 			tools: createA011Tools,
 			model: gateway("anthropic/claude-4-sonnet"),
@@ -58,7 +46,7 @@ export const { GET, POST } = agentHandler({
 	auth: async () => {
 		const authResult = await auth();
 		if (!authResult || !authResult.userId) return null;
-		return { resourceId: authResult.userId };
+		return { userId: authResult.userId };
 	},
 	generateId: uuidv4,
 	enableResume: true, // Enable resumable streams for this agent
