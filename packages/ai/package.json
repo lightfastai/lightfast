@@ -28,12 +28,16 @@
 			"default": "./src/lib/ai/server/adapters/types.ts"
 		},
 		"./agent/memory": {
-			"types": "./src/lib/ai/memory.ts",
-			"default": "./src/lib/ai/memory.ts"
+			"types": "./src/lib/ai/memory/index.ts",
+			"default": "./src/lib/ai/memory/index.ts"
+		},
+		"./agent/memory/redis": {
+			"types": "./src/lib/ai/memory/redis.ts",
+			"default": "./src/lib/ai/memory/redis.ts"
 		},
 		"./agent/redis-memory": {
-			"types": "./src/lib/ai/redis-memory.ts",
-			"default": "./src/lib/ai/redis-memory.ts"
+			"types": "./src/lib/ai/memory/redis.ts",
+			"default": "./src/lib/ai/memory/redis.ts"
 		},
 		"./agents/a011": {
 			"types": "./src/agents/a011.ts",
