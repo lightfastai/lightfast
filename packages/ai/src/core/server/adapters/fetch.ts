@@ -8,7 +8,7 @@ export interface FetchRequestHandlerOptions<
 	TTools extends ToolSet = ToolSet,
 	TRuntimeContext = any,
 > {
-	agent: Agent<TMessage, TTools, TRuntimeContext>;
+	agents: Agent<TMessage, TTools, TRuntimeContext>[];
 	req: Request;
 	params: { agentId: string; threadId: string };
 	createContext: () => { resourceId: string };
@@ -22,21 +22,24 @@ export interface FetchRequestHandlerOptions<
  *
  * @example
  * ```typescript
- * const agent = new Agent({
- *   name: "a011",
- *   resourceId,
- *   memory,
- *   system: A011_SYSTEM_PROMPT,
- *   tools: createA011Tools,
- *   // ... other config
- * });
+ * const agents = [
+ *   new Agent({
+ *     name: "a011",
+ *     resourceId,
+ *     memory,
+ *     system: A011_SYSTEM_PROMPT,
+ *     tools: createA011Tools,
+ *     // ... other config
+ *   }),
+ *   // ... more agents
+ * ];
  *
  * const handler = async (req, { params }) => {
  *   const { userId } = await auth();
  *   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
  *
  *   return fetchRequestHandler({
- *     agent,
+ *     agents,
  *     req,
  *     params: await params,
  *     createContext: () => ({ resourceId: userId }),
@@ -54,9 +57,17 @@ export async function fetchRequestHandler<
 	TTools extends ToolSet = ToolSet,
 	TRuntimeContext = any,
 >(options: FetchRequestHandlerOptions<TMessage, TTools, TRuntimeContext>): Promise<Response> {
-	const { agent, req, params, createContext, generateId, enableResume, onError } = options;
+	const { agents, req, params, createContext, generateId, enableResume, onError } = options;
 	const { threadId } = params;
 	const context = createContext();
+
+	// Find the agent by name
+	const agent = agents.find(a => a.config.name === params.agentId);
+	if (!agent) {
+		const error = new Error(`Agent '${params.agentId}' not found`);
+		onError?.({ error, path: `${params.agentId}/${params.threadId}` });
+		return Response.json({ error: `Agent '${params.agentId}' not found` }, { status: 404 });
+	}
 
 	// Verify agent resourceId matches context resourceId
 	if (agent.config.resourceId !== context.resourceId) {

@@ -18,7 +18,7 @@ const memory = new RedisMemory<LightfastUIMessage>({
 // Handler function that handles auth and calls fetchRequestHandler
 const handler = async (
 	req: Request,
-	{ params }: { params: Promise<{ agentId: string; threadId: string }> }
+	{ params }: { params: Promise<{ ai: string[] }> }
 ) => {
 	// Handle authentication
 	const { userId } = await auth();
@@ -27,15 +27,21 @@ const handler = async (
 	}
 
 	const resolvedParams = await params;
+	const [agentId, threadId] = resolvedParams.ai;
 
-	// Create agents array
+	// Validate params
+	if (!agentId || !threadId) {
+		return Response.json({ error: "Invalid path: expected /api/ai/[agentId]/[threadId]" }, { status: 400 });
+	}
+
+	// Create all available agents with the current userId as resourceId
 	const agents = createAgents({ resourceId: userId, memory });
 
 	// Call fetchRequestHandler with the agents array
 	return fetchRequestHandler({
 		agents,
 		req,
-		params: resolvedParams,
+		params: { agentId, threadId },
 		createContext: () => ({
 			resourceId: userId,
 		}),
