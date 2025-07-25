@@ -17,7 +17,7 @@ import {
 	todoClearTool,
 	todoReadTool,
 	todoWriteTool,
-} from "../tools/todo";
+} from "../tools/task";
 import { webSearchTool } from "../tools/web-search";
 
 export const A011_SYSTEM_PROMPT = `
