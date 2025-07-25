@@ -1,9 +1,9 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import type { LightfastUIMessage } from "@lightfast/types";
 import { ChatInput } from "@/components/chat-input";
 import { useChatTransport } from "@/hooks/use-chat-transport";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { ChatBottomSection } from "./chat-bottom-section";
 import { ChatMessages } from "./chat-messages";
 import { EmptyState } from "./empty-state";

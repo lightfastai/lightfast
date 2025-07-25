@@ -1,9 +1,9 @@
 "use client";
 
-import type { LightfastUIMessage } from "@lightfast/types";
 import type { ChatTransport } from "ai";
 import { DefaultChatTransport } from "ai";
 import { useMemo } from "react";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface UseChatTransportProps {
 	threadId: string;

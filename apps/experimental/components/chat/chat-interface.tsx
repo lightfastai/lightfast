@@ -1,4 +1,4 @@
-import type { LightfastUIMessage } from "@lightfast/types";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { ChatInputSection } from "./chat-input-section";
 
 interface ChatInterfaceProps {

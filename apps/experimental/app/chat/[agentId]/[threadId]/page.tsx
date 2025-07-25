@@ -1,10 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
-import type { LightfastUIMessage } from "@lightfast/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { env } from "@/env";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface ChatPageProps {
 	params: Promise<{

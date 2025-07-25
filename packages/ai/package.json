@@ -3,10 +3,6 @@
 	"version": "1.0.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
 	"exports": {
-		"./env": {
-			"types": "./src/env.ts",
-			"default": "./src/env.ts"
-		},
 		"./agent": {
 			"types": "./src/core/primitives/agent.ts",
 			"default": "./src/core/primitives/agent.ts"
@@ -55,14 +51,10 @@
 		"@ai-sdk/anthropic": "catalog:",
 		"@ai-sdk/gateway": "catalog:",
 		"@ai-sdk/provider": "catalog:",
-		"@browserbasehq/stagehand": "catalog:",
 		"@t3-oss/env-core": "catalog:",
 		"@upstash/redis": "catalog:",
-		"@vercel/blob": "catalog:",
-		"@vercel/sandbox": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
-		"exa-js": "catalog:",
 		"playwright": "catalog:",
 		"playwright-core": "catalog:",
 		"resumable-stream": "catalog:",

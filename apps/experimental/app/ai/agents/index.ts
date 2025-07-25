@@ -1,7 +1,7 @@
 import { gateway } from "@ai-sdk/gateway";
 import { Agent } from "@lightfast/ai/agent";
-import type { LightfastUIMessage } from "@lightfast/types";
 import { smoothStream, stepCountIs } from "ai";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { A011_SYSTEM_PROMPT, type A011Tools, createA011Tools } from "./a011";
 
 /**

@@ -1,11 +1,4 @@
 import {
-	createSandboxTool,
-	createSandboxWithPortsTool,
-	executeSandboxCommandTool,
-	getSandboxDomainTool,
-	listSandboxRoutesTool,
-} from "../tools/sandbox";
-import {
 	fileDeleteTool,
 	fileFindByNameTool,
 	fileFindInContentTool,
@@ -14,10 +7,13 @@ import {
 	fileTool,
 } from "../tools/file";
 import {
-	todoClearTool,
-	todoReadTool,
-	todoWriteTool,
-} from "../tools/task";
+	createSandboxTool,
+	createSandboxWithPortsTool,
+	executeSandboxCommandTool,
+	getSandboxDomainTool,
+	listSandboxRoutesTool,
+} from "../tools/sandbox";
+import { todoClearTool, todoReadTool, todoWriteTool } from "../tools/task";
 import { webSearchTool } from "../tools/web-search";
 
 export const A011_SYSTEM_PROMPT = `
@@ -275,7 +271,7 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 - "Creating a file to store the results..." [file]
 `;
 
-import type { RuntimeContext } from "@lightfast/ai/tools";
+import type { RuntimeContext } from "../tools/types";
 
 // Type for the a011 agent tools
 export type A011Tools = ReturnType<typeof createA011Tools>;

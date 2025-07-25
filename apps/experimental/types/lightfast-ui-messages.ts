@@ -1,3 +1,4 @@
+import type { InferToolInput, InferToolOutput, InferUITool, InferUITools, UIMessage } from "ai";
 import type {
 	createSandboxTool,
 	createSandboxWithPortsTool,
@@ -10,13 +11,12 @@ import type {
 	fileTool,
 	getSandboxDomainTool,
 	listSandboxRoutesTool,
-	RuntimeContext,
 	todoClearTool,
 	todoReadTool,
 	todoWriteTool,
 	webSearchTool,
-} from "@lightfast/ai/tools";
-import type { InferToolInput, InferToolOutput, InferUITool, InferUITools, UIMessage } from "ai";
+} from "@/app/ai/tools";
+import type { RuntimeContext } from "@/app/ai/tools/types";
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {

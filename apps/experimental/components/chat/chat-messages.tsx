@@ -1,7 +1,5 @@
 "use client";
 
-import type { LightfastUIMessage } from "@lightfast/types";
-import { isTextPart, isToolPart } from "@lightfast/types";
 import type { ChatStatus, ToolUIPart } from "ai";
 import { ArrowDown } from "lucide-react";
 import { useRef } from "react";
@@ -11,6 +9,8 @@ import { ThinkingMessage } from "@/components/thinking-message";
 import { ToolCallRenderer } from "@/components/tool-renderers/tool-call-renderer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
+import { isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
 
 interface ChatMessagesProps {
 	messages: LightfastUIMessage[];

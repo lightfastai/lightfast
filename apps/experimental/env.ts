@@ -1,23 +1,55 @@
-import { env as aiEnv } from "@lightfast/ai/env";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
 	/**
-	 * Extend from T3-OSS Vercel preset and AI package env
+	 * Extend from T3-OSS Vercel preset
 	 */
-	extends: [vercel(), aiEnv],
+	extends: [vercel()],
 
 	/**
 	 * Specify your server-side environment variables schema here.
 	 * This way you can ensure the app isn't built with invalid env vars.
 	 */
 	server: {
-		// Redis & KV Store (additional to AI package)
+		// Node environment
+		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+		// Vercel environment detection
+		VERCEL: z.string().optional(),
+		VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
+
+		// KV Store for memory
+		KV_REST_API_URL: z.string().url(),
+		KV_REST_API_TOKEN: z.string().min(1),
+		KV_REST_API_READ_ONLY_TOKEN: z.string().min(1),
+
+		// AI Provider API Keys
+		ANTHROPIC_API_KEY: z.string().min(1),
+		OPENAI_API_KEY: z.string().min(1),
+		EXA_API_KEY: z.string().min(1),
+
+		// Browser automation
+		BROWSERBASE_API_KEY: z.string().min(1),
+		BROWSERBASE_PROJECT_ID: z.string().min(1),
+
+		// Voice services
+		ELEVENLABS_API_KEY: z.string().min(1).optional(),
+
+		// Observability
+		BRAINTRUST_API_KEY: z.string().min(1),
+		BRAINTRUST_PROJECT_ID: z.string().min(1),
+
+		// Vercel Blob Storage
+		BLOB_READ_WRITE_TOKEN: z.string().min(1),
+
+		// AI Gateway (required)
+		AI_GATEWAY_API_KEY: z.string().min(1),
+
+		// Redis & KV Store (additional)
 		REDIS_URL: z.string().url(),
 		KV_URL: z.string().url(),
-		KV_REST_API_READ_ONLY_TOKEN: z.string().min(1),
 
 		// Clerk Authentication
 		CLERK_SECRET_KEY: z.string().min(1),
@@ -38,10 +70,41 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	runtimeEnv: {
-		// Redis & KV Store (additional to AI package)
+		// Node environment
+		NODE_ENV: process.env.NODE_ENV,
+		VERCEL: process.env.VERCEL,
+		VERCEL_ENV: process.env.VERCEL_ENV,
+
+		// KV Store for memory
+		KV_REST_API_URL: process.env.KV_REST_API_URL,
+		KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+		KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
+
+		// AI Provider API Keys
+		ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+		OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+		EXA_API_KEY: process.env.EXA_API_KEY,
+
+		// Browser automation
+		BROWSERBASE_API_KEY: process.env.BROWSERBASE_API_KEY,
+		BROWSERBASE_PROJECT_ID: process.env.BROWSERBASE_PROJECT_ID,
+
+		// Voice services
+		ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
+
+		// Observability
+		BRAINTRUST_API_KEY: process.env.BRAINTRUST_API_KEY,
+		BRAINTRUST_PROJECT_ID: process.env.BRAINTRUST_PROJECT_ID,
+
+		// Vercel Blob Storage
+		BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
+
+		// AI Gateway
+		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
+
+		// Redis & KV Store (additional)
 		REDIS_URL: process.env.REDIS_URL,
 		KV_URL: process.env.KV_URL,
-		KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
 
 		// Clerk Authentication
 		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,

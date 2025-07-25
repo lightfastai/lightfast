@@ -2,9 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
 import { createAgents } from "@/app/ai/agents";
-import type { LightfastUIMessage } from "@lightfast/types";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;

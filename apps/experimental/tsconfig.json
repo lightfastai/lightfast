@@ -4,8 +4,7 @@
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./*"],
-			"@/mastra/*": ["../../packages/ai/src/mastra/*"],
-			"@/types/*": ["../../packages/types/src/*"]
+			"@/mastra/*": ["../../packages/ai/src/mastra/*"]
 		},
 		"composite": true,
 		"tsBuildInfoFile": "./.next/.tsbuildinfo"

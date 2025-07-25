@@ -41,11 +41,7 @@ export interface AgentOptions<
 	tools: (context: TRuntimeContext) => TTools;
 }
 
-export class Agent<
-	TMessage extends UIMessage = UIMessage,
-	TTools extends ToolSet = ToolSet,
-	TRuntimeContext = any,
-> {
+export class Agent<TMessage extends UIMessage = UIMessage, TTools extends ToolSet = ToolSet, TRuntimeContext = any> {
 	public readonly config: AgentConfig<TMessage>;
 	private generateId: () => string;
 	private createTools: (context: TRuntimeContext) => TTools;
@@ -99,5 +95,4 @@ export class Agent<
 			threadId,
 		};
 	}
-
 }

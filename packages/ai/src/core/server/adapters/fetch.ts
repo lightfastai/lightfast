@@ -1,7 +1,7 @@
 import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
-import type { Agent } from "../../primitives/agent";
 import type { Memory } from "../../memory";
+import type { Agent } from "../../primitives/agent";
 import type { HandlerContext } from "./types";
 
 export interface FetchRequestHandlerOptions<
@@ -66,10 +66,10 @@ export async function fetchRequestHandler<
 
 	// Extract agentId and threadId from URL path
 	const url = new URL(req.url);
-	const pathSegments = url.pathname.split('/').filter(Boolean);
-	
+	const pathSegments = url.pathname.split("/").filter(Boolean);
+
 	// Find the index of 'v' in the path
-	const vIndex = pathSegments.indexOf('v');
+	const vIndex = pathSegments.indexOf("v");
 	if (vIndex === -1 || vIndex + 2 >= pathSegments.length) {
 		return Response.json({ error: "Invalid path: expected /api/v/[agentId]/[threadId]" }, { status: 400 });
 	}
@@ -87,7 +87,7 @@ export async function fetchRequestHandler<
 	}
 
 	// Find the agent by name
-	const agent = agents.find(a => a.config.name === agentId);
+	const agent = agents.find((a) => a.config.name === agentId);
 	if (!agent) {
 		const error = new Error(`Agent '${agentId}' not found`);
 		onError?.({ error, path: `${agentId}/${threadId}` });
@@ -135,11 +135,15 @@ export async function fetchRequestHandler<
 			}
 
 			// Stream the response
-			const { result, streamId, threadId: tid } = await agent.stream({ 
-				threadId, 
+			const {
+				result,
+				streamId,
+				threadId: tid,
+			} = await agent.stream({
+				threadId,
 				messages: allMessages,
 				memory,
-				resourceId: context.resourceId
+				resourceId: context.resourceId,
 			});
 
 			// Store stream ID for resumption
