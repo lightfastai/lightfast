@@ -2,19 +2,23 @@ import {
 	createSandboxTool,
 	createSandboxWithPortsTool,
 	executeSandboxCommandTool,
+	getSandboxDomainTool,
+	listSandboxRoutesTool,
+} from "../tools/sandbox";
+import {
 	fileDeleteTool,
 	fileFindByNameTool,
 	fileFindInContentTool,
 	fileReadTool,
 	fileStringReplaceTool,
 	fileTool,
-	getSandboxDomainTool,
-	listSandboxRoutesTool,
+} from "../tools/file";
+import {
 	todoClearTool,
 	todoReadTool,
 	todoWriteTool,
-	webSearchTool,
-} from "@lightfast/ai/tools";
+} from "../tools/todo";
+import { webSearchTool } from "../tools/web-search";
 
 export const A011_SYSTEM_PROMPT = `
 <system>

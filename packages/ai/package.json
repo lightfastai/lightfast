@@ -3,10 +3,6 @@
 	"version": "1.0.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
 	"exports": {
-		"./tools": {
-			"types": "./src/tools/index.ts",
-			"default": "./src/tools/index.ts"
-		},
 		"./env": {
 			"types": "./src/env.ts",
 			"default": "./src/env.ts"
@@ -43,10 +39,6 @@
 			"types": "./src/core/memory/adapters/redis.ts",
 			"default": "./src/core/memory/adapters/redis.ts"
 		},
-		"./agents/a011": {
-			"types": "./src/agents/a011.ts",
-			"default": "./src/agents/a011.ts"
-		},
 		"./providers": {
 			"types": "./src/utils/providers.ts",
 			"default": "./src/utils/providers.ts"
@@ -77,6 +69,7 @@
 		"zod": "catalog:"
 	},
 	"devDependencies": {
+		"@types/node": "^24.0.15",
 		"typescript": "catalog:"
 	}
 }

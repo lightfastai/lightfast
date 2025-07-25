@@ -1,4 +1,3 @@
-import type { RuntimeContext } from "@lightfast/ai/tools";
 import { convertToModelMessages, streamText, type ToolSet, type UIMessage } from "ai";
 import type { Memory } from "./memory";
 import type { HandlerContext } from "./server/adapters/types";
@@ -35,7 +34,7 @@ export interface StreamOptions<TMessage = any> {
 export interface AgentOptions<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext extends RuntimeContext = RuntimeContext,
+	TRuntimeContext = any,
 > extends AgentConfig<TMessage> {
 	// Required: system prompt for the agent
 	system: string;
@@ -46,7 +45,7 @@ export interface AgentOptions<
 export class Agent<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext extends RuntimeContext = RuntimeContext,
+	TRuntimeContext = any,
 > {
 	public readonly config: AgentConfig<TMessage>;
 	private memory: Memory<TMessage>;

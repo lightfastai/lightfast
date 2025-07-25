@@ -1,4 +1,3 @@
-import type { RuntimeContext } from "@lightfast/ai/tools";
 import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
 import type { Agent } from "../../agent";
@@ -7,7 +6,7 @@ import type { HandlerContext } from "./types";
 export interface FetchRequestHandlerOptions<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext extends RuntimeContext = RuntimeContext,
+	TRuntimeContext = any,
 > {
 	agent: Agent<TMessage, TTools, TRuntimeContext>;
 	req: Request;
@@ -53,7 +52,7 @@ export interface FetchRequestHandlerOptions<
 export async function fetchRequestHandler<
 	TMessage extends UIMessage = UIMessage,
 	TTools extends ToolSet = ToolSet,
-	TRuntimeContext extends RuntimeContext = RuntimeContext,
+	TRuntimeContext = any,
 >(options: FetchRequestHandlerOptions<TMessage, TTools, TRuntimeContext>): Promise<Response> {
 	const { agent, req, params, createContext, generateId, enableResume, onError } = options;
 	const { threadId } = params;
