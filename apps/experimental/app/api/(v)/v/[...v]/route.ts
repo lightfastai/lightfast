@@ -3,68 +3,37 @@ import { auth } from "@clerk/nextjs/server";
 import { createAgent } from "@lightfast/ai/agent";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
-import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
-import { createTool } from "@lightfast/ai/tool";
 import { smoothStream, stepCountIs } from "ai";
-import { z } from "zod";
 import { A011_SYSTEM_PROMPT } from "@/app/ai/agents/a011";
+import { 
+	fileTool,
+	fileReadTool,
+	fileDeleteTool,
+	fileStringReplaceTool,
+	fileFindInContentTool,
+	fileFindByNameTool,
+} from "@/app/ai/tools/file";
+import { webSearchTool } from "@/app/ai/tools/web-search";
+import { todoWriteTool, todoReadTool, todoClearTool } from "@/app/ai/tools/task";
+import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
 
-// Define agent-specific context
-interface AgentRuntimeContext {
-	// Add any agent-specific context here
-	// The agent already has access to threadId and resourceId from system context
-}
-
-// Create tools using the new createTool pattern with context injection
-const file = createTool<RuntimeContext<AgentRuntimeContext>>({
-	description: "Create, read, or write files",
-	inputSchema: z.object({
-		operation: z.enum(["create", "read", "write"]),
-		path: z.string(),
-		content: z.string().optional(),
-	}),
-	execute: async ({ operation, path, content }, context) => {
-		// Tool has access to all three context levels
-		console.log(`File ${operation} for thread ${context.threadId} from IP ${context.ipAddress}`);
-		return { result: `${operation} ${path}` };
-	},
-});
-
-const webSearch = createTool<RuntimeContext<AgentRuntimeContext>>({
-	description: "Search the web",
-	inputSchema: z.object({
-		query: z.string(),
-	}),
-	execute: async ({ query }, context) => {
-		// Tool has access to system, request, and agent context
-		console.log(`Web search for thread ${context.threadId} with UA ${context.userAgent}: ${query}`);
-		return { results: `Search results for ${query}` };
-	},
-});
-
-const todoWrite = createTool<RuntimeContext<AgentRuntimeContext>>({
-	description: "Write todos",
-	inputSchema: z.object({
-		todos: z.array(z.object({
-			content: z.string(),
-			status: z.enum(["pending", "in_progress", "completed"]),
-			priority: z.enum(["low", "medium", "high"]),
-			id: z.string(),
-		})),
-	}),
-	execute: async ({ todos }, context) => {
-		console.log(`Writing todos for thread ${context.threadId} from IP ${context.ipAddress}`);
-		return { success: true, count: todos.length };
-	},
-});
-
 // Create tools object for agent
 const a011Tools = {
-	file,
-	webSearch,
-	todoWrite,
+	// File tools
+	file: fileTool,
+	fileRead: fileReadTool,
+	fileDelete: fileDeleteTool,
+	fileStringReplace: fileStringReplaceTool,
+	fileFindInContent: fileFindInContentTool,
+	fileFindByName: fileFindByNameTool,
+	// Web search
+	webSearch: webSearchTool,
+	// Todo tools
+	todoWrite: todoWriteTool,
+	todoRead: todoReadTool,
+	todoClear: todoClearTool,
 } as const;
 
 // Infer the tool schema type
@@ -94,11 +63,11 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 		return Response.json({ error: "Agent not found" }, { status: 404 });
 	}
 
-	const agent = createAgent<A011ToolSchema, AgentRuntimeContext>({
+	const agent = createAgent<A011ToolSchema, AppRuntimeContext>({
 		name: "a011",
 		system: A011_SYSTEM_PROMPT,
 		tools: a011Tools, // Pass the tools directly
-		createRuntimeContext: ({ threadId, resourceId }): AgentRuntimeContext => ({
+		createRuntimeContext: ({ threadId, resourceId }): AppRuntimeContext => ({
 			// Create agent-specific context
 			// The agent can use threadId and resourceId if needed
 			// but they're already available in system context
@@ -115,13 +84,17 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 				// TypeScript should now know the exact tool names from a011Tools
 				console.log("Tool called:", chunk.toolName);
 
-				// Test strong typing - these should work
+				// Test strong typing - these should work with our actual tools
 				if (chunk.toolName === "file") {
 					console.log("File tool called");
 				} else if (chunk.toolName === "webSearch") {
 					console.log("Web search called");
 				} else if (chunk.toolName === "todoWrite") {
-					console.log("Todo tool called");
+					console.log("Todo write tool called");
+				} else if (chunk.toolName === "fileRead") {
+					console.log("File read tool called");
+				} else if (chunk.toolName === "todoRead") {
+					console.log("Todo read tool called");
 				}
 				
 				// TypeScript correctly prevents invalid tool names:
