@@ -100,9 +100,8 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 				} else if (chunk.toolName === "webSearch") {
 					console.log("Web search called");
 				}
-				// Note: If you uncomment the line below with a non-existent tool,
-				// TypeScript may not catch it due to how Vercel AI SDK types work
-				// if (chunk.toolName === "nonExistentTool") {}
+				// TypeScript correctly catches non-existent tool names:
+				// if (chunk.toolName === "nonExistentTool") {} // ← Type error!
 			}
 		},
 		onFinish: ({ finishReason, usage }) => {

@@ -32,8 +32,7 @@ type ExcludedStreamTextProps =
 	| "experimental_transform"; // Needs generic typing
 
 // Agent-specific configuration extending streamText parameters
-export interface AgentConfig<TMessage extends UIMessage = UIMessage>
-	extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
+export interface AgentConfig extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
 	// Agent-specific required fields
 	name: string;
 }
@@ -51,32 +50,10 @@ type ResolveToolFactories<T extends ToolFactorySet<any>> = {
 	[K in keyof T]: T[K] extends ToolFactory<any> ? ReturnType<T[K]> : never;
 };
 
-// Helper type to extract tool factories from an Agent
-export type ExtractAgentToolFactories<TAgent> = TAgent extends Agent<infer TToolFactories> ? TToolFactories : never;
 
-// Helper type to extract resolved tools from an Agent
-export type ExtractAgentTools<TAgent> = TAgent extends Agent<infer TToolFactories>
-	? ResolveToolFactories<TToolFactories>
-	: never;
-
-// Helper type to merge tool sets from multiple agents
-export type MergeToolSets<TAgents extends readonly Agent<any>[]> = TAgents extends readonly [infer First, ...infer Rest]
-	? First extends Agent<any>
-		? Rest extends readonly Agent<any>[]
-			? ExtractAgentTools<First> & MergeToolSets<Rest>
-			: ExtractAgentTools<First>
-		: never
-	: {};
-
-// Helper type to create UIMessage type from agents array
-export type DerivedUIMessage<
-	TAgents extends readonly Agent<any>[],
-	TMetadata = {},
-	TCustomDataTypes extends Record<string, unknown> = {},
-> = UIMessage<TMetadata, TCustomDataTypes, MergeToolSets<TAgents>>;
 
 export interface AgentOptions<TToolFactories extends ToolFactorySet<any> = ToolFactorySet<any>>
-	extends AgentConfig<UIMessage> {
+	extends AgentConfig {
 	// Required: system prompt for the agent
 	system: string;
 	// Required: collection of tool factories that will be automatically injected with runtime context
@@ -102,7 +79,7 @@ export type InferRuntimeContext<TToolFactories extends ToolFactorySet<any>> = TT
 	: never;
 
 export class Agent<TToolFactories extends ToolFactorySet<any> = ToolFactorySet<any>> {
-	public readonly config: AgentConfig<UIMessage>;
+	public readonly config: AgentConfig;
 	private generateId: () => string;
 	private toolFactories: TToolFactories;
 	private system: string;
