@@ -83,16 +83,19 @@ const handler = async (req: Request) => {
 				stopWhen: stepCountIs(30),
 				// Optional: Add agent-specific callbacks with strong typing
 				onChunk: ({ chunk }) => {
-					// Now we get strong typing - chunk knows about our specific tools!
 					if (chunk.type === "tool-call") {
-						// Valid tools work fine
+						// TypeScript knows the exact tool names
+						console.log("Tool called:", chunk.toolName);
+						
+						// All valid tools work
 						if (chunk.toolName === "file") {
-							console.log("File tool called:", chunk.input);
+							console.log("File tool called");
 						} else if (chunk.toolName === "webSearch") {
-							console.log("Web search called:", chunk.input);
+							console.log("Web search called");
 						}
-						// Comment out the line below to avoid TS errors in production
-						// else if (chunk.toolName === "nonExistentTool") {} // This would error!
+						// Note: If you uncomment the line below with a non-existent tool,
+						// TypeScript may not catch it due to how Vercel AI SDK types work
+						// if (chunk.toolName === "nonExistentTool") {} 
 					}
 				},
 				onFinish: ({ finishReason, usage }) => {
