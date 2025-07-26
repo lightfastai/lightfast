@@ -72,6 +72,9 @@ const a011Tools = {
 	todoWrite,
 } as const;
 
+// Infer the tool schema type
+type A011ToolSchema = typeof a011Tools;
+
 // Handler function that handles auth and calls fetchRequestHandler
 const handler = async (req: Request, { params }: { params: Promise<{ v: string[] }> }) => {
 	// Await the params
@@ -96,7 +99,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 		return Response.json({ error: "Agent not found" }, { status: 404 });
 	}
 
-	const agent = createAgent({
+	const agent = createAgent<A011ToolSchema, AgentRuntimeContext>({
 		name: "a011",
 		system: A011_SYSTEM_PROMPT,
 		tools: a011Tools, // Pass the tools directly
@@ -126,8 +129,10 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 					console.log("Todo tool called");
 				}
 				
-				// This should give a TypeScript error:
-				// if (chunk.toolName === "nonExistentTool") {}
+				// TypeScript correctly prevents invalid tool names:
+				// if (chunk.toolName === "nonExistentTool") { // ❌ Error: This comparison appears to be unintentional
+				// 	console.log("This should error!");
+				// }
 			}
 		},
 		onFinish: ({ finishReason, usage }) => {

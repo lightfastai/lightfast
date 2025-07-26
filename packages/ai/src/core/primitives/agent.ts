@@ -80,16 +80,16 @@ export interface AgentOptions<TTools extends ToolSet | ToolFactorySet<any> = Too
 	// Required: function to create runtime context from request parameters
 	createRuntimeContext: (params: { threadId: string; resourceId: string }) => TRuntimeContext;
 	// Optional: tool choice and stop conditions with strong typing based on the resolved tools
-	toolChoice?: StreamTextParameters<ToolSet>["toolChoice"];
-	stopWhen?: StreamTextParameters<ToolSet>["stopWhen"];
+	toolChoice?: StreamTextParameters<ResolvedTools<TTools>>["toolChoice"];
+	stopWhen?: StreamTextParameters<ResolvedTools<TTools>>["stopWhen"];
 	// Strongly typed callbacks based on the agent's specific tools
-	onChunk?: StreamTextParameters<ToolSet>["onChunk"];
-	onFinish?: StreamTextParameters<ToolSet>["onFinish"];
-	onStepFinish?: StreamTextParameters<ToolSet>["onStepFinish"];
-	onAbort?: StreamTextParameters<ToolSet>["onAbort"];
-	onError?: StreamTextParameters<ToolSet>["onError"];
-	prepareStep?: StreamTextParameters<ToolSet>["prepareStep"];
-	experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
+	onChunk?: StreamTextParameters<ResolvedTools<TTools>>["onChunk"];
+	onFinish?: StreamTextParameters<ResolvedTools<TTools>>["onFinish"];
+	onStepFinish?: StreamTextParameters<ResolvedTools<TTools>>["onStepFinish"];
+	onAbort?: StreamTextParameters<ResolvedTools<TTools>>["onAbort"];
+	onError?: StreamTextParameters<ResolvedTools<TTools>>["onError"];
+	prepareStep?: StreamTextParameters<ResolvedTools<TTools>>["prepareStep"];
+	experimental_transform?: StreamTextParameters<ResolvedTools<TTools>>["experimental_transform"];
 }
 
 
@@ -99,15 +99,15 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 	private tools: TTools | ((context: TRuntimeContext) => TTools);
 	private createRuntimeContext: (params: { threadId: string; resourceId: string }) => TRuntimeContext;
 	private system: string;
-	private toolChoice?: StreamTextParameters<ToolSet>["toolChoice"];
-	private stopWhen?: StreamTextParameters<ToolSet>["stopWhen"];
-	private onChunk?: StreamTextParameters<ToolSet>["onChunk"];
-	private onFinish?: StreamTextParameters<ToolSet>["onFinish"];
-	private onStepFinish?: StreamTextParameters<ToolSet>["onStepFinish"];
-	private onAbort?: StreamTextParameters<ToolSet>["onAbort"];
-	private onError?: StreamTextParameters<ToolSet>["onError"];
-	private prepareStep?: StreamTextParameters<ToolSet>["prepareStep"];
-	private experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
+	private toolChoice?: StreamTextParameters<ResolvedTools<TTools>>["toolChoice"];
+	private stopWhen?: StreamTextParameters<ResolvedTools<TTools>>["stopWhen"];
+	private onChunk?: StreamTextParameters<ResolvedTools<TTools>>["onChunk"];
+	private onFinish?: StreamTextParameters<ResolvedTools<TTools>>["onFinish"];
+	private onStepFinish?: StreamTextParameters<ResolvedTools<TTools>>["onStepFinish"];
+	private onAbort?: StreamTextParameters<ResolvedTools<TTools>>["onAbort"];
+	private onError?: StreamTextParameters<ResolvedTools<TTools>>["onError"];
+	private prepareStep?: StreamTextParameters<ResolvedTools<TTools>>["prepareStep"];
+	private experimental_transform?: StreamTextParameters<ResolvedTools<TTools>>["experimental_transform"];
 
 	constructor(options: AgentOptions<TTools, TRuntimeContext>) {
 		const {
@@ -180,28 +180,38 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 
 		// Return the stream result with necessary metadata
 		return {
-			result: streamText<ToolSet>({
+			result: streamText({
 				// Spread all streamText config properties
 				...streamTextConfig,
 				// Override with our specific handling
 				system: this.system,
 				messages: convertToModelMessages(messages, { tools: resolvedTools }),
 				tools: resolvedTools,
-				toolChoice: this.toolChoice,
-				stopWhen: this.stopWhen,
-				onChunk: this.onChunk,
-				onFinish: this.onFinish,
-				onStepFinish: this.onStepFinish,
-				onAbort: this.onAbort,
-				onError: this.onError,
-				prepareStep: this.prepareStep,
-				experimental_transform: this.experimental_transform,
+				toolChoice: this.toolChoice as any,
+				stopWhen: this.stopWhen as any,
+				onChunk: this.onChunk as any,
+				onFinish: this.onFinish as any,
+				onStepFinish: this.onStepFinish as any,
+				onAbort: this.onAbort as any,
+				onError: this.onError as any,
+				prepareStep: this.prepareStep as any,
+				experimental_transform: this.experimental_transform as any,
 			}),
 			streamId,
 			threadId,
 		};
 	}
 }
+
+// Type helper to resolve tool factories to tools
+type ResolveFactory<T> = T extends ToolFactory<any> ? ReturnType<T> : T;
+
+// Type helper to get the resolved tools type
+export type ResolvedTools<T> = T extends ToolFactorySet<any>
+	? { [K in keyof T]: ResolveFactory<T[K]> }
+	: T extends ToolSet
+		? T
+		: never;
 
 /**
  * Factory function to create an agent with proper type inference
