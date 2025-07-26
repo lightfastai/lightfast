@@ -15,18 +15,15 @@ function errorToResponse(error: ApiError): Response {
 }
 
 export interface FetchRequestHandlerOptions<
-	TAgent extends Agent<any>,
-	TCreateRuntimeContext extends (params: { threadId: string; resourceId: string }) => any = (params: {
-		threadId: string;
-		resourceId: string;
-	}) => {},
+	TAgent extends Agent<any, any>,
+	TSystemContext = {}
 > {
 	agent: TAgent;
 	threadId: string;
 	memory: Memory<UIMessage>;
 	req: Request;
 	resourceId: string;
-	createRuntimeContext: TCreateRuntimeContext;
+	createSystemRuntimeContext?: (params: { threadId: string; resourceId: string; req: Request }) => TSystemContext;
 	generateId?: () => string;
 	enableResume?: boolean;
 	onError?: (error: { error: Error }) => void;
@@ -71,13 +68,12 @@ export interface FetchRequestHandlerOptions<
  * ```
  */
 export async function fetchRequestHandler<
-	TAgent extends Agent<any>,
-	TCreateRuntimeContext extends (params: { threadId: string; resourceId: string }) => any = (params: {
-		threadId: string;
-		resourceId: string;
-	}) => {},
->(options: FetchRequestHandlerOptions<TAgent, TCreateRuntimeContext>): Promise<Response> {
-	const { agent, threadId, memory, req, resourceId, createRuntimeContext, generateId, enableResume, onError } = options;
+	TAgent extends Agent<any, any>,
+	TSystemContext = {}
+>(
+	options: FetchRequestHandlerOptions<TAgent, TSystemContext>
+): Promise<Response> {
+	const { agent, threadId, memory, req, resourceId, createSystemRuntimeContext, generateId, enableResume, onError } = options;
 
 	try {
 		// Check HTTP method
@@ -94,6 +90,9 @@ export async function fetchRequestHandler<
 				throw new NoMessagesError();
 			}
 
+			// Create system context if function is provided
+			const systemContext = createSystemRuntimeContext?.({ threadId, resourceId, req });
+
 			// Use the streamChat function from runtime
 			const result = await streamChat({
 				agent,
@@ -101,7 +100,7 @@ export async function fetchRequestHandler<
 				messages,
 				memory,
 				resourceId,
-				createRuntimeContext,
+				systemContext,
 				generateId,
 				enableResume,
 			});

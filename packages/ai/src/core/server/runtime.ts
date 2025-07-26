@@ -7,13 +7,13 @@ import type { RuntimeContext } from "./adapters/types";
 import { type ApiError, NoUserMessageError, ThreadForbiddenError, ThreadNotFoundError } from "./errors";
 import { Err, Ok, type Result } from "./result";
 
-export interface StreamChatOptions<TMessage extends UIMessage = UIMessage, TUserContext = {}> {
-	agent: Agent<any>;
+export interface StreamChatOptions<TMessage extends UIMessage = UIMessage, TSystemContext = {}> {
+	agent: Agent<any, any>;
 	threadId: string;
 	messages: TMessage[];
 	memory: Memory<TMessage>;
 	resourceId: string;
-	createRuntimeContext: (params: { threadId: string; resourceId: string }) => TUserContext;
+	systemContext?: TSystemContext;
 	generateId?: () => string;
 	enableResume?: boolean;
 }
@@ -93,10 +93,10 @@ export async function processMessages<TMessage extends UIMessage = UIMessage>(
 /**
  * Streams a chat response from an agent
  */
-export async function streamChat<TMessage extends UIMessage = UIMessage, TUserContext = {}>(
-	options: StreamChatOptions<TMessage, TUserContext>,
+export async function streamChat<TMessage extends UIMessage = UIMessage, TSystemContext = {}>(
+	options: StreamChatOptions<TMessage, TSystemContext>,
 ): Promise<Result<Response, ApiError>> {
-	const { agent, threadId, messages, memory, resourceId, createRuntimeContext, generateId, enableResume } = options;
+	const { agent, threadId, messages, memory, resourceId, systemContext, generateId, enableResume } = options;
 
 	// Validate thread
 	const threadValidation = await validateThread(memory, threadId, resourceId);
@@ -120,19 +120,6 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TUserCo
 
 	const { allMessages } = processResult.value;
 
-	// Create runtime context for this request
-	const userContext = createRuntimeContext({
-		threadId,
-		resourceId,
-	});
-
-	// Merge system and user contexts
-	const runtimeContext: RuntimeContext<TUserContext> = {
-		threadId,
-		resourceId,
-		...userContext,
-	};
-
 	// Stream the response
 	const {
 		result,
@@ -143,7 +130,7 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TUserCo
 		messages: allMessages,
 		memory,
 		resourceId,
-		runtimeContext,
+		systemContext,
 	});
 
 	// Store stream ID for resumption

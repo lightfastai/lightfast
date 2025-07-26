@@ -19,42 +19,46 @@ export type ToolFactorySet<TRuntimeContext = unknown> = Record<string, ToolFacto
  *
  * @example
  * ```typescript
- * export const myTool = createTool<RuntimeContext>((context) => ({
+ * export const myTool = createTool<RuntimeContext>({
  *   description: "My tool description",
  *   inputSchema: z.object({
  *     query: z.string(),
  *   }),
- *   execute: async ({ query }) => {
- *     // Access runtime context here
+ *   execute: async ({ query }, context) => {
+ *     // Direct access to runtime context
  *     console.log("Thread ID:", context.threadId);
- *     console.log("User ID:", context.userId);
+ *     console.log("User ID:", context.resourceId);
  *
  *     // Tool implementation
  *     return { result: `Processed ${query}` };
  *   },
- * }));
+ * });
  * ```
  */
 export function createTool<
 	TRuntimeContext = unknown,
 	TInputSchema extends z.ZodType = z.ZodType,
 	TOutputSchema extends z.ZodType = z.ZodType,
->(
-	toolDefinition: (context: TRuntimeContext) => {
-		description: string;
-		inputSchema: TInputSchema;
-		outputSchema?: TOutputSchema;
-		execute: (
-			input: z.infer<TInputSchema>,
-		) =>
-			| Promise<TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown>
-			| (TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown);
-	},
-): ToolFactory<TRuntimeContext> {
+>(config: {
+	description: string;
+	inputSchema: TInputSchema;
+	outputSchema?: TOutputSchema;
+	execute: (
+		input: z.infer<TInputSchema>,
+		context: TRuntimeContext,
+	) => Promise<TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown>
+		| (TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown);
+}): ToolFactory<TRuntimeContext> {
 	return (context: TRuntimeContext) => {
-		const config = toolDefinition(context);
-		// The AI SDK's tool function expects a specific format, we need to cast through unknown
-		return aiTool(config as unknown as Parameters<typeof aiTool>[0]);
+		return aiTool({
+			description: config.description,
+			inputSchema: config.inputSchema,
+			outputSchema: config.outputSchema,
+			execute: async (input: z.infer<TInputSchema>) => {
+				// Inject the runtime context as the second parameter
+				return config.execute(input, context);
+			},
+		} as unknown as Parameters<typeof aiTool>[0]);
 	};
 }
 
