@@ -6,7 +6,7 @@ import type { ToolFactorySet } from "../../primitives/tool";
 import type { RuntimeContext } from "./types";
 
 export interface FetchRequestHandlerOptions<
-	TAgents extends readonly Agent<any, any, any>[],
+	TAgents extends readonly Agent<UIMessage, unknown, ToolFactorySet<unknown>>[],
 	TMessage extends UIMessage = UIMessage,
 	TUserContext = {},
 > {
@@ -63,7 +63,7 @@ export interface FetchRequestHandlerOptions<
  * ```
  */
 export async function fetchRequestHandler<
-	TAgents extends readonly Agent<any, any, any>[],
+	TAgents extends readonly Agent<UIMessage, unknown, ToolFactorySet<unknown>>[],
 	TMessage extends UIMessage = UIMessage,
 	TUserContext = {},
 >(options: FetchRequestHandlerOptions<TAgents, TMessage, TUserContext>): Promise<Response> {

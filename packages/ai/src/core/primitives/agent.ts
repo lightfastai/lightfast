@@ -15,7 +15,7 @@ function uuidv4() {
 type StreamTextParameters<TOOLS extends ToolSet> = Parameters<typeof streamText<TOOLS>>[0];
 
 // Properties we need to handle specially or exclude
-type ExcludedStreamTextProps = 
+type ExcludedStreamTextProps =
 	| "messages" // We get this from stream() method
 	| "tools" // We use tool factories
 	| "system" // We store separately
@@ -28,8 +28,8 @@ type ExcludedStreamTextProps =
 	| "_internal"; // We partially override this
 
 // Agent-specific configuration extending streamText parameters
-export interface AgentConfig<TMessage extends UIMessage = UIMessage> 
-	extends Omit<StreamTextParameters<any>, ExcludedStreamTextProps> {
+export interface AgentConfig<TMessage extends UIMessage = UIMessage>
+	extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
 	// Agent-specific required fields
 	name: string;
 }
@@ -43,8 +43,8 @@ export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRuntimeC
 }
 
 // Helper type to convert tool factories to actual tools
-type ResolveToolFactories<T extends ToolFactorySet<any>> = {
-	[K in keyof T]: T[K] extends ToolFactory<any> ? ReturnType<T[K]> : never;
+type ResolveToolFactories<T extends ToolFactorySet<unknown>> = {
+	[K in keyof T]: T[K] extends ToolFactory<unknown> ? ReturnType<T[K]> : never;
 };
 
 export interface AgentOptions<
@@ -81,17 +81,8 @@ export class Agent<
 	private onStepFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onStepFinish"];
 
 	constructor(options: AgentOptions<TMessage, TRuntimeContext, TToolFactories>) {
-		const { 
-			system, 
-			tools, 
-			toolChoice, 
-			stopWhen, 
-			onChunk, 
-			onFinish, 
-			onStepFinish, 
-			...config 
-		} = options;
-		
+		const { system, tools, toolChoice, stopWhen, onChunk, onFinish, onStepFinish, ...config } = options;
+
 		this.toolFactories = tools;
 		this.system = system;
 		this.generateId = uuidv4;
