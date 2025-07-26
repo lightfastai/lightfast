@@ -45,29 +45,10 @@ const handler = async (req: Request) => {
 		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
-	// Define tools type for the generic (temporary double typing)
-	type A011Tools = {
-		file: typeof fileTool;
-		fileRead: typeof fileReadTool;
-		fileDelete: typeof fileDeleteTool;
-		fileStringReplace: typeof fileStringReplaceTool;
-		fileFindInContent: typeof fileFindInContentTool;
-		fileFindByName: typeof fileFindByNameTool;
-		webSearch: typeof webSearchTool;
-		createSandbox: typeof createSandboxTool;
-		executeSandboxCommand: typeof executeSandboxCommandTool;
-		createSandboxWithPorts: typeof createSandboxWithPortsTool;
-		getSandboxDomain: typeof getSandboxDomainTool;
-		listSandboxRoutes: typeof listSandboxRoutesTool;
-		todoWrite: typeof todoWriteTool;
-		todoRead: typeof todoReadTool;
-		todoClear: typeof todoClearTool;
-	};
-
 	// Pass everything to fetchRequestHandler
-	return fetchRequestHandler<LightfastUIMessage, AppRuntimeContext, A011Tools>({
+	return fetchRequestHandler({
 		agents: [
-			new Agent<LightfastUIMessage, RuntimeContext<AppRuntimeContext>>({
+			new Agent({
 				name: "a011",
 				system: A011_SYSTEM_PROMPT,
 				tools: {
@@ -100,8 +81,25 @@ const handler = async (req: Request) => {
 					chunking: "word",
 				}),
 				stopWhen: stepCountIs(30),
+				// Optional: Add agent-specific callbacks with strong typing
+				onChunk: ({ chunk }) => {
+					// Now we get strong typing - chunk knows about our specific tools!
+					if (chunk.type === "tool-call") {
+						// TypeScript knows the exact tool names available
+						if (chunk.toolName === "file") {
+							console.log("File tool called:", chunk.input);
+						} else if (chunk.toolName === "webSearch") {
+							console.log("Web search called:", chunk.input);
+						}
+						// Uncomment to see TypeScript error for non-existent tool:
+						// else if (chunk.toolName === "nonExistentTool") {} // This would error!
+					}
+				},
+				onFinish: ({ finishReason, usage }) => {
+					console.log("a011 finished:", { finishReason, usage });
+				},
 			}),
-		],
+		] as const,
 		memory,
 		req,
 		resourceId: userId,

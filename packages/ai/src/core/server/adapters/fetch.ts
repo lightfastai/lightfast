@@ -2,15 +2,15 @@ import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
-import type { RuntimeContext } from "./types";
 import type { ToolFactorySet } from "../../primitives/tool";
+import type { RuntimeContext } from "./types";
 
 export interface FetchRequestHandlerOptions<
+	TAgents extends readonly Agent<any, any, any>[],
 	TMessage extends UIMessage = UIMessage,
 	TUserContext = {},
-	TToolFactories extends ToolFactorySet<RuntimeContext<TUserContext>> = ToolFactorySet<RuntimeContext<TUserContext>>,
 > {
-	agents: Agent<TMessage, RuntimeContext<TUserContext>, TToolFactories>[];
+	agents: TAgents;
 	memory: Memory<TMessage>;
 	req: Request;
 	resourceId: string;
@@ -63,10 +63,10 @@ export interface FetchRequestHandlerOptions<
  * ```
  */
 export async function fetchRequestHandler<
+	TAgents extends readonly Agent<any, any, any>[],
 	TMessage extends UIMessage = UIMessage,
 	TUserContext = {},
-	TToolFactories extends ToolFactorySet<RuntimeContext<TUserContext>> = ToolFactorySet<RuntimeContext<TUserContext>>,
->(options: FetchRequestHandlerOptions<TMessage, TUserContext, TToolFactories>): Promise<Response> {
+>(options: FetchRequestHandlerOptions<TAgents, TMessage, TUserContext>): Promise<Response> {
 	const { agents, memory, req, resourceId, createRuntimeContext, generateId, enableResume, onError } = options;
 
 	// Extract agentId and threadId from URL path

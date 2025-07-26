@@ -11,17 +11,26 @@ function uuidv4() {
 	});
 }
 
-// Extract streamText configuration type
-type StreamTextConfig = Parameters<typeof streamText>[0];
+// Extract core types from streamText
+type StreamTextParameters<TOOLS extends ToolSet> = Parameters<typeof streamText<TOOLS>>[0];
+type LanguageModel = StreamTextParameters<any>["model"];
 
-// Agent-specific configuration that extends streamText config
-export interface AgentConfig<TMessage extends UIMessage = UIMessage>
-	extends Omit<StreamTextConfig, "messages" | "tools" | "model"> {
+// Agent-specific configuration with only the properties we need
+export interface AgentConfig<TMessage extends UIMessage = UIMessage> {
 	// Agent-specific required fields
 	name: string;
-
-	// Optional streamText configuration (defaults provided in constructor)
-	model?: StreamTextConfig["model"];
+	model: LanguageModel;
+	// Optional common settings
+	maxOutputTokens?: number;
+	temperature?: number;
+	topP?: number;
+	maxRetries?: number;
+	abortSignal?: AbortSignal;
+	headers?: Record<string, string | undefined>;
+	// Experimental features
+	experimental_transform?: StreamTextParameters<any>["experimental_transform"];
+	// Internal config
+	_internal?: StreamTextParameters<any>["_internal"];
 }
 
 export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRuntimeContext = unknown> {
@@ -46,6 +55,13 @@ export interface AgentOptions<
 	system: string;
 	// Required: collection of tool factories that will be automatically injected with runtime context
 	tools: TToolFactories;
+	// Optional: tool choice and stop conditions with proper typing
+	toolChoice?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["toolChoice"];
+	stopWhen?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["stopWhen"];
+	// Strongly typed callbacks based on tools
+	onChunk?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onChunk"];
+	onFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onFinish"];
+	onStepFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onStepFinish"];
 }
 
 export class Agent<
@@ -57,18 +73,29 @@ export class Agent<
 	private generateId: () => string;
 	private toolFactories: TToolFactories;
 	private system: string;
+	private toolChoice?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["toolChoice"];
+	private stopWhen?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["stopWhen"];
+	private onChunk?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onChunk"];
+	private onFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onFinish"];
+	private onStepFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onStepFinish"];
 
 	constructor(options: AgentOptions<TMessage, TRuntimeContext, TToolFactories>) {
-		const { system, tools, ...config } = options;
+		const { system, tools, toolChoice, stopWhen, onChunk, onFinish, onStepFinish, ...config } = options;
 		this.toolFactories = tools;
 		this.system = system;
 		this.generateId = uuidv4;
 
-		// Store configuration with system prompt
+		// Store configuration
 		this.config = {
 			...config,
-			system: this.system,
 		};
+
+		// Store tool-specific properties separately
+		this.toolChoice = toolChoice;
+		this.stopWhen = stopWhen;
+		this.onChunk = onChunk;
+		this.onFinish = onFinish;
+		this.onStepFinish = onStepFinish;
 	}
 
 	async stream({ threadId, messages, memory, resourceId, runtimeContext }: StreamOptions<TMessage, TRuntimeContext>) {
@@ -80,31 +107,34 @@ export class Agent<
 
 		// Automatically inject runtime context into tool factories
 		const tools = Object.fromEntries(
-			Object.entries(this.toolFactories).map(([name, factory]) => [
-				name,
-				factory(runtimeContext)
-			])
+			Object.entries(this.toolFactories).map(([name, factory]) => [name, factory(runtimeContext)]),
 		) as ResolveToolFactories<TToolFactories>;
 
 		// Stream the response with properly typed config
-		const { name, ...streamTextConfig } = this.config;
+		const { name, ...baseConfig } = this.config;
 
 		// Ensure model is set
-		if (!streamTextConfig.model) {
+		if (!baseConfig.model) {
 			throw new Error("Model must be configured");
 		}
 
 		// Return the stream result with necessary metadata
 		return {
-			result: streamText({
-				...streamTextConfig,
-				model: streamTextConfig.model,
+			result: streamText<ResolveToolFactories<TToolFactories>>({
+				...baseConfig,
+				model: baseConfig.model,
+				system: this.system,
 				_internal: {
-					...streamTextConfig._internal,
+					...baseConfig._internal,
 					generateId: this.generateId,
 				},
 				messages: convertToModelMessages(messages, { tools }),
 				tools,
+				toolChoice: this.toolChoice,
+				stopWhen: this.stopWhen,
+				onChunk: this.onChunk,
+				onFinish: this.onFinish,
+				onStepFinish: this.onStepFinish,
 			}),
 			streamId,
 			threadId,
