@@ -1,9 +1,8 @@
-import type { ToolSet, UIMessage, UIMessageStreamOptions } from "ai";
-import { createResumableStreamContext } from "resumable-stream";
+import type { UIMessage } from "ai";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
 import type { ToolFactorySet } from "../../primitives/tool";
-import type { RuntimeContext } from "./types";
+import { findAgent, processMessages, resumeStream, streamChat, validateThread } from "../runtime";
 
 export interface FetchRequestHandlerOptions<
 	TAgents extends readonly Agent<UIMessage, unknown, ToolFactorySet<unknown>>[],
@@ -92,16 +91,16 @@ export async function fetchRequestHandler<
 	}
 
 	// Find the agent by name
-	const agent = agents.find((a) => a.config.name === agentId);
+	const agent = findAgent(agents, agentId);
 	if (!agent) {
 		const error = new Error(`Agent '${agentId}' not found`);
 		onError?.({ error, path: `${agentId}/${threadId}` });
 		return Response.json({ error: `Agent '${agentId}' not found` }, { status: 404 });
 	}
 
-	// Check if thread exists and validate ownership
-	const existingThread = await memory.getThread(threadId);
-	if (existingThread && existingThread.resourceId !== resourceId) {
+	// Validate thread ownership
+	const threadValidation = await validateThread(memory, threadId, resourceId);
+	if (threadValidation.exists && !threadValidation.isAuthorized) {
 		const error = new Error("Forbidden: Thread belongs to another user");
 		onError?.({ error, path: `${agentId}/${threadId}` });
 		return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -112,89 +111,21 @@ export async function fetchRequestHandler<
 			const body = await req.json();
 			const { messages } = body as { messages: TMessage[] };
 
-			// Get the most recent user message
-			const recentUserMessage = messages.filter((message) => message.role === "user").at(-1);
-			if (!recentUserMessage) {
-				throw new Error("No recent user message found");
+			if (!messages || messages.length === 0) {
+				throw new Error("At least one message is required");
 			}
 
-			// Create thread if it doesn't exist
-			await memory.createThread({
+			// Use the streamChat function from runtime
+			return await streamChat({
+				agent,
 				threadId,
-				resourceId: resourceId,
-				agentId: agent.config.name,
-			});
-
-			// Handle messages based on whether thread is new or existing
-			let allMessages: TMessage[];
-
-			if (!existingThread) {
-				// New thread - create with initial messages
-				await memory.createMessages({ threadId, messages });
-				allMessages = messages;
-			} else {
-				// Existing thread - append only the recent user message
-				await memory.appendMessages({ threadId, messages: [recentUserMessage] });
-				// Fetch all messages from memory for full context
-				allMessages = await memory.getMessages(threadId);
-			}
-
-			// Create runtime context for this request
-			const userContext = createRuntimeContext({
-				threadId,
-				resourceId: resourceId,
-			});
-
-			// Merge system and user contexts
-			const runtimeContext: RuntimeContext<TUserContext> = {
-				threadId,
-				resourceId,
-				...userContext,
-			};
-
-			// Stream the response
-			const {
-				result,
-				streamId,
-				threadId: tid,
-			} = await agent.stream({
-				threadId,
-				messages: allMessages,
+				messages,
 				memory,
-				resourceId: resourceId,
-				runtimeContext,
+				resourceId,
+				createRuntimeContext,
+				generateId,
+				enableResume,
 			});
-
-			// Store stream ID for resumption
-			await memory.createStream({ threadId, streamId });
-
-			// Create UI message stream response with proper options
-			const streamOptions: UIMessageStreamOptions<TMessage> = {
-				generateMessageId: generateId,
-				onFinish: async ({ messages: finishedMessages, responseMessage }) => {
-					// Save the assistant's response to memory
-					if (responseMessage && responseMessage.role === "assistant") {
-						await memory.appendMessages({
-							threadId: tid,
-							messages: [responseMessage],
-						});
-					}
-				},
-			};
-
-			// Return response with optional resume support
-			if (enableResume) {
-				return result.toUIMessageStreamResponse<TMessage>({
-					...streamOptions,
-					async consumeSseStream({ stream }) {
-						// Send the SSE stream into a resumable stream sink
-						const streamContext = createResumableStreamContext({ waitUntil: (promise) => promise });
-						await streamContext.createNewResumableStream(streamId, () => stream);
-					},
-				});
-			} else {
-				return result.toUIMessageStreamResponse<TMessage>(streamOptions);
-			}
 		} catch (error) {
 			const err = error instanceof Error ? error : new Error(String(error));
 			onError?.({ error: err, path: `${agentId}/${threadId}` });
@@ -209,31 +140,12 @@ export async function fetchRequestHandler<
 		}
 
 		try {
-			// Check authentication and ownership
-			const thread = await memory.getThread(threadId);
-			if (!thread || thread.resourceId !== resourceId) {
-				return Response.json({ error: "Thread not found or unauthorized" }, { status: 404 });
-			}
-
-			// Get thread streams
-			const streamIds = await memory.getThreadStreams(threadId);
-
-			if (!streamIds.length) {
+			// Use the resumeStream function from runtime
+			const resumedStream = await resumeStream(memory, threadId, resourceId);
+			
+			if (!resumedStream) {
 				return new Response(null, { status: 204 });
 			}
-
-			const recentStreamId = streamIds[0]; // Redis LPUSH puts newest first
-
-			if (!recentStreamId) {
-				return new Response(null, { status: 204 });
-			}
-
-			// Resume the stream using resumable-stream context
-			const streamContext = createResumableStreamContext({
-				waitUntil: (promise) => promise,
-			});
-
-			const resumedStream = await streamContext.resumeExistingStream(recentStreamId);
 
 			return new Response(resumedStream);
 		} catch (error) {

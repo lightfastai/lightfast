@@ -28,9 +28,6 @@ import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
-
 // Create Redis memory instance
 const memory = new RedisMemory<LightfastUIMessage>({
 	url: env.KV_REST_API_URL,
@@ -86,7 +83,7 @@ const handler = async (req: Request) => {
 					if (chunk.type === "tool-call") {
 						// TypeScript knows the exact tool names
 						console.log("Tool called:", chunk.toolName);
-						
+
 						// All valid tools work
 						if (chunk.toolName === "file") {
 							console.log("File tool called");
@@ -95,7 +92,7 @@ const handler = async (req: Request) => {
 						}
 						// Note: If you uncomment the line below with a non-existent tool,
 						// TypeScript may not catch it due to how Vercel AI SDK types work
-						// if (chunk.toolName === "nonExistentTool") {} 
+						// if (chunk.toolName === "nonExistentTool") {}
 					}
 				},
 				onFinish: ({ finishReason, usage }) => {
