@@ -1,4 +1,3 @@
-
 import { Suspense } from "react";
 import { AgentInfoModal } from "@/components/agent-info-modal";
 import { UserDropdown } from "@/components/user-dropdown";

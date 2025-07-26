@@ -15,48 +15,27 @@ catalogs:
     '@ai-sdk/provider':
       specifier: 2.0.0-beta.1
       version: 2.0.0-beta.1
-    '@ai-sdk/react':
-      specifier: 2.0.0-beta.26
-      version: 2.0.0-beta.26
-    '@biomejs/biome':
-      specifier: 2.1.1
-      version: 2.1.1
-    '@browserbasehq/stagehand':
-      specifier: ^2.3.1
-      version: 2.4.1
     '@t3-oss/env-core':
       specifier: ^0.12.0
       version: 0.12.0
     '@upstash/redis':
       specifier: ^1.35.1
       version: 1.35.1
-    '@vercel/blob':
-      specifier: ^1.1.1
-      version: 1.1.1
-    '@vercel/sandbox':
-      specifier: ^0.0.13
-      version: 0.0.13
     ai:
       specifier: 5.0.0-beta.26
       version: 5.0.0-beta.26
     braintrust:
       specifier: ^0.1.1
       version: 0.1.1
-    exa-js:
-      specifier: ^1.8.22
-      version: 1.8.23
     playwright:
       specifier: ^1.54.1
       version: 1.54.1
     playwright-core:
       specifier: ^1.54.1
       version: 1.54.1
-    redis:
-      specifier: ^5.6.0
-      version: 5.6.0
-    turbo:
-      specifier: ^2.5.5
-      version: 2.5.5
+    resumable-stream:
+      specifier: ^2.0.0
+      version: 2.2.1
     typescript:
       specifier: ^5.8.3
       version: 5.8.3
@@ -89,6 +68,9 @@ importers:
       '@ai-sdk/react':
         specifier: 'catalog:'
         version: 2.0.0-beta.26(react@19.1.0)(zod@3.25.76)
+      '@browserbasehq/stagehand':
+        specifier: 'catalog:'
+        version: 2.4.1(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)
       '@clerk/elements':
         specifier: ^0.23.43
         version: 0.23.43(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(next@15.4.3(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -161,6 +143,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      exa-js:
+        specifier: 'catalog:'
+        version: 1.8.23(ws@8.18.3)
       lucide-react:
         specifier: ^0.525.0
         version: 0.525.0(react@19.1.0)
@@ -246,40 +231,34 @@ importers:
       '@ai-sdk/provider':
         specifier: 'catalog:'
         version: 2.0.0-beta.1
-      '@browserbasehq/stagehand':
-        specifier: 'catalog:'
-        version: 2.4.1(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.12.0(typescript@5.8.3)(zod@3.25.76)
       '@upstash/redis':
         specifier: 'catalog:'
         version: 1.35.1
-      '@vercel/blob':
-        specifier: 'catalog:'
-        version: 1.1.1
-      '@vercel/sandbox':
-        specifier: 'catalog:'
-        version: 0.0.13
       ai:
         specifier: 'catalog:'
         version: 5.0.0-beta.26(zod@3.25.76)
       braintrust:
         specifier: 'catalog:'
         version: 0.1.1(@aws-sdk/credential-provider-web-identity@3.848.0)(zod@3.25.76)
-      exa-js:
-        specifier: 'catalog:'
-        version: 1.8.23(ws@8.18.3)
       playwright:
         specifier: 'catalog:'
         version: 1.54.1
       playwright-core:
         specifier: 'catalog:'
         version: 1.54.1
+      resumable-stream:
+        specifier: 'catalog:'
+        version: 2.2.1
       zod:
         specifier: 'catalog:'
         version: 3.25.76
     devDependencies:
+      '@types/node':
+        specifier: ^24.0.15
+        version: 24.1.0
       typescript:
         specifier: 'catalog:'
         version: 5.8.3

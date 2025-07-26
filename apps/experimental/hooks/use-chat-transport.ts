@@ -1,9 +1,9 @@
 "use client";
 
-import type { LightfastUIMessage } from "@lightfast/types";
 import type { ChatTransport } from "ai";
 import { DefaultChatTransport } from "ai";
 import { useMemo } from "react";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface UseChatTransportProps {
 	threadId: string;
@@ -13,13 +13,10 @@ interface UseChatTransportProps {
 /**
  * Hook that creates and configures a DefaultChatTransport for AI integration
  */
-export function useChatTransport({
-	threadId,
-	agentId,
-}: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
+export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<LightfastUIMessage> {
 	const transport = useMemo(() => {
-		// Use the (ai) route group structure with agentId and threadId
-		const apiEndpoint = `/api/chat/${agentId}/${threadId}`;
+		// Use the v API endpoint with agentId and threadId in the path
+		const apiEndpoint = `/api/v/${agentId}/${threadId}`;
 		return new DefaultChatTransport<LightfastUIMessage>({
 			api: apiEndpoint,
 			headers: {
@@ -39,7 +36,7 @@ export function useChatTransport({
 				};
 			},
 			prepareReconnectToStreamRequest: ({ api, headers }) => {
-				// No need for query parameters, the route handles agentId and threadId
+				// For GET requests (resume), use the same path
 				return {
 					api,
 					headers,

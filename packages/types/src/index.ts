@@ -5,5 +5,4 @@
  * making it safe to import in both client and server code.
  */
 
-// Export all type definitions
-export * from "./lightfast-ui-messages";
+// Currently empty - add shared types here as needed

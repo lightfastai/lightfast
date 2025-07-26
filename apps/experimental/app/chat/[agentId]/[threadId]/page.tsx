@@ -1,9 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
-import type { LightfastUIMessage } from "@lightfast/types";
+import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";
-import { getMessages, getThread } from "@/lib/db";
+import { env } from "@/env";
+import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface ChatPageProps {
 	params: Promise<{
@@ -22,16 +23,22 @@ export default async function ChatPage({ params }: ChatPageProps) {
 		notFound();
 	}
 
+	// Create memory instance
+	const memory = new RedisMemory<LightfastUIMessage>({
+		url: env.KV_REST_API_URL,
+		token: env.KV_REST_API_TOKEN,
+	});
+
 	// Get thread metadata
-	const thread = await getThread(threadId);
+	const thread = await memory.getThread(threadId);
 
 	// If thread doesn't exist or user doesn't own it, return 404
-	if (!thread || thread.userId !== userId) {
+	if (!thread || thread.resourceId !== userId) {
 		notFound();
 	}
 
 	// Get messages for the thread
-	const messages = await getMessages(threadId);
+	const messages = await memory.getMessages(threadId);
 
 	return (
 		<Suspense fallback={null}>

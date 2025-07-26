@@ -3,13 +3,45 @@
 	"version": "1.0.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
 	"exports": {
-		"./tools": {
-			"types": "./src/tools/index.ts",
-			"default": "./src/tools/index.ts"
+		"./agent": {
+			"types": "./src/core/primitives/agent.ts",
+			"default": "./src/core/primitives/agent.ts"
 		},
-		"./env": {
-			"types": "./src/env.ts",
-			"default": "./src/env.ts"
+		"./tool": {
+			"types": "./src/core/primitives/tool.ts",
+			"default": "./src/core/primitives/tool.ts"
+		},
+		"./agent/handlers": {
+			"types": "./src/core/server/adapters/fetch.ts",
+			"default": "./src/core/server/adapters/fetch.ts"
+		},
+		"./agent/server/adapters/fetch": {
+			"types": "./src/core/server/adapters/fetch.ts",
+			"default": "./src/core/server/adapters/fetch.ts"
+		},
+		"./agent/server/adapters/types": {
+			"types": "./src/core/server/adapters/types.ts",
+			"default": "./src/core/server/adapters/types.ts"
+		},
+		"./agent/memory": {
+			"types": "./src/core/memory/index.ts",
+			"default": "./src/core/memory/index.ts"
+		},
+		"./agent/memory/adapters/redis": {
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
+		},
+		"./agent/memory/redis": {
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
+		},
+		"./agent/redis-memory": {
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
+		},
+		"./providers": {
+			"types": "./src/utils/providers.ts",
+			"default": "./src/utils/providers.ts"
 		}
 	},
 	"scripts": {
@@ -23,19 +55,17 @@
 		"@ai-sdk/anthropic": "catalog:",
 		"@ai-sdk/gateway": "catalog:",
 		"@ai-sdk/provider": "catalog:",
-		"@browserbasehq/stagehand": "catalog:",
 		"@t3-oss/env-core": "catalog:",
 		"@upstash/redis": "catalog:",
-		"@vercel/blob": "catalog:",
-		"@vercel/sandbox": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
-		"exa-js": "catalog:",
 		"playwright": "catalog:",
 		"playwright-core": "catalog:",
+		"resumable-stream": "catalog:",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
+		"@types/node": "^24.0.15",
 		"typescript": "catalog:"
 	}
 }
