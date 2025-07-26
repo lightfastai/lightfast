@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createAgent } from "@lightfast/ai/agent";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import { smoothStream, stepCountIs } from "ai";
 import { z } from "zod";
@@ -10,20 +11,14 @@ import { A011_SYSTEM_PROMPT } from "@/app/ai/agents/a011";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
 
-// Define agent context interface
+// Define agent-specific context
 interface AgentRuntimeContext {
-	threadId: string;
-	resourceId: string;
-}
-
-// Define system context interface  
-interface SystemRuntimeContext {
-	userAgent?: string;
-	ipAddress?: string;
+	// Add any agent-specific context here
+	// The agent already has access to threadId and resourceId from system context
 }
 
 // Create tools using the new createTool pattern with context injection
-const file = createTool<AgentRuntimeContext & SystemRuntimeContext>({
+const file = createTool<RuntimeContext<AgentRuntimeContext>>({
 	description: "Create, read, or write files",
 	inputSchema: z.object({
 		operation: z.enum(["create", "read", "write"]),
@@ -31,25 +26,25 @@ const file = createTool<AgentRuntimeContext & SystemRuntimeContext>({
 		content: z.string().optional(),
 	}),
 	execute: async ({ operation, path, content }, context) => {
-		// Tool has direct access to merged context
+		// Tool has access to all three context levels
 		console.log(`File ${operation} for thread ${context.threadId} from IP ${context.ipAddress}`);
 		return { result: `${operation} ${path}` };
 	},
 });
 
-const webSearch = createTool<AgentRuntimeContext & SystemRuntimeContext>({
+const webSearch = createTool<RuntimeContext<AgentRuntimeContext>>({
 	description: "Search the web",
 	inputSchema: z.object({
 		query: z.string(),
 	}),
 	execute: async ({ query }, context) => {
-		// Tool has access to both agent and system context
+		// Tool has access to system, request, and agent context
 		console.log(`Web search for thread ${context.threadId} with UA ${context.userAgent}: ${query}`);
 		return { results: `Search results for ${query}` };
 	},
 });
 
-const todoWrite = createTool<AgentRuntimeContext & SystemRuntimeContext>({
+const todoWrite = createTool<RuntimeContext<AgentRuntimeContext>>({
 	description: "Write todos",
 	inputSchema: z.object({
 		todos: z.array(z.object({
@@ -104,9 +99,9 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 		system: A011_SYSTEM_PROMPT,
 		tools: a011Tools, // Pass the tools directly
 		createRuntimeContext: ({ threadId, resourceId }): AgentRuntimeContext => ({
-			// Create the agent-level runtime context
-			threadId,
-			resourceId,
+			// Create agent-specific context
+			// The agent can use threadId and resourceId if needed
+			// but they're already available in system context
 		}),
 		model: gateway("anthropic/claude-4-sonnet"),
 		experimental_transform: smoothStream({
@@ -153,13 +148,11 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 		memory,
 		req,
 		resourceId: userId,
-		createSystemRuntimeContext: ({ threadId, resourceId, req }): SystemRuntimeContext => {
-			// Create system-level context from request data
-			return {
-				userAgent: req.headers.get("user-agent") || undefined,
-				ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
-			};
-		},
+		createRequestContext: (req) => ({
+			// Create request-level context from HTTP request
+			userAgent: req.headers.get("user-agent") || undefined,
+			ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
+		}),
 		generateId: uuidv4,
 		enableResume: true,
 		onError({ error }) {

@@ -1,6 +1,7 @@
 import { convertToModelMessages, streamText, type Tool, type ToolSet, type UIMessage } from "ai";
 import type { ToolFactory, ToolFactorySet } from "./tool";
 import type { Memory } from "../memory";
+import type { SystemContext } from "../server/adapters/types";
 
 // Helper function to resolve tools from factories
 function resolveToolFactories<TRuntimeContext = unknown>(
@@ -60,12 +61,13 @@ export interface AgentConfig extends Omit<StreamTextParameters<ToolSet>, Exclude
 	name: string;
 }
 
-export interface StreamOptions<TMessage extends UIMessage = UIMessage, TSystemContext = {}> {
+export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRequestContext = {}> {
 	threadId: string;
 	messages: TMessage[];
 	memory: Memory<TMessage>;
 	resourceId: string;
-	systemContext?: TSystemContext;
+	systemContext: SystemContext;
+	requestContext: TRequestContext;
 }
 
 
@@ -146,26 +148,29 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		this.experimental_transform = experimental_transform;
 	}
 
-	async stream<TMessage extends UIMessage = UIMessage, TSystemContext = {}>({
+	async stream<TMessage extends UIMessage = UIMessage, TRequestContext = {}>({
 		threadId,
 		messages,
 		memory,
 		resourceId,
 		systemContext,
-	}: StreamOptions<TMessage, TSystemContext>) {
+		requestContext,
+	}: StreamOptions<TMessage, TRequestContext>) {
 		if (!messages || messages.length === 0) {
 			throw new Error("At least one message is required");
 		}
 
 		const streamId = this.generateId();
 
-		// Create runtime context
+		// Create agent-specific runtime context
 		const agentContext = this.createRuntimeContext({ threadId, resourceId });
 		
-		// Merge agent context with system context
-		const mergedContext = systemContext 
-			? { ...agentContext, ...systemContext }
-			: agentContext;
+		// Merge all three context levels: system -> request -> agent
+		const mergedContext = {
+			...systemContext,
+			...requestContext,
+			...agentContext,
+		};
 
 		// Resolve tools using helper function
 		const resolvedTools = resolveToolFactories(this.tools, mergedContext);

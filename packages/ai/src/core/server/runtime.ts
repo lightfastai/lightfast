@@ -3,17 +3,18 @@ import { createResumableStreamContext } from "resumable-stream";
 import type { Memory } from "../memory";
 import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
-import type { RuntimeContext } from "./adapters/types";
+import type { RequestContext, RuntimeContext, SystemContext } from "./adapters/types";
 import { type ApiError, NoUserMessageError, ThreadForbiddenError, ThreadNotFoundError } from "./errors";
 import { Err, Ok, type Result } from "./result";
 
-export interface StreamChatOptions<TMessage extends UIMessage = UIMessage, TSystemContext = {}> {
+export interface StreamChatOptions<TMessage extends UIMessage = UIMessage, TRequestContext = {}> {
 	agent: Agent<any, any>;
 	threadId: string;
 	messages: TMessage[];
 	memory: Memory<TMessage>;
 	resourceId: string;
-	systemContext?: TSystemContext;
+	systemContext: SystemContext;
+	requestContext: TRequestContext;
 	generateId?: () => string;
 	enableResume?: boolean;
 }
@@ -93,10 +94,10 @@ export async function processMessages<TMessage extends UIMessage = UIMessage>(
 /**
  * Streams a chat response from an agent
  */
-export async function streamChat<TMessage extends UIMessage = UIMessage, TSystemContext = {}>(
-	options: StreamChatOptions<TMessage, TSystemContext>,
+export async function streamChat<TMessage extends UIMessage = UIMessage, TRequestContext = {}>(
+	options: StreamChatOptions<TMessage, TRequestContext>,
 ): Promise<Result<Response, ApiError>> {
-	const { agent, threadId, messages, memory, resourceId, systemContext, generateId, enableResume } = options;
+	const { agent, threadId, messages, memory, resourceId, systemContext, requestContext, generateId, enableResume } = options;
 
 	// Validate thread
 	const threadValidation = await validateThread(memory, threadId, resourceId);
@@ -131,6 +132,7 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TSystem
 		memory,
 		resourceId,
 		systemContext,
+		requestContext,
 	});
 
 	// Store stream ID for resumption

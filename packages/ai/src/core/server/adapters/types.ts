@@ -1,13 +1,23 @@
 /**
- * System-defined runtime context that is always provided by the framework
+ * Core system context - always provided by the framework
  */
-export interface SystemRuntimeContext {
+export interface SystemContext {
 	threadId: string;
 	resourceId: string;
 }
 
 /**
- * Combined runtime context type that includes both system and user-defined contexts
- * @template TUserContext - User-defined additional context fields
+ * Request-level context - provided by HTTP handlers (fetchRequestHandler, etc.)
  */
-export type RuntimeContext<TUserContext = {}> = SystemRuntimeContext & TUserContext;
+export interface RequestContext {
+	userAgent?: string;
+	ipAddress?: string;
+	// Can be extended with other request metadata
+}
+
+/**
+ * Combined runtime context passed to tools
+ * Merges system, request, and agent-specific contexts
+ * @template TAgentContext - Agent-specific context defined by the user
+ */
+export type RuntimeContext<TAgentContext = {}> = SystemContext & RequestContext & TAgentContext;

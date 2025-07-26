@@ -1,6 +1,7 @@
 import type { UIMessage } from "ai";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
+import type { RequestContext, SystemContext } from "./types";
 import { type ApiError, GenericBadRequestError, MethodNotAllowedError, NoMessagesError, toApiError } from "../errors";
 import { resumeStream, streamChat } from "../runtime";
 
@@ -16,14 +17,14 @@ function errorToResponse(error: ApiError): Response {
 
 export interface FetchRequestHandlerOptions<
 	TAgent extends Agent<any, any>,
-	TSystemContext = {}
+	TRequestContext extends RequestContext = RequestContext
 > {
 	agent: TAgent;
 	threadId: string;
 	memory: Memory<UIMessage>;
 	req: Request;
 	resourceId: string;
-	createSystemRuntimeContext?: (params: { threadId: string; resourceId: string; req: Request }) => TSystemContext;
+	createRequestContext?: (req: Request) => TRequestContext;
 	generateId?: () => string;
 	enableResume?: boolean;
 	onError?: (error: { error: Error }) => void;
@@ -69,11 +70,11 @@ export interface FetchRequestHandlerOptions<
  */
 export async function fetchRequestHandler<
 	TAgent extends Agent<any, any>,
-	TSystemContext = {}
+	TRequestContext extends RequestContext = RequestContext
 >(
-	options: FetchRequestHandlerOptions<TAgent, TSystemContext>
+	options: FetchRequestHandlerOptions<TAgent, TRequestContext>
 ): Promise<Response> {
-	const { agent, threadId, memory, req, resourceId, createSystemRuntimeContext, generateId, enableResume, onError } = options;
+	const { agent, threadId, memory, req, resourceId, createRequestContext, generateId, enableResume, onError } = options;
 
 	try {
 		// Check HTTP method
@@ -90,8 +91,11 @@ export async function fetchRequestHandler<
 				throw new NoMessagesError();
 			}
 
-			// Create system context if function is provided
-			const systemContext = createSystemRuntimeContext?.({ threadId, resourceId, req });
+			// Create system context
+			const systemContext = { threadId, resourceId };
+
+			// Create request context if function is provided
+			const requestContext = createRequestContext?.(req) || {};
 
 			// Use the streamChat function from runtime
 			const result = await streamChat({
@@ -101,6 +105,7 @@ export async function fetchRequestHandler<
 				memory,
 				resourceId,
 				systemContext,
+				requestContext,
 				generateId,
 				enableResume,
 			});
