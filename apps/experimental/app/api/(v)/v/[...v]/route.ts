@@ -85,13 +85,13 @@ const handler = async (req: Request) => {
 				onChunk: ({ chunk }) => {
 					// Now we get strong typing - chunk knows about our specific tools!
 					if (chunk.type === "tool-call") {
-						// TypeScript knows the exact tool names available
+						// Valid tools work fine
 						if (chunk.toolName === "file") {
 							console.log("File tool called:", chunk.input);
 						} else if (chunk.toolName === "webSearch") {
 							console.log("Web search called:", chunk.input);
 						}
-						// Uncomment to see TypeScript error for non-existent tool:
+						// Comment out the line below to avoid TS errors in production
 						// else if (chunk.toolName === "nonExistentTool") {} // This would error!
 					}
 				},
