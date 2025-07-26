@@ -7,12 +7,12 @@ import type { AppRuntimeContext } from "@/app/ai/types";
 /**
  * Create sandbox tool with injected runtime context
  */
-export const createSandboxTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const createSandboxTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Create a new Vercel sandbox and return its ID",
 	inputSchema: z.object({
 		runtime: z.enum(["node22", "python3.13"]).default("node22").describe("Runtime environment"),
 	}),
-	execute: async ({ runtime }) => {
+	execute: async ({ runtime }, context) => {
 		try {
 			const sandbox = await Sandbox.create({
 				runtime,
@@ -30,12 +30,12 @@ export const createSandboxTool = createTool<RuntimeContext<AppRuntimeContext>>((
 			throw new Error(`Failed to create sandbox: ${error instanceof Error ? error.message : "Unknown error"}`);
 		}
 	},
-}));
+});
 
 /**
  * Create sandbox command execution tool with injected runtime context
  */
-export const executeSandboxCommandTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const executeSandboxCommandTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description:
 		"Execute a command in the sandbox and return full output. Use background=true for long-running processes like servers.",
 	inputSchema: z.object({
@@ -45,7 +45,7 @@ export const executeSandboxCommandTool = createTool<RuntimeContext<AppRuntimeCon
 		cwd: z.string().default("/home/vercel-sandbox").describe("Working directory"),
 		background: z.boolean().default(false).describe("Run command in background (append &)"),
 	}),
-	execute: async ({ sandboxId, command, args, cwd, background }) => {
+	execute: async ({ sandboxId, command, args, cwd, background }, context) => {
 		try {
 			// Get the sandbox instance using the ID
 			const sandbox = await Sandbox.get({ sandboxId });
@@ -95,12 +95,12 @@ export const executeSandboxCommandTool = createTool<RuntimeContext<AppRuntimeCon
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create sandbox with ports tool with injected runtime context
  */
-export const createSandboxWithPortsTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const createSandboxWithPortsTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Create a new Vercel sandbox with exposed ports for web applications",
 	inputSchema: z.object({
 		runtime: z.enum(["node22", "python3.13"]).default("node22").describe("Runtime environment"),
@@ -114,7 +114,7 @@ export const createSandboxWithPortsTool = createTool<RuntimeContext<AppRuntimeCo
 			.optional()
 			.describe("Optional source code to clone"),
 	}),
-	execute: async ({ runtime, ports, source }) => {
+	execute: async ({ runtime, ports, source }, context) => {
 		try {
 			const sandbox = await Sandbox.create({
 				runtime,
@@ -142,18 +142,18 @@ export const createSandboxWithPortsTool = createTool<RuntimeContext<AppRuntimeCo
 			);
 		}
 	},
-}));
+});
 
 /**
  * Create sandbox domain tool with injected runtime context
  */
-export const getSandboxDomainTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const getSandboxDomainTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Get the public domain URL for a specific port in a sandbox",
 	inputSchema: z.object({
 		sandboxId: z.string().describe("The sandbox ID"),
 		port: z.number().describe("Port number to get domain for"),
 	}),
-	execute: async ({ sandboxId, port }) => {
+	execute: async ({ sandboxId, port }, context) => {
 		try {
 			// Get the sandbox instance using the ID
 			const sandbox = await Sandbox.get({ sandboxId });
@@ -175,17 +175,17 @@ export const getSandboxDomainTool = createTool<RuntimeContext<AppRuntimeContext>
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create list sandbox routes tool with injected runtime context
  */
-export const listSandboxRoutesTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const listSandboxRoutesTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "List all exposed ports and their public URLs for a sandbox",
 	inputSchema: z.object({
 		sandboxId: z.string().describe("The sandbox ID"),
 	}),
-	execute: async ({ sandboxId }) => {
+	execute: async ({ sandboxId }, context) => {
 		try {
 			// Get the sandbox instance using the ID
 			const sandbox = await Sandbox.get({ sandboxId });
@@ -209,4 +209,4 @@ export const listSandboxRoutesTool = createTool<RuntimeContext<AppRuntimeContext
 			};
 		}
 	},
-}));
+});

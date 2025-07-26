@@ -8,7 +8,7 @@ import { env } from "@/env";
 /**
  * Create file write tool with injected runtime context
  */
-export const fileTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const fileTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Write markdown content to a .md file in blob storage",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to save (must end with .md, e.g., 'analysis.md', 'report.md')"),
@@ -16,7 +16,7 @@ export const fileTool = createTool<RuntimeContext<AppRuntimeContext>>((context) 
 		contentType: z.string().optional().describe("MIME type (defaults to text/markdown for .md files)"),
 		metadata: z.record(z.string()).optional().describe("Optional metadata to attach to the file"),
 	}),
-	execute: async ({ filename, content, contentType, metadata }) => {
+	execute: async ({ filename, content, contentType, metadata }, context) => {
 		try {
 			// Always organize files by thread ID
 			const fullPath = `threads/${context.threadId}/${filename}`;
@@ -49,18 +49,18 @@ export const fileTool = createTool<RuntimeContext<AppRuntimeContext>>((context) 
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create file read tool with injected runtime context
  */
-export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Read content from a file in blob storage",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to read (e.g., 'analysis.md')"),
 		url: z.string().optional().describe("Direct blob URL (alternative to path)"),
 	}),
-	execute: async ({ filename, url: directUrl }) => {
+	execute: async ({ filename, url: directUrl }, context) => {
 		try {
 			let blobUrl = directUrl;
 
@@ -118,18 +118,18 @@ export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>((conte
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create file delete tool with injected runtime context
  */
-export const fileDeleteTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const fileDeleteTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Delete a file from blob storage",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to delete (e.g., 'analysis.md')"),
 		url: z.string().optional().describe("Direct blob URL (alternative to path)"),
 	}),
-	execute: async ({ filename, url: directUrl }) => {
+	execute: async ({ filename, url: directUrl }, context) => {
 		try {
 			if (directUrl) {
 				await del(directUrl, {
@@ -158,12 +158,12 @@ export const fileDeleteTool = createTool<RuntimeContext<AppRuntimeContext>>((con
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create string replacement tool with injected runtime context
  */
-export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Replace specified string in a file with new content",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to modify (e.g., 'config.json')"),
@@ -174,7 +174,7 @@ export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext
 			.default(false)
 			.describe("Whether to replace all occurrences (default: false, replaces first only)"),
 	}),
-	execute: async ({ filename, oldString, newString, replaceAll }) => {
+	execute: async ({ filename, oldString, newString, replaceAll }, context) => {
 		try {
 			// Build the full path based on thread ID
 			const fullPath = `threads/${context.threadId}/${filename}`;
@@ -238,12 +238,12 @@ export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create find in content tool with injected runtime context
  */
-export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Search for text patterns within file content using regex",
 	inputSchema: z.object({
 		filename: z.string().describe("Filename to search in (e.g., 'config.json')"),
@@ -251,7 +251,7 @@ export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext
 		caseSensitive: z.boolean().default(true).describe("Whether search should be case sensitive"),
 		maxMatches: z.number().default(10).describe("Maximum number of matches to return"),
 	}),
-	execute: async ({ filename, regex, caseSensitive, maxMatches }) => {
+	execute: async ({ filename, regex, caseSensitive, maxMatches }, context) => {
 		try {
 			// Build the full path based on thread ID
 			const fullPath = `threads/${context.threadId}/${filename}`;
@@ -319,19 +319,19 @@ export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create find by name tool with injected runtime context
  */
-export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Find files by name pattern within the current thread's file storage",
 	inputSchema: z.object({
 		globPattern: z.string().describe("Glob pattern to match filenames (e.g., '*.md', 'config.*', 'data-*.json')"),
 		includeContent: z.boolean().default(false).describe("Whether to include file content preview in results"),
 		maxContentChars: z.number().default(200).describe("Maximum characters to include in content preview"),
 	}),
-	execute: async ({ globPattern, includeContent, maxContentChars }) => {
+	execute: async ({ globPattern, includeContent, maxContentChars }, context) => {
 		try {
 			// Build the thread prefix to list all blobs in this thread
 			const threadPrefix = `threads/${context.threadId}/`;
@@ -413,7 +413,7 @@ export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>(
 			};
 		}
 	},
-}));
+});
 
 /**
  * Helper function to match filenames against glob patterns

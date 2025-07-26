@@ -21,13 +21,13 @@ type Task = z.infer<typeof taskSchema>;
 /**
  * Create todo write tool with injected runtime context
  */
-export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description:
 		"Create and update a todo list for the current conversation thread. Use this tool to plan multi-step tasks, track progress, and ensure nothing is forgotten.",
 	inputSchema: z.object({
 		tasks: z.array(taskSchema).describe("The updated task list"),
 	}),
-	execute: async ({ tasks }) => {
+	execute: async ({ tasks }, context) => {
 		try {
 			// Generate markdown content
 			const todoContent = generateTodoMarkdown(tasks);
@@ -64,15 +64,15 @@ export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>((cont
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create todo read tool with injected runtime context
  */
-export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Read the current todo list for this conversation thread",
 	inputSchema: z.object({}),
-	execute: async () => {
+	execute: async ({}, context) => {
 		try {
 			const blobPath = `todos/shared/${context.threadId}/todo.md`;
 
@@ -117,15 +117,15 @@ export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>((conte
 			};
 		}
 	},
-}));
+});
 
 /**
  * Create todo clear tool with injected runtime context
  */
-export const todoClearTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const todoClearTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Clear the todo list for the current conversation thread",
 	inputSchema: z.object({}),
-	execute: async () => {
+	execute: async ({}, context) => {
 		try {
 			const blobPath = `todos/shared/${context.threadId}/todo.md`;
 			await del(blobPath, {
@@ -143,7 +143,7 @@ export const todoClearTool = createTool<RuntimeContext<AppRuntimeContext>>((cont
 			};
 		}
 	},
-}));
+});
 
 /**
  * Generate markdown content from tasks array

@@ -8,7 +8,7 @@ import { env } from "@/env";
 /**
  * Create web search tool with injected runtime context
  */
-export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Advanced web search with optimized content retrieval using Exa",
 	inputSchema: z.object({
 		query: z.string().describe("The search query"),
@@ -40,7 +40,7 @@ export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>((cont
 		summaryQuery,
 		includeDomains,
 		excludeDomains,
-	}) => {
+	}, context) => {
 		try {
 			const exa = new Exa(env.EXA_API_KEY);
 
@@ -159,4 +159,4 @@ export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>((cont
 			throw new Error("An unexpected error occurred during web search. Please try again.");
 		}
 	},
-}));
+});

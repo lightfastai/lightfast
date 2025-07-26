@@ -128,30 +128,30 @@ class StagehandSessionManager {
 // Get the singleton instance
 const sessionManager = StagehandSessionManager.getInstance();
 
-export const stagehandActTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const stagehandActTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Take an action on a webpage using Stagehand",
 	inputSchema: z.object({
 		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
 		action: z.string().describe('Action to perform (e.g., "click sign in button", "type hello in search field")'),
 	}),
-	execute: async ({ url, action }) => {
+	execute: async ({ url, action }, context) => {
 		return await performWebAction(url, action);
 	},
-}));
+});
 
-export const stagehandObserveTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const stagehandObserveTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Observe elements on a webpage using Stagehand to plan actions",
 	inputSchema: z.object({
 		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
 		instruction: z.string().describe('What to observe (e.g., "find the sign in button")'),
 	}),
 	outputSchema: z.array(z.unknown()).describe("Array of observable actions"),
-	execute: async ({ url, instruction }) => {
+	execute: async ({ url, instruction }, context) => {
 		return await performWebObservation(url, instruction);
 	},
-}));
+});
 
-export const stagehandExtractTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const stagehandExtractTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Extract data from a webpage using Stagehand",
 	inputSchema: z.object({
 		url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
@@ -163,7 +163,7 @@ export const stagehandExtractTool = createTool<RuntimeContext<AppRuntimeContext>
 			.describe("Set true for larger-scale extractions, false for small extractions"),
 	}),
 	outputSchema: z.unknown().describe("Extracted data according to schema"),
-	execute: async ({ url, instruction, schema, useTextExtract }) => {
+	execute: async ({ url, instruction, schema, useTextExtract }, context) => {
 		// Create a default schema if none is provided
 		const defaultSchema = {
 			content: z.string(),
@@ -171,7 +171,7 @@ export const stagehandExtractTool = createTool<RuntimeContext<AppRuntimeContext>
 
 		return await performWebExtraction(url, instruction, schema || defaultSchema, useTextExtract);
 	},
-}));
+});
 
 const performWebAction = async (url?: string, action?: string) => {
 	const stagehand = await sessionManager.ensureStagehand();
@@ -303,12 +303,12 @@ const performWebExtraction = async (
 };
 
 // Add a navigation tool for convenience
-export const stagehandNavigateTool = createTool<RuntimeContext<AppRuntimeContext>>((context) => ({
+export const stagehandNavigateTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Navigate to a URL in the browser",
 	inputSchema: z.object({
 		url: z.string().describe("URL to navigate to"),
 	}),
-	execute: async ({ url }) => {
+	execute: async ({ url }, context) => {
 		try {
 			const stagehand = await sessionManager.ensureStagehand();
 
@@ -331,4 +331,4 @@ export const stagehandNavigateTool = createTool<RuntimeContext<AppRuntimeContext
 			};
 		}
 	},
-}));
+});
