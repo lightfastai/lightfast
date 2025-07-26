@@ -4,17 +4,11 @@ import type { Memory } from "../memory";
 import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
 import type { RuntimeContext } from "./adapters/types";
-import {
-	AgentNotFoundError,
-	type ApiError,
-	NoUserMessageError,
-	ThreadForbiddenError,
-	ThreadNotFoundError,
-} from "./errors";
+import { type ApiError, NoUserMessageError, ThreadForbiddenError, ThreadNotFoundError } from "./errors";
 import { Err, Ok, type Result } from "./result";
 
 export interface StreamChatOptions<TMessage extends UIMessage = UIMessage, TUserContext = {}> {
-	agent: Agent<TMessage, TUserContext, ToolFactorySet<TUserContext>>;
+	agent: Agent<any>;
 	threadId: string;
 	messages: TMessage[];
 	memory: Memory<TMessage>;
@@ -220,20 +214,4 @@ export async function resumeStream<TMessage extends UIMessage = UIMessage>(
 
 	const resumedStream = await streamContext.resumeExistingStream(recentStreamId);
 	return Ok(resumedStream ?? null);
-}
-
-/**
- * Finds an agent by name from a list of agents
- */
-export function findAgent<TAgents extends readonly Agent<UIMessage, unknown, ToolFactorySet<unknown>>[]>(
-	agents: TAgents,
-	agentId: string,
-): Result<TAgents[number], AgentNotFoundError> {
-	const agent = agents.find((a) => a.config.name === agentId);
-
-	if (!agent) {
-		return Err(new AgentNotFoundError(agentId));
-	}
-
-	return Ok(agent);
 }

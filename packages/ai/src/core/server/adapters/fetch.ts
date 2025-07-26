@@ -1,35 +1,8 @@
 import type { UIMessage } from "ai";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
-import type { ToolFactorySet } from "../../primitives/tool";
-import {
-	type ApiError,
-	GenericBadRequestError,
-	InvalidPathError,
-	MethodNotAllowedError,
-	NoMessagesError,
-	toApiError,
-} from "../errors";
-import { findAgent, resumeStream, streamChat } from "../runtime";
-
-/**
- * Extract agent and thread IDs from path
- * Matches paths containing /v/[agentId]/[threadId] anywhere in the path
- */
-function extractPathParams(pathname: string): { agentId: string; threadId: string } | null {
-	// Find the index of '/v/' in the path
-	const vIndex = pathname.lastIndexOf("/v/");
-	if (vIndex === -1) return null;
-
-	// Extract the segments after /v/
-	const segments = pathname.slice(vIndex + 3).split("/");
-	if (segments.length < 2) return null;
-
-	const [agentId, threadId] = segments;
-	if (!agentId || !threadId) return null;
-
-	return { agentId, threadId };
-}
+import { type ApiError, GenericBadRequestError, MethodNotAllowedError, NoMessagesError, toApiError } from "../errors";
+import { resumeStream, streamChat } from "../runtime";
 
 /**
  * Helper to convert ApiError to Response
@@ -42,102 +15,80 @@ function errorToResponse(error: ApiError): Response {
 }
 
 export interface FetchRequestHandlerOptions<
-	TAgents extends readonly Agent<UIMessage, unknown, ToolFactorySet<unknown>>[],
-	TMessage extends UIMessage = UIMessage,
-	TUserContext = {},
+	TAgent extends Agent<any>,
+	TCreateRuntimeContext extends (params: { threadId: string; resourceId: string }) => any = (params: {
+		threadId: string;
+		resourceId: string;
+	}) => {},
 > {
-	agents: TAgents;
-	memory: Memory<TMessage>;
+	agent: TAgent;
+	threadId: string;
+	memory: Memory<UIMessage>;
 	req: Request;
 	resourceId: string;
-	createRuntimeContext: (params: { threadId: string; resourceId: string }) => TUserContext;
+	createRuntimeContext: TCreateRuntimeContext;
 	generateId?: () => string;
 	enableResume?: boolean;
-	onError?: (error: { error: Error; path?: string }) => void;
+	onError?: (error: { error: Error }) => void;
 }
 
 /**
- * Handles agent requests following the tRPC pattern
+ * Handles agent streaming requests
  *
  * @example
  * ```typescript
- * const agents = [
- *   new Agent({
- *     name: "a011",
- *     system: A011_SYSTEM_PROMPT,
- *     tools: createA011Tools,
- *     // ... other config
- *   }),
- *   // ... more agents
- * ];
- *
- * const memory = new RedisMemory({
- *   url: env.KV_REST_API_URL,
- *   token: env.KV_REST_API_TOKEN,
- * });
- *
- * const handler = async (req) => {
+ * // In your route handler (e.g., app/api/agents/[agentId]/threads/[threadId]/route.ts)
+ * export async function POST(
+ *   req: Request,
+ *   { params }: { params: { agentId: string; threadId: string } }
+ * ) {
  *   const { userId } = await auth();
  *   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
  *
+ *   // Resolve agent however you want
+ *   const agent = myAgentRegistry.get(params.agentId);
+ *   if (!agent) return Response.json({ error: "Agent not found" }, { status: 404 });
+ *
+ *   const memory = new RedisMemory({
+ *     url: env.KV_REST_API_URL,
+ *     token: env.KV_REST_API_TOKEN,
+ *   });
+ *
  *   return fetchRequestHandler({
- *     agents,
+ *     agent,
+ *     threadId: params.threadId,
  *     memory,
  *     req,
  *     resourceId: userId,
  *     createRuntimeContext: ({ threadId, resourceId }) => ({
- *       threadId,
  *       // Add your runtime context properties here
  *     }),
- *     onError({ error, path }) {
- *       console.error(`Agent error on '${path}':`, error);
+ *     onError({ error }) {
+ *       console.error('Agent error:', error);
  *     }
  *   });
- * };
- *
- * export { handler as GET, handler as POST };
+ * }
  * ```
  */
 export async function fetchRequestHandler<
-	TAgents extends readonly Agent<UIMessage, unknown, ToolFactorySet<unknown>>[],
-	TMessage extends UIMessage = UIMessage,
-	TUserContext = {},
->(options: FetchRequestHandlerOptions<TAgents, TMessage, TUserContext>): Promise<Response> {
-	const { agents, memory, req, resourceId, createRuntimeContext, generateId, enableResume, onError } = options;
-
-	// Extract path parameters
-	const url = new URL(req.url);
-	const pathParams = extractPathParams(url.pathname);
-
-	// Initialize variables for error handler access
-	let agentId = "";
-	let threadId = "";
+	TAgent extends Agent<any>,
+	TCreateRuntimeContext extends (params: { threadId: string; resourceId: string }) => any = (params: {
+		threadId: string;
+		resourceId: string;
+	}) => {},
+>(options: FetchRequestHandlerOptions<TAgent, TCreateRuntimeContext>): Promise<Response> {
+	const { agent, threadId, memory, req, resourceId, createRuntimeContext, generateId, enableResume, onError } = options;
 
 	try {
-		// Validate path structure
-		if (!pathParams) {
-			throw new InvalidPathError("/api/v/[agentId]/[threadId]");
-		}
-
-		agentId = pathParams.agentId;
-		threadId = pathParams.threadId;
-
 		// Check HTTP method
 		if (req.method !== "POST" && req.method !== "GET") {
 			throw new MethodNotAllowedError(req.method, ["GET", "POST"]);
 		}
 
-		// Find the agent
-		const agentResult = findAgent(agents, agentId);
-		if (!agentResult.ok) {
-			throw agentResult.error;
-		}
-		const agent = agentResult.value;
-
 		// Handle POST request
 		if (req.method === "POST") {
 			const body = await req.json();
-			const { messages } = body as { messages: TMessage[] };
+			const { messages } = body as { messages: UIMessage[] };
 
 			if (!messages || messages.length === 0) {
 				throw new NoMessagesError();
@@ -183,7 +134,7 @@ export async function fetchRequestHandler<
 		const apiError = toApiError(error);
 
 		// Call error handler if provided
-		onError?.({ error: apiError, path: `${agentId}/${threadId}` });
+		onError?.({ error: apiError });
 
 		// Return error response
 		return errorToResponse(apiError);

@@ -51,11 +51,32 @@ type ResolveToolFactories<T extends ToolFactorySet<any>> = {
 	[K in keyof T]: T[K] extends ToolFactory<any> ? ReturnType<T[K]> : never;
 };
 
-export interface AgentOptions<
-	TMessage extends UIMessage = UIMessage,
-	TRuntimeContext = unknown,
-	TToolFactories extends ToolFactorySet<TRuntimeContext> = ToolFactorySet<TRuntimeContext>,
-> extends AgentConfig<TMessage> {
+// Helper type to extract tool factories from an Agent
+export type ExtractAgentToolFactories<TAgent> = TAgent extends Agent<infer TToolFactories> ? TToolFactories : never;
+
+// Helper type to extract resolved tools from an Agent
+export type ExtractAgentTools<TAgent> = TAgent extends Agent<infer TToolFactories>
+	? ResolveToolFactories<TToolFactories>
+	: never;
+
+// Helper type to merge tool sets from multiple agents
+export type MergeToolSets<TAgents extends readonly Agent<any>[]> = TAgents extends readonly [infer First, ...infer Rest]
+	? First extends Agent<any>
+		? Rest extends readonly Agent<any>[]
+			? ExtractAgentTools<First> & MergeToolSets<Rest>
+			: ExtractAgentTools<First>
+		: never
+	: {};
+
+// Helper type to create UIMessage type from agents array
+export type DerivedUIMessage<
+	TAgents extends readonly Agent<any>[],
+	TMetadata = {},
+	TCustomDataTypes extends Record<string, unknown> = {},
+> = UIMessage<TMetadata, TCustomDataTypes, MergeToolSets<TAgents>>;
+
+export interface AgentOptions<TToolFactories extends ToolFactorySet<any> = ToolFactorySet<any>>
+	extends AgentConfig<UIMessage> {
 	// Required: system prompt for the agent
 	system: string;
 	// Required: collection of tool factories that will be automatically injected with runtime context
@@ -73,12 +94,15 @@ export interface AgentOptions<
 	experimental_transform?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["experimental_transform"];
 }
 
-export class Agent<
-	TMessage extends UIMessage = UIMessage,
-	TRuntimeContext = unknown,
-	TToolFactories extends ToolFactorySet<TRuntimeContext> = ToolFactorySet<TRuntimeContext>,
-> {
-	public readonly config: AgentConfig<TMessage>;
+// Helper type to infer runtime context from tool factories
+export type InferRuntimeContext<TToolFactories extends ToolFactorySet<any>> = TToolFactories extends ToolFactorySet<
+	infer TContext
+>
+	? TContext
+	: never;
+
+export class Agent<TToolFactories extends ToolFactorySet<any> = ToolFactorySet<any>> {
+	public readonly config: AgentConfig<UIMessage>;
 	private generateId: () => string;
 	private toolFactories: TToolFactories;
 	private system: string;
@@ -92,7 +116,7 @@ export class Agent<
 	private prepareStep?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["prepareStep"];
 	private experimental_transform?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["experimental_transform"];
 
-	constructor(options: AgentOptions<TMessage, TRuntimeContext, TToolFactories>) {
+	constructor(options: AgentOptions<TToolFactories>) {
 		const {
 			system,
 			tools,
@@ -127,7 +151,13 @@ export class Agent<
 		this.experimental_transform = experimental_transform;
 	}
 
-	async stream({ threadId, messages, memory, resourceId, runtimeContext }: StreamOptions<TMessage, TRuntimeContext>) {
+	async stream<TMessage extends UIMessage = UIMessage>({
+		threadId,
+		messages,
+		memory,
+		resourceId,
+		runtimeContext,
+	}: StreamOptions<TMessage, InferRuntimeContext<TToolFactories>>) {
 		if (!messages || messages.length === 0) {
 			throw new Error("At least one message is required");
 		}
@@ -170,4 +200,11 @@ export class Agent<
 			threadId,
 		};
 	}
+}
+
+/**
+ * Factory function to create an agent with proper type inference
+ */
+export function createAgent<TTools extends ToolFactorySet<any>>(options: AgentOptions<TTools>): Agent<TTools> {
+	return new Agent(options);
 }
