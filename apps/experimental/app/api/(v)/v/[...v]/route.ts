@@ -78,6 +78,15 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 			chunking: "word",
 		}),
 		stopWhen: stepCountIs(30),
+		experimental_telemetry: {
+			isEnabled: !!env.OTEL_EXPORTER_OTLP_HEADERS, // Only enable if OTEL headers are configured
+			metadata: {
+				agentId,
+				agentName: "a011",
+				threadId,
+				userId,
+			},
+		},
 		// Optional: Add agent-specific callbacks with strong typing
 		onChunk: ({ chunk }) => {
 			if (chunk.type === "tool-call") {
