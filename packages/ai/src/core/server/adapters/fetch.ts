@@ -2,7 +2,25 @@ import type { UIMessage } from "ai";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
 import type { ToolFactorySet } from "../../primitives/tool";
-import { findAgent, processMessages, resumeStream, streamChat, validateThread } from "../runtime";
+import {
+	type ApiError,
+	GenericBadRequestError,
+	InvalidPathError,
+	MethodNotAllowedError,
+	NoMessagesError,
+	toApiError,
+} from "../errors";
+import { findAgent, resumeStream, streamChat } from "../runtime";
+
+/**
+ * Helper to convert ApiError to Response
+ */
+function errorToResponse(error: ApiError): Response {
+	return Response.json(error.toJSON(), {
+		status: error.statusCode,
+		headers: { "Content-Type": "application/json" },
+	});
+}
 
 export interface FetchRequestHandlerOptions<
 	TAgents extends readonly Agent<UIMessage, unknown, ToolFactorySet<unknown>>[],
@@ -68,55 +86,46 @@ export async function fetchRequestHandler<
 >(options: FetchRequestHandlerOptions<TAgents, TMessage, TUserContext>): Promise<Response> {
 	const { agents, memory, req, resourceId, createRuntimeContext, generateId, enableResume, onError } = options;
 
-	// Extract agentId and threadId from URL path
+	// Extract path parameters outside try-catch for error handler access
 	const url = new URL(req.url);
 	const pathSegments = url.pathname.split("/").filter(Boolean);
-
-	// Find the index of 'v' in the path
 	const vIndex = pathSegments.indexOf("v");
-	if (vIndex === -1 || vIndex + 2 >= pathSegments.length) {
-		return Response.json({ error: "Invalid path: expected /api/v/[agentId]/[threadId]" }, { status: 400 });
-	}
+	const agentId = vIndex !== -1 && vIndex + 1 < pathSegments.length ? pathSegments[vIndex + 1] : "";
+	const threadId = vIndex !== -1 && vIndex + 2 < pathSegments.length ? pathSegments[vIndex + 2] : "";
 
-	// Extract agentId and threadId from path
-	const agentId = pathSegments[vIndex + 1];
-	const threadId = pathSegments[vIndex + 2];
+	try {
+		// Validate path structure
+		if (vIndex === -1 || vIndex + 2 >= pathSegments.length) {
+			throw new InvalidPathError("/api/v/[agentId]/[threadId]");
+		}
 
-	if (!agentId || !threadId) {
-		return Response.json({ error: "Missing agentId or threadId in path" }, { status: 400 });
-	}
+		if (!agentId || !threadId) {
+			throw new GenericBadRequestError("Missing agentId or threadId in path");
+		}
 
-	if (req.method !== "POST" && req.method !== "GET") {
-		return new Response("Method not allowed", { status: 405 });
-	}
+		// Check HTTP method
+		if (req.method !== "POST" && req.method !== "GET") {
+			throw new MethodNotAllowedError(req.method, ["GET", "POST"]);
+		}
 
-	// Find the agent by name
-	const agent = findAgent(agents, agentId);
-	if (!agent) {
-		const error = new Error(`Agent '${agentId}' not found`);
-		onError?.({ error, path: `${agentId}/${threadId}` });
-		return Response.json({ error: `Agent '${agentId}' not found` }, { status: 404 });
-	}
+		// Find the agent
+		const agentResult = findAgent(agents, agentId);
+		if (!agentResult.ok) {
+			throw agentResult.error;
+		}
+		const agent = agentResult.value;
 
-	// Validate thread ownership
-	const threadValidation = await validateThread(memory, threadId, resourceId);
-	if (threadValidation.exists && !threadValidation.isAuthorized) {
-		const error = new Error("Forbidden: Thread belongs to another user");
-		onError?.({ error, path: `${agentId}/${threadId}` });
-		return Response.json({ error: "Forbidden" }, { status: 403 });
-	}
-
-	if (req.method === "POST") {
-		try {
+		// Handle POST request
+		if (req.method === "POST") {
 			const body = await req.json();
 			const { messages } = body as { messages: TMessage[] };
 
 			if (!messages || messages.length === 0) {
-				throw new Error("At least one message is required");
+				throw new NoMessagesError();
 			}
 
 			// Use the streamChat function from runtime
-			return await streamChat({
+			const result = await streamChat({
 				agent,
 				threadId,
 				messages,
@@ -126,38 +135,38 @@ export async function fetchRequestHandler<
 				generateId,
 				enableResume,
 			});
-		} catch (error) {
-			const err = error instanceof Error ? error : new Error(String(error));
-			onError?.({ error: err, path: `${agentId}/${threadId}` });
-			return new Response(JSON.stringify({ error: "Internal server error" }), {
-				status: 500,
-				headers: { "Content-Type": "application/json" },
-			});
-		}
-	} else if (req.method === "GET" && enableResume) {
-		if (!threadId) {
-			return new Response("threadId is required", { status: 400 });
-		}
 
-		try {
-			// Use the resumeStream function from runtime
-			const resumedStream = await resumeStream(memory, threadId, resourceId);
-			
-			if (!resumedStream) {
+			if (!result.ok) {
+				throw result.error;
+			}
+
+			return result.value;
+		}
+		// Handle GET request (resume)
+		if (req.method === "GET" && enableResume) {
+			const result = await resumeStream(memory, threadId, resourceId);
+
+			if (!result.ok) {
+				throw result.error;
+			}
+
+			if (!result.value) {
 				return new Response(null, { status: 204 });
 			}
 
-			return new Response(resumedStream);
-		} catch (error) {
-			const err = error instanceof Error ? error : new Error(String(error));
-			if (err.message.includes("not found")) {
-				return Response.json({ error: "Not found" }, { status: 404 });
-			}
-			onError?.({ error: err, path: `${agentId}/${threadId}` });
-			throw err;
+			return new Response(result.value);
 		}
-	}
 
-	// Method not allowed
-	return new Response("Method not allowed", { status: 405 });
+		// This should not happen due to earlier check
+		throw new MethodNotAllowedError(req.method, ["GET", "POST"]);
+	} catch (error) {
+		// Convert to ApiError if needed
+		const apiError = toApiError(error);
+
+		// Call error handler if provided
+		onError?.({ error: apiError, path: `${agentId}/${threadId}` });
+
+		// Return error response
+		return errorToResponse(apiError);
+	}
 }

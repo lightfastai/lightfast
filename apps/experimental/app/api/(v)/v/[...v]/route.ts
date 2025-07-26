@@ -45,7 +45,7 @@ const handler = async (req: Request) => {
 	// Pass everything to fetchRequestHandler
 	return fetchRequestHandler({
 		agents: [
-			new Agent({
+			new Agent<LightfastUIMessage, RuntimeContext<AppRuntimeContext>>({
 				name: "a011",
 				system: A011_SYSTEM_PROMPT,
 				tools: {

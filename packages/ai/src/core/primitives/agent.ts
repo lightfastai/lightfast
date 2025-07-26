@@ -25,7 +25,11 @@ type ExcludedStreamTextProps =
 	| "onChunk" // Needs generic typing
 	| "onFinish" // Needs generic typing
 	| "onStepFinish" // Needs generic typing
-	| "_internal"; // We partially override this
+	| "onAbort" // Needs generic typing
+	| "onError" // Needs generic typing
+	| "_internal" // We don't use this
+	| "prepareStep" // Needs generic typing
+	| "experimental_transform"; // Needs generic typing
 
 // Agent-specific configuration extending streamText parameters
 export interface AgentConfig<TMessage extends UIMessage = UIMessage>
@@ -43,8 +47,8 @@ export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRuntimeC
 }
 
 // Helper type to convert tool factories to actual tools
-type ResolveToolFactories<T extends ToolFactorySet<unknown>> = {
-	[K in keyof T]: T[K] extends ToolFactory<unknown> ? ReturnType<T[K]> : never;
+type ResolveToolFactories<T extends ToolFactorySet<any>> = {
+	[K in keyof T]: T[K] extends ToolFactory<any> ? ReturnType<T[K]> : never;
 };
 
 export interface AgentOptions<
@@ -56,13 +60,17 @@ export interface AgentOptions<
 	system: string;
 	// Required: collection of tool factories that will be automatically injected with runtime context
 	tools: TToolFactories;
-	// Optional: tool choice and stop conditions with proper typing
+	// Optional: tool choice and stop conditions with strong typing based on the tools
 	toolChoice?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["toolChoice"];
 	stopWhen?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["stopWhen"];
-	// Strongly typed callbacks based on tools
+	// Strongly typed callbacks based on the agent's specific tools
 	onChunk?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onChunk"];
 	onFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onFinish"];
 	onStepFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onStepFinish"];
+	onAbort?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onAbort"];
+	onError?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onError"];
+	prepareStep?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["prepareStep"];
+	experimental_transform?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["experimental_transform"];
 }
 
 export class Agent<
@@ -79,9 +87,26 @@ export class Agent<
 	private onChunk?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onChunk"];
 	private onFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onFinish"];
 	private onStepFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onStepFinish"];
+	private onAbort?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onAbort"];
+	private onError?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onError"];
+	private prepareStep?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["prepareStep"];
+	private experimental_transform?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["experimental_transform"];
 
 	constructor(options: AgentOptions<TMessage, TRuntimeContext, TToolFactories>) {
-		const { system, tools, toolChoice, stopWhen, onChunk, onFinish, onStepFinish, ...config } = options;
+		const {
+			system,
+			tools,
+			toolChoice,
+			stopWhen,
+			onChunk,
+			onFinish,
+			onStepFinish,
+			onAbort,
+			onError,
+			prepareStep,
+			experimental_transform,
+			...config
+		} = options;
 
 		this.toolFactories = tools;
 		this.system = system;
@@ -96,6 +121,10 @@ export class Agent<
 		this.onChunk = onChunk;
 		this.onFinish = onFinish;
 		this.onStepFinish = onStepFinish;
+		this.onAbort = onAbort;
+		this.onError = onError;
+		this.prepareStep = prepareStep;
+		this.experimental_transform = experimental_transform;
 	}
 
 	async stream({ threadId, messages, memory, resourceId, runtimeContext }: StreamOptions<TMessage, TRuntimeContext>) {
@@ -132,11 +161,10 @@ export class Agent<
 				onChunk: this.onChunk,
 				onFinish: this.onFinish,
 				onStepFinish: this.onStepFinish,
-				// Merge _internal config
-				_internal: {
-					...streamTextConfig._internal,
-					generateId: this.generateId,
-				},
+				onAbort: this.onAbort,
+				onError: this.onError,
+				prepareStep: this.prepareStep,
+				experimental_transform: this.experimental_transform,
 			}),
 			streamId,
 			threadId,
