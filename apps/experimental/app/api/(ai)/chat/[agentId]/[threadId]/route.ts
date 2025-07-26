@@ -33,9 +33,6 @@ import {
 	todoClearTool,
 } from "@lightfast/ai/tools";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
-
 export async function POST(request: Request, { params }: { params: Promise<{ agentId: string; threadId: string }> }) {
 	try {
 		// Check authentication
