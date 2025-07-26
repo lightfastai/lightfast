@@ -13,6 +13,25 @@ import {
 import { findAgent, resumeStream, streamChat } from "../runtime";
 
 /**
+ * Extract agent and thread IDs from path
+ * Matches paths containing /v/[agentId]/[threadId] anywhere in the path
+ */
+function extractPathParams(pathname: string): { agentId: string; threadId: string } | null {
+	// Find the index of '/v/' in the path
+	const vIndex = pathname.lastIndexOf("/v/");
+	if (vIndex === -1) return null;
+
+	// Extract the segments after /v/
+	const segments = pathname.slice(vIndex + 3).split("/");
+	if (segments.length < 2) return null;
+
+	const [agentId, threadId] = segments;
+	if (!agentId || !threadId) return null;
+
+	return { agentId, threadId };
+}
+
+/**
  * Helper to convert ApiError to Response
  */
 function errorToResponse(error: ApiError): Response {
@@ -86,22 +105,22 @@ export async function fetchRequestHandler<
 >(options: FetchRequestHandlerOptions<TAgents, TMessage, TUserContext>): Promise<Response> {
 	const { agents, memory, req, resourceId, createRuntimeContext, generateId, enableResume, onError } = options;
 
-	// Extract path parameters outside try-catch for error handler access
+	// Extract path parameters
 	const url = new URL(req.url);
-	const pathSegments = url.pathname.split("/").filter(Boolean);
-	const vIndex = pathSegments.indexOf("v");
-	const agentId = vIndex !== -1 && vIndex + 1 < pathSegments.length ? pathSegments[vIndex + 1] : "";
-	const threadId = vIndex !== -1 && vIndex + 2 < pathSegments.length ? pathSegments[vIndex + 2] : "";
+	const pathParams = extractPathParams(url.pathname);
+
+	// Initialize variables for error handler access
+	let agentId = "";
+	let threadId = "";
 
 	try {
 		// Validate path structure
-		if (vIndex === -1 || vIndex + 2 >= pathSegments.length) {
+		if (!pathParams) {
 			throw new InvalidPathError("/api/v/[agentId]/[threadId]");
 		}
 
-		if (!agentId || !threadId) {
-			throw new GenericBadRequestError("Missing agentId or threadId in path");
-		}
+		agentId = pathParams.agentId;
+		threadId = pathParams.threadId;
 
 		// Check HTTP method
 		if (req.method !== "POST" && req.method !== "GET") {

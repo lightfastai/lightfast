@@ -15,51 +15,27 @@ catalogs:
     '@ai-sdk/provider':
       specifier: 2.0.0-beta.1
       version: 2.0.0-beta.1
-    '@ai-sdk/react':
-      specifier: 2.0.0-beta.26
-      version: 2.0.0-beta.26
-    '@biomejs/biome':
-      specifier: 2.1.1
-      version: 2.1.1
-    '@browserbasehq/stagehand':
-      specifier: ^2.3.1
-      version: 2.4.1
     '@t3-oss/env-core':
       specifier: ^0.12.0
       version: 0.12.0
     '@upstash/redis':
       specifier: ^1.35.1
       version: 1.35.1
-    '@vercel/blob':
-      specifier: ^1.1.1
-      version: 1.1.1
-    '@vercel/sandbox':
-      specifier: ^0.0.13
-      version: 0.0.13
     ai:
       specifier: 5.0.0-beta.26
       version: 5.0.0-beta.26
     braintrust:
       specifier: ^0.1.1
       version: 0.1.1
-    exa-js:
-      specifier: ^1.8.22
-      version: 1.8.23
     playwright:
       specifier: ^1.54.1
       version: 1.54.1
     playwright-core:
       specifier: ^1.54.1
       version: 1.54.1
-    redis:
-      specifier: ^5.6.0
-      version: 5.6.0
     resumable-stream:
       specifier: ^2.0.0
       version: 2.2.1
-    turbo:
-      specifier: ^2.5.5
-      version: 2.5.5
     typescript:
       specifier: ^5.8.3
       version: 5.8.3
