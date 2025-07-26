@@ -270,4 +270,3 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 - "Now I'll search for information about X..." [webSearch]
 - "Creating a file to store the results..." [file]
 `;
-
