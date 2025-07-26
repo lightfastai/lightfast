@@ -13,24 +13,25 @@ function uuidv4() {
 
 // Extract core types from streamText
 type StreamTextParameters<TOOLS extends ToolSet> = Parameters<typeof streamText<TOOLS>>[0];
-type LanguageModel = StreamTextParameters<any>["model"];
 
-// Agent-specific configuration with only the properties we need
-export interface AgentConfig<TMessage extends UIMessage = UIMessage> {
+// Properties we need to handle specially or exclude
+type ExcludedStreamTextProps = 
+	| "messages" // We get this from stream() method
+	| "tools" // We use tool factories
+	| "system" // We store separately
+	| "prompt" // We use messages instead
+	| "toolChoice" // Needs generic typing
+	| "stopWhen" // Needs generic typing
+	| "onChunk" // Needs generic typing
+	| "onFinish" // Needs generic typing
+	| "onStepFinish" // Needs generic typing
+	| "_internal"; // We partially override this
+
+// Agent-specific configuration extending streamText parameters
+export interface AgentConfig<TMessage extends UIMessage = UIMessage> 
+	extends Omit<StreamTextParameters<any>, ExcludedStreamTextProps> {
 	// Agent-specific required fields
 	name: string;
-	model: LanguageModel;
-	// Optional common settings
-	maxOutputTokens?: number;
-	temperature?: number;
-	topP?: number;
-	maxRetries?: number;
-	abortSignal?: AbortSignal;
-	headers?: Record<string, string | undefined>;
-	// Experimental features
-	experimental_transform?: StreamTextParameters<any>["experimental_transform"];
-	// Internal config
-	_internal?: StreamTextParameters<any>["_internal"];
 }
 
 export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRuntimeContext = unknown> {
@@ -80,15 +81,23 @@ export class Agent<
 	private onStepFinish?: StreamTextParameters<ResolveToolFactories<TToolFactories>>["onStepFinish"];
 
 	constructor(options: AgentOptions<TMessage, TRuntimeContext, TToolFactories>) {
-		const { system, tools, toolChoice, stopWhen, onChunk, onFinish, onStepFinish, ...config } = options;
+		const { 
+			system, 
+			tools, 
+			toolChoice, 
+			stopWhen, 
+			onChunk, 
+			onFinish, 
+			onStepFinish, 
+			...config 
+		} = options;
+		
 		this.toolFactories = tools;
 		this.system = system;
 		this.generateId = uuidv4;
 
-		// Store configuration
-		this.config = {
-			...config,
-		};
+		// Store base configuration (all streamText properties except excluded ones)
+		this.config = config;
 
 		// Store tool-specific properties separately
 		this.toolChoice = toolChoice;
@@ -110,24 +119,21 @@ export class Agent<
 			Object.entries(this.toolFactories).map(([name, factory]) => [name, factory(runtimeContext)]),
 		) as ResolveToolFactories<TToolFactories>;
 
-		// Stream the response with properly typed config
-		const { name, ...baseConfig } = this.config;
+		// Extract name from config as it's not a streamText property
+		const { name, ...streamTextConfig } = this.config;
 
 		// Ensure model is set
-		if (!baseConfig.model) {
+		if (!streamTextConfig.model) {
 			throw new Error("Model must be configured");
 		}
 
 		// Return the stream result with necessary metadata
 		return {
 			result: streamText<ResolveToolFactories<TToolFactories>>({
-				...baseConfig,
-				model: baseConfig.model,
+				// Spread all streamText config properties
+				...streamTextConfig,
+				// Override with our specific handling
 				system: this.system,
-				_internal: {
-					...baseConfig._internal,
-					generateId: this.generateId,
-				},
 				messages: convertToModelMessages(messages, { tools }),
 				tools,
 				toolChoice: this.toolChoice,
@@ -135,6 +141,11 @@ export class Agent<
 				onChunk: this.onChunk,
 				onFinish: this.onFinish,
 				onStepFinish: this.onStepFinish,
+				// Merge _internal config
+				_internal: {
+					...streamTextConfig._internal,
+					generateId: this.generateId,
+				},
 			}),
 			streamId,
 			threadId,
