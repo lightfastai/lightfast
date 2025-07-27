@@ -39,7 +39,7 @@ export const env = createEnv({
 
 		// Observability
 		BRAINTRUST_API_KEY: z.string().min(1),
-		BRAINTRUST_PROJECT_ID: z.string().min(1),
+		BRAINTRUST_PROJECT_NAME: z.string().min(1),
 		OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().default("https://api.braintrust.dev/otel"),
 		OTEL_EXPORTER_OTLP_HEADERS: z.string().min(1).optional(),
 
@@ -96,7 +96,7 @@ export const env = createEnv({
 
 		// Observability
 		BRAINTRUST_API_KEY: process.env.BRAINTRUST_API_KEY,
-		BRAINTRUST_PROJECT_ID: process.env.BRAINTRUST_PROJECT_ID,
+		BRAINTRUST_PROJECT_NAME: process.env.BRAINTRUST_PROJECT_NAME,
 		OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
 		OTEL_EXPORTER_OTLP_HEADERS: process.env.OTEL_EXPORTER_OTLP_HEADERS,
 

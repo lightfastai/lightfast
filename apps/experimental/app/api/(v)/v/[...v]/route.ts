@@ -56,7 +56,7 @@ type A011ToolSchema = typeof a011Tools;
 // Initialize Braintrust logging
 initLogger({
 	apiKey: env.BRAINTRUST_API_KEY,
-	projectName: "lightfast-experimental-dev",
+	projectName: env.BRAINTRUST_PROJECT_NAME,
 });
 
 // Handler function that handles auth and calls fetchRequestHandler
