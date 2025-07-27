@@ -1,7 +1,7 @@
 import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import { del, head, list, put } from "@vercel/blob";
-import { wrapTraced, currentSpan } from "braintrust";
+import { currentSpan, wrapTraced } from "braintrust";
 import { z } from "zod";
 import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
@@ -11,7 +11,12 @@ import { env } from "@/env";
  */
 const executeFileWrite = wrapTraced(
 	async function executeFileWrite(
-		{ filename, content, contentType, metadata }: {
+		{
+			filename,
+			content,
+			contentType,
+			metadata,
+		}: {
 			filename: string;
 			content: string;
 			contentType?: string;
@@ -98,7 +103,10 @@ export const fileWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
  */
 const executeFileRead = wrapTraced(
 	async function executeFileRead(
-		{ filename, url: directUrl }: {
+		{
+			filename,
+			url: directUrl,
+		}: {
 			filename: string;
 			url?: string;
 		},
@@ -214,7 +222,10 @@ export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
  */
 const executeFileDelete = wrapTraced(
 	async function executeFileDelete(
-		{ filename, url: directUrl }: {
+		{
+			filename,
+			url: directUrl,
+		}: {
 			filename: string;
 			url?: string;
 		},
@@ -222,7 +233,7 @@ const executeFileDelete = wrapTraced(
 	) {
 		try {
 			let fullPath = "";
-			
+
 			// Log metadata
 			currentSpan().log({
 				metadata: {
@@ -292,7 +303,12 @@ export const fileDeleteTool = createTool<RuntimeContext<AppRuntimeContext>>({
  */
 const executeFileStringReplace = wrapTraced(
 	async function executeFileStringReplace(
-		{ filename, oldString, newString, replaceAll }: {
+		{
+			filename,
+			oldString,
+			newString,
+			replaceAll,
+		}: {
 			filename: string;
 			oldString: string;
 			newString: string;
@@ -421,7 +437,12 @@ export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext
  */
 const executeFindInContent = wrapTraced(
 	async function executeFindInContent(
-		{ filename, regex, caseSensitive, maxMatches }: {
+		{
+			filename,
+			regex,
+			caseSensitive,
+			maxMatches,
+		}: {
 			filename: string;
 			regex: string;
 			caseSensitive?: boolean;
@@ -553,7 +574,11 @@ export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext
  */
 const executeFindByName = wrapTraced(
 	async function executeFindByName(
-		{ globPattern, includeContent, maxContentChars }: {
+		{
+			globPattern,
+			includeContent,
+			maxContentChars,
+		}: {
 			globPattern: string;
 			includeContent?: boolean;
 			maxContentChars?: number;

@@ -24,7 +24,9 @@ type Task = z.infer<typeof taskSchema>;
  */
 const executeTodoWrite = wrapTraced(
 	async function executeTodoWrite(
-		{ tasks }: {
+		{
+			tasks,
+		}: {
 			tasks: Task[];
 		},
 		context: RuntimeContext<AppRuntimeContext>,
@@ -47,9 +49,9 @@ const executeTodoWrite = wrapTraced(
 						cancelled: cancelledCount,
 					},
 					taskPriorities: {
-						high: tasks.filter(t => t.priority === "high").length,
-						medium: tasks.filter(t => t.priority === "medium").length,
-						low: tasks.filter(t => t.priority === "low").length,
+						high: tasks.filter((t) => t.priority === "high").length,
+						medium: tasks.filter((t) => t.priority === "medium").length,
+						low: tasks.filter((t) => t.priority === "low").length,
 					},
 					contextInfo: {
 						threadId: context.threadId,
@@ -118,10 +120,7 @@ export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
  * Wrapped todo read execution function with Braintrust tracing
  */
 const executeTodoRead = wrapTraced(
-	async function executeTodoRead(
-		{}: {},
-		context: RuntimeContext<AppRuntimeContext>,
-	) {
+	async function executeTodoRead(_params: {}, context: RuntimeContext<AppRuntimeContext>) {
 		try {
 			const blobPath = `todos/shared/${context.threadId}/todo.md`;
 
@@ -217,10 +216,7 @@ export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
  * Wrapped todo clear execution function with Braintrust tracing
  */
 const executeTodoClear = wrapTraced(
-	async function executeTodoClear(
-		{}: {},
-		context: RuntimeContext<AppRuntimeContext>,
-	) {
+	async function executeTodoClear(_params: {}, context: RuntimeContext<AppRuntimeContext>) {
 		try {
 			const blobPath = `todos/shared/${context.threadId}/todo.md`;
 

@@ -134,7 +134,10 @@ const sessionManager = StagehandSessionManager.getInstance();
  */
 const executeStagehandAct = wrapTraced(
 	async function executeStagehandAct(
-		{ url, action }: {
+		{
+			url,
+			action,
+		}: {
 			url?: string;
 			action: string;
 		},
@@ -170,7 +173,10 @@ export const stagehandActTool = createTool<RuntimeContext<AppRuntimeContext>>({
  */
 const executeStagehandObserve = wrapTraced(
 	async function executeStagehandObserve(
-		{ url, instruction }: {
+		{
+			url,
+			instruction,
+		}: {
 			url?: string;
 			instruction: string;
 		},
@@ -207,7 +213,12 @@ export const stagehandObserveTool = createTool<RuntimeContext<AppRuntimeContext>
  */
 const executeStagehandExtract = wrapTraced(
 	async function executeStagehandExtract(
-		{ url, instruction, schema, useTextExtract }: {
+		{
+			url,
+			instruction,
+			schema,
+			useTextExtract,
+		}: {
 			url?: string;
 			instruction: string;
 			schema?: Record<string, unknown>;
@@ -228,13 +239,18 @@ const executeStagehandExtract = wrapTraced(
 				},
 			},
 		});
-		
+
 		// Create a default schema if none is provided
 		const defaultSchema = {
 			content: z.string(),
 		};
 
-		return await performWebExtraction(url, instruction, schema as Record<string, z.ZodTypeAny> || defaultSchema, useTextExtract);
+		return await performWebExtraction(
+			url,
+			instruction,
+			(schema as Record<string, z.ZodTypeAny>) || defaultSchema,
+			useTextExtract,
+		);
 	},
 	{ type: "tool", name: "stagehandExtract" },
 );
@@ -445,7 +461,9 @@ const performWebExtraction = async (
  */
 const executeStagehandNavigate = wrapTraced(
 	async function executeStagehandNavigate(
-		{ url }: {
+		{
+			url,
+		}: {
 			url: string;
 		},
 		context: RuntimeContext<AppRuntimeContext>,

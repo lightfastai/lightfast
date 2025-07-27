@@ -10,7 +10,9 @@ import type { AppRuntimeContext } from "@/app/ai/types";
  */
 const executeCreateSandbox = wrapTraced(
 	async function executeCreateSandbox(
-		{ runtime }: {
+		{
+			runtime,
+		}: {
 			runtime: "node22" | "python3.13";
 		},
 		context: RuntimeContext<AppRuntimeContext>,
@@ -81,7 +83,13 @@ export const createSandboxTool = createTool<RuntimeContext<AppRuntimeContext>>({
  */
 const executeCommand = wrapTraced(
 	async function executeCommand(
-		{ sandboxId, command, args, cwd, background }: {
+		{
+			sandboxId,
+			command,
+			args,
+			cwd,
+			background,
+		}: {
 			sandboxId: string;
 			command: string;
 			args?: string[];
@@ -156,7 +164,7 @@ const executeCommand = wrapTraced(
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : "Unknown error";
 			const backgroundNote = background ? " (running in background)" : "";
-			
+
 			// Log error
 			currentSpan().log({
 				metadata: {
@@ -168,7 +176,7 @@ const executeCommand = wrapTraced(
 					},
 				},
 			});
-			
+
 			return {
 				success: false,
 				stdout: "",
@@ -202,7 +210,11 @@ export const executeSandboxCommandTool = createTool<RuntimeContext<AppRuntimeCon
  */
 const executeCreateSandboxWithPorts = wrapTraced(
 	async function executeCreateSandboxWithPorts(
-		{ runtime, ports, source }: {
+		{
+			runtime,
+			ports,
+			source,
+		}: {
 			runtime: "node22" | "python3.13";
 			ports: number[];
 			source?: { type: "git"; url: string; revision?: string };
@@ -268,9 +280,7 @@ const executeCreateSandboxWithPorts = wrapTraced(
 					},
 				},
 			});
-			throw new Error(
-				`Failed to create sandbox with ports: ${errorMessage}`,
-			);
+			throw new Error(`Failed to create sandbox with ports: ${errorMessage}`);
 		}
 	},
 	{ type: "tool", name: "createSandboxWithPorts" },
@@ -301,7 +311,10 @@ export const createSandboxWithPortsTool = createTool<RuntimeContext<AppRuntimeCo
  */
 const executeGetSandboxDomain = wrapTraced(
 	async function executeGetSandboxDomain(
-		{ sandboxId, port }: {
+		{
+			sandboxId,
+			port,
+		}: {
 			sandboxId: string;
 			port: number;
 		},
@@ -379,7 +392,9 @@ export const getSandboxDomainTool = createTool<RuntimeContext<AppRuntimeContext>
  */
 const executeListSandboxRoutes = wrapTraced(
 	async function executeListSandboxRoutes(
-		{ sandboxId }: {
+		{
+			sandboxId,
+		}: {
 			sandboxId: string;
 		},
 		context: RuntimeContext<AppRuntimeContext>,
