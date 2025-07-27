@@ -3,25 +3,26 @@ import { auth } from "@clerk/nextjs/server";
 import { createAgent } from "@lightfast/ai/agent";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
-import { smoothStream, stepCountIs } from "ai";
+import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
+import { BraintrustMiddleware, initLogger } from "braintrust";
 import { A011_SYSTEM_PROMPT } from "@/app/ai/agents/a011";
 import {
-	fileTool,
-	fileReadTool,
 	fileDeleteTool,
-	fileStringReplaceTool,
-	fileFindInContentTool,
 	fileFindByNameTool,
+	fileFindInContentTool,
+	fileReadTool,
+	fileStringReplaceTool,
+	fileTool,
 } from "@/app/ai/tools/file";
-import { webSearchTool } from "@/app/ai/tools/web-search";
-import { todoWriteTool, todoReadTool, todoClearTool } from "@/app/ai/tools/task";
 import {
 	createSandboxTool,
-	executeSandboxCommandTool,
 	createSandboxWithPortsTool,
+	executeSandboxCommandTool,
 	getSandboxDomainTool,
 	listSandboxRoutesTool,
 } from "@/app/ai/tools/sandbox";
+import { todoClearTool, todoReadTool, todoWriteTool } from "@/app/ai/tools/task";
+import { webSearchTool } from "@/app/ai/tools/web-search";
 import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
@@ -52,6 +53,12 @@ const a011Tools = {
 // Infer the tool schema type
 type A011ToolSchema = typeof a011Tools;
 
+// Initialize Braintrust logging
+initLogger({
+	apiKey: env.BRAINTRUST_API_KEY,
+	projectName: "lightfast-experimental-dev",
+});
+
 // Handler function that handles auth and calls fetchRequestHandler
 const handler = async (req: Request, { params }: { params: Promise<{ v: string[] }> }) => {
 	// Await the params
@@ -76,6 +83,12 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 		return Response.json({ error: "Agent not found" }, { status: 404 });
 	}
 
+	// Wrap the model with Braintrust middleware
+	const model = wrapLanguageModel({
+		model: gateway("anthropic/claude-4-sonnet"),
+		middleware: BraintrustMiddleware({ debug: true }),
+	});
+
 	const agent = createAgent<A011ToolSchema, AppRuntimeContext>({
 		name: "a011",
 		system: A011_SYSTEM_PROMPT,
@@ -85,7 +98,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 			// The agent can use threadId and resourceId if needed
 			// but they're already available in system context
 		}),
-		model: gateway("anthropic/claude-4-sonnet"),
+		model,
 		experimental_transform: smoothStream({
 			delayInMs: 25,
 			chunking: "word",
