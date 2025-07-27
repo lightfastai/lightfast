@@ -2,13 +2,12 @@
 
 import type { ChatStatus, ToolUIPart } from "ai";
 import { ArrowDown } from "lucide-react";
-import { memo, useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { Markdown } from "@/components/markdown";
 import { ThinkingMessage } from "@/components/thinking-message";
 import { ToolCallRenderer } from "@/components/tool-renderers/tool-call-renderer";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { isReasoningPart, isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
@@ -25,11 +24,14 @@ interface MessageWithRuntimeStatus extends LightfastUIMessage {
 
 // Memoized reasoning block component
 const ReasoningBlock = memo(function ReasoningBlock({ text }: { text: string }) {
+	// Remove leading newlines while preserving other whitespace
+	const trimmedText = text.replace(/^\n+/, "");
+
 	return (
 		<div className="border border-muted rounded-lg max-h-[200px] overflow-hidden">
 			<div className="max-h-[200px] overflow-y-auto">
 				<div className="p-4">
-					<p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap break-words">{text}</p>
+					<p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap break-words">{trimmedText}</p>
 				</div>
 			</div>
 		</div>
@@ -121,6 +123,16 @@ function MessageItem({
 	isFirst?: boolean;
 	isLast?: boolean;
 }) {
+	// Determine if the latest part during streaming is a reasoning part
+	const hasActiveReasoningPart = useMemo(() => {
+		if (message.runtimeStatus !== "streaming" || !message.parts || message.parts.length === 0) {
+			return false;
+		}
+		// Check if the last part is a reasoning part
+		const lastPart = message.parts[message.parts.length - 1];
+		return lastPart ? isReasoningPart(lastPart) : false;
+	}, [message.parts, message.runtimeStatus]);
+
 	// For user messages
 	if (message.role === "user") {
 		const textContent =
@@ -148,8 +160,6 @@ function MessageItem({
 	}
 
 	// For assistant messages, render parts in order
-	// Check if we have any reasoning parts
-	const hasReasoningPart = message.parts?.some((part) => isReasoningPart(part));
 
 	return (
 		<div
@@ -163,10 +173,7 @@ function MessageItem({
 			<div className="mx-auto max-w-3xl px-4 space-y-4">
 				{/* Show thinking animation at top of assistant message based on runtime status */}
 				{message.runtimeStatus && (
-					<ThinkingMessage
-						status={hasReasoningPart && message.runtimeStatus === "streaming" ? "reasoning" : message.runtimeStatus}
-						show={true}
-					/>
+					<ThinkingMessage status={hasActiveReasoningPart ? "reasoning" : message.runtimeStatus} show={true} />
 				)}
 				{message.parts?.map((part, index) => {
 					// Text part

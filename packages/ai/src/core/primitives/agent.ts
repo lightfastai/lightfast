@@ -216,7 +216,6 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		// This way we maintain proper typing
 		const allModelMessages = [...systemMessages, ...modelMessages];
 
-
 		// Create properly typed parameters for streamText
 		// We know resolvedTools is a ToolSet at runtime, so we can safely type the parameters
 		const streamTextParams: Parameters<typeof streamText<ToolSet>>[0] = {
@@ -238,7 +237,6 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 			prepareStep: this.prepareStep as StreamTextParameters<ToolSet>["prepareStep"],
 			experimental_transform: this.experimental_transform as StreamTextParameters<ToolSet>["experimental_transform"],
 		};
-
 
 		// Return the stream result with necessary metadata
 		return {
