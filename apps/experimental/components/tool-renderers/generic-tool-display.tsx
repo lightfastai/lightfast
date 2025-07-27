@@ -42,7 +42,7 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 			<div className="my-6 border rounded-lg w-full cursor-not-allowed">
 				<div className="py-3 px-4 flex items-center gap-2">
 					<div className="text-left flex-1">
-						<div className="font-medium text-xs text-muted-foreground">{toolName}</div>
+						<div className="font-medium text-xs text-muted-foreground">{toolName}: Processing...</div>
 					</div>
 					<Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
 				</div>
@@ -177,7 +177,7 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
 							<div className="pt-3">
 								<div className="flex items-center gap-2 text-sm text-muted-foreground">
 									<Loader2 className="h-3 w-3 animate-spin" />
-									<span>Executing {toolName}...</span>
+									<span>Processing {toolName}...</span>
 								</div>
 							</div>
 						)}
