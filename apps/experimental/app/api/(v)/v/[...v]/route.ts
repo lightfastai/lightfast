@@ -118,7 +118,9 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 						} satisfies AnthropicProviderOptions,
 					},
 					headers: {
-						"anthropic-beta": "interleaved-thinking-2025-05-14",
+						// Note: token-efficient-tools-2025-02-19 is only available for Claude 3.7 Sonnet
+						// It reduces token usage by ~14% average (up to 70%) and improves latency
+						"anthropic-beta": "interleaved-thinking-2025-05-14,token-efficient-tools-2025-02-19",
 					},
 					experimental_transform: smoothStream({
 						delayInMs: 25,
