@@ -182,25 +182,32 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 			throw new Error("Model must be configured");
 		}
 
+		// Create properly typed parameters for streamText
+		// We know resolvedTools is a ToolSet at runtime, so we can safely type the parameters
+		const streamTextParams: Parameters<typeof streamText<ToolSet>>[0] = {
+			// Spread all streamText config properties
+			...streamTextConfig,
+			// Override with our specific handling
+			system: this.system,
+			messages: convertToModelMessages(messages, { tools: resolvedTools }),
+			tools: resolvedTools,
+			// These callbacks need to be cast because they're typed with ResolvedTools<TTools>
+			// but streamText expects them typed with ToolSet. This is safe because
+			// resolvedTools is guaranteed to be a ToolSet at runtime.
+			toolChoice: this.toolChoice as StreamTextParameters<ToolSet>["toolChoice"],
+			stopWhen: this.stopWhen as StreamTextParameters<ToolSet>["stopWhen"],
+			onChunk: this.onChunk as StreamTextParameters<ToolSet>["onChunk"],
+			onFinish: this.onFinish as StreamTextParameters<ToolSet>["onFinish"],
+			onStepFinish: this.onStepFinish as StreamTextParameters<ToolSet>["onStepFinish"],
+			onAbort: this.onAbort as StreamTextParameters<ToolSet>["onAbort"],
+			onError: this.onError as StreamTextParameters<ToolSet>["onError"],
+			prepareStep: this.prepareStep as StreamTextParameters<ToolSet>["prepareStep"],
+			experimental_transform: this.experimental_transform as StreamTextParameters<ToolSet>["experimental_transform"],
+		};
+
 		// Return the stream result with necessary metadata
 		return {
-			result: streamText({
-				// Spread all streamText config properties
-				...streamTextConfig,
-				// Override with our specific handling
-				system: this.system,
-				messages: convertToModelMessages(messages, { tools: resolvedTools }),
-				tools: resolvedTools,
-				toolChoice: this.toolChoice as any,
-				stopWhen: this.stopWhen as any,
-				onChunk: this.onChunk as any,
-				onFinish: this.onFinish as any,
-				onStepFinish: this.onStepFinish as any,
-				onAbort: this.onAbort as any,
-				onError: this.onError as any,
-				prepareStep: this.prepareStep as any,
-				experimental_transform: this.experimental_transform as any,
-			}),
+			result: streamText(streamTextParams),
 			streamId,
 			threadId,
 		};
