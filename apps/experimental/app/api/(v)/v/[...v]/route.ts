@@ -5,7 +5,7 @@ import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
 import { smoothStream, stepCountIs } from "ai";
 import { A011_SYSTEM_PROMPT } from "@/app/ai/agents/a011";
-import { 
+import {
 	fileTool,
 	fileReadTool,
 	fileDeleteTool,
@@ -15,6 +15,13 @@ import {
 } from "@/app/ai/tools/file";
 import { webSearchTool } from "@/app/ai/tools/web-search";
 import { todoWriteTool, todoReadTool, todoClearTool } from "@/app/ai/tools/task";
+import {
+	createSandboxTool,
+	executeSandboxCommandTool,
+	createSandboxWithPortsTool,
+	getSandboxDomainTool,
+	listSandboxRoutesTool,
+} from "@/app/ai/tools/sandbox";
 import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
@@ -34,6 +41,12 @@ const a011Tools = {
 	todoWrite: todoWriteTool,
 	todoRead: todoReadTool,
 	todoClear: todoClearTool,
+	// Sandbox tools
+	createSandbox: createSandboxTool,
+	executeSandboxCommand: executeSandboxCommandTool,
+	createSandboxWithPorts: createSandboxWithPortsTool,
+	getSandboxDomain: getSandboxDomainTool,
+	listSandboxRoutes: listSandboxRoutesTool,
 } as const;
 
 // Infer the tool schema type
@@ -104,8 +117,12 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 					console.log("File read tool called");
 				} else if (chunk.toolName === "todoRead") {
 					console.log("Todo read tool called");
+				} else if (chunk.toolName === "createSandbox") {
+					console.log("Creating sandbox");
+				} else if (chunk.toolName === "executeSandboxCommand") {
+					console.log("Executing sandbox command");
 				}
-				
+
 				// TypeScript correctly prevents invalid tool names:
 				// if (chunk.toolName === "nonExistentTool") { // ❌ Error: This comparison appears to be unintentional
 				// 	console.log("This should error!");
