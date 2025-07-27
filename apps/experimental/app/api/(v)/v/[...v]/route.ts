@@ -1,3 +1,4 @@
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
 import { createAgent } from "@lightfast/ai/agent";
@@ -107,6 +108,15 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 						model: gateway("anthropic/claude-4-sonnet"),
 						middleware: BraintrustMiddleware({ debug: true }),
 					}),
+					providerOptions: {
+						anthropic: {
+							// Enable Claude Code thinking
+							thinking: {
+								type: "enabled",
+								budgetTokens: 32000, // Generous budget for complex reasoning
+							},
+						} satisfies AnthropicProviderOptions,
+					},
 					experimental_transform: smoothStream({
 						delayInMs: 25,
 						chunking: "word",
@@ -155,6 +165,10 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 							metadata: {
 								finishReason: result.finishReason,
 								usage: result.usage,
+								// Include thinking metadata if available
+								reasoning: result.reasoning,
+								reasoningText: result.reasoningText,
+								providerMetadata: result.providerMetadata,
 							},
 						});
 
@@ -163,6 +177,19 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 							finishReason: result.finishReason,
 							usage: result.usage,
 							textLength: result.text?.length,
+							// Log thinking metadata
+							reasoning: result.reasoning ? `${result.reasoning.length} reasoning parts` : undefined,
+							reasoningText: result.reasoningText ? `${result.reasoningText.length} chars` : undefined,
+							reasoningTokens: (() => {
+								const anthropicMetadata = result.providerMetadata?.anthropic;
+								if (anthropicMetadata && typeof anthropicMetadata === "object" && "usage" in anthropicMetadata) {
+									const usage = anthropicMetadata.usage;
+									if (usage && typeof usage === "object" && "reasoningTokens" in usage) {
+										return usage.reasoningTokens;
+									}
+								}
+								return undefined;
+							})(),
 						});
 					},
 				}),

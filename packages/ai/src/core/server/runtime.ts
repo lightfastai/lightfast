@@ -142,6 +142,7 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 	// Create UI message stream response with proper options
 	const streamOptions: UIMessageStreamOptions<TMessage> = {
 		generateMessageId: generateId,
+		sendReasoning: true, // Enable sending reasoning parts to the client
 		onFinish: async ({ messages: finishedMessages, responseMessage }) => {
 			// Save the assistant's response to memory
 			if (responseMessage && responseMessage.role === "assistant") {

@@ -8,9 +8,10 @@ import { Markdown } from "@/components/markdown";
 import { ThinkingMessage } from "@/components/thinking-message";
 import { ToolCallRenderer } from "@/components/tool-renderers/tool-call-renderer";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
-import { isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
+import { isReasoningPart, isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
 
 interface ChatMessagesProps {
 	messages: LightfastUIMessage[];
@@ -19,7 +20,7 @@ interface ChatMessagesProps {
 
 // Extended message type that includes runtime status
 interface MessageWithRuntimeStatus extends LightfastUIMessage {
-	runtimeStatus?: "thinking" | "streaming" | "done";
+	runtimeStatus?: "thinking" | "streaming" | "reasoning" | "done";
 }
 
 function ScrollButton() {
@@ -134,6 +135,9 @@ function MessageItem({
 	}
 
 	// For assistant messages, render parts in order
+	// Check if we have any reasoning parts
+	const hasReasoningPart = message.parts?.some((part) => isReasoningPart(part));
+	
 	return (
 		<div
 			className={cn(
@@ -145,13 +149,33 @@ function MessageItem({
 		>
 			<div className="mx-auto max-w-3xl px-4 space-y-4">
 				{/* Show thinking animation at top of assistant message based on runtime status */}
-				{message.runtimeStatus && <ThinkingMessage status={message.runtimeStatus} show={true} className="mb-2" />}
+				{message.runtimeStatus && (
+					<ThinkingMessage 
+						status={hasReasoningPart && message.runtimeStatus === "streaming" ? "reasoning" : message.runtimeStatus} 
+						show={true} 
+					/>
+				)}
 				{message.parts?.map((part, index) => {
 					// Text part
 					if (isTextPart(part)) {
 						return (
 							<div key={`${message.id}-part-${index}`} className="w-full">
 								<Markdown>{part.text}</Markdown>
+							</div>
+						);
+					}
+
+					// Reasoning part
+					if (isReasoningPart(part)) {
+						return (
+							<div key={`${message.id}-part-${index}`} className="w-full">
+								<div className="border border-muted h-[200px]">
+									<ScrollArea className="h-full">
+										<div className="p-4">
+											<p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">{part.text}</p>
+										</div>
+									</ScrollArea>
+								</div>
 							</div>
 						);
 					}

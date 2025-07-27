@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { ThinkingAnimation } from "./thinking-animation";
 
 interface ThinkingMessageProps {
-	status: "thinking" | "streaming" | "done";
+	status: "thinking" | "streaming" | "reasoning" | "done";
 	show: boolean;
 	className?: string;
 }
@@ -15,6 +15,7 @@ export function ThinkingMessage({ status, show, className }: ThinkingMessageProp
 	const statusText = {
 		thinking: "Thinking",
 		streaming: "Streaming",
+		reasoning: "Reasoning",
 		done: "Done",
 	}[status];
 

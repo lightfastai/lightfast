@@ -67,6 +67,12 @@ export function isTextPart(part: LightfastUIMessagePart): part is Extract<Lightf
 	return part.type === "text";
 }
 
+export function isReasoningPart(
+	part: LightfastUIMessagePart,
+): part is Extract<LightfastUIMessagePart, { type: "reasoning" }> {
+	return part.type === "reasoning";
+}
+
 export function isToolPart(part: LightfastUIMessagePart): boolean {
 	return typeof part.type === "string" && part.type.startsWith("tool-");
 }
