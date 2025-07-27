@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createAgent } from "@lightfast/ai/agent";
 import { fetchRequestHandler } from "@lightfast/ai/agent/handlers";
 import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
+import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfast/ai/agent/primitives/cache";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware, currentSpan, initLogger, traced } from "braintrust";
 import { A011_SYSTEM_PROMPT } from "@/app/ai/agents/a011";
@@ -99,6 +100,19 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 					name: "a011",
 					system: A011_SYSTEM_PROMPT,
 					tools: a011Tools,
+					// 🔍 CLINE-INSPIRED CACHING STRATEGY:
+					// Using Cline AI assistant's proven approach for Anthropic cache breakpoints:
+					// 1. Always cache system prompt (biggest efficiency gain, works with thinking)
+					// 2. Cache last 2 user messages only (strategic conversation breakpoints)
+					// 3. Up to 4 breakpoints total (within Anthropic's limits)
+					//
+					// This strategy is confirmed to work with thinking models!
+					cache: new AnthropicProviderCache({
+						strategy: new ClineConversationStrategy({
+							cacheSystemPrompt: true,
+							recentUserMessagesToCache: 2,
+						}),
+					}),
 					createRuntimeContext: ({ threadId, resourceId }): AppRuntimeContext => ({
 						// Create agent-specific context
 						// The agent can use threadId and resourceId if needed
@@ -138,23 +152,21 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 					},
 					onChunk: ({ chunk }) => {
 						if (chunk.type === "tool-call") {
-							console.log("Tool called:", chunk.toolName);
-
 							// Test strong typing - these should work with our actual tools
 							if (chunk.toolName === "fileWrite") {
-								console.log("File write tool called");
+								// File write tool called
 							} else if (chunk.toolName === "webSearch") {
-								console.log("Web search called");
+								// Web search called
 							} else if (chunk.toolName === "todoWrite") {
-								console.log("Todo write tool called");
+								// Todo write tool called
 							} else if (chunk.toolName === "fileRead") {
-								console.log("File read tool called");
+								// File read tool called
 							} else if (chunk.toolName === "todoRead") {
-								console.log("Todo read tool called");
+								// Todo read tool called
 							} else if (chunk.toolName === "createSandbox") {
-								console.log("Creating sandbox");
+								// Creating sandbox
 							} else if (chunk.toolName === "executeSandboxCommand") {
-								console.log("Executing sandbox command");
+								// Executing sandbox command
 							}
 						}
 					},
@@ -174,27 +186,9 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 								reasoning: result.reasoning,
 								reasoningText: result.reasoningText,
 								providerMetadata: result.providerMetadata,
+								// Include cache metrics
+								cacheMetrics: cacheStats,
 							},
-						});
-
-						// Keep existing console logging
-						console.log("a011 finished:", {
-							finishReason: result.finishReason,
-							usage: result.usage,
-							textLength: result.text?.length,
-							// Log thinking metadata
-							reasoning: result.reasoning ? `${result.reasoning.length} reasoning parts` : undefined,
-							reasoningText: result.reasoningText ? `${result.reasoningText.length} chars` : undefined,
-							reasoningTokens: (() => {
-								const anthropicMetadata = result.providerMetadata?.anthropic;
-								if (anthropicMetadata && typeof anthropicMetadata === "object" && "usage" in anthropicMetadata) {
-									const usage = anthropicMetadata.usage;
-									if (usage && typeof usage === "object" && "reasoningTokens" in usage) {
-										return usage.reasoningTokens;
-									}
-								}
-								return undefined;
-							})(),
 						});
 					},
 				}),

@@ -39,6 +39,10 @@
 			"types": "./src/core/memory/adapters/redis.ts",
 			"default": "./src/core/memory/adapters/redis.ts"
 		},
+		"./agent/primitives/cache": {
+			"types": "./src/core/primitives/cache/index.ts",
+			"default": "./src/core/primitives/cache/index.ts"
+		},
 		"./providers": {
 			"types": "./src/utils/providers.ts",
 			"default": "./src/utils/providers.ts"

@@ -1,6 +1,7 @@
-import { convertToModelMessages, streamText, type Tool, type ToolSet, type UIMessage } from "ai";
+import { type CoreMessage, convertToModelMessages, streamText, type Tool, type ToolSet, type UIMessage } from "ai";
 import type { Memory } from "../memory";
 import type { SystemContext } from "../server/adapters/types";
+import type { ProviderCache } from "./cache";
 import type { ToolFactory, ToolFactorySet } from "./tool";
 
 // Helper function to resolve tools from factories
@@ -81,6 +82,8 @@ export interface AgentOptions<TTools extends ToolSet | ToolFactorySet<any> = Too
 	tools: TTools | ((context: TRuntimeContext) => TTools);
 	// Required: function to create runtime context from request parameters
 	createRuntimeContext: (params: { threadId: string; resourceId: string }) => TRuntimeContext;
+	// Optional: provider-specific cache implementation
+	cache?: ProviderCache;
 	// Optional: tool choice and stop conditions with strong typing based on the resolved tools
 	toolChoice?: StreamTextParameters<ResolvedTools<TTools>>["toolChoice"];
 	stopWhen?: StreamTextParameters<ResolvedTools<TTools>>["stopWhen"];
@@ -100,6 +103,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 	private tools: TTools | ((context: TRuntimeContext) => TTools);
 	private createRuntimeContext: (params: { threadId: string; resourceId: string }) => TRuntimeContext;
 	private system: string;
+	private cache?: ProviderCache;
 	private toolChoice?: StreamTextParameters<ResolvedTools<TTools>>["toolChoice"];
 	private stopWhen?: StreamTextParameters<ResolvedTools<TTools>>["stopWhen"];
 	private onChunk?: StreamTextParameters<ResolvedTools<TTools>>["onChunk"];
@@ -115,6 +119,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 			system,
 			tools,
 			createRuntimeContext,
+			cache,
 			toolChoice,
 			stopWhen,
 			onChunk,
@@ -130,6 +135,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		this.tools = tools;
 		this.createRuntimeContext = createRuntimeContext;
 		this.system = system;
+		this.cache = cache;
 		this.generateId = uuidv4;
 
 		// Store base configuration (all streamText properties except excluded ones)
@@ -182,14 +188,42 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 			throw new Error("Model must be configured");
 		}
 
+		// Convert system config to messages with cache control
+		let systemMessages: CoreMessage[] = [];
+		let modelMessages: CoreMessage[];
+
+		if (this.cache) {
+			// Use provider cache implementation
+			systemMessages = this.cache.applySystemCaching(this.system);
+
+			// Convert messages to model messages
+			const baseModelMessages = convertToModelMessages(messages, { tools: resolvedTools });
+
+			// Apply message caching
+			modelMessages = this.cache.applyMessageCaching(baseModelMessages, messages);
+		} else {
+			// No cache provider - use simple system message
+			systemMessages.push({
+				role: "system",
+				content: this.system,
+			});
+
+			// Convert messages without caching
+			modelMessages = convertToModelMessages(messages, { tools: resolvedTools });
+		}
+
+		// Prepend system messages to the model messages
+		// This way we maintain proper typing
+		const allModelMessages = [...systemMessages, ...modelMessages];
+
+
 		// Create properly typed parameters for streamText
 		// We know resolvedTools is a ToolSet at runtime, so we can safely type the parameters
 		const streamTextParams: Parameters<typeof streamText<ToolSet>>[0] = {
-			// Spread all streamText config properties
+			// Spread all streamText config properties (includes headers, providerOptions, etc.)
 			...streamTextConfig,
-			// Override with our specific handling
-			system: this.system,
-			messages: convertToModelMessages(messages, { tools: resolvedTools }),
+			// Override with our specific handling - no more system parameter
+			messages: allModelMessages,
 			tools: resolvedTools,
 			// These callbacks need to be cast because they're typed with ResolvedTools<TTools>
 			// but streamText expects them typed with ToolSet. This is safe because
@@ -204,6 +238,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 			prepareStep: this.prepareStep as StreamTextParameters<ToolSet>["prepareStep"],
 			experimental_transform: this.experimental_transform as StreamTextParameters<ToolSet>["experimental_transform"],
 		};
+
 
 		// Return the stream result with necessary metadata
 		return {
