@@ -16,7 +16,7 @@ catalog:
   "@upstash/redis": "^1.35.1"
   "@vercel/blob": "^1.1.1"
   "@vercel/sandbox": "^0.0.13"
-  "braintrust": "^0.1.1"
+  "braintrust": "^0.2.1"
   "exa-js": "^1.8.22"
   "playwright": "^1.54.1"
   "playwright-core": "^1.54.1"

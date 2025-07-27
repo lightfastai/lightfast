@@ -97,7 +97,8 @@ export async function processMessages<TMessage extends UIMessage = UIMessage>(
 export async function streamChat<TMessage extends UIMessage = UIMessage, TRequestContext = {}>(
 	options: StreamChatOptions<TMessage, TRequestContext>,
 ): Promise<Result<Response, ApiError>> {
-	const { agent, threadId, messages, memory, resourceId, systemContext, requestContext, generateId, enableResume } = options;
+	const { agent, threadId, messages, memory, resourceId, systemContext, requestContext, generateId, enableResume } =
+		options;
 
 	// Validate thread
 	const threadValidation = await validateThread(memory, threadId, resourceId);

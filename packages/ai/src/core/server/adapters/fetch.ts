@@ -1,9 +1,9 @@
 import type { UIMessage } from "ai";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
-import type { RequestContext, SystemContext } from "./types";
 import { type ApiError, GenericBadRequestError, MethodNotAllowedError, NoMessagesError, toApiError } from "../errors";
 import { resumeStream, streamChat } from "../runtime";
+import type { RequestContext, SystemContext } from "./types";
 
 /**
  * Helper to convert ApiError to Response
@@ -17,7 +17,7 @@ function errorToResponse(error: ApiError): Response {
 
 export interface FetchRequestHandlerOptions<
 	TAgent extends Agent<any, any>,
-	TRequestContext extends RequestContext = RequestContext
+	TRequestContext extends RequestContext = RequestContext,
 > {
 	agent: TAgent;
 	threadId: string;
@@ -70,10 +70,8 @@ export interface FetchRequestHandlerOptions<
  */
 export async function fetchRequestHandler<
 	TAgent extends Agent<any, any>,
-	TRequestContext extends RequestContext = RequestContext
->(
-	options: FetchRequestHandlerOptions<TAgent, TRequestContext>
-): Promise<Response> {
+	TRequestContext extends RequestContext = RequestContext,
+>(options: FetchRequestHandlerOptions<TAgent, TRequestContext>): Promise<Response> {
 	const { agent, threadId, memory, req, resourceId, createRequestContext, generateId, enableResume, onError } = options;
 
 	try {

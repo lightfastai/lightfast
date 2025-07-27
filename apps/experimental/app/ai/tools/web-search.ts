@@ -1,48 +1,52 @@
 import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
+import { currentSpan, wrapTraced } from "braintrust";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
 import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
 
 /**
- * Create web search tool with injected runtime context
+ * Wrapped web search execution function with Braintrust tracing
  */
-export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Advanced web search with optimized content retrieval using Exa",
-	inputSchema: z.object({
-		query: z.string().describe("The search query"),
-		useAutoprompt: z.boolean().default(true).describe("Whether to enhance the query automatically"),
-		numResults: z.number().min(1).max(10).default(5).describe("Number of results to return"),
-		contentType: z
-			.enum(["highlights", "summary", "text"])
-			.default("highlights")
-			.describe("Type of content to retrieve: highlights (excerpts), summary (AI-generated), or text (full)"),
-		maxCharacters: z
-			.number()
-			.min(100)
-			.max(5000)
-			.default(2000)
-			.describe("Maximum characters per result when using text content type"),
-		summaryQuery: z
-			.string()
-			.optional()
-			.describe("Custom query for generating summaries (only used with summary content type)"),
-		includeDomains: z.array(z.string()).optional().describe("Domains to include in search results"),
-		excludeDomains: z.array(z.string()).optional().describe("Domains to exclude from search results"),
-	}),
-	execute: async ({
-		query,
-		useAutoprompt,
-		numResults,
-		contentType,
-		maxCharacters,
-		summaryQuery,
-		includeDomains,
-		excludeDomains,
-	}, context) => {
+const executeWebSearch = wrapTraced(
+	async function executeWebSearch(
+		{
+			query,
+			useAutoprompt,
+			numResults,
+			contentType,
+			maxCharacters,
+			summaryQuery,
+			includeDomains,
+			excludeDomains,
+		}: {
+			query: string;
+			useAutoprompt: boolean;
+			numResults: number;
+			contentType: "highlights" | "summary" | "text";
+			maxCharacters: number;
+			summaryQuery?: string;
+			includeDomains?: string[];
+			excludeDomains?: string[];
+		},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
 			const exa = new Exa(env.EXA_API_KEY);
+
+			// Log initial search metadata
+			currentSpan().log({
+				metadata: {
+					query,
+					contentType,
+					numResults,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
 
 			// Build search options with proper typing
 			const baseOptions: RegularSearchOptions = {
@@ -105,6 +109,14 @@ export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>({
 				}
 			}
 
+			// Log search results metadata
+			currentSpan().log({
+				metadata: {
+					resultCount: response.results.length,
+					autopromptUsed: !!response.autopromptString,
+				},
+			});
+
 			// Calculate estimated tokens (rough estimate: 1 token ≈ 4 characters)
 			let totalCharacters = 0;
 			const results = response.results.map((result) => {
@@ -139,6 +151,17 @@ export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>({
 		} catch (error) {
 			console.error("Web search error:", error);
 
+			// Log error to Braintrust span
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: error instanceof Error ? error.message : "Unknown error",
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						query,
+					},
+				},
+			});
+
 			// Handle specific error types with user-friendly messages
 			if (error instanceof Error) {
 				if (error.message.includes("API key")) {
@@ -159,4 +182,34 @@ export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>({
 			throw new Error("An unexpected error occurred during web search. Please try again.");
 		}
 	},
+	{ type: "tool", name: "webSearch" },
+);
+
+/**
+ * Create web search tool with injected runtime context
+ */
+export const webSearchTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Advanced web search with optimized content retrieval using Exa",
+	inputSchema: z.object({
+		query: z.string().describe("The search query"),
+		useAutoprompt: z.boolean().default(true).describe("Whether to enhance the query automatically"),
+		numResults: z.number().min(1).max(10).default(5).describe("Number of results to return"),
+		contentType: z
+			.enum(["highlights", "summary", "text"])
+			.default("highlights")
+			.describe("Type of content to retrieve: highlights (excerpts), summary (AI-generated), or text (full)"),
+		maxCharacters: z
+			.number()
+			.min(100)
+			.max(5000)
+			.default(2000)
+			.describe("Maximum characters per result when using text content type"),
+		summaryQuery: z
+			.string()
+			.optional()
+			.describe("Custom query for generating summaries (only used with summary content type)"),
+		includeDomains: z.array(z.string()).optional().describe("Domains to include in search results"),
+		excludeDomains: z.array(z.string()).optional().describe("Domains to exclude from search results"),
+	}),
+	execute: executeWebSearch,
 });

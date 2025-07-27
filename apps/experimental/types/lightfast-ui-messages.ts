@@ -9,7 +9,7 @@ import type {
 	fileFindInContentTool,
 	fileReadTool,
 	fileStringReplaceTool,
-	fileTool,
+	fileWriteTool,
 	getSandboxDomainTool,
 	listSandboxRoutesTool,
 	todoClearTool,
@@ -31,7 +31,7 @@ type ExtractToolType<T> = T extends (context: RuntimeContext<AppRuntimeContext>)
 // Define the tool set type using the helper
 // This matches the structure passed to streamText() in route.ts
 export type LightfastToolSet = {
-	file: InferUITool<ExtractToolType<typeof fileTool>>;
+	fileWrite: InferUITool<ExtractToolType<typeof fileWriteTool>>;
 	fileRead: InferUITool<ExtractToolType<typeof fileReadTool>>;
 	fileDelete: InferUITool<ExtractToolType<typeof fileDeleteTool>>;
 	fileStringReplace: InferUITool<ExtractToolType<typeof fileStringReplaceTool>>;

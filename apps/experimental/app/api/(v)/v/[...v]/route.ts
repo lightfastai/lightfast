@@ -12,7 +12,7 @@ import {
 	fileFindInContentTool,
 	fileReadTool,
 	fileStringReplaceTool,
-	fileTool,
+	fileWriteTool,
 } from "@/app/ai/tools/file";
 import {
 	createSandboxTool,
@@ -30,7 +30,7 @@ import { uuidv4 } from "@/lib/uuidv4";
 // Create tools object for agent
 const a011Tools = {
 	// File tools
-	file: fileTool,
+	fileWrite: fileWriteTool,
 	fileRead: fileReadTool,
 	fileDelete: fileDeleteTool,
 	fileStringReplace: fileStringReplaceTool,
@@ -124,8 +124,8 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 						console.log("Tool called:", chunk.toolName);
 
 						// Test strong typing - these should work with our actual tools
-						if (chunk.toolName === "file") {
-							console.log("File tool called");
+						if (chunk.toolName === "fileWrite") {
+							console.log("File write tool called");
 						} else if (chunk.toolName === "webSearch") {
 							console.log("Web search called");
 						} else if (chunk.toolName === "todoWrite") {

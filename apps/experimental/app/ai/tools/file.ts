@@ -1,28 +1,45 @@
 import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import { del, head, list, put } from "@vercel/blob";
+import { wrapTraced, currentSpan } from "braintrust";
 import { z } from "zod";
 import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
 
 /**
- * Create file write tool with injected runtime context
+ * Wrapped file write execution function with Braintrust tracing
  */
-export const fileTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Write markdown content to a .md file in blob storage",
-	inputSchema: z.object({
-		filename: z.string().describe("Filename to save (must end with .md, e.g., 'analysis.md', 'report.md')"),
-		content: z.string().describe("Markdown content to write to the file"),
-		contentType: z.string().optional().describe("MIME type (defaults to text/markdown for .md files)"),
-		metadata: z.record(z.string()).optional().describe("Optional metadata to attach to the file"),
-	}),
-	execute: async ({ filename, content, contentType, metadata }, context) => {
+const executeFileWrite = wrapTraced(
+	async function executeFileWrite(
+		{ filename, content, contentType, metadata }: {
+			filename: string;
+			content: string;
+			contentType?: string;
+			metadata?: Record<string, string>;
+		},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
 			// Always organize files by thread ID
 			const fullPath = `threads/${context.threadId}/${filename}`;
 
 			// Auto-detect content type if not provided
 			const finalContentType = contentType || getContentType(filename) || "text/plain";
+
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					filename,
+					fullPath,
+					contentType: finalContentType,
+					contentLength: content.length,
+					hasMetadata: !!metadata,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
 
 			// Write to blob storage
 			const blob = await put(fullPath, content, {
@@ -42,6 +59,16 @@ export const fileTool = createTool<RuntimeContext<AppRuntimeContext>>({
 			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						filename,
+					},
+				},
+			});
 			return {
 				success: false,
 				threadId: context.threadId,
@@ -49,25 +76,42 @@ export const fileTool = createTool<RuntimeContext<AppRuntimeContext>>({
 			};
 		}
 	},
+	{ type: "tool", name: "fileWrite" },
+);
+
+/**
+ * Create file write tool with injected runtime context
+ */
+export const fileWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Write content to a new file or overwrite an existing file in blob storage",
+	inputSchema: z.object({
+		filename: z.string().describe("Filename to save as (e.g., 'data.json', 'report.md')"),
+		content: z.string().describe("Content to write to the file"),
+		contentType: z.string().optional().describe("MIME type (auto-detected if not provided)"),
+		metadata: z.record(z.string()).optional().describe("Optional metadata to attach to the file"),
+	}),
+	execute: executeFileWrite,
 });
 
 /**
- * Create file read tool with injected runtime context
+ * Wrapped file read execution function with Braintrust tracing
  */
-export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Read content from a file in blob storage",
-	inputSchema: z.object({
-		filename: z.string().describe("Filename to read (e.g., 'analysis.md')"),
-		url: z.string().optional().describe("Direct blob URL (alternative to path)"),
-	}),
-	execute: async ({ filename, url: directUrl }, context) => {
+const executeFileRead = wrapTraced(
+	async function executeFileRead(
+		{ filename, url: directUrl }: {
+			filename: string;
+			url?: string;
+		},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
 			let blobUrl = directUrl;
+			let fullPath = "";
 
 			// If filename provided, construct the URL
 			if (!blobUrl && filename) {
 				// Build the full path based on thread ID
-				const fullPath = `threads/${context.threadId}/${filename}`;
+				fullPath = `threads/${context.threadId}/${filename}`;
 
 				// Get blob metadata to construct URL
 				const blobMeta = await head(fullPath, {
@@ -79,6 +123,19 @@ export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 			if (!blobUrl) {
 				throw new Error("No filename or URL provided");
 			}
+
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					filename,
+					fullPath,
+					hasDirectUrl: !!directUrl,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
 
 			// Fetch the content
 			const response = await fetch(blobUrl);
@@ -100,6 +157,15 @@ export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 				}
 			}
 
+			// Log successful read
+			currentSpan().log({
+				metadata: {
+					contentLength: content.length,
+					contentType,
+					hasMetadata: Object.keys(metadata).length > 0,
+				},
+			});
+
 			return {
 				success: true,
 				content,
@@ -111,6 +177,16 @@ export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						filename,
+					},
+				},
+			});
 			return {
 				success: false,
 				threadId: context.threadId,
@@ -118,26 +194,54 @@ export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 			};
 		}
 	},
+	{ type: "tool", name: "fileRead" },
+);
+
+/**
+ * Create file read tool with injected runtime context
+ */
+export const fileReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Read content from a file in blob storage",
+	inputSchema: z.object({
+		filename: z.string().describe("Filename to read (e.g., 'analysis.md')"),
+		url: z.string().optional().describe("Direct blob URL (alternative to path)"),
+	}),
+	execute: executeFileRead,
 });
 
 /**
- * Create file delete tool with injected runtime context
+ * Wrapped file delete execution function with Braintrust tracing
  */
-export const fileDeleteTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Delete a file from blob storage",
-	inputSchema: z.object({
-		filename: z.string().describe("Filename to delete (e.g., 'analysis.md')"),
-		url: z.string().optional().describe("Direct blob URL (alternative to path)"),
-	}),
-	execute: async ({ filename, url: directUrl }, context) => {
+const executeFileDelete = wrapTraced(
+	async function executeFileDelete(
+		{ filename, url: directUrl }: {
+			filename: string;
+			url?: string;
+		},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
+			let fullPath = "";
+			
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					filename,
+					hasDirectUrl: !!directUrl,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
+
 			if (directUrl) {
 				await del(directUrl, {
 					token: env.BLOB_READ_WRITE_TOKEN,
 				});
 			} else if (filename) {
 				// Build the full path based on thread ID
-				const fullPath = `threads/${context.threadId}/${filename}`;
+				fullPath = `threads/${context.threadId}/${filename}`;
 
 				await del(fullPath, {
 					token: env.BLOB_READ_WRITE_TOKEN,
@@ -152,32 +256,68 @@ export const fileDeleteTool = createTool<RuntimeContext<AppRuntimeContext>>({
 			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						filename,
+					},
+				},
+			});
 			return {
 				success: false,
 				message: `Failed to delete file: ${errorMessage}`,
 			};
 		}
 	},
+	{ type: "tool", name: "fileDelete" },
+);
+
+/**
+ * Create file delete tool with injected runtime context
+ */
+export const fileDeleteTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Delete a file from blob storage",
+	inputSchema: z.object({
+		filename: z.string().describe("Filename to delete (e.g., 'analysis.md')"),
+		url: z.string().optional().describe("Direct blob URL (alternative to path)"),
+	}),
+	execute: executeFileDelete,
 });
 
 /**
- * Create string replacement tool with injected runtime context
+ * Wrapped file string replace execution function with Braintrust tracing
  */
-export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Replace specified string in a file with new content",
-	inputSchema: z.object({
-		filename: z.string().describe("Filename to modify (e.g., 'config.json')"),
-		oldString: z.string().describe("Exact string to find and replace"),
-		newString: z.string().describe("New string to replace with"),
-		replaceAll: z
-			.boolean()
-			.default(false)
-			.describe("Whether to replace all occurrences (default: false, replaces first only)"),
-	}),
-	execute: async ({ filename, oldString, newString, replaceAll }, context) => {
+const executeFileStringReplace = wrapTraced(
+	async function executeFileStringReplace(
+		{ filename, oldString, newString, replaceAll }: {
+			filename: string;
+			oldString: string;
+			newString: string;
+			replaceAll?: boolean;
+		},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
 			// Build the full path based on thread ID
 			const fullPath = `threads/${context.threadId}/${filename}`;
+
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					filename,
+					fullPath,
+					oldStringLength: oldString.length,
+					newStringLength: newString.length,
+					replaceAll: !!replaceAll,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
 
 			// First read the current file content
 			const blobMeta = await head(fullPath, {
@@ -222,6 +362,14 @@ export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext
 				token: env.BLOB_READ_WRITE_TOKEN,
 			});
 
+			// Log successful replacement
+			currentSpan().log({
+				metadata: {
+					replacements,
+					newContentLength: content.length,
+				},
+			});
+
 			return {
 				success: true,
 				replacements,
@@ -230,6 +378,16 @@ export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext
 			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						filename,
+					},
+				},
+			});
 			return {
 				success: false,
 				replacements: 0,
@@ -238,23 +396,57 @@ export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext
 			};
 		}
 	},
+	{ type: "tool", name: "fileStringReplace" },
+);
+
+/**
+ * Create string replacement tool with injected runtime context
+ */
+export const fileStringReplaceTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Replace specified string in a file with new content",
+	inputSchema: z.object({
+		filename: z.string().describe("Filename to modify (e.g., 'config.json')"),
+		oldString: z.string().describe("Exact string to find and replace"),
+		newString: z.string().describe("New string to replace with"),
+		replaceAll: z
+			.boolean()
+			.default(false)
+			.describe("Whether to replace all occurrences (default: false, replaces first only)"),
+	}),
+	execute: executeFileStringReplace,
 });
 
 /**
- * Create find in content tool with injected runtime context
+ * Wrapped find in content execution function with Braintrust tracing
  */
-export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Search for text patterns within file content using regex",
-	inputSchema: z.object({
-		filename: z.string().describe("Filename to search in (e.g., 'config.json')"),
-		regex: z.string().describe("Regular expression pattern to search for"),
-		caseSensitive: z.boolean().default(true).describe("Whether search should be case sensitive"),
-		maxMatches: z.number().default(10).describe("Maximum number of matches to return"),
-	}),
-	execute: async ({ filename, regex, caseSensitive, maxMatches }, context) => {
+const executeFindInContent = wrapTraced(
+	async function executeFindInContent(
+		{ filename, regex, caseSensitive, maxMatches }: {
+			filename: string;
+			regex: string;
+			caseSensitive?: boolean;
+			maxMatches?: number;
+		},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
 			// Build the full path based on thread ID
 			const fullPath = `threads/${context.threadId}/${filename}`;
+
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					filename,
+					fullPath,
+					regex,
+					caseSensitive: !!caseSensitive,
+					maxMatches: maxMatches || 10,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
 
 			// Read file content
 			const blobMeta = await head(fullPath, {
@@ -301,6 +493,15 @@ export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext
 				}
 			});
 
+			// Log results
+			currentSpan().log({
+				metadata: {
+					matchesFound: matches.length,
+					fileSize: content.length,
+					lineCount: lines.length,
+				},
+			});
+
 			return {
 				success: true,
 				matches,
@@ -310,6 +511,17 @@ export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext
 			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						filename,
+						regex,
+					},
+				},
+			});
 			return {
 				success: false,
 				matches: [],
@@ -319,22 +531,51 @@ export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext
 			};
 		}
 	},
+	{ type: "tool", name: "fileFindInContent" },
+);
+
+/**
+ * Create find in content tool with injected runtime context
+ */
+export const fileFindInContentTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Search for text patterns within file content using regex",
+	inputSchema: z.object({
+		filename: z.string().describe("Filename to search in (e.g., 'config.json')"),
+		regex: z.string().describe("Regular expression pattern to search for"),
+		caseSensitive: z.boolean().default(true).describe("Whether search should be case sensitive"),
+		maxMatches: z.number().default(10).describe("Maximum number of matches to return"),
+	}),
+	execute: executeFindInContent,
 });
 
 /**
- * Create find by name tool with injected runtime context
+ * Wrapped find by name execution function with Braintrust tracing
  */
-export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Find files by name pattern within the current thread's file storage",
-	inputSchema: z.object({
-		globPattern: z.string().describe("Glob pattern to match filenames (e.g., '*.md', 'config.*', 'data-*.json')"),
-		includeContent: z.boolean().default(false).describe("Whether to include file content preview in results"),
-		maxContentChars: z.number().default(200).describe("Maximum characters to include in content preview"),
-	}),
-	execute: async ({ globPattern, includeContent, maxContentChars }, context) => {
+const executeFindByName = wrapTraced(
+	async function executeFindByName(
+		{ globPattern, includeContent, maxContentChars }: {
+			globPattern: string;
+			includeContent?: boolean;
+			maxContentChars?: number;
+		},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
 			// Build the thread prefix to list all blobs in this thread
 			const threadPrefix = `threads/${context.threadId}/`;
+
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					globPattern,
+					includeContent: !!includeContent,
+					maxContentChars: maxContentChars || 200,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
 
 			// List all blobs with the thread prefix
 			const { blobs } = await list({
@@ -395,6 +636,14 @@ export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>(
 				}
 			}
 
+			// Log results
+			currentSpan().log({
+				metadata: {
+					totalBlobs: blobs.length,
+					matchingFiles: matchingFiles.length,
+				},
+			});
+
 			return {
 				success: true,
 				files: matchingFiles,
@@ -404,6 +653,16 @@ export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>(
 			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						globPattern,
+					},
+				},
+			});
 			return {
 				success: false,
 				files: [],
@@ -413,6 +672,20 @@ export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>(
 			};
 		}
 	},
+	{ type: "tool", name: "fileFindByName" },
+);
+
+/**
+ * Create find by name tool with injected runtime context
+ */
+export const fileFindByNameTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Find files by name pattern within the current thread's file storage",
+	inputSchema: z.object({
+		globPattern: z.string().describe("Glob pattern to match filenames (e.g., '*.md', 'config.*', 'data-*.json')"),
+		includeContent: z.boolean().default(false).describe("Whether to include file content preview in results"),
+		maxContentChars: z.number().default(200).describe("Maximum characters to include in content preview"),
+	}),
+	execute: executeFindByName,
 });
 
 /**

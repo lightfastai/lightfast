@@ -46,7 +46,8 @@ export function createTool<
 	execute: (
 		input: z.infer<TInputSchema>,
 		context: TRuntimeContext,
-	) => Promise<TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown>
+	) =>
+		| Promise<TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown>
 		| (TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown);
 }): ToolFactory<TRuntimeContext> {
 	return (context: TRuntimeContext) => {

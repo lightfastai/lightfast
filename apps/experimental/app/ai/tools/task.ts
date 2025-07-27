@@ -1,6 +1,7 @@
 import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { createTool } from "@lightfast/ai/tool";
 import { del, put } from "@vercel/blob";
+import { currentSpan, wrapTraced } from "braintrust";
 import { z } from "zod";
 import type { AppRuntimeContext } from "@/app/ai/types";
 import { env } from "@/env";
@@ -19,16 +20,44 @@ const taskSchema = z.object({
 type Task = z.infer<typeof taskSchema>;
 
 /**
- * Create todo write tool with injected runtime context
+ * Wrapped todo write execution function with Braintrust tracing
  */
-export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description:
-		"Create and update a todo list for the current conversation thread. Use this tool to plan multi-step tasks, track progress, and ensure nothing is forgotten.",
-	inputSchema: z.object({
-		tasks: z.array(taskSchema).describe("The updated task list"),
-	}),
-	execute: async ({ tasks }, context) => {
+const executeTodoWrite = wrapTraced(
+	async function executeTodoWrite(
+		{ tasks }: {
+			tasks: Task[];
+		},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
+			// Count task statuses
+			const completedCount = tasks.filter((t: Task) => t.status === "completed").length;
+			const pendingCount = tasks.filter((t: Task) => t.status === "pending").length;
+			const inProgressCount = tasks.filter((t: Task) => t.status === "in_progress").length;
+			const cancelledCount = tasks.filter((t: Task) => t.status === "cancelled").length;
+
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					taskCount: tasks.length,
+					statusBreakdown: {
+						pending: pendingCount,
+						inProgress: inProgressCount,
+						completed: completedCount,
+						cancelled: cancelledCount,
+					},
+					taskPriorities: {
+						high: tasks.filter(t => t.priority === "high").length,
+						medium: tasks.filter(t => t.priority === "medium").length,
+						low: tasks.filter(t => t.priority === "low").length,
+					},
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
+
 			// Generate markdown content
 			const todoContent = generateTodoMarkdown(tasks);
 
@@ -41,10 +70,6 @@ export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
 				token: env.BLOB_READ_WRITE_TOKEN,
 			});
 
-			const completedCount = tasks.filter((t: Task) => t.status === "completed").length;
-			const pendingCount = tasks.filter((t: Task) => t.status === "pending").length;
-			const inProgressCount = tasks.filter((t: Task) => t.status === "in_progress").length;
-
 			return {
 				success: true,
 				message: `Todo list updated: ${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed`,
@@ -54,27 +79,62 @@ export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
 					pending: pendingCount,
 					inProgress: inProgressCount,
 					completed: completedCount,
-					cancelled: tasks.filter((t: Task) => t.status === "cancelled").length,
+					cancelled: cancelledCount,
 				},
 			};
 		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+					},
+				},
+			});
 			return {
 				success: false,
-				message: `Failed to update todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
+				message: `Failed to update todo list: ${errorMessage}`,
 			};
 		}
 	},
+	{ type: "tool", name: "todoWrite" },
+);
+
+/**
+ * Create todo write tool with injected runtime context
+ */
+export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description:
+		"Create and update a todo list for the current conversation thread. Use this tool to plan multi-step tasks, track progress, and ensure nothing is forgotten.",
+	inputSchema: z.object({
+		tasks: z.array(taskSchema).describe("The updated task list"),
+	}),
+	execute: executeTodoWrite,
 });
 
 /**
- * Create todo read tool with injected runtime context
+ * Wrapped todo read execution function with Braintrust tracing
  */
-export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Read the current todo list for this conversation thread",
-	inputSchema: z.object({}),
-	execute: async ({}, context) => {
+const executeTodoRead = wrapTraced(
+	async function executeTodoRead(
+		{}: {},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
 			const blobPath = `todos/shared/${context.threadId}/todo.md`;
+
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					blobPath,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
 
 			// Try to fetch the blob
 			const response = await fetch(`https://vercel.blob.store/${blobPath}`);
@@ -96,6 +156,20 @@ export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 			const completedCount = tasks.filter((t: Task) => t.status === "completed").length;
 			const pendingCount = tasks.filter((t: Task) => t.status === "pending").length;
 			const inProgressCount = tasks.filter((t: Task) => t.status === "in_progress").length;
+			const cancelledCount = tasks.filter((t: Task) => t.status === "cancelled").length;
+
+			// Log task statistics
+			currentSpan().log({
+				metadata: {
+					taskCount: tasks.length,
+					statusBreakdown: {
+						pending: pendingCount,
+						inProgress: inProgressCount,
+						completed: completedCount,
+						cancelled: cancelledCount,
+					},
+				},
+			});
 
 			return {
 				success: true,
@@ -106,28 +180,61 @@ export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 					pending: pendingCount,
 					inProgress: inProgressCount,
 					completed: completedCount,
-					cancelled: tasks.filter((t: Task) => t.status === "cancelled").length,
+					cancelled: cancelledCount,
 				},
 			};
 		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+					},
+				},
+			});
 			return {
 				success: false,
-				message: `Failed to read todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
+				message: `Failed to read todo list: ${errorMessage}`,
 				tasks: [],
 			};
 		}
 	},
+	{ type: "tool", name: "todoRead" },
+);
+
+/**
+ * Create todo read tool with injected runtime context
+ */
+export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Read the current todo list for this conversation thread",
+	inputSchema: z.object({}),
+	execute: executeTodoRead,
 });
 
 /**
- * Create todo clear tool with injected runtime context
+ * Wrapped todo clear execution function with Braintrust tracing
  */
-export const todoClearTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Clear the todo list for the current conversation thread",
-	inputSchema: z.object({}),
-	execute: async ({}, context) => {
+const executeTodoClear = wrapTraced(
+	async function executeTodoClear(
+		{}: {},
+		context: RuntimeContext<AppRuntimeContext>,
+	) {
 		try {
 			const blobPath = `todos/shared/${context.threadId}/todo.md`;
+
+			// Log metadata
+			currentSpan().log({
+				metadata: {
+					blobPath,
+					contextInfo: {
+						threadId: context.threadId,
+						resourceId: context.resourceId,
+					},
+				},
+			});
+
 			await del(blobPath, {
 				token: env.BLOB_READ_WRITE_TOKEN,
 			});
@@ -137,12 +244,32 @@ export const todoClearTool = createTool<RuntimeContext<AppRuntimeContext>>({
 				message: "Todo list cleared for this thread",
 			};
 		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+					},
+				},
+			});
 			return {
 				success: false,
-				message: `Failed to clear todo list: ${error instanceof Error ? error.message : "Unknown error"}`,
+				message: `Failed to clear todo list: ${errorMessage}`,
 			};
 		}
 	},
+	{ type: "tool", name: "todoClear" },
+);
+
+/**
+ * Create todo clear tool with injected runtime context
+ */
+export const todoClearTool = createTool<RuntimeContext<AppRuntimeContext>>({
+	description: "Clear the todo list for the current conversation thread",
+	inputSchema: z.object({}),
+	execute: executeTodoClear,
 });
 
 /**

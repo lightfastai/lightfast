@@ -1,19 +1,22 @@
 import { convertToModelMessages, streamText, type Tool, type ToolSet, type UIMessage } from "ai";
-import type { ToolFactory, ToolFactorySet } from "./tool";
 import type { Memory } from "../memory";
 import type { SystemContext } from "../server/adapters/types";
+import type { ToolFactory, ToolFactorySet } from "./tool";
 
 // Helper function to resolve tools from factories
 function resolveToolFactories<TRuntimeContext = unknown>(
-	toolsOrFactories: ToolSet | ToolFactorySet<TRuntimeContext> | ((context: TRuntimeContext) => ToolSet | ToolFactorySet<TRuntimeContext>),
-	context: TRuntimeContext
+	toolsOrFactories:
+		| ToolSet
+		| ToolFactorySet<TRuntimeContext>
+		| ((context: TRuntimeContext) => ToolSet | ToolFactorySet<TRuntimeContext>),
+	context: TRuntimeContext,
 ): ToolSet {
 	// First resolve if it's a function
-	const resolved = typeof toolsOrFactories === 'function' ? toolsOrFactories(context) : toolsOrFactories;
-	
+	const resolved = typeof toolsOrFactories === "function" ? toolsOrFactories(context) : toolsOrFactories;
+
 	// Check if it's a ToolFactorySet by checking if the first property is a function
 	const firstKey = Object.keys(resolved)[0];
-	if (firstKey && typeof resolved[firstKey] === 'function') {
+	if (firstKey && typeof resolved[firstKey] === "function") {
 		// It's a ToolFactorySet, resolve each factory
 		const toolSet: ToolSet = {};
 		for (const [key, factory] of Object.entries(resolved)) {
@@ -21,7 +24,7 @@ function resolveToolFactories<TRuntimeContext = unknown>(
 		}
 		return toolSet;
 	}
-	
+
 	// It's already a ToolSet
 	return resolved as ToolSet;
 }
@@ -70,9 +73,6 @@ export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRequestC
 	requestContext: TRequestContext;
 }
 
-
-
-
 export interface AgentOptions<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRuntimeContext = {}>
 	extends AgentConfig {
 	// Required: system prompt for the agent
@@ -93,7 +93,6 @@ export interface AgentOptions<TTools extends ToolSet | ToolFactorySet<any> = Too
 	prepareStep?: StreamTextParameters<ResolvedTools<TTools>>["prepareStep"];
 	experimental_transform?: StreamTextParameters<ResolvedTools<TTools>>["experimental_transform"];
 }
-
 
 export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRuntimeContext = {}> {
 	public readonly config: AgentConfig;
@@ -164,7 +163,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 
 		// Create agent-specific runtime context
 		const agentContext = this.createRuntimeContext({ threadId, resourceId });
-		
+
 		// Merge all three context levels: system -> request -> agent
 		const mergedContext = {
 			...systemContext,
@@ -222,7 +221,7 @@ export type ResolvedTools<T> = T extends ToolFactorySet<any>
  * Factory function to create an agent with proper type inference
  */
 export function createAgent<TTools extends ToolSet | ToolFactorySet<any>, TRuntimeContext = {}>(
-	options: AgentOptions<TTools, TRuntimeContext>
+	options: AgentOptions<TTools, TRuntimeContext>,
 ): Agent<TTools, TRuntimeContext> {
 	return new Agent(options);
 }
