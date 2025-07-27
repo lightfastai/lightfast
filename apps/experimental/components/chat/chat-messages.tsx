@@ -172,7 +172,7 @@ function MessageItem({
 					// Text part
 					if (isTextPart(part)) {
 						return (
-							<div key={`${message.id}-part-${index}`} className="w-full">
+							<div key={`${message.id}-part-${index}`} className="w-full px-4">
 								<Markdown>{part.text}</Markdown>
 							</div>
 						);

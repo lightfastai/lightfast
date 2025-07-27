@@ -186,8 +186,6 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 								reasoning: result.reasoning,
 								reasoningText: result.reasoningText,
 								providerMetadata: result.providerMetadata,
-								// Include cache metrics
-								cacheMetrics: cacheStats,
 							},
 						});
 					},
