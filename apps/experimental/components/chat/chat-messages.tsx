@@ -2,7 +2,7 @@
 
 import type { ChatStatus, ToolUIPart } from "ai";
 import { ArrowDown } from "lucide-react";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { Markdown } from "@/components/markdown";
 import { ThinkingMessage } from "@/components/thinking-message";
@@ -22,6 +22,19 @@ interface ChatMessagesProps {
 interface MessageWithRuntimeStatus extends LightfastUIMessage {
 	runtimeStatus?: "thinking" | "streaming" | "reasoning" | "done";
 }
+
+// Memoized reasoning block component
+const ReasoningBlock = memo(function ReasoningBlock({ text }: { text: string }) {
+	return (
+		<div className="border border-muted rounded-lg max-h-[200px] overflow-hidden">
+			<div className="max-h-[200px] overflow-y-auto">
+				<div className="p-4">
+					<p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap break-words">{text}</p>
+				</div>
+			</div>
+		</div>
+	);
+});
 
 function ScrollButton() {
 	const { isAtBottom, scrollToBottom } = useStickToBottomContext();
@@ -137,7 +150,7 @@ function MessageItem({
 	// For assistant messages, render parts in order
 	// Check if we have any reasoning parts
 	const hasReasoningPart = message.parts?.some((part) => isReasoningPart(part));
-	
+
 	return (
 		<div
 			className={cn(
@@ -150,9 +163,9 @@ function MessageItem({
 			<div className="mx-auto max-w-3xl px-4 space-y-4">
 				{/* Show thinking animation at top of assistant message based on runtime status */}
 				{message.runtimeStatus && (
-					<ThinkingMessage 
-						status={hasReasoningPart && message.runtimeStatus === "streaming" ? "reasoning" : message.runtimeStatus} 
-						show={true} 
+					<ThinkingMessage
+						status={hasReasoningPart && message.runtimeStatus === "streaming" ? "reasoning" : message.runtimeStatus}
+						show={true}
 					/>
 				)}
 				{message.parts?.map((part, index) => {
@@ -169,13 +182,7 @@ function MessageItem({
 					if (isReasoningPart(part)) {
 						return (
 							<div key={`${message.id}-part-${index}`} className="w-full">
-								<div className="border border-muted h-[200px]">
-									<ScrollArea className="h-full">
-										<div className="p-4">
-											<p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">{part.text}</p>
-										</div>
-									</ScrollArea>
-								</div>
+								<ReasoningBlock text={part.text} />
 							</div>
 						);
 					}

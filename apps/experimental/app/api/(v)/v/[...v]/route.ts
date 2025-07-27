@@ -117,6 +117,9 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 							},
 						} satisfies AnthropicProviderOptions,
 					},
+					headers: {
+						"anthropic-beta": "interleaved-thinking-2025-05-14",
+					},
 					experimental_transform: smoothStream({
 						delayInMs: 25,
 						chunking: "word",
