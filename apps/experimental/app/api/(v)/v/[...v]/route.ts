@@ -86,15 +86,6 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 				return Response.json({ error: "Agent not found" }, { status: 404 });
 			}
 
-			// Log initial request metadata
-			span.log({
-				metadata: {
-					agentId,
-					threadId,
-					userId,
-					method: req.method,
-				},
-			});
 
 			// Wrap the model with Braintrust middleware
 			const model = wrapLanguageModel({
@@ -158,7 +149,12 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 				onFinish: (result) => {
 					// Log to Braintrust span with full output
 					currentSpan().log({
-						output: result.text,
+						input: {
+							agentId,
+							threadId,
+							userId,
+						},
+						output: result.response?.messages || result.text,
 						metadata: {
 							finishReason: result.finishReason,
 							usage: result.usage,
@@ -166,10 +162,10 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 					});
 
 					// Keep existing console logging
-					console.log("a011 finished:", { 
-						finishReason: result.finishReason, 
+					console.log("a011 finished:", {
+						finishReason: result.finishReason,
 						usage: result.usage,
-						textLength: result.text?.length 
+						textLength: result.text?.length,
 					});
 				},
 			});
@@ -180,20 +176,6 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 				token: env.KV_REST_API_TOKEN,
 			});
 
-			// Log request body for POST requests
-			if (req.method === "POST") {
-				try {
-					const body = await req.clone().json();
-					if (body.messages) {
-						span.log({
-							input: body.messages,
-						});
-					}
-				} catch (error) {
-					// Body might not be JSON or already consumed
-					console.error("Could not log request body:", error);
-				}
-			}
 
 			// Pass everything to fetchRequestHandler
 			const response = await fetchRequestHandler({
@@ -214,13 +196,6 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 				},
 			});
 
-			// Log response status
-			span.log({
-				output: {
-					status: response.status,
-					statusText: response.statusText,
-				},
-			});
 
 			return response;
 		},
