@@ -81,7 +81,8 @@
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_press_key",
       "mcp__playwright__browser_navigate",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "WebFetch(domain:docs.upstash.com)"
     ],
     "deny": []
   },

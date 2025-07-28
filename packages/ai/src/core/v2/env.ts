@@ -97,6 +97,8 @@ export function getQstashConfig() {
 		qstashUrl: env.QSTASH_URL,
 		qstashToken: env.QSTASH_TOKEN,
 		topicPrefix: env.QSTASH_TOPIC_PREFIX,
+		directUrl: env.QSTASH_DIRECT_URL,
+		workerBaseUrl: env.WORKER_BASE_URL,
 	};
 }
 

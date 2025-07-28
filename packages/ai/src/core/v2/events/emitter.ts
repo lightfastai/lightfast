@@ -252,6 +252,16 @@ export class EventEmitter {
 			console.log(`Event published: ${event.type} [${event.id}]`);
 		} catch (error) {
 			console.error(`Failed to publish event ${event.type}:`, error);
+			
+			// In development, don't fail if topic doesn't exist
+			if (process.env.NODE_ENV === "development" && 
+				error instanceof Error && 
+				error.message.includes("topic") && 
+				error.message.includes("not found")) {
+				console.warn(`⚠️  Topic ${topic} not found. Skipping event publish in development.`);
+				return;
+			}
+			
 			throw new Error(`Event publish failed: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	}
