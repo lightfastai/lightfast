@@ -2,7 +2,7 @@
  * AgentLoopWorker - Core logic for processing agent loop events
  */
 
-import { generateObject } from "ai";
+import { streamText } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
 import { z } from "zod";
@@ -110,8 +110,8 @@ export class AgentLoopWorker {
 			return;
 		}
 
-		// Make a decision using generateObject
-		const decision = await this.makeDecision(session);
+		// Make a decision using streamText for immediate feedback
+		const decision = await this.makeDecision(session, sessionEmitter);
 
 		// Update iteration count
 		await this.incrementIteration(session.sessionId);
@@ -133,32 +133,78 @@ export class AgentLoopWorker {
 	}
 
 	/**
-	 * Make a decision using generateObject
+	 * Make a decision using streamText for immediate feedback
 	 */
-	private async makeDecision(session: AgentSessionState): Promise<AgentDecision> {
+	private async makeDecision(session: AgentSessionState, sessionEmitter: SessionEventEmitter): Promise<AgentDecision> {
 		// Build the system prompt
 		const systemPrompt = this.buildSystemPrompt(session);
 
 		// Prepare messages for the model
 		const messages = this.prepareMessages(session.messages);
 
-		// Generate the decision
-		const { object } = await generateObject({
+		let finalDecision: AgentDecision | null = null;
+
+		// Create a prompt that will naturally generate structured output
+		const structuredPrompt = `${systemPrompt}
+
+Please analyze the conversation and respond with your decision in the following JSON format:
+{
+  "action": "tool_call" | "respond" | "clarify",
+  "reasoning": "your reasoning here",
+  "toolCall": { "tool": "tool_name", "arguments": {...} } // only if action is tool_call
+  "response": "your response text" // only if action is respond
+  "clarification": "your clarification question" // only if action is clarify
+}
+
+Think through this step by step first, then provide your JSON decision.`;
+
+		// Stream the decision-making process
+		const { textStream } = await streamText({
 			model: gateway("anthropic/claude-3-5-sonnet-latest"),
-			schema: AgentDecisionSchema,
-			system: systemPrompt,
+			system: structuredPrompt,
 			messages,
 			temperature: session.temperature,
+			onFinish: async (result) => {
+				// Parse the structured decision from the full text
+				try {
+					const fullText = result.text;
+					const jsonMatch = fullText.match(/\{[\s\S]*\}/);
+					if (jsonMatch) {
+						const parsed = JSON.parse(jsonMatch[0]);
+						finalDecision = AgentDecisionSchema.parse(parsed);
+					}
+				} catch (error) {
+					console.error(`[AgentLoopWorker] Failed to parse decision from text:`, error);
+				}
+				
+				// Log the decision
+				console.log(`[AgentLoopWorker] Decision for session ${session.sessionId}:`, {
+					action: finalDecision?.action,
+					reasoning: finalDecision?.reasoning,
+					tool: finalDecision?.toolCall?.tool,
+				});
+			},
 		});
 
-		// Log the decision
-		console.log(`[AgentLoopWorker] Decision for session ${session.sessionId}:`, {
-			action: object.action,
-			reasoning: object.reasoning,
-			tool: object.toolCall?.tool,
-		});
+		// Stream the thinking process to Redis
+		for await (const chunk of textStream) {
+			if (chunk) {
+				await this.writeToStream(session.sessionId, {
+					type: "thinking",
+					content: chunk,
+					metadata: JSON.stringify({
+						event: "agent.thinking",
+						iteration: session.iteration + 1,
+					}),
+				});
+			}
+		}
+		
+		if (!finalDecision) {
+			throw new Error("Failed to get structured decision from streamText");
+		}
 
-		return object;
+		return finalDecision;
 	}
 
 	/**
@@ -187,7 +233,7 @@ ${toolsSection}
 
 Current iteration: ${session.iteration + 1}/${session.maxIterations}
 
-Always provide clear reasoning for your decision.`;
+Think through your reasoning step by step, then make your decision. Always provide clear reasoning for your decision.`;
 	}
 
 	/**
@@ -268,7 +314,7 @@ Always provide clear reasoning for your decision.`;
 	}
 
 	/**
-	 * Handle response decision
+	 * Handle response decision (streaming already happened in makeDecision)
 	 */
 	private async handleResponse(
 		session: AgentSessionState,
@@ -280,13 +326,13 @@ Always provide clear reasoning for your decision.`;
 			throw new Error("Response decision without response content");
 		}
 
-		// Add assistant message
+		// Add assistant message to conversation history
 		await this.addMessage(session.sessionId, {
 			role: "assistant",
 			content: decision.response,
 		});
 
-		// Write to stream
+		// Write final response to stream
 		await this.writeToStream(session.sessionId, {
 			type: "chunk",
 			content: decision.response,
@@ -309,7 +355,7 @@ Always provide clear reasoning for your decision.`;
 	}
 
 	/**
-	 * Handle clarification decision
+	 * Handle clarification decision (streaming already happened in makeDecision)
 	 */
 	private async handleClarification(
 		session: AgentSessionState,
@@ -321,13 +367,13 @@ Always provide clear reasoning for your decision.`;
 			throw new Error("Clarification decision without clarification content");
 		}
 
-		// Add assistant message
+		// Add assistant message to conversation history
 		await this.addMessage(session.sessionId, {
 			role: "assistant",
 			content: decision.clarification,
 		});
 
-		// Write to stream
+		// Write clarification to stream
 		await this.writeToStream(session.sessionId, {
 			type: "chunk",
 			content: decision.clarification,
@@ -400,6 +446,7 @@ Always provide clear reasoning for your decision.`;
 		const streamKey = `stream:${sessionId}`;
 		await this.redis.xadd(streamKey, "*", data);
 	}
+
 
 	private extractUsedTools(messages: Message[]): string[] {
 		const tools = new Set<string>();
