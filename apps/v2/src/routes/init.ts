@@ -3,16 +3,12 @@
  * Similar to /api/v2/stream/init but simplified for testing
  */
 
-import { getSystemLimits } from "@lightfast/ai/v2/core";
 import type { Message } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
-import { redis, eventEmitter, streamGenerator } from "../config";
+import { redis, eventEmitter, streamGenerator, SYSTEM_LIMITS } from "../config";
 
 const initRoutes = new Hono();
-
-// Get system limits
-const limits = getSystemLimits();
 
 // Request schema
 const InitRequestSchema = z.object({
@@ -25,7 +21,7 @@ const InitRequestSchema = z.object({
 	sessionId: z.string().optional(),
 	systemPrompt: z.string().optional(),
 	temperature: z.number().min(0).max(2).default(0.7),
-	maxIterations: z.number().min(1).max(50).default(limits.agentMaxIterations),
+	maxIterations: z.number().min(1).max(50).default(SYSTEM_LIMITS.agentMaxIterations),
 	tools: z.array(z.string()).optional(),
 	metadata: z.record(z.any()).optional(),
 });

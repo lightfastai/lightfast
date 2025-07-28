@@ -44,3 +44,10 @@ export const streamGenerator = new StreamGenerator(redis);
 
 // Create stream consumer instance
 export const streamConsumer = new StreamConsumer(redis);
+
+// System limits configuration
+export const SYSTEM_LIMITS = {
+	agentMaxIterations: Number(process.env.AGENT_MAX_ITERATIONS) || 10,
+	toolExecutionTimeout: Number(process.env.TOOL_EXECUTION_TIMEOUT) || 30000,
+	streamTTLSeconds: Number(process.env.STREAM_TTL_SECONDS) || 3600,
+};

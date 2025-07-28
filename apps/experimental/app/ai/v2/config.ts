@@ -80,6 +80,15 @@ export const streamGenerator = new StreamGenerator(redis);
 export const streamConsumer = new StreamConsumer(redis);
 
 /**
+ * System limits configuration
+ */
+export const SYSTEM_LIMITS = {
+	agentMaxIterations: Number(env.AGENT_MAX_ITERATIONS) || 10,
+	toolExecutionTimeout: Number(env.TOOL_EXECUTION_TIMEOUT) || 30000,
+	streamTTLSeconds: Number(env.STREAM_TTL_SECONDS) || 3600,
+};
+
+/**
  * Get all V2 infrastructure components
  */
 export function getV2Infrastructure() {
@@ -88,5 +97,6 @@ export function getV2Infrastructure() {
 		eventEmitter,
 		streamGenerator,
 		streamConsumer,
+		limits: SYSTEM_LIMITS,
 	};
 }

@@ -11,13 +11,10 @@
  * 5. Subsequent loops use event-driven processing
  */
 
-import { getSystemLimits, AgentLoopWorker } from "@lightfast/ai/v2/core";
+import { AgentLoopWorker } from "@lightfast/ai/v2/core";
 import type { Message } from "@lightfast/ai/v2/events";
 import { type NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter, streamGenerator } from "@/app/ai/v2/config";
-
-// Get system limits
-const limits = getSystemLimits();
+import { redis, eventEmitter, streamGenerator, SYSTEM_LIMITS } from "@/app/ai/v2/config";
 
 export async function POST(req: NextRequest) {
 	try {
@@ -26,7 +23,7 @@ export async function POST(req: NextRequest) {
 			sessionId: providedSessionId,
 			systemPrompt,
 			temperature = 0.7,
-			maxIterations = limits.agentMaxIterations,
+			maxIterations = SYSTEM_LIMITS.agentMaxIterations,
 			tools = [],
 			metadata = {},
 		} = await req.json();
@@ -129,7 +126,7 @@ export async function GET(req: NextRequest) {
 		}
 
 		// Get stream info
-		const streamInfo = await generator.getStreamInfo(sessionId);
+		const streamInfo = await streamGenerator.getStreamInfo(sessionId);
 
 		return NextResponse.json({
 			sessionId,
