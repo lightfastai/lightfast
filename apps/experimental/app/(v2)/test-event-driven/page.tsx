@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { AlertCircle, Bot, Calculator, Clock, Loader2, Play, RefreshCw, Settings, Trash2, Zap } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -109,8 +108,8 @@ export default function TestEventDrivenPage() {
 			}
 		};
 
-		// Handle specific event types
-		['chunk', 'status', 'event', 'tool', 'thinking', 'error', 'complete', 'completion'].forEach(eventType => {
+		// Handle specific event types including streaming chunks
+		['chunk', 'status', 'event', 'tool', 'thinking', 'error', 'complete', 'completion', 'metadata'].forEach(eventType => {
 			eventSource.addEventListener(eventType, (event) => {
 				try {
 					const data = JSON.parse(event.data);
@@ -123,7 +122,8 @@ export default function TestEventDrivenPage() {
 					};
 					setEvents(prev => [...prev, streamEvent]);
 
-					if (eventType === 'complete' || eventType === 'completion') {
+					if (eventType === 'complete' || eventType === 'completion' || 
+						(eventType === 'metadata' && data.status === 'completed')) {
 						setIsRunningTest(false);
 					}
 				} catch (err) {
@@ -215,6 +215,7 @@ export default function TestEventDrivenPage() {
 			case 'tool': return <Calculator className="h-4 w-4" />;
 			case 'thinking': return <Bot className="h-4 w-4" />;
 			case 'error': return <AlertCircle className="h-4 w-4" />;
+			case 'metadata': return <Settings className="h-4 w-4" />;
 			default: return <Clock className="h-4 w-4" />;
 		}
 	};
@@ -227,6 +228,7 @@ export default function TestEventDrivenPage() {
 			case 'tool': return 'text-purple-600';
 			case 'thinking': return 'text-orange-600';
 			case 'error': return 'text-red-600';
+			case 'metadata': return 'text-teal-600';
 			default: return 'text-gray-600';
 		}
 	};
@@ -406,16 +408,52 @@ export default function TestEventDrivenPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-4">
-							{/* Final Response */}
+							{/* Agent Thinking (Real-time Streaming) */}
+							{events.filter(e => e.type === 'thinking').length > 0 && (
+								<div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
+									<h4 className="font-medium mb-2 flex items-center gap-2">
+										<Bot className="h-4 w-4" />
+										Agent Thinking (Live Stream)
+									</h4>
+									<div className="space-y-2">
+										{/* Show live thinking stream */}
+										<div className="font-mono text-sm bg-background p-3 rounded border">
+											{events
+												.filter(e => e.type === 'thinking')
+												.map(e => e.content)
+												.join('')
+											}
+											{/* Show typing indicator if still streaming thinking */}
+											{isRunningTest && events.some(e => e.type === 'thinking') && <span className="animate-pulse text-orange-500">▋</span>}
+										</div>
+										
+										{/* Show thinking stats */}
+										<div className="text-xs text-muted-foreground">
+											Thinking tokens: {events.filter(e => e.type === 'thinking').length} • 
+											Live decision-making in progress
+										</div>
+									</div>
+								</div>
+							)}
+
+							{/* Final Response (After Decision) */}
 							{events.filter(e => e.type === 'chunk' && e.content && !e.content.includes('tool')).length > 0 && (
 								<div className="p-4 rounded-lg bg-primary/5 border">
-									<h4 className="font-medium mb-2">Response:</h4>
-									<div className="prose prose-sm">
-										{events
-											.filter(e => e.type === 'chunk' && e.content && !e.content.includes('tool'))
-											.map(e => e.content)
-											.join(' ')
-										}
+									<h4 className="font-medium mb-2">Final Response:</h4>
+									<div className="prose prose-sm space-y-2">
+										{/* Show final response */}
+										<div className="bg-background p-3 rounded border">
+											{events
+												.filter(e => e.type === 'chunk' && e.content && !e.content.includes('tool'))
+												.map(e => e.content)
+												.join(' ')
+											}
+										</div>
+										
+										{/* Show response stats */}
+										<div className="text-xs text-muted-foreground">
+											Response complete
+										</div>
 									</div>
 								</div>
 							)}
@@ -441,20 +479,6 @@ export default function TestEventDrivenPage() {
 								</div>
 							)}
 
-							{/* Agent Thinking */}
-							{events.filter(e => e.type === 'thinking').length > 0 && (
-								<div className="space-y-2">
-									<h4 className="font-medium">Agent Reasoning:</h4>
-									{events
-										.filter(e => e.type === 'thinking')
-										.map((event, index) => (
-											<div key={index} className="p-3 rounded-lg bg-orange-50 text-sm">
-												{event.content}
-											</div>
-										))
-									}
-								</div>
-							)}
 						</div>
 					</CardContent>
 				</Card>
@@ -483,16 +507,17 @@ export default function TestEventDrivenPage() {
 								<li>Qstash (Event Routing)</li>
 								<li>Redis Streams (State)</li>
 								<li>Server-Sent Events (SSE)</li>
-								<li>generateObject (Decisions)</li>
+								<li>streamText (Real-time Decisions)</li>
 								<li>Vercel AI SDK (LLM)</li>
 							</ul>
 						</div>
 						<div>
 							<h4 className="font-medium mb-2">Benefits</h4>
 							<ul className="list-disc list-inside space-y-1 text-muted-foreground">
+								<li>Optimized time-to-first-token</li>
+								<li>Real-time agent reasoning</li>
 								<li>Scalable beyond 6min limits</li>
 								<li>Fault-tolerant with retries</li>
-								<li>Real-time streaming</li>
 								<li>Resumable sessions</li>
 								<li>Event-driven architecture</li>
 							</ul>
