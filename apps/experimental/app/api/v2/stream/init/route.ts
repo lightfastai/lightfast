@@ -3,14 +3,15 @@
  * POST /api/v2/stream/init
  *
  * This replaces the old /api/v2/generate endpoint.
- * Instead of directly generating LLM output, this endpoint:
+ * Optimized for time-to-first-token by running the first loop immediately:
  * 1. Creates a new session
  * 2. Initializes Redis state
- * 3. Emits an agent.loop.init event to Qstash
+ * 3. Runs the first agent loop directly (no event delay)
  * 4. Returns the sessionId immediately
+ * 5. Subsequent loops use event-driven processing
  */
 
-import { createV2Infrastructure, getSystemLimits } from "@lightfast/ai/v2/core";
+import { createV2Infrastructure, getSystemLimits, AgentLoopWorker } from "@lightfast/ai/v2/core";
 import type { Message } from "@lightfast/ai/v2/events";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -69,14 +70,29 @@ export async function POST(req: NextRequest) {
 			metadata: JSON.stringify({ status: "initialized" }),
 		});
 
-		// Emit agent.loop.init event to start the agent loop
-		await eventEmitter.emitAgentLoopInit(sessionId, {
+		// For immediate streaming, run the first agent loop directly instead of emitting event
+		// This eliminates the delay from event routing for time-to-first-token optimization
+		const worker = new AgentLoopWorker(redis, eventEmitter);
+		
+		// Create agent loop init event structure (but don't emit it)
+		const agentLoopEvent = {
+			id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+			type: "agent.loop.init" as const,
+			sessionId,
+			timestamp: new Date().toISOString(),
+			version: "1.0" as const,
 			messages: messages as Message[],
 			systemPrompt,
 			temperature,
 			maxIterations,
 			tools,
 			metadata,
+		};
+
+		// Run the first agent loop immediately in the background
+		// Don't await this - let it stream while we return the response
+		worker.processEvent(agentLoopEvent).catch((error) => {
+			console.error(`[Stream Init] First agent loop failed for session ${sessionId}:`, error);
 		});
 
 		// Return session info immediately
