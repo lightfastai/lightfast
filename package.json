@@ -19,6 +19,7 @@
     "dev:docs": "turbo watch dev -F @lightfast/docs --continue",
     "dev:app": "turbo watch dev -F @lightfast/app --continue",
     "dev:auth": "turbo watch dev -F @lightfast/auth --continue",
+    "dev:darkarmy": "turbo watch dev -F @lightfast/darkarmy --continue",
     "dev:desktop": "pnpm --filter @lightfast/desktop dev",
     "dev:email": "turbo run dev:email -F @lightfast/www",
     "brain": "turbo run eval",
