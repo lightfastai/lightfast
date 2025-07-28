@@ -1,17 +1,18 @@
 /**
- * Event emitter for publishing events to Qstash
- * Provides type-safe event emission with automatic validation
+ * V2 Event System Emitter
+ * Handles publishing events to Qstash for distributed processing
  */
 
 import { Client } from "@upstash/qstash";
-import { nanoid } from "nanoid";
+import { EventSchema, EventType } from "./schemas";
 import type {
 	AgentLoopCompleteEvent,
-	AgentLoopErrorEvent,
 	AgentLoopInitEvent,
+	AgentLoopStartEvent,
+	AgentResponseEvent,
 	AgentToolCallEvent,
 	Event,
-	EventType,
+	Message,
 	StreamWriteEvent,
 	ToolExecutionCompleteEvent,
 	ToolExecutionFailedEvent,
@@ -19,23 +20,46 @@ import type {
 } from "./schemas";
 import {
 	AgentLoopCompleteEventSchema,
-	AgentLoopErrorEventSchema,
 	AgentLoopInitEventSchema,
+	AgentLoopStartEventSchema,
+	AgentResponseEventSchema,
 	AgentToolCallEventSchema,
-	EventSchema,
 	StreamWriteEventSchema,
 	ToolExecutionCompleteEventSchema,
 	ToolExecutionFailedEventSchema,
 	ToolExecutionStartEventSchema,
 } from "./schemas";
 
+/**
+ * Event types enum - defines all possible event types in the system
+ * Clients should use these constants instead of hardcoding strings
+ */
+export enum EventTypes {
+	// Agent Loop Events
+	AGENT_LOOP_INIT = "agent.loop.init",
+	AGENT_LOOP_START = "agent.loop.start",
+	AGENT_LOOP_COMPLETE = "agent.loop.complete",
+	AGENT_LOOP_ERROR = "agent.loop.error",
+	
+	// Agent Decision Events
+	AGENT_TOOL_CALL = "agent.tool.call",
+	AGENT_RESPONSE = "agent.response",
+	AGENT_CLARIFICATION = "agent.clarification",
+	
+	// Tool Execution Events
+	TOOL_EXECUTION_START = "tool.execution.start",
+	TOOL_EXECUTION_COMPLETE = "tool.execution.complete",
+	TOOL_EXECUTION_FAILED = "tool.execution.failed",
+	
+	// Stream Events
+	STREAM_WRITE = "stream.write",
+}
+
 export interface EventEmitterConfig {
 	qstashUrl: string;
 	qstashToken: string;
-	topicPrefix?: string;
-	// Direct URL mode configuration
-	directUrl?: string;
-	workerBaseUrl?: string;
+	baseUrl: string;
+	endpoints: Record<string, string>;
 	retryConfig?: {
 		retries?: number;
 		backoff?: "exponential" | "linear" | "constant";
@@ -44,32 +68,22 @@ export interface EventEmitterConfig {
 
 export class EventEmitter {
 	private client: Client;
-	private topicPrefix: string;
-	private directUrl?: string;
-	private workerBaseUrl?: string;
+	private config: EventEmitterConfig;
 
 	constructor(config: EventEmitterConfig) {
+		this.config = config;
 		this.client = new Client({
 			baseUrl: config.qstashUrl,
 			token: config.qstashToken,
 		});
-		this.topicPrefix = config.topicPrefix || "agent";
-		this.directUrl = config.directUrl;
-		this.workerBaseUrl = config.workerBaseUrl;
 	}
+
 
 	/**
 	 * Generate a unique event ID
 	 */
 	private generateEventId(): string {
-		return `evt_${nanoid(16)}`;
-	}
-
-	/**
-	 * Get the topic name for an event type
-	 */
-	private getTopicName(eventType: EventType): string {
-		return `${this.topicPrefix}.${eventType.replace(/\./g, "-")}`;
+		return `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 	}
 
 	/**
@@ -78,14 +92,13 @@ export class EventEmitter {
 	async emitAgentLoopInit(sessionId: string, data: AgentLoopInitEvent["data"]): Promise<void> {
 		const event: AgentLoopInitEvent = {
 			id: this.generateEventId(),
-			type: "agent.loop.init",
+			type: EventTypes.AGENT_LOOP_INIT,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
 			data,
 		};
 
-		// Validate event
 		const validated = AgentLoopInitEventSchema.parse(event);
 		await this.publishEvent(validated);
 	}
@@ -96,7 +109,7 @@ export class EventEmitter {
 	async emitAgentLoopComplete(sessionId: string, data: AgentLoopCompleteEvent["data"]): Promise<void> {
 		const event: AgentLoopCompleteEvent = {
 			id: this.generateEventId(),
-			type: "agent.loop.complete",
+			type: EventTypes.AGENT_LOOP_COMPLETE,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -110,18 +123,21 @@ export class EventEmitter {
 	/**
 	 * Emit an agent loop error event
 	 */
-	async emitAgentLoopError(sessionId: string, data: AgentLoopErrorEvent["data"]): Promise<void> {
-		const event: AgentLoopErrorEvent = {
+	async emitAgentLoopError(sessionId: string, error: Error): Promise<void> {
+		const event = {
 			id: this.generateEventId(),
-			type: "agent.loop.error",
+			type: EventTypes.AGENT_LOOP_ERROR,
 			sessionId,
 			timestamp: new Date().toISOString(),
-			version: "1.0",
-			data,
+			version: "1.0" as const,
+			data: {
+				error: error.message,
+				stack: error.stack,
+			},
 		};
 
-		const validated = AgentLoopErrorEventSchema.parse(event);
-		await this.publishEvent(validated);
+		// Note: We don't have a specific schema for error events yet
+		await this.publishEvent(event as Event);
 	}
 
 	/**
@@ -130,7 +146,7 @@ export class EventEmitter {
 	async emitAgentToolCall(sessionId: string, data: AgentToolCallEvent["data"]): Promise<void> {
 		const event: AgentToolCallEvent = {
 			id: this.generateEventId(),
-			type: "agent.tool.call",
+			type: EventTypes.AGENT_TOOL_CALL,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -142,29 +158,12 @@ export class EventEmitter {
 	}
 
 	/**
-	 * Emit a tool execution start event
-	 */
-	async emitToolExecutionStart(sessionId: string, data: ToolExecutionStartEvent["data"]): Promise<void> {
-		const event: ToolExecutionStartEvent = {
-			id: this.generateEventId(),
-			type: "tool.execution.start",
-			sessionId,
-			timestamp: new Date().toISOString(),
-			version: "1.0",
-			data,
-		};
-
-		const validated = ToolExecutionStartEventSchema.parse(event);
-		await this.publishEvent(validated);
-	}
-
-	/**
 	 * Emit a tool execution complete event
 	 */
 	async emitToolExecutionComplete(sessionId: string, data: ToolExecutionCompleteEvent["data"]): Promise<void> {
 		const event: ToolExecutionCompleteEvent = {
 			id: this.generateEventId(),
-			type: "tool.execution.complete",
+			type: EventTypes.TOOL_EXECUTION_COMPLETE,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -181,7 +180,7 @@ export class EventEmitter {
 	async emitToolExecutionFailed(sessionId: string, data: ToolExecutionFailedEvent["data"]): Promise<void> {
 		const event: ToolExecutionFailedEvent = {
 			id: this.generateEventId(),
-			type: "tool.execution.failed",
+			type: EventTypes.TOOL_EXECUTION_FAILED,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -198,7 +197,7 @@ export class EventEmitter {
 	async emitStreamWrite(sessionId: string, data: StreamWriteEvent["data"]): Promise<void> {
 		const event: StreamWriteEvent = {
 			id: this.generateEventId(),
-			type: "stream.write",
+			type: EventTypes.STREAM_WRITE,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -228,19 +227,21 @@ export class EventEmitter {
 	 * Publish an event to Qstash
 	 */
 	private async publishEvent(event: Event): Promise<void> {
-		// Check if we're in direct URL mode (for testing)
-		if (this.directUrl === "true" && this.workerBaseUrl) {
-			return this.publishEventDirectUrl(event);
+		// Always use direct URL publishing - we don't need URL groups
+		// since each event type maps to exactly one endpoint
+		const endpoint = this.config.endpoints[event.type];
+		if (!endpoint) {
+			console.warn(`No endpoint mapping for event type: ${event.type}`);
+			return;
 		}
 
-		// Normal topic-based publishing
-		const topic = this.getTopicName(event.type);
+		const url = `${this.config.baseUrl}${endpoint}`;
 
 		try {
 			await this.client.publishJSON({
-				topic,
+				url,
 				body: event,
-				retries: 3,
+				retries: this.config.retryConfig?.retries ?? 3,
 				delay: "10s", // Retry after 10 seconds
 				headers: {
 					"x-event-id": event.id,
@@ -249,49 +250,7 @@ export class EventEmitter {
 				},
 			});
 
-			console.log(`Event published: ${event.type} [${event.id}]`);
-		} catch (error) {
-			console.error(`Failed to publish event ${event.type}:`, error);
-			
-			// In development, don't fail if topic doesn't exist
-			if (process.env.NODE_ENV === "development" && 
-				error instanceof Error && 
-				error.message.includes("topic") && 
-				error.message.includes("not found")) {
-				console.warn(`⚠️  Topic ${topic} not found. Skipping event publish in development.`);
-				return;
-			}
-			
-			throw new Error(`Event publish failed: ${error instanceof Error ? error.message : String(error)}`);
-		}
-	}
-
-	/**
-	 * Publish event using direct URL (for testing without topic setup)
-	 */
-	private async publishEventDirectUrl(event: Event): Promise<void> {
-		const endpoint = this.getEndpointForEvent(event.type);
-		if (!endpoint) {
-			console.warn(`No endpoint mapping for event type: ${event.type}`);
-			return;
-		}
-
-		const url = `${this.workerBaseUrl}${endpoint}`;
-
-		try {
-			await this.client.publishJSON({
-				url,
-				body: event,
-				retries: 3,
-				delay: "10s",
-				headers: {
-					"x-event-id": event.id,
-					"x-event-type": event.type,
-					"x-session-id": event.sessionId,
-				},
-			});
-
-			console.log(`Event published via URL: ${event.type} [${event.id}] -> ${url}`);
+			console.log(`Event published: ${event.type} [${event.id}] -> ${url}`);
 		} catch (error) {
 			console.error(`Failed to publish event ${event.type} to ${url}:`, error);
 			throw new Error(`Event publish failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -299,30 +258,77 @@ export class EventEmitter {
 	}
 
 	/**
-	 * Get endpoint for event type (used in direct URL mode)
+	 * Emit an agent response event
 	 */
-	private getEndpointForEvent(eventType: string): string | undefined {
-		const endpoints: Record<string, string> = {
-			"agent.loop.init": "/api/v2/workers/agent-loop",
-			"agent.tool.call": "/api/v2/workers/tool-executor",
-			"tool.execution.complete": "/api/v2/workers/tool-result-complete",
-			"tool.execution.failed": "/api/v2/workers/tool-result-failed",
-			"agent.loop.complete": "/api/v2/workers/agent-complete",
+	async emitAgentResponse(sessionId: string, data: AgentResponseEvent["data"]): Promise<void> {
+		const event: AgentResponseEvent = {
+			id: this.generateEventId(),
+			type: EventTypes.AGENT_RESPONSE,
+			sessionId,
+			timestamp: new Date().toISOString(),
+			version: "1.0",
+			data,
 		};
-		return endpoints[eventType];
+
+		const validated = AgentResponseEventSchema.parse(event);
+		await this.publishEvent(validated);
 	}
 
 	/**
-	 * Create a scoped emitter for a specific session
+	 * Emit an agent clarification event
 	 */
-	forSession(sessionId: string): SessionEventEmitter {
-		return new SessionEventEmitter(this, sessionId);
+	async emitAgentClarification(sessionId: string, data: { question: string; context?: any }): Promise<void> {
+		const event = {
+			id: this.generateEventId(),
+			type: EventTypes.AGENT_CLARIFICATION,
+			sessionId,
+			timestamp: new Date().toISOString(),
+			version: "1.0" as const,
+			data,
+		};
+
+		// Note: We don't have a specific schema for clarification events yet
+		await this.publishEvent(event as Event);
+	}
+
+	/**
+	 * Emit an agent loop start event
+	 */
+	async emitAgentLoopStart(sessionId: string, data: AgentLoopStartEvent["data"]): Promise<void> {
+		const event: AgentLoopStartEvent = {
+			id: this.generateEventId(),
+			type: EventTypes.AGENT_LOOP_START,
+			sessionId,
+			timestamp: new Date().toISOString(),
+			version: "1.0",
+			data,
+		};
+
+		const validated = AgentLoopStartEventSchema.parse(event);
+		await this.publishEvent(validated);
+	}
+
+	/**
+	 * Emit a tool execution start event
+	 */
+	async emitToolExecutionStart(sessionId: string, data: ToolExecutionStartEvent["data"]): Promise<void> {
+		const event: ToolExecutionStartEvent = {
+			id: this.generateEventId(),
+			type: EventTypes.TOOL_EXECUTION_START,
+			sessionId,
+			timestamp: new Date().toISOString(),
+			version: "1.0",
+			data,
+		};
+
+		const validated = ToolExecutionStartEventSchema.parse(event);
+		await this.publishEvent(validated);
 	}
 }
 
 /**
  * Session-scoped event emitter
- * Automatically includes sessionId in all events
+ * Convenience wrapper that automatically includes sessionId
  */
 export class SessionEventEmitter {
 	constructor(
@@ -338,16 +344,12 @@ export class SessionEventEmitter {
 		return this.emitter.emitAgentLoopComplete(this.sessionId, data);
 	}
 
-	async emitAgentLoopError(data: AgentLoopErrorEvent["data"]): Promise<void> {
-		return this.emitter.emitAgentLoopError(this.sessionId, data);
+	async emitAgentLoopError(error: Error): Promise<void> {
+		return this.emitter.emitAgentLoopError(this.sessionId, error);
 	}
 
 	async emitAgentToolCall(data: AgentToolCallEvent["data"]): Promise<void> {
 		return this.emitter.emitAgentToolCall(this.sessionId, data);
-	}
-
-	async emitToolExecutionStart(data: ToolExecutionStartEvent["data"]): Promise<void> {
-		return this.emitter.emitToolExecutionStart(this.sessionId, data);
 	}
 
 	async emitToolExecutionComplete(data: ToolExecutionCompleteEvent["data"]): Promise<void> {
@@ -363,18 +365,3 @@ export class SessionEventEmitter {
 	}
 }
 
-/**
- * Create a default event emitter instance
- */
-export function createEventEmitter(config: EventEmitterConfig): EventEmitter {
-	return new EventEmitter(config);
-}
-
-/**
- * Create an event emitter with default configuration from environment
- */
-export function createDefaultEventEmitter(): EventEmitter {
-	// Import dynamically to avoid circular dependencies
-	const { getQstashConfig } = require("../env");
-	return new EventEmitter(getQstashConfig());
-}

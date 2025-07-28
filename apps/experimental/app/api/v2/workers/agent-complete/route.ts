@@ -4,9 +4,10 @@
  * This is the final step where the agent has finished processing
  */
 
-import { createRedisClient, StreamWriter } from "@lightfast/ai/v2/core";
+import { StreamWriter } from "@lightfast/ai/v2/core";
 import type { AgentLoopCompleteEvent } from "@lightfast/ai/v2/core";
 import { NextRequest, NextResponse } from "next/server";
+import { redis } from "@/app/ai/v2/config";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -15,8 +16,7 @@ export async function POST(request: NextRequest) {
 		
 		console.log(`[Agent Complete Handler] Processing complete event for session ${event.sessionId}`);
 
-		// Create Redis client for final updates
-		const redis = createRedisClient();
+		// Create stream writer for final updates
 		const streamWriter = new StreamWriter(redis);
 
 		// Update session status to completed

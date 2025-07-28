@@ -3,9 +3,10 @@
  * Handles agent.loop.init events from Qstash
  */
 
-import { AgentLoopWorker, createEventEmitter, createRedisClient } from "@lightfast/ai/v2/core";
+import { AgentLoopWorker } from "@lightfast/ai/v2/core";
 import type { AgentLoopInitEvent } from "@lightfast/ai/v2/core";
 import { NextRequest, NextResponse } from "next/server";
+import { redis, eventEmitter } from "@/app/ai/v2/config";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -13,16 +14,6 @@ export async function POST(request: NextRequest) {
 		const event: AgentLoopInitEvent = await request.json();
 		
 		console.log(`[Agent Loop Worker] Processing event ${event.id} for session ${event.sessionId}`);
-
-		// Create Redis client and event emitter
-		const redis = createRedisClient();
-		const eventEmitter = createEventEmitter({
-			qstashUrl: process.env.QSTASH_URL!,
-			qstashToken: process.env.QSTASH_TOKEN!,
-			topicPrefix: process.env.QSTASH_TOPIC_PREFIX || "agent",
-			directUrl: process.env.QSTASH_DIRECT_URL || "true",
-			workerBaseUrl: process.env.WORKER_BASE_URL || "http://localhost:3000"
-		});
 
 		// Create and run the agent loop worker
 		const worker = new AgentLoopWorker(redis, eventEmitter);

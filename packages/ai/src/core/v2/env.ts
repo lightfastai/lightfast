@@ -2,45 +2,28 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 /**
- * Environment configuration for V2 Event-Driven Architecture
- * This validates required environment variables for the event system
+ * AI package environment configuration preset for extending
+ * This can be used by apps to include AI package env vars
  */
-export const env = createEnv({
-	/**
-	 * Server-side environment variables schema
-	 */
+export const aiEnv = () => ({
 	server: {
 		// Redis Configuration (Required for streaming and state management)
 		KV_REST_API_URL: z.string().url().describe("Upstash Redis REST API URL"),
 		KV_REST_API_TOKEN: z.string().min(1).describe("Upstash Redis REST API token"),
 
 		// Qstash Event System (Required for event-driven architecture)
-		QSTASH_URL: z.string().url().default("https://qstash.upstash.io").describe("Qstash API URL"),
+		QSTASH_URL: z.string().url().describe("Qstash API URL"),
 		QSTASH_TOKEN: z.string().min(1).describe("Qstash authentication token"),
 
 		// AI Gateway (Required for LLM calls)
 		AI_GATEWAY_API_KEY: z.string().min(1).describe("Vercel AI Gateway API key"),
 
-		// Optional: Override default topic prefix
-		QSTASH_TOPIC_PREFIX: z.string().default("agent").optional().describe("Qstash topic prefix for events"),
-
-		// Optional: Worker URLs (for local development)
-		AGENT_LOOP_WORKER_URL: z.string().url().optional().describe("URL for agent loop worker"),
-		TOOL_EXECUTOR_URL: z.string().url().optional().describe("URL for tool executor worker"),
-
-		// Optional: Direct URL mode for testing
-		QSTASH_DIRECT_URL: z.string().optional().describe("Enable direct URL publishing mode"),
-		WORKER_BASE_URL: z.string().url().optional().describe("Base URL for worker endpoints in direct mode"),
 
 		// Optional: Timeouts and limits
 		AGENT_MAX_ITERATIONS: z.coerce.number().min(1).max(100).default(10).optional(),
 		TOOL_EXECUTION_TIMEOUT: z.coerce.number().min(1000).max(300000).default(30000).optional(),
 		STREAM_TTL_SECONDS: z.coerce.number().min(60).max(86400).default(3600).optional(),
 	},
-
-	/**
-	 * Runtime environment variables
-	 */
 	runtimeEnv: {
 		// Redis
 		KV_REST_API_URL: process.env.KV_REST_API_URL,
@@ -49,25 +32,25 @@ export const env = createEnv({
 		// Qstash
 		QSTASH_URL: process.env.QSTASH_URL,
 		QSTASH_TOKEN: process.env.QSTASH_TOKEN,
-		QSTASH_TOPIC_PREFIX: process.env.QSTASH_TOPIC_PREFIX,
 
 		// AI Gateway
 		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
 
-		// Worker URLs
-		AGENT_LOOP_WORKER_URL: process.env.AGENT_LOOP_WORKER_URL,
-		TOOL_EXECUTOR_URL: process.env.TOOL_EXECUTOR_URL,
-
-		// Direct URL mode
-		QSTASH_DIRECT_URL: process.env.QSTASH_DIRECT_URL,
-		WORKER_BASE_URL: process.env.WORKER_BASE_URL,
 
 		// Limits
 		AGENT_MAX_ITERATIONS: process.env.AGENT_MAX_ITERATIONS,
 		TOOL_EXECUTION_TIMEOUT: process.env.TOOL_EXECUTION_TIMEOUT,
 		STREAM_TTL_SECONDS: process.env.STREAM_TTL_SECONDS,
 	},
+});
 
+/**
+ * Environment configuration for V2 Event-Driven Architecture
+ * This validates required environment variables for the event system
+ */
+export const env = createEnv({
+	...aiEnv(),
+	
 	/**
 	 * Skip validation in certain environments
 	 */
@@ -96,9 +79,6 @@ export function getQstashConfig() {
 	return {
 		qstashUrl: env.QSTASH_URL,
 		qstashToken: env.QSTASH_TOKEN,
-		topicPrefix: env.QSTASH_TOPIC_PREFIX,
-		directUrl: env.QSTASH_DIRECT_URL,
-		workerBaseUrl: env.WORKER_BASE_URL,
 	};
 }
 

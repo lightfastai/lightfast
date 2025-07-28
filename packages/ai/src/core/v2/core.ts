@@ -9,9 +9,6 @@ export * from "./env";
 // Export event system
 export * from "./events";
 
-// Export factory functions
-export * from "./factories";
-
 // Export server components
 export * from "./server";
 

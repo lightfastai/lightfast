@@ -3,9 +3,9 @@
  * Handles agent.tool.call events from Qstash
  */
 
-import { createEventEmitter, createRedisClient } from "@lightfast/ai/v2/core";
 import type { AgentToolCallEvent } from "@lightfast/ai/v2/core";
 import { NextRequest, NextResponse } from "next/server";
+import { redis, eventEmitter } from "@/app/ai/v2/config";
 
 // Simple tool implementations
 async function executeTool(tool: string, args: Record<string, any>) {
@@ -51,16 +51,6 @@ export async function POST(request: NextRequest) {
 		const event: AgentToolCallEvent = await request.json();
 		
 		console.log(`[Tool Executor] Processing tool call ${event.data.toolCallId} for session ${event.sessionId}`);
-
-		// Create Redis client and event emitter
-		const redis = createRedisClient();
-		const eventEmitter = createEventEmitter({
-			qstashUrl: process.env.QSTASH_URL!,
-			qstashToken: process.env.QSTASH_TOKEN!,
-			topicPrefix: process.env.QSTASH_TOPIC_PREFIX || "agent",
-			directUrl: process.env.QSTASH_DIRECT_URL || "true",
-			workerBaseUrl: process.env.WORKER_BASE_URL || "http://localhost:3000"
-		});
 
 		const streamKey = `stream:${event.sessionId}`;
 		let success = false;

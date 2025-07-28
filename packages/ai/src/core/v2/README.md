@@ -179,16 +179,23 @@ interface BaseEvent {
 
 ### Event Emitter
 
-The event emitter provides type-safe methods for publishing events to Qstash.
+The event emitter provides type-safe methods for publishing events to Qstash. Events are published directly to worker endpoints (no URL groups needed).
 
 ```typescript
-import { createEventEmitter } from "@lightfast/ai/v2/events";
+import { EventEmitter, EventTypes } from "@lightfast/ai/v2/events";
 
-// Initialize emitter
-const emitter = createEventEmitter({
+// Initialize emitter with centralized config
+const emitter = new EventEmitter({
   qstashUrl: process.env.QSTASH_URL,
   qstashToken: process.env.QSTASH_TOKEN,
-  topicPrefix: "agent", // Optional, defaults to "agent"
+  baseUrl: "https://your-app.vercel.app",
+  endpoints: {
+    [EventTypes.AGENT_LOOP_INIT]: "/api/v2/workers/agent-loop",
+    [EventTypes.AGENT_TOOL_CALL]: "/api/v2/workers/tool-executor",
+    [EventTypes.TOOL_EXECUTION_COMPLETE]: "/api/v2/workers/tool-result-complete",
+    [EventTypes.TOOL_EXECUTION_FAILED]: "/api/v2/workers/tool-result-failed",
+    [EventTypes.AGENT_LOOP_COMPLETE]: "/api/v2/workers/agent-complete",
+  }
 });
 
 // Emit events with full type safety
@@ -212,14 +219,14 @@ await session.emitAgentToolCall({
 });
 ```
 
-### Event Topics
+### Event Routing
 
-Events are published to Qstash topics based on their type:
-- `agent.loop.init` → `agent.agent-loop-init`
-- `agent.tool.call` → `agent.agent-tool-call`
-- `tool.execution.complete` → `agent.tool-execution-complete`
+Events are published directly to worker endpoints:
+- `EventTypes.AGENT_LOOP_INIT` → `/api/v2/workers/agent-loop`
+- `EventTypes.AGENT_TOOL_CALL` → `/api/v2/workers/tool-executor`
+- `EventTypes.TOOL_EXECUTION_COMPLETE` → `/api/v2/workers/tool-result-complete`
 
-Workers subscribe to these topics to handle events.
+This direct URL approach eliminates the need for Qstash URL Groups since each event type maps to exactly one endpoint.
 
 ## Incremental Adoption Plan
 

@@ -11,12 +11,12 @@
  * 5. Subsequent loops use event-driven processing
  */
 
-import { createV2Infrastructure, getSystemLimits, AgentLoopWorker } from "@lightfast/ai/v2/core";
+import { getSystemLimits, AgentLoopWorker } from "@lightfast/ai/v2/core";
 import type { Message } from "@lightfast/ai/v2/events";
 import { type NextRequest, NextResponse } from "next/server";
+import { redis, eventEmitter, streamGenerator } from "@/app/ai/v2/config";
 
-// Initialize V2 infrastructure (singleton)
-const { redis, streamGenerator: generator, eventEmitter } = createV2Infrastructure();
+// Get system limits
 const limits = getSystemLimits();
 
 export async function POST(req: NextRequest) {
@@ -37,10 +37,10 @@ export async function POST(req: NextRequest) {
 		}
 
 		// Use provided session ID or generate new one
-		const sessionId = providedSessionId || generator.createSessionId();
+		const sessionId = providedSessionId || streamGenerator.createSessionId();
 
 		// Check if stream already exists
-		const exists = await generator.streamExists(sessionId);
+		const exists = await streamGenerator.streamExists(sessionId);
 		if (exists) {
 			return NextResponse.json({ error: "Session already exists", sessionId }, { status: 409 });
 		}

@@ -3,9 +3,10 @@
  * Handles tool.execution.complete events from Qstash
  */
 
-import { createEventEmitter, createRedisClient, ToolResultHandler } from "@lightfast/ai/v2/core";
+import { ToolResultHandler } from "@lightfast/ai/v2/core";
 import type { ToolExecutionCompleteEvent } from "@lightfast/ai/v2/core";
 import { NextRequest, NextResponse } from "next/server";
+import { redis, eventEmitter } from "@/app/ai/v2/config";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -13,16 +14,6 @@ export async function POST(request: NextRequest) {
 		const event: ToolExecutionCompleteEvent = await request.json();
 		
 		console.log(`[Tool Result Handler] Processing complete event for ${event.data.tool}`);
-
-		// Create Redis client and event emitter
-		const redis = createRedisClient();
-		const eventEmitter = createEventEmitter({
-			qstashUrl: process.env.QSTASH_URL!,
-			qstashToken: process.env.QSTASH_TOKEN!,
-			topicPrefix: process.env.QSTASH_TOPIC_PREFIX || "agent",
-			directUrl: process.env.QSTASH_DIRECT_URL || "true",
-			workerBaseUrl: process.env.WORKER_BASE_URL || "http://localhost:3000"
-		});
 
 		// Create and run the tool result handler
 		const handler = new ToolResultHandler(redis, eventEmitter);

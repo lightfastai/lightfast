@@ -1,12 +1,13 @@
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { createEnv } from "@t3-oss/env-nextjs";
+import { aiEnv } from "@lightfast/ai/v2/core";
 import { z } from "zod";
 
 export const env = createEnv({
 	/**
-	 * Extend from T3-OSS Vercel preset
+	 * Extend from T3-OSS Vercel preset and AI package env
 	 */
-	extends: [vercel()],
+	extends: [vercel(), aiEnv()],
 
 	/**
 	 * Specify your server-side environment variables schema here.
@@ -16,17 +17,10 @@ export const env = createEnv({
 		// Node environment
 		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
-		// Vercel environment detection
-		VERCEL: z.string().optional(),
-		VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
-
-		// KV Store for memory
-		KV_REST_API_URL: z.string().url(),
-		KV_REST_API_TOKEN: z.string().min(1),
+		// Additional KV tokens specific to www app
 		KV_REST_API_READ_ONLY_TOKEN: z.string().min(1),
 
-		// AI Provider API Keys
-		ANTHROPIC_API_KEY: z.string().min(1),
+		// Additional AI Provider API Keys for www app
 		OPENAI_API_KEY: z.string().min(1),
 		EXA_API_KEY: z.string().min(1),
 
@@ -46,22 +40,15 @@ export const env = createEnv({
 		// Vercel Blob Storage
 		BLOB_READ_WRITE_TOKEN: z.string().min(1),
 
-		// AI Gateway (required)
-		AI_GATEWAY_API_KEY: z.string().min(1),
-
-		// Redis & KV Store (additional)
+		// Additional Redis URLs
 		REDIS_URL: z.string().url(),
 		KV_URL: z.string().url(),
 
 		// Clerk Authentication
 		CLERK_SECRET_KEY: z.string().min(1),
 
-		// Qstash Event System
-		QSTASH_URL: z.string().url().default("https://qstash.upstash.io"),
-		QSTASH_TOKEN: z.string().min(1),
-		QSTASH_TOPIC_PREFIX: z.string().default("agent").optional(),
-		QSTASH_DIRECT_URL: z.string().optional(),
-		WORKER_BASE_URL: z.string().url().optional(),
+		// Additional AI keys
+		ANTHROPIC_API_KEY: z.string().min(1),
 	},
 
 	/**
@@ -79,17 +66,18 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	runtimeEnv: {
+		// Inherited from aiEnv() - no need to duplicate
+		...aiEnv().runtimeEnv,
+
 		// Node environment
 		NODE_ENV: process.env.NODE_ENV,
 		VERCEL: process.env.VERCEL,
 		VERCEL_ENV: process.env.VERCEL_ENV,
 
-		// KV Store for memory
-		KV_REST_API_URL: process.env.KV_REST_API_URL,
-		KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+		// Additional KV tokens
 		KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
 
-		// AI Provider API Keys
+		// Additional AI Provider API Keys
 		ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
 		OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 		EXA_API_KEY: process.env.EXA_API_KEY,
@@ -110,22 +98,12 @@ export const env = createEnv({
 		// Vercel Blob Storage
 		BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
 
-		// AI Gateway
-		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
-
-		// Redis & KV Store (additional)
+		// Additional Redis URLs
 		REDIS_URL: process.env.REDIS_URL,
 		KV_URL: process.env.KV_URL,
 
 		// Clerk Authentication
 		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-
-		// Qstash Event System
-		QSTASH_URL: process.env.QSTASH_URL,
-		QSTASH_TOKEN: process.env.QSTASH_TOKEN,
-		QSTASH_TOPIC_PREFIX: process.env.QSTASH_TOPIC_PREFIX,
-		QSTASH_DIRECT_URL: process.env.QSTASH_DIRECT_URL,
-		WORKER_BASE_URL: process.env.WORKER_BASE_URL,
 
 		// Client
 		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,

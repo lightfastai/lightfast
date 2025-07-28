@@ -3,9 +3,8 @@
  * Initiates test scenarios with Qstash event emission
  */
 
-import { createEventEmitter, createRedisClient, createStreamGenerator } from "@lightfast/ai/v2/core";
-import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
+import { redis, eventEmitter, streamGenerator } from "@/app/ai/v2/config";
 
 // Test scenarios matching the V2 test server
 const TEST_SCENARIOS = {
@@ -61,18 +60,7 @@ export async function POST(
 			);
 		}
 
-		// Create Redis client and event emitter
-		const redis = createRedisClient();
-		const eventEmitter = createEventEmitter({
-			qstashUrl: process.env.QSTASH_URL!,
-			qstashToken: process.env.QSTASH_TOKEN!,
-			topicPrefix: process.env.QSTASH_TOPIC_PREFIX || "agent",
-			directUrl: process.env.QSTASH_DIRECT_URL || "true", // Enable direct URL mode for testing
-			workerBaseUrl: process.env.WORKER_BASE_URL || "http://localhost:3000"
-		});
-
 		// Generate session ID
-		const streamGenerator = createStreamGenerator(redis);
 		const sessionId = streamGenerator.createSessionId();
 
 		// Initialize session data
