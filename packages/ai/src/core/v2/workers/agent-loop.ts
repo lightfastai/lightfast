@@ -23,9 +23,16 @@ export class AgentLoopWorker {
 	constructor(
 		private redis: Redis,
 		private eventEmitter: EventEmitter,
-		private config: WorkerConfig = {},
+		private config: Partial<WorkerConfig> = {},
 	) {
 		this.streamWriter = createStreamWriter(redis);
+		// Apply defaults
+		this.config = {
+			maxExecutionTime: 25000,
+			retryAttempts: 3,
+			retryDelay: 1000,
+			...config,
+		};
 	}
 
 	/**
@@ -142,7 +149,6 @@ export class AgentLoopWorker {
 			system: systemPrompt,
 			messages,
 			temperature: session.temperature,
-			maxTokens: 2000,
 		});
 
 		// Log the decision
@@ -207,7 +213,7 @@ Always provide clear reasoning for your decision.`;
 					// Format tool results as assistant messages
 					return {
 						role: "assistant" as const,
-						content: `Tool ${m.toolName} result: ${m.content}`,
+						content: `Tool result: ${m.content}`,
 					};
 				}
 				return {
@@ -398,8 +404,13 @@ Always provide clear reasoning for your decision.`;
 	private extractUsedTools(messages: Message[]): string[] {
 		const tools = new Set<string>();
 		messages.forEach((m) => {
-			if (m.role === "tool" && m.toolName) {
-				tools.add(m.toolName);
+			// Extract tool names from tool calls if available
+			if (m.toolCalls) {
+				m.toolCalls.forEach((toolCall: any) => {
+					if (toolCall.name) {
+						tools.add(toolCall.name);
+					}
+				});
 			}
 		});
 		return Array.from(tools);

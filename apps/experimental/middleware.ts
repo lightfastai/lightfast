@@ -3,7 +3,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // Define protected routes - everything except public routes
-const isProtectedRoute = createRouteMatcher(["/((?!sign-in|api/webhooks|api/cron|api/v2|\\(v2\\)).*)"]);
+const isProtectedRoute = createRouteMatcher([
+	"/((?!sign-in|api/webhooks|api/cron|api/v2|test-event-driven|test-resumable-stream|test-simple).*)"
+]);
 
 // Default agent
 const DEFAULT_AGENT: string = "a011";

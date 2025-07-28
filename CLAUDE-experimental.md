@@ -43,8 +43,14 @@ pnpm dlx shadcn@latest add <component-name>
 # Example: pnpm dlx shadcn@latest add dialog
 # Available components: https://ui.shadcn.com/docs/components
 
-# Run Next.js dev server in background
-pnpm dev > /tmp/nextjs-dev.log 2>&1 &
+# Development Server Management
+# IMPORTANT: Always use port 3000. Kill other processes if needed.
+
+# Kill any process using port 3000
+pkill -f "next dev"
+
+# Run Next.js dev server in background (from monorepo root)
+cd .. && pnpm dev:www > /tmp/nextjs-dev.log 2>&1 &
 
 # Check Next.js dev server logs
 cat /tmp/nextjs-dev.log

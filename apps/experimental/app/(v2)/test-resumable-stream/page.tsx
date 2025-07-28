@@ -27,10 +27,13 @@ export default function TestResumableStreamPage() {
 	const handleGenerate = async () => {
 		try {
 			setIsGenerating(true);
-			const response = await fetch("/api/v2/generate", {
+			const response = await fetch("/api/v2/stream/init", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ prompt }),
+				body: JSON.stringify({ 
+					messages: [{ role: "user", content: prompt }],
+					tools: [] // No tools for simple LLM generation
+				}),
 			});
 
 			if (!response.ok) {

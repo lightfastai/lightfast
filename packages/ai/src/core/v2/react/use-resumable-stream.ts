@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * React hook for auto-reconnecting SSE streams
  * Following the pattern from https://upstash.com/blog/resumable-llm-streams
@@ -121,7 +123,7 @@ export function useResumableStream(
 			reconnectAttemptsRef.current = 0;
 		};
 
-		// Handle messages
+		// Handle messages (generic data events)  
 		eventSource.onmessage = (event) => {
 			try {
 				const message: StreamMessage = JSON.parse(event.data);
@@ -141,6 +143,43 @@ export function useResumableStream(
 				console.error("Failed to parse message:", err);
 			}
 		};
+
+		// Handle typed SSE events from V2 architecture
+		['chunk', 'status', 'event', 'tool', 'thinking', 'error', 'complete', 'completion'].forEach(eventType => {
+			eventSource.addEventListener(eventType, (event: any) => {
+				try {
+					const data = JSON.parse(event.data);
+					const message: StreamMessage = {
+						id: event.lastEventId || Date.now().toString(),
+						type: eventType as any,
+						content: data.content || JSON.stringify(data),
+						metadata: data.metadata || data,
+						timestamp: new Date().toISOString(),
+						status: data.status,
+						error: data.error
+					};
+					setMessages((prev: StreamMessage[]) => [...prev, message]);
+
+					// Update status based on completion events
+					if (eventType === 'complete' || eventType === 'completion') {
+						setStatus("completed");
+						eventSource.close();
+					} else if (eventType === 'error') {
+						setError(new Error(data.content || data.error || 'Unknown error'));
+						setStatus("error");
+					}
+				} catch (err) {
+					// Fallback for non-JSON events
+					const message: StreamMessage = {
+						id: event.lastEventId || Date.now().toString(),
+						type: eventType as any,
+						content: event.data,
+						timestamp: new Date().toISOString()
+					};
+					setMessages((prev: StreamMessage[]) => [...prev, message]);
+				}
+			});
+		});
 
 		// Handle errors
 		eventSource.onerror = (event) => {

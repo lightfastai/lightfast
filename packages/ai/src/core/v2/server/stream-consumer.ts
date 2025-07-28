@@ -29,9 +29,11 @@ export class StreamConsumer {
 		const encoder = new TextEncoder();
 		const redis = this.redis; // Capture redis reference for closure
 
-		// Helper to format SSE messages
-		const formatSSE = (data: unknown): Uint8Array => {
-			return encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
+		// Helper to format SSE messages with proper event types
+		const formatSSE = (message: any): Uint8Array => {
+			const eventType = message.type || 'message';
+			const data = JSON.stringify(message);
+			return encoder.encode(`event: ${eventType}\ndata: ${data}\n\n`);
 		};
 
 		return new ReadableStream({

@@ -1,10 +1,8 @@
 /**
  * V2 Event-Driven Architecture exports
- * Full exports including React components
+ * Server-side only - NO React components
+ * React components are available via @lightfast/ai/v2/react
  */
 
-// Re-export all core functionality
+// Re-export all core functionality (server-side only)
 export * from "./core";
-
-// Export React hooks
-export * from "./react";

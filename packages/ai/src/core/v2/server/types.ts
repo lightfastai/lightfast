@@ -8,6 +8,11 @@ export const MessageType = {
 	METADATA: "metadata",
 	EVENT: "event",
 	ERROR: "error",
+	STATUS: "status",
+	TOOL: "tool",
+	THINKING: "thinking",
+	COMPLETE: "complete",
+	COMPLETION: "completion",
 } as const;
 
 export type MessageType = (typeof MessageType)[keyof typeof MessageType];
@@ -46,7 +51,53 @@ export interface ErrorMessage {
 	code?: string;
 }
 
-export type StreamMessage = ChunkMessage | MetadataMessage | EventMessage | ErrorMessage;
+// V2 Event-driven architecture message types
+export interface StatusMessage {
+	type: typeof MessageType.STATUS;
+	content: string;
+	metadata?: any;
+}
+
+export interface ToolMessage {
+	type: typeof MessageType.TOOL;
+	content: string;
+	metadata?: any;
+}
+
+export interface ThinkingMessage {
+	type: typeof MessageType.THINKING;
+	content: string;
+	metadata?: any;
+}
+
+export interface CompleteMessage {
+	type: typeof MessageType.COMPLETE | typeof MessageType.COMPLETION;
+	content: string;
+	metadata?: any;
+}
+
+// Extended StreamMessage with V2 types
+export type StreamMessage = 
+	| ChunkMessage 
+	| MetadataMessage 
+	| EventMessage 
+	| ErrorMessage
+	| StatusMessage
+	| ToolMessage
+	| ThinkingMessage
+	| CompleteMessage
+	| (BaseMessage & { type: string }); // Fallback for unknown types
+
+// Base message interface for flexibility
+export interface BaseMessage {
+	id?: string;
+	type: string;
+	content: string;
+	metadata?: any;
+	timestamp?: string;
+	status?: string;
+	error?: string;
+}
 
 // Redis stream entry format
 export interface RedisStreamEntry {
@@ -115,8 +166,46 @@ export function validateMessage(entry: any): StreamMessage | null {
 					code: fields.code,
 				};
 
+			case MessageType.STATUS:
+				return {
+					type: MessageType.STATUS,
+					content: fields.content || "",
+					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+				};
+
+			case MessageType.TOOL:
+				return {
+					type: MessageType.TOOL,
+					content: fields.content || "",
+					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+				};
+
+			case MessageType.THINKING:
+				return {
+					type: MessageType.THINKING,
+					content: fields.content || "",
+					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+				};
+
+			case MessageType.COMPLETE:
+			case MessageType.COMPLETION:
+				return {
+					type: type,
+					content: fields.content || "",
+					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+				};
+
 			default:
-				return null;
+				// Fallback for unknown types - return as BaseMessage
+				return {
+					id: fields.id,
+					type: type || "unknown",
+					content: fields.content || "",
+					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+					timestamp: fields.timestamp,
+					status: fields.status,
+					error: fields.error,
+				};
 		}
 	} catch (error) {
 		console.error("Failed to validate message:", error);

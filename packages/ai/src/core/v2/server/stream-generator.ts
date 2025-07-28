@@ -135,23 +135,59 @@ export class StreamGenerator {
 		// Add type-specific fields
 		switch (message.type) {
 			case MessageType.CHUNK:
-				fields.content = message.content;
+				if ('content' in message) {
+					fields.content = message.content;
+				}
 				break;
 			case MessageType.METADATA:
-				fields.status = message.status;
-				fields.sessionId = message.sessionId;
-				fields.timestamp = message.timestamp;
+				if ('status' in message && 'sessionId' in message && 'timestamp' in message) {
+					fields.status = message.status;
+					fields.sessionId = message.sessionId;
+					fields.timestamp = message.timestamp;
+				}
 				break;
 			case MessageType.EVENT:
-				fields.event = message.event;
-				if (message.data) {
-					fields.data = JSON.stringify(message.data);
+				if ('event' in message) {
+					fields.event = message.event;
+					if ('data' in message && message.data) {
+						fields.data = JSON.stringify(message.data);
+					}
 				}
 				break;
 			case MessageType.ERROR:
-				fields.error = message.error;
-				if (message.code) {
-					fields.code = message.code;
+				if ('error' in message && message.error) {
+					fields.error = message.error;
+					if ('code' in message && message.code) {
+						fields.code = message.code;
+					}
+				}
+				break;
+			case MessageType.STATUS:
+			case MessageType.TOOL:
+			case MessageType.THINKING:
+			case MessageType.COMPLETE:
+			case MessageType.COMPLETION:
+				// For V2 event types, store content and metadata
+				if ('content' in message) {
+					fields.content = message.content;
+				}
+				if ('metadata' in message && message.metadata) {
+					fields.metadata = JSON.stringify(message.metadata);
+				}
+				break;
+			default:
+				// For unknown types, store all available fields
+				if ('content' in message) {
+					fields.content = message.content;
+				}
+				if ('metadata' in message && message.metadata) {
+					fields.metadata = JSON.stringify(message.metadata);
+				}
+				if ('status' in message && message.status) {
+					fields.status = message.status;
+				}
+				if ('error' in message && message.error) {
+					fields.error = message.error;
 				}
 				break;
 		}

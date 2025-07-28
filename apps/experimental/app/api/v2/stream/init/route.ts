@@ -10,7 +10,7 @@
  * 4. Returns the sessionId immediately
  */
 
-import { createV2Infrastructure, getSystemLimits } from "@lightfast/ai/v2";
+import { createV2Infrastructure, getSystemLimits } from "@lightfast/ai/v2/core";
 import type { Message } from "@lightfast/ai/v2/events";
 import { type NextRequest, NextResponse } from "next/server";
 
