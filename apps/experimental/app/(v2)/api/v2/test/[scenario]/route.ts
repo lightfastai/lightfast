@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter, streamGenerator } from "@/app/ai/v2/config";
+import { redis, eventEmitter, streamGenerator } from "@/app/(v2)/ai/config";
 
 // Test scenarios matching the V2 test server
 const TEST_SCENARIOS = {

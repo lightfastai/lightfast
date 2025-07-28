@@ -7,7 +7,7 @@ import { RedisMemory } from "@lightfast/ai/agent/memory/adapters/redis";
 import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfast/ai/agent/primitives/cache";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware, currentSpan, initLogger, traced } from "braintrust";
-import { A011_SYSTEM_PROMPT } from "@/app/ai/agents/a011";
+import { A011_SYSTEM_PROMPT } from "@/app/(v1)/ai/agents/a011";
 import {
 	fileDeleteTool,
 	fileFindByNameTool,
@@ -15,17 +15,17 @@ import {
 	fileReadTool,
 	fileStringReplaceTool,
 	fileWriteTool,
-} from "@/app/ai/tools/file";
+} from "@/app/(v1)/ai/tools/file";
 import {
 	createSandboxTool,
 	createSandboxWithPortsTool,
 	executeSandboxCommandTool,
 	getSandboxDomainTool,
 	listSandboxRoutesTool,
-} from "@/app/ai/tools/sandbox";
-import { todoClearTool, todoReadTool, todoWriteTool } from "@/app/ai/tools/task";
-import { webSearchTool } from "@/app/ai/tools/web-search";
-import type { AppRuntimeContext } from "@/app/ai/types";
+} from "@/app/(v1)/ai/tools/sandbox";
+import { todoClearTool, todoReadTool, todoWriteTool } from "@/app/(v1)/ai/tools/task";
+import { webSearchTool } from "@/app/(v1)/ai/tools/web-search";
+import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 import { env } from "@/env";
 import { uuidv4 } from "@/lib/uuidv4";
 

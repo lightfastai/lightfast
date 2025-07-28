@@ -5,7 +5,7 @@
 
 import type { AgentToolCallEvent } from "@lightfast/ai/v2/core";
 import { NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter } from "@/app/ai/v2/config";
+import { redis, eventEmitter } from "@/app/(v2)/ai/config";
 
 // Simple tool implementations
 async function executeTool(tool: string, args: Record<string, any>) {

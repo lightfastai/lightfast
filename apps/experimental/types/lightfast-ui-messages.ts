@@ -16,8 +16,8 @@ import type {
 	todoReadTool,
 	todoWriteTool,
 	webSearchTool,
-} from "@/app/ai/tools";
-import type { AppRuntimeContext } from "@/app/ai/types";
+} from "@/app/(v1)/ai/tools";
+import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 
 // Custom data types for message parts (empty for now)
 export interface LightfastUICustomDataTypes {

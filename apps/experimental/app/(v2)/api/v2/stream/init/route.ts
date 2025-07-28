@@ -14,7 +14,7 @@
 import { AgentLoopWorker } from "@lightfast/ai/v2/core";
 import type { Message } from "@lightfast/ai/v2/events";
 import { type NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter, streamGenerator, SYSTEM_LIMITS } from "@/app/ai/v2/config";
+import { redis, eventEmitter, streamGenerator, SYSTEM_LIMITS } from "@/app/(v2)/ai/config";
 
 export async function POST(req: NextRequest) {
 	try {

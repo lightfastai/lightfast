@@ -7,7 +7,7 @@
 import { StreamWriter } from "@lightfast/ai/v2/core";
 import type { AgentLoopCompleteEvent } from "@lightfast/ai/v2/core";
 import { NextRequest, NextResponse } from "next/server";
-import { redis } from "@/app/ai/v2/config";
+import { redis } from "@/app/(v2)/ai/config";
 
 export async function POST(request: NextRequest) {
 	try {

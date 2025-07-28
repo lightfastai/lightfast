@@ -6,7 +6,7 @@
 import { ToolResultHandler } from "@lightfast/ai/v2/core";
 import type { ToolExecutionCompleteEvent } from "@lightfast/ai/v2/core";
 import { NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter } from "@/app/ai/v2/config";
+import { redis, eventEmitter } from "@/app/(v2)/ai/config";
 
 export async function POST(request: NextRequest) {
 	try {
