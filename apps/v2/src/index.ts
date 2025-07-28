@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { eventRoutes } from "./routes/events";
+import { healthRoutes } from "./routes/health";
 import { initRoutes } from "./routes/init";
 import { streamRoutes } from "./routes/stream";
 import { testRoutes } from "./routes/test";
@@ -36,6 +37,7 @@ app.get("/", (c) => {
 });
 
 // Mount routes
+app.route("/health", healthRoutes);
 app.route("/init", initRoutes);
 app.route("/stream", streamRoutes);
 app.route("/events", eventRoutes);
@@ -55,7 +57,7 @@ app.onError((err, c) => {
 });
 
 // Start server
-const port = Number(process.env.PORT) || 8080;
+const port = Number(process.env.PORT) || 8090;
 
 serve({
 	fetch: app.fetch,
