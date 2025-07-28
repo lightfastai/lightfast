@@ -1,12 +1,12 @@
 "use client";
 
 import { useResumableStream, useStreamMessages } from "@lightfast/ai/v2/react";
+import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 
 export default function TestResumableStreamPage() {
 	const [prompt, setPrompt] = useState("Tell me a short story about a robot learning to paint.");
@@ -58,7 +58,8 @@ export default function TestResumableStreamPage() {
 				<CardHeader>
 					<CardTitle>Resumable LLM Stream Test</CardTitle>
 					<CardDescription>
-						Test the resilient streaming architecture. Try refreshing the page or disconnecting your network while streaming!
+						Test the resilient streaming architecture. Try refreshing the page or disconnecting your network while
+						streaming!
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
@@ -76,10 +77,7 @@ export default function TestResumableStreamPage() {
 
 					{/* Control Buttons */}
 					<div className="flex gap-2">
-						<Button
-							onClick={handleGenerate}
-							disabled={isGenerating || status === "connected"}
-						>
+						<Button onClick={handleGenerate} disabled={isGenerating || status === "connected"}>
 							{isGenerating ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -136,9 +134,7 @@ export default function TestResumableStreamPage() {
 					{/* Content Section */}
 					{content && (
 						<div className="rounded-lg border p-4">
-							<div className="prose prose-sm max-w-none">
-								{content}
-							</div>
+							<div className="prose prose-sm max-w-none">{content}</div>
 						</div>
 					)}
 
@@ -182,9 +178,5 @@ function StatusBadge({ status }: { status: string }) {
 
 	const variant = variants[status] || { color: "text-gray-600", label: status };
 
-	return (
-		<span className={`font-medium ${variant.color}`}>
-			{variant.label}
-		</span>
-	);
+	return <span className={`font-medium ${variant.color}`}>{variant.label}</span>;
 }

@@ -18,7 +18,7 @@ export interface UseResumableStreamOptions {
 	/** Persist session ID in localStorage (default: true) */
 	persistSessionId?: boolean;
 	/** Custom headers for the request */
-	headers?: HeadersInit;
+	headers?: Record<string, string>;
 }
 
 export interface UseResumableStreamReturn {
@@ -52,7 +52,7 @@ export function useResumableStream(
 	// State
 	const [messages, setMessages] = useState<StreamMessage[]>([]);
 	const [status, setStatus] = useState<UseResumableStreamReturn["status"]>(
-		initialSessionId ? "connecting" : "disconnected"
+		initialSessionId ? "connecting" : "disconnected",
 	);
 	const [error, setError] = useState<Error>();
 	const [sessionId, setSessionId] = useState<string | undefined>(initialSessionId);
@@ -191,11 +191,11 @@ export function useResumableStream(
 		setSessionId(undefined);
 		setStatus("disconnected");
 		setError(undefined);
-		
+
 		if (persistSessionId) {
 			localStorage.removeItem("resumable-stream-session-id");
 		}
-		
+
 		if (eventSourceRef.current) {
 			eventSourceRef.current.close();
 			eventSourceRef.current = null;

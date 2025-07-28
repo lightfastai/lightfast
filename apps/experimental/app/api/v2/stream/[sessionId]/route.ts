@@ -5,7 +5,7 @@
 
 import { StreamConsumer } from "@lightfast/ai/v2/server";
 import { Redis } from "@upstash/redis";
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { env } from "@/env";
 
 // Initialize Redis
@@ -17,10 +17,7 @@ const redis = new Redis({
 // Initialize stream consumer
 const consumer = new StreamConsumer(redis);
 
-export async function GET(
-	req: NextRequest,
-	{ params }: { params: Promise<{ sessionId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
 	const { sessionId } = await params;
 
 	if (!sessionId) {
@@ -36,7 +33,7 @@ export async function GET(
 			headers: {
 				"Content-Type": "text/event-stream",
 				"Cache-Control": "no-cache, no-transform",
-				"Connection": "keep-alive",
+				Connection: "keep-alive",
 				// CORS headers if needed
 				"Access-Control-Allow-Origin": "*",
 			},

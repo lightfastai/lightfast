@@ -72,27 +72,27 @@ export function validateMessage(entry: any): StreamMessage | null {
 	try {
 		// Handle both raw fields object and Upstash entry format
 		let fields: Record<string, string>;
-		
-		if (entry && typeof entry === 'object' && 'id' in entry) {
+
+		if (entry && typeof entry === "object" && "id" in entry) {
 			// Upstash format: { id: string, ...fields }
 			const { id, ...rest } = entry;
 			fields = rest;
-		} else if (entry && typeof entry === 'object') {
+		} else if (entry && typeof entry === "object") {
 			// Direct fields object
 			fields = entry;
 		} else {
 			return null;
 		}
-		
+
 		const type = fields.type as MessageType;
-		
+
 		switch (type) {
 			case MessageType.CHUNK:
 				return {
 					type: MessageType.CHUNK,
 					content: fields.content || "",
 				};
-			
+
 			case MessageType.METADATA:
 				return {
 					type: MessageType.METADATA,
@@ -100,21 +100,21 @@ export function validateMessage(entry: any): StreamMessage | null {
 					sessionId: fields.sessionId || "",
 					timestamp: fields.timestamp || new Date().toISOString(),
 				};
-			
+
 			case MessageType.EVENT:
 				return {
 					type: MessageType.EVENT,
 					event: fields.event || "",
 					data: fields.data ? JSON.parse(fields.data) : undefined,
 				};
-			
+
 			case MessageType.ERROR:
 				return {
 					type: MessageType.ERROR,
 					error: fields.error || "Unknown error",
 					code: fields.code,
 				};
-			
+
 			default:
 				return null;
 		}

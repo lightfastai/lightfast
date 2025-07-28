@@ -6,7 +6,8 @@
 import type { Redis } from "@upstash/redis";
 import { streamText } from "ai";
 import { customAlphabet } from "nanoid";
-import { MessageType, StreamStatus, getGroupName, getStreamKey, type StreamConfig, type StreamMessage } from "./types";
+import { getSystemLimits } from "../env";
+import { getGroupName, getStreamKey, MessageType, type StreamConfig, type StreamMessage, StreamStatus } from "./types";
 
 // Generate 6-digit numeric session IDs (as shown in blog)
 const generateSessionId = customAlphabet("0123456789", 6);
@@ -17,10 +18,11 @@ export class StreamGenerator {
 
 	constructor(redis: Redis, config: StreamConfig = {}) {
 		this.redis = redis;
+		const limits = getSystemLimits();
 		this.config = {
 			streamPrefix: config.streamPrefix || "stream",
 			groupPrefix: config.groupPrefix || "stream",
-			ttl: config.ttl || 3600, // 1 hour default
+			ttl: config.ttl || limits.streamTTLSeconds,
 			maxLength: config.maxLength || 1000,
 		};
 	}
@@ -98,7 +100,7 @@ export class StreamGenerator {
 			await this.redis.expire(streamKey, this.config.ttl);
 		} catch (error) {
 			console.error(`Stream generation error for ${sessionId}:`, error);
-			
+
 			// Try to write error to stream if possible
 			try {
 				await this.writeMessage(streamKey, {
@@ -207,8 +209,8 @@ export class StreamGenerator {
 		]);
 
 		// Extract entry IDs from Upstash response format
-		const firstId = first && typeof first === 'object' ? Object.keys(first)[0] : undefined;
-		const lastId = last && typeof last === 'object' ? Object.keys(last)[0] : undefined;
+		const firstId = first && typeof first === "object" ? Object.keys(first)[0] : undefined;
+		const lastId = last && typeof last === "object" ? Object.keys(last)[0] : undefined;
 
 		return {
 			exists: true,

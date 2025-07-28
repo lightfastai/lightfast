@@ -11,19 +11,22 @@ export async function GET() {
 	try {
 		// First check if Redis is configured
 		if (!env.KV_REST_API_URL || !env.KV_REST_API_TOKEN) {
-			return NextResponse.json({
-				error: "Redis not configured",
-				url: !!env.KV_REST_API_URL,
-				token: !!env.KV_REST_API_TOKEN,
-			}, { status: 500 });
+			return NextResponse.json(
+				{
+					error: "Redis not configured",
+					url: !!env.KV_REST_API_URL,
+					token: !!env.KV_REST_API_TOKEN,
+				},
+				{ status: 500 },
+			);
 		}
-		
+
 		const testKey = "test:stream";
-		
+
 		// Test basic xadd - Upstash expects an object
 		const result1 = await redis.xadd(testKey, "*", { field1: "value1", field2: "value2" });
 		console.log("xadd result:", result1);
-		
+
 		// Test xadd with different field types
 		const testFields = {
 			type: "metadata",
@@ -33,7 +36,7 @@ export async function GET() {
 		};
 		const result3 = await redis.xadd(testKey, "*", testFields);
 		console.log("xadd with metadata result:", result3);
-		
+
 		// Test xgroup creation
 		let xgroupResult;
 		try {
@@ -43,14 +46,14 @@ export async function GET() {
 			console.log("xgroup error:", e.message);
 			xgroupResult = { error: e.message };
 		}
-		
+
 		// Test xrange
 		const result2 = await redis.xrange(testKey, "-", "+");
 		console.log("xrange result:", result2);
-		
+
 		// Clean up
 		await redis.del(testKey);
-		
+
 		return NextResponse.json({
 			success: true,
 			xaddResult: result1,
@@ -62,9 +65,12 @@ export async function GET() {
 		});
 	} catch (error) {
 		console.error("Redis test error:", error);
-		return NextResponse.json({
-			error: error instanceof Error ? error.message : "Unknown error",
-			stack: error instanceof Error ? error.stack : undefined,
-		}, { status: 500 });
+		return NextResponse.json(
+			{
+				error: error instanceof Error ? error.message : "Unknown error",
+				stack: error instanceof Error ? error.stack : undefined,
+			},
+			{ status: 500 },
+		);
 	}
 }

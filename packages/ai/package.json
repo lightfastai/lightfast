@@ -2,6 +2,7 @@
 	"name": "@lightfast/ai",
 	"version": "1.0.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
+	"type": "module",
 	"exports": {
 		"./agent": {
 			"types": "./src/core/primitives/agent.ts",
@@ -54,6 +55,18 @@
 		"./v2/react": {
 			"types": "./src/core/v2/react/index.ts",
 			"default": "./src/core/v2/react/index.ts"
+		},
+		"./v2/events": {
+			"types": "./src/core/v2/events/index.ts",
+			"default": "./src/core/v2/events/index.ts"
+		},
+		"./v2": {
+			"types": "./src/core/v2/index.ts",
+			"default": "./src/core/v2/index.ts"
+		},
+		"./v2/core": {
+			"types": "./src/core/v2/core.ts",
+			"default": "./src/core/v2/core.ts"
 		}
 	},
 	"scripts": {
@@ -68,6 +81,7 @@
 		"@ai-sdk/gateway": "catalog:",
 		"@ai-sdk/provider": "catalog:",
 		"@t3-oss/env-core": "catalog:",
+		"@upstash/qstash": "^2.8.1",
 		"@upstash/redis": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",

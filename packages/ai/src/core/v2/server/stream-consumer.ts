@@ -4,7 +4,7 @@
  */
 
 import type { Redis } from "@upstash/redis";
-import { getGroupName, getStreamKey, validateMessage, type StreamConfig, type StreamMessage } from "./types";
+import { getGroupName, getStreamKey, type StreamConfig, type StreamMessage, validateMessage } from "./types";
 
 export class StreamConsumer {
 	private redis: Redis;
@@ -46,19 +46,19 @@ export class StreamConsumer {
 					while (isActive) {
 						try {
 							// Read messages after lastSeenId
-							const response = await redis.xrange(
+							const response = (await redis.xrange(
 								streamKey,
 								`(${lastSeenId}`, // Exclusive start
 								"+",
-								10
-							) as unknown as any;
+								10,
+							)) as unknown as any;
 
 							// Upstash returns an object with entry IDs as keys
-							const entries = response && typeof response === 'object' ? Object.entries(response) : [];
+							const entries = response && typeof response === "object" ? Object.entries(response) : [];
 
 							if (entries.length > 0) {
 								consecutiveEmptyReads = 0;
-								
+
 								for (const [entryId, fields] of entries) {
 									// Pass the fields directly to validateMessage
 									const message = validateMessage(fields);
@@ -71,7 +71,7 @@ export class StreamConsumer {
 											isActive = false;
 											return;
 										}
-										
+
 										// Check if stream is completed
 										if (message.type === "metadata" && message.status === "completed") {
 											isActive = false;
@@ -83,23 +83,19 @@ export class StreamConsumer {
 								}
 							} else {
 								consecutiveEmptyReads++;
-								
+
 								// Stop if we've had too many empty reads (stream might be done)
 								if (consecutiveEmptyReads >= maxEmptyReads) {
 									// Check if stream has completed status
-									const lastResponse = await redis.xrevrange(
-										streamKey,
-										"+",
-										"-",
-										5
-									) as unknown as any;
-									
-									const lastEntries = lastResponse && typeof lastResponse === 'object' ? Object.entries(lastResponse) : [];
+									const lastResponse = (await redis.xrevrange(streamKey, "+", "-", 5)) as unknown as any;
+
+									const lastEntries =
+										lastResponse && typeof lastResponse === "object" ? Object.entries(lastResponse) : [];
 									const hasCompleted = lastEntries.some(([_, fields]: [string, any]) => {
 										const msg = validateMessage(fields);
 										return msg?.type === "metadata" && msg.status === "completed";
 									});
-									
+
 									if (hasCompleted) {
 										isActive = false;
 										controller.close();
@@ -109,7 +105,7 @@ export class StreamConsumer {
 							}
 
 							// Wait before next poll
-							await new Promise(resolve => setTimeout(resolve, 100));
+							await new Promise((resolve) => setTimeout(resolve, 100));
 						} catch (error) {
 							console.error("Error polling messages:", error);
 							controller.error(error);
@@ -130,21 +126,102 @@ export class StreamConsumer {
 	}
 
 	/**
+	 * Consume messages from a stream with callbacks
+	 */
+	async consume(
+		sessionId: string,
+		signal: AbortSignal,
+		options: {
+			onMessage: (message: StreamMessage) => Promise<void>;
+			onError?: (error: Error) => Promise<void>;
+			onComplete?: () => Promise<void>;
+			lastEventId?: string;
+		}
+	): Promise<void> {
+		const streamKey = getStreamKey(sessionId, this.config.streamPrefix);
+		let lastSeenId = options.lastEventId || "0";
+		let consecutiveEmptyReads = 0;
+		const maxEmptyReads = 10;
+
+		try {
+			while (!signal.aborted) {
+				// Read messages after lastSeenId
+				const response = (await this.redis.xrange(
+					streamKey,
+					`(${lastSeenId}`, // Exclusive start
+					"+",
+					10,
+				)) as unknown as any;
+
+				// Upstash returns an object with entry IDs as keys
+				const entries = response && typeof response === "object" ? Object.entries(response) : [];
+
+				if (entries.length > 0) {
+					consecutiveEmptyReads = 0;
+
+					for (const [entryId, fields] of entries) {
+						if (signal.aborted) break;
+						
+						const message = validateMessage(fields);
+						if (message) {
+							await options.onMessage(message);
+
+							// Check if stream is completed
+							if (message.type === "metadata" && message.status === "completed") {
+								if (options.onComplete) {
+									await options.onComplete();
+								}
+								return;
+							}
+						}
+						lastSeenId = entryId;
+					}
+				} else {
+					consecutiveEmptyReads++;
+
+					// Check if we've had too many empty reads
+					if (consecutiveEmptyReads >= maxEmptyReads) {
+						// Check if stream has completed status
+						const lastResponse = (await this.redis.xrevrange(streamKey, "+", "-", 5)) as unknown as any;
+						const lastEntries = lastResponse && typeof lastResponse === "object" ? Object.entries(lastResponse) : [];
+						
+						const hasCompleted = lastEntries.some(([_, fields]: [string, any]) => {
+							const msg = validateMessage(fields);
+							return msg?.type === "metadata" && msg.status === "completed";
+						});
+
+						if (hasCompleted) {
+							if (options.onComplete) {
+								await options.onComplete();
+							}
+							return;
+						}
+					}
+				}
+
+				// Wait before next poll
+				await new Promise((resolve) => setTimeout(resolve, 100));
+			}
+		} catch (error) {
+			if (options.onError) {
+				await options.onError(error as Error);
+			}
+			throw error;
+		}
+	}
+
+	/**
 	 * Read messages from a stream (one-shot, no streaming)
 	 */
-	async readMessages(
-		sessionId: string,
-		fromId = "-",
-		count = 100,
-	): Promise<StreamMessage[]> {
+	async readMessages(sessionId: string, fromId = "-", count = 100): Promise<StreamMessage[]> {
 		const streamKey = getStreamKey(sessionId, this.config.streamPrefix);
 		const messages: StreamMessage[] = [];
 
 		try {
-			const response = await this.redis.xrange(streamKey, fromId, "+", count) as unknown as any;
-			
+			const response = (await this.redis.xrange(streamKey, fromId, "+", count)) as unknown as any;
+
 			// Upstash returns an object with entry IDs as keys
-			const entries = response && typeof response === 'object' ? Object.entries(response) : [];
+			const entries = response && typeof response === "object" ? Object.entries(response) : [];
 
 			for (const [_, fields] of entries) {
 				const message = validateMessage(fields);

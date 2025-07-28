@@ -1,82 +1,96 @@
 /**
- * API route to start LLM stream generation
- * POST /api/v2/generate
+ * DEPRECATED: This endpoint has been replaced by /api/v2/stream/init
+ *
+ * This file exists for backward compatibility and redirects to the new endpoint.
+ * The new endpoint implements the event-driven architecture for agent loops.
  */
 
-import { StreamGenerator } from "@lightfast/ai/v2/server";
-import { Redis } from "@upstash/redis";
-import { NextRequest, NextResponse } from "next/server";
-import { GatewayGPT4Nano } from "@lightfast/ai/providers";
-import { env } from "@/env";
+import { type NextRequest, NextResponse } from "next/server";
 
-// Initialize Redis
-const redis = new Redis({
-	url: env.KV_REST_API_URL,
-	token: env.KV_REST_API_TOKEN,
-});
-
-// Initialize stream generator
-const generator = new StreamGenerator(redis);
-
+/**
+ * POST /api/v2/generate - Redirects to /api/v2/stream/init
+ */
 export async function POST(req: NextRequest) {
 	try {
-		const { prompt, sessionId: providedSessionId } = await req.json();
+		const body = await req.json();
 
-		if (!prompt) {
-			return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
-		}
+		// Transform old format to new format
+		const { prompt, sessionId } = body;
 
-		// Use provided session ID or generate new one
-		const sessionId = providedSessionId || generator.createSessionId();
+		// Create messages array from prompt
+		const messages = [{ role: "user" as const, content: prompt || "" }];
 
-		// Check if stream already exists
-		const exists = await generator.streamExists(sessionId);
-		if (exists) {
-			return NextResponse.json(
-				{ error: "Stream already exists", sessionId },
-				{ status: 409 },
-			);
-		}
-
-		// Start generation in background (don't await)
-		generator.generate(
-			sessionId,
-			prompt,
-			GatewayGPT4Nano(), // Using GPT 4.1 Nano from Vercel AI Gateway
-		).catch((error) => {
-			console.error(`Stream generation error for ${sessionId}:`, error);
+		// Forward to new endpoint
+		const response = await fetch(new URL("/api/v2/stream/init", req.url), {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				messages,
+				sessionId,
+				// Default values for new fields
+				temperature: 0.7,
+				maxIterations: 10,
+				tools: [],
+			}),
 		});
 
-		// Return session ID immediately
-		return NextResponse.json({
-			sessionId,
-			streamUrl: `/api/v2/stream/${sessionId}`,
-		});
+		const data = await response.json();
+
+		// Add deprecation warning to response
+		if (response.ok) {
+			return NextResponse.json({
+				...data,
+				_deprecated: "This endpoint is deprecated. Please use /api/v2/stream/init instead.",
+			});
+		}
+
+		return NextResponse.json(data, { status: response.status });
 	} catch (error) {
-		console.error("Generate error:", error);
+		console.error("Generate redirect error:", error);
 		return NextResponse.json(
-			{ error: "Failed to start generation" },
+			{
+				error: "Failed to redirect to new endpoint",
+				_deprecated: "This endpoint is deprecated. Please use /api/v2/stream/init instead.",
+			},
 			{ status: 500 },
 		);
 	}
 }
 
-// GET endpoint to check stream status
+/**
+ * GET /api/v2/generate - Redirects to /api/v2/stream/init
+ */
 export async function GET(req: NextRequest) {
+	const sessionId = req.nextUrl.searchParams.get("sessionId");
+
+	// Forward to new endpoint
+	const url = new URL("/api/v2/stream/init", req.url);
+	if (sessionId) {
+		url.searchParams.set("sessionId", sessionId);
+	}
+
 	try {
-		const sessionId = req.nextUrl.searchParams.get("sessionId");
-		
-		if (!sessionId) {
-			return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
+		const response = await fetch(url);
+		const data = await response.json();
+
+		// Add deprecation warning
+		if (response.ok) {
+			return NextResponse.json({
+				...data,
+				_deprecated: "This endpoint is deprecated. Please use /api/v2/stream/init instead.",
+			});
 		}
 
-		const info = await generator.getStreamInfo(sessionId);
-
-		return NextResponse.json(info);
+		return NextResponse.json(data, { status: response.status });
 	} catch (error) {
-		console.error("Stream info error:", error);
+		console.error("Generate GET redirect error:", error);
 		return NextResponse.json(
-			{ error: "Failed to get stream info" },
+			{
+				error: "Failed to redirect to new endpoint",
+				_deprecated: "This endpoint is deprecated. Please use /api/v2/stream/init instead.",
+			},
 			{ status: 500 },
 		);
 	}

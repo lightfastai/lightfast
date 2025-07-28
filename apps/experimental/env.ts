@@ -55,6 +55,10 @@ export const env = createEnv({
 
 		// Clerk Authentication
 		CLERK_SECRET_KEY: z.string().min(1),
+
+		// Qstash Event System
+		QSTASH_URL: z.string().url().default("https://qstash.upstash.io"),
+		QSTASH_TOKEN: z.string().min(1),
 	},
 
 	/**
@@ -112,6 +116,10 @@ export const env = createEnv({
 
 		// Clerk Authentication
 		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+
+		// Qstash Event System
+		QSTASH_URL: process.env.QSTASH_URL,
+		QSTASH_TOKEN: process.env.QSTASH_TOKEN,
 
 		// Client
 		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
