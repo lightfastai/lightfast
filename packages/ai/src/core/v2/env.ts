@@ -28,6 +28,10 @@ export const env = createEnv({
 		AGENT_LOOP_WORKER_URL: z.string().url().optional().describe("URL for agent loop worker"),
 		TOOL_EXECUTOR_URL: z.string().url().optional().describe("URL for tool executor worker"),
 
+		// Optional: Direct URL mode for testing
+		QSTASH_DIRECT_URL: z.string().optional().describe("Enable direct URL publishing mode"),
+		WORKER_BASE_URL: z.string().url().optional().describe("Base URL for worker endpoints in direct mode"),
+
 		// Optional: Timeouts and limits
 		AGENT_MAX_ITERATIONS: z.coerce.number().min(1).max(100).default(10).optional(),
 		TOOL_EXECUTION_TIMEOUT: z.coerce.number().min(1000).max(300000).default(30000).optional(),
@@ -53,6 +57,10 @@ export const env = createEnv({
 		// Worker URLs
 		AGENT_LOOP_WORKER_URL: process.env.AGENT_LOOP_WORKER_URL,
 		TOOL_EXECUTOR_URL: process.env.TOOL_EXECUTOR_URL,
+
+		// Direct URL mode
+		QSTASH_DIRECT_URL: process.env.QSTASH_DIRECT_URL,
+		WORKER_BASE_URL: process.env.WORKER_BASE_URL,
 
 		// Limits
 		AGENT_MAX_ITERATIONS: process.env.AGENT_MAX_ITERATIONS,

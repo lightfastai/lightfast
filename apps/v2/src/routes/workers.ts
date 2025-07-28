@@ -183,7 +183,7 @@ workerRoutes.post("/tool-executor", async (c) => {
 			const sessionKey = `session:${event.sessionId}`;
 			const sessionData = await redis.get(sessionKey);
 			if (sessionData) {
-				const session = JSON.parse(sessionData as string);
+				const session = typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData;
 				session.messages.push({
 					role: "tool",
 					content: JSON.stringify(result),

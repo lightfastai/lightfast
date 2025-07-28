@@ -72,13 +72,14 @@ testRoutes.post("/:scenario", async (c) => {
 		// Initialize session
 		const sessionKey = `session:${sessionId}`;
 		const sessionData = {
+			sessionId,
 			messages: scenario.messages,
 			tools: scenario.tools,
 			temperature: 0.7,
 			maxIterations: 10,
 			createdAt: new Date().toISOString(),
 			status: "initializing",
-			iterations: 0,
+			iteration: 0,
 			testScenario: scenarioKey,
 		};
 

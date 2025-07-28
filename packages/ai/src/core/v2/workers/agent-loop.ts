@@ -347,7 +347,8 @@ Always provide clear reasoning for your decision.`;
 		const data = await this.redis.get(sessionKey);
 		if (!data) return null;
 
-		const parsed = JSON.parse(data as string);
+		// Handle both string and object responses from Redis
+		const parsed = typeof data === "string" ? JSON.parse(data) : data;
 		return AgentSessionStateSchema.parse(parsed);
 	}
 

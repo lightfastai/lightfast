@@ -221,6 +221,12 @@ export class EventEmitter {
 	 * Publish an event to Qstash
 	 */
 	private async publishEvent(event: Event): Promise<void> {
+		// Check if we're in direct URL mode (for testing)
+		if (process.env.QSTASH_DIRECT_URL === "true" && process.env.WORKER_BASE_URL) {
+			return this.publishEventDirectUrl(event);
+		}
+
+		// Normal topic-based publishing
 		const topic = this.getTopicName(event.type);
 
 		try {
@@ -241,6 +247,51 @@ export class EventEmitter {
 			console.error(`Failed to publish event ${event.type}:`, error);
 			throw new Error(`Event publish failed: ${error instanceof Error ? error.message : String(error)}`);
 		}
+	}
+
+	/**
+	 * Publish event using direct URL (for testing without topic setup)
+	 */
+	private async publishEventDirectUrl(event: Event): Promise<void> {
+		const endpoint = this.getEndpointForEvent(event.type);
+		if (!endpoint) {
+			console.warn(`No endpoint mapping for event type: ${event.type}`);
+			return;
+		}
+
+		const url = `${process.env.WORKER_BASE_URL}${endpoint}`;
+
+		try {
+			await this.client.publishJSON({
+				url,
+				body: event,
+				retries: 3,
+				delay: "10s",
+				headers: {
+					"x-event-id": event.id,
+					"x-event-type": event.type,
+					"x-session-id": event.sessionId,
+				},
+			});
+
+			console.log(`Event published via URL: ${event.type} [${event.id}] -> ${url}`);
+		} catch (error) {
+			console.error(`Failed to publish event ${event.type} to ${url}:`, error);
+			throw new Error(`Event publish failed: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}
+
+	/**
+	 * Get endpoint for event type (used in direct URL mode)
+	 */
+	private getEndpointForEvent(eventType: string): string | undefined {
+		const endpoints: Record<string, string> = {
+			"agent.loop.init": "/workers/agent-loop",
+			"agent.tool.call": "/workers/tool-executor",
+			"tool.execution.complete": "/workers/tool-result-complete",
+			"tool.execution.failed": "/workers/tool-result-failed",
+		};
+		return endpoints[eventType];
 	}
 
 	/**

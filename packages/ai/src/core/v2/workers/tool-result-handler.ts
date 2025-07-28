@@ -33,7 +33,7 @@ export class ToolResultHandler {
 				throw new Error(`Session ${event.sessionId} not found`);
 			}
 
-			const session = JSON.parse(sessionData as string) as AgentSessionState;
+			const session = (typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData) as AgentSessionState;
 
 			// Add tool result to messages
 			session.messages.push({
@@ -104,7 +104,7 @@ export class ToolResultHandler {
 				throw new Error(`Session ${event.sessionId} not found`);
 			}
 
-			const session = JSON.parse(sessionData as string) as AgentSessionState;
+			const session = (typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData) as AgentSessionState;
 
 			// Add error message
 			session.messages.push({

@@ -5,6 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "pnpm with-env tsx watch src/index.ts",
+		"dev:direct": "QSTASH_DIRECT_URL=true pnpm dev",
 		"dev:test": "pnpm with-env-test tsx watch src/index.ts",
 		"build": "pnpm with-env tsc",
 		"start": "pnpm with-env node dist/index.js",
