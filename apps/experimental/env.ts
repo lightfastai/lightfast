@@ -66,53 +66,7 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	experimental__runtimeEnv: {
-		// AI Package env vars
-		KV_REST_API_URL: process.env.KV_REST_API_URL,
-		KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
-		QSTASH_URL: process.env.QSTASH_URL,
-		QSTASH_TOKEN: process.env.QSTASH_TOKEN,
-		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
-		AGENT_MAX_ITERATIONS: process.env.AGENT_MAX_ITERATIONS,
-		TOOL_EXECUTION_TIMEOUT: process.env.TOOL_EXECUTION_TIMEOUT,
-		STREAM_TTL_SECONDS: process.env.STREAM_TTL_SECONDS,
-
-		// Node environment
-		NODE_ENV: process.env.NODE_ENV,
-		VERCEL: process.env.VERCEL,
-		VERCEL_ENV: process.env.VERCEL_ENV,
-
-		// Additional KV tokens
-		KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
-
-		// Additional AI Provider API Keys
-		ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-		OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-		EXA_API_KEY: process.env.EXA_API_KEY,
-
-		// Browser automation
-		BROWSERBASE_API_KEY: process.env.BROWSERBASE_API_KEY,
-		BROWSERBASE_PROJECT_ID: process.env.BROWSERBASE_PROJECT_ID,
-
-		// Voice services
-		ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
-
-		// Observability
-		BRAINTRUST_API_KEY: process.env.BRAINTRUST_API_KEY,
-		BRAINTRUST_PROJECT_NAME: process.env.BRAINTRUST_PROJECT_NAME,
-		OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-		OTEL_EXPORTER_OTLP_HEADERS: process.env.OTEL_EXPORTER_OTLP_HEADERS,
-
-		// Vercel Blob Storage
-		BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
-
-		// Additional Redis URLs
-		REDIS_URL: process.env.REDIS_URL,
-		KV_URL: process.env.KV_URL,
-
-		// Clerk Authentication
-		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-
-		// Client
+		// Client env vars only
 		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
 		NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY: process.env.NEXT_PUBLIC_VIRTUOSO_LICENSE_KEY,
 		NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,

@@ -4,7 +4,7 @@
  */
 
 import { Redis } from "@upstash/redis";
-import { EventEmitter, EventTypes } from "@lightfast/ai/v2/core";
+import { EventEmitter, EventType } from "@lightfast/ai/v2/core";
 import { StreamGenerator, StreamConsumer } from "@lightfast/ai/v2/core";
 
 // Get base URL for the test server
@@ -14,11 +14,11 @@ function getBaseUrl(): string {
 
 // Worker endpoint configuration
 export const WORKER_ENDPOINTS: Record<string, string> = {
-	[EventTypes.AGENT_LOOP_INIT]: "/workers/agent-loop",
-	[EventTypes.AGENT_TOOL_CALL]: "/workers/tool-executor",
-	[EventTypes.TOOL_EXECUTION_COMPLETE]: "/workers/tool-result-complete",
-	[EventTypes.TOOL_EXECUTION_FAILED]: "/workers/tool-result-failed",
-	[EventTypes.AGENT_LOOP_COMPLETE]: "/workers/agent-complete",
+	[EventType.AGENT_LOOP_INIT]: "/workers/agent-loop",
+	[EventType.AGENT_TOOL_CALL]: "/workers/tool-executor",
+	[EventType.TOOL_EXECUTION_COMPLETE]: "/workers/tool-result-complete",
+	[EventType.TOOL_EXECUTION_FAILED]: "/workers/tool-result-failed",
+	[EventType.AGENT_LOOP_COMPLETE]: "/workers/agent-complete",
 };
 
 // Create Redis client instance

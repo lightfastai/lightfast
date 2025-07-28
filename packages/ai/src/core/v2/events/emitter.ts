@@ -26,27 +26,6 @@ import {
 	ToolExecutionStartEventSchema,
 } from "./schemas";
 
-/**
- * Event types enum - defines all possible event types in the system
- * Clients should use these constants instead of hardcoding strings
- */
-export enum EventTypes {
-	// Agent Loop Events
-	AGENT_LOOP_INIT = "agent.loop.init",
-	AGENT_LOOP_COMPLETE = "agent.loop.complete",
-	
-	// Agent Decision Events
-	AGENT_TOOL_CALL = "agent.tool.call",
-	
-	// Tool Execution Events
-	TOOL_EXECUTION_START = "tool.execution.start",
-	TOOL_EXECUTION_COMPLETE = "tool.execution.complete",
-	TOOL_EXECUTION_FAILED = "tool.execution.failed",
-	
-	// Stream Events
-	STREAM_WRITE = "stream.write",
-}
-
 export interface EventEmitterConfig {
 	qstashUrl: string;
 	qstashToken: string;
@@ -84,7 +63,7 @@ export class EventEmitter {
 	async emitAgentLoopInit(sessionId: string, data: AgentLoopInitEvent["data"]): Promise<void> {
 		const event: AgentLoopInitEvent = {
 			id: this.generateEventId(),
-			type: EventTypes.AGENT_LOOP_INIT,
+			type: EventType.AGENT_LOOP_INIT,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -101,7 +80,7 @@ export class EventEmitter {
 	async emitAgentLoopComplete(sessionId: string, data: AgentLoopCompleteEvent["data"]): Promise<void> {
 		const event: AgentLoopCompleteEvent = {
 			id: this.generateEventId(),
-			type: EventTypes.AGENT_LOOP_COMPLETE,
+			type: EventType.AGENT_LOOP_COMPLETE,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -119,7 +98,7 @@ export class EventEmitter {
 	async emitAgentToolCall(sessionId: string, data: AgentToolCallEvent["data"]): Promise<void> {
 		const event: AgentToolCallEvent = {
 			id: this.generateEventId(),
-			type: EventTypes.AGENT_TOOL_CALL,
+			type: EventType.AGENT_TOOL_CALL,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -136,7 +115,7 @@ export class EventEmitter {
 	async emitToolExecutionComplete(sessionId: string, data: ToolExecutionCompleteEvent["data"]): Promise<void> {
 		const event: ToolExecutionCompleteEvent = {
 			id: this.generateEventId(),
-			type: EventTypes.TOOL_EXECUTION_COMPLETE,
+			type: EventType.TOOL_EXECUTION_COMPLETE,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -153,7 +132,7 @@ export class EventEmitter {
 	async emitToolExecutionFailed(sessionId: string, data: ToolExecutionFailedEvent["data"]): Promise<void> {
 		const event: ToolExecutionFailedEvent = {
 			id: this.generateEventId(),
-			type: EventTypes.TOOL_EXECUTION_FAILED,
+			type: EventType.TOOL_EXECUTION_FAILED,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -170,7 +149,7 @@ export class EventEmitter {
 	async emitStreamWrite(sessionId: string, data: StreamWriteEvent["data"]): Promise<void> {
 		const event: StreamWriteEvent = {
 			id: this.generateEventId(),
-			type: EventTypes.STREAM_WRITE,
+			type: EventType.STREAM_WRITE,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",
@@ -239,7 +218,7 @@ export class EventEmitter {
 	async emitToolExecutionStart(sessionId: string, data: ToolExecutionStartEvent["data"]): Promise<void> {
 		const event: ToolExecutionStartEvent = {
 			id: this.generateEventId(),
-			type: EventTypes.TOOL_EXECUTION_START,
+			type: EventType.TOOL_EXECUTION_START,
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0",

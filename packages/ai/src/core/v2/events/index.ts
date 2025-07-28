@@ -4,8 +4,8 @@
 
 export type { EventEmitterConfig } from "./emitter";
 
-// Export event emitter and event types
+// Export event emitter
 export * from "./emitter";
-export { EventEmitter, SessionEventEmitter, EventTypes } from "./emitter";
-// Export all schemas and types
+export { EventEmitter, SessionEventEmitter } from "./emitter";
+// Export all schemas and types (includes EventType)
 export * from "./schemas";

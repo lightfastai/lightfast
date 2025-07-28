@@ -4,7 +4,7 @@
  */
 
 import { Redis } from "@upstash/redis";
-import { EventEmitter, EventTypes, StreamGenerator, StreamConsumer } from "@lightfast/ai/v2/core";
+import { EventEmitter, EventType, StreamGenerator, StreamConsumer } from "@lightfast/ai/v2/core";
 import { env } from "@/env";
 
 /**
@@ -40,11 +40,11 @@ function getBaseUrl(): string {
  * Maps event types to their handler endpoints
  */
 export const WORKER_ENDPOINTS: Record<string, string> = {
-	[EventTypes.AGENT_LOOP_INIT]: "/api/v2/workers/agent-loop",
-	[EventTypes.AGENT_TOOL_CALL]: "/api/v2/workers/tool-executor",
-	[EventTypes.TOOL_EXECUTION_COMPLETE]: "/api/v2/workers/tool-result-complete",
-	[EventTypes.TOOL_EXECUTION_FAILED]: "/api/v2/workers/tool-result-failed",
-	[EventTypes.AGENT_LOOP_COMPLETE]: "/api/v2/workers/agent-complete",
+	[EventType.AGENT_LOOP_INIT]: "/api/v2/workers/agent-loop",
+	[EventType.AGENT_TOOL_CALL]: "/api/v2/workers/tool-executor",
+	[EventType.TOOL_EXECUTION_COMPLETE]: "/api/v2/workers/tool-result-complete",
+	[EventType.TOOL_EXECUTION_FAILED]: "/api/v2/workers/tool-result-failed",
+	[EventType.AGENT_LOOP_COMPLETE]: "/api/v2/workers/agent-complete",
 };
 
 /**

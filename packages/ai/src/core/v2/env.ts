@@ -24,9 +24,17 @@ export const env = createEnv({
 		STREAM_TTL_SECONDS: z.coerce.number().min(60).max(86400).default(3600).optional(),
 	},
 
-	client: {},
-
-	experimental__runtimeEnv: {},
+	runtimeEnv: {
+		// These will be provided by the consuming application
+		KV_REST_API_URL: process.env.KV_REST_API_URL,
+		KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+		QSTASH_URL: process.env.QSTASH_URL,
+		QSTASH_TOKEN: process.env.QSTASH_TOKEN,
+		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
+		AGENT_MAX_ITERATIONS: process.env.AGENT_MAX_ITERATIONS,
+		TOOL_EXECUTION_TIMEOUT: process.env.TOOL_EXECUTION_TIMEOUT,
+		STREAM_TTL_SECONDS: process.env.STREAM_TTL_SECONDS,
+	},
 
 	/**
 	 * Skip validation in certain environments
