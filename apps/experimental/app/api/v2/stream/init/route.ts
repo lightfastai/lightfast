@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
 		// Initialize session state in Redis
 		const sessionKey = `session:${sessionId}`;
 		const sessionData = {
+			sessionId, // Add sessionId to the stored data
 			messages: messages as Message[],
 			systemPrompt,
 			temperature,
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
 			metadata,
 			createdAt: new Date().toISOString(),
 			status: "initializing",
-			iterations: 0,
+			iteration: 0, // Changed from iterations to iteration to match schema
 		};
 
 		// Store session data (expire after 24 hours)
