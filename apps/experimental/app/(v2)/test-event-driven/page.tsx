@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // Type definitions for V2 event-driven architecture
 interface StreamEvent {
 	id: string;
-	type: 'chunk' | 'status' | 'event' | 'tool' | 'thinking' | 'error' | 'complete';
+	type: 'chunk' | 'status' | 'event' | 'tool' | 'thinking' | 'error' | 'complete' | 'completion';
 	content: string;
 	metadata?: Record<string, any>;
 	timestamp: string;
@@ -110,7 +110,7 @@ export default function TestEventDrivenPage() {
 		};
 
 		// Handle specific event types
-		['chunk', 'status', 'event', 'tool', 'thinking', 'error', 'complete'].forEach(eventType => {
+		['chunk', 'status', 'event', 'tool', 'thinking', 'error', 'complete', 'completion'].forEach(eventType => {
 			eventSource.addEventListener(eventType, (event) => {
 				try {
 					const data = JSON.parse(event.data);
@@ -123,7 +123,7 @@ export default function TestEventDrivenPage() {
 					};
 					setEvents(prev => [...prev, streamEvent]);
 
-					if (eventType === 'complete') {
+					if (eventType === 'complete' || eventType === 'completion') {
 						setIsRunningTest(false);
 					}
 				} catch (err) {
