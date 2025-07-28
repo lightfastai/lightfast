@@ -46,6 +46,14 @@
 		"./providers": {
 			"types": "./src/utils/providers.ts",
 			"default": "./src/utils/providers.ts"
+		},
+		"./v2/server": {
+			"types": "./src/core/v2/server/index.ts",
+			"default": "./src/core/v2/server/index.ts"
+		},
+		"./v2/react": {
+			"types": "./src/core/v2/react/index.ts",
+			"default": "./src/core/v2/react/index.ts"
 		}
 	},
 	"scripts": {
@@ -63,6 +71,7 @@
 		"@upstash/redis": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
+		"nanoid": "^5.1.5",
 		"playwright": "catalog:",
 		"playwright-core": "catalog:",
 		"resumable-stream": "catalog:",
@@ -70,6 +79,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.15",
+		"@types/react": "^19.1.8",
 		"typescript": "catalog:"
 	}
 }

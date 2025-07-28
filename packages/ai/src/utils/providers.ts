@@ -6,3 +6,4 @@ import type { LanguageModelV2 } from "@ai-sdk/provider";
 export const GatewayClaude4Sonnet = (): LanguageModelV2 => gateway("anthropic/claude-4-sonnet");
 export const GatewayGPT4o = (): LanguageModelV2 => gateway("openai/gpt-4o");
 export const GatewayGPT4oMini = (): LanguageModelV2 => gateway("openai/gpt-4o-mini");
+export const GatewayGPT4Nano = (): LanguageModelV2 => gateway("openai/gpt-4-1-nano");
