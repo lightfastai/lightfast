@@ -85,7 +85,70 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 		return Response.json({ error: "Agent not found" }, { status: 404 });
 	}
 
-	// Wrap only the actual handler logic with traced
+	// Skip tracing for GET requests (reusable stream endpoint)
+	if (req.method === "GET") {
+		// Direct handler without Braintrust tracing
+		const memory = new RedisMemory({
+			url: env.KV_REST_API_URL,
+			token: env.KV_REST_API_TOKEN,
+		});
+
+		return fetchRequestHandler({
+			agent: createAgent<A011ToolSchema, AppRuntimeContext>({
+				name: "a011",
+				system: A011_SYSTEM_PROMPT,
+				tools: a011Tools,
+				cache: new AnthropicProviderCache({
+					strategy: new ClineConversationStrategy({
+						cacheSystemPrompt: true,
+						recentUserMessagesToCache: 2,
+					}),
+				}),
+				createRuntimeContext: ({ threadId, resourceId }): AppRuntimeContext => ({}),
+				model: gateway("anthropic/claude-4-sonnet"),
+				providerOptions: {
+					anthropic: {
+						thinking: {
+							type: "enabled",
+							budgetTokens: 32000,
+						},
+					} satisfies AnthropicProviderOptions,
+				},
+				headers: {
+					"anthropic-beta": "interleaved-thinking-2025-05-14,token-efficient-tools-2025-02-19",
+				},
+				experimental_transform: smoothStream({
+					delayInMs: 25,
+					chunking: "word",
+				}),
+				stopWhen: stepCountIs(30),
+				experimental_telemetry: {
+					isEnabled: !!env.OTEL_EXPORTER_OTLP_HEADERS,
+					metadata: {
+						agentId,
+						agentName: "a011",
+						threadId,
+						userId,
+					},
+				},
+			}),
+			threadId,
+			memory,
+			req,
+			resourceId: userId,
+			createRequestContext: (req) => ({
+				userAgent: req.headers.get("user-agent") || undefined,
+				ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
+			}),
+			generateId: uuidv4,
+			enableResume: true,
+			onError({ error }) {
+				console.error(`>>> Agent Error`, error);
+			},
+		});
+	}
+
+	// Wrap only POST requests with traced
 	return traced(
 		async (span) => {
 			// Create Redis memory instance
@@ -209,7 +272,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 			return response;
 		},
 		// Metadata for the span
-		{ type: "function", name: `${req.method} /api/v/${agentId}/${threadId}` },
+		{ type: "function", name: `POST /api/v/${agentId}/${threadId}` },
 	);
 };
 
