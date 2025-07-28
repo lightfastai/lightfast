@@ -3,7 +3,7 @@
  * Handles tool.execution.complete events from Qstash
  */
 
-import { AgentLoopWorker, createEventEmitter, createRedisClient, ToolResultHandler } from "@lightfast/ai/v2/core";
+import { createEventEmitter, createRedisClient, ToolResultHandler } from "@lightfast/ai/v2/core";
 import type { ToolExecutionCompleteEvent } from "@lightfast/ai/v2/core";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -24,11 +24,8 @@ export async function POST(request: NextRequest) {
 			workerBaseUrl: process.env.WORKER_BASE_URL || "http://localhost:3000"
 		});
 
-		// Create agent loop worker for continuation
-		const agentLoopWorker = new AgentLoopWorker(redis, eventEmitter);
-
 		// Create and run the tool result handler
-		const handler = new ToolResultHandler(redis, eventEmitter, agentLoopWorker);
+		const handler = new ToolResultHandler(redis, eventEmitter);
 		await handler.handleToolComplete(event);
 
 		return NextResponse.json({ success: true });

@@ -36,7 +36,7 @@ export default function TestEventDrivenPage() {
 	const [scenarios, setScenarios] = useState<TestScenario[]>([]);
 	const [error, setError] = useState<string>();
 	
-	const eventSourceRef = useRef<EventSource>();
+	const eventSourceRef = useRef<EventSource | null>(null);
 
 	// Available test scenarios
 	const defaultScenarios: TestScenario[] = [

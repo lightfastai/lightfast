@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 				toolCallId: event.data.toolCallId,
 				tool: event.data.tool,
 				error: result.error,
-				duration: 500,
+				lastAttemptDuration: 500,
 				attempts: 1,
 			});
 		}

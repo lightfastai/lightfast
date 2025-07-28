@@ -82,12 +82,14 @@ export async function POST(req: NextRequest) {
 			sessionId,
 			timestamp: new Date().toISOString(),
 			version: "1.0" as const,
-			messages: messages as Message[],
-			systemPrompt,
-			temperature,
-			maxIterations,
-			tools,
-			metadata,
+			data: {
+				messages: messages as Message[],
+				systemPrompt,
+				temperature,
+				maxIterations,
+				tools,
+				metadata,
+			},
 		};
 
 		// Run the first agent loop immediately in the background

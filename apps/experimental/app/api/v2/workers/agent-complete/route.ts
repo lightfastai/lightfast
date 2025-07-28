@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
 			const session = typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData;
 			session.status = "completed";
 			session.completedAt = new Date().toISOString();
-			session.finalResponse = event.data.response;
-			session.totalIterations = event.data.iteration || 1;
+			session.finalResponse = event.data.finalMessage;
+			session.totalIterations = event.data.iterations || 1;
 			
 			// Extend TTL since session is complete
 			await redis.setex(sessionKey, 86400, JSON.stringify(session)); // 24 hours
@@ -37,19 +37,20 @@ export async function POST(request: NextRequest) {
 		// Write completion event to stream
 		await streamWriter.writeMessage(event.sessionId, {
 			type: "completion",
-			content: `Agent completed processing: ${event.data.response}`,
+			content: `Agent completed processing: ${event.data.finalMessage}`,
 			metadata: JSON.stringify({
 				event: "agent.complete",
 				sessionId: event.sessionId,
-				response: event.data.response,
-				iteration: event.data.iteration,
-				reasoning: event.data.reasoning,
+				response: event.data.finalMessage,
+				iterations: event.data.iterations,
+				toolsUsed: event.data.toolsUsed,
+				duration: event.data.duration,
 			}),
 		});
 
 		// Write final response to stream
-		if (event.data.response) {
-			await streamWriter.writeChunk(event.sessionId, event.data.response);
+		if (event.data.finalMessage) {
+			await streamWriter.writeChunk(event.sessionId, event.data.finalMessage);
 		}
 
 		console.log(`[Agent Complete Handler] Session ${event.sessionId} completed successfully`);

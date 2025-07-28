@@ -52,7 +52,7 @@ async function testEventDrivenArchitecture() {
 
 		// Test 5: Read from stream
 		console.log("\n📖 Reading from stream...");
-		const entries = await redis.xrange(streamKey, "-", "+");
+		const entries = await redis.xrange(streamKey, "-", "+") as unknown as any[];
 		console.log(`Found ${entries.length} stream entries:`);
 		for (const entry of entries) {
 			console.log(`  - ${entry.id}: ${JSON.stringify(entry.data)}`);

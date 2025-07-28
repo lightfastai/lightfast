@@ -31,9 +31,9 @@ export default function TestInstantStreamPage() {
 	const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
 	const [currentThinking, setCurrentThinking] = useState("");
 	
-	const eventSourceRef = useRef<EventSource>();
+	const eventSourceRef = useRef<EventSource | null>(null);
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
-	const currentMessageIdRef = useRef<string>();
+	const currentMessageIdRef = useRef<string | undefined>(undefined);
 
 	// Auto-scroll to bottom
 	useEffect(() => {
@@ -340,9 +340,9 @@ function ConnectionStatus({ status }: { status: string }) {
 	const variant = variants[status] || variants.disconnected;
 
 	return (
-		<div className={`flex items-center gap-1 text-sm ${variant.className}`}>
-			{variant.icon}
-			<span>{variant.label}</span>
+		<div className={`flex items-center gap-1 text-sm ${variant?.className || 'text-gray-600'}`}>
+			{variant?.icon || <div className="h-2 w-2 rounded-full bg-gray-400" />}
+			<span>{variant?.label || 'Disconnected'}</span>
 		</div>
 	);
 }
