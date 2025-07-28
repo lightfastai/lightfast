@@ -59,6 +59,9 @@ export const env = createEnv({
 		// Qstash Event System
 		QSTASH_URL: z.string().url().default("https://qstash.upstash.io"),
 		QSTASH_TOKEN: z.string().min(1),
+		QSTASH_TOPIC_PREFIX: z.string().default("agent").optional(),
+		QSTASH_DIRECT_URL: z.string().optional(),
+		WORKER_BASE_URL: z.string().url().optional(),
 	},
 
 	/**
@@ -120,6 +123,9 @@ export const env = createEnv({
 		// Qstash Event System
 		QSTASH_URL: process.env.QSTASH_URL,
 		QSTASH_TOKEN: process.env.QSTASH_TOKEN,
+		QSTASH_TOPIC_PREFIX: process.env.QSTASH_TOPIC_PREFIX,
+		QSTASH_DIRECT_URL: process.env.QSTASH_DIRECT_URL,
+		WORKER_BASE_URL: process.env.WORKER_BASE_URL,
 
 		// Client
 		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
