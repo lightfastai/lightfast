@@ -85,36 +85,54 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 		return Response.json({ error: "Agent not found" }, { status: 404 });
 	}
 
-	// Skip tracing for GET requests (reusable stream endpoint)
-	if (req.method === "GET") {
-		// Direct handler without Braintrust tracing
+	// Define the handler function that will be used for both GET and POST
+	const executeHandler = async () => {
+		// Create Redis memory instance
 		const memory = new RedisMemory({
 			url: env.KV_REST_API_URL,
 			token: env.KV_REST_API_TOKEN,
 		});
 
-		return fetchRequestHandler({
+		// Pass everything to fetchRequestHandler with inline agent
+		const response = await fetchRequestHandler({
 			agent: createAgent<A011ToolSchema, AppRuntimeContext>({
 				name: "a011",
 				system: A011_SYSTEM_PROMPT,
 				tools: a011Tools,
+				// 🔍 CLINE-INSPIRED CACHING STRATEGY:
+				// Using Cline AI assistant's proven approach for Anthropic cache breakpoints:
+				// 1. Always cache system prompt (biggest efficiency gain, works with thinking)
+				// 2. Cache last 2 user messages only (strategic conversation breakpoints)
+				// 3. Up to 4 breakpoints total (within Anthropic's limits)
+				//
+				// This strategy is confirmed to work with thinking models!
 				cache: new AnthropicProviderCache({
 					strategy: new ClineConversationStrategy({
 						cacheSystemPrompt: true,
 						recentUserMessagesToCache: 2,
 					}),
 				}),
-				createRuntimeContext: ({ threadId, resourceId }): AppRuntimeContext => ({}),
-				model: gateway("anthropic/claude-4-sonnet"),
+				createRuntimeContext: ({ threadId, resourceId }): AppRuntimeContext => ({
+					// Create agent-specific context
+					// The agent can use threadId and resourceId if needed
+					// but they're already available in system context
+				}),
+				model: wrapLanguageModel({
+					model: gateway("anthropic/claude-4-sonnet"),
+					middleware: BraintrustMiddleware({ debug: true }),
+				}),
 				providerOptions: {
 					anthropic: {
+						// Enable Claude Code thinking
 						thinking: {
 							type: "enabled",
-							budgetTokens: 32000,
+							budgetTokens: 32000, // Generous budget for complex reasoning
 						},
 					} satisfies AnthropicProviderOptions,
 				},
 				headers: {
+					// Note: token-efficient-tools-2025-02-19 is only available for Claude 3.7 Sonnet
+					// It reduces token usage by ~14% average (up to 70%) and improves latency
 					"anthropic-beta": "interleaved-thinking-2025-05-14,token-efficient-tools-2025-02-19",
 				},
 				experimental_transform: smoothStream({
@@ -131,110 +149,29 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 						userId,
 					},
 				},
-			}),
-			threadId,
-			memory,
-			req,
-			resourceId: userId,
-			createRequestContext: (req) => ({
-				userAgent: req.headers.get("user-agent") || undefined,
-				ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
-			}),
-			generateId: uuidv4,
-			enableResume: true,
-			onError({ error }) {
-				console.error(`>>> Agent Error`, error);
-			},
-		});
-	}
-
-	// Wrap only POST requests with traced
-	return traced(
-		async (span) => {
-			// Create Redis memory instance
-			const memory = new RedisMemory({
-				url: env.KV_REST_API_URL,
-				token: env.KV_REST_API_TOKEN,
-			});
-
-			// Pass everything to fetchRequestHandler with inline agent
-			const response = await fetchRequestHandler({
-				agent: createAgent<A011ToolSchema, AppRuntimeContext>({
-					name: "a011",
-					system: A011_SYSTEM_PROMPT,
-					tools: a011Tools,
-					// 🔍 CLINE-INSPIRED CACHING STRATEGY:
-					// Using Cline AI assistant's proven approach for Anthropic cache breakpoints:
-					// 1. Always cache system prompt (biggest efficiency gain, works with thinking)
-					// 2. Cache last 2 user messages only (strategic conversation breakpoints)
-					// 3. Up to 4 breakpoints total (within Anthropic's limits)
-					//
-					// This strategy is confirmed to work with thinking models!
-					cache: new AnthropicProviderCache({
-						strategy: new ClineConversationStrategy({
-							cacheSystemPrompt: true,
-							recentUserMessagesToCache: 2,
-						}),
-					}),
-					createRuntimeContext: ({ threadId, resourceId }): AppRuntimeContext => ({
-						// Create agent-specific context
-						// The agent can use threadId and resourceId if needed
-						// but they're already available in system context
-					}),
-					model: wrapLanguageModel({
-						model: gateway("anthropic/claude-4-sonnet"),
-						middleware: BraintrustMiddleware({ debug: true }),
-					}),
-					providerOptions: {
-						anthropic: {
-							// Enable Claude Code thinking
-							thinking: {
-								type: "enabled",
-								budgetTokens: 32000, // Generous budget for complex reasoning
-							},
-						} satisfies AnthropicProviderOptions,
-					},
-					headers: {
-						// Note: token-efficient-tools-2025-02-19 is only available for Claude 3.7 Sonnet
-						// It reduces token usage by ~14% average (up to 70%) and improves latency
-						"anthropic-beta": "interleaved-thinking-2025-05-14,token-efficient-tools-2025-02-19",
-					},
-					experimental_transform: smoothStream({
-						delayInMs: 25,
-						chunking: "word",
-					}),
-					stopWhen: stepCountIs(30),
-					experimental_telemetry: {
-						isEnabled: !!env.OTEL_EXPORTER_OTLP_HEADERS,
-						metadata: {
-							agentId,
-							agentName: "a011",
-							threadId,
-							userId,
-						},
-					},
-					onChunk: ({ chunk }) => {
-						if (chunk.type === "tool-call") {
-							// Test strong typing - these should work with our actual tools
-							if (chunk.toolName === "fileWrite") {
-								// File write tool called
-							} else if (chunk.toolName === "webSearch") {
-								// Web search called
-							} else if (chunk.toolName === "todoWrite") {
-								// Todo write tool called
-							} else if (chunk.toolName === "fileRead") {
-								// File read tool called
-							} else if (chunk.toolName === "todoRead") {
-								// Todo read tool called
-							} else if (chunk.toolName === "createSandbox") {
-								// Creating sandbox
-							} else if (chunk.toolName === "executeSandboxCommand") {
-								// Executing sandbox command
-							}
+				onChunk: ({ chunk }) => {
+					if (chunk.type === "tool-call") {
+						// Test strong typing - these should work with our actual tools
+						if (chunk.toolName === "fileWrite") {
+							// File write tool called
+						} else if (chunk.toolName === "webSearch") {
+							// Web search called
+						} else if (chunk.toolName === "todoWrite") {
+							// Todo write tool called
+						} else if (chunk.toolName === "fileRead") {
+							// File read tool called
+						} else if (chunk.toolName === "todoRead") {
+							// Todo read tool called
+						} else if (chunk.toolName === "createSandbox") {
+							// Creating sandbox
+						} else if (chunk.toolName === "executeSandboxCommand") {
+							// Executing sandbox command
 						}
-					},
-					onFinish: (result) => {
-						// Log to Braintrust span with full output
+					}
+				},
+				onFinish: (result) => {
+					// Only log to Braintrust if we're in a traced context
+					if (req.method === "POST") {
 						currentSpan().log({
 							input: {
 								agentId,
@@ -251,29 +188,35 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 								providerMetadata: result.providerMetadata,
 							},
 						});
-					},
-				}),
-				threadId,
-				memory,
-				req,
-				resourceId: userId,
-				createRequestContext: (req) => ({
-					// Create request-level context from HTTP request
-					userAgent: req.headers.get("user-agent") || undefined,
-					ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
-				}),
-				generateId: uuidv4,
-				enableResume: true,
-				onError({ error }) {
-					console.error(`>>> Agent Error`, error);
+					}
 				},
-			});
+			}),
+			threadId,
+			memory,
+			req,
+			resourceId: userId,
+			createRequestContext: (req) => ({
+				// Create request-level context from HTTP request
+				userAgent: req.headers.get("user-agent") || undefined,
+				ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
+			}),
+			generateId: uuidv4,
+			enableResume: true,
+			onError({ error }) {
+				console.error(`>>> Agent Error`, error);
+			},
+		});
 
-			return response;
-		},
-		// Metadata for the span
-		{ type: "function", name: `POST /api/v/${agentId}/${threadId}` },
-	);
+		return response;
+	};
+
+	// Only wrap with traced for POST requests
+	if (req.method === "POST") {
+		return traced(executeHandler, { type: "function", name: `POST /api/v/${agentId}/${threadId}` });
+	}
+
+	// GET requests run without traced wrapper
+	return executeHandler();
 };
 
 // Export the handler for both GET and POST
