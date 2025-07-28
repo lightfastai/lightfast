@@ -10,12 +10,12 @@ export function generateBinaryInstances(
   count: number,
   screenWidth: number,
   screenHeight: number
-): Array<{
+): {
   id: string;
   text: string;
   x: number;
   y: number;
-}> {
+}[] {
   const instances = [];
   const binaryGroups = binary.split(' ');
   
