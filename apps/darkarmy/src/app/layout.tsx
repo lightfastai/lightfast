@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "@repo/ui/globals.css";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Dark Army",
@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="dark min-h-screen bg-black">{children}</body>
     </html>
   );
 }

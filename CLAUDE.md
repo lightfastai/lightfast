@@ -235,6 +235,27 @@ pnpm typecheck  # Type checking
 pnpm format     # Check formatting
 ```
 
+#### Running Dev Servers in Background
+When working with Claude Code, run dev servers in the background to avoid blocking the terminal:
+
+```bash
+# Run specific app dev server in background
+pnpm dev:www > /tmp/www-dev.log 2>&1 &
+pnpm dev:app > /tmp/app-dev.log 2>&1 &
+pnpm dev:darkarmy > /tmp/darkarmy-dev.log 2>&1 &
+
+# Check dev server logs
+cat /tmp/www-dev.log
+tail -f /tmp/app-dev.log  # Follow logs in real-time
+
+# Kill background dev servers
+pkill -f "next dev"
+pkill -f "turbo watch dev"
+
+# Check running processes
+ps aux | grep "pnpm dev"
+```
+
 #### Development Workflow
 1. Use `pnpm with-env` for environment variables
 2. Check types with `tsc --noEmit`

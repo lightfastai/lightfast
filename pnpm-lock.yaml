@@ -316,9 +316,18 @@ importers:
       '@types/react-dom':
         specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
+      autoprefixer:
+        specifier: ^10.4.20
+        version: 10.4.20(postcss@8.5.3)
       eslint:
         specifier: 'catalog:'
         version: 9.25.1(jiti@2.4.2)
+      postcss:
+        specifier: catalog:tailwind4
+        version: 8.5.3
+      tailwindcss:
+        specifier: catalog:tailwind4
+        version: 4.1.4
       typescript:
         specifier: 'catalog:'
         version: 5.8.3
