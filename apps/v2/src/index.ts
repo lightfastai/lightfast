@@ -7,6 +7,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { eventRoutes } from "./routes/events";
 import { healthRoutes } from "./routes/health";
 import { initRoutes } from "./routes/init";
@@ -28,13 +29,18 @@ app.get("/", (c) => {
 		timestamp: new Date().toISOString(),
 		endpoints: {
 			init: "/init",
-			stream: "/stream/:sessionId",
+			stream: "/stream/:sessionId", 
 			events: "/events",
 			workers: "/workers",
 			test: "/test",
+			streamTest: "/stream-test",
 		},
 	});
 });
+
+// Static files
+app.use("/public/*", serveStatic({ root: "./" }));
+app.get("/stream-test", serveStatic({ path: "./public/stream-test.html" }));
 
 // Mount routes
 app.route("/health", healthRoutes);
@@ -76,4 +82,7 @@ Available endpoints:
 - POST /workers/tool-executor - Tool executor endpoint
 - GET  /test                 - List test scenarios
 - POST /test/:scenario       - Run test scenario
+- GET  /stream-test          - Interactive streaming test page
+
+🔥 Try the interactive test: http://localhost:${port}/stream-test
 `);

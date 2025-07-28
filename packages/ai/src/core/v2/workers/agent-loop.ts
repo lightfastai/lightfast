@@ -8,6 +8,7 @@ import type { Redis } from "@upstash/redis";
 import { z } from "zod";
 import { type EventEmitter, type SessionEventEmitter } from "../events/emitter";
 import { type AgentLoopInitEvent, type Message } from "../events/schemas";
+import { createStreamWriter, type StreamWriter } from "../server/stream-writer";
 import {
 	AgentDecisionSchema,
 	type AgentDecision,
@@ -17,11 +18,15 @@ import {
 } from "./schemas";
 
 export class AgentLoopWorker {
+	private streamWriter: StreamWriter;
+
 	constructor(
 		private redis: Redis,
 		private eventEmitter: EventEmitter,
 		private config: WorkerConfig = {},
-	) {}
+	) {
+		this.streamWriter = createStreamWriter(redis);
+	}
 
 	/**
 	 * Process an agent loop init event

@@ -33,6 +33,9 @@ export interface EventEmitterConfig {
 	qstashUrl: string;
 	qstashToken: string;
 	topicPrefix?: string;
+	// Direct URL mode configuration
+	directUrl?: string;
+	workerBaseUrl?: string;
 	retryConfig?: {
 		retries?: number;
 		backoff?: "exponential" | "linear" | "constant";
@@ -42,6 +45,8 @@ export interface EventEmitterConfig {
 export class EventEmitter {
 	private client: Client;
 	private topicPrefix: string;
+	private directUrl?: string;
+	private workerBaseUrl?: string;
 
 	constructor(config: EventEmitterConfig) {
 		this.client = new Client({
@@ -49,6 +54,8 @@ export class EventEmitter {
 			token: config.qstashToken,
 		});
 		this.topicPrefix = config.topicPrefix || "agent";
+		this.directUrl = config.directUrl;
+		this.workerBaseUrl = config.workerBaseUrl;
 	}
 
 	/**
@@ -222,7 +229,7 @@ export class EventEmitter {
 	 */
 	private async publishEvent(event: Event): Promise<void> {
 		// Check if we're in direct URL mode (for testing)
-		if (process.env.QSTASH_DIRECT_URL === "true" && process.env.WORKER_BASE_URL) {
+		if (this.directUrl === "true" && this.workerBaseUrl) {
 			return this.publishEventDirectUrl(event);
 		}
 
@@ -259,7 +266,7 @@ export class EventEmitter {
 			return;
 		}
 
-		const url = `${process.env.WORKER_BASE_URL}${endpoint}`;
+		const url = `${this.workerBaseUrl}${endpoint}`;
 
 		try {
 			await this.client.publishJSON({
@@ -286,10 +293,11 @@ export class EventEmitter {
 	 */
 	private getEndpointForEvent(eventType: string): string | undefined {
 		const endpoints: Record<string, string> = {
-			"agent.loop.init": "/workers/agent-loop",
-			"agent.tool.call": "/workers/tool-executor",
-			"tool.execution.complete": "/workers/tool-result-complete",
-			"tool.execution.failed": "/workers/tool-result-failed",
+			"agent.loop.init": "/api/v2/workers/agent-loop",
+			"agent.tool.call": "/api/v2/workers/tool-executor",
+			"tool.execution.complete": "/api/v2/workers/tool-result-complete",
+			"tool.execution.failed": "/api/v2/workers/tool-result-failed",
+			"agent.loop.complete": "/api/v2/workers/agent-complete",
 		};
 		return endpoints[eventType];
 	}
