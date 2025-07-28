@@ -8,8 +8,6 @@ import { EventSchema, EventType } from "./schemas";
 import type {
 	AgentLoopCompleteEvent,
 	AgentLoopInitEvent,
-	AgentLoopStartEvent,
-	AgentResponseEvent,
 	AgentToolCallEvent,
 	Event,
 	Message,
@@ -21,8 +19,6 @@ import type {
 import {
 	AgentLoopCompleteEventSchema,
 	AgentLoopInitEventSchema,
-	AgentLoopStartEventSchema,
-	AgentResponseEventSchema,
 	AgentToolCallEventSchema,
 	StreamWriteEventSchema,
 	ToolExecutionCompleteEventSchema,
@@ -37,14 +33,10 @@ import {
 export enum EventTypes {
 	// Agent Loop Events
 	AGENT_LOOP_INIT = "agent.loop.init",
-	AGENT_LOOP_START = "agent.loop.start",
 	AGENT_LOOP_COMPLETE = "agent.loop.complete",
-	AGENT_LOOP_ERROR = "agent.loop.error",
 	
 	// Agent Decision Events
 	AGENT_TOOL_CALL = "agent.tool.call",
-	AGENT_RESPONSE = "agent.response",
-	AGENT_CLARIFICATION = "agent.clarification",
 	
 	// Tool Execution Events
 	TOOL_EXECUTION_START = "tool.execution.start",
@@ -120,25 +112,6 @@ export class EventEmitter {
 		await this.publishEvent(validated);
 	}
 
-	/**
-	 * Emit an agent loop error event
-	 */
-	async emitAgentLoopError(sessionId: string, error: Error): Promise<void> {
-		const event = {
-			id: this.generateEventId(),
-			type: EventTypes.AGENT_LOOP_ERROR,
-			sessionId,
-			timestamp: new Date().toISOString(),
-			version: "1.0" as const,
-			data: {
-				error: error.message,
-				stack: error.stack,
-			},
-		};
-
-		// Note: We don't have a specific schema for error events yet
-		await this.publishEvent(event as Event);
-	}
 
 	/**
 	 * Emit an agent tool call event
@@ -257,56 +230,8 @@ export class EventEmitter {
 		}
 	}
 
-	/**
-	 * Emit an agent response event
-	 */
-	async emitAgentResponse(sessionId: string, data: AgentResponseEvent["data"]): Promise<void> {
-		const event: AgentResponseEvent = {
-			id: this.generateEventId(),
-			type: EventTypes.AGENT_RESPONSE,
-			sessionId,
-			timestamp: new Date().toISOString(),
-			version: "1.0",
-			data,
-		};
 
-		const validated = AgentResponseEventSchema.parse(event);
-		await this.publishEvent(validated);
-	}
 
-	/**
-	 * Emit an agent clarification event
-	 */
-	async emitAgentClarification(sessionId: string, data: { question: string; context?: any }): Promise<void> {
-		const event = {
-			id: this.generateEventId(),
-			type: EventTypes.AGENT_CLARIFICATION,
-			sessionId,
-			timestamp: new Date().toISOString(),
-			version: "1.0" as const,
-			data,
-		};
-
-		// Note: We don't have a specific schema for clarification events yet
-		await this.publishEvent(event as Event);
-	}
-
-	/**
-	 * Emit an agent loop start event
-	 */
-	async emitAgentLoopStart(sessionId: string, data: AgentLoopStartEvent["data"]): Promise<void> {
-		const event: AgentLoopStartEvent = {
-			id: this.generateEventId(),
-			type: EventTypes.AGENT_LOOP_START,
-			sessionId,
-			timestamp: new Date().toISOString(),
-			version: "1.0",
-			data,
-		};
-
-		const validated = AgentLoopStartEventSchema.parse(event);
-		await this.publishEvent(validated);
-	}
 
 	/**
 	 * Emit a tool execution start event
@@ -323,6 +248,13 @@ export class EventEmitter {
 
 		const validated = ToolExecutionStartEventSchema.parse(event);
 		await this.publishEvent(validated);
+	}
+
+	/**
+	 * Create a session-scoped event emitter
+	 */
+	forSession(sessionId: string): SessionEventEmitter {
+		return new SessionEventEmitter(this, sessionId);
 	}
 }
 
@@ -342,10 +274,6 @@ export class SessionEventEmitter {
 
 	async emitAgentLoopComplete(data: AgentLoopCompleteEvent["data"]): Promise<void> {
 		return this.emitter.emitAgentLoopComplete(this.sessionId, data);
-	}
-
-	async emitAgentLoopError(error: Error): Promise<void> {
-		return this.emitter.emitAgentLoopError(this.sessionId, error);
 	}
 
 	async emitAgentToolCall(data: AgentToolCallEvent["data"]): Promise<void> {

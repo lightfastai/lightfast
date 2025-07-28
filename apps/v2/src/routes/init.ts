@@ -3,15 +3,15 @@
  * Similar to /api/v2/stream/init but simplified for testing
  */
 
-import { createV2Infrastructure, getSystemLimits } from "@lightfast/ai/v2/core";
+import { getSystemLimits } from "@lightfast/ai/v2/core";
 import type { Message } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
+import { redis, eventEmitter, streamGenerator } from "../config";
 
 const initRoutes = new Hono();
 
-// Initialize V2 infrastructure
-const { redis, streamGenerator, eventEmitter } = createV2Infrastructure();
+// Get system limits
 const limits = getSystemLimits();
 
 // Request schema

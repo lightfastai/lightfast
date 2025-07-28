@@ -2,21 +2,14 @@
  * Simple test to verify the event-driven architecture
  */
 
-import { 
-	createRedisClient,
-	createStreamGenerator,
-	createV2EventEmitter 
-} from "@lightfast/ai/v2/core";
+import { redis, eventEmitter, streamGenerator } from "./config";
 
 async function testEventDrivenArchitecture() {
 	console.log("Testing V2 Event-Driven Architecture...\n");
 
 	try {
-		// Create infrastructure
-		const redis = createRedisClient();
-		const streamGenerator = createStreamGenerator(redis);
-		const eventEmitter = createV2EventEmitter();
-		console.log("✅ Infrastructure created successfully");
+		// Infrastructure already created in config
+		console.log("✅ Infrastructure loaded successfully");
 
 		// Test 1: Create a session
 		const sessionId = streamGenerator.createSessionId();

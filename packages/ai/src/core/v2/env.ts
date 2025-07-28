@@ -2,10 +2,10 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 /**
- * AI package environment configuration preset for extending
- * This can be used by apps to include AI package env vars
+ * Environment configuration for V2 Event-Driven Architecture
+ * This validates required environment variables for the event system
  */
-export const aiEnv = () => ({
+export const env = createEnv({
 	server: {
 		// Redis Configuration (Required for streaming and state management)
 		KV_REST_API_URL: z.string().url().describe("Upstash Redis REST API URL"),
@@ -18,39 +18,16 @@ export const aiEnv = () => ({
 		// AI Gateway (Required for LLM calls)
 		AI_GATEWAY_API_KEY: z.string().min(1).describe("Vercel AI Gateway API key"),
 
-
 		// Optional: Timeouts and limits
 		AGENT_MAX_ITERATIONS: z.coerce.number().min(1).max(100).default(10).optional(),
 		TOOL_EXECUTION_TIMEOUT: z.coerce.number().min(1000).max(300000).default(30000).optional(),
 		STREAM_TTL_SECONDS: z.coerce.number().min(60).max(86400).default(3600).optional(),
 	},
-	runtimeEnv: {
-		// Redis
-		KV_REST_API_URL: process.env.KV_REST_API_URL,
-		KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
 
-		// Qstash
-		QSTASH_URL: process.env.QSTASH_URL,
-		QSTASH_TOKEN: process.env.QSTASH_TOKEN,
+	client: {},
 
-		// AI Gateway
-		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
+	experimental__runtimeEnv: {},
 
-
-		// Limits
-		AGENT_MAX_ITERATIONS: process.env.AGENT_MAX_ITERATIONS,
-		TOOL_EXECUTION_TIMEOUT: process.env.TOOL_EXECUTION_TIMEOUT,
-		STREAM_TTL_SECONDS: process.env.STREAM_TTL_SECONDS,
-	},
-});
-
-/**
- * Environment configuration for V2 Event-Driven Architecture
- * This validates required environment variables for the event system
- */
-export const env = createEnv({
-	...aiEnv(),
-	
 	/**
 	 * Skip validation in certain environments
 	 */
@@ -92,3 +69,4 @@ export function getSystemLimits() {
 		streamTTLSeconds: env.STREAM_TTL_SECONDS ?? 3600,
 	};
 }
+

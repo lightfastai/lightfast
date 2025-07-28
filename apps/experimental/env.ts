@@ -1,13 +1,13 @@
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { createEnv } from "@t3-oss/env-nextjs";
-import { aiEnv } from "@lightfast/ai/v2/core";
+import { env as aiEnv } from "@lightfast/ai/v2/env";
 import { z } from "zod";
 
 export const env = createEnv({
 	/**
 	 * Extend from T3-OSS Vercel preset and AI package env
 	 */
-	extends: [vercel(), aiEnv()],
+	extends: [vercel(), aiEnv],
 
 	/**
 	 * Specify your server-side environment variables schema here.
@@ -65,9 +65,16 @@ export const env = createEnv({
 	 * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
-	runtimeEnv: {
-		// Inherited from aiEnv() - no need to duplicate
-		...aiEnv().runtimeEnv,
+	experimental__runtimeEnv: {
+		// AI Package env vars
+		KV_REST_API_URL: process.env.KV_REST_API_URL,
+		KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+		QSTASH_URL: process.env.QSTASH_URL,
+		QSTASH_TOKEN: process.env.QSTASH_TOKEN,
+		AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
+		AGENT_MAX_ITERATIONS: process.env.AGENT_MAX_ITERATIONS,
+		TOOL_EXECUTION_TIMEOUT: process.env.TOOL_EXECUTION_TIMEOUT,
+		STREAM_TTL_SECONDS: process.env.STREAM_TTL_SECONDS,
 
 		// Node environment
 		NODE_ENV: process.env.NODE_ENV,

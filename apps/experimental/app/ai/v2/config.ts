@@ -4,9 +4,7 @@
  */
 
 import { Redis } from "@upstash/redis";
-import { EventEmitter, EventTypes } from "@lightfast/ai/core/v2/events/emitter";
-import { StreamGenerator } from "@lightfast/ai/core/v2/server/stream-generator";
-import { StreamConsumer } from "@lightfast/ai/core/v2/server/stream-consumer";
+import { EventEmitter, EventTypes, StreamGenerator, StreamConsumer } from "@lightfast/ai/v2/core";
 import { env } from "@/env";
 
 /**

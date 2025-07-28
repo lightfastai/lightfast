@@ -3,16 +3,12 @@
  * For testing and debugging event emission
  */
 
-import { createRedisClient, createV2EventEmitter } from "@lightfast/ai/v2/core";
 import type { Event } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
+import { redis, eventEmitter } from "../config";
 
 const eventRoutes = new Hono();
-
-// Initialize event emitter and Redis
-const eventEmitter = createV2EventEmitter();
-const redis = createRedisClient();
 
 // POST /events/emit - Manually emit an event (for testing)
 eventRoutes.post("/emit", async (c) => {

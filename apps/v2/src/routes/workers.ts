@@ -12,17 +12,14 @@ import {
 	ToolExecutionCompleteEventSchema,
 	type ToolExecutionFailedEvent,
 	ToolExecutionFailedEventSchema,
-	createV2Infrastructure,
 	AgentLoopWorker,
 	ToolResultHandler,
 } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
+import { redis, eventEmitter, streamGenerator } from "../config";
 
 const workerRoutes = new Hono();
-
-// Initialize infrastructure
-const { redis, eventEmitter, streamGenerator } = createV2Infrastructure();
 
 // Create worker instances
 const agentLoopWorker = new AgentLoopWorker(redis, eventEmitter, {

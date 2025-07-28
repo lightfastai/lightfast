@@ -67,6 +67,10 @@
 		"./v2/core": {
 			"types": "./src/core/v2/core.ts",
 			"default": "./src/core/v2/core.ts"
+		},
+		"./v2/env": {
+			"types": "./src/core/v2/env.ts",
+			"default": "./src/core/v2/env.ts"
 		}
 	},
 	"scripts": {

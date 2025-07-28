@@ -3,15 +3,12 @@
  * Provides real-time updates from Redis streams
  */
 
-import { createStreamConsumer, createStreamGenerator } from "@lightfast/ai/v2/core";
 import type { StreamMessage } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
+import { streamConsumer, streamGenerator } from "../config";
 
 const streamRoutes = new Hono();
-
-// Initialize stream consumer
-const consumer = createStreamConsumer();
 
 // GET /stream/:sessionId - SSE endpoint for real-time updates
 streamRoutes.get("/:sessionId", async (c) => {
@@ -32,7 +29,7 @@ streamRoutes.get("/:sessionId", async (c) => {
 			});
 
 			// Start consuming from Redis stream
-			await consumer.consume(sessionId, controller.signal, {
+			await streamConsumer.consume(sessionId, controller.signal, {
 				onMessage: async (message: StreamMessage) => {
 					// Format the message for SSE based on type
 					let data: any = {};
@@ -103,8 +100,7 @@ streamRoutes.get("/:sessionId/info", async (c) => {
 	const sessionId = c.req.param("sessionId");
 
 	try {
-		const generator = createStreamGenerator();
-		const info = await generator.getStreamInfo(sessionId);
+		const info = await streamGenerator.getStreamInfo(sessionId);
 
 		return c.json(info);
 	} catch (error) {

@@ -3,13 +3,10 @@
  * Pre-configured test scenarios for the event-driven architecture
  */
 
-import { createV2Infrastructure } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
+import { redis, eventEmitter, streamGenerator } from "../config";
 
 const testRoutes = new Hono();
-
-// Initialize infrastructure
-const { redis, streamGenerator, eventEmitter } = createV2Infrastructure();
 
 // Test scenarios
 const scenarios = {

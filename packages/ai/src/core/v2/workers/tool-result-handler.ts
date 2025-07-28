@@ -80,12 +80,6 @@ export class ToolResultHandler {
 			});
 		} catch (error) {
 			console.error(`[ToolResultHandler] Error handling tool complete:`, error);
-			await sessionEmitter.emitAgentLoopError({
-				error: error instanceof Error ? error.message : String(error),
-				code: "TOOL_RESULT_HANDLER_ERROR",
-				iteration: 0,
-				recoverable: false,
-			});
 			throw error;
 		}
 	}
@@ -154,12 +148,6 @@ export class ToolResultHandler {
 			});
 		} catch (error) {
 			console.error(`[ToolResultHandler] Error handling tool failure:`, error);
-			await sessionEmitter.emitAgentLoopError({
-				error: error instanceof Error ? error.message : String(error),
-				code: "TOOL_RESULT_HANDLER_ERROR",
-				iteration: 0,
-				recoverable: false,
-			});
 			throw error;
 		}
 	}

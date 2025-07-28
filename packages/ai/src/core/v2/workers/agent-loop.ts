@@ -67,13 +67,6 @@ export class AgentLoopWorker {
 		} catch (error) {
 			console.error(`[AgentLoopWorker] Error processing event ${event.id}:`, error);
 
-			// Emit error event
-			await sessionEmitter.emitAgentLoopError({
-				error: error instanceof Error ? error.message : String(error),
-				code: "AGENT_LOOP_ERROR",
-				iteration: 0,
-				recoverable: false,
-			});
 
 			// Update session status
 			await this.updateSessionStatus(event.sessionId, "error");
