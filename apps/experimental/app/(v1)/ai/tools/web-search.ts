@@ -3,7 +3,7 @@ import { createTool } from "@lightfast/ai/tool";
 import { currentSpan, wrapTraced } from "braintrust";
 import Exa, { type RegularSearchOptions, type SearchResponse } from "exa-js";
 import { z } from "zod";
-import type { AppRuntimeContext } from "@/app/ai/types";
+import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 import { env } from "@/env";
 
 /**

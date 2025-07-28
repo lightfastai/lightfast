@@ -3,7 +3,7 @@ import { createTool } from "@lightfast/ai/tool";
 import { del, put } from "@vercel/blob";
 import { currentSpan, wrapTraced } from "braintrust";
 import { z } from "zod";
-import type { AppRuntimeContext } from "@/app/ai/types";
+import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 import { env } from "@/env";
 
 const taskSchema = z.object({

@@ -3,7 +3,7 @@ import { createTool } from "@lightfast/ai/tool";
 import { Sandbox } from "@vercel/sandbox";
 import { currentSpan, wrapTraced } from "braintrust";
 import { z } from "zod";
-import type { AppRuntimeContext } from "@/app/ai/types";
+import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 
 /**
  * Wrapped create sandbox execution function with Braintrust tracing
