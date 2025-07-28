@@ -8,7 +8,13 @@ import {
 	AgentLoopInitEventSchema,
 	type AgentToolCallEvent,
 	AgentToolCallEventSchema,
+	type ToolExecutionCompleteEvent,
+	ToolExecutionCompleteEventSchema,
+	type ToolExecutionFailedEvent,
+	ToolExecutionFailedEventSchema,
 	createV2Infrastructure,
+	AgentLoopWorker,
+	ToolResultHandler,
 } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -18,6 +24,15 @@ const workerRoutes = new Hono();
 // Initialize infrastructure
 const { redis, eventEmitter, streamGenerator } = createV2Infrastructure();
 
+// Create worker instances
+const agentLoopWorker = new AgentLoopWorker(redis, eventEmitter, {
+	maxExecutionTime: 25000,
+	retryAttempts: 3,
+	retryDelay: 1000,
+});
+
+const toolResultHandler = new ToolResultHandler(redis, eventEmitter);
+
 // POST /workers/agent-loop - Agent loop worker endpoint
 workerRoutes.post("/agent-loop", async (c) => {
 	try {
@@ -26,66 +41,13 @@ workerRoutes.post("/agent-loop", async (c) => {
 
 		console.log(`[Agent Loop Worker] Processing event ${event.id} for session ${event.sessionId}`);
 
-		// Get session data
-		const sessionKey = `session:${event.sessionId}`;
-		const sessionData = await redis.get(sessionKey);
-
-		if (!sessionData) {
-			throw new Error(`Session ${event.sessionId} not found`);
-		}
-
-		const session = JSON.parse(sessionData as string);
-
-		// Update session status
-		session.status = "processing";
-		await redis.setex(sessionKey, 86400, JSON.stringify(session));
-
-		// Write to stream
-		const streamKey = `stream:${event.sessionId}`;
-		await redis.xadd(streamKey, "*", {
-			type: "event",
-			content: "Agent loop started",
-			metadata: JSON.stringify({
-				event: "agent.loop.start",
-				iteration: 1,
-			}),
-		});
-
-		// Simulate agent thinking
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
-		// For testing, always decide to use calculator tool
-		const toolCallId = `tc_${Date.now()}`;
-
-		// Write tool decision to stream
-		await redis.xadd(streamKey, "*", {
-			type: "event",
-			content: "Decided to use calculator tool",
-			metadata: JSON.stringify({
-				event: "agent.decision",
-				tool: "calculator",
-				toolCallId,
-			}),
-		});
-
-		// Emit tool call event
-		await eventEmitter.emitAgentToolCall(event.sessionId, {
-			toolCallId,
-			tool: "calculator",
-			arguments: { expression: "2 + 2" },
-			iteration: 1,
-			priority: "normal",
-		});
+		// Process the event using the real AgentLoopWorker
+		await agentLoopWorker.processEvent(event);
 
 		return c.json({
 			success: true,
-			message: "Agent loop processed",
+			message: "Agent loop processed successfully",
 			sessionId: event.sessionId,
-			decision: {
-				action: "tool_call",
-				tool: "calculator",
-				toolCallId,
-			},
 		});
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -217,22 +179,20 @@ workerRoutes.post("/tool-executor", async (c) => {
 				attempts: 1,
 			});
 
-			// For testing, complete the agent loop after tool execution
-			await eventEmitter.emitAgentLoopComplete(event.sessionId, {
-				finalMessage: `Tool ${event.data.tool} executed successfully. Result: ${JSON.stringify(result)}`,
-				iterations: 1,
-				toolsUsed: [event.data.tool],
-				duration: 2000,
-			});
-
-			// Write completion to stream
-			await redis.xadd(streamKey, "*", {
-				type: "status",
-				content: "completed",
-				metadata: JSON.stringify({
-					event: "agent.loop.complete",
-				}),
-			});
+			// Add tool result to session messages
+			const sessionKey = `session:${event.sessionId}`;
+			const sessionData = await redis.get(sessionKey);
+			if (sessionData) {
+				const session = JSON.parse(sessionData as string);
+				session.messages.push({
+					role: "tool",
+					content: JSON.stringify(result),
+					toolCallId: event.data.toolCallId,
+					toolName: event.data.tool,
+				});
+				session.updatedAt = new Date().toISOString();
+				await redis.setex(sessionKey, 86400, JSON.stringify(session));
+			}
 		} else {
 			await eventEmitter.emitToolExecutionFailed(event.sessionId, {
 				toolCallId: event.data.toolCallId,
@@ -271,6 +231,80 @@ workerRoutes.post("/tool-executor", async (c) => {
 	}
 });
 
+// POST /workers/tool-result-complete - Handle tool execution complete
+workerRoutes.post("/tool-result-complete", async (c) => {
+	try {
+		const body = await c.req.json();
+		const event = ToolExecutionCompleteEventSchema.parse(body);
+
+		console.log(`[Tool Result Handler] Processing complete event for ${event.data.tool}`);
+
+		await toolResultHandler.handleToolComplete(event);
+
+		return c.json({
+			success: true,
+			message: "Tool result processed successfully",
+			sessionId: event.sessionId,
+		});
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return c.json(
+				{
+					error: "Invalid event",
+					details: error.errors,
+				},
+				400,
+			);
+		}
+
+		console.error("[Tool Result Handler] Error:", error);
+		return c.json(
+			{
+				error: "Tool result processing failed",
+				details: error instanceof Error ? error.message : String(error),
+			},
+			500,
+		);
+	}
+});
+
+// POST /workers/tool-result-failed - Handle tool execution failed
+workerRoutes.post("/tool-result-failed", async (c) => {
+	try {
+		const body = await c.req.json();
+		const event = ToolExecutionFailedEventSchema.parse(body);
+
+		console.log(`[Tool Result Handler] Processing failed event for ${event.data.tool}`);
+
+		await toolResultHandler.handleToolFailed(event);
+
+		return c.json({
+			success: true,
+			message: "Tool failure processed successfully",
+			sessionId: event.sessionId,
+		});
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return c.json(
+				{
+					error: "Invalid event",
+					details: error.errors,
+				},
+				400,
+			);
+		}
+
+		console.error("[Tool Result Handler] Error:", error);
+		return c.json(
+			{
+				error: "Tool failure processing failed",
+				details: error instanceof Error ? error.message : String(error),
+			},
+			500,
+		);
+	}
+});
+
 // GET /workers/status - Check worker status
 workerRoutes.get("/status", (c) => {
 	return c.json({
@@ -282,6 +316,14 @@ workerRoutes.get("/status", (c) => {
 			},
 			toolExecutor: {
 				endpoint: "/workers/tool-executor",
+				status: "ready",
+			},
+			toolResultComplete: {
+				endpoint: "/workers/tool-result-complete",
+				status: "ready",
+			},
+			toolResultFailed: {
+				endpoint: "/workers/tool-result-failed",
 				status: "ready",
 			},
 		},

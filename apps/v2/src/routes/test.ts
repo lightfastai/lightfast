@@ -131,7 +131,7 @@ testRoutes.post("/:scenario", async (c) => {
 					// If agent decided on a tool call, execute it
 					if (result?.decision?.action === "tool_call") {
 						setTimeout(async () => {
-							await fetch("http://localhost:8080/workers/tool-executor", {
+							const toolResponse = await fetch("http://localhost:8090/workers/tool-executor", {
 								method: "POST",
 								headers: { "Content-Type": "application/json" },
 								body: JSON.stringify({
@@ -143,12 +143,39 @@ testRoutes.post("/:scenario", async (c) => {
 									data: {
 										toolCallId: result.decision.toolCallId,
 										tool: result.decision.tool,
-										arguments: { expression: "2 + 2" },
+										arguments: { expression: "25 * 4" },
 										iteration: 1,
 										priority: "normal",
 									},
 								}),
 							});
+
+							const toolResult = await toolResponse.json();
+							console.log(`[Test] Tool executor result:`, toolResult);
+
+							// After tool execution, invoke tool result handler
+							if (toolResult.success) {
+								setTimeout(async () => {
+									await fetch("http://localhost:8090/workers/tool-result-complete", {
+										method: "POST",
+										headers: { "Content-Type": "application/json" },
+										body: JSON.stringify({
+											id: `evt_test_result_${Date.now()}`,
+											type: "tool.execution.complete",
+											sessionId,
+											timestamp: new Date().toISOString(),
+											version: "1.0",
+											data: {
+												toolCallId: result.decision.toolCallId,
+												tool: result.decision.tool,
+												result: toolResult.result,
+												duration: 100,
+												attempts: 1,
+											},
+										}),
+									});
+								}, 500);
+							}
 						}, 500);
 					}
 				} catch (error) {

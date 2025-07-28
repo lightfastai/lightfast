@@ -13,3 +13,6 @@ export * from "./factories";
 
 // Export server components
 export * from "./server";
+
+// Export workers
+export * from "./workers";
