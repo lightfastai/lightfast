@@ -1,18 +1,18 @@
 /**
- * V2 Tool Result Handler Endpoint  
+ * V2 Tool Result Handler Endpoint
  * Handles tool.execution.complete events from Qstash
  */
 
-import { ToolResultHandler } from "@lightfast/ai/v2/core";
 import type { ToolExecutionCompleteEvent } from "@lightfast/ai/v2/core";
-import { NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter } from "@/app/(v2)/ai/config";
+import { ToolResultHandler } from "@lightfast/ai/v2/core";
+import { type NextRequest, NextResponse } from "next/server";
+import { eventEmitter, redis } from "@/app/(v2)/ai/config";
 
 export async function POST(request: NextRequest) {
 	try {
 		// Parse the event from Qstash
 		const event: ToolExecutionCompleteEvent = await request.json();
-		
+
 		console.log(`[Tool Result Handler] Processing complete event for ${event.data.tool}`);
 
 		// Create and run the tool result handler
@@ -20,15 +20,14 @@ export async function POST(request: NextRequest) {
 		await handler.handleToolComplete(event);
 
 		return NextResponse.json({ success: true });
-
 	} catch (error) {
 		console.error("[Tool Result Handler] Error:", error);
 		return NextResponse.json(
-			{ 
+			{
 				error: "Failed to process tool result",
-				details: error instanceof Error ? error.message : String(error)
+				details: error instanceof Error ? error.message : String(error),
 			},
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }

@@ -123,7 +123,7 @@ export function useResumableStream(
 			reconnectAttemptsRef.current = 0;
 		};
 
-		// Handle messages (generic data events)  
+		// Handle messages (generic data events)
 		eventSource.onmessage = (event) => {
 			try {
 				const message: StreamMessage = JSON.parse(event.data);
@@ -145,7 +145,7 @@ export function useResumableStream(
 		};
 
 		// Handle typed SSE events from V2 architecture
-		['chunk', 'status', 'event', 'tool', 'thinking', 'error', 'complete', 'completion'].forEach(eventType => {
+		["chunk", "status", "event", "tool", "thinking", "error", "complete", "completion"].forEach((eventType) => {
 			eventSource.addEventListener(eventType, (event: any) => {
 				try {
 					const data = JSON.parse(event.data);
@@ -156,16 +156,16 @@ export function useResumableStream(
 						metadata: data.metadata || data,
 						timestamp: new Date().toISOString(),
 						status: data.status,
-						error: data.error
+						error: data.error,
 					};
 					setMessages((prev: StreamMessage[]) => [...prev, message]);
 
 					// Update status based on completion events
-					if (eventType === 'complete' || eventType === 'completion') {
+					if (eventType === "complete" || eventType === "completion") {
 						setStatus("completed");
 						eventSource.close();
-					} else if (eventType === 'error') {
-						setError(new Error(data.content || data.error || 'Unknown error'));
+					} else if (eventType === "error") {
+						setError(new Error(data.content || data.error || "Unknown error"));
 						setStatus("error");
 					}
 				} catch (err) {
@@ -174,7 +174,7 @@ export function useResumableStream(
 						id: event.lastEventId || Date.now().toString(),
 						type: eventType as any,
 						content: event.data,
-						timestamp: new Date().toISOString()
+						timestamp: new Date().toISOString(),
 					};
 					setMessages((prev: StreamMessage[]) => [...prev, message]);
 				}

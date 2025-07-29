@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 // Define protected routes - everything except public routes
 const isProtectedRoute = createRouteMatcher([
-	"/((?!sign-in|api/webhooks|api/cron|api/v2|test-event-driven|test-resumable-stream|test-simple|test-instant-stream).*)"
+	"/((?!sign-in|api/webhooks|api/cron|api/v2|test-event-driven|test-resumable-stream|test-simple|test-instant-stream).*)",
 ]);
 
 // Default agent

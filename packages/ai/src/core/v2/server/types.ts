@@ -77,10 +77,10 @@ export interface CompleteMessage {
 }
 
 // Extended StreamMessage with V2 types
-export type StreamMessage = 
-	| ChunkMessage 
-	| MetadataMessage 
-	| EventMessage 
+export type StreamMessage =
+	| ChunkMessage
+	| MetadataMessage
+	| EventMessage
 	| ErrorMessage
 	| StatusMessage
 	| ToolMessage
@@ -170,21 +170,33 @@ export function validateMessage(entry: any): StreamMessage | null {
 				return {
 					type: MessageType.STATUS,
 					content: fields.content || "",
-					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+					metadata: fields.metadata
+						? typeof fields.metadata === "string"
+							? JSON.parse(fields.metadata)
+							: fields.metadata
+						: undefined,
 				};
 
 			case MessageType.TOOL:
 				return {
 					type: MessageType.TOOL,
 					content: fields.content || "",
-					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+					metadata: fields.metadata
+						? typeof fields.metadata === "string"
+							? JSON.parse(fields.metadata)
+							: fields.metadata
+						: undefined,
 				};
 
 			case MessageType.THINKING:
 				return {
 					type: MessageType.THINKING,
 					content: fields.content || "",
-					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+					metadata: fields.metadata
+						? typeof fields.metadata === "string"
+							? JSON.parse(fields.metadata)
+							: fields.metadata
+						: undefined,
 				};
 
 			case MessageType.COMPLETE:
@@ -192,7 +204,11 @@ export function validateMessage(entry: any): StreamMessage | null {
 				return {
 					type: type,
 					content: fields.content || "",
-					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+					metadata: fields.metadata
+						? typeof fields.metadata === "string"
+							? JSON.parse(fields.metadata)
+							: fields.metadata
+						: undefined,
 				};
 
 			default:
@@ -201,7 +217,11 @@ export function validateMessage(entry: any): StreamMessage | null {
 					id: fields.id,
 					type: type || "unknown",
 					content: fields.content || "",
-					metadata: fields.metadata ? (typeof fields.metadata === 'string' ? JSON.parse(fields.metadata) : fields.metadata) : undefined,
+					metadata: fields.metadata
+						? typeof fields.metadata === "string"
+							? JSON.parse(fields.metadata)
+							: fields.metadata
+						: undefined,
 					timestamp: fields.timestamp,
 					status: fields.status,
 					error: fields.error,

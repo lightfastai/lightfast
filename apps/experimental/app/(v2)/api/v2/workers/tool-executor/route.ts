@@ -4,32 +4,38 @@
  */
 
 import type { AgentToolCallEvent } from "@lightfast/ai/v2/core";
-import { NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter } from "@/app/(v2)/ai/config";
+import { type NextRequest, NextResponse } from "next/server";
+import { eventEmitter, redis } from "@/app/(v2)/ai/config";
 
 // Simple tool implementations
 async function executeTool(tool: string, args: Record<string, any>) {
 	switch (tool) {
-		case "calculator":
+		case "calculator": {
 			const { expression, a, b, operation } = args;
 			if (expression) {
 				// Simple expression evaluation (be careful in production!)
 				try {
-					const result = eval(expression.replace(/[^0-9+\-*/().\s]/g, ''));
+					const result = eval(expression.replace(/[^0-9+\-*/().\s]/g, ""));
 					return { expression, value: result };
 				} catch {
 					return { error: "Invalid expression" };
 				}
-			} else if (typeof a === 'number' && typeof b === 'number' && operation) {
+			} else if (typeof a === "number" && typeof b === "number" && operation) {
 				switch (operation) {
-					case 'add': return { result: a + b };
-					case 'subtract': return { result: a - b };
-					case 'multiply': return { result: a * b };
-					case 'divide': return { result: b !== 0 ? a / b : "Division by zero" };
-					default: return { error: "Unknown operation" };
+					case "add":
+						return { result: a + b };
+					case "subtract":
+						return { result: a - b };
+					case "multiply":
+						return { result: a * b };
+					case "divide":
+						return { result: b !== 0 ? a / b : "Division by zero" };
+					default:
+						return { error: "Unknown operation" };
 				}
 			}
 			return { error: "Invalid calculator arguments" };
+		}
 
 		case "weather":
 			// Mock weather data
@@ -49,7 +55,7 @@ export async function POST(request: NextRequest) {
 	try {
 		// Parse the event from Qstash
 		const event: AgentToolCallEvent = await request.json();
-		
+
 		console.log(`[Tool Executor] Processing tool call ${event.data.toolCallId} for session ${event.sessionId}`);
 
 		const streamKey = `stream:${event.sessionId}`;
@@ -73,7 +79,6 @@ export async function POST(request: NextRequest) {
 					success,
 				}),
 			});
-
 		} catch (error) {
 			result = { error: error instanceof Error ? error.message : String(error) };
 			success = false;
@@ -126,15 +131,14 @@ export async function POST(request: NextRequest) {
 		}
 
 		return NextResponse.json({ success: true });
-
 	} catch (error) {
 		console.error("[Tool Executor] Error:", error);
 		return NextResponse.json(
-			{ 
+			{
 				error: "Failed to process tool execution",
-				details: error instanceof Error ? error.message : String(error)
+				details: error instanceof Error ? error.message : String(error),
 			},
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }

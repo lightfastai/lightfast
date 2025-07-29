@@ -135,29 +135,29 @@ export class StreamGenerator {
 		// Add type-specific fields
 		switch (message.type) {
 			case MessageType.CHUNK:
-				if ('content' in message) {
+				if ("content" in message) {
 					fields.content = message.content;
 				}
 				break;
 			case MessageType.METADATA:
-				if ('status' in message && 'sessionId' in message && 'timestamp' in message) {
+				if ("status" in message && "sessionId" in message && "timestamp" in message) {
 					fields.status = message.status;
 					fields.sessionId = message.sessionId;
 					fields.timestamp = message.timestamp;
 				}
 				break;
 			case MessageType.EVENT:
-				if ('event' in message) {
+				if ("event" in message) {
 					fields.event = message.event;
-					if ('data' in message && message.data) {
+					if ("data" in message && message.data) {
 						fields.data = JSON.stringify(message.data);
 					}
 				}
 				break;
 			case MessageType.ERROR:
-				if ('error' in message && message.error) {
+				if ("error" in message && message.error) {
 					fields.error = message.error;
-					if ('code' in message && message.code) {
+					if ("code" in message && message.code) {
 						fields.code = message.code;
 					}
 				}
@@ -168,25 +168,25 @@ export class StreamGenerator {
 			case MessageType.COMPLETE:
 			case MessageType.COMPLETION:
 				// For V2 event types, store content and metadata
-				if ('content' in message) {
+				if ("content" in message) {
 					fields.content = message.content;
 				}
-				if ('metadata' in message && message.metadata) {
+				if ("metadata" in message && message.metadata) {
 					fields.metadata = JSON.stringify(message.metadata);
 				}
 				break;
 			default:
 				// For unknown types, store all available fields
-				if ('content' in message) {
+				if ("content" in message) {
 					fields.content = message.content;
 				}
-				if ('metadata' in message && message.metadata) {
+				if ("metadata" in message && message.metadata) {
 					fields.metadata = JSON.stringify(message.metadata);
 				}
-				if ('status' in message && message.status) {
+				if ("status" in message && message.status) {
 					fields.status = message.status;
 				}
-				if ('error' in message && message.error) {
+				if ("error" in message && message.error) {
 					fields.error = message.error;
 				}
 				break;

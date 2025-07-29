@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"description": "Lightfast experimental monorepo",
-	"packageManager": "pnpm@10.5.2",
+	"packageManager": "pnpm@10.13.1",
 	"scripts": {
 		"dev": "turbo run dev",
 		"build": "turbo run build",
@@ -12,8 +12,7 @@
 		"lint": "turbo run lint",
 		"clean": "turbo run clean",
 		"dev:www": "turbo run dev --filter=@lightfast/www",
-		"build:www": "turbo run build --filter=@lightfast/www",
-		"build:packages": "turbo run build --filter=./packages/*"
+		"build:www": "turbo run build --filter=@lightfast/www"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
@@ -32,4 +31,3 @@
 		]
 	}
 }
-

@@ -63,7 +63,12 @@ export class StreamWriter {
 	/**
 	 * Write a tool execution event
 	 */
-	async writeToolExecution(sessionId: string, tool: string, status: "start" | "complete" | "error", result?: any): Promise<string> {
+	async writeToolExecution(
+		sessionId: string,
+		tool: string,
+		status: "start" | "complete" | "error",
+		result?: any,
+	): Promise<string> {
 		const streamKey = `stream:${sessionId}`;
 		return this.writeMessage(streamKey, {
 			type: "tool",

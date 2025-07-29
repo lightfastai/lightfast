@@ -31,7 +31,7 @@ export class StreamConsumer {
 
 		// Helper to format SSE messages with proper event types
 		const formatSSE = (message: any): Uint8Array => {
-			const eventType = message.type || 'message';
+			const eventType = message.type || "message";
 			const data = JSON.stringify(message);
 			return encoder.encode(`event: ${eventType}\ndata: ${data}\n\n`);
 		};
@@ -138,7 +138,7 @@ export class StreamConsumer {
 			onError?: (error: Error) => Promise<void>;
 			onComplete?: () => Promise<void>;
 			lastEventId?: string;
-		}
+		},
 	): Promise<void> {
 		const streamKey = getStreamKey(sessionId, this.config.streamPrefix);
 		let lastSeenId = options.lastEventId || "0";
@@ -163,7 +163,7 @@ export class StreamConsumer {
 
 					for (const [entryId, fields] of entries) {
 						if (signal.aborted) break;
-						
+
 						const message = validateMessage(fields);
 						if (message) {
 							await options.onMessage(message);
@@ -186,7 +186,7 @@ export class StreamConsumer {
 						// Check if stream has completed status
 						const lastResponse = (await this.redis.xrevrange(streamKey, "+", "-", 5)) as unknown as any;
 						const lastEntries = lastResponse && typeof lastResponse === "object" ? Object.entries(lastResponse) : [];
-						
+
 						const hasCompleted = lastEntries.some(([_, fields]: [string, any]) => {
 							const msg = validateMessage(fields);
 							return msg?.type === "metadata" && msg.status === "completed";

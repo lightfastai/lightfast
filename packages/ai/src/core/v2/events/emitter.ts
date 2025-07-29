@@ -4,7 +4,6 @@
  */
 
 import { Client } from "@upstash/qstash";
-import { EventSchema, EventType } from "./schemas";
 import type {
 	AgentLoopCompleteEvent,
 	AgentLoopInitEvent,
@@ -20,6 +19,8 @@ import {
 	AgentLoopCompleteEventSchema,
 	AgentLoopInitEventSchema,
 	AgentToolCallEventSchema,
+	EventSchema,
+	EventType,
 	StreamWriteEventSchema,
 	ToolExecutionCompleteEventSchema,
 	ToolExecutionFailedEventSchema,
@@ -48,7 +49,6 @@ export class EventEmitter {
 			token: config.qstashToken,
 		});
 	}
-
 
 	/**
 	 * Generate a unique event ID
@@ -90,7 +90,6 @@ export class EventEmitter {
 		const validated = AgentLoopCompleteEventSchema.parse(event);
 		await this.publishEvent(validated);
 	}
-
 
 	/**
 	 * Emit an agent tool call event
@@ -209,9 +208,6 @@ export class EventEmitter {
 		}
 	}
 
-
-
-
 	/**
 	 * Emit a tool execution start event
 	 */
@@ -271,4 +267,3 @@ export class SessionEventEmitter {
 		return this.emitter.emitStreamWrite(this.sessionId, data);
 	}
 }
-

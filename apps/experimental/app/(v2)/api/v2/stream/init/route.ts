@@ -14,7 +14,7 @@
 import { AgentLoopWorker } from "@lightfast/ai/v2/core";
 import type { Message } from "@lightfast/ai/v2/events";
 import { type NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter, streamGenerator, SYSTEM_LIMITS } from "@/app/(v2)/ai/config";
+import { eventEmitter, redis, SYSTEM_LIMITS, streamGenerator } from "@/app/(v2)/ai/config";
 
 export async function POST(req: NextRequest) {
 	try {
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 		// For immediate streaming, run the first agent loop directly instead of emitting event
 		// This eliminates the delay from event routing for time-to-first-token optimization
 		const worker = new AgentLoopWorker(redis, eventEmitter);
-		
+
 		// Create agent loop init event structure (but don't emit it)
 		const agentLoopEvent = {
 			id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,

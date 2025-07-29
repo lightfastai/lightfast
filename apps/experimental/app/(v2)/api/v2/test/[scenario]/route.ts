@@ -3,38 +3,35 @@
  * Initiates test scenarios with Qstash event emission
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { redis, eventEmitter, streamGenerator } from "@/app/(v2)/ai/config";
+import { type NextRequest, NextResponse } from "next/server";
+import { eventEmitter, redis, streamGenerator } from "@/app/(v2)/ai/config";
 
 // Test scenarios matching the V2 test server
 const TEST_SCENARIOS = {
 	simple: {
 		key: "simple",
-		name: "Simple Calculator Test", 
+		name: "Simple Calculator Test",
 		description: "Tests basic agent loop with calculator tool",
 		messages: [{ role: "user", content: "What is 25 * 4?" }],
-		tools: ["calculator"]
+		tools: ["calculator"],
 	},
 	multiTool: {
 		key: "multiTool",
 		name: "Multi-Tool Test",
-		description: "Tests multiple tool usage in sequence", 
+		description: "Tests multiple tool usage in sequence",
 		messages: [{ role: "user", content: "What's the weather like and then calculate 15 * 3?" }],
-		tools: ["weather", "calculator"]
+		tools: ["weather", "calculator"],
 	},
 	custom: {
 		key: "custom",
 		name: "Custom Prompt",
 		description: "Use a custom prompt with available tools",
 		messages: [],
-		tools: ["calculator", "weather"]
-	}
+		tools: ["calculator", "weather"],
+	},
 } as const;
 
-export async function POST(
-	request: NextRequest,
-	{ params }: { params: Promise<{ scenario: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ scenario: string }> }) {
 	try {
 		const { scenario } = await params;
 		const body = await request.json();
@@ -42,22 +39,14 @@ export async function POST(
 		// Get scenario configuration
 		const scenarioConfig = TEST_SCENARIOS[scenario as keyof typeof TEST_SCENARIOS];
 		if (!scenarioConfig) {
-			return NextResponse.json(
-				{ error: "Invalid scenario", available: Object.keys(TEST_SCENARIOS) },
-				{ status: 400 }
-			);
+			return NextResponse.json({ error: "Invalid scenario", available: Object.keys(TEST_SCENARIOS) }, { status: 400 });
 		}
 
 		// Use custom messages if provided, otherwise use scenario defaults
-		const messages = body.messages && body.messages.length > 0 
-			? body.messages 
-			: scenarioConfig.messages;
+		const messages = body.messages && body.messages.length > 0 ? body.messages : scenarioConfig.messages;
 
 		if (!messages || messages.length === 0) {
-			return NextResponse.json(
-				{ error: "No messages provided" },
-				{ status: 400 }
-			);
+			return NextResponse.json({ error: "No messages provided" }, { status: 400 });
 		}
 
 		// Generate session ID
@@ -105,7 +94,6 @@ export async function POST(
 			streamUrl: `/api/v2/stream/${sessionId}`,
 			message: "Test scenario started. Connect to the stream URL to see results.",
 		});
-
 	} catch (error) {
 		console.error("Test scenario error:", error);
 		return NextResponse.json(
@@ -113,17 +101,14 @@ export async function POST(
 				error: "Failed to start test scenario",
 				details: error instanceof Error ? error.message : String(error),
 			},
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }
 
-export async function GET(
-	request: NextRequest,
-	{ params }: { params: Promise<{ scenario: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ scenario: string }> }) {
 	const { scenario } = await params;
-	
+
 	if (scenario === "list") {
 		return NextResponse.json({
 			scenarios: Object.values(TEST_SCENARIOS),
@@ -133,10 +118,7 @@ export async function GET(
 
 	const scenarioConfig = TEST_SCENARIOS[scenario as keyof typeof TEST_SCENARIOS];
 	if (!scenarioConfig) {
-		return NextResponse.json(
-			{ error: "Scenario not found", available: Object.keys(TEST_SCENARIOS) },
-			{ status: 404 }
-		);
+		return NextResponse.json({ error: "Scenario not found", available: Object.keys(TEST_SCENARIOS) }, { status: 404 });
 	}
 
 	return NextResponse.json(scenarioConfig);

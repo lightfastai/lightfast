@@ -30,9 +30,9 @@ export default function TestResumableStreamPage() {
 			const response = await fetch("/api/v2/stream/init", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ 
+				body: JSON.stringify({
 					messages: [{ role: "user", content: prompt }],
-					tools: [] // No tools for simple LLM generation
+					tools: [], // No tools for simple LLM generation
 				}),
 			});
 

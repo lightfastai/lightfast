@@ -3,8 +3,8 @@
  * Centralized configuration for all V2 AI components
  */
 
+import { EventEmitter, EventType, StreamConsumer, StreamGenerator } from "@lightfast/ai/v2/core";
 import { Redis } from "@upstash/redis";
-import { EventEmitter, EventType, StreamGenerator, StreamConsumer } from "@lightfast/ai/v2/core";
 import { env } from "@/env";
 
 /**
