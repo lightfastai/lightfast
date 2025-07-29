@@ -12,6 +12,8 @@ import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
 import type { EventEmitter, SessionEventEmitter } from "./events/emitter";
 import type { AgentLoopInitEvent, Message } from "./events/schemas";
+import { getDeltaStreamKey, getSessionKey } from "./server/keys";
+import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
 import { EventWriter } from "./server/writers/event-writer";
 import { MessageWriter } from "./server/writers/message-writer";
@@ -76,6 +78,7 @@ export class Agent<TRuntimeContext = unknown> {
 	private experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
 	private messageWriter: MessageWriter;
 	private eventWriter: EventWriter;
+	private streamWriter: StreamWriter;
 	private tools: Map<string, AgentToolDefinition>;
 	private toolFactories?: ToolFactorySet<TRuntimeContext>;
 	private createRuntimeContext?: (params: { sessionId: string; userId?: string }) => TRuntimeContext;
@@ -123,6 +126,7 @@ export class Agent<TRuntimeContext = unknown> {
 		// Initialize writers
 		this.messageWriter = new MessageWriter(redis);
 		this.eventWriter = new EventWriter(redis);
+		this.streamWriter = new StreamWriter(redis);
 
 		// Apply worker config defaults
 		this.workerConfig = {
@@ -174,6 +178,9 @@ export class Agent<TRuntimeContext = unknown> {
 					duration: Date.now() - startTime,
 				},
 			);
+
+			// Write error to delta stream
+			await this.streamWriter.writeError(event.sessionId, error instanceof Error ? error.message : "Unknown error");
 
 			throw error;
 		}
@@ -303,10 +310,9 @@ export class Agent<TRuntimeContext = unknown> {
 		// Check iteration limit
 		const maxIterations = this.maxIterations || session.maxIterations;
 		if (session.iteration >= maxIterations) {
-			// Emit proper completion metadata for max iterations
+			// Max iterations reached
 			const finalMessage =
 				"Maximum iterations reached. Please start a new conversation if you need further assistance.";
-			await this.emitCompletionMetadata(session.sessionId, 0, finalMessage);
 
 			await sessionEmitter.emitAgentLoopComplete({
 				finalMessage,
@@ -315,6 +321,8 @@ export class Agent<TRuntimeContext = unknown> {
 				duration: Date.now() - startTime,
 			});
 
+			// Write completion to delta stream
+			await this.streamWriter.writeComplete(session.sessionId);
 			await this.updateSessionStatus(session.sessionId, "completed");
 			return;
 		}
@@ -330,15 +338,15 @@ export class Agent<TRuntimeContext = unknown> {
 			await this.handleToolCall(session, decision, sessionEmitter);
 		} else {
 			// For non-tool actions (complete), signal completion and finish
-			// Emit proper completion metadata that the consumer expects
-			await this.emitCompletionMetadata(session.sessionId, chunkCount, fullContent);
-
 			await sessionEmitter.emitAgentLoopComplete({
 				finalMessage: "Agent loop completed",
 				iterations: session.iteration + 1,
 				toolsUsed: this.extractUsedTools(session.messages),
 				duration: Date.now() - startTime,
 			});
+
+			// Write completion to delta stream
+			await this.streamWriter.writeComplete(session.sessionId);
 			await this.updateSessionStatus(session.sessionId, "completed");
 		}
 	}
@@ -360,11 +368,7 @@ export class Agent<TRuntimeContext = unknown> {
 		let responseMessages: UIMessage[] = [];
 		let chunkCount = 0;
 
-		// Signal start of decision making
-		await this.streamMetadata(session.sessionId, "started", {
-			event: "agent.decision.start",
-			iteration: session.iteration + 1,
-		});
+		// Start of decision making (no longer emit metadata)
 
 		// Create a prompt that will naturally generate structured output
 		const structuredPrompt = `${systemPrompt}
@@ -379,7 +383,7 @@ Please analyze the conversation and decide if you need to use a tool. Respond wi
 Think through this step by step first, then provide your JSON decision.`;
 
 		// Stream the decision-making process
-		const { textStream } = await streamText({
+		const { textStream } = streamText({
 			...this.config, // Spread all streamText-compatible properties
 			system: structuredPrompt,
 			messages: preparedMessages,
@@ -449,15 +453,7 @@ Think through this step by step first, then provide your JSON decision.`;
 			throw new Error("Failed to get structured decision from streamText");
 		}
 
-		// Signal completion of decision making
-		await this.streamMetadata(session.sessionId, "completed", {
-			event: "agent.decision.complete",
-			action: (finalDecision as AgentDecision).action,
-			tool:
-				(finalDecision as AgentDecision).action === "tool_call"
-					? (finalDecision as AgentDecision).toolCall?.tool
-					: undefined,
-		});
+		// Decision complete (no longer emit metadata)
 
 		return { decision: finalDecision, chunkCount, fullContent };
 	}
@@ -528,11 +524,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 
 		const toolCallId = `tc_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-		// Stream tool call start for immediate UI feedback
-		await this.streamToolProgress(session.sessionId, decision.toolCall.tool, "starting", {
-			toolCallId,
-			arguments: decision.toolCall.arguments,
-		});
+		// Tool call starting (no longer emit events)
 
 		// Add assistant message with tool decision
 		await this.addMessage(session.sessionId, {
@@ -559,10 +551,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 		};
 		await this.messageWriter.writeUIMessage(session.sessionId, toolMessage);
 
-		// Stream tool call in progress
-		await this.streamToolProgress(session.sessionId, decision.toolCall.tool, "executing", {
-			toolCallId,
-		});
+		// Tool executing (no longer emit events)
 
 		// Emit tool call event (existing event system)
 		await sessionEmitter.emitAgentToolCall({
@@ -581,81 +570,38 @@ Think through your reasoning step by step, then make your decision. Only use too
 	 * Delta streaming methods for real-time UI updates using optimized Redis streams
 	 */
 	private getDeltaStreamKey(sessionId: string): string {
-		return `llm:stream:${sessionId}`;
+		return getDeltaStreamKey(sessionId);
 	}
 
-	private async emitDeltaChunk(
-		sessionId: string,
-		messageType: "chunk" | "metadata" | "event" | "error",
-		content?: string,
-		metadata?: Record<string, any>,
-	): Promise<void> {
+	private async emitDeltaChunk(sessionId: string, content: string): Promise<void> {
 		const streamKey = this.getDeltaStreamKey(sessionId);
 
-		// Prepare message for Redis stream
+		// Only emit chunk type messages
 		const message: Record<string, string> = {
-			type: messageType,
+			type: "chunk",
+			content,
 			timestamp: new Date().toISOString(),
 		};
-
-		if (content) message.content = content;
-		if (metadata) message.metadata = JSON.stringify(metadata);
 
 		// Write to Redis stream for persistence
 		await this.redis.xadd(streamKey, "*", message);
 
-		// Publish for real-time notifications (matching the optimized pattern)
-		await this.redis.publish(streamKey, { type: messageType });
+		// Publish for real-time notifications
+		await this.redis.publish(streamKey, { type: "chunk" });
 	}
 
 	private async streamChunk(sessionId: string, chunk: string): Promise<void> {
-		await this.emitDeltaChunk(sessionId, "chunk", chunk);
+		await this.emitDeltaChunk(sessionId, chunk);
 	}
 
-	private async streamToolProgress(
-		sessionId: string,
-		tool: string,
-		status: string,
-		metadata?: Record<string, any>,
-	): Promise<void> {
-		await this.emitDeltaChunk(sessionId, "event", `${tool}: ${status}`, {
-			tool,
-			event: "tool.progress",
-			...metadata,
-		});
-	}
-
-	private async streamMetadata(sessionId: string, status: string, metadata?: Record<string, any>): Promise<void> {
-		await this.emitDeltaChunk(sessionId, "metadata", undefined, {
-			status,
-			...metadata,
-		});
-	}
-
-	/**
-	 * Emit completion metadata in the format expected by the consumer
-	 */
-	private async emitCompletionMetadata(sessionId: string, totalChunks: number, fullContent: string): Promise<void> {
-		const streamKey = this.getDeltaStreamKey(sessionId);
-
-		const metadataMessage = {
-			type: "metadata",
-			status: StreamStatus.COMPLETED,
-			completedAt: new Date().toISOString(),
-			totalChunks: totalChunks.toString(),
-			fullContent,
-			timestamp: new Date().toISOString(),
-		};
-
-		await this.redis.xadd(streamKey, "*", metadataMessage);
-		await this.redis.publish(streamKey, JSON.stringify({ type: "metadata" }));
-	}
+	// Removed: streamToolProgress, streamMetadata, emitCompletionMetadata
+	// Delta stream now only handles content chunks
 
 	/**
 	 * Helper methods for session management
 	 */
 	private async loadSession(sessionId: string): Promise<AgentSessionState | null> {
-		const sessionKey = `v2:session:${sessionId}`;
+		const sessionKey = getSessionKey(sessionId);
 		const data = await this.redis.get(sessionKey);
 		if (!data) return null;
 
@@ -665,36 +611,36 @@ Think through your reasoning step by step, then make your decision. Only use too
 	}
 
 	private async updateSessionStatus(sessionId: string, status: AgentSessionState["status"]): Promise<void> {
-		const sessionKey = `v2:session:${sessionId}`;
+		const sessionKey = getSessionKey(sessionId);
 		const session = await this.loadSession(sessionId);
 		if (!session) return;
 
 		session.status = status;
 		session.updatedAt = new Date().toISOString();
 
-		await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
+		await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
 	}
 
 	private async incrementIteration(sessionId: string): Promise<void> {
-		const sessionKey = `v2:session:${sessionId}`;
+		const sessionKey = getSessionKey(sessionId);
 		const session = await this.loadSession(sessionId);
 		if (!session) return;
 
 		session.iteration += 1;
 		session.updatedAt = new Date().toISOString();
 
-		await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
+		await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
 	}
 
 	private async addMessage(sessionId: string, message: Message): Promise<void> {
-		const sessionKey = `v2:session:${sessionId}`;
+		const sessionKey = getSessionKey(sessionId);
 		const session = await this.loadSession(sessionId);
 		if (!session) return;
 
 		session.messages.push(message);
 		session.updatedAt = new Date().toISOString();
 
-		await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
+		await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
 	}
 
 	private generateMessageId(): string {

@@ -6,6 +6,7 @@ import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import type { EventEmitter } from "../../events/emitter";
 import type { AgentToolCallEvent } from "../../events/schemas";
+import { getSessionKey } from "../keys";
 
 export class ToolHandler<TRuntimeContext = unknown> {
 	constructor(
@@ -18,7 +19,6 @@ export class ToolHandler<TRuntimeContext = unknown> {
 	 * Handle agent tool call event
 	 */
 	async handleToolCall(toolEvent: AgentToolCallEvent): Promise<Response> {
-		const streamKey = `llm:stream:${toolEvent.sessionId}`;
 		let success = false;
 		let result: any;
 
@@ -27,32 +27,12 @@ export class ToolHandler<TRuntimeContext = unknown> {
 			result = await this.agent.executeTool(toolEvent.data.tool, toolEvent.data.arguments || {});
 			success = true;
 
-			// Write result to stream (with timestamp)
-			await this.redis.xadd(streamKey, "*", {
-				type: "event",
-				content: `Tool ${toolEvent.data.tool} executed successfully`,
-				event: "tool.result",
-				tool: toolEvent.data.tool,
-				toolCallId: toolEvent.data.toolCallId,
-				result: JSON.stringify(result),
-				success: String(success),
-				timestamp: new Date().toISOString(),
-			});
-			await this.redis.publish(streamKey, JSON.stringify({ type: "event" }));
+			// Note: Delta stream no longer handles event messages - removed event emission
 		} catch (error) {
 			result = { error: error instanceof Error ? error.message : String(error) };
 			success = false;
 
-			// Write error to stream (with timestamp)
-			await this.redis.xadd(streamKey, "*", {
-				type: "error",
-				content: `Tool ${toolEvent.data.tool} failed: ${result.error}`,
-				error: result.error,
-				tool: toolEvent.data.tool,
-				toolCallId: toolEvent.data.toolCallId,
-				timestamp: new Date().toISOString(),
-			});
-			await this.redis.publish(streamKey, JSON.stringify({ type: "error" }));
+			// Note: Delta stream no longer handles error messages - removed error emission
 		}
 
 		// Emit completion or failure event
@@ -84,7 +64,7 @@ export class ToolHandler<TRuntimeContext = unknown> {
 	 * Add tool result to session messages
 	 */
 	private async addToolResultToSession(toolEvent: AgentToolCallEvent, result: any): Promise<void> {
-		const sessionKey = `v2:session:${toolEvent.sessionId}`;
+		const sessionKey = getSessionKey(toolEvent.sessionId);
 		const sessionData = await this.redis.get(sessionKey);
 
 		if (sessionData) {
@@ -96,7 +76,7 @@ export class ToolHandler<TRuntimeContext = unknown> {
 				toolName: toolEvent.data.tool,
 			});
 			session.updatedAt = new Date().toISOString();
-			await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
+			await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
 		}
 	}
 }

@@ -1,61 +1,34 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { DeltaStreamType, type DeltaStreamMessage } from "../server/stream/types";
 
-export enum MessageType {
-	CHUNK = "chunk",
-	METADATA = "metadata",
-	EVENT = "event",
-	ERROR = "error",
-}
-
-export enum StreamStatus {
-	INITIALIZED = "initialized",
-	STREAMING = "streaming",
-	COMPLETED = "completed",
-	ERROR = "error",
-}
-
-export interface ChunkMessage {
-	type: MessageType.CHUNK;
-	content: string;
-	timestamp: string;
-}
-
-export interface MetadataMessage {
-	type: MessageType.METADATA;
-	status: StreamStatus;
-	sessionId?: string;
-	timestamp: string;
-}
-
-export interface EventMessage {
-	type: MessageType.EVENT;
-	event: string;
-	data?: any;
-	timestamp: string;
-}
-
-export interface ErrorMessage {
-	type: MessageType.ERROR;
-	error: string;
-	code?: string;
-	timestamp: string;
-}
-
-export type StreamMessage = ChunkMessage | MetadataMessage | EventMessage | ErrorMessage;
-
-export function validateMessage(data: any): StreamMessage | null {
+export function validateMessage(data: any): DeltaStreamMessage | null {
 	if (!data || typeof data !== "object" || !data.type || !data.timestamp) {
 		return null;
 	}
 
-	const validTypes = Object.values(MessageType);
-	if (!validTypes.includes(data.type)) {
+	// Check if it's a valid type
+	if (!Object.values(DeltaStreamType).includes(data.type)) {
 		return null;
 	}
 
-	return data as StreamMessage;
+	// Validate type-specific fields
+	switch (data.type) {
+		case DeltaStreamType.CHUNK:
+			if (!data.content) return null;
+			break;
+		case DeltaStreamType.ERROR:
+			if (!data.error) return null;
+			break;
+		case DeltaStreamType.COMPLETE:
+			// Complete doesn't require additional fields
+			break;
+		default:
+			return null;
+	}
+
+	return data as DeltaStreamMessage;
 }
 
 // Precondition failed error for stream not ready
@@ -166,29 +139,27 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 										}
 
 										switch (validatedMessage.type) {
-											case MessageType.CHUNK: {
-												const chunkMessage = validatedMessage as ChunkMessage;
-												streamContent.current += chunkMessage.content;
-												onChunk?.(chunkMessage.content);
-												break;
-											}
-
-											case MessageType.METADATA: {
-												const metadataMessage = validatedMessage as MetadataMessage;
-
-												if (metadataMessage.status === StreamStatus.COMPLETED) {
-													setIsConnected(false);
-													onComplete?.(streamContent.current);
+											case DeltaStreamType.CHUNK: {
+												if (validatedMessage.content) {
+													streamContent.current += validatedMessage.content;
+													onChunk?.(validatedMessage.content);
 												}
 												break;
 											}
 
-											case MessageType.ERROR: {
-												const errorMessage = validatedMessage as ErrorMessage;
-												const error = new Error(errorMessage.error);
-												setError(error);
+											case DeltaStreamType.COMPLETE: {
 												setIsConnected(false);
-												onError?.(error);
+												onComplete?.(streamContent.current);
+												break;
+											}
+
+											case DeltaStreamType.ERROR: {
+												if (validatedMessage.error) {
+													const error = new Error(validatedMessage.error);
+													setError(error);
+													setIsConnected(false);
+													onError?.(error);
+												}
 												break;
 											}
 										}

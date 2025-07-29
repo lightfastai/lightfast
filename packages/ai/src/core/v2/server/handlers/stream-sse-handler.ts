@@ -3,6 +3,7 @@
  */
 
 import type { Redis } from "@upstash/redis";
+import { getDeltaStreamKey } from "../keys";
 import { StreamConsumer } from "../stream/consumer";
 
 export class StreamSSEHandler {
@@ -22,7 +23,7 @@ export class StreamSSEHandler {
 
 		try {
 			// Check if stream exists before creating SSE stream
-			const streamKey = `llm:stream:${sessionId}`;
+			const streamKey = getDeltaStreamKey(sessionId);
 			const keyExists = await this.redis.exists(streamKey);
 
 			if (!keyExists) {

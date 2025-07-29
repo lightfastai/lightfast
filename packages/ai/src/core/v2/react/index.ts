@@ -2,16 +2,8 @@
  * V2 React exports for chat functionality
  */
 
-export type {
-	ChunkMessage,
-	ErrorMessage,
-	EventMessage,
-	MetadataMessage,
-	StreamMessage,
-	UseChatOptions,
-	UseChatReturn,
-} from "./use-chat";
-export { type MessageType, type StreamStatus, useChat, validateMessage } from "./use-chat";
+export type { UseChatOptions, UseChatReturn } from "./use-chat";
+export { DeltaStreamType, type DeltaStreamMessage, useChat, validateMessage } from "./use-chat";
 
 export type {
 	UseDeltaStreamOptions,

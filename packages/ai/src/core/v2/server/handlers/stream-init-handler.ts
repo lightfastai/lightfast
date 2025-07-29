@@ -6,6 +6,7 @@ import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import type { EventEmitter } from "../../events/emitter";
 import type { AgentLoopInitEvent, Message } from "../../events/schemas";
+import { getDeltaStreamKey, getSessionKey } from "../keys";
 import { StreamGenerator } from "../stream-generator";
 
 export interface StreamInitRequestBody {
@@ -99,7 +100,7 @@ export class StreamInitHandler<TRuntimeContext = unknown> {
 		tools: string[],
 		metadata: Record<string, any>,
 	): Promise<void> {
-		const sessionKey = `v2:session:${sessionId}`;
+		const sessionKey = getSessionKey(sessionId);
 		const sessionData = {
 			sessionId,
 			messages: messages as Message[],
@@ -114,24 +115,21 @@ export class StreamInitHandler<TRuntimeContext = unknown> {
 			updatedAt: new Date().toISOString(),
 		};
 
-		// Store session data (expire after 24 hours)
-		await this.redis.setex(sessionKey, 86400, JSON.stringify(sessionData));
+		// Store session data (no expiration)
+		await this.redis.set(sessionKey, JSON.stringify(sessionData));
 	}
 
 	/**
 	 * Create initial stream entry
 	 */
 	private async createInitialStream(sessionId: string): Promise<void> {
-		const streamKey = `llm:stream:${sessionId}`;
+		const streamKey = getDeltaStreamKey(sessionId);
+		// Create stream with initial marker
 		await this.redis.xadd(streamKey, "*", {
-			type: "metadata",
-			status: "started",
-			completedAt: new Date().toISOString(),
-			totalChunks: 0,
-			fullContent: "",
+			type: "chunk",
+			content: "", // Empty initial chunk to create stream
 			timestamp: new Date().toISOString(),
 		});
-		await this.redis.publish(streamKey, JSON.stringify({ type: "metadata" }));
 	}
 
 	/**

@@ -102,7 +102,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 			// Extract path from URL
 			const url = new URL(request.url);
 			const pathSegments = url.pathname.replace(baseUrl, "").split("/").filter(Boolean);
-			
+
 			console.log(`[V2 Fetch Handler] URL: ${request.url}, Path: ${url.pathname}, Segments:`, pathSegments);
 
 			// Handle stream endpoints

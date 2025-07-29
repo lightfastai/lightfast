@@ -3,6 +3,7 @@
  */
 
 import type { Redis } from "@upstash/redis";
+import { getSessionKey } from "../keys";
 import { StreamGenerator } from "../stream-generator";
 
 export class StreamStatusHandler {
@@ -24,7 +25,7 @@ export class StreamStatusHandler {
 		}
 
 		// Get session data
-		const sessionKey = `v2:session:${sessionId}`;
+		const sessionKey = getSessionKey(sessionId);
 		const sessionData = await this.redis.get(sessionKey);
 
 		if (!sessionData) {

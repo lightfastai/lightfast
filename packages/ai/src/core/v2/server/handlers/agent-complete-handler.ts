@@ -5,6 +5,7 @@
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import type { AgentLoopCompleteEvent } from "../../events/schemas";
+import { getSessionKey } from "../keys";
 import { EventWriter } from "../writers/event-writer";
 import { MessageWriter } from "../writers/message-writer";
 
@@ -42,7 +43,7 @@ export class AgentCompleteHandler {
 	 * Update session status to completed
 	 */
 	private async updateSessionStatus(completeEvent: AgentLoopCompleteEvent): Promise<void> {
-		const sessionKey = `v2:session:${completeEvent.sessionId}`;
+		const sessionKey = getSessionKey(completeEvent.sessionId);
 		const sessionData = await this.redis.get(sessionKey);
 
 		if (sessionData) {
@@ -52,8 +53,8 @@ export class AgentCompleteHandler {
 			session.finalResponse = completeEvent.data.finalMessage;
 			session.totalIterations = completeEvent.data.iterations || 1;
 
-			// Extend TTL since session is complete
-			await this.redis.setex(sessionKey, 86400, JSON.stringify(session)); // 24 hours
+			// Save session (no expiration)
+			await this.redis.set(sessionKey, JSON.stringify(session));
 		}
 	}
 

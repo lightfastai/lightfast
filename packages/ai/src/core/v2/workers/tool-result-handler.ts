@@ -6,6 +6,7 @@
 import type { Redis } from "@upstash/redis";
 import type { EventEmitter, SessionEventEmitter } from "../events/emitter";
 import type { ToolExecutionCompleteEvent, ToolExecutionFailedEvent } from "../events/schemas";
+import { getMessageKey, getSessionKey } from "../server/keys";
 import type { AgentSessionState } from "./schemas";
 
 export class ToolResultHandler {
@@ -22,7 +23,7 @@ export class ToolResultHandler {
 
 		try {
 			// Load session
-			const sessionKey = `v2:session:${event.sessionId}`;
+			const sessionKey = getSessionKey(event.sessionId);
 			const sessionData = await this.redis.get(sessionKey);
 			if (!sessionData) {
 				throw new Error(`Session ${event.sessionId} not found`);
@@ -40,19 +41,9 @@ export class ToolResultHandler {
 
 			// Update session
 			session.updatedAt = new Date().toISOString();
-			await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
+			await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
 
-			// Write to stream
-			const streamKey = `v2:stream:${event.sessionId}`;
-			await this.redis.xadd(streamKey, "*", {
-				type: "event",
-				content: `Tool ${event.data.tool} completed`,
-				metadata: JSON.stringify({
-					event: "tool.result.received",
-					tool: event.data.tool,
-					toolCallId: event.data.toolCallId,
-				}),
-			});
+			// Note: Delta stream no longer handles event messages - removed event emission
 
 			// Emit agent loop init event to continue processing
 			await sessionEmitter.emitAgentLoopInit({
@@ -80,7 +71,7 @@ export class ToolResultHandler {
 
 		try {
 			// Load session
-			const sessionKey = `v2:session:${event.sessionId}`;
+			const sessionKey = getSessionKey(event.sessionId);
 			const sessionData = await this.redis.get(sessionKey);
 			if (!sessionData) {
 				throw new Error(`Session ${event.sessionId} not found`);
@@ -98,19 +89,9 @@ export class ToolResultHandler {
 
 			// Update session
 			session.updatedAt = new Date().toISOString();
-			await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
+			await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
 
-			// Write to stream
-			const streamKey = `v2:stream:${event.sessionId}`;
-			await this.redis.xadd(streamKey, "*", {
-				type: "error",
-				content: `Tool ${event.data.tool} failed: ${event.data.error}`,
-				metadata: JSON.stringify({
-					event: "tool.result.error",
-					tool: event.data.tool,
-					toolCallId: event.data.toolCallId,
-				}),
-			});
+			// Note: Delta stream no longer handles error messages - removed error emission
 
 			// Emit agent loop init event to continue processing with error context
 			await sessionEmitter.emitAgentLoopInit({

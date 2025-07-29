@@ -5,7 +5,8 @@
 
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
-import { getStreamKey, type RedisUIMessageEntry } from "../types";
+import { getMessageKey } from "../keys";
+import type { RedisUIMessageEntry } from "../types";
 
 export class MessageWriter {
 	constructor(private redis: Redis) {}
@@ -14,7 +15,7 @@ export class MessageWriter {
 	 * Write a UIMessage to stream
 	 */
 	async writeUIMessage(sessionId: string, message: UIMessage): Promise<string> {
-		const streamKey = getStreamKey(sessionId);
+		const streamKey = getMessageKey(sessionId);
 
 		const entry: RedisUIMessageEntry = {
 			messageId: message.id,

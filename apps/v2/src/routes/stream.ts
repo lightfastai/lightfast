@@ -3,7 +3,7 @@
  * Provides real-time updates from Redis streams
  */
 
-import type { DeltaStreamMessage } from "@lightfast/ai/v2/core";
+import { type DeltaStreamMessage, DeltaStreamType } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { streamConsumer, streamGenerator } from "../config";
@@ -37,17 +37,14 @@ streamRoutes.get("/:sessionId", async (c) => {
 					let data: any = {};
 
 					switch (message.type) {
-						case "chunk":
+						case DeltaStreamType.CHUNK:
 							data = { content: message.content };
 							break;
-						case "metadata":
-							data = { status: message.status, timestamp: message.timestamp };
+						case DeltaStreamType.ERROR:
+							data = { error: message.error };
 							break;
-						case "event":
-							data = { event: message.content };
-							break;
-						case "error":
-							data = { error: message.content };
+						case DeltaStreamType.COMPLETE:
+							data = { completed: true, timestamp: message.timestamp };
 							break;
 					}
 

@@ -1,29 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-	type ChunkMessage,
-	type ErrorMessage,
-	type EventMessage,
-	type MessageType,
-	type MetadataMessage,
-	type StreamMessage,
-	type StreamStatus,
-	useDeltaStream,
-	validateMessage,
-} from "./use-delta-stream";
+import { DeltaStreamType, type DeltaStreamMessage } from "../server/stream/types";
+import { useDeltaStream, validateMessage } from "./use-delta-stream";
 
 // Re-export types for convenience
-export {
-	type MessageType,
-	type StreamStatus,
-	type ChunkMessage,
-	type MetadataMessage,
-	type EventMessage,
-	type ErrorMessage,
-	type StreamMessage,
-	validateMessage,
-};
+export { DeltaStreamType, type DeltaStreamMessage, validateMessage };
 
 export interface UseChatOptions {
 	apiEndpoint?: string;

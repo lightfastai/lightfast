@@ -6,18 +6,9 @@
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
+import { getDeltaStreamKey } from "../keys";
 import { getStreamKey, isUIMessageEntry, parseUIMessageEntry, type StreamConfig } from "../types";
-
-// Delta stream message format (matches working API route)
-export interface DeltaStreamMessage {
-	type: "chunk" | "metadata" | "event" | "error";
-	content?: string;
-	status?: string; // For metadata messages
-	completedAt?: string;
-	totalChunks?: number;
-	fullContent?: string;
-	timestamp: string;
-}
+import { type DeltaStreamMessage, DeltaStreamType } from "./types";
 
 // Redis stream types
 type StreamField = string;
@@ -42,22 +33,36 @@ const json = (data: Record<string, unknown>): Uint8Array => {
 	return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
 };
 
-// Validate delta stream message (matches working API route)
+// Validate delta stream message
 function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessage | null {
 	if (!rawObj.type) return null;
 
-	const validTypes = ["chunk", "metadata", "event", "error"];
-	if (!validTypes.includes(rawObj.type)) return null;
+	// Check if it's a valid type
+	if (!Object.values(DeltaStreamType).includes(rawObj.type as DeltaStreamType)) {
+		return null;
+	}
 
-	return {
-		type: rawObj.type as DeltaStreamMessage["type"],
-		content: rawObj.content,
-		status: rawObj.status,
-		completedAt: rawObj.completedAt,
-		totalChunks: rawObj.totalChunks ? Number(rawObj.totalChunks) : undefined,
-		fullContent: rawObj.fullContent,
-		timestamp: rawObj.timestamp || new Date().toISOString(), // Fallback if missing
+	const message: DeltaStreamMessage = {
+		type: rawObj.type as DeltaStreamType,
+		timestamp: rawObj.timestamp || new Date().toISOString(),
 	};
+
+	// Add type-specific fields
+	switch (message.type) {
+		case DeltaStreamType.CHUNK:
+			if (!rawObj.content) return null;
+			message.content = rawObj.content;
+			break;
+		case DeltaStreamType.ERROR:
+			if (!rawObj.error) return null;
+			message.error = rawObj.error;
+			break;
+		case DeltaStreamType.COMPLETE:
+			// Complete doesn't require additional fields
+			break;
+	}
+
+	return message;
 }
 
 export class StreamConsumer {
@@ -79,7 +84,7 @@ export class StreamConsumer {
 	 * Simple, readable, and efficient
 	 */
 	createDeltaStream(sessionId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
-		const streamKey = `llm:stream:${sessionId}`; // Match working API route
+		const streamKey = getDeltaStreamKey(sessionId);
 		const groupName = `sse-group-${nanoid()}`;
 		const redis = this.redis;
 
@@ -118,8 +123,8 @@ export class StreamConsumer {
 										console.log("Sending stream message:", validatedMessage);
 										controller.enqueue(json(validatedMessage as unknown as Record<string, unknown>));
 
-										// Check for completion (matches working API route)
-										if (validatedMessage.type === "metadata" && validatedMessage.status === "completed") {
+										// Check for completion
+										if (validatedMessage.type === DeltaStreamType.COMPLETE) {
 											console.log("Stream completed, closing connection");
 											controller.close();
 											return;
@@ -172,7 +177,7 @@ export class StreamConsumer {
 		onError?: (error: Error) => Promise<void>,
 		onComplete?: () => Promise<void>,
 	): Promise<void> {
-		const streamKey = `llm:stream:${sessionId}`; // Match working API route
+		const streamKey = getDeltaStreamKey(sessionId);
 		const groupName = `consumer-group-${nanoid()}`;
 
 		try {
@@ -212,14 +217,6 @@ export class StreamConsumer {
 
 								if (validatedMessage) {
 									await onMessage(validatedMessage);
-
-									// Check for completion (matches working API route)
-									if (validatedMessage.type === "metadata" && validatedMessage.status === "completed") {
-										if (onComplete) {
-											await onComplete();
-										}
-										return;
-									}
 								}
 							}
 						}

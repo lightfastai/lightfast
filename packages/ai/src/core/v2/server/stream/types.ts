@@ -1,6 +1,6 @@
 /**
- * Stream Status Types
- * Shared constants for streaming status across server and client
+ * Stream Types
+ * Shared constants and types for streaming across server and client
  */
 
 export const StreamStatus = {
@@ -11,3 +11,18 @@ export const StreamStatus = {
 } as const;
 
 export type StreamStatusType = (typeof StreamStatus)[keyof typeof StreamStatus];
+
+// Delta stream message types
+export enum DeltaStreamType {
+	CHUNK = "chunk",
+	ERROR = "error",
+	COMPLETE = "complete",
+}
+
+// Delta stream message format
+export interface DeltaStreamMessage {
+	type: DeltaStreamType;
+	content?: string;
+	error?: string;
+	timestamp: string;
+}
