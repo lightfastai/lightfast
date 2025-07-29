@@ -186,7 +186,11 @@ function StatusBadge({ status }: { status: string }) {
 		},
 	};
 
-	const variant = variants[status] || variants.idle;
+	const variant = variants[status] ?? variants.idle ?? {
+		icon: <div className="h-2 w-2 rounded-full bg-gray-400" />,
+		label: "Unknown",
+		className: "text-gray-600",
+	};
 
 	return (
 		<div className={`flex items-center gap-1 text-sm ${variant.className}`}>
