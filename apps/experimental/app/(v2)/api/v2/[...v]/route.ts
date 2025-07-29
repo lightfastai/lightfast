@@ -3,8 +3,12 @@
  * Handles all worker events through a single endpoint
  */
 
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
+import { gateway } from "@ai-sdk/gateway";
 import { Agent } from "@lightfast/ai/v2/core";
 import { fetchRequestHandler } from "@lightfast/ai/v2/server";
+import { smoothStream, wrapLanguageModel } from "ai";
+import { BraintrustMiddleware } from "braintrust";
 import type { NextRequest } from "next/server";
 import { eventEmitter, redis } from "@/app/(v2)/ai/config";
 
@@ -77,9 +81,31 @@ const v2TestAgent = new Agent(
 		name: "v2-test",
 		systemPrompt: "You are a helpful AI assistant with access to various tools. Use them when needed to help the user.",
 		tools: [calculatorTool, weatherTool, searchTool],
-		model: "anthropic/claude-3-5-sonnet-latest",
+		// Use the same model configuration as v1
+		model: wrapLanguageModel({
+			model: gateway("anthropic/claude-4-sonnet"),
+			middleware: BraintrustMiddleware({ debug: true }),
+		}),
 		temperature: 0.7,
 		maxIterations: 10,
+		providerOptions: {
+			anthropic: {
+				// Enable Claude Code thinking
+				thinking: {
+					type: "enabled",
+					budgetTokens: 32000, // Generous budget for complex reasoning
+				},
+			} satisfies AnthropicProviderOptions,
+		},
+		headers: {
+			// Note: token-efficient-tools-2025-02-19 is only available for Claude 3.7 Sonnet
+			// It reduces token usage by ~14% average (up to 70%) and improves latency
+			"anthropic-beta": "interleaved-thinking-2025-05-14,token-efficient-tools-2025-02-19",
+		},
+		experimental_transform: smoothStream({
+			delayInMs: 25,
+			chunking: "word",
+		}),
 	},
 	redis,
 	eventEmitter,

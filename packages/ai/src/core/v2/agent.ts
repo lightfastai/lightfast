@@ -3,9 +3,11 @@
  * Encapsulates agent behavior with system prompt and tools
  */
 
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
-import { streamText } from "ai";
+import { smoothStream, streamText, type ToolSet, wrapLanguageModel } from "ai";
+import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { EventEmitter, SessionEventEmitter } from "./events/emitter";
 import type { AgentLoopInitEvent, Message } from "./events/schemas";
@@ -25,34 +27,77 @@ export interface AgentToolDefinition {
 	schema?: z.ZodSchema<any>;
 }
 
-export interface AgentOptions {
+// Extract core types from streamText
+type StreamTextParameters<TOOLS extends ToolSet> = Parameters<typeof streamText<TOOLS>>[0];
+
+// Properties to exclude from streamText parameters
+type ExcludedStreamTextProps =
+	| "messages" // Handled by session
+	| "tools" // Handled by agent
+	| "system" // Part of systemPrompt
+	| "prompt" // We use messages
+	| "toolChoice" // Needs generic typing
+	| "stopWhen" // Needs generic typing
+	| "onChunk" // Needs generic typing
+	| "onFinish" // Needs generic typing
+	| "onStepFinish" // Needs generic typing
+	| "onAbort" // Needs generic typing
+	| "onError" // Needs generic typing
+	| "_internal" // We don't use this
+	| "prepareStep" // Needs generic typing
+	| "experimental_transform"; // We handle this separately
+
+// Agent-specific configuration extending streamText parameters
+export interface AgentConfig extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
+	// Agent-specific required fields
 	name: string;
+}
+
+// Updated AgentOptions extending AgentConfig
+export interface AgentOptions extends AgentConfig {
 	systemPrompt: string;
-	tools: AgentToolDefinition[];
-	model?: string;
-	temperature?: number;
-	maxIterations?: number;
+	tools: AgentToolDefinition[]; // Keep existing tool structure for now
+	maxIterations?: number; // Agent-specific, not from streamText
+	// Allow passing commonly used streamText options directly
+	experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
 }
 
 export class Agent {
+	public readonly config: AgentConfig;
+	private systemPrompt: string;
+	private maxIterations: number;
+	private experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
 	private streamWriter: StreamWriter;
 	private tools: Map<string, AgentToolDefinition>;
+	private workerConfig: Partial<WorkerConfig>;
 
 	constructor(
-		public readonly options: AgentOptions,
+		options: AgentOptions,
 		private redis: Redis,
 		private eventEmitter: EventEmitter,
-		private config: Partial<WorkerConfig> = {},
+		workerConfig: Partial<WorkerConfig> = {},
 	) {
+		// Destructure agent-specific properties from streamText config
+		const { systemPrompt, tools, maxIterations = 10, experimental_transform, ...streamTextConfig } = options;
+
+		// Store agent-specific properties
+		this.systemPrompt = systemPrompt;
+		this.tools = new Map(tools.map((tool) => [tool.name, tool]));
+		this.maxIterations = maxIterations;
+		this.experimental_transform = experimental_transform;
+
+		// Store all streamText-compatible properties
+		this.config = streamTextConfig;
+
+		// Initialize other properties
 		this.streamWriter = createStreamWriter(redis);
-		// Convert tools array to map for easy lookup
-		this.tools = new Map(options.tools.map((tool) => [tool.name, tool]));
-		// Apply defaults
-		this.config = {
+
+		// Apply worker config defaults
+		this.workerConfig = {
 			maxExecutionTime: 25000,
 			retryAttempts: 3,
 			retryDelay: 1000,
-			...config,
+			...workerConfig,
 		};
 	}
 
@@ -86,7 +131,7 @@ export class Agent {
 			// Process the agent loop
 			await this.runAgentLoop(session, sessionEmitter);
 		} catch (error) {
-			console.error(`[Agent ${this.options.name}] Error processing event ${event.id}:`, error);
+			console.error(`[Agent ${this.config.name}] Error processing event ${event.id}:`, error);
 
 			// Update session status
 			await this.updateSessionStatus(event.sessionId, "error");
@@ -132,13 +177,41 @@ export class Agent {
 	}
 
 	/**
+	 * Get agent name
+	 */
+	getName(): string {
+		return this.config.name;
+	}
+
+	/**
+	 * Get system prompt
+	 */
+	getSystemPrompt(): string {
+		return this.systemPrompt;
+	}
+
+	/**
+	 * Get temperature
+	 */
+	getTemperature(): number | undefined {
+		return this.config.temperature;
+	}
+
+	/**
+	 * Get max iterations
+	 */
+	getMaxIterations(): number {
+		return this.maxIterations;
+	}
+
+	/**
 	 * Run the main agent loop
 	 */
 	private async runAgentLoop(session: AgentSessionState, sessionEmitter: SessionEventEmitter): Promise<void> {
 		const startTime = Date.now();
 
 		// Check iteration limit
-		const maxIterations = this.options.maxIterations || session.maxIterations;
+		const maxIterations = this.maxIterations || session.maxIterations;
 		if (session.iteration >= maxIterations) {
 			await sessionEmitter.emitAgentLoopComplete({
 				finalMessage: "Maximum iterations reached. Please start a new conversation if you need further assistance.",
@@ -209,12 +282,14 @@ Please analyze the conversation and respond with your decision in the following 
 Think through this step by step first, then provide your JSON decision.`;
 
 		// Stream the decision-making process
-		const model = this.options.model || "anthropic/claude-3-5-sonnet-latest";
 		const { textStream } = await streamText({
-			model: gateway(model),
+			...this.config, // Spread all streamText-compatible properties
 			system: structuredPrompt,
 			messages,
-			temperature: this.options.temperature || session.temperature,
+			// Override with session-specific values if needed
+			temperature: session.temperature ?? this.config.temperature,
+			// Apply experimental transform if provided
+			...(this.experimental_transform && { experimental_transform: this.experimental_transform }),
 			onFinish: async (result) => {
 				// Parse the structured decision from the full text
 				try {
@@ -225,11 +300,11 @@ Think through this step by step first, then provide your JSON decision.`;
 						finalDecision = AgentDecisionSchema.parse(parsed);
 					}
 				} catch (error) {
-					console.error(`[Agent ${this.options.name}] Failed to parse decision from text:`, error);
+					console.error(`[Agent ${this.config.name}] Failed to parse decision from text:`, error);
 				}
 
 				// Log the decision
-				console.log(`[Agent ${this.options.name}] Decision for session ${session.sessionId}:`, {
+				console.log(`[Agent ${this.config.name}] Decision for session ${session.sessionId}:`, {
 					action: finalDecision?.action,
 					reasoning: finalDecision?.reasoning,
 					tool: finalDecision?.toolCall?.tool,
@@ -272,9 +347,9 @@ When you need to use a tool, set action to "tool_call" and provide the tool name
 `
 			: "";
 
-		const maxIterations = this.options.maxIterations || session.maxIterations;
+		const maxIterations = this.maxIterations || session.maxIterations;
 
-		return `${this.options.systemPrompt}
+		return `${this.systemPrompt}
 
 Your task is to help the user by analyzing their request and deciding on the best action to take.
 

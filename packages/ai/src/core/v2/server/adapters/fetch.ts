@@ -278,9 +278,9 @@ async function handleStreamInit(
 	const {
 		messages,
 		sessionId: providedSessionId,
-		systemPrompt = agent.options.systemPrompt,
-		temperature = agent.options.temperature || 0.7,
-		maxIterations = agent.options.maxIterations || 10,
+		systemPrompt = agent.getSystemPrompt(),
+		temperature = agent.getTemperature() || 0.7,
+		maxIterations = agent.getMaxIterations() || 10,
 		tools = agent.getAvailableTools(),
 		metadata = {},
 	} = body;
