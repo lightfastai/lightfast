@@ -2,9 +2,11 @@
  * AgentLoopWorker - Core logic for processing agent loop events
  */
 
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
-import { streamText } from "ai";
+import { smoothStream, streamText, wrapLanguageModel } from "ai";
+import { BraintrustMiddleware } from "braintrust";
 import { z } from "zod";
 import type { EventEmitter, SessionEventEmitter } from "../events/emitter";
 import type { AgentLoopInitEvent, Message } from "../events/schemas";
@@ -162,10 +164,31 @@ Think through this step by step first, then provide your JSON decision.`;
 
 		// Stream the decision-making process
 		const { textStream } = await streamText({
-			model: gateway("anthropic/claude-3-5-sonnet-latest"),
+			model: wrapLanguageModel({
+				model: gateway("anthropic/claude-4-sonnet"),
+				middleware: BraintrustMiddleware({ debug: true }),
+			}),
 			system: structuredPrompt,
 			messages,
 			temperature: session.temperature,
+			providerOptions: {
+				anthropic: {
+					// Enable Claude Code thinking
+					thinking: {
+						type: "enabled",
+						budgetTokens: 32000, // Generous budget for complex reasoning
+					},
+				} satisfies AnthropicProviderOptions,
+			},
+			headers: {
+				// Note: token-efficient-tools-2025-02-19 is only available for Claude 3.7 Sonnet
+				// It reduces token usage by ~14% average (up to 70%) and improves latency
+				"anthropic-beta": "interleaved-thinking-2025-05-14,token-efficient-tools-2025-02-19",
+			},
+			experimental_transform: smoothStream({
+				delayInMs: 25,
+				chunking: "word",
+			}),
 			onFinish: async (result) => {
 				// Parse the structured decision from the full text
 				try {
