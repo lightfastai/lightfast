@@ -101,6 +101,11 @@ git clone https://github.com/user/repo.git /tmp/repo/repo-name
 find /tmp/repo/repo-name -type f -name "*.ts" | head -20
 ```
 
+## Task Execution
+- **Evaluate parallelism first** - Can subtasks run independently?
+- **Use Task tool for parallel work** - Multiple agents concurrently when possible
+- **Examples**: File searches, data fetching, independent validations
+
 ## Testing Checklist
 - [ ] Run `pnpm typecheck`
 - [ ] Run `pnpm lint`
