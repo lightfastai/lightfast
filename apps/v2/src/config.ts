@@ -3,7 +3,8 @@
  * Direct instantiation of infrastructure components
  */
 
-import { EventEmitter, StreamConsumer, StreamGenerator } from "@lightfast/ai/v2/core";
+import { EventEmitter, StreamConsumer } from "@lightfast/ai/v2/core";
+import { StreamReader } from "@lightfast/ai/v2/server";
 import { Redis } from "@upstash/redis";
 
 // Get base URL for the test server
@@ -29,11 +30,11 @@ export const eventEmitter = new EventEmitter({
 	},
 });
 
-// Create stream generator instance
-export const streamGenerator = new StreamGenerator(redis);
-
 // Create stream consumer instance
 export const streamConsumer = new StreamConsumer(redis);
+
+// Create stream reader instance
+export const streamReader = new StreamReader(redis);
 
 // System limits configuration
 export const SYSTEM_LIMITS = {

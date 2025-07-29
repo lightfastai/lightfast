@@ -4,8 +4,11 @@
  */
 
 export { type FetchRequestHandlerOptions, fetchRequestHandler } from "../core/v2/server/adapters/fetch";
+export { MessageReader } from "../core/v2/server/readers/message-reader";
+export { StreamReader } from "../core/v2/server/readers/stream-reader";
 export { StreamConsumer } from "../core/v2/server/stream/consumer";
-export { StreamGenerator } from "../core/v2/server/stream-generator";
 export * from "../core/v2/server/types";
+export { generateSessionId } from "../core/v2/server/utils";
 export { EventWriter } from "../core/v2/server/writers/event-writer";
 export { MessageWriter } from "../core/v2/server/writers/message-writer";
+export { SessionWriter } from "../core/v2/server/writers/session-writer";

@@ -17,7 +17,7 @@ import {
 } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
-import { eventEmitter, redis, streamGenerator } from "../config";
+import { eventEmitter, redis } from "../config";
 
 const workerRoutes = new Hono();
 

@@ -3,8 +3,9 @@
  * Pre-configured test scenarios for the event-driven architecture
  */
 
+import { generateSessionId } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
-import { eventEmitter, redis, streamGenerator } from "../config";
+import { eventEmitter, redis } from "../config";
 
 const testRoutes = new Hono();
 
@@ -64,7 +65,7 @@ testRoutes.post("/:scenario", async (c) => {
 
 	try {
 		// Create session
-		const sessionId = streamGenerator.createSessionId();
+		const sessionId = generateSessionId();
 
 		// Initialize session
 		const sessionKey = `session:${sessionId}`;

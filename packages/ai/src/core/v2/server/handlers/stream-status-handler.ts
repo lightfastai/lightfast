@@ -4,13 +4,13 @@
 
 import type { Redis } from "@upstash/redis";
 import { getSessionKey } from "../keys";
-import { StreamGenerator } from "../stream-generator";
+import { StreamReader } from "../readers/stream-reader";
 
 export class StreamStatusHandler {
-	private streamGenerator: StreamGenerator;
+	private streamReader: StreamReader;
 
 	constructor(private redis: Redis) {
-		this.streamGenerator = new StreamGenerator(redis);
+		this.streamReader = new StreamReader(redis);
 	}
 
 	/**
@@ -33,7 +33,7 @@ export class StreamStatusHandler {
 		}
 
 		// Get stream info
-		const streamInfo = await this.streamGenerator.getStreamInfo(sessionId);
+		const streamInfo = await this.streamReader.getStreamInfo(sessionId);
 
 		return Response.json({
 			sessionId,

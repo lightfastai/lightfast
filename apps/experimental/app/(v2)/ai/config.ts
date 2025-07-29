@@ -3,7 +3,8 @@
  * Centralized configuration for all V2 AI components
  */
 
-import { EventEmitter, StreamConsumer, StreamGenerator } from "@lightfast/ai/v2/core";
+import { EventEmitter, StreamConsumer } from "@lightfast/ai/v2/core";
+import { StreamReader } from "@lightfast/ai/v2/server";
 import { Redis } from "@upstash/redis";
 import { env } from "@/env";
 
@@ -59,9 +60,9 @@ export const eventEmitter = new EventEmitter({
 });
 
 /**
- * Create stream generator instance
+ * Create stream reader instance
  */
-export const streamGenerator = new StreamGenerator(redis);
+export const streamReader = new StreamReader(redis);
 
 /**
  * Create stream consumer instance
@@ -84,7 +85,7 @@ export function getV2Infrastructure() {
 	return {
 		redis,
 		eventEmitter,
-		streamGenerator,
+		streamReader,
 		streamConsumer,
 		limits: SYSTEM_LIMITS,
 	};

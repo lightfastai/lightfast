@@ -7,7 +7,7 @@ import type { Agent } from "../../agent";
 import type { EventEmitter } from "../../events/emitter";
 import type { AgentLoopInitEvent, Message } from "../../events/schemas";
 import { StreamWriter } from "../stream/stream-writer";
-import { StreamGenerator } from "../stream-generator";
+import { generateSessionId } from "../utils";
 import { SessionWriter } from "../writers/session-writer";
 
 export interface StreamInitRequestBody {
@@ -23,45 +23,6 @@ export interface StreamInitDependencies<TRuntimeContext = unknown> {
 }
 
 /**
- * Create agent loop init event
- */
-function createAgentLoopEvent<TRuntimeContext>(
-	sessionId: string,
-	messages: Message[],
-	agent: Agent<TRuntimeContext>,
-): AgentLoopInitEvent {
-	return {
-		id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-		type: "agent.loop.init",
-		sessionId,
-		timestamp: new Date().toISOString(),
-		version: "1.0",
-		data: {
-			messages: messages as Message[],
-			systemPrompt: agent.getSystemPrompt(),
-			temperature: agent.getTemperature() || 0.7,
-			tools: agent.getAvailableTools(),
-			metadata: {},
-		},
-	};
-}
-
-/**
- * Start agent loop in background
- */
-function startAgentLoop<TRuntimeContext>(
-	agent: Agent<TRuntimeContext>,
-	agentLoopEvent: AgentLoopInitEvent,
-	sessionId: string,
-): void {
-	// Run the first agent loop immediately in the background
-	// Don't await this - let it stream while we return the response
-	agent.processEvent(agentLoopEvent).catch((error) => {
-		console.error(`[Stream Init] First agent loop failed for session ${sessionId}:`, error);
-	});
-}
-
-/**
  * Handle stream initialization request
  */
 export async function handleStreamInit<TRuntimeContext = unknown>(
@@ -69,7 +30,6 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	deps: StreamInitDependencies<TRuntimeContext>,
 ): Promise<Response> {
 	const { agent, redis, eventEmitter, baseUrl } = deps;
-	const streamGenerator = new StreamGenerator(redis);
 	const streamWriter = new StreamWriter(redis);
 	const sessionWriter = new SessionWriter(redis);
 
@@ -85,20 +45,32 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	const messages = [{ role: "user", content: prompt.trim() }] as Message[];
 
 	// Use provided session ID or generate new one
-	const sessionId = providedSessionId || streamGenerator.createSessionId();
+	const sessionId = providedSessionId || generateSessionId();
 
-	// Check if session already exists using SessionWriter
-	const exists = await sessionWriter.sessionExists(sessionId);
-	if (exists) {
-		return Response.json({ error: "Session already exists", sessionId }, { status: 409 });
-	}
-
-	// Register the session
+	// Register the session (creates if new, continues if existing)
 	await sessionWriter.registerSession(sessionId);
 
-	// Start agent loop in background
-	const agentLoopEvent = createAgentLoopEvent(sessionId, messages, agent);
-	startAgentLoop(agent, agentLoopEvent, sessionId);
+	// Create agent loop init event
+	const agentLoopEvent: AgentLoopInitEvent = {
+		id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+		type: "agent.loop.init",
+		sessionId,
+		timestamp: new Date().toISOString(),
+		version: "1.0",
+		data: {
+			messages: messages as Message[],
+			systemPrompt: agent.getSystemPrompt(),
+			temperature: agent.getTemperature() || 0.7,
+			tools: agent.getAvailableTools(),
+			metadata: {},
+		},
+	};
+
+	// Run the first agent loop immediately in the background
+	// Don't await this - let it stream while we return the response
+	agent.processEvent(agentLoopEvent).catch((error) => {
+		console.error(`[Stream Init] First agent loop failed for session ${sessionId}:`, error);
+	});
 
 	// Return session info immediately
 	return Response.json({

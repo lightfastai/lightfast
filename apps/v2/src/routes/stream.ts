@@ -6,7 +6,7 @@
 import { type DeltaStreamMessage, DeltaStreamType } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-import { streamConsumer, streamGenerator } from "../config";
+import { streamConsumer, streamReader } from "../config";
 
 const streamRoutes = new Hono();
 
@@ -95,7 +95,7 @@ streamRoutes.get("/:sessionId/info", async (c) => {
 	const sessionId = c.req.param("sessionId");
 
 	try {
-		const info = await streamGenerator.getStreamInfo(sessionId);
+		const info = await streamReader.getStreamInfo(sessionId);
 
 		return c.json(info);
 	} catch (error) {

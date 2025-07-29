@@ -4,9 +4,10 @@
  */
 
 import type { Message } from "@lightfast/ai/v2/core";
+import { generateSessionId } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
 import { z } from "zod";
-import { eventEmitter, redis, SYSTEM_LIMITS, streamGenerator } from "../config";
+import { eventEmitter, redis, SYSTEM_LIMITS, streamReader } from "../config";
 
 const initRoutes = new Hono();
 
@@ -33,10 +34,10 @@ initRoutes.post("/", async (c) => {
 		const params = InitRequestSchema.parse(body);
 
 		// Generate or use provided session ID
-		const sessionId = params.sessionId || streamGenerator.createSessionId();
+		const sessionId = params.sessionId || generateSessionId();
 
 		// Check if session already exists
-		const exists = await streamGenerator.streamExists(sessionId);
+		const exists = await streamReader.streamExists(sessionId);
 		if (exists) {
 			return c.json(
 				{
@@ -130,7 +131,7 @@ initRoutes.get("/:sessionId", async (c) => {
 		}
 
 		// Get stream info
-		const streamInfo = await streamGenerator.getStreamInfo(sessionId);
+		const streamInfo = await streamReader.getStreamInfo(sessionId);
 
 		return c.json({
 			sessionId,

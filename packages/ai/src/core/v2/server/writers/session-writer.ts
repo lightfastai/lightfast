@@ -17,15 +17,6 @@ export class SessionWriter {
 	}
 
 	/**
-	 * Check if a session exists
-	 */
-	async sessionExists(sessionId: string): Promise<boolean> {
-		const sessionKey = getSessionKey(sessionId);
-		const exists = await this.redis.exists(sessionKey);
-		return exists === 1;
-	}
-
-	/**
 	 * Delete a session
 	 */
 	async deleteSession(sessionId: string): Promise<void> {
