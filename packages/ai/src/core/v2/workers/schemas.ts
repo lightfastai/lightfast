@@ -8,7 +8,7 @@ import { z } from "zod";
  * Schema for agent decision output from generateObject
  */
 export const AgentDecisionSchema = z.object({
-	action: z.enum(["tool_call", "respond", "clarify"]).describe("The action the agent decided to take"),
+	action: z.enum(["tool_call", "complete"]).describe("The action the agent decided to take"),
 	reasoning: z.string().describe("The agent's reasoning for this decision"),
 	toolCall: z
 		.object({
@@ -17,8 +17,6 @@ export const AgentDecisionSchema = z.object({
 		})
 		.optional()
 		.describe("Tool call details if action is tool_call"),
-	response: z.string().optional().describe("Final response if action is respond"),
-	clarification: z.string().optional().describe("Clarifying question if action is clarify"),
 });
 
 export type AgentDecision = z.infer<typeof AgentDecisionSchema>;

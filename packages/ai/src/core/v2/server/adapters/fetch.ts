@@ -15,7 +15,7 @@ import type {
 	ToolExecutionCompleteEvent,
 } from "../../events/schemas";
 import { ToolResultHandler } from "../../workers/tool-result-handler";
-import { StreamConsumer } from "../stream-consumer";
+import { StreamConsumer } from "../stream/consumer";
 import { StreamGenerator } from "../stream-generator";
 import { StreamWriter } from "../stream-writer";
 
@@ -32,7 +32,7 @@ export interface WorkerRequestBody {
 }
 
 export interface StreamInitRequestBody {
-	messages: Message[];
+	prompt: string;
 	sessionId?: string;
 	systemPrompt?: string;
 	temperature?: number;
@@ -40,6 +40,7 @@ export interface StreamInitRequestBody {
 	tools?: string[];
 	metadata?: Record<string, any>;
 }
+
 
 /**
  * Unified fetch request handler for v2 agent workers
@@ -281,7 +282,7 @@ async function handleStreamInit<TRuntimeContext = unknown>(
 ): Promise<Response> {
 	const body = (await request.json()) as StreamInitRequestBody;
 	const {
-		messages,
+		prompt,
 		sessionId: providedSessionId,
 		systemPrompt = agent.getSystemPrompt(),
 		temperature = agent.getTemperature() || 0.7,
@@ -290,10 +291,13 @@ async function handleStreamInit<TRuntimeContext = unknown>(
 		metadata = {},
 	} = body;
 
-	// Validate messages
-	if (!messages || !Array.isArray(messages) || messages.length === 0) {
-		return Response.json({ error: "Messages array is required" }, { status: 400 });
+	// Validate prompt
+	if (!prompt || !prompt.trim()) {
+		return Response.json({ error: "Prompt is required" }, { status: 400 });
 	}
+
+	// Convert prompt to messages format
+	const messages = [{ role: "user", content: prompt.trim() }] as Message[];
 
 	// Use provided session ID or generate new one
 	const sessionId = providedSessionId || streamGenerator.createSessionId();
@@ -398,7 +402,7 @@ function handleStreamSSE(sessionId: string, streamConsumer: StreamConsumer): Res
 
 	try {
 		// Create SSE stream
-		const stream = streamConsumer.createSSEStream(sessionId);
+		const stream = streamConsumer.createDeltaStream(sessionId);
 
 		// Return SSE response
 		return new Response(stream, {

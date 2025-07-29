@@ -1,309 +1,174 @@
 "use client";
 
-/**
- * React hook for v2 chat functionality with SSE streaming
- */
+import { useRef, useState, useEffect, useCallback } from "react";
+import { 
+	useDeltaStream,
+	type MessageType,
+	type StreamStatus,
+	type ChunkMessage,
+	type MetadataMessage,
+	type EventMessage,
+	type ErrorMessage,
+	type StreamMessage,
+	validateMessage
+} from "./use-delta-stream";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { UIMessage } from "ai";
-
-// Extended UIMessage with additional client-side properties
-export interface ChatMessage extends UIMessage {
-	isStreaming?: boolean;
-	timestamp: Date;
-}
+// Re-export types for convenience
+export {
+	MessageType,
+	StreamStatus,
+	type ChunkMessage,
+	type MetadataMessage,
+	type EventMessage,
+	type ErrorMessage,
+	type StreamMessage,
+	validateMessage
+};
 
 export interface UseChatOptions {
-	/** URL for the unified API endpoint (e.g., "/api/v2") */
-	url?: string;
-	/** Initial messages */
-	initialMessages?: ChatMessage[];
-	/** Tools to enable */
-	tools?: string[];
-	/** Temperature for generation */
-	temperature?: number;
-	/** Max iterations for the agent */
-	maxIterations?: number;
-	/** System prompt override */
-	systemPrompt?: string;
-	/** Metadata to pass to the agent */
-	metadata?: Record<string, any>;
+	apiEndpoint?: string;
+	streamEndpoint?: string;
+	sessionId?: string;
+	onChunk?: (chunk: string) => void;
+	onComplete?: (response: string) => void;
+	onError?: (error: Error) => void;
 }
 
 export interface UseChatReturn {
-	/** All messages in the conversation */
-	messages: ChatMessage[];
-	/** Current input value */
-	input: string;
-	/** Set the input value */
-	setInput: (value: string) => void;
-	/** Send a message */
-	sendMessage: () => Promise<void>;
-	/** Whether the assistant is currently streaming */
-	isStreaming: boolean;
-	/** Connection status */
-	connectionStatus: "disconnected" | "connecting" | "connected" | "error";
-	/** Current thinking content (if any) */
-	currentThinking: string;
-	/** Current session ID */
-	sessionId?: string;
-	/** Clear all messages and reset */
-	clear: () => void;
-	/** Error if any */
-	error?: Error;
-}
-
-// Helper function to extract text content from UIMessage parts
-export function getMessageContent(message: UIMessage): string {
-	if (!message.parts || message.parts.length === 0) return "";
+	// State
+	sessionId: string | null;
+	status: "idle" | "loading" | "streaming" | "completed" | "error";
+	response: string;
+	chunkCount: number;
+	error: Error | null;
 	
-	return message.parts
-		.filter(part => part.type === "text")
-		.map(part => part.text || "")
-		.join("");
+	// Actions
+	sendMessage: (prompt: string) => void;
+	reset: () => void;
+	regenerateSessionId: () => string;
+	clearSessionId: () => void;
+	
+	// Refs for DOM manipulation
+	responseRef: React.RefObject<HTMLDivElement>;
 }
 
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
 	const {
-		url = "/api/v2",
-		initialMessages = [],
-		tools = [],
-		temperature = 0.7,
-		maxIterations,
-		systemPrompt,
-		metadata = {},
+		apiEndpoint = "/api/stream/init",
+		streamEndpoint = "/api/stream",
+		sessionId: initialSessionId,
+		onChunk,
+		onComplete,
+		onError,
 	} = options;
 
 	// State
-	const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-	const [input, setInput] = useState("");
-	const [isStreaming, setIsStreaming] = useState(false);
-	const [sessionId, setSessionId] = useState<string>();
-	const [connectionStatus, setConnectionStatus] = useState<UseChatReturn["connectionStatus"]>("disconnected");
-	const [currentThinking, setCurrentThinking] = useState("");
-	const [error, setError] = useState<Error>();
+	const [sessionId, setSessionId] = useState<string | null>(initialSessionId || null);
+	const [status, setStatus] = useState<"idle" | "loading" | "streaming" | "completed" | "error">("idle");
+	const [response, setResponse] = useState("");
+	const [chunkCount, setChunkCount] = useState(0);
 
 	// Refs
-	const eventSourceRef = useRef<EventSource | null>(null);
-	const currentMessageIdRef = useRef<string | undefined>(undefined);
+	const responseRef = useRef<HTMLDivElement>(null);
 
-	// Clean up event source on unmount
+	// Delta stream hook
+	const deltaStream = useDeltaStream({
+		streamEndpoint,
+		onChunk: (chunk: string) => {
+			setResponse((prev) => prev + chunk);
+			setChunkCount((prev) => prev + 1);
+			onChunk?.(chunk);
+		},
+		onComplete: (fullResponse: string) => {
+			setStatus("completed");
+			onComplete?.(fullResponse);
+		},
+		onError: (error: Error) => {
+			setStatus("error");
+			onError?.(error);
+		},
+	});
+
+	// Auto-scroll to bottom when response updates
 	useEffect(() => {
-		return () => {
-			if (eventSourceRef.current) {
-				eventSourceRef.current.close();
-			}
-		};
+		if (responseRef.current) {
+			responseRef.current.scrollTop = responseRef.current.scrollHeight;
+		}
+	}, [response]);
+
+	// Update status based on stream connection
+	useEffect(() => {
+		if (deltaStream.isConnected && status === "loading") {
+			setStatus("streaming");
+		}
+	}, [deltaStream.isConnected, status]);
+
+	// Generate session ID
+	const regenerateSessionId = useCallback((): string => {
+		const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+		setSessionId(newSessionId);
+		return newSessionId;
 	}, []);
 
-	const connectToStream = useCallback(
-		(sessionId: string) => {
-			if (eventSourceRef.current) {
-				eventSourceRef.current.close();
-			}
+	// Clear session
+	const clearSessionId = useCallback(() => {
+		setSessionId(null);
+	}, []);
 
-			setConnectionStatus("connecting");
-			const eventSource = new EventSource(`${url}/stream/${sessionId}`);
-			eventSourceRef.current = eventSource;
-
-			eventSource.onopen = () => {
-				setConnectionStatus("connected");
-			};
-
-			// Handle different event types
-			const handleStreamEvent = (event: MessageEvent, type: string) => {
-				try {
-					// Skip empty data
-					if (!event.data || event.data.trim() === "") {
-						return;
-					}
-
-					const data = JSON.parse(event.data);
-
-					// Handle UIMessage events
-					if (type === "message") {
-						const message = data as UIMessage;
-						if (message && message.parts && currentMessageIdRef.current) {
-							// Update the assistant message with new parts
-							setMessages((prev) =>
-								prev.map((msg) => 
-									msg.id === currentMessageIdRef.current 
-										? { ...msg, parts: message.parts, isStreaming: false } 
-										: msg
-								),
-							);
-							
-							// Check for reasoning parts
-							const hasReasoning = message.parts.some(part => part.type === "reasoning");
-							if (!hasReasoning) {
-								setCurrentThinking("");
-							} else {
-								// Update thinking with latest reasoning
-								const reasoningParts = message.parts.filter(part => part.type === "reasoning");
-								const latestReasoning = reasoningParts[reasoningParts.length - 1];
-								if (latestReasoning && latestReasoning.text) {
-									setCurrentThinking(latestReasoning.text);
-								}
-							}
-						}
-						return;
-					}
-
-					// Handle UIMessagePart events
-					if (type === "message-part") {
-						const { part, messageId } = data;
-						if (part && part.type === "reasoning") {
-							setCurrentThinking((prev) => prev + (part.text || ""));
-						}
-						return;
-					}
-
-					// Handle system events
-					if (type === "system-event") {
-						const event = data;
-						
-						// Handle completion
-						if (event.type === "metadata" && event.status === "completed") {
-							setIsStreaming(false);
-							setCurrentThinking("");
-							// Close the EventSource when stream is completed
-							if (eventSourceRef.current) {
-								eventSourceRef.current.close();
-								eventSourceRef.current = null;
-								setConnectionStatus("disconnected");
-							}
-						}
-						
-						// Handle errors
-						if (event.type === "error") {
-							setError(new Error(event.error || "Unknown error"));
-							setIsStreaming(false);
-							setCurrentThinking("");
-						}
-						
-						return;
-					}
-				} catch (err) {
-					console.error("Failed to parse event:", err, "Event data:", event.data);
-				}
-			};
-
-			// Listen to new UIMessage event types
-			["message", "message-part", "system-event"].forEach(
-				(eventType) => {
-					eventSource.addEventListener(eventType, (event) => handleStreamEvent(event, eventType));
-				},
-			);
-
-			eventSource.onerror = (error) => {
-				console.error("EventSource error:", error);
-				setConnectionStatus("error");
-				setIsStreaming(false);
-				setCurrentThinking("");
-			};
-		},
-		[url],
-	);
-
-	const sendMessage = useCallback(async () => {
-		if (!input.trim() || isStreaming) return;
-
-		const userMessage: ChatMessage = {
-			id: `msg_${Date.now()}_user`,
-			role: "user",
-			parts: [{ type: "text", text: input.trim() }],
-			isStreaming: false,
-			timestamp: new Date(),
-		};
-
-		const assistantMessageId = `msg_${Date.now()}_assistant`;
-		const assistantMessage: ChatMessage = {
-			id: assistantMessageId,
-			role: "assistant",
-			parts: [],
-			isStreaming: true,
-			timestamp: new Date(),
-		};
-
-		currentMessageIdRef.current = assistantMessageId;
-		setMessages((prev) => [...prev, userMessage, assistantMessage]);
-		setInput("");
-		setIsStreaming(true);
-		setCurrentThinking("");
-		setError(undefined);
-
+	// Send message function
+	const sendMessage = useCallback(async (prompt: string) => {
+		if (!prompt.trim() || status === "loading" || status === "streaming") return;
+		
 		try {
-			// Call the stream init endpoint via unified route
-			const response = await fetch(`${url}/stream/init`, {
+			setStatus("loading");
+			setResponse("");
+			setChunkCount(0);
+
+			const newSessionId = regenerateSessionId();
+
+			// Start the stream
+			await fetch(apiEndpoint, {
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					messages: [...messages, userMessage].map((m) => ({
-						role: m.role,
-						content: getMessageContent(m),
-					})),
-					tools,
-					temperature,
-					maxIterations,
-					systemPrompt,
-					metadata,
-				}),
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ prompt, sessionId: newSessionId }),
 			});
 
-			if (!response.ok) {
-				const errorData = await response.json().catch(() => null);
-				throw new Error(errorData?.error || `HTTP ${response.status}`);
-			}
+			// Connect to the delta stream
+			await deltaStream.connect(newSessionId);
 
-			const data = await response.json();
-			setSessionId(data.sessionId);
-
-			// Connect to stream immediately
-			connectToStream(data.sessionId);
-		} catch (error) {
-			console.error("Send message error:", error);
-			setError(error instanceof Error ? error : new Error("Failed to send message"));
-			setMessages((prev) =>
-				prev.map((msg) =>
-					msg.id === assistantMessageId
-						? {
-								...msg,
-								parts: [{ type: "text", text: "Sorry, an error occurred. Please try again." }],
-								isStreaming: false,
-							}
-						: msg,
-				),
-			);
-			setIsStreaming(false);
-			setCurrentThinking("");
+		} catch (err) {
+			const error = err instanceof Error ? err : new Error("Failed to send message");
+			setStatus("error");
+			onError?.(error);
 		}
-	}, [input, isStreaming, messages, url, tools, temperature, maxIterations, systemPrompt, metadata, connectToStream]);
+	}, [apiEndpoint, regenerateSessionId, deltaStream, status, onError]);
 
-	const clear = useCallback(() => {
-		setMessages([]);
-		setInput("");
-		setIsStreaming(false);
-		setSessionId(undefined);
-		setConnectionStatus("disconnected");
-		setCurrentThinking("");
-		setError(undefined);
-
-		if (eventSourceRef.current) {
-			eventSourceRef.current.close();
-			eventSourceRef.current = null;
-		}
-	}, []);
+	// Reset function
+	const reset = useCallback(() => {
+		deltaStream.disconnect();
+		clearSessionId();
+		setResponse("");
+		setChunkCount(0);
+		setStatus("idle");
+	}, [deltaStream, clearSessionId]);
 
 	return {
-		messages,
-		input,
-		setInput,
-		sendMessage,
-		isStreaming,
-		connectionStatus,
-		currentThinking,
+		// State
 		sessionId,
-		clear,
-		error,
+		status,
+		response,
+		chunkCount,
+		error: deltaStream.error,
+
+		// Actions
+		sendMessage,
+		reset,
+		regenerateSessionId,
+		clearSessionId,
+
+		// Refs
+		responseRef,
 	};
 }

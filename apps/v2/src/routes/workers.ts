@@ -4,9 +4,9 @@
  */
 
 import {
+	Agent,
 	type AgentLoopInitEvent,
 	AgentLoopInitEventSchema,
-	AgentLoopWorker,
 	type AgentToolCallEvent,
 	AgentToolCallEventSchema,
 	type ToolExecutionCompleteEvent,
@@ -21,8 +21,14 @@ import { eventEmitter, redis, streamGenerator } from "../config";
 
 const workerRoutes = new Hono();
 
-// Create worker instances
-const agentLoopWorker = new AgentLoopWorker(redis, eventEmitter, {
+// Create worker instances - using Agent instead of AgentLoopWorker
+const agent = new Agent({
+	name: "test-agent",
+	systemPrompt: "You are a helpful AI assistant.",
+	model: "anthropic/claude-3-5-sonnet-20241022", // Required for streamText
+	temperature: 0.7,
+	maxIterations: 10,
+}, redis, eventEmitter, {
 	maxExecutionTime: 25000,
 	retryAttempts: 3,
 	retryDelay: 1000,
@@ -36,10 +42,10 @@ workerRoutes.post("/agent-loop", async (c) => {
 		const body = await c.req.json();
 		const event = AgentLoopInitEventSchema.parse(body);
 
-		console.log(`[Agent Loop Worker] Processing event ${event.id} for session ${event.sessionId}`);
+		console.log(`[Agent] Processing event ${event.id} for session ${event.sessionId}`);
 
-		// Process the event using the real AgentLoopWorker
-		await agentLoopWorker.processEvent(event);
+		// Process the event using the Agent class
+		await agent.processEvent(event);
 
 		return c.json({
 			success: true,
@@ -57,7 +63,7 @@ workerRoutes.post("/agent-loop", async (c) => {
 			);
 		}
 
-		console.error("[Agent Loop Worker] Error:", error);
+		console.error("[Agent] Error:", error);
 		return c.json(
 			{
 				error: "Agent loop processing failed",

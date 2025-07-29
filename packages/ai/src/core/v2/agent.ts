@@ -322,19 +322,24 @@ export class Agent<TRuntimeContext = unknown> {
 		// Update iteration count
 		await this.incrementIteration(session.sessionId);
 
-		// Handle the decision
-		switch (decision.action) {
-			case "tool_call":
-				await this.handleToolCall(session, decision, sessionEmitter);
-				break;
+		// Handle the decision - only process tool calls
+		if (decision.action === "tool_call") {
+			await this.handleToolCall(session, decision, sessionEmitter);
+		} else {
+			// For non-tool actions (complete), signal completion and finish
+			await this.streamMetadata(session.sessionId, "completed", {
+				event: "agent.loop.complete",
+				iterations: session.iteration + 1,
+				duration: Date.now() - startTime,
+			});
 
-			case "respond":
-				await this.handleResponse(session, decision, sessionEmitter, startTime);
-				break;
-
-			case "clarify":
-				await this.handleClarification(session, decision, sessionEmitter, startTime);
-				break;
+			await sessionEmitter.emitAgentLoopComplete({
+				finalMessage: "Agent loop completed",
+				iterations: session.iteration + 1,
+				toolsUsed: this.extractUsedTools(session.messages),
+				duration: Date.now() - startTime,
+			});
+			await this.updateSessionStatus(session.sessionId, "completed");
 		}
 	}
 
@@ -351,16 +356,20 @@ export class Agent<TRuntimeContext = unknown> {
 		let finalDecision: AgentDecision | null = null;
 		let responseMessages: UIMessage[] = [];
 
+		// Signal start of decision making
+		await this.streamMetadata(session.sessionId, "started", {
+			event: "agent.decision.start",
+			iteration: session.iteration + 1,
+		});
+
 		// Create a prompt that will naturally generate structured output
 		const structuredPrompt = `${systemPrompt}
 
-Please analyze the conversation and respond with your decision in the following JSON format:
+Please analyze the conversation and decide if you need to use a tool. Respond with your decision in the following JSON format:
 {
-  "action": "tool_call" | "respond" | "clarify",
+  "action": "tool_call" | "complete",
   "reasoning": "your reasoning here",
   "toolCall": { "tool": "tool_name", "arguments": {...} } // only if action is tool_call
-  "response": "your response text" // only if action is respond
-  "clarification": "your clarification question" // only if action is clarify
 }
 
 Think through this step by step first, then provide your JSON decision.`;
@@ -408,9 +417,14 @@ Think through this step by step first, then provide your JSON decision.`;
 			},
 		});
 
-		// Consume the stream to completion
-		for await (const _ of textStream) {
-			// Just consuming the stream, messages are handled in onFinish
+		// Stream chunks in real-time for immediate UI feedback
+		let fullContent = "";
+		for await (const chunk of textStream) {
+			if (chunk) {
+				fullContent += chunk;
+				// Delta streaming - immediate UI feedback
+				await this.streamChunk(session.sessionId, chunk);
+			}
 		}
 
 		// Write the complete thinking message with reasoning parts
@@ -429,6 +443,13 @@ Think through this step by step first, then provide your JSON decision.`;
 		if (!finalDecision) {
 			throw new Error("Failed to get structured decision from streamText");
 		}
+
+		// Signal completion of decision making
+		await this.streamMetadata(session.sessionId, "completed", {
+			event: "agent.decision.complete",
+			action: (finalDecision as AgentDecision).action,
+			tool: (finalDecision as AgentDecision).action === "tool_call" ? (finalDecision as AgentDecision).toolCall?.tool : undefined,
+		});
 
 		return finalDecision;
 	}
@@ -451,18 +472,17 @@ When you need to use a tool, set action to "tool_call" and provide the tool name
 
 		return `${this.systemPrompt}
 
-Your task is to help the user by analyzing their request and deciding on the best action to take.
+Your task is to help the user by analyzing their request and determining if you need to use a tool.
 
-You must respond with one of these actions:
+You must decide between:
 1. "tool_call" - Use a tool to gather information or perform an action
-2. "respond" - Provide a final response to the user
-3. "clarify" - Ask for clarification if the request is unclear
+2. "complete" - No tool is needed, the task is complete
 
 ${toolsSection}
 
 Current iteration: ${session.iteration + 1}/${maxIterations}
 
-Think through your reasoning step by step, then make your decision. Always provide clear reasoning for your decision.`;
+Think through your reasoning step by step, then make your decision. Only use tools when necessary to fulfill the user's request.`;
 	}
 
 	/**
@@ -500,13 +520,19 @@ Think through your reasoning step by step, then make your decision. Always provi
 
 		const toolCallId = `tc_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
+		// Stream tool call start for immediate UI feedback
+		await this.streamToolProgress(session.sessionId, decision.toolCall.tool, "starting", {
+			toolCallId,
+			arguments: decision.toolCall.arguments,
+		});
+
 		// Add assistant message with tool decision
 		await this.addMessage(session.sessionId, {
 			role: "assistant",
 			content: `I'll use the ${decision.toolCall.tool} tool to help with your request. ${decision.reasoning}`,
 		});
 
-		// Write tool message with tool call part
+		// Write tool message with tool call part (UIMessage persistence)
 		const toolMessage: UIMessage = {
 			id: this.generateMessageId(),
 			role: "assistant",
@@ -525,7 +551,12 @@ Think through your reasoning step by step, then make your decision. Always provi
 		};
 		await this.streamWriter.writeUIMessage(session.sessionId, toolMessage);
 
-		// Emit tool call event
+		// Stream tool call in progress
+		await this.streamToolProgress(session.sessionId, decision.toolCall.tool, "executing", {
+			toolCallId,
+		});
+
+		// Emit tool call event (existing event system)
 		await sessionEmitter.emitAgentToolCall({
 			toolCallId,
 			tool: decision.toolCall.tool,
@@ -538,105 +569,55 @@ Think through your reasoning step by step, then make your decision. Always provi
 		await this.updateSessionStatus(session.sessionId, "waiting_for_tool");
 	}
 
+
 	/**
-	 * Handle response decision (streaming already happened in makeDecision)
+	 * Delta streaming methods for real-time UI updates using optimized Redis streams
 	 */
-	private async handleResponse(
-		session: AgentSessionState,
-		decision: AgentDecision,
-		sessionEmitter: SessionEventEmitter,
-		startTime: number,
-	): Promise<void> {
-		if (!decision.response) {
-			throw new Error("Response decision without response content");
-		}
-
-		// Add assistant message to conversation history
-		await this.addMessage(session.sessionId, {
-			role: "assistant",
-			content: decision.response,
-		});
-
-		// Write final response message
-		const responseMessage: UIMessage = {
-			id: this.generateMessageId(),
-			role: "assistant",
-			parts: [
-				{
-					type: "text",
-					text: decision.response,
-				},
-			],
-		};
-		await this.streamWriter.writeUIMessage(session.sessionId, responseMessage);
-
-		// Emit completion event
-		await sessionEmitter.emitAgentLoopComplete({
-			finalMessage: decision.response,
-			iterations: session.iteration + 1,
-			toolsUsed: this.extractUsedTools(session.messages),
-			duration: Date.now() - startTime,
-		});
-
-		// Write metadata completion event
-		await this.streamWriter.writeMetadataEvent(session.sessionId, "completed", {
-			reason: "response_delivered",
-			messageId: responseMessage.id,
-		});
-
-		// Update session status
-		await this.updateSessionStatus(session.sessionId, "completed");
+	private getDeltaStreamKey(sessionId: string): string {
+		return `llm:stream:${sessionId}`;
 	}
 
-	/**
-	 * Handle clarification decision (streaming already happened in makeDecision)
-	 */
-	private async handleClarification(
-		session: AgentSessionState,
-		decision: AgentDecision,
-		sessionEmitter: SessionEventEmitter,
-		startTime: number,
+	private async emitDeltaChunk(
+		sessionId: string, 
+		messageType: "chunk" | "metadata" | "event" | "error",
+		content?: string,
+		metadata?: Record<string, any>
 	): Promise<void> {
-		if (!decision.clarification) {
-			throw new Error("Clarification decision without clarification content");
-		}
-
-		// Add assistant message to conversation history
-		await this.addMessage(session.sessionId, {
-			role: "assistant",
-			content: decision.clarification,
-		});
-
-		// Write clarification message
-		const clarificationMessage: UIMessage = {
-			id: this.generateMessageId(),
-			role: "assistant",
-			parts: [
-				{
-					type: "text",
-					text: decision.clarification,
-				},
-			],
+		const streamKey = this.getDeltaStreamKey(sessionId);
+		
+		// Prepare message for Redis stream
+		const message: Record<string, string> = {
+			type: messageType,
+			timestamp: new Date().toISOString(),
 		};
-		await this.streamWriter.writeUIMessage(session.sessionId, clarificationMessage);
 
-		// For now, treat clarification as completion
-		// In a real system, we'd wait for user response
-		await sessionEmitter.emitAgentLoopComplete({
-			finalMessage: decision.clarification,
-			iterations: session.iteration + 1,
-			toolsUsed: this.extractUsedTools(session.messages),
-			duration: Date.now() - startTime,
+		if (content) message.content = content;
+		if (metadata) message.metadata = JSON.stringify(metadata);
+
+		// Write to Redis stream for persistence
+		await this.redis.xadd(streamKey, "*", message);
+		
+		// Publish for real-time notifications (matching the optimized pattern)
+		await this.redis.publish(streamKey, { type: messageType });
+	}
+
+	private async streamChunk(sessionId: string, chunk: string): Promise<void> {
+		await this.emitDeltaChunk(sessionId, "chunk", chunk);
+	}
+
+	private async streamToolProgress(sessionId: string, tool: string, status: string, metadata?: Record<string, any>): Promise<void> {
+		await this.emitDeltaChunk(sessionId, "event", `${tool}: ${status}`, {
+			tool,
+			event: "tool.progress",
+			...metadata,
 		});
+	}
 
-		// Write metadata completion event
-		await this.streamWriter.writeMetadataEvent(session.sessionId, "completed", {
-			reason: "clarification_sent",
-			messageId: clarificationMessage.id,
+	private async streamMetadata(sessionId: string, status: string, metadata?: Record<string, any>): Promise<void> {
+		await this.emitDeltaChunk(sessionId, "metadata", undefined, {
+			status,
+			...metadata,
 		});
-
-		// Update session status
-		await this.updateSessionStatus(session.sessionId, "completed");
 	}
 
 	/**

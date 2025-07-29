@@ -1,8 +1,8 @@
 "use client";
 
-import { useChat, getMessageContent } from "@lightfast/ai/v2/react";
+import { useChat } from "@lightfast/ai/v2/react";
 import { AlertCircle, Bot, Loader2, Send, User, Zap } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,26 +10,35 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function TestInstantStreamPage() {
-	const { messages, input, setInput, sendMessage, isStreaming, connectionStatus, currentThinking, sessionId, error } =
-		useChat({
-			url: "/api/v2",
-			tools: ["calculator", "weather"],
-			temperature: 0.7,
-		});
-
-	const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-	// Auto-scroll to bottom
-	useEffect(() => {
-		if (scrollAreaRef.current) {
-			scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-		}
-	}, [messages, currentThinking]);
+	const [input, setInput] = useState("");
+	const { sessionId, status, response, chunkCount, error, sendMessage, reset, responseRef } = useChat({
+		apiEndpoint: "/api/v2/stream/init",
+		streamEndpoint: "/api/v2/stream",
+		onChunk: (chunk) => {
+			console.log("Received chunk:", chunk);
+		},
+		onComplete: (fullResponse) => {
+			console.log("Stream completed:", fullResponse);
+		},
+		onError: (error) => {
+			console.error("Stream error:", error);
+		},
+	});
 
 	const handleKeyPress = (e: React.KeyboardEvent) => {
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
-			sendMessage();
+			if (input.trim()) {
+				sendMessage(input);
+				setInput("");
+			}
+		}
+	};
+
+	const handleSendClick = () => {
+		if (input.trim()) {
+			sendMessage(input);
+			setInput("");
 		}
 	};
 
@@ -48,10 +57,15 @@ export default function TestInstantStreamPage() {
 							</Badge>
 						</div>
 						<div className="flex items-center gap-2 text-sm">
-							<ConnectionStatus status={connectionStatus} />
+							<StatusBadge status={status} />
 							{sessionId && (
 								<span className="text-muted-foreground">
 									Session: <code className="text-xs">{sessionId}</code>
+								</span>
+							)}
+							{chunkCount > 0 && (
+								<span className="text-muted-foreground">
+									Chunks: <code className="text-xs">{chunkCount}</code>
 								</span>
 							)}
 						</div>
@@ -65,9 +79,9 @@ export default function TestInstantStreamPage() {
 				</div>
 
 				{/* Messages Area */}
-				<ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-					<div className="space-y-4">
-						{messages.length === 0 && (
+				<div className="flex-1 p-4 overflow-hidden">
+					<div className="h-full">
+						{!response && status === "idle" && (
 							<div className="text-center text-muted-foreground py-8">
 								<Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
 								<p>Start a conversation to see instant streaming in action!</p>
@@ -75,33 +89,46 @@ export default function TestInstantStreamPage() {
 							</div>
 						)}
 
-						{messages.map((message) => (
-							<MessageBubble key={message.id} message={message} />
-						))}
+						{(response || status !== "idle") && (
+							<div className="space-y-4">
+								{/* Status indicator */}
+								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+									<Bot className="h-4 w-4" />
+									<span>AI Assistant</span>
+									{status === "streaming" && (
+										<Badge variant="outline" className="text-xs">
+											<Loader2 className="h-3 w-3 animate-spin mr-1" />
+											Streaming
+										</Badge>
+									)}
+									{status === "completed" && (
+										<Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+											Completed
+										</Badge>
+									)}
+								</div>
 
-						{/* Live Thinking Display */}
-						{currentThinking && (
-							<div className="flex gap-3">
-								<Bot className="h-8 w-8 text-orange-500" />
-								<div className="flex-1">
-									<div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-										<div className="flex items-center gap-2 mb-1">
-											<Badge variant="outline" className="text-xs bg-orange-100">
-												<Loader2 className="h-3 w-3 animate-spin mr-1" />
-												Thinking
-											</Badge>
-											<span className="text-xs text-orange-600">Live stream</span>
-										</div>
-										<p className="text-sm font-mono text-orange-900">
-											{currentThinking}
-											<span className="animate-pulse">▋</span>
+								{/* Response Area */}
+								<div 
+									ref={responseRef}
+									className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto"
+								>
+									{response ? (
+										<p className="text-sm whitespace-pre-wrap">
+											{response}
+											{status === "streaming" && <span className="animate-pulse">▋</span>}
 										</p>
-									</div>
+									) : status === "loading" ? (
+										<div className="flex items-center gap-2 text-muted-foreground">
+											<Loader2 className="h-4 w-4 animate-spin" />
+											<span>Initializing stream...</span>
+										</div>
+									) : null}
 								</div>
 							</div>
 						)}
 					</div>
-				</ScrollArea>
+				</div>
 
 				{/* Input Area */}
 				<div className="border-t p-4">
@@ -111,15 +138,18 @@ export default function TestInstantStreamPage() {
 							onChange={(e) => setInput(e.target.value)}
 							onKeyPress={handleKeyPress}
 							placeholder="Ask me anything..."
-							disabled={isStreaming}
+							disabled={status === "loading" || status === "streaming"}
 							className="flex-1"
 						/>
-						<Button onClick={sendMessage} disabled={!input.trim() || isStreaming} size="icon">
-							{isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+						<Button onClick={handleSendClick} disabled={!input.trim() || status === "loading" || status === "streaming"} size="icon">
+							{status === "loading" || status === "streaming" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+						</Button>
+						<Button onClick={reset} variant="outline" size="icon" disabled={status === "loading" || status === "streaming"}>
+							Reset
 						</Button>
 					</div>
 					<p className="text-xs text-muted-foreground mt-2">
-						First agent loop runs instantly • Subsequent tool calls use event-driven processing
+						Delta streaming with real-time chunk updates • Status: {status}
 					</p>
 				</div>
 			</Card>
@@ -127,51 +157,27 @@ export default function TestInstantStreamPage() {
 	);
 }
 
-function MessageBubble({
-	message,
-}: {
-	message: { id: string; role: string; parts: any[]; isStreaming?: boolean; timestamp: Date };
-}) {
-	const isUser = message.role === "user";
-	const content = getMessageContent(message);
-
-	return (
-		<div className={`flex gap-3 ${isUser ? "justify-end" : ""}`}>
-			{!isUser && <Bot className="h-8 w-8 text-primary" />}
-			<div className={`max-w-[80%] ${isUser ? "order-first" : ""}`}>
-				<div className={`rounded-lg p-3 ${isUser ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-					{message.isStreaming && !content ? (
-						<div className="flex items-center gap-2">
-							<Loader2 className="h-4 w-4 animate-spin" />
-							<span className="text-sm">Streaming response...</span>
-						</div>
-					) : (
-						<p className="text-sm whitespace-pre-wrap">{content}</p>
-					)}
-				</div>
-				<p className="text-xs text-muted-foreground mt-1">{message.timestamp.toLocaleTimeString()}</p>
-			</div>
-			{isUser && <User className="h-8 w-8 text-muted-foreground" />}
-		</div>
-	);
-}
-
-function ConnectionStatus({ status }: { status: string }) {
+function StatusBadge({ status }: { status: string }) {
 	const variants: Record<string, { icon: React.ReactNode; label: string; className: string }> = {
-		connecting: {
+		idle: {
+			icon: <div className="h-2 w-2 rounded-full bg-gray-400" />,
+			label: "Idle",
+			className: "text-gray-600",
+		},
+		loading: {
 			icon: <Loader2 className="h-3 w-3 animate-spin" />,
-			label: "Connecting",
+			label: "Loading",
 			className: "text-yellow-600",
 		},
-		connected: {
-			icon: <div className="h-2 w-2 rounded-full bg-green-500" />,
-			label: "Connected",
-			className: "text-green-600",
+		streaming: {
+			icon: <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />,
+			label: "Streaming",
+			className: "text-blue-600",
 		},
-		disconnected: {
-			icon: <div className="h-2 w-2 rounded-full bg-gray-400" />,
-			label: "Disconnected",
-			className: "text-gray-600",
+		completed: {
+			icon: <div className="h-2 w-2 rounded-full bg-green-500" />,
+			label: "Completed",
+			className: "text-green-600",
 		},
 		error: {
 			icon: <AlertCircle className="h-3 w-3" />,
@@ -180,12 +186,12 @@ function ConnectionStatus({ status }: { status: string }) {
 		},
 	};
 
-	const variant = variants[status] || variants.disconnected;
+	const variant = variants[status] || variants.idle;
 
 	return (
-		<div className={`flex items-center gap-1 text-sm ${variant?.className || "text-gray-600"}`}>
-			{variant?.icon || <div className="h-2 w-2 rounded-full bg-gray-400" />}
-			<span>{variant?.label || "Disconnected"}</span>
+		<div className={`flex items-center gap-1 text-sm ${variant.className}`}>
+			{variant.icon}
+			<span>{variant.label}</span>
 		</div>
 	);
 }
