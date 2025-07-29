@@ -28,8 +28,3 @@ export interface SystemEvent {
 	code?: string;
 }
 
-// Redis stream entry format
-export interface RedisStreamEntry {
-	id: string;
-	fields: Record<string, string>;
-}
