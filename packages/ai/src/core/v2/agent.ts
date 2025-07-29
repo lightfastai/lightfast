@@ -12,9 +12,9 @@ import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
 import type { EventEmitter, SessionEventEmitter } from "./events/emitter";
 import type { AgentLoopInitEvent, Message } from "./events/schemas";
-import { MessageWriter } from "./server/writers/message-writer";
-import { EventWriter } from "./server/writers/event-writer";
 import { StreamStatus } from "./server/stream/types";
+import { EventWriter } from "./server/writers/event-writer";
+import { MessageWriter } from "./server/writers/message-writer";
 import {
 	type AgentDecision,
 	AgentDecisionSchema,
@@ -304,7 +304,8 @@ export class Agent<TRuntimeContext = unknown> {
 		const maxIterations = this.maxIterations || session.maxIterations;
 		if (session.iteration >= maxIterations) {
 			// Emit proper completion metadata for max iterations
-			const finalMessage = "Maximum iterations reached. Please start a new conversation if you need further assistance.";
+			const finalMessage =
+				"Maximum iterations reached. Please start a new conversation if you need further assistance.";
 			await this.emitCompletionMetadata(session.sessionId, 0, finalMessage);
 
 			await sessionEmitter.emitAgentLoopComplete({
@@ -345,7 +346,10 @@ export class Agent<TRuntimeContext = unknown> {
 	/**
 	 * Make a decision using streamText for immediate feedback
 	 */
-	private async makeDecision(session: AgentSessionState, sessionEmitter: SessionEventEmitter): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
+	private async makeDecision(
+		session: AgentSessionState,
+		sessionEmitter: SessionEventEmitter,
+	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
 		// Build the system prompt
 		const systemPrompt = this.buildSystemPrompt(session);
 
@@ -449,7 +453,10 @@ Think through this step by step first, then provide your JSON decision.`;
 		await this.streamMetadata(session.sessionId, "completed", {
 			event: "agent.decision.complete",
 			action: (finalDecision as AgentDecision).action,
-			tool: (finalDecision as AgentDecision).action === "tool_call" ? (finalDecision as AgentDecision).toolCall?.tool : undefined,
+			tool:
+				(finalDecision as AgentDecision).action === "tool_call"
+					? (finalDecision as AgentDecision).toolCall?.tool
+					: undefined,
 		});
 
 		return { decision: finalDecision, chunkCount, fullContent };
@@ -570,7 +577,6 @@ Think through your reasoning step by step, then make your decision. Only use too
 		await this.updateSessionStatus(session.sessionId, "waiting_for_tool");
 	}
 
-
 	/**
 	 * Delta streaming methods for real-time UI updates using optimized Redis streams
 	 */
@@ -579,13 +585,13 @@ Think through your reasoning step by step, then make your decision. Only use too
 	}
 
 	private async emitDeltaChunk(
-		sessionId: string, 
+		sessionId: string,
 		messageType: "chunk" | "metadata" | "event" | "error",
 		content?: string,
-		metadata?: Record<string, any>
+		metadata?: Record<string, any>,
 	): Promise<void> {
 		const streamKey = this.getDeltaStreamKey(sessionId);
-		
+
 		// Prepare message for Redis stream
 		const message: Record<string, string> = {
 			type: messageType,
@@ -597,7 +603,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 
 		// Write to Redis stream for persistence
 		await this.redis.xadd(streamKey, "*", message);
-		
+
 		// Publish for real-time notifications (matching the optimized pattern)
 		await this.redis.publish(streamKey, { type: messageType });
 	}
@@ -606,7 +612,12 @@ Think through your reasoning step by step, then make your decision. Only use too
 		await this.emitDeltaChunk(sessionId, "chunk", chunk);
 	}
 
-	private async streamToolProgress(sessionId: string, tool: string, status: string, metadata?: Record<string, any>): Promise<void> {
+	private async streamToolProgress(
+		sessionId: string,
+		tool: string,
+		status: string,
+		metadata?: Record<string, any>,
+	): Promise<void> {
 		await this.emitDeltaChunk(sessionId, "event", `${tool}: ${status}`, {
 			tool,
 			event: "tool.progress",
@@ -626,7 +637,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 	 */
 	private async emitCompletionMetadata(sessionId: string, totalChunks: number, fullContent: string): Promise<void> {
 		const streamKey = this.getDeltaStreamKey(sessionId);
-		
+
 		const metadataMessage = {
 			type: "metadata",
 			status: StreamStatus.COMPLETED,

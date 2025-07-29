@@ -5,10 +5,7 @@
 
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
-import {
-	getStreamKey,
-	type RedisUIMessageEntry,
-} from "../types";
+import { getStreamKey, type RedisUIMessageEntry } from "../types";
 
 export class MessageWriter {
 	constructor(private redis: Redis) {}
@@ -41,4 +38,3 @@ export class MessageWriter {
 		return id as string;
 	}
 }
-

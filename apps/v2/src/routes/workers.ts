@@ -22,17 +22,22 @@ import { eventEmitter, redis, streamGenerator } from "../config";
 const workerRoutes = new Hono();
 
 // Create worker instances - using Agent instead of AgentLoopWorker
-const agent = new Agent({
-	name: "test-agent",
-	systemPrompt: "You are a helpful AI assistant.",
-	model: "anthropic/claude-3-5-sonnet-20241022", // Required for streamText
-	temperature: 0.7,
-	maxIterations: 10,
-}, redis, eventEmitter, {
-	maxExecutionTime: 25000,
-	retryAttempts: 3,
-	retryDelay: 1000,
-});
+const agent = new Agent(
+	{
+		name: "test-agent",
+		systemPrompt: "You are a helpful AI assistant.",
+		model: "anthropic/claude-3-5-sonnet-20241022", // Required for streamText
+		temperature: 0.7,
+		maxIterations: 10,
+	},
+	redis,
+	eventEmitter,
+	{
+		maxExecutionTime: 25000,
+		retryAttempts: 3,
+		retryDelay: 1000,
+	},
+);
 
 const toolResultHandler = new ToolResultHandler(redis, eventEmitter);
 

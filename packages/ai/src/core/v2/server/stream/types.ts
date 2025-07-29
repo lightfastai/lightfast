@@ -4,10 +4,10 @@
  */
 
 export const StreamStatus = {
-  STARTED: "started",
-  STREAMING: "streaming", 
-  COMPLETED: "completed",
-  ERROR: "error",
+	STARTED: "started",
+	STREAMING: "streaming",
+	COMPLETED: "completed",
+	ERROR: "error",
 } as const;
 
-export type StreamStatusType = typeof StreamStatus[keyof typeof StreamStatus];
+export type StreamStatusType = (typeof StreamStatus)[keyof typeof StreamStatus];

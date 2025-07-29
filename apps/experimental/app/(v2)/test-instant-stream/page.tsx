@@ -109,10 +109,7 @@ export default function TestInstantStreamPage() {
 								</div>
 
 								{/* Response Area */}
-								<div 
-									ref={responseRef}
-									className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto"
-								>
+								<div ref={responseRef} className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto">
 									{response ? (
 										<p className="text-sm whitespace-pre-wrap">
 											{response}
@@ -141,10 +138,23 @@ export default function TestInstantStreamPage() {
 							disabled={status === "loading" || status === "streaming"}
 							className="flex-1"
 						/>
-						<Button onClick={handleSendClick} disabled={!input.trim() || status === "loading" || status === "streaming"} size="icon">
-							{status === "loading" || status === "streaming" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+						<Button
+							onClick={handleSendClick}
+							disabled={!input.trim() || status === "loading" || status === "streaming"}
+							size="icon"
+						>
+							{status === "loading" || status === "streaming" ? (
+								<Loader2 className="h-4 w-4 animate-spin" />
+							) : (
+								<Send className="h-4 w-4" />
+							)}
 						</Button>
-						<Button onClick={reset} variant="outline" size="icon" disabled={status === "loading" || status === "streaming"}>
+						<Button
+							onClick={reset}
+							variant="outline"
+							size="icon"
+							disabled={status === "loading" || status === "streaming"}
+						>
 							Reset
 						</Button>
 					</div>
@@ -186,11 +196,12 @@ function StatusBadge({ status }: { status: string }) {
 		},
 	};
 
-	const variant = variants[status] ?? variants.idle ?? {
-		icon: <div className="h-2 w-2 rounded-full bg-gray-400" />,
-		label: "Unknown",
-		className: "text-gray-600",
-	};
+	const variant = variants[status] ??
+		variants.idle ?? {
+			icon: <div className="h-2 w-2 rounded-full bg-gray-400" />,
+			label: "Unknown",
+			className: "text-gray-600",
+		};
 
 	return (
 		<div className={`flex items-center gap-1 text-sm ${variant.className}`}>

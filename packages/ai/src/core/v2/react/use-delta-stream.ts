@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export enum MessageType {
 	CHUNK = "chunk",
-	METADATA = "metadata", 
+	METADATA = "metadata",
 	EVENT = "event",
 	ERROR = "error",
 }
@@ -79,7 +79,7 @@ export interface UseDeltaStreamReturn {
 	// State
 	isConnected: boolean;
 	error: Error | null;
-	
+
 	// Actions
 	connect: (sessionId: string) => Promise<void>;
 	disconnect: () => void;
@@ -104,115 +104,121 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 	const streamContent = useRef<string>("");
 
 	// Connect to stream
-	const connect = useCallback(async (sessionId: string) => {
-		let retryCount = 0;
+	const connect = useCallback(
+		async (sessionId: string) => {
+			let retryCount = 0;
 
-		const attemptConnection = async (): Promise<void> => {
-			try {
-				setError(null);
-				streamContent.current = "";
+			const attemptConnection = async (): Promise<void> => {
+				try {
+					setError(null);
+					streamContent.current = "";
 
-				const abortController = new AbortController();
-				controller.current = abortController;
+					const abortController = new AbortController();
+					controller.current = abortController;
 
-				const res = await fetch(`${streamEndpoint}/${sessionId}`, {
-					headers: { "Content-Type": "text/event-stream" },
-					signal: controller.current.signal,
-				});
+					const res = await fetch(`${streamEndpoint}/${sessionId}`, {
+						headers: { "Content-Type": "text/event-stream" },
+						signal: controller.current.signal,
+					});
 
-				if (res.status === 412) {
-					// Stream is not yet ready, retry connection
-					if (retryCount < maxRetries) {
-						retryCount++;
-						setTimeout(() => attemptConnection(), retryDelay);
-						return;
-					} else {
-						throw new PreconditionFailedError("Stream not ready after max retries");
+					if (res.status === 412) {
+						// Stream is not yet ready, retry connection
+						if (retryCount < maxRetries) {
+							retryCount++;
+							setTimeout(() => attemptConnection(), retryDelay);
+							return;
+						} else {
+							throw new PreconditionFailedError("Stream not ready after max retries");
+						}
 					}
-				}
 
-				if (!res.ok) {
-					throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-				}
+					if (!res.ok) {
+						throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+					}
 
-				if (!res.body) return;
+					if (!res.body) return;
 
-				setIsConnected(true);
+					setIsConnected(true);
 
-				const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+					const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
 
-				while (true) {
-					const { value, done } = await reader.read();
+					while (true) {
+						const { value, done } = await reader.read();
 
-					if (done) break;
+						if (done) break;
 
-					if (value) {
-						const messages = value.split("\n\n").filter(Boolean);
+						if (value) {
+							const messages = value.split("\n\n").filter(Boolean);
 
-						for (const message of messages) {
-							if (message.startsWith("data: ")) {
-								const data = message.slice(6);
-								try {
-									const parsedData = JSON.parse(data);
-									console.log("Raw SSE data:", data);
-									console.log("Parsed SSE data:", parsedData);
-									const validatedMessage = validateMessage(parsedData);
-									console.log("Validated message:", validatedMessage);
+							for (const message of messages) {
+								if (message.startsWith("data: ")) {
+									const data = message.slice(6);
+									try {
+										const parsedData = JSON.parse(data);
+										console.log("Raw SSE data:", data);
+										console.log("Parsed SSE data:", parsedData);
+										const validatedMessage = validateMessage(parsedData);
+										console.log("Validated message:", validatedMessage);
 
-									if (!validatedMessage) {
-										console.log("Message validation failed for:", parsedData);
-										continue;
-									}
+										if (!validatedMessage) {
+											console.log("Message validation failed for:", parsedData);
+											continue;
+										}
 
-									switch (validatedMessage.type) {
-										case MessageType.CHUNK:
-											const chunkMessage = validatedMessage as ChunkMessage;
-											streamContent.current += chunkMessage.content;
-											onChunk?.(chunkMessage.content);
-											break;
-
-										case MessageType.METADATA:
-											const metadataMessage = validatedMessage as MetadataMessage;
-
-											if (metadataMessage.status === StreamStatus.COMPLETED) {
-												setIsConnected(false);
-												onComplete?.(streamContent.current);
+										switch (validatedMessage.type) {
+											case MessageType.CHUNK: {
+												const chunkMessage = validatedMessage as ChunkMessage;
+												streamContent.current += chunkMessage.content;
+												onChunk?.(chunkMessage.content);
+												break;
 											}
-											break;
 
-										case MessageType.ERROR:
-											const errorMessage = validatedMessage as ErrorMessage;
-											const error = new Error(errorMessage.error);
-											setError(error);
-											setIsConnected(false);
-											onError?.(error);
-											break;
+											case MessageType.METADATA: {
+												const metadataMessage = validatedMessage as MetadataMessage;
+
+												if (metadataMessage.status === StreamStatus.COMPLETED) {
+													setIsConnected(false);
+													onComplete?.(streamContent.current);
+												}
+												break;
+											}
+
+											case MessageType.ERROR: {
+												const errorMessage = validatedMessage as ErrorMessage;
+												const error = new Error(errorMessage.error);
+												setError(error);
+												setIsConnected(false);
+												onError?.(error);
+												break;
+											}
+										}
+									} catch (e) {
+										console.error("Failed to parse message:", e);
 									}
-								} catch (e) {
-									console.error("Failed to parse message:", e);
 								}
 							}
 						}
 					}
-				}
 
-				setIsConnected(false);
-			} catch (err) {
-				setIsConnected(false);
-				
-				if (err instanceof PreconditionFailedError && retryCount < maxRetries) {
-					retryCount++;
-					setTimeout(() => attemptConnection(), retryDelay);
-				} else {
-					const error = err instanceof Error ? err : new Error("Stream connection failed");
-					setError(error);
-					onError?.(error);
-				}
-			}
-		};
+					setIsConnected(false);
+				} catch (err) {
+					setIsConnected(false);
 
-		await attemptConnection();
-	}, [streamEndpoint, onChunk, onComplete, onError, maxRetries, retryDelay]);
+					if (err instanceof PreconditionFailedError && retryCount < maxRetries) {
+						retryCount++;
+						setTimeout(() => attemptConnection(), retryDelay);
+					} else {
+						const error = err instanceof Error ? err : new Error("Stream connection failed");
+						setError(error);
+						onError?.(error);
+					}
+				}
+			};
+
+			await attemptConnection();
+		},
+		[streamEndpoint, onChunk, onComplete, onError, maxRetries, retryDelay],
+	);
 
 	// Disconnect from stream
 	const disconnect = useCallback(() => {
@@ -226,7 +232,7 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 		// State
 		isConnected,
 		error,
-		
+
 		// Actions
 		connect,
 		disconnect,

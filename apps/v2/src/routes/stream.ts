@@ -30,7 +30,7 @@ streamRoutes.get("/:sessionId", async (c) => {
 
 			// Start consuming from Redis stream
 			await streamConsumer.consumeDeltaStream(
-				sessionId, 
+				sessionId,
 				controller.signal,
 				async (message: DeltaStreamMessage) => {
 					// Format the message for SSE based on type
@@ -75,7 +75,7 @@ streamRoutes.get("/:sessionId", async (c) => {
 							timestamp: new Date().toISOString(),
 						}),
 					});
-				}
+				},
 			);
 		} catch (error) {
 			console.error(`Failed to start stream for ${sessionId}:`, error);
