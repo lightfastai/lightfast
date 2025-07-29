@@ -242,7 +242,6 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 					// Write metadata with completed status to signal stream end
 					await streamWriter.writeMessage(completeEvent.sessionId, {
 						type: "metadata",
-						content: "Stream completed",
 						status: "completed",
 						sessionId: completeEvent.sessionId,
 						timestamp: new Date().toISOString(),

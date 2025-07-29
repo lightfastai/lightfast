@@ -3,19 +3,25 @@
  * Following the pattern from https://upstash.com/blog/resumable-llm-streams
  */
 
-export const MessageType = {
+// AI Completion Message Types (saved to DB)
+export const AIMessageType = {
 	CHUNK: "chunk",
-	METADATA: "metadata",
-	EVENT: "event",
-	ERROR: "error",
-	STATUS: "status",
-	TOOL: "tool",
 	THINKING: "thinking",
+	TOOL: "tool",
 	COMPLETE: "complete",
 	COMPLETION: "completion",
 } as const;
 
-export type MessageType = (typeof MessageType)[keyof typeof MessageType];
+// Event/System Message Types (not saved to DB)
+export const EventMessageType = {
+	METADATA: "metadata",
+	EVENT: "event",
+	ERROR: "error",
+	STATUS: "status",
+} as const;
+
+export type AIMessageType = (typeof AIMessageType)[keyof typeof AIMessageType];
+export type EventMessageType = (typeof EventMessageType)[keyof typeof EventMessageType];
 
 export const StreamStatus = {
 	STARTED: "started",
@@ -26,67 +32,64 @@ export const StreamStatus = {
 
 export type StreamStatus = (typeof StreamStatus)[keyof typeof StreamStatus];
 
-// Message types
+// AI Completion Message Interfaces
 export interface ChunkMessage {
-	type: typeof MessageType.CHUNK;
+	type: typeof AIMessageType.CHUNK;
 	content: string;
 }
 
+export interface ThinkingMessage {
+	type: typeof AIMessageType.THINKING;
+	content: string;
+	metadata?: any;
+}
+
+export interface ToolMessage {
+	type: typeof AIMessageType.TOOL;
+	content: string;
+	metadata?: any;
+}
+
+export interface CompleteMessage {
+	type: typeof AIMessageType.COMPLETE | typeof AIMessageType.COMPLETION;
+	content: string;
+	metadata?: any;
+}
+
+// Event/System Message Interfaces
 export interface MetadataMessage {
-	type: typeof MessageType.METADATA;
+	type: typeof EventMessageType.METADATA;
 	status: StreamStatus;
 	sessionId: string;
 	timestamp: string;
 }
 
 export interface EventMessage {
-	type: typeof MessageType.EVENT;
+	type: typeof EventMessageType.EVENT;
 	event: string;
 	data?: unknown;
 }
 
 export interface ErrorMessage {
-	type: typeof MessageType.ERROR;
+	type: typeof EventMessageType.ERROR;
 	error: string;
 	code?: string;
 }
 
-// V2 Event-driven architecture message types
 export interface StatusMessage {
-	type: typeof MessageType.STATUS;
+	type: typeof EventMessageType.STATUS;
 	content: string;
 	metadata?: any;
 }
 
-export interface ToolMessage {
-	type: typeof MessageType.TOOL;
-	content: string;
-	metadata?: any;
-}
+// AI Completion Messages Union
+export type AICompletionMessage = ChunkMessage | ThinkingMessage | ToolMessage | CompleteMessage;
 
-export interface ThinkingMessage {
-	type: typeof MessageType.THINKING;
-	content: string;
-	metadata?: any;
-}
+// Event/System Messages Union
+export type EventSystemMessage = MetadataMessage | EventMessage | ErrorMessage | StatusMessage;
 
-export interface CompleteMessage {
-	type: typeof MessageType.COMPLETE | typeof MessageType.COMPLETION;
-	content: string;
-	metadata?: any;
-}
-
-// Extended StreamMessage with V2 types
-export type StreamMessage =
-	| ChunkMessage
-	| MetadataMessage
-	| EventMessage
-	| ErrorMessage
-	| StatusMessage
-	| ToolMessage
-	| ThinkingMessage
-	| CompleteMessage
-	| (BaseMessage & { type: string }); // Fallback for unknown types
+// Stream message type (includes both for streaming, but only AI messages are saved)
+export type StreamMessage = AICompletionMessage | EventSystemMessage;
 
 // Base message interface for flexibility
 export interface BaseMessage {
@@ -135,74 +138,78 @@ export function validateMessage(entry: any): StreamMessage | null {
 			return null;
 		}
 
-		const type = fields.type as MessageType;
+		const type = fields.type as AIMessageType | EventMessageType;
 
+		// AI Completion Messages
 		switch (type) {
-			case MessageType.CHUNK:
+			case AIMessageType.CHUNK:
 				return {
-					type: MessageType.CHUNK,
+					type: AIMessageType.CHUNK,
 					content: fields.content || "",
 				};
 
-			case MessageType.METADATA:
+			case AIMessageType.THINKING:
 				return {
-					type: MessageType.METADATA,
+					type: AIMessageType.THINKING,
+					content: fields.content || "",
+					metadata: fields.metadata
+						? typeof fields.metadata === "string"
+							? JSON.parse(fields.metadata)
+							: fields.metadata
+						: undefined,
+				};
+
+			case AIMessageType.TOOL:
+				return {
+					type: AIMessageType.TOOL,
+					content: fields.content || "",
+					metadata: fields.metadata
+						? typeof fields.metadata === "string"
+							? JSON.parse(fields.metadata)
+							: fields.metadata
+						: undefined,
+				};
+
+			case AIMessageType.COMPLETE:
+			case AIMessageType.COMPLETION:
+				return {
+					type: type as typeof AIMessageType.COMPLETE | typeof AIMessageType.COMPLETION,
+					content: fields.content || "",
+					metadata: fields.metadata
+						? typeof fields.metadata === "string"
+							? JSON.parse(fields.metadata)
+							: fields.metadata
+						: undefined,
+				};
+		}
+
+		// Event/System Messages
+		switch (type) {
+			case EventMessageType.METADATA:
+				return {
+					type: EventMessageType.METADATA,
 					status: fields.status as StreamStatus,
 					sessionId: fields.sessionId || "",
 					timestamp: fields.timestamp || new Date().toISOString(),
 				};
 
-			case MessageType.EVENT:
+			case EventMessageType.EVENT:
 				return {
-					type: MessageType.EVENT,
+					type: EventMessageType.EVENT,
 					event: fields.event || "",
 					data: fields.data ? JSON.parse(fields.data) : undefined,
 				};
 
-			case MessageType.ERROR:
+			case EventMessageType.ERROR:
 				return {
-					type: MessageType.ERROR,
+					type: EventMessageType.ERROR,
 					error: fields.error || "Unknown error",
 					code: fields.code,
 				};
 
-			case MessageType.STATUS:
+			case EventMessageType.STATUS:
 				return {
-					type: MessageType.STATUS,
-					content: fields.content || "",
-					metadata: fields.metadata
-						? typeof fields.metadata === "string"
-							? JSON.parse(fields.metadata)
-							: fields.metadata
-						: undefined,
-				};
-
-			case MessageType.TOOL:
-				return {
-					type: MessageType.TOOL,
-					content: fields.content || "",
-					metadata: fields.metadata
-						? typeof fields.metadata === "string"
-							? JSON.parse(fields.metadata)
-							: fields.metadata
-						: undefined,
-				};
-
-			case MessageType.THINKING:
-				return {
-					type: MessageType.THINKING,
-					content: fields.content || "",
-					metadata: fields.metadata
-						? typeof fields.metadata === "string"
-							? JSON.parse(fields.metadata)
-							: fields.metadata
-						: undefined,
-				};
-
-			case MessageType.COMPLETE:
-			case MessageType.COMPLETION:
-				return {
-					type: type,
+					type: EventMessageType.STATUS,
 					content: fields.content || "",
 					metadata: fields.metadata
 						? typeof fields.metadata === "string"
@@ -212,20 +219,8 @@ export function validateMessage(entry: any): StreamMessage | null {
 				};
 
 			default:
-				// Fallback for unknown types - return as BaseMessage
-				return {
-					id: fields.id,
-					type: type || "unknown",
-					content: fields.content || "",
-					metadata: fields.metadata
-						? typeof fields.metadata === "string"
-							? JSON.parse(fields.metadata)
-							: fields.metadata
-						: undefined,
-					timestamp: fields.timestamp,
-					status: fields.status,
-					error: fields.error,
-				};
+				console.warn(`Unknown message type: ${type}`);
+				return null;
 		}
 	} catch (error) {
 		console.error("Failed to validate message:", error);
@@ -252,4 +247,34 @@ export function getStreamKey(sessionId: string, prefix = "stream"): string {
 
 export function getGroupName(sessionId: string, prefix = "stream"): string {
 	return `v2:${prefix}:${sessionId}:consumers`;
+}
+
+// Type guards to distinguish message categories
+export function isAICompletionMessage(message: StreamMessage): message is AICompletionMessage {
+	return (
+		message.type === AIMessageType.CHUNK ||
+		message.type === AIMessageType.THINKING ||
+		message.type === AIMessageType.TOOL ||
+		message.type === AIMessageType.COMPLETE ||
+		message.type === AIMessageType.COMPLETION
+	);
+}
+
+export function isEventSystemMessage(message: StreamMessage): message is EventSystemMessage {
+	return (
+		message.type === EventMessageType.METADATA ||
+		message.type === EventMessageType.EVENT ||
+		message.type === EventMessageType.ERROR ||
+		message.type === EventMessageType.STATUS
+	);
+}
+
+// Filter messages for database storage (only AI completion messages)
+export function filterForDatabaseStorage(messages: StreamMessage[]): AICompletionMessage[] {
+	return messages.filter(isAICompletionMessage);
+}
+
+// Check if a message should be saved to database
+export function shouldSaveToDatabase(message: StreamMessage): boolean {
+	return isAICompletionMessage(message);
 }

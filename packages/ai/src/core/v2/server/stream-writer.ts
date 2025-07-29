@@ -88,8 +88,8 @@ export class StreamWriter {
 		const streamKey = `v2:stream:${sessionId}`;
 		return this.writeMessage(streamKey, {
 			type: "error",
-			content: error,
-			metadata: { code },
+			error: error,
+			code: code,
 		});
 	}
 

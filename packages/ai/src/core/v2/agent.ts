@@ -6,7 +6,7 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
-import { smoothStream, streamText, type Tool as AiTool, type ToolSet, wrapLanguageModel } from "ai";
+import { type Tool as AiTool, smoothStream, streamText, type ToolSet, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
@@ -85,7 +85,14 @@ export class Agent<TRuntimeContext = unknown> {
 		workerConfig: Partial<WorkerConfig> = {},
 	) {
 		// Destructure agent-specific properties from streamText config
-		const { systemPrompt, tools, createRuntimeContext, maxIterations = 10, experimental_transform, ...streamTextConfig } = options;
+		const {
+			systemPrompt,
+			tools,
+			createRuntimeContext,
+			maxIterations = 10,
+			experimental_transform,
+			...streamTextConfig
+		} = options;
 
 		// Store agent-specific properties
 		this.systemPrompt = systemPrompt;

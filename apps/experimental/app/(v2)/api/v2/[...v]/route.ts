@@ -58,7 +58,8 @@ const v2Tools = {
 const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 	{
 		name: "v2-test",
-		systemPrompt: "You are a helpful AI assistant with comprehensive capabilities. You can manage files, search the web, maintain todo lists, and execute code in sandboxes. Use your tools effectively to help users with their tasks.",
+		systemPrompt:
+			"You are a helpful AI assistant with comprehensive capabilities. You can manage files, search the web, maintain todo lists, and execute code in sandboxes. Use your tools effectively to help users with their tasks.",
 		// Use actual v1 tool factories
 		tools: v2Tools,
 		// Create runtime context from session
