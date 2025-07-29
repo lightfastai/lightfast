@@ -30,7 +30,7 @@ export class StreamWriter {
 	 * Write a text chunk (for streaming responses)
 	 */
 	async writeChunk(sessionId: string, content: string): Promise<string> {
-		const streamKey = `stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		return this.writeMessage(streamKey, {
 			type: "chunk",
 			content,
@@ -41,7 +41,7 @@ export class StreamWriter {
 	 * Write a complete message (for final responses)
 	 */
 	async writeComplete(sessionId: string, content: string): Promise<string> {
-		const streamKey = `stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		return this.writeMessage(streamKey, {
 			type: "complete",
 			content,
@@ -52,7 +52,7 @@ export class StreamWriter {
 	 * Write a status update
 	 */
 	async writeStatus(sessionId: string, status: string, metadata?: Record<string, any>): Promise<string> {
-		const streamKey = `stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		return this.writeMessage(streamKey, {
 			type: "status",
 			content: status,
@@ -69,7 +69,7 @@ export class StreamWriter {
 		status: "start" | "complete" | "error",
 		result?: any,
 	): Promise<string> {
-		const streamKey = `stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		return this.writeMessage(streamKey, {
 			type: "tool",
 			content: `Tool ${tool}: ${status}`,
@@ -85,7 +85,7 @@ export class StreamWriter {
 	 * Write an error message
 	 */
 	async writeError(sessionId: string, error: string, code?: string): Promise<string> {
-		const streamKey = `stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		return this.writeMessage(streamKey, {
 			type: "error",
 			content: error,
@@ -97,7 +97,7 @@ export class StreamWriter {
 	 * Write agent thinking/reasoning
 	 */
 	async writeThinking(sessionId: string, reasoning: string): Promise<string> {
-		const streamKey = `stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		return this.writeMessage(streamKey, {
 			type: "thinking",
 			content: reasoning,

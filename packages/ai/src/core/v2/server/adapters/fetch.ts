@@ -116,7 +116,7 @@ export function fetchRequestHandler(options: FetchRequestHandlerOptions): (reque
 				case "agent.tool.call": {
 					// Execute tool
 					const toolEvent = event as AgentToolCallEvent;
-					const streamKey = `stream:${toolEvent.sessionId}`;
+					const streamKey = `v2:stream:${toolEvent.sessionId}`;
 					let success = false;
 					let result: any;
 
@@ -165,7 +165,7 @@ export function fetchRequestHandler(options: FetchRequestHandlerOptions): (reque
 						});
 
 						// Add tool result to session messages
-						const sessionKey = `session:${toolEvent.sessionId}`;
+						const sessionKey = `v2:session:${toolEvent.sessionId}`;
 						const sessionData = await redis.get(sessionKey);
 						if (sessionData) {
 							const session = typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData;
@@ -204,7 +204,7 @@ export function fetchRequestHandler(options: FetchRequestHandlerOptions): (reque
 					const streamWriter = new StreamWriter(redis);
 
 					// Update session status to completed
-					const sessionKey = `session:${completeEvent.sessionId}`;
+					const sessionKey = `v2:session:${completeEvent.sessionId}`;
 					const sessionData = await redis.get(sessionKey);
 
 					if (sessionData) {
@@ -300,7 +300,7 @@ async function handleStreamInit(
 	}
 
 	// Initialize session state in Redis
-	const sessionKey = `session:${sessionId}`;
+	const sessionKey = `v2:session:${sessionId}`;
 	const sessionData = {
 		sessionId,
 		messages: messages as Message[],
@@ -319,7 +319,7 @@ async function handleStreamInit(
 	await redis.setex(sessionKey, 86400, JSON.stringify(sessionData));
 
 	// Create initial stream entry to establish the stream
-	const streamKey = `stream:${sessionId}`;
+	const streamKey = `v2:stream:${sessionId}`;
 	await redis.xadd(streamKey, "*", {
 		type: "status",
 		content: "Session initialized",
@@ -368,7 +368,7 @@ async function handleStreamStatus(request: Request, redis: Redis, streamGenerato
 	}
 
 	// Get session data
-	const sessionKey = `session:${sessionId}`;
+	const sessionKey = `v2:session:${sessionId}`;
 	const sessionData = await redis.get(sessionKey);
 
 	if (!sessionData) {

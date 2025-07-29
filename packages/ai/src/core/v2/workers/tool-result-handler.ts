@@ -22,7 +22,7 @@ export class ToolResultHandler {
 
 		try {
 			// Load session
-			const sessionKey = `session:${event.sessionId}`;
+			const sessionKey = `v2:session:${event.sessionId}`;
 			const sessionData = await this.redis.get(sessionKey);
 			if (!sessionData) {
 				throw new Error(`Session ${event.sessionId} not found`);
@@ -43,7 +43,7 @@ export class ToolResultHandler {
 			await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
 
 			// Write to stream
-			const streamKey = `stream:${event.sessionId}`;
+			const streamKey = `v2:stream:${event.sessionId}`;
 			await this.redis.xadd(streamKey, "*", {
 				type: "event",
 				content: `Tool ${event.data.tool} completed`,
@@ -80,7 +80,7 @@ export class ToolResultHandler {
 
 		try {
 			// Load session
-			const sessionKey = `session:${event.sessionId}`;
+			const sessionKey = `v2:session:${event.sessionId}`;
 			const sessionData = await this.redis.get(sessionKey);
 			if (!sessionData) {
 				throw new Error(`Session ${event.sessionId} not found`);
@@ -101,7 +101,7 @@ export class ToolResultHandler {
 			await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
 
 			// Write to stream
-			const streamKey = `stream:${event.sessionId}`;
+			const streamKey = `v2:stream:${event.sessionId}`;
 			await this.redis.xadd(streamKey, "*", {
 				type: "error",
 				content: `Tool ${event.data.tool} failed: ${event.data.error}`,

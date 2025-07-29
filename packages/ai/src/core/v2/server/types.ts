@@ -247,9 +247,9 @@ export interface StreamConfig {
 
 // Helper to generate stream keys
 export function getStreamKey(sessionId: string, prefix = "stream"): string {
-	return `${prefix}:${sessionId}`;
+	return `v2:${prefix}:${sessionId}`;
 }
 
 export function getGroupName(sessionId: string, prefix = "stream"): string {
-	return `${prefix}:${sessionId}:consumers`;
+	return `v2:${prefix}:${sessionId}:consumers`;
 }

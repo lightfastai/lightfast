@@ -460,7 +460,7 @@ Think through your reasoning step by step, then make your decision. Always provi
 	 * Helper methods for session management
 	 */
 	private async loadSession(sessionId: string): Promise<AgentSessionState | null> {
-		const sessionKey = `session:${sessionId}`;
+		const sessionKey = `v2:session:${sessionId}`;
 		const data = await this.redis.get(sessionKey);
 		if (!data) return null;
 
@@ -470,7 +470,7 @@ Think through your reasoning step by step, then make your decision. Always provi
 	}
 
 	private async updateSessionStatus(sessionId: string, status: AgentSessionState["status"]): Promise<void> {
-		const sessionKey = `session:${sessionId}`;
+		const sessionKey = `v2:session:${sessionId}`;
 		const session = await this.loadSession(sessionId);
 		if (!session) return;
 
@@ -481,7 +481,7 @@ Think through your reasoning step by step, then make your decision. Always provi
 	}
 
 	private async incrementIteration(sessionId: string): Promise<void> {
-		const sessionKey = `session:${sessionId}`;
+		const sessionKey = `v2:session:${sessionId}`;
 		const session = await this.loadSession(sessionId);
 		if (!session) return;
 
@@ -492,7 +492,7 @@ Think through your reasoning step by step, then make your decision. Always provi
 	}
 
 	private async addMessage(sessionId: string, message: Message): Promise<void> {
-		const sessionKey = `session:${sessionId}`;
+		const sessionKey = `v2:session:${sessionId}`;
 		const session = await this.loadSession(sessionId);
 		if (!session) return;
 
@@ -503,7 +503,7 @@ Think through your reasoning step by step, then make your decision. Always provi
 	}
 
 	private async writeToStream(sessionId: string, data: Record<string, string>): Promise<void> {
-		const streamKey = `stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		await this.redis.xadd(streamKey, "*", data);
 	}
 
