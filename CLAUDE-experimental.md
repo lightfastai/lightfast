@@ -8,6 +8,7 @@
 
 ## Core Rules
 - **NO index.ts files** - Always use direct imports
+- **NO factory functions** - Use `new ClassName()` directly, avoid `createClassName()` patterns
 - **Use pnpm** - Not npm or yarn
 - **Run tests** - `pnpm typecheck` and `pnpm lint` before commits
 - **Biome auto-formats** - Code is formatted on save

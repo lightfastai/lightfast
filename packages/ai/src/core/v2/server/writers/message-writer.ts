@@ -42,9 +42,3 @@ export class MessageWriter {
 	}
 }
 
-/**
- * Create a message writer instance
- */
-export function createMessageWriter(redis: Redis): MessageWriter {
-	return new MessageWriter(redis);
-}

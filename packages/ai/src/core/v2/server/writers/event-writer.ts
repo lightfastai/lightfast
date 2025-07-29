@@ -78,9 +78,3 @@ export class EventWriter {
 	}
 }
 
-/**
- * Create an event writer instance
- */
-export function createEventWriter(redis: Redis): EventWriter {
-	return new EventWriter(redis);
-}

@@ -12,7 +12,8 @@ import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
 import type { EventEmitter, SessionEventEmitter } from "./events/emitter";
 import type { AgentLoopInitEvent, Message } from "./events/schemas";
-import { createMessageWriter, type MessageWriter, createEventWriter, type EventWriter } from "./server/writers";
+import { MessageWriter } from "./server/writers/message-writer";
+import { EventWriter } from "./server/writers/event-writer";
 import { StreamStatus } from "./server/stream/types";
 import {
 	type AgentDecision,
@@ -120,8 +121,8 @@ export class Agent<TRuntimeContext = unknown> {
 		this.config = streamTextConfig;
 
 		// Initialize writers
-		this.messageWriter = createMessageWriter(redis);
-		this.eventWriter = createEventWriter(redis);
+		this.messageWriter = new MessageWriter(redis);
+		this.eventWriter = new EventWriter(redis);
 
 		// Apply worker config defaults
 		this.workerConfig = {

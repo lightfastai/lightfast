@@ -17,7 +17,8 @@ import type {
 import { ToolResultHandler } from "../../workers/tool-result-handler";
 import { StreamConsumer } from "../stream/consumer";
 import { StreamGenerator } from "../stream-generator";
-import { EventWriter, MessageWriter } from "../writers";
+import { EventWriter } from "../writers/event-writer";
+import { MessageWriter } from "../writers/message-writer";
 
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
