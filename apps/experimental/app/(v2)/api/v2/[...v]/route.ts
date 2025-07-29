@@ -5,116 +5,67 @@
 
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { Agent } from "@lightfast/ai/v2/core";
 import { fetchRequestHandler } from "@lightfast/ai/v2/server";
 import { smoothStream, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { NextRequest } from "next/server";
+import {
+	fileDeleteTool,
+	fileFindByNameTool,
+	fileFindInContentTool,
+	fileReadTool,
+	fileStringReplaceTool,
+	fileWriteTool,
+} from "@/app/(v1)/ai/tools/file";
+import {
+	createSandboxTool,
+	createSandboxWithPortsTool,
+	executeSandboxCommandTool,
+	getSandboxDomainTool,
+	listSandboxRoutesTool,
+} from "@/app/(v1)/ai/tools/sandbox";
+import { todoClearTool, todoReadTool, todoWriteTool } from "@/app/(v1)/ai/tools/task";
+import { webSearchTool } from "@/app/(v1)/ai/tools/web-search";
+import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 import { eventEmitter, redis } from "@/app/(v2)/ai/config";
 
-// Import tool factories (in a real app, these would come from v1 tools)
-import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
-import { createTool } from "@lightfast/ai/tool";
-import { z } from "zod";
-
-// App-specific runtime context (matches v1)
-type AppRuntimeContext = {};
-
-// Define calculator tool using tool factory pattern
-const calculatorTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Performs mathematical calculations",
-	inputSchema: z.object({
-		expression: z.string().optional(),
-		a: z.number().optional(),
-		b: z.number().optional(),
-		operation: z.enum(["add", "subtract", "multiply", "divide"]).optional(),
-	}),
-	execute: async (args, context) => {
-		console.log(`Calculator called in thread: ${context.threadId}`);
-		const { expression, a, b, operation } = args;
-		if (expression) {
-			try {
-				const result = eval(expression.replace(/[^0-9+\-*/().\s]/g, ""));
-				return { expression, value: result };
-			} catch {
-				return { error: "Invalid expression" };
-			}
-		} else if (typeof a === "number" && typeof b === "number" && operation) {
-			switch (operation) {
-				case "add":
-					return { result: a + b };
-				case "subtract":
-					return { result: a - b };
-				case "multiply":
-					return { result: a * b };
-				case "divide":
-					return { result: b !== 0 ? a / b : "Division by zero" };
-				default:
-					return { error: "Unknown operation" };
-			}
-		}
-		return { error: "Invalid calculator arguments" };
-	},
-});
-
-// Define weather tool using tool factory pattern
-const weatherTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Gets current weather information for a location",
-	inputSchema: z.object({
-		location: z.string().describe("Location to get weather for"),
-	}),
-	execute: async ({ location }, context) => {
-		console.log(`Weather requested for ${location} by user: ${context.resourceId}`);
-		// Mock weather data
-		return {
-			location: location || "San Francisco",
-			temperature: 72,
-			conditions: "Partly cloudy",
-			humidity: 65,
-			requestedBy: context.resourceId,
-		};
-	},
-});
-
-// Define search tool using tool factory pattern
-const searchTool = createTool<RuntimeContext<AppRuntimeContext>>({
-	description: "Searches the web for information",
-	inputSchema: z.object({
-		query: z.string().describe("Search query"),
-	}),
-	execute: async ({ query }, context) => {
-		console.log(`Search for "${query}" in thread: ${context.threadId}`);
-		// Mock search results
-		return {
-			query,
-			results: [
-				{ title: "Result 1", snippet: "This is a mock search result" },
-				{ title: "Result 2", snippet: "Another mock search result" },
-			],
-			searchContext: {
-				threadId: context.threadId,
-				timestamp: new Date().toISOString(),
-			},
-		};
-	},
-});
+// Create tools object for v2 agent
+const v2Tools = {
+	// File tools
+	fileWrite: fileWriteTool,
+	fileRead: fileReadTool,
+	fileDelete: fileDeleteTool,
+	fileStringReplace: fileStringReplaceTool,
+	fileFindInContent: fileFindInContentTool,
+	fileFindByName: fileFindByNameTool,
+	// Web search
+	webSearch: webSearchTool,
+	// Todo tools
+	todoWrite: todoWriteTool,
+	todoRead: todoReadTool,
+	todoClear: todoClearTool,
+	// Sandbox tools
+	createSandbox: createSandboxTool,
+	executeSandboxCommand: executeSandboxCommandTool,
+	createSandboxWithPorts: createSandboxWithPortsTool,
+	getSandboxDomain: getSandboxDomainTool,
+	listSandboxRoutes: listSandboxRoutesTool,
+} as const;
 
 // Create the v2 test agent with the new Agent class
 const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 	{
 		name: "v2-test",
-		systemPrompt: "You are a helpful AI assistant with access to various tools. Use them when needed to help the user.",
-		// Use tool factories instead of direct tools
-		tools: {
-			calculator: calculatorTool,
-			weather: weatherTool,
-			search: searchTool,
-		},
+		systemPrompt: "You are a helpful AI assistant with comprehensive capabilities. You can manage files, search the web, maintain todo lists, and execute code in sandboxes. Use your tools effectively to help users with their tasks.",
+		// Use actual v1 tool factories
+		tools: v2Tools,
 		// Create runtime context from session
 		createRuntimeContext: ({ sessionId, userId }) => ({
 			threadId: sessionId,
 			resourceId: userId || "anonymous",
-			// Additional context can be added here
+			// App-specific context would be added here
 		}),
 		// Use the same model configuration as v1
 		model: wrapLanguageModel({
