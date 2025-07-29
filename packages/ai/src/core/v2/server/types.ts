@@ -4,22 +4,7 @@
  */
 
 import type { UIMessage } from "ai";
-
-// UIMessagePart type for our usage
-export type UIMessagePart = {
-	type: string;
-	[key: string]: any;
-};
-
-// Stream status for system events (not messages)
-export const StreamStatus = {
-	STARTED: "started",
-	STREAMING: "streaming",
-	COMPLETED: "completed",
-	ERROR: "error",
-} as const;
-
-export type StreamStatus = (typeof StreamStatus)[keyof typeof StreamStatus];
+import type { StreamStatusType as StreamStatus } from "./stream/types";
 
 // System event types (stored separately from messages)
 export const SystemEventType = {
@@ -47,17 +32,8 @@ export interface SystemEvent {
 export interface RedisUIMessageEntry {
 	messageId: string;
 	role: string;
-	parts: string; // JSON stringified UIMessagePart[]
+	parts: string; // JSON stringified parts array
 	metadata?: string; // JSON stringified metadata
-	timestamp: string;
-}
-
-// Redis storage format for UIMessagePart (for streaming)
-export interface RedisUIMessagePartEntry {
-	messageId: string;
-	partIndex: number;
-	partType: string;
-	partData: string; // JSON stringified part data
 	timestamp: string;
 }
 
@@ -65,19 +41,6 @@ export interface RedisUIMessagePartEntry {
 export interface RedisStreamEntry {
 	id: string;
 	fields: Record<string, string>;
-}
-
-// Utility to convert array to object (as shown in blog)
-export function arrToObj(arr: string[]): Record<string, string> {
-	const obj: Record<string, string> = {};
-	for (let i = 0; i < arr.length; i += 2) {
-		const key = arr[i];
-		const value = arr[i + 1];
-		if (key !== undefined && value !== undefined) {
-			obj[key] = value;
-		}
-	}
-	return obj;
 }
 
 // Parse UIMessage from Redis entry
@@ -115,32 +78,6 @@ export function parseUIMessageEntry(entry: any): UIMessage | null {
 		return message;
 	} catch (error) {
 		console.error("Failed to parse UIMessage:", error);
-		return null;
-	}
-}
-
-// Parse UIMessagePart from Redis entry
-export function parseUIMessagePartEntry(entry: any): UIMessagePart | null {
-	try {
-		let fields: Record<string, string>;
-
-		if (entry && typeof entry === "object" && "id" in entry) {
-			const { id, ...rest } = entry;
-			fields = rest;
-		} else if (entry && typeof entry === "object") {
-			fields = entry;
-		} else {
-			return null;
-		}
-
-		// Check if this is a UIMessagePart entry
-		if (!fields.partType || !fields.partData) {
-			return null;
-		}
-
-		return JSON.parse(fields.partData) as UIMessagePart;
-	} catch (error) {
-		console.error("Failed to parse UIMessagePart:", error);
 		return null;
 	}
 }
@@ -197,18 +134,6 @@ export function parseSystemEvent(entry: any): SystemEvent | null {
 	}
 }
 
-// Stream configuration
-export interface StreamConfig {
-	/** Redis stream key prefix */
-	streamPrefix?: string;
-	/** Consumer group prefix */
-	groupPrefix?: string;
-	/** Stream TTL in seconds (default: 3600) */
-	ttl?: number;
-	/** Max stream length (default: 1000) */
-	maxLength?: number;
-}
-
 // Helper to generate stream keys
 export function getStreamKey(sessionId: string, prefix = "stream"): string {
 	return `v2:${prefix}:${sessionId}`;
@@ -219,18 +144,17 @@ export function getEventStreamKey(sessionId: string): string {
 	return `v2:events:${sessionId}`;
 }
 
-export function getGroupName(sessionId: string, prefix = "stream"): string {
-	return `v2:${prefix}:${sessionId}:consumers`;
+// Stream configuration interface
+export interface StreamConfig {
+	streamPrefix?: string;
+	groupPrefix?: string;
+	ttl?: number;
+	maxLength?: number;
 }
 
 // Check if entry is a UIMessage
 export function isUIMessageEntry(fields: Record<string, string>): boolean {
 	return !!(fields.messageId && fields.role && fields.parts);
-}
-
-// Check if entry is a UIMessagePart
-export function isUIMessagePartEntry(fields: Record<string, string>): boolean {
-	return !!(fields.partType && fields.partData);
 }
 
 // Check if entry is a system event

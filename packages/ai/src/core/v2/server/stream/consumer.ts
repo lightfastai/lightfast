@@ -7,8 +7,20 @@ import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
 import { getDeltaStreamKey } from "../keys";
-import { getStreamKey, isUIMessageEntry, parseUIMessageEntry, type StreamConfig } from "../types";
+import { getStreamKey, isUIMessageEntry, parseUIMessageEntry } from "../types";
 import { type DeltaStreamMessage, DeltaStreamType } from "./types";
+
+// Stream configuration
+interface StreamConfig {
+	/** Redis stream key prefix */
+	streamPrefix?: string;
+	/** Consumer group prefix */
+	groupPrefix?: string;
+	/** Stream TTL in seconds (default: 3600) */
+	ttl?: number;
+	/** Max stream length (default: 1000) */
+	maxLength?: number;
+}
 
 // Redis stream types
 type StreamField = string;

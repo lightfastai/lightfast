@@ -5,7 +5,6 @@
 
 export { type FetchRequestHandlerOptions, fetchRequestHandler } from "../core/v2/server/adapters/fetch";
 export { MessageReader } from "../core/v2/server/readers/message-reader";
-export { StreamReader } from "../core/v2/server/readers/stream-reader";
 export { StreamConsumer } from "../core/v2/server/stream/consumer";
 export * from "../core/v2/server/types";
 export { generateSessionId } from "../core/v2/server/utils";

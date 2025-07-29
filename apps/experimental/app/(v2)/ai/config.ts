@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter, StreamConsumer } from "@lightfast/ai/v2/core";
-import { StreamReader } from "@lightfast/ai/v2/server";
 import { Redis } from "@upstash/redis";
 import { env } from "@/env";
 
@@ -60,11 +59,6 @@ export const eventEmitter = new EventEmitter({
 });
 
 /**
- * Create stream reader instance
- */
-export const streamReader = new StreamReader(redis);
-
-/**
  * Create stream consumer instance
  */
 export const streamConsumer = new StreamConsumer(redis);
@@ -85,7 +79,6 @@ export function getV2Infrastructure() {
 	return {
 		redis,
 		eventEmitter,
-		streamReader,
 		streamConsumer,
 		limits: SYSTEM_LIMITS,
 	};

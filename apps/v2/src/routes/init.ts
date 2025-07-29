@@ -7,7 +7,7 @@ import type { Message } from "@lightfast/ai/v2/core";
 import { generateSessionId } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
 import { z } from "zod";
-import { eventEmitter, redis, SYSTEM_LIMITS, streamReader } from "../config";
+import { eventEmitter, redis, SYSTEM_LIMITS } from "../config";
 
 const initRoutes = new Hono();
 
@@ -36,9 +36,12 @@ initRoutes.post("/", async (c) => {
 		// Generate or use provided session ID
 		const sessionId = params.sessionId || generateSessionId();
 
+		// Initialize session state
+		const sessionKey = `session:${sessionId}`;
+
 		// Check if session already exists
-		const exists = await streamReader.streamExists(sessionId);
-		if (exists) {
+		const existingSession = await redis.get(sessionKey);
+		if (existingSession) {
 			return c.json(
 				{
 					error: "Session already exists",
@@ -47,9 +50,6 @@ initRoutes.post("/", async (c) => {
 				409,
 			);
 		}
-
-		// Initialize session state
-		const sessionKey = `session:${sessionId}`;
 		const sessionData = {
 			messages: params.messages as Message[],
 			systemPrompt: params.systemPrompt,
@@ -104,45 +104,6 @@ initRoutes.post("/", async (c) => {
 		return c.json(
 			{
 				error: "Failed to initialize session",
-				details: error instanceof Error ? error.message : String(error),
-			},
-			500,
-		);
-	}
-});
-
-// GET /init/:sessionId - Get session status
-initRoutes.get("/:sessionId", async (c) => {
-	const sessionId = c.req.param("sessionId");
-
-	try {
-		// Get session data
-		const sessionKey = `session:${sessionId}`;
-		const sessionData = await redis.get(sessionKey);
-
-		if (!sessionData) {
-			return c.json(
-				{
-					error: "Session not found",
-					sessionId,
-				},
-				404,
-			);
-		}
-
-		// Get stream info
-		const streamInfo = await streamReader.getStreamInfo(sessionId);
-
-		return c.json({
-			sessionId,
-			session: JSON.parse(sessionData as string),
-			stream: streamInfo,
-		});
-	} catch (error) {
-		console.error("Get session error:", error);
-		return c.json(
-			{
-				error: "Failed to get session info",
 				details: error instanceof Error ? error.message : String(error),
 			},
 			500,

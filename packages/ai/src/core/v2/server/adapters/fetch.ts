@@ -13,11 +13,10 @@ import type {
 	ToolExecutionCompleteEvent,
 } from "../../events/schemas";
 import { ToolResultHandler } from "../../workers/tool-result-handler";
-import { AgentCompleteHandler } from "../handlers/agent-complete-handler";
+import { handleAgentComplete } from "../handlers/agent-complete-handler";
 import { handleStreamInit } from "../handlers/stream-init-handler";
-import { StreamSSEHandler } from "../handlers/stream-sse-handler";
-import { StreamStatusHandler } from "../handlers/stream-status-handler";
-import { ToolHandler } from "../handlers/tool-handler";
+import { handleStreamSSE } from "../handlers/stream-sse-handler";
+import { handleToolCall } from "../handlers/tool-handler";
 
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
@@ -47,7 +46,6 @@ export interface AgentLoopCompleteRequestBody {
  *
  * Routes:
  * - POST /stream/init - Initialize a new stream
- * - GET  /stream/init?sessionId=xxx - Get stream status
  * - GET  /stream/[sessionId] - Server-Sent Events stream
  * - POST /workers/agent-loop-init - Initialize agent loop
  * - POST /workers/agent-tool-call - Execute agent tool
@@ -90,12 +88,6 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 ): (request: Request) => Promise<Response> {
 	const { agent, redis, eventEmitter, baseUrl } = options;
 
-	// Initialize handlers
-	const streamStatusHandler = new StreamStatusHandler(redis);
-	const streamSSEHandler = new StreamSSEHandler(redis);
-	const toolHandler = new ToolHandler<TRuntimeContext>(agent, redis, eventEmitter);
-	const agentCompleteHandler = new AgentCompleteHandler(redis);
-
 	return async function handler(request: Request): Promise<Response> {
 		try {
 			// Extract path from URL
@@ -110,13 +102,11 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 					// Handle POST /stream/init
 					if (request.method === "POST") {
 						return handleStreamInit(request, { agent, redis, eventEmitter, baseUrl });
-					} else if (request.method === "GET") {
-						return streamStatusHandler.handleStreamStatus(request);
 					}
 				} else if (pathSegments[1]) {
 					// Handle GET /stream/[sessionId]
 					const sessionId = pathSegments[1];
-					return await streamSSEHandler.handleStreamSSE(sessionId, request.signal);
+					return await handleStreamSSE(sessionId, { redis }, request.signal);
 				}
 			}
 
@@ -137,7 +127,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						// Handle POST /workers/agent-tool-call
 						const body = (await request.json()) as AgentToolCallRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.tool.call event`);
-						return toolHandler.handleToolCall(body.event);
+						return handleToolCall(body.event, { agent, redis, eventEmitter });
 					}
 
 					case "tool-execution-complete": {
@@ -153,7 +143,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						// Handle POST /workers/agent-loop-complete
 						const body = (await request.json()) as AgentLoopCompleteRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.loop.complete event`);
-						return agentCompleteHandler.handleAgentComplete(body.event);
+						return handleAgentComplete(body.event, { redis });
 					}
 
 					default:
