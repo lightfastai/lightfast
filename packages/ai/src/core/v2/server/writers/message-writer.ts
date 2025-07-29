@@ -39,11 +39,11 @@ export class MessageWriter {
 			};
 			await this.redis.json.set(key, "$", storage as unknown as Record<string, unknown>);
 		} else {
-			// Append messages and update timestamp in parallel
-			await Promise.all([
-				this.redis.json.arrappend(key, "$.messages", ...(messages as unknown as Record<string, unknown>[])),
-				this.redis.json.set(key, "$.updatedAt", now)
-			]);
+			// Use pipeline for atomic operation
+			const pipeline = this.redis.pipeline();
+			pipeline.json.arrappend(key, "$.messages", ...(messages as unknown as Record<string, unknown>[]));
+			pipeline.json.set(key, "$.updatedAt", now);
+			await pipeline.exec();
 		}
 	}
 
@@ -73,11 +73,11 @@ export class MessageWriter {
 			return false; // Message not found
 		}
 		
-		// Update messages array and timestamp in parallel
-		await Promise.all([
-			this.redis.json.set(key, "$.messages", filteredMessages as unknown as Record<string, unknown>[]),
-			this.redis.json.set(key, "$.updatedAt", new Date().toISOString())
-		]);
+		// Update messages array and timestamp atomically
+		const pipeline = this.redis.pipeline();
+		pipeline.json.set(key, "$.messages", filteredMessages as unknown as Record<string, unknown>[]);
+		pipeline.json.set(key, "$.updatedAt", new Date().toISOString());
+		await pipeline.exec();
 		return true;
 	}
 
@@ -101,11 +101,11 @@ export class MessageWriter {
 		// Keep only messages before fromIndex
 		const keptMessages = messages.slice(0, fromIndex);
 		
-		// Update messages array and timestamp in parallel
-		await Promise.all([
-			this.redis.json.set(key, "$.messages", keptMessages as unknown as Record<string, unknown>[]),
-			this.redis.json.set(key, "$.updatedAt", new Date().toISOString())
-		]);
+		// Update messages array and timestamp atomically
+		const pipeline = this.redis.pipeline();
+		pipeline.json.set(key, "$.messages", keptMessages as unknown as Record<string, unknown>[]);
+		pipeline.json.set(key, "$.updatedAt", new Date().toISOString());
+		await pipeline.exec();
 		
 		return originalLength - keptMessages.length;
 	}
