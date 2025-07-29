@@ -7,19 +7,12 @@ import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
 import { getDeltaStreamKey } from "../keys";
-import { getStreamKey, isUIMessageEntry, parseUIMessageEntry } from "../types";
 import { type DeltaStreamMessage, DeltaStreamType } from "./types";
 
 // Stream configuration
 interface StreamConfig {
-	/** Redis stream key prefix */
-	streamPrefix?: string;
-	/** Consumer group prefix */
-	groupPrefix?: string;
 	/** Stream TTL in seconds (default: 3600) */
 	ttl?: number;
-	/** Max stream length (default: 1000) */
-	maxLength?: number;
 }
 
 // Redis stream types
@@ -87,10 +80,7 @@ export class StreamConsumer {
 	constructor(redis: Redis, config: StreamConfig = {}) {
 		this.redis = redis;
 		this.config = {
-			streamPrefix: config.streamPrefix || "stream",
-			groupPrefix: config.groupPrefix || "stream",
 			ttl: config.ttl || 3600,
-			maxLength: config.maxLength || 1000,
 		};
 	}
 
