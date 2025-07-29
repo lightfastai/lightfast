@@ -1,39 +1,42 @@
 /**
- * Message Reader - Utility for reading UIMessages from Redis streams
+ * Message Reader - Utility for reading UIMessages from Redis JSON storage
  */
 
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import { getMessageKey } from "../keys";
 
+interface LightfastDBMessage {
+	sessionId: string;
+	messages: UIMessage[];
+	createdAt: string;
+	updatedAt: string;
+}
+
 export class MessageReader {
 	constructor(private redis: Redis) {}
 
 	/**
-	 * Get all messages from stream
+	 * Get all messages for a session
 	 */
 	async getMessages(sessionId: string): Promise<UIMessage[]> {
-		const streamKey = getMessageKey(sessionId);
-		const entries = await this.redis.xrange(streamKey, "-", "+");
+		const key = getMessageKey(sessionId);
 
-		if (!entries || (entries as any).length === 0) {
+		// Use JSON.GET to retrieve the messages
+		const data = (await this.redis.json.get(key, "$")) as LightfastDBMessage[] | null;
+
+		if (!data || data.length === 0 || !data[0]) {
 			return [];
 		}
 
-		const messages: UIMessage[] = [];
-		const streamEntries = entries as any;
-		for (const entry of Object.values(streamEntries)) {
-			const fields = entry as Record<string, string>;
-			if (fields.messageId && fields.role && fields.parts) {
-				messages.push({
-					id: fields.messageId,
-					role: fields.role as UIMessage["role"],
-					parts: JSON.parse(fields.parts),
-					...(fields.metadata && { metadata: JSON.parse(fields.metadata) }),
-				});
-			}
-		}
+		return data[0].messages || [];
+	}
 
-		return messages;
+	/**
+	 * Check if a session has messages
+	 */
+	async hasMessages(sessionId: string): Promise<boolean> {
+		const key = getMessageKey(sessionId);
+		return Boolean(await this.redis.exists(key));
 	}
 }

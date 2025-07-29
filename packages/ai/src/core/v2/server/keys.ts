@@ -23,3 +23,10 @@ export function getMessageKey(sessionId: string): string {
 export function getDeltaStreamKey(sessionId: string): string {
 	return `llm:stream:${sessionId}`;
 }
+
+/**
+ * Get event stream key for system events
+ */
+export function getEventStreamKey(sessionId: string): string {
+	return `v2:events:${sessionId}`;
+}

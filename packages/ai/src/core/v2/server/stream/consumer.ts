@@ -9,7 +9,6 @@ import { nanoid } from "nanoid";
 import { getDeltaStreamKey } from "../keys";
 import { type DeltaStreamMessage, DeltaStreamType } from "./types";
 
-
 // Redis stream types
 type StreamField = string;
 type StreamMessage = [string, StreamField[]];

@@ -4,8 +4,9 @@
  */
 
 import type { Redis } from "@upstash/redis";
+import { getEventStreamKey } from "../keys";
 import type { StreamStatusType as StreamStatus } from "../stream/types";
-import { getEventStreamKey, type SystemEvent, type SystemEventType } from "../types";
+import type { SystemEvent, SystemEventType } from "../types";
 
 export class EventWriter {
 	constructor(private redis: Redis) {}

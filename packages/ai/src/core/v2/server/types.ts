@@ -28,27 +28,8 @@ export interface SystemEvent {
 	code?: string;
 }
 
-// Redis storage format for UIMessage
-export interface RedisUIMessageEntry {
-	messageId: string;
-	role: string;
-	parts: string; // JSON stringified parts array
-	metadata?: string; // JSON stringified metadata
-	timestamp: string;
-}
-
 // Redis stream entry format
 export interface RedisStreamEntry {
 	id: string;
 	fields: Record<string, string>;
 }
-
-
-
-
-// Helper to generate event stream keys
-export function getEventStreamKey(sessionId: string): string {
-	return `v2:events:${sessionId}`;
-}
-
-
