@@ -106,56 +106,10 @@ const handlerFn = fetchRequestHandler({
 	baseUrl: "/api/v2",
 });
 
-// Handler function that determines the event type and processes accordingly
+// Handler function - now just passes through to fetchRequestHandler
 const handler = async (req: NextRequest, { params }: { params: Promise<{ v: string[] }> }) => {
-	// Await the params
-	const { v } = await params;
-
-	// Check if this is a stream endpoint
-	if (v?.[0] === "stream") {
-		// Let the unified handler process stream endpoints
-		return handlerFn(req);
-	}
-
-	// Otherwise, it's a worker endpoint
-	// Extract worker type from the path
-	// Expected format: /api/v2/workers/[worker-type]
-	const workerType = v?.[1]; // e.g., "agent-loop", "tool-executor", etc.
-
-	if (!workerType) {
-		return Response.json({ error: "Missing worker type in path" }, { status: 400 });
-	}
-
-	// Map worker types to event types
-	const eventTypeMap: Record<string, string> = {
-		"agent-loop": "agent.loop.init",
-		"tool-executor": "agent.tool.call",
-		"tool-result-complete": "tool.execution.complete",
-		"agent-complete": "agent.loop.complete",
-	};
-
-	const eventType = eventTypeMap[workerType];
-	if (!eventType) {
-		return Response.json({ error: `Invalid worker type: ${workerType}` }, { status: 400 });
-	}
-
-	// Parse the original event from the request
-	const event = await req.json();
-
-	// Create a new request with the wrapped body
-	const wrappedBody = JSON.stringify({
-		type: eventType,
-		event,
-	});
-
-	const wrappedRequest = new Request(req.url, {
-		method: req.method,
-		headers: req.headers,
-		body: wrappedBody,
-	});
-
-	// Call the handler with the wrapped request
-	return handlerFn(wrappedRequest);
+	// The fetchRequestHandler now handles all routing internally
+	return handlerFn(req);
 };
 
 // Export the handler for both GET and POST requests
