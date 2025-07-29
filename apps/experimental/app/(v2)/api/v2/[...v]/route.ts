@@ -12,14 +12,27 @@ import { BraintrustMiddleware } from "braintrust";
 import type { NextRequest } from "next/server";
 import { eventEmitter, redis } from "@/app/(v2)/ai/config";
 
-// Define calculator tool
-const calculatorTool = {
-	name: "calculator",
+// Import tool factories (in a real app, these would come from v1 tools)
+import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
+import { createTool } from "@lightfast/ai/tool";
+import { z } from "zod";
+
+// App-specific runtime context (matches v1)
+type AppRuntimeContext = {};
+
+// Define calculator tool using tool factory pattern
+const calculatorTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Performs mathematical calculations",
-	execute: async (args: Record<string, any>) => {
+	inputSchema: z.object({
+		expression: z.string().optional(),
+		a: z.number().optional(),
+		b: z.number().optional(),
+		operation: z.enum(["add", "subtract", "multiply", "divide"]).optional(),
+	}),
+	execute: async (args, context) => {
+		console.log(`Calculator called in thread: ${context.threadId}`);
 		const { expression, a, b, operation } = args;
 		if (expression) {
-			// Simple expression evaluation (be careful in production!)
 			try {
 				const result = eval(expression.replace(/[^0-9+\-*/().\s]/g, ""));
 				return { expression, value: result };
@@ -42,45 +55,67 @@ const calculatorTool = {
 		}
 		return { error: "Invalid calculator arguments" };
 	},
-};
+});
 
-// Define weather tool
-const weatherTool = {
-	name: "weather",
+// Define weather tool using tool factory pattern
+const weatherTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Gets current weather information for a location",
-	execute: async (args: Record<string, any>) => {
+	inputSchema: z.object({
+		location: z.string().describe("Location to get weather for"),
+	}),
+	execute: async ({ location }, context) => {
+		console.log(`Weather requested for ${location} by user: ${context.resourceId}`);
 		// Mock weather data
 		return {
-			location: args.location || "San Francisco",
+			location: location || "San Francisco",
 			temperature: 72,
 			conditions: "Partly cloudy",
 			humidity: 65,
+			requestedBy: context.resourceId,
 		};
 	},
-};
+});
 
-// Define search tool
-const searchTool = {
-	name: "search",
+// Define search tool using tool factory pattern
+const searchTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Searches the web for information",
-	execute: async (args: Record<string, any>) => {
+	inputSchema: z.object({
+		query: z.string().describe("Search query"),
+	}),
+	execute: async ({ query }, context) => {
+		console.log(`Search for "${query}" in thread: ${context.threadId}`);
 		// Mock search results
 		return {
-			query: args.query,
+			query,
 			results: [
 				{ title: "Result 1", snippet: "This is a mock search result" },
 				{ title: "Result 2", snippet: "Another mock search result" },
 			],
+			searchContext: {
+				threadId: context.threadId,
+				timestamp: new Date().toISOString(),
+			},
 		};
 	},
-};
+});
 
 // Create the v2 test agent with the new Agent class
-const v2TestAgent = new Agent(
+const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 	{
 		name: "v2-test",
 		systemPrompt: "You are a helpful AI assistant with access to various tools. Use them when needed to help the user.",
-		tools: [calculatorTool, weatherTool, searchTool],
+		// Use tool factories instead of direct tools
+		tools: {
+			calculator: calculatorTool,
+			weather: weatherTool,
+			search: searchTool,
+		},
+		// Create runtime context from session
+		createRuntimeContext: ({ sessionId, userId }) => ({
+			threadId: sessionId,
+			resourceId: userId || "anonymous",
+			// Additional context can be added here
+		}),
 		// Use the same model configuration as v1
 		model: wrapLanguageModel({
 			model: gateway("anthropic/claude-4-sonnet"),

@@ -18,8 +18,8 @@ import { StreamConsumer } from "../stream-consumer";
 import { StreamGenerator } from "../stream-generator";
 import { StreamWriter } from "../stream-writer";
 
-export interface FetchRequestHandlerOptions {
-	agent: Agent;
+export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
+	agent: Agent<TRuntimeContext>;
 	redis: Redis;
 	eventEmitter: EventEmitter;
 	baseUrl: string; // Base URL for generating stream URLs (e.g., "/api/v2")
@@ -73,7 +73,9 @@ export interface StreamInitRequestBody {
  * }
  * ```
  */
-export function fetchRequestHandler(options: FetchRequestHandlerOptions): (request: Request) => Promise<Response> {
+export function fetchRequestHandler<TRuntimeContext = unknown>(
+	options: FetchRequestHandlerOptions<TRuntimeContext>,
+): (request: Request) => Promise<Response> {
 	const { agent, redis, eventEmitter, baseUrl } = options;
 	const streamGenerator = new StreamGenerator(redis);
 	const streamConsumer = new StreamConsumer(redis);
@@ -266,9 +268,9 @@ export function fetchRequestHandler(options: FetchRequestHandlerOptions): (reque
 }
 
 // Helper function to handle stream initialization
-async function handleStreamInit(
+async function handleStreamInit<TRuntimeContext = unknown>(
 	request: Request,
-	agent: Agent,
+	agent: Agent<TRuntimeContext>,
 	redis: Redis,
 	eventEmitter: EventEmitter,
 	streamGenerator: StreamGenerator,

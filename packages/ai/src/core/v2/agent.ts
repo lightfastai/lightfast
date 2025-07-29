@@ -6,9 +6,10 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
-import { smoothStream, streamText, type ToolSet, wrapLanguageModel } from "ai";
+import { smoothStream, streamText, type Tool as AiTool, type ToolSet, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
+import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
 import type { EventEmitter, SessionEventEmitter } from "./events/emitter";
 import type { AgentLoopInitEvent, Message } from "./events/schemas";
 import { createStreamWriter, type StreamWriter } from "./server/stream-writer";
@@ -20,6 +21,7 @@ import {
 	type WorkerConfig,
 } from "./workers/schemas";
 
+// Legacy v2 tool definition (for backward compatibility)
 export interface AgentToolDefinition {
 	name: string;
 	description: string;
@@ -54,37 +56,56 @@ export interface AgentConfig extends Omit<StreamTextParameters<ToolSet>, Exclude
 }
 
 // Updated AgentOptions extending AgentConfig
-export interface AgentOptions extends AgentConfig {
+export interface AgentOptions<TRuntimeContext = unknown> extends AgentConfig {
 	systemPrompt: string;
-	tools: AgentToolDefinition[]; // Keep existing tool structure for now
+	// Support both legacy tools and tool factories
+	tools?: AgentToolDefinition[] | ToolFactorySet<TRuntimeContext>;
+	// Function to create runtime context from session
+	createRuntimeContext?: (params: { sessionId: string; userId?: string }) => TRuntimeContext;
 	maxIterations?: number; // Agent-specific, not from streamText
 	// Allow passing commonly used streamText options directly
 	experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
 }
 
-export class Agent {
+export class Agent<TRuntimeContext = unknown> {
 	public readonly config: AgentConfig;
 	private systemPrompt: string;
 	private maxIterations: number;
 	private experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
 	private streamWriter: StreamWriter;
 	private tools: Map<string, AgentToolDefinition>;
+	private toolFactories?: ToolFactorySet<TRuntimeContext>;
+	private createRuntimeContext?: (params: { sessionId: string; userId?: string }) => TRuntimeContext;
 	private workerConfig: Partial<WorkerConfig>;
 
 	constructor(
-		options: AgentOptions,
+		options: AgentOptions<TRuntimeContext>,
 		private redis: Redis,
 		private eventEmitter: EventEmitter,
 		workerConfig: Partial<WorkerConfig> = {},
 	) {
 		// Destructure agent-specific properties from streamText config
-		const { systemPrompt, tools, maxIterations = 10, experimental_transform, ...streamTextConfig } = options;
+		const { systemPrompt, tools, createRuntimeContext, maxIterations = 10, experimental_transform, ...streamTextConfig } = options;
 
 		// Store agent-specific properties
 		this.systemPrompt = systemPrompt;
-		this.tools = new Map(tools.map((tool) => [tool.name, tool]));
 		this.maxIterations = maxIterations;
 		this.experimental_transform = experimental_transform;
+		this.createRuntimeContext = createRuntimeContext;
+
+		// Handle tools - check if it's tool factories or legacy tools
+		if (tools) {
+			if (Array.isArray(tools)) {
+				// Legacy v2 tools
+				this.tools = new Map(tools.map((tool) => [tool.name, tool]));
+			} else {
+				// Tool factories
+				this.toolFactories = tools;
+				this.tools = new Map(); // Empty map, will be populated at runtime
+			}
+		} else {
+			this.tools = new Map();
+		}
 
 		// Store all streamText-compatible properties
 		this.config = streamTextConfig;
@@ -151,29 +172,90 @@ export class Agent {
 	}
 
 	/**
-	 * Execute a tool by name
+	 * Execute a tool by name with runtime context support
 	 */
-	async executeTool(toolName: string, args: Record<string, any>): Promise<any> {
+	async executeTool(toolName: string, args: Record<string, any>, sessionId?: string): Promise<any> {
+		// First check legacy tools
 		const tool = this.tools.get(toolName);
-		if (!tool) {
-			throw new Error(`Unknown tool: ${toolName}`);
+		if (tool) {
+			return tool.execute(args);
 		}
-		return tool.execute(args);
+
+		// Check tool factories with runtime context
+		if (this.toolFactories && this.toolFactories[toolName] && this.createRuntimeContext) {
+			const runtimeContext = this.createRuntimeContext({
+				sessionId: sessionId || "",
+				userId: undefined, // Would come from session in real implementation
+			});
+			const toolInstance = this.toolFactories[toolName](runtimeContext);
+			// AI SDK tools may require options as second parameter
+			return await (toolInstance as any).execute(args, {});
+		}
+
+		throw new Error(`Unknown tool: ${toolName}`);
 	}
 
 	/**
-	 * Get available tool names
+	 * Get available tool names from both legacy tools and tool factories
 	 */
 	getAvailableTools(): string[] {
-		return Array.from(this.tools.keys());
+		const legacyTools = Array.from(this.tools.keys());
+		const factoryTools = this.toolFactories ? Object.keys(this.toolFactories) : [];
+		return [...legacyTools, ...factoryTools];
+	}
+
+	/**
+	 * Get all tools resolved for a specific session (for streamText)
+	 */
+	private getResolvedTools(sessionId: string): ToolSet {
+		const resolvedTools: ToolSet = {};
+
+		// Add legacy tools
+		for (const [name, tool] of this.tools) {
+			resolvedTools[name] = {
+				description: tool.description,
+				parameters: tool.schema || {},
+				execute: async (args: any) => tool.execute(args),
+			} as AiTool;
+		}
+
+		// Add tools from factories
+		if (this.toolFactories && this.createRuntimeContext) {
+			const runtimeContext = this.createRuntimeContext({
+				sessionId,
+				userId: undefined, // Would come from session
+			});
+
+			for (const [name, factory] of Object.entries(this.toolFactories)) {
+				const toolInstance = factory(runtimeContext as TRuntimeContext);
+				resolvedTools[name] = toolInstance;
+			}
+		}
+
+		return resolvedTools;
 	}
 
 	/**
 	 * Get tool description
 	 */
-	getToolDescription(toolName: string): string {
+	getToolDescription(toolName: string, sessionId?: string): string {
+		// Check legacy tools first
 		const tool = this.tools.get(toolName);
-		return tool?.description || "Tool for various operations";
+		if (tool) {
+			return tool.description;
+		}
+
+		// Check tool factories
+		if (this.toolFactories && this.toolFactories[toolName] && this.createRuntimeContext) {
+			const runtimeContext = this.createRuntimeContext({
+				sessionId: sessionId || "",
+				userId: undefined,
+			});
+			const toolInstance = this.toolFactories[toolName](runtimeContext);
+			return toolInstance.description || "Tool for various operations";
+		}
+
+		return "Tool for various operations";
 	}
 
 	/**
@@ -341,7 +423,7 @@ Think through this step by step first, then provide your JSON decision.`;
 		const toolsSection = toolNames.length
 			? `
 Available Tools:
-${toolNames.map((tool) => `- ${tool}: ${this.getToolDescription(tool)}`).join("\n")}
+${toolNames.map((tool) => `- ${tool}: ${this.getToolDescription(tool, session.sessionId)}`).join("\n")}
 
 When you need to use a tool, set action to "tool_call" and provide the tool name and arguments.
 `
