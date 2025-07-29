@@ -9,11 +9,6 @@ import { nanoid } from "nanoid";
 import { getDeltaStreamKey } from "../keys";
 import { type DeltaStreamMessage, DeltaStreamType } from "./types";
 
-// Stream configuration
-interface StreamConfig {
-	/** Stream TTL in seconds (default: 3600) */
-	ttl?: number;
-}
 
 // Redis stream types
 type StreamField = string;
@@ -75,13 +70,9 @@ function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessag
 
 export class StreamConsumer {
 	private redis: Redis;
-	private config: Required<StreamConfig>;
 
-	constructor(redis: Redis, config: StreamConfig = {}) {
+	constructor(redis: Redis) {
 		this.redis = redis;
-		this.config = {
-			ttl: config.ttl || 3600,
-		};
 	}
 
 	/**
