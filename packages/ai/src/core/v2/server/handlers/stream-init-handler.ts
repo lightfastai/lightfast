@@ -8,6 +8,7 @@ import type { EventEmitter } from "../../events/emitter";
 import type { AgentLoopInitEvent, Message } from "../../events/schemas";
 import { getDeltaStreamKey, getSessionKey } from "../keys";
 import { StreamGenerator } from "../stream-generator";
+import { DeltaStreamType } from "../stream/types";
 
 export interface StreamInitRequestBody {
 	prompt: string;
@@ -124,10 +125,9 @@ export class StreamInitHandler<TRuntimeContext = unknown> {
 	 */
 	private async createInitialStream(sessionId: string): Promise<void> {
 		const streamKey = getDeltaStreamKey(sessionId);
-		// Create stream with initial marker
+		// Create stream with initialization marker
 		await this.redis.xadd(streamKey, "*", {
-			type: "chunk",
-			content: "", // Empty initial chunk to create stream
+			type: DeltaStreamType.INIT,
 			timestamp: new Date().toISOString(),
 		});
 	}

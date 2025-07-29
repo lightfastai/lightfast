@@ -14,6 +14,7 @@ export type StreamStatusType = (typeof StreamStatus)[keyof typeof StreamStatus];
 
 // Delta stream message types
 export enum DeltaStreamType {
+	INIT = "init",
 	CHUNK = "chunk",
 	ERROR = "error",
 	COMPLETE = "complete",

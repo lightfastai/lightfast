@@ -37,6 +37,9 @@ streamRoutes.get("/:sessionId", async (c) => {
 					let data: any = {};
 
 					switch (message.type) {
+						case DeltaStreamType.INIT:
+							data = { initialized: true, timestamp: message.timestamp };
+							break;
 						case DeltaStreamType.CHUNK:
 							data = { content: message.content };
 							break;

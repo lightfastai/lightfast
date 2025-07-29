@@ -15,6 +15,9 @@ export function validateMessage(data: any): DeltaStreamMessage | null {
 
 	// Validate type-specific fields
 	switch (data.type) {
+		case DeltaStreamType.INIT:
+			// Init doesn't require additional fields
+			break;
 		case DeltaStreamType.CHUNK:
 			if (!data.content) return null;
 			break;
@@ -139,6 +142,12 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 										}
 
 										switch (validatedMessage.type) {
+											case DeltaStreamType.INIT: {
+												// Stream initialized - can be used for UI feedback
+												console.log("Stream initialized");
+												break;
+											}
+
 											case DeltaStreamType.CHUNK: {
 												if (validatedMessage.content) {
 													streamContent.current += validatedMessage.content;

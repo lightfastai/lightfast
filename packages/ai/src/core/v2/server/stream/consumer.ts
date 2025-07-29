@@ -49,6 +49,9 @@ function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessag
 
 	// Add type-specific fields
 	switch (message.type) {
+		case DeltaStreamType.INIT:
+			// Init doesn't require additional fields
+			break;
 		case DeltaStreamType.CHUNK:
 			if (!rawObj.content) return null;
 			message.content = rawObj.content;
