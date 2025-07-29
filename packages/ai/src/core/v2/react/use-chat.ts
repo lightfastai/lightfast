@@ -54,8 +54,8 @@ export interface UseChatReturn {
 
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
 	const {
-		apiEndpoint = "/api/stream/init",
-		streamEndpoint = "/api/stream",
+		apiEndpoint = "/api/v2/stream/init",
+		streamEndpoint = "/api/v2/stream",
 		sessionId: initialSessionId,
 		onChunk,
 		onComplete,

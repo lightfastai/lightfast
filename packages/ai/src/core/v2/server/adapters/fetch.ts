@@ -100,7 +100,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				} else if (pathSegments[1]) {
 					// Handle GET /stream/[sessionId]
 					const sessionId = pathSegments[1];
-					return await handleStreamSSE(sessionId, streamConsumer, redis);
+					return await handleStreamSSE(sessionId, streamConsumer, redis, request.signal);
 				}
 			}
 
@@ -120,7 +120,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				case "agent.tool.call": {
 					// Execute tool
 					const toolEvent = event as AgentToolCallEvent;
-					const streamKey = `v2:stream:${toolEvent.sessionId}`;
+					const streamKey = `llm:stream:${toolEvent.sessionId}`; // Match working API route
 					let success = false;
 					let result: any;
 
@@ -129,33 +129,32 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						result = await agent.executeTool(toolEvent.data.tool, toolEvent.data.arguments || {});
 						success = true;
 
-						// Write result to stream
+						// Write result to stream (with timestamp)
 						await redis.xadd(streamKey, "*", {
-							type: "tool",
+							type: "event",
 							content: `Tool ${toolEvent.data.tool} executed successfully`,
-							metadata: JSON.stringify({
-								event: "tool.result",
-								tool: toolEvent.data.tool,
-								toolCallId: toolEvent.data.toolCallId,
-								result,
-								success,
-							}),
+							event: "tool.result",
+							tool: toolEvent.data.tool,
+							toolCallId: toolEvent.data.toolCallId,
+							result: JSON.stringify(result),
+							success: String(success),
+							timestamp: new Date().toISOString(),
 						});
+						await redis.publish(streamKey, JSON.stringify({ type: "event" }));
 					} catch (error) {
 						result = { error: error instanceof Error ? error.message : String(error) };
 						success = false;
 
-						// Write error to stream
+						// Write error to stream (with timestamp)
 						await redis.xadd(streamKey, "*", {
 							type: "error",
 							content: `Tool ${toolEvent.data.tool} failed: ${result.error}`,
-							metadata: JSON.stringify({
-								event: "tool.error",
-								tool: toolEvent.data.tool,
-								toolCallId: toolEvent.data.toolCallId,
-								error: result.error,
-							}),
+							error: result.error,
+							tool: toolEvent.data.tool,
+							toolCallId: toolEvent.data.toolCallId,
+							timestamp: new Date().toISOString(),
 						});
+						await redis.publish(streamKey, JSON.stringify({ type: "error" }));
 					}
 
 					// Emit completion or failure event
@@ -327,13 +326,17 @@ async function handleStreamInit<TRuntimeContext = unknown>(
 	// Store session data (expire after 24 hours)
 	await redis.setex(sessionKey, 86400, JSON.stringify(sessionData));
 
-	// Create initial stream entry to establish the stream
-	const streamKey = `v2:stream:${sessionId}`;
+	// Create initial stream entry to establish the stream (match working API route)
+	const streamKey = `llm:stream:${sessionId}`;
 	await redis.xadd(streamKey, "*", {
-		type: "status",
-		content: "Session initialized",
-		metadata: JSON.stringify({ status: "initialized" }),
+		type: "metadata",
+		status: "started",
+		completedAt: new Date().toISOString(),
+		totalChunks: 0,
+		fullContent: "",
+		timestamp: new Date().toISOString(),
 	});
+	await redis.publish(streamKey, JSON.stringify({ type: "metadata" }));
 
 	// Create agent loop init event structure
 	const agentLoopEvent: AgentLoopInitEvent = {
@@ -395,14 +398,14 @@ async function handleStreamStatus(request: Request, redis: Redis, streamGenerato
 }
 
 // Helper function to handle SSE stream
-async function handleStreamSSE(sessionId: string, streamConsumer: StreamConsumer, redis: Redis): Promise<Response> {
+async function handleStreamSSE(sessionId: string, streamConsumer: StreamConsumer, redis: Redis, signal?: AbortSignal): Promise<Response> {
 	if (!sessionId) {
 		return new Response("Session ID is required", { status: 400 });
 	}
 
 	try {
-		// Check if stream exists before creating SSE stream
-		const streamKey = `v2:stream:${sessionId}`;
+		// Check if stream exists before creating SSE stream (match working API route)
+		const streamKey = `llm:stream:${sessionId}`;
 		const keyExists = await redis.exists(streamKey);
 		
 		if (!keyExists) {
@@ -410,8 +413,8 @@ async function handleStreamSSE(sessionId: string, streamConsumer: StreamConsumer
 			return new Response("Stream not ready", { status: 412 });
 		}
 
-		// Create SSE stream
-		const stream = streamConsumer.createDeltaStream(sessionId);
+		// Create SSE stream with signal for cleanup
+		const stream = streamConsumer.createDeltaStream(sessionId, signal);
 
 		// Return SSE response
 		return new Response(stream, {

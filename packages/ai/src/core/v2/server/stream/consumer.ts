@@ -8,11 +8,14 @@ import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
 import { getStreamKey, isUIMessageEntry, parseUIMessageEntry, type StreamConfig } from "../types";
 
-// Delta stream message format (matches Agent delta streaming)
+// Delta stream message format (matches working API route)
 interface DeltaStreamMessage {
 	type: "chunk" | "metadata" | "event" | "error";
 	content?: string;
-	metadata?: string; // JSON stringified
+	status?: string; // For metadata messages
+	completedAt?: string;
+	totalChunks?: number;
+	fullContent?: string;
 	timestamp: string;
 }
 
@@ -39,9 +42,9 @@ const json = (data: Record<string, unknown>): Uint8Array => {
 	return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
 };
 
-// Validate delta stream message
+// Validate delta stream message (matches working API route)
 function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessage | null {
-	if (!rawObj.type || !rawObj.timestamp) return null;
+	if (!rawObj.type) return null;
 
 	const validTypes = ["chunk", "metadata", "event", "error"];
 	if (!validTypes.includes(rawObj.type)) return null;
@@ -49,8 +52,11 @@ function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessag
 	return {
 		type: rawObj.type as DeltaStreamMessage["type"],
 		content: rawObj.content,
-		metadata: rawObj.metadata,
-		timestamp: rawObj.timestamp,
+		status: rawObj.status,
+		completedAt: rawObj.completedAt,
+		totalChunks: rawObj.totalChunks ? Number(rawObj.totalChunks) : undefined,
+		fullContent: rawObj.fullContent,
+		timestamp: rawObj.timestamp || new Date().toISOString(), // Fallback if missing
 	};
 }
 
@@ -72,8 +78,8 @@ export class StreamConsumer {
 	 * Create an optimized delta stream following your clean pattern
 	 * Simple, readable, and efficient
 	 */
-	createDeltaStream(sessionId: string): ReadableStream<Uint8Array> {
-		const streamKey = `v2:stream:${sessionId}`;
+	createDeltaStream(sessionId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
+		const streamKey = `llm:stream:${sessionId}`; // Match working API route
 		const groupName = `sse-group-${nanoid()}`;
 		const redis = this.redis;
 
@@ -93,6 +99,8 @@ export class StreamConsumer {
 					// Group might already exist
 				}
 
+				let subscription: ReturnType<typeof redis.subscribe> | null = null;
+
 				// Read stream messages using consumer group
 				const readStreamMessages = async () => {
 					const chunks = (await redis.xreadgroup(groupName, "consumer-1", streamKey, ">")) as StreamData[];
@@ -107,19 +115,14 @@ export class StreamConsumer {
 									const validatedMessage = validateDeltaMessage(rawObj);
 
 									if (validatedMessage) {
+										console.log("Sending stream message:", validatedMessage);
 										controller.enqueue(json(validatedMessage as unknown as Record<string, unknown>));
 
-										// Check for completion
-										console.log(validatedMessage);
-										if (validatedMessage.type === "metadata" && validatedMessage.metadata) {
-											const metadata =
-												typeof validatedMessage.metadata === "string"
-													? JSON.parse(validatedMessage.metadata)
-													: validatedMessage.metadata;
-											if (metadata.status === "completed") {
-												controller.close();
-												return;
-											}
+										// Check for completion (matches working API route)
+										if (validatedMessage.type === "metadata" && validatedMessage.status === "completed") {
+											console.log("Stream completed, closing connection");
+											controller.close();
+											return;
 										}
 									}
 								}
@@ -132,9 +135,11 @@ export class StreamConsumer {
 				await readStreamMessages();
 
 				// Subscribe to stream notifications
-				const subscription = redis.subscribe(streamKey);
+				subscription = redis.subscribe(streamKey);
 				subscription.on("message", async () => {
-					await readStreamMessages();
+					if (!signal?.aborted) {
+						await readStreamMessages();
+					}
 				});
 
 				subscription.on("error", (error) => {
@@ -143,11 +148,16 @@ export class StreamConsumer {
 				});
 
 				// Handle client disconnect
-				// Note: This would be handled by the request signal in your API route
+				signal?.addEventListener("abort", () => {
+					console.log("Client disconnected, cleaning up subscription");
+					subscription?.unsubscribe();
+					controller.close();
+				});
 			},
 
 			cancel() {
-				// Cleanup when client disconnects
+				// Cleanup when client disconnects (fallback)
+				// Note: subscription is not accessible here due to scope
 			},
 		});
 	}
@@ -162,7 +172,7 @@ export class StreamConsumer {
 		onError?: (error: Error) => Promise<void>,
 		onComplete?: () => Promise<void>,
 	): Promise<void> {
-		const streamKey = `v2:stream:${sessionId}`;
+		const streamKey = `llm:stream:${sessionId}`; // Match working API route
 		const groupName = `consumer-group-${nanoid()}`;
 
 		try {
@@ -203,18 +213,12 @@ export class StreamConsumer {
 								if (validatedMessage) {
 									await onMessage(validatedMessage);
 
-									// Check for completion
-									if (validatedMessage.type === "metadata" && validatedMessage.metadata) {
-										const metadata =
-											typeof validatedMessage.metadata === "string"
-												? JSON.parse(validatedMessage.metadata)
-												: validatedMessage.metadata;
-										if (metadata.status === "completed") {
-											if (onComplete) {
-												await onComplete();
-											}
-											return;
+									// Check for completion (matches working API route)
+									if (validatedMessage.type === "metadata" && validatedMessage.status === "completed") {
+										if (onComplete) {
+											await onComplete();
 										}
+										return;
 									}
 								}
 							}

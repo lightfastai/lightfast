@@ -87,7 +87,7 @@ export interface UseDeltaStreamReturn {
 
 export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStreamReturn {
 	const {
-		streamEndpoint = "/api/stream",
+		streamEndpoint = "/api/v2/stream",
 		onChunk,
 		onComplete,
 		onError,
