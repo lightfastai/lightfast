@@ -31,7 +31,6 @@ export interface EventEmitterConfig {
 	qstashUrl: string;
 	qstashToken: string;
 	baseUrl: string;
-	endpoints: Record<string, string>;
 	retryConfig?: {
 		retries?: number;
 		backoff?: "exponential" | "linear" | "constant";
@@ -175,18 +174,34 @@ export class EventEmitter {
 	}
 
 	/**
+	 * Map event types to worker paths for the unified route handler
+	 */
+	private getWorkerPath(eventType: string): string {
+		const workerPathMap: Record<string, string> = {
+			[EventType.AGENT_LOOP_INIT]: "agent-loop",
+			[EventType.AGENT_TOOL_CALL]: "tool-executor",
+			[EventType.TOOL_EXECUTION_COMPLETE]: "tool-result-complete",
+			[EventType.TOOL_EXECUTION_FAILED]: "tool-result-failed",
+			[EventType.AGENT_LOOP_COMPLETE]: "agent-complete",
+		};
+
+		return workerPathMap[eventType] || "";
+	}
+
+	/**
 	 * Publish an event to Qstash
 	 */
 	private async publishEvent(event: Event): Promise<void> {
-		// Always use direct URL publishing - we don't need URL groups
-		// since each event type maps to exactly one endpoint
-		const endpoint = this.config.endpoints[event.type];
-		if (!endpoint) {
-			console.warn(`No endpoint mapping for event type: ${event.type}`);
+		// Get worker path for this event type
+		const workerPath = this.getWorkerPath(event.type);
+		if (!workerPath) {
+			console.warn(`No worker path mapping for event type: ${event.type}`);
 			return;
 		}
 
-		const url = `${this.config.baseUrl}${endpoint}`;
+		// Construct URL for unified route handler
+		// The route handler expects: /api/v2/workers/[worker-type]
+		const url = `${this.config.baseUrl}/api/v2/workers/${workerPath}`;
 
 		try {
 			await this.client.publishJSON({

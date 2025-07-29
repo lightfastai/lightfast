@@ -3,22 +3,13 @@
  * Direct instantiation of infrastructure components
  */
 
-import { EventEmitter, EventType, StreamConsumer, StreamGenerator } from "@lightfast/ai/v2/core";
+import { EventEmitter, StreamConsumer, StreamGenerator } from "@lightfast/ai/v2/core";
 import { Redis } from "@upstash/redis";
 
 // Get base URL for the test server
 function getBaseUrl(): string {
 	return process.env.WORKER_BASE_URL || `http://localhost:${process.env.PORT || 8080}`;
 }
-
-// Worker endpoint configuration
-export const WORKER_ENDPOINTS: Record<string, string> = {
-	[EventType.AGENT_LOOP_INIT]: "/workers/agent-loop",
-	[EventType.AGENT_TOOL_CALL]: "/workers/tool-executor",
-	[EventType.TOOL_EXECUTION_COMPLETE]: "/workers/tool-result-complete",
-	[EventType.TOOL_EXECUTION_FAILED]: "/workers/tool-result-failed",
-	[EventType.AGENT_LOOP_COMPLETE]: "/workers/agent-complete",
-};
 
 // Create Redis client instance
 export const redis = new Redis({
@@ -27,11 +18,11 @@ export const redis = new Redis({
 });
 
 // Create event emitter instance
+// The EventEmitter internally maps event types to worker paths
 export const eventEmitter = new EventEmitter({
 	qstashUrl: process.env.QSTASH_URL || "https://qstash.upstash.io",
 	qstashToken: process.env.QSTASH_TOKEN!,
 	baseUrl: getBaseUrl(),
-	endpoints: WORKER_ENDPOINTS,
 	retryConfig: {
 		retries: 3,
 		backoff: "exponential",

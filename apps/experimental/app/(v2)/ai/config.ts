@@ -3,7 +3,7 @@
  * Centralized configuration for all V2 AI components
  */
 
-import { EventEmitter, EventType, StreamConsumer, StreamGenerator } from "@lightfast/ai/v2/core";
+import { EventEmitter, StreamConsumer, StreamGenerator } from "@lightfast/ai/v2/core";
 import { Redis } from "@upstash/redis";
 import { env } from "@/env";
 
@@ -44,26 +44,14 @@ export const redis = new Redis({
 });
 
 /**
- * Worker endpoint configuration
- * Maps event types to the unified route handler with appropriate paths
- */
-const WORKER_ENDPOINTS: Record<string, string> = {
-	[EventType.AGENT_LOOP_INIT]: "/api/v2/workers/agent-loop",
-	[EventType.AGENT_TOOL_CALL]: "/api/v2/workers/tool-executor",
-	[EventType.TOOL_EXECUTION_COMPLETE]: "/api/v2/workers/tool-result-complete",
-	[EventType.TOOL_EXECUTION_FAILED]: "/api/v2/workers/tool-result-failed",
-	[EventType.AGENT_LOOP_COMPLETE]: "/api/v2/workers/agent-complete",
-};
-
-/**
  * Create event emitter instance with full configuration
- * The unified route handler at /api/v2/[...v] handles all worker events internally
+ * The EventEmitter internally maps event types to worker paths
+ * All events are routed through the unified handler at /api/v2/[...v]
  */
 export const eventEmitter = new EventEmitter({
 	qstashUrl: env.QSTASH_URL,
 	qstashToken: env.QSTASH_TOKEN,
 	baseUrl: getBaseUrl(),
-	endpoints: WORKER_ENDPOINTS,
 	retryConfig: {
 		retries: 3,
 		backoff: "exponential",
