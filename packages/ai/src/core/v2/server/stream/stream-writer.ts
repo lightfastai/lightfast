@@ -29,6 +29,25 @@ export class StreamWriter {
 	}
 
 	/**
+	 * Write a chunk event to the delta stream
+	 */
+	async writeChunk(sessionId: string, content: string): Promise<void> {
+		const streamKey = getDeltaStreamKey(sessionId);
+
+		const message: Record<string, string> = {
+			type: DeltaStreamType.CHUNK,
+			content,
+			timestamp: new Date().toISOString(),
+		};
+
+		// Write to Redis stream
+		await this.redis.xadd(streamKey, "*", message);
+
+		// Publish for real-time notifications
+		await this.redis.publish(streamKey, { type: DeltaStreamType.CHUNK });
+	}
+
+	/**
 	 * Write a completion event to the delta stream
 	 */
 	async writeComplete(sessionId: string): Promise<void> {

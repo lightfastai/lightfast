@@ -1,19 +1,35 @@
 /**
- * Session Writer - Utility for writing session state to Redis
+ * Session Writer - Utility for managing session IDs in Redis
  */
 
 import type { Redis } from "@upstash/redis";
-import type { AgentSessionState } from "../../workers/schemas";
 import { getSessionKey } from "../keys";
 
 export class SessionWriter {
 	constructor(private redis: Redis) {}
 
 	/**
-	 * Write session state to Redis
+	 * Register a session ID in Redis
 	 */
-	async writeSession(sessionId: string, session: AgentSessionState): Promise<void> {
+	async registerSession(sessionId: string): Promise<void> {
 		const sessionKey = getSessionKey(sessionId);
-		await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
+		await this.redis.set(sessionKey, sessionId); // Just store the ID itself
+	}
+
+	/**
+	 * Check if a session exists
+	 */
+	async sessionExists(sessionId: string): Promise<boolean> {
+		const sessionKey = getSessionKey(sessionId);
+		const exists = await this.redis.exists(sessionKey);
+		return exists === 1;
+	}
+
+	/**
+	 * Delete a session
+	 */
+	async deleteSession(sessionId: string): Promise<void> {
+		const sessionKey = getSessionKey(sessionId);
+		await this.redis.del(sessionKey);
 	}
 }

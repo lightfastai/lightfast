@@ -14,7 +14,7 @@ import type {
 } from "../../events/schemas";
 import { ToolResultHandler } from "../../workers/tool-result-handler";
 import { AgentCompleteHandler } from "../handlers/agent-complete-handler";
-import { StreamInitHandler } from "../handlers/stream-init-handler";
+import { handleStreamInit } from "../handlers/stream-init-handler";
 import { StreamSSEHandler } from "../handlers/stream-sse-handler";
 import { StreamStatusHandler } from "../handlers/stream-status-handler";
 import { ToolHandler } from "../handlers/tool-handler";
@@ -91,7 +91,6 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 	const { agent, redis, eventEmitter, baseUrl } = options;
 
 	// Initialize handlers
-	const streamInitHandler = new StreamInitHandler<TRuntimeContext>(agent, redis, eventEmitter, baseUrl);
 	const streamStatusHandler = new StreamStatusHandler(redis);
 	const streamSSEHandler = new StreamSSEHandler(redis);
 	const toolHandler = new ToolHandler<TRuntimeContext>(agent, redis, eventEmitter);
@@ -110,7 +109,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				if (pathSegments[1] === "init") {
 					// Handle POST /stream/init
 					if (request.method === "POST") {
-						return streamInitHandler.handleStreamInit(request);
+						return handleStreamInit(request, { agent, redis, eventEmitter, baseUrl });
 					} else if (request.method === "GET") {
 						return streamStatusHandler.handleStreamStatus(request);
 					}

@@ -6,169 +6,106 @@ import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import type { EventEmitter } from "../../events/emitter";
 import type { AgentLoopInitEvent, Message } from "../../events/schemas";
-import { getDeltaStreamKey, getSessionKey } from "../keys";
+import { StreamWriter } from "../stream/stream-writer";
 import { StreamGenerator } from "../stream-generator";
-import { DeltaStreamType } from "../stream/types";
+import { SessionWriter } from "../writers/session-writer";
 
 export interface StreamInitRequestBody {
 	prompt: string;
 	sessionId?: string;
-	systemPrompt?: string;
-	temperature?: number;
-	maxIterations?: number;
-	tools?: string[];
-	metadata?: Record<string, any>;
 }
 
-export class StreamInitHandler<TRuntimeContext = unknown> {
-	private streamGenerator: StreamGenerator;
+export interface StreamInitDependencies<TRuntimeContext = unknown> {
+	agent: Agent<TRuntimeContext>;
+	redis: Redis;
+	eventEmitter: EventEmitter;
+	baseUrl: string;
+}
 
-	constructor(
-		private agent: Agent<TRuntimeContext>,
-		private redis: Redis,
-		private eventEmitter: EventEmitter,
-		private baseUrl: string,
-	) {
-		this.streamGenerator = new StreamGenerator(redis);
-	}
-
-	/**
-	 * Handle stream initialization request
-	 */
-	async handleStreamInit(request: Request): Promise<Response> {
-		const body = (await request.json()) as StreamInitRequestBody;
-		const {
-			prompt,
-			sessionId: providedSessionId,
-			systemPrompt = this.agent.getSystemPrompt(),
-			temperature = this.agent.getTemperature() || 0.7,
-			maxIterations = this.agent.getMaxIterations() || 10,
-			tools = this.agent.getAvailableTools(),
-			metadata = {},
-		} = body;
-
-		// Validate prompt
-		if (!prompt || !prompt.trim()) {
-			return Response.json({ error: "Prompt is required" }, { status: 400 });
-		}
-
-		// Convert prompt to messages format
-		const messages = [{ role: "user", content: prompt.trim() }] as Message[];
-
-		// Use provided session ID or generate new one
-		const sessionId = providedSessionId || this.streamGenerator.createSessionId();
-
-		// Check if stream already exists
-		const exists = await this.streamGenerator.streamExists(sessionId);
-		if (exists) {
-			return Response.json({ error: "Session already exists", sessionId }, { status: 409 });
-		}
-
-		// Initialize session and stream
-		await this.initializeSession(sessionId, messages, systemPrompt, temperature, maxIterations, tools, metadata);
-		await this.createInitialStream(sessionId);
-
-		// Start agent loop in background
-		const agentLoopEvent = this.createAgentLoopEvent(
-			sessionId,
-			messages,
-			systemPrompt,
-			temperature,
-			maxIterations,
-			tools,
-			metadata,
-		);
-		this.startAgentLoop(agentLoopEvent, sessionId);
-
-		// Return session info immediately
-		return Response.json({
-			sessionId,
-			streamUrl: `${this.baseUrl}/stream/${sessionId}`,
-			status: "initialized",
-			message: "Agent loop initialized. Connect to the stream URL to receive updates.",
-		});
-	}
-
-	/**
-	 * Initialize session state in Redis
-	 */
-	private async initializeSession(
-		sessionId: string,
-		messages: Message[],
-		systemPrompt: string,
-		temperature: number,
-		maxIterations: number,
-		tools: string[],
-		metadata: Record<string, any>,
-	): Promise<void> {
-		const sessionKey = getSessionKey(sessionId);
-		const sessionData = {
-			sessionId,
+/**
+ * Create agent loop init event
+ */
+function createAgentLoopEvent<TRuntimeContext>(
+	sessionId: string,
+	messages: Message[],
+	agent: Agent<TRuntimeContext>,
+): AgentLoopInitEvent {
+	return {
+		id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+		type: "agent.loop.init",
+		sessionId,
+		timestamp: new Date().toISOString(),
+		version: "1.0",
+		data: {
 			messages: messages as Message[],
-			systemPrompt,
-			temperature,
-			maxIterations,
-			tools,
-			metadata,
-			createdAt: new Date().toISOString(),
-			status: "initializing",
-			iteration: 0,
-			updatedAt: new Date().toISOString(),
-		};
+			systemPrompt: agent.getSystemPrompt(),
+			temperature: agent.getTemperature() || 0.7,
+			maxIterations: agent.getMaxIterations() || 10,
+			tools: agent.getAvailableTools(),
+			metadata: {},
+		},
+	};
+}
 
-		// Store session data (no expiration)
-		await this.redis.set(sessionKey, JSON.stringify(sessionData));
+/**
+ * Start agent loop in background
+ */
+function startAgentLoop<TRuntimeContext>(
+	agent: Agent<TRuntimeContext>,
+	agentLoopEvent: AgentLoopInitEvent,
+	sessionId: string,
+): void {
+	// Run the first agent loop immediately in the background
+	// Don't await this - let it stream while we return the response
+	agent.processEvent(agentLoopEvent).catch((error) => {
+		console.error(`[Stream Init] First agent loop failed for session ${sessionId}:`, error);
+	});
+}
+
+/**
+ * Handle stream initialization request
+ */
+export async function handleStreamInit<TRuntimeContext = unknown>(
+	request: Request,
+	deps: StreamInitDependencies<TRuntimeContext>,
+): Promise<Response> {
+	const { agent, redis, eventEmitter, baseUrl } = deps;
+	const streamGenerator = new StreamGenerator(redis);
+	const streamWriter = new StreamWriter(redis);
+	const sessionWriter = new SessionWriter(redis);
+
+	const body = (await request.json()) as StreamInitRequestBody;
+	const { prompt, sessionId: providedSessionId } = body;
+
+	// Validate prompt
+	if (!prompt || !prompt.trim()) {
+		return Response.json({ error: "Prompt is required" }, { status: 400 });
 	}
 
-	/**
-	 * Create initial stream entry
-	 */
-	private async createInitialStream(sessionId: string): Promise<void> {
-		const streamKey = getDeltaStreamKey(sessionId);
-		// Create stream with initialization marker
-		await this.redis.xadd(streamKey, "*", {
-			type: DeltaStreamType.INIT,
-			timestamp: new Date().toISOString(),
-		});
+	// Convert prompt to messages format
+	const messages = [{ role: "user", content: prompt.trim() }] as Message[];
+
+	// Use provided session ID or generate new one
+	const sessionId = providedSessionId || streamGenerator.createSessionId();
+
+	// Check if session already exists using SessionWriter
+	const exists = await sessionWriter.sessionExists(sessionId);
+	if (exists) {
+		return Response.json({ error: "Session already exists", sessionId }, { status: 409 });
 	}
 
-	/**
-	 * Create agent loop init event
-	 */
-	private createAgentLoopEvent(
-		sessionId: string,
-		messages: Message[],
-		systemPrompt: string,
-		temperature: number,
-		maxIterations: number,
-		tools: string[],
-		metadata: Record<string, any>,
-	): AgentLoopInitEvent {
-		return {
-			id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-			type: "agent.loop.init",
-			sessionId,
-			timestamp: new Date().toISOString(),
-			version: "1.0",
-			data: {
-				messages: messages as Message[],
-				systemPrompt,
-				temperature,
-				maxIterations,
-				tools,
-				metadata,
-			},
-		};
-	}
+	// Register the session
+	await sessionWriter.registerSession(sessionId);
 
-	/**
-	 * Start agent loop in background
-	 */
-	private startAgentLoop(agentLoopEvent: AgentLoopInitEvent, sessionId: string): void {
-		// Run the first agent loop immediately in the background
-		// Don't await this - let it stream while we return the response
-		this.agent.processEvent(agentLoopEvent).catch((error) => {
-			console.error(`[Stream Init] First agent loop failed for session ${sessionId}:`, error);
-		});
-	}
+	// Start agent loop in background
+	const agentLoopEvent = createAgentLoopEvent(sessionId, messages, agent);
+	startAgentLoop(agent, agentLoopEvent, sessionId);
+
+	// Return session info immediately
+	return Response.json({
+		sessionId,
+		streamUrl: `${baseUrl}/stream/${sessionId}`,
+		status: "initialized",
+		message: "Agent loop initialized. Connect to the stream URL to receive updates.",
+	});
 }
