@@ -26,13 +26,33 @@ export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	baseUrl: string; // Base URL for generating stream URLs (e.g., "/api/v2")
 }
 
-export interface WorkerRequestBody {
-	type: "agent.loop.init" | "agent.tool.call" | "tool.execution.complete" | "agent.loop.complete";
-	event: AgentLoopInitEvent | AgentToolCallEvent | ToolExecutionCompleteEvent | AgentLoopCompleteEvent;
+export interface AgentLoopInitRequestBody {
+	event: AgentLoopInitEvent;
+}
+
+export interface AgentToolCallRequestBody {
+	event: AgentToolCallEvent;
+}
+
+export interface ToolExecutionCompleteRequestBody {
+	event: ToolExecutionCompleteEvent;
+}
+
+export interface AgentLoopCompleteRequestBody {
+	event: AgentLoopCompleteEvent;
 }
 
 /**
  * Unified fetch request handler for v2 agent workers
+ *
+ * Routes:
+ * - POST /stream/init - Initialize a new stream
+ * - GET  /stream/init?sessionId=xxx - Get stream status
+ * - GET  /stream/[sessionId] - Server-Sent Events stream
+ * - POST /workers/agent-loop-init - Initialize agent loop
+ * - POST /workers/agent-tool-call - Execute agent tool
+ * - POST /workers/tool-execution-complete - Handle tool completion
+ * - POST /workers/agent-loop-complete - Handle agent loop completion
  *
  * @example
  * ```typescript
@@ -59,7 +79,8 @@ export interface WorkerRequestBody {
  *   return fetchRequestHandler({
  *     agent: myAgent,
  *     redis,
- *     eventEmitter
+ *     eventEmitter,
+ *     baseUrl: "/api/v2"
  *   });
  * }
  * ```
@@ -99,36 +120,48 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 			}
 
 			// Handle worker endpoints
-			// Parse the request body
-			const body = (await request.json()) as WorkerRequestBody;
-			const { type, event } = body;
+			if (pathSegments[0] === "workers") {
+				const workerAction = pathSegments[1];
 
-			console.log(`[V2 Worker Handler] Processing ${type} event`);
+				switch (workerAction) {
+					case "agent-loop-init": {
+						// Handle POST /workers/agent-loop-init
+						const body = (await request.json()) as AgentLoopInitRequestBody;
+						console.log(`[V2 Worker Handler] Processing agent.loop.init event`);
+						await agent.processEvent(body.event);
+						return Response.json({ success: true });
+					}
 
-			switch (type) {
-				case "agent.loop.init":
-					// Process agent loop init event
-					await agent.processEvent(event as AgentLoopInitEvent);
-					return Response.json({ success: true });
+					case "agent-tool-call": {
+						// Handle POST /workers/agent-tool-call
+						const body = (await request.json()) as AgentToolCallRequestBody;
+						console.log(`[V2 Worker Handler] Processing agent.tool.call event`);
+						return toolHandler.handleToolCall(body.event);
+					}
 
-				case "agent.tool.call":
-					// Handle tool execution
-					return toolHandler.handleToolCall(event as AgentToolCallEvent);
+					case "tool-execution-complete": {
+						// Handle POST /workers/tool-execution-complete
+						const body = (await request.json()) as ToolExecutionCompleteRequestBody;
+						console.log(`[V2 Worker Handler] Processing tool.execution.complete event`);
+						const handler = new ToolResultHandler(redis, eventEmitter);
+						await handler.handleToolComplete(body.event);
+						return Response.json({ success: true });
+					}
 
-				case "tool.execution.complete": {
-					// Handle tool completion
-					const handler = new ToolResultHandler(redis, eventEmitter);
-					await handler.handleToolComplete(event as ToolExecutionCompleteEvent);
-					return Response.json({ success: true });
+					case "agent-loop-complete": {
+						// Handle POST /workers/agent-loop-complete
+						const body = (await request.json()) as AgentLoopCompleteRequestBody;
+						console.log(`[V2 Worker Handler] Processing agent.loop.complete event`);
+						return agentCompleteHandler.handleAgentComplete(body.event);
+					}
+
+					default:
+						return Response.json({ error: `Unknown worker action: ${workerAction}` }, { status: 404 });
 				}
-
-				case "agent.loop.complete":
-					// Handle agent completion
-					return agentCompleteHandler.handleAgentComplete(event as AgentLoopCompleteEvent);
-
-				default:
-					return Response.json({ error: `Unknown event type: ${type}` }, { status: 400 });
 			}
+
+			// If no route matches
+			return Response.json({ error: "Not found" }, { status: 404 });
 		} catch (error) {
 			console.error("[V2 Worker Handler] Error:", error);
 			return Response.json(

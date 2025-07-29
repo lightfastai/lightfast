@@ -178,11 +178,11 @@ export class EventEmitter {
 	 */
 	private getWorkerPath(eventType: string): string {
 		const workerPathMap: Record<string, string> = {
-			[EventType.AGENT_LOOP_INIT]: "agent-loop",
-			[EventType.AGENT_TOOL_CALL]: "tool-executor",
-			[EventType.TOOL_EXECUTION_COMPLETE]: "tool-result-complete",
-			[EventType.TOOL_EXECUTION_FAILED]: "tool-result-failed",
-			[EventType.AGENT_LOOP_COMPLETE]: "agent-complete",
+			[EventType.AGENT_LOOP_INIT]: "agent-loop-init",
+			[EventType.AGENT_TOOL_CALL]: "agent-tool-call",
+			[EventType.TOOL_EXECUTION_COMPLETE]: "tool-execution-complete",
+			[EventType.TOOL_EXECUTION_FAILED]: "tool-execution-failed",
+			[EventType.AGENT_LOOP_COMPLETE]: "agent-loop-complete",
 		};
 
 		return workerPathMap[eventType] || "";
@@ -206,7 +206,7 @@ export class EventEmitter {
 		try {
 			await this.client.publishJSON({
 				url,
-				body: event,
+				body: { event }, // Wrap event in object as expected by handlers
 				retries: this.config.retryConfig?.retries ?? 3,
 				delay: "10s", // Retry after 10 seconds
 				headers: {
