@@ -17,7 +17,7 @@ import type {
 import { ToolResultHandler } from "../../workers/tool-result-handler";
 import { StreamConsumer } from "../stream/consumer";
 import { StreamGenerator } from "../stream-generator";
-import { StreamWriter } from "../stream-writer";
+import { EventWriter, MessageWriter } from "../writers";
 
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
@@ -204,7 +204,8 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				case "agent.loop.complete": {
 					// Handle agent completion
 					const completeEvent = event as AgentLoopCompleteEvent;
-					const streamWriter = new StreamWriter(redis);
+					const eventWriter = new EventWriter(redis);
+					const messageWriter = new MessageWriter(redis);
 
 					// Update session status to completed
 					const sessionKey = `v2:session:${completeEvent.sessionId}`;
@@ -222,7 +223,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 					}
 
 					// Write completion event
-					await streamWriter.writeEvent(completeEvent.sessionId, "event", {
+					await eventWriter.writeEvent(completeEvent.sessionId, "event", {
 						event: "agent.complete",
 						sessionId: completeEvent.sessionId,
 						response: completeEvent.data.finalMessage,
@@ -243,11 +244,11 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 								},
 							],
 						};
-						await streamWriter.writeUIMessage(completeEvent.sessionId, finalMessage);
+						await messageWriter.writeUIMessage(completeEvent.sessionId, finalMessage);
 					}
 
 					// Write metadata completion event
-					await streamWriter.writeMetadataEvent(completeEvent.sessionId, "completed", {
+					await eventWriter.writeMetadataEvent(completeEvent.sessionId, "completed", {
 						sessionId: completeEvent.sessionId,
 					});
 

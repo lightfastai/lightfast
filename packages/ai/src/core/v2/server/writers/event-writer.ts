@@ -1,51 +1,18 @@
 /**
- * Stream Writer - Utility for writing UIMessages and events to Redis streams
- * Used by workers to write agent responses, tool results, and status updates
+ * Event Writer - Utility for writing system events to Redis streams
+ * Used by workers to write status updates, errors, and metadata
  */
 
 import type { Redis } from "@upstash/redis";
-import type { UIMessage } from "ai";
 import {
 	getEventStreamKey,
-	getStreamKey,
-	type RedisUIMessageEntry,
-	type RedisUIMessagePartEntry,
 	type StreamStatus,
 	type SystemEvent,
 	type SystemEventType,
-	type UIMessagePart,
-} from "./types";
+} from "../types";
 
-export class StreamWriter {
+export class EventWriter {
 	constructor(private redis: Redis) {}
-
-	/**
-	 * Write a UIMessage to stream
-	 */
-	async writeUIMessage(sessionId: string, message: UIMessage): Promise<string> {
-		const streamKey = getStreamKey(sessionId);
-
-		const entry: RedisUIMessageEntry = {
-			messageId: message.id,
-			role: message.role,
-			parts: JSON.stringify(message.parts),
-			timestamp: new Date().toISOString(),
-		};
-
-		if (message.metadata) {
-			entry.metadata = JSON.stringify(message.metadata);
-		}
-
-		// Convert to flat fields for Redis
-		const fields: Record<string, string> = {};
-		Object.entries(entry).forEach(([key, value]) => {
-			fields[key] = typeof value === "string" ? value : String(value);
-		});
-
-		// Write to Redis stream
-		const id = await this.redis.xadd(streamKey, "*", fields);
-		return id as string;
-	}
 
 	/**
 	 * Write a system event (not a message)
@@ -112,8 +79,8 @@ export class StreamWriter {
 }
 
 /**
- * Create a stream writer instance
+ * Create an event writer instance
  */
-export function createStreamWriter(redis: Redis): StreamWriter {
-	return new StreamWriter(redis);
+export function createEventWriter(redis: Redis): EventWriter {
+	return new EventWriter(redis);
 }

@@ -12,7 +12,7 @@ import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
 import type { EventEmitter, SessionEventEmitter } from "./events/emitter";
 import type { AgentLoopInitEvent, Message } from "./events/schemas";
-import { createStreamWriter, type StreamWriter } from "./server/stream-writer";
+import { createMessageWriter, type MessageWriter, createEventWriter, type EventWriter } from "./server/writers";
 import { StreamStatus } from "./server/stream/types";
 import {
 	type AgentDecision,
@@ -73,7 +73,8 @@ export class Agent<TRuntimeContext = unknown> {
 	private systemPrompt: string;
 	private maxIterations: number;
 	private experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
-	private streamWriter: StreamWriter;
+	private messageWriter: MessageWriter;
+	private eventWriter: EventWriter;
 	private tools: Map<string, AgentToolDefinition>;
 	private toolFactories?: ToolFactorySet<TRuntimeContext>;
 	private createRuntimeContext?: (params: { sessionId: string; userId?: string }) => TRuntimeContext;
@@ -118,8 +119,9 @@ export class Agent<TRuntimeContext = unknown> {
 		// Store all streamText-compatible properties
 		this.config = streamTextConfig;
 
-		// Initialize other properties
-		this.streamWriter = createStreamWriter(redis);
+		// Initialize writers
+		this.messageWriter = createMessageWriter(redis);
+		this.eventWriter = createEventWriter(redis);
 
 		// Apply worker config defaults
 		this.workerConfig = {
@@ -148,7 +150,7 @@ export class Agent<TRuntimeContext = unknown> {
 			await this.updateSessionStatus(event.sessionId, "processing");
 
 			// Write status event
-			await this.streamWriter.writeEvent(event.sessionId, "event", {
+			await this.eventWriter.writeEvent(event.sessionId, "event", {
 				event: "agent.loop.start",
 				iteration: session.iteration + 1,
 			});
@@ -162,7 +164,7 @@ export class Agent<TRuntimeContext = unknown> {
 			await this.updateSessionStatus(event.sessionId, "error");
 
 			// Write error event
-			await this.streamWriter.writeErrorEvent(
+			await this.eventWriter.writeErrorEvent(
 				event.sessionId,
 				error instanceof Error ? error.message : "Unknown error",
 				"AGENT_LOOP_ERROR",
@@ -434,7 +436,7 @@ Think through this step by step first, then provide your JSON decision.`;
 					...thinkingMessage,
 					parts: thinkingMessage.parts.map((part) => (part.type === "text" ? { ...part, type: "reasoning" } : part)),
 				};
-				await this.streamWriter.writeUIMessage(session.sessionId, reasoningMessage);
+				await this.messageWriter.writeUIMessage(session.sessionId, reasoningMessage);
 			}
 		}
 
@@ -547,7 +549,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 				},
 			],
 		};
-		await this.streamWriter.writeUIMessage(session.sessionId, toolMessage);
+		await this.messageWriter.writeUIMessage(session.sessionId, toolMessage);
 
 		// Stream tool call in progress
 		await this.streamToolProgress(session.sessionId, decision.toolCall.tool, "executing", {
