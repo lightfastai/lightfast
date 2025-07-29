@@ -100,7 +100,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				} else if (pathSegments[1]) {
 					// Handle GET /stream/[sessionId]
 					const sessionId = pathSegments[1];
-					return handleStreamSSE(sessionId, streamConsumer);
+					return await handleStreamSSE(sessionId, streamConsumer, redis);
 				}
 			}
 
@@ -395,12 +395,21 @@ async function handleStreamStatus(request: Request, redis: Redis, streamGenerato
 }
 
 // Helper function to handle SSE stream
-function handleStreamSSE(sessionId: string, streamConsumer: StreamConsumer): Response {
+async function handleStreamSSE(sessionId: string, streamConsumer: StreamConsumer, redis: Redis): Promise<Response> {
 	if (!sessionId) {
 		return new Response("Session ID is required", { status: 400 });
 	}
 
 	try {
+		// Check if stream exists before creating SSE stream
+		const streamKey = `v2:stream:${sessionId}`;
+		const keyExists = await redis.exists(streamKey);
+		
+		if (!keyExists) {
+			// Return 412 to indicate stream not ready (client will retry)
+			return new Response("Stream not ready", { status: 412 });
+		}
+
 		// Create SSE stream
 		const stream = streamConsumer.createDeltaStream(sessionId);
 

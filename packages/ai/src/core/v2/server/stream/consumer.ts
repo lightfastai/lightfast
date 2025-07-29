@@ -6,12 +6,7 @@
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
-import {
-	getStreamKey,
-	isUIMessageEntry,
-	parseUIMessageEntry,
-	type StreamConfig,
-} from "../types";
+import { getStreamKey, isUIMessageEntry, parseUIMessageEntry, type StreamConfig } from "../types";
 
 // Delta stream message format (matches Agent delta streaming)
 interface DeltaStreamMessage {
@@ -47,7 +42,7 @@ const json = (data: Record<string, unknown>): Uint8Array => {
 // Validate delta stream message
 function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessage | null {
 	if (!rawObj.type || !rawObj.timestamp) return null;
-	
+
 	const validTypes = ["chunk", "metadata", "event", "error"];
 	if (!validTypes.includes(rawObj.type)) return null;
 
@@ -78,18 +73,14 @@ export class StreamConsumer {
 	 * Simple, readable, and efficient
 	 */
 	createDeltaStream(sessionId: string): ReadableStream<Uint8Array> {
-		const streamKey = `llm:stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		const groupName = `sse-group-${nanoid()}`;
 		const redis = this.redis;
 
 		return new ReadableStream({
 			async start(controller) {
-				// Check if stream exists
-				const keyExists = await redis.exists(streamKey);
-				if (!keyExists) {
-					controller.error(new Error("Stream does not exist"));
-					return;
-				}
+				// Note: Stream existence is now checked at the fetch handler level
+				// This assumes the stream exists when we reach this point
 
 				// Create consumer group
 				try {
@@ -104,12 +95,7 @@ export class StreamConsumer {
 
 				// Read stream messages using consumer group
 				const readStreamMessages = async () => {
-					const chunks = await redis.xreadgroup(
-						groupName,
-						"consumer-1",
-						streamKey,
-						">"
-					) as StreamData[];
+					const chunks = (await redis.xreadgroup(groupName, "consumer-1", streamKey, ">")) as StreamData[];
 
 					if (chunks && chunks.length > 0) {
 						const streamData = chunks[0];
@@ -124,11 +110,16 @@ export class StreamConsumer {
 										controller.enqueue(json(validatedMessage as unknown as Record<string, unknown>));
 
 										// Check for completion
-										if (validatedMessage.type === "metadata" && 
-											validatedMessage.metadata && 
-											JSON.parse(validatedMessage.metadata).status === "completed") {
-											controller.close();
-											return;
+										console.log(validatedMessage);
+										if (validatedMessage.type === "metadata" && validatedMessage.metadata) {
+											const metadata =
+												typeof validatedMessage.metadata === "string"
+													? JSON.parse(validatedMessage.metadata)
+													: validatedMessage.metadata;
+											if (metadata.status === "completed") {
+												controller.close();
+												return;
+											}
 										}
 									}
 								}
@@ -169,9 +160,9 @@ export class StreamConsumer {
 		signal: AbortSignal,
 		onMessage: (message: DeltaStreamMessage) => Promise<void>,
 		onError?: (error: Error) => Promise<void>,
-		onComplete?: () => Promise<void>
+		onComplete?: () => Promise<void>,
 	): Promise<void> {
-		const streamKey = `llm:stream:${sessionId}`;
+		const streamKey = `v2:stream:${sessionId}`;
 		const groupName = `consumer-group-${nanoid()}`;
 
 		try {
@@ -194,12 +185,9 @@ export class StreamConsumer {
 
 			// Read stream messages
 			const readStreamMessages = async () => {
-				const chunks = await this.redis.xreadgroup(
-					groupName,
-					`consumer-${nanoid()}`,
-					streamKey,
-					">"
-				) as StreamData[] | null;
+				const chunks = (await this.redis.xreadgroup(groupName, `consumer-${nanoid()}`, streamKey, ">")) as
+					| StreamData[]
+					| null;
 
 				if (chunks && chunks.length > 0) {
 					const streamData = chunks[0];
@@ -216,13 +204,17 @@ export class StreamConsumer {
 									await onMessage(validatedMessage);
 
 									// Check for completion
-									if (validatedMessage.type === "metadata" && 
-										validatedMessage.metadata && 
-										JSON.parse(validatedMessage.metadata).status === "completed") {
-										if (onComplete) {
-											await onComplete();
+									if (validatedMessage.type === "metadata" && validatedMessage.metadata) {
+										const metadata =
+											typeof validatedMessage.metadata === "string"
+												? JSON.parse(validatedMessage.metadata)
+												: validatedMessage.metadata;
+										if (metadata.status === "completed") {
+											if (onComplete) {
+												await onComplete();
+											}
+											return;
 										}
-										return;
 									}
 								}
 							}
@@ -250,12 +242,11 @@ export class StreamConsumer {
 
 			// Keep subscription alive until aborted
 			while (!signal.aborted) {
-				await new Promise(resolve => setTimeout(resolve, 1000));
+				await new Promise((resolve) => setTimeout(resolve, 1000));
 			}
 
 			// Cleanup
 			subscription.unsubscribe();
-
 		} catch (error) {
 			if (onError) {
 				await onError(error as Error);
@@ -263,35 +254,4 @@ export class StreamConsumer {
 			throw error;
 		}
 	}
-
-
-	/**
-	 * Read UIMessages from a stream (one-shot, no streaming)
-	 */
-	async readUIMessages(sessionId: string, fromId = "-", count = 100): Promise<UIMessage[]> {
-		const streamKey = getStreamKey(sessionId, this.config.streamPrefix);
-		const messages: UIMessage[] = [];
-
-		try {
-			const response = (await this.redis.xrange(streamKey, fromId, "+", count)) as unknown as any;
-
-			// Upstash returns an object with entry IDs as keys
-			const entries = response && typeof response === "object" ? Object.entries(response) : [];
-
-			for (const [_, fields] of entries) {
-				const fieldsObj = fields as Record<string, string>;
-				if (isUIMessageEntry(fieldsObj)) {
-					const message = parseUIMessageEntry(fieldsObj);
-					if (message) {
-						messages.push(message);
-					}
-				}
-			}
-		} catch (error) {
-			console.error("Error reading messages:", error);
-		}
-
-		return messages;
-	}
-
 }

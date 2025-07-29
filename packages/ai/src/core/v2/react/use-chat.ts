@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import { 
+import {
 	useDeltaStream,
 	type MessageType,
 	type StreamStatus,
@@ -10,7 +10,7 @@ import {
 	type EventMessage,
 	type ErrorMessage,
 	type StreamMessage,
-	validateMessage
+	validateMessage,
 } from "./use-delta-stream";
 
 // Re-export types for convenience
@@ -22,7 +22,7 @@ export {
 	type EventMessage,
 	type ErrorMessage,
 	type StreamMessage,
-	validateMessage
+	validateMessage,
 };
 
 export interface UseChatOptions {
@@ -41,13 +41,13 @@ export interface UseChatReturn {
 	response: string;
 	chunkCount: number;
 	error: Error | null;
-	
+
 	// Actions
 	sendMessage: (prompt: string) => void;
 	reset: () => void;
 	regenerateSessionId: () => string;
 	clearSessionId: () => void;
-	
+
 	// Refs for DOM manipulation
 	responseRef: React.RefObject<HTMLDivElement>;
 }
@@ -116,34 +116,36 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 	}, []);
 
 	// Send message function
-	const sendMessage = useCallback(async (prompt: string) => {
-		if (!prompt.trim() || status === "loading" || status === "streaming") return;
-		
-		try {
-			setStatus("loading");
-			setResponse("");
-			setChunkCount(0);
+	const sendMessage = useCallback(
+		async (prompt: string) => {
+			if (!prompt.trim() || status === "loading" || status === "streaming") return;
 
-			const newSessionId = regenerateSessionId();
+			try {
+				setStatus("loading");
+				setResponse("");
+				setChunkCount(0);
 
-			// Start the stream
-			await fetch(apiEndpoint, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ prompt, sessionId: newSessionId }),
-			});
+				const newSessionId = regenerateSessionId();
 
-			// Connect to the delta stream
-			await deltaStream.connect(newSessionId);
+				// Start the stream
+				await fetch(apiEndpoint, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ prompt, sessionId: newSessionId }),
+				});
 
-		} catch (err) {
-			const error = err instanceof Error ? err : new Error("Failed to send message");
-			setStatus("error");
-			onError?.(error);
-		}
-	}, [apiEndpoint, regenerateSessionId, deltaStream, status, onError]);
+				// Connect to the delta stream
+				await deltaStream.connect(newSessionId);
+			} catch (err) {
+				const error = err instanceof Error ? err : new Error("Failed to send message");
+				setStatus("error");
+				onError?.(error);
+			}
+		},
+		[apiEndpoint, regenerateSessionId, deltaStream, status, onError],
+	);
 
 	// Reset function
 	const reset = useCallback(() => {
@@ -172,3 +174,4 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 		responseRef,
 	};
 }
+
