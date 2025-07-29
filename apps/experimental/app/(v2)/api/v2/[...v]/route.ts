@@ -74,7 +74,6 @@ const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 			middleware: BraintrustMiddleware({ debug: true }),
 		}),
 		temperature: 0.7,
-		maxIterations: 10,
 		providerOptions: {
 			anthropic: {
 				// Enable Claude Code thinking

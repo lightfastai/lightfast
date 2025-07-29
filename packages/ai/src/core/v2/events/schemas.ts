@@ -35,7 +35,6 @@ export const AgentLoopInitEventSchema = BaseEventSchema.extend({
 		messages: z.array(MessageSchema).describe("Initial conversation messages"),
 		systemPrompt: z.string().optional().describe("System prompt for the agent"),
 		temperature: z.number().min(0).max(2).default(0.7).describe("LLM temperature"),
-		maxIterations: z.number().min(1).max(50).default(10).describe("Max loop iterations"),
 		tools: z.array(z.string()).optional().describe("Available tool names"),
 		metadata: z.record(z.any()).optional().describe("Additional metadata"),
 	}),

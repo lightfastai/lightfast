@@ -100,7 +100,6 @@ eventRoutes.post("/test/:type", async (c) => {
 				await eventEmitter.emitAgentLoopInit(sessionId, {
 					messages: [{ role: "user", content: "Test message" }],
 					temperature: 0.7,
-					maxIterations: 5,
 				});
 				break;
 

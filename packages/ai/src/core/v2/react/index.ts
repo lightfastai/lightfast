@@ -3,7 +3,7 @@
  */
 
 export type { UseChatOptions, UseChatReturn } from "./use-chat";
-export { DeltaStreamType, type DeltaStreamMessage, useChat, validateMessage } from "./use-chat";
+export { type DeltaStreamMessage, DeltaStreamType, useChat, validateMessage } from "./use-chat";
 
 export type {
 	UseDeltaStreamOptions,

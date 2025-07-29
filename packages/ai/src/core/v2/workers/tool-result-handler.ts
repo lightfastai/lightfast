@@ -4,10 +4,11 @@
  */
 
 import type { Redis } from "@upstash/redis";
+import type { UIMessage } from "ai";
 import type { EventEmitter, SessionEventEmitter } from "../events/emitter";
-import type { ToolExecutionCompleteEvent, ToolExecutionFailedEvent } from "../events/schemas";
-import { getMessageKey, getSessionKey } from "../server/keys";
-import type { AgentSessionState } from "./schemas";
+import type { Message, ToolExecutionCompleteEvent, ToolExecutionFailedEvent } from "../events/schemas";
+import { MessageReader } from "../server/readers/message-reader";
+import { MessageWriter } from "../server/writers/message-writer";
 
 export class ToolResultHandler {
 	constructor(
@@ -20,40 +21,53 @@ export class ToolResultHandler {
 	 */
 	async handleToolComplete(event: ToolExecutionCompleteEvent): Promise<void> {
 		const sessionEmitter = this.eventEmitter.forSession(event.sessionId);
+		const messageReader = new MessageReader(this.redis);
+		const messageWriter = new MessageWriter(this.redis);
 
 		try {
-			// Load session
-			const sessionKey = getSessionKey(event.sessionId);
-			const sessionData = await this.redis.get(sessionKey);
-			if (!sessionData) {
-				throw new Error(`Session ${event.sessionId} not found`);
-			}
+			// Get existing messages
+			const uiMessages = await messageReader.getMessages(event.sessionId);
 
-			const session = (typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData) as AgentSessionState;
+			// Convert UIMessages to Messages format
+			const messages: Message[] = uiMessages.map((msg) => {
+				const metadata = msg.metadata as any;
+				return {
+					role: msg.role,
+					content: msg.parts.find((p) => p.type === "text")?.text || "",
+					...(metadata?.toolCallId && { toolCallId: metadata.toolCallId }),
+				};
+			});
 
 			// Add tool result to messages
-			session.messages.push({
+			const toolResultMessage: Message = {
 				role: "tool",
 				content: JSON.stringify(event.data.result),
 				toolCallId: event.data.toolCallId,
-				toolName: event.data.tool,
-			});
+			};
+			messages.push(toolResultMessage);
 
-			// Update session
-			session.updatedAt = new Date().toISOString();
-			await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
-
-			// Note: Delta stream no longer handles event messages - removed event emission
+			// Write tool result as UIMessage
+			const toolResultUIMessage: UIMessage = {
+				id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+				role: "assistant",
+				parts: [
+					{
+						type: "text",
+						text: `Tool result: ${JSON.stringify(event.data.result)}`,
+					},
+				],
+				metadata: {
+					toolCallId: event.data.toolCallId,
+					toolName: event.data.tool,
+				},
+			};
+			await messageWriter.writeUIMessage(event.sessionId, toolResultUIMessage);
 
 			// Emit agent loop init event to continue processing
 			await sessionEmitter.emitAgentLoopInit({
-				messages: session.messages,
-				systemPrompt: session.systemPrompt,
-				temperature: session.temperature,
-				maxIterations: session.maxIterations,
-				tools: session.tools,
+				messages,
+				temperature: 0.7, // Default temperature
 				metadata: {
-					...session.metadata,
 					continuedFromTool: event.data.tool,
 				},
 			});
@@ -68,40 +82,54 @@ export class ToolResultHandler {
 	 */
 	async handleToolFailed(event: ToolExecutionFailedEvent): Promise<void> {
 		const sessionEmitter = this.eventEmitter.forSession(event.sessionId);
+		const messageReader = new MessageReader(this.redis);
+		const messageWriter = new MessageWriter(this.redis);
 
 		try {
-			// Load session
-			const sessionKey = getSessionKey(event.sessionId);
-			const sessionData = await this.redis.get(sessionKey);
-			if (!sessionData) {
-				throw new Error(`Session ${event.sessionId} not found`);
-			}
+			// Get existing messages
+			const uiMessages = await messageReader.getMessages(event.sessionId);
 
-			const session = (typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData) as AgentSessionState;
+			// Convert UIMessages to Messages format
+			const messages: Message[] = uiMessages.map((msg) => {
+				const metadata = msg.metadata as any;
+				return {
+					role: msg.role,
+					content: msg.parts.find((p) => p.type === "text")?.text || "",
+					...(metadata?.toolCallId && { toolCallId: metadata.toolCallId }),
+				};
+			});
 
 			// Add error message
-			session.messages.push({
+			const errorMessage: Message = {
 				role: "tool",
 				content: `Error: ${event.data.error}`,
 				toolCallId: event.data.toolCallId,
-				toolName: event.data.tool,
-			});
+			};
+			messages.push(errorMessage);
 
-			// Update session
-			session.updatedAt = new Date().toISOString();
-			await this.redis.set(sessionKey, JSON.stringify(session)); // No expiration
-
-			// Note: Delta stream no longer handles error messages - removed error emission
+			// Write error as UIMessage
+			const errorUIMessage: UIMessage = {
+				id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+				role: "assistant",
+				parts: [
+					{
+						type: "text",
+						text: `Tool error: ${event.data.error}`,
+					},
+				],
+				metadata: {
+					toolCallId: event.data.toolCallId,
+					toolName: event.data.tool,
+					isError: true,
+				},
+			};
+			await messageWriter.writeUIMessage(event.sessionId, errorUIMessage);
 
 			// Emit agent loop init event to continue processing with error context
 			await sessionEmitter.emitAgentLoopInit({
-				messages: session.messages,
-				systemPrompt: session.systemPrompt,
-				temperature: session.temperature,
-				maxIterations: session.maxIterations,
-				tools: session.tools,
+				messages,
+				temperature: 0.7, // Default temperature
 				metadata: {
-					...session.metadata,
 					toolError: {
 						tool: event.data.tool,
 						error: event.data.error,

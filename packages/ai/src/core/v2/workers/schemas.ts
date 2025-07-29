@@ -33,32 +33,6 @@ export const ToolDefinitionSchema = z.object({
 export type ToolDefinition = z.infer<typeof ToolDefinitionSchema>;
 
 /**
- * Schema for agent session state
- */
-export const AgentSessionStateSchema = z.object({
-	sessionId: z.string(),
-	messages: z.array(
-		z.object({
-			role: z.enum(["system", "user", "assistant", "tool"]),
-			content: z.string(),
-			toolCallId: z.string().optional(),
-			toolName: z.string().optional(),
-		}),
-	),
-	status: z.enum(["initializing", "processing", "waiting_for_tool", "completed", "error"]),
-	iteration: z.number().default(0),
-	maxIterations: z.number().default(10),
-	temperature: z.number().default(0.7),
-	tools: z.array(z.string()).optional(),
-	systemPrompt: z.string().optional(),
-	metadata: z.record(z.any()).optional(),
-	createdAt: z.string(),
-	updatedAt: z.string().optional(),
-});
-
-export type AgentSessionState = z.infer<typeof AgentSessionStateSchema>;
-
-/**
  * Schema for worker configuration
  */
 export const WorkerConfigSchema = z.object({

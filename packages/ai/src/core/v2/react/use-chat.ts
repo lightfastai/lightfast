@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DeltaStreamType, type DeltaStreamMessage } from "../server/stream/types";
+import { type DeltaStreamMessage, DeltaStreamType } from "../server/stream/types";
 import { useDeltaStream, validateMessage } from "./use-delta-stream";
 
 // Re-export types for convenience

@@ -98,7 +98,6 @@ testRoutes.post("/:scenario", async (c) => {
 			messages: scenario.messages,
 			tools: scenario.tools,
 			temperature: 0.7,
-			maxIterations: 10,
 		});
 
 		// For local testing, directly call worker endpoints

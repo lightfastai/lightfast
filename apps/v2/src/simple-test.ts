@@ -39,7 +39,6 @@ async function testEventDrivenArchitecture() {
 		await eventEmitter.emitAgentLoopInit(sessionId, {
 			messages: [{ role: "user", content: "What is 2 + 2?" }],
 			temperature: 0.7,
-			maxIterations: 5,
 		});
 		console.log("✅ Event emitted successfully");
 

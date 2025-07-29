@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { DeltaStreamType, type DeltaStreamMessage } from "../server/stream/types";
+import { type DeltaStreamMessage, DeltaStreamType } from "../server/stream/types";
 
 export function validateMessage(data: any): DeltaStreamMessage | null {
 	if (!data || typeof data !== "object" || !data.type || !data.timestamp) {

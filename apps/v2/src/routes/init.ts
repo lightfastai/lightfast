@@ -77,7 +77,6 @@ initRoutes.post("/", async (c) => {
 			messages: params.messages as Message[],
 			systemPrompt: params.systemPrompt,
 			temperature: params.temperature,
-			maxIterations: params.maxIterations,
 			tools: params.tools,
 			metadata: params.metadata,
 		});

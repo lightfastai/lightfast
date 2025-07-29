@@ -40,7 +40,6 @@ function createAgentLoopEvent<TRuntimeContext>(
 			messages: messages as Message[],
 			systemPrompt: agent.getSystemPrompt(),
 			temperature: agent.getTemperature() || 0.7,
-			maxIterations: agent.getMaxIterations() || 10,
 			tools: agent.getAvailableTools(),
 			metadata: {},
 		},

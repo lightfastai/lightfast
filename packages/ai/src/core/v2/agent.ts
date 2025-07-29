@@ -17,13 +17,7 @@ import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
 import { EventWriter } from "./server/writers/event-writer";
 import { MessageWriter } from "./server/writers/message-writer";
-import {
-	type AgentDecision,
-	AgentDecisionSchema,
-	type AgentSessionState,
-	AgentSessionStateSchema,
-	type WorkerConfig,
-} from "./workers/schemas";
+import { type AgentDecision, AgentDecisionSchema, type WorkerConfig } from "./workers/schemas";
 
 // Legacy v2 tool definition (for backward compatibility)
 export interface AgentToolDefinition {
@@ -66,7 +60,6 @@ export interface AgentOptions<TRuntimeContext = unknown> extends AgentConfig {
 	tools?: AgentToolDefinition[] | ToolFactorySet<TRuntimeContext>;
 	// Function to create runtime context from session
 	createRuntimeContext?: (params: { sessionId: string; userId?: string }) => TRuntimeContext;
-	maxIterations?: number; // Agent-specific, not from streamText
 	// Allow passing commonly used streamText options directly
 	experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
 }
@@ -74,7 +67,6 @@ export interface AgentOptions<TRuntimeContext = unknown> extends AgentConfig {
 export class Agent<TRuntimeContext = unknown> {
 	public readonly config: AgentConfig;
 	private systemPrompt: string;
-	private maxIterations: number;
 	private experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
 	private messageWriter: MessageWriter;
 	private eventWriter: EventWriter;
@@ -91,18 +83,10 @@ export class Agent<TRuntimeContext = unknown> {
 		workerConfig: Partial<WorkerConfig> = {},
 	) {
 		// Destructure agent-specific properties from streamText config
-		const {
-			systemPrompt,
-			tools,
-			createRuntimeContext,
-			maxIterations = 10,
-			experimental_transform,
-			...streamTextConfig
-		} = options;
+		const { systemPrompt, tools, createRuntimeContext, experimental_transform, ...streamTextConfig } = options;
 
 		// Store agent-specific properties
 		this.systemPrompt = systemPrompt;
-		this.maxIterations = maxIterations;
 		this.experimental_transform = experimental_transform;
 		this.createRuntimeContext = createRuntimeContext;
 
@@ -145,29 +129,14 @@ export class Agent<TRuntimeContext = unknown> {
 		const sessionEmitter = this.eventEmitter.forSession(event.sessionId);
 
 		try {
-			// Create session state from event data
-			const session: AgentSessionState = {
-				sessionId: event.sessionId,
-				messages: event.data.messages,
-				status: "processing",
-				iteration: 0,
-				maxIterations: event.data.maxIterations,
-				temperature: event.data.temperature,
-				tools: event.data.tools,
-				systemPrompt: event.data.systemPrompt,
-				metadata: event.data.metadata,
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			};
-
 			// Write status event
 			await this.eventWriter.writeEvent(event.sessionId, "event", {
 				event: "agent.loop.start",
-				iteration: session.iteration + 1,
+				iteration: 1,
 			});
 
-			// Process the agent loop
-			await this.runAgentLoop(session, sessionEmitter);
+			// Process the agent loop with event data
+			await this.runAgentLoop(event, sessionEmitter);
 		} catch (error) {
 			console.error(`[Agent ${this.config.name}] Error processing event ${event.id}:`, error);
 
@@ -298,57 +267,35 @@ export class Agent<TRuntimeContext = unknown> {
 	}
 
 	/**
-	 * Get max iterations
-	 */
-	getMaxIterations(): number {
-		return this.maxIterations;
-	}
-
-	/**
 	 * Run the main agent loop
 	 */
-	private async runAgentLoop(session: AgentSessionState, sessionEmitter: SessionEventEmitter): Promise<void> {
+	private async runAgentLoop(event: AgentLoopInitEvent, sessionEmitter: SessionEventEmitter): Promise<void> {
 		const startTime = Date.now();
-
-		// Check iteration limit
-		const maxIterations = this.maxIterations || session.maxIterations;
-		if (session.iteration >= maxIterations) {
-			// Max iterations reached
-			const finalMessage =
-				"Maximum iterations reached. Please start a new conversation if you need further assistance.";
-
-			await sessionEmitter.emitAgentLoopComplete({
-				finalMessage,
-				iterations: session.iteration,
-				toolsUsed: this.extractUsedTools(session.messages),
-				duration: Date.now() - startTime,
-			});
-
-			// Write completion to delta stream
-			await this.streamWriter.writeComplete(session.sessionId);
-			return;
-		}
+		const { sessionId, data } = event;
+		const messages = [...data.messages]; // Create mutable copy
 
 		// Make a decision using streamText for immediate feedback
-		const { decision, chunkCount, fullContent } = await this.makeDecision(session, sessionEmitter);
-
-		// Update iteration count locally
-		session.iteration += 1;
+		const { decision, chunkCount, fullContent } = await this.makeDecision(
+			sessionId,
+			messages,
+			data.temperature,
+			sessionEmitter,
+		);
 
 		// Handle the decision - only process tool calls
 		if (decision.action === "tool_call") {
-			await this.handleToolCall(session, decision, sessionEmitter);
+			await this.handleToolCall(sessionId, messages, decision, sessionEmitter);
 		} else {
 			// For non-tool actions (complete), signal completion and finish
 			await sessionEmitter.emitAgentLoopComplete({
 				finalMessage: "Agent loop completed",
-				iterations: session.iteration + 1,
-				toolsUsed: this.extractUsedTools(session.messages),
+				iterations: 1,
+				toolsUsed: this.extractUsedTools(messages),
 				duration: Date.now() - startTime,
 			});
 
 			// Write completion to delta stream
-			await this.streamWriter.writeComplete(session.sessionId);
+			await this.streamWriter.writeComplete(sessionId);
 		}
 	}
 
@@ -356,14 +303,16 @@ export class Agent<TRuntimeContext = unknown> {
 	 * Make a decision using streamText for immediate feedback
 	 */
 	private async makeDecision(
-		session: AgentSessionState,
+		sessionId: string,
+		messages: Message[],
+		temperature: number,
 		sessionEmitter: SessionEventEmitter,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
 		// Build the system prompt
-		const systemPrompt = this.buildSystemPrompt(session);
+		const systemPrompt = this.buildSystemPrompt(sessionId);
 
 		// Prepare messages for the model
-		const preparedMessages = this.prepareMessages(session.messages);
+		const preparedMessages = this.prepareMessages(messages);
 
 		let finalDecision: AgentDecision | null = null;
 		let responseMessages: UIMessage[] = [];
@@ -389,7 +338,7 @@ Think through this step by step first, then provide your JSON decision.`;
 			system: structuredPrompt,
 			messages: preparedMessages,
 			// Override with session-specific values if needed
-			temperature: session.temperature ?? this.config.temperature,
+			temperature: temperature ?? this.config.temperature,
 			// Apply experimental transform if provided
 			...(this.experimental_transform && { experimental_transform: this.experimental_transform }),
 			onFinish: async (result) => {
@@ -418,7 +367,7 @@ Think through this step by step first, then provide your JSON decision.`;
 				}
 
 				// Log the decision
-				console.log(`[Agent ${this.config.name}] Decision for session ${session.sessionId}:`, {
+				console.log(`[Agent ${this.config.name}] Decision for session ${sessionId}:`, {
 					action: finalDecision?.action,
 					reasoning: finalDecision?.reasoning,
 					tool: finalDecision?.toolCall?.tool,
@@ -433,7 +382,7 @@ Think through this step by step first, then provide your JSON decision.`;
 				fullContent += chunk;
 				chunkCount++;
 				// Delta streaming - immediate UI feedback
-				await this.streamWriter.writeChunk(session.sessionId, chunk);
+				await this.streamWriter.writeChunk(sessionId, chunk);
 			}
 		}
 
@@ -446,7 +395,7 @@ Think through this step by step first, then provide your JSON decision.`;
 					...thinkingMessage,
 					parts: thinkingMessage.parts.map((part) => (part.type === "text" ? { ...part, type: "reasoning" } : part)),
 				};
-				await this.messageWriter.writeUIMessage(session.sessionId, reasoningMessage);
+				await this.messageWriter.writeUIMessage(sessionId, reasoningMessage);
 			}
 		}
 
@@ -462,18 +411,16 @@ Think through this step by step first, then provide your JSON decision.`;
 	/**
 	 * Build the system prompt for the agent
 	 */
-	private buildSystemPrompt(session: AgentSessionState): string {
+	private buildSystemPrompt(sessionId: string): string {
 		const toolNames = this.getAvailableTools();
 		const toolsSection = toolNames.length
 			? `
 Available Tools:
-${toolNames.map((tool) => `- ${tool}: ${this.getToolDescription(tool, session.sessionId)}`).join("\n")}
+${toolNames.map((tool) => `- ${tool}: ${this.getToolDescription(tool, sessionId)}`).join("\n")}
 
 When you need to use a tool, set action to "tool_call" and provide the tool name and arguments.
 `
 			: "";
-
-		const maxIterations = this.maxIterations || session.maxIterations;
 
 		return `${this.systemPrompt}
 
@@ -484,8 +431,6 @@ You must decide between:
 2. "complete" - No tool is needed, the task is complete
 
 ${toolsSection}
-
-Current iteration: ${session.iteration + 1}/${maxIterations}
 
 Think through your reasoning step by step, then make your decision. Only use tools when necessary to fulfill the user's request.`;
 	}
@@ -515,7 +460,8 @@ Think through your reasoning step by step, then make your decision. Only use too
 	 * Handle tool call decision
 	 */
 	private async handleToolCall(
-		session: AgentSessionState,
+		sessionId: string,
+		messages: Message[],
 		decision: AgentDecision,
 		sessionEmitter: SessionEventEmitter,
 	): Promise<void> {
@@ -528,7 +474,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 		// Tool call starting (no longer emit events)
 
 		// Add assistant message with tool decision to local state
-		session.messages.push({
+		messages.push({
 			role: "assistant",
 			content: `I'll use the ${decision.toolCall.tool} tool to help with your request. ${decision.reasoning}`,
 		});
@@ -550,7 +496,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 				},
 			],
 		};
-		await this.messageWriter.writeUIMessage(session.sessionId, toolMessage);
+		await this.messageWriter.writeUIMessage(sessionId, toolMessage);
 
 		// Tool executing (no longer emit events)
 
@@ -559,12 +505,9 @@ Think through your reasoning step by step, then make your decision. Only use too
 			toolCallId,
 			tool: decision.toolCall.tool,
 			arguments: decision.toolCall.arguments,
-			iteration: session.iteration + 1,
+			iteration: 1,
 			priority: "normal",
 		});
-
-		// Update local session status
-		session.status = "waiting_for_tool";
 	}
 
 	private generateMessageId(): string {

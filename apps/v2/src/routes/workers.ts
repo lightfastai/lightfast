@@ -28,7 +28,6 @@ const agent = new Agent(
 		systemPrompt: "You are a helpful AI assistant.",
 		model: "anthropic/claude-3-5-sonnet-20241022", // Required for streamText
 		temperature: 0.7,
-		maxIterations: 10,
 	},
 	redis,
 	eventEmitter,
