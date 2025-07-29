@@ -2,16 +2,16 @@
  * AgentLoopWorker - Core logic for processing agent loop events
  */
 
-import { streamText } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
+import { streamText } from "ai";
 import { z } from "zod";
-import { type EventEmitter, type SessionEventEmitter } from "../events/emitter";
-import { type AgentLoopInitEvent, type Message } from "../events/schemas";
+import type { EventEmitter, SessionEventEmitter } from "../events/emitter";
+import type { AgentLoopInitEvent, Message } from "../events/schemas";
 import { createStreamWriter, type StreamWriter } from "../server/stream-writer";
 import {
-	AgentDecisionSchema,
 	type AgentDecision,
+	AgentDecisionSchema,
 	type AgentSessionState,
 	AgentSessionStateSchema,
 	type WorkerConfig,
@@ -67,7 +67,6 @@ export class AgentLoopWorker {
 		} catch (error) {
 			console.error(`[AgentLoopWorker] Error processing event ${event.id}:`, error);
 
-
 			// Update session status
 			await this.updateSessionStatus(event.sessionId, "error");
 
@@ -99,6 +98,16 @@ export class AgentLoopWorker {
 				toolsUsed: this.extractUsedTools(session.messages),
 				duration: Date.now() - startTime,
 			});
+
+			// Write metadata completion signal to stream
+			await this.writeToStream(session.sessionId, {
+				type: "metadata",
+				content: "Stream completed - max iterations reached",
+				status: "completed",
+				sessionId: session.sessionId,
+				timestamp: new Date().toISOString(),
+			});
+
 			await this.updateSessionStatus(session.sessionId, "completed");
 			return;
 		}
@@ -169,7 +178,7 @@ Think through this step by step first, then provide your JSON decision.`;
 				} catch (error) {
 					console.error(`[AgentLoopWorker] Failed to parse decision from text:`, error);
 				}
-				
+
 				// Log the decision
 				console.log(`[AgentLoopWorker] Decision for session ${session.sessionId}:`, {
 					action: finalDecision?.action,
@@ -192,7 +201,7 @@ Think through this step by step first, then provide your JSON decision.`;
 				});
 			}
 		}
-		
+
 		if (!finalDecision) {
 			throw new Error("Failed to get structured decision from streamText");
 		}
@@ -343,6 +352,15 @@ Think through your reasoning step by step, then make your decision. Always provi
 			duration: Date.now() - startTime,
 		});
 
+		// Write metadata completion signal to stream
+		await this.writeToStream(session.sessionId, {
+			type: "metadata",
+			content: "Stream completed",
+			status: "completed",
+			sessionId: session.sessionId,
+			timestamp: new Date().toISOString(),
+		});
+
 		// Update session status
 		await this.updateSessionStatus(session.sessionId, "completed");
 	}
@@ -383,6 +401,15 @@ Think through your reasoning step by step, then make your decision. Always provi
 			iterations: session.iteration + 1,
 			toolsUsed: this.extractUsedTools(session.messages),
 			duration: Date.now() - startTime,
+		});
+
+		// Write metadata completion signal to stream
+		await this.writeToStream(session.sessionId, {
+			type: "metadata",
+			content: "Stream completed",
+			status: "completed",
+			sessionId: session.sessionId,
+			timestamp: new Date().toISOString(),
 		});
 
 		// Update session status
@@ -439,7 +466,6 @@ Think through your reasoning step by step, then make your decision. Always provi
 		const streamKey = `stream:${sessionId}`;
 		await this.redis.xadd(streamKey, "*", data);
 	}
-
 
 	private extractUsedTools(messages: Message[]): string[] {
 		const tools = new Set<string>();
