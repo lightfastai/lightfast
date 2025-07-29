@@ -3,10 +3,11 @@
  * IMPORTANT: This file must NEVER import React or client-side components
  */
 // Export event system
-export * from "./events";
 
+// Export Agent class
+export { Agent, type AgentOptions, type AgentToolDefinition } from "./agent";
+export * from "./events";
 // Export server components
 export * from "./server";
-
 // Export workers
 export * from "./workers";

@@ -3,9 +3,8 @@
  * Direct instantiation of infrastructure components
  */
 
+import { EventEmitter, EventType, StreamConsumer, StreamGenerator } from "@lightfast/ai/v2/core";
 import { Redis } from "@upstash/redis";
-import { EventEmitter, EventType } from "@lightfast/ai/v2/core";
-import { StreamGenerator, StreamConsumer } from "@lightfast/ai/v2/core";
 
 // Get base URL for the test server
 function getBaseUrl(): string {

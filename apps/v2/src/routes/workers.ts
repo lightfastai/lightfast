@@ -6,18 +6,18 @@
 import {
 	type AgentLoopInitEvent,
 	AgentLoopInitEventSchema,
+	AgentLoopWorker,
 	type AgentToolCallEvent,
 	AgentToolCallEventSchema,
 	type ToolExecutionCompleteEvent,
 	ToolExecutionCompleteEventSchema,
 	type ToolExecutionFailedEvent,
 	ToolExecutionFailedEventSchema,
-	AgentLoopWorker,
 	ToolResultHandler,
 } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
-import { redis, eventEmitter, streamGenerator } from "../config";
+import { eventEmitter, redis, streamGenerator } from "../config";
 
 const workerRoutes = new Hono();
 

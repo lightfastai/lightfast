@@ -49,8 +49,8 @@
 			"default": "./src/utils/providers.ts"
 		},
 		"./v2/server": {
-			"types": "./src/core/v2/server/index.ts",
-			"default": "./src/core/v2/server/index.ts"
+			"types": "./src/v2/server.ts",
+			"default": "./src/v2/server.ts"
 		},
 		"./v2/react": {
 			"types": "./src/core/v2/react/index.ts",

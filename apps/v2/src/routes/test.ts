@@ -4,7 +4,7 @@
  */
 
 import { Hono } from "hono";
-import { redis, eventEmitter, streamGenerator } from "../config";
+import { eventEmitter, redis, streamGenerator } from "../config";
 
 const testRoutes = new Hono();
 
@@ -148,7 +148,7 @@ testRoutes.post("/:scenario", async (c) => {
 								}),
 							});
 
-							const toolResult = await toolResponse.json() as { success: boolean; result?: any };
+							const toolResult = (await toolResponse.json()) as { success: boolean; result?: any };
 							console.log(`[Test] Tool executor result:`, toolResult);
 
 							// After tool execution, invoke tool result handler

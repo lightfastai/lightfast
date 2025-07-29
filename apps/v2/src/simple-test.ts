@@ -2,7 +2,7 @@
  * Simple test to verify the event-driven architecture
  */
 
-import { redis, eventEmitter, streamGenerator } from "./config";
+import { eventEmitter, redis, streamGenerator } from "./config";
 
 async function testEventDrivenArchitecture() {
 	console.log("Testing V2 Event-Driven Architecture...\n");
@@ -45,7 +45,7 @@ async function testEventDrivenArchitecture() {
 
 		// Test 5: Read from stream
 		console.log("\n📖 Reading from stream...");
-		const entries = await redis.xrange(streamKey, "-", "+") as unknown as any[];
+		const entries = (await redis.xrange(streamKey, "-", "+")) as unknown as any[];
 		console.log(`Found ${entries.length} stream entries:`);
 		for (const entry of entries) {
 			console.log(`  - ${entry.id}: ${JSON.stringify(entry.data)}`);

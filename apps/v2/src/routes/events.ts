@@ -6,7 +6,7 @@
 import type { Event } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
-import { redis, eventEmitter } from "../config";
+import { eventEmitter, redis } from "../config";
 
 const eventRoutes = new Hono();
 
@@ -138,14 +138,14 @@ eventRoutes.post("/test/:type", async (c) => {
 					{
 						error: "Unknown event type",
 						availableTypes: [
-						"agent.loop.init",
-						"agent.loop.complete",
-						"agent.loop.error",
-						"agent.tool.call",
-						"tool.execution.start",
-						"tool.execution.complete",
-						"tool.execution.failed",
-					],
+							"agent.loop.init",
+							"agent.loop.complete",
+							"agent.loop.error",
+							"agent.tool.call",
+							"tool.execution.start",
+							"tool.execution.complete",
+							"tool.execution.failed",
+						],
 					},
 					400,
 				);

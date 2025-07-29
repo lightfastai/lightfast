@@ -6,18 +6,13 @@
 import type { Redis } from "@upstash/redis";
 import type { EventEmitter, SessionEventEmitter } from "../events/emitter";
 import type { ToolExecutionCompleteEvent, ToolExecutionFailedEvent } from "../events/schemas";
-import { AgentLoopWorker } from "./agent-loop";
 import type { AgentSessionState } from "./schemas";
 
 export class ToolResultHandler {
-	private agentLoopWorker: AgentLoopWorker;
-
 	constructor(
 		private redis: Redis,
 		private eventEmitter: EventEmitter,
-	) {
-		this.agentLoopWorker = new AgentLoopWorker(redis, eventEmitter);
-	}
+	) {}
 
 	/**
 	 * Handle tool execution complete event
@@ -59,23 +54,16 @@ export class ToolResultHandler {
 				}),
 			});
 
-			// Continue the agent loop
-			await this.agentLoopWorker.processEvent({
-				id: `evt_continue_${Date.now()}`,
-				type: "agent.loop.init",
-				sessionId: event.sessionId,
-				timestamp: new Date().toISOString(),
-				version: "1.0",
-				data: {
-					messages: session.messages,
-					systemPrompt: session.systemPrompt,
-					temperature: session.temperature,
-					maxIterations: session.maxIterations,
-					tools: session.tools,
-					metadata: {
-						...session.metadata,
-						continuedFromTool: event.data.tool,
-					},
+			// Emit agent loop init event to continue processing
+			await sessionEmitter.emitAgentLoopInit({
+				messages: session.messages,
+				systemPrompt: session.systemPrompt,
+				temperature: session.temperature,
+				maxIterations: session.maxIterations,
+				tools: session.tools,
+				metadata: {
+					...session.metadata,
+					continuedFromTool: event.data.tool,
 				},
 			});
 		} catch (error) {
@@ -124,25 +112,18 @@ export class ToolResultHandler {
 				}),
 			});
 
-			// Continue the agent loop with error context
-			await this.agentLoopWorker.processEvent({
-				id: `evt_continue_error_${Date.now()}`,
-				type: "agent.loop.init",
-				sessionId: event.sessionId,
-				timestamp: new Date().toISOString(),
-				version: "1.0",
-				data: {
-					messages: session.messages,
-					systemPrompt: session.systemPrompt,
-					temperature: session.temperature,
-					maxIterations: session.maxIterations,
-					tools: session.tools,
-					metadata: {
-						...session.metadata,
-						toolError: {
-							tool: event.data.tool,
-							error: event.data.error,
-						},
+			// Emit agent loop init event to continue processing with error context
+			await sessionEmitter.emitAgentLoopInit({
+				messages: session.messages,
+				systemPrompt: session.systemPrompt,
+				temperature: session.temperature,
+				maxIterations: session.maxIterations,
+				tools: session.tools,
+				metadata: {
+					...session.metadata,
+					toolError: {
+						tool: event.data.tool,
+						error: event.data.error,
 					},
 				},
 			});

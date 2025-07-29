@@ -1,6 +1,6 @@
 /**
- * V2 React exports for resumable LLM streams
+ * V2 React exports for chat functionality
  */
 
-export type { UseResumableStreamOptions, UseResumableStreamReturn } from "./use-resumable-stream";
-export { useResumableStream, useStreamMessages } from "./use-resumable-stream";
+export { useChat } from "./use-chat";
+export type { ChatMessage, UseChatOptions, UseChatReturn } from "./use-chat";

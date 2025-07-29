@@ -39,18 +39,18 @@ streamRoutes.get("/:sessionId", async (c) => {
 							data = { content: message.content };
 							break;
 						case "metadata":
-							if ('status' in message && 'sessionId' in message && 'timestamp' in message) {
+							if ("status" in message && "sessionId" in message && "timestamp" in message) {
 								data = { status: message.status, sessionId: message.sessionId, timestamp: message.timestamp };
 							}
 							break;
 						case "event":
-							if ('event' in message) {
-								data = { event: message.event, data: 'data' in message ? message.data : undefined };
+							if ("event" in message) {
+								data = { event: message.event, data: "data" in message ? message.data : undefined };
 							}
 							break;
 						case "error":
-							if ('error' in message) {
-								data = { error: message.error, code: 'code' in message ? message.code : undefined };
+							if ("error" in message) {
+								data = { error: message.error, code: "code" in message ? message.code : undefined };
 							}
 							break;
 					}

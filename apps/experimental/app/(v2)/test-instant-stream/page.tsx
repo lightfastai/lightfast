@@ -1,41 +1,32 @@
 "use client";
 
+import { useChat } from "@lightfast/ai/v2/react";
 import { AlertCircle, Bot, Loader2, Send, User, Zap } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface Message {
-	id: string;
-	role: "user" | "assistant" | "system";
-	content: string;
-	isStreaming?: boolean;
-	timestamp: Date;
-}
-
-interface StreamEvent {
-	id: string;
-	type: "chunk" | "status" | "event" | "tool" | "thinking" | "error" | "complete" | "completion" | "metadata";
-	content: string;
-	metadata?: Record<string, any>;
-}
-
 export default function TestInstantStreamPage() {
-	const [messages, setMessages] = useState<Message[]>([]);
-	const [input, setInput] = useState("");
-	const [isStreaming, setIsStreaming] = useState(false);
-	const [sessionId, setSessionId] = useState<string>();
-	const [connectionStatus, setConnectionStatus] = useState<"disconnected" | "connecting" | "connected" | "error">(
-		"disconnected",
-	);
-	const [currentThinking, setCurrentThinking] = useState("");
+	const {
+		messages,
+		input,
+		setInput,
+		sendMessage,
+		isStreaming,
+		connectionStatus,
+		currentThinking,
+		sessionId,
+		error,
+	} = useChat({
+		url: "/api/v2",
+		tools: ["calculator", "weather"],
+		temperature: 0.7,
+	});
 
-	const eventSourceRef = useRef<EventSource | null>(null);
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
-	const currentMessageIdRef = useRef<string | undefined>(undefined);
 
 	// Auto-scroll to bottom
 	useEffect(() => {
@@ -43,154 +34,6 @@ export default function TestInstantStreamPage() {
 			scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
 		}
 	}, [messages, currentThinking]);
-
-	// Clean up event source on unmount
-	useEffect(() => {
-		return () => {
-			if (eventSourceRef.current) {
-				eventSourceRef.current.close();
-			}
-		};
-	}, []);
-
-	const connectToStream = useCallback((sessionId: string) => {
-		if (eventSourceRef.current) {
-			eventSourceRef.current.close();
-		}
-
-		setConnectionStatus("connecting");
-		const eventSource = new EventSource(`/api/v2/stream/${sessionId}`);
-		eventSourceRef.current = eventSource;
-
-		eventSource.onopen = () => {
-			setConnectionStatus("connected");
-		};
-
-		// Handle different event types
-		const handleStreamEvent = (event: MessageEvent, type: string) => {
-			try {
-				// Skip empty data
-				if (!event.data || event.data.trim() === "") {
-					return;
-				}
-
-				const data = JSON.parse(event.data);
-
-				// Handle thinking events - show in real-time
-				if (type === "thinking") {
-					setCurrentThinking((prev) => prev + (data.content || ""));
-					return;
-				}
-
-				// Handle chunk events - these are the final responses
-				if (type === "chunk" && data.content && !data.content.includes("Session initialized")) {
-					const messageId = currentMessageIdRef.current;
-					if (messageId) {
-						setMessages((prev) =>
-							prev.map((msg) => (msg.id === messageId ? { ...msg, content: data.content, isStreaming: false } : msg)),
-						);
-						setCurrentThinking("");
-					}
-				}
-
-				// Handle completion
-				if (type === "complete" || type === "completion" || (type === "metadata" && data.status === "completed")) {
-					setIsStreaming(false);
-					setCurrentThinking("");
-					// Close the EventSource when stream is completed
-					if (eventSourceRef.current) {
-						eventSourceRef.current.close();
-						eventSourceRef.current = null;
-						setConnectionStatus("disconnected");
-					}
-				}
-
-				// Handle tool events
-				if (type === "tool") {
-					console.log("Tool event:", data);
-				}
-			} catch (err) {
-				console.error("Failed to parse event:", err, "Event data:", event.data);
-			}
-		};
-
-		// Listen to all event types
-		["chunk", "status", "event", "tool", "thinking", "error", "complete", "completion", "metadata"].forEach(
-			(eventType) => {
-				eventSource.addEventListener(eventType, (event) => handleStreamEvent(event, eventType));
-			},
-		);
-
-		eventSource.onerror = (error) => {
-			console.error("EventSource error:", error);
-			setConnectionStatus("error");
-			setIsStreaming(false);
-			setCurrentThinking("");
-		};
-	}, []);
-
-	const sendMessage = async () => {
-		if (!input.trim() || isStreaming) return;
-
-		const userMessage: Message = {
-			id: `msg_${Date.now()}_user`,
-			role: "user",
-			content: input.trim(),
-			timestamp: new Date(),
-		};
-
-		const assistantMessageId = `msg_${Date.now()}_assistant`;
-		const assistantMessage: Message = {
-			id: assistantMessageId,
-			role: "assistant",
-			content: "",
-			isStreaming: true,
-			timestamp: new Date(),
-		};
-
-		currentMessageIdRef.current = assistantMessageId;
-		setMessages((prev) => [...prev, userMessage, assistantMessage]);
-		setInput("");
-		setIsStreaming(true);
-		setCurrentThinking("");
-
-		try {
-			// Call the stream init endpoint for instant streaming
-			const response = await fetch("/api/v2/stream/init", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					messages: [...messages, userMessage].map((m) => ({
-						role: m.role,
-						content: m.content,
-					})),
-					tools: ["calculator", "weather"],
-					temperature: 0.7,
-				}),
-			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}`);
-			}
-
-			const data = await response.json();
-			setSessionId(data.sessionId);
-
-			// Connect to stream immediately
-			connectToStream(data.sessionId);
-		} catch (error) {
-			console.error("Send message error:", error);
-			setMessages((prev) =>
-				prev.map((msg) =>
-					msg.id === assistantMessageId
-						? { ...msg, content: "Sorry, an error occurred. Please try again.", isStreaming: false }
-						: msg,
-				),
-			);
-			setIsStreaming(false);
-			setCurrentThinking("");
-		}
-	};
 
 	const handleKeyPress = (e: React.KeyboardEvent) => {
 		if (e.key === "Enter" && !e.shiftKey) {
@@ -222,6 +65,12 @@ export default function TestInstantStreamPage() {
 							)}
 						</div>
 					</div>
+					{error && (
+						<div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+							<AlertCircle className="inline h-4 w-4 mr-1" />
+							{error.message}
+						</div>
+					)}
 				</div>
 
 				{/* Messages Area */}
@@ -287,7 +136,7 @@ export default function TestInstantStreamPage() {
 	);
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({ message }: { message: { id: string; role: string; content: string; isStreaming?: boolean; timestamp: Date } }) {
 	const isUser = message.role === "user";
 
 	return (

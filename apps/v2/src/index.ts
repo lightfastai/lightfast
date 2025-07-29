@@ -4,10 +4,10 @@
  */
 
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { serveStatic } from "@hono/node-server/serve-static";
 import { eventRoutes } from "./routes/events";
 import { healthRoutes } from "./routes/health";
 import { initRoutes } from "./routes/init";
@@ -29,7 +29,7 @@ app.get("/", (c) => {
 		timestamp: new Date().toISOString(),
 		endpoints: {
 			init: "/init",
-			stream: "/stream/:sessionId", 
+			stream: "/stream/:sessionId",
 			events: "/events",
 			workers: "/workers",
 			test: "/test",

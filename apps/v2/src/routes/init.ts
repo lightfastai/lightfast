@@ -6,7 +6,7 @@
 import type { Message } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
-import { redis, eventEmitter, streamGenerator, SYSTEM_LIMITS } from "../config";
+import { eventEmitter, redis, SYSTEM_LIMITS, streamGenerator } from "../config";
 
 const initRoutes = new Hono();
 
