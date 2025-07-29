@@ -36,18 +36,6 @@ function getBaseUrl(): string {
 }
 
 /**
- * Worker endpoint configuration
- * Maps event types to their handler endpoints
- */
-export const WORKER_ENDPOINTS: Record<string, string> = {
-	[EventType.AGENT_LOOP_INIT]: "/api/v2/workers/agent-loop",
-	[EventType.AGENT_TOOL_CALL]: "/api/v2/workers/tool-executor",
-	[EventType.TOOL_EXECUTION_COMPLETE]: "/api/v2/workers/tool-result-complete",
-	[EventType.TOOL_EXECUTION_FAILED]: "/api/v2/workers/tool-result-failed",
-	[EventType.AGENT_LOOP_COMPLETE]: "/api/v2/workers/agent-complete",
-};
-
-/**
  * Create Redis client instance
  */
 export const redis = new Redis({
@@ -56,7 +44,20 @@ export const redis = new Redis({
 });
 
 /**
+ * Worker endpoint configuration
+ * Maps event types to the unified route handler with appropriate paths
+ */
+const WORKER_ENDPOINTS: Record<string, string> = {
+	[EventType.AGENT_LOOP_INIT]: "/api/v2/workers/agent-loop",
+	[EventType.AGENT_TOOL_CALL]: "/api/v2/workers/tool-executor",
+	[EventType.TOOL_EXECUTION_COMPLETE]: "/api/v2/workers/tool-result-complete",
+	[EventType.TOOL_EXECUTION_FAILED]: "/api/v2/workers/tool-result-failed",
+	[EventType.AGENT_LOOP_COMPLETE]: "/api/v2/workers/agent-complete",
+};
+
+/**
  * Create event emitter instance with full configuration
+ * The unified route handler at /api/v2/[...v] handles all worker events internally
  */
 export const eventEmitter = new EventEmitter({
 	qstashUrl: env.QSTASH_URL,

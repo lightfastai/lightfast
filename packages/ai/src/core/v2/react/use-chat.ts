@@ -232,7 +232,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 								...msg,
 								content: "Sorry, an error occurred. Please try again.",
 								isStreaming: false,
-						  }
+							}
 						: msg,
 				),
 			);

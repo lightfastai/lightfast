@@ -10,21 +10,12 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function TestInstantStreamPage() {
-	const {
-		messages,
-		input,
-		setInput,
-		sendMessage,
-		isStreaming,
-		connectionStatus,
-		currentThinking,
-		sessionId,
-		error,
-	} = useChat({
-		url: "/api/v2",
-		tools: ["calculator", "weather"],
-		temperature: 0.7,
-	});
+	const { messages, input, setInput, sendMessage, isStreaming, connectionStatus, currentThinking, sessionId, error } =
+		useChat({
+			url: "/api/v2",
+			tools: ["calculator", "weather"],
+			temperature: 0.7,
+		});
 
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -136,7 +127,11 @@ export default function TestInstantStreamPage() {
 	);
 }
 
-function MessageBubble({ message }: { message: { id: string; role: string; content: string; isStreaming?: boolean; timestamp: Date } }) {
+function MessageBubble({
+	message,
+}: {
+	message: { id: string; role: string; content: string; isStreaming?: boolean; timestamp: Date };
+}) {
 	const isUser = message.role === "user";
 
 	return (

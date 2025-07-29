@@ -10,13 +10,13 @@ import type {
 	AgentLoopCompleteEvent,
 	AgentLoopInitEvent,
 	AgentToolCallEvent,
+	Message,
 	ToolExecutionCompleteEvent,
 } from "../../events/schemas";
 import { ToolResultHandler } from "../../workers/tool-result-handler";
-import { StreamWriter } from "../stream-writer";
 import { StreamConsumer } from "../stream-consumer";
 import { StreamGenerator } from "../stream-generator";
-import type { Message } from "../../events/schemas";
+import { StreamWriter } from "../stream-writer";
 
 export interface FetchRequestHandlerOptions {
 	agent: Agent;
@@ -83,7 +83,7 @@ export function fetchRequestHandler(options: FetchRequestHandlerOptions): (reque
 			// Extract path from URL
 			const url = new URL(request.url);
 			const pathSegments = url.pathname.replace(baseUrl, "").split("/").filter(Boolean);
-			
+
 			// Handle stream endpoints
 			if (pathSegments[0] === "stream") {
 				if (pathSegments[1] === "init") {
@@ -272,7 +272,7 @@ async function handleStreamInit(
 	redis: Redis,
 	eventEmitter: EventEmitter,
 	streamGenerator: StreamGenerator,
-	baseUrl: string
+	baseUrl: string,
 ): Promise<Response> {
 	const body = (await request.json()) as StreamInitRequestBody;
 	const {
@@ -359,11 +359,7 @@ async function handleStreamInit(
 }
 
 // Helper function to handle stream status check
-async function handleStreamStatus(
-	request: Request,
-	redis: Redis,
-	streamGenerator: StreamGenerator
-): Promise<Response> {
+async function handleStreamStatus(request: Request, redis: Redis, streamGenerator: StreamGenerator): Promise<Response> {
 	const url = new URL(request.url);
 	const sessionId = url.searchParams.get("sessionId");
 
@@ -390,10 +386,7 @@ async function handleStreamStatus(
 }
 
 // Helper function to handle SSE stream
-function handleStreamSSE(
-	sessionId: string,
-	streamConsumer: StreamConsumer
-): Response {
+function handleStreamSSE(sessionId: string, streamConsumer: StreamConsumer): Response {
 	if (!sessionId) {
 		return new Response("Session ID is required", { status: 400 });
 	}
