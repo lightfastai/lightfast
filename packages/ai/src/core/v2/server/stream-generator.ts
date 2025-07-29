@@ -1,19 +1,12 @@
 /**
- * Stream Generator - Generates LLM output and writes to Redis streams
+ * Stream Generator - Manages stream sessions and metadata
  * Following the pattern from https://upstash.com/blog/resumable-llm-streams
  */
 
 import type { Redis } from "@upstash/redis";
 import { customAlphabet } from "nanoid";
 import { getSystemLimits } from "../env";
-import {
-	AIMessageType,
-	EventMessageType,
-	getStreamKey,
-	type StreamConfig,
-	type StreamMessage,
-	StreamStatus,
-} from "./types";
+import { getEventStreamKey, getStreamKey, type StreamConfig } from "./types";
 
 // Generate 6-digit numeric session IDs (as shown in blog)
 const generateSessionId = customAlphabet("0123456789", 6);
@@ -41,73 +34,24 @@ export class StreamGenerator {
 	}
 
 	/**
-	 * Write a message to Redis stream and publish notification
+	 * Initialize a stream with TTL
 	 */
-	private async writeMessage(streamKey: string, message: StreamMessage): Promise<void> {
-		// Convert message to flat fields for Redis
-		const fields: Record<string, string> = {
-			type: message.type,
-		};
+	async initializeStream(sessionId: string): Promise<void> {
+		const streamKey = getStreamKey(sessionId, this.config.streamPrefix);
+		const eventKey = getEventStreamKey(sessionId);
 
-		// Add type-specific fields
-		switch (message.type) {
-			case AIMessageType.CHUNK:
-				if ("content" in message) {
-					fields.content = message.content;
-				}
-				break;
-			case EventMessageType.METADATA:
-				if ("status" in message && "sessionId" in message && "timestamp" in message) {
-					fields.status = message.status;
-					fields.sessionId = message.sessionId;
-					fields.timestamp = message.timestamp;
-				}
-				break;
-			case EventMessageType.EVENT:
-				if ("event" in message) {
-					fields.event = message.event;
-					if ("data" in message && message.data) {
-						fields.data = JSON.stringify(message.data);
-					}
-				}
-				break;
-			case EventMessageType.ERROR:
-				if ("error" in message && message.error) {
-					fields.error = message.error;
-					if ("code" in message && message.code) {
-						fields.code = message.code;
-					}
-				}
-				break;
-			case EventMessageType.STATUS:
-			case AIMessageType.TOOL:
-			case AIMessageType.THINKING:
-			case AIMessageType.COMPLETE:
-			case AIMessageType.COMPLETION:
-				// For V2 event types, store content and metadata
-				if ("content" in message) {
-					fields.content = message.content;
-				}
-				if ("metadata" in message && message.metadata) {
-					fields.metadata = JSON.stringify(message.metadata);
-				}
-				break;
-			default: {
-				// This should never happen with our strict types
-				const _exhaustiveCheck: never = message;
-				throw new Error(`Unknown message type: ${JSON.stringify(message)}`);
-			}
+		// Set TTL on both streams
+		if (this.config.ttl > 0) {
+			await Promise.all([this.redis.expire(streamKey, this.config.ttl), this.redis.expire(eventKey, this.config.ttl)]);
 		}
+	}
 
-		// Write to stream with automatic ID (*) - Upstash format
-		// Upstash expects an object, not spread field pairs
-		await this.redis.xadd(streamKey, "*", fields);
+	/**
+	 * Trim stream to max length
+	 */
+	async trimStream(sessionId: string): Promise<void> {
+		const streamKey = getStreamKey(sessionId, this.config.streamPrefix);
 
-		// Publish notification (as shown in blog)
-		await this.redis.publish(streamKey, JSON.stringify({ type: message.type }));
-
-		// Trim stream to max length
-		// Upstash has xtrim method directly
 		try {
 			await this.redis.xtrim(streamKey, {
 				strategy: "MAXLEN",
@@ -118,6 +62,14 @@ export class StreamGenerator {
 			// Ignore trim errors as they're not critical
 			console.error("Stream trim error:", trimError);
 		}
+	}
+
+	/**
+	 * Publish notification for stream update
+	 */
+	async publishNotification(sessionId: string, type: string): Promise<void> {
+		const streamKey = getStreamKey(sessionId, this.config.streamPrefix);
+		await this.redis.publish(streamKey, JSON.stringify({ type, sessionId }));
 	}
 
 	/**

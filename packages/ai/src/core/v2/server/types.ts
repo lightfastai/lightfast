@@ -1,28 +1,17 @@
 /**
- * Message types and schemas for resumable LLM streams
+ * Types and schemas for UIMessage-based resumable LLM streams
  * Following the pattern from https://upstash.com/blog/resumable-llm-streams
  */
 
-// AI Completion Message Types (saved to DB)
-export const AIMessageType = {
-	CHUNK: "chunk",
-	THINKING: "thinking",
-	TOOL: "tool",
-	COMPLETE: "complete",
-	COMPLETION: "completion",
-} as const;
+import type { UIMessage } from "ai";
 
-// Event/System Message Types (not saved to DB)
-export const EventMessageType = {
-	METADATA: "metadata",
-	EVENT: "event",
-	ERROR: "error",
-	STATUS: "status",
-} as const;
+// UIMessagePart type for our usage
+export type UIMessagePart = {
+	type: string;
+	[key: string]: any;
+};
 
-export type AIMessageType = (typeof AIMessageType)[keyof typeof AIMessageType];
-export type EventMessageType = (typeof EventMessageType)[keyof typeof EventMessageType];
-
+// Stream status for system events (not messages)
 export const StreamStatus = {
 	STARTED: "started",
 	STREAMING: "streaming",
@@ -32,74 +21,44 @@ export const StreamStatus = {
 
 export type StreamStatus = (typeof StreamStatus)[keyof typeof StreamStatus];
 
-// AI Completion Message Interfaces
-export interface ChunkMessage {
-	type: typeof AIMessageType.CHUNK;
-	content: string;
-}
+// System event types (stored separately from messages)
+export const SystemEventType = {
+	STATUS: "status",
+	ERROR: "error",
+	METADATA: "metadata",
+	EVENT: "event",
+} as const;
 
-export interface ThinkingMessage {
-	type: typeof AIMessageType.THINKING;
-	content: string;
-	metadata?: any;
-}
+export type SystemEventType = (typeof SystemEventType)[keyof typeof SystemEventType];
 
-export interface ToolMessage {
-	type: typeof AIMessageType.TOOL;
-	content: string;
-	metadata?: any;
-}
-
-export interface CompleteMessage {
-	type: typeof AIMessageType.COMPLETE | typeof AIMessageType.COMPLETION;
-	content: string;
-	metadata?: any;
-}
-
-// Event/System Message Interfaces
-export interface MetadataMessage {
-	type: typeof EventMessageType.METADATA;
-	status: StreamStatus;
+// System event interface (not a message)
+export interface SystemEvent {
+	id: string;
+	type: SystemEventType;
 	sessionId: string;
 	timestamp: string;
-}
-
-export interface EventMessage {
-	type: typeof EventMessageType.EVENT;
-	event: string;
-	data?: unknown;
-}
-
-export interface ErrorMessage {
-	type: typeof EventMessageType.ERROR;
-	error: string;
+	data?: Record<string, any>;
+	status?: StreamStatus;
+	error?: string;
 	code?: string;
 }
 
-export interface StatusMessage {
-	type: typeof EventMessageType.STATUS;
-	content: string;
-	metadata?: any;
+// Redis storage format for UIMessage
+export interface RedisUIMessageEntry {
+	messageId: string;
+	role: string;
+	parts: string; // JSON stringified UIMessagePart[]
+	metadata?: string; // JSON stringified metadata
+	timestamp: string;
 }
 
-// AI Completion Messages Union
-export type AICompletionMessage = ChunkMessage | ThinkingMessage | ToolMessage | CompleteMessage;
-
-// Event/System Messages Union
-export type EventSystemMessage = MetadataMessage | EventMessage | ErrorMessage | StatusMessage;
-
-// Stream message type (includes both for streaming, but only AI messages are saved)
-export type StreamMessage = AICompletionMessage | EventSystemMessage;
-
-// Base message interface for flexibility
-export interface BaseMessage {
-	id?: string;
-	type: string;
-	content: string;
-	metadata?: any;
-	timestamp?: string;
-	status?: string;
-	error?: string;
+// Redis storage format for UIMessagePart (for streaming)
+export interface RedisUIMessagePartEntry {
+	messageId: string;
+	partIndex: number;
+	partType: string;
+	partData: string; // JSON stringified part data
+	timestamp: string;
 }
 
 // Redis stream entry format
@@ -121,10 +80,9 @@ export function arrToObj(arr: string[]): Record<string, string> {
 	return obj;
 }
 
-// Validate and parse message from Redis
-export function validateMessage(entry: any): StreamMessage | null {
+// Parse UIMessage from Redis entry
+export function parseUIMessageEntry(entry: any): UIMessage | null {
 	try {
-		// Handle both raw fields object and Upstash entry format
 		let fields: Record<string, string>;
 
 		if (entry && typeof entry === "object" && "id" in entry) {
@@ -138,92 +96,103 @@ export function validateMessage(entry: any): StreamMessage | null {
 			return null;
 		}
 
-		const type = fields.type as AIMessageType | EventMessageType;
-
-		// AI Completion Messages
-		switch (type) {
-			case AIMessageType.CHUNK:
-				return {
-					type: AIMessageType.CHUNK,
-					content: fields.content || "",
-				};
-
-			case AIMessageType.THINKING:
-				return {
-					type: AIMessageType.THINKING,
-					content: fields.content || "",
-					metadata: fields.metadata
-						? typeof fields.metadata === "string"
-							? JSON.parse(fields.metadata)
-							: fields.metadata
-						: undefined,
-				};
-
-			case AIMessageType.TOOL:
-				return {
-					type: AIMessageType.TOOL,
-					content: fields.content || "",
-					metadata: fields.metadata
-						? typeof fields.metadata === "string"
-							? JSON.parse(fields.metadata)
-							: fields.metadata
-						: undefined,
-				};
-
-			case AIMessageType.COMPLETE:
-			case AIMessageType.COMPLETION:
-				return {
-					type: type as typeof AIMessageType.COMPLETE | typeof AIMessageType.COMPLETION,
-					content: fields.content || "",
-					metadata: fields.metadata
-						? typeof fields.metadata === "string"
-							? JSON.parse(fields.metadata)
-							: fields.metadata
-						: undefined,
-				};
+		// Check if this is a UIMessage entry
+		if (!fields.messageId || !fields.role || !fields.parts) {
+			return null;
 		}
 
-		// Event/System Messages
-		switch (type) {
-			case EventMessageType.METADATA:
-				return {
-					type: EventMessageType.METADATA,
-					status: fields.status as StreamStatus,
-					sessionId: fields.sessionId || "",
-					timestamp: fields.timestamp || new Date().toISOString(),
-				};
+		// Reconstruct UIMessage
+		const message: UIMessage = {
+			id: fields.messageId,
+			role: fields.role as "system" | "user" | "assistant",
+			parts: typeof fields.parts === "string" ? JSON.parse(fields.parts) : fields.parts,
+		};
 
-			case EventMessageType.EVENT:
-				return {
-					type: EventMessageType.EVENT,
-					event: fields.event || "",
-					data: fields.data ? JSON.parse(fields.data) : undefined,
-				};
-
-			case EventMessageType.ERROR:
-				return {
-					type: EventMessageType.ERROR,
-					error: fields.error || "Unknown error",
-					code: fields.code,
-				};
-
-			case EventMessageType.STATUS:
-				return {
-					type: EventMessageType.STATUS,
-					content: fields.content || "",
-					metadata: fields.metadata
-						? typeof fields.metadata === "string"
-							? JSON.parse(fields.metadata)
-							: fields.metadata
-						: undefined,
-				};
-
-			default:
-				console.warn(`Unknown message type: ${type}`);
-				return null;
+		if (fields.metadata) {
+			message.metadata = typeof fields.metadata === "string" ? JSON.parse(fields.metadata) : fields.metadata;
 		}
+
+		return message;
 	} catch (error) {
-		console.error("Failed to validate message:", error);
+		console.error("Failed to parse UIMessage:", error);
+		return null;
+	}
+}
+
+// Parse UIMessagePart from Redis entry
+export function parseUIMessagePartEntry(entry: any): UIMessagePart | null {
+	try {
+		let fields: Record<string, string>;
+
+		if (entry && typeof entry === "object" && "id" in entry) {
+			const { id, ...rest } = entry;
+			fields = rest;
+		} else if (entry && typeof entry === "object") {
+			fields = entry;
+		} else {
+			return null;
+		}
+
+		// Check if this is a UIMessagePart entry
+		if (!fields.partType || !fields.partData) {
+			return null;
+		}
+
+		return JSON.parse(fields.partData) as UIMessagePart;
+	} catch (error) {
+		console.error("Failed to parse UIMessagePart:", error);
+		return null;
+	}
+}
+
+// Parse system event from Redis entry
+export function parseSystemEvent(entry: any): SystemEvent | null {
+	try {
+		let fields: Record<string, string>;
+
+		if (entry && typeof entry === "object" && "id" in entry) {
+			const { id, ...rest } = entry;
+			fields = rest;
+		} else if (entry && typeof entry === "object") {
+			fields = entry;
+		} else {
+			return null;
+		}
+
+		// Check if this is a system event
+		if (!fields.type || !fields.sessionId) {
+			return null;
+		}
+
+		const event: SystemEvent = {
+			id: fields.id || "",
+			type: fields.type as SystemEventType,
+			sessionId: fields.sessionId,
+			timestamp: fields.timestamp || new Date().toISOString(),
+		};
+
+		if (fields.data) {
+			try {
+				// Handle both string and object cases
+				event.data = typeof fields.data === "string" ? JSON.parse(fields.data) : fields.data;
+			} catch (parseError) {
+				console.error("Failed to parse event data:", fields.data, parseError);
+				// If parsing fails, skip setting data
+			}
+		}
+		if (fields.status) {
+			event.status = fields.status as StreamStatus;
+		}
+		if (fields.error) {
+			event.error = fields.error;
+		}
+		if (fields.code) {
+			event.code = fields.code;
+		}
+
+		return event;
+	} catch (error) {
+		console.error("Failed to parse system event:", error);
 		return null;
 	}
 }
@@ -245,36 +214,26 @@ export function getStreamKey(sessionId: string, prefix = "stream"): string {
 	return `v2:${prefix}:${sessionId}`;
 }
 
+// Helper to generate event stream keys
+export function getEventStreamKey(sessionId: string): string {
+	return `v2:events:${sessionId}`;
+}
+
 export function getGroupName(sessionId: string, prefix = "stream"): string {
 	return `v2:${prefix}:${sessionId}:consumers`;
 }
 
-// Type guards to distinguish message categories
-export function isAICompletionMessage(message: StreamMessage): message is AICompletionMessage {
-	return (
-		message.type === AIMessageType.CHUNK ||
-		message.type === AIMessageType.THINKING ||
-		message.type === AIMessageType.TOOL ||
-		message.type === AIMessageType.COMPLETE ||
-		message.type === AIMessageType.COMPLETION
-	);
+// Check if entry is a UIMessage
+export function isUIMessageEntry(fields: Record<string, string>): boolean {
+	return !!(fields.messageId && fields.role && fields.parts);
 }
 
-export function isEventSystemMessage(message: StreamMessage): message is EventSystemMessage {
-	return (
-		message.type === EventMessageType.METADATA ||
-		message.type === EventMessageType.EVENT ||
-		message.type === EventMessageType.ERROR ||
-		message.type === EventMessageType.STATUS
-	);
+// Check if entry is a UIMessagePart
+export function isUIMessagePartEntry(fields: Record<string, string>): boolean {
+	return !!(fields.partType && fields.partData);
 }
 
-// Filter messages for database storage (only AI completion messages)
-export function filterForDatabaseStorage(messages: StreamMessage[]): AICompletionMessage[] {
-	return messages.filter(isAICompletionMessage);
-}
-
-// Check if a message should be saved to database
-export function shouldSaveToDatabase(message: StreamMessage): boolean {
-	return isAICompletionMessage(message);
+// Check if entry is a system event
+export function isSystemEventEntry(fields: Record<string, string>): boolean {
+	return !!(fields.type && fields.sessionId && Object.values(SystemEventType).includes(fields.type as SystemEventType));
 }

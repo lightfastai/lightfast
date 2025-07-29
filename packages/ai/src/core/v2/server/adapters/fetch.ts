@@ -4,6 +4,7 @@
  */
 
 import type { Redis } from "@upstash/redis";
+import type { UIMessage } from "ai";
 import type { Agent, AgentToolDefinition } from "../../agent";
 import type { EventEmitter } from "../../events/emitter";
 import type {
@@ -220,31 +221,34 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						await redis.setex(sessionKey, 86400, JSON.stringify(session)); // 24 hours
 					}
 
-					// Write completion event to stream
-					await streamWriter.writeMessage(completeEvent.sessionId, {
-						type: "completion",
-						content: `Agent completed processing: ${completeEvent.data.finalMessage}`,
-						metadata: JSON.stringify({
-							event: "agent.complete",
-							sessionId: completeEvent.sessionId,
-							response: completeEvent.data.finalMessage,
-							iterations: completeEvent.data.iterations,
-							toolsUsed: completeEvent.data.toolsUsed,
-							duration: completeEvent.data.duration,
-						}),
+					// Write completion event
+					await streamWriter.writeEvent(completeEvent.sessionId, "event", {
+						event: "agent.complete",
+						sessionId: completeEvent.sessionId,
+						response: completeEvent.data.finalMessage,
+						iterations: completeEvent.data.iterations,
+						toolsUsed: completeEvent.data.toolsUsed,
+						duration: completeEvent.data.duration,
 					});
 
-					// Write final response to stream
+					// Write final response as UIMessage
 					if (completeEvent.data.finalMessage) {
-						await streamWriter.writeChunk(completeEvent.sessionId, completeEvent.data.finalMessage);
+						const finalMessage: UIMessage = {
+							id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+							role: "assistant",
+							parts: [
+								{
+									type: "text",
+									text: completeEvent.data.finalMessage,
+								},
+							],
+						};
+						await streamWriter.writeUIMessage(completeEvent.sessionId, finalMessage);
 					}
 
-					// Write metadata with completed status to signal stream end
-					await streamWriter.writeMessage(completeEvent.sessionId, {
-						type: "metadata",
-						status: "completed",
+					// Write metadata completion event
+					await streamWriter.writeMetadataEvent(completeEvent.sessionId, "completed", {
 						sessionId: completeEvent.sessionId,
-						timestamp: new Date().toISOString(),
 					});
 
 					return Response.json({ success: true });

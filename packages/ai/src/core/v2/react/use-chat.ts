@@ -5,11 +5,10 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { UIMessage } from "ai";
 
-export interface ChatMessage {
-	id: string;
-	role: "user" | "assistant" | "system";
-	content: string;
+// Extended UIMessage with additional client-side properties
+export interface ChatMessage extends UIMessage {
 	isStreaming?: boolean;
 	timestamp: Date;
 }
@@ -52,6 +51,16 @@ export interface UseChatReturn {
 	clear: () => void;
 	/** Error if any */
 	error?: Error;
+}
+
+// Helper function to extract text content from UIMessage parts
+export function getMessageContent(message: UIMessage): string {
+	if (!message.parts || message.parts.length === 0) return "";
+	
+	return message.parts
+		.filter(part => part.type === "text")
+		.map(part => part.text || "")
+		.join("");
 }
 
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
@@ -111,48 +120,76 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
 					const data = JSON.parse(event.data);
 
-					// Handle thinking events - show in real-time
-					if (type === "thinking") {
-						setCurrentThinking((prev) => prev + (data.content || ""));
+					// Handle UIMessage events
+					if (type === "message") {
+						const message = data as UIMessage;
+						if (message && message.parts && currentMessageIdRef.current) {
+							// Update the assistant message with new parts
+							setMessages((prev) =>
+								prev.map((msg) => 
+									msg.id === currentMessageIdRef.current 
+										? { ...msg, parts: message.parts, isStreaming: false } 
+										: msg
+								),
+							);
+							
+							// Check for reasoning parts
+							const hasReasoning = message.parts.some(part => part.type === "reasoning");
+							if (!hasReasoning) {
+								setCurrentThinking("");
+							} else {
+								// Update thinking with latest reasoning
+								const reasoningParts = message.parts.filter(part => part.type === "reasoning");
+								const latestReasoning = reasoningParts[reasoningParts.length - 1];
+								if (latestReasoning && latestReasoning.text) {
+									setCurrentThinking(latestReasoning.text);
+								}
+							}
+						}
 						return;
 					}
 
-					// Handle chunk events - these are the final responses
-					if (type === "chunk" && data.content && !data.content.includes("Session initialized")) {
-						const messageId = currentMessageIdRef.current;
-						if (messageId) {
-							setMessages((prev) =>
-								prev.map((msg) => (msg.id === messageId ? { ...msg, content: data.content, isStreaming: false } : msg)),
-							);
+					// Handle UIMessagePart events
+					if (type === "message-part") {
+						const { part, messageId } = data;
+						if (part && part.type === "reasoning") {
+							setCurrentThinking((prev) => prev + (part.text || ""));
+						}
+						return;
+					}
+
+					// Handle system events
+					if (type === "system-event") {
+						const event = data;
+						
+						// Handle completion
+						if (event.type === "metadata" && event.status === "completed") {
+							setIsStreaming(false);
+							setCurrentThinking("");
+							// Close the EventSource when stream is completed
+							if (eventSourceRef.current) {
+								eventSourceRef.current.close();
+								eventSourceRef.current = null;
+								setConnectionStatus("disconnected");
+							}
+						}
+						
+						// Handle errors
+						if (event.type === "error") {
+							setError(new Error(event.error || "Unknown error"));
+							setIsStreaming(false);
 							setCurrentThinking("");
 						}
-					}
-
-					// Handle completion
-					if (type === "complete" || type === "completion" || (type === "metadata" && data.status === "completed")) {
-						setIsStreaming(false);
-						setCurrentThinking("");
-						// Close the EventSource when stream is completed
-						if (eventSourceRef.current) {
-							eventSourceRef.current.close();
-							eventSourceRef.current = null;
-							setConnectionStatus("disconnected");
-						}
-					}
-
-					// Handle errors
-					if (type === "error") {
-						setError(new Error(data.content || data.error || "Unknown error"));
-						setIsStreaming(false);
-						setCurrentThinking("");
+						
+						return;
 					}
 				} catch (err) {
 					console.error("Failed to parse event:", err, "Event data:", event.data);
 				}
 			};
 
-			// Listen to all event types
-			["chunk", "status", "event", "tool", "thinking", "error", "complete", "completion", "metadata"].forEach(
+			// Listen to new UIMessage event types
+			["message", "message-part", "system-event"].forEach(
 				(eventType) => {
 					eventSource.addEventListener(eventType, (event) => handleStreamEvent(event, eventType));
 				},
@@ -174,7 +211,8 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 		const userMessage: ChatMessage = {
 			id: `msg_${Date.now()}_user`,
 			role: "user",
-			content: input.trim(),
+			parts: [{ type: "text", text: input.trim() }],
+			isStreaming: false,
 			timestamp: new Date(),
 		};
 
@@ -182,7 +220,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 		const assistantMessage: ChatMessage = {
 			id: assistantMessageId,
 			role: "assistant",
-			content: "",
+			parts: [],
 			isStreaming: true,
 			timestamp: new Date(),
 		};
@@ -202,7 +240,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 				body: JSON.stringify({
 					messages: [...messages, userMessage].map((m) => ({
 						role: m.role,
-						content: m.content,
+						content: getMessageContent(m),
 					})),
 					tools,
 					temperature,
@@ -230,7 +268,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 					msg.id === assistantMessageId
 						? {
 								...msg,
-								content: "Sorry, an error occurred. Please try again.",
+								parts: [{ type: "text", text: "Sorry, an error occurred. Please try again." }],
 								isStreaming: false,
 							}
 						: msg,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat } from "@lightfast/ai/v2/react";
+import { useChat, getMessageContent } from "@lightfast/ai/v2/react";
 import { AlertCircle, Bot, Loader2, Send, User, Zap } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -130,22 +130,23 @@ export default function TestInstantStreamPage() {
 function MessageBubble({
 	message,
 }: {
-	message: { id: string; role: string; content: string; isStreaming?: boolean; timestamp: Date };
+	message: { id: string; role: string; parts: any[]; isStreaming?: boolean; timestamp: Date };
 }) {
 	const isUser = message.role === "user";
+	const content = getMessageContent(message);
 
 	return (
 		<div className={`flex gap-3 ${isUser ? "justify-end" : ""}`}>
 			{!isUser && <Bot className="h-8 w-8 text-primary" />}
 			<div className={`max-w-[80%] ${isUser ? "order-first" : ""}`}>
 				<div className={`rounded-lg p-3 ${isUser ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-					{message.isStreaming && !message.content ? (
+					{message.isStreaming && !content ? (
 						<div className="flex items-center gap-2">
 							<Loader2 className="h-4 w-4 animate-spin" />
 							<span className="text-sm">Streaming response...</span>
 						</div>
 					) : (
-						<p className="text-sm whitespace-pre-wrap">{message.content}</p>
+						<p className="text-sm whitespace-pre-wrap">{content}</p>
 					)}
 				</div>
 				<p className="text-xs text-muted-foreground mt-1">{message.timestamp.toLocaleTimeString()}</p>

@@ -1,24 +1,45 @@
 /**
- * Stream Writer - Simple utility for writing messages to Redis streams
+ * Stream Writer - Utility for writing UIMessages and events to Redis streams
  * Used by workers to write agent responses, tool results, and status updates
  */
 
 import type { Redis } from "@upstash/redis";
-import type { StreamMessage } from "./types";
+import type { UIMessage } from "ai";
+import {
+	getEventStreamKey,
+	getStreamKey,
+	type RedisUIMessageEntry,
+	type RedisUIMessagePartEntry,
+	type StreamStatus,
+	type SystemEvent,
+	type SystemEventType,
+	type UIMessagePart,
+} from "./types";
 
 export class StreamWriter {
 	constructor(private redis: Redis) {}
 
 	/**
-	 * Write a message to a stream
+	 * Write a UIMessage to stream
 	 */
-	async writeMessage(streamKey: string, message: Partial<StreamMessage>): Promise<string> {
-		// Flatten message object for Redis XADD
+	async writeUIMessage(sessionId: string, message: UIMessage): Promise<string> {
+		const streamKey = getStreamKey(sessionId);
+
+		const entry: RedisUIMessageEntry = {
+			messageId: message.id,
+			role: message.role,
+			parts: JSON.stringify(message.parts),
+			timestamp: new Date().toISOString(),
+		};
+
+		if (message.metadata) {
+			entry.metadata = JSON.stringify(message.metadata);
+		}
+
+		// Convert to flat fields for Redis
 		const fields: Record<string, string> = {};
-		Object.entries(message).forEach(([key, value]) => {
-			if (value !== undefined && value !== null) {
-				fields[key] = typeof value === "object" ? JSON.stringify(value) : String(value);
-			}
+		Object.entries(entry).forEach(([key, value]) => {
+			fields[key] = typeof value === "string" ? value : String(value);
 		});
 
 		// Write to Redis stream
@@ -27,81 +48,66 @@ export class StreamWriter {
 	}
 
 	/**
-	 * Write a text chunk (for streaming responses)
+	 * Write a system event (not a message)
 	 */
-	async writeChunk(sessionId: string, content: string): Promise<string> {
-		const streamKey = `v2:stream:${sessionId}`;
-		return this.writeMessage(streamKey, {
-			type: "chunk",
-			content,
-		});
-	}
-
-	/**
-	 * Write a complete message (for final responses)
-	 */
-	async writeComplete(sessionId: string, content: string): Promise<string> {
-		const streamKey = `v2:stream:${sessionId}`;
-		return this.writeMessage(streamKey, {
-			type: "complete",
-			content,
-		});
-	}
-
-	/**
-	 * Write a status update
-	 */
-	async writeStatus(sessionId: string, status: string, metadata?: Record<string, any>): Promise<string> {
-		const streamKey = `v2:stream:${sessionId}`;
-		return this.writeMessage(streamKey, {
-			type: "status",
-			content: status,
-			metadata,
-		});
-	}
-
-	/**
-	 * Write a tool execution event
-	 */
-	async writeToolExecution(
+	async writeEvent(
 		sessionId: string,
-		tool: string,
-		status: "start" | "complete" | "error",
-		result?: any,
+		type: SystemEventType,
+		data?: Record<string, any>,
+		status?: StreamStatus,
+		error?: string,
+		code?: string,
 	): Promise<string> {
-		const streamKey = `v2:stream:${sessionId}`;
-		return this.writeMessage(streamKey, {
-			type: "tool",
-			content: `Tool ${tool}: ${status}`,
-			metadata: {
-				tool,
-				status,
-				result,
-			},
-		});
+		const eventKey = getEventStreamKey(sessionId);
+
+		const event: SystemEvent = {
+			id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+			type,
+			sessionId,
+			timestamp: new Date().toISOString(),
+		};
+
+		if (data) event.data = data;
+		if (status) event.status = status;
+		if (error) event.error = error;
+		if (code) event.code = code;
+
+		// Flatten for Redis
+		const fields: Record<string, string> = {
+			id: event.id,
+			type: event.type,
+			sessionId: event.sessionId,
+			timestamp: event.timestamp,
+		};
+
+		if (event.data) fields.data = JSON.stringify(event.data);
+		if (event.status) fields.status = event.status;
+		if (event.error) fields.error = event.error;
+		if (event.code) fields.code = event.code;
+
+		const id = await this.redis.xadd(eventKey, "*", fields);
+		return id as string;
 	}
 
 	/**
-	 * Write an error message
+	 * Write a status event
 	 */
-	async writeError(sessionId: string, error: string, code?: string): Promise<string> {
-		const streamKey = `v2:stream:${sessionId}`;
-		return this.writeMessage(streamKey, {
-			type: "error",
-			error: error,
-			code: code,
-		});
+	async writeStatusEvent(sessionId: string, status: StreamStatus, data?: Record<string, any>): Promise<string> {
+		return this.writeEvent(sessionId, "status", data, status);
 	}
 
 	/**
-	 * Write agent thinking/reasoning
+	 * Write an error event
 	 */
-	async writeThinking(sessionId: string, reasoning: string): Promise<string> {
-		const streamKey = `v2:stream:${sessionId}`;
-		return this.writeMessage(streamKey, {
-			type: "thinking",
-			content: reasoning,
-		});
+	async writeErrorEvent(sessionId: string, error: string, code?: string, data?: Record<string, any>): Promise<string> {
+		return this.writeEvent(sessionId, "error", data, undefined, error, code);
+	}
+
+	/**
+	 * Write a metadata event
+	 */
+	async writeMetadataEvent(sessionId: string, status: StreamStatus, data?: Record<string, any>): Promise<string> {
+		return this.writeEvent(sessionId, "metadata", data, status);
 	}
 }
 

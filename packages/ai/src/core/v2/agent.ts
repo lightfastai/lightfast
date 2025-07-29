@@ -6,7 +6,7 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
-import { type Tool as AiTool, smoothStream, streamText, type ToolSet, wrapLanguageModel } from "ai";
+import { type Tool as AiTool, smoothStream, streamText, type ToolSet, type UIMessage, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
@@ -146,14 +146,10 @@ export class Agent<TRuntimeContext = unknown> {
 			// Update session status
 			await this.updateSessionStatus(event.sessionId, "processing");
 
-			// Write status to stream
-			await this.writeToStream(event.sessionId, {
-				type: "event",
-				content: "Agent loop started",
-				metadata: JSON.stringify({
-					event: "agent.loop.start",
-					iteration: session.iteration + 1,
-				}),
+			// Write status event
+			await this.streamWriter.writeEvent(event.sessionId, "event", {
+				event: "agent.loop.start",
+				iteration: session.iteration + 1,
 			});
 
 			// Process the agent loop
@@ -164,15 +160,16 @@ export class Agent<TRuntimeContext = unknown> {
 			// Update session status
 			await this.updateSessionStatus(event.sessionId, "error");
 
-			// Write error to stream
-			await this.writeToStream(event.sessionId, {
-				type: "error",
-				content: error instanceof Error ? error.message : "Unknown error",
-				metadata: JSON.stringify({
+			// Write error event
+			await this.streamWriter.writeErrorEvent(
+				event.sessionId,
+				error instanceof Error ? error.message : "Unknown error",
+				"AGENT_LOOP_ERROR",
+				{
 					event: "agent.loop.error",
 					duration: Date.now() - startTime,
-				}),
-			});
+				},
+			);
 
 			throw error;
 		}
@@ -309,13 +306,10 @@ export class Agent<TRuntimeContext = unknown> {
 				duration: Date.now() - startTime,
 			});
 
-			// Write metadata completion signal to stream
-			await this.writeToStream(session.sessionId, {
-				type: "metadata",
-				content: "Stream completed - max iterations reached",
-				status: "completed",
-				sessionId: session.sessionId,
-				timestamp: new Date().toISOString(),
+			// Write metadata completion event
+			await this.streamWriter.writeMetadataEvent(session.sessionId, "completed", {
+				reason: "max_iterations_reached",
+				iterations: session.iteration,
 			});
 
 			await this.updateSessionStatus(session.sessionId, "completed");
@@ -352,9 +346,10 @@ export class Agent<TRuntimeContext = unknown> {
 		const systemPrompt = this.buildSystemPrompt(session);
 
 		// Prepare messages for the model
-		const messages = this.prepareMessages(session.messages);
+		const preparedMessages = this.prepareMessages(session.messages);
 
 		let finalDecision: AgentDecision | null = null;
+		let responseMessages: UIMessage[] = [];
 
 		// Create a prompt that will naturally generate structured output
 		const structuredPrompt = `${systemPrompt}
@@ -374,7 +369,7 @@ Think through this step by step first, then provide your JSON decision.`;
 		const { textStream } = await streamText({
 			...this.config, // Spread all streamText-compatible properties
 			system: structuredPrompt,
-			messages,
+			messages: preparedMessages,
 			// Override with session-specific values if needed
 			temperature: session.temperature ?? this.config.temperature,
 			// Apply experimental transform if provided
@@ -392,6 +387,18 @@ Think through this step by step first, then provide your JSON decision.`;
 					console.error(`[Agent ${this.config.name}] Failed to parse decision from text:`, error);
 				}
 
+				// For now, we'll construct a simple message from the text
+				// In the future, we might want to use result.responseMessages if available
+				if (result.text) {
+					responseMessages = [
+						{
+							id: this.generateMessageId(),
+							role: "assistant",
+							parts: [{ type: "text", text: result.text }],
+						},
+					];
+				}
+
 				// Log the decision
 				console.log(`[Agent ${this.config.name}] Decision for session ${session.sessionId}:`, {
 					action: finalDecision?.action,
@@ -401,17 +408,21 @@ Think through this step by step first, then provide your JSON decision.`;
 			},
 		});
 
-		// Stream the thinking process to Redis
-		for await (const chunk of textStream) {
-			if (chunk) {
-				await this.writeToStream(session.sessionId, {
-					type: "thinking",
-					content: chunk,
-					metadata: JSON.stringify({
-						event: "agent.thinking",
-						iteration: session.iteration + 1,
-					}),
-				});
+		// Consume the stream to completion
+		for await (const _ of textStream) {
+			// Just consuming the stream, messages are handled in onFinish
+		}
+
+		// Write the complete thinking message with reasoning parts
+		if (responseMessages.length > 0) {
+			const thinkingMessage = responseMessages[0];
+			if (thinkingMessage) {
+				// Transform text parts to reasoning parts for thinking
+				const reasoningMessage: UIMessage = {
+					...thinkingMessage,
+					parts: thinkingMessage.parts.map((part) => (part.type === "text" ? { ...part, type: "reasoning" } : part)),
+				};
+				await this.streamWriter.writeUIMessage(session.sessionId, reasoningMessage);
 			}
 		}
 
@@ -495,16 +506,24 @@ Think through your reasoning step by step, then make your decision. Always provi
 			content: `I'll use the ${decision.toolCall.tool} tool to help with your request. ${decision.reasoning}`,
 		});
 
-		// Write to stream
-		await this.writeToStream(session.sessionId, {
-			type: "chunk",
-			content: `Using ${decision.toolCall.tool} tool...`,
-			metadata: JSON.stringify({
-				event: "agent.tool.decision",
-				tool: decision.toolCall.tool,
-				reasoning: decision.reasoning,
-			}),
-		});
+		// Write tool message with tool call part
+		const toolMessage: UIMessage = {
+			id: this.generateMessageId(),
+			role: "assistant",
+			parts: [
+				{
+					type: "text",
+					text: `Using ${decision.toolCall.tool} tool...`,
+				},
+				{
+					type: `tool-${decision.toolCall.tool}`,
+					toolCallId,
+					state: "input-available",
+					input: decision.toolCall.arguments,
+				},
+			],
+		};
+		await this.streamWriter.writeUIMessage(session.sessionId, toolMessage);
 
 		// Emit tool call event
 		await sessionEmitter.emitAgentToolCall({
@@ -538,15 +557,18 @@ Think through your reasoning step by step, then make your decision. Always provi
 			content: decision.response,
 		});
 
-		// Write final response to stream
-		await this.writeToStream(session.sessionId, {
-			type: "chunk",
-			content: decision.response,
-			metadata: JSON.stringify({
-				event: "agent.response",
-				reasoning: decision.reasoning,
-			}),
-		});
+		// Write final response message
+		const responseMessage: UIMessage = {
+			id: this.generateMessageId(),
+			role: "assistant",
+			parts: [
+				{
+					type: "text",
+					text: decision.response,
+				},
+			],
+		};
+		await this.streamWriter.writeUIMessage(session.sessionId, responseMessage);
 
 		// Emit completion event
 		await sessionEmitter.emitAgentLoopComplete({
@@ -556,13 +578,10 @@ Think through your reasoning step by step, then make your decision. Always provi
 			duration: Date.now() - startTime,
 		});
 
-		// Write metadata completion signal to stream
-		await this.writeToStream(session.sessionId, {
-			type: "metadata",
-			content: "Stream completed",
-			status: "completed",
-			sessionId: session.sessionId,
-			timestamp: new Date().toISOString(),
+		// Write metadata completion event
+		await this.streamWriter.writeMetadataEvent(session.sessionId, "completed", {
+			reason: "response_delivered",
+			messageId: responseMessage.id,
 		});
 
 		// Update session status
@@ -588,15 +607,18 @@ Think through your reasoning step by step, then make your decision. Always provi
 			content: decision.clarification,
 		});
 
-		// Write clarification to stream
-		await this.writeToStream(session.sessionId, {
-			type: "chunk",
-			content: decision.clarification,
-			metadata: JSON.stringify({
-				event: "agent.clarification",
-				reasoning: decision.reasoning,
-			}),
-		});
+		// Write clarification message
+		const clarificationMessage: UIMessage = {
+			id: this.generateMessageId(),
+			role: "assistant",
+			parts: [
+				{
+					type: "text",
+					text: decision.clarification,
+				},
+			],
+		};
+		await this.streamWriter.writeUIMessage(session.sessionId, clarificationMessage);
 
 		// For now, treat clarification as completion
 		// In a real system, we'd wait for user response
@@ -607,13 +629,10 @@ Think through your reasoning step by step, then make your decision. Always provi
 			duration: Date.now() - startTime,
 		});
 
-		// Write metadata completion signal to stream
-		await this.writeToStream(session.sessionId, {
-			type: "metadata",
-			content: "Stream completed",
-			status: "completed",
-			sessionId: session.sessionId,
-			timestamp: new Date().toISOString(),
+		// Write metadata completion event
+		await this.streamWriter.writeMetadataEvent(session.sessionId, "completed", {
+			reason: "clarification_sent",
+			messageId: clarificationMessage.id,
 		});
 
 		// Update session status
@@ -666,9 +685,8 @@ Think through your reasoning step by step, then make your decision. Always provi
 		await this.redis.setex(sessionKey, 86400, JSON.stringify(session));
 	}
 
-	private async writeToStream(sessionId: string, data: Record<string, string>): Promise<void> {
-		const streamKey = `v2:stream:${sessionId}`;
-		await this.redis.xadd(streamKey, "*", data);
+	private generateMessageId(): string {
+		return `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 	}
 
 	private extractUsedTools(messages: Message[]): string[] {

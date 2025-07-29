@@ -3,4 +3,4 @@
  */
 
 export type { ChatMessage, UseChatOptions, UseChatReturn } from "./use-chat";
-export { useChat } from "./use-chat";
+export { useChat, getMessageContent } from "./use-chat";
