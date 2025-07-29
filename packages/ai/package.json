@@ -89,15 +89,16 @@
 		"@upstash/redis": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
-		"nanoid": "^5.1.5",
 		"playwright": "catalog:",
 		"playwright-core": "catalog:",
 		"resumable-stream": "catalog:",
+		"uuid": "^11.1.0",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.15",
 		"@types/react": "^19.1.8",
+		"@types/uuid": "^10.0.0",
 		"typescript": "catalog:"
 	}
 }

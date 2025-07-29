@@ -5,7 +5,7 @@
 
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
-import { nanoid } from "nanoid";
+import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey } from "../keys";
 import { type DeltaStreamMessage, DeltaStreamType } from "./types";
 
@@ -80,7 +80,7 @@ export class StreamConsumer {
 	 */
 	createDeltaStream(sessionId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
 		const streamKey = getDeltaStreamKey(sessionId);
-		const groupName = `sse-group-${nanoid()}`;
+		const groupName = `sse-group-${uuidv4()}`;
 		const redis = this.redis;
 
 		return new ReadableStream({
@@ -173,7 +173,7 @@ export class StreamConsumer {
 		onComplete?: () => Promise<void>,
 	): Promise<void> {
 		const streamKey = getDeltaStreamKey(sessionId);
-		const groupName = `consumer-group-${nanoid()}`;
+		const groupName = `consumer-group-${uuidv4()}`;
 
 		try {
 			// Check if stream exists
@@ -195,7 +195,7 @@ export class StreamConsumer {
 
 			// Read stream messages
 			const readStreamMessages = async () => {
-				const chunks = (await this.redis.xreadgroup(groupName, `consumer-${nanoid()}`, streamKey, ">")) as
+				const chunks = (await this.redis.xreadgroup(groupName, `consumer-${uuidv4()}`, streamKey, ">")) as
 					| StreamData[]
 					| null;
 

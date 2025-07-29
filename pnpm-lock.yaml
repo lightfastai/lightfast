@@ -337,6 +337,9 @@ importers:
       resumable-stream:
         specifier: 'catalog:'
         version: 2.2.1
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -347,6 +350,9 @@ importers:
       '@types/react':
         specifier: ^19.1.8
         version: 19.1.8
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
       typescript:
         specifier: 'catalog:'
         version: 5.8.3

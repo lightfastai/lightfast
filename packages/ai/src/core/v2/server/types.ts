@@ -27,4 +27,3 @@ export interface SystemEvent {
 	error?: string;
 	code?: string;
 }
-
