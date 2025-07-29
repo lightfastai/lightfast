@@ -49,7 +49,7 @@ export interface UseChatReturn {
 	clearSessionId: () => void;
 
 	// Refs for DOM manipulation
-	responseRef: React.RefObject<HTMLDivElement>;
+	responseRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function useChat(options: UseChatOptions = {}): UseChatReturn {

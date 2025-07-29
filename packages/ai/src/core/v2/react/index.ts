@@ -13,10 +13,9 @@ export type {
 } from "./use-chat";
 export { 
 	useChat, 
-	validateMessage,
-	MessageType,
-	StreamStatus
+	validateMessage
 } from "./use-chat";
+export { type MessageType, type StreamStatus } from "./use-chat";
 
 export type {
 	UseDeltaStreamOptions,

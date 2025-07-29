@@ -9,7 +9,7 @@ import { nanoid } from "nanoid";
 import { getStreamKey, isUIMessageEntry, parseUIMessageEntry, type StreamConfig } from "../types";
 
 // Delta stream message format (matches working API route)
-interface DeltaStreamMessage {
+export interface DeltaStreamMessage {
 	type: "chunk" | "metadata" | "event" | "error";
 	content?: string;
 	status?: string; // For metadata messages

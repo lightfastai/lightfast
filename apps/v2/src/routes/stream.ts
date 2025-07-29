@@ -3,7 +3,7 @@
  * Provides real-time updates from Redis streams
  */
 
-import type { StreamMessage } from "@lightfast/ai/v2/core";
+import type { DeltaStreamMessage } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { streamConsumer, streamGenerator } from "../config";
@@ -29,8 +29,10 @@ streamRoutes.get("/:sessionId", async (c) => {
 			});
 
 			// Start consuming from Redis stream
-			await streamConsumer.consume(sessionId, controller.signal, {
-				onMessage: async (message: StreamMessage) => {
+			await streamConsumer.consumeDeltaStream(
+				sessionId, 
+				controller.signal,
+				async (message: DeltaStreamMessage) => {
 					// Format the message for SSE based on type
 					let data: any = {};
 
@@ -39,29 +41,23 @@ streamRoutes.get("/:sessionId", async (c) => {
 							data = { content: message.content };
 							break;
 						case "metadata":
-							if ("status" in message && "sessionId" in message && "timestamp" in message) {
-								data = { status: message.status, sessionId: message.sessionId, timestamp: message.timestamp };
-							}
+							data = { status: message.status, timestamp: message.timestamp };
 							break;
 						case "event":
-							if ("event" in message) {
-								data = { event: message.event, data: "data" in message ? message.data : undefined };
-							}
+							data = { event: message.content };
 							break;
 						case "error":
-							if ("error" in message) {
-								data = { error: message.error, code: "code" in message ? message.code : undefined };
-							}
+							data = { error: message.content };
 							break;
 					}
 
 					await stream.writeSSE({
 						data: JSON.stringify(data),
 						event: message.type,
-						id: Date.now().toString(), // Generate ID since StreamMessage doesn't have one
+						id: Date.now().toString(),
 					});
 				},
-				onError: async (error: Error) => {
+				async (error: Error) => {
 					console.error(`Stream error for ${sessionId}:`, error);
 					await stream.writeSSE({
 						event: "error",
@@ -71,7 +67,7 @@ streamRoutes.get("/:sessionId", async (c) => {
 						}),
 					});
 				},
-				onComplete: async () => {
+				async () => {
 					await stream.writeSSE({
 						event: "complete",
 						data: JSON.stringify({
@@ -79,9 +75,8 @@ streamRoutes.get("/:sessionId", async (c) => {
 							timestamp: new Date().toISOString(),
 						}),
 					});
-				},
-				lastEventId,
-			});
+				}
+			);
 		} catch (error) {
 			console.error(`Failed to start stream for ${sessionId}:`, error);
 			await stream.writeSSE({

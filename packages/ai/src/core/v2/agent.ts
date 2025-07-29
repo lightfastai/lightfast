@@ -13,6 +13,7 @@ import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
 import type { EventEmitter, SessionEventEmitter } from "./events/emitter";
 import type { AgentLoopInitEvent, Message } from "./events/schemas";
 import { createStreamWriter, type StreamWriter } from "./server/stream-writer";
+import { StreamStatus } from "./server/stream/types";
 import {
 	type AgentDecision,
 	AgentDecisionSchema,
@@ -299,17 +300,15 @@ export class Agent<TRuntimeContext = unknown> {
 		// Check iteration limit
 		const maxIterations = this.maxIterations || session.maxIterations;
 		if (session.iteration >= maxIterations) {
+			// Emit proper completion metadata for max iterations
+			const finalMessage = "Maximum iterations reached. Please start a new conversation if you need further assistance.";
+			await this.emitCompletionMetadata(session.sessionId, 0, finalMessage);
+
 			await sessionEmitter.emitAgentLoopComplete({
-				finalMessage: "Maximum iterations reached. Please start a new conversation if you need further assistance.",
+				finalMessage,
 				iterations: session.iteration,
 				toolsUsed: this.extractUsedTools(session.messages),
 				duration: Date.now() - startTime,
-			});
-
-			// Write metadata completion event
-			await this.streamWriter.writeMetadataEvent(session.sessionId, "completed", {
-				reason: "max_iterations_reached",
-				iterations: session.iteration,
 			});
 
 			await this.updateSessionStatus(session.sessionId, "completed");
@@ -317,7 +316,7 @@ export class Agent<TRuntimeContext = unknown> {
 		}
 
 		// Make a decision using streamText for immediate feedback
-		const decision = await this.makeDecision(session, sessionEmitter);
+		const { decision, chunkCount, fullContent } = await this.makeDecision(session, sessionEmitter);
 
 		// Update iteration count
 		await this.incrementIteration(session.sessionId);
@@ -327,11 +326,8 @@ export class Agent<TRuntimeContext = unknown> {
 			await this.handleToolCall(session, decision, sessionEmitter);
 		} else {
 			// For non-tool actions (complete), signal completion and finish
-			await this.streamMetadata(session.sessionId, "completed", {
-				event: "agent.loop.complete",
-				iterations: session.iteration + 1,
-				duration: Date.now() - startTime,
-			});
+			// Emit proper completion metadata that the consumer expects
+			await this.emitCompletionMetadata(session.sessionId, chunkCount, fullContent);
 
 			await sessionEmitter.emitAgentLoopComplete({
 				finalMessage: "Agent loop completed",
@@ -346,7 +342,7 @@ export class Agent<TRuntimeContext = unknown> {
 	/**
 	 * Make a decision using streamText for immediate feedback
 	 */
-	private async makeDecision(session: AgentSessionState, sessionEmitter: SessionEventEmitter): Promise<AgentDecision> {
+	private async makeDecision(session: AgentSessionState, sessionEmitter: SessionEventEmitter): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
 		// Build the system prompt
 		const systemPrompt = this.buildSystemPrompt(session);
 
@@ -355,6 +351,7 @@ export class Agent<TRuntimeContext = unknown> {
 
 		let finalDecision: AgentDecision | null = null;
 		let responseMessages: UIMessage[] = [];
+		let chunkCount = 0;
 
 		// Signal start of decision making
 		await this.streamMetadata(session.sessionId, "started", {
@@ -422,6 +419,7 @@ Think through this step by step first, then provide your JSON decision.`;
 		for await (const chunk of textStream) {
 			if (chunk) {
 				fullContent += chunk;
+				chunkCount++;
 				// Delta streaming - immediate UI feedback
 				await this.streamChunk(session.sessionId, chunk);
 			}
@@ -451,7 +449,7 @@ Think through this step by step first, then provide your JSON decision.`;
 			tool: (finalDecision as AgentDecision).action === "tool_call" ? (finalDecision as AgentDecision).toolCall?.tool : undefined,
 		});
 
-		return finalDecision;
+		return { decision: finalDecision, chunkCount, fullContent };
 	}
 
 	/**
@@ -618,6 +616,25 @@ Think through your reasoning step by step, then make your decision. Only use too
 			status,
 			...metadata,
 		});
+	}
+
+	/**
+	 * Emit completion metadata in the format expected by the consumer
+	 */
+	private async emitCompletionMetadata(sessionId: string, totalChunks: number, fullContent: string): Promise<void> {
+		const streamKey = this.getDeltaStreamKey(sessionId);
+		
+		const metadataMessage = {
+			type: "metadata",
+			status: StreamStatus.COMPLETED,
+			completedAt: new Date().toISOString(),
+			totalChunks: totalChunks.toString(),
+			fullContent,
+			timestamp: new Date().toISOString(),
+		};
+
+		await this.redis.xadd(streamKey, "*", metadataMessage);
+		await this.redis.publish(streamKey, JSON.stringify({ type: "metadata" }));
 	}
 
 	/**
