@@ -58,6 +58,44 @@ export class MessageWriter {
 	}
 
 	/**
+	 * Update an existing message by merging new parts
+	 * Used for adding tool results to assistant messages
+	 */
+	async updateMessageParts(sessionId: string, messageId: string, newParts: any[]): Promise<void> {
+		const key = getMessageKey(sessionId);
+		const now = new Date().toISOString();
+
+		// Get existing data
+		const existing = (await this.redis.json.get(key, "$")) as LightfastDBMessage[] | null;
+		if (!existing || existing.length === 0) {
+			throw new Error(`No messages found for session ${sessionId}`);
+		}
+
+		// Find the message to update
+		const messages = existing[0]?.messages || [];
+		const messageIndex = messages.findIndex((m: UIMessage) => m.id === messageId);
+
+		if (messageIndex < 0) {
+			throw new Error(`Message ${messageId} not found in session ${sessionId}`);
+		}
+
+		// Merge the parts
+		const existingMessage = messages[messageIndex];
+		if (existingMessage) {
+			const updatedMessage = {
+				...existingMessage,
+				parts: [...(existingMessage.parts || []), ...newParts],
+			};
+
+			// Update the specific message in the array
+			const pipeline = this.redis.pipeline();
+			pipeline.json.set(key, `$.messages[${messageIndex}]`, updatedMessage as unknown as Record<string, unknown>);
+			pipeline.json.set(key, "$.updatedAt", now);
+			await pipeline.exec();
+		}
+	}
+
+	/**
 	 * Atomically write a UIMessage and complete the associated stream
 	 * This prevents race conditions where stream completion happens before message is stored
 	 */

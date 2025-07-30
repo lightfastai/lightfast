@@ -199,20 +199,9 @@ export class AgentRuntime implements Runtime {
 				output: result,
 			};
 
-			// Append the tool result as a part to the existing assistant message
-			const assistantMessage: UIMessage = {
-				id: state.assistantMessageId,
-				role: "assistant",
-				parts: [toolResultPart],
-			};
-
-			// This will merge the parts with the existing assistant message
-			await messageWriter.writeUIMessageWithStreamComplete(
-				sessionId,
-				state.resourceId,
-				assistantMessage,
-				state.assistantMessageId,
-			);
+			// Update the assistant message with the tool result part
+			// This does NOT send a stream complete signal
+			await messageWriter.updateMessageParts(sessionId, state.assistantMessageId, [toolResultPart]);
 
 			// Don't store tool results in state - they're already in the messages
 
