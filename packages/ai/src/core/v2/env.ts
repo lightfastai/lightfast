@@ -19,12 +19,10 @@ export const env = createEnv({
 		QSTASH_CURRENT_SIGNING_KEY: z
 			.string()
 			.min(1)
-			.optional()
 			.describe("QStash current signing key for signature verification"),
 		QSTASH_NEXT_SIGNING_KEY: z
 			.string()
 			.min(1)
-			.optional()
 			.describe("QStash next signing key for signature verification"),
 
 		// AI Gateway (Required for LLM calls)
