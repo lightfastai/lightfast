@@ -5,9 +5,9 @@
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import { EventWriter } from "../events/event-writer";
-import type { AgentLoopInitEvent, AgentToolCallEvent, Message } from "../events/types";
 import { getSessionKey } from "../keys";
-import type { AgentLoopStepEvent, QStashClient, Runtime, SessionState, ToolRegistry } from "./types";
+import { MessageReader } from "../readers/message-reader";
+import type { QStashClient, Runtime, SessionState, ToolRegistry } from "./types";
 
 export class AgentRuntime implements Runtime {
 	private eventWriter: EventWriter;
@@ -23,28 +23,36 @@ export class AgentRuntime implements Runtime {
 	 * Initialize a new agent loop
 	 */
 	async initAgentLoop<TRuntimeContext = unknown>({
-		event,
+		sessionId,
 		agent,
 		baseUrl,
 	}: {
-		event: AgentLoopInitEvent;
+		sessionId: string;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
 	}): Promise<void> {
-		const { sessionId, data } = event;
+		// Read messages from storage
+		const messageReader = new MessageReader(this.redis);
+		const uiMessages = await messageReader.getMessages(sessionId);
+
+		// Convert UIMessages to simple format for agent
+		const messages = uiMessages.map((msg) => ({
+			role: msg.role,
+			content: msg.parts.find((p) => p.type === "text")?.text || "",
+		}));
 
 		// Track loop start
-		const userMessage = data.messages.find((m: Message) => m.role === "user");
+		const userMessage = messages.find((m) => m.role === "user");
 		await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userMessage?.content || "");
 
 		// Save initial state
 		const state: SessionState = {
-			messages: data.messages,
+			messages,
 			stepIndex: 0,
 			startTime: Date.now(),
 			toolCallCount: 0,
 			agentId: agent.getName(),
-			temperature: data.temperature,
+			temperature: agent.getTemperature() || 0.7,
 		};
 		await this.saveSessionState(sessionId, state);
 
@@ -52,7 +60,7 @@ export class AgentRuntime implements Runtime {
 		await this.executeStep({
 			sessionId,
 			agent,
-			messages: data.messages,
+			messages,
 			stepIndex: 0,
 			baseUrl,
 		});
@@ -62,39 +70,30 @@ export class AgentRuntime implements Runtime {
 	 * Execute one step of the agent loop
 	 */
 	async executeAgentStep<TRuntimeContext = unknown>({
-		event,
+		sessionId,
+		stepIndex,
 		agent,
 		baseUrl,
 	}: {
-		event: AgentLoopStepEvent;
+		sessionId: string;
+		stepIndex: number;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
 	}): Promise<void> {
-		const { sessionId, data } = event;
-
 		// Get session state
 		const state = await this.getSessionState(sessionId);
 		if (!state) {
 			throw new Error(`Session state not found for ${sessionId}`);
 		}
 
-		// Add tool results to messages if any
-		if (data.toolResults) {
-			for (const result of data.toolResults) {
-				state.messages.push({
-					role: "tool",
-					content: JSON.stringify(result.output),
-					toolCallId: result.toolCallId,
-				});
-			}
-		}
+		// Tool results should already be in state.messages from executeTool
 
 		// Execute next step
 		await this.executeStep({
 			sessionId,
 			agent,
 			messages: state.messages,
-			stepIndex: data.stepIndex,
+			stepIndex,
 			baseUrl,
 		});
 	}
@@ -103,50 +102,55 @@ export class AgentRuntime implements Runtime {
 	 * Execute a tool call
 	 */
 	async executeTool({
-		event,
+		sessionId,
+		toolCallId,
+		toolName,
+		toolArgs,
 		toolRegistry,
 		baseUrl,
 	}: {
-		event: AgentToolCallEvent;
+		sessionId: string;
+		toolCallId: string;
+		toolName: string;
+		toolArgs: Record<string, any>;
 		toolRegistry: ToolRegistry;
 		baseUrl: string;
 	}): Promise<void> {
-		const { sessionId, data } = event;
 		const startTime = Date.now();
 
-		// Get session state to get agentId
+		// Get session state
 		const state = await this.getSessionState(sessionId);
 		if (!state) {
 			throw new Error(`Session state not found for ${sessionId}`);
 		}
 
 		// Track tool call
-		await this.eventWriter.writeAgentToolCall(sessionId, state.agentId, data.tool, data.toolCallId, data.arguments);
+		await this.eventWriter.writeAgentToolCall(sessionId, state.agentId, toolName, toolCallId, toolArgs);
 
 		try {
 			// Execute tool
-			const result = await toolRegistry.execute(data.tool, data.arguments);
+			const result = await toolRegistry.execute(toolName, toolArgs);
 
 			// Track tool result
 			await this.eventWriter.writeAgentToolResult(
 				sessionId,
 				state.agentId,
-				data.tool,
-				data.toolCallId,
+				toolName,
+				toolCallId,
 				result,
 				Date.now() - startTime,
 			);
 
 			// Update pending tool calls
 			if (state.pendingToolCalls) {
-				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== data.toolCallId);
+				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== toolCallId);
 			}
 
 			// Store tool result in state
 			const toolResults = state.toolResults || [];
 			toolResults.push({
-				toolCallId: data.toolCallId,
-				tool: data.tool,
+				toolCallId,
+				tool: toolName,
 				output: result,
 			});
 
@@ -156,15 +160,8 @@ export class AgentRuntime implements Runtime {
 				await this.qstash.publishJSON({
 					url: `${baseUrl}/workers/agent-loop-step`,
 					body: {
-						id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-						type: "agent.loop.step",
 						sessionId,
-						timestamp: new Date().toISOString(),
-						version: "1.0",
-						data: {
-							toolResults,
-							stepIndex: state.stepIndex + 1,
-						},
+						stepIndex: state.stepIndex + 1,
 					},
 				});
 			} else {
@@ -178,7 +175,7 @@ export class AgentRuntime implements Runtime {
 				error instanceof Error ? error.message : String(error),
 				"TOOL_ERROR",
 				undefined,
-				data.toolCallId,
+				toolCallId,
 			);
 			throw error;
 		}
@@ -190,7 +187,12 @@ export class AgentRuntime implements Runtime {
 	private async executeStep<TRuntimeContext = unknown>(params: {
 		sessionId: string;
 		agent: Agent<TRuntimeContext>;
-		messages: Message[];
+		messages: Array<{
+			role: "system" | "user" | "assistant" | "tool";
+			content: string;
+			toolCallId?: string;
+			toolCalls?: any[];
+		}>;
 		stepIndex: number;
 		baseUrl: string;
 	}): Promise<void> {

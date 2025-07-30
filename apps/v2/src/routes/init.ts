@@ -3,8 +3,7 @@
  * Similar to /api/v2/stream/init but simplified for testing
  */
 
-import type { Message } from "@lightfast/ai/v2/core";
-import { generateSessionId } from "@lightfast/ai/v2/server";
+import { generateSessionId, MessageWriter } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
 import { z } from "zod";
 import { baseUrl, qstash, redis, SYSTEM_LIMITS } from "../config";
@@ -50,8 +49,20 @@ initRoutes.post("/", async (c) => {
 				409,
 			);
 		}
+		// Write messages to message storage
+		const messageWriter = new MessageWriter(redis);
+		for (const msg of params.messages) {
+			// Skip tool messages as UIMessage doesn't support them
+			if (msg.role === "tool") continue;
+
+			await messageWriter.writeUIMessage(sessionId, {
+				id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+				role: msg.role as "system" | "user" | "assistant",
+				parts: [{ type: "text", text: msg.content }],
+			});
+		}
+
 		const sessionData = {
-			messages: params.messages as Message[],
 			systemPrompt: params.systemPrompt,
 			temperature: params.temperature,
 			maxIterations: params.maxIterations,
@@ -73,24 +84,23 @@ initRoutes.post("/", async (c) => {
 			metadata: JSON.stringify({ status: "initialized" }),
 		});
 
-		// Publish agent.loop.init event to worker via QStash
-		const initEvent = {
+		// Publish agent.loop.init message to worker via QStash
+		const initMessage = {
 			id: `${sessionId}-init`,
 			sessionId,
 			type: "agent.loop.init" as const,
 			timestamp: new Date().toISOString(),
+			version: "1.0" as const,
 			data: {
-				messages: params.messages as Message[],
-				systemPrompt: params.systemPrompt,
-				temperature: params.temperature,
-				tools: params.tools,
+				agentId: "default", // Could be passed in params
+				userId: undefined,
 				metadata: params.metadata,
 			},
 		};
 
 		await qstash.publishJSON({
 			url: `${baseUrl}/workers/agent-loop-init`,
-			body: { event: initEvent },
+			body: { sessionId, agentId: "default" },
 		});
 
 		return c.json({

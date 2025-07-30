@@ -5,12 +5,12 @@
 
 import {
 	Agent,
-	type AgentLoopInitEvent,
-	AgentLoopInitEventSchema,
-	type AgentLoopStepEvent,
-	AgentLoopStepEventSchema,
-	type AgentToolCallEvent,
-	AgentToolCallEventSchema,
+	type AgentLoopInitMessage,
+	AgentLoopInitMessageSchema,
+	type AgentLoopStepMessage,
+	AgentLoopStepMessageSchema,
+	type AgentToolCallMessage,
+	AgentToolCallMessageSchema,
 	type AgentToolDefinition,
 } from "@lightfast/ai/v2/core";
 import { handleAgentInit, handleAgentStep, handleToolCall } from "@lightfast/ai/v2/server";
@@ -85,17 +85,20 @@ const agent = new Agent(
 workerRoutes.post("/agent-loop-init", async (c) => {
 	try {
 		const body = await c.req.json();
-		const event = AgentLoopInitEventSchema.parse(body);
+		const event = AgentLoopInitMessageSchema.parse(body);
 
 		console.log(`[Worker] Processing agent.loop.init event ${event.id} for session ${event.sessionId}`);
 
 		// Use the runtime handler
-		const response = await handleAgentInit(event, {
-			agent,
-			redis,
-			qstash,
-			baseUrl,
-		});
+		const response = await handleAgentInit(
+			{ sessionId: event.sessionId, agentId: event.data.agentId },
+			{
+				agent,
+				redis,
+				qstash,
+				baseUrl,
+			},
+		);
 
 		return response;
 	} catch (error) {
@@ -124,17 +127,20 @@ workerRoutes.post("/agent-loop-init", async (c) => {
 workerRoutes.post("/agent-loop-step", async (c) => {
 	try {
 		const body = await c.req.json();
-		const event = AgentLoopStepEventSchema.parse(body);
+		const event = AgentLoopStepMessageSchema.parse(body);
 
 		console.log(`[Worker] Processing agent.loop.step event ${event.id} for session ${event.sessionId}`);
 
 		// Use the runtime handler
-		const response = await handleAgentStep(event, {
-			agent,
-			redis,
-			qstash,
-			baseUrl,
-		});
+		const response = await handleAgentStep(
+			{ sessionId: event.sessionId, stepIndex: event.data.stepIndex },
+			{
+				agent,
+				redis,
+				qstash,
+				baseUrl,
+			},
+		);
 
 		return response;
 	} catch (error) {
@@ -163,17 +169,25 @@ workerRoutes.post("/agent-loop-step", async (c) => {
 workerRoutes.post("/agent-tool-call", async (c) => {
 	try {
 		const body = await c.req.json();
-		const event = AgentToolCallEventSchema.parse(body);
+		const event = AgentToolCallMessageSchema.parse(body);
 
 		console.log(`[Worker] Processing agent.tool.call event ${event.id} for session ${event.sessionId}`);
 
 		// Use the runtime handler
-		const response = await handleToolCall(event, {
-			agent,
-			redis,
-			qstash,
-			baseUrl,
-		});
+		const response = await handleToolCall(
+			{
+				sessionId: event.sessionId,
+				toolCallId: event.data.toolCallId,
+				toolName: event.data.tool,
+				toolArgs: event.data.arguments,
+			},
+			{
+				agent,
+				redis,
+				qstash,
+				baseUrl,
+			},
+		);
 
 		return response;
 	} catch (error) {

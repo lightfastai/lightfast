@@ -11,12 +11,19 @@ import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
 import { EventWriter } from "./server/events/event-writer";
-import type { AgentLoopInitEvent, Message } from "./server/events/types";
 import { getDeltaStreamKey } from "./server/keys";
 import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
 import { MessageWriter } from "./server/writers/message-writer";
 import { type AgentDecision, AgentDecisionSchema, type WorkerConfig } from "./workers/schemas";
+
+// Simple message type for internal use
+type SimpleMessage = {
+	role: "system" | "user" | "assistant" | "tool";
+	content: string;
+	toolCallId?: string;
+	toolCalls?: any[];
+};
 
 // Legacy v2 tool definition (for backward compatibility)
 export interface AgentToolDefinition {
@@ -232,7 +239,7 @@ export class Agent<TRuntimeContext = unknown> {
 	 */
 	async makeDecisionForRuntime(
 		sessionId: string,
-		messages: Message[],
+		messages: SimpleMessage[],
 		temperature: number,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
 		// Build the system prompt
@@ -359,7 +366,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 	/**
 	 * Prepare messages for the model
 	 */
-	private prepareMessages(messages: Message[]): Array<{ role: "user" | "assistant"; content: string }> {
+	private prepareMessages(messages: SimpleMessage[]): Array<{ role: "user" | "assistant"; content: string }> {
 		return messages
 			.filter((m) => m.role !== "system")
 			.map((m) => {
@@ -381,7 +388,7 @@ Think through your reasoning step by step, then make your decision. Only use too
 		return `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 	}
 
-	private extractUsedTools(messages: Message[]): string[] {
+	private extractUsedTools(messages: SimpleMessage[]): string[] {
 		const tools = new Set<string>();
 		messages.forEach((m) => {
 			// Extract tool names from tool calls if available

@@ -3,7 +3,6 @@
  */
 
 import type { Agent } from "../../agent";
-import type { AgentLoopInitEvent, AgentLoopStepEvent, AgentToolCallEvent } from "../events/types";
 
 /**
  * Session state stored in Redis
@@ -48,7 +47,7 @@ export interface Runtime {
 	 * Initialize a new agent loop
 	 */
 	initAgentLoop<TRuntimeContext = unknown>(params: {
-		event: AgentLoopInitEvent;
+		sessionId: string;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
 	}): Promise<void>;
@@ -57,7 +56,8 @@ export interface Runtime {
 	 * Execute one step of the agent loop
 	 */
 	executeAgentStep<TRuntimeContext = unknown>(params: {
-		event: AgentLoopStepEvent;
+		sessionId: string;
+		stepIndex: number;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
 	}): Promise<void>;
@@ -65,14 +65,17 @@ export interface Runtime {
 	/**
 	 * Execute a tool call
 	 */
-	executeTool(params: { event: AgentToolCallEvent; toolRegistry: ToolRegistry; baseUrl: string }): Promise<void>;
+	executeTool(params: {
+		sessionId: string;
+		toolCallId: string;
+		toolName: string;
+		toolArgs: Record<string, any>;
+		toolRegistry: ToolRegistry;
+		baseUrl: string;
+	}): Promise<void>;
 }
 
 /**
  * Re-export QStash client type
  */
 export type { Client as QStashClient } from "@upstash/qstash";
-/**
- * Re-export event types from events/types.ts for convenience
- */
-export type { AgentLoopStepEvent } from "../events/types";

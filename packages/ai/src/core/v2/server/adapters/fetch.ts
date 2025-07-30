@@ -6,12 +6,6 @@
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
-import type {
-	AgentLoopCompleteEvent,
-	AgentLoopInitEvent,
-	AgentToolCallEvent,
-	ToolExecutionCompleteEvent,
-} from "../events/types";
 import { handleAgentInit } from "../handlers/runtime/init-handler";
 import { handleAgentStep } from "../handlers/runtime/step-handler";
 import { handleToolCall } from "../handlers/runtime/tool-handler";
@@ -26,23 +20,32 @@ export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 }
 
 export interface AgentLoopInitRequestBody {
-	event: AgentLoopInitEvent;
+	sessionId: string;
+	agentId: string;
 }
 
 export interface AgentLoopStepRequestBody {
-	event: import("../runtime/types").AgentLoopStepEvent;
+	sessionId: string;
+	stepIndex: number;
 }
 
 export interface AgentToolCallRequestBody {
-	event: AgentToolCallEvent;
+	sessionId: string;
+	toolCallId: string;
+	toolName: string;
+	toolArgs: Record<string, any>;
 }
 
 export interface ToolExecutionCompleteRequestBody {
-	event: ToolExecutionCompleteEvent;
+	sessionId: string;
+	toolCallId: string;
+	toolName: string;
+	result: any;
 }
 
 export interface AgentLoopCompleteRequestBody {
-	event: AgentLoopCompleteEvent;
+	sessionId: string;
+	finalMessage: string;
 }
 
 /**
@@ -99,7 +102,10 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 			const baseUrlPath = baseUrl.includes("://") ? new URL(baseUrl).pathname : baseUrl;
 			const pathSegments = url.pathname.replace(baseUrlPath, "").split("/").filter(Boolean);
 
-			console.log(`[V2 Fetch Handler] URL: ${request.url}, Path: ${url.pathname}, BaseUrlPath: ${baseUrlPath}, Segments:`, pathSegments);
+			console.log(
+				`[V2 Fetch Handler] URL: ${request.url}, Path: ${url.pathname}, BaseUrlPath: ${baseUrlPath}, Segments:`,
+				pathSegments,
+			);
 
 			// Handle stream endpoints
 			if (pathSegments[0] === "stream") {
@@ -127,7 +133,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						if (!qstash) {
 							return Response.json({ error: "QStash client not configured" }, { status: 500 });
 						}
-						return handleAgentInit(body.event, { agent, redis, qstash, baseUrl });
+						return handleAgentInit(body, { agent, redis, qstash, baseUrl });
 					}
 
 					case "agent-loop-step": {
@@ -137,7 +143,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						if (!qstash) {
 							return Response.json({ error: "QStash client not configured" }, { status: 500 });
 						}
-						return handleAgentStep(body.event, { agent, redis, qstash, baseUrl });
+						return handleAgentStep(body, { agent, redis, qstash, baseUrl });
 					}
 
 					case "agent-tool-call": {
@@ -147,7 +153,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						if (!qstash) {
 							return Response.json({ error: "QStash client not configured" }, { status: 500 });
 						}
-						return handleToolCall(body.event, { agent, redis, qstash, baseUrl });
+						return handleToolCall(body, { agent, redis, qstash, baseUrl });
 					}
 
 					case "tool-execution-complete": {

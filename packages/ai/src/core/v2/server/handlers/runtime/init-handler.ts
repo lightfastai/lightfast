@@ -5,7 +5,6 @@
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../../agent";
-import type { AgentLoopInitEvent } from "../../events/types";
 import { AgentRuntime } from "../../runtime/agent-runtime";
 
 export interface InitHandlerDependencies<TRuntimeContext = unknown> {
@@ -19,7 +18,7 @@ export interface InitHandlerDependencies<TRuntimeContext = unknown> {
  * Handle agent loop init event
  */
 export async function handleAgentInit<TRuntimeContext = unknown>(
-	initEvent: AgentLoopInitEvent,
+	body: { sessionId: string; agentId: string },
 	deps: InitHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
 	const { agent, redis, qstash, baseUrl } = deps;
@@ -27,7 +26,7 @@ export async function handleAgentInit<TRuntimeContext = unknown>(
 
 	try {
 		await runtime.initAgentLoop({
-			event: initEvent,
+			sessionId: body.sessionId,
 			agent,
 			baseUrl,
 		});

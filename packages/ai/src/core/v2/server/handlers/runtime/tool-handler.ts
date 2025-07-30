@@ -5,7 +5,6 @@
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../../agent";
-import type { AgentToolCallEvent } from "../../events/types";
 import { AgentRuntime } from "../../runtime/agent-runtime";
 import type { ToolRegistry } from "../../runtime/types";
 
@@ -20,7 +19,7 @@ export interface ToolHandlerDependencies<TRuntimeContext = unknown> {
  * Handle agent tool call event
  */
 export async function handleToolCall<TRuntimeContext = unknown>(
-	toolEvent: AgentToolCallEvent,
+	body: { sessionId: string; toolCallId: string; toolName: string; toolArgs: Record<string, any> },
 	deps: ToolHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
 	const { agent, redis, qstash, baseUrl } = deps;
@@ -40,7 +39,10 @@ export async function handleToolCall<TRuntimeContext = unknown>(
 
 	try {
 		await runtime.executeTool({
-			event: toolEvent,
+			sessionId: body.sessionId,
+			toolCallId: body.toolCallId,
+			toolName: body.toolName,
+			toolArgs: body.toolArgs,
 			toolRegistry,
 			baseUrl,
 		});

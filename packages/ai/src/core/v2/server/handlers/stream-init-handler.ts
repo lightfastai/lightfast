@@ -5,9 +5,10 @@
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
-import type { AgentLoopInitEvent, Message } from "../events/types";
 import { getDeltaStreamKey, getSessionKey } from "../keys";
+import type { AgentLoopInitMessage } from "../orchestration/types";
 import { DeltaStreamType } from "../stream/types";
+import { MessageWriter } from "../writers/message-writer";
 
 export interface StreamInitRequestBody {
 	prompt: string;
@@ -42,8 +43,13 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		return Response.json({ error: "Session ID is required" }, { status: 400 });
 	}
 
-	// Convert prompt to messages format
-	const messages = [{ role: "user", content: prompt.trim() }] as Message[];
+	// Write initial user message
+	const messageWriter = new MessageWriter(redis);
+	await messageWriter.writeUIMessage(sessionId, {
+		id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+		role: "user",
+		parts: [{ type: "text", text: prompt.trim() }],
+	});
 
 	// Use Redis pipeline for atomic session initialization
 	const pipeline = redis.pipeline();
@@ -66,19 +72,17 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	// Execute all operations in a single batch
 	await pipeline.exec();
 
-	// Create agent loop init event
-	const agentLoopEvent: AgentLoopInitEvent = {
+	// Create agent loop init message
+	const agentLoopMessage: AgentLoopInitMessage = {
 		id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
 		type: "agent.loop.init",
 		sessionId,
 		timestamp: new Date().toISOString(),
 		version: "1.0",
 		data: {
-			messages: messages as Message[],
-			systemPrompt: agent.getSystemPrompt(),
-			temperature: agent.getTemperature() || 0.7,
-			tools: agent.getAvailableTools(),
-			metadata: {},
+			agentId: agent.getName(),
+			userId: undefined, // Could be extracted from auth context
+			metadata: { prompt }, // Store the prompt in metadata for debugging
 		},
 	};
 
@@ -88,10 +92,10 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		qstash
 			.publishJSON({
 				url: `${baseUrl}/workers/agent-loop-init`,
-				body: { event: agentLoopEvent },
+				body: { message: agentLoopMessage },
 			})
 			.catch((error) => {
-				console.error(`[Stream Init] Failed to publish agent loop init event for session ${sessionId}:`, error);
+				console.error(`[Stream Init] Failed to publish agent loop init message for session ${sessionId}:`, error);
 			});
 	} else {
 		console.warn(`[Stream Init] QStash not configured, cannot start agent loop for session ${sessionId}`);

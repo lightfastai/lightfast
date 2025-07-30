@@ -3,7 +3,7 @@
  * For testing and debugging event publishing
  */
 
-import type { Event } from "@lightfast/ai/v2/core";
+import type { OrchestrationMessage } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
 import { baseUrl, qstash, redis } from "../config";
@@ -16,7 +16,7 @@ eventRoutes.post("/publish", async (c) => {
 		const body = await c.req.json();
 
 		// Validate event against schema
-		const event = body as Event;
+		const event = body as OrchestrationMessage;
 
 		// Determine worker URL based on event type
 		let workerUrl: string;

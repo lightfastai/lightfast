@@ -6,7 +6,6 @@ import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../../agent";
 import { AgentRuntime } from "../../runtime/agent-runtime";
-import type { AgentLoopStepEvent } from "../../runtime/types";
 
 export interface StepHandlerDependencies<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
@@ -19,7 +18,7 @@ export interface StepHandlerDependencies<TRuntimeContext = unknown> {
  * Handle agent loop step event
  */
 export async function handleAgentStep<TRuntimeContext = unknown>(
-	stepEvent: AgentLoopStepEvent,
+	body: { sessionId: string; stepIndex: number },
 	deps: StepHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
 	const { agent, redis, qstash, baseUrl } = deps;
@@ -27,7 +26,8 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 
 	try {
 		await runtime.executeAgentStep({
-			event: stepEvent,
+			sessionId: body.sessionId,
+			stepIndex: body.stepIndex,
 			agent,
 			baseUrl,
 		});
