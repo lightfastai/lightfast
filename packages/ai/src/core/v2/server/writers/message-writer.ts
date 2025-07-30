@@ -5,7 +5,8 @@
 
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
-import { getMessageKey } from "../keys";
+import { getDeltaStreamKey, getMessageKey } from "../keys";
+import { DeltaStreamType } from "../stream/types";
 
 interface LightfastDBMessage {
 	sessionId: string;
@@ -54,5 +55,53 @@ export class MessageWriter {
 	 */
 	async writeUIMessage(sessionId: string, resourceId: string, message: UIMessage): Promise<void> {
 		await this.writeUIMessages(sessionId, resourceId, [message]);
+	}
+
+	/**
+	 * Atomically write a UIMessage and complete the associated stream
+	 * This prevents race conditions where stream completion happens before message is stored
+	 */
+	async writeUIMessageWithStreamComplete(
+		sessionId: string,
+		resourceId: string,
+		message: UIMessage,
+		streamId: string,
+	): Promise<void> {
+		const messageKey = getMessageKey(sessionId);
+		const streamKey = getDeltaStreamKey(streamId);
+		const now = new Date().toISOString();
+
+		// Get existing data or create new
+		const existing = (await this.redis.json.get(messageKey, "$")) as LightfastDBMessage[] | null;
+
+		const pipeline = this.redis.pipeline();
+
+		if (!existing || existing.length === 0) {
+			// Create new storage
+			const storage: LightfastDBMessage = {
+				sessionId,
+				resourceId,
+				messages: [message],
+				createdAt: now,
+				updatedAt: now,
+			};
+			pipeline.json.set(messageKey, "$", storage as unknown as Record<string, unknown>);
+		} else {
+			// Append to existing messages
+			pipeline.json.arrappend(messageKey, "$.messages", message as unknown as Record<string, unknown>);
+			pipeline.json.set(messageKey, "$.updatedAt", now);
+		}
+
+		// Complete the stream atomically
+		pipeline.xadd(streamKey, "*", {
+			type: DeltaStreamType.COMPLETE,
+			timestamp: now,
+		});
+
+		// Publish for real-time notifications
+		pipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.COMPLETE }));
+
+		// Execute all operations atomically
+		await pipeline.exec();
 	}
 }

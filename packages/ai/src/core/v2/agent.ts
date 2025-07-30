@@ -340,17 +340,23 @@ export class Agent<TRuntimeContext = unknown> {
 			}
 		}
 
-		// CRITICAL: Mark stream as complete
-		await this.streamWriter.writeComplete(assistantMessageId);
-
-		// Write the assistant message if we have content
+		// Write the assistant message and complete stream atomically to prevent race conditions
 		if (fullContent.trim()) {
 			const assistantMessage: UIMessage = {
 				id: assistantMessageId,
 				role: "assistant",
 				parts: [{ type: "text", text: fullContent }],
 			};
-			await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
+			// Atomic operation: write message AND complete stream
+			await this.messageWriter.writeUIMessageWithStreamComplete(
+				sessionId,
+				resourceId,
+				assistantMessage,
+				assistantMessageId,
+			);
+		} else {
+			// Just complete stream if no content
+			await this.streamWriter.writeComplete(assistantMessageId);
 		}
 
 		// Return decision based on what streamText naturally decided
@@ -358,7 +364,6 @@ export class Agent<TRuntimeContext = unknown> {
 
 		return { decision, chunkCount, fullContent };
 	}
-
 
 	private extractUsedTools(messages: SimpleMessage[]): string[] {
 		const tools = new Set<string>();

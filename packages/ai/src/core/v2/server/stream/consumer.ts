@@ -95,8 +95,12 @@ export class StreamConsumer {
 						group: groupName,
 						id: "0",
 					});
-				} catch (_err) {
-					// Group might already exist
+					console.log(`[StreamConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`);
+				} catch (err) {
+					console.log(`[StreamConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
+						stream: streamKey,
+						error: err instanceof Error ? err.message : String(err)
+					});
 				}
 
 				let subscription: ReturnType<typeof redis.subscribe> | null = null;
@@ -189,8 +193,12 @@ export class StreamConsumer {
 					group: groupName,
 					id: "0",
 				});
-			} catch (_err) {
-				// Group might already exist
+				console.log(`[StreamConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`);
+			} catch (err) {
+				console.log(`[StreamConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
+					stream: streamKey,
+					error: err instanceof Error ? err.message : String(err)
+				});
 			}
 
 			// Read stream messages
