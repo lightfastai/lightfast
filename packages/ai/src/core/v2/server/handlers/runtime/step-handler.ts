@@ -19,7 +19,7 @@ export interface StepHandlerDependencies<TRuntimeContext = unknown> {
  * Handle agent loop step event
  */
 export async function handleAgentStep<TRuntimeContext = unknown>(
-	body: { sessionId: string; stepIndex: number; resourceId?: string },
+	body: { sessionId: string; stepIndex: number; resourceId?: string; assistantMessageId?: string },
 	deps: StepHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
 	const { agent, redis, qstash, baseUrl, resourceId: depsResourceId } = deps;
@@ -32,6 +32,7 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 			agent,
 			baseUrl,
 			resourceId: body.resourceId || depsResourceId,
+			assistantMessageId: body.assistantMessageId,
 		});
 
 		return Response.json({ success: true });

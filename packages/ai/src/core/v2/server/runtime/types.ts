@@ -26,6 +26,7 @@ export interface SessionState {
 	}>;
 	agentId: string;
 	temperature?: number;
+	assistantMessageId?: string;
 }
 
 /**
@@ -49,6 +50,7 @@ export interface Runtime {
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
 		resourceId?: string;
+		assistantMessageId?: string;
 	}): Promise<void>;
 
 	/**

@@ -36,6 +36,7 @@ export function useChatV2({
 	const {
 		status,
 		response,
+		messageId,
 		sendMessage: v2SendMessage,
 		reset,
 	} = useChat({
@@ -47,9 +48,9 @@ export function useChatV2({
 			onChunkReceived?.(chunk);
 		},
 		onComplete: (fullResponse) => {
-			// Add the assistant message to messages array
+			// Add the assistant message to messages array with server-provided ID
 			const assistantMessage: UIMessage = {
-				id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+				id: messageId || `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
 				role: "assistant",
 				parts: [{ type: "text", text: fullResponse }],
 			};
@@ -80,7 +81,8 @@ export function useChatV2({
 			};
 			setMessages((prev) => [...prev, userMessage]);
 
-			// Send message for streaming
+			// Send message for streaming - v2SendMessage will return the message ID
+			// The useChat hook from v2 will handle getting the message ID from the init response
 			await v2SendMessage(message);
 		},
 		[status, v2SendMessage],

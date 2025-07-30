@@ -14,20 +14,20 @@ export interface StreamSSEDependencies {
  * Handle SSE stream connection
  */
 export async function handleStreamSSE(
-	sessionId: string,
+	streamId: string, // Can be either sessionId or messageId
 	deps: StreamSSEDependencies,
 	signal?: AbortSignal,
 ): Promise<Response> {
 	const { redis } = deps;
 	const streamConsumer = new StreamConsumer(redis);
 
-	if (!sessionId) {
-		return new Response("Session ID is required", { status: 400 });
+	if (!streamId) {
+		return new Response("Stream ID is required", { status: 400 });
 	}
 
 	try {
 		// Check if stream exists before creating SSE stream
-		const streamKey = getDeltaStreamKey(sessionId);
+		const streamKey = getDeltaStreamKey(streamId);
 		const keyExists = await redis.exists(streamKey);
 
 		if (!keyExists) {
@@ -36,7 +36,7 @@ export async function handleStreamSSE(
 		}
 
 		// Create SSE stream with signal for cleanup
-		const stream = streamConsumer.createDeltaStream(sessionId, signal);
+		const stream = streamConsumer.createDeltaStream(streamId, signal);
 
 		// Return SSE response
 		return new Response(stream, {

@@ -19,6 +19,7 @@ export interface UseChatOptions {
 export interface UseChatReturn {
 	// State
 	sessionId: string | undefined;
+	messageId: string | undefined;
 	status: "idle" | "loading" | "streaming" | "completed" | "error";
 	response: string;
 	chunkCount: number;
@@ -44,6 +45,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 	const [status, setStatus] = useState<"idle" | "loading" | "streaming" | "completed" | "error">("idle");
 	const [response, setResponse] = useState("");
 	const [chunkCount, setChunkCount] = useState(0);
+	const [messageId, setMessageId] = useState<string | undefined>();
 
 	// Refs
 	const responseRef = useRef<HTMLDivElement>(null);
@@ -93,8 +95,8 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 				setResponse("");
 				setChunkCount(0);
 
-				// Start the stream
-				await fetch(apiEndpoint, {
+				// Start the stream and get message ID
+				const initResponse = await fetch(apiEndpoint, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
@@ -102,9 +104,19 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 					body: JSON.stringify({ prompt, sessionId }),
 				});
 
-				// Connect to the delta stream if sessionId is provided
-				if (sessionId) {
-					await deltaStream.connect(sessionId);
+				if (!initResponse.ok) {
+					throw new Error(`Failed to initialize stream: ${initResponse.statusText}`);
+				}
+
+				const initData = await initResponse.json();
+				const { messageId: newMessageId } = initData;
+
+				// Store the message ID
+				setMessageId(newMessageId);
+
+				// Connect to the delta stream using message ID (not session ID)
+				if (newMessageId) {
+					await deltaStream.connect(newMessageId);
 				}
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error("Failed to send message");
@@ -121,11 +133,13 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		setResponse("");
 		setChunkCount(0);
 		setStatus("idle");
+		setMessageId(undefined);
 	}, [deltaStream]);
 
 	return {
 		// State
 		sessionId,
+		messageId,
 		status,
 		response,
 		chunkCount,

@@ -29,12 +29,14 @@ export class AgentRuntime implements Runtime {
 		agent,
 		baseUrl,
 		resourceId,
+		assistantMessageId,
 	}: {
 		sessionId: string;
 		stepIndex: number;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
 		resourceId?: string;
+		assistantMessageId?: string;
 	}): Promise<void> {
 		// Get or initialize session state
 		let state = await this.getSessionState(sessionId);
@@ -61,6 +63,7 @@ export class AgentRuntime implements Runtime {
 				toolCallCount: 0,
 				agentId: agent.getName(),
 				temperature: agent.getTemperature() || 0.7,
+				assistantMessageId: assistantMessageId,
 			};
 			await this.saveSessionState(sessionId, state);
 		} else {
@@ -184,8 +187,9 @@ export class AgentRuntime implements Runtime {
 		messages: UIMessage[];
 		stepIndex: number;
 		baseUrl: string;
+		assistantMessageId?: string;
 	}): Promise<void> {
-		const { sessionId, agent, messages, stepIndex, baseUrl } = params;
+		const { sessionId, agent, messages, stepIndex, baseUrl, assistantMessageId } = params;
 
 		// Track step start
 		const lastMessage = messages[messages.length - 1];
@@ -207,6 +211,7 @@ export class AgentRuntime implements Runtime {
 				state.resourceId,
 				messages,
 				state.temperature || 0.7,
+				assistantMessageId,
 			);
 
 			// The agent has already written the assistant message during streaming
@@ -257,6 +262,7 @@ export class AgentRuntime implements Runtime {
 							iteration: stepIndex,
 							priority: "normal",
 						},
+						assistantMessageId,
 					},
 				});
 			} else {

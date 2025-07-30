@@ -285,6 +285,7 @@ export class Agent<TRuntimeContext = unknown> {
 		resourceId: string,
 		messages: UIMessage[],
 		temperature: number,
+		assistantMessageId?: string,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
 		// Convert UIMessages to model messages
 		const modelMessages = convertToModelMessages(messages);
@@ -315,7 +316,7 @@ export class Agent<TRuntimeContext = unknown> {
 						fullContent += chunk.text;
 						chunkCount++;
 						// Delta streaming - immediate UI feedback
-						await this.streamWriter.writeChunk(sessionId, chunk.text);
+						await this.streamWriter.writeChunk(assistantMessageId || sessionId, chunk.text);
 					}
 					break;
 
@@ -333,19 +334,19 @@ export class Agent<TRuntimeContext = unknown> {
 						// Handle reasoning chunks (Claude thinking)
 						fullContent += chunk.delta;
 						chunkCount++;
-						await this.streamWriter.writeChunk(sessionId, chunk.delta);
+						await this.streamWriter.writeChunk(assistantMessageId || sessionId, chunk.delta);
 					}
 					break;
 			}
 		}
 
 		// CRITICAL: Mark stream as complete
-		await this.streamWriter.writeComplete(sessionId);
+		await this.streamWriter.writeComplete(assistantMessageId || sessionId);
 
 		// Write the assistant message if we have content
 		if (fullContent.trim()) {
 			const assistantMessage: UIMessage = {
-				id: this.generateMessageId(),
+				id: assistantMessageId || this.generateMessageId(),
 				role: "assistant",
 				parts: [{ type: "text", text: fullContent }],
 			};

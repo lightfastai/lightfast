@@ -56,6 +56,9 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		parts: [{ type: "text", text: prompt.trim() }],
 	});
 
+	// Generate unique message ID for the assistant response
+	const assistantMessageId = `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
 	// Determine the step index
 	let stepIndex = 0;
 	if (existingState) {
@@ -66,24 +69,27 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	} else {
 		// This is a new conversation
 		console.log(`[Stream Init] Starting new conversation for session ${sessionId}`);
-
-		// Use Redis pipeline for atomic session initialization
-		const pipeline = redis.pipeline();
-
-		// Write INIT message to stream for new sessions
-		const streamKey = getDeltaStreamKey(sessionId);
-		const initMessage = {
-			type: DeltaStreamType.INIT,
-			timestamp: new Date().toISOString(),
-		};
-		pipeline.xadd(streamKey, "*", initMessage);
-
-		// Publish notification
-		pipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.INIT }));
-
-		// Execute all operations in a single batch
-		await pipeline.exec();
 	}
+
+	// Use Redis pipeline for atomic initialization
+	const pipeline = redis.pipeline();
+
+	// Write INIT message to message-specific stream (not session stream)
+	const streamKey = getDeltaStreamKey(assistantMessageId);
+	const initMessage = {
+		type: DeltaStreamType.INIT,
+		timestamp: new Date().toISOString(),
+	};
+	pipeline.xadd(streamKey, "*", initMessage);
+
+	// Publish notification
+	pipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.INIT }));
+
+	// Set TTL on the stream (24 hours)
+	pipeline.expire(streamKey, 86400);
+
+	// Execute all operations in a single batch
+	await pipeline.exec();
 
 	// Always publish agent-loop-step event (handles both new and continuing)
 	if (qstash) {
@@ -95,6 +101,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 					sessionId,
 					stepIndex,
 					resourceId,
+					assistantMessageId, // Pass the message ID to the worker
 				},
 			})
 			.catch((error) => {
@@ -104,10 +111,11 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		console.warn(`[Stream Init] QStash not configured, cannot start agent loop for session ${sessionId}`);
 	}
 
-	// Return session info immediately
+	// Return session info immediately with message ID
 	return Response.json({
 		sessionId,
-		streamUrl: `${baseUrl}/stream/${sessionId}`,
+		messageId: assistantMessageId, // Return the assistant message ID
+		streamUrl: `${baseUrl}/stream/${assistantMessageId}`, // Use message ID for stream URL
 		status: existingState ? "continued" : "initialized",
 		stepIndex,
 		message: existingState

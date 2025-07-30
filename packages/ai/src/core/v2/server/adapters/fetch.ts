@@ -114,9 +114,9 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						return handleStreamInit(request, { agent, redis, qstash, baseUrl, resourceId });
 					}
 				} else if (pathSegments[1]) {
-					// Handle GET /stream/[sessionId]
-					const sessionId = pathSegments[1];
-					return await handleStreamSSE(sessionId, { redis }, request.signal);
+					// Handle GET /stream/[streamId] (can be sessionId or messageId)
+					const streamId = pathSegments[1];
+					return await handleStreamSSE(streamId, { redis }, request.signal);
 				}
 			}
 
