@@ -3,7 +3,6 @@
 import { useChat } from "@lightfast/ai/v2/react";
 import type { ChatStatus, UIMessage } from "ai";
 import { useCallback, useState } from "react";
-import { uuidv4 } from "@/lib/uuidv4";
 
 interface UseChatV2Options {
 	agentId: string;
@@ -30,7 +29,6 @@ export function useChatV2({
 	onChunkReceived,
 	onStreamComplete,
 }: UseChatV2Options): UseChatV2Return {
-	const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
 	const [currentResponse, setCurrentResponse] = useState("");
 	const [isProcessingMessage, setIsProcessingMessage] = useState(false);
 
@@ -38,11 +36,13 @@ export function useChatV2({
 	const {
 		status,
 		response,
+		messages,
 		messageId,
 		sendMessage: v2SendMessage,
 		reset,
 	} = useChat({
 		sessionId: threadId,
+		initialMessages,
 		apiEndpoint: "/api/v2/stream/init",
 		streamEndpoint: "/api/v2/stream",
 		onChunk: (chunk) => {
@@ -50,13 +50,6 @@ export function useChatV2({
 			onChunkReceived?.(chunk);
 		},
 		onComplete: (fullResponse, serverMessageId) => {
-			// Add the assistant message to messages array with server-provided ID
-			const assistantMessage: UIMessage = {
-				id: serverMessageId,
-				role: "assistant",
-				parts: [{ type: "text", text: fullResponse }],
-			};
-			setMessages((prev) => [...prev, assistantMessage]);
 			setCurrentResponse("");
 			setIsProcessingMessage(false); // Reset processing state
 			onStreamComplete?.(fullResponse);
@@ -80,16 +73,8 @@ export function useChatV2({
 			// Clear any current response state before sending new message
 			setCurrentResponse("");
 
-			// Add user message to messages array
-			const userMessage: UIMessage = {
-				id: uuidv4(),
-				role: "user",
-				parts: [{ type: "text", text: message }],
-			};
-			setMessages((prev) => [...prev, userMessage]);
-
 			try {
-				// Send message for streaming - v2SendMessage will return the message ID
+				// Send message for streaming - v2SendMessage will handle adding the user message
 				// The useChat hook from v2 will handle getting the message ID from the init response
 				await v2SendMessage(message);
 			} catch (error) {

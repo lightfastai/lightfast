@@ -1,7 +1,9 @@
 "use client";
 
+import type { UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type DeltaStreamMessage, DeltaStreamType } from "../server/stream/types";
+import { uuidv4 } from "../utils/uuid";
 import { useDeltaStream, validateMessage } from "./use-delta-stream";
 
 // Re-export types for convenience
@@ -11,6 +13,7 @@ export interface UseChatOptions {
 	apiEndpoint?: string;
 	streamEndpoint?: string;
 	sessionId?: string;
+	initialMessages?: UIMessage[];
 	onChunk?: (chunk: string) => void;
 	onComplete?: (response: string, messageId: string) => void;
 	onError?: (error: Error) => void;
@@ -20,6 +23,7 @@ export interface UseChatReturn {
 	// State
 	sessionId: string | undefined;
 	messageId: string | undefined;
+	messages: UIMessage[];
 	status: "idle" | "loading" | "streaming" | "completed" | "error";
 	response: string;
 	chunkCount: number;
@@ -38,6 +42,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		apiEndpoint = "/api/v2/stream/init",
 		streamEndpoint = "/api/v2/stream",
 		sessionId,
+		initialMessages = [],
 		onChunk,
 		onComplete,
 		onError,
@@ -46,6 +51,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 	const [response, setResponse] = useState("");
 	const [chunkCount, setChunkCount] = useState(0);
 	const [messageId, setMessageId] = useState<string | undefined>();
+	const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
 
 	// Refs
 	const responseRef = useRef<HTMLDivElement>(null);
@@ -61,6 +67,13 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		onComplete: (fullResponse: string) => {
 			setStatus("completed");
 			if (messageId) {
+				// Add assistant message to messages array
+				const assistantMessage: UIMessage = {
+					id: messageId,
+					role: "assistant",
+					parts: [{ type: "text", text: fullResponse }],
+				};
+				setMessages((prev) => [...prev, assistantMessage]);
 				onComplete?.(fullResponse, messageId);
 			}
 		},
@@ -96,6 +109,14 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 				setStatus("loading");
 				setResponse("");
 				setChunkCount(0);
+
+				// Add user message to messages array
+				const userMessage: UIMessage = {
+					id: uuidv4(),
+					role: "user",
+					parts: [{ type: "text", text: prompt }],
+				};
+				setMessages((prev) => [...prev, userMessage]);
 
 				// Start the stream and get message ID
 				const initResponse = await fetch(apiEndpoint, {
@@ -136,12 +157,14 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		setChunkCount(0);
 		setStatus("idle");
 		setMessageId(undefined);
+		setMessages([]);
 	}, [deltaStream]);
 
 	return {
 		// State
 		sessionId,
 		messageId,
+		messages,
 		status,
 		response,
 		chunkCount,

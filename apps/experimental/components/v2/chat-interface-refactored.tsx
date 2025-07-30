@@ -39,7 +39,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		initialMessages,
 	});
 
-
 	// Convert messages for display
 	const displayMessages = convertToLightfastMessages(messages);
 
