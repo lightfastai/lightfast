@@ -78,8 +78,8 @@ export class StreamConsumer {
 	 * Create an optimized delta stream following your clean pattern
 	 * Simple, readable, and efficient
 	 */
-	createDeltaStream(sessionId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
-		const streamKey = getDeltaStreamKey(sessionId);
+	createDeltaStream(streamId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
+		const streamKey = getDeltaStreamKey(streamId);
 		const groupName = `sse-group-${uuidv4()}`;
 		const redis = this.redis;
 
@@ -166,13 +166,13 @@ export class StreamConsumer {
 	 * Simple consume method for delta messages with callbacks
 	 */
 	async consumeDeltaStream(
-		sessionId: string,
+		streamId: string,
 		signal: AbortSignal,
 		onMessage: (message: DeltaStreamMessage) => Promise<void>,
 		onError?: (error: Error) => Promise<void>,
 		onComplete?: () => Promise<void>,
 	): Promise<void> {
-		const streamKey = getDeltaStreamKey(sessionId);
+		const streamKey = getDeltaStreamKey(streamId);
 		const groupName = `consumer-group-${uuidv4()}`;
 
 		try {
