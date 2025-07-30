@@ -363,26 +363,6 @@ ${toolsSection}
 Think through your reasoning step by step, then make your decision. Only use tools when necessary to fulfill the user's request.`;
 	}
 
-	/**
-	 * Prepare messages for the model
-	 */
-	private prepareMessages(messages: SimpleMessage[]): Array<{ role: "user" | "assistant"; content: string }> {
-		return messages
-			.filter((m) => m.role !== "system")
-			.map((m) => {
-				if (m.role === "tool") {
-					// Format tool results as assistant messages
-					return {
-						role: "assistant" as const,
-						content: `Tool result: ${m.content}`,
-					};
-				}
-				return {
-					role: m.role as "user" | "assistant",
-					content: m.content,
-				};
-			});
-	}
 
 	private generateMessageId(): string {
 		return `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
