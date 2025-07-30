@@ -23,8 +23,6 @@ export {
 // Export event types from unified location
 export * from "./server/events/types";
 
-// Export orchestration types
-export * from "./server/orchestration/types";
 
 // Export specific stream types
 export { type DeltaStreamMessage, DeltaStreamType } from "./server/stream/types";
