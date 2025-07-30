@@ -8,6 +8,7 @@ import { Receiver } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import { env } from "../../env";
+import type { LoggerFactory } from "../../logger";
 import { handleAgentStep } from "../handlers/runtime/step-handler";
 import { handleToolCall } from "../handlers/runtime/tool-handler";
 import { handleStreamInit } from "../handlers/stream-init-handler";
@@ -21,6 +22,7 @@ export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	qstash?: QStashClient; // Optional - required only for worker endpoints
 	baseUrl: string; // Base URL for generating stream URLs (e.g., "/api/v2")
 	resourceId: string; // Required resource ID (user ID in our case)
+	loggerFactory?: LoggerFactory; // Optional logger factory for structured logging
 }
 
 export interface AgentLoopStepRequestBody {
@@ -93,7 +95,7 @@ export interface AgentLoopCompleteRequestBody {
 export function fetchRequestHandler<TRuntimeContext = unknown>(
 	options: FetchRequestHandlerOptions<TRuntimeContext>,
 ): (request: Request) => Promise<Response> {
-	const { agent, redis, qstash, baseUrl, resourceId } = options;
+	const { agent, redis, qstash, baseUrl, resourceId, loggerFactory } = options;
 
 	return async function handler(request: Request): Promise<Response> {
 		try {
@@ -113,7 +115,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				if (pathSegments[1] === "init") {
 					// Handle POST /stream/init
 					if (request.method === "POST") {
-						return handleStreamInit(request, { agent, redis, qstash, baseUrl, resourceId });
+						return handleStreamInit(request, { agent, redis, qstash, baseUrl, resourceId, loggerFactory });
 					}
 				} else if (pathSegments[1]) {
 					// Handle GET /stream/[streamId] (can be sessionId or messageId)
@@ -166,14 +168,14 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						// Handle POST /workers/agent-loop-step
 						const body = (await request.json()) as AgentLoopStepRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.loop.step event`);
-						return handleAgentStep(body, { agent, redis, qstash, baseUrl, resourceId });
+						return handleAgentStep(body, { agent, redis, qstash, baseUrl, resourceId, loggerFactory });
 					}
 
 					case "agent-tool-call": {
 						// Handle POST /workers/agent-tool-call
 						const body = (await request.json()) as AgentToolCallRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.tool.call event`);
-						return handleToolCall(body, { agent, redis, qstash, baseUrl, resourceId });
+						return handleToolCall(body, { agent, redis, qstash, baseUrl, resourceId, loggerFactory });
 					}
 
 					case "tool-execution-complete": {

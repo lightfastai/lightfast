@@ -5,6 +5,8 @@
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../../agent";
+import type { LoggerFactory } from "../../../logger";
+import { noopLogger } from "../../../logger";
 import { AgentRuntime } from "../../runtime/agent-runtime";
 
 export interface StepHandlerDependencies<TRuntimeContext = unknown> {
@@ -13,6 +15,7 @@ export interface StepHandlerDependencies<TRuntimeContext = unknown> {
 	qstash: QStashClient;
 	baseUrl: string;
 	resourceId: string;
+	loggerFactory?: LoggerFactory;
 }
 
 /**
@@ -22,8 +25,16 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 	body: { sessionId: string; stepIndex: number; resourceId?: string; assistantMessageId?: string },
 	deps: StepHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent, redis, qstash, baseUrl, resourceId: depsResourceId } = deps;
-	const runtime = new AgentRuntime(redis, qstash);
+	const { agent, redis, qstash, baseUrl, resourceId: depsResourceId, loggerFactory } = deps;
+	
+	// Create logger for this session
+	const logger = loggerFactory ? loggerFactory({
+		sessionId: body.sessionId,
+		agentId: agent.getName(),
+		userId: body.resourceId || depsResourceId,
+	}) : noopLogger;
+	
+	const runtime = new AgentRuntime(redis, qstash, logger);
 
 	try {
 		// Validate required parameters

@@ -5,6 +5,8 @@
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import type { Agent } from "../../agent";
+import type { ILogger } from "../../logger";
+import { LogEventName, noopLogger } from "../../logger";
 import { EventWriter } from "../events/event-writer";
 import { getSessionKey } from "../keys";
 import { MessageReader } from "../readers/message-reader";
@@ -12,12 +14,15 @@ import type { QStashClient, Runtime, SessionState, ToolRegistry } from "./types"
 
 export class AgentRuntime implements Runtime {
 	private eventWriter: EventWriter;
+	private logger: ILogger;
 
 	constructor(
 		private redis: Redis,
 		private qstash: QStashClient,
+		logger?: ILogger,
 	) {
 		this.eventWriter = new EventWriter(redis);
+		this.logger = logger || noopLogger;
 	}
 
 	/**
@@ -50,6 +55,15 @@ export class AgentRuntime implements Runtime {
 			const userMessage = uiMessages.find((m) => m.role === "user");
 			const userContent = userMessage?.parts?.find((p) => p.type === "text")?.text || "";
 			await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userContent);
+			
+			// Log to structured logger
+			this.logger.logEvent(LogEventName.AGENT_LOOP_START, {
+				sessionId,
+				agentId: agent.getName(),
+				input: userContent,
+				timestamp: new Date().toISOString(),
+				messageCount: uiMessages.length,
+			});
 
 			// Create initial state with UIMessages
 			// resourceId and assistantMessageId are now strictly required
@@ -80,6 +94,15 @@ export class AgentRuntime implements Runtime {
 			if (lastUserMessage) {
 				const lastUserContent = lastUserMessage.parts?.find((p) => p.type === "text")?.text || "";
 				await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex, lastUserContent);
+				
+				// Log to structured logger
+				this.logger.logEvent(LogEventName.AGENT_STEP_START, {
+					sessionId,
+					agentId: agent.getName(),
+					stepIndex,
+					input: lastUserContent,
+					timestamp: new Date().toISOString(),
+				});
 			}
 		}
 
@@ -122,6 +145,16 @@ export class AgentRuntime implements Runtime {
 
 		// Track tool call
 		await this.eventWriter.writeAgentToolCall(sessionId, state.agentId, toolName, toolCallId, toolArgs);
+		
+		// Log to structured logger
+		this.logger.logEvent(LogEventName.AGENT_TOOL_CALL, {
+			sessionId,
+			agentId: state.agentId,
+			toolName,
+			toolCallId,
+			args: toolArgs,
+			timestamp: new Date().toISOString(),
+		});
 
 		try {
 			// Execute tool
@@ -136,6 +169,17 @@ export class AgentRuntime implements Runtime {
 				result,
 				Date.now() - startTime,
 			);
+			
+			// Log to structured logger
+			this.logger.logEvent(LogEventName.AGENT_TOOL_RESULT, {
+				sessionId,
+				agentId: state.agentId,
+				toolName,
+				toolCallId,
+				result,
+				duration: Date.now() - startTime,
+				timestamp: new Date().toISOString(),
+			});
 
 			// Update pending tool calls
 			if (state.pendingToolCalls) {
@@ -173,6 +217,17 @@ export class AgentRuntime implements Runtime {
 				undefined,
 				toolCallId,
 			);
+			
+			// Log to structured logger
+			this.logger.logEvent(LogEventName.AGENT_ERROR, {
+				sessionId,
+				agentId: state.agentId,
+				error: error instanceof Error ? error.message : String(error),
+				code: "TOOL_ERROR",
+				toolCallId,
+				timestamp: new Date().toISOString(),
+			});
+			
 			throw error;
 		}
 	}
@@ -194,6 +249,15 @@ export class AgentRuntime implements Runtime {
 		const lastMessage = messages[messages.length - 1];
 		const lastMessageContent = lastMessage?.parts?.find((p) => p.type === "text")?.text || "";
 		await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex, lastMessageContent);
+		
+		// Log to structured logger
+		this.logger.logEvent(LogEventName.AGENT_STEP_START, {
+			sessionId,
+			agentId: agent.getName(),
+			stepIndex,
+			input: lastMessageContent,
+			timestamp: new Date().toISOString(),
+		});
 
 		const stepStartTime = Date.now();
 
@@ -232,6 +296,16 @@ export class AgentRuntime implements Runtime {
 				fullContent,
 				Date.now() - stepStartTime,
 			);
+			
+			// Log to structured logger
+			this.logger.logEvent(LogEventName.AGENT_STEP_COMPLETE, {
+				sessionId,
+				agentId: agent.getName(),
+				stepIndex,
+				output: fullContent,
+				duration: Date.now() - stepStartTime,
+				timestamp: new Date().toISOString(),
+			});
 
 			if (decision.toolCall) {
 				// Agent wants to call a tool
@@ -276,6 +350,17 @@ export class AgentRuntime implements Runtime {
 				"AGENT_STEP_ERROR",
 				stepIndex,
 			);
+			
+			// Log to structured logger
+			this.logger.logEvent(LogEventName.AGENT_ERROR, {
+				sessionId,
+				agentId: agent.getName(),
+				error: error instanceof Error ? error.message : String(error),
+				code: "AGENT_STEP_ERROR",
+				stepIndex,
+				timestamp: new Date().toISOString(),
+			});
+			
 			throw error;
 		}
 	}
@@ -299,6 +384,17 @@ export class AgentRuntime implements Runtime {
 			state.toolCallCount,
 			state.stepIndex + 1,
 		);
+		
+		// Log to structured logger
+		this.logger.logEvent(LogEventName.AGENT_LOOP_COMPLETE, {
+			sessionId,
+			agentId,
+			output,
+			duration: Date.now() - state.startTime,
+			toolCalls: state.toolCallCount,
+			steps: state.stepIndex + 1,
+			timestamp: new Date().toISOString(),
+		});
 
 		// Extract tools used from UIMessage parts
 		const toolsUsed = new Set<string>();

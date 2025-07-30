@@ -32,6 +32,7 @@ import { todoClearTool, todoReadTool, todoWriteTool } from "@/app/(v1)/ai/tools/
 import { webSearchTool } from "@/app/(v1)/ai/tools/web-search";
 import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 import { baseUrl as configBaseUrl, qstash, redis } from "@/app/(v2)/ai/config";
+import { loggerFactory } from "@/lib/logger";
 
 // Create tools object for v2 agent
 const v2Tools = {
@@ -121,6 +122,7 @@ const handler = async (req: NextRequest, { params }: { params: Promise<{ v: stri
 		qstash,
 		baseUrl: `${configBaseUrl}/api/v2`, // Use full URL for QStash
 		resourceId,
+		loggerFactory,
 	});
 
 	// Pass request to handler

@@ -5,6 +5,8 @@
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../../agent";
+import type { LoggerFactory } from "../../../logger";
+import { noopLogger } from "../../../logger";
 import { AgentRuntime } from "../../runtime/agent-runtime";
 import type { ToolRegistry } from "../../runtime/types";
 
@@ -14,6 +16,7 @@ export interface ToolHandlerDependencies<TRuntimeContext = unknown> {
 	qstash: QStashClient;
 	baseUrl: string;
 	resourceId?: string;
+	loggerFactory?: LoggerFactory;
 }
 
 /**
@@ -23,8 +26,16 @@ export async function handleToolCall<TRuntimeContext = unknown>(
 	body: { sessionId: string; toolCallId: string; toolName: string; toolArgs: Record<string, any> },
 	deps: ToolHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent, redis, qstash, baseUrl } = deps;
-	const runtime = new AgentRuntime(redis, qstash);
+	const { agent, redis, qstash, baseUrl, resourceId, loggerFactory } = deps;
+	
+	// Create logger for this session
+	const logger = loggerFactory ? loggerFactory({
+		sessionId: body.sessionId,
+		agentId: agent.getName(),
+		userId: resourceId,
+	}) : noopLogger;
+	
+	const runtime = new AgentRuntime(redis, qstash, logger);
 
 	// Create tool registry from agent
 	const toolRegistry: ToolRegistry = {

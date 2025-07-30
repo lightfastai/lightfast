@@ -6,6 +6,8 @@ import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import type { Agent } from "../../agent";
+import type { LoggerFactory } from "../../logger";
+import { LogEventName, noopLogger } from "../../logger";
 import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey, getMessageKey, getSessionKey } from "../keys";
 import type { SessionState } from "../runtime/types";
@@ -30,6 +32,7 @@ export interface StreamInitDependencies<TRuntimeContext = unknown> {
 	qstash?: QStashClient;
 	baseUrl: string;
 	resourceId: string;
+	loggerFactory?: LoggerFactory;
 }
 
 /**
@@ -39,7 +42,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	request: Request,
 	deps: StreamInitDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent: _agent, redis, qstash, baseUrl, resourceId } = deps;
+	const { agent: _agent, redis, qstash, baseUrl, resourceId, loggerFactory } = deps;
 
 	const body = (await request.json()) as StreamInitRequestBody;
 	const { prompt, sessionId } = body;
@@ -119,6 +122,40 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 
 	// Execute all write operations atomically
 	await writePipeline.exec();
+	
+	// Log session creation/resumption
+	const logger = loggerFactory ? loggerFactory({
+		sessionId,
+		agentId: _agent.getName(),
+		userId: resourceId,
+	}) : noopLogger;
+	
+	if (stepIndex === 0) {
+		logger.logEvent(LogEventName.SESSION_CREATED, {
+			sessionId,
+			agentId: _agent.getName(),
+			userId: resourceId,
+			timestamp: now,
+			initialMessage: prompt,
+		});
+	} else {
+		logger.logEvent(LogEventName.SESSION_RESUMED, {
+			sessionId,
+			agentId: _agent.getName(),
+			userId: resourceId,
+			timestamp: now,
+			messageCount: stepIndex + 1,
+			lastActivity: now,
+		});
+	}
+	
+	logger.logEvent(LogEventName.STREAM_START, {
+		sessionId,
+		agentId: _agent.getName(),
+		userId: resourceId,
+		timestamp: now,
+		streamType: "delta",
+	});
 
 	// Always publish agent-loop-step event (handles both new and continuing)
 	if (qstash) {

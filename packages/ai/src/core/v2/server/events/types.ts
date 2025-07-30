@@ -81,3 +81,64 @@ export type AgentEvent =
 	| AgentToolCallEvent
 	| AgentToolResultEvent
 	| AgentErrorEvent;
+
+/**
+ * Parameter types for EventWriter methods
+ * These types extract the parameters from the methods to ensure consistency
+ */
+
+export interface AgentLoopStartParams {
+	sessionId: string;
+	agentId: string;
+	input: string;
+}
+
+export interface AgentLoopCompleteParams {
+	sessionId: string;
+	agentId: string;
+	output: string;
+	duration: number;
+	toolCalls: number;
+	steps: number;
+}
+
+export interface AgentToolCallParams {
+	sessionId: string;
+	agentId: string;
+	toolName: string;
+	toolCallId: string;
+	args: Record<string, any>;
+}
+
+export interface AgentToolResultParams {
+	sessionId: string;
+	agentId: string;
+	toolName: string;
+	toolCallId: string;
+	result: any;
+	duration: number;
+}
+
+export interface AgentStepStartParams {
+	sessionId: string;
+	agentId: string;
+	stepIndex: number;
+	input: string;
+}
+
+export interface AgentStepCompleteParams {
+	sessionId: string;
+	agentId: string;
+	stepIndex: number;
+	output: string;
+	duration: number;
+}
+
+export interface AgentErrorParams {
+	sessionId: string;
+	agentId: string;
+	error: string;
+	code?: string;
+	stepIndex?: number;
+	toolCallId?: string;
+}

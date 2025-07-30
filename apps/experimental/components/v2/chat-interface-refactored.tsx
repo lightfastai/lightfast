@@ -39,13 +39,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		initialMessages,
 	});
 
-	// Update URL when first message is sent
-	useEffect(() => {
-		if (messages.length > 0 && window.location.pathname === `/v2-chat/${agentId}`) {
-			// Use window.history.replaceState to avoid full page reload
-			window.history.replaceState(null, "", `/v2-chat/${agentId}/${threadId}`);
-		}
-	}, [messages.length, agentId, threadId]);
 
 	// Convert messages for display
 	const displayMessages = convertToLightfastMessages(messages);
@@ -60,6 +53,11 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 	}
 
 	const handleSendMessage = async (message: string) => {
+		// Update URL immediately when sending first message
+		if (window.location.pathname === `/v2-chat/${agentId}`) {
+			window.history.replaceState(null, "", `/v2-chat/${agentId}/${threadId}`);
+		}
+
 		try {
 			await sendMessage(message);
 		} catch (error) {

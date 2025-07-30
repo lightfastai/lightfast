@@ -24,6 +24,11 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
+	// Update messages when initialMessages changes
+	useEffect(() => {
+		setMessages(initialMessages);
+	}, [initialMessages]);
+
 	// Use v2 chat hook for streaming
 	const { status, response, sendMessage, reset } = useChat({
 		sessionId: threadId,

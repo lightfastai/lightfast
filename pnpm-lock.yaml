@@ -12,9 +12,6 @@ catalogs:
     '@ai-sdk/gateway':
       specifier: 1.0.0-beta.11
       version: 1.0.0-beta.11
-    '@ai-sdk/provider':
-      specifier: 2.0.0-beta.1
-      version: 2.0.0-beta.1
     '@ai-sdk/react':
       specifier: 2.0.0-beta.26
       version: 2.0.0-beta.26
@@ -54,12 +51,6 @@ catalogs:
     redis:
       specifier: ^5.6.0
       version: 5.6.0
-    resumable-stream:
-      specifier: ^2.0.0
-      version: 2.2.1
-    turbo:
-      specifier: ^2.5.5
-      version: 2.5.5
     typescript:
       specifier: ^5.8.3
       version: 5.8.3
@@ -200,6 +191,9 @@ importers:
       next:
         specifier: ^15.4.2
         version: 15.4.3(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      pino:
+        specifier: ^9.7.0
+        version: 9.7.0
       playwright:
         specifier: 'catalog:'
         version: 1.54.1
@@ -294,6 +288,9 @@ importers:
       braintrust:
         specifier: 'catalog:'
         version: 0.2.1(@aws-sdk/credential-provider-web-identity@3.848.0)(zod@3.25.76)
+      pino:
+        specifier: ^9.7.0
+        version: 9.7.0
       playwright:
         specifier: 'catalog:'
         version: 1.54.1
@@ -2757,8 +2754,9 @@ packages:
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
 
-  dateformat@4.6.3:
-    resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
+  dateformat@5.0.3:
+    resolution: {integrity: sha512-Kvr6HmPXUMerlLcLF+Pwq3K7apHpYmGDVqrxcDasBg86UcKeTSNWbEzU8bwdXnxnR44FtMhJAxI4Bov6Y/KUfA==}
+    engines: {node: '>=12.20'}
 
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -3617,8 +3615,8 @@ packages:
   pino-abstract-transport@2.0.0:
     resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
 
-  pino-pretty@13.0.0:
-    resolution: {integrity: sha512-cQBBIVG3YajgoUjo1FdKVRX6t9XPxwB9lcNJVD5GCnNM4Y6T12YYx8c6zEejxQsU0wrg9TwmDulcE9LR7qcJqA==}
+  pino-pretty@13.1.0:
+    resolution: {integrity: sha512-UY+gCpL1f/2S2ohMGhPgtpeonDe3nT3/AjhywJjzAJPcMdcXk9ra0S5+4BhTlvWQFCktc6Q+HMKZ0KvvNugsQw==}
     hasBin: true
 
   pino-std-serializers@7.0.0:
@@ -3805,6 +3803,9 @@ packages:
   secure-json-parse@2.7.0:
     resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
 
+  secure-json-parse@4.0.0:
+    resolution: {integrity: sha512-dxtLJO6sc35jWidmLxo7ij+Eg48PM/kleBsxpC8QJE0qJICe+KawkDQmvCMZUr9u7WKVHgMW6vy3fQ7zMiFZMA==}
+
   semver@7.7.2:
     resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
     engines: {node: '>=10'}
@@ -3911,9 +3912,9 @@ packages:
     resolution: {integrity: sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==}
     engines: {node: '>=8'}
 
-  strip-json-comments@3.1.1:
-    resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
-    engines: {node: '>=8'}
+  strip-json-comments@5.0.2:
+    resolution: {integrity: sha512-4X2FR3UwhNUE9G49aIsJW5hRRR3GXGTBTZRMfv568O60ojM8HcWjV/VxAxCDW3SUND33O6ZY66ZuRcdkj73q2g==}
+    engines: {node: '>=14.16'}
 
   strnum@2.1.1:
     resolution: {integrity: sha512-7ZvoFTiCnGxBtDqJ//Cu6fWtZtc7Y3x+QOirG15wztbdngGSkht27o2pyGWrVy0b4WAy3jbKmnoK6g5VlVNUUw==}
@@ -4674,7 +4675,7 @@ snapshots:
       fetch-cookie: 3.1.0
       openai: 4.104.0(ws@8.18.3)(zod@3.25.76)
       pino: 9.7.0
-      pino-pretty: 13.0.0
+      pino-pretty: 13.1.0
       playwright: 1.54.1
       ws: 8.18.3
       zod: 3.25.76
@@ -7009,7 +7010,7 @@ snapshots:
 
   csstype@3.1.3: {}
 
-  dateformat@4.6.3: {}
+  dateformat@5.0.3: {}
 
   debug@2.6.9:
     dependencies:
@@ -8057,10 +8058,10 @@ snapshots:
     dependencies:
       split2: 4.2.0
 
-  pino-pretty@13.0.0:
+  pino-pretty@13.1.0:
     dependencies:
       colorette: 2.0.20
-      dateformat: 4.6.3
+      dateformat: 5.0.3
       fast-copy: 3.0.2
       fast-safe-stringify: 2.1.1
       help-me: 5.0.0
@@ -8069,9 +8070,9 @@ snapshots:
       on-exit-leak-free: 2.1.2
       pino-abstract-transport: 2.0.0
       pump: 3.0.3
-      secure-json-parse: 2.7.0
+      secure-json-parse: 4.0.0
       sonic-boom: 4.2.0
-      strip-json-comments: 3.1.1
+      strip-json-comments: 5.0.2
 
   pino-std-serializers@7.0.0: {}
 
@@ -8295,6 +8296,8 @@ snapshots:
 
   secure-json-parse@2.7.0: {}
 
+  secure-json-parse@4.0.0: {}
+
   semver@7.7.2:
     optional: true
 
@@ -8459,7 +8462,7 @@ snapshots:
     dependencies:
       ansi-regex: 5.0.1
 
-  strip-json-comments@3.1.1: {}
+  strip-json-comments@5.0.2: {}
 
   strnum@2.1.1:
     optional: true

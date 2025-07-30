@@ -89,6 +89,7 @@
 		"@upstash/redis": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
+		"pino": "^9.7.0",
 		"playwright": "catalog:",
 		"playwright-core": "catalog:",
 		"resumable-stream": "catalog:",
