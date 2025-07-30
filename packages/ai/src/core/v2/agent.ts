@@ -20,6 +20,7 @@ import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
 import { EventWriter } from "./server/events/event-writer";
 import { getDeltaStreamKey } from "./server/keys";
+import { MessageReader } from "./server/readers/message-reader";
 import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
 import { MessageWriter } from "./server/writers/message-writer";
@@ -90,6 +91,8 @@ export class Agent<TRuntimeContext = unknown> {
 	private createRuntimeContext?: (params: { sessionId: string; userId?: string }) => TRuntimeContext;
 	private workerConfig: Partial<WorkerConfig>;
 
+	private messageReader: MessageReader;
+
 	constructor(
 		options: AgentOptions<TRuntimeContext>,
 		private redis: Redis,
@@ -120,7 +123,8 @@ export class Agent<TRuntimeContext = unknown> {
 		// Store all streamText-compatible properties
 		this.config = streamTextConfig;
 
-		// Initialize writers
+		// Initialize readers and writers
+		this.messageReader = new MessageReader(redis);
 		this.messageWriter = new MessageWriter(redis);
 		this.eventWriter = new EventWriter(redis);
 		this.streamWriter = new StreamWriter(redis);
@@ -367,7 +371,17 @@ export class Agent<TRuntimeContext = unknown> {
 			// }
 
 			// Write message without completing stream
-			await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
+			// First check if the message already exists
+			const existingMessages = await this.messageReader.getMessages(sessionId);
+			const messageExists = existingMessages.some(m => m.id === assistantMessageId);
+			
+			if (messageExists) {
+				// Message already exists - update its parts
+				await this.messageWriter.updateMessageParts(sessionId, assistantMessageId, assistantMessage.parts);
+			} else {
+				// New message - write it
+				await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
+			}
 		}
 
 		// Return decision based on what streamText naturally decided
