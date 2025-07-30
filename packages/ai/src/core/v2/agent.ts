@@ -354,19 +354,7 @@ export class Agent<TRuntimeContext = unknown> {
 				assistantMessage.parts.push({ type: "text", text: fullContent });
 			}
 
-			// Add tool call part if there's a pending tool call
-			if (pendingToolCall) {
-				// Tool call part needs proper structure for convertToModelMessages
-				// Use the specific tool type format expected by AI SDK
-				const toolCallPart: any = {
-					type: `tool-${pendingToolCall.name}` as const,
-					toolCallId: pendingToolCall.id,
-					state: "input-available", // Use proper AI SDK state
-					input: pendingToolCall.args,
-					providerExecuted: false,
-				};
-				assistantMessage.parts.push(toolCallPart);
-			}
+			// Don't save tool call part - it will be added when tool result comes back
 
 			// Atomic operation: write message AND complete stream
 			await this.messageWriter.writeUIMessageWithStreamComplete(

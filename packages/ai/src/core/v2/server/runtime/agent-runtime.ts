@@ -187,38 +187,32 @@ export class AgentRuntime implements Runtime {
 				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== toolCallId);
 			}
 
-			// Write tool result to the messages
-			// Get the message reader to fetch current messages
-			const messageReader = new MessageReader(this.redis);
-			const currentMessages = await messageReader.getMessages(sessionId);
+			// Write tool result as part of the assistant message
+			const messageWriter = new MessageWriter(this.redis);
 
-			// Find the assistant message that contains the tool call
-			const assistantMessage = currentMessages.find((m) => m.id === state.assistantMessageId);
-			if (assistantMessage && assistantMessage.parts) {
-				// Check if this tool call exists in the message
-				// Tool parts have type format: tool-${toolName}
-				const toolCallPart = assistantMessage.parts.find(
-					(part: any) => part.type === `tool-${toolName}` && part.toolCallId === toolCallId,
-				);
+			// Create tool result part
+			const toolResultPart: any = {
+				type: `tool-${toolName}`,
+				toolCallId,
+				state: "output-available",
+				input: toolArgs,
+				output: result,
+			};
 
-				if (toolCallPart) {
-					// Update the tool call part to include the output and change state
-					// The Vercel AI SDK expects tool results to have 'output-available' state
-					// Keep the existing input and add the output
-					(toolCallPart as any).output = result;
-					(toolCallPart as any).state = "output-available"; // Change state to indicate output is available
-					// Ensure input is preserved (it should already be there from input-available state)
+			// Append the tool result as a part to the existing assistant message
+			const assistantMessage: UIMessage = {
+				id: state.assistantMessageId,
+				role: "assistant",
+				parts: [toolResultPart],
+			};
 
-					// Write the updated messages back
-					await this.redis.json.set(getMessageKey(sessionId), "$", {
-						sessionId,
-						resourceId: state.resourceId,
-						messages: currentMessages,
-						createdAt: new Date().toISOString(),
-						updatedAt: new Date().toISOString(),
-					} as unknown as Record<string, unknown>);
-				}
-			}
+			// This will merge the parts with the existing assistant message
+			await messageWriter.writeUIMessageWithStreamComplete(
+				sessionId,
+				state.resourceId,
+				assistantMessage,
+				state.assistantMessageId,
+			);
 
 			// Store tool result in state
 			const toolResults = state.toolResults || [];
