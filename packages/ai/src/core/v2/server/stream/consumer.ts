@@ -99,7 +99,7 @@ export class StreamConsumer {
 				} catch (err) {
 					console.log(`[StreamConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
 						stream: streamKey,
-						error: err instanceof Error ? err.message : String(err)
+						error: err instanceof Error ? err.message : String(err),
 					});
 				}
 
@@ -197,7 +197,7 @@ export class StreamConsumer {
 			} catch (err) {
 				console.log(`[StreamConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
 					stream: streamKey,
-					error: err instanceof Error ? err.message : String(err)
+					error: err instanceof Error ? err.message : String(err),
 				});
 			}
 

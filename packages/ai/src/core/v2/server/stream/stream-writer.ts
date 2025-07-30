@@ -60,16 +60,16 @@ export class StreamWriter {
 
 		// Use pipeline for better performance
 		const pipeline = this.redis.pipeline();
-		
+
 		// Write to Redis stream
 		pipeline.xadd(streamKey, "*", message);
-		
+
 		// Set TTL on delta stream (1 hour) - extends TTL on each write
 		pipeline.expire(streamKey, 3600);
-		
+
 		// Publish for real-time notifications
 		pipeline.publish(streamKey, { type: DeltaStreamType.CHUNK });
-		
+
 		// Execute all operations atomically
 		await pipeline.exec();
 	}

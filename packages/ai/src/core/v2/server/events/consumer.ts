@@ -156,7 +156,7 @@ export class EventConsumer {
 				} catch (err) {
 					console.log(`[EventConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
 						stream: streamKey,
-						error: err instanceof Error ? err.message : String(err)
+						error: err instanceof Error ? err.message : String(err),
 					});
 				}
 
@@ -246,7 +246,7 @@ export class EventConsumer {
 			} catch (err) {
 				console.log(`[EventConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
 					stream: streamKey,
-					error: err instanceof Error ? err.message : String(err)
+					error: err instanceof Error ? err.message : String(err),
 				});
 			}
 
