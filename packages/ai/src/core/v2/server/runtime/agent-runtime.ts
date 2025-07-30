@@ -183,9 +183,10 @@ export class AgentRuntime implements Runtime {
 				timestamp: new Date().toISOString(),
 			});
 
-			// Update pending tool calls
+			// Update pending tool calls and save state
 			if (state.pendingToolCalls) {
 				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== toolCallId);
+				await this.saveSessionState(sessionId, state);
 			}
 
 			// Write tool result as part of the assistant message
