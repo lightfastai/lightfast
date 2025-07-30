@@ -8,6 +8,7 @@ import type { Agent } from "../../agent";
 import { getDeltaStreamKey, getSessionKey } from "../keys";
 import type { SessionState } from "../runtime/types";
 import { DeltaStreamType } from "../stream/types";
+import { uuidv4 } from "../../utils/uuid";
 import { MessageWriter } from "../writers/message-writer";
 
 export interface StreamInitRequestBody {
@@ -51,13 +52,13 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	// Write user message
 	const messageWriter = new MessageWriter(redis);
 	await messageWriter.writeUIMessage(sessionId, resourceId, {
-		id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+		id: uuidv4(),
 		role: "user",
 		parts: [{ type: "text", text: prompt.trim() }],
 	});
 
 	// Generate unique message ID for the assistant response
-	const assistantMessageId = `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+	const assistantMessageId = uuidv4();
 
 	// Determine the step index
 	let stepIndex = 0;

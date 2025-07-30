@@ -3,6 +3,7 @@
 import { useChat } from "@lightfast/ai/v2/react";
 import type { ChatStatus, UIMessage } from "ai";
 import { useCallback, useState } from "react";
+import { uuidv4 } from "@/lib/uuidv4";
 
 interface UseChatV2Options {
 	agentId: string;
@@ -47,10 +48,10 @@ export function useChatV2({
 			setCurrentResponse((prev) => prev + chunk);
 			onChunkReceived?.(chunk);
 		},
-		onComplete: (fullResponse) => {
+		onComplete: (fullResponse, serverMessageId) => {
 			// Add the assistant message to messages array with server-provided ID
 			const assistantMessage: UIMessage = {
-				id: messageId || `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+				id: serverMessageId,
 				role: "assistant",
 				parts: [{ type: "text", text: fullResponse }],
 			};
@@ -75,7 +76,7 @@ export function useChatV2({
 
 			// Add user message to messages array
 			const userMessage: UIMessage = {
-				id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+				id: uuidv4(),
 				role: "user",
 				parts: [{ type: "text", text: message }],
 			};

@@ -12,7 +12,7 @@ export interface UseChatOptions {
 	streamEndpoint?: string;
 	sessionId?: string;
 	onChunk?: (chunk: string) => void;
-	onComplete?: (response: string) => void;
+	onComplete?: (response: string, messageId: string) => void;
 	onError?: (error: Error) => void;
 }
 
@@ -60,7 +60,9 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		},
 		onComplete: (fullResponse: string) => {
 			setStatus("completed");
-			onComplete?.(fullResponse);
+			if (messageId) {
+				onComplete?.(fullResponse, messageId);
+			}
 		},
 		onError: (error: Error) => {
 			setStatus("error");

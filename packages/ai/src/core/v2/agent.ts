@@ -23,6 +23,7 @@ import { getDeltaStreamKey } from "./server/keys";
 import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
 import { MessageWriter } from "./server/writers/message-writer";
+import { uuidv4 } from "./utils/uuid";
 import { type AgentDecision, AgentDecisionSchema, type WorkerConfig } from "./workers/schemas";
 
 // Simple message type for internal use
@@ -360,7 +361,7 @@ export class Agent<TRuntimeContext = unknown> {
 	}
 
 	private generateMessageId(): string {
-		return `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+		return uuidv4();
 	}
 
 	private extractUsedTools(messages: SimpleMessage[]): string[] {
