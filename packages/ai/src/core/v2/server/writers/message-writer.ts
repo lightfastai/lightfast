@@ -87,8 +87,30 @@ export class MessageWriter {
 			};
 			pipeline.json.set(messageKey, "$", storage as unknown as Record<string, unknown>);
 		} else {
-			// Append to existing messages
-			pipeline.json.arrappend(messageKey, "$.messages", message as unknown as Record<string, unknown>);
+			// Check if this message ID already exists
+			const messages = existing[0]?.messages || [];
+			const existingMessageIndex = messages.findIndex((m: UIMessage) => m.id === message.id);
+
+			if (existingMessageIndex >= 0) {
+				// Message exists - merge parts instead of creating duplicate
+				const existingMessage = messages[existingMessageIndex];
+				if (existingMessage) {
+					const updatedMessage = {
+						...existingMessage,
+						parts: [...(existingMessage.parts || []), ...(message.parts || [])],
+					};
+
+					// Update the specific message in the array
+					pipeline.json.set(
+						messageKey,
+						`$.messages[${existingMessageIndex}]`,
+						updatedMessage as unknown as Record<string, unknown>,
+					);
+				}
+			} else {
+				// New message - append to array
+				pipeline.json.arrappend(messageKey, "$.messages", message as unknown as Record<string, unknown>);
+			}
 			pipeline.json.set(messageKey, "$.updatedAt", now);
 		}
 
