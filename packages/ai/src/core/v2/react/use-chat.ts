@@ -55,6 +55,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 
 	// Refs
 	const responseRef = useRef<HTMLDivElement>(null);
+	const messageIdRef = useRef<string | undefined>();
 
 	// Delta stream hook
 	const deltaStream = useDeltaStream({
@@ -66,15 +67,16 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		},
 		onComplete: (fullResponse: string) => {
 			setStatus("completed");
-			if (messageId) {
+			const currentMessageId = messageIdRef.current;
+			if (currentMessageId) {
 				// Add assistant message to messages array
 				const assistantMessage: UIMessage = {
-					id: messageId,
+					id: currentMessageId,
 					role: "assistant",
 					parts: [{ type: "text", text: fullResponse }],
 				};
 				setMessages((prev) => [...prev, assistantMessage]);
-				onComplete?.(fullResponse, messageId);
+				onComplete?.(fullResponse, currentMessageId);
 			}
 		},
 		onError: (error: Error) => {
@@ -134,8 +136,9 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 				const initData = await initResponse.json();
 				const { messageId: newMessageId } = initData;
 
-				// Store the message ID
+				// Store the message ID in both state and ref
 				setMessageId(newMessageId);
+				messageIdRef.current = newMessageId;
 
 				// Connect to the delta stream using message ID (not session ID)
 				if (newMessageId) {
@@ -157,6 +160,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		setChunkCount(0);
 		setStatus("idle");
 		setMessageId(undefined);
+		messageIdRef.current = undefined;
 		setMessages([]);
 	}, [deltaStream]);
 
