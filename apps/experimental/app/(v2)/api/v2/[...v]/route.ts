@@ -31,6 +31,7 @@ import { todoClearTool, todoReadTool, todoWriteTool } from "@/app/(v1)/ai/tools/
 import { webSearchTool } from "@/app/(v1)/ai/tools/web-search";
 import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 import { baseUrl as configBaseUrl, qstash, redis } from "@/app/(v2)/ai/config";
+import { A011_SYSTEM_PROMPT } from "@/app/(v1)/ai/agents/a011";
 
 // Create tools object for v2 agent
 const v2Tools = {
@@ -58,9 +59,8 @@ const v2Tools = {
 // Create the v2 test agent with the new Agent class
 const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 	{
-		name: "v2-test",
-		systemPrompt:
-			"You are a helpful AI assistant with comprehensive capabilities. You can manage files, search the web, maintain todo lists, and execute code in sandboxes. Use your tools effectively to help users with their tasks.",
+		name: "a011",
+		systemPrompt: A011_SYSTEM_PROMPT,
 		// Use actual v1 tool factories
 		tools: v2Tools,
 		// Create runtime context from session
