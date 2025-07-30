@@ -43,7 +43,7 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 	useEffect(() => {
 		if (messages.length > 0 && window.location.pathname === `/v2-chat/${agentId}`) {
 			// Use window.history.replaceState to avoid full page reload
-			window.history.replaceState(null, '', `/v2-chat/${agentId}/${threadId}`);
+			window.history.replaceState(null, "", `/v2-chat/${agentId}/${threadId}`);
 		}
 	}, [messages.length, agentId, threadId]);
 

@@ -2,8 +2,8 @@
  * Agent Runtime - Executes agent loops and tools with event tracking
  */
 
-import type { UIMessage } from "ai";
 import type { Redis } from "@upstash/redis";
+import type { UIMessage } from "ai";
 import type { Agent } from "../../agent";
 import { EventWriter } from "../events/event-writer";
 import { getSessionKey } from "../keys";
@@ -72,12 +72,7 @@ export class AgentRuntime implements Runtime {
 			const lastUserMessage = [...uiMessages].reverse().find((m) => m.role === "user");
 			if (lastUserMessage) {
 				const lastUserContent = lastUserMessage.parts?.find((p) => p.type === "text")?.text || "";
-				await this.eventWriter.writeAgentStepStart(
-					sessionId,
-					agent.getName(),
-					stepIndex,
-					lastUserContent,
-				);
+				await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex, lastUserContent);
 			}
 		}
 
@@ -189,12 +184,7 @@ export class AgentRuntime implements Runtime {
 		// Track step start
 		const lastMessage = messages[messages.length - 1];
 		const lastMessageContent = lastMessage?.parts?.find((p) => p.type === "text")?.text || "";
-		await this.eventWriter.writeAgentStepStart(
-			sessionId,
-			agent.getName(),
-			stepIndex,
-			lastMessageContent,
-		);
+		await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex, lastMessageContent);
 
 		const stepStartTime = Date.now();
 

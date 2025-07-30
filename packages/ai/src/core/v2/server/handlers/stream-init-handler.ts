@@ -46,7 +46,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	// Check if this is a continuing conversation
 	const sessionKey = getSessionKey(sessionId);
 	const existingState = (await redis.get(sessionKey)) as SessionState | null;
-	
+
 	// Write user message
 	const messageWriter = new MessageWriter(redis);
 	await messageWriter.writeUIMessage(sessionId, {
@@ -65,7 +65,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	} else {
 		// This is a new conversation
 		console.log(`[Stream Init] Starting new conversation for session ${sessionId}`);
-		
+
 		// Use Redis pipeline for atomic session initialization
 		const pipeline = redis.pipeline();
 
@@ -108,7 +108,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		streamUrl: `${baseUrl}/stream/${sessionId}`,
 		status: existingState ? "continued" : "initialized",
 		stepIndex,
-		message: existingState 
+		message: existingState
 			? `Continuing conversation at step ${stepIndex}. Connect to the stream URL to receive updates.`
 			: "New conversation started. Connect to the stream URL to receive updates.",
 	});

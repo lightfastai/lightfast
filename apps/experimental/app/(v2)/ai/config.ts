@@ -12,27 +12,10 @@ import { env } from "@/env";
  * Get the base URL for the application
  */
 function getBaseUrl(): string {
-	// In browser context
-	if (typeof window !== "undefined") {
-		return window.location.origin;
-	}
-
-	// Vercel deployment
-	if (process.env.VERCEL_URL) {
-		return `https://${process.env.VERCEL_URL}`;
-	}
-
-	// Vercel preview deployments
-	if (process.env.VERCEL_BRANCH_URL) {
-		return `https://${process.env.VERCEL_BRANCH_URL}`;
-	}
-
-	// Production domain (if set)
-	if (process.env.NEXT_PUBLIC_VERCEL_URL) {
-		return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
-	}
-
-	// Local development
+	// Use production URL if available (for QStash to bypass preview auth)
+	if (env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+	if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`;
+	// eslint-disable-next-line no-restricted-properties
 	return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
