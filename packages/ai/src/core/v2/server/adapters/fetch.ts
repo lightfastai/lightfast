@@ -26,6 +26,8 @@ export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 export interface AgentLoopStepRequestBody {
 	sessionId: string;
 	stepIndex: number;
+	resourceId?: string;
+	assistantMessageId?: string;
 }
 
 export interface AgentToolCallRequestBody {

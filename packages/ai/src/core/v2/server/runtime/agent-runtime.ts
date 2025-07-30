@@ -35,8 +35,8 @@ export class AgentRuntime implements Runtime {
 		stepIndex: number;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
-		resourceId?: string;
-		assistantMessageId?: string;
+		resourceId: string;
+		assistantMessageId: string;
 	}): Promise<void> {
 		// Get or initialize session state
 		let state = await this.getSessionState(sessionId);
@@ -52,9 +52,7 @@ export class AgentRuntime implements Runtime {
 			await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userContent);
 
 			// Create initial state with UIMessages
-			if (!resourceId) {
-				throw new Error(`resourceId is required for new sessions`);
-			}
+			// resourceId and assistantMessageId are now strictly required
 			state = {
 				resourceId,
 				messages: uiMessages,
@@ -63,7 +61,7 @@ export class AgentRuntime implements Runtime {
 				toolCallCount: 0,
 				agentId: agent.getName(),
 				temperature: agent.getTemperature() || 0.7,
-				assistantMessageId: assistantMessageId,
+				assistantMessageId,
 			};
 			await this.saveSessionState(sessionId, state);
 		} else {
@@ -92,6 +90,7 @@ export class AgentRuntime implements Runtime {
 			messages: state.messages,
 			stepIndex,
 			baseUrl,
+			assistantMessageId,
 		});
 	}
 
@@ -187,7 +186,7 @@ export class AgentRuntime implements Runtime {
 		messages: UIMessage[];
 		stepIndex: number;
 		baseUrl: string;
-		assistantMessageId?: string;
+		assistantMessageId: string;
 	}): Promise<void> {
 		const { sessionId, agent, messages, stepIndex, baseUrl, assistantMessageId } = params;
 

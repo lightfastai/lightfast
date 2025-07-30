@@ -161,38 +161,48 @@ Available on both client and server:
 The v2 agent infrastructure (`@packages/ai/src/core/v2/`) implements a state-machine routing system through HTTP endpoints:
 
 ```mermaid
-graph LR
-    %% Core Flow
-    Client[Client] -->|1. POST /stream/init| Init[Initialize]
-    Init -->|2. Queue Step| QStash[QStash]
-    Client -->|3. SSE /stream/id| Stream[Stream]
+graph TD
+    Client[Client] -->|POST /stream/init| InitHandler[Stream Init Handler]
+    InitHandler -->|Write message| Redis[(Redis)]
+    InitHandler -->|Publish event| QStash[QStash]
+    InitHandler -->|Return streamUrl| Client
     
-    %% Agent Loop
-    QStash -->|4. Process Step| Agent[Agent]
-    Agent -->|5a. Stream Text| Stream
-    Agent -->|5b. Call Tool| QStash
+    Client -->|GET /stream/messageId| SSEHandler[SSE Handler]
     
-    %% Tool Execution
-    QStash -->|6. Execute Tool| Tool[Tool]
-    Tool -->|7. Next Step| QStash
+    QStash -->|POST /workers/agent-loop-step| StepHandler[Step Handler]
+    StepHandler -->|Load state| Redis
+    StepHandler -->|Execute| AgentRuntime[Agent Runtime]
+    AgentRuntime -->|makeDecisionForRuntime| Agent[Agent]
     
-    %% State
-    Agent -.->|State| Redis[(Redis)]
-    Tool -.->|State| Redis
+    Agent -->|Stream chunks| StreamWriter[Stream Writer]
+    StreamWriter -->|Write to stream| Redis
+    Redis -->|Delta updates| SSEHandler
+    SSEHandler -->|Server-Sent Events| Client
+    
+    Agent -->|Tool call decision| StepHandler
+    StepHandler -->|Publish tool event| QStash
+    
+    QStash -->|POST /workers/agent-tool-call| ToolHandler[Tool Handler]
+    ToolHandler -->|Execute tool| ToolRegistry[Tool Registry]
+    ToolRegistry -->|Tool result| ToolHandler
+    ToolHandler -->|Update state| Redis
+    ToolHandler -->|Publish next step| QStash
     
     style Client fill:#f9f,stroke:#333,stroke-width:2px
     style QStash fill:#bfb,stroke:#333,stroke-width:2px
     style Redis fill:#bbf,stroke:#333,stroke-width:2px
+    style Agent fill:#fbf,stroke:#333,stroke-width:2px
 ```
 
-**Core Workflow:**
-1. Client sends prompt to `/stream/init`
-2. System queues first agent step via QStash
-3. Client connects to SSE endpoint for real-time updates
-4. Agent processes each step, either:
-   - Streaming text responses directly to client
-   - Calling tools and queuing next steps
-5. Loop continues until conversation completes
+**HTTP Endpoint Flow:**
+
+1. **POST `/stream/init`** - Stream Init Handler writes user message to Redis, publishes agent-loop-step event to QStash, returns streamUrl
+2. **GET `/stream/{messageId}`** - SSE Handler creates persistent connection for real-time updates
+3. **POST `/workers/agent-loop-step`** - Step Handler loads session state, executes Agent Runtime → Agent decision
+4. **Agent streams text** via Stream Writer → Redis → SSE Handler → Client (real-time)
+5. **Agent calls tool** → Step Handler publishes tool event to QStash
+6. **POST `/workers/agent-tool-call`** - Tool Handler executes tool, updates state, publishes next step
+7. **Loop continues** until Agent completes conversation (no more tools needed)
 
 ## 🛠️ Tech Stack
 

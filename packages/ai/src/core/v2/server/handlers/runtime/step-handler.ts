@@ -12,7 +12,7 @@ export interface StepHandlerDependencies<TRuntimeContext = unknown> {
 	redis: Redis;
 	qstash: QStashClient;
 	baseUrl: string;
-	resourceId?: string;
+	resourceId: string;
 }
 
 /**
@@ -26,13 +26,25 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 	const runtime = new AgentRuntime(redis, qstash);
 
 	try {
+		// Validate required parameters
+		const resourceId = body.resourceId || depsResourceId;
+		const assistantMessageId = body.assistantMessageId;
+
+		if (!resourceId) {
+			throw new Error('resourceId is required for agent step execution');
+		}
+
+		if (!assistantMessageId) {
+			throw new Error('assistantMessageId is required for agent step execution');
+		}
+
 		await runtime.executeStep({
 			sessionId: body.sessionId,
 			stepIndex: body.stepIndex,
 			agent,
 			baseUrl,
-			resourceId: body.resourceId || depsResourceId,
-			assistantMessageId: body.assistantMessageId,
+			resourceId,
+			assistantMessageId,
 		});
 
 		return Response.json({ success: true });
