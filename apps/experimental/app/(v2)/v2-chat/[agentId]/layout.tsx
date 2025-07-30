@@ -13,10 +13,10 @@ export default async function AgentLayout({ children, params }: AgentLayoutProps
 	const { agentId } = await params;
 
 	// Validate agentId is a valid type
-	const validAgentIds: string[] = ["a010", "a011"];
-	if (!validAgentIds.includes(agentId)) {
-		notFound();
-	}
+	// const validAgentIds: string[] = ["a010", "a011"];
+	// if (!validAgentIds.includes(agentId)) {
+	// notFound();
+	// }
 
 	return (
 		<ChatLayout agentId={agentId} version="v2">
