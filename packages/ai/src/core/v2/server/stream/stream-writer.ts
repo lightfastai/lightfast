@@ -12,8 +12,8 @@ export class StreamWriter {
 	/**
 	 * Write an initialization event to the delta stream
 	 */
-	async writeInit(sessionId: string): Promise<void> {
-		const streamKey = getDeltaStreamKey(sessionId);
+	async writeInit(streamId: string): Promise<void> {
+		const streamKey = getDeltaStreamKey(streamId);
 
 		const message: Record<string, string> = {
 			type: DeltaStreamType.INIT,
@@ -30,8 +30,8 @@ export class StreamWriter {
 	/**
 	 * Write an error event to the delta stream
 	 */
-	async writeError(sessionId: string, error: string): Promise<void> {
-		const streamKey = getDeltaStreamKey(sessionId);
+	async writeError(streamId: string, error: string): Promise<void> {
+		const streamKey = getDeltaStreamKey(streamId);
 
 		const message: Record<string, string> = {
 			type: DeltaStreamType.ERROR,
@@ -49,8 +49,8 @@ export class StreamWriter {
 	/**
 	 * Write a chunk event to the delta stream
 	 */
-	async writeChunk(sessionId: string, content: string): Promise<void> {
-		const streamKey = getDeltaStreamKey(sessionId);
+	async writeChunk(streamId: string, content: string): Promise<void> {
+		const streamKey = getDeltaStreamKey(streamId);
 
 		const message: Record<string, string> = {
 			type: DeltaStreamType.CHUNK,
@@ -68,8 +68,8 @@ export class StreamWriter {
 	/**
 	 * Write a completion event to the delta stream
 	 */
-	async writeComplete(sessionId: string): Promise<void> {
-		const streamKey = getDeltaStreamKey(sessionId);
+	async writeComplete(streamId: string): Promise<void> {
+		const streamKey = getDeltaStreamKey(streamId);
 
 		const message: Record<string, string> = {
 			type: DeltaStreamType.COMPLETE,
