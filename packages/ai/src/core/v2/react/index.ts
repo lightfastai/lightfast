@@ -15,4 +15,4 @@ export type {
 	UseEventStreamOptions,
 	UseEventStreamReturn,
 } from "./use-event-stream";
-export { useEventStream, useAgentLoopEvents, useAgentToolEvents, useAgentErrorEvents } from "./use-event-stream";
+export { useAgentErrorEvents, useAgentLoopEvents, useAgentToolEvents, useEventStream } from "./use-event-stream";

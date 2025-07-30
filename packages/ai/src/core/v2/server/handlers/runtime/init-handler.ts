@@ -2,8 +2,8 @@
  * Init Handler - Handles agent loop initialization events
  */
 
-import type { Redis } from "@upstash/redis";
 import type { Client as QStashClient } from "@upstash/qstash";
+import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../../agent";
 import type { AgentLoopInitEvent } from "../../events/types";
 import { AgentRuntime } from "../../runtime/agent-runtime";

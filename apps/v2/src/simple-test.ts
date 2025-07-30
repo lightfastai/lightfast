@@ -3,7 +3,7 @@
  */
 
 import { generateSessionId } from "@lightfast/ai/v2/server";
-import { redis, qstash, baseUrl } from "./config";
+import { baseUrl, qstash, redis } from "./config";
 
 async function testEventDrivenArchitecture() {
 	console.log("Testing V2 Event-Driven Architecture...\n");

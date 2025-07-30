@@ -4,8 +4,8 @@
  */
 
 import { StreamConsumer } from "@lightfast/ai/v2/core";
-import { Redis } from "@upstash/redis";
 import { Client as QStashClient } from "@upstash/qstash";
+import { Redis } from "@upstash/redis";
 import { env } from "@/env";
 
 /**

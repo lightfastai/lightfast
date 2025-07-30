@@ -4,7 +4,7 @@
 
 import type { Redis } from "@upstash/redis";
 import { uuidv4 } from "../../utils/uuid";
-import { EventName, type AgentEvent } from "./types";
+import { type AgentEvent, EventName } from "./types";
 
 export class EventWriter {
 	constructor(private redis: Redis) {}
@@ -30,12 +30,15 @@ export class EventWriter {
 			sessionId: event.sessionId,
 			agentId: event.agentId,
 			// Flatten all other properties
-			...Object.entries(event).reduce((acc, [key, value]) => {
-				if (!["name", "timestamp", "sessionId", "agentId"].includes(key)) {
-					acc[key] = typeof value === "object" ? JSON.stringify(value) : String(value);
-				}
-				return acc;
-			}, {} as Record<string, string>),
+			...Object.entries(event).reduce(
+				(acc, [key, value]) => {
+					if (!["name", "timestamp", "sessionId", "agentId"].includes(key)) {
+						acc[key] = typeof value === "object" ? JSON.stringify(value) : String(value);
+					}
+					return acc;
+				},
+				{} as Record<string, string>,
+			),
 		};
 
 		// Write to Redis stream

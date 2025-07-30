@@ -5,7 +5,7 @@
 
 import type { Redis } from "@upstash/redis";
 import { uuidv4 } from "../../utils/uuid";
-import { EventName, type AgentEvent } from "./types";
+import { type AgentEvent, EventName } from "./types";
 
 // Redis stream types
 type StreamField = string;
@@ -309,7 +309,7 @@ export class EventConsumer {
 
 		try {
 			// Read all messages from the stream
-			const messages = await this.redis.xrange(streamKey, "-", "+", limit) as unknown as StreamMessage[];
+			const messages = (await this.redis.xrange(streamKey, "-", "+", limit)) as unknown as StreamMessage[];
 
 			for (const [_messageId, fields] of messages) {
 				const rawObj = arrToObj(fields);

@@ -7,7 +7,7 @@ import type { Message } from "@lightfast/ai/v2/core";
 import { generateSessionId } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
 import { z } from "zod";
-import { redis, qstash, baseUrl, SYSTEM_LIMITS } from "../config";
+import { baseUrl, qstash, redis, SYSTEM_LIMITS } from "../config";
 
 const initRoutes = new Hono();
 

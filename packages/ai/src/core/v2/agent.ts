@@ -10,11 +10,11 @@ import { type Tool as AiTool, smoothStream, streamText, type ToolSet, type UIMes
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
+import { EventWriter } from "./server/events/event-writer";
 import type { AgentLoopInitEvent, Message } from "./server/events/types";
 import { getDeltaStreamKey } from "./server/keys";
 import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
-import { EventWriter } from "./server/events/event-writer";
 import { MessageWriter } from "./server/writers/message-writer";
 import { type AgentDecision, AgentDecisionSchema, type WorkerConfig } from "./workers/schemas";
 
@@ -118,7 +118,6 @@ export class Agent<TRuntimeContext = unknown> {
 			...workerConfig,
 		};
 	}
-
 
 	/**
 	 * Execute a tool by name with runtime context support
@@ -377,7 +376,6 @@ Think through your reasoning step by step, then make your decision. Only use too
 				};
 			});
 	}
-
 
 	private generateMessageId(): string {
 		return `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;

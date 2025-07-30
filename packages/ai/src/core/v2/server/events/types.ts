@@ -1,6 +1,6 @@
 /**
  * Unified Event Types for V2 Agent System
- * 
+ *
  * This file contains both:
  * 1. Orchestration Events - Used for worker-to-worker communication via QStash
  * 2. Tracking Events - Used for monitoring and observability via Redis pub/sub
@@ -53,11 +53,16 @@ export const AgentLoopStepEventSchema = BaseEventSchema.extend({
 	type: z.literal("agent.loop.step"),
 	data: z.object({
 		stepIndex: z.number().describe("Current step index"),
-		toolResults: z.array(z.object({
-			toolCallId: z.string().describe("Tool call identifier"),
-			tool: z.string().describe("Tool name"),
-			output: z.any().describe("Tool execution output"),
-		})).optional().describe("Results from completed tool calls"),
+		toolResults: z
+			.array(
+				z.object({
+					toolCallId: z.string().describe("Tool call identifier"),
+					tool: z.string().describe("Tool name"),
+					output: z.any().describe("Tool execution output"),
+				}),
+			)
+			.optional()
+			.describe("Results from completed tool calls"),
 		metadata: z.record(z.any()).optional().describe("Additional metadata"),
 	}),
 });

@@ -2,7 +2,7 @@
 
 import { useChat } from "@lightfast/ai/v2/react";
 import { AlertCircle, Bot, Loader2, Send, User, Zap } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

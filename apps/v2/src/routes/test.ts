@@ -5,7 +5,7 @@
 
 import { generateSessionId } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
-import { redis, qstash, baseUrl } from "../config";
+import { baseUrl, qstash, redis } from "../config";
 
 const testRoutes = new Hono();
 

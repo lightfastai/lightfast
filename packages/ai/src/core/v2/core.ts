@@ -8,16 +8,16 @@
 export { Agent, type AgentOptions, type AgentToolDefinition } from "./agent";
 
 // Export server components
-export { 
-	type FetchRequestHandlerOptions, 
-	fetchRequestHandler,
-	MessageReader,
-	StreamConsumer,
-	generateSessionId,
-	EventWriter,
+export {
 	EventConsumer,
+	EventWriter,
+	type FetchRequestHandlerOptions,
+	fetchRequestHandler,
+	generateSessionId,
+	MessageReader,
 	MessageWriter,
-	SessionWriter
+	SessionWriter,
+	StreamConsumer,
 } from "./server";
 
 // Export event types from unified location

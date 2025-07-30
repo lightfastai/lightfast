@@ -6,7 +6,7 @@
 import type { Event } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
-import { redis, qstash, baseUrl } from "../config";
+import { baseUrl, qstash, redis } from "../config";
 
 const eventRoutes = new Hono();
 

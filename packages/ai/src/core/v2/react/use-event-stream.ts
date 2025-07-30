@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { EventName, type AgentEvent } from "../server/events/types";
+import { type AgentEvent, EventName } from "../server/events/types";
 
 export interface UseEventStreamOptions {
 	streamEndpoint?: string;
@@ -23,12 +23,7 @@ export interface UseEventStreamReturn {
 }
 
 export function useEventStream(options: UseEventStreamOptions = {}): UseEventStreamReturn {
-	const {
-		streamEndpoint = "/api/v2/events",
-		onEvent,
-		onError,
-		filter,
-	} = options;
+	const { streamEndpoint = "/api/v2/events", onEvent, onError, filter } = options;
 
 	// State
 	const [isConnected, setIsConnected] = useState(false);

@@ -2,9 +2,9 @@
  * Stream Init Handler - Handles stream initialization requests
  */
 
+import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
-import type { Client as QStashClient } from "@upstash/qstash";
 import type { AgentLoopInitEvent, Message } from "../events/types";
 import { getDeltaStreamKey, getSessionKey } from "../keys";
 import { DeltaStreamType } from "../stream/types";
@@ -85,12 +85,14 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	// Publish the event to QStash for processing
 	if (qstash) {
 		// Don't await this - let it process in the background while we return the response
-		qstash.publishJSON({
-			url: `${baseUrl}/workers/agent-loop-init`,
-			body: { event: agentLoopEvent },
-		}).catch((error) => {
-			console.error(`[Stream Init] Failed to publish agent loop init event for session ${sessionId}:`, error);
-		});
+		qstash
+			.publishJSON({
+				url: `${baseUrl}/workers/agent-loop-init`,
+				body: { event: agentLoopEvent },
+			})
+			.catch((error) => {
+				console.error(`[Stream Init] Failed to publish agent loop init event for session ${sessionId}:`, error);
+			});
 	} else {
 		console.warn(`[Stream Init] QStash not configured, cannot start agent loop for session ${sessionId}`);
 	}

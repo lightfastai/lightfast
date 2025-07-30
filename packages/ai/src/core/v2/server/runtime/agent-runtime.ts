@@ -4,8 +4,8 @@
 
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
-import type { AgentLoopInitEvent, AgentToolCallEvent, Message } from "../events/types";
 import { EventWriter } from "../events/event-writer";
+import type { AgentLoopInitEvent, AgentToolCallEvent, Message } from "../events/types";
 import { getSessionKey } from "../keys";
 import type { AgentLoopStepEvent, QStashClient, Runtime, SessionState, ToolRegistry } from "./types";
 
@@ -22,7 +22,11 @@ export class AgentRuntime implements Runtime {
 	/**
 	 * Initialize a new agent loop
 	 */
-	async initAgentLoop<TRuntimeContext = unknown>({ event, agent, baseUrl }: {
+	async initAgentLoop<TRuntimeContext = unknown>({
+		event,
+		agent,
+		baseUrl,
+	}: {
 		event: AgentLoopInitEvent;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
@@ -31,11 +35,7 @@ export class AgentRuntime implements Runtime {
 
 		// Track loop start
 		const userMessage = data.messages.find((m: Message) => m.role === "user");
-		await this.eventWriter.writeAgentLoopStart(
-			sessionId,
-			agent.getName(),
-			userMessage?.content || "",
-		);
+		await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userMessage?.content || "");
 
 		// Save initial state
 		const state: SessionState = {
@@ -61,7 +61,11 @@ export class AgentRuntime implements Runtime {
 	/**
 	 * Execute one step of the agent loop
 	 */
-	async executeAgentStep<TRuntimeContext = unknown>({ event, agent, baseUrl }: {
+	async executeAgentStep<TRuntimeContext = unknown>({
+		event,
+		agent,
+		baseUrl,
+	}: {
 		event: AgentLoopStepEvent;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
@@ -98,7 +102,11 @@ export class AgentRuntime implements Runtime {
 	/**
 	 * Execute a tool call
 	 */
-	async executeTool({ event, toolRegistry, baseUrl }: {
+	async executeTool({
+		event,
+		toolRegistry,
+		baseUrl,
+	}: {
 		event: AgentToolCallEvent;
 		toolRegistry: ToolRegistry;
 		baseUrl: string;
@@ -113,13 +121,7 @@ export class AgentRuntime implements Runtime {
 		}
 
 		// Track tool call
-		await this.eventWriter.writeAgentToolCall(
-			sessionId,
-			state.agentId,
-			data.tool,
-			data.toolCallId,
-			data.arguments,
-		);
+		await this.eventWriter.writeAgentToolCall(sessionId, state.agentId, data.tool, data.toolCallId, data.arguments);
 
 		try {
 			// Execute tool
@@ -137,9 +139,7 @@ export class AgentRuntime implements Runtime {
 
 			// Update pending tool calls
 			if (state.pendingToolCalls) {
-				state.pendingToolCalls = state.pendingToolCalls.filter(
-					tc => tc.id !== data.toolCallId
-				);
+				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== data.toolCallId);
 			}
 
 			// Store tool result in state
@@ -242,11 +242,13 @@ export class AgentRuntime implements Runtime {
 
 			if (decision.toolCall) {
 				// Agent wants to call a tool
-				updatedState.pendingToolCalls = [{
-					id: decision.toolCall.id,
-					name: decision.toolCall.name,
-					args: decision.toolCall.args,
-				}];
+				updatedState.pendingToolCalls = [
+					{
+						id: decision.toolCall.id,
+						name: decision.toolCall.name,
+						args: decision.toolCall.args,
+					},
+				];
 				updatedState.toolCallCount += 1;
 				await this.saveSessionState(sessionId, updatedState);
 
@@ -306,9 +308,9 @@ export class AgentRuntime implements Runtime {
 
 		// Extract tools used
 		const toolsUsed = new Set<string>();
-		state.messages.forEach(msg => {
+		state.messages.forEach((msg) => {
 			if (msg.role === "assistant" && msg.toolCalls) {
-				msg.toolCalls.forEach(tc => toolsUsed.add(tc.name));
+				msg.toolCalls.forEach((tc) => toolsUsed.add(tc.name));
 			}
 		});
 

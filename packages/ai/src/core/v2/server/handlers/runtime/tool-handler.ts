@@ -2,8 +2,8 @@
  * Tool Handler - Handles agent tool call events
  */
 
-import type { Redis } from "@upstash/redis";
 import type { Client as QStashClient } from "@upstash/qstash";
+import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../../agent";
 import type { AgentToolCallEvent } from "../../events/types";
 import { AgentRuntime } from "../../runtime/agent-runtime";

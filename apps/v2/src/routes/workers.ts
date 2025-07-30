@@ -13,14 +13,10 @@ import {
 	AgentToolCallEventSchema,
 	type AgentToolDefinition,
 } from "@lightfast/ai/v2/core";
-import {
-	handleAgentInit,
-	handleAgentStep,
-	handleToolCall,
-} from "@lightfast/ai/v2/server";
+import { handleAgentInit, handleAgentStep, handleToolCall } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
 import { z } from "zod";
-import { redis, qstash, baseUrl } from "../config";
+import { baseUrl, qstash, redis } from "../config";
 
 const workerRoutes = new Hono();
 

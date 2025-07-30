@@ -3,8 +3,8 @@
  * Unified routing handler for v2 agent worker routes
  */
 
-import type { Redis } from "@upstash/redis";
 import type { Client as QStashClient } from "@upstash/qstash";
+import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import type {
 	AgentLoopCompleteEvent,
@@ -12,11 +12,11 @@ import type {
 	AgentToolCallEvent,
 	ToolExecutionCompleteEvent,
 } from "../events/types";
-import { handleStreamInit } from "../handlers/stream-init-handler";
-import { handleStreamSSE } from "../handlers/stream-sse-handler";
 import { handleAgentInit } from "../handlers/runtime/init-handler";
 import { handleAgentStep } from "../handlers/runtime/step-handler";
 import { handleToolCall } from "../handlers/runtime/tool-handler";
+import { handleStreamInit } from "../handlers/stream-init-handler";
+import { handleStreamSSE } from "../handlers/stream-sse-handler";
 
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
@@ -95,9 +95,11 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 		try {
 			// Extract path from URL
 			const url = new URL(request.url);
-			const pathSegments = url.pathname.replace(baseUrl, "").split("/").filter(Boolean);
+			// Extract just the path part from baseUrl if it includes the full URL
+			const baseUrlPath = baseUrl.includes("://") ? new URL(baseUrl).pathname : baseUrl;
+			const pathSegments = url.pathname.replace(baseUrlPath, "").split("/").filter(Boolean);
 
-			console.log(`[V2 Fetch Handler] URL: ${request.url}, Path: ${url.pathname}, Segments:`, pathSegments);
+			console.log(`[V2 Fetch Handler] URL: ${request.url}, Path: ${url.pathname}, BaseUrlPath: ${baseUrlPath}, Segments:`, pathSegments);
 
 			// Handle stream endpoints
 			if (pathSegments[0] === "stream") {
