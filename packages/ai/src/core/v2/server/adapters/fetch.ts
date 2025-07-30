@@ -14,9 +14,9 @@ import type {
 } from "../events/types";
 import { handleStreamInit } from "../handlers/stream-init-handler";
 import { handleStreamSSE } from "../handlers/stream-sse-handler";
-import { handleAgentInit } from "../handlers/init-handler";
-import { handleAgentStep } from "../handlers/step-handler";
-import { handleToolCall } from "../handlers/tool-handler";
+import { handleAgentInit } from "../handlers/runtime/init-handler";
+import { handleAgentStep } from "../handlers/runtime/step-handler";
+import { handleToolCall } from "../handlers/runtime/tool-handler";
 
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
@@ -30,7 +30,7 @@ export interface AgentLoopInitRequestBody {
 }
 
 export interface AgentLoopStepRequestBody {
-	event: import("../../runtime/types").AgentLoopStepEvent;
+	event: import("../runtime/types").AgentLoopStepEvent;
 }
 
 export interface AgentToolCallRequestBody {

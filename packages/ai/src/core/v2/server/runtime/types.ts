@@ -2,28 +2,8 @@
  * Runtime types for executing agent loops and tools with event tracking
  */
 
-import type { Agent } from "../agent";
-import type { AgentLoopInitEvent, AgentToolCallEvent } from "../server/events/types";
-
-/**
- * Event for continuing agent loop after tool execution
- */
-export interface AgentLoopStepEvent {
-	id: string;
-	type: "agent.loop.step";
-	sessionId: string;
-	timestamp: string;
-	version: "1.0";
-	data: {
-		stepIndex: number;
-		toolResults?: Array<{
-			toolCallId: string;
-			tool: string;
-			output: any;
-		}>;
-		metadata?: Record<string, any>;
-	};
-}
+import type { Agent } from "../../agent";
+import type { AgentLoopInitEvent, AgentToolCallEvent, AgentLoopStepEvent } from "../events/types";
 
 /**
  * Session state stored in Redis
@@ -93,14 +73,11 @@ export interface Runtime {
 }
 
 /**
- * QStash client interface - matches the @upstash/qstash Client
+ * Re-export event types from events/types.ts for convenience
  */
-export interface QStashClient {
-	publish(params: {
-		url: string;
-		body: any;
-		headers?: Record<string, string>;
-		delay?: number;
-		retries?: number;
-	}): Promise<{ messageId: string }>;
-}
+export type { AgentLoopStepEvent } from "../events/types";
+
+/**
+ * Re-export QStash client type
+ */
+export type { Client as QStashClient } from "@upstash/qstash";

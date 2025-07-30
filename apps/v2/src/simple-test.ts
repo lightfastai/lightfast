@@ -3,7 +3,7 @@
  */
 
 import { generateSessionId } from "@lightfast/ai/v2/server";
-import { eventEmitter, redis } from "./config";
+import { redis, qstash, baseUrl } from "./config";
 
 async function testEventDrivenArchitecture() {
 	console.log("Testing V2 Event-Driven Architecture...\n");
@@ -35,13 +35,24 @@ async function testEventDrivenArchitecture() {
 		});
 		console.log("✅ Initial stream entry created");
 
-		// Test 4: Emit an event
-		console.log("\n🚀 Emitting agent.loop.init event...");
-		await eventEmitter.emitAgentLoopInit(sessionId, {
-			messages: [{ role: "user", content: "What is 2 + 2?" }],
-			temperature: 0.7,
+		// Test 4: Publish an event
+		console.log("\n🚀 Publishing agent.loop.init event...");
+		const initEvent = {
+			id: `${sessionId}-init`,
+			sessionId,
+			type: "agent.loop.init" as const,
+			timestamp: new Date().toISOString(),
+			data: {
+				messages: [{ role: "user", content: "What is 2 + 2?" }],
+				temperature: 0.7,
+			},
+		};
+
+		await qstash.publishJSON({
+			url: `${baseUrl}/workers/agent-loop-init`,
+			body: { event: initEvent },
 		});
-		console.log("✅ Event emitted successfully");
+		console.log("✅ Event published successfully");
 
 		// Test 5: Read from stream
 		console.log("\n📖 Reading from stream...");

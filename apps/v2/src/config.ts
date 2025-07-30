@@ -3,8 +3,9 @@
  * Direct instantiation of infrastructure components
  */
 
-import { EventEmitter, StreamConsumer } from "@lightfast/ai/v2/core";
+import { StreamConsumer } from "@lightfast/ai/v2/core";
 import { Redis } from "@upstash/redis";
+import { Client as QStashClient } from "@upstash/qstash";
 
 // Get base URL for the test server
 function getBaseUrl(): string {
@@ -17,20 +18,16 @@ export const redis = new Redis({
 	token: process.env.KV_REST_API_TOKEN!,
 });
 
-// Create event emitter instance
-// The EventEmitter internally maps event types to worker paths
-export const eventEmitter = new EventEmitter({
-	qstashUrl: process.env.QSTASH_URL || "https://qstash.upstash.io",
-	qstashToken: process.env.QSTASH_TOKEN!,
-	baseUrl: getBaseUrl(),
-	retryConfig: {
-		retries: 3,
-		backoff: "exponential",
-	},
+// Create QStash client instance for worker communication
+export const qstash = new QStashClient({
+	token: process.env.QSTASH_TOKEN!,
 });
 
 // Create stream consumer instance
 export const streamConsumer = new StreamConsumer(redis);
+
+// Export base URL for use in handlers
+export const baseUrl = getBaseUrl();
 
 // System limits configuration
 export const SYSTEM_LIMITS = {

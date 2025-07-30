@@ -3,4 +3,4 @@
  */
 
 export * from "./schemas";
-export * from "./tool-result-handler";
+// Tool result handler is deprecated - use Runtime instead

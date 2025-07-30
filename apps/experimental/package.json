@@ -55,6 +55,7 @@
 		"@radix-ui/react-slot": "^1.2.3",
 		"@t3-oss/env-core": "catalog:",
 		"@t3-oss/env-nextjs": "^0.12.0",
+		"@upstash/qstash": "^2.8.1",
 		"@upstash/redis": "catalog:",
 		"@vercel/analytics": "^1.5.0",
 		"@vercel/blob": "catalog:",

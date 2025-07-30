@@ -29,7 +29,7 @@ import {
 import { todoClearTool, todoReadTool, todoWriteTool } from "@/app/(v1)/ai/tools/task";
 import { webSearchTool } from "@/app/(v1)/ai/tools/web-search";
 import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
-import { eventEmitter, redis } from "@/app/(v2)/ai/config";
+import { qstash, redis, baseUrl as configBaseUrl } from "@/app/(v2)/ai/config";
 
 // Create tools object for v2 agent
 const v2Tools = {
@@ -94,14 +94,13 @@ const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 		}),
 	},
 	redis,
-	eventEmitter,
 );
 
 // Create the handler using fetchRequestHandler
 const handlerFn = fetchRequestHandler({
 	agent: v2TestAgent,
 	redis,
-	eventEmitter,
+	qstash,
 	baseUrl: "/api/v2",
 });
 

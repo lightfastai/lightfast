@@ -3,8 +3,9 @@
  * Centralized configuration for all V2 AI components
  */
 
-import { EventEmitter, StreamConsumer } from "@lightfast/ai/v2/core";
+import { StreamConsumer } from "@lightfast/ai/v2/core";
 import { Redis } from "@upstash/redis";
+import { Client as QStashClient } from "@upstash/qstash";
 import { env } from "@/env";
 
 /**
@@ -44,24 +45,22 @@ export const redis = new Redis({
 });
 
 /**
- * Create event emitter instance with full configuration
- * The EventEmitter internally maps event types to worker paths
+ * Create QStash client for worker communication
  * All events are routed through the unified handler at /api/v2/[...v]
  */
-export const eventEmitter = new EventEmitter({
-	qstashUrl: env.QSTASH_URL,
-	qstashToken: env.QSTASH_TOKEN,
-	baseUrl: getBaseUrl(),
-	retryConfig: {
-		retries: 3,
-		backoff: "exponential",
-	},
+export const qstash = new QStashClient({
+	token: env.QSTASH_TOKEN,
 });
 
 /**
  * Create stream consumer instance
  */
 export const streamConsumer = new StreamConsumer(redis);
+
+/**
+ * Export base URL for handlers
+ */
+export const baseUrl = getBaseUrl();
 
 /**
  * System limits configuration
@@ -78,8 +77,9 @@ export const SYSTEM_LIMITS = {
 export function getV2Infrastructure() {
 	return {
 		redis,
-		eventEmitter,
+		qstash,
 		streamConsumer,
+		baseUrl,
 		limits: SYSTEM_LIMITS,
 	};
 }

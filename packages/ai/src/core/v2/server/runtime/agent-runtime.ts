@@ -3,10 +3,10 @@
  */
 
 import type { Redis } from "@upstash/redis";
-import type { Agent } from "../agent";
-import type { AgentLoopInitEvent, AgentToolCallEvent, Message } from "../server/events/types";
-import { EventWriter } from "../server/events/event-writer";
-import { getSessionKey } from "../server/keys";
+import type { Agent } from "../../agent";
+import type { AgentLoopInitEvent, AgentToolCallEvent, Message } from "../events/types";
+import { EventWriter } from "../events/event-writer";
+import { getSessionKey } from "../keys";
 import type { AgentLoopStepEvent, QStashClient, Runtime, SessionState, ToolRegistry } from "./types";
 
 export class AgentRuntime implements Runtime {
@@ -30,7 +30,7 @@ export class AgentRuntime implements Runtime {
 		const { sessionId, data } = event;
 
 		// Track loop start
-		const userMessage = data.messages.find(m => m.role === "user");
+		const userMessage = data.messages.find((m: Message) => m.role === "user");
 		await this.eventWriter.writeAgentLoopStart(
 			sessionId,
 			agent.getName(),
@@ -153,7 +153,7 @@ export class AgentRuntime implements Runtime {
 			// Check if all tools for this step are complete
 			if (!state.pendingToolCalls || state.pendingToolCalls.length === 0) {
 				// All tools done - continue to next agent step
-				await this.qstash.publish({
+				await this.qstash.publishJSON({
 					url: `${baseUrl}/workers/agent-loop-step`,
 					body: {
 						id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
@@ -251,7 +251,7 @@ export class AgentRuntime implements Runtime {
 				await this.saveSessionState(sessionId, updatedState);
 
 				// Publish tool call event
-				await this.qstash.publish({
+				await this.qstash.publishJSON({
 					url: `${baseUrl}/workers/agent-tool-call`,
 					body: {
 						id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
@@ -313,7 +313,7 @@ export class AgentRuntime implements Runtime {
 		});
 
 		// Publish completion event
-		await this.qstash.publish({
+		await this.qstash.publishJSON({
 			url: `${baseUrl}/workers/agent-loop-complete`,
 			body: {
 				id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,

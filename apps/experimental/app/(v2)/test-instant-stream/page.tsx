@@ -2,7 +2,7 @@
 
 import { useChat } from "@lightfast/ai/v2/react";
 import { AlertCircle, Bot, Loader2, Send, User, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function TestInstantStreamPage() {
 	const [input, setInput] = useState("");
-	const { sessionId, status, response, chunkCount, error, sendMessage, reset, responseRef } = useChat({
+	const sessionId = useMemo(() => `session-${Date.now()}-${Math.random().toString(36).substring(7)}`, []);
+	const { status, response, chunkCount, error, sendMessage, reset, responseRef } = useChat({
+		sessionId,
 		apiEndpoint: "/api/v2/stream/init",
 		streamEndpoint: "/api/v2/stream",
 		onChunk: (chunk) => {

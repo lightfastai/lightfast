@@ -7,7 +7,7 @@ import type { Message } from "@lightfast/ai/v2/core";
 import { generateSessionId } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
 import { z } from "zod";
-import { eventEmitter, redis, SYSTEM_LIMITS } from "../config";
+import { redis, qstash, baseUrl, SYSTEM_LIMITS } from "../config";
 
 const initRoutes = new Hono();
 
@@ -73,13 +73,24 @@ initRoutes.post("/", async (c) => {
 			metadata: JSON.stringify({ status: "initialized" }),
 		});
 
-		// Emit agent.loop.init event
-		await eventEmitter.emitAgentLoopInit(sessionId, {
-			messages: params.messages as Message[],
-			systemPrompt: params.systemPrompt,
-			temperature: params.temperature,
-			tools: params.tools,
-			metadata: params.metadata,
+		// Publish agent.loop.init event to worker via QStash
+		const initEvent = {
+			id: `${sessionId}-init`,
+			sessionId,
+			type: "agent.loop.init" as const,
+			timestamp: new Date().toISOString(),
+			data: {
+				messages: params.messages as Message[],
+				systemPrompt: params.systemPrompt,
+				temperature: params.temperature,
+				tools: params.tools,
+				metadata: params.metadata,
+			},
+		};
+
+		await qstash.publishJSON({
+			url: `${baseUrl}/workers/agent-loop-init`,
+			body: { event: initEvent },
 		});
 
 		return c.json({

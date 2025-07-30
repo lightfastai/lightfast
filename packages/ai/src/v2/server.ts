@@ -12,3 +12,6 @@ export { EventConsumer } from "../core/v2/server/events/consumer";
 export * from "../core/v2/server/events/types";
 export { MessageWriter } from "../core/v2/server/writers/message-writer";
 export { SessionWriter } from "../core/v2/server/writers/session-writer";
+
+// Export runtime handlers
+export * from "../core/v2/server/handlers/runtime";

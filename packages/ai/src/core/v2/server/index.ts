@@ -11,3 +11,6 @@ export { EventConsumer } from "./events/consumer";
 export * from "./events/types";
 export { MessageWriter } from "./writers/message-writer";
 export { SessionWriter } from "./writers/session-writer";
+
+// Export runtime handlers
+export * from "./handlers/runtime";

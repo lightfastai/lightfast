@@ -1,26 +1,49 @@
 /**
  * Event management routes
- * For testing and debugging event emission
+ * For testing and debugging event publishing
  */
 
 import type { Event } from "@lightfast/ai/v2/core";
 import { Hono } from "hono";
 import { z } from "zod";
-import { eventEmitter, redis } from "../config";
+import { redis, qstash, baseUrl } from "../config";
 
 const eventRoutes = new Hono();
 
-// POST /events/emit - Manually emit an event (for testing)
-eventRoutes.post("/emit", async (c) => {
+// POST /events/publish - Manually publish an event to workers (for testing)
+eventRoutes.post("/publish", async (c) => {
 	try {
 		const body = await c.req.json();
 
 		// Validate event against schema
-		// For now, just validate basic structure
 		const event = body as Event;
 
-		// Emit the event
-		await eventEmitter.emit(event);
+		// Determine worker URL based on event type
+		let workerUrl: string;
+		switch (event.type) {
+			case "agent.loop.init":
+				workerUrl = `${baseUrl}/workers/agent-loop-init`;
+				break;
+			case "agent.loop.step":
+				workerUrl = `${baseUrl}/workers/agent-loop-step`;
+				break;
+			case "agent.tool.call":
+				workerUrl = `${baseUrl}/workers/agent-tool-call`;
+				break;
+			default:
+				return c.json(
+					{
+						error: `Unknown event type: ${event.type}`,
+					},
+					400,
+				);
+		}
+
+		// Publish the event via QStash
+		await qstash.publishJSON({
+			url: workerUrl,
+			body: { event },
+		});
 
 		return c.json({
 			success: true,
@@ -29,7 +52,8 @@ eventRoutes.post("/emit", async (c) => {
 				type: event.type,
 				sessionId: event.sessionId,
 			},
-			message: "Event emitted successfully",
+			message: "Event published successfully",
+			workerUrl,
 		});
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -42,10 +66,10 @@ eventRoutes.post("/emit", async (c) => {
 			);
 		}
 
-		console.error("Event emission error:", error);
+		console.error("Event publishing error:", error);
 		return c.json(
 			{
-				error: "Failed to emit event",
+				error: "Failed to publish event",
 				details: error instanceof Error ? error.message : String(error),
 			},
 			500,
@@ -53,34 +77,32 @@ eventRoutes.post("/emit", async (c) => {
 	}
 });
 
-// GET /events/list - List recent events for a session
-eventRoutes.get("/list/:sessionId", async (c) => {
+// GET /events/session/:sessionId - Get event history for a session
+eventRoutes.get("/session/:sessionId", async (c) => {
 	const sessionId = c.req.param("sessionId");
-	const limit = Number(c.req.query("limit")) || 10;
 
 	try {
-		// Get events from Redis (stored in a list for debugging)
-		const eventKey = `events:${sessionId}`;
-		const events = await redis.lrange(eventKey, 0, limit - 1);
+		// Get stream entries
+		const streamKey = `stream:${sessionId}`;
+		const entries = (await redis.xrange(streamKey, "-", "+")) as unknown as any[];
 
-		const parsedEvents = events.map((event) => {
-			try {
-				return JSON.parse(event as string);
-			} catch {
-				return event;
-			}
-		});
+		// Parse entries
+		const events = entries.map((entry) => ({
+			id: entry.id,
+			timestamp: entry.id.split("-")[0],
+			data: entry.data,
+		}));
 
 		return c.json({
 			sessionId,
-			events: parsedEvents,
-			count: parsedEvents.length,
+			eventCount: events.length,
+			events,
 		});
 	} catch (error) {
-		console.error("List events error:", error);
+		console.error("Event history error:", error);
 		return c.json(
 			{
-				error: "Failed to list events",
+				error: "Failed to retrieve event history",
 				details: error instanceof Error ? error.message : String(error),
 			},
 			500,
@@ -88,138 +110,41 @@ eventRoutes.get("/list/:sessionId", async (c) => {
 	}
 });
 
-// POST /events/test/:type - Emit a test event of specific type
-eventRoutes.post("/test/:type", async (c) => {
-	const type = c.req.param("type");
-	const { sessionId = "test-session" } = await c.req.json().catch(() => ({}));
-
+// GET /events/sessions - List active sessions
+eventRoutes.get("/sessions", async (c) => {
 	try {
-		// Create test events based on type
-		switch (type) {
-			case "agent.loop.init":
-				await eventEmitter.emitAgentLoopInit(sessionId, {
-					messages: [{ role: "user", content: "Test message" }],
-					temperature: 0.7,
-				});
-				break;
+		// Get all session keys
+		const keys = await redis.keys("session:*");
 
-			case "agent.tool.call":
-				await eventEmitter.emitAgentToolCall(sessionId, {
-					toolCallId: "test-tool-call",
-					tool: "calculator",
-					arguments: { expression: "2 + 2" },
-					iteration: 1,
-					priority: "normal",
+		const sessions = [];
+		for (const key of keys) {
+			const sessionId = key.replace("session:", "");
+			const sessionData = await redis.get(key);
+			if (sessionData) {
+				const data = typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData;
+				sessions.push({
+					sessionId,
+					status: data.status,
+					createdAt: data.createdAt,
+					messageCount: data.messages?.length || 0,
 				});
-				break;
-
-			case "tool.execution.complete":
-				await eventEmitter.emitToolExecutionComplete(sessionId, {
-					toolCallId: "test-tool-call",
-					tool: "calculator",
-					result: { value: 4 },
-					duration: 100,
-					attempts: 1,
-				});
-				break;
-
-			case "agent.loop.complete":
-				await eventEmitter.emitAgentLoopComplete(sessionId, {
-					finalMessage: "Test completed successfully",
-					iterations: 1,
-					toolsUsed: ["calculator"],
-					duration: 1000,
-				});
-				break;
-
-			default:
-				return c.json(
-					{
-						error: "Unknown event type",
-						availableTypes: [
-							"agent.loop.init",
-							"agent.loop.complete",
-							"agent.loop.error",
-							"agent.tool.call",
-							"tool.execution.start",
-							"tool.execution.complete",
-							"tool.execution.failed",
-						],
-					},
-					400,
-				);
+			}
 		}
 
-		// Store event for debugging
-		const eventKey = `events:${sessionId}`;
-		await redis.lpush(
-			eventKey,
-			JSON.stringify({
-				type,
-				sessionId,
-				timestamp: new Date().toISOString(),
-				test: true,
-			}),
-		);
-		await redis.expire(eventKey, 3600); // 1 hour TTL
-
 		return c.json({
-			success: true,
-			type,
-			sessionId,
-			message: `Test ${type} event emitted`,
+			sessionCount: sessions.length,
+			sessions,
 		});
 	} catch (error) {
-		console.error("Test event error:", error);
+		console.error("Session list error:", error);
 		return c.json(
 			{
-				error: "Failed to emit test event",
+				error: "Failed to list sessions",
 				details: error instanceof Error ? error.message : String(error),
 			},
 			500,
 		);
 	}
 });
-
-// GET /events/types - List all available event types
-eventRoutes.get("/types", (c) => {
-	const eventTypes = [
-		{ key: "AGENT_LOOP_INIT", value: "agent.loop.init" },
-		{ key: "AGENT_LOOP_COMPLETE", value: "agent.loop.complete" },
-		{ key: "AGENT_LOOP_ERROR", value: "agent.loop.error" },
-		{ key: "AGENT_TOOL_CALL", value: "agent.tool.call" },
-		{ key: "TOOL_EXECUTION_START", value: "tool.execution.start" },
-		{ key: "TOOL_EXECUTION_COMPLETE", value: "tool.execution.complete" },
-		{ key: "TOOL_EXECUTION_FAILED", value: "tool.execution.failed" },
-		{ key: "STREAM_WRITE", value: "stream.write" },
-		{ key: "RESOURCE_REQUEST", value: "resource.request" },
-		{ key: "RESOURCE_RELEASE", value: "resource.release" },
-	];
-
-	return c.json({
-		types: eventTypes.map(({ key, value }) => ({
-			key,
-			value,
-			description: getEventDescription(value),
-		})),
-	});
-});
-
-function getEventDescription(type: string): string {
-	const descriptions: Record<string, string> = {
-		"agent.loop.init": "Initialize a new agent conversation",
-		"agent.loop.complete": "Agent finished successfully",
-		"agent.loop.error": "Agent encountered an error",
-		"agent.tool.call": "Agent requests tool execution",
-		"tool.execution.start": "Tool begins processing",
-		"tool.execution.complete": "Tool finished successfully",
-		"tool.execution.failed": "Tool failed after retries",
-		"stream.write": "Write data to Redis stream",
-		"resource.request": "Request a pooled resource",
-		"resource.release": "Release a pooled resource",
-	};
-
-	return descriptions[type] || "Unknown event type";
-}
 
 export { eventRoutes };

@@ -10,7 +10,7 @@ export { DeltaStreamType, type DeltaStreamMessage, validateMessage };
 export interface UseChatOptions {
 	apiEndpoint?: string;
 	streamEndpoint?: string;
-	sessionId: string;
+	sessionId?: string;
 	onChunk?: (chunk: string) => void;
 	onComplete?: (response: string) => void;
 	onError?: (error: Error) => void;
@@ -18,7 +18,7 @@ export interface UseChatOptions {
 
 export interface UseChatReturn {
 	// State
-	sessionId: string;
+	sessionId: string | undefined;
 	status: "idle" | "loading" | "streaming" | "completed" | "error";
 	response: string;
 	chunkCount: number;
@@ -99,8 +99,10 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 					body: JSON.stringify({ prompt, sessionId }),
 				});
 
-				// Connect to the delta stream
-				await deltaStream.connect(sessionId);
+				// Connect to the delta stream if sessionId is provided
+				if (sessionId) {
+					await deltaStream.connect(sessionId);
+				}
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error("Failed to send message");
 				setStatus("error");

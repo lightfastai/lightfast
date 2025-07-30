@@ -4,7 +4,7 @@
 
 import type { Redis } from "@upstash/redis";
 import type { Client as QStashClient } from "@upstash/qstash";
-import type { Agent } from "../../agent";
+import type { Agent } from "../../../agent";
 import type { AgentLoopStepEvent } from "../../runtime/types";
 import { AgentRuntime } from "../../runtime/agent-runtime";
 

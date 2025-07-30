@@ -5,7 +5,7 @@
 
 import { generateSessionId } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
-import { eventEmitter, redis } from "../config";
+import { redis, qstash, baseUrl } from "../config";
 
 const testRoutes = new Hono();
 
@@ -94,11 +94,22 @@ testRoutes.post("/:scenario", async (c) => {
 			}),
 		});
 
-		// Emit agent.loop.init event
-		await eventEmitter.emitAgentLoopInit(sessionId, {
-			messages: scenario.messages,
-			tools: scenario.tools,
-			temperature: 0.7,
+		// Publish agent.loop.init event
+		const initEvent = {
+			id: `${sessionId}-init`,
+			sessionId,
+			type: "agent.loop.init" as const,
+			timestamp: new Date().toISOString(),
+			data: {
+				messages: scenario.messages,
+				tools: scenario.tools,
+				temperature: 0.7,
+			},
+		};
+
+		await qstash.publishJSON({
+			url: `${baseUrl}/workers/agent-loop-init`,
+			body: { event: initEvent },
 		});
 
 		// For local testing, directly call worker endpoints
