@@ -23,11 +23,11 @@
 ### Monorepo Commands (from root)
 ```bash
 pnpm dev          # Run all dev servers (Turborepo)
-pnpm build        # Build all packages
+pnpm build:packages # Build all packages
+pnpm build:www    # Build only web app
 pnpm typecheck    # TypeScript check all packages
 pnpm lint         # Run Biome linter on all packages
 pnpm dev:www      # Run only web app dev server
-pnpm build:www    # Build only web app
 ```
 
 ### Web App Commands (from apps/www)

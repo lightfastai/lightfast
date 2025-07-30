@@ -99,19 +99,28 @@ const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 
 // Handler function - handles auth and passes resourceId
 const handler = async (req: NextRequest, { params }: { params: Promise<{ v: string[] }> }) => {
-	// Handle authentication
-	const { userId } = await auth();
-	if (!userId) {
-		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	// Check if this is a worker route (called by QStash)
+	const { v } = await params;
+	const isWorkerRoute = v?.[0] === "workers";
+
+	// Skip auth for worker routes (they use QStash signature verification instead)
+	let resourceId = "";
+	if (!isWorkerRoute) {
+		// Handle authentication for user routes
+		const { userId } = await auth();
+		if (!userId) {
+			return Response.json({ error: "Unauthorized" }, { status: 401 });
+		}
+		resourceId = userId;
 	}
 
-	// Create the handler with resourceId
+	// Create the handler with resourceId (empty for worker routes)
 	const handlerFn = fetchRequestHandler({
 		agent: v2TestAgent,
 		redis,
 		qstash,
 		baseUrl: `${configBaseUrl}/api/v2`, // Use full URL for QStash
-		resourceId: userId,
+		resourceId,
 	});
 
 	// Pass request to handler
