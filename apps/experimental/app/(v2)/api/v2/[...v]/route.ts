@@ -12,6 +12,7 @@ import { fetchRequestHandler } from "@lightfast/ai/v2/server";
 import { smoothStream, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { NextRequest } from "next/server";
+import { A011_SYSTEM_PROMPT } from "@/app/(v1)/ai/agents/a011";
 import {
 	fileDeleteTool,
 	fileFindByNameTool,
@@ -31,7 +32,6 @@ import { todoClearTool, todoReadTool, todoWriteTool } from "@/app/(v1)/ai/tools/
 import { webSearchTool } from "@/app/(v1)/ai/tools/web-search";
 import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 import { baseUrl as configBaseUrl, qstash, redis } from "@/app/(v2)/ai/config";
-import { A011_SYSTEM_PROMPT } from "@/app/(v1)/ai/agents/a011";
 
 // Create tools object for v2 agent
 const v2Tools = {

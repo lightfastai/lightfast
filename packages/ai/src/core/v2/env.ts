@@ -14,10 +14,18 @@ export const env = createEnv({
 		// Qstash Event System (Required for event-driven architecture)
 		QSTASH_URL: z.string().url().describe("Qstash API URL"),
 		QSTASH_TOKEN: z.string().min(1).describe("Qstash authentication token"),
-		
+
 		// QStash signing keys for signature verification
-		QSTASH_CURRENT_SIGNING_KEY: z.string().min(1).optional().describe("QStash current signing key for signature verification"),
-		QSTASH_NEXT_SIGNING_KEY: z.string().min(1).optional().describe("QStash next signing key for signature verification"),
+		QSTASH_CURRENT_SIGNING_KEY: z
+			.string()
+			.min(1)
+			.optional()
+			.describe("QStash current signing key for signature verification"),
+		QSTASH_NEXT_SIGNING_KEY: z
+			.string()
+			.min(1)
+			.optional()
+			.describe("QStash next signing key for signature verification"),
 
 		// AI Gateway (Required for LLM calls)
 		AI_GATEWAY_API_KEY: z.string().min(1).describe("Vercel AI Gateway API key"),

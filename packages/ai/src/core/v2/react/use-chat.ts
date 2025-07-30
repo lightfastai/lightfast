@@ -86,6 +86,9 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 			if (!prompt.trim() || status === "loading" || status === "streaming") return;
 
 			try {
+				// Reset any existing stream state
+				deltaStream.disconnect();
+
 				setStatus("loading");
 				setResponse("");
 				setChunkCount(0);

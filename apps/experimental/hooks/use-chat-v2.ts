@@ -69,6 +69,9 @@ export function useChatV2({
 				throw new Error("Cannot send message");
 			}
 
+			// Clear any current response state before sending new message
+			setCurrentResponse("");
+
 			// Add user message to messages array
 			const userMessage: UIMessage = {
 				id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,

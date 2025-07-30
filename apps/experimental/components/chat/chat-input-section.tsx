@@ -19,6 +19,13 @@ interface ChatInputSectionProps {
  * Isolated from server-rendered content for better performance
  */
 export function ChatInputSection({ agentId, threadId, initialMessages = [] }: ChatInputSectionProps) {
+	console.log("[ChatInputSection] Render with:", {
+		agentId,
+		threadId,
+		initialMessagesCount: initialMessages.length,
+		initialMessages: initialMessages.map((m) => ({ id: m.id, role: m.role, partsCount: m.parts?.length })),
+	});
+
 	// Create transport for AI SDK v5 with agentId
 	const transport = useChatTransport({ threadId, agentId });
 
@@ -42,7 +49,15 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 		resume: shouldAutoResume,
 	});
 
+	console.log("[ChatInputSection] Current state:", {
+		messagesCount: messages.length,
+		status,
+		messages: messages.map((m) => ({ id: m.id, role: m.role, partsCount: m.parts?.length })),
+	});
+
 	const handleSendMessage = async (message: string) => {
+		console.log("[handleSendMessage] Called with:", { message, status, messagesCount: messages.length });
+
 		if (!message.trim() || status === "streaming" || status === "submitted") return;
 
 		// Update URL to include chat ID - following Vercel's pattern
@@ -53,6 +68,8 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 		try {
 			// Generate UUID for the user message
 			const userMessageId = crypto.randomUUID();
+
+			console.log("[handleSendMessage] Sending message with ID:", userMessageId);
 
 			// Use vercelSendMessage with the correct AI SDK v5 format
 			await vercelSendMessage(

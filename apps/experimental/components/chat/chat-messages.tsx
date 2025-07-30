@@ -57,6 +57,12 @@ function ScrollButton() {
 }
 
 export function ChatMessages({ messages, status }: ChatMessagesProps) {
+	console.log("[ChatMessages] Render with:", {
+		messagesCount: messages.length,
+		status,
+		messages: messages.map((m) => ({ id: m.id, role: m.role, partsCount: m.parts?.length })),
+	});
+
 	// Track initial message count for scroll anchor
 	const initialMessageCount = useRef<number | null>(null);
 	if (initialMessageCount.current === null) {
@@ -85,6 +91,13 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 			runtimeStatus: "thinking",
 		});
 	}
+
+	console.log("[ChatMessages] Processing messages:", {
+		originalCount: messages.length,
+		processedCount: messagesWithStatus.length,
+		lastMessage: messagesWithStatus[messagesWithStatus.length - 1],
+		status,
+	});
 
 	return (
 		<div className="flex-1 relative min-h-0 overflow-hidden">
