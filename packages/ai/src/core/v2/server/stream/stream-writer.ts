@@ -58,11 +58,20 @@ export class StreamWriter {
 			timestamp: new Date().toISOString(),
 		};
 
+		// Use pipeline for better performance
+		const pipeline = this.redis.pipeline();
+		
 		// Write to Redis stream
-		await this.redis.xadd(streamKey, "*", message);
-
+		pipeline.xadd(streamKey, "*", message);
+		
+		// Set TTL on delta stream (1 hour) - extends TTL on each write
+		pipeline.expire(streamKey, 3600);
+		
 		// Publish for real-time notifications
-		await this.redis.publish(streamKey, { type: DeltaStreamType.CHUNK });
+		pipeline.publish(streamKey, { type: DeltaStreamType.CHUNK });
+		
+		// Execute all operations atomically
+		await pipeline.exec();
 	}
 
 	/**

@@ -18,7 +18,7 @@ import type { SessionState } from "../runtime/types";
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
 	redis: Redis;
-	qstash?: QStashClient;
+	qstash: QStashClient; // Required for worker endpoints
 	baseUrl: string; // Base URL for generating stream URLs (e.g., "/api/v2")
 	resourceId: string; // Required resource ID (user ID in our case)
 }
@@ -124,38 +124,34 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 
 			// Handle worker endpoints
 			if (pathSegments[0] === "workers") {
-				// Verify QStash signature if signing keys are configured
-				if (qstash && env.QSTASH_CURRENT_SIGNING_KEY && env.QSTASH_NEXT_SIGNING_KEY) {
-					const signature = request.headers.get("upstash-signature");
-					if (!signature) {
-						return Response.json({ error: "Missing QStash signature" }, { status: 401 });
-					}
+				// Always verify QStash signature - keys are required in production
+				const signature = request.headers.get("upstash-signature");
+				if (!signature) {
+					return Response.json({ error: "Missing QStash signature" }, { status: 401 });
+				}
 
-					// Clone request to read body for verification
-					const body = await request.clone().text();
+				// Clone request to read body for verification
+				const body = await request.clone().text();
 
-					try {
-						// Create receiver instance for verification
-						const receiver = new Receiver({
-							currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
-							nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
-						});
+				try {
+					// Create receiver instance for verification
+					const receiver = new Receiver({
+						currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
+						nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
+					});
 
-						const isValid = await receiver.verify({
-							signature,
-							body,
-							url: request.url,
-						});
+					const isValid = await receiver.verify({
+						signature,
+						body,
+						url: request.url,
+					});
 
-						if (!isValid) {
-							return Response.json({ error: "Invalid QStash signature" }, { status: 401 });
-						}
-					} catch (error) {
-						console.error("[V2 Worker Handler] QStash signature verification failed:", error);
+					if (!isValid) {
 						return Response.json({ error: "Invalid QStash signature" }, { status: 401 });
 					}
-				} else if (!env.QSTASH_CURRENT_SIGNING_KEY || !env.QSTASH_NEXT_SIGNING_KEY) {
-					console.log("[V2 Worker Handler] QStash signing keys not configured - skipping signature verification");
+				} catch (error) {
+					console.error("[V2 Worker Handler] QStash signature verification failed:", error);
+					return Response.json({ error: "Invalid QStash signature" }, { status: 401 });
 				}
 
 				const workerAction = pathSegments[1];
@@ -165,9 +161,6 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						// Handle POST /workers/agent-loop-step
 						const body = (await request.json()) as AgentLoopStepRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.loop.step event`);
-						if (!qstash) {
-							return Response.json({ error: "QStash client not configured" }, { status: 500 });
-						}
 						return handleAgentStep(body, { agent, redis, qstash, baseUrl, resourceId });
 					}
 
@@ -175,9 +168,6 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						// Handle POST /workers/agent-tool-call
 						const body = (await request.json()) as AgentToolCallRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.tool.call event`);
-						if (!qstash) {
-							return Response.json({ error: "QStash client not configured" }, { status: 500 });
-						}
 						return handleToolCall(body, { agent, redis, qstash, baseUrl, resourceId });
 					}
 

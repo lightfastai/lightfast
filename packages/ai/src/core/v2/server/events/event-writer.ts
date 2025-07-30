@@ -41,11 +41,20 @@ export class EventWriter {
 			),
 		};
 
+		// Use pipeline for atomic operations
+		const pipeline = this.redis.pipeline();
+		
 		// Write to Redis stream
-		await this.redis.xadd(streamKey, "*", message);
-
+		pipeline.xadd(streamKey, "*", message);
+		
+		// Set TTL on event stream (1 hour)
+		pipeline.expire(streamKey, 3600);
+		
 		// Publish simple notification for real-time updates
-		await this.redis.publish(streamKey, "1");
+		pipeline.publish(streamKey, "1");
+		
+		// Execute all operations atomically
+		await pipeline.exec();
 	}
 
 	/**

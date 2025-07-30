@@ -31,11 +31,11 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 		const assistantMessageId = body.assistantMessageId;
 
 		if (!resourceId) {
-			throw new Error('resourceId is required for agent step execution');
+			throw new Error("resourceId is required for agent step execution");
 		}
 
 		if (!assistantMessageId) {
-			throw new Error('assistantMessageId is required for agent step execution');
+			throw new Error("assistantMessageId is required for agent step execution");
 		}
 
 		await runtime.executeStep({

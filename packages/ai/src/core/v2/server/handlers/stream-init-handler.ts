@@ -5,10 +5,10 @@
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
+import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey, getSessionKey } from "../keys";
 import type { SessionState } from "../runtime/types";
 import { DeltaStreamType } from "../stream/types";
-import { uuidv4 } from "../../utils/uuid";
 import { MessageWriter } from "../writers/message-writer";
 
 export interface StreamInitRequestBody {
