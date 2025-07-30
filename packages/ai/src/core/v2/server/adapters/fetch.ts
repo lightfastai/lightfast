@@ -18,7 +18,7 @@ import type { SessionState } from "../runtime/types";
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
 	redis: Redis;
-	qstash: QStashClient; // Required for worker endpoints
+	qstash?: QStashClient; // Optional - required only for worker endpoints
 	baseUrl: string; // Base URL for generating stream URLs (e.g., "/api/v2")
 	resourceId: string; // Required resource ID (user ID in our case)
 }
@@ -124,6 +124,11 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 
 			// Handle worker endpoints
 			if (pathSegments[0] === "workers") {
+				// Worker endpoints require QStash
+				if (!qstash) {
+					return Response.json({ error: "QStash client is required for worker endpoints" }, { status: 500 });
+				}
+
 				// Always verify QStash signature - keys are required in production
 				const signature = request.headers.get("upstash-signature");
 				if (!signature) {
