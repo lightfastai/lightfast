@@ -17,6 +17,12 @@
 - **Super strict TypeScript** - Full type safety, no shortcuts
 - **Always use shadcn/ui components** - Import from @/components/ui/*
 - **Use workspace packages** - Import as @lightfast/ai, @lightfast/types, @lightfast/evals
+- **NEVER use process.env directly** - Always import and use `env` from the appropriate env.ts file
+- **Adding new env vars** - When adding new environment variables:
+  1. Check the relevant env.ts file (apps/www/env.ts or packages/ai/src/core/v2/env.ts)
+  2. Add the variable to the schema with proper zod validation
+  3. Add it to runtimeEnv mapping
+  4. Ask the user to add the actual key to their .env file
 
 ## Commands
 
@@ -76,6 +82,32 @@ pnpm eval:baseline     # Show current baseline
 
 ## Environment Variables
 See `.env.example` for all required variables.
+
+### Important: Environment Variable Usage
+- **NEVER use `process.env.VARIABLE_NAME`** directly in code
+- Always import the typed `env` object from the appropriate env.ts file:
+  - For web app code: `import { env } from "@/env"`
+  - For AI package v2: `import { env } from "@lightfast/ai/v2/env"`
+- This provides type safety, validation, and runtime checks
+- The env.ts files use @t3-oss/env-nextjs for validation
+
+### Adding New Environment Variables
+When you need a new environment variable:
+1. Locate the appropriate env.ts file
+2. Add the variable to the `server` or `client` schema with zod validation
+3. Add the corresponding mapping in `runtimeEnv` (server) or `experimental__runtimeEnv` (client)
+4. Inform the user they need to add the key to their .env file
+
+Example:
+```typescript
+// In env.ts
+server: {
+  MY_NEW_API_KEY: z.string().min(1).describe("API key for new service"),
+},
+runtimeEnv: {
+  MY_NEW_API_KEY: process.env.MY_NEW_API_KEY,
+}
+```
 
 ## Documentation
 - **Next.js Best Practices**: @docs/nextjs.md
