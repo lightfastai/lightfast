@@ -6,10 +6,9 @@ import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import { uuidv4 } from "../../utils/uuid";
-import { getDeltaStreamKey, getSessionKey } from "../keys";
+import { getDeltaStreamKey, getMessageKey, getSessionKey } from "../keys";
 import type { SessionState } from "../runtime/types";
 import { DeltaStreamType } from "../stream/types";
-import { MessageWriter } from "../writers/message-writer";
 
 export interface StreamInitRequestBody {
 	prompt: string;
@@ -45,52 +44,72 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		return Response.json({ error: "Session ID is required" }, { status: 400 });
 	}
 
-	// Check if this is a continuing conversation
-	const sessionKey = getSessionKey(sessionId);
-	const existingState = (await redis.get(sessionKey)) as SessionState | null;
-
-	// Write user message
-	const messageWriter = new MessageWriter(redis);
-	await messageWriter.writeUIMessage(sessionId, resourceId, {
-		id: uuidv4(),
-		role: "user",
-		parts: [{ type: "text", text: prompt.trim() }],
-	});
-
-	// Generate unique message ID for the assistant response
+	// Generate IDs and timestamp once
+	const now = new Date().toISOString();
+	const userMessageId = uuidv4();
 	const assistantMessageId = uuidv4();
 
+	// Prepare keys for Redis operations
+	const sessionKey = getSessionKey(sessionId);
+	const messageKey = getMessageKey(sessionId);
+	const streamKey = getDeltaStreamKey(assistantMessageId);
+
+	// Read operations in parallel (Promise.all for better typing)
+	const [existingState, existingMessages] = await Promise.all([
+		redis.get(sessionKey) as Promise<SessionState | null>,
+		redis.json.get(messageKey, "$") as Promise<any[] | null>,
+	]);
+
 	// Determine the step index
-	let stepIndex = 0;
-	if (existingState) {
-		// This is a continuing conversation
-		// The step index should be incremented from the last completed step
-		stepIndex = existingState.stepIndex + 1;
-		console.log(`[Stream Init] Continuing conversation for session ${sessionId} at step ${stepIndex}`);
+	const stepIndex = existingState ? existingState.stepIndex + 1 : 0;
+
+	console.log(
+		existingState
+			? `[Stream Init] Continuing conversation for session ${sessionId} at step ${stepIndex}`
+			: `[Stream Init] Starting new conversation for session ${sessionId}`,
+	);
+
+	// Create user message
+	const userMessage = {
+		id: userMessageId,
+		role: "user" as const,
+		parts: [{ type: "text", text: prompt.trim() }],
+	};
+
+	// Second pipeline: All write operations atomically
+	const writePipeline = redis.pipeline();
+
+	// Write user message to storage
+	if (!existingMessages || existingMessages.length === 0) {
+		// Create new message storage
+		const storage = {
+			sessionId,
+			resourceId,
+			messages: [userMessage],
+			createdAt: now,
+			updatedAt: now,
+		};
+		writePipeline.json.set(messageKey, "$", storage as unknown as Record<string, unknown>);
 	} else {
-		// This is a new conversation
-		console.log(`[Stream Init] Starting new conversation for session ${sessionId}`);
+		// Append to existing messages
+		writePipeline.json.arrappend(messageKey, "$.messages", userMessage as unknown as Record<string, unknown>);
+		writePipeline.json.set(messageKey, "$.updatedAt", now);
 	}
 
-	// Use Redis pipeline for atomic initialization
-	const pipeline = redis.pipeline();
-
-	// Write INIT message to message-specific stream (not session stream)
-	const streamKey = getDeltaStreamKey(assistantMessageId);
-	const initMessage = {
+	// Initialize stream
+	writePipeline.xadd(streamKey, "*", {
 		type: DeltaStreamType.INIT,
-		timestamp: new Date().toISOString(),
-	};
-	pipeline.xadd(streamKey, "*", initMessage);
+		timestamp: now,
+	});
 
 	// Publish notification
-	pipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.INIT }));
+	writePipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.INIT }));
 
 	// Set TTL on the stream (24 hours)
-	pipeline.expire(streamKey, 86400);
+	writePipeline.expire(streamKey, 86400);
 
-	// Execute all operations in a single batch
-	await pipeline.exec();
+	// Execute all write operations atomically
+	await writePipeline.exec();
 
 	// Always publish agent-loop-step event (handles both new and continuing)
 	if (qstash) {
