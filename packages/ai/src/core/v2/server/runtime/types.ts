@@ -10,7 +10,6 @@ import type { Agent } from "../../agent";
  */
 export interface SessionState {
 	resourceId: string;
-	messages: UIMessage[];
 	stepIndex: number;
 	startTime: number;
 	toolCallCount: number;
@@ -18,11 +17,6 @@ export interface SessionState {
 		id: string;
 		name: string;
 		args: any;
-	}>;
-	toolResults?: Array<{
-		toolCallId: string;
-		tool: string;
-		output: any;
 	}>;
 	agentId: string;
 	temperature?: number;

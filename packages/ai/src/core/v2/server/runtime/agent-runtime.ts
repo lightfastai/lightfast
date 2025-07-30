@@ -66,11 +66,10 @@ export class AgentRuntime implements Runtime {
 				messageCount: uiMessages.length,
 			});
 
-			// Create initial state with UIMessages
+			// Create initial state (minimal, no messages)
 			// resourceId and assistantMessageId are now strictly required
 			state = {
 				resourceId,
-				messages: uiMessages,
 				stepIndex: 0,
 				startTime: Date.now(),
 				toolCallCount: 0,
@@ -80,15 +79,13 @@ export class AgentRuntime implements Runtime {
 			};
 			await this.saveSessionState(sessionId, state);
 		} else {
-			// Continuing conversation - refresh messages from storage
-			// This ensures we have all messages including the new user message
-			const messageReader = new MessageReader(this.redis);
-			const uiMessages = await messageReader.getMessages(sessionId);
-
-			// Update state with fresh UIMessages
-			state.messages = uiMessages;
+			// Continuing conversation - just update step index
 			state.stepIndex = stepIndex;
 			await this.saveSessionState(sessionId, state);
+
+			// Fetch messages to track continuation
+			const messageReader = new MessageReader(this.redis);
+			const uiMessages = await messageReader.getMessages(sessionId);
 
 			// Track continuation
 			const lastUserMessage = [...uiMessages].reverse().find((m) => m.role === "user");
@@ -107,11 +104,14 @@ export class AgentRuntime implements Runtime {
 			}
 		}
 
-		// Execute the step with UIMessages
+		// Execute the step - fetch fresh messages
+		const messageReader = new MessageReader(this.redis);
+		const messages = await messageReader.getMessages(sessionId);
+
 		await this._executeStepInternal({
 			sessionId,
 			agent,
-			messages: state.messages,
+			messages,
 			stepIndex,
 			baseUrl,
 			assistantMessageId,
@@ -214,17 +214,7 @@ export class AgentRuntime implements Runtime {
 				state.assistantMessageId,
 			);
 
-			// Store tool result in state
-			const toolResults = state.toolResults || [];
-			toolResults.push({
-				toolCallId,
-				tool: toolName,
-				output: result,
-			});
-
-			// Update state with tool results
-			const updatedState = { ...state, toolResults };
-			await this.saveSessionState(sessionId, updatedState);
+			// Don't store tool results in state - they're already in the messages
 
 			// Check if all tools for this step are complete
 			if (!state.pendingToolCalls || state.pendingToolCalls.length === 0) {
@@ -419,17 +409,18 @@ export class AgentRuntime implements Runtime {
 			timestamp: new Date().toISOString(),
 		});
 
-		// Extract tools used from UIMessage parts
+		// Extract tools used from messages in DB
+		const messageReader = new MessageReader(this.redis);
+		const messages = await messageReader.getMessages(sessionId);
+
 		const toolsUsed = new Set<string>();
-		state.messages.forEach((msg) => {
+		messages.forEach((msg) => {
 			if (msg.role === "assistant" && msg.parts) {
 				msg.parts.forEach((part) => {
-					if (part.type.startsWith("tool-call-")) {
-						// Extract tool name from tool-call part
-						const toolName = (part as any).toolName;
-						if (toolName) {
-							toolsUsed.add(toolName);
-						}
+					if (part.type.startsWith("tool-") && (part as any).state === "output-available") {
+						// Extract tool name from type (e.g., "tool-calculator" -> "calculator")
+						const toolName = part.type.replace("tool-", "");
+						toolsUsed.add(toolName);
 					}
 				});
 			}
