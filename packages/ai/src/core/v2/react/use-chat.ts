@@ -55,7 +55,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 
 	// Refs
 	const responseRef = useRef<HTMLDivElement>(null);
-	const messageIdRef = useRef<string | undefined>();
+	const messageIdRef = useRef<string | undefined>(undefined);
 
 	// Delta stream hook
 	const deltaStream = useDeltaStream({
