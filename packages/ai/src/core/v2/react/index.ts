@@ -10,3 +10,9 @@ export type {
 	UseDeltaStreamReturn,
 } from "./use-delta-stream";
 export { useDeltaStream } from "./use-delta-stream";
+
+export type {
+	UseEventStreamOptions,
+	UseEventStreamReturn,
+} from "./use-event-stream";
+export { useEventStream, useAgentLoopEvents, useAgentToolEvents, useAgentErrorEvents } from "./use-event-stream";

@@ -10,7 +10,7 @@ export { DeltaStreamType, type DeltaStreamMessage, validateMessage };
 export interface UseChatOptions {
 	apiEndpoint?: string;
 	streamEndpoint?: string;
-	sessionId?: string;
+	sessionId: string;
 	onChunk?: (chunk: string) => void;
 	onComplete?: (response: string) => void;
 	onError?: (error: Error) => void;
@@ -18,7 +18,7 @@ export interface UseChatOptions {
 
 export interface UseChatReturn {
 	// State
-	sessionId: string | null;
+	sessionId: string;
 	status: "idle" | "loading" | "streaming" | "completed" | "error";
 	response: string;
 	chunkCount: number;
@@ -27,25 +27,20 @@ export interface UseChatReturn {
 	// Actions
 	sendMessage: (prompt: string) => void;
 	reset: () => void;
-	regenerateSessionId: () => string;
-	clearSessionId: () => void;
 
 	// Refs for DOM manipulation
 	responseRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function useChat(options: UseChatOptions = {}): UseChatReturn {
+export function useChat(options: UseChatOptions): UseChatReturn {
 	const {
 		apiEndpoint = "/api/v2/stream/init",
 		streamEndpoint = "/api/v2/stream",
-		sessionId: initialSessionId,
+		sessionId,
 		onChunk,
 		onComplete,
 		onError,
 	} = options;
-
-	// State
-	const [sessionId, setSessionId] = useState<string | null>(initialSessionId || null);
 	const [status, setStatus] = useState<"idle" | "loading" | "streaming" | "completed" | "error">("idle");
 	const [response, setResponse] = useState("");
 	const [chunkCount, setChunkCount] = useState(0);
@@ -85,18 +80,6 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 		}
 	}, [deltaStream.isConnected, status]);
 
-	// Generate session ID
-	const regenerateSessionId = useCallback((): string => {
-		const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-		setSessionId(newSessionId);
-		return newSessionId;
-	}, []);
-
-	// Clear session
-	const clearSessionId = useCallback(() => {
-		setSessionId(null);
-	}, []);
-
 	// Send message function
 	const sendMessage = useCallback(
 		async (prompt: string) => {
@@ -107,36 +90,33 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 				setResponse("");
 				setChunkCount(0);
 
-				const newSessionId = regenerateSessionId();
-
 				// Start the stream
 				await fetch(apiEndpoint, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ prompt, sessionId: newSessionId }),
+					body: JSON.stringify({ prompt, sessionId }),
 				});
 
 				// Connect to the delta stream
-				await deltaStream.connect(newSessionId);
+				await deltaStream.connect(sessionId);
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error("Failed to send message");
 				setStatus("error");
 				onError?.(error);
 			}
 		},
-		[apiEndpoint, regenerateSessionId, deltaStream, status, onError],
+		[apiEndpoint, sessionId, deltaStream, status, onError],
 	);
 
 	// Reset function
 	const reset = useCallback(() => {
 		deltaStream.disconnect();
-		clearSessionId();
 		setResponse("");
 		setChunkCount(0);
 		setStatus("idle");
-	}, [deltaStream, clearSessionId]);
+	}, [deltaStream]);
 
 	return {
 		// State
@@ -149,8 +129,6 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 		// Actions
 		sendMessage,
 		reset,
-		regenerateSessionId,
-		clearSessionId,
 
 		// Refs
 		responseRef,

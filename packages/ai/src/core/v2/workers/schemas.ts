@@ -5,18 +5,17 @@
 import { z } from "zod";
 
 /**
- * Schema for agent decision output from generateObject
+ * Schema for agent decision output
  */
 export const AgentDecisionSchema = z.object({
-	action: z.enum(["tool_call", "complete"]).describe("The action the agent decided to take"),
-	reasoning: z.string().describe("The agent's reasoning for this decision"),
 	toolCall: z
 		.object({
-			tool: z.string().describe("Name of the tool to call"),
-			arguments: z.record(z.any()).describe("Arguments to pass to the tool"),
+			id: z.string().describe("Unique identifier for this tool call"),
+			name: z.string().describe("Name of the tool to call"),
+			args: z.record(z.any()).describe("Arguments to pass to the tool"),
 		})
 		.optional()
-		.describe("Tool call details if action is tool_call"),
+		.describe("Tool call to execute, if any"),
 });
 
 export type AgentDecision = z.infer<typeof AgentDecisionSchema>;

@@ -4,21 +4,20 @@
 
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
-import type { EventEmitter } from "../../events/emitter";
-import type { AgentLoopInitEvent, Message } from "../../events/schemas";
-import { StreamWriter } from "../stream/stream-writer";
-import { generateSessionId } from "../utils";
-import { SessionWriter } from "../writers/session-writer";
+import type { Client as QStashClient } from "@upstash/qstash";
+import type { AgentLoopInitEvent, Message } from "../events/types";
+import { getDeltaStreamKey, getSessionKey } from "../keys";
+import { DeltaStreamType } from "../stream/types";
 
 export interface StreamInitRequestBody {
 	prompt: string;
-	sessionId?: string;
+	sessionId: string;
 }
 
 export interface StreamInitDependencies<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
 	redis: Redis;
-	eventEmitter: EventEmitter;
+	qstash?: QStashClient;
 	baseUrl: string;
 }
 
@@ -29,26 +28,43 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	request: Request,
 	deps: StreamInitDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent, redis, eventEmitter, baseUrl } = deps;
-	const streamWriter = new StreamWriter(redis);
-	const sessionWriter = new SessionWriter(redis);
+	const { agent, redis, qstash, baseUrl } = deps;
 
 	const body = (await request.json()) as StreamInitRequestBody;
-	const { prompt, sessionId: providedSessionId } = body;
+	const { prompt, sessionId } = body;
 
-	// Validate prompt
+	// Validate required fields
 	if (!prompt || !prompt.trim()) {
 		return Response.json({ error: "Prompt is required" }, { status: 400 });
+	}
+
+	if (!sessionId || !sessionId.trim()) {
+		return Response.json({ error: "Session ID is required" }, { status: 400 });
 	}
 
 	// Convert prompt to messages format
 	const messages = [{ role: "user", content: prompt.trim() }] as Message[];
 
-	// Use provided session ID or generate new one
-	const sessionId = providedSessionId || generateSessionId();
+	// Use Redis pipeline for atomic session initialization
+	const pipeline = redis.pipeline();
 
-	// Register the session (creates if new, continues if existing)
-	await sessionWriter.registerSession(sessionId);
+	// Register session
+	const sessionKey = getSessionKey(sessionId);
+	pipeline.set(sessionKey, sessionId);
+
+	// Write INIT message to stream
+	const streamKey = getDeltaStreamKey(sessionId);
+	const initMessage = {
+		type: DeltaStreamType.INIT,
+		timestamp: new Date().toISOString(),
+	};
+	pipeline.xadd(streamKey, "*", initMessage);
+
+	// Publish notification
+	pipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.INIT }));
+
+	// Execute all operations in a single batch
+	await pipeline.exec();
 
 	// Create agent loop init event
 	const agentLoopEvent: AgentLoopInitEvent = {
@@ -66,11 +82,18 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		},
 	};
 
-	// Run the first agent loop immediately in the background
-	// Don't await this - let it stream while we return the response
-	agent.processEvent(agentLoopEvent).catch((error) => {
-		console.error(`[Stream Init] First agent loop failed for session ${sessionId}:`, error);
-	});
+	// Publish the event to QStash for processing
+	if (qstash) {
+		// Don't await this - let it process in the background while we return the response
+		qstash.publishJSON({
+			url: `${baseUrl}/workers/agent-loop-init`,
+			body: { event: agentLoopEvent },
+		}).catch((error) => {
+			console.error(`[Stream Init] Failed to publish agent loop init event for session ${sessionId}:`, error);
+		});
+	} else {
+		console.warn(`[Stream Init] QStash not configured, cannot start agent loop for session ${sessionId}`);
+	}
 
 	// Return session info immediately
 	return Response.json({

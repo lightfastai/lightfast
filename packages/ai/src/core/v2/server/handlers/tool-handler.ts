@@ -3,15 +3,17 @@
  */
 
 import type { Redis } from "@upstash/redis";
+import type { Client as QStashClient } from "@upstash/qstash";
 import type { Agent } from "../../agent";
-import type { EventEmitter } from "../../events/emitter";
-import type { AgentToolCallEvent } from "../../events/schemas";
-import { getSessionKey } from "../keys";
+import type { AgentToolCallEvent } from "../events/types";
+import { AgentRuntime } from "../../runtime/agent-runtime";
+import type { ToolRegistry } from "../../runtime/types";
 
 export interface ToolHandlerDependencies<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
 	redis: Redis;
-	eventEmitter: EventEmitter;
+	qstash: QStashClient;
+	baseUrl: string;
 }
 
 /**
@@ -21,64 +23,37 @@ export async function handleToolCall<TRuntimeContext = unknown>(
 	toolEvent: AgentToolCallEvent,
 	deps: ToolHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent, redis, eventEmitter } = deps;
-	let success = false;
-	let result: any;
+	const { agent, redis, qstash, baseUrl } = deps;
+	const runtime = new AgentRuntime(redis, qstash);
+
+	// Create tool registry from agent
+	const toolRegistry: ToolRegistry = {
+		execute: async (toolName: string, args: Record<string, any>) => {
+			return agent.executeTool(toolName, args);
+		},
+		has: (toolName: string) => {
+			// Check if agent has this tool
+			const availableTools = agent.getAvailableTools();
+			return availableTools.includes(toolName);
+		},
+	};
 
 	try {
-		// Execute the tool using the agent
-		result = await agent.executeTool(toolEvent.data.tool, toolEvent.data.arguments || {});
-		success = true;
+		await runtime.executeTool({
+			event: toolEvent,
+			toolRegistry,
+			baseUrl,
+		});
 
-		// Note: Delta stream no longer handles event messages - removed event emission
+		return Response.json({ success: true });
 	} catch (error) {
-		result = { error: error instanceof Error ? error.message : String(error) };
-		success = false;
-
-		// Note: Delta stream no longer handles error messages - removed error emission
-	}
-
-	// Emit completion or failure event
-	if (success) {
-		await eventEmitter.emitToolExecutionComplete(toolEvent.sessionId, {
-			toolCallId: toolEvent.data.toolCallId,
-			tool: toolEvent.data.tool,
-			result,
-			duration: 500,
-			attempts: 1,
-		});
-
-		// Add tool result to session messages
-		await addToolResultToSession(toolEvent, result, redis);
-	} else {
-		await eventEmitter.emitToolExecutionFailed(toolEvent.sessionId, {
-			toolCallId: toolEvent.data.toolCallId,
-			tool: toolEvent.data.tool,
-			error: result.error,
-			lastAttemptDuration: 500,
-			attempts: 1,
-		});
-	}
-
-	return Response.json({ success: true });
-}
-
-/**
- * Add tool result to session messages
- */
-async function addToolResultToSession(toolEvent: AgentToolCallEvent, result: any, redis: Redis): Promise<void> {
-	const sessionKey = getSessionKey(toolEvent.sessionId);
-	const sessionData = await redis.get(sessionKey);
-
-	if (sessionData) {
-		const session = typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData;
-		session.messages.push({
-			role: "tool",
-			content: JSON.stringify(result),
-			toolCallId: toolEvent.data.toolCallId,
-			toolName: toolEvent.data.tool,
-		});
-		session.updatedAt = new Date().toISOString();
-		await redis.set(sessionKey, JSON.stringify(session)); // No expiration
+		console.error(`[Tool Handler] Error processing tool event:`, error);
+		return Response.json(
+			{
+				success: false,
+				error: error instanceof Error ? error.message : "Unknown error",
+			},
+			{ status: 500 },
+		);
 	}
 }

@@ -325,9 +325,6 @@ importers:
       braintrust:
         specifier: 'catalog:'
         version: 0.2.1(@aws-sdk/credential-provider-web-identity@3.848.0)(zod@3.25.76)
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
       playwright:
         specifier: 'catalog:'
         version: 1.54.1

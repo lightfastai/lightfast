@@ -6,10 +6,25 @@
 
 // Export Agent class
 export { Agent, type AgentOptions, type AgentToolDefinition } from "./agent";
-export * from "./events";
+
 // Export server components
-export * from "./server";
+export { 
+	type FetchRequestHandlerOptions, 
+	fetchRequestHandler,
+	MessageReader,
+	StreamConsumer,
+	generateSessionId,
+	EventWriter,
+	EventConsumer,
+	MessageWriter,
+	SessionWriter
+} from "./server";
+
+// Export event types from unified location
+export * from "./server/events/types";
+
 // Export specific stream types
 export { type DeltaStreamMessage, DeltaStreamType } from "./server/stream/types";
+
 // Export workers
 export * from "./workers";

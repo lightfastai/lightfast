@@ -4,29 +4,33 @@
  */
 
 import type { Redis } from "@upstash/redis";
+import type { Client as QStashClient } from "@upstash/qstash";
 import type { Agent } from "../../agent";
-import type { EventEmitter } from "../../events/emitter";
 import type {
 	AgentLoopCompleteEvent,
 	AgentLoopInitEvent,
 	AgentToolCallEvent,
 	ToolExecutionCompleteEvent,
-} from "../../events/schemas";
-import { ToolResultHandler } from "../../workers/tool-result-handler";
-import { handleAgentComplete } from "../handlers/agent-complete-handler";
+} from "../events/types";
 import { handleStreamInit } from "../handlers/stream-init-handler";
 import { handleStreamSSE } from "../handlers/stream-sse-handler";
+import { handleAgentInit } from "../handlers/init-handler";
+import { handleAgentStep } from "../handlers/step-handler";
 import { handleToolCall } from "../handlers/tool-handler";
 
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
 	redis: Redis;
-	eventEmitter: EventEmitter;
+	qstash?: QStashClient;
 	baseUrl: string; // Base URL for generating stream URLs (e.g., "/api/v2")
 }
 
 export interface AgentLoopInitRequestBody {
 	event: AgentLoopInitEvent;
+}
+
+export interface AgentLoopStepRequestBody {
+	event: import("../../runtime/types").AgentLoopStepEvent;
 }
 
 export interface AgentToolCallRequestBody {
@@ -71,13 +75,12 @@ export interface AgentLoopCompleteRequestBody {
  *       }
  *     }
  *   ]
- * }, redis, eventEmitter);
+ * }, redis);
  *
  * export async function POST(req: NextRequest) {
  *   return fetchRequestHandler({
  *     agent: myAgent,
  *     redis,
- *     eventEmitter,
  *     baseUrl: "/api/v2"
  *   });
  * }
@@ -86,7 +89,7 @@ export interface AgentLoopCompleteRequestBody {
 export function fetchRequestHandler<TRuntimeContext = unknown>(
 	options: FetchRequestHandlerOptions<TRuntimeContext>,
 ): (request: Request) => Promise<Response> {
-	const { agent, redis, eventEmitter, baseUrl } = options;
+	const { agent, redis, qstash, baseUrl } = options;
 
 	return async function handler(request: Request): Promise<Response> {
 		try {
@@ -101,7 +104,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				if (pathSegments[1] === "init") {
 					// Handle POST /stream/init
 					if (request.method === "POST") {
-						return handleStreamInit(request, { agent, redis, eventEmitter, baseUrl });
+						return handleStreamInit(request, { agent, redis, qstash, baseUrl });
 					}
 				} else if (pathSegments[1]) {
 					// Handle GET /stream/[sessionId]
@@ -119,23 +122,38 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						// Handle POST /workers/agent-loop-init
 						const body = (await request.json()) as AgentLoopInitRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.loop.init event`);
-						await agent.processEvent(body.event);
-						return Response.json({ success: true });
+						if (!qstash) {
+							return Response.json({ error: "QStash client not configured" }, { status: 500 });
+						}
+						return handleAgentInit(body.event, { agent, redis, qstash, baseUrl });
+					}
+
+					case "agent-loop-step": {
+						// Handle POST /workers/agent-loop-step
+						const body = (await request.json()) as AgentLoopStepRequestBody;
+						console.log(`[V2 Worker Handler] Processing agent.loop.step event`);
+						if (!qstash) {
+							return Response.json({ error: "QStash client not configured" }, { status: 500 });
+						}
+						return handleAgentStep(body.event, { agent, redis, qstash, baseUrl });
 					}
 
 					case "agent-tool-call": {
 						// Handle POST /workers/agent-tool-call
 						const body = (await request.json()) as AgentToolCallRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.tool.call event`);
-						return handleToolCall(body.event, { agent, redis, eventEmitter });
+						if (!qstash) {
+							return Response.json({ error: "QStash client not configured" }, { status: 500 });
+						}
+						return handleToolCall(body.event, { agent, redis, qstash, baseUrl });
 					}
 
 					case "tool-execution-complete": {
 						// Handle POST /workers/tool-execution-complete
 						const body = (await request.json()) as ToolExecutionCompleteRequestBody;
 						console.log(`[V2 Worker Handler] Processing tool.execution.complete event`);
-						const handler = new ToolResultHandler(redis, eventEmitter);
-						await handler.handleToolComplete(body.event);
+						// TODO: This event handler needs to be refactored to work without EventEmitter
+						// For now, just acknowledge the event
 						return Response.json({ success: true });
 					}
 
@@ -143,7 +161,8 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						// Handle POST /workers/agent-loop-complete
 						const body = (await request.json()) as AgentLoopCompleteRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.loop.complete event`);
-						return handleAgentComplete(body.event, { redis });
+						// TODO: Implement new event system handling
+						return Response.json({ success: true });
 					}
 
 					default:

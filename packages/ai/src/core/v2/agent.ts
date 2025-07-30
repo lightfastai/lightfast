@@ -10,12 +10,11 @@ import { type Tool as AiTool, smoothStream, streamText, type ToolSet, type UIMes
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
-import type { EventEmitter, SessionEventEmitter } from "./events/emitter";
-import type { AgentLoopInitEvent, Message } from "./events/schemas";
+import type { AgentLoopInitEvent, Message } from "./server/events/types";
 import { getDeltaStreamKey } from "./server/keys";
 import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
-import { EventWriter } from "./server/writers/event-writer";
+import { EventWriter } from "./server/events/event-writer";
 import { MessageWriter } from "./server/writers/message-writer";
 import { type AgentDecision, AgentDecisionSchema, type WorkerConfig } from "./workers/schemas";
 
@@ -79,7 +78,6 @@ export class Agent<TRuntimeContext = unknown> {
 	constructor(
 		options: AgentOptions<TRuntimeContext>,
 		private redis: Redis,
-		private eventEmitter: EventEmitter,
 		workerConfig: Partial<WorkerConfig> = {},
 	) {
 		// Destructure agent-specific properties from streamText config
@@ -121,42 +119,6 @@ export class Agent<TRuntimeContext = unknown> {
 		};
 	}
 
-	/**
-	 * Process an agent loop init event
-	 */
-	async processEvent(event: AgentLoopInitEvent): Promise<void> {
-		const startTime = Date.now();
-		const sessionEmitter = this.eventEmitter.forSession(event.sessionId);
-
-		try {
-			// Write status event
-			await this.eventWriter.writeEvent(event.sessionId, "event", {
-				event: "agent.loop.start",
-				iteration: 1,
-			});
-
-			// Process the agent loop with event data
-			await this.runAgentLoop(event, sessionEmitter);
-		} catch (error) {
-			console.error(`[Agent ${this.config.name}] Error processing event ${event.id}:`, error);
-
-			// Write error event
-			await this.eventWriter.writeErrorEvent(
-				event.sessionId,
-				error instanceof Error ? error.message : "Unknown error",
-				"AGENT_LOOP_ERROR",
-				{
-					event: "agent.loop.error",
-					duration: Date.now() - startTime,
-				},
-			);
-
-			// Write error to delta stream
-			await this.streamWriter.writeError(event.sessionId, error instanceof Error ? error.message : "Unknown error");
-
-			throw error;
-		}
-	}
 
 	/**
 	 * Execute a tool by name with runtime context support
@@ -267,46 +229,12 @@ export class Agent<TRuntimeContext = unknown> {
 	}
 
 	/**
-	 * Run the main agent loop
+	 * Public method for Runtime to make agent decisions
 	 */
-	private async runAgentLoop(event: AgentLoopInitEvent, sessionEmitter: SessionEventEmitter): Promise<void> {
-		const startTime = Date.now();
-		const { sessionId, data } = event;
-		const messages = [...data.messages]; // Create mutable copy
-
-		// Make a decision using streamText for immediate feedback
-		const { decision, chunkCount, fullContent } = await this.makeDecision(
-			sessionId,
-			messages,
-			data.temperature,
-			sessionEmitter,
-		);
-
-		// Handle the decision - only process tool calls
-		if (decision.action === "tool_call") {
-			await this.handleToolCall(sessionId, messages, decision, sessionEmitter);
-		} else {
-			// For non-tool actions (complete), signal completion and finish
-			await sessionEmitter.emitAgentLoopComplete({
-				finalMessage: "Agent loop completed",
-				iterations: 1,
-				toolsUsed: this.extractUsedTools(messages),
-				duration: Date.now() - startTime,
-			});
-
-			// Write completion to delta stream
-			await this.streamWriter.writeComplete(sessionId);
-		}
-	}
-
-	/**
-	 * Make a decision using streamText for immediate feedback
-	 */
-	private async makeDecision(
+	async makeDecisionForRuntime(
 		sessionId: string,
 		messages: Message[],
 		temperature: number,
-		sessionEmitter: SessionEventEmitter,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
 		// Build the system prompt
 		const systemPrompt = this.buildSystemPrompt(sessionId);
@@ -318,17 +246,15 @@ export class Agent<TRuntimeContext = unknown> {
 		let responseMessages: UIMessage[] = [];
 		let chunkCount = 0;
 
-		// Start of decision making (no longer emit metadata)
-
 		// Create a prompt that will naturally generate structured output
 		const structuredPrompt = `${systemPrompt}
 
 Please analyze the conversation and decide if you need to use a tool. Respond with your decision in the following JSON format:
 {
-  "action": "tool_call" | "complete",
-  "reasoning": "your reasoning here",
-  "toolCall": { "tool": "tool_name", "arguments": {...} } // only if action is tool_call
+  "toolCall": { "id": "unique_id", "name": "tool_name", "args": {...} } // include this field only if you need to use a tool
 }
+
+If no tool is needed, return an empty JSON object: {}
 
 Think through this step by step first, then provide your JSON decision.`;
 
@@ -368,9 +294,7 @@ Think through this step by step first, then provide your JSON decision.`;
 
 				// Log the decision
 				console.log(`[Agent ${this.config.name}] Decision for session ${sessionId}:`, {
-					action: finalDecision?.action,
-					reasoning: finalDecision?.reasoning,
-					tool: finalDecision?.toolCall?.tool,
+					toolCall: finalDecision?.toolCall,
 				});
 			},
 		});
@@ -402,8 +326,6 @@ Think through this step by step first, then provide your JSON decision.`;
 		if (!finalDecision) {
 			throw new Error("Failed to get structured decision from streamText");
 		}
-
-		// Decision complete (no longer emit metadata)
 
 		return { decision: finalDecision, chunkCount, fullContent };
 	}
@@ -456,59 +378,6 @@ Think through your reasoning step by step, then make your decision. Only use too
 			});
 	}
 
-	/**
-	 * Handle tool call decision
-	 */
-	private async handleToolCall(
-		sessionId: string,
-		messages: Message[],
-		decision: AgentDecision,
-		sessionEmitter: SessionEventEmitter,
-	): Promise<void> {
-		if (!decision.toolCall) {
-			throw new Error("Tool call decision without tool details");
-		}
-
-		const toolCallId = `tc_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-		// Tool call starting (no longer emit events)
-
-		// Add assistant message with tool decision to local state
-		messages.push({
-			role: "assistant",
-			content: `I'll use the ${decision.toolCall.tool} tool to help with your request. ${decision.reasoning}`,
-		});
-
-		// Write tool message with tool call part (UIMessage persistence)
-		const toolMessage: UIMessage = {
-			id: this.generateMessageId(),
-			role: "assistant",
-			parts: [
-				{
-					type: "text",
-					text: `Using ${decision.toolCall.tool} tool...`,
-				},
-				{
-					type: `tool-${decision.toolCall.tool}`,
-					toolCallId,
-					state: "input-available",
-					input: decision.toolCall.arguments,
-				},
-			],
-		};
-		await this.messageWriter.writeUIMessage(sessionId, toolMessage);
-
-		// Tool executing (no longer emit events)
-
-		// Emit tool call event (existing event system)
-		await sessionEmitter.emitAgentToolCall({
-			toolCallId,
-			tool: decision.toolCall.tool,
-			arguments: decision.toolCall.arguments,
-			iteration: 1,
-			priority: "normal",
-		});
-	}
 
 	private generateMessageId(): string {
 		return `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;

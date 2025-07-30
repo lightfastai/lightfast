@@ -1,11 +1,8 @@
 /**
- * Event-driven architecture exports
+ * V2 Event System - Export point for event types
+ * 
+ * All event types are now consolidated in server/events/types.ts
  */
 
-export type { EventEmitterConfig } from "./emitter";
-
-// Export event emitter
-export * from "./emitter";
-export { EventEmitter, SessionEventEmitter } from "./emitter";
-// Export all schemas and types (includes EventType)
-export * from "./schemas";
+// Re-export all event types from the unified location
+export * from "../server/events/types";

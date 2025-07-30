@@ -10,6 +10,24 @@ export class StreamWriter {
 	constructor(private redis: Redis) {}
 
 	/**
+	 * Write an initialization event to the delta stream
+	 */
+	async writeInit(sessionId: string): Promise<void> {
+		const streamKey = getDeltaStreamKey(sessionId);
+
+		const message: Record<string, string> = {
+			type: DeltaStreamType.INIT,
+			timestamp: new Date().toISOString(),
+		};
+
+		// Write to Redis stream
+		await this.redis.xadd(streamKey, "*", message);
+
+		// Publish for real-time notifications
+		await this.redis.publish(streamKey, { type: DeltaStreamType.INIT });
+	}
+
+	/**
 	 * Write an error event to the delta stream
 	 */
 	async writeError(sessionId: string, error: string): Promise<void> {
