@@ -13,6 +13,7 @@ export interface ToolHandlerDependencies<TRuntimeContext = unknown> {
 	redis: Redis;
 	qstash: QStashClient;
 	baseUrl: string;
+	resourceId?: string;
 }
 
 /**

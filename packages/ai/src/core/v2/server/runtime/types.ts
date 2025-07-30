@@ -9,6 +9,7 @@ import type { Agent } from "../../agent";
  * Session state stored in Redis
  */
 export interface SessionState {
+	resourceId: string;
 	messages: UIMessage[];
 	stepIndex: number;
 	startTime: number;
@@ -47,6 +48,7 @@ export interface Runtime {
 		stepIndex: number;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
+		resourceId?: string;
 	}): Promise<void>;
 
 	/**

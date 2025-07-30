@@ -28,11 +28,13 @@ export class AgentRuntime implements Runtime {
 		stepIndex,
 		agent,
 		baseUrl,
+		resourceId,
 	}: {
 		sessionId: string;
 		stepIndex: number;
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
+		resourceId?: string;
 	}): Promise<void> {
 		// Get or initialize session state
 		let state = await this.getSessionState(sessionId);
@@ -48,7 +50,11 @@ export class AgentRuntime implements Runtime {
 			await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userContent);
 
 			// Create initial state with UIMessages
+			if (!resourceId) {
+				throw new Error(`resourceId is required for new sessions`);
+			}
 			state = {
+				resourceId,
 				messages: uiMessages,
 				stepIndex: 0,
 				startTime: Date.now(),
@@ -198,6 +204,7 @@ export class AgentRuntime implements Runtime {
 			// Agent makes decision and streams response
 			const { decision, chunkCount, fullContent } = await agent.makeDecisionForRuntime(
 				sessionId,
+				state.resourceId,
 				messages,
 				state.temperature || 0.7,
 			);

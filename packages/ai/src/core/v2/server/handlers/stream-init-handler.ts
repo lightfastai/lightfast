@@ -20,6 +20,7 @@ export interface StreamInitDependencies<TRuntimeContext = unknown> {
 	redis: Redis;
 	qstash?: QStashClient;
 	baseUrl: string;
+	resourceId: string;
 }
 
 /**
@@ -29,7 +30,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	request: Request,
 	deps: StreamInitDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent, redis, qstash, baseUrl } = deps;
+	const { agent, redis, qstash, baseUrl, resourceId } = deps;
 
 	const body = (await request.json()) as StreamInitRequestBody;
 	const { prompt, sessionId } = body;
@@ -49,7 +50,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 
 	// Write user message
 	const messageWriter = new MessageWriter(redis);
-	await messageWriter.writeUIMessage(sessionId, {
+	await messageWriter.writeUIMessage(sessionId, resourceId, {
 		id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
 		role: "user",
 		parts: [{ type: "text", text: prompt.trim() }],
@@ -93,6 +94,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 				body: {
 					sessionId,
 					stepIndex,
+					resourceId,
 				},
 			})
 			.catch((error) => {

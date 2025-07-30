@@ -12,16 +12,17 @@ export interface StepHandlerDependencies<TRuntimeContext = unknown> {
 	redis: Redis;
 	qstash: QStashClient;
 	baseUrl: string;
+	resourceId?: string;
 }
 
 /**
  * Handle agent loop step event
  */
 export async function handleAgentStep<TRuntimeContext = unknown>(
-	body: { sessionId: string; stepIndex: number },
+	body: { sessionId: string; stepIndex: number; resourceId?: string },
 	deps: StepHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent, redis, qstash, baseUrl } = deps;
+	const { agent, redis, qstash, baseUrl, resourceId: depsResourceId } = deps;
 	const runtime = new AgentRuntime(redis, qstash);
 
 	try {
@@ -30,6 +31,7 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 			stepIndex: body.stepIndex,
 			agent,
 			baseUrl,
+			resourceId: body.resourceId || depsResourceId,
 		});
 
 		return Response.json({ success: true });

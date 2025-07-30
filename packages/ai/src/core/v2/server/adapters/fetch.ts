@@ -4,18 +4,22 @@
  */
 
 import type { Client as QStashClient } from "@upstash/qstash";
+import { Receiver } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import { handleAgentStep } from "../handlers/runtime/step-handler";
 import { handleToolCall } from "../handlers/runtime/tool-handler";
 import { handleStreamInit } from "../handlers/stream-init-handler";
 import { handleStreamSSE } from "../handlers/stream-sse-handler";
+import { getSessionKey } from "../keys";
+import type { SessionState } from "../runtime/types";
 
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
 	redis: Redis;
 	qstash?: QStashClient;
 	baseUrl: string; // Base URL for generating stream URLs (e.g., "/api/v2")
+	resourceId: string; // Required resource ID (user ID in our case)
 }
 
 export interface AgentLoopStepRequestBody {
@@ -86,7 +90,7 @@ export interface AgentLoopCompleteRequestBody {
 export function fetchRequestHandler<TRuntimeContext = unknown>(
 	options: FetchRequestHandlerOptions<TRuntimeContext>,
 ): (request: Request) => Promise<Response> {
-	const { agent, redis, qstash, baseUrl } = options;
+	const { agent, redis, qstash, baseUrl, resourceId } = options;
 
 	return async function handler(request: Request): Promise<Response> {
 		try {
@@ -106,17 +110,62 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				if (pathSegments[1] === "init") {
 					// Handle POST /stream/init
 					if (request.method === "POST") {
-						return handleStreamInit(request, { agent, redis, qstash, baseUrl });
+						return handleStreamInit(request, { agent, redis, qstash, baseUrl, resourceId });
 					}
 				} else if (pathSegments[1]) {
 					// Handle GET /stream/[sessionId]
 					const sessionId = pathSegments[1];
+
+					// Verify session ownership
+					const sessionKey = getSessionKey(sessionId);
+					const sessionState = (await redis.get(sessionKey)) as SessionState | null;
+
+					if (!sessionState) {
+						return Response.json({ error: "Session not found" }, { status: 404 });
+					}
+
+					if (sessionState.resourceId !== resourceId) {
+						return Response.json({ error: "Forbidden - you do not own this session" }, { status: 403 });
+					}
+
 					return await handleStreamSSE(sessionId, { redis }, request.signal);
 				}
 			}
 
 			// Handle worker endpoints
 			if (pathSegments[0] === "workers") {
+				// Verify QStash signature for all worker routes
+				if (qstash) {
+					const signature = request.headers.get("upstash-signature");
+					if (!signature) {
+						return Response.json({ error: "Missing QStash signature" }, { status: 401 });
+					}
+
+					// Clone request to read body for verification
+					const body = await request.clone().text();
+
+					try {
+						// Create receiver instance for verification
+						const receiver = new Receiver({
+							currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY!,
+							nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY!,
+						});
+
+						const isValid = await receiver.verify({
+							signature,
+							body,
+							url: request.url,
+						});
+
+						if (!isValid) {
+							return Response.json({ error: "Invalid QStash signature" }, { status: 401 });
+						}
+					} catch (error) {
+						console.error("[V2 Worker Handler] QStash signature verification failed:", error);
+						return Response.json({ error: "Invalid QStash signature" }, { status: 401 });
+					}
+				}
+
 				const workerAction = pathSegments[1];
 
 				switch (workerAction) {
@@ -127,7 +176,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						if (!qstash) {
 							return Response.json({ error: "QStash client not configured" }, { status: 500 });
 						}
-						return handleAgentStep(body, { agent, redis, qstash, baseUrl });
+						return handleAgentStep(body, { agent, redis, qstash, baseUrl, resourceId });
 					}
 
 					case "agent-tool-call": {
@@ -137,7 +186,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						if (!qstash) {
 							return Response.json({ error: "QStash client not configured" }, { status: 500 });
 						}
-						return handleToolCall(body, { agent, redis, qstash, baseUrl });
+						return handleToolCall(body, { agent, redis, qstash, baseUrl, resourceId });
 					}
 
 					case "tool-execution-complete": {

@@ -5,6 +5,7 @@
 
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
+import { auth } from "@clerk/nextjs/server";
 import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
 import { Agent } from "@lightfast/ai/v2/core";
 import { fetchRequestHandler } from "@lightfast/ai/v2/server";
@@ -96,17 +97,24 @@ const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 	redis,
 );
 
-// Create the handler using fetchRequestHandler
-const handlerFn = fetchRequestHandler({
-	agent: v2TestAgent,
-	redis,
-	qstash,
-	baseUrl: `${configBaseUrl}/api/v2`, // Use full URL for QStash
-});
-
-// Handler function - now just passes through to fetchRequestHandler
+// Handler function - handles auth and passes resourceId
 const handler = async (req: NextRequest, { params }: { params: Promise<{ v: string[] }> }) => {
-	// The fetchRequestHandler now handles all routing internally
+	// Handle authentication
+	const { userId } = await auth();
+	if (!userId) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	// Create the handler with resourceId
+	const handlerFn = fetchRequestHandler({
+		agent: v2TestAgent,
+		redis,
+		qstash,
+		baseUrl: `${configBaseUrl}/api/v2`, // Use full URL for QStash
+		resourceId: userId,
+	});
+
+	// Pass request to handler
 	return handlerFn(req);
 };
 

@@ -282,6 +282,7 @@ export class Agent<TRuntimeContext = unknown> {
 	 */
 	async makeDecisionForRuntime(
 		sessionId: string,
+		resourceId: string,
 		messages: UIMessage[],
 		temperature: number,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
@@ -348,7 +349,7 @@ export class Agent<TRuntimeContext = unknown> {
 				role: "assistant",
 				parts: [{ type: "text", text: fullContent }],
 			};
-			await this.messageWriter.writeUIMessage(sessionId, assistantMessage);
+			await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
 		}
 
 		// Return decision based on what streamText naturally decided
