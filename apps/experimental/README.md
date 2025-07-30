@@ -158,107 +158,41 @@ Available on both client and server:
 
 ### V2 Agent State Machine Architecture
 
-The v2 agent infrastructure (`@packages/ai/src/core/v2/`) implements a sophisticated state-machine routing system through HTTP endpoints for agent loop execution:
+The v2 agent infrastructure (`@packages/ai/src/core/v2/`) implements a state-machine routing system through HTTP endpoints:
 
 ```mermaid
-graph TD
-    %% Client Request Flow
-    Client[Client App] -->|POST /stream/init| StreamInit[Stream Init Handler]
+graph LR
+    %% Core Flow
+    Client[Client] -->|1. POST /stream/init| Init[Initialize]
+    Init -->|2. Queue Step| QStash[QStash]
+    Client -->|3. SSE /stream/id| Stream[Stream]
     
-    %% Stream Initialization
-    StreamInit -->|1. Write User Message| Redis[(Redis Store)]
-    StreamInit -->|2. Create Delta Stream| DeltaStream[Delta Stream]
-    StreamInit -->|3. Publish to QStash| QStash{QStash Queue}
-    StreamInit -->|4. Return streamUrl + messageId| Client
+    %% Agent Loop
+    QStash -->|4. Process Step| Agent[Agent]
+    Agent -->|5a. Stream Text| Stream
+    Agent -->|5b. Call Tool| QStash
     
-    %% SSE Connection
-    Client -->|GET /stream/messageId| StreamSSE[Stream SSE Handler]
-    StreamSSE -.->|Server-Sent Events| Client
-    DeltaStream -.->|Stream Updates| StreamSSE
+    %% Tool Execution
+    QStash -->|6. Execute Tool| Tool[Tool]
+    Tool -->|7. Next Step| QStash
     
-    %% Agent Loop Step Processing
-    QStash -->|/workers/agent-loop-step| StepHandler[Agent Step Handler]
-    StepHandler -->|1. Load Session State| SessionState[Session State]
-    StepHandler -->|2. Get Messages| Redis
-    StepHandler -->|3. Agent Decision| Agent[Agent Class]
+    %% State
+    Agent -.->|State| Redis[(Redis)]
+    Tool -.->|State| Redis
     
-    %% Agent Decision Flow
-    Agent -->|makeDecisionForRuntime| DecisionEngine{Decision Engine}
-    DecisionEngine -->|Text Response| StreamWriter[Stream Writer]
-    DecisionEngine -->|Tool Call| ToolCall[Tool Call Decision]
-    
-    %% Streaming Response
-    StreamWriter -->|Write Chunks| DeltaStream
-    StreamWriter -->|Write Complete| DeltaStream
-    
-    %% Tool Execution Flow
-    ToolCall -->|Publish Tool Event| QStash
-    QStash -->|/workers/agent-tool-call| ToolHandler[Tool Handler]
-    ToolHandler -->|Execute Tool| ToolRegistry[Tool Registry]
-    ToolRegistry -->|Tool Result| ToolHandler
-    
-    %% Tool Result Processing
-    ToolHandler -->|Update State| SessionState
-    ToolHandler -->|Check Pending Tools| PendingCheck{All Tools Complete?}
-    PendingCheck -->|No| ToolHandler
-    PendingCheck -->|Yes| NextStep[Schedule Next Step]
-    NextStep -->|Publish Step Event| QStash
-    
-    %% Loop Completion
-    Agent -->|No More Tools| LoopComplete[Loop Complete]
-    LoopComplete -->|Write Final Message| Redis
-    LoopComplete -->|Publish Complete Event| QStash
-    QStash -->|/workers/agent-loop-complete| CompleteHandler[Complete Handler]
-    CompleteHandler -->|Clean Session| SessionState
-    
-    %% State Storage
-    SessionState -.->|Persistent State| Redis
-    
-    %% Key Components
-    classDef handler fill:#f9f,stroke:#333,stroke-width:2px
-    classDef storage fill:#bbf,stroke:#333,stroke-width:2px
-    classDef queue fill:#bfb,stroke:#333,stroke-width:2px
-    classDef decision fill:#fbf,stroke:#333,stroke-width:2px
-    
-    class StreamInit,StreamSSE,StepHandler,ToolHandler,CompleteHandler handler
-    class Redis,SessionState,DeltaStream storage
-    class QStash queue
-    class DecisionEngine,PendingCheck decision
+    style Client fill:#f9f,stroke:#333,stroke-width:2px
+    style QStash fill:#bfb,stroke:#333,stroke-width:2px
+    style Redis fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
-#### Key Components:
-
-1. **Stream Initialization** (`/stream/init`):
-   - Creates user message in Redis
-   - Initializes delta stream for real-time updates
-   - Publishes first step to QStash queue
-   - Returns stream URL with unique message ID
-
-2. **Server-Sent Events** (`/stream/{messageId}`):
-   - Provides real-time streaming of agent responses
-   - Uses Redis streams for message delivery
-   - Supports graceful disconnection handling
-
-3. **Agent Loop Step** (`/workers/agent-loop-step`):
-   - Loads session state from Redis
-   - Agent makes decisions using `makeDecisionForRuntime`
-   - Streams text responses in real-time
-   - Schedules tool calls through QStash
-
-4. **Tool Execution** (`/workers/agent-tool-call`):
-   - Executes tools via Tool Registry
-   - Updates session state with results
-   - Schedules next step when all tools complete
-
-5. **State Management**:
-   - Session state persisted in Redis
-   - Includes messages, step index, pending tools
-   - Supports conversation continuation
-
-6. **Event-Driven Architecture**:
-   - QStash for reliable message delivery
-   - Event tracking for observability
-   - Async processing with retries
+**Core Workflow:**
+1. Client sends prompt to `/stream/init`
+2. System queues first agent step via QStash
+3. Client connects to SSE endpoint for real-time updates
+4. Agent processes each step, either:
+   - Streaming text responses directly to client
+   - Calling tools and queuing next steps
+5. Loop continues until conversation completes
 
 ## 🛠️ Tech Stack
 
