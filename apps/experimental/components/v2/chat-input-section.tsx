@@ -125,7 +125,7 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 					{messages.map((message) => (
 						<MessageBubble key={message.id} message={message} />
 					))}
-					
+
 					{/* Current streaming response */}
 					{currentResponse && (
 						<div className="flex gap-3">
@@ -142,7 +142,7 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 							</div>
 						</div>
 					)}
-					
+
 					<div ref={messagesEndRef} />
 				</div>
 			</ScrollArea>
@@ -177,7 +177,7 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 
 function MessageBubble({ message }: { message: UIMessage }) {
 	const isUser = message.role === "user";
-	const text = message.parts.find(part => part.type === "text")?.text || "";
+	const text = message.parts.find((part) => part.type === "text")?.text || "";
 
 	return (
 		<div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
@@ -188,7 +188,7 @@ function MessageBubble({ message }: { message: UIMessage }) {
 				<div
 					className={cn(
 						"rounded-lg px-4 py-2 max-w-[80%]",
-						isUser ? "bg-primary text-primary-foreground ml-auto" : "bg-muted"
+						isUser ? "bg-primary text-primary-foreground ml-auto" : "bg-muted",
 					)}
 				>
 					<p className="text-sm whitespace-pre-wrap">{text}</p>

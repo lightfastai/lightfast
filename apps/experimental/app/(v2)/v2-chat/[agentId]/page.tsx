@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ChatInterface } from "@/components/v2/chat-interface";
+import { ChatInterface } from "@/components/v2/chat-interface-refactored";
 import { uuidv4 } from "@/lib/uuidv4";
 
 interface NewChatPageProps {

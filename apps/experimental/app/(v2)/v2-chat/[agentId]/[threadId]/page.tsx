@@ -1,9 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { MessageReader } from "@lightfast/ai/v2/server";
-import { redis } from "@/app/(v2)/ai/config";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ChatInterface } from "@/components/v2/chat-interface";
+import { redis } from "@/app/(v2)/ai/config";
+import { ChatInterface } from "@/components/v2/chat-interface-refactored";
 
 interface ChatPageProps {
 	params: Promise<{
