@@ -140,6 +140,13 @@ export function useAgentToolEvents(options: Omit<UseEventStreamOptions, "filter"
 	});
 }
 
+export function useAgentStepEvents(options: Omit<UseEventStreamOptions, "filter"> = {}) {
+	return useEventStream({
+		...options,
+		filter: (event) => event.name === EventName.AGENT_STEP_START || event.name === EventName.AGENT_STEP_COMPLETE,
+	});
+}
+
 export function useAgentErrorEvents(options: Omit<UseEventStreamOptions, "filter"> = {}) {
 	return useEventStream({
 		...options,

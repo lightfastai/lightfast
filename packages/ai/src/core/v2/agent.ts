@@ -6,7 +6,15 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
-import { type Tool as AiTool, convertToModelMessages, smoothStream, streamText, type ToolSet, type UIMessage, wrapLanguageModel } from "ai";
+import {
+	type Tool as AiTool,
+	convertToModelMessages,
+	smoothStream,
+	streamText,
+	type ToolSet,
+	type UIMessage,
+	wrapLanguageModel,
+} from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
@@ -191,6 +199,41 @@ export class Agent<TRuntimeContext = unknown> {
 	}
 
 	/**
+	 * Get tools for scheduling (without execute functions for QStash scheduling)
+	 */
+	private getToolsForScheduling(sessionId: string): ToolSet {
+		const schedulingTools: ToolSet = {};
+
+		// Add legacy tools without execute functions
+		for (const [name, tool] of this.tools) {
+			schedulingTools[name] = {
+				description: tool.description,
+				inputSchema: tool.schema || {},
+				// No execute function - tools will be scheduled via QStash
+			} as AiTool;
+		}
+
+		// Add tools from factories without execute functions
+		if (this.toolFactories && this.createRuntimeContext) {
+			const runtimeContext = this.createRuntimeContext({
+				sessionId,
+				userId: undefined, // Would come from session
+			});
+
+			for (const [name, factory] of Object.entries(this.toolFactories)) {
+				const toolInstance = factory(runtimeContext as TRuntimeContext);
+				schedulingTools[name] = {
+					description: toolInstance.description,
+					inputSchema: toolInstance.inputSchema,
+					// No execute function - tools will be scheduled via QStash
+				} as AiTool;
+			}
+		}
+
+		return schedulingTools;
+	}
+
+	/**
 	 * Get tool description
 	 */
 	getToolDescription(toolName: string, sessionId?: string): string {
@@ -235,134 +278,95 @@ export class Agent<TRuntimeContext = unknown> {
 	}
 
 	/**
-	 * Public method for Runtime to make agent decisions
+	 * Public method for Runtime to make agent decisions using natural streamText flow
 	 */
 	async makeDecisionForRuntime(
 		sessionId: string,
 		messages: UIMessage[],
 		temperature: number,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
-		// Build the system prompt
-		const systemPrompt = this.buildSystemPrompt(sessionId);
-
 		// Convert UIMessages to model messages
 		const modelMessages = convertToModelMessages(messages);
 
-		let finalDecision: AgentDecision | null = null;
-		let responseMessages: UIMessage[] = [];
-		let chunkCount = 0;
+		// Get tools for scheduling (without execute functions)
+		const toolsForScheduling = this.getToolsForScheduling(sessionId);
 
-		// Create a prompt that will naturally generate structured output
-		const structuredPrompt = `${systemPrompt}
-
-Please analyze the conversation and decide if you need to use a tool. Respond with your decision in the following JSON format:
-{
-  "toolCall": { "id": "unique_id", "name": "tool_name", "args": {...} } // include this field only if you need to use a tool
-}
-
-If no tool is needed, return an empty JSON object: {}
-
-Think through this step by step first, then provide your JSON decision.`;
-
-		// Stream the decision-making process
-		const { textStream } = streamText({
+		// Use streamText with tools directly - let it decide naturally
+		const { fullStream } = streamText({
 			...this.config, // Spread all streamText-compatible properties
-			system: structuredPrompt,
+			system: this.systemPrompt,
 			messages: modelMessages,
-			// Override with session-specific values if needed
 			temperature: temperature ?? this.config.temperature,
+			tools: toolsForScheduling,
 			// Apply experimental transform if provided
 			...(this.experimental_transform && { experimental_transform: this.experimental_transform }),
-			onFinish: async (result) => {
-				// Parse the structured decision from the full text
-				try {
-					const fullText = result.text;
-					const jsonMatch = fullText.match(/\{[\s\S]*\}/);
-					if (jsonMatch) {
-						const parsed = JSON.parse(jsonMatch[0]);
-						finalDecision = AgentDecisionSchema.parse(parsed);
-					}
-				} catch (error) {
-					console.error(`[Agent ${this.config.name}] Failed to parse decision from text:`, error);
-				}
-
-				// For now, we'll construct a simple message from the text
-				// In the future, we might want to use result.responseMessages if available
-				if (result.text) {
-					responseMessages = [
-						{
-							id: this.generateMessageId(),
-							role: "assistant",
-							parts: [{ type: "text", text: result.text }],
-						},
-					];
-				}
-
-				// Log the decision
-				console.log(`[Agent ${this.config.name}] Decision for session ${sessionId}:`, {
-					toolCall: finalDecision?.toolCall,
-				});
-			},
 		});
 
-		// Stream chunks in real-time for immediate UI feedback
+		// Stream content AND collect tool calls
 		let fullContent = "";
-		for await (const chunk of textStream) {
-			if (chunk) {
-				fullContent += chunk;
-				chunkCount++;
-				// Delta streaming - immediate UI feedback
-				await this.streamWriter.writeChunk(sessionId, chunk);
+		let chunkCount = 0;
+		let pendingToolCall: { id: string; name: string; args: Record<string, any> } | null = null;
+
+		for await (const chunk of fullStream) {
+			switch (chunk.type) {
+				case "text-delta":
+					if ("delta" in chunk && typeof chunk.delta === "string") {
+						fullContent += chunk.delta;
+						chunkCount++;
+						// Delta streaming - immediate UI feedback
+						await this.streamWriter.writeChunk(sessionId, chunk.delta);
+					}
+					break;
+
+				case "tool-call":
+					// Store tool call for QStash scheduling - don't execute immediately
+					pendingToolCall = {
+						id: chunk.toolCallId,
+						name: chunk.toolName,
+						args: chunk.input,
+					};
+					break;
+
+				case "reasoning-delta":
+					if ("delta" in chunk && typeof chunk.delta === "string") {
+						// Handle reasoning chunks (Claude thinking)
+						fullContent += chunk.delta;
+						chunkCount++;
+						await this.streamWriter.writeChunk(sessionId, chunk.delta);
+					}
+					break;
+
+				// Handle other chunk types as needed
+				default:
+					// Log unknown chunk types for debugging
+					console.log(`[Agent ${this.config.name}] Unhandled chunk type:`, chunk.type);
+					break;
 			}
 		}
 
-		// Write the complete thinking message with reasoning parts
-		if (responseMessages.length > 0) {
-			const thinkingMessage = responseMessages[0];
-			if (thinkingMessage) {
-				// Transform text parts to reasoning parts for thinking
-				const reasoningMessage: UIMessage = {
-					...thinkingMessage,
-					parts: thinkingMessage.parts.map((part) => (part.type === "text" ? { ...part, type: "reasoning" } : part)),
-				};
-				await this.messageWriter.writeUIMessage(sessionId, reasoningMessage);
-			}
+		// CRITICAL: Mark stream as complete
+		await this.streamWriter.writeComplete(sessionId);
+
+		// Write the assistant message if we have content
+		if (fullContent.trim()) {
+			const assistantMessage: UIMessage = {
+				id: this.generateMessageId(),
+				role: "assistant",
+				parts: [{ type: "text", text: fullContent }],
+			};
+			await this.messageWriter.writeUIMessage(sessionId, assistantMessage);
 		}
 
-		if (!finalDecision) {
-			throw new Error("Failed to get structured decision from streamText");
-		}
+		// Return decision based on what streamText naturally decided
+		const decision: AgentDecision = pendingToolCall ? { toolCall: pendingToolCall } : {}; // No tool needed
 
-		return { decision: finalDecision, chunkCount, fullContent };
+		console.log(`[Agent ${this.config.name}] Natural decision for session ${sessionId}:`, {
+			toolCall: decision.toolCall,
+			contentLength: fullContent.length,
+		});
+
+		return { decision, chunkCount, fullContent };
 	}
-
-	/**
-	 * Build the system prompt for the agent
-	 */
-	private buildSystemPrompt(sessionId: string): string {
-		const toolNames = this.getAvailableTools();
-		const toolsSection = toolNames.length
-			? `
-Available Tools:
-${toolNames.map((tool) => `- ${tool}: ${this.getToolDescription(tool, sessionId)}`).join("\n")}
-
-When you need to use a tool, set action to "tool_call" and provide the tool name and arguments.
-`
-			: "";
-
-		return `${this.systemPrompt}
-
-Your task is to help the user by analyzing their request and determining if you need to use a tool.
-
-You must decide between:
-1. "tool_call" - Use a tool to gather information or perform an action
-2. "complete" - No tool is needed, the task is complete
-
-${toolsSection}
-
-Think through your reasoning step by step, then make your decision. Only use tools when necessary to fulfill the user's request.`;
-	}
-
 
 	private generateMessageId(): string {
 		return `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
