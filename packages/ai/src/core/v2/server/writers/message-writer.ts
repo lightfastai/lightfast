@@ -96,6 +96,57 @@ export class MessageWriter {
 	}
 
 	/**
+	 * Update a tool call part with its result
+	 * Finds the existing tool call part and updates it with the output
+	 */
+	async updateToolCallResult(sessionId: string, messageId: string, toolCallId: string, toolResult: any): Promise<void> {
+		const key = getMessageKey(sessionId);
+		const now = new Date().toISOString();
+
+		// Get existing data
+		const existing = (await this.redis.json.get(key, "$")) as LightfastDBMessage[] | null;
+		if (!existing || existing.length === 0) {
+			throw new Error(`No messages found for session ${sessionId}`);
+		}
+
+		// Find the message to update
+		const messages = existing[0]?.messages || [];
+		const messageIndex = messages.findIndex((m: UIMessage) => m.id === messageId);
+
+		if (messageIndex < 0) {
+			throw new Error(`Message ${messageId} not found in session ${sessionId}`);
+		}
+
+		// Update the tool call part with the result
+		const existingMessage = messages[messageIndex];
+		if (existingMessage && existingMessage.parts) {
+			// Find the tool call part
+			const updatedParts = existingMessage.parts.map((part: any) => {
+				if (part.toolCallId === toolCallId) {
+					// Update the existing tool call part with the result
+					return {
+						...part,
+						state: "output-available",
+						output: toolResult,
+					};
+				}
+				return part;
+			});
+
+			const updatedMessage = {
+				...existingMessage,
+				parts: updatedParts,
+			};
+
+			// Update the specific message in the array
+			const pipeline = this.redis.pipeline();
+			pipeline.json.set(key, `$.messages[${messageIndex}]`, updatedMessage as unknown as Record<string, unknown>);
+			pipeline.json.set(key, "$.updatedAt", now);
+			await pipeline.exec();
+		}
+	}
+
+	/**
 	 * Atomically write a UIMessage and complete the associated stream
 	 * This prevents race conditions where stream completion happens before message is stored
 	 */

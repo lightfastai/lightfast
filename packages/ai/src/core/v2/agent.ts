@@ -322,7 +322,6 @@ export class Agent<TRuntimeContext = unknown> {
 
 				case "tool-call":
 					// Store tool call for QStash scheduling - don't execute immediately
-					console.log(chunk);
 					pendingToolCall = {
 						id: chunk.toolCallId,
 						name: chunk.toolName,
@@ -355,7 +354,17 @@ export class Agent<TRuntimeContext = unknown> {
 				assistantMessage.parts.push({ type: "text", text: fullContent });
 			}
 
-			// Don't save tool call part - it will be added when tool result comes back
+			// Add tool call part if there's a pending tool call
+			if (pendingToolCall) {
+				// Tool call part with input-streaming state (tool is being called)
+				const toolCallPart: any = {
+					type: `tool-${pendingToolCall.name}`,
+					toolCallId: pendingToolCall.id,
+					state: "input-streaming",
+					input: pendingToolCall.args,
+				};
+				assistantMessage.parts.push(toolCallPart);
+			}
 
 			// Write message without completing stream
 			await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
