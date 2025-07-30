@@ -27,14 +27,16 @@ export async function handleToolCall<TRuntimeContext = unknown>(
 	deps: ToolHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
 	const { agent, redis, qstash, baseUrl, resourceId, loggerFactory } = deps;
-	
+
 	// Create logger for this session
-	const logger = loggerFactory ? loggerFactory({
-		sessionId: body.sessionId,
-		agentId: agent.getName(),
-		userId: resourceId,
-	}) : noopLogger;
-	
+	const logger = loggerFactory
+		? loggerFactory({
+				sessionId: body.sessionId,
+				agentId: agent.getName(),
+				userId: resourceId,
+			})
+		: noopLogger;
+
 	const runtime = new AgentRuntime(redis, qstash, logger);
 
 	// Create tool registry from agent

@@ -322,6 +322,7 @@ export class Agent<TRuntimeContext = unknown> {
 
 				case "tool-call":
 					// Store tool call for QStash scheduling - don't execute immediately
+					console.log(chunk);
 					pendingToolCall = {
 						id: chunk.toolCallId,
 						name: chunk.toolName,
@@ -341,12 +342,32 @@ export class Agent<TRuntimeContext = unknown> {
 		}
 
 		// Write the assistant message and complete stream atomically to prevent race conditions
-		if (fullContent.trim()) {
+		if (fullContent.trim() || pendingToolCall) {
 			const assistantMessage: UIMessage = {
 				id: assistantMessageId,
 				role: "assistant",
-				parts: [{ type: "text", text: fullContent }],
+				parts: [] as any[],
 			};
+
+			// Add text part if there's content
+			if (fullContent.trim()) {
+				assistantMessage.parts.push({ type: "text", text: fullContent });
+			}
+
+			// Add tool call part if there's a pending tool call
+			if (pendingToolCall) {
+				// Tool call part needs proper structure for convertToModelMessages
+				// Use the specific tool type format expected by AI SDK
+				const toolCallPart: any = {
+					type: `tool-${pendingToolCall.name}` as const,
+					toolCallId: pendingToolCall.id,
+					state: "input-available", // Use proper AI SDK state
+					input: pendingToolCall.args,
+					providerExecuted: false,
+				};
+				assistantMessage.parts.push(toolCallPart);
+			}
+
 			// Atomic operation: write message AND complete stream
 			await this.messageWriter.writeUIMessageWithStreamComplete(
 				sessionId,

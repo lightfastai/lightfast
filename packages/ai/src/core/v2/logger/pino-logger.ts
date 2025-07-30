@@ -40,17 +40,14 @@ export class PinoLoggerAdapter implements ILogger {
 		}
 	}
 
-	logEvent<T extends keyof LogEventContextMap>(
-		eventName: T,
-		context: LogEventContextMap[T]
-	): void {
+	logEvent<T extends keyof LogEventContextMap>(eventName: T, context: LogEventContextMap[T]): void {
 		// Log events at info level with event name and full context
 		this.pino.info(
 			{
 				event: eventName,
 				...context,
 			},
-			eventName
+			eventName,
 		);
 	}
 
@@ -70,7 +67,7 @@ export function createPinoLoggerFactory(basePino: PinoLogger): LoggerFactory {
 			userId: context.userId,
 			traceId: context.traceId,
 		});
-		
+
 		return new PinoLoggerAdapter(childLogger);
 	};
 }

@@ -29,10 +29,7 @@ export class NoopLogger implements ILogger {
 		// No-op
 	}
 
-	logEvent<T extends keyof LogEventContextMap>(
-		_eventName: T,
-		_context: LogEventContextMap[T]
-	): void {
+	logEvent<T extends keyof LogEventContextMap>(_eventName: T, _context: LogEventContextMap[T]): void {
 		// No-op
 	}
 

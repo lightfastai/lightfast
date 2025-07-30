@@ -26,14 +26,16 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 	deps: StepHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
 	const { agent, redis, qstash, baseUrl, resourceId: depsResourceId, loggerFactory } = deps;
-	
+
 	// Create logger for this session
-	const logger = loggerFactory ? loggerFactory({
-		sessionId: body.sessionId,
-		agentId: agent.getName(),
-		userId: body.resourceId || depsResourceId,
-	}) : noopLogger;
-	
+	const logger = loggerFactory
+		? loggerFactory({
+				sessionId: body.sessionId,
+				agentId: agent.getName(),
+				userId: body.resourceId || depsResourceId,
+			})
+		: noopLogger;
+
 	const runtime = new AgentRuntime(redis, qstash, logger);
 
 	try {

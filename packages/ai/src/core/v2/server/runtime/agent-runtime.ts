@@ -8,8 +8,9 @@ import type { Agent } from "../../agent";
 import type { ILogger } from "../../logger";
 import { LogEventName, noopLogger } from "../../logger";
 import { EventWriter } from "../events/event-writer";
-import { getSessionKey } from "../keys";
+import { getMessageKey, getSessionKey } from "../keys";
 import { MessageReader } from "../readers/message-reader";
+import { MessageWriter } from "../writers/message-writer";
 import type { QStashClient, Runtime, SessionState, ToolRegistry } from "./types";
 
 export class AgentRuntime implements Runtime {
@@ -55,7 +56,7 @@ export class AgentRuntime implements Runtime {
 			const userMessage = uiMessages.find((m) => m.role === "user");
 			const userContent = userMessage?.parts?.find((p) => p.type === "text")?.text || "";
 			await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userContent);
-			
+
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_LOOP_START, {
 				sessionId,
@@ -94,7 +95,7 @@ export class AgentRuntime implements Runtime {
 			if (lastUserMessage) {
 				const lastUserContent = lastUserMessage.parts?.find((p) => p.type === "text")?.text || "";
 				await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex, lastUserContent);
-				
+
 				// Log to structured logger
 				this.logger.logEvent(LogEventName.AGENT_STEP_START, {
 					sessionId,
@@ -145,7 +146,7 @@ export class AgentRuntime implements Runtime {
 
 		// Track tool call
 		await this.eventWriter.writeAgentToolCall(sessionId, state.agentId, toolName, toolCallId, toolArgs);
-		
+
 		// Log to structured logger
 		this.logger.logEvent(LogEventName.AGENT_TOOL_CALL, {
 			sessionId,
@@ -169,7 +170,7 @@ export class AgentRuntime implements Runtime {
 				result,
 				Date.now() - startTime,
 			);
-			
+
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_TOOL_RESULT, {
 				sessionId,
@@ -186,6 +187,39 @@ export class AgentRuntime implements Runtime {
 				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== toolCallId);
 			}
 
+			// Write tool result to the messages
+			// Get the message reader to fetch current messages
+			const messageReader = new MessageReader(this.redis);
+			const currentMessages = await messageReader.getMessages(sessionId);
+
+			// Find the assistant message that contains the tool call
+			const assistantMessage = currentMessages.find((m) => m.id === state.assistantMessageId);
+			if (assistantMessage && assistantMessage.parts) {
+				// Check if this tool call exists in the message
+				// Tool parts have type format: tool-${toolName}
+				const toolCallPart = assistantMessage.parts.find(
+					(part: any) => part.type === `tool-${toolName}` && part.toolCallId === toolCallId,
+				);
+
+				if (toolCallPart) {
+					// Update the tool call part to include the output and change state
+					// The Vercel AI SDK expects tool results to have 'output-available' state
+					// Keep the existing input and add the output
+					(toolCallPart as any).output = result;
+					(toolCallPart as any).state = "output-available"; // Change state to indicate output is available
+					// Ensure input is preserved (it should already be there from input-available state)
+
+					// Write the updated messages back
+					await this.redis.json.set(getMessageKey(sessionId), "$", {
+						sessionId,
+						resourceId: state.resourceId,
+						messages: currentMessages,
+						createdAt: new Date().toISOString(),
+						updatedAt: new Date().toISOString(),
+					} as unknown as Record<string, unknown>);
+				}
+			}
+
 			// Store tool result in state
 			const toolResults = state.toolResults || [];
 			toolResults.push({
@@ -193,6 +227,10 @@ export class AgentRuntime implements Runtime {
 				tool: toolName,
 				output: result,
 			});
+
+			// Update state with tool results
+			const updatedState = { ...state, toolResults };
+			await this.saveSessionState(sessionId, updatedState);
 
 			// Check if all tools for this step are complete
 			if (!state.pendingToolCalls || state.pendingToolCalls.length === 0) {
@@ -202,11 +240,10 @@ export class AgentRuntime implements Runtime {
 					body: {
 						sessionId,
 						stepIndex: state.stepIndex + 1,
+						resourceId: state.resourceId,
+						assistantMessageId: state.assistantMessageId,
 					},
 				});
-			} else {
-				// Save updated state with tool results
-				await this.saveSessionState(sessionId, { ...state, toolResults });
 			}
 		} catch (error) {
 			await this.eventWriter.writeAgentError(
@@ -217,7 +254,7 @@ export class AgentRuntime implements Runtime {
 				undefined,
 				toolCallId,
 			);
-			
+
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_ERROR, {
 				sessionId,
@@ -227,7 +264,7 @@ export class AgentRuntime implements Runtime {
 				toolCallId,
 				timestamp: new Date().toISOString(),
 			});
-			
+
 			throw error;
 		}
 	}
@@ -249,7 +286,7 @@ export class AgentRuntime implements Runtime {
 		const lastMessage = messages[messages.length - 1];
 		const lastMessageContent = lastMessage?.parts?.find((p) => p.type === "text")?.text || "";
 		await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex, lastMessageContent);
-		
+
 		// Log to structured logger
 		this.logger.logEvent(LogEventName.AGENT_STEP_START, {
 			sessionId,
@@ -286,6 +323,7 @@ export class AgentRuntime implements Runtime {
 
 			// Update state
 			updatedState.stepIndex = stepIndex;
+			updatedState.assistantMessageId = assistantMessageId;
 			await this.saveSessionState(sessionId, updatedState);
 
 			// Track step complete
@@ -296,7 +334,7 @@ export class AgentRuntime implements Runtime {
 				fullContent,
 				Date.now() - stepStartTime,
 			);
-			
+
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_STEP_COMPLETE, {
 				sessionId,
@@ -323,19 +361,10 @@ export class AgentRuntime implements Runtime {
 				await this.qstash.publishJSON({
 					url: `${baseUrl}/workers/agent-tool-call`,
 					body: {
-						id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-						type: "agent.tool.call",
 						sessionId,
-						timestamp: new Date().toISOString(),
-						version: "1.0",
-						data: {
-							toolCallId: decision.toolCall.id,
-							tool: decision.toolCall.name,
-							arguments: decision.toolCall.args,
-							iteration: stepIndex,
-							priority: "normal",
-						},
-						assistantMessageId,
+						toolCallId: decision.toolCall.id,
+						toolName: decision.toolCall.name,
+						toolArgs: decision.toolCall.args,
 					},
 				});
 			} else {
@@ -350,7 +379,7 @@ export class AgentRuntime implements Runtime {
 				"AGENT_STEP_ERROR",
 				stepIndex,
 			);
-			
+
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_ERROR, {
 				sessionId,
@@ -360,7 +389,7 @@ export class AgentRuntime implements Runtime {
 				stepIndex,
 				timestamp: new Date().toISOString(),
 			});
-			
+
 			throw error;
 		}
 	}
@@ -384,7 +413,7 @@ export class AgentRuntime implements Runtime {
 			state.toolCallCount,
 			state.stepIndex + 1,
 		);
-		
+
 		// Log to structured logger
 		this.logger.logEvent(LogEventName.AGENT_LOOP_COMPLETE, {
 			sessionId,

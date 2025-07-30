@@ -122,14 +122,16 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 
 	// Execute all write operations atomically
 	await writePipeline.exec();
-	
+
 	// Log session creation/resumption
-	const logger = loggerFactory ? loggerFactory({
-		sessionId,
-		agentId: _agent.getName(),
-		userId: resourceId,
-	}) : noopLogger;
-	
+	const logger = loggerFactory
+		? loggerFactory({
+				sessionId,
+				agentId: _agent.getName(),
+				userId: resourceId,
+			})
+		: noopLogger;
+
 	if (stepIndex === 0) {
 		logger.logEvent(LogEventName.SESSION_CREATED, {
 			sessionId,
@@ -148,7 +150,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 			lastActivity: now,
 		});
 	}
-	
+
 	logger.logEvent(LogEventName.STREAM_START, {
 		sessionId,
 		agentId: _agent.getName(),

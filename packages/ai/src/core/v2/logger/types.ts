@@ -1,18 +1,18 @@
 /**
  * Strongly typed logger interface for V2 Agent System
- * 
+ *
  * This interface defines all loggable events and their parameters
  * to ensure type safety across the entire system.
  */
 
 import type {
-	AgentLoopStartParams,
+	AgentErrorParams,
 	AgentLoopCompleteParams,
+	AgentLoopStartParams,
+	AgentStepCompleteParams,
+	AgentStepStartParams,
 	AgentToolCallParams,
 	AgentToolResultParams,
-	AgentStepStartParams,
-	AgentStepCompleteParams,
-	AgentErrorParams,
 } from "../server/events/types";
 
 // Logger levels aligned with pino
@@ -98,7 +98,6 @@ export interface AgentStepCompleteContext extends BaseLogContext, AgentStepCompl
 		total: number;
 	};
 }
-
 
 // Tool events - extend from parameter types
 export interface AgentToolCallContext extends BaseLogContext, AgentToolCallParams {
@@ -242,13 +241,10 @@ export interface ILogger {
 	warn(message: string, context?: Record<string, any>): void;
 	error(message: string, error?: Error | Record<string, any>): void;
 	fatal(message: string, error?: Error | Record<string, any>): void;
-	
+
 	// Strongly typed event logging
-	logEvent<T extends keyof LogEventContextMap>(
-		eventName: T,
-		context: LogEventContextMap[T]
-	): void;
-	
+	logEvent<T extends keyof LogEventContextMap>(eventName: T, context: LogEventContextMap[T]): void;
+
 	// Child logger creation
 	child(bindings: Record<string, any>): ILogger;
 }
