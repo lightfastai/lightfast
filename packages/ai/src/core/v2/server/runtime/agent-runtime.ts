@@ -10,6 +10,7 @@ import { LogEventName, noopLogger } from "../../logger";
 import { EventWriter } from "../events/event-writer";
 import { getMessageKey, getSessionKey } from "../keys";
 import { MessageReader } from "../readers/message-reader";
+import { StreamWriter } from "../stream/stream-writer";
 import { MessageWriter } from "../writers/message-writer";
 import type { QStashClient, Runtime, SessionState, ToolRegistry } from "./types";
 
@@ -377,6 +378,9 @@ export class AgentRuntime implements Runtime {
 		state: SessionState,
 		baseUrl: string,
 	): Promise<void> {
+		// Complete the stream now that the agent loop is done
+		const streamWriter = new StreamWriter(this.redis);
+		await streamWriter.writeComplete(state.assistantMessageId);
 		// Track completion
 		await this.eventWriter.writeAgentLoopComplete(
 			sessionId,

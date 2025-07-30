@@ -341,7 +341,8 @@ export class Agent<TRuntimeContext = unknown> {
 			}
 		}
 
-		// Write the assistant message and complete stream atomically to prevent race conditions
+		// Write the assistant message WITHOUT completing stream
+		// Stream stays open for the entire agent loop
 		if (fullContent.trim() || pendingToolCall) {
 			const assistantMessage: UIMessage = {
 				id: assistantMessageId,
@@ -356,16 +357,8 @@ export class Agent<TRuntimeContext = unknown> {
 
 			// Don't save tool call part - it will be added when tool result comes back
 
-			// Atomic operation: write message AND complete stream
-			await this.messageWriter.writeUIMessageWithStreamComplete(
-				sessionId,
-				resourceId,
-				assistantMessage,
-				assistantMessageId,
-			);
-		} else {
-			// Just complete stream if no content
-			await this.streamWriter.writeComplete(assistantMessageId);
+			// Write message without completing stream
+			await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
 		}
 
 		// Return decision based on what streamText naturally decided
