@@ -4,11 +4,20 @@
 
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
+import type { UIMessage } from "ai";
 import type { Agent } from "../../agent";
 import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey, getMessageKey, getSessionKey } from "../keys";
 import type { SessionState } from "../runtime/types";
 import { DeltaStreamType } from "../stream/types";
+
+interface LightfastDBMessage {
+	sessionId: string;
+	resourceId: string;
+	messages: UIMessage[];
+	createdAt: string;
+	updatedAt: string;
+}
 
 export interface StreamInitRequestBody {
 	prompt: string;
@@ -30,7 +39,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	request: Request,
 	deps: StreamInitDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent, redis, qstash, baseUrl, resourceId } = deps;
+	const { agent: _agent, redis, qstash, baseUrl, resourceId } = deps;
 
 	const body = (await request.json()) as StreamInitRequestBody;
 	const { prompt, sessionId } = body;
@@ -57,7 +66,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	// Read operations in parallel (Promise.all for better typing)
 	const [existingState, existingMessages] = await Promise.all([
 		redis.get(sessionKey) as Promise<SessionState | null>,
-		redis.json.get(messageKey, "$") as Promise<any[] | null>,
+		redis.json.get(messageKey, "$") as Promise<LightfastDBMessage[] | null>,
 	]);
 
 	// Determine the step index
@@ -70,9 +79,9 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	);
 
 	// Create user message
-	const userMessage = {
+	const userMessage: UIMessage = {
 		id: userMessageId,
-		role: "user" as const,
+		role: "user",
 		parts: [{ type: "text", text: prompt.trim() }],
 	};
 
@@ -82,7 +91,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	// Write user message to storage
 	if (!existingMessages || existingMessages.length === 0) {
 		// Create new message storage
-		const storage = {
+		const storage: LightfastDBMessage = {
 			sessionId,
 			resourceId,
 			messages: [userMessage],
