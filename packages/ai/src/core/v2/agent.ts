@@ -310,11 +310,11 @@ export class Agent<TRuntimeContext = unknown> {
 		for await (const chunk of fullStream) {
 			switch (chunk.type) {
 				case "text-delta":
-					if ("delta" in chunk && typeof chunk.delta === "string") {
-						fullContent += chunk.delta;
+					if ("text" in chunk && typeof chunk.text === "string") {
+						fullContent += chunk.text;
 						chunkCount++;
 						// Delta streaming - immediate UI feedback
-						await this.streamWriter.writeChunk(sessionId, chunk.delta);
+						await this.streamWriter.writeChunk(sessionId, chunk.text);
 					}
 					break;
 
@@ -335,12 +335,6 @@ export class Agent<TRuntimeContext = unknown> {
 						await this.streamWriter.writeChunk(sessionId, chunk.delta);
 					}
 					break;
-
-				// Handle other chunk types as needed
-				default:
-					// Log unknown chunk types for debugging
-					console.log(`[Agent ${this.config.name}] Unhandled chunk type:`, chunk.type);
-					break;
 			}
 		}
 
@@ -359,11 +353,6 @@ export class Agent<TRuntimeContext = unknown> {
 
 		// Return decision based on what streamText naturally decided
 		const decision: AgentDecision = pendingToolCall ? { toolCall: pendingToolCall } : {}; // No tool needed
-
-		console.log(`[Agent ${this.config.name}] Natural decision for session ${sessionId}:`, {
-			toolCall: decision.toolCall,
-			contentLength: fullContent.length,
-		});
 
 		return { decision, chunkCount, fullContent };
 	}

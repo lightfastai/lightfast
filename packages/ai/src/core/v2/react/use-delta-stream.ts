@@ -131,20 +131,15 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 									const data = message.slice(6);
 									try {
 										const parsedData = JSON.parse(data);
-										console.log("Raw SSE data:", data);
-										console.log("Parsed SSE data:", parsedData);
 										const validatedMessage = validateMessage(parsedData);
-										console.log("Validated message:", validatedMessage);
 
 										if (!validatedMessage) {
-											console.log("Message validation failed for:", parsedData);
 											continue;
 										}
 
 										switch (validatedMessage.type) {
 											case DeltaStreamType.INIT: {
 												// Stream initialized - can be used for UI feedback
-												console.log("Stream initialized");
 												break;
 											}
 
@@ -173,7 +168,7 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 											}
 										}
 									} catch (e) {
-										console.error("Failed to parse message:", e);
+										// Silently ignore malformed messages
 									}
 								}
 							}
