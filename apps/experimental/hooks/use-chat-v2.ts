@@ -32,6 +32,7 @@ export function useChatV2({
 }: UseChatV2Options): UseChatV2Return {
 	const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
 	const [currentResponse, setCurrentResponse] = useState("");
+	const [isProcessingMessage, setIsProcessingMessage] = useState(false);
 
 	// Use v2 chat hook for streaming
 	const {
@@ -57,10 +58,12 @@ export function useChatV2({
 			};
 			setMessages((prev) => [...prev, assistantMessage]);
 			setCurrentResponse("");
+			setIsProcessingMessage(false); // Reset processing state
 			onStreamComplete?.(fullResponse);
 		},
 		onError: (error) => {
 			console.error("Stream error:", error);
+			setIsProcessingMessage(false); // Reset processing state on error
 			onError?.(error);
 		},
 	});
@@ -70,6 +73,9 @@ export function useChatV2({
 			if (!message.trim() || status === "loading" || status === "streaming") {
 				throw new Error("Cannot send message");
 			}
+
+			// Set processing state to ensure "Thinking" persists
+			setIsProcessingMessage(true);
 
 			// Clear any current response state before sending new message
 			setCurrentResponse("");
@@ -82,24 +88,35 @@ export function useChatV2({
 			};
 			setMessages((prev) => [...prev, userMessage]);
 
-			// Send message for streaming - v2SendMessage will return the message ID
-			// The useChat hook from v2 will handle getting the message ID from the init response
-			await v2SendMessage(message);
+			try {
+				// Send message for streaming - v2SendMessage will return the message ID
+				// The useChat hook from v2 will handle getting the message ID from the init response
+				await v2SendMessage(message);
+			} catch (error) {
+				// Reset processing state on error
+				setIsProcessingMessage(false);
+				throw error;
+			}
 		},
 		[status, v2SendMessage],
 	);
 
-	// Map v2 status to ChatStatus
+	// Map v2 status to ChatStatus with persistent "Thinking" state
 	const chatStatus: ChatStatus = (() => {
+		// If we're processing a message, always show "submitted" (Thinking) until we get content or complete
+		if (isProcessingMessage && !currentResponse) {
+			return "submitted"; // Shows "Thinking"
+		}
+
 		switch (status) {
 			case "loading":
-				return "submitted";
+				return "submitted"; // Shows "Thinking"
 			case "streaming":
-				return "streaming";
+				return "streaming"; // Shows "streaming"
 			case "error":
 				return "error";
-			case "idle":
 			case "completed":
+			case "idle":
 			default:
 				return "ready";
 		}
