@@ -189,9 +189,21 @@ export class AgentRuntime implements Runtime {
 				await this.saveSessionState(sessionId, state);
 			}
 
-			// Update the existing tool call part with the result
+			// Write tool result as part of the assistant message
 			const messageWriter = new MessageWriter(this.redis);
-			await messageWriter.updateToolCallResult(sessionId, state.assistantMessageId, toolCallId, result);
+
+			// Create tool result part
+			const toolResultPart: any = {
+				type: `tool-${toolName}`,
+				toolCallId,
+				state: "output-available",
+				input: toolArgs,
+				output: result,
+			};
+
+			// Update the assistant message with the tool result part
+			// This does NOT send a stream complete signal
+			await messageWriter.updateMessageParts(sessionId, state.assistantMessageId, [toolResultPart]);
 
 			// Don't store tool results in state - they're already in the messages
 
