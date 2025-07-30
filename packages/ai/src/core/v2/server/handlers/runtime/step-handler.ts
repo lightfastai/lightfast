@@ -25,7 +25,7 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 	const runtime = new AgentRuntime(redis, qstash);
 
 	try {
-		await runtime.executeAgentStep({
+		await runtime.executeStep({
 			sessionId: body.sessionId,
 			stepIndex: body.stepIndex,
 			agent,

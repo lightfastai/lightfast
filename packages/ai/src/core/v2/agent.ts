@@ -6,7 +6,7 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
-import { type Tool as AiTool, smoothStream, streamText, type ToolSet, type UIMessage, wrapLanguageModel } from "ai";
+import { type Tool as AiTool, convertToModelMessages, smoothStream, streamText, type ToolSet, type UIMessage, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
@@ -239,14 +239,14 @@ export class Agent<TRuntimeContext = unknown> {
 	 */
 	async makeDecisionForRuntime(
 		sessionId: string,
-		messages: SimpleMessage[],
+		messages: UIMessage[],
 		temperature: number,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
 		// Build the system prompt
 		const systemPrompt = this.buildSystemPrompt(sessionId);
 
-		// Prepare messages for the model
-		const preparedMessages = this.prepareMessages(messages);
+		// Convert UIMessages to model messages
+		const modelMessages = convertToModelMessages(messages);
 
 		let finalDecision: AgentDecision | null = null;
 		let responseMessages: UIMessage[] = [];
@@ -268,7 +268,7 @@ Think through this step by step first, then provide your JSON decision.`;
 		const { textStream } = streamText({
 			...this.config, // Spread all streamText-compatible properties
 			system: structuredPrompt,
-			messages: preparedMessages,
+			messages: modelMessages,
 			// Override with session-specific values if needed
 			temperature: temperature ?? this.config.temperature,
 			// Apply experimental transform if provided

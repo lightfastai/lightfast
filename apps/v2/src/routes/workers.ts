@@ -5,15 +5,13 @@
 
 import {
 	Agent,
-	type AgentLoopInitMessage,
-	AgentLoopInitMessageSchema,
 	type AgentLoopStepMessage,
 	AgentLoopStepMessageSchema,
 	type AgentToolCallMessage,
 	AgentToolCallMessageSchema,
 	type AgentToolDefinition,
 } from "@lightfast/ai/v2/core";
-import { handleAgentInit, handleAgentStep, handleToolCall } from "@lightfast/ai/v2/server";
+import { handleAgentStep, handleToolCall } from "@lightfast/ai/v2/server";
 import { Hono } from "hono";
 import { z } from "zod";
 import { baseUrl, qstash, redis } from "../config";
@@ -81,59 +79,16 @@ const agent = new Agent(
 	redis,
 );
 
-// POST /workers/agent-loop-init - Initialize agent loop
-workerRoutes.post("/agent-loop-init", async (c) => {
-	try {
-		const body = await c.req.json();
-		const event = AgentLoopInitMessageSchema.parse(body);
-
-		console.log(`[Worker] Processing agent.loop.init event ${event.id} for session ${event.sessionId}`);
-
-		// Use the runtime handler
-		const response = await handleAgentInit(
-			{ sessionId: event.sessionId, agentId: event.data.agentId },
-			{
-				agent,
-				redis,
-				qstash,
-				baseUrl,
-			},
-		);
-
-		return response;
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			return c.json(
-				{
-					error: "Invalid event",
-					details: error.errors,
-				},
-				400,
-			);
-		}
-
-		console.error("[Worker] Error:", error);
-		return c.json(
-			{
-				error: "Agent loop initialization failed",
-				details: error instanceof Error ? error.message : String(error),
-			},
-			500,
-		);
-	}
-});
-
 // POST /workers/agent-loop-step - Process agent loop step
 workerRoutes.post("/agent-loop-step", async (c) => {
 	try {
 		const body = await c.req.json();
-		const event = AgentLoopStepMessageSchema.parse(body);
 
-		console.log(`[Worker] Processing agent.loop.step event ${event.id} for session ${event.sessionId}`);
+		console.log(`[Worker] Processing agent.loop.step for session ${body.sessionId}, step ${body.stepIndex}`);
 
 		// Use the runtime handler
 		const response = await handleAgentStep(
-			{ sessionId: event.sessionId, stepIndex: event.data.stepIndex },
+			{ sessionId: body.sessionId, stepIndex: body.stepIndex },
 			{
 				agent,
 				redis,
@@ -217,10 +172,6 @@ workerRoutes.get("/status", (c) => {
 	return c.json({
 		status: "ok",
 		workers: {
-			agentLoopInit: {
-				endpoint: "/workers/agent-loop-init",
-				status: "ready",
-			},
 			agentLoopStep: {
 				endpoint: "/workers/agent-loop-step",
 				status: "ready",

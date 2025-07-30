@@ -2,6 +2,7 @@
  * Agent Runtime - Executes agent loops and tools with event tracking
  */
 
+import type { UIMessage } from "ai";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import { EventWriter } from "../events/event-writer";
@@ -20,56 +21,9 @@ export class AgentRuntime implements Runtime {
 	}
 
 	/**
-	 * Initialize a new agent loop
+	 * Execute a step of the agent loop (handles initialization automatically)
 	 */
-	async initAgentLoop<TRuntimeContext = unknown>({
-		sessionId,
-		agent,
-		baseUrl,
-	}: {
-		sessionId: string;
-		agent: Agent<TRuntimeContext>;
-		baseUrl: string;
-	}): Promise<void> {
-		// Read messages from storage
-		const messageReader = new MessageReader(this.redis);
-		const uiMessages = await messageReader.getMessages(sessionId);
-
-		// Convert UIMessages to simple format for agent
-		const messages = uiMessages.map((msg) => ({
-			role: msg.role,
-			content: msg.parts.find((p) => p.type === "text")?.text || "",
-		}));
-
-		// Track loop start
-		const userMessage = messages.find((m) => m.role === "user");
-		await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userMessage?.content || "");
-
-		// Save initial state
-		const state: SessionState = {
-			messages,
-			stepIndex: 0,
-			startTime: Date.now(),
-			toolCallCount: 0,
-			agentId: agent.getName(),
-			temperature: agent.getTemperature() || 0.7,
-		};
-		await this.saveSessionState(sessionId, state);
-
-		// Execute first step
-		await this.executeStep({
-			sessionId,
-			agent,
-			messages,
-			stepIndex: 0,
-			baseUrl,
-		});
-	}
-
-	/**
-	 * Execute one step of the agent loop
-	 */
-	async executeAgentStep<TRuntimeContext = unknown>({
+	async executeStep<TRuntimeContext = unknown>({
 		sessionId,
 		stepIndex,
 		agent,
@@ -80,16 +34,55 @@ export class AgentRuntime implements Runtime {
 		agent: Agent<TRuntimeContext>;
 		baseUrl: string;
 	}): Promise<void> {
-		// Get session state
-		const state = await this.getSessionState(sessionId);
+		// Get or initialize session state
+		let state = await this.getSessionState(sessionId);
+
 		if (!state) {
-			throw new Error(`Session state not found for ${sessionId}`);
+			// First step - initialize state
+			const messageReader = new MessageReader(this.redis);
+			const uiMessages = await messageReader.getMessages(sessionId);
+
+			// Track loop start
+			const userMessage = uiMessages.find((m) => m.role === "user");
+			const userContent = userMessage?.parts?.find((p) => p.type === "text")?.text || "";
+			await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userContent);
+
+			// Create initial state with UIMessages
+			state = {
+				messages: uiMessages,
+				stepIndex: 0,
+				startTime: Date.now(),
+				toolCallCount: 0,
+				agentId: agent.getName(),
+				temperature: agent.getTemperature() || 0.7,
+			};
+			await this.saveSessionState(sessionId, state);
+		} else {
+			// Continuing conversation - refresh messages from storage
+			// This ensures we have all messages including the new user message
+			const messageReader = new MessageReader(this.redis);
+			const uiMessages = await messageReader.getMessages(sessionId);
+
+			// Update state with fresh UIMessages
+			state.messages = uiMessages;
+			state.stepIndex = stepIndex;
+			await this.saveSessionState(sessionId, state);
+
+			// Track continuation
+			const lastUserMessage = [...uiMessages].reverse().find((m) => m.role === "user");
+			if (lastUserMessage) {
+				const lastUserContent = lastUserMessage.parts?.find((p) => p.type === "text")?.text || "";
+				await this.eventWriter.writeAgentStepStart(
+					sessionId,
+					agent.getName(),
+					stepIndex,
+					lastUserContent,
+				);
+			}
 		}
 
-		// Tool results should already be in state.messages from executeTool
-
-		// Execute next step
-		await this.executeStep({
+		// Execute the step with UIMessages
+		await this._executeStepInternal({
 			sessionId,
 			agent,
 			messages: state.messages,
@@ -182,28 +175,25 @@ export class AgentRuntime implements Runtime {
 	}
 
 	/**
-	 * Execute a single step of the agent loop
+	 * Execute a single step of the agent loop (internal implementation)
 	 */
-	private async executeStep<TRuntimeContext = unknown>(params: {
+	private async _executeStepInternal<TRuntimeContext = unknown>(params: {
 		sessionId: string;
 		agent: Agent<TRuntimeContext>;
-		messages: Array<{
-			role: "system" | "user" | "assistant" | "tool";
-			content: string;
-			toolCallId?: string;
-			toolCalls?: any[];
-		}>;
+		messages: UIMessage[];
 		stepIndex: number;
 		baseUrl: string;
 	}): Promise<void> {
 		const { sessionId, agent, messages, stepIndex, baseUrl } = params;
 
 		// Track step start
+		const lastMessage = messages[messages.length - 1];
+		const lastMessageContent = lastMessage?.parts?.find((p) => p.type === "text")?.text || "";
 		await this.eventWriter.writeAgentStepStart(
 			sessionId,
 			agent.getName(),
 			stepIndex,
-			messages[messages.length - 1]?.content || "",
+			lastMessageContent,
 		);
 
 		const stepStartTime = Date.now();
@@ -308,11 +298,19 @@ export class AgentRuntime implements Runtime {
 			state.stepIndex + 1,
 		);
 
-		// Extract tools used
+		// Extract tools used from UIMessage parts
 		const toolsUsed = new Set<string>();
 		state.messages.forEach((msg) => {
-			if (msg.role === "assistant" && msg.toolCalls) {
-				msg.toolCalls.forEach((tc) => toolsUsed.add(tc.name));
+			if (msg.role === "assistant" && msg.parts) {
+				msg.parts.forEach((part) => {
+					if (part.type.startsWith("tool-call-")) {
+						// Extract tool name from tool-call part
+						const toolName = (part as any).toolName;
+						if (toolName) {
+							toolsUsed.add(toolName);
+						}
+					}
+				});
 			}
 		});
 

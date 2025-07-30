@@ -6,7 +6,6 @@
 import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
-import { handleAgentInit } from "../handlers/runtime/init-handler";
 import { handleAgentStep } from "../handlers/runtime/step-handler";
 import { handleToolCall } from "../handlers/runtime/tool-handler";
 import { handleStreamInit } from "../handlers/stream-init-handler";
@@ -17,11 +16,6 @@ export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	redis: Redis;
 	qstash?: QStashClient;
 	baseUrl: string; // Base URL for generating stream URLs (e.g., "/api/v2")
-}
-
-export interface AgentLoopInitRequestBody {
-	sessionId: string;
-	agentId: string;
 }
 
 export interface AgentLoopStepRequestBody {
@@ -54,7 +48,7 @@ export interface AgentLoopCompleteRequestBody {
  * Routes:
  * - POST /stream/init - Initialize a new stream
  * - GET  /stream/[sessionId] - Server-Sent Events stream
- * - POST /workers/agent-loop-init - Initialize agent loop
+ * - POST /workers/agent-loop-step - Process agent loop step
  * - POST /workers/agent-tool-call - Execute agent tool
  * - POST /workers/tool-execution-complete - Handle tool completion
  * - POST /workers/agent-loop-complete - Handle agent loop completion
@@ -126,16 +120,6 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				const workerAction = pathSegments[1];
 
 				switch (workerAction) {
-					case "agent-loop-init": {
-						// Handle POST /workers/agent-loop-init
-						const body = (await request.json()) as AgentLoopInitRequestBody;
-						console.log(`[V2 Worker Handler] Processing agent.loop.init event`);
-						if (!qstash) {
-							return Response.json({ error: "QStash client not configured" }, { status: 500 });
-						}
-						return handleAgentInit(body, { agent, redis, qstash, baseUrl });
-					}
-
 					case "agent-loop-step": {
 						// Handle POST /workers/agent-loop-step
 						const body = (await request.json()) as AgentLoopStepRequestBody;

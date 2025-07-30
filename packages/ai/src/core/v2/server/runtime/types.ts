@@ -2,18 +2,14 @@
  * Runtime types for executing agent loops and tools with event tracking
  */
 
+import type { UIMessage } from "ai";
 import type { Agent } from "../../agent";
 
 /**
  * Session state stored in Redis
  */
 export interface SessionState {
-	messages: Array<{
-		role: "system" | "user" | "assistant" | "tool";
-		content: string;
-		toolCallId?: string;
-		toolCalls?: any[];
-	}>;
+	messages: UIMessage[];
 	stepIndex: number;
 	startTime: number;
 	toolCallCount: number;
@@ -44,18 +40,9 @@ export interface ToolRegistry {
  */
 export interface Runtime {
 	/**
-	 * Initialize a new agent loop
+	 * Execute a step of the agent loop (handles initialization automatically)
 	 */
-	initAgentLoop<TRuntimeContext = unknown>(params: {
-		sessionId: string;
-		agent: Agent<TRuntimeContext>;
-		baseUrl: string;
-	}): Promise<void>;
-
-	/**
-	 * Execute one step of the agent loop
-	 */
-	executeAgentStep<TRuntimeContext = unknown>(params: {
+	executeStep<TRuntimeContext = unknown>(params: {
 		sessionId: string;
 		stepIndex: number;
 		agent: Agent<TRuntimeContext>;

@@ -6,7 +6,7 @@ import type { Client as QStashClient } from "@upstash/qstash";
 import type { Redis } from "@upstash/redis";
 import type { Agent } from "../../agent";
 import { getDeltaStreamKey, getSessionKey } from "../keys";
-import type { AgentLoopInitMessage } from "../orchestration/types";
+import type { SessionState } from "../runtime/types";
 import { DeltaStreamType } from "../stream/types";
 import { MessageWriter } from "../writers/message-writer";
 
@@ -43,7 +43,11 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		return Response.json({ error: "Session ID is required" }, { status: 400 });
 	}
 
-	// Write initial user message
+	// Check if this is a continuing conversation
+	const sessionKey = getSessionKey(sessionId);
+	const existingState = (await redis.get(sessionKey)) as SessionState | null;
+	
+	// Write user message
 	const messageWriter = new MessageWriter(redis);
 	await messageWriter.writeUIMessage(sessionId, {
 		id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
@@ -51,51 +55,48 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 		parts: [{ type: "text", text: prompt.trim() }],
 	});
 
-	// Use Redis pipeline for atomic session initialization
-	const pipeline = redis.pipeline();
+	// Determine the step index
+	let stepIndex = 0;
+	if (existingState) {
+		// This is a continuing conversation
+		// The step index should be incremented from the last completed step
+		stepIndex = existingState.stepIndex + 1;
+		console.log(`[Stream Init] Continuing conversation for session ${sessionId} at step ${stepIndex}`);
+	} else {
+		// This is a new conversation
+		console.log(`[Stream Init] Starting new conversation for session ${sessionId}`);
+		
+		// Use Redis pipeline for atomic session initialization
+		const pipeline = redis.pipeline();
 
-	// Register session
-	const sessionKey = getSessionKey(sessionId);
-	pipeline.set(sessionKey, sessionId);
+		// Write INIT message to stream for new sessions
+		const streamKey = getDeltaStreamKey(sessionId);
+		const initMessage = {
+			type: DeltaStreamType.INIT,
+			timestamp: new Date().toISOString(),
+		};
+		pipeline.xadd(streamKey, "*", initMessage);
 
-	// Write INIT message to stream
-	const streamKey = getDeltaStreamKey(sessionId);
-	const initMessage = {
-		type: DeltaStreamType.INIT,
-		timestamp: new Date().toISOString(),
-	};
-	pipeline.xadd(streamKey, "*", initMessage);
+		// Publish notification
+		pipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.INIT }));
 
-	// Publish notification
-	pipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.INIT }));
+		// Execute all operations in a single batch
+		await pipeline.exec();
+	}
 
-	// Execute all operations in a single batch
-	await pipeline.exec();
-
-	// Create agent loop init message
-	const agentLoopMessage: AgentLoopInitMessage = {
-		id: `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-		type: "agent.loop.init",
-		sessionId,
-		timestamp: new Date().toISOString(),
-		version: "1.0",
-		data: {
-			agentId: agent.getName(),
-			userId: undefined, // Could be extracted from auth context
-			metadata: { prompt }, // Store the prompt in metadata for debugging
-		},
-	};
-
-	// Publish the event to QStash for processing
+	// Always publish agent-loop-step event (handles both new and continuing)
 	if (qstash) {
 		// Don't await this - let it process in the background while we return the response
 		qstash
 			.publishJSON({
-				url: `${baseUrl}/workers/agent-loop-init`,
-				body: { message: agentLoopMessage },
+				url: `${baseUrl}/workers/agent-loop-step`,
+				body: {
+					sessionId,
+					stepIndex,
+				},
 			})
 			.catch((error) => {
-				console.error(`[Stream Init] Failed to publish agent loop init message for session ${sessionId}:`, error);
+				console.error(`[Stream Init] Failed to publish agent loop step message for session ${sessionId}:`, error);
 			});
 	} else {
 		console.warn(`[Stream Init] QStash not configured, cannot start agent loop for session ${sessionId}`);
@@ -105,7 +106,10 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	return Response.json({
 		sessionId,
 		streamUrl: `${baseUrl}/stream/${sessionId}`,
-		status: "initialized",
-		message: "Agent loop initialized. Connect to the stream URL to receive updates.",
+		status: existingState ? "continued" : "initialized",
+		stepIndex,
+		message: existingState 
+			? `Continuing conversation at step ${stepIndex}. Connect to the stream URL to receive updates.`
+			: "New conversation started. Connect to the stream URL to receive updates.",
 	});
 }
