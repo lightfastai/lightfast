@@ -1,7 +1,7 @@
 "use client";
 
 import type { UIMessage } from "ai";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type DeltaStreamMessage, DeltaStreamType, type ToolCallPart } from "../server/stream/types";
 import { uuidv4 } from "../utils/uuid";
 import { useDeltaStream, validateMessage } from "./use-delta-stream";
@@ -59,6 +59,46 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 	const responseRef = useRef<HTMLDivElement>(null);
 	const messageIdRef = useRef<string | undefined>(undefined);
 	const messagePartsRef = useRef<Array<{ type: "text" | "tool-call"; text?: string; toolCall?: ToolCallPart }>>([]);
+	const isStreamingMessageAddedRef = useRef<boolean>(false);
+
+	// Helper to update streaming message with current parts
+	const updateStreamingMessage = () => {
+		const currentMessageId = messageIdRef.current;
+		if (!currentMessageId) return;
+
+		// Convert accumulated parts to UIMessage parts format
+		const parts: any[] = messagePartsRef.current
+			.map((part) => {
+				if (part.type === "text") {
+					return { type: "text", text: part.text || "" };
+				} else if (part.type === "tool-call" && part.toolCall) {
+					return part.toolCall; // ToolCallPart already has the correct format
+				}
+				return null;
+			})
+			.filter(Boolean);
+
+		// Update or add the assistant message
+		setMessages((prev) => {
+			const existingIndex = prev.findIndex((msg) => msg.id === currentMessageId);
+			const assistantMessage: UIMessage = {
+				id: currentMessageId,
+				role: "assistant",
+				parts: parts.length > 0 ? parts : [],
+			};
+
+			if (existingIndex >= 0) {
+				// Update existing message
+				const newMessages = [...prev];
+				newMessages[existingIndex] = assistantMessage;
+				return newMessages;
+			} else {
+				// Add new message
+				isStreamingMessageAddedRef.current = true;
+				return [...prev, assistantMessage];
+			}
+		});
+	};
 
 	// Delta stream hook
 	const deltaStream = useDeltaStream({
@@ -73,34 +113,23 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 			} else {
 				lastPart.text = (lastPart.text || "") + chunk;
 			}
+			// Update the streaming message in real-time
+			updateStreamingMessage();
 			onChunk?.(chunk);
 		},
 		onToolCall: (toolCall: ToolCallPart) => {
 			// Add tool call part
 			messagePartsRef.current.push({ type: "tool-call", toolCall });
+			// Update the streaming message to show tool call immediately
+			updateStreamingMessage();
 			onToolCall?.(toolCall);
 		},
 		onComplete: (fullResponse: string) => {
 			setStatus("completed");
 			const currentMessageId = messageIdRef.current;
 			if (currentMessageId) {
-				// Convert accumulated parts to UIMessage parts format
-				const parts: any[] = messagePartsRef.current.map((part) => {
-					if (part.type === "text") {
-						return { type: "text", text: part.text || "" };
-					} else if (part.type === "tool-call" && part.toolCall) {
-						return part.toolCall; // ToolCallPart already has the correct format
-					}
-					return null;
-				}).filter(Boolean);
-
-				// Add assistant message with all parts
-				const assistantMessage: UIMessage = {
-					id: currentMessageId,
-					role: "assistant",
-					parts: parts.length > 0 ? parts : [{ type: "text", text: fullResponse }],
-				};
-				setMessages((prev) => [...prev, assistantMessage]);
+				// Final update to ensure all parts are included
+				updateStreamingMessage();
 				onComplete?.(fullResponse, currentMessageId);
 			}
 		},
@@ -137,6 +166,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 				setResponse("");
 				setChunkCount(0);
 				messagePartsRef.current = [];
+				isStreamingMessageAddedRef.current = false;
 
 				// Add user message to messages array
 				const userMessage: UIMessage = {
@@ -188,6 +218,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		setMessageId(undefined);
 		messageIdRef.current = undefined;
 		messagePartsRef.current = [];
+		isStreamingMessageAddedRef.current = false;
 		setMessages([]);
 	}, [deltaStream]);
 

@@ -49,6 +49,10 @@ export function useChatV2({
 			setCurrentResponse((prev) => prev + chunk);
 			onChunkReceived?.(chunk);
 		},
+		onToolCall: (toolCall) => {
+			// Tool calls are handled internally by useChat and added to messages
+			console.log("[useChatV2] Tool call received:", toolCall);
+		},
 		onComplete: (fullResponse, serverMessageId) => {
 			setCurrentResponse("");
 			setIsProcessingMessage(false); // Reset processing state
