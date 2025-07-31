@@ -130,7 +130,7 @@ export class AgentRuntime implements Runtime {
 		}
 
 		// Track tool call
-		await this.eventWriter.writeAgentToolCall(sessionId, state.agentId, toolName, toolCallId, toolArgs);
+		await this.eventWriter.writeAgentToolCall(sessionId, state.agentId, toolName, toolCallId);
 
 		// Log to structured logger
 		this.logger.logEvent(LogEventName.AGENT_TOOL_CALL, {
@@ -138,7 +138,6 @@ export class AgentRuntime implements Runtime {
 			agentId: state.agentId,
 			toolName,
 			toolCallId,
-			args: toolArgs,
 			timestamp: new Date().toISOString(),
 		});
 
@@ -152,7 +151,6 @@ export class AgentRuntime implements Runtime {
 				state.agentId,
 				toolName,
 				toolCallId,
-				result,
 				Date.now() - startTime,
 			);
 
@@ -162,7 +160,6 @@ export class AgentRuntime implements Runtime {
 				agentId: state.agentId,
 				toolName,
 				toolCallId,
-				result,
 				duration: Date.now() - startTime,
 				timestamp: new Date().toISOString(),
 			});
@@ -318,7 +315,7 @@ export class AgentRuntime implements Runtime {
 				});
 			} else {
 				// No tools - complete the loop
-				await this.completeAgentLoop(sessionId, agent.getName(), fullContent, updatedState, baseUrl);
+				await this.completeAgentLoop(sessionId, agent.getName(), updatedState, baseUrl);
 			}
 		} catch (error) {
 			await this.eventWriter.writeAgentError(
@@ -349,7 +346,6 @@ export class AgentRuntime implements Runtime {
 	private async completeAgentLoop(
 		sessionId: string,
 		agentId: string,
-		output: string,
 		state: SessionState,
 		baseUrl: string,
 	): Promise<void> {
@@ -360,7 +356,6 @@ export class AgentRuntime implements Runtime {
 		await this.eventWriter.writeAgentLoopComplete(
 			sessionId,
 			agentId,
-			output,
 			Date.now() - state.startTime,
 			state.toolCallCount,
 			state.stepIndex + 1,
@@ -370,7 +365,6 @@ export class AgentRuntime implements Runtime {
 		this.logger.logEvent(LogEventName.AGENT_LOOP_COMPLETE, {
 			sessionId,
 			agentId,
-			output,
 			duration: Date.now() - state.startTime,
 			toolCalls: state.toolCallCount,
 			steps: state.stepIndex + 1,
@@ -404,7 +398,6 @@ export class AgentRuntime implements Runtime {
 				timestamp: new Date().toISOString(),
 				version: "1.0",
 				data: {
-					finalMessage: output,
 					iterations: state.stepIndex + 1,
 					toolsUsed: Array.from(toolsUsed),
 					duration: Date.now() - state.startTime,

@@ -30,7 +30,6 @@ export interface AgentLoopStartEvent extends BaseEvent {
 
 export interface AgentLoopCompleteEvent extends BaseEvent {
 	name: typeof EventName.AGENT_LOOP_COMPLETE;
-	output: string;
 	duration: number;
 	toolCalls: number;
 	steps: number;
@@ -51,14 +50,12 @@ export interface AgentToolCallEvent extends BaseEvent {
 	name: typeof EventName.AGENT_TOOL_CALL;
 	toolName: string;
 	toolCallId: string;
-	args: Record<string, any>;
 }
 
 export interface AgentToolResultEvent extends BaseEvent {
 	name: typeof EventName.AGENT_TOOL_RESULT;
 	toolName: string;
 	toolCallId: string;
-	result: any;
 	duration: number;
 }
 
@@ -92,7 +89,6 @@ export interface AgentLoopStartParams {
 export interface AgentLoopCompleteParams {
 	sessionId: string;
 	agentId: string;
-	output: string;
 	duration: number;
 	toolCalls: number;
 	steps: number;
@@ -103,7 +99,6 @@ export interface AgentToolCallParams {
 	agentId: string;
 	toolName: string;
 	toolCallId: string;
-	args: Record<string, any>;
 }
 
 export interface AgentToolResultParams {
@@ -111,7 +106,6 @@ export interface AgentToolResultParams {
 	agentId: string;
 	toolName: string;
 	toolCallId: string;
-	result: any;
 	duration: number;
 }
 

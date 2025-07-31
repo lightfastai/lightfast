@@ -75,7 +75,6 @@ export class EventWriter {
 	async writeAgentLoopComplete(
 		sessionId: string,
 		agentId: string,
-		output: string,
 		duration: number,
 		toolCalls: number,
 		steps: number,
@@ -85,7 +84,6 @@ export class EventWriter {
 			timestamp: new Date().toISOString(),
 			sessionId,
 			agentId,
-			output,
 			duration,
 			toolCalls,
 			steps,
@@ -95,13 +93,7 @@ export class EventWriter {
 	/**
 	 * Write agent tool call event
 	 */
-	async writeAgentToolCall(
-		sessionId: string,
-		agentId: string,
-		toolName: string,
-		toolCallId: string,
-		args: Record<string, any>,
-	): Promise<void> {
+	async writeAgentToolCall(sessionId: string, agentId: string, toolName: string, toolCallId: string): Promise<void> {
 		await this.writeEvent({
 			name: EventName.AGENT_TOOL_CALL,
 			timestamp: new Date().toISOString(),
@@ -109,7 +101,6 @@ export class EventWriter {
 			agentId,
 			toolName,
 			toolCallId,
-			args,
 		});
 	}
 
@@ -121,7 +112,6 @@ export class EventWriter {
 		agentId: string,
 		toolName: string,
 		toolCallId: string,
-		result: any,
 		duration: number,
 	): Promise<void> {
 		await this.writeEvent({
@@ -131,7 +121,6 @@ export class EventWriter {
 			agentId,
 			toolName,
 			toolCallId,
-			result,
 			duration,
 		});
 	}

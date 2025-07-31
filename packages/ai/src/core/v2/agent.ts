@@ -373,8 +373,8 @@ export class Agent<TRuntimeContext = unknown> {
 			// Write message without completing stream
 			// First check if the message already exists
 			const existingMessages = await this.messageReader.getMessages(sessionId);
-			const messageExists = existingMessages.some(m => m.id === assistantMessageId);
-			
+			const messageExists = existingMessages.some((m) => m.id === assistantMessageId);
+
 			if (messageExists) {
 				// Message already exists - update its parts
 				await this.messageWriter.updateMessageParts(sessionId, assistantMessageId, assistantMessage.parts);

@@ -53,34 +53,31 @@ function parseEventMessage(rawObj: Record<string, string>): AgentEvent | null {
 			};
 
 		case EventName.AGENT_LOOP_COMPLETE:
-			if (!rawObj.output || !rawObj.duration || !rawObj.toolCalls || !rawObj.steps) return null;
+			if (!rawObj.duration || !rawObj.toolCalls || !rawObj.steps) return null;
 			return {
 				...baseEvent,
 				name: EventName.AGENT_LOOP_COMPLETE,
-				output: rawObj.output,
 				duration: Number(rawObj.duration),
 				toolCalls: Number(rawObj.toolCalls),
 				steps: Number(rawObj.steps),
 			};
 
 		case EventName.AGENT_TOOL_CALL:
-			if (!rawObj.toolName || !rawObj.toolCallId || !rawObj.args) return null;
+			if (!rawObj.toolName || !rawObj.toolCallId) return null;
 			return {
 				...baseEvent,
 				name: EventName.AGENT_TOOL_CALL,
 				toolName: rawObj.toolName,
 				toolCallId: rawObj.toolCallId,
-				args: JSON.parse(rawObj.args),
 			};
 
 		case EventName.AGENT_TOOL_RESULT:
-			if (!rawObj.toolName || !rawObj.toolCallId || !rawObj.result || !rawObj.duration) return null;
+			if (!rawObj.toolName || !rawObj.toolCallId || !rawObj.duration) return null;
 			return {
 				...baseEvent,
 				name: EventName.AGENT_TOOL_RESULT,
 				toolName: rawObj.toolName,
 				toolCallId: rawObj.toolCallId,
-				result: JSON.parse(rawObj.result),
 				duration: Number(rawObj.duration),
 			};
 
