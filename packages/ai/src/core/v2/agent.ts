@@ -293,49 +293,17 @@ export class Agent<TRuntimeContext = unknown> {
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
 		// Get tools for scheduling (without execute functions)
 		const toolsForScheduling = this.getToolsForScheduling(sessionId);
-		
-		// Convert UIMessages to model messages with tools
-		const modelMessages = convertToModelMessages(messages, { tools: toolsForScheduling });
-		
-		// Debug: Log the converted messages to understand the structure
-		console.log('Converted model messages:', JSON.stringify(modelMessages, null, 2));
-		
-		// Log specific problematic message if it exists
-		if (modelMessages[2] && modelMessages[2].content) {
-			console.log('Third message content:', JSON.stringify(modelMessages[2].content, null, 2));
-			if (Array.isArray(modelMessages[2].content) && modelMessages[2].content[2]) {
-				console.log('Third element of third message content:', JSON.stringify(modelMessages[2].content[2], null, 2));
-			}
-		}
 
-		// The AI SDK might have issues with tool-result parts in assistant messages
-		// Let's try filtering them out temporarily to see if that's the issue
-		const filteredMessages = modelMessages.map(msg => {
-			if (msg.role === 'assistant' && Array.isArray(msg.content)) {
-				// Filter out tool-result parts as they might be causing the error
-				const filteredContent = msg.content.filter(part => {
-					if (typeof part === 'object' && part !== null && 'type' in part) {
-						// Skip tool-result parts for now
-						if (part.type === 'tool-result') {
-							console.log('Filtering out tool-result part:', JSON.stringify(part, null, 2));
-							return false;
-						}
-						return true;
-					}
-					return typeof part === 'string'; // Keep string content
-				});
-				return { ...msg, content: filteredContent };
-			}
-			return msg;
-		});
-
-		console.log('Filtered messages (without tool-results):', JSON.stringify(filteredMessages, null, 2));
-
+		// Convert UIMessages to model messages
+		// Important: Don't pass tools to convertToModelMessages when we have tool results
+		// This prevents the SDK from trying to convert our custom tool result format
+		const modelMessages = convertToModelMessages(messages);
+		
 		// Use streamText with tools directly - let it decide naturally
 		const { fullStream } = streamText({
 			...this.config, // Spread all streamText-compatible properties
 			system: this.systemPrompt,
-			messages: filteredMessages,
+			messages: modelMessages,
 			temperature: temperature ?? this.config.temperature,
 			tools: toolsForScheduling,
 			// Apply experimental transform if provided
