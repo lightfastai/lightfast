@@ -188,8 +188,8 @@ export class AgentRuntime implements Runtime {
 					output: result,
 				};
 
-				const updatedParts = [...assistantMessage.parts, toolResultPart];
-				await messageWriter.updateMessageParts(sessionId, state.assistantMessageId, updatedParts);
+				// Append the tool result part to the existing message
+				await messageWriter.appendMessageParts(sessionId, state.assistantMessageId, [toolResultPart]);
 			} else {
 				throw new Error(`Assistant message not found: ${state.assistantMessageId}`);
 			}
