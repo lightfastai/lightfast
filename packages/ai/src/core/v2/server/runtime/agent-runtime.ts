@@ -172,20 +172,27 @@ export class AgentRuntime implements Runtime {
 
 			// Write tool result as part of the assistant message
 			const messageWriter = new MessageWriter(this.redis);
+			const messageReader = new MessageReader(this.redis);
 
-			// Create tool result part that matches AI SDK expectations
-			const toolResultPart: any = {
-				type: `tool-${toolName}`,
-				toolCallId,
-				state: "output-available",
-				providerExecuted: true, // This tells AI SDK it's a result, not a call
-				input: toolArgs,
-				output: result,
-			};
+			// Get the current assistant message
+			const assistantMessage = await messageReader.getMessage(sessionId, state.assistantMessageId);
 
-			// Update the assistant message with the tool result part
-			// This does NOT send a stream complete signal
-			await messageWriter.updateMessageParts(sessionId, state.assistantMessageId, [toolResultPart]);
+			if (assistantMessage && assistantMessage.parts) {
+				// Add tool result part to the existing assistant message
+				const toolResultPart: any = {
+					type: `tool-${toolName}`,
+					toolCallId,
+					state: "output-available",
+					providerExecuted: true,
+					input: toolArgs,
+					output: result,
+				};
+
+				const updatedParts = [...assistantMessage.parts, toolResultPart];
+				await messageWriter.updateMessageParts(sessionId, state.assistantMessageId, updatedParts);
+			} else {
+				throw new Error(`Assistant message not found: ${state.assistantMessageId}`);
+			}
 
 			// Don't store tool results in state - they're already in the messages
 
@@ -378,10 +385,19 @@ export class AgentRuntime implements Runtime {
 
 		const toolsUsed = new Set<string>();
 		messages.forEach((msg) => {
+			// Look for tool-call and tool result parts in assistant messages
 			if (msg.role === "assistant" && msg.parts) {
 				msg.parts.forEach((part) => {
-					if (part.type.startsWith("tool-") && (part as any).state === "output-available") {
-						// Extract tool name from type (e.g., "tool-calculator" -> "calculator")
+					// Tool call part
+					if (part.type === "tool-call" && (part as any).toolName) {
+						toolsUsed.add((part as any).toolName);
+					}
+					// Tool result part (type: tool-${toolName})
+					if (
+						typeof part.type === "string" &&
+						part.type.startsWith("tool-") &&
+						(part as any).state === "output-available"
+					) {
 						const toolName = part.type.replace("tool-", "");
 						toolsUsed.add(toolName);
 					}

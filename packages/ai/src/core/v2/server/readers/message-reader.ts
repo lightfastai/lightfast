@@ -58,4 +58,12 @@ export class MessageReader {
 		const data = (await this.redis.json.get(key, "$")) as LightfastDBMessage[] | null;
 		return data?.[0] || null;
 	}
+
+	/**
+	 * Get a specific message by ID
+	 */
+	async getMessage(sessionId: string, messageId: string): Promise<UIMessage | null> {
+		const messages = await this.getMessages(sessionId);
+		return messages.find((m) => m.id === messageId) || null;
+	}
 }

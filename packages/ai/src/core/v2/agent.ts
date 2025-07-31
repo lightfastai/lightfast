@@ -298,17 +298,20 @@ export class Agent<TRuntimeContext = unknown> {
 		// Important: Don't pass tools to convertToModelMessages when we have tool results
 		// This prevents the SDK from trying to convert our custom tool result format
 		const modelMessages = convertToModelMessages(messages);
-		
+
 		// Use streamText with tools directly - let it decide naturally
+		// IMPORTANT: maxSteps=1 to prevent internal looping - we handle the loop via QStash
 		const { fullStream } = streamText({
 			...this.config, // Spread all streamText-compatible properties
+			model: this.config.model!, // Required field
 			system: this.systemPrompt,
 			messages: modelMessages,
 			temperature: temperature ?? this.config.temperature,
 			tools: toolsForScheduling,
+			maxSteps: 1, // Critical: Only one LLM call per HTTP request
 			// Apply experimental transform if provided
 			...(this.experimental_transform && { experimental_transform: this.experimental_transform }),
-		});
+		} as Parameters<typeof streamText>[0]);
 
 		// Stream content AND collect tool calls
 		let fullContent = "";
@@ -360,17 +363,17 @@ export class Agent<TRuntimeContext = unknown> {
 				assistantMessage.parts.push({ type: "text", text: fullContent });
 			}
 
-			// Don't save tool call part - it will be added when tool result comes back
-			// if (pendingToolCall) {
-			// 	// Tool call part with input-streaming state (tool is being called)
-			// 	const toolCallPart: any = {
-			// 		type: `tool-${pendingToolCall.name}`,
-			// 		toolCallId: pendingToolCall.id,
-			// 		state: "input-streaming",
-			// 		input: pendingToolCall.args,
-			// 	};
-			// 	assistantMessage.parts.push(toolCallPart);
-			// }
+			// Add tool call part if there's a pending tool call
+			if (pendingToolCall) {
+				// Tool call part following AI SDK format
+				const toolCallPart: any = {
+					type: "tool-call",
+					toolCallId: pendingToolCall.id,
+					toolName: pendingToolCall.name,
+					args: pendingToolCall.args,
+				};
+				assistantMessage.parts.push(toolCallPart);
+			}
 
 			// Write message without completing stream
 			// First check if the message already exists
