@@ -329,49 +329,6 @@ export class Agent<TRuntimeContext = unknown> {
 		// Get tools for scheduling (without execute functions)
 		const toolsForScheduling = this.getToolsForScheduling(sessionId);
 
-		// TEST: Inject a fake tool result to see what format works
-		const msg1 = messages[1];
-		if (messages.length === 2 && msg1?.role === "assistant" && msg1.parts && msg1.parts.length === 3) {
-			console.log("\n!!! INJECTING FAKE TOOL RESULT FOR TESTING !!!");
-			const testMessages = [...messages];
-			const assistantMsg = testMessages[1];
-			if (assistantMsg && assistantMsg.parts) {
-				const testParts = [...assistantMsg.parts];
-				
-				// Try different formats to see what works
-				// Format 1: Use tool-{toolName} type with state field
-				testParts[2] = {
-					type: "tool-webSearch", // Tool parts use type: "tool-{toolName}"
-					toolCallId: (testParts[1] as any).toolCallId,
-					state: "output-available", // State indicates this is a result
-					input: (testParts[1] as any).args,
-					output: { test: "fake result" },
-				};
-				
-				testMessages[1] = {
-					...assistantMsg,
-					parts: testParts,
-				};
-				
-				console.log("Test part 2:", JSON.stringify(testParts[2], null, 2));
-				
-				// Also log the actual tool result part to see the difference
-				if (msg1.parts && msg1.parts[2]) {
-					console.log("\nActual part 2 from messages:", JSON.stringify(msg1.parts[2], null, 2));
-					console.log("Part 2 type check:", typeof msg1.parts[2], Object.keys(msg1.parts[2]));
-				}
-				
-				try {
-					const testModelMessages = convertToModelMessages(testMessages, { 
-						tools: toolsForScheduling 
-					});
-					console.log("!!! TEST SUCCESSFUL - This format works!");
-					console.log("Model messages count:", testModelMessages.length);
-				} catch (e: unknown) {
-					console.log("!!! TEST FAILED with error:", e instanceof Error ? e.message : String(e));
-				}
-			}
-		}
 
 		// DO NOT DELETE THIS COMMENT - CRITICAL FOR V2 TOOL RESULT HANDLING
 		// 
