@@ -60,13 +60,12 @@ export class EventWriter {
 	/**
 	 * Write agent loop start event
 	 */
-	async writeAgentLoopStart(sessionId: string, agentId: string, input: string): Promise<void> {
+	async writeAgentLoopStart(sessionId: string, agentId: string): Promise<void> {
 		await this.writeEvent({
 			name: EventName.AGENT_LOOP_START,
 			timestamp: new Date().toISOString(),
 			sessionId,
 			agentId,
-			input,
 		});
 	}
 
@@ -140,34 +139,26 @@ export class EventWriter {
 	/**
 	 * Write agent step start event
 	 */
-	async writeAgentStepStart(sessionId: string, agentId: string, stepIndex: number, input: string): Promise<void> {
+	async writeAgentStepStart(sessionId: string, agentId: string, stepIndex: number): Promise<void> {
 		await this.writeEvent({
 			name: EventName.AGENT_STEP_START,
 			timestamp: new Date().toISOString(),
 			sessionId,
 			agentId,
 			stepIndex,
-			input,
 		});
 	}
 
 	/**
 	 * Write agent step complete event
 	 */
-	async writeAgentStepComplete(
-		sessionId: string,
-		agentId: string,
-		stepIndex: number,
-		output: string,
-		duration: number,
-	): Promise<void> {
+	async writeAgentStepComplete(sessionId: string, agentId: string, stepIndex: number, duration: number): Promise<void> {
 		await this.writeEvent({
 			name: EventName.AGENT_STEP_COMPLETE,
 			timestamp: new Date().toISOString(),
 			sessionId,
 			agentId,
 			stepIndex,
-			output,
 			duration,
 		});
 	}

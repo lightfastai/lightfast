@@ -47,11 +47,9 @@ function parseEventMessage(rawObj: Record<string, string>): AgentEvent | null {
 	// Parse based on event type with proper typing
 	switch (name) {
 		case EventName.AGENT_LOOP_START:
-			if (!rawObj.input) return null;
 			return {
 				...baseEvent,
 				name: EventName.AGENT_LOOP_START,
-				input: rawObj.input,
 			};
 
 		case EventName.AGENT_LOOP_COMPLETE:
@@ -87,21 +85,19 @@ function parseEventMessage(rawObj: Record<string, string>): AgentEvent | null {
 			};
 
 		case EventName.AGENT_STEP_START:
-			if (!rawObj.stepIndex || !rawObj.input) return null;
+			if (!rawObj.stepIndex) return null;
 			return {
 				...baseEvent,
 				name: EventName.AGENT_STEP_START,
 				stepIndex: Number(rawObj.stepIndex),
-				input: rawObj.input,
 			};
 
 		case EventName.AGENT_STEP_COMPLETE:
-			if (!rawObj.stepIndex || !rawObj.output || !rawObj.duration) return null;
+			if (!rawObj.stepIndex || !rawObj.duration) return null;
 			return {
 				...baseEvent,
 				name: EventName.AGENT_STEP_COMPLETE,
 				stepIndex: Number(rawObj.stepIndex),
-				output: rawObj.output,
 				duration: Number(rawObj.duration),
 			};
 

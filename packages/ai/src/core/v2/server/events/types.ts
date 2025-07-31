@@ -26,7 +26,6 @@ interface BaseEvent {
 
 export interface AgentLoopStartEvent extends BaseEvent {
 	name: typeof EventName.AGENT_LOOP_START;
-	input: string;
 }
 
 export interface AgentLoopCompleteEvent extends BaseEvent {
@@ -40,13 +39,11 @@ export interface AgentLoopCompleteEvent extends BaseEvent {
 export interface AgentStepStartEvent extends BaseEvent {
 	name: typeof EventName.AGENT_STEP_START;
 	stepIndex: number;
-	input: string;
 }
 
 export interface AgentStepCompleteEvent extends BaseEvent {
 	name: typeof EventName.AGENT_STEP_COMPLETE;
 	stepIndex: number;
-	output: string;
 	duration: number;
 }
 
@@ -90,7 +87,6 @@ export type AgentEvent =
 export interface AgentLoopStartParams {
 	sessionId: string;
 	agentId: string;
-	input: string;
 }
 
 export interface AgentLoopCompleteParams {
@@ -123,14 +119,12 @@ export interface AgentStepStartParams {
 	sessionId: string;
 	agentId: string;
 	stepIndex: number;
-	input: string;
 }
 
 export interface AgentStepCompleteParams {
 	sessionId: string;
 	agentId: string;
 	stepIndex: number;
-	output: string;
 	duration: number;
 }
 

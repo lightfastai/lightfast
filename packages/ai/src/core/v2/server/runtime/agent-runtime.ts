@@ -50,21 +50,14 @@ export class AgentRuntime implements Runtime {
 
 		if (!state) {
 			// First step - initialize state
-			const messageReader = new MessageReader(this.redis);
-			const uiMessages = await messageReader.getMessages(sessionId);
-
 			// Track loop start
-			const userMessage = uiMessages.find((m) => m.role === "user");
-			const userContent = userMessage?.parts?.find((p) => p.type === "text")?.text || "";
-			await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName(), userContent);
+			await this.eventWriter.writeAgentLoopStart(sessionId, agent.getName());
 
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_LOOP_START, {
 				sessionId,
 				agentId: agent.getName(),
-				input: userContent,
 				timestamp: new Date().toISOString(),
-				messageCount: uiMessages.length,
 			});
 
 			// Create initial state (minimal, no messages)
@@ -84,25 +77,16 @@ export class AgentRuntime implements Runtime {
 			state.stepIndex = stepIndex;
 			await this.saveSessionState(sessionId, state);
 
-			// Fetch messages to track continuation
-			const messageReader = new MessageReader(this.redis);
-			const uiMessages = await messageReader.getMessages(sessionId);
-
 			// Track continuation
-			const lastUserMessage = [...uiMessages].reverse().find((m) => m.role === "user");
-			if (lastUserMessage) {
-				const lastUserContent = lastUserMessage.parts?.find((p) => p.type === "text")?.text || "";
-				await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex, lastUserContent);
+			await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex);
 
-				// Log to structured logger
-				this.logger.logEvent(LogEventName.AGENT_STEP_START, {
-					sessionId,
-					agentId: agent.getName(),
-					stepIndex,
-					input: lastUserContent,
-					timestamp: new Date().toISOString(),
-				});
-			}
+			// Log to structured logger
+			this.logger.logEvent(LogEventName.AGENT_STEP_START, {
+				sessionId,
+				agentId: agent.getName(),
+				stepIndex,
+				timestamp: new Date().toISOString(),
+			});
 		}
 
 		// Execute the step - fetch fresh messages
@@ -258,16 +242,13 @@ export class AgentRuntime implements Runtime {
 		const { sessionId, agent, messages, stepIndex, baseUrl, assistantMessageId } = params;
 
 		// Track step start
-		const lastMessage = messages[messages.length - 1];
-		const lastMessageContent = lastMessage?.parts?.find((p) => p.type === "text")?.text || "";
-		await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex, lastMessageContent);
+		await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex);
 
 		// Log to structured logger
 		this.logger.logEvent(LogEventName.AGENT_STEP_START, {
 			sessionId,
 			agentId: agent.getName(),
 			stepIndex,
-			input: lastMessageContent,
 			timestamp: new Date().toISOString(),
 		});
 
@@ -302,20 +283,13 @@ export class AgentRuntime implements Runtime {
 			await this.saveSessionState(sessionId, updatedState);
 
 			// Track step complete
-			await this.eventWriter.writeAgentStepComplete(
-				sessionId,
-				agent.getName(),
-				stepIndex,
-				fullContent,
-				Date.now() - stepStartTime,
-			);
+			await this.eventWriter.writeAgentStepComplete(sessionId, agent.getName(), stepIndex, Date.now() - stepStartTime);
 
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_STEP_COMPLETE, {
 				sessionId,
 				agentId: agent.getName(),
 				stepIndex,
-				output: fullContent,
 				duration: Date.now() - stepStartTime,
 				timestamp: new Date().toISOString(),
 			});
