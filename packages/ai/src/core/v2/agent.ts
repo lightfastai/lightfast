@@ -348,7 +348,10 @@ export class Agent<TRuntimeContext = unknown> {
 		} as Parameters<typeof streamText>[0]);
 
 		// Stream content AND collect tool calls
-		let fullContent = "";
+		// Keep track of parts separately to preserve their order and types
+		const parts: Array<{ type: "text" | "reasoning"; content: string }> = [];
+		let currentTextContent = "";
+		let currentReasoningContent = "";
 		let chunkCount = 0;
 		let pendingToolCall: { id: string; name: string; args: Record<string, any> } | null = null;
 
@@ -356,14 +359,43 @@ export class Agent<TRuntimeContext = unknown> {
 			switch (chunk.type) {
 				case "text-delta":
 					if ("text" in chunk && typeof chunk.text === "string") {
-						fullContent += chunk.text;
+						// If we were accumulating reasoning, flush it first
+						if (currentReasoningContent) {
+							parts.push({ type: "reasoning", content: currentReasoningContent });
+							currentReasoningContent = "";
+						}
+						currentTextContent += chunk.text;
 						chunkCount++;
 						// Delta streaming - immediate UI feedback
 						await this.streamWriter.writeChunk(assistantMessageId, chunk.text);
 					}
 					break;
 
+				case "reasoning-delta":
+					if ("delta" in chunk && typeof chunk.delta === "string") {
+						// If we were accumulating text, flush it first
+						if (currentTextContent) {
+							parts.push({ type: "text", content: currentTextContent });
+							currentTextContent = "";
+						}
+						// Handle reasoning chunks (Claude thinking)
+						currentReasoningContent += chunk.delta;
+						chunkCount++;
+						await this.streamWriter.writeChunk(assistantMessageId, chunk.delta);
+					}
+					break;
+
+
 				case "tool-call":
+					// Flush any pending content before tool call
+					if (currentTextContent) {
+						parts.push({ type: "text", content: currentTextContent });
+						currentTextContent = "";
+					}
+					if (currentReasoningContent) {
+						parts.push({ type: "reasoning", content: currentReasoningContent });
+						currentReasoningContent = "";
+					}
 					// Store tool call for QStash scheduling - don't execute immediately
 					pendingToolCall = {
 						id: chunk.toolCallId,
@@ -372,15 +404,27 @@ export class Agent<TRuntimeContext = unknown> {
 					};
 					break;
 
-				case "reasoning-delta":
-					if ("delta" in chunk && typeof chunk.delta === "string") {
-						// Handle reasoning chunks (Claude thinking)
-						fullContent += chunk.delta;
-						chunkCount++;
-						await this.streamWriter.writeChunk(assistantMessageId, chunk.delta);
+				case "finish-step":
+				case "finish":
+					// Flush any remaining content
+					if (currentTextContent) {
+						parts.push({ type: "text", content: currentTextContent });
+						currentTextContent = "";
+					}
+					if (currentReasoningContent) {
+						parts.push({ type: "reasoning", content: currentReasoningContent });
+						currentReasoningContent = "";
 					}
 					break;
 			}
+		}
+
+		// Final flush in case there's any remaining content
+		if (currentTextContent) {
+			parts.push({ type: "text", content: currentTextContent });
+		}
+		if (currentReasoningContent) {
+			parts.push({ type: "reasoning", content: currentReasoningContent });
 		}
 
 		// Write the assistant message WITHOUT completing stream
@@ -388,21 +432,28 @@ export class Agent<TRuntimeContext = unknown> {
 		const existingMessages = await this.messageReader.getMessages(sessionId);
 		const existingMessage = existingMessages.find((m) => m.id === assistantMessageId);
 
-		// If message already exists with content, don't write again
-		// This prevents duplicate parts when makeDecisionForRuntime is called multiple times
 		if (existingMessage && existingMessage.parts && existingMessage.parts.length > 0) {
-			// Message already exists, skip write
-		} else if (fullContent.trim() || pendingToolCall) {
-
+			// Message already exists - append new parts if any
+			if (parts.length > 0) {
+				// This is a subsequent response after tool execution
+				// Append the new parts to the existing message
+				const newParts = parts.map(part => ({
+					type: part.type,
+					text: part.content
+				}));
+				await this.messageWriter.appendMessageParts(sessionId, assistantMessageId, newParts);
+			}
+		} else if (parts.length > 0 || pendingToolCall) {
+			// First time writing this message
 			const assistantMessage: UIMessage = {
 				id: assistantMessageId,
 				role: "assistant",
 				parts: [] as any[],
 			};
 
-			// Add text part if there's content
-			if (fullContent.trim()) {
-				assistantMessage.parts.push({ type: "text", text: fullContent });
+			// Add all parts in order
+			for (const part of parts) {
+				assistantMessage.parts.push({ type: part.type, text: part.content });
 			}
 
 			// DO NOT SAVE TOOL-CALL PARTS IN V2
@@ -427,6 +478,9 @@ export class Agent<TRuntimeContext = unknown> {
 
 		// Return decision based on what streamText naturally decided
 		const decision: AgentDecision = pendingToolCall ? { toolCall: pendingToolCall } : {}; // No tool needed
+		
+		// Calculate full content from all parts
+		const fullContent = parts.map(p => p.content).join("");
 
 		return { decision, chunkCount, fullContent };
 	}
