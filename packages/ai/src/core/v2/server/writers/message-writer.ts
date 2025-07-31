@@ -62,8 +62,6 @@ export class MessageWriter {
 	 * Used for updating assistant messages with complete content
 	 */
 	async updateMessageParts(sessionId: string, messageId: string, newParts: any[]): Promise<void> {
-		console.log(`\n[MessageWriter.updateMessageParts] Called for message ${messageId}`);
-		console.log(`  New parts count: ${newParts.length}`);
 
 		const key = getMessageKey(sessionId);
 		const now = new Date().toISOString();
@@ -85,9 +83,6 @@ export class MessageWriter {
 		// Replace the parts entirely
 		const existingMessage = messages[messageIndex];
 		if (existingMessage) {
-			console.log(`  Existing message has ${existingMessage.parts?.length || 0} parts`);
-			console.log(`  Replacing with ${newParts.length} new parts`);
-
 			const updatedMessage = {
 				...existingMessage,
 				parts: newParts,
@@ -98,8 +93,6 @@ export class MessageWriter {
 			pipeline.json.set(key, `$.messages[${messageIndex}]`, updatedMessage as unknown as Record<string, unknown>);
 			pipeline.json.set(key, "$.updatedAt", now);
 			await pipeline.exec();
-
-			console.log(`  Message updated successfully`);
 		}
 	}
 
@@ -108,8 +101,6 @@ export class MessageWriter {
 	 * Used for adding tool results to assistant messages
 	 */
 	async appendMessageParts(sessionId: string, messageId: string, newParts: any[]): Promise<void> {
-		console.log(`\n[MessageWriter.appendMessageParts] Called for message ${messageId}`);
-		console.log(`  New parts to append: ${newParts.length}`);
 
 		const key = getMessageKey(sessionId);
 		const now = new Date().toISOString();
@@ -131,22 +122,16 @@ export class MessageWriter {
 		// Append the new parts to existing parts
 		const existingMessage = messages[messageIndex];
 		if (existingMessage) {
-			console.log(`  Existing message has ${existingMessage.parts?.length || 0} parts`);
-
 			const updatedMessage = {
 				...existingMessage,
 				parts: [...(existingMessage.parts || []), ...newParts],
 			};
-
-			console.log(`  After append will have ${updatedMessage.parts.length} parts`);
 
 			// Update the specific message in the array
 			const pipeline = this.redis.pipeline();
 			pipeline.json.set(key, `$.messages[${messageIndex}]`, updatedMessage as unknown as Record<string, unknown>);
 			pipeline.json.set(key, "$.updatedAt", now);
 			await pipeline.exec();
-
-			console.log(`  Parts appended successfully`);
 		}
 	}
 

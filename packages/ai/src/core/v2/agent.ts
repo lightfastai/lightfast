@@ -291,40 +291,6 @@ export class Agent<TRuntimeContext = unknown> {
 		temperature: number,
 		assistantMessageId: string,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
-		console.log(`\n=== makeDecisionForRuntime START ===`);
-		console.log(`Session: ${sessionId}, AssistantMessageId: ${assistantMessageId}`);
-		console.log(`Incoming messages count: ${messages.length}`);
-
-		// Log the last few messages to see what we're working with
-		const lastMessages = messages.slice(-3);
-		lastMessages.forEach((msg, idx) => {
-			console.log(`\nMessage ${messages.length - 3 + idx}:`);
-			console.log(`  ID: ${msg.id}`);
-			console.log(`  Role: ${msg.role}`);
-			if (msg.role === "assistant" && msg.parts) {
-				console.log(`  Parts: ${msg.parts.length}`);
-				msg.parts.forEach((part: any, partIdx: number) => {
-					if (part.type === "text") {
-						console.log(`    Part ${partIdx}: type=${part.type}, text="${part.text?.substring(0, 50)}..."`);
-					} else if (part.type === "tool-call") {
-						console.log(`    Part ${partIdx}: type=${part.type}, toolCallId=${part.toolCallId}`);
-					} else if (part.type?.startsWith("tool-")) {
-						// Tool result - log all properties to debug
-						console.log(`    Part ${partIdx}: type=${part.type}, toolCallId=${part.toolCallId}, state=${part.state}, hasOutput=${!!part.output}, hasInput=${!!part.input}`);
-					} else {
-						console.log(`    Part ${partIdx}: type=${part.type}, toolCallId=${part.toolCallId || 'none'}`);
-					}
-				});
-			} else if (msg.role === "user") {
-				// User messages can have content in different formats
-				const content = (msg as any).content;
-				if (typeof content === "string") {
-					console.log(`  Content: "${content.substring(0, 50)}..."`);
-				} else if (content) {
-					console.log(`  Content: [complex content]`);
-				}
-			}
-		});
 
 		// Get tools for scheduling (without execute functions)
 		const toolsForScheduling = this.getToolsForScheduling(sessionId);
@@ -366,14 +332,6 @@ export class Agent<TRuntimeContext = unknown> {
 			tools: toolsForScheduling 
 		});
 
-		console.log(`\nConverted to ${modelMessages.length} model messages`);
-		// Log the last model message to see the conversion
-		if (modelMessages.length > 0) {
-			const lastModel = modelMessages[modelMessages.length - 1];
-			if (lastModel) {
-				console.log(`Last model message: role=${lastModel.role}, content type=${typeof lastModel.content}`);
-			}
-		}
 
 		// Use streamText with tools directly - let it decide naturally
 		// IMPORTANT: maxSteps=1 to prevent internal looping - we handle the loop via QStash
@@ -426,27 +384,15 @@ export class Agent<TRuntimeContext = unknown> {
 		}
 
 		// Write the assistant message WITHOUT completing stream
-		// First check if the message already exists
-		console.log(`\nChecking if message ${assistantMessageId} already exists...`);
+		// Check if the message already exists
 		const existingMessages = await this.messageReader.getMessages(sessionId);
 		const existingMessage = existingMessages.find((m) => m.id === assistantMessageId);
 
 		// If message already exists with content, don't write again
 		// This prevents duplicate parts when makeDecisionForRuntime is called multiple times
 		if (existingMessage && existingMessage.parts && existingMessage.parts.length > 0) {
-			console.log(
-				`\n!!! Message ${assistantMessageId} already exists with ${existingMessage.parts.length} parts, skipping write`,
-			);
-			console.log(`Existing parts:`);
-			existingMessage.parts.forEach((part: any, idx: number) => {
-				console.log(
-					`  Part ${idx}: type=${part.type}, ${part.type === "text" ? `text="${part.text?.substring(0, 50)}..."` : `toolCallId=${part.toolCallId}`}`,
-				);
-			});
+			// Message already exists, skip write
 		} else if (fullContent.trim() || pendingToolCall) {
-			console.log(`\nWriting new assistant message ${assistantMessageId}`);
-			console.log(`  Has text content: ${!!fullContent.trim()}`);
-			console.log(`  Has tool call: ${!!pendingToolCall}`);
 
 			const assistantMessage: UIMessage = {
 				id: assistantMessageId,
@@ -456,7 +402,6 @@ export class Agent<TRuntimeContext = unknown> {
 
 			// Add text part if there's content
 			if (fullContent.trim()) {
-				console.log(`  Adding text part: "${fullContent.substring(0, 50)}..."`);
 				assistantMessage.parts.push({ type: "text", text: fullContent });
 			}
 
@@ -466,7 +411,6 @@ export class Agent<TRuntimeContext = unknown> {
 			// The tool-call part is redundant and can cause issues with message reconstruction
 			//
 			// if (pendingToolCall) {
-			//     console.log(`  Adding tool call part: ${pendingToolCall.name} (${pendingToolCall.id})`);
 			//     // Tool call part following AI SDK format
 			//     const toolCallPart: any = {
 			//         type: "tool-call",
@@ -477,21 +421,12 @@ export class Agent<TRuntimeContext = unknown> {
 			//     assistantMessage.parts.push(toolCallPart);
 			// }
 
-			console.log(`  Total parts to write: ${assistantMessage.parts.length}`);
 			// Write the new message
 			await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
-			console.log(`  Message written successfully`);
-		} else {
-			console.log(`\nNo content to write for message ${assistantMessageId}`);
 		}
 
 		// Return decision based on what streamText naturally decided
 		const decision: AgentDecision = pendingToolCall ? { toolCall: pendingToolCall } : {}; // No tool needed
-
-		console.log(`\n=== makeDecisionForRuntime END ===`);
-		console.log(`  Returning decision: ${pendingToolCall ? `tool call ${pendingToolCall.name}` : "no tool needed"}`);
-		console.log(`  Full content length: ${fullContent.length}`);
-		console.log(`  Chunk count: ${chunkCount}`);
 
 		return { decision, chunkCount, fullContent };
 	}

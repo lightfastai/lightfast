@@ -45,10 +45,6 @@ export class AgentRuntime implements Runtime {
 		resourceId: string;
 		assistantMessageId: string;
 	}): Promise<void> {
-		console.log(`\n>>> AgentRuntime.executeStep called`);
-		console.log(`    Session: ${sessionId}`);
-		console.log(`    Step: ${stepIndex}`);
-		console.log(`    AssistantMessageId: ${assistantMessageId}`);
 
 		// Get or initialize session state
 		let state = await this.getSessionState(sessionId);
@@ -180,16 +176,9 @@ export class AgentRuntime implements Runtime {
 			const messageReader = new MessageReader(this.redis);
 
 			// Get the current assistant message
-			console.log(`\n>>> Adding tool result to message ${state.assistantMessageId}`);
 			const assistantMessage = await messageReader.getMessage(sessionId, state.assistantMessageId);
 
 			if (assistantMessage && assistantMessage.parts) {
-				console.log(`    Current message has ${assistantMessage.parts.length} parts`);
-				assistantMessage.parts.forEach((part: any, idx: number) => {
-					console.log(
-						`      Part ${idx}: type=${part.type}, ${part.toolCallId ? `toolCallId=${part.toolCallId}` : ""}`,
-					);
-				});
 
 				// Add tool result part using AI SDK v5 format
 				// Tool parts use type: "tool-{toolName}" and state to indicate result
@@ -201,12 +190,8 @@ export class AgentRuntime implements Runtime {
 					output: result,
 				};
 
-				console.log(`    Adding tool result part: type=tool-${toolName}, toolCallId=${toolCallId}`);
-				console.log(`    Full tool result part:`, JSON.stringify(toolResultPart, null, 2));
-
 				// Append the tool result part to the existing message
 				await messageWriter.appendMessageParts(sessionId, state.assistantMessageId, [toolResultPart]);
-				console.log(`    Tool result appended successfully`);
 			} else {
 				throw new Error(`Assistant message not found: ${state.assistantMessageId}`);
 			}
