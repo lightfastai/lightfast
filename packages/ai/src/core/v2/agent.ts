@@ -291,11 +291,14 @@ export class Agent<TRuntimeContext = unknown> {
 		temperature: number,
 		assistantMessageId: string,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
-		// Convert UIMessages to model messages
-		const modelMessages = convertToModelMessages(messages);
-
 		// Get tools for scheduling (without execute functions)
 		const toolsForScheduling = this.getToolsForScheduling(sessionId);
+		
+		// Convert UIMessages to model messages with tools
+		const modelMessages = convertToModelMessages(messages, { tools: toolsForScheduling });
+		
+		// Debug: Log the converted messages to understand the structure
+		console.log('Converted model messages:', JSON.stringify(modelMessages, null, 2));
 
 		// Use streamText with tools directly - let it decide naturally
 		const { fullStream } = streamText({

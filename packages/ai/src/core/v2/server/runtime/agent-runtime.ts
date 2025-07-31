@@ -173,11 +173,12 @@ export class AgentRuntime implements Runtime {
 			// Write tool result as part of the assistant message
 			const messageWriter = new MessageWriter(this.redis);
 
-			// Create tool result part
+			// Create tool result part that matches AI SDK expectations
 			const toolResultPart: any = {
 				type: `tool-${toolName}`,
 				toolCallId,
 				state: "output-available",
+				providerExecuted: true, // This tells AI SDK it's a result, not a call
 				input: toolArgs,
 				output: result,
 			};
