@@ -2,7 +2,7 @@
 
 import type { UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { type DeltaStreamMessage, DeltaStreamType } from "../server/stream/types";
+import { type DeltaStreamMessage, DeltaStreamType, type ToolCallPart } from "../server/stream/types";
 import { uuidv4 } from "../utils/uuid";
 import { useDeltaStream, validateMessage } from "./use-delta-stream";
 
@@ -15,6 +15,7 @@ export interface UseChatOptions {
 	sessionId?: string;
 	initialMessages?: UIMessage[];
 	onChunk?: (chunk: string) => void;
+	onToolCall?: (toolCall: ToolCallPart) => void;
 	onComplete?: (response: string, messageId: string) => void;
 	onError?: (error: Error) => void;
 }
@@ -44,6 +45,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		sessionId,
 		initialMessages = [],
 		onChunk,
+		onToolCall,
 		onComplete,
 		onError,
 	} = options;
@@ -56,6 +58,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 	// Refs
 	const responseRef = useRef<HTMLDivElement>(null);
 	const messageIdRef = useRef<string | undefined>(undefined);
+	const messagePartsRef = useRef<Array<{ type: "text" | "tool-call"; text?: string; toolCall?: ToolCallPart }>>([]);
 
 	// Delta stream hook
 	const deltaStream = useDeltaStream({
@@ -63,17 +66,39 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		onChunk: (chunk: string) => {
 			setResponse((prev) => prev + chunk);
 			setChunkCount((prev) => prev + 1);
+			// Accumulate text in the current part
+			const lastPart = messagePartsRef.current[messagePartsRef.current.length - 1];
+			if (!lastPart || lastPart.type !== "text") {
+				messagePartsRef.current.push({ type: "text", text: chunk });
+			} else {
+				lastPart.text = (lastPart.text || "") + chunk;
+			}
 			onChunk?.(chunk);
+		},
+		onToolCall: (toolCall: ToolCallPart) => {
+			// Add tool call part
+			messagePartsRef.current.push({ type: "tool-call", toolCall });
+			onToolCall?.(toolCall);
 		},
 		onComplete: (fullResponse: string) => {
 			setStatus("completed");
 			const currentMessageId = messageIdRef.current;
 			if (currentMessageId) {
-				// Add assistant message to messages array
+				// Convert accumulated parts to UIMessage parts format
+				const parts: any[] = messagePartsRef.current.map((part) => {
+					if (part.type === "text") {
+						return { type: "text", text: part.text || "" };
+					} else if (part.type === "tool-call" && part.toolCall) {
+						return part.toolCall; // ToolCallPart already has the correct format
+					}
+					return null;
+				}).filter(Boolean);
+
+				// Add assistant message with all parts
 				const assistantMessage: UIMessage = {
 					id: currentMessageId,
 					role: "assistant",
-					parts: [{ type: "text", text: fullResponse }],
+					parts: parts.length > 0 ? parts : [{ type: "text", text: fullResponse }],
 				};
 				setMessages((prev) => [...prev, assistantMessage]);
 				onComplete?.(fullResponse, currentMessageId);
@@ -111,6 +136,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 				setStatus("loading");
 				setResponse("");
 				setChunkCount(0);
+				messagePartsRef.current = [];
 
 				// Add user message to messages array
 				const userMessage: UIMessage = {
@@ -161,6 +187,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		setStatus("idle");
 		setMessageId(undefined);
 		messageIdRef.current = undefined;
+		messagePartsRef.current = [];
 		setMessages([]);
 	}, [deltaStream]);
 
