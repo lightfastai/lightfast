@@ -291,6 +291,8 @@ export class Agent<TRuntimeContext = unknown> {
 		temperature: number,
 		assistantMessageId: string,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
+		console.log(`makeDecisionForRuntime called for session ${sessionId}, assistantMessageId: ${assistantMessageId}`);
+		
 		// Get tools for scheduling (without execute functions)
 		const toolsForScheduling = this.getToolsForScheduling(sessionId);
 
@@ -350,8 +352,15 @@ export class Agent<TRuntimeContext = unknown> {
 		}
 
 		// Write the assistant message WITHOUT completing stream
-		// Stream stays open for the entire agent loop
-		if (fullContent.trim() || pendingToolCall) {
+		// First check if the message already exists
+		const existingMessages = await this.messageReader.getMessages(sessionId);
+		const existingMessage = existingMessages.find((m) => m.id === assistantMessageId);
+
+		// If message already exists with content, don't write again
+		// This prevents duplicate parts when makeDecisionForRuntime is called multiple times
+		if (existingMessage && existingMessage.parts && existingMessage.parts.length > 0) {
+			console.log(`Message ${assistantMessageId} already exists with ${existingMessage.parts.length} parts, skipping write`);
+		} else if (fullContent.trim() || pendingToolCall) {
 			const assistantMessage: UIMessage = {
 				id: assistantMessageId,
 				role: "assistant",
@@ -375,18 +384,8 @@ export class Agent<TRuntimeContext = unknown> {
 				assistantMessage.parts.push(toolCallPart);
 			}
 
-			// Write message without completing stream
-			// First check if the message already exists
-			const existingMessages = await this.messageReader.getMessages(sessionId);
-			const messageExists = existingMessages.some((m) => m.id === assistantMessageId);
-
-			if (messageExists) {
-				// Message already exists - update its parts
-				await this.messageWriter.updateMessageParts(sessionId, assistantMessageId, assistantMessage.parts);
-			} else {
-				// New message - write it
-				await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
-			}
+			// Write the new message
+			await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
 		}
 
 		// Return decision based on what streamText naturally decided
