@@ -146,6 +146,14 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 		onFinish: async ({ messages: finishedMessages, responseMessage }) => {
 			// Save the assistant's response to memory
 			if (responseMessage && responseMessage.role === "assistant") {
+				console.log(`\n[V1 onFinish] responseMessage:`, JSON.stringify(responseMessage, null, 2));
+				if (responseMessage.parts) {
+					console.log(`[V1 onFinish] Parts count: ${responseMessage.parts.length}`);
+					responseMessage.parts.forEach((part: any, idx: number) => {
+						console.log(`  Part ${idx}: type=${part.type}`, 
+							part.type === 'tool-result' ? `state=${part.state}` : '');
+					});
+				}
 				await memory.appendMessages({
 					threadId: tid,
 					messages: [responseMessage],

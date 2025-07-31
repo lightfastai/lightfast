@@ -49,7 +49,7 @@ export class AgentRuntime implements Runtime {
 		console.log(`    Session: ${sessionId}`);
 		console.log(`    Step: ${stepIndex}`);
 		console.log(`    AssistantMessageId: ${assistantMessageId}`);
-		
+
 		// Get or initialize session state
 		let state = await this.getSessionState(sessionId);
 
@@ -186,20 +186,23 @@ export class AgentRuntime implements Runtime {
 			if (assistantMessage && assistantMessage.parts) {
 				console.log(`    Current message has ${assistantMessage.parts.length} parts`);
 				assistantMessage.parts.forEach((part: any, idx: number) => {
-					console.log(`      Part ${idx}: type=${part.type}, ${part.toolCallId ? `toolCallId=${part.toolCallId}` : ''}`);
+					console.log(
+						`      Part ${idx}: type=${part.type}, ${part.toolCallId ? `toolCallId=${part.toolCallId}` : ""}`,
+					);
 				});
-				
-				// Add tool result part to the existing assistant message
+
+				// Add tool result part using AI SDK v5 format
+				// Tool parts use type: "tool-{toolName}" and state to indicate result
 				const toolResultPart: any = {
 					type: `tool-${toolName}`,
 					toolCallId,
 					state: "output-available",
-					providerExecuted: true,
 					input: toolArgs,
 					output: result,
 				};
-				
+
 				console.log(`    Adding tool result part: type=tool-${toolName}, toolCallId=${toolCallId}`);
+				console.log(`    Full tool result part:`, JSON.stringify(toolResultPart, null, 2));
 
 				// Append the tool result part to the existing message
 				await messageWriter.appendMessageParts(sessionId, state.assistantMessageId, [toolResultPart]);
@@ -243,7 +246,46 @@ export class AgentRuntime implements Runtime {
 				timestamp: new Date().toISOString(),
 			});
 
-			throw error;
+			// Write error tool result as part of the assistant message
+			const messageWriter = new MessageWriter(this.redis);
+			const messageReader = new MessageReader(this.redis);
+
+			const assistantMessage = await messageReader.getMessage(sessionId, state.assistantMessageId);
+
+			if (assistantMessage && assistantMessage.parts) {
+				// Add error tool result part using AI SDK v5 format
+				// Tool parts use type: "tool-{toolName}" and state to indicate error
+				const errorResultPart: any = {
+					type: `tool-${toolName}`,
+					toolCallId,
+					state: "output-error", // Error case
+					// For errors, AI SDK expects errorText field
+					errorText: error instanceof Error ? error.message : String(error),
+				};
+
+				// Append the error result part to the existing message
+				await messageWriter.appendMessageParts(sessionId, state.assistantMessageId, [errorResultPart]);
+			}
+
+			// Update pending tool calls and save state
+			if (state.pendingToolCalls) {
+				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== toolCallId);
+				await this.saveSessionState(sessionId, state);
+			}
+
+			// Continue to next step even on error
+			// Check if all pending tool calls are done
+			if (!state.pendingToolCalls || state.pendingToolCalls.length === 0) {
+				await this.qstash.publishJSON({
+					url: `${baseUrl}/workers/agent-loop-step`,
+					body: {
+						sessionId,
+						stepIndex: state.stepIndex + 1,
+						resourceId: state.resourceId,
+						assistantMessageId: state.assistantMessageId,
+					},
+				});
+			}
 		}
 	}
 
@@ -406,13 +448,13 @@ export class AgentRuntime implements Runtime {
 					if (part.type === "tool-call" && (part as any).toolName) {
 						toolsUsed.add((part as any).toolName);
 					}
-					// Tool result part (type: tool-${toolName})
+					// Tool result part (type: tool-{toolName} with state)
 					if (
-						typeof part.type === "string" &&
 						part.type.startsWith("tool-") &&
 						(part as any).state === "output-available"
 					) {
-						const toolName = part.type.replace("tool-", "");
+						// Extract tool name from type
+						const toolName = part.type.split("-").slice(1).join("-");
 						toolsUsed.add(toolName);
 					}
 				});
