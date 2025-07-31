@@ -7,7 +7,7 @@ import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey } from "../keys";
-import { type DeltaStreamMessage, DeltaStreamType } from "./types";
+import { type DeltaStreamMessage, DeltaStreamType, type ToolCallPart } from "./types";
 
 // Redis stream types
 type StreamField = string;
@@ -36,35 +36,45 @@ const json = (data: Record<string, unknown>): Uint8Array => {
 function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessage | null {
 	if (!rawObj.type) return null;
 
+	const type = rawObj.type as DeltaStreamType;
+	const timestamp = rawObj.timestamp || new Date().toISOString();
+
 	// Check if it's a valid type
-	if (!Object.values(DeltaStreamType).includes(rawObj.type as DeltaStreamType)) {
+	if (!Object.values(DeltaStreamType).includes(type)) {
 		return null;
 	}
 
-	const message: DeltaStreamMessage = {
-		type: rawObj.type as DeltaStreamType,
-		timestamp: rawObj.timestamp || new Date().toISOString(),
-	};
-
-	// Add type-specific fields
-	switch (message.type) {
+	// Handle type-specific validation and return proper discriminated union type
+	switch (type) {
 		case DeltaStreamType.INIT:
-			// Init doesn't require additional fields
-			break;
+			return { type: DeltaStreamType.INIT, timestamp };
+		
 		case DeltaStreamType.CHUNK:
 			if (!rawObj.content) return null;
-			message.content = rawObj.content;
-			break;
+			return { type: DeltaStreamType.CHUNK, content: rawObj.content, timestamp };
+		
+		case DeltaStreamType.TOOL_CALL:
+			if (!rawObj.toolCall) return null;
+			try {
+				// Parse the JSON string back to ToolCallPart
+				const toolCall = typeof rawObj.toolCall === 'string' 
+					? JSON.parse(rawObj.toolCall) 
+					: rawObj.toolCall;
+				return { type: DeltaStreamType.TOOL_CALL, toolCall, timestamp };
+			} catch {
+				return null;
+			}
+		
 		case DeltaStreamType.ERROR:
 			if (!rawObj.error) return null;
-			message.error = rawObj.error;
-			break;
+			return { type: DeltaStreamType.ERROR, error: rawObj.error, timestamp };
+		
 		case DeltaStreamType.COMPLETE:
-			// Complete doesn't require additional fields
-			break;
+			return { type: DeltaStreamType.COMPLETE, timestamp };
+		
+		default:
+			return null;
 	}
-
-	return message;
 }
 
 export class StreamConsumer {

@@ -3,6 +3,14 @@
  * Shared constants and types for streaming across server and client
  */
 
+// Tool call part format that matches Vercel AI SDK
+export interface ToolCallPart {
+	type: "tool-call";
+	toolCallId: string;
+	toolName: string;
+	args: any;
+}
+
 export const StreamStatus = {
 	STARTED: "started",
 	STREAMING: "streaming",
@@ -16,14 +24,33 @@ export type StreamStatusType = (typeof StreamStatus)[keyof typeof StreamStatus];
 export enum DeltaStreamType {
 	INIT = "init",
 	CHUNK = "chunk",
+	TOOL_CALL = "tool-call",
 	ERROR = "error",
 	COMPLETE = "complete",
 }
 
-// Delta stream message format
-export interface DeltaStreamMessage {
-	type: DeltaStreamType;
-	content?: string;
-	error?: string;
-	timestamp: string;
-}
+// Delta stream message formats using discriminated unions
+export type DeltaStreamMessage = 
+	| {
+		type: DeltaStreamType.INIT;
+		timestamp: string;
+	}
+	| {
+		type: DeltaStreamType.CHUNK;
+		content: string;
+		timestamp: string;
+	}
+	| {
+		type: DeltaStreamType.TOOL_CALL;
+		toolCall: ToolCallPart;
+		timestamp: string;
+	}
+	| {
+		type: DeltaStreamType.ERROR;
+		error: string;
+		timestamp: string;
+	}
+	| {
+		type: DeltaStreamType.COMPLETE;
+		timestamp: string;
+	};

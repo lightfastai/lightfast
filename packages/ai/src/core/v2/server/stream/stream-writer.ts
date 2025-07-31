@@ -4,7 +4,7 @@
 
 import type { Redis } from "@upstash/redis";
 import { getDeltaStreamKey } from "../keys";
-import { DeltaStreamType } from "./types";
+import { DeltaStreamType, type ToolCallPart } from "./types";
 
 export class StreamWriter {
 	constructor(private redis: Redis) {}
@@ -72,6 +72,26 @@ export class StreamWriter {
 
 		// Execute all operations atomically
 		await pipeline.exec();
+	}
+
+	/**
+	 * Write a tool call event to the delta stream
+	 */
+	async writeToolCall(streamId: string, toolCall: ToolCallPart): Promise<void> {
+		const streamKey = getDeltaStreamKey(streamId);
+
+		const message: Record<string, string> = {
+			type: DeltaStreamType.TOOL_CALL,
+			// Serialize the tool call as JSON
+			toolCall: JSON.stringify(toolCall),
+			timestamp: new Date().toISOString(),
+		};
+
+		// Write to Redis stream
+		await this.redis.xadd(streamKey, "*", message);
+
+		// Publish for real-time notifications
+		await this.redis.publish(streamKey, { type: DeltaStreamType.TOOL_CALL });
 	}
 
 	/**

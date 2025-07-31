@@ -291,15 +291,13 @@ export class Agent<TRuntimeContext = unknown> {
 		temperature: number,
 		assistantMessageId: string,
 	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
-
 		// Get tools for scheduling (without execute functions)
 		const toolsForScheduling = this.getToolsForScheduling(sessionId);
 
-
 		// DO NOT DELETE THIS COMMENT - CRITICAL FOR V2 TOOL RESULT HANDLING
-		// 
+		//
 		// The Vercel AI SDK v5's streamText function has specific requirements for tool result parts:
-		// 
+		//
 		// 1. Tool parts are identified by type starting with "tool-" (checked via isToolUIPart function)
 		// 2. Tool name is extracted from type: type.split("-").slice(1).join("-")
 		//    Example: "tool-webSearch" → toolName = "webSearch"
@@ -310,12 +308,12 @@ export class Agent<TRuntimeContext = unknown> {
 		//    - input: the tool's input arguments
 		//    - output: the tool's results (for success)
 		//    - errorText: error message (for errors)
-		// 
+		//
 		// REDIS STORAGE ISSUE:
 		// When tool results are stored in Redis, only 'input' and 'output' fields are persisted.
 		// The critical metadata fields (type, toolCallId, state) are lost during storage/retrieval.
 		// This causes AI SDK to throw: "Unsupported tool part state: undefined"
-		// 
+		//
 		// V2 ARCHITECTURE NOTE:
 		// In v2, we do NOT store tool-call parts in the database. Tool calls are handled by
 		// the distributed state machine (QStash). Only tool results are persisted.
@@ -328,10 +326,9 @@ export class Agent<TRuntimeContext = unknown> {
 
 		// Convert UIMessages to model messages
 		// Pass tools so the SDK knows how to handle tool results properly
-		const modelMessages = convertToModelMessages(fixedMessages, { 
-			tools: toolsForScheduling 
+		const modelMessages = convertToModelMessages(fixedMessages, {
+			tools: toolsForScheduling,
 		});
-
 
 		// Use streamText with tools directly - let it decide naturally
 		// IMPORTANT: maxSteps=1 to prevent internal looping - we handle the loop via QStash
@@ -385,7 +382,6 @@ export class Agent<TRuntimeContext = unknown> {
 					}
 					break;
 
-
 				case "tool-call":
 					// Flush any pending content before tool call
 					if (currentTextContent) {
@@ -402,6 +398,15 @@ export class Agent<TRuntimeContext = unknown> {
 						name: chunk.toolName,
 						args: chunk.input,
 					};
+					// Write tool call to delta stream for UI
+					await this.streamWriter.writeToolCall(assistantMessageId, {
+						type: "tool-call",
+						toolCallId: chunk.toolCallId,
+						toolName: chunk.toolName,
+						args: chunk.input,
+					});
+					// Also write tool call event for tracking
+					await this.eventWriter.writeAgentToolCall(sessionId, this.config.name, chunk.toolName, chunk.toolCallId);
 					break;
 
 				case "finish-step":
@@ -437,9 +442,9 @@ export class Agent<TRuntimeContext = unknown> {
 			if (parts.length > 0) {
 				// This is a subsequent response after tool execution
 				// Append the new parts to the existing message
-				const newParts = parts.map(part => ({
+				const newParts = parts.map((part) => ({
 					type: part.type,
-					text: part.content
+					text: part.content,
 				}));
 				await this.messageWriter.appendMessageParts(sessionId, assistantMessageId, newParts);
 			}
@@ -478,9 +483,9 @@ export class Agent<TRuntimeContext = unknown> {
 
 		// Return decision based on what streamText naturally decided
 		const decision: AgentDecision = pendingToolCall ? { toolCall: pendingToolCall } : {}; // No tool needed
-		
+
 		// Calculate full content from all parts
-		const fullContent = parts.map(p => p.content).join("");
+		const fullContent = parts.map((p) => p.content).join("");
 
 		return { decision, chunkCount, fullContent };
 	}
