@@ -36,6 +36,8 @@ export default async function ChatPage({ params }: ChatPageProps) {
 		// notFound();
 	}
 
+	console.log(messages);
+
 	return (
 		<Suspense fallback={null}>
 			<ChatInterface agentId={agentId} threadId={threadId} initialMessages={messages} />

@@ -26,14 +26,6 @@ import { StreamStatus } from "./server/stream/types";
 import { MessageWriter } from "./server/writers/message-writer";
 import { type AgentDecision, AgentDecisionSchema, type WorkerConfig } from "./workers/schemas";
 
-// Simple message type for internal use
-type SimpleMessage = {
-	role: "system" | "user" | "assistant" | "tool";
-	content: string;
-	toolCallId?: string;
-	toolCalls?: any[];
-};
-
 // Legacy v2 tool definition (for backward compatibility)
 export interface AgentToolDefinition {
 	name: string;
@@ -488,20 +480,5 @@ export class Agent<TRuntimeContext = unknown> {
 		const fullContent = parts.map((p) => p.content).join("");
 
 		return { decision, chunkCount, fullContent };
-	}
-
-	private extractUsedTools(messages: SimpleMessage[]): string[] {
-		const tools = new Set<string>();
-		messages.forEach((m) => {
-			// Extract tool names from tool calls if available
-			if (m.toolCalls) {
-				m.toolCalls.forEach((toolCall: any) => {
-					if (toolCall.name) {
-						tools.add(toolCall.name);
-					}
-				});
-			}
-		});
-		return Array.from(tools);
 	}
 }
