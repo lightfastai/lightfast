@@ -42,15 +42,6 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 	// Convert messages for display
 	const displayMessages = convertToLightfastMessages(messages);
 
-	// Add current streaming response as a temporary message
-	if (currentResponse) {
-		displayMessages.push({
-			id: "streaming-message",
-			role: "assistant",
-			parts: [{ type: "text", text: currentResponse }],
-		});
-	}
-
 	const handleSendMessage = async (message: string) => {
 		// Update URL immediately when sending first message
 		if (window.location.pathname === `/v2-chat/${agentId}`) {
