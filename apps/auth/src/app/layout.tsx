@@ -10,15 +10,17 @@ import { cn } from "@repo/ui/lib/utils";
 
 export const metadata: Metadata = {
   title: {
-    default: siteConfig.name,
-    template: `%s - ${siteConfig.name}`,
+    default: `${siteConfig.name} Auth`,
+    template: `%s - ${siteConfig.name} Auth`,
   },
   metadataBase: new URL(siteConfig.url),
-  description: siteConfig.description,
+  description: `Authentication portal for ${siteConfig.name} platform`,
   keywords: [
-    "Lightfast",
-    "App",
-    "Application",
+    siteConfig.name,
+    "Auth",
+    "Authentication",
+    "Sign In",
+    "Login",
   ],
   authors: [
     {
@@ -31,22 +33,22 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteConfig.url,
-    title: siteConfig.name,
-    description: siteConfig.description,
-    siteName: siteConfig.name,
+    title: `${siteConfig.name} Auth`,
+    description: `Authentication portal for ${siteConfig.name} platform`,
+    siteName: `${siteConfig.name} Auth`,
     images: [
       {
         url: siteConfig.ogImage,
         width: 1200,
         height: 630,
-        alt: siteConfig.name,
+        alt: `${siteConfig.name} Auth`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
+    title: `${siteConfig.name} Auth`,
+    description: `Authentication portal for ${siteConfig.name} platform`,
     images: [siteConfig.ogImage],
   },
   icons: {
@@ -68,11 +70,11 @@ export const metadata: Metadata = {
       },
     ],
   },
-  applicationName: siteConfig.name,
+  applicationName: `${siteConfig.name} Auth`,
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: siteConfig.name,
+    title: `${siteConfig.name} Auth`,
   },
   formatDetection: {
     telephone: false,
