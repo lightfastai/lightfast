@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import "./env";
+import "./src/env";
 
 const nextConfig: NextConfig = {
 	/** Enables hot reloading for local packages without a build step */
