@@ -15,7 +15,6 @@
     "db:studio": "turbo -F @vendor/db lightfast:studio",
     "dev": "turbo run dev --parallel --filter=@lightfast/app --filter=@lightfast/www",
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
-    "dev:docs": "turbo watch dev -F @lightfast/docs --continue",
     "dev:app": "turbo watch dev -F @lightfast/app --continue",
     "dev:darkarmy": "turbo watch dev -F @lightfast/darkarmy --continue",
     "dev:desktop": "pnpm --filter @lightfast/desktop dev",
