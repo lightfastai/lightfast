@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
 import { siteConfig } from "@repo/lightfast-config";
+import { ClerkProvider } from "@clerk/nextjs";
 
 
 export const metadata: Metadata = {
@@ -84,11 +85,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head />
-      <body className="bg-gray-900 text-white min-h-screen">
-        {children}
-      </body>
-    </html>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      signInUrl="/sign-in"
+      afterSignInUrl="/dashboard"
+      signUpUrl="/sign-up"
+      afterSignUpUrl="/dashboard"
+      appearance={{
+        variables: {
+          colorPrimary: "#3b82f6",
+          colorBackground: "#0a0a0a",
+          colorInputBackground: "#18181b",
+          colorInputText: "#fafafa",
+        },
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body className="bg-gray-900 text-white min-h-screen">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
