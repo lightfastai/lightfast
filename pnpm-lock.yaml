@@ -324,13 +324,13 @@ importers:
         version: 2.4.4
       '@lightfast/core':
         specifier: workspace:*
-        version: link:../../packages/ai-experimental
+        version: link:../../packages/lightfast-core
       '@lightfast/evals':
         specifier: workspace:*
-        version: link:../../packages/evals
+        version: link:../../packages/lightfast-evals
       '@lightfast/types':
         specifier: workspace:*
-        version: link:../../packages/types
+        version: link:../../packages/lightfast-types
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.0
@@ -741,92 +741,6 @@ importers:
         specifier: 'catalog:'
         version: 5.9.2
 
-  packages/ai-experimental:
-    dependencies:
-      '@ai-sdk/anthropic':
-        specifier: 'catalog:'
-        version: 2.0.0-beta.8(zod@3.25.76)
-      '@ai-sdk/gateway':
-        specifier: 'catalog:'
-        version: 1.0.0-beta.11(zod@3.25.76)
-      '@ai-sdk/provider':
-        specifier: 'catalog:'
-        version: 2.0.0-beta.1
-      '@t3-oss/env-core':
-        specifier: 'catalog:'
-        version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
-      '@upstash/qstash':
-        specifier: ^2.8.1
-        version: 2.8.2
-      '@upstash/redis':
-        specifier: 'catalog:'
-        version: 1.35.3
-      ai:
-        specifier: 'catalog:'
-        version: 5.0.0-beta.26(zod@3.25.76)
-      braintrust:
-        specifier: 'catalog:'
-        version: 0.2.1(zod@3.25.76)
-      pino:
-        specifier: ^9.7.0
-        version: 9.7.0
-      playwright:
-        specifier: 'catalog:'
-        version: 1.54.1
-      playwright-core:
-        specifier: 'catalog:'
-        version: 1.54.1
-      resumable-stream:
-        specifier: 'catalog:'
-        version: 2.2.3
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
-      zod:
-        specifier: 'catalog:'
-        version: 3.25.76
-    devDependencies:
-      '@types/node':
-        specifier: ^24.0.15
-        version: 24.1.0
-      '@types/react':
-        specifier: ^19.1.8
-        version: 19.1.9
-      '@types/uuid':
-        specifier: ^10.0.0
-        version: 10.0.0
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.2
-
-  packages/evals:
-    dependencies:
-      '@lightfast/core':
-        specifier: workspace:*
-        version: link:../ai-experimental
-      ai:
-        specifier: 'catalog:'
-        version: 5.0.0-beta.26(zod@3.25.76)
-      braintrust:
-        specifier: 'catalog:'
-        version: 0.2.1(zod@3.25.76)
-      zod:
-        specifier: 'catalog:'
-        version: 3.25.76
-    devDependencies:
-      '@types/node':
-        specifier: ^24.0.15
-        version: 24.1.0
-      dotenv-cli:
-        specifier: ^8.0.0
-        version: 8.0.0
-      tsx:
-        specifier: ^4.20.3
-        version: 4.20.3
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.2
-
   packages/lib:
     dependencies:
       nanoid:
@@ -892,6 +806,64 @@ importers:
         specifier: 'catalog:'
         version: 3.6.2
 
+  packages/lightfast-core:
+    dependencies:
+      '@ai-sdk/anthropic':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.8(zod@3.25.76)
+      '@ai-sdk/gateway':
+        specifier: 'catalog:'
+        version: 1.0.0-beta.11(zod@3.25.76)
+      '@ai-sdk/provider':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.1
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      '@upstash/qstash':
+        specifier: ^2.8.1
+        version: 2.8.2
+      '@upstash/redis':
+        specifier: 'catalog:'
+        version: 1.35.3
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.0-beta.26(zod@3.25.76)
+      braintrust:
+        specifier: 'catalog:'
+        version: 0.2.1(zod@3.25.76)
+      pino:
+        specifier: ^9.7.0
+        version: 9.7.0
+      playwright:
+        specifier: 'catalog:'
+        version: 1.54.1
+      playwright-core:
+        specifier: 'catalog:'
+        version: 1.54.1
+      resumable-stream:
+        specifier: 'catalog:'
+        version: 2.2.3
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.15
+        version: 24.1.0
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.1.9
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
   packages/lightfast-email:
     dependencies:
       '@react-email/components':
@@ -953,6 +925,34 @@ importers:
         specifier: 'catalog:'
         version: 3.6.2
 
+  packages/lightfast-evals:
+    dependencies:
+      '@lightfast/core':
+        specifier: workspace:*
+        version: link:../lightfast-core
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.0-beta.26(zod@3.25.76)
+      braintrust:
+        specifier: 'catalog:'
+        version: 0.2.1(zod@3.25.76)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.15
+        version: 24.1.0
+      dotenv-cli:
+        specifier: ^8.0.0
+        version: 8.0.0
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
   packages/lightfast-js:
     dependencies:
       lucide-react:
@@ -985,6 +985,22 @@ importers:
         version: 3.6.2
       typescript:
         specifier: 'catalog:'
+        version: 5.9.2
+
+  packages/lightfast-types:
+    dependencies:
+      '@lightfast/core':
+        specifier: workspace:*
+        version: link:../lightfast-core
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.0-beta.26(zod@3.25.76)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.15
+        version: 24.1.0
+      typescript:
+        specifier: ^5.8.3
         version: 5.9.2
 
   packages/trpc-client:
@@ -1040,22 +1056,6 @@ importers:
         version: 3.6.2
       typescript:
         specifier: 'catalog:'
-        version: 5.9.2
-
-  packages/types:
-    dependencies:
-      '@lightfast/core':
-        specifier: workspace:*
-        version: link:../ai-experimental
-      ai:
-        specifier: 'catalog:'
-        version: 5.0.0-beta.26(zod@3.25.76)
-    devDependencies:
-      '@types/node':
-        specifier: ^24.0.15
-        version: 24.1.0
-      typescript:
-        specifier: ^5.8.3
         version: 5.9.2
 
   packages/ui:

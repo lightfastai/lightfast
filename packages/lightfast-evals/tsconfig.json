@@ -12,5 +12,5 @@
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist"],
-	"references": [{ "path": "../ai-experimental" }, { "path": "../types" }]
+	"references": [{ "path": "../lightfast-core" }, { "path": "../lightfast-types" }]
 }
