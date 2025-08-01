@@ -1,5 +1,5 @@
 {
-  "name": "@vendor/openauth",
+  "name": "@repo/vercel-config",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,10 +7,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
-    },
-    "./server": "./src/server/index.ts",
-    "./env": "./env.ts",
-    "./server/auth-functions/core": "./src/server/auth-functions/core.ts"
+    }
   },
   "license": "MIT",
   "scripts": {
@@ -19,21 +16,16 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@openauthjs/openauth": "^0.4.3",
-    "@t3-oss/env-nextjs": "^0.12.0",
-    "js-cookie": "^3.0.5",
-    "react": "catalog:react19",
-    "react-dom": "catalog:react19",
-    "zod": "catalog:"
+    "typescript": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/js-cookie": "^3.0.6",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

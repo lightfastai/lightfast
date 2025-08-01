@@ -4,10 +4,10 @@ import { z } from "zod";
 
 import { User } from "@vendor/db/lightfast/schema";
 
-import { serverProcedure } from "../../trpc";
+import { protectedProcedure } from "../../trpc";
 
 export const userRouter = {
-  create: serverProcedure
+  create: protectedProcedure
     .input(
       z.object({
         email: z.string().email("Please enter a valid email address."),

@@ -1,12 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
-import "@repo/ui/globals.css";
-
 import { siteConfig } from "@repo/lightfast-config";
-import { Toaster } from "@repo/ui/components/ui/toaster";
-import { fonts } from "@repo/ui/lib/fonts";
-import { cn } from "@repo/ui/lib/utils";
-import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+
 
 export const metadata: Metadata = {
   title: {
@@ -91,11 +86,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={cn("bg-background dark min-h-screen", fonts)}>
+      <body className="bg-gray-900 text-white min-h-screen">
         {children}
-        <Toaster />
-        <VercelAnalytics />
-        <SpeedInsights />
       </body>
     </html>
   );

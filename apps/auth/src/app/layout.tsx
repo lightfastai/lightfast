@@ -7,6 +7,7 @@ import { siteConfig } from "@repo/lightfast-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { getClerkConfig } from "@repo/url-utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 export const metadata: Metadata = {
@@ -86,6 +87,8 @@ export const viewport: Viewport = {
   themeColor: "#09090b",
 };
 
+const clerkConfig = getClerkConfig("auth");
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -93,8 +96,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
-      signInUrl="/sign-in"
-      signInFallbackRedirectUrl="/"
+      {...clerkConfig}
       appearance={{
         variables: {
           colorPrimary: "#3b82f6",

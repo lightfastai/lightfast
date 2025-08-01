@@ -117,7 +117,7 @@ export default function HomePage() {
                   href={siteConfig.links.chat.href}
                 >
                   <ZapIcon className="mr-1 h-4 w-4" />
-                  Go to Chat App
+                  Get Started
                 </Link>
               </Button>
             </div>

@@ -1,5 +1,5 @@
 {
-  "name": "@vendor/trpc",
+  "name": "@repo/url-utils",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,13 +7,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
-    },
-    "./env": "./env.ts",
-    "./inngest": {
-      "types": "./inngest/dist/index.d.ts",
-      "default": "./src/inngest/index.ts"
-    },
-    "./headers": "./src/headers.ts"
+    }
   },
   "license": "MIT",
   "scripts": {
@@ -25,24 +19,14 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@repo/ai": "workspace:^",
-    "@tanstack/react-query": "catalog:",
-    "@trpc/client": "catalog:",
-    "@trpc/server": "catalog:",
-    "@trpc/tanstack-react-query": "catalog:",
-    "@vendor/clerk": "workspace:*",
-    "@vendor/db": "workspace:*",
-    "@vendor/inngest": "workspace:^",
-    "@vendor/observability": "workspace:*",
-    "bcrypt-ts": "^5.0.2",
-    "react": "catalog:react19",
-    "superjson": "2.2.1",
-    "zod": "catalog:"
+    "@repo/vercel-config": "workspace:*",
+    "typescript": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

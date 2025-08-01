@@ -5,7 +5,6 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import type { AppRouter } from "@vendor/trpc";
-import { getSessionFromCookiesNextHandler } from "@vendor/openauth/server";
 import { appRouter, createTRPCContext } from "@vendor/trpc";
 
 import { createQueryClient } from "./trpc-react-query-client";
@@ -19,7 +18,6 @@ const createContext = cache(async () => {
   heads.set("x-trpc-source", "rsc");
 
   return createTRPCContext({
-    session: await getSessionFromCookiesNextHandler(),
     headers: heads,
   });
 });
