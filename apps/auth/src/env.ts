@@ -19,7 +19,8 @@ export const env = createEnv({
    * This way you can ensure the app isn't built with invalid env vars.
    */
   server: {
-    // Add server-only environment variables here
+    CLERK_WEBHOOK_SECRET: z.string().min(1).startsWith("whsec_"),
+    REQUEST_ID_SECRET: z.string().min(1),
   },
 
   /**

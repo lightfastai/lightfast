@@ -4,7 +4,10 @@ import { z } from "zod";
 export const env = createEnv({
   shared: {},
   server: {
-    POSTGRES_URL: z.string().min(1).url(),
+    DATABASE_HOST: z.string().min(1),
+    DATABASE_USERNAME: z.string().min(1), 
+    DATABASE_PASSWORD: z.string().min(1),
+    DATABASE_NAME: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {},

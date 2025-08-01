@@ -27,12 +27,11 @@
     "with-env-lightfast": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
+    "@planetscale/database": "^1.19.0",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@vercel/postgres": "^0.10.0",
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.7.1",
-    "postgres": "^3.4.5",
     "zod": "catalog:"
   },
   "devDependencies": {

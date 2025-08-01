@@ -1,16 +1,18 @@
-import { relations, sql } from "drizzle-orm";
-import { pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 import { nanoid } from "@repo/lib";
 
-import { Session } from "./Session";
-
-export const User = pgTable("user", {
+export const User = mysqlTable("user", {
   id: varchar("id", { length: 191 })
     .notNull()
     .primaryKey()
     .$defaultFn(() => nanoid()),
+  clerkId: varchar("clerk_id", { length: 191 }).notNull().unique(),
   email: varchar("email", { length: 191 }).notNull().unique(),
+  firstName: varchar("first_name", { length: 191 }),
+  lastName: varchar("last_name", { length: 191 }),
+  imageUrl: varchar("image_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -18,8 +20,5 @@ export const User = pgTable("user", {
     .$onUpdateFn(() => sql`now()`),
 });
 
-export const UserRelations = relations(User, ({ many }) => ({
-  sessions: many(Session),
-}));
-
 export type User = typeof User.$inferSelect;
+export type InsertUser = typeof User.$inferInsert;
