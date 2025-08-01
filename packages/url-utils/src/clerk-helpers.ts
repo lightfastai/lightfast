@@ -38,7 +38,7 @@ export function getClerkMiddlewareConfig(appName: ProjectName) {
   
   if (appName === "auth") {
     return {
-      publicRoutes: ["/", "/sign-in", "/sign-up"],
+      publicRoutes: ["/sign-in", "/sign-up"],
       ignoredRoutes: ["/api/health"],
       ...config,
     };

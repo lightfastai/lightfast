@@ -103,17 +103,12 @@ export function getCurrentAppUrl(): string {
 
 /**
  * Helper for Clerk subdomain configuration
- * For subdomain setups, we don't need satellite config - sessions are shared via root domain cookies
+ * For subdomain setups, we don't need complex satellite config - sessions are shared via root domain cookies
  */
 export function getClerkSubdomainConfig(currentApp: ProjectName) {
-  // For subdomain setups, we only need to specify the domain for production
-  // In development, localhost handles this automatically
-  if (process.env.NODE_ENV === "production") {
-    return {
-      domain: "lightfast.ai", // Root domain for cookie sharing
-    };
-  }
-
-  // No special config needed for development
+  // For subdomain setups with Next.js, we typically don't need special Clerk config
+  // The cookie sharing happens automatically via the root domain
+  // Only add specific config if needed for your Clerk setup
+  
   return {};
 }
