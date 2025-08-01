@@ -3,11 +3,7 @@ import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
-import { env } from "../../../env";
-
-// Determine auth mode based on environment
-const isProduction = env.NEXT_PUBLIC_VERCEL_ENV === "production";
-const usePasswordAuth = !isProduction;
+// Always use passwordless authentication (email verification)
 
 export default function SignInPage() {
 	return (
@@ -25,6 +21,28 @@ export default function SignInPage() {
 							<Clerk.GlobalError className="text-sm text-red-500" />
 
 							<div className="space-y-4">
+								{/* Email Authentication */}
+								<Clerk.Field name="identifier" className="space-y-2">
+									<Clerk.Input asChild>
+										<Input type="email" placeholder="Enter your email" />
+									</Clerk.Input>
+									<Clerk.FieldError className="text-xs text-red-500" />
+								</Clerk.Field>
+
+								<SignIn.Action submit asChild>
+									<Button className="w-full">Continue with Email</Button>
+								</SignIn.Action>
+
+								{/* Divider */}
+								<div className="relative">
+									<div className="absolute inset-0 flex items-center">
+										<span className="w-full border-t border-border/50" />
+									</div>
+									<div className="relative flex justify-center text-xs uppercase">
+										<span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+									</div>
+								</div>
+
 								{/* Social Authentication */}
 								<div className="space-y-3">
 									<Clerk.Connection name="github" asChild>
@@ -48,50 +66,13 @@ export default function SignInPage() {
 										</Button>
 									</Clerk.Connection>
 								</div>
-
-								{/* Divider */}
-								<div className="relative">
-									<div className="absolute inset-0 flex items-center">
-										<span className="w-full border-t border-border/50" />
-									</div>
-									<div className="relative flex justify-center text-xs uppercase">
-										<span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
-									</div>
-								</div>
-
-								{/* Email Authentication */}
-								<Clerk.Field name="identifier" className="space-y-2">
-									<Clerk.Input asChild>
-										<Input type="email" placeholder="Enter your email" />
-									</Clerk.Input>
-									<Clerk.FieldError className="text-xs text-red-500" />
-								</Clerk.Field>
-
-								{/* Password field for dev/preview */}
-								{usePasswordAuth && (
-									<Clerk.Field name="password" className="space-y-2">
-										<Clerk.Input asChild>
-											<Input type="password" placeholder="Enter your password" />
-										</Clerk.Input>
-										<Clerk.FieldError className="text-xs text-red-500" />
-									</Clerk.Field>
-								)}
-
-								<SignIn.Action submit asChild>
-									<Button className="w-full">{usePasswordAuth ? "Sign In" : "Continue with Email"}</Button>
-								</SignIn.Action>
 							</div>
 
-							{/* Footer */}
-							<div className="space-y-2">
-								<p className="text-center text-xs text-muted-foreground">Authentication powered by Clerk</p>
-							</div>
 						</div>
 					</SignIn.Step>
 
-					{/* Email verification step - only for production */}
-					{!usePasswordAuth && (
-						<SignIn.Step name="verifications">
+					{/* Email verification step */}
+					<SignIn.Step name="verifications">
 							<div className="space-y-6">
 								{/* Header */}
 								<div className="text-center">
@@ -122,8 +103,7 @@ export default function SignInPage() {
 									</SignIn.Action>
 								</div>
 							</div>
-						</SignIn.Step>
-					)}
+					</SignIn.Step>
 				</SignIn.Root>
 			</div>
 		</div>
