@@ -1,0 +1,26 @@
+{
+	"name": "@lightfast/types",
+	"version": "1.0.0",
+	"description": "Shared TypeScript types for Lightfast",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./src/index.ts"
+		}
+	},
+	"scripts": {
+		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"build": "tsc",
+		"dev": "tsc",
+		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
+		"lint": "biome check --write ."
+	},
+	"dependencies": {
+		"ai": "catalog:",
+		"@lightfast/ai": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.15",
+		"typescript": "^5.8.3"
+	}
+}

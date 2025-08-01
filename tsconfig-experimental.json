@@ -1,0 +1,16 @@
+{
+  "extends": "./tooling/typescript/base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "files": [],
+  "references": [
+    { "path": "./packages/types" },
+    { "path": "./packages/ai" },
+    { "path": "./packages/evals" },
+    { "path": "./apps/www" },
+    { "path": "./tooling/typescript" }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+	"mcpServers": {
+		"playwright": {
+			"command": "npx",
+			"args": [
+				"@playwright/mcp@latest",
+				"--headless",
+				"--browser",
+				"chrome",
+				"--caps",
+				"core,tabs,wait,files,testing",
+				"--isolated",
+				"--no-sandbox"
+			]
+		},
+		"container-use": {
+			"command": "container-use",
+			"args": ["stdio"],
+			"timeout": 1200000
+		}
+	}
+}
