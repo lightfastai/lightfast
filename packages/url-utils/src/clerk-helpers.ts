@@ -15,8 +15,6 @@ export function getClerkConfig(appName: ProjectName) {
       signUpUrl: "/sign-up",
       signInFallbackRedirectUrl: authUrls.afterSignIn,
       signUpFallbackRedirectUrl: authUrls.afterSignUp,
-      afterSignInUrl: authUrls.afterSignIn,
-      afterSignUpUrl: authUrls.afterSignUp,
       signInForceRedirectUrl: authUrls.afterSignIn,
       signUpForceRedirectUrl: authUrls.afterSignUp,
       ...subdomainConfig,

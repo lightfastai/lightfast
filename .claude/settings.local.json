@@ -93,7 +93,8 @@
       "mcp__playwright__browser_close",
       "Bash(pnpm --filter @lightfast/www typecheck)",
       "WebFetch(domain:clerk.com)",
-      "Bash(pnpm --filter @vendor/db build)"
+      "Bash(pnpm --filter @vendor/db build)",
+      "WebFetch(domain:clerk.com)"
     ],
     "deny": []
   },

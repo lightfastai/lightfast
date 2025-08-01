@@ -1,19 +1,34 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 import { log } from "@vendor/observability/log";
-import { getAllAppUrls } from "@repo/url-utils";
+import { getAllAppUrls, getClerkMiddlewareConfig } from "@repo/url-utils";
 
 import {
   generateSignedRequestId,
   REQUEST_ID_HEADER,
 } from "./lib/requests/request-id";
 
+const clerkConfig = getClerkMiddlewareConfig("www");
+
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/api/health", 
+  "/api/early-access/*",
+  "/legal/*"
+]);
+
 /**
  * Middleware to handle request ID generation, authentication, and protected routes
  */
 export const middleware = clerkMiddleware(async (auth, request: NextRequest) => {
+  // Handle authentication protection first
+  if (!isPublicRoute(request)) {
+    await auth.protect();
+  }
+  
   const { userId } = await auth();
   
   // If user is authenticated and on landing page, redirect to app
@@ -41,7 +56,7 @@ export const middleware = clerkMiddleware(async (auth, request: NextRequest) => 
       [REQUEST_ID_HEADER]: requestId,
     },
   });
-});
+}, clerkConfig);
 
 export const config = {
   matcher: [
