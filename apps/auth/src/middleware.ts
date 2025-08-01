@@ -1,8 +1,21 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
-import { getAllAppUrls } from "@repo/url-utils";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { getAllAppUrls, getClerkMiddlewareConfig } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 
+const clerkConfig = getClerkMiddlewareConfig("auth");
+
+// Define public routes for the auth app
+const isPublicRoute = createRouteMatcher([
+  "/sign-in",
+  "/sign-up",
+]);
+
 export default clerkMiddleware(async (auth, req) => {
+  // Handle authentication protection first
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
+  
   const { userId } = await auth();
   const urls = getAllAppUrls();
   
@@ -18,7 +31,7 @@ export default clerkMiddleware(async (auth, req) => {
   
   // Continue with normal behavior
   return NextResponse.next();
-});
+}, clerkConfig);
 
 export const config = {
   matcher: [

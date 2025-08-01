@@ -1,10 +1,17 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-
 import { NextResponse } from "next/server";
 
-// Define protected routes - everything except public routes
-const isProtectedRoute = createRouteMatcher([
-	"/((?!sign-in|api/webhooks|api/cron|api/v2|test-event-driven|test-resumable-stream|test-simple|test-instant-stream).*)",
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+	"/sign-in",
+	"/api/health",
+	"/api/webhooks/*",
+	"/api/cron/*",
+	"/api/v2/*",
+	"/test-event-driven",
+	"/test-resumable-stream", 
+	"/test-simple",
+	"/test-instant-stream"
 ]);
 
 // Default agent
@@ -12,8 +19,8 @@ const DEFAULT_AGENT = "a011";
 
 export default clerkMiddleware(
 	async (auth, req) => {
-		// Protect routes using Clerk's built-in protection
-		if (isProtectedRoute(req)) {
+		// Handle authentication protection first
+		if (!isPublicRoute(req)) {
 			await auth.protect();
 		}
 
