@@ -8,7 +8,6 @@ import {
   Database,
   Home,
   Settings2,
-  Zap,
   Sparkles,
 } from "lucide-react";
 
