@@ -1,7 +1,6 @@
 import React from "react";
 import { ZapIcon, CodeIcon, DatabaseIcon } from "lucide-react";
 
-import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { SidebarTrigger } from "@repo/ui/components/ui/sidebar";
 import { AuthStatus } from "~/components/auth-status";
