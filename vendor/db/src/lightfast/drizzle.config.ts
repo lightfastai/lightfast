@@ -6,7 +6,7 @@ export default createDrizzleConfig({
   host: env.DATABASE_HOST,
   username: env.DATABASE_USERNAME,
   password: env.DATABASE_PASSWORD,
-  database: env.DATABASE_NAME,
+  database: "lightfast", // Default database name for PlanetScale
   schema: "./src/lightfast/schema/index.ts",
   out: "./src/lightfast/migrations",
 });

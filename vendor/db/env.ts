@@ -7,7 +7,6 @@ export const env = createEnv({
     DATABASE_HOST: z.string().min(1),
     DATABASE_USERNAME: z.string().min(1), 
     DATABASE_PASSWORD: z.string().min(1),
-    DATABASE_NAME: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {},
