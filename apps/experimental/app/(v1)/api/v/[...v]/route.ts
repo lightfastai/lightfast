@@ -1,10 +1,10 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
-import { createAgent } from "@lightfast/ai-experimental/agent";
-import { fetchRequestHandler } from "@lightfast/ai-experimental/agent/handlers";
-import { RedisMemory } from "@lightfast/ai-experimental/agent/memory/adapters/redis";
-import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfast/ai-experimental/agent/primitives/cache";
+import { createAgent } from "@lightfast/core/agent";
+import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
+import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
+import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfast/core/agent/primitives/cache";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware, currentSpan, initLogger, traced } from "braintrust";
 import { A011_SYSTEM_PROMPT } from "@/app/(v1)/ai/agents/a011";

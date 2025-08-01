@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { MessageReader } from "@lightfast/ai-experimental/v2/server";
+import { MessageReader } from "@lightfast/core/v2/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { redis } from "@/app/(v2)/ai/config";

@@ -3,7 +3,7 @@
  * Centralized configuration for all V2 AI components
  */
 
-import { StreamConsumer } from "@lightfast/ai-experimental/v2/core";
+import { StreamConsumer } from "@lightfast/core/v2/core";
 import { Client as QStashClient } from "@upstash/qstash";
 import { Redis } from "@upstash/redis";
 import { env } from "@/env";

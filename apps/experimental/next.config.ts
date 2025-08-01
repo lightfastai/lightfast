@@ -4,7 +4,7 @@ import "./env";
 const nextConfig: NextConfig = {
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
-    "@lightfast/ai-experimental",
+    "@lightfast/core",
     "@lightfast/types",
     "@lightfast/evals",
   ],

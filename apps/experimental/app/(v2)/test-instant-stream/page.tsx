@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat } from "@lightfast/ai-experimental/v2/react";
+import { useChat } from "@lightfast/core/v2/react";
 import { AlertCircle, Bot, Loader2, Send, User, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";

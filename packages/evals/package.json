@@ -31,7 +31,7 @@
 		"with-env": "dotenv -e ../../apps/www/.env.local --"
 	},
 	"dependencies": {
-		"@lightfast/ai-experimental": "workspace:*",
+		"@lightfast/core": "workspace:*",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
 		"zod": "catalog:"
