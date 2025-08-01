@@ -89,7 +89,8 @@
       "Bash(pnpm clean:workspaces:*)",
       "Bash(npm view:*)",
       "Bash(npm view:*)",
-      "Bash(pnpm list:*)"
+      "Bash(pnpm list:*)",
+      "mcp__playwright__browser_close"
     ],
     "deny": []
   },

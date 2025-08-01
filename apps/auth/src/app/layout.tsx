@@ -92,7 +92,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl="/sign-in"
+      signInFallbackRedirectUrl="/"
+      appearance={{
+        variables: {
+          colorPrimary: "#3b82f6",
+          colorBackground: "#0a0a0a",
+          colorInputBackground: "#18181b",
+          colorInputText: "#fafafa",
+        },
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
         <head />
         <body className={cn("bg-background dark min-h-screen", fonts)}>
