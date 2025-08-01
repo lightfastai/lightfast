@@ -1,0 +1,37 @@
+{
+  "name": "@lightfast/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules",
+    "dev": "next dev -p 4104",
+    "lint": "eslint",
+    "start": "next start -p 4104",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.25.4",
+    "@repo/lightfast-config": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.12.0",
+    "@vendor/clerk": "workspace:*",
+    "next": "catalog:",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "autoprefixer": "^10.4.21",
+    "eslint": "catalog:",
+    "postcss": "catalog:tailwind4",
+    "tailwindcss": "catalog:tailwind4",
+    "typescript": "catalog:"
+  }
+}
