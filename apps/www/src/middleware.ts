@@ -16,8 +16,8 @@ const clerkConfig = getClerkMiddlewareConfig("www");
 const isPublicRoute = createRouteMatcher([
   "/",
   "/api/health", 
-  "/api/early-access/*",
-  "/legal/*"
+  "/api/early-access/(.*)",
+  "/legal/(.*)"
 ]);
 
 /**

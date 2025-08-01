@@ -5,9 +5,9 @@ import { NextResponse } from "next/server";
 const isPublicRoute = createRouteMatcher([
 	"/sign-in",
 	"/api/health",
-	"/api/webhooks/*",
-	"/api/cron/*",
-	"/api/v2/*",
+	"/api/webhooks/(.*)",
+	"/api/cron/(.*)",
+	"/api/v2/(.*)",
 	"/test-event-driven",
 	"/test-resumable-stream", 
 	"/test-simple",
