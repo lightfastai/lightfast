@@ -174,7 +174,7 @@ importers:
         specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       autoprefixer:
-        specifier: ^10.4.20
+        specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.3)
       eslint:
         specifier: 'catalog:'
@@ -220,7 +220,7 @@ importers:
         specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       autoprefixer:
-        specifier: ^10.4.20
+        specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.3)
       eslint:
         specifier: 'catalog:'
@@ -446,7 +446,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/ui
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       '@vendor/analytics':
         specifier: workspace:*
@@ -519,11 +519,11 @@ importers:
         specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       autoprefixer:
-        specifier: ^10.4.20
+        specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.3)
       dotenv-cli:
-        specifier: ^7.4.2
-        version: 7.4.4
+        specifier: ^8.0.0
+        version: 8.0.0
       eslint:
         specifier: 'catalog:'
         version: 9.32.0(jiti@1.21.7)
@@ -634,7 +634,7 @@ importers:
         specifier: ^0.4.5
         version: 0.4.6(zod@3.25.76)
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       ai:
         specifier: ^4.3.13
@@ -766,7 +766,7 @@ importers:
   packages/lib:
     dependencies:
       nanoid:
-        specifier: ^5.0.8
+        specifier: ^5.1.5
         version: 5.1.5
     devDependencies:
       '@repo/eslint-config':
@@ -816,7 +816,7 @@ importers:
         specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       autoprefixer:
-        specifier: ^10.4.20
+        specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.3)
       eslint:
         specifier: 'catalog:'
@@ -877,7 +877,7 @@ importers:
         specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
       autoprefixer:
-        specifier: ^10.4.20
+        specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.3)
       eslint:
         specifier: 'catalog:'
@@ -1000,7 +1000,7 @@ importers:
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.61.1(react@19.1.0))
       '@radix-ui/react-accordion':
-        specifier: ^1.2.3
+        specifier: ^1.2.11
         version: 1.2.11(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.6
@@ -1009,7 +1009,7 @@ importers:
         specifier: ^1.1.0
         version: 1.1.7(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-avatar':
-        specifier: ^1.1.1
+        specifier: ^1.1.10
         version: 1.1.10(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-checkbox':
         specifier: ^1.1.2
@@ -1021,16 +1021,16 @@ importers:
         specifier: ^2.2.6
         version: 2.2.15(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-dialog':
-        specifier: ^1.1.2
+        specifier: ^1.1.14
         version: 1.1.14(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-dropdown-menu':
-        specifier: ^2.1.2
+        specifier: ^2.1.15
         version: 2.1.15(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-hover-card':
         specifier: ^1.1.6
         version: 1.1.14(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-label':
-        specifier: ^2.1.0
+        specifier: ^2.1.7
         version: 2.1.7(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-menubar':
         specifier: ^1.1.6
@@ -1039,7 +1039,7 @@ importers:
         specifier: ^1.2.5
         version: 1.2.13(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-popover':
-        specifier: ^1.1.2
+        specifier: ^1.1.14
         version: 1.1.14(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-progress':
         specifier: ^1.1.2
@@ -1048,10 +1048,10 @@ importers:
         specifier: ^1.2.3
         version: 1.3.7(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-scroll-area':
-        specifier: ^1.2.0
+        specifier: ^1.2.9
         version: 1.2.9(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-select':
-        specifier: ^2.1.6
+        specifier: ^2.2.5
         version: 2.2.5(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-separator':
         specifier: ^1.1.0
@@ -1060,7 +1060,7 @@ importers:
         specifier: ^1.2.1
         version: 1.3.5(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-slot':
-        specifier: ^1.1.2
+        specifier: ^1.2.3
         version: 1.2.3(@types/react@19.1.2)(react@19.1.0)
       '@radix-ui/react-switch':
         specifier: ^1.1.3
@@ -1081,7 +1081,7 @@ importers:
         specifier: ^1.1.3
         version: 1.2.7(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       class-variance-authority:
-        specifier: ^0.7.0
+        specifier: ^0.7.1
         version: 0.7.1
       clsx:
         specifier: ^2.1.1
@@ -1129,14 +1129,14 @@ importers:
         specifier: ^2.13.3
         version: 2.15.4(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       remark-gfm:
-        specifier: ^4.0.0
+        specifier: ^4.0.1
         version: 4.0.1
       sonner:
         specifier: ^2.0.2
         version: 2.0.6(react-dom@19.1.1(react@19.1.0))(react@19.1.0)
       tailwind-merge:
-        specifier: ^2.3.0
-        version: 2.6.0
+        specifier: ^3.3.1
+        version: 3.3.1
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.1.4)
@@ -1254,13 +1254,13 @@ importers:
   vendor/clerk:
     dependencies:
       '@clerk/elements':
-        specifier: ^0.23.18
+        specifier: ^0.23.43
         version: 0.23.48(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(next@15.3.0(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@clerk/nextjs':
-        specifier: ^6.18.0
+        specifier: ^6.25.4
         version: 6.28.1(next@15.3.0(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       next:
         specifier: 'catalog:'
@@ -1328,8 +1328,8 @@ importers:
         specifier: workspace:*
         version: link:../../internal/typescript
       dotenv-cli:
-        specifier: ^7.4.2
-        version: 7.4.4
+        specifier: ^8.0.0
+        version: 8.0.0
       drizzle-kit:
         specifier: ^0.31.0
         version: 0.31.4
@@ -1346,7 +1346,7 @@ importers:
   vendor/email:
     dependencies:
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       resend:
         specifier: ^4.3.0
@@ -1396,7 +1396,7 @@ importers:
         specifier: workspace:*
         version: link:../../internal/typescript
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       concurrently:
         specifier: ^9.1.0
@@ -1417,7 +1417,7 @@ importers:
         specifier: ^15.0.3
         version: 15.4.5(bufferutil@4.0.9)
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       '@vendor/observability':
         specifier: workspace:*
@@ -1460,7 +1460,7 @@ importers:
         specifier: ^9.14.0
         version: 9.44.0(@opentelemetry/context-async-hooks@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(next@15.4.5(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)(webpack@5.101.0)
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
     devDependencies:
       '@repo/eslint-config':
@@ -1488,7 +1488,7 @@ importers:
         specifier: ^0.4.3
         version: 0.4.3(arctic@2.3.4)(hono@4.8.10)
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       js-cookie:
         specifier: ^3.0.5
@@ -1537,7 +1537,7 @@ importers:
         specifier: ^3.0.5
         version: 3.0.5
       react:
-        specifier: ^19.0.0
+        specifier: ^19.1.0
         version: 19.1.1
     devDependencies:
       '@repo/eslint-config':
@@ -1553,7 +1553,7 @@ importers:
         specifier: ^3.0.6
         version: 3.0.6
       '@types/react':
-        specifier: ^19.0.0
+        specifier: ^19.1.8
         version: 19.1.9
       eslint:
         specifier: 'catalog:'
@@ -1568,7 +1568,7 @@ importers:
   vendor/storage:
     dependencies:
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       '@vendor/observability':
         specifier: workspace:*
@@ -1666,7 +1666,7 @@ importers:
   vendor/upstash:
     dependencies:
       '@t3-oss/env-nextjs':
-        specifier: 0.12.0
+        specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
       '@upstash/redis':
         specifier: ^1.34.8
@@ -1685,7 +1685,7 @@ importers:
         specifier: ^3.0.6
         version: 3.0.6
       '@types/react':
-        specifier: ^19.0.0
+        specifier: ^19.1.8
         version: 19.1.9
       eslint:
         specifier: 'catalog:'
@@ -7080,10 +7080,6 @@ packages:
   dot-case@2.1.1:
     resolution: {integrity: sha512-HnM6ZlFqcajLsyudHq7LeeLDr2rFAVYtDv/hV5qchQEidSck8j9OPUsXY9KwJv/lHMtYlX4DjRQqwFYa+0r8Ug==}
 
-  dotenv-cli@7.4.4:
-    resolution: {integrity: sha512-XkBYCG0tPIes+YZr4SpfFv76SQrV/LeCE8CI7JSEMi3VR9MvTihCGTOtbIexD6i2mXF+6px7trb1imVCXSNMDw==}
-    hasBin: true
-
   dotenv-cli@8.0.0:
     resolution: {integrity: sha512-aLqYbK7xKOiTMIRf1lDPbI+Y+Ip/wo5k3eyp6ePysVaSqbyxjyK3dK35BTxG+rmd7djf5q2UPs4noPNH+cj0Qw==}
     hasBin: true
@@ -10207,9 +10203,6 @@ packages:
     resolution: {integrity: sha512-pjllRDr2s0iTwiE5Isvip51dZGR7GjLH1gCSVyE8bQnbAx6xackXsFdojau+1O5u98yHF5V73HQGOFxKUXO9gQ==}
     peerDependencies:
       vue: '>=3.2.26 < 4'
-
-  tailwind-merge@2.6.0:
-    resolution: {integrity: sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA==}
 
   tailwind-merge@3.3.1:
     resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
@@ -17278,13 +17271,6 @@ snapshots:
     dependencies:
       no-case: 2.3.2
 
-  dotenv-cli@7.4.4:
-    dependencies:
-      cross-spawn: 7.0.6
-      dotenv: 16.6.1
-      dotenv-expand: 10.0.0
-      minimist: 1.2.8
-
   dotenv-cli@8.0.0:
     dependencies:
       cross-spawn: 7.0.6
@@ -21208,8 +21194,6 @@ snapshots:
   swrv@1.1.0(vue@3.5.18(typescript@5.9.2)):
     dependencies:
       vue: 3.5.18(typescript@5.9.2)
-
-  tailwind-merge@2.6.0: {}
 
   tailwind-merge@3.3.1: {}
 

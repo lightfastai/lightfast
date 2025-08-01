@@ -24,7 +24,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.4.21",
     "eslint": "catalog:",
     "postcss": "catalog:tailwind4",
     "tailwindcss": "catalog:tailwind4",

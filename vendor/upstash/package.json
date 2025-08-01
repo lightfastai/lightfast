@@ -24,14 +24,14 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/js-cookie": "^3.0.6",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.1.8",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@t3-oss/env-nextjs": "0.12.0",
+    "@t3-oss/env-nextjs": "^0.12.0",
     "@upstash/redis": "^1.34.8"
   }
 }

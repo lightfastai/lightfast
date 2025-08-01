@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "nanoid": "^5.0.8"
+    "nanoid": "^5.1.5"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

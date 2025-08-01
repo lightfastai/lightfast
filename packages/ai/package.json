@@ -39,7 +39,7 @@
     "@fal-ai/client": "^1.2.0",
     "@fal-ai/server-proxy": "^1.1.1",
     "@openrouter/ai-sdk-provider": "^0.4.5",
-    "@t3-oss/env-nextjs": "0.12.0",
+    "@t3-oss/env-nextjs": "^0.12.0",
     "ai": "^4.3.13",
     "autoevals": "^0.0.103",
     "braintrust": "^0.0.168",
