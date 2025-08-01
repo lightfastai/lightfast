@@ -1,0 +1,105 @@
+{
+	"name": "@lightfast/ai",
+	"version": "1.0.0",
+	"description": "AI agents, tools, and workflows for Lightfast",
+	"type": "module",
+	"exports": {
+		"./agent": {
+			"types": "./src/core/primitives/agent.ts",
+			"default": "./src/core/primitives/agent.ts"
+		},
+		"./tool": {
+			"types": "./src/core/primitives/tool.ts",
+			"default": "./src/core/primitives/tool.ts"
+		},
+		"./agent/handlers": {
+			"types": "./src/core/server/adapters/fetch.ts",
+			"default": "./src/core/server/adapters/fetch.ts"
+		},
+		"./agent/server/adapters/fetch": {
+			"types": "./src/core/server/adapters/fetch.ts",
+			"default": "./src/core/server/adapters/fetch.ts"
+		},
+		"./agent/server/adapters/types": {
+			"types": "./src/core/server/adapters/types.ts",
+			"default": "./src/core/server/adapters/types.ts"
+		},
+		"./agent/memory": {
+			"types": "./src/core/memory/index.ts",
+			"default": "./src/core/memory/index.ts"
+		},
+		"./agent/memory/adapters/redis": {
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
+		},
+		"./agent/memory/redis": {
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
+		},
+		"./agent/redis-memory": {
+			"types": "./src/core/memory/adapters/redis.ts",
+			"default": "./src/core/memory/adapters/redis.ts"
+		},
+		"./agent/primitives/cache": {
+			"types": "./src/core/primitives/cache/index.ts",
+			"default": "./src/core/primitives/cache/index.ts"
+		},
+		"./providers": {
+			"types": "./src/utils/providers.ts",
+			"default": "./src/utils/providers.ts"
+		},
+		"./v2/server": {
+			"types": "./src/v2/server.ts",
+			"default": "./src/v2/server.ts"
+		},
+		"./v2/react": {
+			"types": "./src/core/v2/react/index.ts",
+			"default": "./src/core/v2/react/index.ts"
+		},
+		"./v2/events": {
+			"types": "./src/core/v2/events/index.ts",
+			"default": "./src/core/v2/events/index.ts"
+		},
+		"./v2": {
+			"types": "./src/core/v2/index.ts",
+			"default": "./src/core/v2/index.ts"
+		},
+		"./v2/core": {
+			"types": "./src/core/v2/core.ts",
+			"default": "./src/core/v2/core.ts"
+		},
+		"./v2/env": {
+			"types": "./src/core/v2/env.ts",
+			"default": "./src/core/v2/env.ts"
+		}
+	},
+	"scripts": {
+		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"build": "tsc",
+		"dev": "tsc",
+		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
+		"lint": "biome check --write ."
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "catalog:",
+		"@ai-sdk/gateway": "catalog:",
+		"@ai-sdk/provider": "catalog:",
+		"@t3-oss/env-core": "catalog:",
+		"@upstash/qstash": "^2.8.1",
+		"@upstash/redis": "catalog:",
+		"ai": "catalog:",
+		"braintrust": "catalog:",
+		"pino": "^9.7.0",
+		"playwright": "catalog:",
+		"playwright-core": "catalog:",
+		"resumable-stream": "catalog:",
+		"uuid": "^11.1.0",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.15",
+		"@types/react": "^19.1.8",
+		"@types/uuid": "^10.0.0",
+		"typescript": "catalog:"
+	}
+}

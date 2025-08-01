@@ -1,15 +1,17 @@
 {
-	"name": "@lightfast/www",
+	"name": "@lightfast/experimental",
 	"version": "1.0.0",
-	"description": "Lightfast experimental web application",
+	"description": "Lightfast experimental AI chat application",
 	"private": true,
 	"scripts": {
 		"dev": "pnpm with-env next dev --turbo",
 		"build": "pnpm with-env next build",
 		"start": "next start",
-		"lint": "biome check --write .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
 		"typecheck": "tsc --noEmit",
-		"format": "biome format --write .",
+		"format": "prettier --check . --ignore-path ../../.gitignore",
+		"format:fix": "prettier --write . --ignore-path ../../.gitignore",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"with-env": "dotenv -e ./.vercel/.env.development.local --",
 		"clean": "rm -rf .next node_modules tsconfig.tsbuildinfo && pnpm store prune",
@@ -20,7 +22,9 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.5.2",
 	"devDependencies": {
-		"@biomejs/biome": "catalog:",
+		"@repo/eslint-config": "workspace:*",
+		"@repo/prettier-config": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
 		"@tailwindcss/postcss": "^4.1.11",
 		"@types/node": "^24.0.15",
 		"@types/react": "^19.1.8",
@@ -84,5 +88,6 @@
 		"use-stick-to-bottom": "1.1.1",
 		"uuid": "^11.1.0",
 		"zod": "catalog:"
-	}
+	},
+	"prettier": "@repo/prettier-config"
 }
