@@ -6,7 +6,7 @@
   "scripts": {
     "build": "next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "dev": "next dev -p 4102",
+    "dev": "next dev -p 4102 --turbo",
     "lint": "eslint",
     "start": "next start -p 4102",
     "typecheck": "tsc --noEmit"
