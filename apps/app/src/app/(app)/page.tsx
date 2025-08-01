@@ -1,60 +1,52 @@
-import { auth } from "@clerk/nextjs/server";
-import { SignInButton, UserButton } from "@clerk/nextjs";
+import React from "react";
+import { ZapIcon, CodeIcon, DatabaseIcon } from "lucide-react";
+
+import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import { AuthStatus } from "~/components/auth-status";
 
-export default async function HomePage() {
-  const { userId } = await auth();
-
+export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <div className="max-w-4xl mx-auto text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Lightfast App</h1>
-        <p className="text-lg text-muted-foreground mb-8">
-          Ready to build your agent applications with lightning speed
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Authentication</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {userId ? (
-                <div className="flex items-center justify-center gap-4">
-                  <span>Welcome! You're logged in</span>
-                  <UserButton />
-                </div>
-              ) : (
-                <div>
-                  <p className="mb-4">Please sign in to continue</p>
-                  <SignInButton mode="modal">
-                    <Button>Sign In</Button>
-                  </SignInButton>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Application Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <p>✅ Connected to subdomain</p>
-                <p>✅ Clerk authentication active</p>
-                <p>✅ Ready for agent development</p>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-background flex items-center justify-center p-8">
+      <div className="max-w-4xl mx-auto text-center space-y-8">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-foreground text-4xl font-bold mb-2">
+              Welcome to Lightfast
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Build AI agents with lightning speed
+            </p>
+          </div>
+          <AuthStatus />
         </div>
 
-        <div className="text-sm text-muted-foreground">
-          <p>This is the main Lightfast application running on app.lightfast.ai</p>
-          <p>Authentication flows through auth.lightfast.ai via Clerk subdomains</p>
+        {/* Status Grid */}
+        <div className="grid grid-cols-3 gap-8 text-center my-12">
+          <div className="flex flex-col items-center space-y-2">
+            <ZapIcon className="w-8 h-8 text-primary" />
+            <span className="text-sm text-muted-foreground">Ready</span>
+          </div>
+          <div className="flex flex-col items-center space-y-2">
+            <CodeIcon className="w-8 h-8 text-primary" />
+            <span className="text-sm text-muted-foreground">Connected</span>
+          </div>
+          <div className="flex flex-col items-center space-y-2">
+            <DatabaseIcon className="w-8 h-8 text-primary" />
+            <span className="text-sm text-muted-foreground">Active</span>
+          </div>
+        </div>
+
+        {/* Logo and Action */}
+        <div className="flex items-center justify-between">
+          <Icons.logoShort className="text-primary w-12 h-12" />
+          <Button>
+            <ZapIcon className="mr-2 h-4 w-4" />
+            Build Agent
+          </Button>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -3,24 +3,29 @@ import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import { Icons } from "@repo/ui/components/icons";
 // Always use passwordless authentication (email verification)
 
 export default function SignInPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background px-4">
-			<div className="w-full max-w-md rounded-2xl border border-border/50 bg-background p-8">
+			<div className="w-full max-w-md rounded-none border border-border/50 bg-background p-8">
 				<SignIn.Root>
 					<SignIn.Step name="start">
 						<div className="space-y-6">
 							{/* Header */}
-							<div className="text-center">
-								<h1 className="font-mono text-xs tracking-widest text-muted-foreground">Lightfast Auth</h1>
+							<div className="text-center space-y-4">
+								<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
+								<div>
+									<h1 className="text-lg font-bold text-foreground">Sign In to Lightfast</h1>
+									<p className="text-sm text-muted-foreground mt-2">We are currently in alpha</p>
+								</div>
 							</div>
 
 							{/* Form */}
 							<Clerk.GlobalError className="text-sm text-red-500" />
 
-							<div className="space-y-4">
+							<div className="space-y-4 mt-8">
 								{/* Email Authentication */}
 								<Clerk.Field name="identifier" className="space-y-2">
 									<Clerk.Input asChild>
@@ -34,12 +39,12 @@ export default function SignInPage() {
 								</SignIn.Action>
 
 								{/* Divider */}
-								<div className="relative">
+								<div className="relative my-4">
 									<div className="absolute inset-0 flex items-center">
 										<span className="w-full border-t border-border/50" />
 									</div>
 									<div className="relative flex justify-center text-xs uppercase">
-										<span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+										<span className="bg-background px-2 text-muted-foreground">Or</span>
 									</div>
 								</div>
 
@@ -68,6 +73,14 @@ export default function SignInPage() {
 								</div>
 							</div>
 
+							{/* Sign Up Link */}
+							<div className="text-center text-sm">
+								<span className="text-muted-foreground">Don't have an account? </span>
+								<a href="/sign-up" className="text-primary hover:text-primary/80 underline">
+									Sign up
+								</a>
+							</div>
+
 						</div>
 					</SignIn.Step>
 
@@ -75,8 +88,9 @@ export default function SignInPage() {
 					<SignIn.Step name="verifications">
 							<div className="space-y-6">
 								{/* Header */}
-								<div className="text-center">
-									<h1 className="font-mono text-xs tracking-widest text-muted-foreground">Lightfast Auth</h1>
+								<div className="text-center space-y-4">
+									<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
+									<h1 className="text-lg font-medium text-foreground">Verify Your Email</h1>
 								</div>
 
 								{/* Verification Form */}
