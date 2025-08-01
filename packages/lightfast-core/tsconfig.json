@@ -9,7 +9,7 @@
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "noEmit": false,
     "emitDeclarationOnly": true,
-    "types": [],
+    "types": ["node"],
     "lib": ["ES2022", "DOM"]
   },
   "exclude": ["node_modules", "dist"]

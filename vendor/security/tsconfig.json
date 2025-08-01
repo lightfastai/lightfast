@@ -1,12 +1,27 @@
 {
   "extends": "@repo/typescript-config/internal-package.json",
   "compilerOptions": {
+    "types": [
+      "node"
+    ],
     "paths": {
-      "~/env": ["./env.ts"]
+      "~/env": [
+        "./env.ts"
+      ]
     },
-    "lib": ["ES2022", "dom", "dom.iterable"],
+    "lib": [
+      "ES2022",
+      "dom",
+      "dom.iterable"
+    ],
     "jsx": "react-jsx"
   },
-  "include": ["*.ts", "src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "*.ts",
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

@@ -1,28 +1,27 @@
 "use client"
 
 import * as React from "react"
-import type * as LabelPrimitive from "@radix-ui/react-label"
+import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
 import {
   Controller,
   FormProvider,
   useFormContext,
-  useFormState
-  
-  
-  
+  useFormState,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
 } from "react-hook-form"
-import type {ControllerProps, FieldPath, FieldValues} from "react-hook-form";
 
 import { cn } from "@repo/ui/lib/utils"
 import { Label } from "@repo/ui/components/ui/label"
 
 const Form = FormProvider
 
-interface FormFieldContextValue<
+type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> {
+> = {
   name: TName
 }
 
@@ -66,7 +65,7 @@ const useFormField = () => {
   }
 }
 
-interface FormItemContextValue {
+type FormItemContextValue = {
   id: string
 }
 

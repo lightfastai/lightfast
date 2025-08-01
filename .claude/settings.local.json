@@ -87,7 +87,9 @@
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_evaluate",
       "Bash(pnpm clean:workspaces:*)",
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "Bash(npm view:*)",
+      "Bash(pnpm list:*)"
     ],
     "deny": []
   },

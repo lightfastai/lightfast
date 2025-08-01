@@ -1,5 +1,15 @@
 {
   "extends": "@repo/typescript-config/internal-package.json",
-  "include": ["src", "src/types/**/*.d.ts"],
-  "exclude": ["node_modules"]
+  "compilerOptions": {
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src",
+    "src/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

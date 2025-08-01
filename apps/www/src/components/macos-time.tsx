@@ -60,7 +60,7 @@ export function MacOSTime() {
       variant="ghost"
       aria-label="Show notifications"
       // onClick={handleClick}
-      size="xs"
+      size="sm"
       className="rounded-md px-2"
     >
       <div className="flex items-center gap-2 text-xs">

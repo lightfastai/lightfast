@@ -1,23 +1,20 @@
+import type { Metadata, Viewport } from "next";
+
+import "@repo/ui/globals.css";
+
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-
-const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
-});
+import { siteConfig } from "@repo/lightfast-config";
+import { Toaster } from "@repo/ui/components/ui/toaster";
+import { fonts } from "@repo/ui/lib/fonts";
+import { cn } from "@repo/ui/lib/utils";
+import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 export const metadata: Metadata = {
-	title: "Lightfast Experimental",
+	title: {
+		default: `${siteConfig.name} Experimental`,
+		template: `%s - ${siteConfig.name} Experimental`,
+	},
 	description: "Experimental AI chat interface",
 	metadataBase: new URL("https://experimental.lightfast.ai"),
 	robots: {
@@ -37,21 +34,21 @@ export const metadata: Metadata = {
 		type: "website",
 		locale: "en_US",
 		url: "https://experimental.lightfast.ai",
-		title: "Lightfast Experimental",
+		title: `${siteConfig.name} Experimental`,
 		description: "Experimental AI chat interface",
-		siteName: "Lightfast Experimental",
+		siteName: `${siteConfig.name} Experimental`,
 		images: [
 			{
 				url: "/og.jpg",
 				width: 1200,
 				height: 630,
-				alt: "Lightfast Experimental",
+				alt: `${siteConfig.name} Experimental`,
 			},
 		],
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Lightfast Experimental",
+		title: `${siteConfig.name} Experimental`,
 		description: "Experimental AI chat interface",
 		images: ["/og.jpg"],
 	},
@@ -100,10 +97,12 @@ export default function RootLayout({
 				},
 			}}
 		>
-			<html lang="en">
-				<body className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}>
+			<html lang="en" suppressHydrationWarning>
+				<head />
+				<body className={cn("bg-background dark min-h-screen", fonts)}>
 					{children}
-					<Analytics />
+					<Toaster />
+					<VercelAnalytics />
 					<SpeedInsights />
 				</body>
 			</html>

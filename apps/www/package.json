@@ -34,7 +34,9 @@
     "next": "catalog:",
     "react": "catalog:react19",
     "react-confetti": "^6.4.0",
-    "react-dom": "catalog:react19"
+    "react-dom": "catalog:react19",
+    "react-hook-form": "^7.61.1",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

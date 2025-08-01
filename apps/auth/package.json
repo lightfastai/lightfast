@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
+    "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "dev": "next dev -p 4104",
+    "dev": "pnpm with-env next dev -p 4104",
     "lint": "eslint",
-    "start": "next start -p 4104",
-    "typecheck": "tsc --noEmit"
+    "start": "pnpm with-env next start -p 4104",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
     "@clerk/elements": "catalog:",
@@ -31,6 +32,7 @@
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
     "autoprefixer": "^10.4.21",
+    "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
     "postcss": "catalog:tailwind4",
     "tailwindcss": "catalog:tailwind4",

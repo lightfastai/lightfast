@@ -7,6 +7,9 @@ import { Send } from "lucide-react";
 import Confetti from "react-confetti";
 import { createPortal } from "react-dom";
 
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Form,
@@ -15,7 +18,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useForm,
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { useToast } from "@repo/ui/hooks/use-toast";
@@ -37,8 +39,8 @@ export function CenterCardEarlyAccessForm() {
   const logger = useLogger();
   const { trackSignup } = useEarlyAccessAnalytics();
 
-  const form = useForm({
-    schema: earlyAccessFormSchema,
+  const form = useForm<z.infer<typeof earlyAccessFormSchema>>({
+    resolver: zodResolver(earlyAccessFormSchema),
     defaultValues: {
       email: "",
     },
