@@ -9,16 +9,20 @@ import { Icons } from "@repo/ui/components/icons";
 export default function SignInPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background px-4">
-			<div className="w-full max-w-md rounded-none border border-border/50 bg-background p-8">
+			<div className="w-full max-w-lg rounded-none border border-border/50 bg-background p-16">
 				<SignIn.Root>
 					<SignIn.Step name="start">
 						<div className="space-y-6">
 							{/* Header */}
 							<div className="text-center space-y-4">
 								<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
-								<div>
-									<h1 className="text-lg font-bold text-foreground">Sign In to Lightfast</h1>
-									<p className="text-sm text-muted-foreground mt-2">We are currently in alpha</p>
+								<div className="flex flex-col gap-2">
+									<h1 className="text-lg font-bold text-foreground">
+										Sign In to Lightfast
+									</h1>
+									<p className="text-sm text-muted-foreground">
+										We are currently in alpha. Join us!
+									</p>
 								</div>
 							</div>
 
@@ -35,7 +39,7 @@ export default function SignInPage() {
 								</Clerk.Field>
 
 								<SignIn.Action submit asChild>
-									<Button className="w-full">Continue with Email</Button>
+									<Button className="w-full">Login with Email</Button>
 								</SignIn.Action>
 
 								{/* Divider */}
@@ -44,7 +48,9 @@ export default function SignInPage() {
 										<span className="w-full border-t border-border/50" />
 									</div>
 									<div className="relative flex justify-center text-xs uppercase">
-										<span className="bg-background px-2 text-muted-foreground">Or</span>
+										<span className="bg-background px-2 text-muted-foreground">
+											Or
+										</span>
 									</div>
 								</div>
 
@@ -52,10 +58,14 @@ export default function SignInPage() {
 								<div className="space-y-3">
 									<Clerk.Connection name="github" asChild>
 										<Button variant="outline" className="w-full">
-											<svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
-												<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+											<svg
+												className="w-4 h-4 mr-2"
+												viewBox="0 0 24 24"
+												fill="currentColor"
+											>
+												<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
 											</svg>
-											Continue with GitHub
+											Login with GitHub
 										</Button>
 									</Clerk.Connection>
 
@@ -81,51 +91,66 @@ export default function SignInPage() {
 
 							{/* Sign Up Link */}
 							<div className="text-center text-sm">
-								<span className="text-muted-foreground">Don't have an account? </span>
-								<a href="/sign-up" className="text-primary hover:text-primary/80 underline">
+								<span className="text-muted-foreground">
+									Don't have an account?{" "}
+								</span>
+								<a
+									href="/sign-up"
+									className="text-primary hover:text-primary/80 underline"
+								>
 									Sign up
 								</a>
 							</div>
-
 						</div>
 					</SignIn.Step>
 
 					{/* Email verification step */}
 					<SignIn.Step name="verifications">
-							<div className="space-y-6">
-								{/* Header */}
-								<div className="text-center space-y-4">
-									<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
-									<h1 className="text-lg font-medium text-foreground">Verify Your Email</h1>
-								</div>
-
-								{/* Verification Form */}
-								<div className="space-y-4">
-									<SignIn.Strategy name="email_code">
-										<Clerk.Field name="code" className="space-y-2">
-											<Clerk.Input asChild>
-												<Input type="text" placeholder="Enter verification code" />
-											</Clerk.Input>
-											<Clerk.FieldError className="text-xs text-red-500" />
-										</Clerk.Field>
-
-										<SignIn.Action submit asChild>
-											<Button className="w-full">Verify Email</Button>
-										</SignIn.Action>
-									</SignIn.Strategy>
-								</div>
-
-								{/* Resend option */}
-								<div className="text-center text-sm">
-									<span className="text-muted-foreground">Didn't receive a code? </span>
-									<SignIn.Action resend className="text-primary hover:text-primary/80 cursor-pointer">
-										Resend
-									</SignIn.Action>
-								</div>
+						<div className="space-y-6">
+							{/* Header */}
+							<div className="text-center space-y-4">
+								<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
+								<h1 className="text-lg font-medium text-foreground">
+									Verify Your Email
+								</h1>
 							</div>
+
+							{/* Verification Form */}
+							<div className="space-y-4">
+								<SignIn.Strategy name="email_code">
+									<Clerk.Field name="code" className="space-y-2">
+										<Clerk.Input asChild>
+											<Input
+												type="text"
+												placeholder="Enter verification code"
+											/>
+										</Clerk.Input>
+										<Clerk.FieldError className="text-xs text-red-500" />
+									</Clerk.Field>
+
+									<SignIn.Action submit asChild>
+										<Button className="w-full">Verify Email</Button>
+									</SignIn.Action>
+								</SignIn.Strategy>
+							</div>
+
+							{/* Resend option */}
+							<div className="text-center text-sm">
+								<span className="text-muted-foreground">
+									Didn't receive a code?{" "}
+								</span>
+								<SignIn.Action
+									resend
+									className="text-primary hover:text-primary/80 cursor-pointer"
+								>
+									Resend
+								</SignIn.Action>
+							</div>
+						</div>
 					</SignIn.Step>
 				</SignIn.Root>
 			</div>
 		</div>
 	);
 }
+
