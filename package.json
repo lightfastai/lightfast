@@ -34,10 +34,10 @@
 	"devDependencies": {
 		"@repo/prettier-config": "workspace:*",
 		"@types/minimatch": "^6.0.0",
-		"envmcp": "^0.2.0",
+		"envmcp": "^0.2.1",
 		"prettier": "catalog:",
-		"turbo": "^2.4.4",
-		"turbo-ignore": "^2.4.4",
+		"turbo": "^2.5.5",
+		"turbo-ignore": "^2.5.5",
 		"typescript": "catalog:"
 	},
 	"prettier": "@repo/prettier-config"

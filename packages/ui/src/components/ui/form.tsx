@@ -1,65 +1,33 @@
-"use client";
+"use client"
 
-import type * as LabelPrimitive from "@radix-ui/react-label";
-import type { OTPInputProps } from "input-otp";
-import type {
-  ControllerProps,
-  FieldPath,
-  FieldValues,
-  UseFormProps,
-} from "react-hook-form";
-import type { ZodType, ZodTypeDef } from "zod";
-import * as React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Slot } from "@radix-ui/react-slot";
-import { REGEXP_ONLY_DIGITS } from "input-otp";
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+import { Slot } from "@radix-ui/react-slot"
 import {
-  useForm as __useForm,
   Controller,
   FormProvider,
   useFormContext,
   useFormState,
-} from "react-hook-form";
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form"
 
-import { Label } from "@repo/ui/components/ui/label";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "@repo/ui/lib/utils"
+import { Label } from "@repo/ui/components/ui/label"
 
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSeparator,
-  InputOTPSlot,
-} from "./input-otp";
+const Form = FormProvider
 
-const Form = FormProvider;
-
-const useForm = <
-  TOut extends FieldValues,
-  TDef extends ZodTypeDef,
-  TIn extends FieldValues,
->(
-  props: Omit<UseFormProps<TIn>, "resolver"> & {
-    schema: ZodType<TOut, TDef, TIn>;
-  },
-) => {
-  const form = __useForm<TIn, unknown, TOut>({
-    ...props,
-    resolver: zodResolver(props.schema, undefined),
-  });
-
-  return form;
-};
-
-interface FormFieldContextValue<
+type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> {
-  name: TName;
+> = {
+  name: TName
 }
 
 const FormFieldContext = React.createContext<FormFieldContextValue>(
-  {} as FormFieldContextValue,
-);
+  {} as FormFieldContextValue
+)
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
@@ -71,21 +39,21 @@ const FormField = <
     <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />
     </FormFieldContext.Provider>
-  );
-};
+  )
+}
 
 const useFormField = () => {
-  const fieldContext = React.useContext(FormFieldContext);
-  const itemContext = React.useContext(FormItemContext);
-  const { getFieldState } = useFormContext();
-  const formState = useFormState({ name: fieldContext.name });
-  const fieldState = getFieldState(fieldContext.name, formState);
+  const fieldContext = React.useContext(FormFieldContext)
+  const itemContext = React.useContext(FormItemContext)
+  const { getFieldState } = useFormContext()
+  const formState = useFormState({ name: fieldContext.name })
+  const fieldState = getFieldState(fieldContext.name, formState)
 
   if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>");
+    throw new Error("useFormField should be used within <FormField>")
   }
 
-  const { id } = itemContext;
+  const { id } = itemContext
 
   return {
     id,
@@ -94,19 +62,19 @@ const useFormField = () => {
     formDescriptionId: `${id}-form-item-description`,
     formMessageId: `${id}-form-item-message`,
     ...fieldState,
-  };
-};
+  }
+}
 
-interface FormItemContextValue {
-  id: string;
+type FormItemContextValue = {
+  id: string
 }
 
 const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue,
-);
+  {} as FormItemContextValue
+)
 
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
-  const id = React.useId();
+  const id = React.useId()
 
   return (
     <FormItemContext.Provider value={{ id }}>
@@ -116,14 +84,14 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
         {...props}
       />
     </FormItemContext.Provider>
-  );
+  )
 }
 
 function FormLabel({
   className,
   ...props
 }: React.ComponentProps<typeof LabelPrimitive.Root>) {
-  const { error, formItemId } = useFormField();
+  const { error, formItemId } = useFormField()
 
   return (
     <Label
@@ -133,12 +101,11 @@ function FormLabel({
       htmlFor={formItemId}
       {...props}
     />
-  );
+  )
 }
 
 function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
-  const { error, formItemId, formDescriptionId, formMessageId } =
-    useFormField();
+  const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
 
   return (
     <Slot
@@ -152,11 +119,11 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
       aria-invalid={!!error}
       {...props}
     />
-  );
+  )
 }
 
 function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
-  const { formDescriptionId } = useFormField();
+  const { formDescriptionId } = useFormField()
 
   return (
     <p
@@ -165,15 +132,15 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
       className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
-  );
+  )
 }
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
-  const { error, formMessageId } = useFormField();
-  const body = error ? String(error.message ?? "") : props.children;
+  const { error, formMessageId } = useFormField()
+  const body = error ? String(error?.message ?? "") : props.children
 
   if (!body) {
-    return null;
+    return null
   }
 
   return (
@@ -185,75 +152,8 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     >
       {body}
     </p>
-  );
+  )
 }
-
-export type ListOfErrors = (string | null | undefined)[] | null | undefined;
-
-export function ErrorList({
-  id,
-  errors,
-  className,
-}: {
-  errors?: ListOfErrors;
-  id?: string;
-  className?: string;
-}) {
-  const errorsToRender = errors?.filter(Boolean);
-  if (!errorsToRender?.length) return null;
-  return (
-    <ul id={id} className={cn("flex flex-col gap-1", className)}>
-      {errorsToRender.map((e) => (
-        <li key={`${id}-${e}`} className="text-destructive text-sm">
-          {e}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export const OTPField = React.forwardRef<
-  HTMLInputElement,
-  {
-    labelProps?: React.LabelHTMLAttributes<HTMLLabelElement>;
-    inputProps: Partial<OTPInputProps & { render: never }>;
-    errors?: ListOfErrors;
-    className?: string;
-  }
->(({ labelProps, inputProps, errors, className }, ref) => {
-  const fallbackId = React.useId();
-  const id = inputProps.id ?? fallbackId;
-  const errorId = errors?.length ? `${id}-error` : undefined;
-  return (
-    <div className={className}>
-      {!!labelProps && <Label htmlFor={id} {...labelProps} />}
-      <InputOTP
-        pattern={REGEXP_ONLY_DIGITS}
-        maxLength={6}
-        ref={ref}
-        id={id}
-        aria-invalid={errorId ? true : undefined}
-        aria-describedby={errorId}
-        {...inputProps}
-      >
-        <InputOTPGroup>
-          <InputOTPSlot index={0} />
-          <InputOTPSlot index={1} />
-          <InputOTPSlot index={2} />
-        </InputOTPGroup>
-        <InputOTPSeparator />
-        <InputOTPGroup>
-          <InputOTPSlot index={3} />
-          <InputOTPSlot index={4} />
-          <InputOTPSlot index={5} />
-        </InputOTPGroup>
-      </InputOTP>
-      <div className="px-4 py-3 text-center">
-        {errorId ? <ErrorList id={errorId} errors={errors} /> : null}
-      </div>
-    </div>
-  );
-});
 
 export {
   useFormField,
@@ -264,6 +164,4 @@ export {
   FormDescription,
   FormMessage,
   FormField,
-};
-
-export { useForm };
+}
