@@ -315,6 +315,7 @@ export class Agent<TRuntimeContext = unknown> {
 		// until the Redis storage issue is properly fixed.
 		//
 		const fixedMessages = messages;
+		console.log(fixedMessages.forEach((x) => console.log(x)));
 
 		// Convert UIMessages to model messages
 		// Pass tools so the SDK knows how to handle tool results properly
@@ -322,6 +323,8 @@ export class Agent<TRuntimeContext = unknown> {
 			tools: toolsForScheduling,
 		});
 
+		console.log("-----");
+		console.log(modelMessages.forEach((x) => console.log(x)));
 		// Use streamText with tools directly - let it decide naturally
 		// IMPORTANT: maxSteps=1 to prevent internal looping - we handle the loop via QStash
 		const { fullStream } = streamText({

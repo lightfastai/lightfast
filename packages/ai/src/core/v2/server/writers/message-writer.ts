@@ -62,7 +62,6 @@ export class MessageWriter {
 	 * Used for updating assistant messages with complete content
 	 */
 	async updateMessageParts(sessionId: string, messageId: string, newParts: any[]): Promise<void> {
-
 		const key = getMessageKey(sessionId);
 		const now = new Date().toISOString();
 
@@ -101,7 +100,6 @@ export class MessageWriter {
 	 * Used for adding tool results to assistant messages
 	 */
 	async appendMessageParts(sessionId: string, messageId: string, newParts: any[]): Promise<void> {
-
 		const key = getMessageKey(sessionId);
 		const now = new Date().toISOString();
 

@@ -196,9 +196,11 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 			// Use provider cache implementation
 			systemMessages = this.cache.applySystemCaching(this.system);
 
+			// console.log(messages.forEach((x) => console.log(x)));
 			// Convert messages to model messages
 			const baseModelMessages = convertToModelMessages(messages, { tools: resolvedTools });
 
+			console.log(baseModelMessages.forEach((x) => console.log(x)));
 			// Apply message caching
 			modelMessages = this.cache.applyMessageCaching(baseModelMessages, messages);
 		} else {

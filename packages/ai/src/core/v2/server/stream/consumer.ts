@@ -48,30 +48,28 @@ function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessag
 	switch (type) {
 		case DeltaStreamType.INIT:
 			return { type: DeltaStreamType.INIT, timestamp };
-		
+
 		case DeltaStreamType.CHUNK:
 			if (!rawObj.content) return null;
 			return { type: DeltaStreamType.CHUNK, content: rawObj.content, timestamp };
-		
+
 		case DeltaStreamType.TOOL_CALL:
 			if (!rawObj.toolCall) return null;
 			try {
 				// Parse the JSON string back to ToolCallPart
-				const toolCall = typeof rawObj.toolCall === 'string' 
-					? JSON.parse(rawObj.toolCall) 
-					: rawObj.toolCall;
+				const toolCall = typeof rawObj.toolCall === "string" ? JSON.parse(rawObj.toolCall) : rawObj.toolCall;
 				return { type: DeltaStreamType.TOOL_CALL, toolCall, timestamp };
 			} catch {
 				return null;
 			}
-		
+
 		case DeltaStreamType.ERROR:
 			if (!rawObj.error) return null;
 			return { type: DeltaStreamType.ERROR, error: rawObj.error, timestamp };
-		
+
 		case DeltaStreamType.COMPLETE:
 			return { type: DeltaStreamType.COMPLETE, timestamp };
-		
+
 		default:
 			return null;
 	}

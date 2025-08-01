@@ -25,9 +25,7 @@ export function validateMessage(data: any): DeltaStreamMessage | null {
 			if (!data.toolCall) return null;
 			// Parse the JSON string back to object
 			try {
-				const toolCall = typeof data.toolCall === 'string' 
-					? JSON.parse(data.toolCall) 
-					: data.toolCall;
+				const toolCall = typeof data.toolCall === "string" ? JSON.parse(data.toolCall) : data.toolCall;
 				data.toolCall = toolCall;
 			} catch {
 				return null;

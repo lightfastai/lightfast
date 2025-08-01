@@ -30,27 +30,27 @@ export enum DeltaStreamType {
 }
 
 // Delta stream message formats using discriminated unions
-export type DeltaStreamMessage = 
+export type DeltaStreamMessage =
 	| {
-		type: DeltaStreamType.INIT;
-		timestamp: string;
-	}
+			type: DeltaStreamType.INIT;
+			timestamp: string;
+	  }
 	| {
-		type: DeltaStreamType.CHUNK;
-		content: string;
-		timestamp: string;
-	}
+			type: DeltaStreamType.CHUNK;
+			content: string;
+			timestamp: string;
+	  }
 	| {
-		type: DeltaStreamType.TOOL_CALL;
-		toolCall: ToolCallPart;
-		timestamp: string;
-	}
+			type: DeltaStreamType.TOOL_CALL;
+			toolCall: ToolCallPart;
+			timestamp: string;
+	  }
 	| {
-		type: DeltaStreamType.ERROR;
-		error: string;
-		timestamp: string;
-	}
+			type: DeltaStreamType.ERROR;
+			error: string;
+			timestamp: string;
+	  }
 	| {
-		type: DeltaStreamType.COMPLETE;
-		timestamp: string;
-	};
+			type: DeltaStreamType.COMPLETE;
+			timestamp: string;
+	  };

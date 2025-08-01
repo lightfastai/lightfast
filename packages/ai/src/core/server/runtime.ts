@@ -150,8 +150,7 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 				if (responseMessage.parts) {
 					console.log(`[V1 onFinish] Parts count: ${responseMessage.parts.length}`);
 					responseMessage.parts.forEach((part: any, idx: number) => {
-						console.log(`  Part ${idx}: type=${part.type}`, 
-							part.type === 'tool-result' ? `state=${part.state}` : '');
+						console.log(`  Part ${idx}: type=${part.type}`, part.type === "tool-result" ? `state=${part.state}` : "");
 					});
 				}
 				await memory.appendMessages({

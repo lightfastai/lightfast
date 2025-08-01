@@ -45,7 +45,6 @@ export class AgentRuntime implements Runtime {
 		resourceId: string;
 		assistantMessageId: string;
 	}): Promise<void> {
-
 		// Get or initialize session state
 		let state = await this.getSessionState(sessionId);
 
@@ -88,6 +87,13 @@ export class AgentRuntime implements Runtime {
 				stepIndex,
 				timestamp: new Date().toISOString(),
 			});
+
+			// CRITICAL: Add step-start part to separate loop iterations
+			// This prevents tool calls from previous steps being incorrectly grouped
+			if (stepIndex > 0) {
+				const messageWriter = new MessageWriter(this.redis);
+				await messageWriter.appendMessageParts(sessionId, assistantMessageId, [{ type: "step-start" }]);
+			}
 		}
 
 		// Execute the step - fetch fresh messages
@@ -179,7 +185,6 @@ export class AgentRuntime implements Runtime {
 			const assistantMessage = await messageReader.getMessage(sessionId, state.assistantMessageId);
 
 			if (assistantMessage && assistantMessage.parts) {
-
 				// Add tool result part using AI SDK v5 format
 				// Tool parts use type: "tool-{toolName}" and state to indicate result
 				const toolResultPart: any = {
@@ -434,10 +439,7 @@ export class AgentRuntime implements Runtime {
 						toolsUsed.add((part as any).toolName);
 					}
 					// Tool result part (type: tool-{toolName} with state)
-					if (
-						part.type.startsWith("tool-") &&
-						(part as any).state === "output-available"
-					) {
+					if (part.type.startsWith("tool-") && (part as any).state === "output-available") {
 						// Extract tool name from type
 						const toolName = part.type.split("-").slice(1).join("-");
 						toolsUsed.add(toolName);
