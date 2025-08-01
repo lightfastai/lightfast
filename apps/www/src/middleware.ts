@@ -1,7 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
 import { log } from "@vendor/observability/log";
+import { getAllAppUrls } from "@repo/url-utils";
 
 import {
   generateSignedRequestId,
@@ -9,9 +11,17 @@ import {
 } from "./lib/requests/request-id";
 
 /**
- * Middleware to handle request ID generation and protected routes
+ * Middleware to handle request ID generation, authentication, and protected routes
  */
-export const middleware = async (request: NextRequest) => {
+export const middleware = clerkMiddleware(async (auth, request: NextRequest) => {
+  const { userId } = await auth();
+  
+  // If user is authenticated and on landing page, redirect to app
+  if (userId && request.nextUrl.pathname === "/") {
+    const urls = getAllAppUrls();
+    return NextResponse.redirect(new URL(urls.app));
+  }
+
   // Generate a new request ID for all requests if one doesn't exist
   const existingRequestId = request.headers.get(REQUEST_ID_HEADER);
   const requestId = existingRequestId ?? (await generateSignedRequestId(log));
@@ -31,7 +41,7 @@ export const middleware = async (request: NextRequest) => {
       [REQUEST_ID_HEADER]: requestId,
     },
   });
-};
+});
 
 export const config = {
   matcher: [
