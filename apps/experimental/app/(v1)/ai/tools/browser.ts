@@ -1,6 +1,6 @@
 import { Stagehand } from "@browserbasehq/stagehand";
-import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
-import { createTool } from "@lightfast/ai/tool";
+import type { RuntimeContext } from "@lightfast/ai-experimental/agent/server/adapters/types";
+import { createTool } from "@lightfast/ai-experimental/tool";
 import { currentSpan, wrapTraced } from "braintrust";
 import { z } from "zod";
 import type { AppRuntimeContext } from "@/app/(v1)/ai/types";

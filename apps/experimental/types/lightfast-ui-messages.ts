@@ -1,4 +1,4 @@
-import type { RuntimeContext } from "@lightfast/ai/agent/server/adapters/types";
+import type { RuntimeContext } from "@lightfast/ai-experimental/agent/server/adapters/types";
 import type { InferToolInput, InferToolOutput, InferUITool, InferUITools, UIMessage } from "ai";
 import type {
 	createSandboxTool,

@@ -1,4 +1,4 @@
-import { env as aiEnv } from "@lightfast/ai/v2/env";
+import { env as aiEnv } from "@lightfast/ai-experimental/v2/env";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";

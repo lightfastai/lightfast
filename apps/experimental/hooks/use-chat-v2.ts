@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat } from "@lightfast/ai/v2/react";
+import { useChat } from "@lightfast/ai-experimental/v2/react";
 import type { ChatStatus, UIMessage } from "ai";
 import { useCallback, useState } from "react";
 

@@ -1,5 +1,5 @@
 {
-	"extends": "../../tooling/typescript/base.json",
+	"extends": "../../tooling/typescript/library.json",
 	"compilerOptions": {
 		"rootDir": "./src",
 		"composite": true,
@@ -12,5 +12,5 @@
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist"],
-	"references": [{ "path": "../ai" }, { "path": "../types" }]
+	"references": [{ "path": "../ai-experimental" }, { "path": "../types" }]
 }

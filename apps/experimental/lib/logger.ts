@@ -2,7 +2,7 @@
  * Pino logger configuration for the web app
  */
 
-import { createPinoLoggerFactory } from "@lightfast/ai/v2";
+import { createPinoLoggerFactory } from "@lightfast/ai-experimental/v2";
 import pino from "pino";
 import { env } from "@/env";
 
