@@ -157,12 +157,18 @@ importers:
       '@repo/lightfast-config':
         specifier: workspace:*
         version: link:../../packages/lightfast-config
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@repo/url-utils':
         specifier: workspace:*
         version: link:../../packages/url-utils
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../../vendor/clerk
       next:
         specifier: 'catalog:'
         version: 15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)

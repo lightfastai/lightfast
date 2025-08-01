@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from "next";
 
+import "@repo/ui/globals.css";
+
 import { siteConfig } from "@repo/lightfast-config";
+import { Toaster } from "@repo/ui/components/ui/toaster";
+import { fonts } from "@repo/ui/lib/fonts";
+import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { getClerkConfig } from "@repo/url-utils";
 
@@ -102,8 +107,9 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head />
-        <body className="bg-gray-900 text-white min-h-screen">
+        <body className={cn("bg-background dark min-h-screen", fonts)}>
           {children}
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>
