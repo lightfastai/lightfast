@@ -3,11 +3,11 @@
 import { useChat } from "@lightfast/core/v2/react";
 import { AlertCircle, Bot, Loader2, Send, User, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Button } from "@repo/ui/components/ui/button";
+import { Card } from "@repo/ui/components/ui/card";
+import { Input } from "@repo/ui/components/ui/input";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 export default function TestInstantStreamPage() {
 	const [input, setInput] = useState("");

@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/elements": "^0.23.43",
-    "@clerk/nextjs": "^6.25.4",
+    "@clerk/elements": "catalog:",
+    "@clerk/nextjs": "catalog:",
     "@repo/lightfast-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",

@@ -1,7 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/ui/popover";
 
 export function ExperimentalBadge() {
 	return (

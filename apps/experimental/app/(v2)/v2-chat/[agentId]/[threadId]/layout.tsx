@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+
 
 interface ThreadLayoutProps {
-	children: ReactNode;
+	children: React.ReactNode;
 	params: Promise<{
 		agentId: string;
 		threadId: string;

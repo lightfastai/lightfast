@@ -2,8 +2,8 @@
 
 import { ArrowUp } from "lucide-react";
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@repo/ui/components/ui/button";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 
 interface ChatInputProps {
 	onSendMessage: (message: string) => Promise<void> | void;
@@ -58,7 +58,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 		}, []);
 
 		// Expose the textarea ref for parent components
-		useImperativeHandle(ref, () => textareaRef.current as HTMLTextAreaElement, []);
+		useImperativeHandle(ref, () => textareaRef.current!, []);
 
 		const handleSendMessage = useCallback(async () => {
 			if (!message.trim() || disabled || isSending) return;

@@ -387,10 +387,10 @@ function parseTodoMarkdown(content: string): Task[] {
 
 	for (const line of lines) {
 		// Look for task headers (### with status icon)
-		const taskHeaderMatch = line.match(/^### [⏳🔄✅❌📋] (.+): (.+)$/u);
+		const taskHeaderMatch = /^### [⏳🔄✅❌📋] (.+): (.+)$/u.exec(line);
 		if (taskHeaderMatch) {
 			// Save previous task if exists
-			if (currentTask && currentTask.id && currentTask.content) {
+			if (currentTask?.id && currentTask.content) {
 				tasks.push(currentTask as Task);
 			}
 
@@ -407,14 +407,14 @@ function parseTodoMarkdown(content: string): Task[] {
 
 		if (currentTask) {
 			// Parse priority
-			const priorityMatch = line.match(/\*\*Priority:\*\* [🔴🟡🟢] (high|medium|low)/u);
+			const priorityMatch = /\*\*Priority:\*\* [🔴🟡🟢] (high|medium|low)/u.exec(line);
 			if (priorityMatch) {
 				currentTask.priority = priorityMatch[1] as Task["priority"];
 				continue;
 			}
 
 			// Parse created date
-			const createdMatch = line.match(/\*\*Created:\*\* (.+)/);
+			const createdMatch = /\*\*Created:\*\* (.+)/.exec(line);
 			if (createdMatch) {
 				if (createdMatch[1]) {
 					currentTask.createdAt = new Date(createdMatch[1]).toISOString();
@@ -423,7 +423,7 @@ function parseTodoMarkdown(content: string): Task[] {
 			}
 
 			// Parse started date
-			const startedMatch = line.match(/\*\*Started:\*\* (.+)/);
+			const startedMatch = /\*\*Started:\*\* (.+)/.exec(line);
 			if (startedMatch) {
 				if (startedMatch[1]) {
 					currentTask.startedAt = new Date(startedMatch[1]).toISOString();
@@ -432,7 +432,7 @@ function parseTodoMarkdown(content: string): Task[] {
 			}
 
 			// Parse completed date
-			const completedMatch = line.match(/\*\*Completed:\*\* (.+)/);
+			const completedMatch = /\*\*Completed:\*\* (.+)/.exec(line);
 			if (completedMatch) {
 				if (completedMatch[1]) {
 					currentTask.completedAt = new Date(completedMatch[1]).toISOString();
@@ -441,7 +441,7 @@ function parseTodoMarkdown(content: string): Task[] {
 			}
 
 			// Parse notes
-			const notesMatch = line.match(/\*\*Notes:\*\* (.+)/);
+			const notesMatch = /\*\*Notes:\*\* (.+)/.exec(line);
 			if (notesMatch) {
 				currentTask.notes = notesMatch[1];
 			}
@@ -449,7 +449,7 @@ function parseTodoMarkdown(content: string): Task[] {
 	}
 
 	// Save last task
-	if (currentTask && currentTask.id && currentTask.content) {
+	if (currentTask?.id && currentTask.content) {
 		tasks.push(currentTask as Task);
 	}
 
@@ -475,7 +475,7 @@ function parseTodoMarkdown(content: string): Task[] {
 		}
 
 		// When we hit a task header, assign the current status
-		if (line.match(/^### [⏳🔄✅❌📋]/u)) {
+		if (/^### [⏳🔄✅❌📋]/u.exec(line)) {
 			if (tasks[taskIndex]) {
 				const task = tasks[taskIndex];
 				if (task) {

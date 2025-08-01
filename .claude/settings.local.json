@@ -85,7 +85,9 @@
       "mcp__playwright__browser_navigate",
       "WebFetch(domain:docs.upstash.com)",
       "mcp__playwright__browser_snapshot",
-      "mcp__playwright__browser_evaluate"
+      "mcp__playwright__browser_evaluate",
+      "Bash(pnpm clean:workspaces:*)",
+      "Bash(npm view:*)"
     ],
     "deny": []
   },

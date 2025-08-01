@@ -8,7 +8,7 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 // Default agent
-const DEFAULT_AGENT: string = "a011";
+const DEFAULT_AGENT = "a011";
 
 export default clerkMiddleware(
 	async (auth, req) => {

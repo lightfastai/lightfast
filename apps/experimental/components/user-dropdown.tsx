@@ -3,14 +3,14 @@
 import { useClerk } from "@clerk/nextjs";
 import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+} from "@repo/ui/components/ui/dropdown-menu";
+import { cn } from "@repo/ui/lib/utils";
 
 interface UserDropdownProps {
 	className?: string;

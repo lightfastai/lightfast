@@ -20,9 +20,7 @@ import type {
 import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 
 // Custom data types for message parts (empty for now)
-export interface LightfastUICustomDataTypes {
-	[key: string]: unknown; // Index signature required by UIDataTypes
-}
+export type LightfastUICustomDataTypes = Record<string, unknown>;
 
 // Helper type to extract the tool type from a tool factory function
 // This handles the RuntimeContext injection pattern
@@ -30,6 +28,7 @@ type ExtractToolType<T> = T extends (context: RuntimeContext<AppRuntimeContext>)
 
 // Define the tool set type using the helper
 // This matches the structure passed to streamText() in route.ts
+// We use a type alias instead of interface to satisfy the UITools constraint
 export type LightfastToolSet = {
 	fileWrite: InferUITool<ExtractToolType<typeof fileWriteTool>>;
 	fileRead: InferUITool<ExtractToolType<typeof fileReadTool>>;
@@ -46,7 +45,7 @@ export type LightfastToolSet = {
 	todoWrite: InferUITool<ExtractToolType<typeof todoWriteTool>>;
 	todoRead: InferUITool<ExtractToolType<typeof todoReadTool>>;
 	todoClear: InferUITool<ExtractToolType<typeof todoClearTool>>;
-};
+}
 
 // Metadata type for our messages
 export interface LightfastUIMessageMetadata {

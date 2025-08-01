@@ -8,6 +8,11 @@
 	"packageManager": "pnpm@10.5.2",
 	"scripts": {
 		"build": "turbo run build",
+		"build:www": "turbo run build -F @lightfast/www",
+		"build:darkarmy": "turbo run build -F @lightfast/darkarmy",
+		"build:app": "turbo run build -F @lightfast/app",
+		"build:auth": "turbo run build -F @lightfast/auth",
+		"build:experimental": "turbo run build -F @lightfast/experimental",
 		"clean": "git clean -xdf node_modules .turbo .internal",
 		"clean:workspaces": "turbo run clean",
 		"db:migrate": "turbo -F @vendor/db migrate",
@@ -33,7 +38,6 @@
 	},
 	"devDependencies": {
 		"@repo/prettier-config": "workspace:*",
-		"@types/minimatch": "^6.0.0",
 		"envmcp": "^0.2.1",
 		"prettier": "catalog:",
 		"turbo": "^2.5.5",

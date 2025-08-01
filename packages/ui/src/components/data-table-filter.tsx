@@ -349,28 +349,28 @@ export function ActiveFilters<TData>({ table }: { table: Table<TData> }) {
             return renderFilter<TData, "text">(
               filter as { id: string; value: FilterModel<"text", TData> },
               column,
-              meta as ColumnMeta<TData, unknown> & { type: "text" },
+              meta,
               table,
             );
           case "number":
             return renderFilter<TData, "number">(
               filter as { id: string; value: FilterModel<"number", TData> },
               column,
-              meta as ColumnMeta<TData, unknown> & { type: "number" },
+              meta,
               table,
             );
           case "date":
             return renderFilter<TData, "date">(
               filter as { id: string; value: FilterModel<"date", TData> },
               column,
-              meta as ColumnMeta<TData, unknown> & { type: "date" },
+              meta,
               table,
             );
           case "option":
             return renderFilter<TData, "option">(
               filter as { id: string; value: FilterModel<"option", TData> },
               column,
-              meta as ColumnMeta<TData, unknown> & { type: "option" },
+              meta,
               table,
             );
           case "multiOption":
@@ -380,9 +380,7 @@ export function ActiveFilters<TData>({ table }: { table: Table<TData> }) {
                 value: FilterModel<"multiOption", TData>;
               },
               column,
-              meta as ColumnMeta<TData, unknown> & {
-                type: "multiOption";
-              },
+              meta,
               table,
             );
           default:

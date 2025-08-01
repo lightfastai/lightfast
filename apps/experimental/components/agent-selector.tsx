@@ -2,13 +2,13 @@
 
 import { Ghost } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@repo/ui/components/ui/dropdown-menu";
 
 // Define the available agent IDs here
 const EXPERIMENTAL_AGENT_IDS: string[] = ["a010", "a011"];

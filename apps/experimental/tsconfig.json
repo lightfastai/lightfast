@@ -2,12 +2,10 @@
   "extends": "@repo/typescript-config/react-library.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "types": [],
     "paths": {
       "@/*": [
         "./*"
-      ],
-      "@/mastra/*": [
-        "../../packages/ai/src/mastra/*"
       ]
     },
     "composite": true,

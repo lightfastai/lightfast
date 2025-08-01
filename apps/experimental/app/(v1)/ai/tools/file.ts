@@ -486,12 +486,12 @@ const executeFindInContent = wrapTraced(
 			const flags = caseSensitive ? "g" : "gi";
 			const searchRegex = new RegExp(regex, flags);
 
-			const matches: Array<{
+			const matches: {
 				match: string;
 				lineNumber: number;
 				lineContent: string;
 				index: number;
-			}> = [];
+			}[] = [];
 
 			// Search through each line
 			lines.forEach((line, lineIndex) => {
@@ -609,14 +609,14 @@ const executeFindByName = wrapTraced(
 			});
 
 			// Extract filenames and filter by glob pattern
-			const matchingFiles: Array<{
+			const matchingFiles: {
 				filename: string;
 				path: string;
 				url: string;
 				size?: number;
 				uploadedAt?: string;
 				contentPreview?: string;
-			}> = [];
+			}[] = [];
 
 			for (const blob of blobs) {
 				// Extract filename from the full path
@@ -649,7 +649,7 @@ const executeFindByName = wrapTraced(
 							if (response.ok) {
 								const content = await response.text();
 								fileInfo.contentPreview =
-									content.length > maxContentChars! ? `${content.substring(0, maxContentChars!)}...` : content;
+									content.length > maxContentChars! ? `${content.substring(0, maxContentChars)}...` : content;
 							}
 						} catch {
 							// Ignore content fetch errors, just skip the preview

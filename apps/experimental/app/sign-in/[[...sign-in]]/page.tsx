@@ -1,8 +1,7 @@
 "use client";
 import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
 import { env } from "@/env";
 
 // Determine auth mode based on environment
@@ -18,38 +17,44 @@ export default function SignInPage() {
 						<div className="space-y-6">
 							{/* Header */}
 							<div className="text-center">
-								<h1 className="font-mono text-xs tracking-widest text-muted-foreground">CODENAME: Experimental</h1>
+								<h1 className="font-mono text-xs tracking-widest text-muted-foreground">
+									CODENAME: Experimental
+								</h1>
 							</div>
 
 							{/* Form */}
-							<Clerk.GlobalError className="text-sm text-red-500" />
+							<Clerk.GlobalError />
 
 							<div className="space-y-4">
-								<Clerk.Field name="identifier" className="space-y-2">
-									<Clerk.Input asChild>
-										<Input type="email" placeholder="Enter your email" />
-									</Clerk.Input>
-									<Clerk.FieldError className="text-xs text-red-500" />
+								<Clerk.Field name="identifier">
+									<div className="space-y-2">
+										<Clerk.Input type="text" />
+										<Clerk.FieldError />
+									</div>
 								</Clerk.Field>
 
 								{/* Password field for dev/preview */}
 								{usePasswordAuth && (
-									<Clerk.Field name="password" className="space-y-2">
-										<Clerk.Input asChild>
-											<Input type="password" placeholder="Enter your password" />
-										</Clerk.Input>
-										<Clerk.FieldError className="text-xs text-red-500" />
+									<Clerk.Field name="password">
+										<div className="space-y-2">
+											<Clerk.Input type="password" />
+											<Clerk.FieldError />
+										</div>
 									</Clerk.Field>
 								)}
 
 								<SignIn.Action submit asChild>
-									<Button className="w-full">{usePasswordAuth ? "Sign In" : "Continue with Email"}</Button>
+									<Button className="w-full">
+										{usePasswordAuth ? "Sign In" : "Continue with Email"}
+									</Button>
 								</SignIn.Action>
 							</div>
 
 							{/* Footer */}
 							<div className="space-y-2">
-								<p className="text-center text-xs text-muted-foreground">This platform is invite-only</p>
+								<p className="text-center text-xs text-muted-foreground">
+									This platform is invite-only
+								</p>
 							</div>
 						</div>
 					</SignIn.Step>
@@ -60,17 +65,19 @@ export default function SignInPage() {
 							<div className="space-y-6">
 								{/* Header */}
 								<div className="text-center">
-									<h1 className="font-mono text-xs tracking-widest text-muted-foreground">CODENAME: Experimental</h1>
+									<h1 className="font-mono text-xs tracking-widest text-muted-foreground">
+										CODENAME: Experimental
+									</h1>
 								</div>
 
 								{/* Verification Form */}
 								<div className="space-y-4">
 									<SignIn.Strategy name="email_code">
-										<Clerk.Field name="code" className="space-y-2">
-											<Clerk.Input asChild>
-												<Input type="text" placeholder="Enter verification code" />
-											</Clerk.Input>
-											<Clerk.FieldError className="text-xs text-red-500" />
+										<Clerk.Field name="code">
+											<div className="space-y-2">
+												<Clerk.Input type="text" />
+												<Clerk.FieldError />
+											</div>
 										</Clerk.Field>
 
 										<SignIn.Action submit asChild>
@@ -81,8 +88,12 @@ export default function SignInPage() {
 
 								{/* Resend option */}
 								<div className="text-center text-sm">
-									<span className="text-muted-foreground">Didn't receive a code? </span>
-									<SignIn.Action resend className="text-primary hover:text-primary/80 cursor-pointer">
+									<span className="text-muted-foreground">
+										Didn't receive a code?{" "}
+									</span>
+									<SignIn.Action
+										resend
+									>
 										Resend
 									</SignIn.Action>
 								</div>

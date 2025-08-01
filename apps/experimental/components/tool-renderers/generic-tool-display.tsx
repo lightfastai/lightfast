@@ -4,10 +4,10 @@ import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import type { ToolUIPart } from "ai";
 import { AlertCircle, Check, Copy, Loader2 } from "lucide-react";
 import { memo, useState } from "react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { ScrollBar } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@repo/ui/components/ui/accordion";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
+import { Button } from "@repo/ui/components/ui/button";
+import { ScrollBar } from "@repo/ui/components/ui/scroll-area";
 
 export interface GenericToolDisplayProps {
 	toolPart: ToolUIPart;

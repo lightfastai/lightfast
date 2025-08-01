@@ -5,10 +5,10 @@ import type { UIMessage } from "ai";
 import { Bot, Loader2, Send, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { cn } from "@repo/ui/lib/utils";
 
 interface ChatInputSectionProps {
 	agentId: string;

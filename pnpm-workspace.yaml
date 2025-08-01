@@ -4,52 +4,38 @@ packages:
   - internal/*
   - vendor/*
 catalog:
-  # Query & RPC
-  '@tanstack/react-query': ^5.69.0
-  '@trpc/client': ^11.0.0
-  '@trpc/tanstack-react-query': ^11.0.0
-  '@trpc/server': ^11.0.0
-  
-  # UI
+  '@tanstack/react-query': ^5.80.7
+  '@trpc/client': ^11.4.0
+  '@trpc/tanstack-react-query': ^11.4.0
+  '@trpc/server': ^11.4.0
   lucide-react: ^0.451.0
-  
-  # Types
   '@types/node': ^20.16.11
   '@types/eslint__js': 8.42.3
-  
-  # Core
   zod: ^3.24.0
   eslint: ^9.23.0
   prettier: ^3.5.3
   typescript: ^5.8.2
-  next: 15.3.0
+  next: ^15.4.0
   turbo: ^2.5.5
-  
-  # AI SDK packages (from experimental)
-  "@ai-sdk/anthropic": "2.0.0-beta.8"
-  "@ai-sdk/gateway": "1.0.0-beta.11"
-  "@ai-sdk/provider": "2.0.0-beta.1"
-  "@ai-sdk/react": "2.0.0-beta.26"
-  "ai": "5.0.0-beta.26"
-  
-  # Storage & Infrastructure
-  "@upstash/redis": "^1.35.1"
-  "@vercel/blob": "^1.1.1"
-  "@vercel/sandbox": "^0.0.13"
-  "redis": "^5.6.0"
-  
-  # External Services
-  "braintrust": "^0.2.1"
-  "exa-js": "^1.8.22"
-  "@browserbasehq/stagehand": "^2.3.1"
-  
-  # Browser Automation
-  "playwright": "^1.54.1"
-  "playwright-core": "^1.54.1"
-  
-  # Utilities
-  "@t3-oss/env-core": "^0.12.0"
-  "resumable-stream": "^2.0.0"
+  '@ai-sdk/anthropic': 2.0.0-beta.8
+  '@ai-sdk/gateway': 1.0.0-beta.11
+  '@ai-sdk/provider': 2.0.0-beta.1
+  '@ai-sdk/react': 2.0.0-beta.26
+  ai: 5.0.0-beta.26
+  '@upstash/redis': ^1.35.1
+  '@vercel/blob': ^1.1.1
+  '@vercel/sandbox': ^0.0.13
+  redis: ^5.6.0
+  braintrust: ^0.2.1
+  exa-js: ^1.8.22
+  '@browserbasehq/stagehand': ^2.3.1
+  playwright: ^1.54.1
+  playwright-core: ^1.54.1
+  '@t3-oss/env-core': ^0.12.0
+  resumable-stream: ^2.0.0
+  '@clerk/elements': ^0.23.48
+  '@clerk/nextjs': ^6.28.1
+  '@clerk/themes': ^2.4.4
 catalogs:
   react19:
     react: 19.1.0
@@ -64,15 +50,18 @@ catalogs:
 onlyBuiltDependencies:
   - '@clerk/shared'
   - '@sentry/cli'
+  - '@tailwindcss/oxide'
   - '@vercel/speed-insights'
   - bufferutil
-  - contentlayer2
   - core-js
   - core-js-pure
-  - electron
-  - electron-winstaller
   - esbuild
   - protobufjs
   - sharp
-  - utf-8-validate
-  - better-sqlite3
+ignoredBuiltDependencies:
+  - bufferutil
+  - core-js
+  - core-js-pure
+  - esbuild
+  - protobufjs
+  - sharp

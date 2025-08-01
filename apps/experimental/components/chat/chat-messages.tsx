@@ -7,8 +7,8 @@ import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { Markdown } from "@/components/markdown";
 import { ThinkingMessage } from "@/components/thinking-message";
 import { ToolCallRenderer } from "@/components/tool-renderers/tool-call-renderer";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { isReasoningPart, isTextPart, isToolPart } from "@/types/lightfast-ui-messages";
 

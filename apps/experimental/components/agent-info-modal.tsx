@@ -2,7 +2,7 @@
 
 import { Info } from "lucide-react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -10,7 +10,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@repo/ui/components/ui/dialog";
 
 interface AgentInfoModalProps {
 	agentId?: string;

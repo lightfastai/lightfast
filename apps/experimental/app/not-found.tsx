@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/ui/icons";
+import { Button } from "@repo/ui/components/ui/button";
+import { Icons } from "@repo/ui/components/icons";
 
 export default function NotFound() {
 	return (
