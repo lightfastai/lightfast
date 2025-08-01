@@ -183,7 +183,7 @@ export class AgentRuntime implements Runtime {
 				streamId: state.assistantMessageId,
 				toolCallId,
 				toolName,
-				result: typeof result === 'object' ? JSON.stringify(result).slice(0, 100) + '...' : result,
+				result: typeof result === "object" ? JSON.stringify(result).slice(0, 100) + "..." : result,
 			});
 			await streamWriter.writeToolResult(state.assistantMessageId, {
 				toolCallId,

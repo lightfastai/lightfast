@@ -114,7 +114,7 @@ export class StreamWriter {
 
 		// Publish for real-time notifications
 		await this.redis.publish(streamKey, { type: DeltaStreamType.TOOL_RESULT });
-		
+
 		console.log(`[StreamWriter] TOOL_RESULT written and published to ${streamKey}`);
 	}
 

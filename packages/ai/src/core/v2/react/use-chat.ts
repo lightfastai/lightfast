@@ -65,7 +65,14 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 	// Refs
 	const responseRef = useRef<HTMLDivElement>(null);
 	const messageIdRef = useRef<string | undefined>(undefined);
-	const messagePartsRef = useRef<Array<{ type: "text" | "tool-call"; text?: string; toolCall?: ToolCallPart }>>([]);
+	const messagePartsRef = useRef<
+		Array<{
+			type: "text" | "tool-call";
+			text?: string;
+			toolCall?: ToolCallPart;
+			toolResult?: ToolResultPart;
+		}>
+	>([]);
 	const isStreamingMessageAddedRef = useRef<boolean>(false);
 
 	// Helper to update streaming message with current parts
@@ -81,17 +88,21 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 				} else if (part.type === "tool-call" && part.toolCall) {
 					// Convert tool call to UI format with proper type and state
 					const toolCall = part.toolCall;
-					const hasResult = toolCall.result !== undefined;
-					const isError = hasResult && typeof toolCall.result === "object" && "error" in toolCall.result;
-					
-					if (hasResult) {
+					const hasResult = part.toolResult !== undefined;
+					const isError =
+						hasResult &&
+						part.toolResult?.result &&
+						typeof part.toolResult.result === "object" &&
+						"error" in part.toolResult.result;
+
+					if (hasResult && part.toolResult) {
 						// Tool has been executed and has a result
 						if (isError) {
 							return {
 								type: `tool-${toolCall.toolName}`,
 								toolCallId: toolCall.toolCallId,
 								state: "output-error",
-								errorText: toolCall.result.error,
+								errorText: part.toolResult.result.error,
 							};
 						} else {
 							return {
@@ -99,7 +110,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 								toolCallId: toolCall.toolCallId,
 								state: "output-available",
 								input: toolCall.args,
-								output: toolCall.result,
+								output: part.toolResult.result,
 							};
 						}
 					} else {
@@ -165,31 +176,24 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		},
 		onToolResult: (toolResult: ToolResultPart) => {
 			console.log("[use-chat] Processing TOOL_RESULT:", toolResult);
-			
+
 			// Update the messagePartsRef to include the tool result
 			// This is important because the streaming message is built from messagePartsRef
 			const updatedPartsRef = messagePartsRef.current.map((part) => {
 				if (part.type === "tool-call" && part.toolCall?.toolCallId === toolResult.toolCallId) {
-					// Check if this is an error result
-					const isError = toolResult.result && typeof toolResult.result === "object" && "error" in toolResult.result;
-					
-					// Update the tool call part to include the result
+					// Add the tool result to the part
 					return {
 						...part,
-						toolCall: {
-							...part.toolCall,
-							result: toolResult.result,
-							state: isError ? "output-error" : "output-available",
-						},
+						toolResult: toolResult,
 					};
 				}
 				return part;
 			});
 			messagePartsRef.current = updatedPartsRef;
-			
+
 			// Now rebuild the streaming message with the updated parts
 			updateStreamingMessage();
-			
+
 			onToolResult?.(toolResult);
 		},
 		onComplete: (fullResponse: string) => {
