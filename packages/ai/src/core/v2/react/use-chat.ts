@@ -2,7 +2,12 @@
 
 import type { UIMessage } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { type DeltaStreamMessage, DeltaStreamType, type ToolCallPart } from "../server/stream/types";
+import {
+	type DeltaStreamMessage,
+	DeltaStreamType,
+	type ToolCallPart,
+	type ToolResultPart,
+} from "../server/stream/types";
 import { uuidv4 } from "../utils/uuid";
 import { useDeltaStream, validateMessage } from "./use-delta-stream";
 
@@ -16,6 +21,7 @@ export interface UseChatOptions {
 	initialMessages?: UIMessage[];
 	onChunk?: (chunk: string) => void;
 	onToolCall?: (toolCall: ToolCallPart) => void;
+	onToolResult?: (toolResult: ToolResultPart) => void;
 	onComplete?: (response: string, messageId: string) => void;
 	onError?: (error: Error) => void;
 }
@@ -46,6 +52,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		initialMessages = [],
 		onChunk,
 		onToolCall,
+		onToolResult,
 		onComplete,
 		onError,
 	} = options;
@@ -72,7 +79,38 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 				if (part.type === "text") {
 					return { type: "text", text: part.text || "" };
 				} else if (part.type === "tool-call" && part.toolCall) {
-					return part.toolCall; // ToolCallPart already has the correct format
+					// Convert tool call to UI format with proper type and state
+					const toolCall = part.toolCall;
+					const hasResult = toolCall.result !== undefined;
+					const isError = hasResult && typeof toolCall.result === "object" && "error" in toolCall.result;
+					
+					if (hasResult) {
+						// Tool has been executed and has a result
+						if (isError) {
+							return {
+								type: `tool-${toolCall.toolName}`,
+								toolCallId: toolCall.toolCallId,
+								state: "output-error",
+								errorText: toolCall.result.error,
+							};
+						} else {
+							return {
+								type: `tool-${toolCall.toolName}`,
+								toolCallId: toolCall.toolCallId,
+								state: "output-available",
+								input: toolCall.args,
+								output: toolCall.result,
+							};
+						}
+					} else {
+						// Tool call is still pending
+						return {
+							type: `tool-${toolCall.toolName}`,
+							toolCallId: toolCall.toolCallId,
+							state: "partial-call",
+							input: toolCall.args,
+						};
+					}
 				}
 				return null;
 			})
@@ -118,11 +156,41 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 			onChunk?.(chunk);
 		},
 		onToolCall: (toolCall: ToolCallPart) => {
+			console.log("[use-chat] Received TOOL_CALL:", toolCall);
 			// Add tool call part
 			messagePartsRef.current.push({ type: "tool-call", toolCall });
 			// Update the streaming message to show tool call immediately
 			updateStreamingMessage();
 			onToolCall?.(toolCall);
+		},
+		onToolResult: (toolResult: ToolResultPart) => {
+			console.log("[use-chat] Processing TOOL_RESULT:", toolResult);
+			
+			// Update the messagePartsRef to include the tool result
+			// This is important because the streaming message is built from messagePartsRef
+			const updatedPartsRef = messagePartsRef.current.map((part) => {
+				if (part.type === "tool-call" && part.toolCall?.toolCallId === toolResult.toolCallId) {
+					// Check if this is an error result
+					const isError = toolResult.result && typeof toolResult.result === "object" && "error" in toolResult.result;
+					
+					// Update the tool call part to include the result
+					return {
+						...part,
+						toolCall: {
+							...part.toolCall,
+							result: toolResult.result,
+							state: isError ? "output-error" : "output-available",
+						},
+					};
+				}
+				return part;
+			});
+			messagePartsRef.current = updatedPartsRef;
+			
+			// Now rebuild the streaming message with the updated parts
+			updateStreamingMessage();
+			
+			onToolResult?.(toolResult);
 		},
 		onComplete: (fullResponse: string) => {
 			setStatus("completed");

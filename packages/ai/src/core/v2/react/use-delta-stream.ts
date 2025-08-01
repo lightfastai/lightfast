@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { type DeltaStreamMessage, DeltaStreamType, type ToolCallPart } from "../server/stream/types";
+import {
+	type DeltaStreamMessage,
+	DeltaStreamType,
+	type ToolCallPart,
+	type ToolResultPart,
+} from "../server/stream/types";
 
 export function validateMessage(data: any): DeltaStreamMessage | null {
 	if (!data || typeof data !== "object" || !data.type || !data.timestamp) {
@@ -31,6 +36,16 @@ export function validateMessage(data: any): DeltaStreamMessage | null {
 				return null;
 			}
 			break;
+		case DeltaStreamType.TOOL_RESULT:
+			if (!data.toolResult) return null;
+			// Parse the JSON string back to object
+			try {
+				const toolResult = typeof data.toolResult === "string" ? JSON.parse(data.toolResult) : data.toolResult;
+				data.toolResult = toolResult;
+			} catch {
+				return null;
+			}
+			break;
 		case DeltaStreamType.ERROR:
 			if (!data.error) return null;
 			break;
@@ -56,6 +71,7 @@ export interface UseDeltaStreamOptions {
 	streamEndpoint?: string;
 	onChunk?: (chunk: string) => void;
 	onToolCall?: (toolCall: ToolCallPart) => void;
+	onToolResult?: (toolResult: ToolResultPart) => void;
 	onComplete?: (response: string) => void;
 	onError?: (error: Error) => void;
 	maxRetries?: number;
@@ -77,6 +93,7 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 		streamEndpoint = "/api/v2/stream",
 		onChunk,
 		onToolCall,
+		onToolResult,
 		onComplete,
 		onError,
 		maxRetries = 10,
@@ -170,6 +187,14 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 												break;
 											}
 
+											case DeltaStreamType.TOOL_RESULT: {
+												if (validatedMessage.toolResult) {
+													console.log("[use-delta-stream] Received TOOL_RESULT:", validatedMessage.toolResult);
+													onToolResult?.(validatedMessage.toolResult);
+												}
+												break;
+											}
+
 											case DeltaStreamType.COMPLETE: {
 												setIsConnected(false);
 												onComplete?.(streamContent.current);
@@ -211,7 +236,7 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 
 			await attemptConnection();
 		},
-		[streamEndpoint, onChunk, onToolCall, onComplete, onError, maxRetries, retryDelay],
+		[streamEndpoint, onChunk, onToolCall, onToolResult, onComplete, onError, maxRetries, retryDelay],
 	);
 
 	// Disconnect from stream

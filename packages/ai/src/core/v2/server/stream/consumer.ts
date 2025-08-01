@@ -7,7 +7,7 @@ import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey } from "../keys";
-import { type DeltaStreamMessage, DeltaStreamType, type ToolCallPart } from "./types";
+import { type DeltaStreamMessage, DeltaStreamType, type ToolCallPart, type ToolResultPart } from "./types";
 
 // Redis stream types
 type StreamField = string;
@@ -59,6 +59,16 @@ function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessag
 				// Parse the JSON string back to ToolCallPart
 				const toolCall = typeof rawObj.toolCall === "string" ? JSON.parse(rawObj.toolCall) : rawObj.toolCall;
 				return { type: DeltaStreamType.TOOL_CALL, toolCall, timestamp };
+			} catch {
+				return null;
+			}
+
+		case DeltaStreamType.TOOL_RESULT:
+			if (!rawObj.toolResult) return null;
+			try {
+				// Parse the JSON string back to ToolResultPart
+				const toolResult = typeof rawObj.toolResult === "string" ? JSON.parse(rawObj.toolResult) : rawObj.toolResult;
+				return { type: DeltaStreamType.TOOL_RESULT, toolResult, timestamp };
 			} catch {
 				return null;
 			}

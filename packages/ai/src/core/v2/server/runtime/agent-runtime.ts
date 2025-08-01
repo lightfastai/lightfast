@@ -177,6 +177,20 @@ export class AgentRuntime implements Runtime {
 				await this.saveSessionState(sessionId, state);
 			}
 
+			// Write tool result to delta stream
+			const streamWriter = new StreamWriter(this.redis);
+			console.log(`[AgentRuntime] Writing tool result to stream:`, {
+				streamId: state.assistantMessageId,
+				toolCallId,
+				toolName,
+				result: typeof result === 'object' ? JSON.stringify(result).slice(0, 100) + '...' : result,
+			});
+			await streamWriter.writeToolResult(state.assistantMessageId, {
+				toolCallId,
+				toolName,
+				result,
+			});
+
 			// Write tool result as part of the assistant message
 			const messageWriter = new MessageWriter(this.redis);
 			const messageReader = new MessageReader(this.redis);
@@ -234,6 +248,22 @@ export class AgentRuntime implements Runtime {
 				code: "TOOL_ERROR",
 				toolCallId,
 				timestamp: new Date().toISOString(),
+			});
+
+			// Write error tool result to delta stream
+			const streamWriter = new StreamWriter(this.redis);
+			console.log(`[AgentRuntime] Writing tool error to stream:`, {
+				streamId: state.assistantMessageId,
+				toolCallId,
+				toolName,
+				error: error instanceof Error ? error.message : String(error),
+			});
+			await streamWriter.writeToolResult(state.assistantMessageId, {
+				toolCallId,
+				toolName,
+				result: {
+					error: error instanceof Error ? error.message : String(error),
+				},
 			});
 
 			// Write error tool result as part of the assistant message

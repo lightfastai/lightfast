@@ -11,6 +11,13 @@ export interface ToolCallPart {
 	args: any;
 }
 
+// Tool result part format
+export interface ToolResultPart {
+	toolCallId: string;
+	toolName: string;
+	result: any;
+}
+
 export const StreamStatus = {
 	STARTED: "started",
 	STREAMING: "streaming",
@@ -25,6 +32,7 @@ export enum DeltaStreamType {
 	INIT = "init",
 	CHUNK = "chunk",
 	TOOL_CALL = "tool-call",
+	TOOL_RESULT = "tool-result",
 	ERROR = "error",
 	COMPLETE = "complete",
 }
@@ -43,6 +51,11 @@ export type DeltaStreamMessage =
 	| {
 			type: DeltaStreamType.TOOL_CALL;
 			toolCall: ToolCallPart;
+			timestamp: string;
+	  }
+	| {
+			type: DeltaStreamType.TOOL_RESULT;
+			toolResult: ToolResultPart;
 			timestamp: string;
 	  }
 	| {

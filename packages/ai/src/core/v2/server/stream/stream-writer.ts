@@ -4,7 +4,7 @@
 
 import type { Redis } from "@upstash/redis";
 import { getDeltaStreamKey } from "../keys";
-import { DeltaStreamType, type ToolCallPart } from "./types";
+import { DeltaStreamType, type ToolCallPart, type ToolResultPart } from "./types";
 
 export class StreamWriter {
 	constructor(private redis: Redis) {}
@@ -92,6 +92,30 @@ export class StreamWriter {
 
 		// Publish for real-time notifications
 		await this.redis.publish(streamKey, { type: DeltaStreamType.TOOL_CALL });
+	}
+
+	/**
+	 * Write a tool result event to the delta stream
+	 */
+	async writeToolResult(streamId: string, toolResult: ToolResultPart): Promise<void> {
+		const streamKey = getDeltaStreamKey(streamId);
+
+		const message: Record<string, string> = {
+			type: DeltaStreamType.TOOL_RESULT,
+			// Serialize the tool result as JSON
+			toolResult: JSON.stringify(toolResult),
+			timestamp: new Date().toISOString(),
+		};
+
+		console.log(`[StreamWriter] Writing TOOL_RESULT to Redis stream ${streamKey}:`, message);
+
+		// Write to Redis stream
+		await this.redis.xadd(streamKey, "*", message);
+
+		// Publish for real-time notifications
+		await this.redis.publish(streamKey, { type: DeltaStreamType.TOOL_RESULT });
+		
+		console.log(`[StreamWriter] TOOL_RESULT written and published to ${streamKey}`);
 	}
 
 	/**
