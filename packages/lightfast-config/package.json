@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@repo/ui": "workspace:*",
+    "@repo/url-utils": "workspace:*",
     "typescript": "catalog:"
   },
   "devDependencies": {
