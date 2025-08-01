@@ -94,7 +94,8 @@
       "Bash(pnpm --filter @lightfast/www typecheck)",
       "WebFetch(domain:clerk.com)",
       "Bash(pnpm --filter @vendor/db build)",
-      "WebFetch(domain:clerk.com)"
+      "WebFetch(domain:clerk.com)",
+      "Bash(pnpm --filter @lightfast/auth build)"
     ],
     "deny": []
   },
