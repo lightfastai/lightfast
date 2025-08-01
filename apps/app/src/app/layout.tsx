@@ -6,6 +6,7 @@ import { siteConfig } from "@repo/lightfast-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 export const metadata: Metadata = {
   title: {
@@ -93,6 +94,8 @@ export default function RootLayout({
       <body className={cn("bg-background dark min-h-screen", fonts)}>
         {children}
         <Toaster />
+        <VercelAnalytics />
+        <SpeedInsights />
       </body>
     </html>
   );
