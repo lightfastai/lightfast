@@ -1,5 +1,5 @@
 {
-	"name": "@lightfast/ai",
+	"name": "@lightfast/ai-experimental",
 	"version": "1.0.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
 	"type": "module",

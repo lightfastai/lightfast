@@ -1,5 +1,5 @@
 {
-	"extends": "../../tooling/typescript/library.json",
+	"extends": "../../tooling-experimental/typescript/library.json",
 	"compilerOptions": {
 		"rootDir": "./src",
 		"composite": true,
