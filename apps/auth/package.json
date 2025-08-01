@@ -17,6 +17,7 @@
     "@repo/lightfast-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
+    "@vendor/analytics": "workspace:*",
     "@vendor/clerk": "workspace:*",
     "next": "catalog:",
     "react": "catalog:react19",
