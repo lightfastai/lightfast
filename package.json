@@ -17,7 +17,6 @@
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
     "dev:app": "turbo watch dev -F @lightfast/app --continue",
     "dev:darkarmy": "turbo watch dev -F @lightfast/darkarmy --continue",
-    "dev:desktop": "pnpm --filter @lightfast/desktop dev",
     "dev:email": "turbo run dev:email -F @lightfast/www",
     "brain": "turbo run eval",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
