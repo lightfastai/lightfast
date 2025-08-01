@@ -1,4 +1,4 @@
-# Dark Army
+# Test
 
 Minimal Next.js SSR application.
 
