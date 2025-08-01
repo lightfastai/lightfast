@@ -157,6 +157,9 @@ importers:
       '@repo/lightfast-config':
         specifier: workspace:*
         version: link:../../packages/lightfast-config
+      '@repo/lightfast-react':
+        specifier: workspace:*
+        version: link:../../packages/lightfast-react
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -1022,6 +1025,40 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
+  packages/lightfast-react:
+    dependencies:
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lucide-react:
+        specifier: ^0.469.0
+        version: 0.469.0(react@19.1.1)
+      react:
+        specifier: ^18 || ^19
+        version: 19.1.1
+      react-dom:
+        specifier: ^18 || ^19
+        version: 19.1.1(react@19.1.1)
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/react':
+        specifier: catalog:react19
+        version: 19.1.2
+      '@types/react-dom':
+        specifier: catalog:react19
+        version: 19.1.2(@types/react@19.1.2)
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
@@ -8589,6 +8626,11 @@ packages:
     resolution: {integrity: sha512-OwQ3uljZLp2cerj8sboy5rnhtGTCl9UCJIhT1J85/yOuGVlEH+xaUPR7tvNdddPvmV5M5VLdr7cQuWE3hzA4jw==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
+
+  lucide-react@0.469.0:
+    resolution: {integrity: sha512-28vvUnnKQ/dBwiCQtwJw7QauYnE7yd2Cyp4tTTJpvglX4EMpbflcdBgrgToX2j71B3YvugK/NH3BGUk+E/p/Fw==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
@@ -18494,6 +18536,10 @@ snapshots:
   lucide-react@0.451.0(react@19.1.0):
     dependencies:
       react: 19.1.0
+
+  lucide-react@0.469.0(react@19.1.1):
+    dependencies:
+      react: 19.1.1
 
   magic-string@0.30.17:
     dependencies:
