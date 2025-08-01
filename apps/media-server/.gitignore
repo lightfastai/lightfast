@@ -1,9 +1,0 @@
-# OpenNext
-/.open-next
-
-# wrangler files
-.wrangler
-.dev.vars*
-
-# clerk configuration (can include secrets)
-/.clerk/
