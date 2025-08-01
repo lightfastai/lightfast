@@ -14,9 +14,8 @@ pnpm format         # Check formatting
 pnpm format:fix     # Fix formatting issues
 
 # Development servers
-pnpm dev            # Start www and app together
+pnpm dev            # Start development servers
 pnpm dev:www        # Start www app only (port 4101)
-pnpm dev:app        # Start app only (port 4100)
 pnpm dev:darkarmy   # Start darkarmy app (port 4102)
 
 # Other useful commands
@@ -35,7 +34,6 @@ pnpm db:studio      # Open database studio
 - **Monorepo**: pnpm workspace with Turbo
 - **Apps**:
   - `apps/www` - Marketing site (port 4101)
-  - `apps/app` - Main application (port 4100)
   - `apps/darkarmy` - Binary matrix display app (port 4102)
 - **Packages**: Shared libraries in `packages/`
 - **Vendor**: Third-party integrations in `vendor/`
