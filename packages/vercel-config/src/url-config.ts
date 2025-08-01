@@ -102,28 +102,18 @@ export function getCurrentAppUrl(): string {
 }
 
 /**
- * Helper for Clerk satellite configuration
+ * Helper for Clerk subdomain configuration
+ * For subdomain setups, we don't need satellite config - sessions are shared via root domain cookies
  */
-export function getClerkSatelliteConfig(currentApp: ProjectName) {
-  const urls = getAllAppUrls();
-  const authUrls = getAuthUrls();
-
-  // Primary domain (www) doesn't need satellite config
-  if (currentApp === "www") {
+export function getClerkSubdomainConfig(currentApp: ProjectName) {
+  // For subdomain setups, we only need to specify the domain for production
+  // In development, localhost handles this automatically
+  if (process.env.NODE_ENV === "production") {
     return {
-      isSatellite: false,
-      domain: PRODUCTION_URLS.www.replace("https://", ""),
+      domain: "lightfast.ai", // Root domain for cookie sharing
     };
   }
 
-  // Satellite domains
-  return {
-    isSatellite: true,
-    domain: PRODUCTION_URLS[currentApp].replace("https://", ""),
-    primaryDomain: PRODUCTION_URLS.www.replace("https://", ""),
-    signInUrl: authUrls.signIn,
-    signUpUrl: authUrls.signUp,
-    afterSignInUrl: currentApp === "auth" ? authUrls.afterSignIn : undefined,
-    afterSignUpUrl: currentApp === "auth" ? authUrls.afterSignUp : undefined,
-  };
+  // No special config needed for development
+  return {};
 }

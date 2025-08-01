@@ -1,11 +1,12 @@
-import { getAuthUrls, getClerkSatelliteConfig, type ProjectName } from "@repo/vercel-config";
+import { getAuthUrls, getClerkSubdomainConfig, type ProjectName } from "@repo/vercel-config";
 
 /**
- * Get Clerk configuration for a specific app
+ * Get Clerk configuration for a specific app in a subdomain setup
+ * Handles redirects between subdomains (auth.lightfast.ai, app.lightfast.ai, etc.)
  */
 export function getClerkConfig(appName: ProjectName) {
   const authUrls = getAuthUrls();
-  const satelliteConfig = getClerkSatelliteConfig(appName);
+  const subdomainConfig = getClerkSubdomainConfig(appName);
 
   // For auth app, we handle redirects differently
   if (appName === "auth") {
@@ -14,22 +15,23 @@ export function getClerkConfig(appName: ProjectName) {
       signUpUrl: "/sign-up",
       signInFallbackRedirectUrl: authUrls.afterSignIn,
       signUpFallbackRedirectUrl: authUrls.afterSignUp,
-      ...satelliteConfig,
+      ...subdomainConfig,
     };
   }
 
-  // For other apps, redirect to auth app
+  // For other apps, redirect to auth subdomain
   return {
     signInUrl: authUrls.signIn,
     signUpUrl: authUrls.signUp,
     signInFallbackRedirectUrl: "/",
     signUpFallbackRedirectUrl: "/",
-    ...satelliteConfig,
+    ...subdomainConfig,
   };
 }
 
 /**
- * Get middleware configuration for Clerk
+ * Get middleware configuration for Clerk subdomain setup
+ * Configures public routes and auth redirects for each subdomain
  */
 export function getClerkMiddlewareConfig(appName: ProjectName) {
   const config = getClerkConfig(appName);

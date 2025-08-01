@@ -8,7 +8,7 @@ export {
   getAllAppUrls,
   getAuthUrls,
   getCurrentAppUrl,
-  getClerkSatelliteConfig,
+  getClerkSubdomainConfig,
   type AppUrls,
 } from "@repo/vercel-config";
 
