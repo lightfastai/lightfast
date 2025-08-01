@@ -91,6 +91,9 @@ importers:
 
   apps/app:
     dependencies:
+      '@repo/lightfast-config':
+        specifier: workspace:*
+        version: link:../../packages/lightfast-config
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
