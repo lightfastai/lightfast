@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 import { siteConfig } from "@repo/lightfast-config";
 import { ClerkProvider } from "@clerk/nextjs";
+import { getClerkConfig } from "@repo/url-utils";
 
 
 export const metadata: Metadata = {
@@ -84,13 +85,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clerkConfig = getClerkConfig("app");
+
   return (
     <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      signInUrl="/sign-in"
-      afterSignInUrl="/dashboard"
-      signUpUrl="/sign-up"
-      afterSignUpUrl="/dashboard"
+      {...clerkConfig}
       appearance={{
         variables: {
           colorPrimary: "#3b82f6",
