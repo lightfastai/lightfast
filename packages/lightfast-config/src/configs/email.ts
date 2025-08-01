@@ -4,6 +4,8 @@ export interface EmailConfig {
   auth: string;
   legal: string;
   hello: string;
+  admin: string;
+  support: string;
 }
 
 export const emailConfig: EmailConfig = {
@@ -12,4 +14,6 @@ export const emailConfig: EmailConfig = {
   auth: "Lightfast.ai <auth@mail.lightfast.ai>",
   legal: "legal@lightfast.ai",
   hello: "hello@lightfast.ai",
+  admin: "admin@lightfast.ai",
+  support: "support@lightfast.ai",
 };
