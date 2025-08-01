@@ -1,3 +1,69 @@
+# Project Specification
+See @SPEC.md for business goals and product vision.
+
+# Common Commands
+
+## Build, Lint, and Typecheck
+```bash
+# Global commands (run from root)
+pnpm build          # Build all packages
+pnpm lint           # Lint all packages
+pnpm lint:fix       # Fix linting issues
+pnpm typecheck      # Run TypeScript type checking
+pnpm format         # Check formatting
+pnpm format:fix     # Fix formatting issues
+
+# Development servers
+pnpm dev            # Start www and app together
+pnpm dev:www        # Start www app only (port 4101)
+pnpm dev:app        # Start app only (port 4100)
+pnpm dev:darkarmy   # Start darkarmy app (port 4102)
+
+# Other useful commands
+pnpm clean          # Clean all build artifacts
+pnpm clean:workspaces # Clean turbo workspaces
+```
+
+## Database Commands
+```bash
+pnpm db:migrate     # Run database migrations
+pnpm db:migrate:generate # Generate migration files
+pnpm db:studio      # Open database studio
+```
+
+# Repository Structure
+- **Monorepo**: pnpm workspace with Turbo
+- **Apps**:
+  - `apps/www` - Marketing site (port 4101)
+  - `apps/app` - Main application (port 4100)
+  - `apps/darkarmy` - Binary matrix display app (port 4102)
+- **Packages**: Shared libraries in `packages/`
+- **Vendor**: Third-party integrations in `vendor/`
+- **Internal**: ESLint, Prettier, TypeScript configs in `internal/`
+
+# Code Style
+- ESLint configuration extends from `@repo/eslint-config`
+- Prettier configuration from `@repo/prettier-config`
+- TypeScript configs extend from `@repo/typescript-config`
+
+# Testing Instructions
+Check package.json files for test commands - currently no global test command configured.
+
+# Environment Setup
+- Node.js >= 20.16.0
+- pnpm 10.5.2 (enforced by packageManager)
+- Environment variables loaded via `dotenv` in app packages
+
+# Workflows
+
+## Workflow 1: Investigate External Repos
+Clone repos to `/tmp/repos/<repo-name>` for safe investigation without affecting the current workspace.
+
+## Workflow 2: Investigate Dependencies  
+In pnpm monorepo with `node-linker=hoisted`, all dependencies are hoisted to root `node_modules/` - check there first.
+
+---
+
 # Lightfast Next.js App Development Guide
 
 This guide provides best practices and conventions for developing the Next.js application in `apps/www` based on the patterns established in this codebase.
