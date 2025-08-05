@@ -105,7 +105,7 @@ export default function HomePage() {
               top: "calc(100% - 32px)",
             }}
           >
-            <Icons.logoShort className="text-primary" />
+            <Icons.logoShort className="text-primary w-10 h-6" />
           </div>
 
           <div className="absolute right-0 bottom-0 left-0">
@@ -113,7 +113,6 @@ export default function HomePage() {
               <Button asChild variant="outline">
                 <Link
                   className="text-foreground flex items-center"
-                  target="_blank"
                   href={siteConfig.links.chat.href}
                 >
                   <ZapIcon className="mr-1 h-4 w-4" />

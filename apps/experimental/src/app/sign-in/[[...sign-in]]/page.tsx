@@ -1,134 +1,97 @@
-"use client";
-import * as Clerk from "@clerk/elements/common";
-import * as SignIn from "@clerk/elements/sign-in";
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
+import React from "react";
+import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
-import { useState } from "react";
-import { env } from "@/env";
+import { siteConfig } from "@repo/lightfast-config";
+import { SignInForm } from "./sign-in-form";
 
 export default function SignInPage() {
-	const [usePassword, setUsePassword] = useState(false);
+	const gridLinePositions = {
+		"--viewport-width": "100vw",
+		"--viewport-height": "100vh",
+		"--margin-vertical": "15vh",
+		"--margin-horizontal": "15vw",
+		"--container-top": "var(--margin-vertical)",
+		"--container-bottom": "calc(100vh - var(--margin-vertical))",
+		"--container-left": "var(--margin-horizontal)",
+		"--container-right": "calc(100vw - var(--margin-horizontal))",
+	} as React.CSSProperties;
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-background px-4">
-			<div className="w-full max-w-lg rounded-none border border-border/50 bg-background p-16">
-				<SignIn.Root>
-					<SignIn.Step name="start">
-						<div className="space-y-6">
-							{/* Header */}
-							<div className="text-center space-y-4">
-								<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
-								<div className="flex flex-col gap-2">
-									<h1 className="text-lg font-bold text-foreground">
-										Sign In to Experimental
-									</h1>
-									<p className="text-sm text-muted-foreground">
-										This platform is invite-only
-									</p>
-								</div>
+		<div className="min-h-screen bg-background relative overflow-hidden" style={gridLinePositions}>
+			{/* Grid lines */}
+			<div className="pointer-events-none absolute inset-0 z-10">
+				{/* Horizontal lines through corners */}
+				<div
+					className="bg-border/30 absolute h-px w-full"
+					style={{ top: "var(--container-top)" }}
+				/>
+				<div
+					className="bg-border/30 absolute h-px w-full"
+					style={{ top: "var(--container-bottom)" }}
+				/>
+				
+				{/* Vertical lines through corners */}
+				<div
+					className="bg-border/30 absolute top-0 h-full w-px"
+					style={{ left: "var(--container-left)" }}
+				/>
+				<div
+					className="bg-border/30 absolute top-0 h-full w-px"
+					style={{ left: "var(--container-right)" }}
+				/>
+				
+				{/* Inner grid lines - 3x3 grid */}
+				<div
+					className="bg-border/20 absolute h-px w-full"
+					style={{ top: "calc(var(--container-top) + (var(--container-bottom) - var(--container-top)) * 0.33)" }}
+				/>
+				<div
+					className="bg-border/20 absolute h-px w-full"
+					style={{ top: "calc(var(--container-top) + (var(--container-bottom) - var(--container-top)) * 0.66)" }}
+				/>
+				<div
+					className="bg-border/20 absolute top-0 h-full w-px"
+					style={{ left: "calc(var(--container-left) + (var(--container-right) - var(--container-left)) * 0.33)" }}
+				/>
+				<div
+					className="bg-border/20 absolute top-0 h-full w-px"
+					style={{ left: "calc(var(--container-left) + (var(--container-right) - var(--container-left)) * 0.66)" }}
+				/>
+			</div>
+
+			{/* Rectangle container spanning from 15vh/15vw to 85vh/85vw */}
+			<div className="absolute inset-0 m-[15vh_15vw] border border-border/50 bg-background z-20">
+				{/* Grid with 12 columns: 7/12 for left, 5/12 for right */}
+				<div className="grid grid-cols-12 h-full">
+					{/* Left section - 7/12 of space */}
+					<div className="col-span-7 border-r border-border/50">
+						<div className="relative h-full p-8">
+							{/* Text at top left */}
+							<div className="absolute top-8 left-8 right-8">
+								<p className="text-foreground max-w-xl text-2xl font-bold sm:text-3xl lg:text-4xl">
+									Experiment with unreleased Lightfast features in our sandbox.
+								</p>
+								<p className="text-muted-foreground text-sm mt-4">
+									This platform is invite-only
+								</p>
 							</div>
 
-							{/* Form */}
-							<Clerk.GlobalError className="text-sm text-red-500" />
-
-							<div className="space-y-4 mt-8">
-								{/* Email field - always shown */}
-								<Clerk.Field name="identifier" className="space-y-2">
-									<Clerk.Input asChild>
-										<Input type="email" placeholder="Enter your email" />
-									</Clerk.Input>
-									<Clerk.FieldError className="text-xs text-red-500" />
-								</Clerk.Field>
-
-								{/* Password field - only when usePassword is true */}
-								{usePassword && (
-									<Clerk.Field name="password" className="space-y-2">
-										<Clerk.Input asChild>
-											<Input type="password" placeholder="Enter your password" />
-										</Clerk.Input>
-										<Clerk.FieldError className="text-xs text-red-500" />
-									</Clerk.Field>
-								)}
-
-								<SignIn.Action submit asChild>
-									<Button className="w-full">
-										{usePassword ? "Sign In" : "Continue with Email"}
-									</Button>
-								</SignIn.Action>
-
-								{/* Divider */}
-								<div className="relative my-4">
-									<div className="absolute inset-0 flex items-center">
-										<span className="w-full border-t border-border/50" />
-									</div>
-									<div className="relative flex justify-center text-xs uppercase">
-										<span className="bg-background px-2 text-muted-foreground">
-											Or
-										</span>
-									</div>
-								</div>
-
-								{/* Toggle between email and password */}
-								<Button
-									type="button"
-									variant="outline"
-									className="w-full"
-									onClick={() => setUsePassword(!usePassword)}
-								>
-									{usePassword ? "Use Email Verification Instead" : "Sign In with Password"}
-								</Button>
+							{/* Logo at bottom left */}
+							<div className="absolute bottom-8 left-8">
+								<Link href={siteConfig.url} target="_blank" rel="noopener noreferrer">
+									<Icons.logoShort className="text-primary w-10 h-6 hover:opacity-80 transition-opacity cursor-pointer" />
+								</Link>
 							</div>
 						</div>
-					</SignIn.Step>
+					</div>
 
-					{/* Email verification step - only for email method */}
-					<SignIn.Step name="verifications">
-						<div className="space-y-6">
-							{/* Header */}
-							<div className="text-center space-y-4">
-								<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
-								<div className="flex flex-col gap-2">
-									<h1 className="text-lg font-bold text-foreground">
-										Verify Your Email
-									</h1>
-									<p className="text-sm text-muted-foreground">
-										We've sent a verification code to your email
-									</p>
-								</div>
-							</div>
-
-							{/* Verification Form */}
-							<div className="space-y-4 mt-8">
-								<SignIn.Strategy name="email_code">
-									<Clerk.Field name="code" className="space-y-2">
-										<Clerk.Input asChild>
-											<Input type="text" placeholder="Enter verification code" />
-										</Clerk.Input>
-										<Clerk.FieldError className="text-xs text-red-500" />
-									</Clerk.Field>
-
-									<SignIn.Action submit asChild>
-										<Button className="w-full">Verify Email</Button>
-									</SignIn.Action>
-								</SignIn.Strategy>
-							</div>
-
-							{/* Resend option */}
-							<div className="text-center text-sm">
-								<span className="text-muted-foreground">
-									Didn't receive a code?{" "}
-								</span>
-								<SignIn.Action
-									resend
-									className="text-primary hover:text-primary/80 cursor-pointer underline"
-								>
-									Resend
-								</SignIn.Action>
-							</div>
+					{/* Right section - 5/12 of space for sign-in */}
+					<div className="col-span-5 flex items-center justify-center p-8">
+						<div className="w-full max-w-sm">
+							<SignInForm />
 						</div>
-					</SignIn.Step>
-				</SignIn.Root>
+					</div>
+				</div>
 			</div>
 		</div>
 	);
