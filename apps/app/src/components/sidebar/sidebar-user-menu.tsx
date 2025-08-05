@@ -26,10 +26,12 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function SidebarUserMenu() {
   const { signOut } = useClerk();
+  const router = useRouter();
   const { user } = useUser();
   const { state } = useSidebar();
   const [open, setOpen] = useState(false);
@@ -43,6 +45,7 @@ export function SidebarUserMenu() {
 
   const handleSignOut = async () => {
     await signOut();
+    router.push("/");
   };
 
   const displayName = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "User";
