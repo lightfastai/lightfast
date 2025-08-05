@@ -3,6 +3,7 @@ import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import { Icons } from "@repo/ui/components/icons";
 import { useState } from "react";
 import { env } from "@/env";
 
@@ -11,21 +12,27 @@ export default function SignInPage() {
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background px-4">
-			<div className="w-full max-w-md rounded-2xl border border-border/50 bg-background p-8">
+			<div className="w-full max-w-lg rounded-none border border-border/50 bg-background p-16">
 				<SignIn.Root>
 					<SignIn.Step name="start">
 						<div className="space-y-6">
 							{/* Header */}
-							<div className="text-center">
-								<h1 className="font-mono text-xs tracking-widest text-muted-foreground">
-									CODENAME: Experimental
-								</h1>
+							<div className="text-center space-y-4">
+								<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
+								<div className="flex flex-col gap-2">
+									<h1 className="text-lg font-bold text-foreground">
+										Sign In to Experimental
+									</h1>
+									<p className="text-sm text-muted-foreground">
+										This platform is invite-only
+									</p>
+								</div>
 							</div>
 
 							{/* Form */}
 							<Clerk.GlobalError className="text-sm text-red-500" />
 
-							<div className="space-y-4">
+							<div className="space-y-4 mt-8">
 								{/* Email field - always shown */}
 								<Clerk.Field name="identifier" className="space-y-2">
 									<Clerk.Input asChild>
@@ -72,13 +79,6 @@ export default function SignInPage() {
 									{usePassword ? "Use Email Verification Instead" : "Sign In with Password"}
 								</Button>
 							</div>
-
-							{/* Footer */}
-							<div className="space-y-2">
-								<p className="text-center text-xs text-muted-foreground">
-									This platform is invite-only
-								</p>
-							</div>
 						</div>
 					</SignIn.Step>
 
@@ -86,18 +86,20 @@ export default function SignInPage() {
 					<SignIn.Step name="verifications">
 						<div className="space-y-6">
 							{/* Header */}
-							<div className="text-center">
-								<h1 className="font-mono text-xs tracking-widest text-muted-foreground">
-									CODENAME: Experimental
-								</h1>
+							<div className="text-center space-y-4">
+								<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
+								<div className="flex flex-col gap-2">
+									<h1 className="text-lg font-bold text-foreground">
+										Verify Your Email
+									</h1>
+									<p className="text-sm text-muted-foreground">
+										We've sent a verification code to your email
+									</p>
+								</div>
 							</div>
 
 							{/* Verification Form */}
-							<div className="space-y-4">
-								<p className="text-center text-sm text-muted-foreground">
-									We've sent a verification code to your email
-								</p>
-								
+							<div className="space-y-4 mt-8">
 								<SignIn.Strategy name="email_code">
 									<Clerk.Field name="code" className="space-y-2">
 										<Clerk.Input asChild>
@@ -119,7 +121,7 @@ export default function SignInPage() {
 								</span>
 								<SignIn.Action
 									resend
-									className="text-primary hover:text-primary/80 cursor-pointer"
+									className="text-primary hover:text-primary/80 cursor-pointer underline"
 								>
 									Resend
 								</SignIn.Action>

@@ -110,13 +110,18 @@ export default function SignInPage() {
 							{/* Header */}
 							<div className="text-center space-y-4">
 								<Icons.logoShort className="mx-auto w-10 h-10 text-foreground" />
-								<h1 className="text-lg font-medium text-foreground">
-									Verify Your Email
-								</h1>
+								<div className="flex flex-col gap-2">
+									<h1 className="text-lg font-bold text-foreground">
+										Verify Your Email
+									</h1>
+									<p className="text-sm text-muted-foreground">
+										We've sent a verification code to your email
+									</p>
+								</div>
 							</div>
 
 							{/* Verification Form */}
-							<div className="space-y-4">
+							<div className="space-y-4 mt-8">
 								<SignIn.Strategy name="email_code">
 									<Clerk.Field name="code" className="space-y-2">
 										<Clerk.Input asChild>
@@ -141,7 +146,7 @@ export default function SignInPage() {
 								</span>
 								<SignIn.Action
 									resend
-									className="text-primary hover:text-primary/80 cursor-pointer"
+									className="text-primary hover:text-primary/80 cursor-pointer underline"
 								>
 									Resend
 								</SignIn.Action>
