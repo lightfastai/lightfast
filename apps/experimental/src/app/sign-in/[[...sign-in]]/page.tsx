@@ -59,16 +59,16 @@ export default function SignInPage() {
 				/>
 			</div>
 
-			{/* Rectangle container spanning from 15vh/15vw to 85vh/85vw */}
-			<div className="absolute inset-0 m-[15vh_15vw] border border-border/50 bg-background z-20">
-				{/* Grid with 12 columns: 7/12 for left, 5/12 for right */}
-				<div className="grid grid-cols-12 h-full">
-					{/* Left section - 7/12 of space */}
-					<div className="col-span-7 border-r border-border/50">
-						<div className="relative h-full p-8">
+			{/* Rectangle container - responsive margins */}
+			<div className="absolute inset-0 m-[5vh_5vw] lg:m-[15vh_15vw] border border-border/50 bg-background z-20">
+				{/* Grid - switches from columns to rows on mobile/tablet */}
+				<div className="grid grid-cols-1 lg:grid-cols-12 h-full">
+					{/* Top/Left section - content */}
+					<div className="lg:col-span-7 border-b lg:border-b-0 lg:border-r border-border/50">
+						<div className="relative h-full p-6 lg:p-8">
 							{/* Text at top left */}
-							<div className="absolute top-8 left-8 right-8">
-								<p className="text-foreground max-w-xl text-2xl font-bold sm:text-3xl lg:text-4xl">
+							<div className="lg:absolute lg:top-8 lg:left-8 lg:right-8">
+								<p className="text-foreground max-w-xl text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold">
 									Experiment with unreleased Lightfast features in our sandbox.
 								</p>
 								<p className="text-muted-foreground text-sm mt-4">
@@ -76,8 +76,8 @@ export default function SignInPage() {
 								</p>
 							</div>
 
-							{/* Logo at bottom left */}
-							<div className="absolute bottom-8 left-8">
+							{/* Logo - hidden on mobile, shown at bottom on desktop */}
+							<div className="hidden lg:block absolute bottom-8 left-8">
 								<Link href={siteConfig.url} target="_blank" rel="noopener noreferrer">
 									<Icons.logoShort className="text-primary w-10 h-6 hover:opacity-80 transition-opacity cursor-pointer" />
 								</Link>
@@ -85,8 +85,8 @@ export default function SignInPage() {
 						</div>
 					</div>
 
-					{/* Right section - 5/12 of space for sign-in */}
-					<div className="col-span-5 flex items-center justify-center p-8">
+					{/* Bottom/Right section - sign-in form */}
+					<div className="lg:col-span-5 flex items-center justify-center p-6 lg:p-8">
 						<div className="w-full max-w-sm">
 							<SignInForm />
 						</div>
