@@ -3,6 +3,9 @@ import * as Clerk from "@clerk/elements/common";
 import * as SignUp from "@clerk/elements/sign-up";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import Link from "next/link";
+import { siteConfig } from "@repo/lightfast-config";
 
 export function SignUpForm() {
 	return (
@@ -28,9 +31,36 @@ export function SignUpForm() {
 							<Clerk.FieldError className="text-xs text-red-500" />
 						</Clerk.Field>
 
+						{/* Hidden field for legal acceptance */}
+						<Clerk.Field name="legalAccepted" className="hidden">
+							<Clerk.Input type="hidden" value="true" />
+						</Clerk.Field>
+
 						<SignUp.Action submit asChild>
 							<Button className="w-full">Sign up with Email</Button>
 						</SignUp.Action>
+
+						{/* Legal compliance text */}
+						<p className="text-xs text-center text-muted-foreground">
+							By joining, you agree to our{" "}
+							<Link
+								href={siteConfig.links.terms.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-primary hover:underline"
+							>
+								Terms of Service
+							</Link>{" "}
+							and{" "}
+							<Link
+								href={siteConfig.links.privacy.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-primary hover:underline"
+							>
+								Privacy Policy
+							</Link>
+						</p>
 
 						{/* Divider */}
 						<div className="relative my-4">
