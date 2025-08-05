@@ -3,7 +3,6 @@ import * as Clerk from "@clerk/elements/common";
 import * as SignUp from "@clerk/elements/sign-up";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
-import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import Link from "next/link";
 import { siteConfig } from "@repo/lightfast-config";
 
