@@ -4,7 +4,13 @@ import { playgroundUrl } from "./src/lib/related-projects";
 
 const config: NextConfig = {
 	reactStrictMode: true,
-	transpilePackages: ["@repo/ui"],
+	transpilePackages: [
+		"@repo/ui",
+		"@repo/lightfast-config",
+		"@repo/lightfast-react",
+		"@repo/url-utils",
+		"@vendor/clerk",
+	],
 	experimental: {
 		optimizeCss: true,
 		optimizePackageImports: ["@repo/ui", "lucide-react"],

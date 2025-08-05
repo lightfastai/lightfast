@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
     "@repo/ui",
     "@repo/lightfast-react",
     "@repo/lightfast-config",
+    "@repo/ai",
+    "@repo/url-utils",
     "@lightfast/core",
   ],
 };

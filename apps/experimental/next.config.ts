@@ -5,9 +5,11 @@ const nextConfig: NextConfig = {
 	/** Enables hot reloading for local packages without a build step */
 	transpilePackages: [
 		"@repo/ui",
+		"@repo/lightfast-config",
 		"@lightfast/core",
 		"@lightfast/types",
 		"@lightfast/evals",
+		"@vendor/analytics",
 	],
 	experimental: {
 		/** Optimize client-side routing */
