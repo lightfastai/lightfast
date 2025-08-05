@@ -15,15 +15,12 @@ export function SignInPageWrapper() {
 	}
 
 	function handleVerificationStepChange(step: 'email' | 'code') {
-		console.log('Changing verification step to:', step);
 		setVerificationStep(step);
 		if (step === 'email') {
 			setHasError(false);
 		}
 	}
 
-	console.log('Current verification step:', verificationStep, 'Has error:', hasError);
-	
 	return (
 		<>
 			{/* Back Button - positioned absolutely in the grid container */}
@@ -31,7 +28,7 @@ export function SignInPageWrapper() {
 				<div className="absolute top-4 left-4 lg:top-8 lg:left-8 z-10">
 					<Button
 						onClick={handleReset}
-						variant="ghost"
+						variant="outline"
 						size="icon"
 						className="h-8 w-8"
 					>

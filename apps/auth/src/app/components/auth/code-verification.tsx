@@ -119,13 +119,7 @@ export function CodeVerification({
 	}
 
 	return (
-		<div className="space-y-4">
-			<div className="text-center">
-				<p className="text-sm text-muted-foreground">
-					We sent a verification code to {email}
-				</p>
-			</div>
-
+		<div className="space-y-6">
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 					<FormField

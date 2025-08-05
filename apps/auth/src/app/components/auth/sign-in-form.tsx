@@ -40,10 +40,15 @@ export function SignInForm({
 	return (
 		<div className="space-y-6">
 			{/* Header */}
-			<div className="text-center">
+			<div className="text-center space-y-2">
 				<h1 className="text-lg font-bold text-foreground">
 					Sign in to Lightfast
 				</h1>
+				{verificationStep === 'code' && emailAddress && (
+					<p className="text-sm text-muted-foreground">
+						We sent a verification code to {emailAddress}
+					</p>
+				)}
 			</div>
 
 			<div className="space-y-4 mt-8">
