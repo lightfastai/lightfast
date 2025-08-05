@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from '@repo/ui/components/ui/form'
 import { Icons } from '@repo/ui/components/icons'
+import { getErrorMessage, logError, logSuccess } from '~/app/lib/clerk/error-handling'
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -38,7 +39,7 @@ export function EmailInput({ onSuccess, onError }: EmailInputProps) {
   })
 
   async function onSubmit(data: EmailFormData) {
-    if (!signIn || !isLoaded) return
+    if (!signIn) return
 
     try {
       // Create sign-in attempt with email
@@ -60,22 +61,11 @@ export function EmailInput({ onSuccess, onError }: EmailInputProps) {
         emailAddressId: emailFactor.emailAddressId,
       })
 
+      logSuccess('EmailInput.onSubmit', { email: data.email })
       onSuccess(data.email)
     } catch (err) {
-      console.error('Email sign-in error:', err)
-      
-      if (err instanceof Error) {
-        onError(err.message)
-      } else if (typeof err === 'object' && err !== null && 'errors' in err) {
-        const clerkError = err as { errors?: { longMessage?: string }[] }
-        if (clerkError.errors?.[0]?.longMessage) {
-          onError(clerkError.errors[0].longMessage)
-        } else {
-          onError('An error occurred. Please try again.')
-        }
-      } else {
-        onError('An error occurred. Please try again.')
-      }
+      logError('EmailInput.onSubmit', err)
+      onError(getErrorMessage(err))
     }
   }
 

@@ -15,6 +15,7 @@ import {
 	FormMessage,
 } from "@repo/ui/components/ui/form";
 import { Icons } from "@repo/ui/components/icons";
+import { getErrorMessage, logError, logSuccess } from "~/app/lib/clerk/error-handling";
 
 const codeSchema = z.object({
 	code: z.string().min(6, "Code must be at least 6 characters"),
@@ -43,6 +44,7 @@ export function SignUpCodeVerification({
 	});
 
 	async function onSubmit(data: CodeFormData) {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (!signUp || !setActive) return;
 
 		try {
@@ -54,23 +56,14 @@ export function SignUpCodeVerification({
 			if (result.status === "complete") {
 				// Sign-up successful, set the active session
 				await setActive({ session: result.createdSessionId });
+				logSuccess("SignUpCodeVerification.onSubmit", { 
+					email, 
+					sessionId: result.createdSessionId 
+				});
 			}
 		} catch (err) {
-			console.error("Code verification error:", err);
-
-			if (err instanceof Error) {
-				onError(err.message);
-			} else if (typeof err === "object" && err !== null && "errors" in err) {
-				const clerkError = err as { errors?: { longMessage?: string }[] };
-				if (clerkError.errors?.[0]?.longMessage) {
-					onError(clerkError.errors[0].longMessage);
-				} else {
-					onError("Invalid verification code. Please try again.");
-				}
-			} else {
-				onError("Invalid verification code. Please try again.");
-			}
-
+			logError("SignUpCodeVerification.onSubmit", err);
+			onError(getErrorMessage(err));
 			form.reset();
 		}
 	}

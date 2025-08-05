@@ -5,13 +5,14 @@ import type { OAuthStrategy } from '@clerk/types'
 import { useSignUp } from '@clerk/nextjs'
 import { Button } from '@repo/ui/components/ui/button'
 import { Icons } from '@repo/ui/components/icons'
+import { logError } from '~/app/lib/clerk/error-handling'
 
 export function OAuthSignUp() {
   const { signUp, isLoaded } = useSignUp()
   const [loading, setLoading] = React.useState<OAuthStrategy | null>(null)
 
   const signUpWith = async (strategy: OAuthStrategy) => {
-    if (!signUp || !isLoaded) return
+    if (!signUp) return
     
     try {
       setLoading(strategy)
@@ -21,8 +22,9 @@ export function OAuthSignUp() {
         redirectUrlComplete: '/',
       })
     } catch (err) {
-      console.error('OAuth sign-up error:', err)
+      logError('OAuthSignUp.signUpWith', err)
       setLoading(null)
+      // OAuth errors are typically shown on the callback page
     }
   }
 

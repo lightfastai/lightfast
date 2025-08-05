@@ -15,6 +15,7 @@ import {
 	FormMessage,
 } from "@repo/ui/components/ui/form";
 import { Icons } from "@repo/ui/components/icons";
+import { getErrorMessage, logError, logSuccess, isAccountLockedError, formatLockoutTime } from "~/app/lib/clerk/error-handling";
 
 const codeSchema = z.object({
 	code: z.string().min(6, "Code must be at least 6 characters"),
@@ -43,6 +44,7 @@ export function CodeVerification({
 	});
 
 	async function onSubmit(data: CodeFormData) {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (!signIn || !setActive) return;
 
 		try {
@@ -55,21 +57,20 @@ export function CodeVerification({
 			if (result.status === "complete") {
 				// Sign-in successful, set the active session
 				await setActive({ session: result.createdSessionId });
+				logSuccess("CodeVerification.onSubmit", { 
+					email, 
+					sessionId: result.createdSessionId 
+				});
 			}
 		} catch (err) {
-			console.error("Code verification error:", err);
-
-			if (err instanceof Error) {
-				onError(err.message);
-			} else if (typeof err === "object" && err !== null && "errors" in err) {
-				const clerkError = err as { errors?: { longMessage?: string }[] };
-				if (clerkError.errors?.[0]?.longMessage) {
-					onError(clerkError.errors[0].longMessage);
-				} else {
-					onError("Invalid verification code. Please try again.");
-				}
+			logError("CodeVerification.onSubmit", err);
+			
+			// Check for account lockout
+			const lockoutInfo = isAccountLockedError(err);
+			if (lockoutInfo.locked && lockoutInfo.expiresInSeconds) {
+				onError(`Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`);
 			} else {
-				onError("Invalid verification code. Please try again.");
+				onError(getErrorMessage(err));
 			}
 
 			form.reset();
