@@ -175,9 +175,6 @@ importers:
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk
-      '@vercel/microfrontends':
-        specifier: ^1.2.4
-        version: 1.2.4(@vercel/analytics@1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(@vercel/speed-insights@1.2.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@vercel/toolbar':
         specifier: ^0.1.28
         version: 0.1.38(@vercel/analytics@1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(@vercel/speed-insights@1.2.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -587,9 +584,6 @@ importers:
       '@vercel/analytics':
         specifier: ^1.5.0
         version: 1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2))
-      '@vercel/microfrontends':
-        specifier: ^1.2.4
-        version: 1.3.0(@vercel/analytics@1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(@vercel/speed-insights@1.2.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@vercel/toolbar':
         specifier: ^0.1.28
         version: 0.1.38(@vercel/analytics@1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(@vercel/speed-insights@1.2.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -6020,9 +6014,6 @@ packages:
   '@types/eslint@8.56.12':
     resolution: {integrity: sha512-03ruubjWyOHlmljCVoxSuNDdmfZDzsrrz0P2LeJsOXr+ZwFQ+0yQIwNCwt/GYhV7Z31fgtXJTAEs+FYlEL851g==}
 
-  '@types/eslint@9.6.1':
-    resolution: {integrity: sha512-FXx2pKgId/WyYo2jXw63kk7/+TY7u7AziEJxJAnSFzHlqTAS3Ync6SvgYAN/k4/PQpnnVuzoMuVnByKK2qp0ag==}
-
   '@types/eslint__js@8.42.3':
     resolution: {integrity: sha512-alfG737uhmPdnvkrLdZLcEKJ/B8s9Y4hrZ+YAdzUeoArBlSUERA2E87ROfOaS4jd/C45fzOoZzidLc1IPwLqOw==}
 
@@ -6248,33 +6239,6 @@ packages:
       '@aws-sdk/credential-provider-web-identity': '*'
     peerDependenciesMeta:
       '@aws-sdk/credential-provider-web-identity':
-        optional: true
-
-  '@vercel/microfrontends@1.2.4':
-    resolution: {integrity: sha512-tH/FaGa14Uzn/QqHgIm75ZIKNGjYmMnIKkSosz+R3TT9x47EjFe4hoB7CoqNs6/xFp8+5YNAyRzv1wxxmVaMBQ==}
-    hasBin: true
-    peerDependencies:
-      '@sveltejs/kit': '>=1'
-      '@vercel/analytics': '>=1.5.0'
-      '@vercel/speed-insights': '>=1.2.0'
-      next: '>=13'
-      react: '>=17.0.0'
-      react-dom: '>=17.0.0'
-      vite: '>=5'
-    peerDependenciesMeta:
-      '@sveltejs/kit':
-        optional: true
-      '@vercel/analytics':
-        optional: true
-      '@vercel/speed-insights':
-        optional: true
-      next:
-        optional: true
-      react:
-        optional: true
-      react-dom:
-        optional: true
-      vite:
         optional: true
 
   '@vercel/microfrontends@1.3.0':
@@ -15513,15 +15477,10 @@ snapshots:
 
   '@types/eslint-scope@3.7.7':
     dependencies:
-      '@types/eslint': 9.6.1
+      '@types/eslint': 8.56.12
       '@types/estree': 1.0.8
 
   '@types/eslint@8.56.12':
-    dependencies:
-      '@types/estree': 1.0.8
-      '@types/json-schema': 7.0.15
-
-  '@types/eslint@9.6.1':
     dependencies:
       '@types/estree': 1.0.8
       '@types/json-schema': 7.0.15
@@ -15800,26 +15759,6 @@ snapshots:
       undici: 5.29.0
 
   '@vercel/functions@1.6.0': {}
-
-  '@vercel/microfrontends@1.2.4(@vercel/analytics@1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(@vercel/speed-insights@1.2.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
-    dependencies:
-      '@next/env': 15.1.6
-      ajv: 8.17.1
-      commander: 12.1.0
-      cookie: 0.4.0
-      fast-glob: 3.3.3
-      http-proxy: 1.18.1
-      jsonc-parser: 3.3.1
-      nanoid: 3.3.11
-      path-to-regexp: 6.2.1
-    optionalDependencies:
-      '@vercel/analytics': 1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2))
-      '@vercel/speed-insights': 1.2.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2))
-      next: 15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
-    transitivePeerDependencies:
-      - debug
 
   '@vercel/microfrontends@1.3.0(@vercel/analytics@1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(@vercel/speed-insights@1.2.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
