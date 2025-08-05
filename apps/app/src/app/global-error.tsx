@@ -8,11 +8,8 @@ import { captureException } from "@sentry/nextjs";
 import { Button } from "@repo/ui/components/ui/button";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
-import {
-  LightfastCustomGridBackground,
-  LightfastErrorPage,
-  ErrorCode,
-} from "@repo/lightfast-react";
+import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
+import { LightfastErrorPage, ErrorCode } from "@repo/ui/components/lightfast-error-page";
 
 interface GlobalErrorProperties {
   readonly error: NextError & { digest?: string };
