@@ -15,7 +15,8 @@ import {
 	FormMessage,
 } from "@repo/ui/components/ui/form";
 import { Icons } from "@repo/ui/components/icons";
-import { getErrorMessage, logError, logSuccess } from "~/app/lib/clerk/error-handling";
+import { getErrorMessage, formatErrorForLogging } from "~/app/lib/clerk/error-handling";
+import { useLogger } from '@vendor/observability/client-log';
 
 const codeSchema = z.object({
 	code: z.string().min(6, "Code must be at least 6 characters"),
@@ -35,6 +36,7 @@ export function SignUpCodeVerification({
 	onError,
 }: SignUpCodeVerificationProps) {
 	const { signUp, setActive } = useSignUp();
+	const log = useLogger();
 
 	const form = useForm<CodeFormData>({
 		resolver: zodResolver(codeSchema),
@@ -56,13 +58,14 @@ export function SignUpCodeVerification({
 			if (result.status === "complete") {
 				// Sign-up successful, set the active session
 				await setActive({ session: result.createdSessionId });
-				logSuccess("SignUpCodeVerification.onSubmit", { 
+				log.info('[SignUpCodeVerification.onSubmit] Authentication success', { 
 					email, 
-					sessionId: result.createdSessionId 
+					sessionId: result.createdSessionId,
+					timestamp: new Date().toISOString()
 				});
 			}
 		} catch (err) {
-			logError("SignUpCodeVerification.onSubmit", err);
+			log.error('[SignUpCodeVerification.onSubmit] Authentication error', formatErrorForLogging('SignUpCodeVerification.onSubmit', err));
 			onError(getErrorMessage(err));
 			form.reset();
 		}

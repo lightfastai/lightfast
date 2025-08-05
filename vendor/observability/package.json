@@ -10,6 +10,7 @@
       "types": "./dist/src/log.d.ts",
       "default": "./src/log.ts"
     },
+    "./client-log": "./src/client-log.ts",
     "./types": "./src/types.ts",
     "./error": "./src/error.ts",
     "./async-executor": "./src/async-executor.ts",
@@ -37,6 +38,7 @@
   "dependencies": {
     "@logtail/next": "^0.2.0",
     "@sentry/nextjs": "^9.14.0",
-    "@t3-oss/env-nextjs": "^0.12.0"
+    "@t3-oss/env-nextjs": "^0.12.0",
+    "react": "catalog:react19"
   }
 }

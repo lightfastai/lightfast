@@ -2,74 +2,21 @@ import React from "react";
 import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { siteConfig } from "@repo/lightfast-config";
+import { LightfastCustomGridBackground } from "@repo/lightfast-react";
 
 export default function AuthLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	const gridLinePositions = {
-		"--viewport-width": "100vw",
-		"--viewport-height": "100vh",
-		"--margin-vertical": "15vh",
-		"--margin-horizontal": "15vw",
-		"--margin-vertical-mobile": "5vh",
-		"--margin-horizontal-mobile": "5vw",
-		"--container-top": "var(--margin-vertical)",
-		"--container-bottom": "calc(100vh - var(--margin-vertical))",
-		"--container-left": "var(--margin-horizontal)",
-		"--container-right": "calc(100vw - var(--margin-horizontal))",
-		"--container-top-mobile": "var(--margin-vertical-mobile)",
-		"--container-bottom-mobile": "calc(100vh - var(--margin-vertical-mobile))",
-		"--container-left-mobile": "var(--margin-horizontal-mobile)",
-		"--container-right-mobile": "calc(100vw - var(--margin-horizontal-mobile))",
-	} as React.CSSProperties;
-
 	return (
-		<div className="min-h-screen bg-background relative overflow-hidden" style={gridLinePositions}>
-			{/* Grid lines */}
-			<div className="pointer-events-none absolute inset-0 z-10">
-				{/* Horizontal lines through corners */}
-				<div
-					className="bg-border/30 absolute h-px w-full"
-					style={{ top: "var(--container-top)" }}
-				/>
-				<div
-					className="bg-border/30 absolute h-px w-full"
-					style={{ top: "var(--container-bottom)" }}
-				/>
-				
-				{/* Vertical lines through corners */}
-				<div
-					className="bg-border/30 absolute top-0 h-full w-px"
-					style={{ left: "var(--container-left)" }}
-				/>
-				<div
-					className="bg-border/30 absolute top-0 h-full w-px"
-					style={{ left: "var(--container-right)" }}
-				/>
-				
-				{/* Inner grid lines - 3x3 grid */}
-				<div
-					className="bg-border/20 absolute h-px w-full"
-					style={{ top: "calc(var(--container-top) + (var(--container-bottom) - var(--container-top)) * 0.33)" }}
-				/>
-				<div
-					className="bg-border/20 absolute h-px w-full"
-					style={{ top: "calc(var(--container-top) + (var(--container-bottom) - var(--container-top)) * 0.66)" }}
-				/>
-				<div
-					className="bg-border/20 absolute top-0 h-full w-px"
-					style={{ left: "calc(var(--container-left) + (var(--container-right) - var(--container-left)) * 0.33)" }}
-				/>
-				<div
-					className="bg-border/20 absolute top-0 h-full w-px"
-					style={{ left: "calc(var(--container-left) + (var(--container-right) - var(--container-left)) * 0.66)" }}
-				/>
-			</div>
-
-			{/* Rectangle container - responsive margins */}
-			<div className="absolute inset-0 m-[5vh_5vw] lg:m-[15vh_15vw] border border-border/50 bg-background z-20">
+		<LightfastCustomGridBackground.Root 
+			marginVertical="15vh" 
+			marginHorizontal="15vw"
+			marginVerticalMobile="5vh"
+			marginHorizontalMobile="5vw"
+		>
+			<LightfastCustomGridBackground.Container>
 				{/* Grid - switches from columns to rows on mobile/tablet */}
 				<div className="grid grid-cols-1 lg:grid-cols-12 h-full">
 					{/* Top/Left section - content */}
@@ -101,7 +48,7 @@ export default function AuthLayout({
 						</div>
 					</div>
 				</div>
-			</div>
-		</div>
+			</LightfastCustomGridBackground.Container>
+		</LightfastCustomGridBackground.Root>
 	);
 }

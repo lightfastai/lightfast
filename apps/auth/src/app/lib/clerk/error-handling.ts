@@ -1,6 +1,5 @@
 import { isClerkAPIResponseError, isUserLockedError } from '@clerk/shared'
 import type { ClerkAPIError } from '@clerk/types'
-import { log } from '@vendor/observability/log'
 
 export interface AuthError {
   code: string
@@ -105,10 +104,12 @@ export function formatLockoutTime(seconds: number): string {
 }
 
 /**
- * Log error details for debugging
+ * Format error details for logging
+ * @param context - The context where the error occurred
+ * @param err - The error object
+ * @returns Structured error data for logging
  */
-export function logError(context: string, err: unknown): void {
-  // Create structured error object for logging
+export function formatErrorForLogging(context: string, err: unknown): Record<string, unknown> {
   const errorData: Record<string, unknown> = {
     context,
     timestamp: new Date().toISOString(),
@@ -130,17 +131,5 @@ export function logError(context: string, err: unknown): void {
     errorData.error = err
   }
   
-  // Log to BetterStack in production, console in development
-  log.error(`[${context}] Authentication error`, errorData)
-}
-
-/**
- * Log successful authentication events
- */
-export function logSuccess(context: string, data?: Record<string, unknown>): void {
-  log.info(`[${context}] Authentication success`, {
-    context,
-    timestamp: new Date().toISOString(),
-    ...data
-  })
+  return errorData
 }

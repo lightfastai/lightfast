@@ -17,6 +17,7 @@
     "@repo/lib": "workspace:*",
     "@repo/lightfast-config": "workspace:*",
     "@repo/lightfast-email": "workspace:*",
+    "@repo/lightfast-react": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",

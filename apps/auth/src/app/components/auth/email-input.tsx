@@ -15,7 +15,8 @@ import {
   FormMessage,
 } from '@repo/ui/components/ui/form'
 import { Icons } from '@repo/ui/components/icons'
-import { getErrorMessage, logError, logSuccess } from '~/app/lib/clerk/error-handling'
+import { getErrorMessage, formatErrorForLogging } from '~/app/lib/clerk/error-handling'
+import { useLogger } from '@vendor/observability/client-log'
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -30,6 +31,7 @@ interface EmailInputProps {
 
 export function EmailInput({ onSuccess, onError }: EmailInputProps) {
   const { signIn, isLoaded } = useSignIn()
+  const log = useLogger()
 
   const form = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
@@ -61,10 +63,13 @@ export function EmailInput({ onSuccess, onError }: EmailInputProps) {
         emailAddressId: emailFactor.emailAddressId,
       })
 
-      logSuccess('EmailInput.onSubmit', { email: data.email })
+      log.info('[EmailInput.onSubmit] Authentication success', { 
+        email: data.email,
+        timestamp: new Date().toISOString()
+      })
       onSuccess(data.email)
     } catch (err) {
-      logError('EmailInput.onSubmit', err)
+      log.error('[EmailInput.onSubmit] Authentication error', formatErrorForLogging('EmailInput.onSubmit', err))
       onError(getErrorMessage(err))
     }
   }

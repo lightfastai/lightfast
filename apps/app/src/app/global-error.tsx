@@ -4,10 +4,9 @@ import type NextError from "next/error";
 import { useEffect } from "react";
 import Link from "next/link";
 import { captureException } from "@sentry/nextjs";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
 
 import { Button } from "@repo/ui/components/ui/button";
+import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import {
   LightfastCustomGridBackground,
@@ -30,9 +29,8 @@ const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
       <head />
       <body
         className={cn(
-          "dark bg-background font-sans antialiased",
-          GeistSans.variable,
-          GeistMono.variable,
+          "dark bg-background",
+          fonts,
         )}
       >
         <LightfastCustomGridBackground.Root
