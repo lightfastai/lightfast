@@ -2,9 +2,12 @@ import React from "react";
 import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { siteConfig } from "@repo/lightfast-config";
-import { SignInForm } from "./sign-in-form";
 
-export default function SignInPage() {
+export default function AuthLayout({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
 	const gridLinePositions = {
 		"--viewport-width": "100vw",
 		"--viewport-height": "100vh",
@@ -85,10 +88,10 @@ export default function SignInPage() {
 						</div>
 					</div>
 
-					{/* Right section - 5/12 of space for sign-in */}
+					{/* Right section - 5/12 of space for auth forms */}
 					<div className="col-span-5 flex items-center justify-center p-8">
 						<div className="w-full max-w-sm">
-							<SignInForm />
+							{children}
 						</div>
 					</div>
 				</div>
