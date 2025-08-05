@@ -1,5 +1,6 @@
 import { NextConfig } from "next";
 import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
+import { env } from "./src/env";
 
 const config: NextConfig = {
 	reactStrictMode: true,
@@ -11,7 +12,7 @@ const config: NextConfig = {
 	async rewrites() {
 		// In production, playground will be deployed separately with its own domain
 		// These rewrites are only for local development
-		if (process.env.NODE_ENV === 'development') {
+		if (env.NODE_ENV === 'development') {
 			return [
 				{
 					source: '/playground',
