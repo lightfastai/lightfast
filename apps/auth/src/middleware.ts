@@ -7,6 +7,7 @@ const clerkConfig = getClerkMiddlewareConfig("auth");
 // Define public routes for the auth app
 const isPublicRoute = createRouteMatcher([
   "/sign-in",
+  "/sign-in/sso-callback",
   "/sign-up",
   "/api/health",
 ]);
