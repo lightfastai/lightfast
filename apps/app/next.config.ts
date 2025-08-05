@@ -1,5 +1,6 @@
 import { NextConfig } from "next";
 import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
+import { withRelatedProjects } from "@vercel/related-projects/next";
 import { env } from "./src/env";
 
 const config: NextConfig = {
@@ -42,5 +43,5 @@ const config: NextConfig = {
 	},
 };
 
-export default withVercelToolbar()(config);
+export default withVercelToolbar()(withRelatedProjects(config));
 
