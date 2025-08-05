@@ -5,8 +5,19 @@ import { EmailInput } from "./email-input";
 import { CodeVerification } from "./code-verification";
 import { OAuthSignIn } from "./oauth-sign-in";
 
-export function SignInForm() {
-	const [verificationStep, setVerificationStep] = React.useState<'email' | 'code'>('email');
+interface SignInFormProps {
+	verificationStep?: 'email' | 'code';
+	onVerificationStepChange?: (step: 'email' | 'code') => void;
+}
+
+export function SignInForm({ 
+	verificationStep: controlledStep,
+	onVerificationStepChange 
+}: SignInFormProps = {}) {
+	const [internalStep, setInternalStep] = React.useState<'email' | 'code'>('email');
+	const verificationStep = controlledStep ?? internalStep;
+	const setVerificationStep = onVerificationStepChange ?? setInternalStep;
+	
 	const [emailAddress, setEmailAddress] = React.useState('');
 	const [error, setError] = React.useState('');
 

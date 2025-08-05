@@ -96,7 +96,9 @@
       "Bash(pnpm --filter @vendor/db build)",
       "WebFetch(domain:clerk.com)",
       "Bash(pnpm --filter @lightfast/auth build)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(pnpm --filter @repo/ui typecheck)",
+      "Bash(pnpm --filter @lightfast/auth lint)"
     ],
     "deny": []
   },

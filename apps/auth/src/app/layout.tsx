@@ -4,7 +4,7 @@ import "@repo/ui/globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { siteConfig } from "@repo/lightfast-config";
-import { Toaster } from "@repo/ui/components/ui/toaster";
+import { Toaster } from "sonner";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { getClerkConfig } from "@repo/url-utils";
@@ -111,7 +111,7 @@ export default function RootLayout({
         <head />
         <body className={cn("bg-background dark min-h-screen", fonts)}>
           {children}
-          <Toaster />
+          <Toaster theme="dark" position="bottom-right" />
           <VercelAnalytics />
           <SpeedInsights />
         </body>

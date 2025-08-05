@@ -27,6 +27,7 @@ export function getClerkConfig(appName: ProjectName) {
     signUpUrl: authUrls.signUp,
     signInFallbackRedirectUrl: "/",
     signUpFallbackRedirectUrl: "/",
+    afterSignOutUrl: authUrls.afterSignOut,
     ...subdomainConfig,
   };
 }

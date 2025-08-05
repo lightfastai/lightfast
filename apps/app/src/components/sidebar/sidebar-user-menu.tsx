@@ -45,7 +45,6 @@ export function SidebarUserMenu() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/");
   };
 
   const displayName = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "User";
