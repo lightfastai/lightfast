@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
-import { withMicrofrontends } from "@vercel/microfrontends/next/config";
 import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  basePath: '/playground',
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -28,6 +28,4 @@ const nextConfig: NextConfig = {
   ],
 };
 
-export default withVercelToolbar()(
-  withMicrofrontends(nextConfig, { debug: true })
-);
+export default withVercelToolbar()(nextConfig);

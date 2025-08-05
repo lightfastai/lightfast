@@ -8,6 +8,8 @@ const clerkConfig = getClerkMiddlewareConfig("app");
 // Define protected routes - everything except public routes should require auth
 const isPublicRoute = createRouteMatcher([
   "/api/health",
+  "/playground",
+  "/playground/(.*)",
 ]);
 
 const isApiRoute = createRouteMatcher(["/api/(.*)"]);
