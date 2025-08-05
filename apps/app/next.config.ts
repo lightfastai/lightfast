@@ -25,16 +25,18 @@ const config: NextConfig = {
 			];
 		}
 		
-		// In production, you might want to proxy to the deployed playground subdomain
-		// For example: playground.lightfast.ai
+		// In production, use the related project URL which will be automatically
+		// resolved by Vercel based on the deployment environment
+		const playgroundHost = process.env.VERCEL_RELATED_PROJECT_PLAYGROUND_URL || 'https://playground.lightfast.ai';
+		
 		return [
 			{
 				source: '/playground',
-				destination: 'https://playground.lightfast.ai/playground',
+				destination: `${playgroundHost}/playground`,
 			},
 			{
 				source: '/playground/:path*',
-				destination: 'https://playground.lightfast.ai/playground/:path*',
+				destination: `${playgroundHost}/playground/:path*`,
 			},
 		];
 	},

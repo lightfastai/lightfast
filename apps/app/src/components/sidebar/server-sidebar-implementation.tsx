@@ -10,6 +10,7 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 import {
   Sparkles,
+  FlaskConical,
 } from "lucide-react";
 import { ActiveMenuItem } from "./active-menu-item";
 import { PlatformSidebarTrigger } from "./platform-sidebar-trigger";
@@ -19,9 +20,14 @@ import { SidebarUserMenu } from "./sidebar-user-menu";
 // Menu items configuration
 const navItems = [
   {
-    title: "Playground",
+    title: "Chat",
     url: "/",
     icon: Sparkles,
+  },
+  {
+    title: "Playground",
+    url: "/playground",
+    icon: FlaskConical,
   },
 ];
 
