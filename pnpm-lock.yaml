@@ -248,9 +248,15 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
+      '@vendor/next':
+        specifier: workspace:*
+        version: link:../../vendor/next
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      geist:
+        specifier: ^1.3.1
+        version: 1.4.2(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       neverthrow:
         specifier: ^8.2.0
         version: 8.2.0
