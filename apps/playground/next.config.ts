@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
+import "~/env";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

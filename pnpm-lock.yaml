@@ -209,6 +209,9 @@ importers:
       '@types/react-dom':
         specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
+      '@vercel/related-projects':
+        specifier: ^1.0.0
+        version: 1.0.0
       autoprefixer:
         specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.6)
@@ -636,6 +639,9 @@ importers:
       '@types/react-dom':
         specifier: catalog:react19
         version: 19.1.2(@types/react@19.1.2)
+      '@vercel/related-projects':
+        specifier: ^1.0.0
+        version: 1.0.0
       eslint:
         specifier: 'catalog:'
         version: 9.32.0(jiti@2.5.1)
@@ -6283,6 +6289,9 @@ packages:
   '@vercel/postgres@0.10.0':
     resolution: {integrity: sha512-fSD23DxGND40IzSkXjcFcxr53t3Tiym59Is0jSYIFpG4/0f0KO9SGtcp1sXiebvPaGe7N/tU05cH4yt2S6/IPg==}
     engines: {node: '>=18.14'}
+
+  '@vercel/related-projects@1.0.0':
+    resolution: {integrity: sha512-wGk91hdzpQMMSTCE9q6q5caKWMse9OzH3IeeC83SBZ/ZprvjPSusgftYBrbkDehV0gytRd22MFzYFaSwbVYiDw==}
 
   '@vercel/sandbox@0.0.13':
     resolution: {integrity: sha512-ZxDYrIs37VMMcdTfPeoWgFfx2a9QcK1StCuT1Ph+ymmHuwsV/m7DXPGHQTEnAGmDmm74gbPYfsgb1mqfoc2ODw==}
@@ -15818,6 +15827,10 @@ snapshots:
     transitivePeerDependencies:
       - utf-8-validate
     optional: true
+
+  '@vercel/related-projects@1.0.0':
+    optionalDependencies:
+      ajv: 6.12.6
 
   '@vercel/sandbox@0.0.13':
     dependencies:
