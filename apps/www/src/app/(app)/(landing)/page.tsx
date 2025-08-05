@@ -36,41 +36,41 @@ export default function HomePage() {
       {/* Static Background Lines */}
       <div className="pointer-events-none absolute inset-0 z-10">
         <div
-          className="bg-border absolute h-px w-full"
+          className="bg-border/30 absolute h-px w-full"
           style={{ top: "calc(var(--cc-visual-top) - 0.5px)" }}
         />
         <div
-          className="bg-border absolute h-px w-full"
+          className="bg-border/30 absolute h-px w-full"
           style={{ top: "calc(var(--cc-visual-bottom))" }}
         />
         <div
-          className="bg-border absolute top-0 h-full w-px"
+          className="bg-border/30 absolute top-0 h-full w-px"
           style={{ left: "calc(var(--cc-visual-left) - 0.5px)" }}
         />
         <div
-          className="bg-border absolute top-0 h-full w-px"
+          className="bg-border/30 absolute top-0 h-full w-px"
           style={{ left: "calc(var(--cc-visual-right))" }}
         />
         <div
-          className="bg-border absolute h-px w-full"
+          className="bg-border/20 absolute h-px w-full"
           style={{
             top: "calc(var(--cc-visual-top) + (var(--cc-visual-bottom) - var(--cc-visual-top)) * 0.33)",
           }}
         />
         <div
-          className="bg-border absolute h-px w-full"
+          className="bg-border/20 absolute h-px w-full"
           style={{
             top: "calc(var(--cc-visual-top) + (var(--cc-visual-bottom) - var(--cc-visual-top)) * 0.66)",
           }}
         />
         <div
-          className="bg-border absolute top-0 h-full w-px"
+          className="bg-border/20 absolute top-0 h-full w-px"
           style={{
             left: "calc(var(--cc-visual-left) + (var(--cc-visual-right) - var(--cc-visual-left)) * 0.33)",
           }}
         />
         <div
-          className="bg-border absolute top-0 h-full w-px"
+          className="bg-border/20 absolute top-0 h-full w-px"
           style={{
             left: "calc(var(--cc-visual-left) + (var(--cc-visual-right) - var(--cc-visual-left)) * 0.66)",
           }}
@@ -80,7 +80,7 @@ export default function HomePage() {
       <div
         className={cn(
           "bg-background p-4 text-black sm:p-8",
-          "border",
+          "border border-border/50",
           "absolute z-20",
           "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
         )}
