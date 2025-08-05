@@ -8,6 +8,7 @@ import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { getClerkConfig } from "@repo/url-utils";
+import { env } from "~/env";
 
 export const metadata: Metadata = {
   title: {
@@ -94,7 +95,7 @@ export default function RootLayout({
 
   return (
     <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       {...clerkConfig}
       appearance={{
         variables: {

@@ -4,11 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
-    "dev": "next dev --turbo --port 4105",
+    "build": "pnpm with-env next build",
+    "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
+    "dev": "pnpm with-env next dev --turbo --port 4105",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint .",
-    "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "start": "pnpm with-env next start --port 4105",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "catalog:",
@@ -22,6 +25,7 @@
     "@repo/url-utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "catalog:",
+    "@vendor/clerk": "workspace:^",
     "@vercel/analytics": "^1.5.0",
     "@vercel/toolbar": "^0.1.28",
     "ai": "catalog:",
@@ -43,7 +47,11 @@
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
     "@vercel/related-projects": "^1.0.0",
+    "autoprefixer": "^10.4.21",
+    "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
+    "jiti": "^1.21.6",
+    "postcss": "catalog:tailwind4",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
