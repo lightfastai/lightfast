@@ -65,4 +65,4 @@ export const config = {
     // Always run for API routes except Inngest
     "/(api(?!/inngest)|trpc)(.*)",
   ],
-};
+}

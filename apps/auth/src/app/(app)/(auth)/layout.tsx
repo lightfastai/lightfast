@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { siteConfig } from "@repo/lightfast-config";
-import { LightfastCustomGridBackground } from "@repo/lightfast-react";
+import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
 
 export default function AuthLayout({
 	children,

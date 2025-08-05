@@ -14,7 +14,7 @@ interface Message {
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = (message: string) => {
     const newMessage: Message = {
       id: Date.now().toString(),
       role: "user",

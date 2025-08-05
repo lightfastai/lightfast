@@ -1,5 +1,5 @@
 import React from "react";
-import { Icons } from "@repo/ui/components/icons";
+import { Icons } from "./icons";
 
 export enum ErrorCode {
 	BadRequest = "400",
