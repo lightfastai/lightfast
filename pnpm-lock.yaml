@@ -200,6 +200,12 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@tailwindcss/postcss':
+        specifier: catalog:tailwind4
+        version: 4.1.11
+      '@tailwindcss/typography':
+        specifier: catalog:tailwind4
+        version: 0.5.16(tailwindcss@4.1.11)
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.9
@@ -306,6 +312,12 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@tailwindcss/postcss':
+        specifier: catalog:tailwind4
+        version: 4.1.11
+      '@tailwindcss/typography':
+        specifier: catalog:tailwind4
+        version: 0.5.16(tailwindcss@4.1.11)
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.9
@@ -355,6 +367,12 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@tailwindcss/postcss':
+        specifier: catalog:tailwind4
+        version: 4.1.11
+      '@tailwindcss/typography':
+        specifier: catalog:tailwind4
+        version: 0.5.16(tailwindcss@4.1.11)
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.9
@@ -515,6 +533,12 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@tailwindcss/postcss':
+        specifier: catalog:tailwind4
+        version: 4.1.11
+      '@tailwindcss/typography':
+        specifier: catalog:tailwind4
+        version: 0.5.16(tailwindcss@4.1.11)
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.9
@@ -617,9 +641,6 @@ importers:
       react-hook-form:
         specifier: ^7.61.1
         version: 7.61.1(react@19.1.0)
-      tailwindcss:
-        specifier: catalog:tailwind4
-        version: 4.1.11
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -633,6 +654,12 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@tailwindcss/postcss':
+        specifier: catalog:tailwind4
+        version: 4.1.11
+      '@tailwindcss/typography':
+        specifier: catalog:tailwind4
+        version: 0.5.16(tailwindcss@4.1.11)
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.9
@@ -663,6 +690,9 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
+      tailwindcss:
+        specifier: catalog:tailwind4
+        version: 4.1.11
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
@@ -754,6 +784,12 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@tailwindcss/postcss':
+        specifier: catalog:tailwind4
+        version: 4.1.11
+      '@tailwindcss/typography':
+        specifier: catalog:tailwind4
+        version: 0.5.16(tailwindcss@4.1.11)
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
