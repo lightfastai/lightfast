@@ -29,7 +29,7 @@ type ExtractToolType<T> = T extends (context: RuntimeContext<AppRuntimeContext>)
 // Define the tool set type using the helper
 // This matches the structure passed to streamText() in route.ts
 // We use a type alias instead of interface to satisfy the UITools constraint
-export type LightfastToolSet = {
+export interface LightfastToolSet {
 	fileWrite: InferUITool<ExtractToolType<typeof fileWriteTool>>;
 	fileRead: InferUITool<ExtractToolType<typeof fileReadTool>>;
 	fileDelete: InferUITool<ExtractToolType<typeof fileDeleteTool>>;
