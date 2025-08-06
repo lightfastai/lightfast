@@ -20,12 +20,8 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      router.push("/");
-    } catch (_error) {
-      // Handle sign out error silently
-    }
+    await signOut();
+    router.push("/");
   };
 
   return (
