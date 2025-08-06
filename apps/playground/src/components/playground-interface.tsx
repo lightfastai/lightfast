@@ -67,10 +67,10 @@ function PlaygroundInterfaceInner({
 	// Update URL to include thread ID when first message is sent
 	useEffect(() => {
 		if (messages.length > 0 && window.location.pathname === "/playground") {
-			// Use router.replace to update URL without adding to history
-			router.replace(`/playground/${threadId}`);
+			// Use history.replaceState to update URL without adding to history
+			window.history.replaceState(null, '', `/playground/${threadId}`);
 		}
-	}, [messages.length, threadId, router]);
+	}, [messages.length, threadId]);
 
 	const handleSendMessage = async (message: string) => {
 		try {

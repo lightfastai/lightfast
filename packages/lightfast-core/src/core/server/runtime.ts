@@ -143,6 +143,9 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 	const streamOptions: UIMessageStreamOptions<TMessage> = {
 		generateMessageId: generateId,
 		sendReasoning: true, // Enable sending reasoning parts to the client
+		headers: {
+			'Content-Encoding': 'none', // Prevent proxy buffering for streaming
+		},
 		onFinish: async ({ messages: finishedMessages, responseMessage }) => {
 			// Save the assistant's response to memory
 			if (responseMessage && responseMessage.role === "assistant") {
