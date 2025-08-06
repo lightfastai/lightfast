@@ -20,6 +20,14 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    serverActions: {
+      allowedOrigins: [
+        'app.lightfast.ai',
+        'https://app.lightfast.ai',
+        'localhost:4103',
+        'http://localhost:4103',
+      ],
+    },
     optimizeCss: true,
     optimizePackageImports: [
       "@repo/ui",
