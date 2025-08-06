@@ -63,7 +63,7 @@ export function PlaygroundInterface({ threadId, initialMessages }: PlaygroundInt
         </div>
         
         {/* Right section - 70% */}
-        <div className="col-span-7 border-l">
+        <div className="col-span-7 border">
           {/* Empty for now */}
         </div>
       </div>
