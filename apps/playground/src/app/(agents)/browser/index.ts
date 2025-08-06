@@ -2,6 +2,7 @@ import { Stagehand } from "@browserbasehq/stagehand";
 import type { RuntimeContext } from "@lightfast/core/agent/server/adapters/types";
 import { createTool } from "@lightfast/core/tool";
 import { z } from "zod";
+import { put } from "@vendor/storage";
 import { env } from "~/env";
 
 // Define empty runtime context type for now
@@ -362,13 +363,21 @@ export const stagehandScreenshotTool = createTool<RuntimeContext<AppRuntimeConte
         screenshotBuffer = await page.screenshot({ fullPage });
       }
 
-      // In production, save to blob storage and return real URL
+      // Upload screenshot to Vercel Blob
+      const blobPath = `screenshots/${filename}`;
+      const blob = await put(blobPath, screenshotBuffer, {
+        access: 'public',
+        addRandomSuffix: false,
+        token: env.BLOB_READ_WRITE_TOKEN,
+      });
+      
       return {
         success: true,
         filename,
         size: screenshotBuffer.length,
-        path: `screenshots/${filename}`,
-        url: `https://storage.example.com/screenshots/${filename}`,
+        path: blobPath,
+        url: blob.url,
+        screenshot: blob.url, // URL for direct display in browser viewer
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

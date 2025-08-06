@@ -7,9 +7,10 @@ import { BrowserContainer } from "./browser-container";
 import { EmptyState } from "./empty-state";
 import { ChatMessages } from "./chat-messages";
 import { useChat } from "~/hooks/use-chat";
+import { useScreenshotManager } from "~/hooks/use-screenshot-manager";
 import { AgentId } from "~/app/(agents)/types";
 import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";
-import { BrowserProvider, useBrowser } from "~/contexts/browser-context";
+import { BrowserProvider } from "~/contexts/browser-context";
 
 interface PlaygroundInterfaceProps {
 	threadId: string;
@@ -24,8 +25,7 @@ function PlaygroundInterfaceInner({
 	initialMessages,
 }: PlaygroundInterfaceProps) {
 	const router = useRouter();
-	const { updateBrowserState } = useBrowser();
-	
+
 	// Use the chat hook with the browser agent
 	const { messages, sendMessage, status, isLoading } = useChat({
 		agentId: AgentId.BROWSER_010,
@@ -36,39 +36,15 @@ function PlaygroundInterfaceInner({
 			// TODO: Add toast notification for user feedback
 		},
 	});
-
-	// Update browser state when messages change
-	useEffect(() => {
-		// Look for the latest screenshot or navigation in messages
-		for (let i = messages.length - 1; i >= 0; i--) {
-			const message = messages[i];
-			if (message.role === "assistant") {
-				for (const part of message.parts) {
-					// Check for screenshot results
-					if (part.type === "tool-result-stagehandScreenshot" && "result" in part && part.result) {
-						const result = part.result as { screenshot?: string };
-						if (result.screenshot) {
-							updateBrowserState({ screenshot: result.screenshot });
-							return;
-						}
-					}
-					// Check for navigation
-					if (part.type === "tool-call-stagehandNavigate" && "args" in part && part.args) {
-						const args = part.args as { url?: string };
-						if (args.url) {
-							updateBrowserState({ url: args.url, isLoading: true });
-						}
-					}
-				}
-			}
-		}
-	}, [messages, updateBrowserState]);
+	
+	// Manage screenshots from messages
+	useScreenshotManager({ messages, threadId });
 
 	// Update URL to include thread ID when first message is sent
 	useEffect(() => {
 		if (messages.length > 0 && window.location.pathname === "/playground") {
 			// Use history.replaceState to update URL without adding to history
-			window.history.replaceState(null, '', `/playground/${threadId}`);
+			window.history.replaceState(null, "", `/playground/${threadId}`);
 		}
 	}, [messages.length, threadId]);
 
@@ -103,7 +79,7 @@ function PlaygroundInterfaceInner({
 						</div>
 
 						{/* Right section - 70% */}
-						<div className="col-span-7 border border-border/50 rounded-sm shadow-lg">
+						<div className="col-span-7 border rounded-sm shadow-lg">
 							<BrowserContainer />
 						</div>
 					</div>
@@ -140,4 +116,3 @@ export function PlaygroundInterface(props: PlaygroundInterfaceProps) {
 		</BrowserProvider>
 	);
 }
-

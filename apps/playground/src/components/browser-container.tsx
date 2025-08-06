@@ -15,11 +15,11 @@ export enum BrowserContainerViewType {
 
 export function BrowserContainer({ className }: BrowserContainerProps) {
 	const [activeView, setActiveView] = useState<BrowserContainerViewType>(BrowserContainerViewType.BROWSER);
-
+	
 	return (
 		<div className={`flex flex-col h-full ${className || ""}`}>
 			{/* Header */}
-			<div className="h-14 border-b border-border/50 flex items-center px-4">
+			<div className="h-14 border-b flex items-center px-4">
 				<Button 
 					variant="ghost" 
 					size="sm" 

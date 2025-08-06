@@ -29,6 +29,7 @@
     "@tanstack/react-query": "catalog:",
     "@upstash/redis": "catalog:",
     "@vendor/clerk": "workspace:^",
+    "@vendor/storage": "workspace:^",
     "@vendor/upstash": "workspace:^",
     "@vercel/analytics": "^1.5.0",
     "@vercel/toolbar": "^0.1.28",
@@ -43,7 +44,8 @@
     "react-dom": "catalog:react19",
     "react-hook-form": "^7.61.1",
     "use-stick-to-bottom": "1.1.1",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

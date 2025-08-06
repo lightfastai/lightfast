@@ -36,11 +36,14 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
     }
   };
 
+  // Check if this is a screenshot tool result
+  const isScreenshotTool = toolName === "stagehandScreenshot" && state === "output-available" && "output" in toolPart && toolPart.output;
+  const screenshotOutput = isScreenshotTool ? toolPart.output as { screenshot?: string; url?: string; filename?: string } : null;
+  const screenshotUrl = screenshotOutput ? (screenshotOutput.screenshot || screenshotOutput.url) : null;
+
   // Custom display for browser tools with screenshots
-  if (toolName === "stagehandScreenshot" && state === "output-available" && "output" in toolPart && toolPart.output) {
-    const output = toolPart.output as { screenshot?: string };
-    if (output.screenshot) {
-      return (
+  if (isScreenshotTool && screenshotUrl) {
+    return (
         <div className="my-6 border rounded-lg w-full">
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value={accordionValue}>
@@ -54,7 +57,7 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
               <AccordionContent className="px-4 pb-4">
                 <div className="pt-3">
                   <img 
-                    src={output.screenshot} 
+                    src={screenshotUrl} 
                     alt="Browser screenshot" 
                     className="max-w-full rounded-lg border border-border/50"
                   />
@@ -62,9 +65,8 @@ export const GenericToolDisplay = memo(function GenericToolDisplay({ toolPart, t
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-        </div>
-      );
-    }
+      </div>
+    );
   }
 
   // For all non-output states, show a non-expandable view with loading

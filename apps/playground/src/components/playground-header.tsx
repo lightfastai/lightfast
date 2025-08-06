@@ -10,12 +10,14 @@ export function PlaygroundHeader() {
     <>
       {/* Desktop header - absolute positioned */}
       <div className="hidden lg:flex absolute top-4 left-6 right-6 z-20 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="xs" asChild>
-            <Link href={appUrl}>
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="pr-4 border-r">
+            <Button variant="outline" size="xs" asChild>
+              <Link href={appUrl}>
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
           <NewChatButton />
         </div>
 
@@ -24,12 +26,14 @@ export function PlaygroundHeader() {
 
       {/* Mobile/Tablet header */}
       <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="xs" asChild>
-            <Link href={appUrl}>
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="pr-4 border-r">
+            <Button variant="outline" size="xs" asChild>
+              <Link href={appUrl}>
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
           <NewChatButton variant="mobile" />
         </div>
 

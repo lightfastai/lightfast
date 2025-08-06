@@ -7,6 +7,7 @@ import { anthropicEnv } from "@repo/ai/anthropic-env";
 import { browserbaseEnv } from "@repo/ai/browserbase-env";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as upstashEnv } from "@vendor/upstash/env";
+import { env as storageEnv } from "@vendor/storage/env";
 
 export const env = createEnv({
   extends: [
@@ -16,6 +17,7 @@ export const env = createEnv({
     braintrustEnv,
     browserbaseEnv,
     anthropicEnv,
+    storageEnv,
   ],
   shared: {
     NODE_ENV: z

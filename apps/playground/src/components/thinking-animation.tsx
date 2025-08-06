@@ -1,15 +1,30 @@
 "use client";
 
 import { memo } from "react";
+import { cn } from "@repo/ui/lib/utils";
+
+interface ThinkingAnimationProps {
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}
 
 /**
  * Memoized thinking animation component
  * Displays an animated square with gradient effects
  * Uses Tailwind animations instead of styled-jsx
  */
-export const ThinkingAnimation = memo(function ThinkingAnimation() {
+export const ThinkingAnimation = memo(function ThinkingAnimation({ 
+  size = "md",
+  className 
+}: ThinkingAnimationProps) {
+  const sizeClasses = {
+    sm: "w-2.5 h-2.5",
+    md: "w-3 h-3", 
+    lg: "w-4 h-4"
+  };
+  
   return (
-    <div className="relative w-3 h-3">
+    <div className={cn("relative", sizeClasses[size], className)}>
       {/* Square shape with animated gradient inside */}
       <div className="absolute inset-0 rounded-sm overflow-hidden">
         {/* Animated gradient background */}

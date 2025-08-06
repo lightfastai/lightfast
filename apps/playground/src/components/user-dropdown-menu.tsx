@@ -31,7 +31,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="xs" className={className}>
+        <Button variant="outline" size="xs" className={`rounded-full ${className || ""}`}>
           <User className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>

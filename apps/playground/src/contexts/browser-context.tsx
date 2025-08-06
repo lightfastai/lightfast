@@ -4,7 +4,6 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface BrowserState {
   url: string | null;
-  screenshot: string | null;
   isLoading: boolean;
 }
 
@@ -18,7 +17,6 @@ const BrowserContext = createContext<BrowserContextValue | undefined>(undefined)
 export function BrowserProvider({ children }: { children: ReactNode }) {
   const [browserState, setBrowserState] = useState<BrowserState>({
     url: null,
-    screenshot: null,
     isLoading: false,
   });
 

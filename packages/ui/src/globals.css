@@ -173,6 +173,26 @@
 		background-color: rgba(255, 255, 255, 0.2);
 	}
 
+	/* Hide scrollbar utility */
+	.scrollbar-hide {
+		-ms-overflow-style: none !important;  /* IE and Edge */
+		scrollbar-width: none !important;  /* Firefox */
+	}
+	
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none !important;  /* Chrome, Safari and Opera */
+	}
+	
+	/* Hide all scrollbars in children */
+	.scrollbar-hide-all * {
+		-ms-overflow-style: none !important;
+		scrollbar-width: none !important;
+	}
+	
+	.scrollbar-hide-all *::-webkit-scrollbar {
+		display: none !important;
+	}
+
 	/* Thinking animation keyframes */
 	@keyframes gradient-shift {
 		0% {

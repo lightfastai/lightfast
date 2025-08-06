@@ -1,3 +1,4 @@
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { auth } from "@clerk/nextjs/server";
 import { createAgent } from "@lightfast/core/agent";
 import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
@@ -92,6 +93,15 @@ const handler = async (
 								model: gateway("anthropic/claude-4-sonnet"),
 								middleware: BraintrustMiddleware({ debug: true }),
 							}),
+							providerOptions: {
+								anthropic: {
+									// Enable Claude Code thinking
+									thinking: {
+										type: "enabled",
+										budgetTokens: 32000, // Generous budget for complex reasoning
+									},
+								} satisfies AnthropicProviderOptions,
+							},
 							experimental_transform: smoothStream({
 								delayInMs: 25,
 								chunking: "word",
@@ -134,6 +144,10 @@ const handler = async (
 										metadata: {
 											finishReason: result.finishReason,
 											usage: result.usage,
+											// Include thinking metadata if available
+											reasoning: result.reasoning,
+											reasoningText: result.reasoningText,
+											providerMetadata: result.providerMetadata,
 										},
 									});
 								}

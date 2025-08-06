@@ -1,12 +1,13 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
+import { getToolName } from "ai";
 import { ArrowDown } from "lucide-react";
 import { memo, useMemo, useRef } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { Markdown } from "@repo/ui/components/markdown";
-import { ThinkingMessage } from "./thinking-message";
-import { GenericToolDisplay } from "./tool-renderers/generic-tool-display";
+import { ThinkingAccordion } from "./thinking-accordion";
+import { ToolRenderer } from "./tool-renderers";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";
@@ -20,23 +21,8 @@ interface ChatMessagesProps {
 // Extended message type that includes runtime status
 interface MessageWithRuntimeStatus extends PlaygroundUIMessage {
   runtimeStatus?: "thinking" | "streaming" | "reasoning" | "done";
+  reasoningText?: string;
 }
-
-// Memoized reasoning block component
-const ReasoningBlock = memo(function ReasoningBlock({ text }: { text: string }) {
-  // Remove leading newlines while preserving other whitespace
-  const trimmedText = text.replace(/^\n+/, "");
-
-  return (
-    <div className="border border-muted rounded-lg max-h-[200px] overflow-hidden">
-      <div className="max-h-[200px] overflow-y-auto">
-        <div className="p-4">
-          <p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap break-words">{trimmedText}</p>
-        </div>
-      </div>
-    </div>
-  );
-});
 
 function ScrollButton() {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
@@ -123,14 +109,24 @@ function MessageItem({
   isFirst?: boolean;
   isLast?: boolean;
 }) {
-  // Determine if the latest part during streaming is a reasoning part
-  const hasActiveReasoningPart = useMemo(() => {
-    if (message.runtimeStatus !== "streaming" || !message.parts || message.parts.length === 0) {
-      return false;
-    }
-    // Check if the last part is a reasoning part
-    const lastPart = message.parts[message.parts.length - 1];
-    return lastPart ? isReasoningPart(lastPart) : false;
+  // Extract reasoning text and determine if actively streaming reasoning
+  const { hasActiveReasoningPart, reasoningText } = useMemo(() => {
+    // Extract all reasoning text
+    const allReasoningText = message.parts
+      ?.filter(isReasoningPart)
+      .map(part => part.text)
+      .join('');
+      
+    // Check if actively streaming reasoning
+    const isStreamingReasoning = message.runtimeStatus === "streaming" && 
+      message.parts && 
+      message.parts.length > 0 &&
+      isReasoningPart(message.parts[message.parts.length - 1]);
+      
+    return {
+      hasActiveReasoningPart: isStreamingReasoning,
+      reasoningText: allReasoningText
+    };
   }, [message.parts, message.runtimeStatus]);
 
   // For user messages
@@ -152,7 +148,7 @@ function MessageItem({
       >
         <div className="mx-auto max-w-3xl px-4 flex justify-end">
           <div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
-            <p className="whitespace-pre-wrap">{textContent}</p>
+            <p className="whitespace-pre-wrap text-sm">{textContent}</p>
           </div>
         </div>
       </div>
@@ -170,35 +166,42 @@ function MessageItem({
       )}
     >
       <div className="mx-auto max-w-3xl px-4 space-y-4">
-        {/* Show thinking animation at top of assistant message based on runtime status */}
-        {message.runtimeStatus && (
-          <ThinkingMessage status={hasActiveReasoningPart ? "reasoning" : message.runtimeStatus} show={true} />
+        {/* Show thinking accordion at top of assistant message */}
+        {message.runtimeStatus && message.runtimeStatus !== "done" && (
+          <ThinkingAccordion 
+            status={hasActiveReasoningPart ? "reasoning" : message.runtimeStatus} 
+            reasoningText={reasoningText}
+          />
+        )}
+        {/* Show completed thinking with reasoning text if available */}
+        {message.runtimeStatus === "done" && reasoningText && (
+          <ThinkingAccordion 
+            status="done" 
+            reasoningText={reasoningText}
+          />
         )}
         {message.parts?.map((part, index) => {
           // Text part
           if (isTextPart(part)) {
             return (
-              <div key={`${message.id}-part-${index}`} className="w-full px-4">
+              <div key={`${message.id}-part-${index}`} className="w-full px-4 text-sm">
                 <Markdown>{part.text}</Markdown>
               </div>
             );
           }
 
-          // Reasoning part
+          // Skip reasoning parts as they're now handled in ThinkingAccordion
           if (isReasoningPart(part)) {
-            return (
-              <div key={`${message.id}-part-${index}`} className="w-full">
-                <ReasoningBlock text={part.text} />
-              </div>
-            );
+            return null;
           }
 
           // Tool part
           if (isToolPart(part)) {
-            const toolName = part.type.replace("tool-", "");
+            const toolPart = part as ToolUIPart;
+            const toolName = getToolName(toolPart);
             return (
               <div key={`${message.id}-part-${index}`} className="w-full">
-                <GenericToolDisplay toolPart={part as ToolUIPart} toolName={toolName} />
+                <ToolRenderer toolPart={toolPart} toolName={toolName as string} />
               </div>
             );
           }

@@ -43,6 +43,7 @@ export function useChat({ agentId, threadId, initialMessages = [], onError }: Us
     resume: shouldAutoResume,
   });
 
+
   const sendMessage = async (message: string) => {
     if (!message.trim() || status === "streaming" || status === "submitted") {
       throw new Error("Cannot send message");
