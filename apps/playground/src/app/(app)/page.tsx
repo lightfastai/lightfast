@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { PlaygroundInterface } from "~/components/playground-interface";
-import { uuidv4 } from "~/lib/uuid";
+import { uuidv4 } from "@lightfast/core/v2/utils";
 
 /**
  * New playground page at /playground

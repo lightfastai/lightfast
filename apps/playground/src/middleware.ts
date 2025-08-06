@@ -6,6 +6,7 @@ const clerkConfig = getClerkMiddlewareConfig("playground");
 // Define public routes
 const isPublicRoute = createRouteMatcher([
   "/api/health",
+  "/api/agents/(.*)", // Agent routes handle auth internally
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
