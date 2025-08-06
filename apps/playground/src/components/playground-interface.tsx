@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChatInput } from "./chat-input";
 import { BrowserContainer } from "./browser-container";
 import { EmptyState } from "./empty-state";
-import { Message } from "./message";
+import { ChatMessages } from "./chat-messages";
 import { useChat } from "~/hooks/use-chat";
 import { AgentId } from "~/app/(agents)/types";
 import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";
@@ -90,23 +90,7 @@ function PlaygroundInterfaceInner({
 						{/* Chat section - 30% */}
 						<div className="col-span-3 flex flex-col">
 							{/* Messages area */}
-							<div className="flex-1 overflow-auto py-4 px-4">
-								{messages.map((message) => (
-									<Message key={message.id} message={message} />
-								))}
-								{/* Show loading indicator when streaming */}
-								{isLoading && (
-									<div className="mb-4 text-left">
-										<div className="inline-block p-3 rounded-lg bg-muted">
-											<div className="flex items-center gap-2">
-												<div className="animate-pulse">●</div>
-												<div className="animate-pulse delay-100">●</div>
-												<div className="animate-pulse delay-200">●</div>
-											</div>
-										</div>
-									</div>
-								)}
-							</div>
+							<ChatMessages messages={messages} status={status} />
 
 							{/* Input area */}
 							<div className="flex-shrink-0 pb-4">

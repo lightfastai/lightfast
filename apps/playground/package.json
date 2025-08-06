@@ -19,6 +19,7 @@
     "@browserbasehq/stagehand": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@lightfast/core": "workspace:*",
+    "@radix-ui/react-scroll-area": "^1.2.9",
     "@repo/ai": "workspace:*",
     "@repo/lightfast-config": "workspace:*",
     "@repo/lightfast-react": "workspace:*",
@@ -39,6 +40,7 @@
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "react-hook-form": "^7.61.1",
+    "use-stick-to-bottom": "1.1.1",
     "zod": "catalog:"
   },
   "devDependencies": {
