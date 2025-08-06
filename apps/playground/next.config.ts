@@ -5,6 +5,7 @@ import "~/env";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   basePath: '/playground',
+  assetPrefix: process.env.NODE_ENV === 'production' ? 'https://playground.lightfast.ai/playground' : undefined,
   typescript: {
     ignoreBuildErrors: true,
   },
