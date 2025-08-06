@@ -1,41 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
 
 interface BrowserViewerProps {
 	className?: string;
 }
 
 export function BrowserViewer({ className }: BrowserViewerProps) {
-	const [url, setUrl] = useState("");
-
 	return (
 		<div
 			className={`flex flex-col aspect-[3/2] border border-border/50 rounded-sm overflow-hidden ${className || ""}`}
 		>
 			{/* Browser toolbar */}
-			<div className="flex items-center gap-2 p-3 border-b border-border/50">
+			<div className="flex items-center gap-2 p-2 border-b border-border/50">
 				<div className="flex items-center gap-1">
-					<button className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-xs">
-						←
-					</button>
-					<button className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-xs">
-						→
-					</button>
-					<button className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-xs">
-						↻
-					</button>
-				</div>
-
-				{/* URL bar */}
-				<div className="flex-1 flex items-center bg-muted rounded-lg px-3 py-1.5">
-					<input
-						type="text"
-						value={url}
-						onChange={(e) => setUrl(e.target.value)}
-						placeholder="Enter URL..."
-						className="flex-1 bg-transparent outline-none text-sm"
-					/>
+					<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+						<ChevronLeft className="h-4 w-4" />
+					</Button>
+					<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+						<ChevronRight className="h-4 w-4" />
+					</Button>
 				</div>
 			</div>
 
@@ -62,4 +47,3 @@ export function BrowserViewer({ className }: BrowserViewerProps) {
 		</div>
 	);
 }
-

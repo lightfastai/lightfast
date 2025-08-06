@@ -1,16 +1,11 @@
 import { PlaygroundHeader } from "~/components/playground-header";
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <main className="flex h-screen flex-col relative">
-      <PlaygroundHeader />
-      <div className="flex-1 flex flex-col lg:pt-16 min-h-0">
-        {children}
-      </div>
-    </main>
-  );
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+	return (
+		<main className="flex h-screen flex-col relative">
+			<PlaygroundHeader />
+			<div className="flex-1 flex flex-col lg:pt-12 min-h-0">{children}</div>
+		</main>
+	);
 }
+
