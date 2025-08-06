@@ -41,6 +41,7 @@
 		"@clerk/themes": "catalog:",
 		"@lightfast/core": "workspace:*",
 		"@lightfast/evals": "workspace:*",
+		"@lightfast/lightfast-tools": "workspace:*",
 		"@lightfast/types": "workspace:*",
 		"@opentelemetry/api": "^1.9.0",
 		"@opentelemetry/auto-instrumentations-node": "^0.62.0",

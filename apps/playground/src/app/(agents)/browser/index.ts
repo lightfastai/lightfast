@@ -1,6 +1,13 @@
-import { Stagehand } from "@browserbasehq/stagehand";
 import type { RuntimeContext } from "@lightfast/core/agent/server/adapters/types";
 import { createTool } from "@lightfast/core/tool";
+import {
+  StagehandSessionManager,
+  performWebAction,
+  performWebObservation,
+  performWebExtraction,
+  performWebNavigation,
+  takeScreenshot,
+} from "@lightfast/lightfast-tools/browserbase";
 import { z } from "zod";
 import { put } from "@vendor/storage";
 import { env } from "~/env";
@@ -87,132 +94,18 @@ CRITICAL TOOL USAGE RULE: You MUST write a brief descriptive sentence before EVE
 // ============================================
 // STAGEHAND SESSION MANAGER
 // ============================================
-class StagehandSessionManager {
-  private static instance: StagehandSessionManager;
-  private stagehand: Stagehand | null = null;
-  private initialized = false;
-  private lastUsed = Date.now();
-  private readonly sessionTimeout = 10 * 60 * 1000; // 10 minutes
 
-  private constructor() {
-    // Schedule session cleanup to prevent memory leaks
-    setInterval(() => this.checkAndCleanupSession(), 60 * 1000);
-  }
-
-  public static getInstance(): StagehandSessionManager {
-    if (!StagehandSessionManager.instance) {
-      StagehandSessionManager.instance = new StagehandSessionManager();
-    }
-    return StagehandSessionManager.instance;
-  }
-
-  public async ensureStagehand(): Promise<Stagehand> {
-    this.lastUsed = Date.now();
-
-    try {
-      if (!this.stagehand || !this.initialized) {
-        console.log("Creating new Stagehand instance");
-        this.stagehand = new Stagehand({
-          apiKey: env.BROWSERBASE_API_KEY,
-          projectId: env.BROWSERBASE_PROJECT_ID,
-          env: "BROWSERBASE",
-          disablePino: true,
-          modelName: "claude-3-7-sonnet-latest",
-          modelClientOptions: {
-            apiKey: env.ANTHROPIC_API_KEY,
-          },
-          browserbaseSessionCreateParams: {
-            projectId: env.BROWSERBASE_PROJECT_ID,
-            browserSettings: {
-              blockAds: true,
-              viewport: {
-                width: 1024,
-                height: 768,
-              },
-            },
-          },
-        });
-
-        try {
-          console.log("Initializing Stagehand...");
-          await this.stagehand.init();
-          console.log("Stagehand initialized successfully");
-          this.initialized = true;
-          return this.stagehand;
-        } catch (initError) {
-          console.error("Failed to initialize Stagehand:", initError);
-          throw initError;
-        }
-      }
-
-      try {
-        const title = await this.stagehand.page.evaluate(() => document.title);
-        console.log("Session check successful, page title:", title);
-        return this.stagehand;
-      } catch (error) {
-        console.error("Session check failed:", error);
-        if (
-          error instanceof Error &&
-          (error.message.includes("Target page, context or browser has been closed") ||
-            error.message.includes("Session expired") ||
-            error.message.includes("context destroyed"))
-        ) {
-          console.log("Browser session expired, reinitializing Stagehand...");
-          this.stagehand = new Stagehand({
-            apiKey: env.BROWSERBASE_API_KEY,
-            projectId: env.BROWSERBASE_PROJECT_ID,
-            env: "BROWSERBASE",
-            disablePino: true,
-            modelName: "claude-3-7-sonnet-latest",
-            modelClientOptions: {
-              apiKey: env.ANTHROPIC_API_KEY,
-            },
-          });
-          await this.stagehand.init();
-          this.initialized = true;
-          return this.stagehand;
-        }
-        throw error;
-      }
-    } catch (error) {
-      this.initialized = false;
-      this.stagehand = null;
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to initialize/reinitialize Stagehand: ${errorMsg}`);
-    }
-  }
-
-  private async checkAndCleanupSession(): Promise<void> {
-    if (!this.stagehand || !this.initialized) return;
-
-    const now = Date.now();
-    if (now - this.lastUsed > this.sessionTimeout) {
-      console.log("Cleaning up idle Stagehand session");
-      try {
-        await this.stagehand.close();
-      } catch (error) {
-        console.error(`Error closing idle session: ${error}`);
-      }
-      this.stagehand = null;
-      this.initialized = false;
-    }
-  }
-
-  public async close(): Promise<void> {
-    if (this.stagehand) {
-      try {
-        await this.stagehand.close();
-      } catch (error) {
-        console.error(`Error closing Stagehand session: ${error}`);
-      }
-      this.stagehand = null;
-      this.initialized = false;
-    }
-  }
-}
-
-// Get the singleton instance
-const sessionManager = StagehandSessionManager.getInstance();
+// Initialize the session manager with config
+const sessionManager = StagehandSessionManager.getInstance({
+  apiKey: env.BROWSERBASE_API_KEY,
+  projectId: env.BROWSERBASE_PROJECT_ID,
+  anthropicApiKey: env.ANTHROPIC_API_KEY,
+  modelName: "claude-3-7-sonnet-latest",
+  enableCaptchaSolving: true,
+  enableAdvancedStealth: false, // Set to true if on Scale Plan
+  viewportWidth: 1280,
+  viewportHeight: 720,
+});
 
 // ============================================
 // STAGEHAND TOOLS
@@ -238,17 +131,8 @@ export const stagehandNavigateTool = createTool<RuntimeContext<AppRuntimeContext
   }),
   execute: async ({ url }, context) => {
     try {
-      const stagehand = await sessionManager.ensureStagehand();
-      await stagehand.page.goto(url);
-
-      const title = await stagehand.page.evaluate(() => document.title);
-      const currentUrl = await stagehand.page.evaluate(() => window.location.href);
-
-      return {
-        success: true,
-        title,
-        currentUrl,
-      };
+      const result = await performWebNavigation(sessionManager, url);
+      return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
@@ -268,21 +152,8 @@ export const stagehandActTool = createTool<RuntimeContext<AppRuntimeContext>>({
   }),
   execute: async ({ url, action }, context) => {
     try {
-      const stagehand = await sessionManager.ensureStagehand();
-      const page = stagehand.page;
-
-      if (url) {
-        await page.goto(url);
-      }
-
-      if (action) {
-        await page.act(action);
-      }
-
-      return {
-        success: true,
-        message: `Successfully performed: ${action}`,
-      };
+      const result = await performWebAction(sessionManager, url, action);
+      return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Stagehand action failed: ${errorMessage}`);
@@ -300,19 +171,8 @@ export const stagehandObserveTool = createTool<RuntimeContext<AppRuntimeContext>
   outputSchema: z.array(z.unknown()).describe("Array of observable actions"),
   execute: async ({ url, instruction }, context) => {
     try {
-      const stagehand = await sessionManager.ensureStagehand();
-      const page = stagehand.page;
-
-      if (url) {
-        await page.goto(url);
-      }
-
-      if (instruction) {
-        const actions = await page.observe(instruction);
-        return actions;
-      }
-
-      return [];
+      const actions = await performWebObservation(sessionManager, url, instruction);
+      return actions;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Stagehand observation failed: ${errorMessage}`);
@@ -335,28 +195,18 @@ export const stagehandExtractTool = createTool<RuntimeContext<AppRuntimeContext>
   outputSchema: z.unknown().describe("Extracted data according to schema"),
   execute: async ({ url, instruction, schema, useTextExtract }, context) => {
     try {
-      const stagehand = await sessionManager.ensureStagehand();
-      const page = stagehand.page;
-
-      if (url) {
-        await page.goto(url);
-      }
-
-      if (instruction) {
-        const defaultSchema = { content: z.string() };
-        const finalSchemaObj = schema || defaultSchema;
-        const schemaZ = z.object(finalSchemaObj as Record<string, z.ZodTypeAny>);
-
-        const result = await page.extract({
-          instruction,
-          schema: schemaZ,
-          useTextExtract,
-        });
-
-        return result;
-      }
-
-      return null;
+      const defaultSchema = { content: z.string() };
+      const finalSchemaObj = schema || defaultSchema;
+      
+      const result = await performWebExtraction(
+        sessionManager,
+        url,
+        instruction,
+        finalSchemaObj as Record<string, z.ZodTypeAny>,
+        useTextExtract
+      );
+      
+      return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Stagehand extraction failed: ${errorMessage}`);
@@ -373,24 +223,14 @@ export const stagehandScreenshotTool = createTool<RuntimeContext<AppRuntimeConte
   }),
   execute: async ({ fullPage = false, selector }, context) => {
     try {
-      const stagehand = await sessionManager.ensureStagehand();
-      const page = stagehand.page;
+      const screenshotBuffer = await takeScreenshot(sessionManager, {
+        fullPage,
+        selector,
+      });
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       // Include resourceId and timestamp in filename
       const filename = `screenshot-${context.resourceId}-${timestamp}.png`;
-
-      let screenshotBuffer: Buffer;
-
-      if (selector) {
-        const element = await page.$(selector);
-        if (!element) {
-          throw new Error(`Element not found: ${selector}`);
-        }
-        screenshotBuffer = await element.screenshot();
-      } else {
-        screenshotBuffer = await page.screenshot({ fullPage });
-      }
 
       // Upload screenshot to Vercel Blob under threadId directory
       const blobPath = `screenshots/${context.threadId}/${filename}`;

@@ -100,7 +100,8 @@
       "Bash(pnpm --filter @repo/ui typecheck)",
       "Bash(pnpm --filter @lightfast/auth lint)",
       "Bash(pnpm --filter experimental build)",
-      "WebFetch(domain:docs.browserbase.com)"
+      "WebFetch(domain:docs.browserbase.com)",
+      "Bash(git diff:*)"
     ],
     "deny": []
   },

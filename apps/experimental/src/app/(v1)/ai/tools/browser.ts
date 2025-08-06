@@ -1,141 +1,28 @@
-import { Stagehand } from "@browserbasehq/stagehand";
 import type { RuntimeContext } from "@lightfast/core/agent/server/adapters/types";
 import { createTool } from "@lightfast/core/tool";
+import {
+	StagehandSessionManager,
+	performWebAction,
+	performWebObservation,
+	performWebExtraction,
+	performWebNavigation,
+} from "@lightfast/lightfast-tools/browserbase";
 import { currentSpan, wrapTraced } from "braintrust";
 import { z } from "zod";
 import type { AppRuntimeContext } from "@/app/(v1)/ai/types";
 import { env } from "@/env";
 
-class StagehandSessionManager {
-	private static instance: StagehandSessionManager;
-	private stagehand: Stagehand | null = null;
-	private initialized = false;
-	private lastUsed = Date.now();
-	private readonly sessionTimeout = 10 * 60 * 1000; // 10 minutes
-
-	private constructor() {
-		// Schedule session cleanup to prevent memory leaks
-		setInterval(() => this.checkAndCleanupSession(), 60 * 1000);
-	}
-
-	/**
-	 * Get the singleton instance of StagehandSessionManager
-	 */
-	public static getInstance(): StagehandSessionManager {
-		if (!StagehandSessionManager.instance) {
-			StagehandSessionManager.instance = new StagehandSessionManager();
-		}
-		return StagehandSessionManager.instance;
-	}
-
-	/**
-	 * Ensure Stagehand is initialized and return the instance
-	 */
-	public async ensureStagehand(): Promise<Stagehand> {
-		this.lastUsed = Date.now();
-
-		try {
-			// Initialize if not already initialized
-			if (!this.stagehand || !this.initialized) {
-				console.log("Creating new Stagehand instance");
-				this.stagehand = new Stagehand({
-					apiKey: env.BROWSERBASE_API_KEY,
-					projectId: env.BROWSERBASE_PROJECT_ID,
-					env: "BROWSERBASE",
-					disablePino: true,
-					modelName: "claude-3-7-sonnet-latest",
-					modelClientOptions: {
-						apiKey: env.ANTHROPIC_API_KEY,
-					},
-				});
-
-				try {
-					console.log("Initializing Stagehand...");
-					await this.stagehand.init();
-					console.log("Stagehand initialized successfully");
-					this.initialized = true;
-					return this.stagehand;
-				} catch (initError) {
-					console.error("Failed to initialize Stagehand:", initError);
-					throw initError;
-				}
-			}
-
-			try {
-				const title = await this.stagehand.page.evaluate(() => document.title);
-				console.log("Session check successful, page title:", title);
-				return this.stagehand;
-			} catch (error) {
-				// If we get an error indicating the session is invalid, reinitialize
-				console.error("Session check failed:", error);
-				if (
-					error instanceof Error &&
-					(error.message.includes("Target page, context or browser has been closed") ||
-						error.message.includes("Session expired") ||
-						error.message.includes("context destroyed"))
-				) {
-					console.log("Browser session expired, reinitializing Stagehand...");
-					this.stagehand = new Stagehand({
-						apiKey: env.BROWSERBASE_API_KEY,
-						projectId: env.BROWSERBASE_PROJECT_ID,
-						env: "BROWSERBASE",
-						disablePino: true,
-						modelName: "claude-3-7-sonnet-latest",
-						modelClientOptions: {
-							apiKey: env.ANTHROPIC_API_KEY,
-						},
-					});
-					await this.stagehand.init();
-					this.initialized = true;
-					return this.stagehand;
-				}
-				throw error; // Re-throw if it's a different type of error
-			}
-		} catch (error) {
-			this.initialized = false;
-			this.stagehand = null;
-			const errorMsg = error instanceof Error ? error.message : String(error);
-			throw new Error(`Failed to initialize/reinitialize Stagehand: ${errorMsg}`);
-		}
-	}
-
-	/**
-	 * Close the Stagehand session if it's been idle for too long
-	 */
-	private async checkAndCleanupSession(): Promise<void> {
-		if (!this.stagehand || !this.initialized) return;
-
-		const now = Date.now();
-		if (now - this.lastUsed > this.sessionTimeout) {
-			console.log("Cleaning up idle Stagehand session");
-			try {
-				await this.stagehand.close();
-			} catch (error) {
-				console.error(`Error closing idle session: ${error}`);
-			}
-			this.stagehand = null;
-			this.initialized = false;
-		}
-	}
-
-	/**
-	 * Manually close the session
-	 */
-	public async close(): Promise<void> {
-		if (this.stagehand) {
-			try {
-				await this.stagehand.close();
-			} catch (error) {
-				console.error(`Error closing Stagehand session: ${error}`);
-			}
-			this.stagehand = null;
-			this.initialized = false;
-		}
-	}
-}
-
-// Get the singleton instance
-const sessionManager = StagehandSessionManager.getInstance();
+// Initialize the session manager with config
+const sessionManager = StagehandSessionManager.getInstance({
+	apiKey: env.BROWSERBASE_API_KEY,
+	projectId: env.BROWSERBASE_PROJECT_ID,
+	anthropicApiKey: env.ANTHROPIC_API_KEY,
+	modelName: "claude-3-7-sonnet-latest",
+	enableCaptchaSolving: true,
+	enableAdvancedStealth: false, // Set to true if on Scale Plan
+	viewportWidth: 1280,
+	viewportHeight: 720,
+});
 
 /**
  * Wrapped stagehand act execution function with Braintrust tracing
@@ -162,7 +49,34 @@ const executeStagehandAct = wrapTraced(
 				},
 			},
 		});
-		return await performWebAction(url, action);
+		
+		try {
+			const result = await performWebAction(sessionManager, url, action);
+			
+			// Log success
+			currentSpan().log({
+				metadata: {
+					success: true,
+					actionPerformed: action,
+				},
+			});
+			
+			return result;
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						action,
+						url,
+					},
+				},
+			});
+			throw error;
+		}
 	},
 	{ type: "tool", name: "stagehandAct" },
 );
@@ -201,7 +115,34 @@ const executeStagehandObserve = wrapTraced(
 				},
 			},
 		});
-		return await performWebObservation(url, instruction);
+		
+		try {
+			const actions = await performWebObservation(sessionManager, url, instruction);
+			
+			// Log observation results
+			currentSpan().log({
+				metadata: {
+					actionsFound: Array.isArray(actions) ? actions.length : 0,
+					instruction,
+				},
+			});
+			
+			return actions;
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						instruction,
+						url,
+					},
+				},
+			});
+			throw error;
+		}
 	},
 	{ type: "tool", name: "stagehandObserve" },
 );
@@ -253,12 +194,40 @@ const executeStagehandExtract = wrapTraced(
 			content: z.string(),
 		};
 
-		return await performWebExtraction(
-			url,
-			instruction,
-			(schema as Record<string, z.ZodTypeAny>) || defaultSchema,
-			useTextExtract,
-		);
+		try {
+			const result = await performWebExtraction(
+				sessionManager,
+				url,
+				instruction,
+				(schema as Record<string, z.ZodTypeAny>) || defaultSchema,
+				useTextExtract,
+			);
+			
+			// Log extraction results
+			currentSpan().log({
+				metadata: {
+					extractionSuccessful: true,
+					instruction,
+					useTextExtract: !!useTextExtract,
+				},
+			});
+			
+			return result;
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			// Log error
+			currentSpan().log({
+				metadata: {
+					error: {
+						message: errorMessage,
+						type: error instanceof Error ? error.constructor.name : "UnknownError",
+						instruction,
+						url,
+					},
+				},
+			});
+			throw error;
+		}
 	},
 	{ type: "tool", name: "stagehandExtract" },
 );
@@ -278,192 +247,6 @@ export const stagehandExtractTool = createTool<RuntimeContext<AppRuntimeContext>
 	execute: executeStagehandExtract,
 });
 
-const performWebAction = async (url?: string, action?: string) => {
-	const stagehand = await sessionManager.ensureStagehand();
-	const page = stagehand.page;
-
-	try {
-		// Navigate to the URL if provided
-		if (url) {
-			await page.goto(url);
-		}
-
-		// Perform the action
-		if (action) {
-			await page.act(action);
-		}
-
-		// Log success
-		currentSpan().log({
-			metadata: {
-				success: true,
-				actionPerformed: action,
-			},
-		});
-
-		return {
-			success: true,
-			message: `Successfully performed: ${action}`,
-		};
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error);
-		// Log error
-		currentSpan().log({
-			metadata: {
-				error: {
-					message: errorMessage,
-					type: error instanceof Error ? error.constructor.name : "UnknownError",
-					action,
-					url,
-				},
-			},
-		});
-		throw new Error(`Stagehand action failed: ${errorMessage}`);
-	}
-};
-
-const performWebObservation = async (url?: string, instruction?: string) => {
-	console.log(`Starting observation${url ? ` for ${url}` : ""} with instruction: ${instruction}`);
-
-	try {
-		const stagehand = await sessionManager.ensureStagehand();
-		if (!stagehand) {
-			console.error("Failed to get Stagehand instance");
-			throw new Error("Failed to get Stagehand instance");
-		}
-
-		const page = stagehand.page;
-		if (!page) {
-			console.error("Page not available");
-			throw new Error("Page not available");
-		}
-
-		try {
-			// Navigate to the URL if provided
-			if (url) {
-				console.log(`Navigating to ${url}`);
-				await page.goto(url);
-				console.log(`Successfully navigated to ${url}`);
-			}
-
-			// Observe the page
-			if (instruction) {
-				console.log(`Observing with instruction: ${instruction}`);
-				try {
-					const actions = await page.observe(instruction);
-					console.log(`Observation successful, found ${actions.length} actions`);
-					// Log observation results
-					currentSpan().log({
-						metadata: {
-							actionsFound: actions.length,
-							instruction,
-						},
-					});
-					return actions;
-				} catch (observeError) {
-					console.error("Error during observation:", observeError);
-					throw observeError;
-				}
-			}
-
-			return [];
-		} catch (pageError) {
-			console.error("Error in page operation:", pageError);
-			throw pageError;
-		}
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error);
-		console.error(`Full stack trace for observation error:`, error);
-		// Log error
-		currentSpan().log({
-			metadata: {
-				error: {
-					message: errorMessage,
-					type: error instanceof Error ? error.constructor.name : "UnknownError",
-					instruction,
-					url,
-				},
-			},
-		});
-		throw new Error(`Stagehand observation failed: ${errorMessage}`);
-	}
-};
-
-const performWebExtraction = async (
-	url?: string,
-	instruction?: string,
-	schemaObj?: Record<string, z.ZodTypeAny>,
-	useTextExtract?: boolean,
-) => {
-	console.log(`Starting extraction${url ? ` for ${url}` : ""} with instruction: ${instruction}`);
-
-	try {
-		const stagehand = await sessionManager.ensureStagehand();
-		const page = stagehand.page;
-
-		try {
-			// Navigate to the URL if provided
-			if (url) {
-				console.log(`Navigating to ${url}`);
-				await page.goto(url);
-				console.log(`Successfully navigated to ${url}`);
-			}
-
-			// Extract data
-			if (instruction) {
-				console.log(`Extracting with instruction: ${instruction}`);
-
-				// Create a default schema if none is provided from Mastra Agent
-				const finalSchemaObj = schemaObj || { content: z.string() };
-
-				try {
-					const schema = z.object(finalSchemaObj);
-
-					const result = await page.extract({
-						instruction,
-						schema,
-						useTextExtract,
-					});
-
-					console.log(`Extraction successful:`, result);
-					// Log extraction results
-					currentSpan().log({
-						metadata: {
-							extractionSuccessful: true,
-							instruction,
-							useTextExtract: !!useTextExtract,
-						},
-					});
-					return result;
-				} catch (extractError) {
-					console.error("Error during extraction:", extractError);
-					throw extractError;
-				}
-			}
-
-			return null;
-		} catch (pageError) {
-			console.error("Error in page operation:", pageError);
-			throw pageError;
-		}
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error);
-		console.error(`Full stack trace for extraction error:`, error);
-		// Log error
-		currentSpan().log({
-			metadata: {
-				error: {
-					message: errorMessage,
-					type: error instanceof Error ? error.constructor.name : "UnknownError",
-					instruction,
-					url,
-				},
-			},
-		});
-		throw new Error(`Stagehand extraction failed: ${errorMessage}`);
-	}
-};
-
 /**
  * Wrapped stagehand navigate execution function with Braintrust tracing
  */
@@ -476,41 +259,26 @@ const executeStagehandNavigate = wrapTraced(
 		},
 		context: RuntimeContext<AppRuntimeContext>,
 	) {
+		// Log metadata
+		currentSpan().log({
+			metadata: {
+				url,
+				contextInfo: {
+					threadId: context.threadId,
+					resourceId: context.resourceId,
+				},
+			},
+		});
+
 		try {
-			// Log metadata
+			const result = await performWebNavigation(sessionManager, url);
+
+			// Log result
 			currentSpan().log({
-				metadata: {
-					url,
-					contextInfo: {
-						threadId: context.threadId,
-						resourceId: context.resourceId,
-					},
-				},
+				metadata: result,
 			});
 
-			const stagehand = await sessionManager.ensureStagehand();
-
-			// Navigate to the URL
-			await stagehand.page.goto(url);
-
-			// Get page title and current URL
-			const title = await stagehand.page.evaluate(() => document.title);
-			const currentUrl = await stagehand.page.evaluate(() => window.location.href);
-
-			// Log success
-			currentSpan().log({
-				metadata: {
-					success: true,
-					title,
-					currentUrl,
-				},
-			});
-
-			return {
-				success: true,
-				title,
-				currentUrl,
-			};
+			return result;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			// Log error

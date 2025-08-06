@@ -20,6 +20,7 @@
     "@clerk/nextjs": "catalog:",
     "@gsap/react": "^2.1.2",
     "@lightfast/core": "workspace:*",
+    "@lightfast/lightfast-tools": "workspace:*",
     "@radix-ui/react-scroll-area": "^1.2.9",
     "@repo/ai": "workspace:*",
     "@repo/lightfast-config": "workspace:*",
