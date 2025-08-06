@@ -6,6 +6,7 @@ import { braintrustEnv } from "@lightfast/core/v2/braintrust-env";
 import { anthropicEnv } from "@repo/ai/anthropic-env";
 import { browserbaseEnv } from "@repo/ai/browserbase-env";
 import { clerkEnvBase } from "@vendor/clerk/env";
+import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as upstashEnv } from "@vendor/upstash/env";
 import { env as storageEnv } from "@vendor/storage/env";
 
@@ -13,6 +14,7 @@ export const env = createEnv({
   extends: [
     vercel(),
     clerkEnvBase,
+    sentryEnv,
     upstashEnv,
     braintrustEnv,
     browserbaseEnv,

@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
+import { withSentry } from "@vendor/next/next-config-builder";
 import { env } from "~/env";
 
 // Determine the asset prefix based on environment
@@ -23,7 +24,7 @@ function getAssetPrefix(): string | undefined {
   return undefined;
 }
 
-const nextConfig: NextConfig = {
+let nextConfig: NextConfig = {
   reactStrictMode: true,
   basePath: '/playground',
   assetPrefix: getAssetPrefix(),
@@ -50,6 +51,7 @@ const nextConfig: NextConfig = {
         'http://localhost:4103',
       ],
     },
+    instrumentationHook: true,
     optimizeCss: true,
     optimizePackageImports: [
       "@repo/ui",
@@ -66,7 +68,14 @@ const nextConfig: NextConfig = {
     "@repo/ai",
     "@repo/url-utils",
     "@lightfast/core",
+    "@vendor/observability",
+    "@vendor/next",
   ],
 };
+
+// Apply Sentry configuration in Vercel environment
+if (env.VERCEL) {
+  nextConfig = withSentry(nextConfig);
+}
 
 export default withVercelToolbar()(nextConfig);

@@ -33,6 +33,8 @@
     "@upstash/redis": "catalog:",
     "@vendor/analytics": "workspace:^",
     "@vendor/clerk": "workspace:^",
+    "@vendor/next": "workspace:^",
+    "@vendor/observability": "workspace:^",
     "@vendor/storage": "workspace:^",
     "@vendor/upstash": "workspace:^",
     "@vercel/analytics": "^1.5.0",

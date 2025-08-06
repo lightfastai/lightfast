@@ -21,6 +21,8 @@
     "@repo/url-utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@vendor/clerk": "workspace:*",
+    "@vendor/next": "workspace:*",
+    "@vendor/observability": "workspace:*",
     "@vercel/toolbar": "^0.1.28",
     "nanoid": "^5.1.5",
     "next": "catalog:",

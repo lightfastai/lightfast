@@ -3,11 +3,13 @@ import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
+import { sentryEnv } from "@vendor/observability/sentry-env";
 
 export const env = createEnv({
   extends: [
     vercel(),
     clerkEnvBase,
+    sentryEnv,
   ],
   shared: {
     NODE_ENV: z

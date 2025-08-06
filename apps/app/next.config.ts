@@ -1,8 +1,10 @@
 import { NextConfig } from "next";
 import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
+import { withSentry } from "@vendor/next/next-config-builder";
 import { playgroundUrl } from "./src/lib/related-projects";
+import { env } from "./src/env";
 
-const config: NextConfig = {
+let config: NextConfig = {
 	reactStrictMode: true,
 	transpilePackages: [
 		"@repo/ui",
@@ -10,8 +12,11 @@ const config: NextConfig = {
 		"@repo/lightfast-react",
 		"@repo/url-utils",
 		"@vendor/clerk",
+		"@vendor/observability",
+		"@vendor/next",
 	],
 	experimental: {
+		instrumentationHook: true,
 		optimizeCss: true,
 		optimizePackageImports: ["@repo/ui", "lucide-react"],
 	},
@@ -29,6 +34,11 @@ const config: NextConfig = {
 		];
 	},
 };
+
+// Apply Sentry configuration in Vercel environment
+if (env.VERCEL) {
+	config = withSentry(config);
+}
 
 export default withVercelToolbar()(config);
 
