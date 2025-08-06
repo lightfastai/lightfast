@@ -27,12 +27,13 @@ export function PlaygroundInterface({ threadId, initialMessages }: PlaygroundInt
   };
 
   return (
-    <div className="flex-1 app-container">
-      <div className="grid grid-cols-10 gap-0 h-full">
-        {/* Chat section - 30% */}
-        <div className="col-span-3 flex flex-col">
-          {/* Messages area */}
-          <div className="flex-1 overflow-auto py-4">
+    <div className="flex-1 flex flex-col">
+      <div className="flex-1 app-container">
+        <div className="grid grid-cols-10 gap-0 h-full">
+          {/* Chat section - 30% */}
+          <div className="col-span-3 flex flex-col">
+            {/* Messages area */}
+            <div className="flex-1 overflow-auto py-4">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -62,9 +63,10 @@ export function PlaygroundInterface({ threadId, initialMessages }: PlaygroundInt
           </div>
         </div>
         
-        {/* Right section - 70% */}
-        <div className="col-span-7 border">
-          {/* Empty for now */}
+          {/* Right section - 70% */}
+          <div className="col-span-7 border">
+            {/* Empty for now */}
+          </div>
         </div>
       </div>
     </div>
