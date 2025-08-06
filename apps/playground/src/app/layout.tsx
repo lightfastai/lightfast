@@ -55,24 +55,25 @@ export const metadata: Metadata = {
     images: [siteConfig.ogImage],
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
+    icon: "/playground/favicon.ico",
+    shortcut: "/playground/favicon-16x16.png",
+    apple: "/playground/apple-touch-icon.png",
     other: [
       {
         rel: "icon",
-        url: "/favicon-32x32.png",
+        url: "/playground/favicon-32x32.png",
       },
       {
         rel: "icon",
-        url: "/android-chrome-192x192.png",
+        url: "/playground/android-chrome-192x192.png",
       },
       {
         rel: "icon",
-        url: "/android-chrome-512x512.png",
+        url: "/playground/android-chrome-512x512.png",
       },
     ],
   },
+  manifest: "/playground/manifest.webmanifest",
   applicationName: "Lightfast Playground",
   appleWebApp: {
     capable: true,

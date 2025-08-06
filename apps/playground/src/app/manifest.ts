@@ -7,44 +7,44 @@ export default function manifest(): MetadataRoute.Manifest {
     name: `${siteConfig.name} Playground`,
     short_name: "Playground",
     description: `Development playground for ${siteConfig.name}`,
-    start_url: "/",
+    start_url: "/playground/",
     display: "standalone",
     background_color: "#09090b",
     theme_color: "#09090b",
     icons: [
       {
-        src: "/favicon.ico",
+        src: "/playground/favicon.ico",
         sizes: "48x48",
         type: "image/x-icon",
       },
       {
-        src: "/apple-touch-icon.png",
+        src: "/playground/apple-touch-icon.png",
         sizes: "180x180",
         type: "image/png",
       },
       {
-        src: "/favicon-16x16.png",
+        src: "/playground/favicon-16x16.png",
         sizes: "16x16",
         type: "image/png",
       },
       {
-        src: "/favicon-32x32.png",
+        src: "/playground/favicon-32x32.png",
         sizes: "32x32",
         type: "image/png",
       },
       {
-        src: "/android-chrome-192x192.png",
+        src: "/playground/android-chrome-192x192.png",
         sizes: "192x192",
         type: "image/png",
       },
       {
-        src: "/android-chrome-512x512.png",
+        src: "/playground/android-chrome-512x512.png",
         sizes: "512x512",
         type: "image/png",
       },
     ],
     orientation: "portrait",
-    scope: "/",
+    scope: "/playground/",
     prefer_related_applications: false,
   };
 }
