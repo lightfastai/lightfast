@@ -8,7 +8,7 @@ interface PlaygroundThreadPageProps {
 }
 
 /**
- * Existing chat page at /[threadId]
+ * Existing chat page at /playground/[threadId]
  * Renders the same playground interface with existing messages
  */
 export default async function PlaygroundThreadPage({ params }: PlaygroundThreadPageProps) {

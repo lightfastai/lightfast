@@ -3,9 +3,9 @@ import { PlaygroundInterface } from "~/components/playground-interface";
 import { uuidv4 } from "~/lib/uuid";
 
 /**
- * New playground page at /
+ * New playground page at /playground
  * Generates UUID server-side and renders playground interface
- * URL will change to /[threadId] after first message
+ * URL will change to /playground/[threadId] after first message
  */
 export default function PlaygroundPage() {
   // Generate a new thread ID server-side

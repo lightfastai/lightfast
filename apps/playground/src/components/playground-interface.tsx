@@ -31,9 +31,10 @@ export function PlaygroundInterface({
 		setIsSubmitting(true);
 
 		// Update URL to include thread ID - following experimental's pattern
+		// In multi-zone setup, we need to preserve the /playground prefix
 		// Note: There may be a race condition where navigation happens before
 		// messages are persisted, causing empty initial state on refresh
-		window.history.replaceState({}, "", `/${threadId}`);
+		window.history.replaceState({}, "", `/playground/${threadId}`);
 
 		try {
 			// Add user message
