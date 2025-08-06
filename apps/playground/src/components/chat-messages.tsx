@@ -28,17 +28,16 @@ function ScrollButton() {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   return (
-    <Button
-      onClick={() => scrollToBottom()}
-      className={cn(
-        "absolute bottom-4 right-4 rounded-full p-2 shadow-lg transition-all duration-200",
-        isAtBottom ? "opacity-0 pointer-events-none" : "opacity-100",
-      )}
-      variant="secondary"
-      size="icon"
-    >
-      <ArrowDown className="h-4 w-4" />
-    </Button>
+    !isAtBottom && (
+      <Button
+        onClick={() => scrollToBottom()}
+        className="absolute bottom-4 right-4 rounded-full p-2 shadow-lg transition-all duration-200"
+        variant="secondary"
+        size="icon"
+      >
+        <ArrowDown className="h-4 w-4" />
+      </Button>
+    )
   );
 }
 
@@ -73,21 +72,23 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
   }
 
   return (
-    <div className="flex-1 relative min-h-0 overflow-hidden">
-      <StickToBottom className="absolute inset-0 overflow-y-auto" resize="smooth" initial="instant" role="log">
-        <StickToBottom.Content className="flex w-full flex-col">
+    <div className="flex-1 relative min-h-0 overflow-hidden scrollbar-hide-all">
+      <StickToBottom 
+        className="absolute inset-0 flex overflow-y-auto"
+        resize="smooth"
+        initial="instant"
+        role="log"
+      >
+        <StickToBottom.Content className="flex w-full flex-col py-4 px-4">
           {messagesWithStatus.map((message, index) => {
-            const isFirst = index === 0;
             const isLast = index === messagesWithStatus.length - 1;
-            const hasScrollAnchor =
-              isLast && initialMessageCount.current !== null && messagesWithStatus.length > initialMessageCount.current;
+            const hasScrollAnchor = isLast && messagesWithStatus.length > initialMessageCount.current;
+            
             return (
               <MessageItem
                 key={message.id}
                 message={message}
                 hasScrollAnchor={hasScrollAnchor}
-                isFirst={isFirst}
-                isLast={isLast}
               />
             );
           })}
@@ -101,13 +102,9 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 function MessageItem({
   message,
   hasScrollAnchor,
-  isFirst,
-  isLast,
 }: {
   message: MessageWithRuntimeStatus;
   hasScrollAnchor?: boolean;
-  isFirst?: boolean;
-  isLast?: boolean;
 }) {
   // Extract reasoning text and determine if actively streaming reasoning
   const { hasActiveReasoningPart, reasoningText } = useMemo(() => {
@@ -138,15 +135,8 @@ function MessageItem({
         .join("\n") || "";
 
     return (
-      <div
-        className={cn(
-          "pb-12",
-          hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]",
-          isFirst && "pt-3",
-          isLast && "pb-6",
-        )}
-      >
-        <div className="mx-auto max-w-3xl px-4 flex justify-end">
+      <div className={cn("py-3", hasScrollAnchor && "min-h-[25vh]")}>
+        <div className="mx-auto max-w-3xl flex justify-end">
           <div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
             <p className="whitespace-pre-wrap text-sm">{textContent}</p>
           </div>
@@ -157,14 +147,7 @@ function MessageItem({
 
   // For assistant messages, render parts in order
   return (
-    <div
-      className={cn(
-        "pb-12",
-        hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]",
-        isFirst && "pt-3",
-        isLast && "pb-20",
-      )}
-    >
+    <div className={cn("py-3", hasScrollAnchor && "min-h-[25vh]")}>
       <div className="mx-auto max-w-3xl px-4 space-y-4">
         {/* Show thinking accordion at top of assistant message */}
         {message.runtimeStatus && message.runtimeStatus !== "done" && (

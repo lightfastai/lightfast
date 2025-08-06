@@ -4,9 +4,7 @@ import { createTool } from "@lightfast/core/tool";
 import { z } from "zod";
 import { put } from "@vendor/storage";
 import { env } from "~/env";
-
-// Define empty runtime context type for now
-type AppRuntimeContext = Record<string, never>;
+import type { AppRuntimeContext } from "../shared-types";
 
 // ============================================
 // BROWSER_010 SYSTEM PROMPT
@@ -30,6 +28,14 @@ export const BROWSER_010_SYSTEM_PROMPT = `
   <objective>
     Navigate websites, interact with web elements, extract information, and automate complex browser-based workflows using Stagehand browser automation tools. Provide transparent progress tracking and visual verification of actions.
   </objective>
+
+  <error_handling>
+    <rate_limiting>
+      CRITICAL: If you encounter a 429 error (Too Many Requests), immediately respond with:
+      "Sorry, you've hit the rate limit. Please try again in 5 minutes."
+      Do NOT attempt to retry or continue with the action.
+    </rate_limiting>
+  </error_handling>
 
   <tool_usage>
     <critical_rule>ALWAYS write a brief description of what you're about to do BEFORE making any tool call. Never make consecutive tool calls without text in between.</critical_rule>
@@ -114,6 +120,16 @@ class StagehandSessionManager {
           modelName: "claude-3-7-sonnet-latest",
           modelClientOptions: {
             apiKey: env.ANTHROPIC_API_KEY,
+          },
+          browserbaseSessionCreateParams: {
+            projectId: env.BROWSERBASE_PROJECT_ID,
+            browserSettings: {
+              blockAds: true,
+              viewport: {
+                width: 1024,
+                height: 768,
+              },
+            },
           },
         });
 
@@ -206,7 +222,19 @@ const sessionManager = StagehandSessionManager.getInstance();
 export const stagehandNavigateTool = createTool<RuntimeContext<AppRuntimeContext>>({
   description: "Navigate to a URL in the browser",
   inputSchema: z.object({
-    url: z.string().describe("URL to navigate to"),
+    url: z.string().transform((val) => {
+      // If URL doesn't start with protocol, add https://
+      if (!val.match(/^https?:\/\//i)) {
+        val = `https://${val}`;
+      }
+      // Validate the URL
+      try {
+        new URL(val);
+        return val;
+      } catch {
+        throw new Error(`Invalid URL: ${val}`);
+      }
+    }).describe("URL to navigate to"),
   }),
   execute: async ({ url }, context) => {
     try {
@@ -349,7 +377,8 @@ export const stagehandScreenshotTool = createTool<RuntimeContext<AppRuntimeConte
       const page = stagehand.page;
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `screenshot-${timestamp}.png`;
+      // Include resourceId and timestamp in filename
+      const filename = `screenshot-${context.resourceId}-${timestamp}.png`;
 
       let screenshotBuffer: Buffer;
 
@@ -363,8 +392,8 @@ export const stagehandScreenshotTool = createTool<RuntimeContext<AppRuntimeConte
         screenshotBuffer = await page.screenshot({ fullPage });
       }
 
-      // Upload screenshot to Vercel Blob
-      const blobPath = `screenshots/${filename}`;
+      // Upload screenshot to Vercel Blob under threadId directory
+      const blobPath = `screenshots/${context.threadId}/${filename}`;
       const blob = await put(blobPath, screenshotBuffer, {
         access: 'public',
         addRandomSuffix: false,

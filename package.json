@@ -47,8 +47,5 @@
 		"turbo-ignore": "^2.5.5",
 		"typescript": "catalog:"
 	},
-	"prettier": "@repo/prettier-config",
-	"dependencies": {
-		"@vercel/blob": "^1.1.1"
-	}
+	"prettier": "@repo/prettier-config"
 }

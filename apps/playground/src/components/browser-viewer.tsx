@@ -2,15 +2,17 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { useScreenshotStore } from "~/stores/screenshot-store";
 import Image from "next/image";
+import type { Screenshot } from "~/hooks/use-screenshots-query";
 
 interface BrowserViewerProps {
 	className?: string;
+	screenshots: Screenshot[];
+	currentIndex: number;
+	setCurrentIndex: (index: number) => void;
 }
 
-export function BrowserViewer({ className }: BrowserViewerProps) {
-	const { screenshots, currentIndex, setCurrentIndex } = useScreenshotStore();
+export function BrowserViewer({ className, screenshots, currentIndex, setCurrentIndex }: BrowserViewerProps) {
 	
 	// Get the current screenshot from the store
 	const currentScreenshot = currentIndex >= 0 && currentIndex < screenshots.length 
@@ -37,7 +39,7 @@ export function BrowserViewer({ className }: BrowserViewerProps) {
 			className={`flex flex-col aspect-[3/2] border rounded-sm overflow-hidden ${className || ""}`}
 		>
 			{/* Browser toolbar */}
-			<div className="flex items-center justify-between p-2 border-b">
+			<div className="flex items-center justify-between p-2 border-b bg-background flex-shrink-0">
 				<div className="flex items-center gap-1">
 					<Button 
 						variant="ghost" 
@@ -66,17 +68,18 @@ export function BrowserViewer({ className }: BrowserViewerProps) {
 			</div>
 
 			{/* Browser content */}
-			<div className="flex-1 bg-muted/20 overflow-auto relative">
+			<div className="flex-1 bg-muted/20 overflow-auto relative min-h-0">
 				{displayScreenshot ? (
-					<div className="relative w-full">
+					<div className="w-full min-h-full">
 						<Image 
 							src={displayScreenshot} 
 							alt="Browser view" 
-							width={1200}
-							height={800}
+							width={1024}
+							height={768}
 							className="w-full h-auto"
-							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1024px"
 							priority
+							unoptimized
 						/>
 					</div>
 				) : (

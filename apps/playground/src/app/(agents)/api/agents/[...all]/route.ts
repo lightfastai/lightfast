@@ -25,9 +25,7 @@ import {
 } from "~/app/(agents)/browser";
 import { redis } from "~/vendor/upstash";
 import { env } from "~/env";
-
-// Define runtime context type
-type AppRuntimeContext = Record<string, never>;
+import type { AppRuntimeContext } from "~/app/(agents)/shared-types";
 
 // Initialize Braintrust logging
 const braintrustConfig = getBraintrustConfig();
@@ -87,7 +85,8 @@ const handler = async (
 								threadId,
 								resourceId,
 							}): AppRuntimeContext => ({
-								// Return empty context for now
+								threadId,
+								resourceId,
 							}),
 							model: wrapLanguageModel({
 								model: gateway("anthropic/claude-4-sonnet"),
