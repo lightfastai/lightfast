@@ -70,6 +70,9 @@ const handler = async (
 		return Response.json({ error: "Agent not found" }, { status: 404 });
 	}
 
+	// Note: Thread ownership validation is handled by the runtime's streamChat function
+	// which checks that threadData.resourceId === userId (passed as resourceId below)
+
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async () => {
 		try {

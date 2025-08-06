@@ -12,8 +12,34 @@ export interface CorsConfig {
 
 const DEFAULT_CORS_CONFIG: CorsConfig = {
   allowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
-  allowedHeaders: ["*"], // Allow all headers
-  exposedHeaders: ["*"], // Expose all headers
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization", 
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+    // Next.js specific headers
+    "next-router-prefetch",
+    "next-router-state-tree",
+    "next-url",
+    "rsc",
+    "x-invoke-path",
+    "x-invoke-query",
+    // Vercel specific headers
+    "x-deployment-id",
+    "x-vercel-id",
+    "x-vercel-ip-country",
+    "x-vercel-ip-country-region",
+    // Custom headers
+    "x-request-id",
+  ],
+  exposedHeaders: [
+    "Content-Length",
+    "Content-Type",
+    "Date",
+    "ETag",
+    "X-Request-Id",
+  ],
   credentials: true,
   maxAge: 86400, // 24 hours
 };
@@ -87,39 +113,17 @@ export function applyCorsHeaders(
   }
   
   if (config.allowedHeaders?.length) {
-    // If wildcard, allow the request headers
-    if (config.allowedHeaders.includes("*")) {
-      const requestHeaders = request.headers.get("Access-Control-Request-Headers");
-      if (requestHeaders) {
-        response.headers.set("Access-Control-Allow-Headers", requestHeaders);
-      } else {
-        // Fallback to common headers
-        response.headers.set(
-          "Access-Control-Allow-Headers",
-          "Content-Type, Authorization, X-Requested-With, Accept, Origin"
-        );
-      }
-    } else {
-      response.headers.set(
-        "Access-Control-Allow-Headers",
-        config.allowedHeaders.join(", ")
-      );
-    }
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      config.allowedHeaders.join(", ")
+    );
   }
   
   if (config.exposedHeaders?.length) {
-    // If wildcard, expose common response headers
-    if (config.exposedHeaders.includes("*")) {
-      response.headers.set(
-        "Access-Control-Expose-Headers",
-        "Content-Length, Content-Type, Date, ETag, X-Request-Id"
-      );
-    } else {
-      response.headers.set(
-        "Access-Control-Expose-Headers",
-        config.exposedHeaders.join(", ")
-      );
-    }
+    response.headers.set(
+      "Access-Control-Expose-Headers",
+      config.exposedHeaders.join(", ")
+    );
   }
   
   if (config.maxAge) {

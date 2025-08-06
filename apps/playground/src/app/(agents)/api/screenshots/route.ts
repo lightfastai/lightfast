@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { list } from "@vendor/storage";
 import { auth } from "@clerk/nextjs/server";
 import { env } from "~/env";
+import { RedisMemory } from "@lightfast/core/agent/memory/redis";
 
 interface ScreenshotBlob {
   url: string;
@@ -9,6 +10,12 @@ interface ScreenshotBlob {
   size: number;
   uploadedAt: string;
 }
+
+// Create memory instance
+const memory = new RedisMemory({
+  url: env.KV_REST_API_URL,
+  token: env.KV_REST_API_TOKEN,
+});
 
 export async function GET(request: Request) {
   // Check authentication
@@ -28,6 +35,16 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { error: "threadId is required" },
         { status: 400 }
+      );
+    }
+
+    // Security check: Verify thread ownership via memory system
+    // The resourceId in thread metadata stores the userId (owner)
+    const threadData = await memory.getThread(threadId);
+    if (!threadData || threadData.resourceId !== userId) {
+      return NextResponse.json(
+        { error: "Forbidden: Access denied to this thread" },
+        { status: 403 }
       );
     }
 
