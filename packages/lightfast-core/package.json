@@ -48,6 +48,10 @@
 			"types": "./src/utils/providers.ts",
 			"default": "./src/utils/providers.ts"
 		},
+		"./v2/utils": {
+			"types": "./src/core/v2/utils/index.ts",
+			"default": "./src/core/v2/utils/index.ts"
+		},
 		"./v2/server": {
 			"types": "./src/v2/server.ts",
 			"default": "./src/v2/server.ts"
@@ -71,6 +75,10 @@
 		"./v2/env": {
 			"types": "./src/core/v2/env.ts",
 			"default": "./src/core/v2/env.ts"
+		},
+		"./v2/braintrust-env": {
+			"types": "./src/core/v2/braintrust-env.ts",
+			"default": "./src/core/v2/braintrust-env.ts"
 		}
 	},
 	"scripts": {

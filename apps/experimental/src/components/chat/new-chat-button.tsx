@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Icons } from "@repo/ui/components/icons";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
 
@@ -12,19 +12,18 @@ interface NewChatButtonProps {
 export function NewChatButton({ variant = "default", href = "/" }: NewChatButtonProps) {
 	if (variant === "mobile") {
 		return (
-			<Button variant="outline" size="icon" asChild className="h-8 w-8">
+			<Button variant="ghost" size="icon" asChild className="h-8 w-8">
 				<Link href={href}>
-					<Plus className="h-4 w-4" />
+					<Icons.newChat className="h-4 w-4" />
 				</Link>
 			</Button>
 		);
 	}
 
 	return (
-		<Button variant="outline" size="sm" asChild className="h-8 gap-1">
+		<Button variant="ghost" size="icon" asChild>
 			<Link href={href}>
-				<Plus className="h-4 w-4" />
-				<span>New Chat</span>
+				<Icons.newChat className="h-4 w-4" />
 			</Link>
 		</Button>
 	);

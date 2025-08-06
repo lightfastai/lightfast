@@ -28,24 +28,24 @@ type ExtractToolType<T> = T extends (context: RuntimeContext<AppRuntimeContext>)
 
 // Define the tool set type using the helper
 // This matches the structure passed to streamText() in route.ts
-// We use a type alias instead of interface to satisfy the UITools constraint
-export interface LightfastToolSet {
-	fileWrite: InferUITool<ExtractToolType<typeof fileWriteTool>>;
-	fileRead: InferUITool<ExtractToolType<typeof fileReadTool>>;
-	fileDelete: InferUITool<ExtractToolType<typeof fileDeleteTool>>;
-	fileStringReplace: InferUITool<ExtractToolType<typeof fileStringReplaceTool>>;
-	fileFindInContent: InferUITool<ExtractToolType<typeof fileFindInContentTool>>;
-	fileFindByName: InferUITool<ExtractToolType<typeof fileFindByNameTool>>;
-	webSearch: InferUITool<ExtractToolType<typeof webSearchTool>>;
-	createSandbox: InferUITool<ExtractToolType<typeof createSandboxTool>>;
-	executeSandboxCommand: InferUITool<ExtractToolType<typeof executeSandboxCommandTool>>;
-	createSandboxWithPorts: InferUITool<ExtractToolType<typeof createSandboxWithPortsTool>>;
-	getSandboxDomain: InferUITool<ExtractToolType<typeof getSandboxDomainTool>>;
-	listSandboxRoutes: InferUITool<ExtractToolType<typeof listSandboxRoutesTool>>;
-	todoWrite: InferUITool<ExtractToolType<typeof todoWriteTool>>;
-	todoRead: InferUITool<ExtractToolType<typeof todoReadTool>>;
-	todoClear: InferUITool<ExtractToolType<typeof todoClearTool>>;
-}
+// Define the tool set type using InferUITools helper
+export type LightfastToolSet = InferUITools<{
+	fileWrite: ExtractToolType<typeof fileWriteTool>;
+	fileRead: ExtractToolType<typeof fileReadTool>;
+	fileDelete: ExtractToolType<typeof fileDeleteTool>;
+	fileStringReplace: ExtractToolType<typeof fileStringReplaceTool>;
+	fileFindInContent: ExtractToolType<typeof fileFindInContentTool>;
+	fileFindByName: ExtractToolType<typeof fileFindByNameTool>;
+	webSearch: ExtractToolType<typeof webSearchTool>;
+	createSandbox: ExtractToolType<typeof createSandboxTool>;
+	executeSandboxCommand: ExtractToolType<typeof executeSandboxCommandTool>;
+	createSandboxWithPorts: ExtractToolType<typeof createSandboxWithPortsTool>;
+	getSandboxDomain: ExtractToolType<typeof getSandboxDomainTool>;
+	listSandboxRoutes: ExtractToolType<typeof listSandboxRoutesTool>;
+	todoWrite: ExtractToolType<typeof todoWriteTool>;
+	todoRead: ExtractToolType<typeof todoReadTool>;
+	todoClear: ExtractToolType<typeof todoClearTool>;
+}>;
 
 // Metadata type for our messages
 export interface LightfastUIMessageMetadata {

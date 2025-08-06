@@ -1,13 +1,16 @@
 import { env as aiEnv } from "@lightfast/core/v2/env";
+import { braintrustEnv } from "@lightfast/core/v2/braintrust-env";
+import { anthropicEnv } from "@repo/ai/anthropic-env";
+import { browserbaseEnv } from "@repo/ai/browserbase-env";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
 	/**
-	 * Extend from T3-OSS Vercel preset and AI package env
+	 * Extend from T3-OSS Vercel preset, AI package env, Braintrust env, Browserbase env, and Anthropic env
 	 */
-	extends: [vercel(), aiEnv],
+	extends: [vercel(), aiEnv, braintrustEnv, browserbaseEnv, anthropicEnv],
 
 	/**
 	 * Specify your server-side environment variables schema here.
@@ -24,18 +27,8 @@ export const env = createEnv({
 		OPENAI_API_KEY: z.string().min(1),
 		EXA_API_KEY: z.string().min(1),
 
-		// Browser automation
-		BROWSERBASE_API_KEY: z.string().min(1),
-		BROWSERBASE_PROJECT_ID: z.string().min(1),
-
 		// Voice services
 		ELEVENLABS_API_KEY: z.string().min(1).optional(),
-
-		// Observability
-		BRAINTRUST_API_KEY: z.string().min(1),
-		BRAINTRUST_PROJECT_NAME: z.string().min(1),
-		OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().default("https://api.braintrust.dev/otel"),
-		OTEL_EXPORTER_OTLP_HEADERS: z.string().min(1).optional(),
 
 		// Vercel Blob Storage
 		BLOB_READ_WRITE_TOKEN: z.string().min(1),
@@ -47,8 +40,6 @@ export const env = createEnv({
 		// Clerk Authentication
 		CLERK_SECRET_KEY: z.string().min(1),
 
-		// Additional AI keys
-		ANTHROPIC_API_KEY: z.string().min(1),
 	},
 
 	/**

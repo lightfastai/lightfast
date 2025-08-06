@@ -1,18 +1,7 @@
-import { ChatInterface } from "~/components/playground/chat-interface";
-import { AnalyticsInterface } from "~/components/playground/analytics-interface";
-
-export default function PlaygroundPage() {
+export default function HomePage() {
   return (
-    <div className="flex h-full w-full">
-      {/* Left side - Chat Interface */}
-      <div className="flex-1 border-r border-muted/30">
-        <ChatInterface />
-      </div>
-
-      {/* Right side - Analytics Interface */}
-      <div className="flex-1">
-        <AnalyticsInterface />
-      </div>
+    <div className="flex h-full w-full items-center justify-center">
+      <h1 className="text-2xl font-semibold">Welcome to Lightfast</h1>
     </div>
   );
 }

@@ -6,3 +6,6 @@
 
 // Re-export all core functionality (server-side only)
 export * from "./core";
+
+// Export environment configurations
+export * from "./braintrust-env";

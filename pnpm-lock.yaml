@@ -410,7 +410,7 @@ importers:
         specifier: 'catalog:'
         version: 2.0.0-beta.26(react@19.1.0)(zod@3.25.76)
       '@browserbasehq/stagehand':
-        specifier: 'catalog:'
+        specifier: ^2.3.1
         version: 2.4.2(bufferutil@4.0.9)(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)
       '@clerk/elements':
         specifier: 'catalog:'
@@ -436,6 +436,9 @@ importers:
       '@opentelemetry/auto-instrumentations-node':
         specifier: ^0.62.0
         version: 0.62.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@repo/lightfast-config':
         specifier: workspace:*
         version: link:../../packages/lightfast-config
@@ -491,10 +494,10 @@ importers:
         specifier: ^9.7.0
         version: 9.7.0
       playwright:
-        specifier: 'catalog:'
+        specifier: ^1.54.1
         version: 1.54.1
       playwright-core:
-        specifier: 'catalog:'
+        specifier: ^1.54.1
         version: 1.54.1
       react:
         specifier: catalog:react19
@@ -578,15 +581,24 @@ importers:
       '@ai-sdk/anthropic':
         specifier: 'catalog:'
         version: 2.0.0-beta.8(zod@3.25.76)
-      '@browserbasehq/stagehand':
+      '@ai-sdk/react':
         specifier: 'catalog:'
+        version: 2.0.0-beta.26(react@19.1.0)(zod@3.25.76)
+      '@browserbasehq/stagehand':
+        specifier: ^2.3.1
         version: 2.4.2(bufferutil@4.0.9)(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)
       '@clerk/nextjs':
         specifier: 'catalog:'
         version: 6.28.1(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@gsap/react':
+        specifier: ^2.1.2
+        version: 2.1.2(gsap@3.13.0)(react@19.1.0)
       '@lightfast/core':
         specifier: workspace:*
         version: link:../../packages/lightfast-core
+      '@radix-ui/react-scroll-area':
+        specifier: ^1.2.9
+        version: 1.2.9(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -608,9 +620,24 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.84.0(react@19.1.0)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.84.1
+        version: 5.84.1(@tanstack/react-query@5.84.0(react@19.1.0))(react@19.1.0)
+      '@upstash/redis':
+        specifier: 'catalog:'
+        version: 1.35.3
+      '@vendor/analytics':
+        specifier: workspace:^
+        version: link:../../vendor/analytics
       '@vendor/clerk':
         specifier: workspace:^
         version: link:../../vendor/clerk
+      '@vendor/storage':
+        specifier: workspace:^
+        version: link:../../vendor/storage
+      '@vendor/upstash':
+        specifier: workspace:^
+        version: link:../../vendor/upstash
       '@vercel/analytics':
         specifier: ^1.5.0
         version: 1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2))
@@ -620,6 +647,9 @@ importers:
       ai:
         specifier: 'catalog:'
         version: 5.0.0-beta.26(zod@3.25.76)
+      gsap:
+        specifier: ^3.13.0
+        version: 3.13.0
       jotai:
         specifier: ^2.12.3
         version: 2.12.5(@types/react@19.1.2)(react@19.1.0)
@@ -632,6 +662,12 @@ importers:
       next:
         specifier: 'catalog:'
         version: 15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      playwright:
+        specifier: ^1.54.1
+        version: 1.54.1
+      playwright-core:
+        specifier: ^1.54.1
+        version: 1.54.1
       react:
         specifier: catalog:react19
         version: 19.1.0
@@ -641,9 +677,15 @@ importers:
       react-hook-form:
         specifier: ^7.61.1
         version: 7.61.1(react@19.1.0)
+      use-stick-to-bottom:
+        specifier: 1.1.1
+        version: 1.1.1(react@19.1.0)
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+      zustand:
+        specifier: 'catalog:'
+        version: 5.0.7(@types/react@19.1.2)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -1905,8 +1947,8 @@ importers:
         specifier: workspace:*
         version: link:../observability
       '@vercel/blob':
-        specifier: ^0.22.0
-        version: 0.22.3
+        specifier: ^1.1.1
+        version: 1.1.1
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -3126,6 +3168,12 @@ packages:
     resolution: {integrity: sha512-tMXdRCfYVixjuFK+Hk0Q1s38gV9zDiDJfWL3h1rv4Qc39oILCu1TRTDt7+fGUI8K4G1Fj125Hx/ru3azECWTyQ==}
     engines: {node: '>=6'}
     hasBin: true
+
+  '@gsap/react@2.1.2':
+    resolution: {integrity: sha512-JqliybO1837UcgH2hVOM4VO+38APk3ECNrsuSM4MuXp+rbf+/2IG2K1YJiqfTcXQHH7XlA0m3ykniFYstfq0Iw==}
+    peerDependencies:
+      gsap: ^3.12.5
+      react: '>=17'
 
   '@hookform/resolvers@3.10.0':
     resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
@@ -5908,6 +5956,15 @@ packages:
   '@tanstack/query-core@5.83.1':
     resolution: {integrity: sha512-OG69LQgT7jSp+5pPuCfzltq/+7l2xoweggjme9vlbCPa/d7D7zaqv5vN/S82SzSYZ4EDLTxNO1PWrv49RAS64Q==}
 
+  '@tanstack/query-devtools@5.84.0':
+    resolution: {integrity: sha512-fbF3n+z1rqhvd9EoGp5knHkv3p5B2Zml1yNRjh7sNXklngYI5RVIWUrUjZ1RIcEoscarUb0+bOvIs5x9dwzOXQ==}
+
+  '@tanstack/react-query-devtools@5.84.1':
+    resolution: {integrity: sha512-nle+OQ9B3Z3EG2R3ixvaNcJ6OeqGwmAc5iMDW6Vj+emLZkWRrN3BDsrzZQu414n34lpxplnC7z1jmKuU/scHCQ==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.84.1
+      react: ^18 || ^19
+
   '@tanstack/react-query@5.84.0':
     resolution: {integrity: sha512-iPycFGLq5lltDE16Jf13Nx7SOvtfoopfOH/+Ahbdd+z4QqOfYu/SOkY86AVYVcKjneuqPxTm8e85lSGhwe0cog==}
     peerDependencies:
@@ -6280,10 +6337,6 @@ packages:
         optional: true
       vue-router:
         optional: true
-
-  '@vercel/blob@0.22.3':
-    resolution: {integrity: sha512-l0t2KhbOO/I8ZNOl9zypYf1NE0837aO4/CPQNGR/RAxtj8FpdYKjhyUADUXj2gERLQmnhun+teaVs/G7vZJ/TQ==}
-    engines: {node: '>=16.14'}
 
   '@vercel/blob@1.1.1':
     resolution: {integrity: sha512-heiJGj2qt5qTv6yiShH9f6KRAoZGj+lz61GQ+lBRL4lhvUmKI9A51KYlQTnsUd9ymdFlKHBlvmPeG+yGz2Qsbg==}
@@ -8084,6 +8137,9 @@ packages:
 
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
+
+  gsap@3.13.0:
+    resolution: {integrity: sha512-QL7MJ2WMjm1PHWsoFrAQH/J8wUeqZvMtHO58qdekHpCfhvhSL4gSiz6vJf5EeMP0LOn3ZCprL2ki/gjED8ghVw==}
 
   gtoken@7.1.0:
     resolution: {integrity: sha512-pCcEwRi+TKpMlxAQObHDQ56KawURgyAf6jtIY046fJ5tIv3zDe/LEIubckAO8fj6JnAxLdmWkUfNyulQ2iKdEw==}
@@ -12113,6 +12169,11 @@ snapshots:
       protobufjs: 7.5.3
       yargs: 17.7.2
 
+  '@gsap/react@2.1.2(gsap@3.13.0)(react@19.1.0)':
+    dependencies:
+      gsap: 3.13.0
+      react: 19.1.0
+
   '@hookform/resolvers@3.10.0(react-hook-form@7.61.1(react@19.1.0))':
     dependencies:
       react-hook-form: 7.61.1(react@19.1.0)
@@ -14421,6 +14482,16 @@ snapshots:
       '@types/react': 19.1.2
       '@types/react-dom': 19.1.2(@types/react@19.1.2)
 
+  '@radix-ui/react-presence@1.1.4(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.1.2)(react@19.1.0)
+      '@radix-ui/react-use-layout-effect': 1.1.1(@types/react@19.1.2)(react@19.1.0)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+    optionalDependencies:
+      '@types/react': 19.1.2
+      '@types/react-dom': 19.1.2(@types/react@19.1.2)
+
   '@radix-ui/react-presence@1.1.4(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.1(react@19.1.0))(react@19.1.0)':
     dependencies:
       '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.1.2)(react@19.1.0)
@@ -14509,6 +14580,23 @@ snapshots:
       '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.1.2)(react@19.1.0)
       react: 19.1.0
       react-dom: 19.1.1(react@19.1.0)
+    optionalDependencies:
+      '@types/react': 19.1.2
+      '@types/react-dom': 19.1.2(@types/react@19.1.2)
+
+  '@radix-ui/react-scroll-area@1.2.9(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@radix-ui/number': 1.1.1
+      '@radix-ui/primitive': 1.1.2
+      '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.1.2)(react@19.1.0)
+      '@radix-ui/react-context': 1.1.2(@types/react@19.1.2)(react@19.1.0)
+      '@radix-ui/react-direction': 1.1.1(@types/react@19.1.2)(react@19.1.0)
+      '@radix-ui/react-presence': 1.1.4(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@radix-ui/react-use-callback-ref': 1.1.1(@types/react@19.1.2)(react@19.1.0)
+      '@radix-ui/react-use-layout-effect': 1.1.1(@types/react@19.1.2)(react@19.1.0)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
     optionalDependencies:
       '@types/react': 19.1.2
       '@types/react-dom': 19.1.2(@types/react@19.1.2)
@@ -15356,6 +15444,14 @@ snapshots:
 
   '@tanstack/query-core@5.83.1': {}
 
+  '@tanstack/query-devtools@5.84.0': {}
+
+  '@tanstack/react-query-devtools@5.84.1(@tanstack/react-query@5.84.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@tanstack/query-devtools': 5.84.0
+      '@tanstack/react-query': 5.84.0(react@19.1.0)
+      react: 19.1.0
+
   '@tanstack/react-query@5.84.0(react@19.1.0)':
     dependencies:
       '@tanstack/query-core': 5.83.1
@@ -15802,13 +15898,6 @@ snapshots:
       react: 19.1.1
       svelte: 5.37.2
       vue: 3.5.18(typescript@5.9.2)
-
-  '@vercel/blob@0.22.3':
-    dependencies:
-      async-retry: 1.3.3
-      bytes: 3.1.2
-      is-buffer: 2.0.5
-      undici: 5.29.0
 
   '@vercel/blob@1.1.1':
     dependencies:
@@ -18078,6 +18167,8 @@ snapshots:
       tinygradient: 1.1.5
 
   graphemer@1.4.0: {}
+
+  gsap@3.13.0: {}
 
   gtoken@7.1.0:
     dependencies:

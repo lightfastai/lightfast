@@ -22,7 +22,7 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.12.0",
     "@vendor/observability": "workspace:*",
-    "@vercel/blob": "^0.22.0",
+    "@vercel/blob": "^1.1.1",
     "zod": "catalog:"
   },
   "devDependencies": {

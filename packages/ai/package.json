@@ -8,6 +8,7 @@
     "./fal-env": "./src/env/fal-env.ts",
     "./openai-env": "./src/env/openai-env.ts",
     "./anthropic-env": "./src/env/anthropic-env.ts",
+    "./browserbase-env": "./src/env/browserbase-env.ts",
     "./openrouter-env": "./src/env/openrouter-env.ts",
     "./google-env": "./src/env/google-env.ts",
     "./schema": {

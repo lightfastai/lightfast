@@ -135,6 +135,18 @@
 }
 
 @layer utilities {
+	.app-container {
+		@apply p-4;
+	}
+	
+	.app-container-sm {
+		@apply p-2;
+	}
+	
+	.app-container-lg {
+		@apply p-6;
+	}
+	
 	.chat-container {
 		@apply max-w-3xl mx-auto px-4;
 	}
@@ -159,5 +171,56 @@
 	
 	.dark .chat-input-scroll::-webkit-scrollbar-thumb {
 		background-color: rgba(255, 255, 255, 0.2);
+	}
+
+	/* Hide scrollbar utility */
+	.scrollbar-hide {
+		-ms-overflow-style: none !important;  /* IE and Edge */
+		scrollbar-width: none !important;  /* Firefox */
+	}
+	
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none !important;  /* Chrome, Safari and Opera */
+	}
+	
+	/* Hide all scrollbars in children */
+	.scrollbar-hide-all * {
+		-ms-overflow-style: none !important;
+		scrollbar-width: none !important;
+	}
+	
+	.scrollbar-hide-all *::-webkit-scrollbar {
+		display: none !important;
+	}
+
+	/* Thinking animation keyframes */
+	@keyframes gradient-shift {
+		0% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0% 50%;
+		}
+	}
+
+	@keyframes pulse-soft {
+		0%, 100% {
+			opacity: 0.4;
+		}
+		50% {
+			opacity: 0.7;
+		}
+	}
+
+	/* Animation utility classes */
+	.animate-gradient-shift {
+		animation: gradient-shift 3s ease infinite;
+	}
+
+	.animate-pulse-soft {
+		animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
 }

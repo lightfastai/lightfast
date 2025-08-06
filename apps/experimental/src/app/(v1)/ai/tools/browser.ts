@@ -43,6 +43,10 @@ class StagehandSessionManager {
 					projectId: env.BROWSERBASE_PROJECT_ID,
 					env: "BROWSERBASE",
 					disablePino: true,
+					modelName: "claude-3-7-sonnet-latest",
+					modelClientOptions: {
+						apiKey: env.ANTHROPIC_API_KEY,
+					},
 				});
 
 				try {
@@ -76,6 +80,10 @@ class StagehandSessionManager {
 						projectId: env.BROWSERBASE_PROJECT_ID,
 						env: "BROWSERBASE",
 						disablePino: true,
+						modelName: "claude-3-7-sonnet-latest",
+						modelClientOptions: {
+							apiKey: env.ANTHROPIC_API_KEY,
+						},
 					});
 					await this.stagehand.init();
 					this.initialized = true;
