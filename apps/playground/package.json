@@ -16,7 +16,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "catalog:",
     "@ai-sdk/react": "catalog:",
-    "@browserbasehq/stagehand": "catalog:",
+    "@browserbasehq/stagehand": "^2.3.1",
     "@clerk/nextjs": "catalog:",
     "@lightfast/core": "workspace:*",
     "@radix-ui/react-scroll-area": "^1.2.9",
@@ -37,6 +37,8 @@
     "lucide-react": "catalog:",
     "neverthrow": "^8.2.0",
     "next": "catalog:",
+    "playwright": "^1.54.1",
+    "playwright-core": "^1.54.1",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "react-hook-form": "^7.61.1",

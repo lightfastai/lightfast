@@ -2,6 +2,7 @@ import { Stagehand } from "@browserbasehq/stagehand";
 import type { RuntimeContext } from "@lightfast/core/agent/server/adapters/types";
 import { createTool } from "@lightfast/core/tool";
 import { z } from "zod";
+import { env } from "~/env";
 
 // Define empty runtime context type for now
 type AppRuntimeContext = Record<string, never>;
@@ -105,11 +106,14 @@ class StagehandSessionManager {
       if (!this.stagehand || !this.initialized) {
         console.log("Creating new Stagehand instance");
         this.stagehand = new Stagehand({
-          // Local development settings
-          env: "LOCAL",
-          headless: false,
-          debugDom: true,
-          enableCaching: true,
+          apiKey: env.BROWSERBASE_API_KEY,
+          projectId: env.BROWSERBASE_PROJECT_ID,
+          env: "BROWSERBASE",
+          disablePino: true,
+          modelName: "claude-3-7-sonnet-latest",
+          modelClientOptions: {
+            apiKey: env.ANTHROPIC_API_KEY,
+          },
         });
 
         try {
@@ -138,10 +142,14 @@ class StagehandSessionManager {
         ) {
           console.log("Browser session expired, reinitializing Stagehand...");
           this.stagehand = new Stagehand({
-            env: "LOCAL",
-            headless: false,
-            debugDom: true,
-            enableCaching: true,
+            apiKey: env.BROWSERBASE_API_KEY,
+            projectId: env.BROWSERBASE_PROJECT_ID,
+            env: "BROWSERBASE",
+            disablePino: true,
+            modelName: "claude-3-7-sonnet-latest",
+            modelClientOptions: {
+              apiKey: env.ANTHROPIC_API_KEY,
+            },
           });
           await this.stagehand.init();
           this.initialized = true;
