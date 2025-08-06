@@ -143,9 +143,6 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 	const streamOptions: UIMessageStreamOptions<TMessage> = {
 		generateMessageId: generateId,
 		sendReasoning: true, // Enable sending reasoning parts to the client
-		headers: {
-			'Content-Encoding': 'none', // Prevent proxy buffering for streaming
-		},
 		onFinish: async ({ messages: finishedMessages, responseMessage }) => {
 			// Save the assistant's response to memory
 			if (responseMessage && responseMessage.role === "assistant") {
@@ -169,6 +166,9 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 		return Ok(
 			result.toUIMessageStreamResponse<TMessage>({
 				...streamOptions,
+				headers: {
+					'Content-Encoding': 'none', // Prevent proxy buffering for streaming
+				},
 				async consumeSseStream({ stream }) {
 					// Send the SSE stream into a resumable stream sink
 					const streamContext = createResumableStreamContext({ waitUntil: (promise) => promise });
@@ -177,7 +177,12 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 			}),
 		);
 	} else {
-		return Ok(result.toUIMessageStreamResponse<TMessage>(streamOptions));
+		return Ok(result.toUIMessageStreamResponse<TMessage>({
+			...streamOptions,
+			headers: {
+				'Content-Encoding': 'none', // Prevent proxy buffering for streaming
+			},
+		}));
 	}
 }
 

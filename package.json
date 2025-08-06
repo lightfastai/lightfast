@@ -13,6 +13,7 @@
 		"build:app": "turbo run build -F @lightfast/app",
 		"build:auth": "turbo run build -F @lightfast/auth",
 		"build:experimental": "turbo run build -F @lightfast/experimental",
+		"build:playground": "turbo run build -F @lightfast/playground",
 		"clean": "git clean -xdf node_modules .turbo .internal",
 		"clean:workspaces": "turbo run clean",
 		"db:migrate": "turbo -F @vendor/db migrate",
