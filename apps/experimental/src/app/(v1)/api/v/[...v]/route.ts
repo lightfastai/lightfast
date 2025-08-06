@@ -7,6 +7,7 @@ import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
 import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfast/core/agent/primitives/cache";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware, currentSpan, initLogger, traced } from "braintrust";
+import { getBraintrustConfig, isOtelEnabled } from "@lightfast/core/v2/braintrust-env";
 import { A011_SYSTEM_PROMPT } from "@/app/(v1)/ai/agents/a011";
 import {
 	fileDeleteTool,
@@ -56,9 +57,10 @@ const a011Tools = {
 type A011ToolSchema = typeof a011Tools;
 
 // Initialize Braintrust logging
+const braintrustConfig = getBraintrustConfig();
 initLogger({
-	apiKey: env.BRAINTRUST_API_KEY,
-	projectName: env.BRAINTRUST_PROJECT_NAME,
+	apiKey: braintrustConfig.apiKey,
+	projectName: braintrustConfig.projectName,
 });
 
 // Handler function that handles auth and calls fetchRequestHandler
@@ -141,7 +143,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 				}),
 				stopWhen: stepCountIs(30),
 				experimental_telemetry: {
-					isEnabled: !!env.OTEL_EXPORTER_OTLP_HEADERS,
+					isEnabled: isOtelEnabled(),
 					metadata: {
 						agentId,
 						agentName: "a011",

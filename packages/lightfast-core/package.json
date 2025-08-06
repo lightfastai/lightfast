@@ -75,6 +75,10 @@
 		"./v2/env": {
 			"types": "./src/core/v2/env.ts",
 			"default": "./src/core/v2/env.ts"
+		},
+		"./v2/braintrust-env": {
+			"types": "./src/core/v2/braintrust-env.ts",
+			"default": "./src/core/v2/braintrust-env.ts"
 		}
 	},
 	"scripts": {
