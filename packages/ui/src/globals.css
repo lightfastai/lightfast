@@ -135,6 +135,18 @@
 }
 
 @layer utilities {
+	.app-container {
+		@apply p-4;
+	}
+	
+	.app-container-sm {
+		@apply p-2;
+	}
+	
+	.app-container-lg {
+		@apply p-6;
+	}
+	
 	.chat-container {
 		@apply max-w-3xl mx-auto px-4;
 	}

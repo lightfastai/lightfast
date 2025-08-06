@@ -3,11 +3,9 @@ import { getClerkMiddlewareConfig } from "@repo/url-utils";
 
 const clerkConfig = getClerkMiddlewareConfig("playground");
 
-// Define public routes - playground is a public demo app
+// Define public routes
 const isPublicRoute = createRouteMatcher([
-  "/",
   "/api/health",
-  // Add other public routes as needed
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
