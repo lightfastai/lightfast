@@ -85,10 +85,10 @@ function PlaygroundInterfaceInner({
 
 	// For empty state, center the content in the middle of the page
 	return (
-		<div className="h-screen flex flex-col">
+		<div className="h-screen flex flex-col relative">
 			<PlaygroundHeader />
-			<div className="flex-1 flex items-center justify-center">
-				<div className="w-full max-w-3xl px-4">
+			<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+				<div className="w-full max-w-3xl px-4 pointer-events-auto">
 					<div className="px-4">
 						<EmptyState />
 					</div>

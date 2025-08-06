@@ -152,7 +152,9 @@ function MessageItem({
         {/* Show thinking accordion at top of assistant message */}
         {message.runtimeStatus && message.runtimeStatus !== "done" && (
           <ThinkingAccordion 
-            status={hasActiveReasoningPart ? "reasoning" : message.runtimeStatus} 
+            status={hasActiveReasoningPart ? "reasoning" : 
+                   (message.runtimeStatus === "streaming" && !message.parts?.length) ? "thinking" : 
+                   message.runtimeStatus} 
             reasoningText={reasoningText}
           />
         )}
