@@ -1,5 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { getAllAppUrls, getClerkMiddlewareConfig } from "@repo/url-utils";
+import { getClerkMiddlewareConfig, handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 
 const clerkConfig = getClerkMiddlewareConfig("auth");
@@ -14,38 +14,10 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-	// Handle CORS headers first for preflight requests
-	const origin = req.headers.get("origin");
-	const urls = getAllAppUrls();
-	
-	// List of allowed origins (production and development)
-	const allowedOrigins = [
-		urls.app,
-		urls.www,
-		"https://playground.lightfast.ai",
-		"http://localhost:4101",
-		"http://localhost:4103", 
-		"http://localhost:4105",
-	];
-	
-	// Check if origin is allowed
-	const isAllowedOrigin = origin && allowedOrigins.includes(origin);
-	
-	// Handle preflight OPTIONS requests immediately
-	if (req.method === "OPTIONS" && isAllowedOrigin) {
-		const response = new NextResponse(null, { status: 200 });
-		response.headers.set("Access-Control-Allow-Origin", origin);
-		response.headers.set("Access-Control-Allow-Credentials", "true");
-		response.headers.set(
-			"Access-Control-Allow-Headers",
-			"Content-Type, Authorization, X-Requested-With, Accept, next-router-prefetch, next-router-state-tree, next-url, rsc, x-invoke-path, x-invoke-query"
-		);
-		response.headers.set(
-			"Access-Control-Allow-Methods",
-			"GET, POST, PUT, DELETE, OPTIONS, HEAD"
-		);
-		response.headers.set("Access-Control-Max-Age", "86400");
-		return response;
+	// Handle CORS preflight requests
+	const preflightResponse = handleCorsPreflightRequest(req);
+	if (preflightResponse) {
+		return preflightResponse;
 	}
 	
 	// Handle authentication protection
@@ -56,27 +28,22 @@ export default clerkMiddleware(async (auth, req) => {
 	const { userId } = await auth();
 	
 	// Create the appropriate response
-	const response = userId 
-		? NextResponse.redirect(new URL(urls.app))
-		: req.nextUrl.pathname === "/" 
-			? NextResponse.redirect(new URL("/sign-in", req.url))
-			: NextResponse.next();
-	
-	// Add CORS headers to all responses for allowed origins
-	if (isAllowedOrigin) {
-		response.headers.set("Access-Control-Allow-Origin", origin);
-		response.headers.set("Access-Control-Allow-Credentials", "true");
-		response.headers.set(
-			"Access-Control-Allow-Headers",
-			"Content-Type, Authorization, X-Requested-With, Accept, next-router-prefetch, next-router-state-tree, next-url, rsc, x-invoke-path, x-invoke-query"
-		);
-		response.headers.set(
-			"Access-Control-Allow-Methods",
-			"GET, POST, PUT, DELETE, OPTIONS, HEAD"
-		);
+	let response: NextResponse;
+	if (userId) {
+		// User is signed in, redirect to app
+		const { getAllAppUrls } = await import("@repo/url-utils");
+		const urls = getAllAppUrls();
+		response = NextResponse.redirect(new URL(urls.app));
+	} else if (req.nextUrl.pathname === "/") {
+		// Not signed in and at root, redirect to sign-in
+		response = NextResponse.redirect(new URL("/sign-in", req.url));
+	} else {
+		// Continue with the request
+		response = NextResponse.next();
 	}
 	
-	return response;
+	// Apply CORS headers to the response
+	return applyCorsHeaders(response, req);
 }, clerkConfig);
 
 export const config = {
@@ -87,4 +54,3 @@ export const config = {
 		"/(api|trpc)(.*)",
 	],
 };
-
