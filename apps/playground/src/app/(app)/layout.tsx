@@ -8,7 +8,7 @@ export default function AppLayout({
   return (
     <main className="flex h-screen flex-col relative">
       <PlaygroundHeader />
-      <div className="flex-1 flex flex-col lg:pt-0 min-h-0">
+      <div className="flex-1 flex flex-col lg:pt-16 min-h-0">
         {children}
       </div>
     </main>

@@ -28,8 +28,7 @@ export function PlaygroundInterface({ threadId, initialMessages }: PlaygroundInt
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Add top padding on desktop to account for absolute header */}
-      <div className="flex-1 app-container lg:pt-16">
+      <div className="flex-1 app-container">
         <div className="grid grid-cols-10 gap-0 h-full">
           {/* Chat section - 30% */}
           <div className="col-span-3 flex flex-col">
