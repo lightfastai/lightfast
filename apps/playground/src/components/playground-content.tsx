@@ -17,14 +17,14 @@ export function PlaygroundContent({ threadId, children }: PlaygroundContentProps
     setIsSubmitting(true);
     
     // Update URL to include thread ID
-    window.history.replaceState({}, "", `/${threadId}`);
+    window.history.replaceState({}, "", `/playground/${threadId}`);
     
     // TODO: Actually send the message to the API
     console.log("Message sent:", message, "Thread:", threadId);
     
     // For now, just navigate to the new page
     // In a real app, you'd send the message first, then navigate
-    window.location.href = `/${threadId}`;
+    window.location.href = `/playground/${threadId}`;
   };
 
   // Empty state - chat input centered in the middle
