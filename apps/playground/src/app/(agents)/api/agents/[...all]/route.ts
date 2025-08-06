@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createAgent } from "@lightfast/core/agent";
 import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
+import { RedisMemory } from "@lightfast/core/agent/memory/redis";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import { uuidv4 } from "@lightfast/core/v2/utils";
@@ -11,9 +12,17 @@ import {
   type Browser010ToolSchema,
   cleanup as cleanupBrowser,
 } from "~/app/(agents)/browser";
+import { redis } from "~/vendor/upstash";
+import { env } from "~/env";
 
 // Define runtime context type
 type AppRuntimeContext = Record<string, never>;
+
+// Create memory instance
+const memory = new RedisMemory({
+  url: env.KV_REST_API_URL,
+  token: env.KV_REST_API_TOKEN,
+});
 
 // Handler function that handles auth and calls fetchRequestHandler
 const handler = async (req: Request, { params }: { params: Promise<{ all: string[] }> }) => {
@@ -97,6 +106,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ all: string
               },
             }),
             threadId,
+            memory,
             req,
             resourceId: userId,
             createRequestContext: (req) => ({

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { PlaygroundInterface } from "~/components/playground-interface";
+import { getMessages } from "~/lib/get-messages";
 
 interface PlaygroundThreadPageProps {
   params: Promise<{
@@ -14,13 +15,8 @@ interface PlaygroundThreadPageProps {
 export default async function PlaygroundThreadPage({ params }: PlaygroundThreadPageProps) {
   const { threadId } = await params;
 
-  // TODO: In a real app, you would fetch existing messages here
-  // For now, we'll pass empty messages
-  const messages: Array<{
-    id: string;
-    content: string;
-    role: "user" | "assistant";
-  }> = [];
+  // Fetch existing messages from Redis
+  const messages = await getMessages(threadId);
 
   // Wrap in Suspense to ensure proper hydration timing
   return (

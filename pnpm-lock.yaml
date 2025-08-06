@@ -578,6 +578,9 @@ importers:
       '@ai-sdk/anthropic':
         specifier: 'catalog:'
         version: 2.0.0-beta.8(zod@3.25.76)
+      '@ai-sdk/react':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.26(react@19.1.0)(zod@3.25.76)
       '@browserbasehq/stagehand':
         specifier: 'catalog:'
         version: 2.4.2(bufferutil@4.0.9)(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)
@@ -608,9 +611,15 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.84.0(react@19.1.0)
+      '@upstash/redis':
+        specifier: 'catalog:'
+        version: 1.35.3
       '@vendor/clerk':
         specifier: workspace:^
         version: link:../../vendor/clerk
+      '@vendor/upstash':
+        specifier: workspace:^
+        version: link:../../vendor/upstash
       '@vercel/analytics':
         specifier: ^1.5.0
         version: 1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2))

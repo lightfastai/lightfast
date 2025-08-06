@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/react": "catalog:",
     "@browserbasehq/stagehand": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@lightfast/core": "workspace:*",
@@ -25,7 +26,9 @@
     "@repo/url-utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "catalog:",
+    "@upstash/redis": "catalog:",
     "@vendor/clerk": "workspace:^",
+    "@vendor/upstash": "workspace:^",
     "@vercel/analytics": "^1.5.0",
     "@vercel/toolbar": "^0.1.28",
     "ai": "catalog:",
