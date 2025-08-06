@@ -3,7 +3,6 @@
 import { User } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useClerk } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,11 +16,10 @@ interface UserDropdownMenuProps {
 
 export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   const { signOut } = useClerk();
-  const router = useRouter();
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
+  const handleSignOut = () => {
+    // Use Clerk's built-in redirect which handles the domain properly
+    signOut({ redirectUrl: "/" });
   };
 
   return (
