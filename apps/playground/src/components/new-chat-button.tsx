@@ -10,12 +10,10 @@ interface NewChatButtonProps {
 }
 
 export function NewChatButton({ variant = "default", className }: NewChatButtonProps) {
-  const href = "/";
-
   if (variant === "mobile") {
     return (
       <Button asChild size="icon" variant="ghost" className={className}>
-        <Link href={href}>
+        <Link href="/">
           <Icons.newChat className="h-4 w-4" />
           <span className="sr-only">New Chat</span>
         </Link>
@@ -25,7 +23,7 @@ export function NewChatButton({ variant = "default", className }: NewChatButtonP
 
   return (
     <Button asChild variant="ghost" size="icon" className={className}>
-      <Link href={href}>
+      <Link href="/">
         <Icons.newChat className="h-4 w-4" />
       </Link>
     </Button>

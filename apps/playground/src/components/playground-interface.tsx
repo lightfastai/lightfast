@@ -43,8 +43,8 @@ function PlaygroundInterfaceInner({
 	// Update URL to include thread ID when first message is sent
 	useEffect(() => {
 		if (messages.length > 0 && window.location.pathname === "/playground") {
-			// Use history.replaceState to update URL without adding to history
-			window.history.replaceState(null, "", `/playground/${threadId}`);
+			// Use history.replaceState like Vercel AI Chatbot for seamless URL update
+			window.history.replaceState({}, "", `/playground/${threadId}`);
 		}
 	}, [messages.length, threadId]);
 
@@ -110,7 +110,7 @@ function PlaygroundInterfaceInner({
 export function PlaygroundInterface(props: PlaygroundInterfaceProps) {
 	return (
 		<BrowserProvider>
-			<PlaygroundInterfaceInner {...props} />
+			<PlaygroundInterfaceInner key={props.threadId} {...props} />
 		</BrowserProvider>
 	);
 }
