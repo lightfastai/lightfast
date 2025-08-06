@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
-import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
-import { withSentry } from "@vendor/next/next-config-builder";
+
+import "~/env";
+
+import {
+  config as vendorConfig,
+  withBetterStack,
+  withSentry,
+} from "@vendor/next/next-config-builder";
+
 import { env } from "~/env";
 
 // Determine the asset prefix based on environment
@@ -24,7 +31,7 @@ function getAssetPrefix(): string | undefined {
   return undefined;
 }
 
-let nextConfig: NextConfig = {
+let config: NextConfig = withBetterStack({
   reactStrictMode: true,
   basePath: '/playground',
   assetPrefix: getAssetPrefix(),
@@ -33,14 +40,6 @@ let nextConfig: NextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '71rhzdwymx1lzqpv.public.blob.vercel-storage.com',
-      },
-    ],
   },
   experimental: {
     serverActions: {
@@ -70,12 +69,24 @@ let nextConfig: NextConfig = {
     "@lightfast/core",
     "@vendor/observability",
     "@vendor/next",
+    "@vendor/storage",
   ],
-};
+  ...vendorConfig,
+  images: {
+    ...vendorConfig.images,
+    remotePatterns: [
+      ...(vendorConfig.images?.remotePatterns || []),
+      {
+        protocol: 'https' as const,
+        hostname: new URL(env.BLOB_BASE_URI).hostname,
+      },
+    ],
+  },
+});
 
 // Apply Sentry configuration in Vercel environment
 if (env.VERCEL) {
-  nextConfig = withSentry(nextConfig);
+  config = withSentry(config);
 }
 
-export default withVercelToolbar()(nextConfig);
+export default config;

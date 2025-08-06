@@ -1,10 +1,17 @@
 import { NextConfig } from "next";
-import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
-import { withSentry } from "@vendor/next/next-config-builder";
+
+import "./src/env";
+
+import {
+  config as vendorConfig,
+  withBetterStack,
+  withSentry,
+} from "@vendor/next/next-config-builder";
 import { playgroundUrl } from "./src/lib/related-projects";
+
 import { env } from "./src/env";
 
-let config: NextConfig = {
+let config: NextConfig = withBetterStack({
 	reactStrictMode: true,
 	transpilePackages: [
 		"@repo/ui",
@@ -16,7 +23,6 @@ let config: NextConfig = {
 		"@vendor/next",
 	],
 	experimental: {
-		instrumentationHook: true,
 		optimizeCss: true,
 		optimizePackageImports: ["@repo/ui", "lucide-react"],
 	},
@@ -33,12 +39,13 @@ let config: NextConfig = {
 			},
 		];
 	},
-};
+	...vendorConfig,
+});
 
 // Apply Sentry configuration in Vercel environment
 if (env.VERCEL) {
 	config = withSentry(config);
 }
 
-export default withVercelToolbar()(config);
+export default config;
 
