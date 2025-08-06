@@ -3,7 +3,6 @@
 import { User } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useClerk } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,11 +16,9 @@ interface UserDropdownMenuProps {
 
 export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   const { signOut } = useClerk();
-  const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
+    await signOut(); // Will use afterSignOutUrl from Clerk config
   };
 
   return (

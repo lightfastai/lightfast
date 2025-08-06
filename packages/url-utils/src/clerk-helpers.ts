@@ -27,7 +27,7 @@ export function getClerkConfig(appName: ProjectName) {
     signUpUrl: authUrls.signUp,
     signInFallbackRedirectUrl: "/",
     signUpFallbackRedirectUrl: "/",
-    afterSignOutUrl: authUrls.afterSignOut,
+    afterSignOutUrl: authUrls.afterSignOut, // This already points to www (lightfast.ai)
     ...subdomainConfig,
   };
 }

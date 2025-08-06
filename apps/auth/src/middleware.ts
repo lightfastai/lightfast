@@ -14,26 +14,69 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-	// Handle authentication protection first
+	// Handle CORS headers first for preflight requests
+	const origin = req.headers.get("origin");
+	const urls = getAllAppUrls();
+	
+	// List of allowed origins (production and development)
+	const allowedOrigins = [
+		urls.app,
+		urls.www,
+		"https://playground.lightfast.ai",
+		"http://localhost:4101",
+		"http://localhost:4103", 
+		"http://localhost:4105",
+	];
+	
+	// Check if origin is allowed
+	const isAllowedOrigin = origin && allowedOrigins.includes(origin);
+	
+	// Handle preflight OPTIONS requests immediately
+	if (req.method === "OPTIONS" && isAllowedOrigin) {
+		const response = new NextResponse(null, { status: 200 });
+		response.headers.set("Access-Control-Allow-Origin", origin);
+		response.headers.set("Access-Control-Allow-Credentials", "true");
+		response.headers.set(
+			"Access-Control-Allow-Headers",
+			"Content-Type, Authorization, X-Requested-With, Accept, next-router-prefetch, next-router-state-tree, next-url, rsc, x-invoke-path, x-invoke-query"
+		);
+		response.headers.set(
+			"Access-Control-Allow-Methods",
+			"GET, POST, PUT, DELETE, OPTIONS, HEAD"
+		);
+		response.headers.set("Access-Control-Max-Age", "86400");
+		return response;
+	}
+	
+	// Handle authentication protection
 	if (!isPublicRoute(req)) {
 		await auth.protect();
 	}
 
 	const { userId } = await auth();
-	const urls = getAllAppUrls();
-
-	// If user is authenticated, redirect to app
-	if (userId) {
-		return NextResponse.redirect(new URL(urls.app));
+	
+	// Create the appropriate response
+	const response = userId 
+		? NextResponse.redirect(new URL(urls.app))
+		: req.nextUrl.pathname === "/" 
+			? NextResponse.redirect(new URL("/sign-in", req.url))
+			: NextResponse.next();
+	
+	// Add CORS headers to all responses for allowed origins
+	if (isAllowedOrigin) {
+		response.headers.set("Access-Control-Allow-Origin", origin);
+		response.headers.set("Access-Control-Allow-Credentials", "true");
+		response.headers.set(
+			"Access-Control-Allow-Headers",
+			"Content-Type, Authorization, X-Requested-With, Accept, next-router-prefetch, next-router-state-tree, next-url, rsc, x-invoke-path, x-invoke-query"
+		);
+		response.headers.set(
+			"Access-Control-Allow-Methods",
+			"GET, POST, PUT, DELETE, OPTIONS, HEAD"
+		);
 	}
-
-	// If user is not authenticated and on root path, redirect to sign-in
-	if (req.nextUrl.pathname === "/") {
-		return NextResponse.redirect(new URL("/sign-in", req.url));
-	}
-
-	// Continue with normal behavior
-	return NextResponse.next();
+	
+	return response;
 }, clerkConfig);
 
 export const config = {

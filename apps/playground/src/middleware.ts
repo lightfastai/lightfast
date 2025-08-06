@@ -1,7 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { getClerkMiddlewareConfig } from "@repo/url-utils";
 
-const clerkConfig = getClerkMiddlewareConfig("playground");
+// Playground is accessed via app domain, so use app's Clerk config
+const clerkConfig = getClerkMiddlewareConfig("app");
 
 // Define public routes
 const isPublicRoute = createRouteMatcher([
