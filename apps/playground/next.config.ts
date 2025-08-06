@@ -19,12 +19,12 @@ function getAssetPrefix(): string | undefined {
 
   // In Vercel preview deployments
   if (env.VERCEL_ENV === 'preview' && env.VERCEL_URL) {
-    return `https://${env.VERCEL_URL}/playground`;
+    return `https://${env.VERCEL_URL}`;
   }
 
   // In production
   if (env.VERCEL_ENV === 'production') {
-    return 'https://playground.lightfast.ai/playground';
+    return 'https://playground.lightfast.ai';
   }
 
   // Default to undefined for local dev
