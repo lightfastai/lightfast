@@ -1,11 +1,32 @@
 import type { NextConfig } from "next";
 import { withVercelToolbar } from "@vercel/toolbar/plugins/next";
-import "~/env";
+import { env } from "~/env";
+
+// Determine the asset prefix based on environment
+function getAssetPrefix(): string | undefined {
+  // In development, no prefix needed
+  if (env.NODE_ENV === 'development') {
+    return undefined;
+  }
+
+  // In Vercel preview deployments
+  if (env.VERCEL_ENV === 'preview' && env.VERCEL_URL) {
+    return `https://${env.VERCEL_URL}/playground`;
+  }
+
+  // In production
+  if (env.VERCEL_ENV === 'production') {
+    return 'https://playground.lightfast.ai/playground';
+  }
+
+  // Default to undefined for local dev
+  return undefined;
+}
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   basePath: '/playground',
-  assetPrefix: process.env.NODE_ENV === 'production' ? 'https://playground.lightfast.ai/playground' : undefined,
+  assetPrefix: getAssetPrefix(),
   typescript: {
     ignoreBuildErrors: true,
   },
