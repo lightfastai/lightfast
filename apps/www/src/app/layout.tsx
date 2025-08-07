@@ -10,6 +10,7 @@ import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 import { createBaseUrl } from "~/lib/base-url";
+import { ThemeProvider } from "~/provider/theme-provider";
 
 export const metadata: Metadata = {
 	title: {
@@ -106,13 +107,20 @@ export default function RootLayout({
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head />
-			<body className={cn("bg-background dark min-h-screen", fonts)}>
-				<PostHogProvider baseUrl={createBaseUrl()}>
-					{children}
-					<Toaster />
-					<VercelAnalytics />
-					<SpeedInsights />
-				</PostHogProvider>
+			<body className={cn("bg-background min-h-screen", fonts)}>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="dark"
+					enableSystem
+					disableTransitionOnChange
+				>
+					<PostHogProvider baseUrl={createBaseUrl()}>
+						{children}
+						<Toaster />
+						<VercelAnalytics />
+						<SpeedInsights />
+					</PostHogProvider>
+				</ThemeProvider>
 			</body>
 		</html>
 	);

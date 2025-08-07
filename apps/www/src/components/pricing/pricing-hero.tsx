@@ -1,14 +1,15 @@
 export function PricingHero() {
-  return (
-    <section className="relative overflow-hidden px-6 py-24 sm:py-32 lg:px-8">
-      <div className="mx-auto max-w-7xl text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
-          Find a plan to power your AI agents
-        </h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">
-          Lightfast supports teams of all sizes, with pricing that scales as you grow.
-        </p>
-      </div>
-    </section>
-  );
+	return (
+		<div className="flex min-h-56">
+			<div className="space-y-4 max-w-3xl">
+				<h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-5xl">
+					More affordable, more capabilities
+				</h1>
+				<p className="text-lg leading-8 text-muted-foreground">
+					Access a variety of latest AI models such as GPT 4.1, o3, Claude 4,
+					Gemini 2.5 and many more with our monthly plan.
+				</p>
+			</div>
+		</div>
+	);
 }

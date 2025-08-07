@@ -10,52 +10,59 @@ import {
 
 const faqs = [
   {
-    question: "Which Lightfast plan is right for me?",
-    answer: "If you're just getting started with AI agents or building personal projects, the Hobby plan is perfect. For production applications with team collaboration needs, choose Pro. Enterprise is ideal for organizations requiring advanced security, compliance, and dedicated support."
+    question: "What's included in Lightfast Chat?",
+    answer: "Lightfast Chat includes unlimited conversations, access to all the latest AI models (with usage limits), real-time collaboration features, priority support, and enterprise-grade security."
   },
   {
-    question: "Can I change plans at any time?",
-    answer: "Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll have immediate access to new features. When downgrading, changes take effect at the next billing cycle."
+    question: "Which AI models are available?",
+    answer: "You get access to all the latest models including GPT-4, Claude 3, Gemini Pro, and more. We continuously add new models as they become available. Usage limits apply based on model costs."
   },
   {
-    question: "How does usage-based pricing work?",
-    answer: "Beyond the included limits in each plan, you only pay for what you use. We track agent executions, compute time, and data transfer. You can set spending limits to avoid unexpected charges."
+    question: "How does the $8/month pricing work?",
+    answer: "It's simple - $8 USD per user per month for Lightfast Chat. No hidden fees, no setup costs. Just straightforward monthly billing for each user in your team. This pricing is specifically for our hosted Lightfast Chat service."
   },
   {
-    question: "Do you offer custom pricing for startups?",
-    answer: "Yes, we offer special pricing for qualified startups through our startup program. This includes credits, extended limits, and access to Pro features."
+    question: "Can I cancel anytime?",
+    answer: "Yes! You can cancel your subscription at any time. You'll continue to have access until the end of your current billing period."
   },
   {
     question: "What payment methods do you accept?",
-    answer: "We accept all major credit cards, ACH transfers for Enterprise customers, and can arrange custom invoicing for annual contracts."
+    answer: "We accept all major credit cards and debit cards. For enterprise customers, we can arrange custom invoicing."
   },
   {
-    question: "Is there a free trial for Pro features?",
-    answer: "Yes! Pro plans include a 14-day free trial with full access to all features. No credit card required to start."
+    question: "Can I try Lightfast Chat for free?",
+    answer: "Yes! You can use the chat app for free with rate limits applied. This lets you experience the product before upgrading to the paid plan for unlimited usage."
   },
   {
-    question: "How do team seats work?",
-    answer: "Pro plans include 5 team seats. Additional seats are $10/month each. Enterprise plans include custom team configurations."
+    question: "Is Lightfast Chat open-source?",
+    answer: "Yes! Lightfast Chat is fully open-source. We believe in transparency and encourage users to own their infrastructure. You can self-host the entire application on your own servers for complete control over your data and infrastructure. Check out github.com/lightfastai/chat for the source code and deployment guides."
   },
   {
-    question: "What happens if I exceed my plan limits?",
-    answer: "We'll notify you when you're approaching limits. You can either upgrade your plan or pay for additional usage at our standard overage rates."
+    question: "How does team collaboration work?",
+    answer: "Teams can share conversations, collaborate in real-time, and maintain shared knowledge bases. Each team member needs their own subscription."
+  },
+  {
+    question: "Is my data secure and private?",
+    answer: "Absolutely. We use enterprise-grade encryption, never train on your data, and comply with SOC 2 and GDPR standards. Your conversations remain private and secure."
   },
 ];
 
 export function PricingFAQ() {
   return (
-    <section className="px-6 lg:px-8 py-24">
-      <div className="mx-auto max-w-4xl">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight">
-            Frequently Asked Questions
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Everything you need to know about our pricing
-          </p>
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Top row - heading on left */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold tracking-tight">
+          Frequently Asked Questions
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Everything you need to know about our pricing
+        </p>
+      </div>
+      <div></div>
 
+      {/* FAQ content spanning full width */}
+      <div className="md:col-span-2 mt-8">
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, index) => (
             <AccordionItem key={index} value={`item-${index}`}>
@@ -68,31 +75,7 @@ export function PricingFAQ() {
             </AccordionItem>
           ))}
         </Accordion>
-
-        <div className="mt-16 text-center p-8 border rounded-lg bg-muted/30">
-          <h3 className="text-xl font-semibold mb-2">
-            Still have questions?
-          </h3>
-          <p className="text-muted-foreground mb-6">
-            Our team is here to help you find the right solution.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <a 
-              href="mailto:sales@lightfast.ai" 
-              className="text-primary hover:underline"
-            >
-              sales@lightfast.ai
-            </a>
-            <span className="text-muted-foreground">or</span>
-            <a 
-              href="/contact" 
-              className="text-primary hover:underline"
-            >
-              Schedule a call
-            </a>
-          </div>
-        </div>
       </div>
-    </section>
+    </div>
   );
 }

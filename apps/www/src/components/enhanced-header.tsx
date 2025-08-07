@@ -1,5 +1,8 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 import { Icons } from "@repo/ui/components/icons";
 import { Button, buttonVariants } from "@repo/ui/components/ui/button";
@@ -8,32 +11,18 @@ import {
 	NavigationMenu,
 	NavigationMenuContent,
 	NavigationMenuItem,
-	NavigationMenuLink,
 	NavigationMenuList,
 	NavigationMenuTrigger,
-	navigationMenuTriggerStyle,
 } from "@repo/ui/components/ui/navigation-menu";
-import { cn } from "@repo/ui/lib/utils";
-
-const products = [
-	{
-		title: "Chat",
-		href: "/products/chat",
-		description: "Interactive AI chat experiences for your applications.",
-	},
-	{
-		title: "Agent Runtime",
-		href: "/products/runtime",
-		description: "Scalable infrastructure for agent execution.",
-	},
-	{
-		title: "Observability",
-		href: "/products/observability",
-		description: "Monitor and debug your AI agents in production.",
-	},
-];
 
 export function EnhancedHeader() {
+	const { theme, setTheme } = useTheme();
+	const [mounted, setMounted] = React.useState(false);
+
+	React.useEffect(() => {
+		setMounted(true);
+	}, []);
+
 	return (
 		<header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-background">
 			<div className="flex items-center">
@@ -121,31 +110,17 @@ export function EnhancedHeader() {
 				<div className="flex h-4 items-center mx-2">
 					<Separator orientation="vertical" />
 				</div>
-				<Button variant="ghost" size="icon" className="h-9 w-9">
+				<Button 
+					variant="ghost" 
+					size="icon" 
+					className="h-9 w-9"
+					onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+					disabled={!mounted}
+				>
 					<Icons.darkMode className="h-4 w-4" />
 					<span className="sr-only">Toggle theme</span>
 				</Button>
 			</div>
 		</header>
-	);
-}
-
-function ListItem({
-	title,
-	children,
-	href,
-	...props
-}: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
-	return (
-		<li {...props}>
-			<NavigationMenuLink asChild>
-				<Link href={href}>
-					<div className="text-sm leading-none font-medium">{title}</div>
-					<p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-						{children}
-					</p>
-				</Link>
-			</NavigationMenuLink>
-		</li>
 	);
 }
