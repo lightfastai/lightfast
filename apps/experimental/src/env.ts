@@ -40,6 +40,8 @@ export const env = createEnv({
 		// Clerk Authentication
 		CLERK_SECRET_KEY: z.string().min(1),
 
+		// Health Check Authentication
+		HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
 	},
 
 	/**

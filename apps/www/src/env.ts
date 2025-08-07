@@ -37,6 +37,7 @@ export const env = createEnv({
   server: {
     RESEND_EARLY_ACCESS_AUDIENCE_ID: z.string().min(1),
     REQUEST_ID_SECRET: z.string().min(1),
+    HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
   },
 
   /**

@@ -469,6 +469,12 @@ importers:
       '@vendor/analytics':
         specifier: workspace:*
         version: link:../../vendor/analytics
+      '@vendor/next':
+        specifier: workspace:*
+        version: link:../../vendor/next
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
       '@vercel/blob':
         specifier: 'catalog:'
         version: 1.1.1

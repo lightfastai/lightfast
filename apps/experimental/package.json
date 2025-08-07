@@ -53,6 +53,8 @@
 		"@upstash/qstash": "^2.8.1",
 		"@upstash/redis": "catalog:",
 		"@vendor/analytics": "workspace:*",
+		"@vendor/next": "workspace:*",
+		"@vendor/observability": "workspace:*",
 		"@vercel/blob": "catalog:",
 		"@vercel/otel": "^1.13.0",
 		"@vercel/sandbox": "catalog:",

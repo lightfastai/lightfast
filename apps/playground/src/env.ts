@@ -26,7 +26,9 @@ export const env = createEnv({
       .enum(["development", "production", "test"])
       .default("development"),
   },
-  server: {},
+  server: {
+    HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
+  },
   client: {},
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
