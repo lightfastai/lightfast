@@ -7,6 +7,7 @@ import {
   withBetterStack,
   withSentry,
 } from "@vendor/next/next-config-builder";
+import { mergeNextConfig } from "@vendor/next/merge-config";
 
 import { env } from "~/env";
 
@@ -19,70 +20,69 @@ function getAssetPrefix(): string | undefined {
 
   // In Vercel preview deployments
   if (env.VERCEL_ENV === 'preview' && env.VERCEL_URL) {
-    return `https://${env.VERCEL_URL}`;
+    return `https://${env.VERCEL_URL}/playground`;
   }
 
   // In production
   if (env.VERCEL_ENV === 'production') {
-    return 'https://playground.lightfast.ai';
+    return 'https://playground.lightfast.ai/playground';
   }
 
   // Default to undefined for local dev
   return undefined;
 }
 
-let config: NextConfig = withBetterStack({
-  reactStrictMode: true,
-  basePath: '/playground',
-  assetPrefix: getAssetPrefix(),
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  experimental: {
-    serverActions: {
-      allowedOrigins: [
-        'app.lightfast.ai',
-        'https://app.lightfast.ai',
-        'localhost:4103',
-        'http://localhost:4103',
+let config: NextConfig = withBetterStack(
+  mergeNextConfig(vendorConfig, {
+    reactStrictMode: true,
+    basePath: '/playground',
+    assetPrefix: getAssetPrefix(),
+    typescript: {
+      ignoreBuildErrors: true,
+    },
+    eslint: {
+      ignoreDuringBuilds: true,
+    },
+    experimental: {
+      serverActions: {
+        allowedOrigins: [
+          'app.lightfast.ai',
+          'https://app.lightfast.ai',
+          'localhost:4103',
+          'http://localhost:4103',
+        ],
+      },
+      instrumentationHook: true,
+      optimizeCss: true,
+      optimizePackageImports: [
+        "@repo/ui",
+        "@repo/lightfast-react",
+        "jotai",
+        "lucide-react",
+        "@tanstack/react-query",
       ],
     },
-    instrumentationHook: true,
-    optimizeCss: true,
-    optimizePackageImports: [
+    transpilePackages: [
       "@repo/ui",
       "@repo/lightfast-react",
-      "jotai",
-      "lucide-react",
-      "@tanstack/react-query",
+      "@repo/lightfast-config",
+      "@repo/ai",
+      "@repo/url-utils",
+      "@lightfast/core",
+      "@vendor/observability",
+      "@vendor/next",
+      "@vendor/storage",
     ],
-  },
-  transpilePackages: [
-    "@repo/ui",
-    "@repo/lightfast-react",
-    "@repo/lightfast-config",
-    "@repo/ai",
-    "@repo/url-utils",
-    "@lightfast/core",
-    "@vendor/observability",
-    "@vendor/next",
-    "@vendor/storage",
-  ],
-  ...vendorConfig,
-  images: {
-    ...vendorConfig.images,
-    remotePatterns: [
-      ...(vendorConfig.images?.remotePatterns || []),
-      {
-        protocol: 'https' as const,
-        hostname: new URL(env.BLOB_BASE_URI).hostname,
-      },
-    ],
-  },
-});
+    images: {
+      remotePatterns: [
+        {
+          protocol: 'https' as const,
+          hostname: new URL(env.BLOB_BASE_URI).hostname,
+        },
+      ],
+    },
+  })
+);
 
 // Apply Sentry configuration in Vercel environment
 if (env.VERCEL) {

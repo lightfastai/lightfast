@@ -8,6 +8,10 @@
     "./next-config-builder": {
       "types": "./dist/src/next-config-builder.d.ts",
       "default": "./src/next-config-builder.ts"
+    },
+    "./merge-config": {
+      "types": "./dist/src/merge-config.d.ts",
+      "default": "./src/merge-config.ts"
     }
   },
   "scripts": {
