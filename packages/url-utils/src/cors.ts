@@ -30,6 +30,11 @@ const DEFAULT_CORS_CONFIG: CorsConfig = {
     "x-vercel-id",
     "x-vercel-ip-country",
     "x-vercel-ip-country-region",
+    // OpenTelemetry and tracing headers
+    "baggage",
+    "sentry-trace",
+    "traceparent",
+    "tracestate",
     // Custom headers
     "x-request-id",
   ],
