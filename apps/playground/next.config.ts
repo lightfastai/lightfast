@@ -20,12 +20,15 @@ function getAssetPrefix(): string | undefined {
 
   // In Vercel preview deployments
   if (env.VERCEL_ENV === 'preview' && env.VERCEL_URL) {
-    return `https://${env.VERCEL_URL}/playground`;
+    // For preview deployments, use the Vercel URL without /playground
+    // since basePath already adds it
+    return `https://${env.VERCEL_URL}`;
   }
 
-  // In production
+  // In production - use the playground subdomain without /playground path
+  // The basePath configuration already handles the /playground path
   if (env.VERCEL_ENV === 'production') {
-    return 'https://playground.lightfast.ai/playground';
+    return 'https://playground.lightfast.ai';
   }
 
   // Default to undefined for local dev
