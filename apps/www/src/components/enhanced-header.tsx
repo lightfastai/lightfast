@@ -14,10 +14,12 @@ import {
 	NavigationMenuList,
 	NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
+import { getAuthUrls } from "@repo/url-utils";
 
 export function EnhancedHeader() {
 	const { theme, setTheme } = useTheme();
 	const [mounted, setMounted] = React.useState(false);
+	const authUrls = getAuthUrls();
 
 	React.useEffect(() => {
 		setMounted(true);
@@ -56,33 +58,19 @@ export function EnhancedHeader() {
 											Enterprise-grade AI infrastructure built for scale and reliability.
 										</p>
 									</Link>
-									<Link href="/products/chat" className="block p-3 hover:bg-accent rounded-md">
+									<Link 
+										href="https://chat.lightfast.ai" 
+										target="_blank"
+										rel="noopener noreferrer"
+										className="block p-3 hover:bg-accent rounded-md"
+									>
 										<div className="text-sm font-medium leading-none">Chat</div>
 										<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
 											Interactive AI chat experiences for your applications.
 										</p>
 									</Link>
-									<Link href="/products/runtime" className="block p-3 hover:bg-accent rounded-md">
-										<div className="text-sm font-medium leading-none">Agent Runtime</div>
-										<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
-											Scalable infrastructure for agent execution.
-										</p>
-									</Link>
-									<Link href="/products/observability" className="block p-3 hover:bg-accent rounded-md">
-										<div className="text-sm font-medium leading-none">Observability</div>
-										<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
-											Monitor and debug your AI agents in production.
-										</p>
-									</Link>
 								</div>
 							</NavigationMenuContent>
-						</NavigationMenuItem>
-
-						{/* Docs */}
-						<NavigationMenuItem>
-							<Link href="/docs" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-								Docs
-							</Link>
 						</NavigationMenuItem>
 
 						{/* Pricing */}
@@ -97,7 +85,20 @@ export function EnhancedHeader() {
 
 			{/* Right side actions */}
 			<div className="flex items-center">
-				<Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+				<Button variant="outline" size="sm" asChild>
+					<Link href={authUrls.signIn}>
+						Login
+					</Link>
+				</Button>
+				<Button size="sm" className="ml-2" asChild>
+					<Link href={authUrls.signUp}>
+						Sign up
+					</Link>
+				</Button>
+				<div className="flex h-4 items-center mx-2">
+					<Separator orientation="vertical" />
+				</div>
+				<Button variant="ghost" size="xs" asChild>
 					<Link
 						href="https://github.com/lightfastai/lightfast"
 						target="_blank"
@@ -112,8 +113,7 @@ export function EnhancedHeader() {
 				</div>
 				<Button 
 					variant="ghost" 
-					size="icon" 
-					className="h-9 w-9"
+					size="xs"
 					onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
 					disabled={!mounted}
 				>
