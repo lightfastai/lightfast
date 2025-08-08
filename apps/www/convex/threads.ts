@@ -39,13 +39,22 @@ export const listForInfiniteScroll = query({
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (ctx, args) => {
-		const clerkUserId = await getAuthenticatedClerkUserId(ctx);
-		return await ctx.db
-			.query("threads")
-			.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
-			.filter((q) => q.eq(q.field("pinned"), undefined)) // Only show threads where pinned is undefined (not false)
-			.order("desc")
-			.paginate(args.paginationOpts);
+		try {
+			const clerkUserId = await getAuthenticatedClerkUserId(ctx);
+			return await ctx.db
+				.query("threads")
+				.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+				.filter((q) => q.eq(q.field("pinned"), undefined)) // Only show threads where pinned is undefined (not false)
+				.order("desc")
+				.paginate(args.paginationOpts);
+		} catch (error) {
+			// Return empty page if authentication fails (likely during initial load)
+			return {
+				page: [],
+				isDone: true,
+				continueCursor: null,
+			};
+		}
 	},
 });
 
