@@ -7,10 +7,13 @@ import { captureException } from "@sentry/nextjs";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 
+import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
+import {
+  ErrorCode,
+  LightfastErrorPage,
+} from "@repo/ui/components/lightfast-error-page";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
-import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
-import { LightfastErrorPage, ErrorCode } from "@repo/ui/components/lightfast-error-page";
 
 interface GlobalErrorProperties {
   readonly error: NextError & { digest?: string };

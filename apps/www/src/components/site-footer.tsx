@@ -1,9 +1,10 @@
-import { cn } from "@repo/ui/lib/utils"
-import { Dot } from "lucide-react"
-import Link from "next/link"
+import Link from "next/link";
+import { Dot } from "lucide-react";
+
+import { cn } from "@repo/ui/lib/utils";
 
 interface FooterProps {
-  className?: string
+  className?: string;
 }
 
 export function SiteFooter({ className }: FooterProps) {
@@ -112,5 +113,5 @@ export function SiteFooter({ className }: FooterProps) {
         </div>
       </div>
     </footer>
-  )
+  );
 }

@@ -2,13 +2,12 @@
 
 import type * as z from "zod";
 import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAtom } from "jotai";
 import { Send } from "lucide-react";
 import Confetti from "react-confetti";
 import { createPortal } from "react-dom";
-
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@repo/ui/components/ui/button";
 import {
