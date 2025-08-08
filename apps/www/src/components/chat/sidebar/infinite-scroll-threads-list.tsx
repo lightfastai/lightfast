@@ -10,7 +10,7 @@ import {
 } from "@lightfast/ui/components/ui/sidebar";
 import { Skeleton } from "@lightfast/ui/components/ui/skeleton";
 import { getDateGroupOrder, groupByDate } from "@repo/utils/time";
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery, useConvexAuth } from "convex/react";
 import type { FunctionArgs } from "convex/server";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -85,6 +85,9 @@ function LoadingGroup() {
 export function InfiniteScrollThreadsList({
 	className,
 }: InfiniteScrollThreadsListProps) {
+	// Check authentication status
+	const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
+	
 	const togglePinned = useMutation(
 		api.threads.togglePinned,
 	).withOptimisticUpdate((localStore, args) => {
@@ -177,9 +180,14 @@ export function InfiniteScrollThreadsList({
 	const loadMoreRef = useRef<HTMLDivElement>(null);
 
 	// Use separate query for pinned threads (non-paginated, always loaded)
-	const pinnedThreads = useQuery(api.threads.listPinned, {});
+	// Only run query when authenticated
+	const pinnedThreads = useQuery(
+		api.threads.listPinned, 
+		isAuthenticated ? {} : "skip"
+	);
 
 	// Use paginated query ONLY for unpinned threads
+	// Only run query when authenticated
 	const {
 		results: unpinnedThreads,
 		status,
@@ -187,7 +195,7 @@ export function InfiniteScrollThreadsList({
 		isLoading,
 	} = usePaginatedQuery(
 		api.threads.listForInfiniteScroll,
-		{},
+		isAuthenticated ? {} : "skip",
 		{ initialNumItems: 5 }, // Load 5 at a time
 	);
 
@@ -232,6 +240,28 @@ export function InfiniteScrollThreadsList({
 		return () => observer.disconnect();
 	}, [status, isLoading, loadMore]);
 
+	// Show loading state while auth is loading
+	if (isAuthLoading) {
+		return (
+			<div className={className}>
+				<LoadingGroup />
+			</div>
+		);
+	}
+	
+	// If not authenticated, show unauthenticated message
+	if (!isAuthenticated) {
+		return (
+			<div className={className}>
+				<div className="px-3 py-8 text-center text-muted-foreground">
+					<p className="group-data-[collapsible=icon]:hidden text-xs">
+						Sign in to see your conversations
+					</p>
+				</div>
+			</div>
+		);
+	}
+	
 	// Show empty state only if both queries have loaded and are confirmed empty
 	const pinnedLoaded = pinnedThreads !== undefined;
 	const pinnedEmpty = pinnedThreads?.length === 0;

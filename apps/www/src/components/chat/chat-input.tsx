@@ -511,19 +511,15 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 												<Button
 													variant="ghost"
 													size="icon"
-													onClick={() => fileInputRef.current?.click()}
-													disabled={disabled || isUploading}
-													className="h-8 w-8"
+													onClick={() => {}}
+													disabled={true}
+													className="h-8 w-8 opacity-50 cursor-not-allowed"
 												>
-													{isUploading ? (
-														<Loader2 className="w-4 h-4 animate-spin" />
-													) : (
-														<Paperclip className="w-4 h-4" />
-													)}
+													<Paperclip className="w-4 h-4" />
 												</Button>
 											</TooltipTrigger>
 											<TooltipContent side="bottom">
-												<p>Attach files</p>
+												<p>We've temporarily disabled this functionality. Check back soon!</p>
 											</TooltipContent>
 										</Tooltip>
 

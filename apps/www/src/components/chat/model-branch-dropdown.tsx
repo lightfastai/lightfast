@@ -17,6 +17,11 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "@lightfast/ui/components/ui/dropdown-menu";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@lightfast/ui/components/ui/tooltip";
 
 // Icon component mapper for capability icons
 const CapabilityIcon = ({

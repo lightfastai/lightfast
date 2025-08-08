@@ -17,18 +17,13 @@ import {
 export const list = query({
 	args: {},
 	handler: async (ctx, _args) => {
-		try {
-			const clerkUserId = await getAuthenticatedClerkUserId(ctx);
-			// Return first 20 threads for initial preload
-			return await ctx.db
-				.query("threads")
-				.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
-				.order("desc")
-				.take(20);
-		} catch {
-			// Return empty array for unauthenticated users
-			return [];
-		}
+		const clerkUserId = await getAuthenticatedClerkUserId(ctx);
+		// Return first 20 threads for initial preload
+		return await ctx.db
+			.query("threads")
+			.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+			.order("desc")
+			.take(20);
 	},
 });
 
@@ -39,22 +34,13 @@ export const listForInfiniteScroll = query({
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (ctx, args) => {
-		try {
-			const clerkUserId = await getAuthenticatedClerkUserId(ctx);
-			return await ctx.db
-				.query("threads")
-				.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
-				.filter((q) => q.eq(q.field("pinned"), undefined)) // Only show threads where pinned is undefined (not false)
-				.order("desc")
-				.paginate(args.paginationOpts);
-		} catch (error) {
-			// Return empty page if authentication fails (likely during initial load)
-			return {
-				page: [],
-				isDone: true,
-				continueCursor: null,
-			};
-		}
+		const clerkUserId = await getAuthenticatedClerkUserId(ctx);
+		return await ctx.db
+			.query("threads")
+			.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+			.filter((q) => q.eq(q.field("pinned"), undefined)) // Only show threads where pinned is undefined (not false)
+			.order("desc")
+			.paginate(args.paginationOpts);
 	},
 });
 
@@ -63,40 +49,26 @@ export const listPaginated = query({
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (ctx, args) => {
-		try {
-			const clerkUserId = await getAuthenticatedClerkUserId(ctx);
-			return await ctx.db
-				.query("threads")
-				.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
-				.filter((q) => q.eq(q.field("pinned"), undefined)) // Only show threads where pinned is undefined (not false)
-				.order("desc")
-				.paginate(args.paginationOpts);
-		} catch {
-			// Return empty page for unauthenticated users
-			return {
-				page: [],
-				isDone: true,
-				continueCursor: null,
-			};
-		}
+		const clerkUserId = await getAuthenticatedClerkUserId(ctx);
+		return await ctx.db
+			.query("threads")
+			.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+			.filter((q) => q.eq(q.field("pinned"), undefined)) // Only show threads where pinned is undefined (not false)
+			.order("desc")
+			.paginate(args.paginationOpts);
 	},
 });
 
 export const listPinned = query({
 	args: {},
 	handler: async (ctx, _args) => {
-		try {
-			const clerkUserId = await getAuthenticatedClerkUserId(ctx);
-			return await ctx.db
-				.query("threads")
-				.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
-				.filter((q) => q.eq(q.field("pinned"), true))
-				.order("desc")
-				.collect();
-		} catch {
-			// Return empty array for unauthenticated users
-			return [];
-		}
+		const clerkUserId = await getAuthenticatedClerkUserId(ctx);
+		return await ctx.db
+			.query("threads")
+			.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+			.filter((q) => q.eq(q.field("pinned"), true))
+			.order("desc")
+			.collect();
 	},
 });
 
@@ -218,57 +190,48 @@ export const listPaginatedWithGrouping = query({
 		skipFirst: v.optional(v.number()), // Skip the first N items (for after preload)
 	},
 	handler: async (ctx, args) => {
-		try {
-			const clerkUserId = await getAuthenticatedClerkUserId(ctx);
+		const clerkUserId = await getAuthenticatedClerkUserId(ctx);
 
-			// Build the query
-			let query = ctx.db
-				.query("threads")
-				.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
-				.filter((q) => q.eq(q.field("pinned"), undefined)) // Only show threads where pinned is undefined (not false)
-				.order("desc");
+		// Build the query
+		let query = ctx.db
+			.query("threads")
+			.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+			.filter((q) => q.eq(q.field("pinned"), undefined)) // Only show threads where pinned is undefined (not false)
+			.order("desc");
 
-			// Skip the first N items only on the first paginated call (no cursor)
-			if (args.skipFirst && args.skipFirst > 0 && !args.paginationOpts.cursor) {
-				// This is the first paginated call after preload, so we need to skip
-				const itemsToSkip = await query.take(args.skipFirst);
-				if (itemsToSkip.length === args.skipFirst) {
-					// Get the last item's timestamp to continue from there
-					const lastSkipped = itemsToSkip[itemsToSkip.length - 1];
-					query = ctx.db
-						.query("threads")
-						.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
-						.filter((q) =>
-							q.and(
-								q.eq(q.field("pinned"), undefined),
-								q.lt(q.field("_creationTime"), lastSkipped._creationTime),
-							),
-						)
-						.order("desc");
-				}
+		// Skip the first N items only on the first paginated call (no cursor)
+		if (args.skipFirst && args.skipFirst > 0 && !args.paginationOpts.cursor) {
+			// This is the first paginated call after preload, so we need to skip
+			const itemsToSkip = await query.take(args.skipFirst);
+			if (itemsToSkip.length === args.skipFirst) {
+				// Get the last item's timestamp to continue from there
+				const lastSkipped = itemsToSkip[itemsToSkip.length - 1];
+				query = ctx.db
+					.query("threads")
+					.withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+					.filter((q) =>
+						q.and(
+							q.eq(q.field("pinned"), undefined),
+							q.lt(q.field("_creationTime"), lastSkipped._creationTime),
+						),
+					)
+					.order("desc");
 			}
+		}
 
-			const result = await query.paginate(args.paginationOpts);
+		const result = await query.paginate(args.paginationOpts);
 
-			// Add date categories to each thread
-			const threadsWithCategories = result.page.map((thread) => ({
-				...thread,
-				dateCategory: getDateCategory(thread._creationTime),
+		// Add date categories to each thread
+		const threadsWithCategories = result.page.map((thread) => ({
+			...thread,
+			dateCategory: getDateCategory(thread._creationTime),
 			}));
 
-			return {
-				page: threadsWithCategories,
-				isDone: result.isDone,
-				continueCursor: result.continueCursor,
-			};
-		} catch {
-			// Return empty page for unauthenticated users
-			return {
-				page: [],
-				isDone: true,
-				continueCursor: null,
-			};
-		}
+		return {
+			page: threadsWithCategories,
+			isDone: result.isDone,
+			continueCursor: result.continueCursor,
+		};
 	},
 });
 
@@ -278,13 +241,8 @@ export const get = query({
 		threadId: v.id("threads"),
 	},
 	handler: async (ctx, args) => {
-		try {
-			const clerkUserId = await getAuthenticatedClerkUserId(ctx);
-			return await getWithClerkOwnership(ctx.db, "threads", args.threadId, clerkUserId);
-		} catch {
-			// Return null for unauthenticated users or threads they don't own
-			return null;
-		}
+		const clerkUserId = await getAuthenticatedClerkUserId(ctx);
+		return await getWithClerkOwnership(ctx.db, "threads", args.threadId, clerkUserId);
 	},
 });
 
@@ -294,19 +252,14 @@ export const getByClientId = query({
 		clientId: clientIdValidator,
 	},
 	handler: async (ctx, args) => {
-		try {
-			const clerkUserId = await getAuthenticatedClerkUserId(ctx);
-			const thread = await ctx.db
-				.query("threads")
-				.withIndex("by_clerk_user_client", (q) =>
-					q.eq("clerkUserId", clerkUserId).eq("clientId", args.clientId),
-				)
-				.first();
-			return thread;
-		} catch {
-			// Return null for unauthenticated users
-			return null;
-		}
+		const clerkUserId = await getAuthenticatedClerkUserId(ctx);
+		const thread = await ctx.db
+			.query("threads")
+			.withIndex("by_clerk_user_client", (q) =>
+				q.eq("clerkUserId", clerkUserId).eq("clientId", args.clientId),
+			)
+			.first();
+		return thread;
 	},
 });
 
