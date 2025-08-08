@@ -2,7 +2,7 @@
 
 import { usePlatformShortcuts } from "@/hooks/use-platform-shortcuts";
 import { siteConfig } from "@/lib/site-config";
-import { useAuthActions } from "@convex-dev/auth/react";
+import { useAuthActions } from "@/hooks/use-auth";
 import {
 	Avatar,
 	AvatarFallback,
@@ -50,7 +50,7 @@ export function SidebarUserMenu() {
 
 	const handleSignOut = async () => {
 		await signOut();
-		router.push("/signin");
+		router.push("/sign-in");
 	};
 
 	const displayName = currentUser?.name || currentUser?.email || "User";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuthActions } from "@convex-dev/auth/react";
+import { useAuthActions } from "@/hooks/use-auth";
 import { Button } from "@lightfast/ui/components/ui/button";
 import { useConvexAuth } from "convex/react";
 import { LogOut } from "lucide-react";
@@ -28,7 +28,7 @@ export function SignOutButton({
 	size = "default",
 	variant = "outline",
 	children,
-	redirectTo = "/signin",
+	redirectTo = "/sign-in",
 	showOnlyWhenAuthenticated = true,
 	onSignOutStart,
 	onSignOutComplete,
