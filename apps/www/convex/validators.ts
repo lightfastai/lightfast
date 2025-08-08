@@ -264,10 +264,15 @@ export const userPreferencesValidator = v.optional(
 );
 
 // ===== Shared Metadata Validators =====
-// Message metadata validator - contains usage only
+// Message metadata validator - contains usage and migrated fields
 export const messageMetadataValidator = v.optional(
 	v.object({
 		usage: tokenUsageValidator,
+		model: v.optional(modelIdValidator), // Migrated from modelId
+		provider: v.optional(modelProviderValidator), // Migrated from model
+		usedUserApiKey: v.optional(v.boolean()), // Migrated from usedUserApiKey
+		thinkingStartedAt: v.optional(v.number()), // Migrated from thinkingStartedAt
+		thinkingCompletedAt: v.optional(v.number()), // Migrated from thinkingCompletedAt
 	}),
 );
 
