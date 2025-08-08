@@ -173,18 +173,22 @@ export const createErrorMessage = internalMutation({
 		await ctx.db.insert("messages", {
 			threadId: args.threadId,
 			parts: [{ type: "text", text: args.errorMessage, timestamp: now }],
+			role: "assistant",
+			status: "error",
+			metadata: {
+				model: args.modelId,
+				provider: args.provider,
+				thinkingStartedAt: now,
+				thinkingCompletedAt: now,
+				usage: undefined, // Error messages don't have usage data
+			},
+			// Keep legacy fields for backward compatibility during migration
 			timestamp: now,
-			role: "assistant", // Use current schema field
-			// Keep legacy fields for backward compatibility
 			messageType: "assistant",
 			model: args.provider,
 			modelId: args.modelId,
-			status: "error",
 			thinkingStartedAt: now,
 			thinkingCompletedAt: now,
-			metadata: {
-				usage: undefined, // Error messages don't have usage data
-			},
 		});
 
 		return null;
@@ -537,7 +541,7 @@ export const addUsage = internalMutation({
 		await ctx.runMutation(internal.messages.updateThreadUsage, {
 			threadId: message.threadId,
 			messageUsage: args.usage,
-			modelId: message.modelId,
+			modelId: message.modelId || message.metadata?.model,
 		});
 
 		return null;
@@ -635,10 +639,14 @@ export const createUserMessage = internalMutation({
 		const messageId = await ctx.db.insert("messages", {
 			threadId: args.threadId,
 			parts: [partWithTimestamp],
-			timestamp: now,
 			role: "user",
-			modelId: args.modelId,
 			status: "ready",
+			metadata: {
+				model: args.modelId,
+			},
+			// Keep legacy fields for backward compatibility during migration
+			timestamp: now,
+			modelId: args.modelId,
 		});
 
 		return messageId;
@@ -657,10 +665,14 @@ export const createAssistantMessage = internalMutation({
 		const messageId = await ctx.db.insert("messages", {
 			threadId: args.threadId,
 			parts: [],
-			timestamp: now,
 			role: "assistant",
-			modelId: args.modelId,
 			status: "submitted",
+			metadata: {
+				model: args.modelId,
+			},
+			// Keep legacy fields for backward compatibility during migration
+			timestamp: now,
+			modelId: args.modelId,
 		});
 
 		return messageId;
