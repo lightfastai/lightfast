@@ -103,7 +103,16 @@
       "WebFetch(domain:docs.browserbase.com)",
       "Bash(git diff:*)",
       "Bash(pnpm --filter @repo/url-utils build)",
-      "Bash(pnpm --filter @lightfast/playground build)"
+      "Bash(pnpm --filter @lightfast/playground build)",
+      "Bash(gh pr create:*)",
+      "Bash(npx convex import:*)",
+      "Bash(npx convex run:*)",
+      "Bash(./scripts/run-usage-migration.sh:*)",
+      "Bash(chmod:*)",
+      "WebFetch(domain:docs.convex.dev)",
+      "Bash(npx convex deploy:*)",
+      "Bash(SKIP_ENV_VALIDATION=true pnpm build:www)",
+      "Bash(SKIP_ENV_VALIDATION=true pnpm build)"
     ],
     "deny": []
   },

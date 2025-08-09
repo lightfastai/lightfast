@@ -35,6 +35,22 @@ pnpm db:migrate:generate # Generate migration files
 pnpm db:studio      # Open database studio
 ```
 
+## Environment Variable Management
+```bash
+# Chat application environment sync (in submodules/chat)
+pnpm env:sync:chat              # Sync env vars for chat app from root
+pnpm env:sync:chat:auto         # Auto-sync with Vercel pull + Convex sync
+
+# From within submodules/chat directory
+cd submodules/chat
+pnpm env:sync                   # Manual sync to Convex
+pnpm env:sync:auto              # Auto-sync with Vercel pull + Convex sync
+pnpm env:check                  # Check Convex environment variables
+
+# Vercel commands (run from submodules/chat)
+vercel pull  # Pull env vars from Vercel
+vercel env ls                   # List environment variables
+
 # Repository Structure
 - **Monorepo**: pnpm workspace with Turbo
 - **Apps**:
