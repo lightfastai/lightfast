@@ -1,6 +1,8 @@
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next/types";
 
+import "./src/env";
+
 const withMDX = createMDX();
 
 const config: NextConfig = {

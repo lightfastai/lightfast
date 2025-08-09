@@ -1,20 +1,26 @@
 import Link from "next/link";
+import { Button } from "@repo/ui/components/ui/button";
+import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
+import { LightfastErrorPage, ErrorCode } from "@repo/ui/components/lightfast-error-page";
 
 export default function NotFound() {
 	return (
-		<div className="flex min-h-screen items-center justify-center">
-			<div className="text-center">
-				<h2 className="text-2xl font-bold">Page Not Found</h2>
-				<p className="mt-2 text-muted-foreground">
-					The documentation page you're looking for doesn't exist.
-				</p>
-				<Link
-					href="/docs"
-					className="mt-4 inline-block text-primary underline-offset-4 hover:underline"
+		<LightfastCustomGridBackground.Root
+			marginVertical="25vh"
+			marginHorizontal="25vw"
+			marginVerticalMobile="25vh"
+			marginHorizontalMobile="10vw"
+		>
+			<LightfastCustomGridBackground.Container>
+				<LightfastErrorPage
+					code={ErrorCode.NotFound}
+					description="Sorry, we couldn't find the documentation page you're looking for."
 				>
-					Return to docs home
-				</Link>
-			</div>
-		</div>
+					<Button asChild>
+						<Link href="/docs">Return to Docs Home</Link>
+					</Button>
+				</LightfastErrorPage>
+			</LightfastCustomGridBackground.Container>
+		</LightfastCustomGridBackground.Root>
 	);
 }
