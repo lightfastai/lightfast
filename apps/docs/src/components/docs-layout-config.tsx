@@ -39,4 +39,10 @@ export const baseOptions: BaseLayoutProps = {
 export const createDocsOptions = (tree: PageTree.Root): DocsLayoutProps => ({
 	...baseOptions,
 	tree, // Add tree from source
+	sidebar: {
+		enabled: false, // Disable sidebar completely
+	},
+	nav: {
+		enabled: false, // Disable the built-in nav (which includes sidebar trigger)
+	},
 });
