@@ -1,3 +1,4 @@
+import "@repo/ui/globals.css";
 import "./globals.css";
 import { docsMetadata, siteConfig } from "@/src/lib/site-config";
 import { fonts } from "@repo/ui/lib/fonts";
