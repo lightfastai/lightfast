@@ -1253,9 +1253,11 @@ Based on selected features, ensure these are configured:
 
 1. **Build failures**: Check that all environment variables are properly set
 2. **Authentication issues**: Verify Clerk keys and middleware configuration
-3. **Type errors**: Ensure all workspace packages are built
-4. **Port conflicts**: Use the assigned port convention
+3. **Type errors**: Ensure all workspace packages are built (especially vercel-config and url-utils after adding new apps)
+4. **Port conflicts**: Use the assigned port convention (check auth is on 4104, not chat)
 5. **Missing dependencies**: Run `pnpm install` at the root level
+6. **Health check blocked by Clerk**: Even with placeholder keys, Clerk middleware may block health checks. Use valid test keys from Clerk dashboard for proper testing
+7. **ProjectName type errors**: When adding a new app, update `VERCEL_PROJECT_IDS` in `packages/vercel-config/src/project-config.ts` and URLs in `url-config.ts`
 
 ### Debug Commands
 
@@ -1285,34 +1287,45 @@ When setting up a new app, follow this checklist:
    - [ ] Confirm app name, URL, port, and description
    - [ ] Determine app type and optional features
 
-2. **Create Base Structure**
+2. **Update Shared Configurations**
+   - [ ] Add app to `VERCEL_PROJECT_IDS` in `packages/vercel-config/src/project-config.ts`
+   - [ ] Add URLs to `PRODUCTION_URLS` and `DEVELOPMENT_URLS` in `packages/vercel-config/src/url-config.ts`
+   - [ ] Update `getAllAppUrls()` function to include new app
+   - [ ] Build vercel-config package: `cd packages/vercel-config && pnpm build`
+   - [ ] Build url-utils package: `cd packages/url-utils && pnpm build`
+
+3. **Create Base Structure**
    - [ ] Create app directory and folder structure
    - [ ] Set up package.json with appropriate dependencies
    - [ ] Configure TypeScript and ESLint
    - [ ] Set up PostCSS and Tailwind
 
-3. **Configure Next.js**
+4. **Configure Next.js**
    - [ ] Create next.config.ts based on app type
    - [ ] Set up environment variables in src/env.ts
    - [ ] Configure middleware based on auth requirements
    - [ ] Create root and app layouts
 
-4. **Implement Core Features**
+5. **Implement Core Features**
    - [ ] Set up health check endpoint
    - [ ] Configure instrumentation (if monitoring)
-   - [ ] Add static assets
+   - [ ] Add static assets (copy from existing app)
    - [ ] Create initial pages
+   - [ ] Add error handling pages (not-found, global-error)
+   - [ ] Add metadata files (manifest, robots)
 
-5. **Add Optional Features**
+6. **Add Optional Features**
    - [ ] Implement selected optional features
    - [ ] Configure environment variables
    - [ ] Test integrations
 
-6. **Final Steps**
-   - [ ] Update root package.json scripts
-   - [ ] Run `pnpm install`
+7. **Final Steps**
+   - [ ] Update root package.json scripts (add build:[app-name] and dev:[app-name])
+   - [ ] Create .vercel/.env.development.local with required env vars
+   - [ ] Run `pnpm install` at root
    - [ ] Test development server
    - [ ] Run linting and type checking
+   - [ ] Test health check endpoint
    - [ ] Document any app-specific setup
 
 ## 🎯 Quick Reference
@@ -1321,8 +1334,10 @@ When setting up a new app, follow this checklist:
 - 4101: www
 - 4102: darkarmy  
 - 4103: app
-- 4104: chat (suggested)
-- 4105+: New apps
+- 4104: auth (was mistakenly noted as chat earlier)
+- 4105: playground  
+- 4106: chat (new)
+- 4107+: New apps
 
 ### App Types Summary
 1. **Full App**: Complete auth, monitoring, sidebar layout

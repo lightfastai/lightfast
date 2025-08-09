@@ -1,0 +1,38 @@
+import { NextConfig } from "next";
+
+import "./src/env";
+
+import {
+  config as vendorConfig,
+  withBetterStack,
+  withSentry,
+} from "@vendor/next/next-config-builder";
+import { mergeNextConfig } from "@vendor/next/merge-config";
+
+import { env } from "./src/env";
+
+let config: NextConfig = withBetterStack(
+  mergeNextConfig(vendorConfig, {
+    reactStrictMode: true,
+    transpilePackages: [
+      "@repo/ui",
+      "@repo/lightfast-config",
+      "@repo/lightfast-react",
+      "@repo/url-utils",
+      "@vendor/clerk",
+      "@vendor/observability",
+      "@vendor/next",
+    ],
+    experimental: {
+      optimizeCss: true,
+      optimizePackageImports: ["@repo/ui", "lucide-react"],
+    },
+  })
+);
+
+// Apply Sentry configuration in Vercel environment
+if (env.VERCEL) {
+  config = withSentry(config);
+}
+
+export default config;
