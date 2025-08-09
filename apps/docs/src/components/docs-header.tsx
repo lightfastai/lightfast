@@ -1,9 +1,4 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
-
 import { Icons } from "@repo/ui/components/icons";
 import { Button, buttonVariants } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
@@ -15,16 +10,11 @@ import {
 	NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
 import { getAuthUrls, getAllAppUrls } from "@repo/url-utils";
+import { ThemeToggle } from "./theme-toggle";
 
 export function DocsHeader() {
-	const { theme, setTheme } = useTheme();
-	const [mounted, setMounted] = React.useState(false);
 	const authUrls = getAuthUrls();
 	const appUrls = getAllAppUrls();
-
-	React.useEffect(() => {
-		setMounted(true);
-	}, []);
 
 	return (
 		<header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-background border-b">
@@ -150,15 +140,7 @@ export function DocsHeader() {
 				<div className="flex h-4 items-center mx-2">
 					<Separator orientation="vertical" />
 				</div>
-				<Button 
-					variant="ghost" 
-					size="xs"
-					onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-					disabled={!mounted}
-				>
-					<Icons.darkMode className="h-4 w-4" />
-					<span className="sr-only">Toggle theme</span>
-				</Button>
+				<ThemeToggle />
 			</div>
 		</header>
 	);
