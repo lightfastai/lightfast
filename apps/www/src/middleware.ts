@@ -17,7 +17,9 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/api/health", 
   "/api/early-access/(.*)",
-  "/legal/(.*)"
+  "/legal/(.*)",
+  "/docs",
+  "/docs/(.*)"
 ]);
 
 /**
