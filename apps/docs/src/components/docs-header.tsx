@@ -20,7 +20,7 @@ export function DocsHeader() {
 		<header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-background border-b">
 			<div className="flex items-center">
 				<Button variant="outline" size="xs" asChild>
-					<Link href="/">
+					<Link href={appUrls.www}>
 						<Icons.logoShort className="h-4 w-4" />
 					</Link>
 				</Button>
