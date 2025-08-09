@@ -11,13 +11,14 @@ import {
 } from "@repo/ui/components/ui/navigation-menu";
 import { getAuthUrls, getAllAppUrls } from "@repo/url-utils";
 import { ThemeToggle } from "./theme-toggle";
+import { SearchTrigger } from "./search-trigger";
 
 export function DocsHeader() {
 	const authUrls = getAuthUrls();
 	const appUrls = getAllAppUrls();
 
 	return (
-		<header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-background border-b">
+		<header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-background">
 			<div className="flex items-center">
 				<Button variant="outline" size="xs" asChild>
 					<Link href={appUrls.www}>
@@ -33,12 +34,14 @@ export function DocsHeader() {
 					<NavigationMenuList>
 						{/* Documentation */}
 						<NavigationMenuItem>
-							<NavigationMenuTrigger className={buttonVariants({ variant: "ghost", size: "sm" })}>
+							<NavigationMenuTrigger
+								className={buttonVariants({ variant: "ghost", size: "sm" })}
+							>
 								Documentation
 							</NavigationMenuTrigger>
 							<NavigationMenuContent>
 								<div className="grid gap-2 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-									<Link 
+									<Link
 										href="/docs"
 										className="row-span-3 from-muted/50 to-muted flex h-full w-full flex-col justify-end rounded-md bg-gradient-to-b p-6 no-underline outline-none select-none focus:shadow-md hover:opacity-90"
 									>
@@ -49,20 +52,24 @@ export function DocsHeader() {
 											Learn how to use Lightfast AI in your projects.
 										</p>
 									</Link>
-									<Link 
+									<Link
 										href="/docs/api"
 										className="block p-3 hover:bg-accent rounded-md"
 									>
-										<div className="text-sm font-medium leading-none">API Reference</div>
+										<div className="text-sm font-medium leading-none">
+											API Reference
+										</div>
 										<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
 											Complete API documentation and examples.
 										</p>
 									</Link>
-									<Link 
+									<Link
 										href="/docs/guides"
 										className="block p-3 hover:bg-accent rounded-md"
 									>
-										<div className="text-sm font-medium leading-none">Guides</div>
+										<div className="text-sm font-medium leading-none">
+											Guides
+										</div>
 										<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
 											Step-by-step tutorials and best practices.
 										</p>
@@ -73,12 +80,14 @@ export function DocsHeader() {
 
 						{/* Products */}
 						<NavigationMenuItem>
-							<NavigationMenuTrigger className={buttonVariants({ variant: "ghost", size: "sm" })}>
+							<NavigationMenuTrigger
+								className={buttonVariants({ variant: "ghost", size: "sm" })}
+							>
 								Products
 							</NavigationMenuTrigger>
 							<NavigationMenuContent>
 								<div className="grid gap-2 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-2">
-									<Link 
+									<Link
 										href={appUrls.chat}
 										target="_blank"
 										rel="noopener noreferrer"
@@ -89,11 +98,13 @@ export function DocsHeader() {
 											Interactive AI chat experiences.
 										</p>
 									</Link>
-									<Link 
+									<Link
 										href={appUrls.app}
 										className="block p-3 hover:bg-accent rounded-md"
 									>
-										<div className="text-sm font-medium leading-none">Dashboard</div>
+										<div className="text-sm font-medium leading-none">
+											Dashboard
+										</div>
 										<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
 											Manage your AI applications.
 										</p>
@@ -104,7 +115,10 @@ export function DocsHeader() {
 
 						{/* Pricing */}
 						<NavigationMenuItem>
-							<Link href="/pricing" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+							<Link
+								href="/pricing"
+								className={buttonVariants({ variant: "ghost", size: "sm" })}
+							>
 								Pricing
 							</Link>
 						</NavigationMenuItem>
@@ -114,15 +128,15 @@ export function DocsHeader() {
 
 			{/* Right side actions */}
 			<div className="flex items-center">
+				<SearchTrigger />
+				<div className="flex h-4 items-center mx-2">
+					<Separator orientation="vertical" />
+				</div>
 				<Button variant="outline" size="sm" asChild>
-					<Link href={authUrls.signIn}>
-						Login
-					</Link>
+					<Link href={authUrls.signIn}>Login</Link>
 				</Button>
 				<Button size="sm" className="ml-2" asChild>
-					<Link href={authUrls.signUp}>
-						Sign up
-					</Link>
+					<Link href={authUrls.signUp}>Sign up</Link>
 				</Button>
 				<div className="flex h-4 items-center mx-2">
 					<Separator orientation="vertical" />
@@ -145,3 +159,4 @@ export function DocsHeader() {
 		</header>
 	);
 }
+
