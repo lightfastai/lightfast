@@ -10,7 +10,7 @@ export function SearchTrigger() {
 		<Button
 			variant="outline"
 			size="xs"
-			className="relative w-9 p-0 xl:w-80 xl:justify-start xl:px-3 xl:py-2 border-border/50"
+			className="relative w-9 p-0 xl:w-80 xl:justify-start xl:px-3 xl:py-2 dark:border-border/50"
 			onClick={() => setOpenSearch(true)}
 		>
 			<span className="hidden xl:inline-flex text-muted-foreground/50 text-xs">
