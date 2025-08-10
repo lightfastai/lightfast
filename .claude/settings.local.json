@@ -118,7 +118,8 @@
       "WebFetch(domain:fumadocs.dev)",
       "Bash(pnpm --filter @lightfast/docs typecheck)",
       "mcp__playwright__browser_resize",
-      "mcp__playwright__browser_take_screenshot"
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(pnpm --filter @lightfast/cloud typecheck)"
     ],
     "deny": []
   },

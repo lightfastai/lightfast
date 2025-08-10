@@ -7,7 +7,7 @@ import { getDeploymentUrl, getBranchUrl, isVercel, type ProjectName } from "./pr
 export interface AppUrls {
   www: string;
   auth: string;
-  app: string;
+  cloud: string;
   chat: string;
   docs: string;
 }
@@ -18,7 +18,7 @@ export interface AppUrls {
 const PRODUCTION_URLS: AppUrls = {
   www: "https://lightfast.ai",
   auth: "https://auth.lightfast.ai",
-  app: "https://app.lightfast.ai",
+  cloud: "https://cloud.lightfast.ai",
   chat: "https://chat.lightfast.ai",
   docs: "https://docs.lightfast.ai",
 } as const;
@@ -29,7 +29,7 @@ const PRODUCTION_URLS: AppUrls = {
 const DEVELOPMENT_URLS: AppUrls = {
   www: "http://localhost:4101",
   auth: "http://localhost:4104",
-  app: "http://localhost:4103",
+  cloud: "http://localhost:4103",
   chat: "http://localhost:4106",
   docs: "http://localhost:3002",
 } as const;
@@ -65,7 +65,7 @@ export function getAllAppUrls(): AppUrls {
   return {
     www: getAppUrl("www"),
     auth: getAppUrl("auth"),
-    app: getAppUrl("app"),
+    cloud: getAppUrl("cloud"),
     chat: getAppUrl("chat"),
     docs: getAppUrl("docs"),
   };
@@ -80,8 +80,8 @@ export function getAuthUrls() {
   return {
     signIn: `${urls.auth}/sign-in`,
     signUp: `${urls.auth}/sign-up`,
-    afterSignIn: urls.app,
-    afterSignUp: urls.app,
+    afterSignIn: urls.cloud,
+    afterSignUp: urls.cloud,
     afterSignOut: urls.www,
   };
 }

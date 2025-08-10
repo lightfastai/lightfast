@@ -51,20 +51,25 @@ export function getCorsConfig(additionalOrigins: string[] = []): CorsConfig {
   const urls = getAllAppUrls();
   
   const allowedOrigins = [
-    urls.app,
+    urls.cloud,
     urls.www,
     urls.auth,
+    urls.chat,
+    urls.docs,
     // Add common variations
     "https://playground.lightfast.ai",
-    "https://app.lightfast.ai",
+    "https://cloud.lightfast.ai",
     "https://www.lightfast.ai",
     "https://auth.lightfast.ai",
+    "https://chat.lightfast.ai",
+    "https://docs.lightfast.ai",
     // Development URLs
     "http://localhost:4101", // www
     "http://localhost:4102", // darkarmy
-    "http://localhost:4103", // app
+    "http://localhost:4103", // cloud
     "http://localhost:4104", // auth
     "http://localhost:4105", // playground
+    "http://localhost:4106", // chat
     "http://localhost:3000", // common dev port
     "http://localhost:3001",
     "http://localhost:3002",

@@ -52,7 +52,7 @@ export function isCurrentApp(appName: ProjectName): boolean {
 /**
  * Get redirect URL after authentication
  */
-export function getRedirectUrl(defaultApp: ProjectName = "app"): string {
+export function getRedirectUrl(defaultApp: ProjectName = "cloud"): string {
   if (typeof window === "undefined") {
     return getAppUrl(defaultApp);
   }
@@ -68,7 +68,7 @@ export function getRedirectUrl(defaultApp: ProjectName = "app"): string {
       const allowedDomains = [
         "lightfast.ai",
         "auth.lightfast.ai",
-        "app.lightfast.ai",
+        "cloud.lightfast.ai",
         "localhost",
       ];
       

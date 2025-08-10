@@ -15,7 +15,7 @@ When setting up a new app, Claude Code should ask the user the following questio
 ### App Type Configuration
 Choose one of the following app types:
 
-#### 1. **Full App** (like `apps/app`)
+#### 1. **Full App** (like `apps/cloud`)
 - ✅ Clerk authentication with protected routes
 - ✅ Sentry error tracking
 - ✅ BetterStack logging

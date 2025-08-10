@@ -32,7 +32,7 @@ Lightfast is a monorepo containing multiple applications and packages:
 
 - **🌐 www** - Marketing website and landing pages
 - **🔐 auth** - Authentication service and user management  
-- **📱 app** - Main platform application
+- **☁️ cloud** - Main platform application
 - **🎮 playground** - Interactive agent playground and testing environment
 - **🧪 experimental** - Experimental features and prototypes
 - **🎨 darkarmy** - Binary matrix display application
@@ -106,7 +106,7 @@ Third-party integrations and services:
    ```bash
    # Copy environment files for each app you want to run
    cp apps/www/.env.example apps/www/.env.local
-   cp apps/app/.env.example apps/app/.env.local
+   cp apps/cloud/.env.example apps/cloud/.env.local
    # Edit .env.local files with your configuration
    ```
 
@@ -117,7 +117,7 @@ Third-party integrations and services:
    
    # Or start specific apps
    pnpm run dev:www      # Marketing site (port 4101)
-   pnpm run dev:app      # Main app
+   pnpm run dev:cloud    # Main cloud app
    pnpm run dev:playground # Playground
    pnpm run dev:docs     # Documentation
    ```
@@ -127,7 +127,7 @@ Third-party integrations and services:
 ### Development
 - `pnpm run dev` - Start main development servers (www, app, auth)
 - `pnpm run dev:www` - Marketing website (localhost:4101)
-- `pnpm run dev:app` - Main platform application
+- `pnpm run dev:cloud` - Main platform application
 - `pnpm run dev:auth` - Authentication service
 - `pnpm run dev:playground` - Agent playground
 - `pnpm run dev:experimental` - Experimental features
@@ -138,7 +138,7 @@ Third-party integrations and services:
 ### Building
 - `pnpm run build` - Build all applications
 - `pnpm run build:www` - Build marketing site only
-- `pnpm run build:app` - Build main app only
+- `pnpm run build:cloud` - Build cloud app only
 - `pnpm run build:auth` - Build auth service only
 - `pnpm run build:playground` - Build playground only
 - `pnpm run build:experimental` - Build experimental features only
@@ -197,7 +197,7 @@ ARCJET_KEY=your-arcjet-key
 
 Each application may require additional environment variables. Check each app's README for specific requirements:
 - `apps/www/README.md` - Marketing site configuration
-- `apps/app/README.md` - Main app configuration  
+- `apps/cloud/README.md` - Main cloud app configuration  
 - `apps/playground/README.md` - Playground configuration
 - `apps/chat/README.md` - Chat app configuration
 
@@ -207,7 +207,7 @@ Each application may require additional environment variables. Check each app's 
 lightfast/
 ├── apps/                       # Applications
 │   ├── www/                   # Marketing website
-│   ├── app/                   # Main platform app
+│   ├── cloud/                 # Main platform app
 │   ├── auth/                  # Authentication service
 │   ├── playground/            # Interactive playground
 │   ├── experimental/          # Experimental features
@@ -240,7 +240,7 @@ lightfast/
 ### Working with the Monorepo
 
 1. **Install dependencies**: `pnpm install` (root installs all workspaces)
-2. **Run specific app**: `pnpm run dev:www` or `pnpm run dev:app`
+2. **Run specific app**: `pnpm run dev:www` or `pnpm run dev:cloud`
 3. **Build specific app**: `pnpm run build:www`
 4. **Add dependency to specific app**: `pnpm add package-name --filter @lightfast/www`
 5. **Run script in specific app**: `pnpm --filter @lightfast/www run script-name`

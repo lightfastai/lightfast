@@ -8,7 +8,7 @@ See @SPEC.md for business goals and product vision.
 # App-specific build commands (NEVER use pnpm build for all packages)
 pnpm build:www      # Build www app only
 pnpm build:auth     # Build auth app only
-pnpm build:app      # Build app only
+pnpm build:cloud    # Build cloud app only
 pnpm build:darkarmy # Build darkarmy app only
 
 # Linting and formatting (global commands)

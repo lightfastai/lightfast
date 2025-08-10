@@ -24,7 +24,7 @@
     "studio": "pnpm with-env-lightfast drizzle-kit studio --config=./src/lightfast/drizzle.config.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --",
-    "with-env-lightfast": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
+    "with-env-lightfast": "dotenv -e ../../apps/cloud/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@planetscale/database": "^1.19.0",

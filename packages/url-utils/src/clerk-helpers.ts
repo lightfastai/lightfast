@@ -2,7 +2,7 @@ import { getAuthUrls, getClerkSubdomainConfig, type ProjectName } from "@repo/ve
 
 /**
  * Get Clerk configuration for a specific app in a subdomain setup
- * Handles redirects between subdomains (auth.lightfast.ai, app.lightfast.ai, etc.)
+ * Handles redirects between subdomains (auth.lightfast.ai, cloud.lightfast.ai, etc.)
  */
 export function getClerkConfig(appName: ProjectName) {
   const authUrls = getAuthUrls();
