@@ -1,15 +1,17 @@
 "use server";
 
 import { z } from "zod";
+import { redis, REDIS_KEYS } from "~/lib/redis";
 
-export interface WaitlistState {
-	success?: boolean;
-	message?: string;
-	error?: string;
-	fieldErrors?: {
-		email?: string[];
-	};
-}
+export type WaitlistState =
+	| { status: "idle" }
+	| { status: "success"; message: string }
+	| { status: "error"; error: string }
+	| {
+			status: "validation_error";
+			fieldErrors: { email?: string[] };
+			error: string;
+	  };
 
 const waitlistSchema = z.object({
 	email: z
@@ -20,41 +22,65 @@ const waitlistSchema = z.object({
 		.trim(),
 });
 
+interface WaitlistEntry {
+	email: string;
+	timestamp: string;
+}
+
 export async function joinWaitlistAction(
 	prevState: WaitlistState | null,
-	formData: FormData
+	formData: FormData,
 ): Promise<WaitlistState> {
 	try {
 		// Parse and validate form data
 		const validatedFields = waitlistSchema.safeParse({
 			email: formData.get("email"),
 		});
-		
+
 		// Return field errors if validation fails
 		if (!validatedFields.success) {
 			return {
-				success: false,
+				status: "validation_error",
 				fieldErrors: validatedFields.error.flatten().fieldErrors,
-				error: "Please fix the errors below"
+				error: "Please fix the errors below",
 			};
 		}
-		
-		const { email: _email } = validatedFields.data;
-		
-		// TODO: Implement actual waitlist logic (save to database, send to CRM, etc.)
-		// For now, just simulate a delay and return success
-		await new Promise(resolve => setTimeout(resolve, 1000));
-		
-		
+
+		const { email } = validatedFields.data;
+
+		// Check if email already exists in the hash
+		const exists = await redis.hexists(REDIS_KEYS.WAITLIST, email);
+		if (exists) {
+			return {
+				status: "error",
+				error: "This email is already on the waitlist!",
+			};
+		}
+
+		// Create waitlist entry
+		const entry: WaitlistEntry = {
+			email,
+			timestamp: new Date().toISOString(),
+		};
+
+		// Add to hash (field = email, value = JSON data)
+		await redis.hset(REDIS_KEYS.WAITLIST, {
+			[email]: JSON.stringify(entry),
+		});
+
 		return {
-			success: true,
-			message: "Successfully joined the waitlist! We'll notify you when Lightfast Cloud is ready."
+			status: "success",
+			message:
+				"Successfully joined the waitlist! We'll notify you when Lightfast Cloud is ready.",
 		};
 	} catch (error) {
 		console.error("Waitlist error:", error);
 		return {
-			success: false,
-			error: error instanceof Error ? error.message : "Something went wrong. Please try again."
+			status: "error",
+			error:
+				error instanceof Error
+					? error.message
+					: "Something went wrong. Please try again.",
 		};
 	}
 }

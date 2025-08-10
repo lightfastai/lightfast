@@ -20,10 +20,10 @@ function SubmitButton() {
 }
 
 export function WaitlistForm() {
-	const [state, formAction] = useActionState(joinWaitlistAction, null);
+	const [state, formAction] = useActionState(joinWaitlistAction, { status: "idle" });
 	const wwwUrl = getAppUrl("www");
 
-	if (state?.success) {
+	if (state.status === "success") {
 		return (
 			<>
 				<ConfettiWrapper />
@@ -49,14 +49,14 @@ export function WaitlistForm() {
 					placeholder="placeholder@example.com"
 					required
 					aria-describedby="email-error"
-					aria-invalid={!!state?.fieldErrors?.email}
+					aria-invalid={state.status === "validation_error" && !!state.fieldErrors.email}
 				/>
-				{state?.fieldErrors?.email && (
+				{state.status === "validation_error" && state.fieldErrors.email && (
 					<p id="email-error" className="text-xs text-destructive">
 						{state.fieldErrors.email[0]}
 					</p>
 				)}
-				{state?.error && !state.fieldErrors && (
+				{state.status === "error" && (
 					<p className="text-xs text-destructive">{state.error}</p>
 				)}
 				<SubmitButton />

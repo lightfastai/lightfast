@@ -4,12 +4,14 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { upstashEnv } from "@vendor/upstash/env";
 
 export const env = createEnv({
   extends: [
     vercel(),
     clerkEnvBase,
     sentryEnv,
+    upstashEnv,
   ],
   shared: {
     NODE_ENV: z
