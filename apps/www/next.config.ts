@@ -53,9 +53,9 @@ let config: NextConfig = withBetterStack(
 		// Rewrites for docs app
 		async rewrites() {
 			const docsUrl =
-				process.env.NODE_ENV === "development"
+				env.VERCEL_ENV === "development"
 					? "http://localhost:3002"
-					: "https://docs.lightfast.ai";
+					: "https://lightfast-docs.vercel.app";
 
 			return [
 				{
