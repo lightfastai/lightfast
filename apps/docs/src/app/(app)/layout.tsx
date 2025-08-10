@@ -13,7 +13,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 				<CustomSidebar tree={pageTree} />
 				<div className="flex-1 bg-muted/20 border border-border/30 rounded-md mx-2 mb-2 overflow-hidden">
 					<ScrollArea className="h-full">
-						<main className="min-h-full p-8">
+						<main className="min-h-full py-2">
 							<div className="max-w-4xl mx-auto app-container">{children}</div>
 						</main>
 					</ScrollArea>

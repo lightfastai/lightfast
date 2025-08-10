@@ -18,13 +18,15 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
 	if (!tree) return null;
 
 	return (
-		<aside className={cn("max-lg:hidden w-64 h-full bg-background", className)}>
+		<aside
+			className={cn("max-lg:hidden w-64 py-4 h-full bg-background", className)}
+		>
 			<ScrollArea className="h-full">
 				<nav className="px-4 lg:px-6">
 					<div className="space-y-4">
 						{tree.children.map((item, index) => (
 							<div key={item.$id ?? `item-${index}`} className="space-y-2">
-								<div className="text-xs font-semibold px-2 text-muted-foreground tracking-wider">
+								<div className="text-xs font-semibold px-3 text-muted-foreground tracking-wider">
 									{item.name}
 								</div>
 								{item.type === "folder" && (
