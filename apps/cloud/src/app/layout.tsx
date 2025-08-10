@@ -90,7 +90,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const clerkConfig = getClerkConfig("app");
+  const clerkConfig = getClerkConfig("cloud");
 
   return (
     <ClerkProvider

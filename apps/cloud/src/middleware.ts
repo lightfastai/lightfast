@@ -3,7 +3,7 @@ import { getClerkMiddlewareConfig, handleCorsPreflightRequest, applyCorsHeaders 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const clerkConfig = getClerkMiddlewareConfig("app");
+const clerkConfig = getClerkMiddlewareConfig("cloud");
 
 // Define protected routes - everything except public routes should require auth
 const isPublicRoute = createRouteMatcher([
