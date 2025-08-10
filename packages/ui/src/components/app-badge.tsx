@@ -3,12 +3,17 @@ import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
-} from "@repo/ui/components/ui/popover";
+} from "./ui/popover";
 
-export function PlaygroundBadge() {
+interface AppBadgeProps {
+	title: string;
+	description: string;
+}
+
+export function AppBadge({ title, description }: AppBadgeProps) {
 	return (
 		<div className="flex items-center gap-1 mb-2">
-			<h1 className="font-mono text-xs text-muted-foreground">Playground</h1>
+			<h1 className="font-mono text-xs text-muted-foreground">{title}</h1>
 			<Popover>
 				<PopoverTrigger asChild>
 					<button type="button" className="hover:opacity-70 transition-opacity">
@@ -16,13 +21,9 @@ export function PlaygroundBadge() {
 					</button>
 				</PopoverTrigger>
 				<PopoverContent side="right" className="w-80">
-					<p className="text-sm">
-						This is the Lightfast playground. Test and experiment with AI agent
-						capabilities in a safe environment.
-					</p>
+					<p className="text-sm">{description}</p>
 				</PopoverContent>
 			</Popover>
 		</div>
 	);
 }
-

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChatInput } from "./chat-input";
 import { BrowserContainer } from "./browser-container";
-import { EmptyState } from "./empty-state";
+import { AppEmptyState } from "@repo/ui/components/app-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { PlaygroundHeader } from "./playground-header";
 import { PlaygroundLayout } from "./layouts/playground-layout";
@@ -90,7 +90,10 @@ function PlaygroundInterfaceInner({
 			<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 				<div className="w-full max-w-3xl px-4 pointer-events-auto">
 					<div className="px-4">
-						<EmptyState />
+						<AppEmptyState 
+							title="Playground"
+							description="This is the Lightfast playground. Test and experiment with AI agent capabilities in a safe environment."
+						/>
 					</div>
 					<ChatInput
 						onSendMessage={handleSendMessage}

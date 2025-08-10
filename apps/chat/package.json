@@ -23,6 +23,7 @@
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vercel/toolbar": "^0.1.28",
+    "lucide-react": "catalog:",
     "nanoid": "^5.1.5",
     "next": "catalog:",
     "react": "catalog:react19",
