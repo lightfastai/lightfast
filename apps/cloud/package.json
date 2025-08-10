@@ -27,6 +27,7 @@
     "nanoid": "^5.1.5",
     "next": "catalog:",
     "react": "catalog:react19",
+    "react-confetti": "^6.4.0",
     "react-dom": "catalog:react19",
     "zod": "catalog:"
   },

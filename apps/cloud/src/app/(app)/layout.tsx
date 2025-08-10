@@ -1,27 +1,28 @@
-import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
-import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
-import { Suspense } from "react";
-import { ServerSidebarImplementation } from "~/components/sidebar/server-sidebar-implementation";
-import { SidebarSkeleton } from "~/components/sidebar/sidebar-skeleton";
+import Link from "next/link";
+import { Icons } from "@repo/ui/components/icons";
+import { Button } from "@repo/ui/components/ui/button";
+import { getAppUrl } from "@repo/url-utils";
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <TooltipProvider>
-      <SidebarProvider defaultOpen={false}>
-        <div className="flex h-screen w-full bg-background">
-          <Suspense fallback={<SidebarSkeleton />}>
-            <ServerSidebarImplementation />
-          </Suspense>
-          <div className="flex border-l border-muted/30 flex-col w-full">
-            {/* Content area */}
-            <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
-          </div>
-        </div>
-      </SidebarProvider>
-    </TooltipProvider>
-  );
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+	const chatUrl = getAppUrl("chat");
+	const wwwUrl = getAppUrl("www");
+
+	return (
+		<div className="min-h-screen bg-background relative">
+			<header className="absolute top-0 left-0 right-0 z-10">
+				<div className="max-w-5xl mx-auto px-4 py-12 flex items-center justify-between">
+					<Link href={wwwUrl} className="flex items-center">
+						<Icons.logo className="h-5 w-auto" />
+					</Link>
+
+					<Button variant="secondary" size="lg" asChild>
+						<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
+							Go to Lightfast Chat
+						</Link>
+					</Button>
+				</div>
+			</header>
+			<main className="h-screen">{children}</main>
+		</div>
+	);
 }
