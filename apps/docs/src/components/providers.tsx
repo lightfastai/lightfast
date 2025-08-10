@@ -18,17 +18,19 @@ export function Providers({ children }: ProvidersProps) {
 			search={{
 				enabled: true,
 				SearchDialog,
-				api: "/docs/api/search", // API path with basePath
+				options: {
+					api: "/docs/api/search", // Full path needed for multizone
+				},
 				hotKey: [
 					{
 						display: "K",
 						key: "k",
 					},
 				],
-				placeholder: "Search documentation...",
 			}}
 		>
 			{children}
 		</RootProvider>
 	);
 }
+
