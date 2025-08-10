@@ -8,14 +8,14 @@ import { NewChatButton } from "./new-chat-button";
 
 export function PlaygroundHeader() {
   return (
-    <header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-background">
+    <header className="h-14 flex items-center justify-between app-container bg-background">
       <div className="flex items-center">
         <Button variant="outline" size="xs" asChild>
           <Link href={appUrl}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div className="flex h-4 items-center mx-4">
+        <div className="flex h-4 items-center px-4">
           <Separator orientation="vertical" />
         </div>
         <NewChatButton className="hidden lg:flex" />
