@@ -49,25 +49,26 @@ let config: NextConfig = withBetterStack(
 			// Faster navigation for production
 			// ppr: true,
 		},
-		
+
 		// Rewrites for docs app
 		async rewrites() {
-			const docsUrl = process.env.NODE_ENV === 'development' 
-				? 'http://localhost:3002'
-				: 'https://docs.lightfast.ai';
-			
+			const docsUrl =
+				process.env.NODE_ENV === "development"
+					? "http://localhost:3002"
+					: "https://docs.lightfast.ai";
+
 			return [
 				{
-					source: '/docs',
+					source: "/docs",
 					destination: `${docsUrl}/docs`,
 				},
 				{
-					source: '/docs/:path*',
+					source: "/docs/:path*",
 					destination: `${docsUrl}/docs/:path*`,
 				},
 			];
 		},
-	})
+	}),
 );
 
 if (env.VERCEL) {

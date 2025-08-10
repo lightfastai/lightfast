@@ -112,7 +112,13 @@
       "WebFetch(domain:docs.convex.dev)",
       "Bash(npx convex deploy:*)",
       "Bash(SKIP_ENV_VALIDATION=true pnpm build:www)",
-      "Bash(SKIP_ENV_VALIDATION=true pnpm build)"
+      "Bash(SKIP_ENV_VALIDATION=true pnpm build)",
+      "Bash(cat:*)",
+      "WebFetch(domain:fumadocs.vercel.app)",
+      "WebFetch(domain:fumadocs.dev)",
+      "Bash(pnpm --filter @lightfast/docs typecheck)",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_take_screenshot"
     ],
     "deny": []
   },

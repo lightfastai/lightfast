@@ -1,18 +1,19 @@
+import "@repo/ui/globals.css";
 import "./globals.css";
+import "fumadocs-ui/style.css";
 import { docsMetadata, siteConfig } from "@/src/lib/site-config";
 import { fonts } from "@repo/ui/lib/fonts";
-import { RootProvider } from "fumadocs-ui/provider";
+import { cn } from "@repo/ui/lib/utils";
+import { Providers } from "@/src/components/providers";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { DocsLayoutWrapper } from "../components/docs-layout-wrapper";
 
 export default function Layout({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en" className={fonts} suppressHydrationWarning>
-			<body className="min-h-screen bg-background text-foreground antialiased">
-				<RootProvider>
-					<DocsLayoutWrapper>{children}</DocsLayoutWrapper>
-				</RootProvider>
+		<html lang="en" suppressHydrationWarning>
+			<head />
+			<body className={cn("bg-background min-h-screen dark", fonts)}>
+				<Providers>{children}</Providers>
 			</body>
 		</html>
 	);

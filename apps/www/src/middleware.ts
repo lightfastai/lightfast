@@ -15,6 +15,7 @@ const clerkConfig = getClerkMiddlewareConfig("www");
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/pricing",
   "/api/health", 
   "/api/early-access/(.*)",
   "/legal/(.*)",

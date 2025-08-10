@@ -104,15 +104,15 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html lang="en" className="dark">
 			<head />
-			<body className={cn("bg-background dark min-h-screen", fonts)}>
-				<PostHogProvider baseUrl={createBaseUrl()}>
-					{children}
-					<Toaster />
-					<VercelAnalytics />
-					<SpeedInsights />
-				</PostHogProvider>
+			<body className={cn("bg-background min-h-screen dark", fonts)}>
+					<PostHogProvider baseUrl={createBaseUrl()}>
+						{children}
+						<Toaster />
+						<VercelAnalytics />
+						<SpeedInsights />
+					</PostHogProvider>
 			</body>
 		</html>
 	);
