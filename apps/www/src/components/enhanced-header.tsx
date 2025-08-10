@@ -14,26 +14,27 @@ import {
 	NavigationMenuList,
 	NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
-import { getAuthUrls } from "@repo/url-utils";
+import { getAuthUrls, getAppUrl } from "@repo/url-utils";
 
 export function EnhancedHeader() {
 	const { theme, setTheme } = useTheme();
 	const [mounted, setMounted] = React.useState(false);
 	const authUrls = getAuthUrls();
+	const chatUrl = getAppUrl("chat");
 
 	React.useEffect(() => {
 		setMounted(true);
 	}, []);
 
 	return (
-		<header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-background">
+		<header className="h-14 flex items-center justify-between app-container bg-background">
 			<div className="flex items-center">
 				<Button variant="outline" size="xs" asChild>
 					<Link href="/">
 						<Icons.logoShort className="h-4 w-4" />
 					</Link>
 				</Button>
-				<div className="flex h-4 items-center mx-4">
+				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
 
@@ -59,7 +60,7 @@ export function EnhancedHeader() {
 										</p>
 									</Link>
 									<Link 
-										href="https://chat.lightfast.ai" 
+										href={chatUrl} 
 										target="_blank"
 										rel="noopener noreferrer"
 										className="block p-3 hover:bg-accent rounded-md"
@@ -71,6 +72,13 @@ export function EnhancedHeader() {
 									</Link>
 								</div>
 							</NavigationMenuContent>
+						</NavigationMenuItem>
+
+						{/* Docs */}
+						<NavigationMenuItem>
+							<Link href="/docs" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+								Docs
+							</Link>
 						</NavigationMenuItem>
 
 						{/* Pricing */}
@@ -95,7 +103,7 @@ export function EnhancedHeader() {
 						Sign up
 					</Link>
 				</Button>
-				<div className="flex h-4 items-center mx-2">
+				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
 				<Button variant="ghost" size="xs" asChild>
@@ -108,7 +116,7 @@ export function EnhancedHeader() {
 						<span className="sr-only">GitHub</span>
 					</Link>
 				</Button>
-				<div className="flex h-4 items-center mx-2">
+				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
 				<Button 

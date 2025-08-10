@@ -1,0 +1,8 @@
+{
+  "title": "Get Started",
+  "description": "Get started with Lightfast",
+  "defaultOpen": true,
+  "pages": [
+    "overview"
+  ]
+}

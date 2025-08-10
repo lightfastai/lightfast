@@ -5,29 +5,37 @@ import { Separator } from "@repo/ui/components/ui/separator";
 import { getAuthUrls, getAllAppUrls } from "@repo/url-utils";
 import { ThemeToggle } from "./theme-toggle";
 import { SearchTrigger } from "./search-trigger";
-import { SidebarTrigger } from "./sidebar-trigger";
 
 export function DocsHeader() {
 	const authUrls = getAuthUrls();
 	const appUrls = getAllAppUrls();
 
 	return (
-		<header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-background">
-			<div className="flex items-center gap-4">
-				<div className="flex items-center pr-4 border-r">
-					<Button variant="outline" size="xs" asChild>
-						<Link href={appUrls.www}>
-							<Icons.logoShort className="h-4 w-4" />
-						</Link>
-					</Button>
-				</div>
-				<SidebarTrigger />
+		<header className="h-14 flex items-center justify-between app-container bg-background">
+			<div className="flex items-center">
+				<Button variant="outline" size="xs" asChild>
+					<Link href={appUrls.www}>
+						<Icons.logoShort className="h-4 w-4" />
+					</Link>
+				</Button>
 			</div>
 
 			{/* Right side actions */}
 			<div className="flex items-center">
+				{/* Navigation Links */}
+				<nav className="flex items-center gap-2">
+					<Button variant="ghost" size="sm" asChild>
+						<Link href="/get-started/overview">Docs</Link>
+					</Button>
+				</nav>
+
+				<div className="flex h-4 items-center px-4">
+					<Separator orientation="vertical" />
+				</div>
+
 				<SearchTrigger />
-				<div className="flex h-4 items-center mx-2">
+
+				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
 				<Button variant="outline" size="sm" asChild>
@@ -36,7 +44,7 @@ export function DocsHeader() {
 				<Button size="sm" className="ml-2" asChild>
 					<Link href={authUrls.signUp}>Sign up</Link>
 				</Button>
-				<div className="flex h-4 items-center mx-2">
+				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
 				<Button variant="ghost" size="xs" asChild>
@@ -49,7 +57,7 @@ export function DocsHeader() {
 						<span className="sr-only">GitHub</span>
 					</Link>
 				</Button>
-				<div className="flex h-4 items-center mx-2">
+				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
 				<ThemeToggle />
@@ -57,4 +65,3 @@ export function DocsHeader() {
 		</header>
 	);
 }
-
