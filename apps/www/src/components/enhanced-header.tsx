@@ -13,11 +13,11 @@ import {
 	NavigationMenuList,
 	NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
-import { getAuthUrls, getAppUrl } from "@repo/url-utils";
+import { getAppUrl } from "@repo/url-utils";
 
 export function EnhancedHeader() {
-	const authUrls = getAuthUrls();
 	const chatUrl = getAppUrl("chat");
+	const cloudUrl = getAppUrl("cloud");
 
 	return (
 		<header className="h-14 flex items-center justify-between app-container bg-background">
@@ -44,7 +44,7 @@ export function EnhancedHeader() {
 							<NavigationMenuContent>
 								<div className="grid gap-2 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
 									<Link
-										href="/products/cloud"
+										href={cloudUrl}
 										className="row-span-3 from-muted/50 to-muted flex h-full w-full flex-col justify-end rounded-md bg-gradient-to-b p-6 no-underline outline-none select-none focus:shadow-md hover:opacity-90"
 									>
 										<div className="mt-4 mb-2 text-lg font-medium">Cloud</div>
@@ -93,11 +93,8 @@ export function EnhancedHeader() {
 
 			{/* Right side actions */}
 			<div className="flex items-center">
-				<Button variant="outline" size="sm" asChild>
-					<Link href={authUrls.signIn}>Login</Link>
-				</Button>
-				<Button size="sm" className="ml-2" asChild>
-					<Link href={authUrls.signUp}>Sign up</Link>
+				<Button size="sm" asChild>
+					<Link href={chatUrl}>Try Chat</Link>
 				</Button>
 				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 import { log } from "@vendor/observability/log";
-import { getAllAppUrls, getClerkMiddlewareConfig } from "@repo/url-utils";
+import { getClerkMiddlewareConfig } from "@repo/url-utils";
 
 import {
   generateSignedRequestId,
@@ -32,13 +32,8 @@ export const middleware = clerkMiddleware(async (auth, request: NextRequest) => 
     await auth.protect();
   }
   
-  const { userId } = await auth();
-  
-  // If user is authenticated and on landing page, redirect to app
-  if (userId && request.nextUrl.pathname === "/") {
-    const urls = getAllAppUrls();
-    return NextResponse.redirect(new URL(urls.cloud));
-  }
+  // Removed redirect for authenticated users on landing page
+  // Users can now access the homepage even when logged in
 
   // Generate a new request ID for all requests if one doesn't exist
   const existingRequestId = request.headers.get(REQUEST_ID_HEADER);

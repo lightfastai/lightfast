@@ -36,8 +36,8 @@ export const siteConfig: SiteConfig<SiteLinks> = {
       href: "https://lightfast.ai/legal/terms",
     },
     chat: {
-      title: "Get Started",
-      href: getAllAppUrls().auth,
+      title: "Try Chat",
+      href: getAllAppUrls().chat,
     },
   },
   location: "3141, Melbourne, VIC, Australia",
