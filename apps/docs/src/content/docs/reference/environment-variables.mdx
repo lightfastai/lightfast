@@ -1,0 +1,70 @@
+---
+title: Environment Variables
+description: Environment variable reference
+---
+
+# Environment Variables
+
+Complete list of environment variables for Lightfast configuration.
+
+## Core Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LIGHTFAST_API_KEY` | API authentication key | Required |
+| `LIGHTFAST_ENV` | Environment (dev/staging/prod) | `production` |
+| `LIGHTFAST_REGION` | Deployment region | `us-east-1` |
+| `LIGHTFAST_LOG_LEVEL` | Logging verbosity | `info` |
+
+## Model Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LIGHTFAST_MODEL_PROVIDER` | LLM provider | `openai` |
+| `LIGHTFAST_MODEL_NAME` | Model name | `gpt-4` |
+| `LIGHTFAST_MODEL_TEMPERATURE` | Temperature | `0.7` |
+| `LIGHTFAST_MODEL_MAX_TOKENS` | Max tokens | `4000` |
+
+## Resource Limits
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LIGHTFAST_MAX_CONCURRENT` | Max concurrent executions | `100` |
+| `LIGHTFAST_TIMEOUT` | Execution timeout (ms) | `30000` |
+| `LIGHTFAST_MEMORY_LIMIT` | Memory limit (MB) | `1024` |
+| `LIGHTFAST_CPU_LIMIT` | CPU limit (cores) | `2` |
+
+## Security
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LIGHTFAST_ENABLE_AUTH` | Enable authentication | `true` |
+| `LIGHTFAST_CORS_ORIGIN` | CORS allowed origins | `*` |
+| `LIGHTFAST_RATE_LIMIT` | Requests per minute | `60` |
+| `LIGHTFAST_ENCRYPTION_KEY` | Data encryption key | Generated |
+
+## Monitoring
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LIGHTFAST_METRICS_ENABLED` | Enable metrics | `true` |
+| `LIGHTFAST_TRACING_ENABLED` | Enable tracing | `false` |
+| `LIGHTFAST_ALERTS_WEBHOOK` | Alert webhook URL | - |
+
+## Database
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LIGHTFAST_DB_URL` | Database connection URL | - |
+| `LIGHTFAST_DB_POOL_SIZE` | Connection pool size | `20` |
+| `LIGHTFAST_REDIS_URL` | Redis connection URL | - |
+
+## External Services
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OPENAI_API_KEY` | OpenAI API key | - |
+| `ANTHROPIC_API_KEY` | Anthropic API key | - |
+| `GOOGLE_AI_API_KEY` | Google AI API key | - |
+
+Environment variables make configuration portable!

@@ -1,0 +1,11 @@
+{
+  "title": "Advanced Topics",
+  "description": "Advanced concepts and techniques",
+  "pages": [
+    "performance",
+    "security",
+    "testing",
+    "debugging",
+    "optimization"
+  ]
+}

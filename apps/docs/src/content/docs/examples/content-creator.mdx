@@ -1,0 +1,158 @@
+---
+title: Content Creator
+description: AI agent for content generation
+---
+
+# Content Creator Agent
+
+Build an AI content creator that generates articles, social media posts, and marketing copy.
+
+## Setup
+
+```typescript
+const contentCreator = new Agent({
+  name: 'content-creator',
+  model: 'gpt-4',
+  tools: ['web-search', 'image-generator', 'seo-analyzer'],
+  instructions: `
+    Create engaging, original content.
+    Optimize for SEO and readability.
+    Match brand voice and tone.
+  `
+});
+```
+
+## Blog Post Generation
+
+```typescript
+async function createBlogPost(topic: string, keywords: string[]) {
+  // Research topic
+  const research = await contentCreator.execute({
+    input: `Research: ${topic}`,
+    tools: ['web-search']
+  });
+  
+  // Generate outline
+  const outline = await contentCreator.execute({
+    input: 'Create detailed blog outline',
+    context: { topic, research, keywords }
+  });
+  
+  // Write content
+  const content = await contentCreator.execute({
+    input: 'Write comprehensive blog post',
+    context: { outline, research },
+    parameters: {
+      wordCount: 1500,
+      tone: 'professional',
+      includeExamples: true
+    }
+  });
+  
+  return {
+    title: content.title,
+    content: content.body,
+    meta: content.seoMeta,
+    keywords: content.keywords
+  };
+}
+```
+
+## Social Media Management
+
+```typescript
+class SocialMediaAgent {
+  async createCampaign(product: string, platforms: string[]) {
+    const posts = {};
+    
+    for (const platform of platforms) {
+      posts[platform] = await contentCreator.execute({
+        input: `Create ${platform} post for ${product}`,
+        parameters: {
+          platform,
+          includeHashtags: true,
+          optimizeFor: this.getPlatformGoals(platform)
+        }
+      });
+    }
+    
+    return {
+      posts,
+      schedule: this.optimizeSchedule(posts),
+      hashtags: this.extractHashtags(posts)
+    };
+  }
+}
+```
+
+## Email Campaigns
+
+```typescript
+async function createEmailCampaign(audience: string, goal: string) {
+  const campaign = await contentCreator.execute({
+    input: 'Design email campaign',
+    context: { audience, goal },
+    parameters: {
+      emails: 5, // sequence length
+      personalization: true,
+      abTesting: true
+    }
+  });
+  
+  return {
+    sequence: campaign.emails,
+    subjectLines: campaign.subjects,
+    schedule: campaign.timing,
+    segments: campaign.audienceSegments
+  };
+}
+```
+
+## SEO Optimization
+
+```typescript
+const seoOptimizer = new Agent({
+  tools: ['seo-analyzer', 'keyword-researcher'],
+  
+  async optimizeContent(content: string, targetKeywords: string[]) {
+    const analysis = await this.analyzeSEO(content);
+    
+    const optimized = await this.execute({
+      input: 'Optimize content for SEO',
+      context: { content, analysis, targetKeywords }
+    });
+    
+    return {
+      content: optimized.content,
+      score: optimized.seoScore,
+      improvements: optimized.changes,
+      metadata: optimized.meta
+    };
+  }
+});
+```
+
+## Video Script Writing
+
+```typescript
+async function createVideoScript(topic: string, duration: number) {
+  const script = await contentCreator.execute({
+    input: `Write ${duration}-minute video script about ${topic}`,
+    parameters: {
+      format: 'youtube',
+      includeHooks: true,
+      includeCTA: true,
+      optimizeRetention: true
+    }
+  });
+  
+  return {
+    script: script.text,
+    shots: script.shotList,
+    graphics: script.graphicSuggestions,
+    duration: script.estimatedDuration
+  };
+}
+```
+
+Create compelling content at scale with AI!

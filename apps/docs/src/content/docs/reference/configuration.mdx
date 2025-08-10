@@ -1,0 +1,90 @@
+---
+title: Configuration Reference
+description: Complete configuration options
+---
+
+# Configuration Reference
+
+All configuration options for Lightfast agents and deployments.
+
+## Agent Configuration
+
+```typescript
+interface AgentConfig {
+  // Required
+  name: string;
+  model: ModelConfig;
+  
+  // Optional
+  description?: string;
+  instructions?: string;
+  tools?: string[];
+  constraints?: ConstraintConfig;
+  monitoring?: MonitoringConfig;
+  security?: SecurityConfig;
+}
+```
+
+## Model Configuration
+
+```typescript
+interface ModelConfig {
+  provider: 'openai' | 'anthropic' | 'google';
+  name: string;
+  temperature?: number; // 0.0 - 2.0
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+}
+```
+
+## Environment Configuration
+
+```yaml
+# lightfast.yaml
+version: 1
+name: my-project
+
+agents:
+  - name: assistant
+    model: gpt-4
+    tools:
+      - web-search
+      - calculator
+
+deployment:
+  environment: production
+  region: us-east-1
+  scaling:
+    min: 2
+    max: 10
+
+monitoring:
+  provider: datadog
+  alerts: true
+```
+
+## Security Configuration
+
+```json
+{
+  "security": {
+    "authentication": {
+      "type": "api-key",
+      "rotation": "90d"
+    },
+    "encryption": {
+      "atRest": true,
+      "inTransit": true,
+      "algorithm": "AES-256-GCM"
+    },
+    "firewall": {
+      "allowedIPs": ["10.0.0.0/8"],
+      "blockedIPs": []
+    }
+  }
+}
+```
+
+Configure once, run anywhere!

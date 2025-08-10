@@ -1,0 +1,9 @@
+{
+  "title": "Reference",
+  "description": "Technical reference documentation",
+  "pages": [
+    "configuration",
+    "environment-variables",
+    "error-codes"
+  ]
+}

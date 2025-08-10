@@ -1,0 +1,11 @@
+{
+  "title": "API Reference",
+  "description": "Complete API documentation",
+  "pages": [
+    "overview",
+    "agents",
+    "tools",
+    "workflows",
+    "webhooks"
+  ]
+}

@@ -1,0 +1,353 @@
+---
+title: Building Your First Agent
+description: Complete guide to building a production-ready agent
+---
+
+# Building Your First Agent
+
+This comprehensive guide walks you through building a production-ready agent from scratch.
+
+## Planning Your Agent
+
+Before writing code, consider:
+- What tasks will the agent perform?
+- What tools does it need?
+- What constraints should be enforced?
+- How will errors be handled?
+
+## Basic Agent Structure
+
+```typescript
+import { Agent, Tool } from '@lightfast/sdk';
+
+const myAgent = new Agent({
+  // Identity
+  name: 'data-analyst',
+  description: 'Analyzes data and generates insights',
+  
+  // Model configuration
+  model: {
+    provider: 'openai',
+    name: 'gpt-4',
+    temperature: 0.7,
+    maxTokens: 2000
+  },
+  
+  // Capabilities
+  tools: ['sql-query', 'chart-generator', 'web-search'],
+  
+  // Instructions
+  instructions: `
+    You are a data analyst specializing in business intelligence.
+    Always validate data before analysis.
+    Provide actionable insights with your findings.
+  `,
+  
+  // Constraints
+  constraints: {
+    maxExecutionTime: 300, // seconds
+    maxToolCalls: 20,
+    allowedDomains: ['*.company.com']
+  }
+});
+```
+
+## Adding Custom Tools
+
+### Tool Definition
+
+```typescript
+const sqlTool: Tool = {
+  name: 'sql-query',
+  description: 'Execute SQL queries on the data warehouse',
+  
+  parameters: {
+    query: {
+      type: 'string',
+      description: 'SQL query to execute',
+      required: true
+    },
+    database: {
+      type: 'string',
+      description: 'Target database',
+      enum: ['analytics', 'production'],
+      default: 'analytics'
+    }
+  },
+  
+  handler: async ({ query, database }) => {
+    // Validate query
+    if (!isValidSQL(query)) {
+      throw new Error('Invalid SQL syntax');
+    }
+    
+    // Execute query
+    const results = await db.query(query, { database });
+    
+    return {
+      success: true,
+      data: results,
+      rowCount: results.length
+    };
+  }
+};
+
+myAgent.addTool(sqlTool);
+```
+
+## Implementing Conversations
+
+### Stateful Conversations
+
+```typescript
+class ConversationAgent {
+  private agent: Agent;
+  private history: Message[] = [];
+  
+  async send(message: string): Promise<string> {
+    // Add user message to history
+    this.history.push({
+      role: 'user',
+      content: message
+    });
+    
+    // Get response with context
+    const response = await this.agent.run({
+      message,
+      context: this.history
+    });
+    
+    // Add assistant response to history
+    this.history.push({
+      role: 'assistant',
+      content: response.content
+    });
+    
+    return response.content;
+  }
+  
+  reset() {
+    this.history = [];
+  }
+}
+```
+
+## Error Handling
+
+### Comprehensive Error Strategy
+
+```typescript
+const resilientAgent = new Agent({
+  name: 'resilient-agent',
+  
+  errorHandling: {
+    retry: {
+      maxAttempts: 3,
+      backoff: 'exponential',
+      retryableErrors: ['RATE_LIMIT', 'TIMEOUT']
+    },
+    
+    fallback: {
+      enabled: true,
+      model: 'gpt-3.5-turbo' // Fallback to faster model
+    },
+    
+    hooks: {
+      onError: async (error) => {
+        console.error('Agent error:', error);
+        await metrics.increment('agent.errors');
+        
+        if (error.severity === 'critical') {
+          await alerting.send({
+            message: `Critical error in ${error.agent}`,
+            details: error
+          });
+        }
+      }
+    }
+  }
+});
+```
+
+## Testing Your Agent
+
+### Unit Tests
+
+```typescript
+describe('DataAnalystAgent', () => {
+  let agent: Agent;
+  
+  beforeEach(() => {
+    agent = new Agent({
+      name: 'test-agent',
+      model: 'gpt-3.5-turbo',
+      tools: ['mock-tool']
+    });
+  });
+  
+  test('handles basic queries', async () => {
+    const response = await agent.run({
+      message: 'What is 2+2?'
+    });
+    
+    expect(response.content).toContain('4');
+  });
+  
+  test('uses tools correctly', async () => {
+    const mockTool = jest.fn().mockResolvedValue({
+      data: [1, 2, 3]
+    });
+    
+    agent.addTool({
+      name: 'mock-tool',
+      handler: mockTool
+    });
+    
+    await agent.run({
+      message: 'Use the mock tool'
+    });
+    
+    expect(mockTool).toHaveBeenCalled();
+  });
+});
+```
+
+### Integration Tests
+
+```typescript
+test('end-to-end workflow', async () => {
+  const agent = createProductionAgent();
+  
+  // Test complete workflow
+  const result = await agent.run({
+    message: 'Analyze last quarter sales data',
+    timeout: 60000
+  });
+  
+  expect(result).toHaveProperty('analysis');
+  expect(result).toHaveProperty('charts');
+  expect(result).toHaveProperty('recommendations');
+});
+```
+
+## Performance Optimization
+
+### Caching Strategy
+
+```typescript
+const cachedAgent = new Agent({
+  name: 'cached-agent',
+  
+  cache: {
+    enabled: true,
+    ttl: 3600, // 1 hour
+    
+    keyGenerator: (input) => {
+      return crypto
+        .createHash('sha256')
+        .update(JSON.stringify(input))
+        .digest('hex');
+    },
+    
+    shouldCache: (input, output) => {
+      // Only cache successful, deterministic responses
+      return output.success && !input.realtime;
+    }
+  }
+});
+```
+
+### Token Optimization
+
+```typescript
+class TokenOptimizedAgent {
+  async run(input: string) {
+    // Compress input if too long
+    if (this.countTokens(input) > 1000) {
+      input = await this.summarize(input);
+    }
+    
+    // Stream response for better UX
+    const stream = await this.agent.stream({ message: input });
+    
+    // Process chunks efficiently
+    for await (const chunk of stream) {
+      yield chunk;
+    }
+  }
+}
+```
+
+## Deployment
+
+### Production Configuration
+
+```typescript
+const productionAgent = new Agent({
+  name: 'production-agent',
+  
+  // Production model settings
+  model: {
+    provider: 'openai',
+    name: 'gpt-4',
+    temperature: 0.3, // Lower for consistency
+    timeout: 30000
+  },
+  
+  // Monitoring
+  monitoring: {
+    metrics: true,
+    tracing: true,
+    logging: 'info'
+  },
+  
+  // Security
+  security: {
+    sanitizeInputs: true,
+    validateOutputs: true,
+    maxOutputLength: 10000
+  },
+  
+  // Rate limiting
+  rateLimiting: {
+    maxRequestsPerMinute: 60,
+    maxTokensPerDay: 1000000
+  }
+});
+```
+
+## Monitoring
+
+### Metrics Collection
+
+```typescript
+agent.on('execution:start', (event) => {
+  metrics.increment('agent.executions');
+  metrics.gauge('agent.active', 1);
+});
+
+agent.on('execution:complete', (event) => {
+  metrics.histogram('agent.duration', event.duration);
+  metrics.gauge('agent.active', -1);
+});
+
+agent.on('tool:called', (event) => {
+  metrics.increment(`agent.tools.${event.tool}`);
+});
+```
+
+## Best Practices
+
+1. **Start Simple**: Build incrementally, adding complexity as needed
+2. **Test Thoroughly**: Include unit, integration, and end-to-end tests
+3. **Monitor Everything**: Track performance, errors, and usage
+4. **Handle Failures**: Implement retry logic and fallbacks
+5. **Optimize Tokens**: Minimize usage while maintaining quality
+6. **Document Well**: Clear instructions improve agent performance
+
+## Next Steps
+
+Your agent is ready! Continue with:
+- [Advanced Tool Development](./tool-development)
+- [Production Deployment](./deployment)
+- [Scaling Strategies](./scaling)

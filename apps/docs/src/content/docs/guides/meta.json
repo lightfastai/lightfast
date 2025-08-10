@@ -1,0 +1,12 @@
+{
+  "title": "Guides",
+  "description": "Step-by-step guides and tutorials",
+  "pages": [
+    "quick-start",
+    "first-agent",
+    "tool-development",
+    "deployment",
+    "monitoring",
+    "scaling"
+  ]
+}

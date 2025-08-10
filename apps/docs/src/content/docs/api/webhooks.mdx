@@ -1,0 +1,88 @@
+---
+title: Webhooks API
+description: Configure webhooks for event notifications
+---
+
+# Webhooks API
+
+Receive real-time notifications about agent and workflow events.
+
+## Register Webhook
+
+```http
+POST /v1/webhooks
+```
+
+### Request Body
+
+```json
+{
+  "url": "https://example.com/webhook",
+  "events": [
+    "agent.execution.completed",
+    "agent.execution.failed",
+    "workflow.completed"
+  ],
+  "secret": "webhook_secret_key"
+}
+```
+
+## Webhook Events
+
+### Agent Events
+
+- `agent.created`
+- `agent.updated`
+- `agent.deleted`
+- `agent.execution.started`
+- `agent.execution.completed`
+- `agent.execution.failed`
+
+### Workflow Events
+
+- `workflow.started`
+- `workflow.step.completed`
+- `workflow.completed`
+- `workflow.failed`
+
+## Event Payload
+
+```json
+{
+  "event": "agent.execution.completed",
+  "timestamp": "2024-01-10T10:00:00Z",
+  "data": {
+    "execution_id": "exec_123",
+    "agent_id": "agent_456",
+    "duration": 2.34,
+    "tokens_used": 150
+  }
+}
+```
+
+## Verify Webhook Signature
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhook(payload, signature, secret) {
+  const hash = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  
+  return hash === signature;
+}
+```
+
+## List Webhooks
+
+```http
+GET /v1/webhooks
+```
+
+## Delete Webhook
+
+```http
+DELETE /v1/webhooks/{webhook_id}
+```

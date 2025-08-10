@@ -1,0 +1,211 @@
+---
+title: Testing Strategies
+description: Comprehensive testing for agent applications
+---
+
+# Testing Strategies
+
+Build reliable agents with comprehensive testing strategies.
+
+## Unit Testing
+
+```typescript
+describe('Agent', () => {
+  let agent: Agent;
+  
+  beforeEach(() => {
+    agent = new Agent({
+      name: 'test-agent',
+      model: 'gpt-3.5-turbo'
+    });
+  });
+  
+  test('responds to basic queries', async () => {
+    const response = await agent.execute({
+      input: 'What is 2+2?'
+    });
+    
+    expect(response.output).toContain('4');
+  });
+  
+  test('handles errors gracefully', async () => {
+    const response = await agent.execute({
+      input: '',
+      timeout: 1000
+    });
+    
+    expect(response.error).toBeDefined();
+  });
+});
+```
+
+## Integration Testing
+
+```typescript
+describe('Workflow Integration', () => {
+  test('complete document processing', async () => {
+    const workflow = new DocumentWorkflow();
+    
+    const result = await workflow.process({
+      document: testDocument
+    });
+    
+    expect(result.extracted).toBeDefined();
+    expect(result.analyzed).toBeDefined();
+    expect(result.stored).toBe(true);
+  });
+});
+```
+
+## Mocking Tools
+
+```typescript
+class MockTool implements Tool {
+  name = 'mock-database';
+  
+  handler = jest.fn().mockResolvedValue({
+    data: [
+      { id: 1, name: 'Test' }
+    ]
+  });
+}
+
+test('agent uses tools correctly', async () => {
+  const mockTool = new MockTool();
+  agent.addTool(mockTool);
+  
+  await agent.execute({
+    input: 'Query the database'
+  });
+  
+  expect(mockTool.handler).toHaveBeenCalled();
+});
+```
+
+## Load Testing
+
+```typescript
+import { LoadTest } from '@lightfast/testing';
+
+const loadTest = new LoadTest({
+  duration: '5m',
+  users: 100,
+  rampUp: '30s'
+});
+
+loadTest.scenario('user-interaction', async (user) => {
+  const response = await user.request({
+    method: 'POST',
+    url: '/api/agent/execute',
+    body: { input: 'Test query' }
+  });
+  
+  user.check(response.status === 200);
+  user.check(response.time < 2000);
+});
+
+const results = await loadTest.run();
+```
+
+## Contract Testing
+
+```typescript
+describe('API Contract', () => {
+  test('agent response schema', async () => {
+    const response = await agent.execute({
+      input: 'Test'
+    });
+    
+    expect(response).toMatchSchema({
+      type: 'object',
+      properties: {
+        output: { type: 'string' },
+        usage: {
+          type: 'object',
+          properties: {
+            tokens: { type: 'number' },
+            cost: { type: 'number' }
+          }
+        }
+      }
+    });
+  });
+});
+```
+
+## Behavior Testing
+
+```typescript
+describe('Agent Behavior', () => {
+  test('maintains conversation context', async () => {
+    const conversation = agent.createConversation();
+    
+    await conversation.send('My name is Alice');
+    const response = await conversation.send('What is my name?');
+    
+    expect(response).toContain('Alice');
+  });
+  
+  test('respects token limits', async () => {
+    const longInput = 'a'.repeat(10000);
+    
+    const response = await agent.execute({
+      input: longInput,
+      maxTokens: 100
+    });
+    
+    expect(response.usage.tokens).toBeLessThanOrEqual(100);
+  });
+});
+```
+
+## Regression Testing
+
+```typescript
+class RegressionTest {
+  private snapshots = new Map();
+  
+  async test(input: string, expectedOutput: string) {
+    const output = await agent.execute({ input });
+    
+    if (this.snapshots.has(input)) {
+      const previous = this.snapshots.get(input);
+      
+      if (previous !== output.output) {
+        console.warn('Output changed:', {
+          input,
+          previous,
+          current: output.output
+        });
+      }
+    }
+    
+    this.snapshots.set(input, output.output);
+  }
+}
+```
+
+## Chaos Testing
+
+```typescript
+class ChaosTest {
+  async injectFailures() {
+    // Random network delays
+    if (Math.random() < 0.1) {
+      await sleep(5000);
+    }
+    
+    // Random errors
+    if (Math.random() < 0.05) {
+      throw new Error('Chaos monkey!');
+    }
+    
+    // Resource constraints
+    if (Math.random() < 0.1) {
+      this.limitMemory(100 * 1024 * 1024);
+    }
+  }
+}
+```
+
+Test early, test often, test everything!

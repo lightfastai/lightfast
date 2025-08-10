@@ -1,0 +1,220 @@
+---
+title: Code Assistant
+description: Build an AI-powered coding assistant
+---
+
+# Code Assistant Example
+
+Create a powerful code assistant that can write, review, and refactor code.
+
+## Basic Code Assistant
+
+```typescript
+import { Agent } from '@lightfast/sdk';
+
+const codeAssistant = new Agent({
+  name: 'code-assistant',
+  model: 'gpt-4',
+  tools: ['code-executor', 'file-reader', 'web-search'],
+  instructions: `
+    You are an expert programming assistant.
+    Write clean, efficient, and well-documented code.
+    Follow best practices and design patterns.
+  `
+});
+```
+
+## Code Generation
+
+```typescript
+async function generateCode(requirements: string, language: string) {
+  const response = await codeAssistant.execute({
+    input: `Generate ${language} code for: ${requirements}`,
+    parameters: {
+      language,
+      style: 'clean',
+      includeTests: true
+    }
+  });
+  
+  return {
+    code: response.output,
+    tests: response.tests,
+    documentation: response.docs
+  };
+}
+```
+
+## Code Review
+
+```typescript
+const codeReviewer = new Agent({
+  name: 'code-reviewer',
+  tools: ['static-analyzer', 'security-scanner'],
+  
+  async reviewCode(code: string, language: string) {
+    // Static analysis
+    const issues = await this.analyzeCode(code, language);
+    
+    // Security scan
+    const vulnerabilities = await this.scanSecurity(code);
+    
+    // AI review
+    const review = await this.execute({
+      input: 'Review this code for quality and best practices',
+      context: { code, language, issues, vulnerabilities }
+    });
+    
+    return {
+      score: review.score,
+      issues: review.issues,
+      suggestions: review.suggestions,
+      security: vulnerabilities
+    };
+  }
+});
+```
+
+## Refactoring Assistant
+
+```typescript
+class RefactoringAssistant {
+  async refactor(code: string, goal: string) {
+    // Analyze current code
+    const analysis = await this.analyze(code);
+    
+    // Generate refactoring plan
+    const plan = await codeAssistant.execute({
+      input: `Create refactoring plan for: ${goal}`,
+      context: { code, analysis }
+    });
+    
+    // Apply refactoring
+    const refactored = await this.applyRefactoring(code, plan);
+    
+    // Verify correctness
+    await this.runTests(refactored);
+    
+    return {
+      original: code,
+      refactored,
+      changes: plan.changes,
+      improvements: plan.improvements
+    };
+  }
+}
+```
+
+## Interactive Debugging
+
+```typescript
+const debugAssistant = new Agent({
+  name: 'debug-assistant',
+  tools: ['debugger', 'log-analyzer'],
+  
+  async debug(error: Error, context: any) {
+    // Analyze error
+    const analysis = await this.analyzeError(error);
+    
+    // Get relevant code
+    const code = await this.getRelevantCode(error.stack);
+    
+    // Generate fix
+    const fix = await this.execute({
+      input: 'Debug and fix this error',
+      context: { error, code, analysis }
+    });
+    
+    return {
+      cause: fix.cause,
+      solution: fix.solution,
+      code: fix.fixedCode,
+      explanation: fix.explanation
+    };
+  }
+});
+```
+
+## Documentation Generator
+
+```typescript
+async function generateDocs(codebase: string) {
+  const docs = await codeAssistant.execute({
+    input: 'Generate comprehensive documentation',
+    context: { codebase },
+    parameters: {
+      format: 'markdown',
+      includeExamples: true,
+      generateAPI: true
+    }
+  });
+  
+  return {
+    readme: docs.readme,
+    api: docs.apiDocs,
+    examples: docs.examples,
+    guides: docs.guides
+  };
+}
+```
+
+## Test Generation
+
+```typescript
+const testGenerator = new Agent({
+  name: 'test-generator',
+  
+  async generateTests(code: string, framework: string) {
+    // Analyze code structure
+    const structure = await this.analyzeStructure(code);
+    
+    // Generate test cases
+    const tests = await this.execute({
+      input: 'Generate comprehensive test suite',
+      context: { code, structure, framework }
+    });
+    
+    // Validate tests compile
+    await this.validateTests(tests);
+    
+    return {
+      unitTests: tests.unit,
+      integrationTests: tests.integration,
+      coverage: tests.estimatedCoverage
+    };
+  }
+});
+```
+
+## IDE Integration
+
+```typescript
+// VS Code Extension
+class CodeAssistantExtension {
+  async onDidChangeTextDocument(event: TextDocumentChangeEvent) {
+    // Real-time suggestions
+    const suggestions = await codeAssistant.getSuggestions({
+      code: event.document.getText(),
+      position: event.contentChanges[0].range.start
+    });
+    
+    this.showSuggestions(suggestions);
+  }
+  
+  async onCommand(command: string) {
+    switch (command) {
+      case 'explain':
+        await this.explainCode();
+        break;
+      case 'optimize':
+        await this.optimizeCode();
+        break;
+      case 'test':
+        await this.generateTests();
+        break;
+    }
+  }
+}
+```
+
+Code smarter, not harder with Lightfast!

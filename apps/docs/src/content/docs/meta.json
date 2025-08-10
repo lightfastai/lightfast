@@ -1,6 +1,5 @@
 {
-  "title": "Documentation",
-  "pages": [
-    "get-started"
-  ]
+	"title": "Documentation",
+	"pages": ["get-started", "fundamentals", "guides", "api", "examples", "advanced", "reference"]
 }
+

@@ -1,0 +1,191 @@
+---
+title: Building a Chatbot
+description: Create an intelligent conversational agent
+---
+
+# Building a Chatbot
+
+Learn how to build a production-ready chatbot with Lightfast.
+
+## Basic Chatbot
+
+```typescript
+import { Agent } from '@lightfast/sdk';
+
+const chatbot = new Agent({
+  name: 'customer-support',
+  model: 'gpt-4',
+  instructions: `
+    You are a helpful customer support agent.
+    Be friendly, professional, and concise.
+    If you don't know something, admit it.
+  `
+});
+
+// Handle message
+async function handleMessage(message: string, userId: string) {
+  const response = await chatbot.execute({
+    input: message,
+    context: { userId }
+  });
+  
+  return response.output;
+}
+```
+
+## Stateful Conversations
+
+```typescript
+class ConversationManager {
+  private sessions = new Map<string, Message[]>();
+  
+  async sendMessage(sessionId: string, message: string) {
+    // Get or create session
+    if (!this.sessions.has(sessionId)) {
+      this.sessions.set(sessionId, []);
+    }
+    
+    const history = this.sessions.get(sessionId)!;
+    history.push({ role: 'user', content: message });
+    
+    // Execute with context
+    const response = await chatbot.execute({
+      input: message,
+      context: { history }
+    });
+    
+    history.push({ role: 'assistant', content: response.output });
+    
+    return response.output;
+  }
+}
+```
+
+## Multi-Channel Support
+
+```typescript
+class MultiChannelBot {
+  async handleSlack(event: SlackEvent) {
+    const response = await this.process(event.text, 'slack');
+    await this.slack.postMessage({
+      channel: event.channel,
+      text: response
+    });
+  }
+  
+  async handleDiscord(message: DiscordMessage) {
+    const response = await this.process(message.content, 'discord');
+    await message.reply(response);
+  }
+  
+  async handleWeb(request: WebRequest) {
+    const response = await this.process(request.message, 'web');
+    return { response };
+  }
+}
+```
+
+## Advanced Features
+
+### Intent Recognition
+
+```typescript
+const intentBot = new Agent({
+  name: 'intent-classifier',
+  tools: ['intent-classifier'],
+  
+  async preProcess(input: string) {
+    const intent = await this.classifyIntent(input);
+    
+    switch (intent.type) {
+      case 'support':
+        return this.routeToSupport(input);
+      case 'sales':
+        return this.routeToSales(input);
+      case 'general':
+        return this.handleGeneral(input);
+    }
+  }
+});
+```
+
+### Emotion Detection
+
+```typescript
+const emotionalBot = new Agent({
+  tools: ['emotion-detector'],
+  
+  async execute(input: string) {
+    const emotion = await this.detectEmotion(input);
+    
+    // Adjust response based on emotion
+    const tone = this.getToneForEmotion(emotion);
+    
+    return this.generateResponse(input, { tone });
+  }
+});
+```
+
+## Production Deployment
+
+```typescript
+// Rate limiting
+const rateLimiter = new RateLimiter({
+  windowMs: 60000,
+  maxRequests: 10
+});
+
+// Error handling
+app.post('/chat', async (req, res) => {
+  try {
+    // Check rate limit
+    if (!await rateLimiter.check(req.userId)) {
+      return res.status(429).json({ error: 'Too many requests' });
+    }
+    
+    // Process message
+    const response = await chatbot.execute({
+      input: req.body.message,
+      timeout: 30000
+    });
+    
+    // Log for analytics
+    await analytics.track({
+      event: 'message_processed',
+      userId: req.userId,
+      duration: response.duration
+    });
+    
+    res.json({ response: response.output });
+    
+  } catch (error) {
+    logger.error('Chat error:', error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+```
+
+## Testing
+
+```typescript
+describe('Chatbot', () => {
+  test('handles greetings', async () => {
+    const response = await chatbot.execute({
+      input: 'Hello!'
+    });
+    
+    expect(response.output).toMatch(/hello|hi|greetings/i);
+  });
+  
+  test('maintains context', async () => {
+    const session = new ConversationManager();
+    
+    await session.sendMessage('123', 'My name is Alice');
+    const response = await session.sendMessage('123', 'What is my name?');
+    
+    expect(response).toContain('Alice');
+  });
+});
+```
+
+Build engaging conversational experiences with Lightfast!

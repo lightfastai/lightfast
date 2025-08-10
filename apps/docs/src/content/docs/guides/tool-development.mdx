@@ -1,0 +1,387 @@
+---
+title: Tool Development
+description: Create powerful custom tools for your agents
+---
+
+# Tool Development Guide
+
+Tools extend agent capabilities by providing access to external systems, APIs, and custom logic. This guide covers everything you need to know about building tools.
+
+## Tool Anatomy
+
+```typescript
+interface Tool {
+  // Metadata
+  name: string;
+  description: string;
+  version?: string;
+  
+  // Parameters
+  parameters: ParameterSchema;
+  
+  // Execution
+  handler: ToolHandler;
+  
+  // Configuration
+  config?: ToolConfig;
+}
+```
+
+## Basic Tool Example
+
+```typescript
+const weatherTool: Tool = {
+  name: 'get-weather',
+  description: 'Get current weather for a location',
+  
+  parameters: {
+    location: {
+      type: 'string',
+      description: 'City name or coordinates',
+      required: true
+    },
+    units: {
+      type: 'string',
+      enum: ['celsius', 'fahrenheit'],
+      default: 'celsius'
+    }
+  },
+  
+  handler: async ({ location, units }) => {
+    const response = await fetch(
+      `https://api.weather.com/v1/current?location=${location}&units=${units}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Weather API error: ${response.status}`);
+    }
+    
+    return response.json();
+  }
+};
+```
+
+## Parameter Validation
+
+### Schema Definition
+
+```typescript
+const complexTool: Tool = {
+  name: 'data-processor',
+  
+  parameters: {
+    data: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'number' },
+          value: { type: 'string' }
+        }
+      },
+      minItems: 1,
+      maxItems: 100
+    },
+    options: {
+      type: 'object',
+      properties: {
+        format: {
+          type: 'string',
+          enum: ['json', 'csv', 'xml']
+        },
+        compress: {
+          type: 'boolean',
+          default: false
+        }
+      }
+    }
+  },
+  
+  handler: async (params) => {
+    // Parameters are validated before reaching handler
+    return processData(params.data, params.options);
+  }
+};
+```
+
+## Advanced Tool Features
+
+### Streaming Tools
+
+```typescript
+const streamingTool: Tool = {
+  name: 'large-file-processor',
+  
+  handler: async function* ({ filePath }) {
+    const stream = fs.createReadStream(filePath);
+    const reader = readline.createInterface({ input: stream });
+    
+    for await (const line of reader) {
+      const processed = await processLine(line);
+      yield {
+        type: 'progress',
+        data: processed
+      };
+    }
+    
+    yield {
+      type: 'complete',
+      summary: 'Processing finished'
+    };
+  }
+};
+```
+
+### Stateful Tools
+
+```typescript
+class StatefulTool implements Tool {
+  private state = new Map();
+  
+  name = 'session-tool';
+  
+  handler = async ({ action, sessionId, data }) => {
+    switch (action) {
+      case 'start':
+        this.state.set(sessionId, { data, startTime: Date.now() });
+        return { sessionId, status: 'started' };
+        
+      case 'update':
+        const session = this.state.get(sessionId);
+        if (!session) throw new Error('Session not found');
+        
+        session.data = { ...session.data, ...data };
+        return { sessionId, status: 'updated' };
+        
+      case 'end':
+        const result = this.state.get(sessionId);
+        this.state.delete(sessionId);
+        return { sessionId, result, duration: Date.now() - result.startTime };
+    }
+  };
+}
+```
+
+## Tool Composition
+
+### Combining Tools
+
+```typescript
+const composedTool: Tool = {
+  name: 'research-and-summarize',
+  
+  handler: async ({ topic }) => {
+    // Use other tools internally
+    const searchResults = await tools.webSearch({ query: topic });
+    const articles = await tools.fetchArticles({ urls: searchResults.urls });
+    const summary = await tools.summarize({ texts: articles });
+    
+    return {
+      topic,
+      sources: searchResults.urls,
+      summary
+    };
+  }
+};
+```
+
+## Error Handling
+
+### Graceful Degradation
+
+```typescript
+const resilientTool: Tool = {
+  name: 'api-caller',
+  
+  config: {
+    retry: {
+      maxAttempts: 3,
+      backoff: 'exponential'
+    }
+  },
+  
+  handler: async ({ endpoint, data }) => {
+    const attempts = [];
+    
+    for (let i = 0; i < 3; i++) {
+      try {
+        return await callAPI(endpoint, data);
+      } catch (error) {
+        attempts.push(error);
+        
+        if (i === 2) {
+          // Final attempt failed, try fallback
+          return {
+            success: false,
+            error: 'API unavailable',
+            fallback: await getFallbackData(data)
+          };
+        }
+        
+        await sleep(Math.pow(2, i) * 1000);
+      }
+    }
+  }
+};
+```
+
+## Security Considerations
+
+### Input Sanitization
+
+```typescript
+const secureTool: Tool = {
+  name: 'database-query',
+  
+  handler: async ({ query, params }) => {
+    // Validate and sanitize inputs
+    if (!isValidQuery(query)) {
+      throw new Error('Invalid query structure');
+    }
+    
+    // Use parameterized queries
+    const sanitizedParams = params.map(p => 
+      typeof p === 'string' ? sanitizeString(p) : p
+    );
+    
+    // Execute with limited permissions
+    return await db.query(query, sanitizedParams, {
+      readonly: true,
+      timeout: 5000
+    });
+  }
+};
+```
+
+### Rate Limiting
+
+```typescript
+class RateLimitedTool implements Tool {
+  private limiter = new RateLimiter({
+    tokensPerInterval: 100,
+    interval: 'minute'
+  });
+  
+  handler = async (params) => {
+    const allowed = await this.limiter.tryConsume(1);
+    
+    if (!allowed) {
+      throw new Error('Rate limit exceeded');
+    }
+    
+    return this.execute(params);
+  };
+}
+```
+
+## Testing Tools
+
+### Unit Testing
+
+```typescript
+describe('WeatherTool', () => {
+  it('returns weather data for valid location', async () => {
+    const result = await weatherTool.handler({
+      location: 'San Francisco',
+      units: 'celsius'
+    });
+    
+    expect(result).toHaveProperty('temperature');
+    expect(result).toHaveProperty('conditions');
+  });
+  
+  it('handles invalid location gracefully', async () => {
+    await expect(
+      weatherTool.handler({ location: '' })
+    ).rejects.toThrow('Invalid location');
+  });
+});
+```
+
+### Mocking External Dependencies
+
+```typescript
+const mockTool = createMockTool(originalTool, {
+  responses: [
+    { input: { x: 1 }, output: { y: 2 } },
+    { input: { x: 2 }, output: { y: 4 } }
+  ]
+});
+```
+
+## Performance Optimization
+
+### Caching
+
+```typescript
+const cachedTool = withCache(originalTool, {
+  ttl: 3600,
+  key: (params) => JSON.stringify(params)
+});
+```
+
+### Batch Processing
+
+```typescript
+const batchTool: Tool = {
+  name: 'batch-processor',
+  
+  handler: async ({ items }) => {
+    const BATCH_SIZE = 10;
+    const results = [];
+    
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+      const batch = items.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(item => processItem(item))
+      );
+      results.push(...batchResults);
+    }
+    
+    return results;
+  }
+};
+```
+
+## Tool Registry
+
+### Managing Tools
+
+```typescript
+class ToolRegistry {
+  private tools = new Map<string, Tool>();
+  
+  register(tool: Tool) {
+    this.validateTool(tool);
+    this.tools.set(tool.name, tool);
+  }
+  
+  get(name: string): Tool {
+    const tool = this.tools.get(name);
+    if (!tool) {
+      throw new Error(`Tool not found: ${name}`);
+    }
+    return tool;
+  }
+  
+  list(): ToolInfo[] {
+    return Array.from(this.tools.values()).map(t => ({
+      name: t.name,
+      description: t.description,
+      parameters: t.parameters
+    }));
+  }
+}
+```
+
+## Best Practices
+
+1. **Clear Descriptions**: Help agents understand when to use your tool
+2. **Validate Inputs**: Never trust input parameters
+3. **Handle Errors**: Provide meaningful error messages
+4. **Document Parameters**: Include examples and constraints
+5. **Test Thoroughly**: Cover edge cases and error conditions
+6. **Monitor Usage**: Track performance and errors
+7. **Version Tools**: Support backward compatibility
+
+Tools are the bridge between agents and the real world - build them well!

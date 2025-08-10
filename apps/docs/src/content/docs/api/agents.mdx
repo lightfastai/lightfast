@@ -1,0 +1,230 @@
+---
+title: Agents API
+description: API reference for managing agents
+---
+
+# Agents API
+
+Comprehensive API reference for creating, managing, and executing agents.
+
+## Create Agent
+
+```http
+POST /v1/agents
+```
+
+### Request Body
+
+```json
+{
+  "name": "assistant",
+  "description": "General purpose assistant",
+  "model": {
+    "provider": "openai",
+    "name": "gpt-4",
+    "temperature": 0.7
+  },
+  "tools": ["web-search", "calculator"],
+  "instructions": "You are a helpful assistant",
+  "constraints": {
+    "maxTokens": 4000,
+    "timeout": 60
+  }
+}
+```
+
+### Response
+
+```json
+{
+  "data": {
+    "id": "agent_abc123",
+    "name": "assistant",
+    "status": "active",
+    "created_at": "2024-01-10T10:00:00Z"
+  }
+}
+```
+
+## List Agents
+
+```http
+GET /v1/agents
+```
+
+### Query Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| limit | integer | Number of results (max 100) |
+| offset | integer | Pagination offset |
+| status | string | Filter by status |
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "id": "agent_abc123",
+      "name": "assistant",
+      "status": "active"
+    }
+  ],
+  "meta": {
+    "total": 42,
+    "limit": 10,
+    "offset": 0
+  }
+}
+```
+
+## Execute Agent
+
+```http
+POST /v1/agents/{agent_id}/execute
+```
+
+### Request Body
+
+```json
+{
+  "input": "What is the weather today?",
+  "context": {
+    "user_id": "user_123",
+    "session_id": "session_456"
+  },
+  "stream": false
+}
+```
+
+### Response
+
+```json
+{
+  "data": {
+    "execution_id": "exec_xyz789",
+    "status": "completed",
+    "output": "The weather today is sunny with a high of 72°F",
+    "usage": {
+      "tokens": 125,
+      "duration": 2.3
+    }
+  }
+}
+```
+
+## Update Agent
+
+```http
+PATCH /v1/agents/{agent_id}
+```
+
+### Request Body
+
+```json
+{
+  "description": "Updated description",
+  "model": {
+    "temperature": 0.5
+  }
+}
+```
+
+## Delete Agent
+
+```http
+DELETE /v1/agents/{agent_id}
+```
+
+### Response
+
+```json
+{
+  "data": {
+    "deleted": true
+  }
+}
+```
+
+## WebSocket API
+
+### Connect
+
+```javascript
+const ws = new WebSocket('wss://api.lightfast.dev/v1/agents/stream');
+
+ws.send(JSON.stringify({
+  type: 'auth',
+  token: 'lf_sk_...'
+}));
+```
+
+### Stream Execution
+
+```javascript
+ws.send(JSON.stringify({
+  type: 'execute',
+  agent_id: 'agent_abc123',
+  input: 'Tell me a story'
+}));
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  if (data.type === 'chunk') {
+    console.log(data.content);
+  }
+};
+```
+
+## SDK Usage
+
+### JavaScript
+
+```javascript
+// Create agent
+const agent = await client.agents.create({
+  name: 'my-agent',
+  model: 'gpt-4'
+});
+
+// Execute
+const result = await agent.execute({
+  input: 'Hello world'
+});
+
+// Stream
+const stream = await agent.stream({
+  input: 'Tell me a story'
+});
+
+for await (const chunk of stream) {
+  console.log(chunk);
+}
+```
+
+### Python
+
+```python
+# Create agent
+agent = client.agents.create(
+    name='my-agent',
+    model='gpt-4'
+)
+
+# Execute
+result = agent.execute(input='Hello world')
+
+# Stream
+for chunk in agent.stream(input='Tell me a story'):
+    print(chunk)
+```
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `agent_not_found` | Agent does not exist |
+| `invalid_model` | Model not supported |
+| `quota_exceeded` | Usage quota exceeded |
+| `execution_timeout` | Execution timed out |

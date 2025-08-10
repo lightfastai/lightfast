@@ -7,10 +7,10 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 import type { PageTree } from "fumadocs-core/server";
 import { getAuthUrls } from "@repo/url-utils";
-import { SearchTrigger } from "./search-trigger";
 
 interface MobileNavProps {
 	tree?: PageTree.Root;
@@ -53,43 +53,48 @@ export function MobileNav({ tree }: MobileNavProps) {
 
 					{/* Content */}
 					<div className="flex flex-col h-[calc(100vh-5rem)]">
-						<nav className="flex-1 overflow-y-auto px-6">
-							{/* Navigation sections */}
-							<div className="space-y-6">
-								{/* Page Tree Sections */}
-								{tree.children.map((section) => (
-									<div key={String(section.name)} className="space-y-1">
-										<div className="text-sm text-muted-foreground">
-											{section.name}
-										</div>
-										{section.type === "folder" && (
-											<div className="space-y-1">
-												{section.children.map((item) => {
-													if (item.type !== "page") return null;
-													const isActive = item.url === pathname;
-
-													return (
-														<Link
-															key={item.url}
-															href={item.url}
-															onClick={() => setOpen(false)}
-															className={cn(
-																"block text-2xl font-medium py-2 transition-colors",
-																isActive
-																	? "text-foreground"
-																	: "hover:text-muted-foreground",
-															)}
-														>
-															{item.name}
-														</Link>
-													);
-												})}
+						<ScrollArea className="flex-1 overflow-hidden">
+							<div className="px-6">
+								{/* Navigation sections */}
+								<div className="space-y-3">
+									{/* Page Tree Sections */}
+									{tree.children.map((section, index) => (
+										<div
+											key={section.$id ?? `section-${index}`}
+											className="space-y-1"
+										>
+											<div className="text-sm text-muted-foreground">
+												{section.name}
 											</div>
-										)}
-									</div>
-								))}
+											{section.type === "folder" && (
+												<div className="space-y-1">
+													{section.children.map((item) => {
+														if (item.type !== "page") return null;
+														const isActive = item.url === pathname;
+
+														return (
+															<Link
+																key={item.url}
+																href={item.url}
+																onClick={() => setOpen(false)}
+																className={cn(
+																	"block text-2xl font-medium py-1 transition-colors",
+																	isActive
+																		? "text-foreground"
+																		: "hover:text-muted-foreground",
+																)}
+															>
+																{item.name}
+															</Link>
+														);
+													})}
+												</div>
+											)}
+										</div>
+									))}
+								</div>
 							</div>
-						</nav>
+						</ScrollArea>
 
 						{/* Footer with Login/Signup */}
 						<div className="border-t p-6 flex gap-3">

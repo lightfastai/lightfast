@@ -1,0 +1,374 @@
+---
+title: Monitoring
+description: Monitor and observe your agents in production
+---
+
+# Monitoring Guide
+
+Comprehensive monitoring is essential for maintaining reliable agent systems. This guide covers metrics, logging, tracing, and alerting.
+
+## Metrics Collection
+
+### Key Metrics
+
+```typescript
+const metrics = {
+  // Performance Metrics
+  'agent.latency': 'histogram',
+  'agent.throughput': 'counter',
+  'agent.concurrent': 'gauge',
+  
+  // Resource Metrics
+  'resource.cpu': 'gauge',
+  'resource.memory': 'gauge',
+  'resource.tokens': 'counter',
+  
+  // Business Metrics
+  'agent.success_rate': 'gauge',
+  'agent.cost': 'counter',
+  'agent.user_satisfaction': 'gauge'
+};
+```
+
+### Custom Metrics
+
+```typescript
+import { Metrics } from '@lightfast/monitoring';
+
+const metrics = new Metrics();
+
+// Track custom events
+metrics.increment('custom.event', {
+  tags: { region: 'us-east', agent: 'assistant' }
+});
+
+// Record timing
+const timer = metrics.timer('operation.duration');
+await performOperation();
+timer.stop();
+
+// Track gauge values
+metrics.gauge('queue.depth', queue.length);
+```
+
+## Logging
+
+### Structured Logging
+
+```typescript
+import { Logger } from '@lightfast/logging';
+
+const logger = new Logger({
+  level: 'info',
+  format: 'json',
+  destination: 'cloudwatch'
+});
+
+// Log with context
+logger.info('Agent execution started', {
+  agentId: agent.id,
+  userId: user.id,
+  requestId: generateRequestId(),
+  timestamp: new Date().toISOString()
+});
+
+// Log errors with stack traces
+logger.error('Tool execution failed', {
+  error: error.message,
+  stack: error.stack,
+  tool: tool.name,
+  params: tool.params
+});
+```
+
+### Log Aggregation
+
+```typescript
+const logConfig = {
+  aggregation: {
+    provider: 'elasticsearch',
+    index: 'lightfast-logs',
+    pipeline: {
+      processors: [
+        { grok: { field: 'message' } },
+        { date: { field: 'timestamp' } },
+        { remove: { field: 'sensitive_data' } }
+      ]
+    }
+  }
+};
+```
+
+## Distributed Tracing
+
+### Trace Implementation
+
+```typescript
+import { Tracer } from '@lightfast/tracing';
+
+const tracer = new Tracer({
+  serviceName: 'agent-service',
+  provider: 'jaeger',
+  samplingRate: 0.1
+});
+
+async function executeAgent(input) {
+  const span = tracer.startSpan('agent.execute');
+  
+  try {
+    span.setTag('agent.id', agent.id);
+    span.setTag('input.length', input.length);
+    
+    const result = await agent.run(input);
+    
+    span.setTag('result.success', true);
+    return result;
+  } catch (error) {
+    span.setTag('error', true);
+    span.log({ event: 'error', message: error.message });
+    throw error;
+  } finally {
+    span.finish();
+  }
+}
+```
+
+## Real-time Dashboards
+
+### Grafana Configuration
+
+```json
+{
+  "dashboard": {
+    "title": "Lightfast Agent Monitoring",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(agent_requests_total[5m])"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(agent_errors_total[5m]) / rate(agent_requests_total[5m])"
+          }
+        ]
+      },
+      {
+        "title": "P95 Latency",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, agent_latency_bucket)"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Alerting
+
+### Alert Rules
+
+```yaml
+alerts:
+  - name: HighErrorRate
+    expr: rate(agent_errors_total[5m]) > 0.05
+    for: 5m
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value }} (threshold: 0.05)"
+    
+  - name: HighLatency
+    expr: histogram_quantile(0.95, agent_latency_bucket) > 5
+    for: 10m
+    annotations:
+      summary: "High latency detected"
+      description: "P95 latency is {{ $value }}s"
+    
+  - name: TokenQuotaExceeded
+    expr: sum(rate(tokens_used_total[1h])) > 1000000
+    annotations:
+      summary: "Token quota exceeded"
+      description: "Used {{ $value }} tokens in the last hour"
+```
+
+### Alert Channels
+
+```typescript
+const alertConfig = {
+  channels: [
+    {
+      type: 'slack',
+      webhook: process.env.SLACK_WEBHOOK,
+      severity: ['critical', 'warning']
+    },
+    {
+      type: 'pagerduty',
+      apiKey: process.env.PAGERDUTY_KEY,
+      severity: ['critical']
+    },
+    {
+      type: 'email',
+      recipients: ['oncall@company.com'],
+      severity: ['warning', 'info']
+    }
+  ]
+};
+```
+
+## Performance Profiling
+
+### CPU Profiling
+
+```typescript
+import { Profiler } from '@lightfast/profiling';
+
+const profiler = new Profiler();
+
+// Start profiling
+profiler.startCPUProfile('agent-execution');
+
+// Execute agent
+await agent.run(input);
+
+// Stop and save profile
+const profile = profiler.stopCPUProfile();
+await profiler.saveProfile(profile, 's3://profiles/cpu');
+```
+
+### Memory Profiling
+
+```typescript
+// Take heap snapshot
+const snapshot = profiler.takeHeapSnapshot();
+
+// Analyze memory usage
+const analysis = profiler.analyzeSnapshot(snapshot);
+console.log('Memory usage:', analysis);
+
+// Detect memory leaks
+profiler.detectLeaks({
+  threshold: 100 * 1024 * 1024, // 100MB
+  duration: 60000 // 1 minute
+});
+```
+
+## Business Intelligence
+
+### Analytics Queries
+
+```sql
+-- Agent usage by day
+SELECT 
+  DATE(timestamp) as date,
+  COUNT(*) as executions,
+  AVG(duration) as avg_duration,
+  SUM(tokens_used) as total_tokens
+FROM agent_executions
+GROUP BY DATE(timestamp)
+ORDER BY date DESC;
+
+-- Top error patterns
+SELECT 
+  error_type,
+  COUNT(*) as occurrences,
+  MIN(timestamp) as first_seen,
+  MAX(timestamp) as last_seen
+FROM agent_errors
+WHERE timestamp > NOW() - INTERVAL '7 days'
+GROUP BY error_type
+ORDER BY occurrences DESC;
+```
+
+## Cost Monitoring
+
+### Token Usage Tracking
+
+```typescript
+class TokenMonitor {
+  async trackUsage(agentId: string, tokens: number) {
+    // Record usage
+    await this.metrics.increment('tokens.used', tokens, {
+      agent: agentId
+    });
+    
+    // Check quotas
+    const usage = await this.getUsage(agentId);
+    if (usage > this.quota) {
+      await this.alert('Quota exceeded', { agentId, usage });
+    }
+    
+    // Calculate cost
+    const cost = tokens * this.pricePerToken;
+    await this.metrics.increment('cost.total', cost);
+  }
+}
+```
+
+## Health Monitoring
+
+### Synthetic Monitoring
+
+```typescript
+class SyntheticMonitor {
+  async runHealthCheck() {
+    const checks = [
+      this.checkAgentResponse(),
+      this.checkToolAvailability(),
+      this.checkDatabaseConnection(),
+      this.checkAPILatency()
+    ];
+    
+    const results = await Promise.allSettled(checks);
+    
+    return {
+      healthy: results.every(r => r.status === 'fulfilled'),
+      checks: results.map((r, i) => ({
+        name: checks[i].name,
+        status: r.status,
+        duration: r.value?.duration
+      }))
+    };
+  }
+}
+```
+
+## Debugging Tools
+
+### Debug Mode
+
+```typescript
+const debugAgent = new Agent({
+  debug: {
+    enabled: true,
+    verbosity: 'trace',
+    saveTranscripts: true,
+    captureSnapshots: true
+  }
+});
+
+// Access debug information
+const debugInfo = debugAgent.getDebugInfo();
+console.log('Execution trace:', debugInfo.trace);
+console.log('State snapshots:', debugInfo.snapshots);
+```
+
+## Best Practices
+
+1. **Define SLIs/SLOs**: Set clear service level indicators and objectives
+2. **Alert on Symptoms**: Alert on user-facing issues, not just metrics
+3. **Reduce Alert Fatigue**: Only alert on actionable issues
+4. **Correlate Metrics**: Look for patterns across different metrics
+5. **Regular Reviews**: Conduct monthly monitoring reviews
+6. **Automate Response**: Create runbooks for common issues
+
+Effective monitoring turns data into insights and insights into action!

@@ -1,0 +1,235 @@
+---
+title: Optimization Techniques
+description: Optimize agents for maximum efficiency
+---
+
+# Optimization Techniques
+
+Advanced optimization strategies for production agents.
+
+## Cost Optimization
+
+```typescript
+class CostOptimizer {
+  async optimizeTokenUsage(input: string): Promise<string> {
+    // Compress prompts
+    const compressed = await this.compressPrompt(input);
+    
+    // Use cheaper models for simple tasks
+    const complexity = this.assessComplexity(input);
+    const model = complexity < 0.5 ? 'gpt-3.5-turbo' : 'gpt-4';
+    
+    return { input: compressed, model };
+  }
+  
+  private compressPrompt(prompt: string): string {
+    // Remove redundancy
+    const deduplicated = this.removeDuplicates(prompt);
+    
+    // Summarize verbose sections
+    const summarized = this.summarizeLongSections(deduplicated);
+    
+    return summarized;
+  }
+}
+```
+
+## Response Time Optimization
+
+```typescript
+class ResponseOptimizer {
+  async parallel(tasks: Task[]) {
+    // Group independent tasks
+    const groups = this.groupIndependentTasks(tasks);
+    
+    // Execute groups in parallel
+    const results = await Promise.all(
+      groups.map(group => this.executeGroup(group))
+    );
+    
+    return this.mergeResults(results);
+  }
+  
+  async streaming(input: string) {
+    const stream = await agent.stream({ input });
+    
+    // Process chunks as they arrive
+    for await (const chunk of stream) {
+      this.processChunk(chunk);
+      yield chunk;
+    }
+  }
+}
+```
+
+## Model Selection
+
+```typescript
+class ModelSelector {
+  selectOptimal(task: Task): ModelConfig {
+    const features = this.extractFeatures(task);
+    
+    if (features.requiresReasoning) {
+      return { model: 'gpt-4', temperature: 0.3 };
+    }
+    
+    if (features.creative) {
+      return { model: 'gpt-4', temperature: 0.8 };
+    }
+    
+    if (features.simple) {
+      return { model: 'gpt-3.5-turbo', temperature: 0.5 };
+    }
+    
+    return { model: 'gpt-4', temperature: 0.5 };
+  }
+}
+```
+
+## Caching Optimization
+
+```typescript
+class CacheOptimizer {
+  private cache = new LRUCache<string, any>({
+    max: 1000,
+    ttl: 1000 * 60 * 60 // 1 hour
+  });
+  
+  async get(key: string, factory: () => Promise<any>) {
+    // Check cache
+    if (this.cache.has(key)) {
+      this.metrics.increment('cache.hit');
+      return this.cache.get(key);
+    }
+    
+    // Generate and cache
+    this.metrics.increment('cache.miss');
+    const value = await factory();
+    this.cache.set(key, value);
+    
+    return value;
+  }
+}
+```
+
+## Database Optimization
+
+```typescript
+class DatabaseOptimizer {
+  optimizeQueries() {
+    // Use prepared statements
+    this.db.prepare('SELECT * FROM users WHERE id = ?');
+    
+    // Batch operations
+    this.db.batch([
+      { query: 'INSERT ...', params: [...] },
+      { query: 'UPDATE ...', params: [...] }
+    ]);
+    
+    // Connection pooling
+    this.db.pool({ min: 5, max: 20 });
+  }
+  
+  async optimizeIndexes() {
+    const slowQueries = await this.getSlowQueries();
+    
+    for (const query of slowQueries) {
+      const index = this.suggestIndex(query);
+      await this.createIndex(index);
+    }
+  }
+}
+```
+
+## Network Optimization
+
+```typescript
+class NetworkOptimizer {
+  async compressData(data: any): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      zlib.gzip(JSON.stringify(data), (err, compressed) => {
+        if (err) reject(err);
+        else resolve(compressed);
+      });
+    });
+  }
+  
+  configureCDN() {
+    return {
+      provider: 'cloudflare',
+      cache: {
+        static: '1y',
+        api: '5m'
+      },
+      compression: 'brotli'
+    };
+  }
+}
+```
+
+## Algorithm Optimization
+
+```typescript
+class AlgorithmOptimizer {
+  // Use efficient data structures
+  private trie = new Trie();
+  private bloomFilter = new BloomFilter();
+  
+  fastSearch(query: string): boolean {
+    // O(1) approximate membership
+    if (!this.bloomFilter.mightContain(query)) {
+      return false;
+    }
+    
+    // O(m) exact search
+    return this.trie.search(query);
+  }
+  
+  memoize<T>(fn: (...args: any[]) => T): (...args: any[]) => T {
+    const cache = new Map();
+    
+    return (...args: any[]) => {
+      const key = JSON.stringify(args);
+      
+      if (!cache.has(key)) {
+        cache.set(key, fn(...args));
+      }
+      
+      return cache.get(key);
+    };
+  }
+}
+```
+
+## Resource Pooling
+
+```typescript
+class ResourcePool<T> {
+  private available: T[] = [];
+  private inUse = new Set<T>();
+  
+  async acquire(): Promise<T> {
+    if (this.available.length === 0) {
+      if (this.inUse.size < this.maxSize) {
+        const resource = await this.create();
+        this.inUse.add(resource);
+        return resource;
+      }
+      
+      // Wait for available resource
+      await this.waitForAvailable();
+    }
+    
+    const resource = this.available.pop()!;
+    this.inUse.add(resource);
+    return resource;
+  }
+  
+  release(resource: T) {
+    this.inUse.delete(resource);
+    this.available.push(resource);
+  }
+}
+```
+
+Optimize everything, waste nothing!
