@@ -1,37 +1,3 @@
 @import "tailwindcss";
 @import "fumadocs-ui/css/black.css";
 @import "fumadocs-ui/css/preset.css";
-
-/* Custom fumadocs sidebar styles */
-/* Make all sidebar items non-collapsible and hide chevrons */
-#nd-sidebar [data-collapsed] {
-	pointer-events: none !important;
-}
-
-#nd-sidebar button[data-state] svg.lucide-chevron-down {
-	display: none !important;
-}
-
-/* Apply text-xs to all sidebar items */
-#nd-sidebar {
-	font-size: 0.75rem !important; /* text-xs */
-	line-height: 1rem !important;
-}
-
-#nd-sidebar a,
-#nd-sidebar button,
-#nd-sidebar p {
-	font-size: 0.75rem !important; /* text-xs */
-}
-
-/* Style active page items with white text */
-#nd-sidebar a[data-active="true"] {
-	color: white !important;
-	font-size: 0.75rem !important; /* text-xs */
-}
-
-/* Disable folder collapse functionality */
-#nd-sidebar [role="group"] > button:first-child {
-	cursor: default !important;
-	pointer-events: none !important;
-}

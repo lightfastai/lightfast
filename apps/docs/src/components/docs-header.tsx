@@ -3,7 +3,6 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { getAuthUrls, getAllAppUrls } from "@repo/url-utils";
-import { ThemeToggle } from "./theme-toggle";
 import { SearchTrigger } from "./search-trigger";
 import { MobileNav } from "./mobile-nav";
 import { pageTree } from "../lib/source";
@@ -65,10 +64,6 @@ export function DocsHeader() {
 						<span className="sr-only">GitHub</span>
 					</Link>
 				</Button>
-				<div className="flex h-4 items-center px-4">
-					<Separator orientation="vertical" />
-				</div>
-				<ThemeToggle />
 				</div>
 			</div>
 		</header>
