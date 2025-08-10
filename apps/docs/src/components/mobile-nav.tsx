@@ -1,0 +1,112 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
+import * as SheetPrimitive from "@radix-ui/react-dialog";
+import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
+import { cn } from "@repo/ui/lib/utils";
+import type { PageTree } from "fumadocs-core/server";
+import { getAuthUrls } from "@repo/url-utils";
+import { SearchTrigger } from "./search-trigger";
+
+interface MobileNavProps {
+	tree?: PageTree.Root;
+}
+
+export function MobileNav({ tree }: MobileNavProps) {
+	const [open, setOpen] = React.useState(false);
+	const pathname = usePathname();
+	const authUrls = getAuthUrls();
+
+	if (!tree) return null;
+
+	return (
+		<Sheet open={open} onOpenChange={setOpen}>
+			<SheetTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon"
+					className="lg:hidden"
+					aria-label="Toggle Menu"
+				>
+					<Menu className="h-5 w-5" />
+				</Button>
+			</SheetTrigger>
+			<SheetPrimitive.Portal>
+				<SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+				<SheetPrimitive.Content className="fixed inset-y-0 left-0 z-50 h-full w-screen bg-background/95 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left data-[state=closed]:duration-300 data-[state=open]:duration-500">
+					{/* Visually hidden title for accessibility */}
+					<SheetPrimitive.Title className="sr-only">
+						Navigation Menu
+					</SheetPrimitive.Title>
+
+					{/* Header */}
+					<div className="flex items-center justify-between p-6 pb-4">
+						<SheetPrimitive.Close className="flex items-center gap-2 text-foreground hover:opacity-70 transition-opacity">
+							<X className="h-5 w-5" />
+							<span className="text-lg font-medium">Menu</span>
+						</SheetPrimitive.Close>
+					</div>
+
+					{/* Content */}
+					<div className="flex flex-col h-[calc(100vh-5rem)]">
+						<nav className="flex-1 overflow-y-auto px-6">
+							{/* Navigation sections */}
+							<div className="space-y-6">
+								{/* Page Tree Sections */}
+								{tree.children.map((section) => (
+									<div key={String(section.name)} className="space-y-1">
+										<div className="text-sm text-muted-foreground">
+											{section.name}
+										</div>
+										{section.type === "folder" && (
+											<div className="space-y-1">
+												{section.children.map((item) => {
+													if (item.type !== "page") return null;
+													const isActive = item.url === pathname;
+
+													return (
+														<Link
+															key={item.url}
+															href={item.url}
+															onClick={() => setOpen(false)}
+															className={cn(
+																"block text-2xl font-medium py-2 transition-colors",
+																isActive
+																	? "text-foreground"
+																	: "hover:text-muted-foreground",
+															)}
+														>
+															{item.name}
+														</Link>
+													);
+												})}
+											</div>
+										)}
+									</div>
+								))}
+							</div>
+						</nav>
+
+						{/* Footer with Login/Signup */}
+						<div className="border-t p-6 flex gap-3">
+							<Button variant="outline" className="flex-1" asChild>
+								<Link href={authUrls.signIn} onClick={() => setOpen(false)}>
+									Log In
+								</Link>
+							</Button>
+							<Button className="flex-1" asChild>
+								<Link href={authUrls.signUp} onClick={() => setOpen(false)}>
+									Sign Up
+								</Link>
+							</Button>
+						</div>
+					</div>
+				</SheetPrimitive.Content>
+			</SheetPrimitive.Portal>
+		</Sheet>
+	);
+}

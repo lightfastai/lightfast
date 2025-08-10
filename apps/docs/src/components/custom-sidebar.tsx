@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type PageTree } from "fumadocs-core/server";
+import type { PageTree } from "fumadocs-core/server";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
 
 interface CustomSidebarProps {
-	tree?: PageTree;
+	tree?: PageTree.Root;
 	className?: string;
 }
 
@@ -17,18 +17,14 @@ export function CustomSidebar({
 }: CustomSidebarProps) {
 	const pathname = usePathname();
 	
-	// Show sidebar on all pages except the home page
-	// This includes /api and all documentation pages
-	const shouldShowSidebar = pathname !== "/" && tree;
-
-	if (!shouldShowSidebar) return null;
+	if (!tree) return null;
 
 	return (
-		<aside className={cn("w-64 min-h-full bg-background", className)}>
+		<aside className={cn("max-lg:hidden w-64 min-h-full bg-background", className)}>
 			<nav className="px-4 lg:px-6 py-6 sticky top-0">
 				<div className="space-y-4">
 					{tree.children.map((item) => (
-						<div key={item.name} className="space-y-2">
+						<div key={String(item.name)} className="space-y-2">
 							<div className="text-xs font-semibold px-2 text-muted-foreground tracking-wider">
 								{item.name}
 							</div>

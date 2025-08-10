@@ -9,6 +9,7 @@ export interface AppUrls {
   auth: string;
   app: string;
   chat: string;
+  docs: string;
 }
 
 /**
@@ -19,6 +20,7 @@ const PRODUCTION_URLS: AppUrls = {
   auth: "https://auth.lightfast.ai",
   app: "https://app.lightfast.ai",
   chat: "https://chat.lightfast.ai",
+  docs: "https://docs.lightfast.ai",
 } as const;
 
 /**
@@ -29,6 +31,7 @@ const DEVELOPMENT_URLS: AppUrls = {
   auth: "http://localhost:4104",
   app: "http://localhost:4103",
   chat: "http://localhost:4106",
+  docs: "http://localhost:3002",
 } as const;
 
 /**
@@ -64,6 +67,7 @@ export function getAllAppUrls(): AppUrls {
     auth: getAppUrl("auth"),
     app: getAppUrl("app"),
     chat: getAppUrl("chat"),
+    docs: getAppUrl("docs"),
   };
 }
 

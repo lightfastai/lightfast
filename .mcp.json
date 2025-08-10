@@ -12,11 +12,6 @@
 				"--isolated",
 				"--no-sandbox"
 			]
-		},
-		"container-use": {
-			"command": "container-use",
-			"args": ["stdio"],
-			"timeout": 1200000
 		}
 	}
 }

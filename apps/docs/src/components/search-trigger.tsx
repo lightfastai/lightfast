@@ -24,7 +24,7 @@ export function SearchTrigger({ className }: SearchTriggerProps) {
 			<span className="text-muted-foreground/50 text-xs">
 				Search documentation...
 			</span>
-			<div className="pointer-events-none absolute right-1.5 flex h-6 select-none items-center gap-1 font-mono text-xs font-medium opacity-100">
+			<div className="pointer-events-none absolute right-1.5 hidden lg:flex h-6 select-none items-center gap-1 font-mono text-xs font-medium opacity-100">
 				<kbd className="px-1.5 py-0.5 rounded border border-border bg-background text-xs">
 					⌘
 				</kbd>

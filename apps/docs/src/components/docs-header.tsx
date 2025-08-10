@@ -5,6 +5,8 @@ import { Separator } from "@repo/ui/components/ui/separator";
 import { getAuthUrls, getAllAppUrls } from "@repo/url-utils";
 import { ThemeToggle } from "./theme-toggle";
 import { SearchTrigger } from "./search-trigger";
+import { MobileNav } from "./mobile-nav";
+import { pageTree } from "../lib/source";
 
 export function DocsHeader() {
 	const authUrls = getAuthUrls();
@@ -12,6 +14,7 @@ export function DocsHeader() {
 
 	return (
 		<header className="h-14 flex items-center justify-between app-container bg-background">
+			{/* Left side - Logo */}
 			<div className="flex items-center">
 				<Button variant="outline" size="xs" asChild>
 					<Link href={appUrls.www}>
@@ -20,8 +23,13 @@ export function DocsHeader() {
 				</Button>
 			</div>
 
-			{/* Right side actions */}
-			<div className="flex items-center">
+			{/* Right side */}
+			<div className="flex items-center gap-2">
+				{/* Mobile menu button */}
+				<MobileNav tree={pageTree} />
+				
+				{/* Desktop navigation */}
+				<div className="flex items-center max-lg:hidden">
 				{/* Navigation Links */}
 				<nav className="flex items-center gap-2">
 					<Button variant="ghost" size="sm" asChild>
@@ -61,6 +69,7 @@ export function DocsHeader() {
 					<Separator orientation="vertical" />
 				</div>
 				<ThemeToggle />
+				</div>
 			</div>
 		</header>
 	);

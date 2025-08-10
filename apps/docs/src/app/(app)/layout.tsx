@@ -10,8 +10,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 			<DocsHeader />
 			<div className="flex flex-1">
 				<CustomSidebar tree={pageTree} />
-				<main className="flex-1 py-8 border border-border/30 bg-muted/20 rounded-sm mr-2 mb-2">
-					<div className="max-w-4xl mx-auto">{children}</div>
+				<main className="flex-1 py-8 border border-border/30 bg-muted/20 rounded-sm mx-2 mb-2">
+					<div className="max-w-4xl mx-auto app-container">{children}</div>
 				</main>
 			</div>
 		</div>
