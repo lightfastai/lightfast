@@ -37,7 +37,7 @@ export const middleware = clerkMiddleware(async (auth, request: NextRequest) => 
   // If user is authenticated and on landing page, redirect to app
   if (userId && request.nextUrl.pathname === "/") {
     const urls = getAllAppUrls();
-    return NextResponse.redirect(new URL(urls.app));
+    return NextResponse.redirect(new URL(urls.cloud));
   }
 
   // Generate a new request ID for all requests if one doesn't exist
