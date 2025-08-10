@@ -46,8 +46,8 @@ let config: NextConfig = withBetterStack(
     experimental: {
       serverActions: {
         allowedOrigins: [
-          'app.lightfast.ai',
-          'https://app.lightfast.ai',
+          'cloud.lightfast.ai',
+          'https://cloud.lightfast.ai',
           'localhost:4103',
           'http://localhost:4103',
         ],

@@ -5,5 +5,5 @@ export const appUrl = withRelatedProject({
   projectName: 'lightfast-app',
   defaultHost: process.env.NODE_ENV === 'development' 
     ? 'http://localhost:4103' 
-    : 'https://app.lightfast.ai',
+    : 'https://cloud.lightfast.ai',
 });
