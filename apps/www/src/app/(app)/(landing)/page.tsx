@@ -8,8 +8,8 @@ import { Button } from "@repo/ui/components/ui/button";
 
 export default function HomePage() {
 	return (
-		<div className="fixed inset-0 overflow-hidden">
-			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-6xl h-[60vh] border border-border/50 p-12">
+		<div className="flex items-center justify-center min-h-[calc(100vh-80px)] overflow-hidden">
+			<div className="relative w-[90vw] max-w-6xl h-[60vh] border border-border/50 p-12">
 				<div className="absolute top-12 left-12 right-12">
 					<p className="text-foreground max-w-2xl text-2xl font-bold sm:text-3xl lg:text-4xl">
 						Crafting tomorrow's AI backbone with open-source infrastructure.
