@@ -6,7 +6,7 @@ import { ChatInput } from "./chat-input";
 import { BrowserContainer } from "./browser-container";
 import { AppEmptyState } from "@repo/ui/components/app-empty-state";
 import { ChatMessages } from "./chat-messages";
-import { PlaygroundHeader } from "./playground-header";
+import { AuthenticatedHeader } from "./authenticated-header";
 import { PlaygroundLayout } from "./layouts/playground-layout";
 import { ChatSection } from "./layouts/chat-section";
 import { BrowserSection } from "./layouts/browser-section";
@@ -61,7 +61,7 @@ function PlaygroundInterfaceInner({
 	if (messages.length > 0) {
 		return (
 			<PlaygroundLayout
-				header={<PlaygroundHeader />}
+				header={<AuthenticatedHeader />}
 				sidebar={
 					<ChatSection
 						messages={<ChatMessages messages={messages} status={status} />}
@@ -86,7 +86,7 @@ function PlaygroundInterfaceInner({
 	// For empty state, center the content in the middle of the page
 	return (
 		<div className="h-screen flex flex-col relative">
-			<PlaygroundHeader />
+			<AuthenticatedHeader />
 			<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 				<div className="w-full max-w-3xl px-4 pointer-events-auto">
 					<div className="px-4">

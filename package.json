@@ -21,7 +21,7 @@
 		"db:migrate": "turbo -F @vendor/db migrate",
 		"db:migrate:generate": "turbo -F @vendor/db lightfast:migrate:generate",
 		"db:studio": "turbo -F @vendor/db lightfast:studio",
-		"dev": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/cloud --filter=@lightfast/auth",
+		"dev": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/docs --filter=@lightfast/cloud --filter=@lightfast/auth --filter=@lightfast/chat --filter=@lightfast/playground",
 		"dev:www": "turbo watch dev -F @lightfast/www --continue",
 		"dev:darkarmy": "turbo watch dev -F @lightfast/darkarmy --continue",
 		"dev:cloud": "turbo watch dev -F @lightfast/cloud --continue",
