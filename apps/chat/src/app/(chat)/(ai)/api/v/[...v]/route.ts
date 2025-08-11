@@ -1,3 +1,4 @@
+import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "@lightfast/core/agent";
 import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
 import { smoothStream, wrapLanguageModel } from "ai";
@@ -8,7 +9,7 @@ import { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/types";
 import { env } from "~/env";
 import { auth } from "@clerk/nextjs/server";
-import { anthropic } from "@ai-sdk/anthropic";
+import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
 
 // Create tools object for c010 agent
 const c010Tools = {
@@ -25,25 +26,26 @@ initLogger({
 	projectName: braintrustConfig.projectName || "chat-app",
 });
 
+// Create PlanetScale memory instance for persistence
+const memory = new PlanetScaleMemory();
+
 // Handler function that handles auth and calls fetchRequestHandler
 const handler = async (req: Request, { params }: { params: Promise<{ v: string[] }> }) => {
 	// Await the params
 	const { v } = await params;
 
-	// Extract agentId and threadId
-	const [agentId, threadId] = v || [];
+	// Extract agentId and sessionId
+	const [agentId, sessionId] = v || [];
 
-	// For now, we're not requiring authentication
-	// You can enable this later when auth is set up
-	// const { userId } = await auth();
-	// if (!userId) {
-	//   return Response.json({ error: "Unauthorized" }, { status: 401 });
-	// }
-	const userId = "anonymous"; // Temporary for development
+	// Get authenticated user ID from Clerk
+	const { userId } = await auth();
+	if (!userId) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
 
 	// Validate params
-	if (!agentId || !threadId) {
-		return Response.json({ error: "Invalid path. Expected /api/v/[agentId]/[threadId]" }, { status: 400 });
+	if (!agentId || !sessionId) {
+		return Response.json({ error: "Invalid path. Expected /api/v/[agentId]/[sessionId]" }, { status: 400 });
 	}
 
 	// Validate agent exists
@@ -61,12 +63,12 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 You can help users find information, answer questions, and provide insights based on current web data.
 When searching, be thoughtful about your queries and provide comprehensive, well-sourced answers.`,
 				tools: c010Tools,
-				createRuntimeContext: ({ threadId, resourceId }): AppRuntimeContext => ({
+				createRuntimeContext: ({ sessionId, resourceId }): AppRuntimeContext => ({
 					userId,
 					agentId,
 				}),
 				model: wrapLanguageModel({
-					model: anthropic("claude-3-5-sonnet-20241022"),
+					model: gateway("openai/gpt-4.1-nano"),
 					middleware: BraintrustMiddleware({ debug: true }),
 				}),
 				experimental_transform: smoothStream({
@@ -78,7 +80,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 					metadata: {
 						agentId,
 						agentName: "c010",
-						threadId,
+						sessionId,
 						userId,
 					},
 				},
@@ -96,7 +98,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 						currentSpan().log({
 							input: {
 								agentId,
-								threadId,
+								sessionId,
 								userId,
 							},
 							output: result.response?.messages || result.text,
@@ -108,8 +110,8 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 					}
 				},
 			}),
-			threadId,
-			memory: null, // No memory/persistence for now
+			sessionId,
+			memory, // Use PlanetScale memory for persistence
 			req,
 			resourceId: userId,
 			createRequestContext: (req) => ({
@@ -117,7 +119,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 				ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
 			}),
 			generateId: uuidv4,
-			enableResume: true,
+			enableResume: false,
 			onError({ error }) {
 				console.error(`>>> Agent Error`, error);
 			},

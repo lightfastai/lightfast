@@ -5,6 +5,7 @@ import { z } from "zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { braintrustEnv } from "@lightfast/core/v2/braintrust-env";
+import { dbEnv } from "@vendor/db/env";
 
 export const env = createEnv({
   extends: [
@@ -12,6 +13,7 @@ export const env = createEnv({
     clerkEnvBase,
     sentryEnv,
     braintrustEnv,
+    dbEnv,
   ],
   shared: {
     NODE_ENV: z

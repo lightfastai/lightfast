@@ -54,7 +54,7 @@ const executeTodoWrite = wrapTraced(
 						low: tasks.filter((t) => t.priority === "low").length,
 					},
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -64,7 +64,7 @@ const executeTodoWrite = wrapTraced(
 			const todoContent = generateTodoMarkdown(tasks);
 
 			// Store in blob with thread-scoped path
-			const blobPath = `todos/shared/${context.threadId}/todo.md`;
+			const blobPath = `todos/shared/${context.sessionId}/todo.md`;
 			const blob = await put(blobPath, todoContent, {
 				access: "public",
 				contentType: "text/markdown",
@@ -122,14 +122,14 @@ export const todoWriteTool = createTool<RuntimeContext<AppRuntimeContext>>({
 const executeTodoRead = wrapTraced(
 	async function executeTodoRead(_params: {}, context: RuntimeContext<AppRuntimeContext>) {
 		try {
-			const blobPath = `todos/shared/${context.threadId}/todo.md`;
+			const blobPath = `todos/shared/${context.sessionId}/todo.md`;
 
 			// Log metadata
 			currentSpan().log({
 				metadata: {
 					blobPath,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -218,14 +218,14 @@ export const todoReadTool = createTool<RuntimeContext<AppRuntimeContext>>({
 const executeTodoClear = wrapTraced(
 	async function executeTodoClear(_params: {}, context: RuntimeContext<AppRuntimeContext>) {
 		try {
-			const blobPath = `todos/shared/${context.threadId}/todo.md`;
+			const blobPath = `todos/shared/${context.sessionId}/todo.md`;
 
 			// Log metadata
 			currentSpan().log({
 				metadata: {
 					blobPath,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},

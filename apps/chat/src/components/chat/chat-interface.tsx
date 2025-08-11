@@ -49,13 +49,13 @@ export function ChatInterface() {
 		return { type: ChatStateType.UNKNOWN, id: null, isNew: false };
 	}, [pathname]);
 
-	// Generate or use existing threadId
-	const threadId = chatState.id || uuidv4();
+	// Generate or use existing sessionId
+	const sessionId = chatState.id || uuidv4();
 	
 	// Use the chat hook with c010 agent by default
 	const { messages, sendMessage, status, isLoading } = useChat({
 		agentId: "c010",
-		threadId,
+		sessionId,
 		initialMessages: [],
 		onError: (error) => {
 			console.error("Chat error:", error);
@@ -64,11 +64,11 @@ export function ChatInterface() {
 
 	const handleSendMessage = async (message: string) => {
 		try {
-			// If this is a new chat, update the URL to include the threadId
+			// If this is a new chat, update the URL to include the sessionId
 			if (chatState.isNew) {
 				const newPath = chatState.type === ChatStateType.UNAUTHENTICATED 
-					? `/${threadId}` 
-					: `/${threadId}`;
+					? `/${sessionId}` 
+					: `/${sessionId}`;
 				window.history.replaceState({}, "", newPath);
 			}
 			

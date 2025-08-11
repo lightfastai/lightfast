@@ -2,25 +2,18 @@ import { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import type { Memory } from "../";
 
-interface ThreadMessagesData<TMessage> {
-	threadId: string;
+interface SessionMessagesData<TMessage> {
 	messages: TMessage[];
-	createdAt: string;
-	updatedAt: string;
 }
 
-interface ThreadMetadata {
-	threadId: string;
+interface SessionData {
 	resourceId: string;
 	agentId: string;
-	title: string;
-	createdAt: string;
-	updatedAt: string;
 }
 
 interface StreamData {
 	id: string;
-	threadId: string;
+	sessionId: string;
 	createdAt: string;
 }
 
@@ -32,50 +25,41 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 
 	// Redis key patterns
 	private readonly KEYS = {
-		threadMetadata: (threadId: string) => `thread:${threadId}:metadata`,
-		threadMessages: (threadId: string) => `thread:${threadId}:messages`,
-		threadStreams: (threadId: string) => `thread:${threadId}:streams`,
+		sessionMetadata: (sessionId: string) => `session:${sessionId}:metadata`,
+		sessionMessages: (sessionId: string) => `session:${sessionId}:messages`,
+		sessionStreams: (sessionId: string) => `session:${sessionId}:streams`,
 		stream: (streamId: string) => `stream:${streamId}`,
 	} as const;
 
 	// TTL constants
 	private readonly TTL = {
 		STREAM: 86400, // 24 hours for streams
-		// Threads and messages are persisted forever - no TTL
+		// Sessions and messages are persisted forever - no TTL
 	} as const;
 
 	constructor(config: { url: string; token: string }) {
 		this.redis = new Redis(config);
 	}
 
-	async appendMessages({ threadId, messages }: { threadId: string; messages: TMessage[] }): Promise<void> {
-		const key = this.KEYS.threadMessages(threadId);
+	async appendMessage({ sessionId, message }: { sessionId: string; message: TMessage }): Promise<void> {
+		const key = this.KEYS.sessionMessages(sessionId);
 
 		// Check if the key exists first
 		const exists = await this.redis.exists(key);
 
 		if (!exists) {
-			throw new Error(`Cannot append messages to non-existent thread ${threadId}. Use createMessages for new threads.`);
+			throw new Error(`Cannot append message to non-existent session ${sessionId}. Use createMessages for new sessions.`);
 		}
 
-		// Use JSON.ARRAPPEND to append each message to the messages array
-		for (const message of messages) {
-			await this.redis.json.arrappend(key, "$.messages", message);
-		}
-
-		// Update the timestamp
-		await this.redis.json.set(key, "$.updatedAt", new Date().toISOString());
+		// Directly append the single message to the messages array
+		await this.redis.json.arrappend(key, "$.messages", message);
 	}
 
-	async createMessages({ threadId, messages }: { threadId: string; messages: TMessage[] }): Promise<void> {
-		const key = this.KEYS.threadMessages(threadId);
+	async createMessages({ sessionId, messages }: { sessionId: string; messages: TMessage[] }): Promise<void> {
+		const key = this.KEYS.sessionMessages(sessionId);
 
-		const now = new Date().toISOString();
-		const data: ThreadMessagesData<TMessage> = {
-			threadId,
+		const data: SessionMessagesData<TMessage> = {
 			messages,
-			createdAt: now,
-			updatedAt: now,
 		};
 
 		// Use JSON.SET to store as a JSON document
@@ -83,11 +67,11 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 		// Messages are persisted forever - no TTL
 	}
 
-	async getMessages(threadId: string): Promise<TMessage[]> {
-		const key = this.KEYS.threadMessages(threadId);
+	async getMessages(sessionId: string): Promise<TMessage[]> {
+		const key = this.KEYS.sessionMessages(sessionId);
 
 		// Use JSON.GET for JSON-stored data
-		const jsonData = (await this.redis.json.get(key, "$")) as ThreadMessagesData<TMessage>[] | null;
+		const jsonData = (await this.redis.json.get(key, "$")) as SessionMessagesData<TMessage>[] | null;
 		if (jsonData && jsonData.length > 0 && jsonData[0]) {
 			return jsonData[0].messages || [];
 		}
@@ -95,91 +79,69 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 		return [];
 	}
 
-	async createThread({
-		threadId,
+	async createSession({
+		sessionId,
 		resourceId,
 		agentId,
 	}: {
-		threadId: string;
+		sessionId: string;
 		resourceId: string;
 		agentId: string;
 	}): Promise<void> {
-		const key = this.KEYS.threadMetadata(threadId);
+		const key = this.KEYS.sessionMetadata(sessionId);
 
-		// Check if thread already exists
+		// Check if session already exists
 		const existing = await this.redis.get(key);
 		if (existing) {
-			// Update only the updatedAt timestamp
-			await this.updateThreadTimestamp(threadId);
 			return;
 		}
 
-		const metadata: ThreadMetadata = {
-			threadId,
+		const data: SessionData = {
 			resourceId,
 			agentId,
-			title: `Chat with ${agentId}`,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
 		};
 
-		// Threads are persisted forever - no TTL
-		await this.redis.set(key, JSON.stringify(metadata));
+		// Sessions are persisted forever - no TTL
+		await this.redis.set(key, JSON.stringify(data));
 	}
 
-	async getThread(threadId: string): Promise<{ resourceId: string } | null> {
-		const key = this.KEYS.threadMetadata(threadId);
+	async getSession(sessionId: string): Promise<{ resourceId: string } | null> {
+		const key = this.KEYS.sessionMetadata(sessionId);
 		const data = await this.redis.get(key);
 
 		if (!data) return null;
 
 		// Handle both string and already-parsed data
-		let metadata: ThreadMetadata;
+		let sessionData: SessionData;
 		if (typeof data === "string") {
-			metadata = JSON.parse(data);
+			sessionData = JSON.parse(data);
 		} else {
-			metadata = data as ThreadMetadata;
+			sessionData = data as SessionData;
 		}
 
-		return { resourceId: metadata.resourceId };
+		return { resourceId: sessionData.resourceId };
 	}
 
-	async createStream({ threadId, streamId }: { threadId: string; streamId: string }): Promise<void> {
+	async createStream({ sessionId, streamId }: { sessionId: string; streamId: string }): Promise<void> {
 		// Store stream data
 		const streamData: StreamData = {
 			id: streamId,
-			threadId,
+			sessionId,
 			createdAt: new Date().toISOString(),
 		};
 
 		await this.redis.setex(this.KEYS.stream(streamId), this.TTL.STREAM, JSON.stringify(streamData));
 
-		// Add to thread's stream list
-		await this.redis.lpush(this.KEYS.threadStreams(threadId), streamId);
+		// Add to session's stream list
+		await this.redis.lpush(this.KEYS.sessionStreams(sessionId), streamId);
 
-		// Keep only the latest 100 streams per thread
-		await this.redis.ltrim(this.KEYS.threadStreams(threadId), 0, 99);
+		// Keep only the latest 100 streams per session
+		await this.redis.ltrim(this.KEYS.sessionStreams(sessionId), 0, 99);
 	}
 
-	async getThreadStreams(threadId: string): Promise<string[]> {
-		const streamIds = await this.redis.lrange(this.KEYS.threadStreams(threadId), 0, -1);
+	async getSessionStreams(sessionId: string): Promise<string[]> {
+		const streamIds = await this.redis.lrange(this.KEYS.sessionStreams(sessionId), 0, -1);
 		return streamIds || [];
 	}
 
-	private async updateThreadTimestamp(threadId: string): Promise<void> {
-		const key = this.KEYS.threadMetadata(threadId);
-		const data = await this.redis.get(key);
-
-		if (data) {
-			let metadata: ThreadMetadata;
-			if (typeof data === "string") {
-				metadata = JSON.parse(data);
-			} else {
-				metadata = data as ThreadMetadata;
-			}
-
-			metadata.updatedAt = new Date().toISOString();
-			await this.redis.set(key, JSON.stringify(metadata));
-		}
-	}
 }

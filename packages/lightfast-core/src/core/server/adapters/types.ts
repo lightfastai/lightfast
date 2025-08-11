@@ -2,7 +2,7 @@
  * Core system context - always provided by the framework
  */
 export interface SystemContext {
-	threadId: string;
+	sessionId: string;
 	resourceId: string;
 }
 

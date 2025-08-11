@@ -24,7 +24,7 @@ const executeCreateSandbox = wrapTraced(
 					runtime,
 					timeout: 300000,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -108,7 +108,7 @@ const executeCommand = wrapTraced(
 					cwd: cwd || "/home/vercel-sandbox",
 					background: !!background,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -232,7 +232,7 @@ const executeCreateSandboxWithPorts = wrapTraced(
 					sourceUrl: source?.url,
 					sourceRevision: source?.revision,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -327,7 +327,7 @@ const executeGetSandboxDomain = wrapTraced(
 					sandboxId,
 					port,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -405,7 +405,7 @@ const executeListSandboxRoutes = wrapTraced(
 				metadata: {
 					sandboxId,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},

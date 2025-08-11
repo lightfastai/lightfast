@@ -11,14 +11,14 @@ import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface ChatInterfaceProps {
 	agentId: string;
-	threadId: string;
+	sessionId: string;
 	initialMessages?: UIMessage[];
 }
 
 /**
  * V2 ChatInterface using base components and useChatV2 hook
  */
-export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatInterfaceProps) {
+export function ChatInterface({ agentId, sessionId, initialMessages = [] }: ChatInterfaceProps) {
 	const router = useRouter();
 
 	// Convert UIMessage to LightfastUIMessage for compatibility with ChatMessages
@@ -34,7 +34,7 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 
 	const { messages, sendMessage, status, isLoading, currentResponse } = useChatV2({
 		agentId,
-		threadId,
+		sessionId,
 		initialMessages,
 	});
 
@@ -44,7 +44,7 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 	const handleSendMessage = async (message: string) => {
 		// Update URL immediately when sending first message
 		if (window.location.pathname === `/v2-chat/${agentId}`) {
-			window.history.replaceState(null, "", `/v2-chat/${agentId}/${threadId}`);
+			window.history.replaceState(null, "", `/v2-chat/${agentId}/${sessionId}`);
 		}
 
 		try {

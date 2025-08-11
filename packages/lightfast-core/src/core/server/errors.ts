@@ -109,24 +109,24 @@ export class AgentNotFoundError extends NotFoundError {
 }
 
 /**
- * Specific error for thread ownership
+ * Specific error for session ownership
  */
-export class ThreadForbiddenError extends ForbiddenError {
-	readonly errorCode = "THREAD_FORBIDDEN";
+export class SessionForbiddenError extends ForbiddenError {
+	readonly errorCode = "SESSION_FORBIDDEN";
 
 	constructor() {
-		super("Thread belongs to another user");
+		super("Session belongs to another user");
 	}
 }
 
 /**
- * Specific error for thread not found
+ * Specific error for session not found
  */
-export class ThreadNotFoundError extends NotFoundError {
-	readonly errorCode = "THREAD_NOT_FOUND";
+export class SessionNotFoundError extends NotFoundError {
+	readonly errorCode = "SESSION_NOT_FOUND";
 
 	constructor() {
-		super("Thread not found or unauthorized");
+		super("Session not found or unauthorized");
 	}
 }
 

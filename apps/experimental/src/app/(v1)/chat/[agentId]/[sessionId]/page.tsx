@@ -9,12 +9,12 @@ import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 interface ChatPageProps {
 	params: Promise<{
 		agentId: string;
-		threadId: string;
+		sessionId: string;
 	}>;
 }
 
 export default async function ChatPage({ params }: ChatPageProps) {
-	const { agentId, threadId } = await params;
+	const { agentId, sessionId } = await params;
 
 	// Get userId - we need this for the ownership check
 	// Auth is already validated in parent layout, but we need the userId value
@@ -29,21 +29,21 @@ export default async function ChatPage({ params }: ChatPageProps) {
 		token: env.KV_REST_API_TOKEN,
 	});
 
-	// Get thread metadata
-	const thread = await memory.getThread(threadId);
+	// Get session metadata
+	const session = await memory.getSession(sessionId);
 
-	// If thread doesn't exist or user doesn't own it, return 404
-	if (!thread || thread.resourceId !== userId) {
+	// If session doesn't exist or user doesn't own it, return 404
+	if (!session || session.resourceId !== userId) {
 		notFound();
 	}
 
-	// Get messages for the thread
-	const messages = await memory.getMessages(threadId);
+	// Get messages for the session
+	const messages = await memory.getMessages(sessionId);
 
 	console.log(messages.forEach((x) => console.log(x)));
 	return (
 		<Suspense fallback={null}>
-			<ChatInterface agentId={agentId} threadId={threadId} initialMessages={messages} />
+			<ChatInterface agentId={agentId} sessionId={sessionId} initialMessages={messages} />
 		</Suspense>
 	);
 }

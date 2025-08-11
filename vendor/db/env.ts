@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-export const env = createEnv({
+export const dbEnv = createEnv({
   shared: {},
   server: {
     DATABASE_HOST: z.string().min(1),
@@ -13,3 +13,6 @@ export const env = createEnv({
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
+
+// Also export as 'env' for backward compatibility with existing imports
+export const env = dbEnv;

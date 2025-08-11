@@ -8,12 +8,12 @@ import { ChatInterface } from "@/components/v2/chat-interface-refactored";
 interface ChatPageProps {
 	params: Promise<{
 		agentId: string;
-		threadId: string;
+		sessionId: string;
 	}>;
 }
 
 export default async function ChatPage({ params }: ChatPageProps) {
-	const { agentId, threadId } = await params;
+	const { agentId, sessionId } = await params;
 
 	// Get userId - we need this for the ownership check
 	// Auth is already validated in parent layout, but we need the userId value
@@ -25,14 +25,14 @@ export default async function ChatPage({ params }: ChatPageProps) {
 	// Create message reader instance
 	const messageReader = new MessageReader(redis);
 
-	// Get messages for the thread
-	const messages = await messageReader.getMessages(threadId);
+	// Get messages for the session
+	const messages = await messageReader.getMessages(sessionId);
 
-	// If no messages exist, this might be an invalid thread
-	// In v2, we don't have thread metadata yet, so we just check if messages exist
-	// TODO: Add thread metadata support in v2
+	// If no messages exist, this might be an invalid session
+	// In v2, we don't have session metadata yet, so we just check if messages exist
+	// TODO: Add session metadata support in v2
 	if (!messages || messages.length === 0) {
-		// For now, allow empty threads (new conversations)
+		// For now, allow empty sessions (new conversations)
 		// notFound();
 	}
 
@@ -40,7 +40,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
 
 	return (
 		<Suspense fallback={null}>
-			<ChatInterface agentId={agentId} threadId={threadId} initialMessages={messages} />
+			<ChatInterface agentId={agentId} sessionId={sessionId} initialMessages={messages} />
 		</Suspense>
 	);
 }

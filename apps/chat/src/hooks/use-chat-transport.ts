@@ -6,17 +6,17 @@ import { useMemo } from "react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 
 interface UseChatTransportProps {
-	threadId: string;
+	sessionId: string;
 	agentId: string;
 }
 
 /**
  * Hook that creates and configures a DefaultChatTransport for AI integration
  */
-export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<LightfastAppChatUIMessage> {
+export function useChatTransport({ sessionId, agentId }: UseChatTransportProps): ChatTransport<LightfastAppChatUIMessage> {
 	const transport = useMemo(() => {
-		// Use the v API endpoint with agentId and threadId in the path
-		const apiEndpoint = `/api/v/${agentId}/${threadId}`;
+		// Use the v API endpoint with agentId and sessionId in the path
+		const apiEndpoint = `/api/v/${agentId}/${sessionId}`;
 		return new DefaultChatTransport<LightfastAppChatUIMessage>({
 			api: apiEndpoint,
 			headers: {
@@ -43,7 +43,7 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
 				};
 			},
 		});
-	}, [threadId, agentId]);
+	}, [sessionId, agentId]);
 
 	return transport;
 }

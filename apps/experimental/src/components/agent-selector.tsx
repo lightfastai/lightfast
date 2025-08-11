@@ -22,11 +22,11 @@ export function AgentSelector() {
 	const router = useRouter();
 	const params = useParams();
 	const currentAgentId = params.agentId as string;
-	const threadId = params.threadId as string;
+	const sessionId = params.sessionId as string;
 
 	const handleAgentChange = (agentId: string) => {
 		// Navigate to the same thread with the new agent
-		router.push(`/chat/${agentId}/${threadId}`);
+		router.push(`/chat/${agentId}/${sessionId}`);
 	};
 
 	return (

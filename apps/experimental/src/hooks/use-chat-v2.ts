@@ -6,7 +6,7 @@ import { useCallback, useState } from "react";
 
 interface UseChatV2Options {
 	agentId: string;
-	threadId: string;
+	sessionId: string;
 	initialMessages?: UIMessage[];
 	onError?: (error: Error) => void;
 	onChunkReceived?: (chunk: string) => void;
@@ -23,7 +23,7 @@ interface UseChatV2Return {
 
 export function useChatV2({
 	agentId,
-	threadId,
+	sessionId,
 	initialMessages = [],
 	onError,
 	onChunkReceived,
@@ -41,7 +41,7 @@ export function useChatV2({
 		sendMessage: v2SendMessage,
 		reset,
 	} = useChat({
-		sessionId: threadId,
+		sessionId,
 		initialMessages,
 		apiEndpoint: "/api/v2/stream/init",
 		streamEndpoint: "/api/v2/stream",
