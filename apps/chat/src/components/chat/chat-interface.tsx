@@ -3,9 +3,12 @@
 import { AppEmptyState } from "@repo/ui/components/app-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
+import { ProviderModelSelector } from "./provider-model-selector";
 import { useChat } from "@ai-sdk/react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import { DEFAULT_MODEL_ID, type ModelId } from "~/lib/ai/providers";
+import { useState, useCallback, useEffect } from "react";
 
 interface ChatInterfaceProps {
 	agentId: string;
@@ -18,6 +21,26 @@ export function ChatInterface({
 	sessionId,
 	initialMessages = [],
 }: ChatInterfaceProps) {
+	// Model selection state
+	const [selectedModelId, setSelectedModelId] = useState<ModelId>(DEFAULT_MODEL_ID);
+
+	// Load persisted model selection after mount
+	useEffect(() => {
+		const storedModel = sessionStorage.getItem("selectedModelId");
+		if (storedModel) {
+			setSelectedModelId(storedModel as ModelId);
+		}
+	}, []);
+
+	// Handle model selection change
+	const handleModelChange = useCallback((value: ModelId) => {
+		setSelectedModelId(value);
+		// Persist to sessionStorage to maintain selection across navigation
+		if (typeof window !== "undefined") {
+			sessionStorage.setItem("selectedModelId", value);
+		}
+	}, []);
+
 	// Create transport for AI SDK v5
 	const transport = useChatTransport({ sessionId, agentId });
 
@@ -61,6 +84,7 @@ export function ChatInterface({
 				{
 					body: {
 						userMessageId,
+						modelId: selectedModelId,
 					},
 				},
 			);
@@ -68,6 +92,15 @@ export function ChatInterface({
 			console.error("Failed to send message:", error);
 		}
 	};
+
+	// Create model selector component
+	const modelSelector = (
+		<ProviderModelSelector
+			value={selectedModelId}
+			onValueChange={handleModelChange}
+			disabled={status === "streaming" || status === "submitted"}
+		/>
+	);
 
 	// For new chats (no messages yet), show centered layout
 	if (messages.length === 0) {
@@ -84,6 +117,7 @@ export function ChatInterface({
 						onSendMessage={handleSendMessage}
 						placeholder="Ask anything..."
 						disabled={status === "streaming" || status === "submitted"}
+						modelSelector={modelSelector}
 					/>
 				</div>
 			</div>
@@ -102,6 +136,7 @@ export function ChatInterface({
 						disabled={status === "streaming" || status === "submitted"}
 						withGradient={true}
 						withDescription="Chat with Lightfast AI"
+						modelSelector={modelSelector}
 					/>
 				</div>
 			</div>

@@ -15,6 +15,13 @@
       "when": 1754903713152,
       "tag": "0001_big_leech",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1754918169756,
+      "tag": "0002_third_talkback",
+      "breakpoints": true
     }
   ]
 }

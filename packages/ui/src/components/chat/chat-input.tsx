@@ -15,6 +15,7 @@ interface ChatInputProps {
   onChange?: (value: string) => void;
   withGradient?: boolean;
   withDescription?: string;
+  modelSelector?: React.ReactNode;
 }
 
 const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
@@ -29,6 +30,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
       onChange,
       withGradient = false,
       withDescription,
+      modelSelector,
     },
     ref,
   ) => {
@@ -138,17 +140,22 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
                 </div>
 
                 {/* Controls area - always at bottom */}
-                <div className="flex items-center justify-end p-1 bg-transparent dark:bg-input/10 transition-[color,box-shadow]">
-                  {/* Send button */}
-                  <Button
-                    type="button"
-                    onClick={handleSendMessage}
-                    disabled={!canSend}
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                  >
-                    <ArrowUp className="w-4 h-4" />
-                  </Button>
+                <div className="flex items-center justify-end p-2 bg-transparent dark:bg-input/10 transition-[color,box-shadow]">
+                  <div className="flex items-center gap-2">
+                    {/* Model selector */}
+                    {modelSelector}
+                    
+                    {/* Send button */}
+                    <Button
+                      type="button"
+                      onClick={handleSendMessage}
+                      disabled={!canSend}
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                    >
+                      <ArrowUp className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

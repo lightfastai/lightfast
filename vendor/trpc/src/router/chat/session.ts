@@ -2,31 +2,52 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { db, LightfastChatSession, LightfastChatMessage } from "@vendor/db";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, lt, and } from "drizzle-orm";
 
 export const sessionRouter = {
   /**
-   * List user's chat sessions
+   * List user's chat sessions with cursor-based pagination
    */
   list: protectedProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(20),
-        offset: z.number().min(0).default(0),
+        cursor: z.string().optional(), // Last session ID from previous page
       })
     )
     .query(async ({ ctx, input }) => {
+      const whereConditions = [
+        eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+      ];
+
+      // If cursor is provided, get sessions older than the cursor
+      if (input.cursor) {
+        // First get the cursor session's updatedAt timestamp
+        const cursorSession = await db
+          .select({ updatedAt: LightfastChatSession.updatedAt })
+          .from(LightfastChatSession)
+          .where(eq(LightfastChatSession.id, input.cursor))
+          .limit(1);
+
+        if (cursorSession[0]) {
+          whereConditions.push(
+            lt(LightfastChatSession.updatedAt, cursorSession[0].updatedAt)
+          );
+        }
+      }
+
       const sessions = await db
         .select({
           id: LightfastChatSession.id,
+          title: LightfastChatSession.title,
+          pinned: LightfastChatSession.pinned,
           createdAt: LightfastChatSession.createdAt,
           updatedAt: LightfastChatSession.updatedAt,
         })
         .from(LightfastChatSession)
-        .where(eq(LightfastChatSession.clerkUserId, ctx.session.userId!))
+        .where(and(...whereConditions))
         .orderBy(desc(LightfastChatSession.updatedAt))
-        .limit(input.limit)
-        .offset(input.offset);
+        .limit(input.limit);
 
       return sessions;
     }),
@@ -77,6 +98,42 @@ export const sessionRouter = {
         });
 
       return { id: result.insertId };
+    }),
+
+  /**
+   * Set pinned status of a session
+   */
+  setPinned: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        pinned: z.boolean(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership
+      const session = await db
+        .select({ id: LightfastChatSession.id })
+        .from(LightfastChatSession)
+        .where(
+          and(
+            eq(LightfastChatSession.id, input.sessionId),
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+          )
+        )
+        .limit(1);
+
+      if (!session[0]) {
+        throw new Error("Session not found");
+      }
+
+      // Set the pinned status explicitly
+      await db
+        .update(LightfastChatSession)
+        .set({ pinned: input.pinned })
+        .where(eq(LightfastChatSession.id, input.sessionId));
+
+      return { success: true, pinned: input.pinned };
     }),
 
   /**

@@ -1,11 +1,11 @@
 import { getQueryClient, trpc, HydrateClient } from "~/trpc/server";
 import { notFound } from "next/navigation";
 import type React from "react";
-import { Suspense } from "react";
 import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { UserDropdownMenu } from "~/components/layouts/user-dropdown-menu";
+import { ITEMS_PER_PAGE } from "~/components/sidebar/types";
 
 interface AuthenticatedLayoutProps {
 	children: React.ReactNode;
@@ -24,16 +24,17 @@ export default async function AuthenticatedLayout({
 		notFound();
 	}
 
+	// Note: We don't prefetch sessions here because:
+	// 1. prefetchInfiniteQuery can't be used in RSC (serialization issues)
+	// 2. Regular prefetchQuery has different query keys than infiniteQuery
+	// 3. We're using Suspense which handles the loading state gracefully
+
 	return (
 		<HydrateClient>
 			<TooltipProvider>
 				<SidebarProvider defaultOpen={true}>
 					<div className="flex h-screen w-full">
-						<Suspense
-							fallback={<div className="w-64 bg-muted/30 animate-pulse" />}
-						>
-							<AppSidebar />
-						</Suspense>
+						<AppSidebar />
 						<div className="flex border-l border-muted/30 flex-col w-full relative">
 							{/* Absolutely positioned header with user dropdown */}
 							<header className="absolute top-0 right-0 z-10">

@@ -6,45 +6,54 @@ import {
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuItem,
+	SidebarMenuButton,
 } from "@repo/ui/components/ui/sidebar";
-import { MessageSquarePlus } from "lucide-react";
-import { ActiveMenuItem } from "./active-menu-item";
-import { PlatformSidebarTrigger } from "./platform-sidebar-trigger";
+import { Icons } from "@repo/ui/components/icons";
+import Link from "next/link";
+import { InfiniteScrollSessions } from "./sessions/infinite-scroll-sessions";
 import { SidebarHoverExpand } from "./sidebar-hover-expand";
-import { SessionsList } from "./sessions-list";
+import { ThreadsErrorBoundary } from "./threads-error-boundary";
+import { SidebarTriggerButton } from "./sidebar-trigger-button";
 
 // Main server component - renders static parts with reactive sessions list
 export function AppSidebar() {
 	return (
-		<Sidebar variant="inset" collapsible="icon" className="w-64 max-w-64">
+		<Sidebar
+			variant="inset"
+			collapsible="icon"
+			className="w-64 pl-2 py-2 max-w-64"
+		>
 			<SidebarHeader className="p-0">
 				<SidebarGroup className="p-2">
-					<PlatformSidebarTrigger />
-				</SidebarGroup>
-			</SidebarHeader>
-
-			<SidebarContent>
-				<SidebarGroup className="p-2">
 					<SidebarGroupContent>
-						<SidebarMenu>
+						<SidebarMenu className="space-y-2">
 							<SidebarMenuItem>
-								<ActiveMenuItem sessionId="new" href="/new" size="default">
-									<MessageSquarePlus className="w-4 h-4" />
-									<span className="group-data-[collapsible=icon]:hidden text-xs">
-										New Chat
-									</span>
-								</ActiveMenuItem>
+								<SidebarTriggerButton />
+							</SidebarMenuItem>
+							<SidebarMenuItem>
+								<SidebarMenuButton asChild>
+									<Link href="/new">
+										<Icons.newChat className="size-4" />
+										<span className="group-data-[collapsible=icon]:hidden">
+											New Chat
+										</span>
+									</Link>
+								</SidebarMenuButton>
 							</SidebarMenuItem>
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
+			</SidebarHeader>
 
-				{/* Only the sessions list is a client component - everything else stays server-rendered */}
-				<div className="w-full min-w-0 group-data-[collapsible=icon]:hidden">
-					<SessionsList className="h-[calc(100vh-180px)] w-full" />
+			<SidebarContent className="flex flex-col">
+				{/* Sessions list with constrained height for scrolling */}
+				<div className="flex-1 min-h-0 w-full group-data-[collapsible=icon]:hidden">
+					<ThreadsErrorBoundary>
+						<InfiniteScrollSessions className="h-full w-full" />
+					</ThreadsErrorBoundary>
 				</div>
 
-				{/* Hover expand zone - fills the remaining space */}
+				{/* Hover expand zone - only for collapsed state */}
 				<div className="flex-1 relative group-data-[collapsible=icon]:block hidden">
 					<SidebarHoverExpand />
 				</div>

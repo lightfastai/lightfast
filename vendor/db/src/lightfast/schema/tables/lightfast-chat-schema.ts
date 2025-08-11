@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { json, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, json, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
 import type { UIMessage } from "ai";
 
 import { uuidv4 } from "@repo/lib";
@@ -29,6 +29,18 @@ export const LightfastChatSession = mysqlTable("lightfast_chat_session", {
    * Links to the Clerk user ID for authentication
    */
   clerkUserId: varchar("clerk_user_id", { length: 191 }).notNull(),
+  
+  /**
+   * Display title for the session
+   * Defaults to "New Session" and can be updated based on conversation content
+   */
+  title: varchar("title", { length: 255 }).default("New Session").notNull(),
+  
+  /**
+   * Whether this session is pinned by the user
+   * Pinned sessions appear at the top of the session list
+   */
+  pinned: boolean("pinned").default(false).notNull(),
   
   /**
    * Timestamp when the session was created
