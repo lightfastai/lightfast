@@ -11,7 +11,9 @@ export function ChatLayout({ children, agentId, version = "v1" }: ChatLayoutProp
 		<main className="flex h-screen flex-col relative">
 			<div className="relative h-full">
 				<AuthenticatedHeader agentId={agentId} version={version} />
-				<div className="flex-1 flex flex-col h-full">{children}</div>
+				{/* Add padding-top only on mobile/iPad for the traditional header */}
+				{/* Desktop uses floating elements so chat can use full viewport */}
+				<div className="flex-1 flex flex-col h-full pt-14 lg:pt-0">{children}</div>
 			</div>
 		</main>
 	);
