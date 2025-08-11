@@ -20,7 +20,7 @@ export type LightfastAppChatToolSet = InferUITools<{
 // Metadata type for our messages
 export interface LightfastAppChatUIMessageMetadata {
 	createdAt?: string;
-	threadId?: string;
+	sessionId?: string;
 	resourceId?: string;
 	status?: "thinking" | "streaming" | "done";
 }

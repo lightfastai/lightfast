@@ -39,9 +39,9 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
 	return (
 		<Suspense fallback={null}>
 			<ChatInterface 
-				key={`${agentId}-${threadId}`}
+				key={`${agentId}-${sessionId}`}
 				agentId={agentId} 
-				sessionId={threadId} 
+				sessionId={sessionId} 
 				initialMessages={messages} 
 			/>
 		</Suspense>

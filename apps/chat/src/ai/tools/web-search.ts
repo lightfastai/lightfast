@@ -43,7 +43,7 @@ const executeWebSearch = wrapTraced(
 					contentType,
 					numResults,
 					contextInfo: {
-						threadId: context.threadId,
+						sessionId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},

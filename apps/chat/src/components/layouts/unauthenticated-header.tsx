@@ -83,20 +83,14 @@ export function UnauthenticatedHeader() {
 				</div>
 			</div>
 
-			{/* Right side */}
-			<div className="absolute top-0 right-0 h-14 flex items-center pr-4 z-10 w-fit gap-2">
-				{/* Mobile menu button */}
-				<UnauthenticatedMobileNav />
-				
-				{/* Desktop actions */}
-				<div className="hidden lg:flex items-center gap-2">
+			{/* Desktop Right side */}
+			<div className="hidden lg:flex absolute top-0 right-0 h-14 items-center pr-4 z-10 w-fit gap-2">
 					<Button variant="ghost" size="sm" asChild>
 						<Link href={`${authUrl}/sign-in`}>Log in</Link>
 					</Button>
 					<Button size="sm" asChild>
 						<Link href={`${authUrl}/sign-up`}>Sign up</Link>
 					</Button>
-				</div>
 			</div>
 		</>
 	);
