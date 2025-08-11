@@ -100,6 +100,37 @@ export const LightfastChatMessage = mysqlTable("lightfast_chat_message", {
 });
 
 /**
+ * LightfastChatStream table represents active streaming sessions in the Lightfast Chat application.
+ * 
+ * This table tracks stream IDs for resumable streams, allowing the system to handle
+ * interrupted connections and resume streaming where it left off.
+ */
+export const LightfastChatStream = mysqlTable("lightfast_chat_stream", {
+  /**
+   * Unique identifier for the stream
+   * Generated using uuidv4 for global uniqueness
+   */
+  id: varchar("id", { length: 191 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  
+  /**
+   * Reference to the session this stream belongs to
+   * Links to the lightfast_chat_session table
+   * 
+   * Note: PlanetScale doesn't support foreign key constraints,
+   * so the relationship is enforced at the application level
+   */
+  sessionId: varchar("session_id", { length: 191 }).notNull(),
+  
+  /**
+   * Timestamp when the stream was created
+   */
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+/**
  * Drizzle Relations
  * 
  * These define the relationships between tables at the ORM level.
@@ -107,15 +138,24 @@ export const LightfastChatMessage = mysqlTable("lightfast_chat_message", {
  * rather than using database-level foreign key constraints for better performance.
  */
 
-// Session relations - one session can have many messages
+// Session relations - one session can have many messages and streams
 export const lightfastChatSessionRelations = relations(LightfastChatSession, ({ many }) => ({
   messages: many(LightfastChatMessage),
+  streams: many(LightfastChatStream),
 }));
 
 // Message relations - each message belongs to one session
 export const lightfastChatMessageRelations = relations(LightfastChatMessage, ({ one }) => ({
   session: one(LightfastChatSession, {
     fields: [LightfastChatMessage.sessionId],
+    references: [LightfastChatSession.id],
+  }),
+}));
+
+// Stream relations - each stream belongs to one session
+export const lightfastChatStreamRelations = relations(LightfastChatStream, ({ one }) => ({
+  session: one(LightfastChatSession, {
+    fields: [LightfastChatStream.sessionId],
     references: [LightfastChatSession.id],
   }),
 }));
@@ -127,3 +167,7 @@ export type InsertLightfastChatSession = typeof LightfastChatSession.$inferInser
 // Type exports for Message
 export type LightfastChatMessage = typeof LightfastChatMessage.$inferSelect;
 export type InsertLightfastChatMessage = typeof LightfastChatMessage.$inferInsert;
+
+// Type exports for Stream
+export type LightfastChatStream = typeof LightfastChatStream.$inferSelect;
+export type InsertLightfastChatStream = typeof LightfastChatStream.$inferInsert;

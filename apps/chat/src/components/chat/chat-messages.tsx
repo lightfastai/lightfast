@@ -59,9 +59,7 @@ function ScrollButton() {
 export function ChatMessages({ messages, status }: ChatMessagesProps) {
 	// Track initial message count for scroll anchor
 	const initialMessageCount = useRef<number | null>(null);
-	if (initialMessageCount.current === null) {
-		initialMessageCount.current = messages.length;
-	}
+	initialMessageCount.current ??= messages.length;
 
 	// Add runtime status to messages and inject thinking placeholder
 	const messagesWithStatus: MessageWithRuntimeStatus[] = messages.map((msg, index) => {
@@ -140,7 +138,7 @@ function MessageItem({
 			message.parts
 				?.filter(isTextPart)
 				.map((part) => part.text)
-				.join("\n") || "";
+				.join("\n") ?? "";
 
 		return (
 			<div

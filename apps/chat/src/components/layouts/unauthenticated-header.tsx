@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { Button, buttonVariants } from "@repo/ui/components/ui/button";
-import { Separator } from "@repo/ui/components/ui/separator";
 import {
 	NavigationMenu,
 	NavigationMenuContent,

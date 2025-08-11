@@ -60,7 +60,7 @@ export function AuthenticatedMobileNav() {
 								</div>
 								<div>
 									<p className="text-sm font-medium">
-										{user.firstName || user.username}
+										{user.firstName ?? user.username}
 									</p>
 									<p className="text-xs text-muted-foreground">
 										{user.primaryEmailAddress?.emailAddress}

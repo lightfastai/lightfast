@@ -12,12 +12,12 @@ interface ToolCallRendererProps {
 
 export function ToolCallRenderer({ toolPart, toolName, className }: ToolCallRendererProps) {
 	// For web search tool
-	if (toolName === "webSearch") {
+	if (toolName === "webSearch" && 'args' in toolPart) {
 		const args = toolPart.args as { query?: string };
 		return (
 			<div className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
 				<Search className="w-3 h-3" />
-				<span>Searching: {args.query || "..."}</span>
+				<span>Searching: {args.query ?? "..."}</span>
 			</div>
 		);
 	}

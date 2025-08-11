@@ -1,12 +1,14 @@
-import { sessionRouter } from "./router/auth/session";
-import { chatAppRouter } from "./router/chat";
+import { userRouter } from "./router/auth/user";
+import { sessionRouter } from "./router/chat/session";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
-  auth: {
-    session: sessionRouter,
-  },
-  chat: chatAppRouter,
+	auth: {
+		user: userRouter,
+	},
+	chat: {
+		session: sessionRouter,
+	},
 });
 
 export type AppRouter = typeof appRouter;

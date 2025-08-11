@@ -1,7 +1,5 @@
 import type { MetadataRoute } from "next";
 
-import { siteConfig } from "@repo/lightfast-config";
-
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Lightfast Chat",

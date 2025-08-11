@@ -8,6 +8,7 @@ import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { getClerkConfig } from "@repo/url-utils";
+import { TRPCReactProvider } from "~/trpc/react";
 
 
 export const metadata: Metadata = {
@@ -109,8 +110,10 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <head />
         <body className={cn("bg-background dark min-h-screen", fonts)}>
-          {children}
-          <Toaster />
+          <TRPCReactProvider>
+            {children}
+            <Toaster />
+          </TRPCReactProvider>
         </body>
       </html>
     </ClerkProvider>

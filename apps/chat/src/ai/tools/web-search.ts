@@ -83,7 +83,7 @@ const executeWebSearch = wrapTraced(
 					const searchOptions = {
 						...baseOptions,
 						summary: {
-							query: summaryQuery || query,
+							query: summaryQuery ?? query,
 						},
 					} as const;
 					response = await exa.searchAndContents(query, searchOptions);
@@ -135,11 +135,11 @@ const executeWebSearch = wrapTraced(
 				totalCharacters += content.length;
 
 				return {
-					title: result.title || "Untitled",
+					title: result.title ?? "Untitled",
 					url: result.url,
 					content,
 					contentType,
-					score: result.score || undefined,
+					score: result.score ?? undefined,
 				};
 			});
 

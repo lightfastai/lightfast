@@ -1,1 +1,1 @@
-export * from "./tables/lightfast-chat-schema"; // Contains LightfastChatSession and LightfastChatMessage tables
+export * from "./tables/lightfast-chat-schema"; // Contains LightfastChatSession, LightfastChatMessage, and LightfastChatStream tables

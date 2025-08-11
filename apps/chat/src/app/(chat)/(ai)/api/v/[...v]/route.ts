@@ -15,7 +15,6 @@ import {
 import { uuidv4 } from "@lightfast/core/v2/utils";
 import { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/types";
-import { env } from "~/env";
 import { auth } from "@clerk/nextjs/server";
 import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
 
@@ -43,7 +42,7 @@ const handler = async (
 	const { v } = await params;
 
 	// Extract agentId and sessionId
-	const [agentId, sessionId] = v || [];
+	const [agentId, sessionId] = v;
 
 	// Get authenticated user ID from Clerk
 	const { userId } = await auth();
@@ -78,8 +77,8 @@ You can help users find information, answer questions, and provide insights base
 When searching, be thoughtful about your queries and provide comprehensive, well-sourced answers.`,
 				tools: c010Tools,
 				createRuntimeContext: ({
-					sessionId,
-					resourceId,
+					sessionId: _sessionId,
+					resourceId: _resourceId,
 				}): AppRuntimeContext => ({
 					userId,
 					agentId,
@@ -103,9 +102,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 				},
 				onChunk: ({ chunk }) => {
 					if (chunk.type === "tool-call") {
-						if (chunk.toolName === "webSearch") {
-							// Web search called
-						}
+						// Tool called
 					}
 				},
 				onFinish: (result) => {
@@ -117,7 +114,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 								sessionId,
 								userId,
 							},
-							output: result.response?.messages || result.text,
+							output: result.response?.messages ?? result.text,
 							metadata: {
 								finishReason: result.finishReason,
 								usage: result.usage,
@@ -131,10 +128,10 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 			req,
 			resourceId: userId,
 			createRequestContext: (req) => ({
-				userAgent: req.headers.get("user-agent") || undefined,
+				userAgent: req.headers.get("user-agent") ?? undefined,
 				ipAddress:
-					req.headers.get("x-forwarded-for") ||
-					req.headers.get("x-real-ip") ||
+					req.headers.get("x-forwarded-for") ??
+					req.headers.get("x-real-ip") ??
 					undefined,
 			}),
 			generateId: uuidv4,

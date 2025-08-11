@@ -1,10 +1,9 @@
-import { getQueryClient, trpc } from "~/trpc/server";
+import { getQueryClient, trpc, HydrateClient } from "~/trpc/server";
 import { notFound } from "next/navigation";
 import type React from "react";
 import { Suspense } from "react";
 import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
-import { TRPCReactProvider } from "~/trpc/react";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { UserDropdownMenu } from "~/components/layouts/user-dropdown-menu";
 
@@ -18,7 +17,7 @@ export default async function AuthenticatedLayout({
 }: AuthenticatedLayoutProps) {
 	const queryClient = getQueryClient();
 	const session = await queryClient.fetchQuery(
-		trpc.auth.session.getSession.queryOptions(),
+		trpc.auth.user.getUser.queryOptions(),
 	);
 
 	if (!session.userId) {
@@ -26,11 +25,13 @@ export default async function AuthenticatedLayout({
 	}
 
 	return (
-		<TooltipProvider>
-			<TRPCReactProvider>
+		<HydrateClient>
+			<TooltipProvider>
 				<SidebarProvider defaultOpen={true}>
 					<div className="flex h-screen w-full">
-						<Suspense fallback={<div className="w-64 bg-muted/30 animate-pulse" />}>
+						<Suspense
+							fallback={<div className="w-64 bg-muted/30 animate-pulse" />}
+						>
 							<AppSidebar />
 						</Suspense>
 						<div className="flex border-l border-muted/30 flex-col w-full relative">
@@ -45,8 +46,7 @@ export default async function AuthenticatedLayout({
 						</div>
 					</div>
 				</SidebarProvider>
-			</TRPCReactProvider>
-		</TooltipProvider>
+			</TooltipProvider>
+		</HydrateClient>
 	);
 }
-

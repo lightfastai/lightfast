@@ -1,36 +1,34 @@
-import { createTRPCClient, httpBatchStreamLink, loggerLink } from "@trpc/client";
+import {
+	defaultShouldDehydrateQuery,
+	QueryClient,
+} from "@tanstack/react-query";
 import SuperJSON from "superjson";
 
-import type { AppRouter } from "@vendor/trpc";
-import { createTRPCHeaders, $TRPCSource } from "@vendor/trpc/headers";
+export const createQueryClient = () =>
+	new QueryClient({
+		defaultOptions: {
+			queries: {
+				// With SSR, we usually want to set some default staleTime
+				// above 0 to avoid refetching immediately on the client
+				staleTime: 30 * 1000,
+			},
+			dehydrate: {
+				serializeData: SuperJSON.serialize,
+				shouldDehydrateQuery: (query) =>
+					defaultShouldDehydrateQuery(query) ||
+					query.state.status === "pending",
+				shouldRedactErrors: () => {
+					// We should not catch Next.js server errors
+					// as that's how Next.js detects dynamic pages
+					// so we cannot redact them.
+					// Next.js also automatically redacts errors for us
+					// with better digests.
+					return false;
+				},
+			},
+			hydrate: {
+				deserializeData: SuperJSON.deserialize,
+			},
+		},
+	});
 
-import { env } from "~/env";
-
-const getBaseUrl = () => {
-  if (typeof window !== "undefined") return window.location.origin;
-  if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 4106}`;
-};
-
-/**
- * Direct TRPC client for the chat app (non-React usage)
- */
-export const trpc = createTRPCClient<AppRouter>({
-  links: [
-    loggerLink({
-      enabled: (op) =>
-        process.env.NODE_ENV === "development" ||
-        (op.direction === "down" && op.result instanceof Error),
-    }),
-    httpBatchStreamLink({
-      transformer: SuperJSON,
-      url: `${getBaseUrl()}/api/trpc`,
-      headers: async () => {
-        const headers = createTRPCHeaders({
-          source: $TRPCSource.Enum["lightfast-chat"],
-        });
-        return headers;
-      },
-    }),
-  ],
-});
