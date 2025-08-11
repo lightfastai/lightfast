@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const $TRPCSource = z.enum(["lightfast-app"]);
+export const $TRPCSource = z.enum(["lightfast-app", "lightfast-chat"]);
 
 export type TRPCSource = z.infer<typeof $TRPCSource>;
 

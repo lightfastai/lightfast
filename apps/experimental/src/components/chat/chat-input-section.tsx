@@ -4,7 +4,6 @@ import { useChat } from "@ai-sdk/react";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
-import { ChatBottomSection } from "./chat-bottom-section";
 import { ChatMessages } from "./chat-messages";
 import { EmptyState } from "./empty-state";
 
@@ -94,15 +93,18 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 		return (
 			<>
 				<ChatMessages messages={messages} status={status} />
-				<ChatBottomSection>
-					<ChatInput
-						onSendMessage={handleSendMessage}
-						placeholder="Ask Lightfast"
-						disabled={status === "streaming" || status === "submitted"}
-						withGradient={true}
-						withDescription="This is an experiment by Lightfast. Use with discretion."
-					/>
-				</ChatBottomSection>
+				<div className="relative">
+					{/* Chat Input container with gradient */}
+					<div className="relative bg-background pb-4">
+						<ChatInput
+							onSendMessage={handleSendMessage}
+							placeholder="Ask Lightfast"
+							disabled={status === "streaming" || status === "submitted"}
+							withGradient={true}
+							withDescription="This is an experiment by Lightfast. Use with discretion."
+						/>
+					</div>
+				</div>
 			</>
 		);
 	}

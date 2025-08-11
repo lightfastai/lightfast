@@ -4,12 +4,14 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { braintrustEnv } from "@lightfast/core/v2/braintrust-env";
 
 export const env = createEnv({
   extends: [
     vercel(),
     clerkEnvBase,
     sentryEnv,
+    braintrustEnv,
   ],
   shared: {
     NODE_ENV: z
@@ -22,6 +24,7 @@ export const env = createEnv({
    */
   server: {
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
+    EXA_API_KEY: z.string().min(1),
   },
 
   /**

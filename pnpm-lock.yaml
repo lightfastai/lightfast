@@ -254,15 +254,27 @@ importers:
 
   apps/chat:
     dependencies:
+      '@ai-sdk/anthropic':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.8(zod@3.25.76)
+      '@ai-sdk/react':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.26(react@19.1.0)(zod@3.25.76)
       '@clerk/nextjs':
         specifier: 'catalog:'
         version: 6.28.1(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@lightfast/core':
+        specifier: workspace:^
+        version: link:../../packages/lightfast-core
       '@repo/lightfast-config':
         specifier: workspace:*
         version: link:../../packages/lightfast-config
       '@repo/lightfast-react':
         specifier: workspace:*
         version: link:../../packages/lightfast-react
+      '@repo/trpc-client':
+        specifier: workspace:*
+        version: link:../../packages/trpc-client
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -272,6 +284,18 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.84.0(react@19.1.0)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.4.3(typescript@5.9.2)
+      '@trpc/tanstack-react-query':
+        specifier: 'catalog:'
+        version: 11.4.3(@tanstack/react-query@5.84.0(react@19.1.0))(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.3(typescript@5.9.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.2)
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk
@@ -281,9 +305,21 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/trpc':
+        specifier: workspace:*
+        version: link:../../vendor/trpc
       '@vercel/toolbar':
         specifier: ^0.1.28
         version: 0.1.38(@vercel/analytics@1.5.0(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(@vercel/speed-insights@1.2.0(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(svelte@5.37.2)(vue@3.5.18(typescript@5.9.2)))(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.0-beta.26(zod@3.25.76)
+      braintrust:
+        specifier: 'catalog:'
+        version: 0.2.1(zod@3.25.76)
+      exa-js:
+        specifier: 'catalog:'
+        version: 1.8.26(ws@8.18.3(bufferutil@4.0.9))
       lucide-react:
         specifier: 'catalog:'
         version: 0.451.0(react@19.1.0)
@@ -299,6 +335,12 @@ importers:
       react-dom:
         specifier: catalog:react19
         version: 19.1.0(react@19.1.0)
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
+      superjson:
+        specifier: 2.2.1
+        version: 2.2.1
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -16351,6 +16393,15 @@ snapshots:
 
   '@trpc/server@11.4.3(typescript@5.9.2)':
     dependencies:
+      typescript: 5.9.2
+
+  '@trpc/tanstack-react-query@11.4.3(@tanstack/react-query@5.84.0(react@19.1.0))(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.3(typescript@5.9.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.2)':
+    dependencies:
+      '@tanstack/react-query': 5.84.0(react@19.1.0)
+      '@trpc/client': 11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2)
+      '@trpc/server': 11.4.3(typescript@5.9.2)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
       typescript: 5.9.2
 
   '@trpc/tanstack-react-query@11.4.3(@tanstack/react-query@5.84.0(react@19.1.0))(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.3(typescript@5.9.2))(react-dom@19.1.1(react@19.1.0))(react@19.1.0)(typescript@5.9.2)':

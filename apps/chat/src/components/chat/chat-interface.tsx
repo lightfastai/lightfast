@@ -5,6 +5,8 @@ import { useMemo } from "react";
 import { AppEmptyState } from "@repo/ui/components/app-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
+import { useChat } from "~/hooks/use-chat";
+import { uuidv4 } from "@lightfast/core/v2/utils";
 
 enum ChatStateType {
 	UNAUTHENTICATED = "unauthenticated",
@@ -47,23 +49,33 @@ export function ChatInterface() {
 		return { type: ChatStateType.UNKNOWN, id: null, isNew: false };
 	}, [pathname]);
 
-	// TODO: Implement useUnauthenticatedChat hook
-	// TODO: Implement useAuthenticatedChat hook
-	// TODO: Load messages based on threadId
-	// TODO: Set up streaming
-	const messages = []; // TODO: Get from hooks
-	const isLoading = false; // TODO: Get from hooks
+	// Generate or use existing threadId
+	const threadId = chatState.id || uuidv4();
+	
+	// Use the chat hook with c010 agent by default
+	const { messages, sendMessage, status, isLoading } = useChat({
+		agentId: "c010",
+		threadId,
+		initialMessages: [],
+		onError: (error) => {
+			console.error("Chat error:", error);
+		},
+	});
 
 	const handleSendMessage = async (message: string) => {
-		// TODO: Route to appropriate handler based on chatState.type
-		console.log(
-			"Sending message:",
-			message,
-			"Type:",
-			chatState.type,
-			"ID:",
-			chatState.id,
-		);
+		try {
+			// If this is a new chat, update the URL to include the threadId
+			if (chatState.isNew) {
+				const newPath = chatState.type === ChatStateType.UNAUTHENTICATED 
+					? `/${threadId}` 
+					: `/${threadId}`;
+				window.history.replaceState({}, "", newPath);
+			}
+			
+			await sendMessage(message);
+		} catch (error) {
+			console.error("Failed to send message:", error);
+		}
 	};
 
 	// For new chats (no messages yet), show centered layout

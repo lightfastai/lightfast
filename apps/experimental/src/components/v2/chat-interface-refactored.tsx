@@ -3,7 +3,6 @@
 import type { ChatStatus, UIMessage } from "ai";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ChatBottomSection } from "@/components/chat/chat-bottom-section";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { EmptyState } from "@/components/chat/empty-state";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
@@ -73,15 +72,18 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 	return (
 		<>
 			<ChatMessages messages={displayMessages} status={status} />
-			<ChatBottomSection>
-				<ChatInput 
-					onSendMessage={handleSendMessage} 
-					placeholder="Ask Lightfast" 
-					disabled={isLoading}
-					withGradient={true}
-					withDescription="This is an experiment by Lightfast. Use with discretion."
-				/>
-			</ChatBottomSection>
+			<div className="relative">
+				{/* Chat Input container with gradient */}
+				<div className="relative bg-background pb-4">
+					<ChatInput 
+						onSendMessage={handleSendMessage} 
+						placeholder="Ask Lightfast" 
+						disabled={isLoading}
+						withGradient={true}
+						withDescription="This is an experiment by Lightfast. Use with discretion."
+					/>
+				</div>
+			</div>
 		</>
 	);
 }
