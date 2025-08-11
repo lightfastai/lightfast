@@ -1,8 +1,7 @@
 "use client";
 
-import type { QueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createTRPCClient,
   httpBatchStreamLink,
@@ -12,10 +11,22 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
 import type { AppRouter } from "@vendor/trpc";
-import { createTRPCHeaders, TRPCSource } from "@vendor/trpc/headers";
+import { createTRPCHeaders, $TRPCSource } from "@vendor/trpc/headers";
 
-import { env } from "../env";
-import { createQueryClient } from "./trpc-react-query-client";
+import { env } from "~/env";
+
+// Create query client
+const createQueryClient = () => {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        // With SSR, we usually want to set some default staleTime
+        // above 0 to avoid refetching immediately on the client
+        staleTime: 30 * 1000,
+      },
+    },
+  });
+};
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
@@ -28,16 +39,13 @@ const getQueryClient = () => {
   }
 };
 
+// Create TRPC React hooks
 export const { useTRPC, TRPCProvider } = createTRPCContext<AppRouter>();
 
 export function TRPCReactProvider({
-  source,
   children,
-  baseUrl = getBaseUrl(),
 }: {
-  source: TRPCSource;
   children: React.ReactNode;
-  baseUrl?: string;
 }) {
   const queryClient = getQueryClient();
 
@@ -46,15 +54,15 @@ export function TRPCReactProvider({
       links: [
         loggerLink({
           enabled: (op) =>
-            env.NODE_ENV === "development" ||
+            process.env.NODE_ENV === "development" ||
             (op.direction === "down" && op.result instanceof Error),
         }),
         httpBatchStreamLink({
           transformer: SuperJSON,
-          url: `${baseUrl}/api/trpc`,
+          url: `${getBaseUrl()}/api/trpc`,
           headers: async () => {
             const headers = createTRPCHeaders({
-              source,
+              source: $TRPCSource.Enum["lightfast-chat"],
             });
             return headers;
           },
@@ -75,6 +83,5 @@ export function TRPCReactProvider({
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return window.location.origin;
   if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`;
-  // eslint-disable-next-line no-restricted-properties
-  return `http://localhost:${process.env.PORT ?? 3000}`;
+  return `http://localhost:${process.env.PORT ?? 4106}`;
 };

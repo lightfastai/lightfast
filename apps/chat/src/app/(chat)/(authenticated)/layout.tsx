@@ -1,7 +1,6 @@
 import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
-import { TRPCReactProvider } from "@repo/trpc-client/trpc-react-provider";
-import { getQueryClient, trpc } from "@repo/trpc-client/trpc-react-server-provider";
-import { $TRPCSource } from "@vendor/trpc/headers";
+import { TRPCReactProvider } from "~/trpc/react";
+import { getQueryClient, trpc } from "~/trpc/server";
 import { notFound } from "next/navigation";
 
 interface AuthenticatedLayoutProps {
@@ -19,7 +18,7 @@ export default async function AuthenticatedLayout({ children }: AuthenticatedLay
   }
 
   return (
-    <TRPCReactProvider source={$TRPCSource.Enum["lightfast-chat"]}>
+    <TRPCReactProvider>
       <div className="relative h-full">
         <AuthenticatedHeader />
         {children}

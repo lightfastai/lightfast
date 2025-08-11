@@ -272,9 +272,6 @@ importers:
       '@repo/lightfast-react':
         specifier: workspace:*
         version: link:../../packages/lightfast-react
-      '@repo/trpc-client':
-        specifier: workspace:*
-        version: link:../../packages/trpc-client
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -1545,58 +1542,6 @@ importers:
         version: 24.1.0
       typescript:
         specifier: ^5.8.3
-        version: 5.9.2
-
-  packages/trpc-client:
-    dependencies:
-      '@tanstack/react-query':
-        specifier: 'catalog:'
-        version: 5.84.0(react@19.1.0)
-      '@trpc/client':
-        specifier: 'catalog:'
-        version: 11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2)
-      '@trpc/server':
-        specifier: 'catalog:'
-        version: 11.4.3(typescript@5.9.2)
-      '@trpc/tanstack-react-query':
-        specifier: 'catalog:'
-        version: 11.4.3(@tanstack/react-query@5.84.0(react@19.1.0))(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.3(typescript@5.9.2))(react-dom@19.1.1(react@19.1.0))(react@19.1.0)(typescript@5.9.2)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
-      '@vendor/db':
-        specifier: workspace:*
-        version: link:../../vendor/db
-      '@vendor/trpc':
-        specifier: workspace:*
-        version: link:../../vendor/trpc
-      react:
-        specifier: catalog:react19
-        version: 19.1.0
-      superjson:
-        specifier: 2.2.1
-        version: 2.2.1
-      zod:
-        specifier: 'catalog:'
-        version: 3.25.76
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../internal/eslint
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../../internal/prettier
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      eslint:
-        specifier: 'catalog:'
-        version: 9.32.0(jiti@2.5.1)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.6.2
-      typescript:
-        specifier: 'catalog:'
         version: 5.9.2
 
   packages/ui:

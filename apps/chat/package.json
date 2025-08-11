@@ -19,7 +19,6 @@
     "@lightfast/core": "workspace:^",
     "@repo/lightfast-config": "workspace:*",
     "@repo/lightfast-react": "workspace:*",
-    "@repo/trpc-client": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
