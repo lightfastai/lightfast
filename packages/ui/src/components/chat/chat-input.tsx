@@ -13,6 +13,8 @@ interface ChatInputProps {
   className?: string;
   value?: string;
   onChange?: (value: string) => void;
+  withGradient?: boolean;
+  withDescription?: string;
 }
 
 const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
@@ -25,6 +27,8 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
       className = "",
       value,
       onChange,
+      withGradient = false,
+      withDescription,
     },
     ref,
   ) => {
@@ -98,6 +102,15 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
     return (
       <div className={`flex-shrink-0 ${className}`}>
+        {/* Gradient overlay */}
+        {withGradient && (
+          <div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none">
+            <div className="chat-container relative h-full !px-0">
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+            </div>
+          </div>
+        )}
+        
         <div className="chat-container relative">
           <div className="flex gap-2">
             <div className="flex-1 min-w-0">
@@ -141,6 +154,15 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
             </div>
           </div>
         </div>
+        
+        {/* Description text */}
+        {withDescription && (
+          <div className="chat-container">
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              {withDescription}
+            </p>
+          </div>
+        )}
       </div>
     );
   },

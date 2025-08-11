@@ -1,13 +1,21 @@
 import Link from "next/link";
-import { Button, buttonVariants } from "@repo/ui/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Icons } from "@repo/ui/components/icons";
 import { getAppUrl } from "@repo/url-utils";
-import { UserDropdownMenu } from "./user-dropdown-menu";
+import { UserDropdown } from "../user-dropdown";
 import { AuthenticatedMobileNav } from "./authenticated-mobile-nav";
+import { AgentInfoModal } from "../agent-info-modal";
 
-export function AuthenticatedHeader() {
+interface AuthenticatedHeaderProps {
+	agentId?: string;
+	version?: "v1" | "v2";
+}
+
+export function AuthenticatedHeader({ agentId, version = "v1" }: AuthenticatedHeaderProps) {
 	const cloudUrl = getAppUrl("cloud");
+	const chatUrl = getAppUrl("chat");
+	const newChatHref = version === "v2" ? `/v2-chat/${agentId || "a011"}` : "/";
 
 	return (
 		<header className="absolute top-0 left-0 right-0 h-14 flex items-center justify-between app-container bg-background border-b border-border/50 lg:border-b-0 z-10">
@@ -25,7 +33,7 @@ export function AuthenticatedHeader() {
 						<Separator orientation="vertical" />
 					</div>
 					<Button size="xs" variant="ghost" asChild>
-						<Link href="/new">
+						<Link href={newChatHref}>
 							<Icons.newChat className="h-4 w-4" />
 						</Link>
 					</Button>
@@ -34,15 +42,17 @@ export function AuthenticatedHeader() {
 
 			{/* Right side */}
 			<div className="flex items-center gap-2">
+				{/* Agent Info Modal */}
+				<AgentInfoModal agentId={agentId} />
+				
 				{/* Mobile menu button */}
-				<AuthenticatedMobileNav />
+				<AuthenticatedMobileNav agentId={agentId} version={version} />
 				
 				{/* Desktop - User dropdown */}
 				<div className="hidden lg:block">
-					<UserDropdownMenu />
+					<UserDropdown />
 				</div>
 			</div>
 		</header>
 	);
 }
-

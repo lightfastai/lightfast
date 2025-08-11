@@ -18,8 +18,8 @@ export function AuthenticatedHeader() {
           </Link>
         </Button>
         
-        {/* Desktop only - New Playground Button */}
-        <div className="hidden lg:flex items-center">
+        {/* New Playground Button - visible on all screen sizes */}
+        <div className="flex items-center">
           <div className="flex h-4 items-center px-4">
             <Separator orientation="vertical" />
           </div>

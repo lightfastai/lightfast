@@ -7,7 +7,7 @@ import { memo, useMemo, useRef } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { Markdown } from "@repo/ui/components/markdown";
 import { ThinkingAccordion } from "./thinking-accordion";
-import { ToolRenderer } from "./tool-renderers";
+import { ToolRenderer } from "../tool-renderers";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";

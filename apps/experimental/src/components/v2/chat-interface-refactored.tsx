@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { ChatBottomSection } from "@/components/chat/chat-bottom-section";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { EmptyState } from "@/components/chat/empty-state";
-import { ChatInput } from "@/components/chat-input";
+import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { useChatV2 } from "@/hooks/use-chat-v2";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
@@ -74,7 +74,13 @@ export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatI
 		<>
 			<ChatMessages messages={displayMessages} status={status} />
 			<ChatBottomSection>
-				<ChatInput onSendMessage={handleSendMessage} placeholder="Ask Lightfast" disabled={isLoading} />
+				<ChatInput 
+					onSendMessage={handleSendMessage} 
+					placeholder="Ask Lightfast" 
+					disabled={isLoading}
+					withGradient={true}
+					withDescription="This is an experiment by Lightfast. Use with discretion."
+				/>
 			</ChatBottomSection>
 		</>
 	);

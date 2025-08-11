@@ -75,12 +75,6 @@ catalogs:
     next:
       specifier: ^15.4.0
       version: 15.4.5
-    playwright:
-      specifier: ^1.54.1
-      version: 1.54.2
-    playwright-core:
-      specifier: ^1.54.1
-      version: 1.54.2
     prettier:
       specifier: ^3.5.3
       version: 3.6.2
@@ -639,6 +633,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@repo/url-utils':
+        specifier: workspace:*
+        version: link:../../packages/url-utils
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
@@ -693,12 +690,6 @@ importers:
       pino:
         specifier: ^9.7.0
         version: 9.7.0
-      playwright:
-        specifier: ^1.54.1
-        version: 1.54.1
-      playwright-core:
-        specifier: ^1.54.1
-        version: 1.54.1
       react:
         specifier: catalog:react19
         version: 19.1.0
@@ -871,12 +862,6 @@ importers:
       next:
         specifier: 'catalog:'
         version: 15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      playwright:
-        specifier: ^1.54.1
-        version: 1.54.1
-      playwright-core:
-        specifier: ^1.54.1
-        version: 1.54.1
       react:
         specifier: catalog:react19
         version: 19.1.0
@@ -1309,12 +1294,6 @@ importers:
       pino:
         specifier: ^9.7.0
         version: 9.7.0
-      playwright:
-        specifier: 'catalog:'
-        version: 1.54.2
-      playwright-core:
-        specifier: 'catalog:'
-        version: 1.54.2
       resumable-stream:
         specifier: 'catalog:'
         version: 2.2.3
@@ -1475,6 +1454,12 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      playwright:
+        specifier: ^1.54.1
+        version: 1.54.2
+      playwright-core:
+        specifier: ^1.54.1
+        version: 1.54.2
       zod:
         specifier: ^3.24.3
         version: 3.25.76
@@ -9979,18 +9964,8 @@ packages:
     resolution: {integrity: sha512-ueGLflrrnvwB3xuo/uGob5pd5FN7l0MsLf0Z87o/UQmRtwjvfylfc9MurIxRAWywCYTgrvpXBcqjV4OfCYGCIQ==}
     engines: {node: '>=16.20.0'}
 
-  playwright-core@1.54.1:
-    resolution: {integrity: sha512-Nbjs2zjj0htNhzgiy5wu+3w09YetDx5pkrpI/kZotDlDUaYk0HVA5xrBVPdow4SAUIlhgKcJeJg4GRKW6xHusA==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright-core@1.54.2:
     resolution: {integrity: sha512-n5r4HFbMmWsB4twG7tJLDN9gmBUeSPcsBZiWSE4DnYz9mJMAFqr2ID7+eGC9kpEnxExJ1epttwR59LEWCk8mtA==}
-    engines: {node: '>=18'}
-    hasBin: true
-
-  playwright@1.54.1:
-    resolution: {integrity: sha512-peWpSwIBmSLi6aW2auvrUtf2DqY16YYcCMO8rTVx486jKmDTJg7UAhyrraP98GB8BoPURZP8+nxO7TSd4cPr5g==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -20993,15 +20968,7 @@ snapshots:
 
   pkce-challenge@5.0.0: {}
 
-  playwright-core@1.54.1: {}
-
   playwright-core@1.54.2: {}
-
-  playwright@1.54.1:
-    dependencies:
-      playwright-core: 1.54.1
-    optionalDependencies:
-      fsevents: 2.3.2
 
   playwright@1.54.2:
     dependencies:

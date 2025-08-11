@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { ChatInput } from "@/components/chat-input";
+import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { useChatTransport } from "@/hooks/use-chat-transport";
 import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 import { ChatBottomSection } from "./chat-bottom-section";
@@ -99,6 +99,8 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 						onSendMessage={handleSendMessage}
 						placeholder="Ask Lightfast"
 						disabled={status === "streaming" || status === "submitted"}
+						withGradient={true}
+						withDescription="This is an experiment by Lightfast. Use with discretion."
 					/>
 				</ChatBottomSection>
 			</>

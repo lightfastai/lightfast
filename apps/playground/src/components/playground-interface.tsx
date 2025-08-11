@@ -2,11 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChatInput } from "./chat-input";
 import { BrowserContainer } from "./browser-container";
 import { AppEmptyState } from "@repo/ui/components/app-empty-state";
-import { ChatMessages } from "./chat-messages";
-import { AuthenticatedHeader } from "./authenticated-header";
+import { ChatInput } from "@repo/ui/components/chat/chat-input";
+import { ChatMessages } from "./chat/chat-messages";
+import { AuthenticatedHeader } from "./layouts/authenticated-header";
 import { PlaygroundLayout } from "./layouts/playground-layout";
 import { ChatSection } from "./layouts/chat-section";
 import { BrowserSection } from "./layouts/browser-section";
@@ -70,6 +70,8 @@ function PlaygroundInterfaceInner({
 								onSendMessage={handleSendMessage}
 								placeholder="Ask the browser agent to navigate, interact, or extract data..."
 								disabled={isLoading}
+								withGradient={true}
+								withDescription="Playground is powered by Lightfast Cloud"
 							/>
 						}
 					/>

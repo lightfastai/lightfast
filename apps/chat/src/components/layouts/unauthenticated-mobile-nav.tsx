@@ -68,12 +68,18 @@ export function UnauthenticatedMobileNav() {
 						{/* Footer with Login/Signup */}
 						<div className="border-t p-6 flex gap-3">
 							<Button variant="outline" className="flex-1" asChild>
-								<Link href={`${authUrl}/sign-in`} onClick={() => setOpen(false)}>
+								<Link
+									href={`${authUrl}/sign-in`}
+									onClick={() => setOpen(false)}
+								>
 									Log In
 								</Link>
 							</Button>
 							<Button className="flex-1" asChild>
-								<Link href={`${authUrl}/sign-up`} onClick={() => setOpen(false)}>
+								<Link
+									href={`${authUrl}/sign-up`}
+									onClick={() => setOpen(false)}
+								>
 									Sign Up
 								</Link>
 							</Button>
@@ -84,3 +90,4 @@ export function UnauthenticatedMobileNav() {
 		</Sheet>
 	);
 }
+
