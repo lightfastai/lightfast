@@ -28,28 +28,28 @@ import { $TRPCHeaderName, getHeaderFromTRPCHeaders } from "./headers";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: {
-  headers: Headers;
+	headers: Headers;
 }): Promise<{
-  session: Awaited<ReturnType<typeof auth>>;
-  db: typeof DB;
+	session: Awaited<ReturnType<typeof auth>>;
+	db: typeof DB;
 }> => {
-  const session = await auth();
-  
-  const source = getHeaderFromTRPCHeaders(
-    opts.headers,
-    $TRPCHeaderName.Enum["x-lightfast-trpc-source"],
-  );
+	const session = await auth();
 
-  if (session?.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${session.userId}`);
-  } else {
-    console.info(`>>> tRPC Request from ${source} by unknown`);
-  }
-  
-  return {
-    session,
-    db,
-  };
+	const source = getHeaderFromTRPCHeaders(
+		opts.headers,
+		$TRPCHeaderName.Enum["x-lightfast-trpc-source"],
+	);
+
+	if (session?.userId) {
+		console.info(`>>> tRPC Request from ${source} by ${session.userId}`);
+	} else {
+		console.info(`>>> tRPC Request from ${source} by unknown`);
+	}
+
+	return {
+		session,
+		db,
+	};
 };
 
 /**
@@ -59,14 +59,14 @@ export const createTRPCContext = async (opts: {
  * transformer
  */
 const t = initTRPC.context<typeof createTRPCContext>().create({
-  transformer: superjson,
-  errorFormatter: ({ shape, error }) => ({
-    ...shape,
-    data: {
-      ...shape.data,
-      zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
-    },
-  }),
+	transformer: superjson,
+	errorFormatter: ({ shape, error }) => ({
+		...shape,
+		data: {
+			...shape.data,
+			zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
+		},
+	}),
 });
 
 /**
@@ -95,20 +95,20 @@ export const createTRPCRouter = t.router;
  * network latency that would occur in production but not in local development.
  */
 const timingMiddleware = t.middleware(async ({ next, path }) => {
-  const start = Date.now();
+	const start = Date.now();
 
-  if (t._config.isDev) {
-    // artificial delay in dev 100-500ms
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
+	if (t._config.isDev) {
+		// artificial delay in dev 100-500ms
+		const waitMs = Math.floor(Math.random() * 400) + 100;
+		await new Promise((resolve) => setTimeout(resolve, waitMs));
+	}
 
-  const result = await next();
+	const result = await next();
 
-  const end = Date.now();
-  console.info(`[TRPC] ${path} took ${end - start}ms to execute`);
+	const end = Date.now();
+	console.info(`[TRPC] ${path} took ${end - start}ms to execute`);
 
-  return result;
+	return result;
 });
 
 /**
@@ -129,15 +129,16 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure
-  .use(timingMiddleware)
-  .use(({ ctx, next }) => {
-    if (!ctx.session?.userId) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: ctx.session,
-      },
-    });
-  });
+	.use(timingMiddleware)
+	.use(({ ctx, next }) => {
+		if (!ctx.session?.userId) {
+			throw new TRPCError({ code: "UNAUTHORIZED" });
+		}
+		return next({
+			ctx: {
+				// infers the `session` as non-nullable
+				session: ctx.session,
+			},
+		});
+	});
+
