@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "../../lib/utils";
 import { ThinkingAnimation } from "./thinking-animation";
 
 interface ThinkingMessageProps {
@@ -9,11 +9,7 @@ interface ThinkingMessageProps {
 	className?: string;
 }
 
-export function ThinkingMessage({
-	status,
-	show,
-	className,
-}: ThinkingMessageProps) {
+export function ThinkingMessage({ status, show, className }: ThinkingMessageProps) {
 	if (!show) return null;
 
 	const statusText = {

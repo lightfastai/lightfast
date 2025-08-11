@@ -10,9 +10,9 @@ export function AuthenticatedHeader() {
 	const cloudUrl = getAppUrl("cloud");
 
 	return (
-		<header className="absolute top-0 left-0 right-0 h-14 flex items-center justify-between app-container bg-background border-b border-border/50 lg:border-b-0 z-10">
+		<>
 			{/* Left side - Logo and New Chat */}
-			<div className="flex items-center">
+			<div className="absolute top-0 left-0 h-14 flex items-center pl-4 z-10 w-fit">
 				<Button variant="outline" size="xs" asChild>
 					<Link href="/">
 						<Icons.logoShort className="h-4 w-4" />
@@ -33,7 +33,7 @@ export function AuthenticatedHeader() {
 			</div>
 
 			{/* Right side */}
-			<div className="flex items-center gap-2">
+			<div className="absolute top-0 right-0 h-14 flex items-center pr-4 z-10 w-fit gap-2">
 				{/* Mobile menu button */}
 				<AuthenticatedMobileNav />
 				
@@ -42,7 +42,7 @@ export function AuthenticatedHeader() {
 					<UserDropdownMenu />
 				</div>
 			</div>
-		</header>
+		</>
 	);
 }
 

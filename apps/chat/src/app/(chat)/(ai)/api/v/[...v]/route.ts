@@ -2,8 +2,16 @@ import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "@lightfast/core/agent";
 import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
 import { smoothStream, wrapLanguageModel } from "ai";
-import { BraintrustMiddleware, currentSpan, initLogger } from "braintrust";
-import { getBraintrustConfig, isOtelEnabled } from "@lightfast/core/v2/braintrust-env";
+import {
+	BraintrustMiddleware,
+	currentSpan,
+	initLogger,
+	traced,
+} from "braintrust";
+import {
+	getBraintrustConfig,
+	isOtelEnabled,
+} from "@lightfast/core/v2/braintrust-env";
 import { uuidv4 } from "@lightfast/core/v2/utils";
 import { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/types";
@@ -26,11 +34,11 @@ initLogger({
 	projectName: braintrustConfig.projectName || "chat-app",
 });
 
-// Create PlanetScale memory instance for persistence
-const memory = new PlanetScaleMemory();
-
 // Handler function that handles auth and calls fetchRequestHandler
-const handler = async (req: Request, { params }: { params: Promise<{ v: string[] }> }) => {
+const handler = async (
+	req: Request,
+	{ params }: { params: Promise<{ v: string[] }> },
+) => {
 	// Await the params
 	const { v } = await params;
 
@@ -45,7 +53,10 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 
 	// Validate params
 	if (!agentId || !sessionId) {
-		return Response.json({ error: "Invalid path. Expected /api/v/[agentId]/[sessionId]" }, { status: 400 });
+		return Response.json(
+			{ error: "Invalid path. Expected /api/v/[agentId]/[sessionId]" },
+			{ status: 400 },
+		);
 	}
 
 	// Validate agent exists
@@ -55,6 +66,9 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async () => {
+		// Create PlanetScale memory instance
+		const memory = new PlanetScaleMemory();
+		
 		// Pass everything to fetchRequestHandler with inline agent
 		const response = await fetchRequestHandler({
 			agent: createAgent<C010ToolSchema, AppRuntimeContext>({
@@ -63,7 +77,10 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 You can help users find information, answer questions, and provide insights based on current web data.
 When searching, be thoughtful about your queries and provide comprehensive, well-sourced answers.`,
 				tools: c010Tools,
-				createRuntimeContext: ({ sessionId, resourceId }): AppRuntimeContext => ({
+				createRuntimeContext: ({
+					sessionId,
+					resourceId,
+				}): AppRuntimeContext => ({
 					userId,
 					agentId,
 				}),
@@ -87,8 +104,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 				onChunk: ({ chunk }) => {
 					if (chunk.type === "tool-call") {
 						if (chunk.toolName === "webSearch") {
-							// Web search called - you can add logging here if needed
-							console.log("Web search tool called");
+							// Web search called
 						}
 					}
 				},
@@ -111,15 +127,18 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 				},
 			}),
 			sessionId,
-			memory, // Use PlanetScale memory for persistence
+			memory,
 			req,
 			resourceId: userId,
 			createRequestContext: (req) => ({
 				userAgent: req.headers.get("user-agent") || undefined,
-				ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
+				ipAddress:
+					req.headers.get("x-forwarded-for") ||
+					req.headers.get("x-real-ip") ||
+					undefined,
 			}),
 			generateId: uuidv4,
-			enableResume: false,
+			enableResume: true,
 			onError({ error }) {
 				console.error(`>>> Agent Error`, error);
 			},
@@ -128,10 +147,18 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 		return response;
 	};
 
-	// For now, just execute without tracing wrapper
-	// You can add Braintrust tracing later if needed
+	// Only wrap with traced for POST requests
+	if (req.method === "POST") {
+		return traced(executeHandler, {
+			type: "function",
+			name: `POST /api/v/${agentId}/${sessionId}`,
+		});
+	}
+
+	// GET requests run without traced wrapper
 	return executeHandler();
 };
 
 // Export the handler for both GET and POST
 export { handler as GET, handler as POST };
+

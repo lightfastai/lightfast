@@ -2,26 +2,26 @@ import { Suspense } from "react";
 import { PlaygroundInterface } from "~/components/playground-interface";
 import { getMessages } from "~/lib/get-messages";
 
-interface PlaygroundThreadPageProps {
+interface PlaygroundSessionPageProps {
   params: Promise<{
-    threadId: string;
+    sessionId: string;
   }>;
 }
 
 /**
- * Existing chat page at /playground/[threadId]
+ * Existing chat page at /playground/[sessionId]
  * Renders the same playground interface with existing messages
  */
-export default async function PlaygroundThreadPage({ params }: PlaygroundThreadPageProps) {
-  const { threadId } = await params;
+export default async function PlaygroundSessionPage({ params }: PlaygroundSessionPageProps) {
+  const { sessionId } = await params;
 
   // Fetch existing messages from Redis
-  const messages = await getMessages(threadId);
+  const messages = await getMessages(sessionId);
 
   // Wrap in Suspense to ensure proper hydration timing
   return (
     <Suspense fallback={null}>
-      <PlaygroundInterface threadId={threadId} initialMessages={messages} />
+      <PlaygroundInterface sessionId={sessionId} initialMessages={messages} />
     </Suspense>
   );
 }

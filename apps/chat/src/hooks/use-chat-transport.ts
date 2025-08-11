@@ -13,7 +13,10 @@ interface UseChatTransportProps {
 /**
  * Hook that creates and configures a DefaultChatTransport for AI integration
  */
-export function useChatTransport({ sessionId, agentId }: UseChatTransportProps): ChatTransport<LightfastAppChatUIMessage> {
+export function useChatTransport({
+	sessionId,
+	agentId,
+}: UseChatTransportProps): ChatTransport<LightfastAppChatUIMessage> {
 	const transport = useMemo(() => {
 		// Use the v API endpoint with agentId and sessionId in the path
 		const apiEndpoint = `/api/v/${agentId}/${sessionId}`;
@@ -47,3 +50,4 @@ export function useChatTransport({ sessionId, agentId }: UseChatTransportProps):
 
 	return transport;
 }
+

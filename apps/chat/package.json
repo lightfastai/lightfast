@@ -44,6 +44,7 @@
     "react-dom": "catalog:react19",
     "server-only": "^0.0.1",
     "superjson": "2.2.1",
+    "use-stick-to-bottom": "1.1.1",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -5,6 +5,8 @@
 	"type": "module",
 	"exports": {
 		"./components/*": "./src/components/*.tsx",
+		"./components/chat": "./src/components/chat/index.ts",
+		"./components/chat/*": "./src/components/chat/*.tsx",
 		"./lib/*": "./src/lib/*.ts",
 		"./tailwind.config": "./tailwind.config.ts",
 		"./postcss.config": "./postcss.config.mjs",

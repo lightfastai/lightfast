@@ -27,7 +27,7 @@ export interface PlaygroundToolSet {
 // Metadata type for our messages
 export interface PlaygroundUIMessageMetadata {
   createdAt?: string;
-  threadId?: string;
+  sessionId?: string;
   resourceId?: string;
   status?: "thinking" | "streaming" | "done";
 }

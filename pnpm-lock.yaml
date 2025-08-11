@@ -347,6 +347,9 @@ importers:
       superjson:
         specifier: 2.2.1
         version: 2.2.1
+      use-stick-to-bottom:
+        specifier: 1.1.1
+        version: 1.1.1(react@19.1.0)
       zod:
         specifier: 'catalog:'
         version: 3.25.76

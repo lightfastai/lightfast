@@ -1,85 +1,76 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useMemo } from "react";
 import { AppEmptyState } from "@repo/ui/components/app-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
-import { useChat } from "~/hooks/use-chat";
-import { uuidv4 } from "@lightfast/core/v2/utils";
+import { useChat } from "@ai-sdk/react";
+import { useChatTransport } from "~/hooks/use-chat-transport";
+import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 
-enum ChatStateType {
-	UNAUTHENTICATED = "unauthenticated",
-	AUTHENTICATED_NEW = "authenticated-new",
-	AUTHENTICATED_THREAD = "authenticated-thread",
-	UNKNOWN = "unknown",
+interface ChatInterfaceProps {
+	agentId: string;
+	sessionId: string;
+	initialMessages?: LightfastAppChatUIMessage[];
 }
 
-interface ChatState {
-	type: ChatStateType;
-	id: string | null;
-	isNew: boolean;
-}
+export function ChatInterface({
+	agentId,
+	sessionId,
+	initialMessages = [],
+}: ChatInterfaceProps) {
+	// Create transport for AI SDK v5
+	const transport = useChatTransport({ sessionId, agentId });
 
-export function ChatInterface() {
-	const pathname = usePathname();
-
-	// Determine chat state from pathname
-	const chatState = useMemo<ChatState>(() => {
-		// Unauthenticated root
-		if (pathname === "/") {
-			return { type: ChatStateType.UNAUTHENTICATED, id: null, isNew: true };
-		}
-
-		// Authenticated new chat
-		if (pathname === "/new") {
-			return { type: ChatStateType.AUTHENTICATED_NEW, id: null, isNew: true };
-		}
-
-		// Authenticated thread
-		const threadMatch = pathname.match(/^\/([^/]+)$/);
-		if (threadMatch) {
-			return {
-				type: ChatStateType.AUTHENTICATED_THREAD,
-				id: threadMatch[1],
-				isNew: false,
-			};
-		}
-
-		return { type: ChatStateType.UNKNOWN, id: null, isNew: false };
-	}, [pathname]);
-
-	// Generate or use existing sessionId
-	const sessionId = chatState.id || uuidv4();
-	
-	// Use the chat hook with c010 agent by default
-	const { messages, sendMessage, status, isLoading } = useChat({
-		agentId: "c010",
-		sessionId,
-		initialMessages: [],
+	// Use Vercel's useChat directly with transport
+	const {
+		messages,
+		sendMessage: vercelSendMessage,
+		status,
+	} = useChat<LightfastAppChatUIMessage>({
+		id: `${agentId}-${sessionId}`,
+		transport,
+		messages: initialMessages,
 		onError: (error) => {
 			console.error("Chat error:", error);
 		},
+		resume:
+			initialMessages.length > 0 &&
+			initialMessages[initialMessages.length - 1]?.role === "user",
 	});
 
 	const handleSendMessage = async (message: string) => {
+		if (!message.trim() || status === "streaming" || status === "submitted") {
+			return;
+		}
+
 		try {
-			// If this is a new chat, update the URL to include the sessionId
-			if (chatState.isNew) {
-				const newPath = chatState.type === ChatStateType.UNAUTHENTICATED 
-					? `/${sessionId}` 
-					: `/${sessionId}`;
-				window.history.replaceState({}, "", newPath);
-			}
-			
-			await sendMessage(message);
+			// Update URL to include sessionId
+			// This happens BEFORE sending the message to match experimental app
+			window.history.replaceState({}, "", `/${sessionId}`);
+
+			// Generate UUID for the user message
+			const userMessageId = crypto.randomUUID();
+
+			// Send message using Vercel's format
+			await vercelSendMessage(
+				{
+					role: "user",
+					parts: [{ type: "text", text: message }],
+					id: userMessageId,
+				},
+				{
+					body: {
+						userMessageId,
+					},
+				},
+			);
 		} catch (error) {
 			console.error("Failed to send message:", error);
 		}
 	};
 
 	// For new chats (no messages yet), show centered layout
-	if (chatState.isNew && messages.length === 0) {
+	if (messages.length === 0) {
 		return (
 			<div className="h-full flex items-center justify-center">
 				<div className="w-full max-w-3xl px-4">
@@ -92,6 +83,7 @@ export function ChatInterface() {
 					<ChatInput
 						onSendMessage={handleSendMessage}
 						placeholder="Ask anything..."
+						disabled={status === "streaming" || status === "submitted"}
 					/>
 				</div>
 			</div>
@@ -101,16 +93,13 @@ export function ChatInterface() {
 	// Thread view or chat with existing messages
 	return (
 		<div className="flex flex-col h-full">
-			<ChatMessages
-				threadId={chatState.id}
-				messages={messages}
-				isLoading={isLoading}
-			/>
+			<ChatMessages messages={messages} status={status} />
 			<div className="relative bg-background">
 				<div className="max-w-3xl mx-auto p-4">
 					<ChatInput
 						onSendMessage={handleSendMessage}
 						placeholder="Continue the conversation..."
+						disabled={status === "streaming" || status === "submitted"}
 						withGradient={true}
 						withDescription="Chat with Lightfast AI"
 					/>
@@ -119,4 +108,3 @@ export function ChatInterface() {
 		</div>
 	);
 }
-

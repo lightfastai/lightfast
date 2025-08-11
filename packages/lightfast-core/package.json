@@ -28,6 +28,14 @@
 			"types": "./src/core/memory/index.ts",
 			"default": "./src/core/memory/index.ts"
 		},
+		"./memory": {
+			"types": "./src/core/memory/index.ts",
+			"default": "./src/core/memory/index.ts"
+		},
+		"./memory/adapters/in-memory": {
+			"types": "./src/core/memory/adapters/in-memory.ts",
+			"default": "./src/core/memory/adapters/in-memory.ts"
+		},
 		"./agent/memory/adapters/redis": {
 			"types": "./src/core/memory/adapters/redis.ts",
 			"default": "./src/core/memory/adapters/redis.ts"

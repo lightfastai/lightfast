@@ -3,11 +3,23 @@ import { createResumableStreamContext } from "resumable-stream";
 import type { Memory } from "../memory";
 import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
-import type { RequestContext, RuntimeContext, SystemContext } from "./adapters/types";
-import { type ApiError, NoUserMessageError, SessionForbiddenError, SessionNotFoundError } from "./errors";
+import type {
+	RequestContext,
+	RuntimeContext,
+	SystemContext,
+} from "./adapters/types";
+import {
+	type ApiError,
+	NoUserMessageError,
+	SessionForbiddenError,
+	SessionNotFoundError,
+} from "./errors";
 import { Err, Ok, type Result } from "./result";
 
-export interface StreamChatOptions<TMessage extends UIMessage = UIMessage, TRequestContext = {}> {
+export interface StreamChatOptions<
+	TMessage extends UIMessage = UIMessage,
+	TRequestContext = {},
+> {
 	agent: Agent<any, any>;
 	sessionId: string;
 	messages: TMessage[];
@@ -62,7 +74,9 @@ export async function processMessages<TMessage extends UIMessage = UIMessage>(
 	sessionExists: boolean,
 ): Promise<Result<ProcessMessagesResult<TMessage>, NoUserMessageError>> {
 	// Get the most recent user message
-	const recentUserMessage = messages.filter((message) => message.role === "user").at(-1);
+	const recentUserMessage = messages
+		.filter((message) => message.role === "user")
+		.at(-1);
 	if (!recentUserMessage) {
 		return Err(new NoUserMessageError());
 	}
@@ -94,14 +108,30 @@ export async function processMessages<TMessage extends UIMessage = UIMessage>(
 /**
  * Streams a chat response from an agent
  */
-export async function streamChat<TMessage extends UIMessage = UIMessage, TRequestContext = {}>(
+export async function streamChat<
+	TMessage extends UIMessage = UIMessage,
+	TRequestContext = {},
+>(
 	options: StreamChatOptions<TMessage, TRequestContext>,
 ): Promise<Result<Response, ApiError>> {
-	const { agent, sessionId, messages, memory, resourceId, systemContext, requestContext, generateId, enableResume } =
-		options;
+	const {
+		agent,
+		sessionId,
+		messages,
+		memory,
+		resourceId,
+		systemContext,
+		requestContext,
+		generateId,
+		enableResume,
+	} = options;
 
 	// Validate session
-	const sessionValidation = await validateSession(memory, sessionId, resourceId);
+	const sessionValidation = await validateSession(
+		memory,
+		sessionId,
+		resourceId,
+	);
 	if (!sessionValidation.ok) {
 		return sessionValidation;
 	}
@@ -146,11 +176,19 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 		onFinish: async ({ messages: finishedMessages, responseMessage }) => {
 			// Save the assistant's response to memory
 			if (responseMessage && responseMessage.role === "assistant") {
-				console.log(`\n[V1 onFinish] responseMessage:`, JSON.stringify(responseMessage, null, 2));
+				console.log(
+					`\n[V1 onFinish] responseMessage:`,
+					JSON.stringify(responseMessage, null, 2),
+				);
 				if (responseMessage.parts) {
-					console.log(`[V1 onFinish] Parts count: ${responseMessage.parts.length}`);
+					console.log(
+						`[V1 onFinish] Parts count: ${responseMessage.parts.length}`,
+					);
 					responseMessage.parts.forEach((part: any, idx: number) => {
-						console.log(`  Part ${idx}: type=${part.type}`, part.type === "tool-result" ? `state=${part.state}` : "");
+						console.log(
+							`  Part ${idx}: type=${part.type}`,
+							part.type === "tool-result" ? `state=${part.state}` : "",
+						);
 					});
 				}
 				await memory.appendMessage({
@@ -167,22 +205,26 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 			result.toUIMessageStreamResponse<TMessage>({
 				...streamOptions,
 				headers: {
-					'Content-Encoding': 'none', // Prevent proxy buffering for streaming
+					"Content-Encoding": "none", // Prevent proxy buffering for streaming
 				},
 				async consumeSseStream({ stream }) {
 					// Send the SSE stream into a resumable stream sink
-					const streamContext = createResumableStreamContext({ waitUntil: (promise) => promise });
+					const streamContext = createResumableStreamContext({
+						waitUntil: (promise) => promise,
+					});
 					await streamContext.createNewResumableStream(streamId, () => stream);
 				},
 			}),
 		);
 	} else {
-		return Ok(result.toUIMessageStreamResponse<TMessage>({
-			...streamOptions,
-			headers: {
-				'Content-Encoding': 'none', // Prevent proxy buffering for streaming
-			},
-		}));
+		return Ok(
+			result.toUIMessageStreamResponse<TMessage>({
+				...streamOptions,
+				headers: {
+					"Content-Encoding": "none", // Prevent proxy buffering for streaming
+				},
+			}),
+		);
 	}
 }
 
@@ -218,6 +260,7 @@ export async function resumeStream<TMessage extends UIMessage = UIMessage>(
 		waitUntil: (promise) => promise,
 	});
 
-	const resumedStream = await streamContext.resumeExistingStream(recentStreamId);
+	const resumedStream =
+		await streamContext.resumeExistingStream(recentStreamId);
 	return Ok(resumedStream ?? null);
 }

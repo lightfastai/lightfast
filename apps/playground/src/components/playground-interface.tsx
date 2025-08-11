@@ -16,7 +16,7 @@ import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";
 import { BrowserProvider } from "~/contexts/browser-context";
 
 interface PlaygroundInterfaceProps {
-	threadId: string;
+	sessionId: string;
 	initialMessages: PlaygroundUIMessage[];
 }
 
@@ -24,7 +24,7 @@ interface PlaygroundInterfaceProps {
  * Inner component that uses browser context
  */
 function PlaygroundInterfaceInner({
-	threadId,
+	sessionId,
 	initialMessages,
 }: PlaygroundInterfaceProps) {
 	const router = useRouter();
@@ -32,7 +32,7 @@ function PlaygroundInterfaceInner({
 	// Use the chat hook with the browser agent
 	const { messages, sendMessage, status, isLoading } = useChat({
 		agentId: AgentId.BROWSER_010,
-		threadId,
+		sessionId,
 		initialMessages,
 		onError: (error) => {
 			console.error("Chat error:", error);
@@ -40,13 +40,13 @@ function PlaygroundInterfaceInner({
 		},
 	});
 
-	// Update URL to include thread ID when first message is sent
+	// Update URL to include session ID when first message is sent
 	useEffect(() => {
 		if (messages.length > 0 && window.location.pathname === "/playground") {
 			// Use history.replaceState like Vercel AI Chatbot for seamless URL update
-			window.history.replaceState({}, "", `/playground/${threadId}`);
+			window.history.replaceState({}, "", `/playground/${sessionId}`);
 		}
-	}, [messages.length, threadId]);
+	}, [messages.length, sessionId]);
 
 	const handleSendMessage = async (message: string) => {
 		try {
@@ -78,7 +78,7 @@ function PlaygroundInterfaceInner({
 				}
 				main={
 					<BrowserSection>
-						<BrowserContainer threadId={threadId} />
+						<BrowserContainer sessionId={sessionId} />
 					</BrowserSection>
 				}
 			/>
@@ -115,7 +115,7 @@ function PlaygroundInterfaceInner({
 export function PlaygroundInterface(props: PlaygroundInterfaceProps) {
 	return (
 		<BrowserProvider>
-			<PlaygroundInterfaceInner key={props.threadId} {...props} />
+			<PlaygroundInterfaceInner key={props.sessionId} {...props} />
 		</BrowserProvider>
 	);
 }

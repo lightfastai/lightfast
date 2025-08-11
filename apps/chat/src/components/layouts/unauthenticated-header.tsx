@@ -17,9 +17,27 @@ export function UnauthenticatedHeader() {
 	const authUrl = getAppUrl("auth");
 
 	return (
-		<header className="absolute top-0 left-0 right-0 h-14 flex items-center justify-between app-container bg-background border-b border-border/50 lg:border-b-0 z-10">
-			{/* Left side - Logo (both mobile and desktop) */}
-			<div className="flex items-center">
+		<>
+			{/* Mobile/Tablet header - relative positioning */}
+			<header className="lg:hidden relative h-14 flex items-center justify-between px-4 bg-background border-b border-border/50 z-10">
+				{/* Left side - Logo */}
+				<div className="flex items-center">
+					<Button variant="outline" size="xs" asChild>
+						<Link href="/">
+							<Icons.logoShort className="h-4 w-4" />
+						</Link>
+					</Button>
+				</div>
+
+				{/* Right side - Mobile menu */}
+				<div className="flex items-center gap-2">
+					<UnauthenticatedMobileNav />
+				</div>
+			</header>
+
+			{/* Desktop header - absolute positioning */}
+			{/* Left side - Logo and navigation */}
+			<div className="hidden lg:flex absolute top-0 left-0 h-14 items-center pl-4 z-10 w-fit">
 				<Button variant="outline" size="xs" asChild>
 					<Link href="/">
 						<Icons.logoShort className="h-4 w-4" />
@@ -27,7 +45,7 @@ export function UnauthenticatedHeader() {
 				</Button>
 				
 				{/* Desktop navigation */}
-				<div className="hidden lg:flex items-center ml-4">
+				<div className="flex items-center ml-4">
 				<NavigationMenu>
 					<NavigationMenuList>
 						<NavigationMenuItem>
@@ -66,7 +84,7 @@ export function UnauthenticatedHeader() {
 			</div>
 
 			{/* Right side */}
-			<div className="flex items-center gap-2">
+			<div className="absolute top-0 right-0 h-14 flex items-center pr-4 z-10 w-fit gap-2">
 				{/* Mobile menu button */}
 				<UnauthenticatedMobileNav />
 				
@@ -80,6 +98,6 @@ export function UnauthenticatedHeader() {
 					</Button>
 				</div>
 			</div>
-		</header>
+		</>
 	);
 }
