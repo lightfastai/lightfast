@@ -40,7 +40,7 @@ export const DEFAULT_MODEL_ID: ModelId = "gpt-4.1-nano";
 // Display name utility
 export function getModelDisplayName(modelId: string): string {
 	const model = MODELS[modelId as ModelId];
-	return model?.displayName ?? "Unknown Model";
+	return model ? model.displayName : "Unknown Model";
 }
 
 // Extract provider from modelId (type-safe)

@@ -147,7 +147,6 @@ function MessageItem({
 	const hasActiveReasoningPart = useMemo(() => {
 		if (
 			message.runtimeStatus !== "streaming" ||
-			!message.parts ||
 			message.parts.length === 0
 		) {
 			return false;
@@ -161,9 +160,9 @@ function MessageItem({
 	if (message.role === "user") {
 		const textContent =
 			message.parts
-				?.filter(isTextPart)
+				.filter(isTextPart)
 				.map((part) => part.text)
-				.join("\n") ?? "";
+				.join("\n");
 
 		return (
 			<div
@@ -206,7 +205,7 @@ function MessageItem({
 						/>
 					</div>
 				)}
-				{message.parts?.map((part, index) => {
+				{message.parts.map((part, index) => {
 					// Text part
 					if (isTextPart(part)) {
 						return (

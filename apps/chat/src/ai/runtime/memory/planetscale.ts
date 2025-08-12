@@ -32,7 +32,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 				sessionId,
 				message: {
 					id: message.id,
-					role: message.role as "system" | "user" | "assistant",
+					role: message.role,
 					parts: message.parts,
 				},
 			});
@@ -142,10 +142,6 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 			const result = await caller.chat.session.get({
 				sessionId,
 			});
-			
-			if (!result?.session) {
-				return null;
-			}
 			
 			return {
 				resourceId: result.session.clerkUserId,

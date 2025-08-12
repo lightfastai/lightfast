@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { TRPCClientError } from "@trpc/client";
 import { captureException } from "@sentry/nextjs";
+import { isNotFound } from "~/lib/trpc-errors";
 import { Button } from "@repo/ui/components/ui/button";
 import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
 import { LightfastErrorPage, ErrorCode } from "@repo/ui/components/lightfast-error-page";
@@ -17,9 +17,9 @@ export default function SessionError({ error, reset }: SessionErrorProps) {
 	useEffect(() => {
 		// Only capture unexpected errors to Sentry
 		// NOT_FOUND is expected when users try to access sessions they don't own
-		const isNotFound = error instanceof TRPCClientError && error.data?.code === "NOT_FOUND";
+		const isNotFoundError = isNotFound(error);
 		
-		if (!isNotFound) {
+		if (!isNotFoundError) {
 			// Capture unexpected errors for monitoring
 			captureException(error);
 		}
@@ -29,7 +29,7 @@ export default function SessionError({ error, reset }: SessionErrorProps) {
 	}, [error]);
 
 	// Handle TRPC NOT_FOUND errors (unauthorized access or non-existent session)
-	if (error instanceof TRPCClientError && error.data?.code === "NOT_FOUND") {
+	if (isNotFound(error)) {
 		return (
 			<LightfastCustomGridBackground.Root
 				marginVertical="25vh"

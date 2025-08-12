@@ -83,8 +83,8 @@ export function ProviderModelSelector({
 
 	// Get the model to show details for (hovered or selected)
 	const detailModel = useMemo(() => {
-		const modelId = hoveredModel || value;
-		return allModels.find((m) => m.id === modelId) || null;
+		const modelId = hoveredModel ?? value;
+		return allModels.find((m) => m.id === modelId) ?? null;
 	}, [hoveredModel, value, allModels]);
 
 	// Reset hover when opening
@@ -129,15 +129,13 @@ export function ProviderModelSelector({
 					<div className="flex items-center gap-2">
 						{(() => {
 							const iconName = PROVIDER_ICONS[
-								selectedModel?.provider || "openai"
+								selectedModel.provider
 							] as keyof typeof Icons;
 							const IconComponent = Icons[iconName];
-							return IconComponent ? (
-								<IconComponent className="w-4 h-4 shrink-0" />
-							) : null;
+							return <IconComponent className="w-4 h-4 shrink-0" />;
 						})()}
 						<span className="truncate text-xs">
-							{selectedModel?.displayName}
+							{selectedModel.displayName}
 						</span>
 					</div>
 					<ChevronDown className="h-3 w-3 opacity-50" />
@@ -174,9 +172,7 @@ export function ProviderModelSelector({
 												model.provider
 											] as keyof typeof Icons;
 											const IconComponent = Icons[iconName];
-											return IconComponent ? (
-												<IconComponent className="w-4 h-4 shrink-0" />
-											) : null;
+											return <IconComponent className="w-4 h-4 shrink-0" />;
 										})()}
 										<span className="truncate text-xs">
 											{model.displayName}
@@ -203,9 +199,7 @@ export function ProviderModelSelector({
 												detailModel.provider
 											] as keyof typeof Icons;
 											const IconComponent = Icons[iconName];
-											return IconComponent ? (
-												<IconComponent className="w-6 h-6 shrink-0 mt-0.5" />
-											) : null;
+											return <IconComponent className="w-6 h-6 shrink-0 mt-0.5" />;
 										})()}
 										<div className="flex-1 min-w-0">
 											<h4 className="font-medium truncate">
@@ -236,28 +230,25 @@ export function ProviderModelSelector({
 										</p>
 										<div className="flex flex-wrap gap-1">
 											{Object.entries(detailModel.features).map(
-												([feature, enabled]) =>
-													enabled &&
-													featureBadges[
-														feature as keyof typeof featureBadges
-													] ? (
+												([feature, enabled]) => {
+													if (!enabled) return null;
+													const featureKey = feature as keyof typeof featureBadges;
+													const badge = featureBadges[featureKey];
+													if (!(feature in featureBadges)) return null;
+													
+													return (
 														<Badge
 															key={feature}
 															variant="secondary"
 															className={cn(
 																"text-xs px-2 py-0.5",
-																featureBadges[
-																	feature as keyof typeof featureBadges
-																].className,
+																badge.className,
 															)}
 														>
-															{
-																featureBadges[
-																	feature as keyof typeof featureBadges
-																].label
-															}
+															{badge.label}
 														</Badge>
-													) : null,
+													);
+												}
 											)}
 										</div>
 									</div>

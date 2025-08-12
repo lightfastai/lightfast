@@ -18,7 +18,7 @@ export function GroupedSessions({ sessions, onPinToggle }: GroupedSessionsProps)
     <>
       {DATE_GROUP_ORDER.map((category) => {
         const categorySessions = groupedSessions[category];
-        if (categorySessions && categorySessions.length > 0) {
+        if (categorySessions.length > 0) {
           return (
             <SessionGroup
               key={category}

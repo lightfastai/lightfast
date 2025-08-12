@@ -4,8 +4,6 @@ import type {
 	QueryClient} from "@tanstack/react-query";
 import {
 	QueryClientProvider,
-	HydrationBoundary,
-	dehydrate,
 } from "@tanstack/react-query";
 import { useState } from "react";
 import {

@@ -1,6 +1,4 @@
-import { Suspense } from "react";
 import { SessionChatWrapper } from "~/components/chat/session-chat-wrapper";
-import { ChatLoadingSkeleton } from "~/components/chat/chat-loading-skeleton";
 import { prefetch, trpc } from "~/trpc/server";
 
 interface SessionPageProps {
@@ -18,12 +16,6 @@ export default async function SessionPage({ params }: SessionPageProps) {
 	// This will make it instantly available in SessionChatWrapper
 	prefetch(trpc.chat.session.get.queryOptions({ sessionId }));
 
-	// Return immediately with Suspense boundary
-	// SessionChatWrapper will use useSuspenseQuery for instant cached data
-	return (
-		<Suspense fallback={<ChatLoadingSkeleton />}>
-			<SessionChatWrapper sessionId={sessionId} agentId={agentId} />
-		</Suspense>
-	);
+	return <SessionChatWrapper sessionId={sessionId} agentId={agentId} />;
 }
 

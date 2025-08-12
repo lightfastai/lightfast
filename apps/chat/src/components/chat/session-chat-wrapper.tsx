@@ -1,6 +1,5 @@
 "use client";
 
-import { notFound } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ChatInterface } from "./chat-interface";
 import { useTRPC } from "~/trpc/react";
@@ -23,10 +22,8 @@ export function SessionChatWrapper({ sessionId, agentId }: SessionChatWrapperPro
 		...trpc.chat.session.get.queryOptions({ sessionId }),
 	});
 
-	// If session doesn't exist, show 404
-	if (!data) {
-		notFound();
-	}
+	// Note: useSuspenseQuery guarantees data is available
+	// If session doesn't exist, tRPC will throw NOT_FOUND error
 
 	// Convert database messages to UI format
 	const initialMessages: LightfastAppChatUIMessage[] = data.messages.map((msg) => ({

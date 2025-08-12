@@ -12,7 +12,6 @@ import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messa
 import { DEFAULT_MODEL_ID } from "~/lib/ai/providers";
 import type { ModelId } from "~/lib/ai/providers";
 import { useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 interface ChatInterfaceProps {
 	agentId: string;

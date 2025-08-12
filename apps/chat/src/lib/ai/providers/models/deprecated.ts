@@ -1,4 +1,3 @@
-import { ModelConfigSchema } from "../schemas";
 
 /**
  * Deprecated AI Models

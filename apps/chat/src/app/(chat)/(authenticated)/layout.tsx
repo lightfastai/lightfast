@@ -5,7 +5,6 @@ import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
-import { ITEMS_PER_PAGE } from "~/components/sidebar/types";
 import { TRPCReactProvider } from "~/trpc/react";
 
 interface AuthenticatedLayoutProps {

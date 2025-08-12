@@ -17,10 +17,10 @@ interface SessionItemProps {
 
 export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 	const handlePinClick = useCallback(
-		async (e: React.MouseEvent) => {
+		(e: React.MouseEvent) => {
 			e.preventDefault();
 			e.stopPropagation();
-			await onPinToggle(session.id);
+			onPinToggle(session.id);
 		},
 		[onPinToggle, session.id],
 	);

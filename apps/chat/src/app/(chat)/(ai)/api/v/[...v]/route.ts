@@ -115,7 +115,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 								sessionId,
 								userId,
 							},
-							output: result.response?.messages ?? result.text,
+							output: result.response.messages.length > 0 ? result.response.messages : result.text,
 							metadata: {
 								finishReason: result.finishReason,
 								usage: result.usage,
