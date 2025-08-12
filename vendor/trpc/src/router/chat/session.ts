@@ -94,14 +94,24 @@ export const sessionRouter = {
    * Create a new session
    */
   create: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      const result = await db
+    .input(
+      z.object({
+        id: z.string().uuid("Session ID must be a valid UUID v4"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await db
         .insert(LightfastChatSession)
         .values({
+          id: input.id,  // Use client-provided ID directly
           clerkUserId: ctx.session.userId!,
-        });
+        })
+        .execute();
 
-      return { id: result.insertId };
+      return { 
+        id: input.id,  // Return the same ID
+        success: true
+      };
     }),
 
   /**

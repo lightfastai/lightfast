@@ -1,11 +1,12 @@
 "use client";
 
 import {
-	type ModelId,
+	
 	PROVIDER_ICONS,
 	getModelConfig,
-	getVisibleModels,
+	getVisibleModels
 } from "~/lib/ai/providers";
+import type {ModelId} from "~/lib/ai/providers";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {

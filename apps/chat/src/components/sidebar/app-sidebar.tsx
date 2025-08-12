@@ -6,14 +6,13 @@ import {
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuItem,
-	SidebarMenuButton,
 } from "@repo/ui/components/ui/sidebar";
 import { Icons } from "@repo/ui/components/icons";
-import Link from "next/link";
 import { InfiniteScrollSessions } from "./sessions/infinite-scroll-sessions";
 import { SidebarHoverExpand } from "./sidebar-hover-expand";
 import { ThreadsErrorBoundary } from "./threads-error-boundary";
 import { SidebarTriggerButton } from "./sidebar-trigger-button";
+import { ActiveMenuItem } from "./active-menu-item";
 
 // Main server component - renders static parts with reactive sessions list
 export function AppSidebar() {
@@ -21,24 +20,22 @@ export function AppSidebar() {
 		<Sidebar
 			variant="inset"
 			collapsible="icon"
-			className="w-64 pl-2 py-2 max-w-64"
+			className="w-64 max-w-64 p-0 border-r border-border/50"
 		>
 			<SidebarHeader className="p-0">
-				<SidebarGroup className="p-2">
+				<SidebarGroup className="pl-4 pt-4 pr-4 pb-2">
 					<SidebarGroupContent>
-						<SidebarMenu className="space-y-2">
+						<SidebarMenu className="space-y-1">
 							<SidebarMenuItem>
 								<SidebarTriggerButton />
 							</SidebarMenuItem>
 							<SidebarMenuItem>
-								<SidebarMenuButton asChild>
-									<Link href="/new">
-										<Icons.newChat className="size-4" />
-										<span className="group-data-[collapsible=icon]:hidden">
-											New Chat
-										</span>
-									</Link>
-								</SidebarMenuButton>
+								<ActiveMenuItem sessionId="new" href="/new">
+									<Icons.newChat className="size-4" />
+									<span className="group-data-[collapsible=icon]:hidden text-xs">
+										New Chat
+									</span>
+								</ActiveMenuItem>
 							</SidebarMenuItem>
 						</SidebarMenu>
 					</SidebarGroupContent>

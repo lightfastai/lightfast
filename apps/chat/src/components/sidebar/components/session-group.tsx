@@ -13,12 +13,12 @@ export function SessionGroup({
   onPinToggle,
 }: SessionGroupProps) {
   return (
-    <SidebarGroup className="w-58">
+    <SidebarGroup className="pl-4 pr-2 py-2">
       <SidebarGroupLabel className="text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
         {categoryName}
       </SidebarGroupLabel>
       <SidebarGroupContent className="w-full max-w-full overflow-hidden">
-        <SidebarMenu className="space-y-0.5">
+        <SidebarMenu className="space-y-1">
           {sessions.map((session) => (
             <SessionItem
               key={session.id}

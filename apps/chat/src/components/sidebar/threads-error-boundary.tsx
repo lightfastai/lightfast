@@ -8,7 +8,8 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import type React from "react";
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component   } from "react";
+import type {ErrorInfo, ReactNode} from "react";
 
 interface ErrorBoundaryState {
 	hasError: boolean;

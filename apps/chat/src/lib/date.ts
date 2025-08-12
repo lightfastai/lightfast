@@ -33,15 +33,15 @@ export function groupByDate<T extends { createdAt: Date }>(items: T[]): Record<D
 		const isLastMonth = itemDate > thirtyDaysAgo && !isLastWeek && !isToday && !isYesterday;
 
 		if (isToday) {
-			groups["Today"].push(item);
+			groups.Today.push(item);
 		} else if (isYesterday) {
-			groups["Yesterday"].push(item);
+			groups.Yesterday.push(item);
 		} else if (isLastWeek) {
 			groups["Last 7 days"].push(item);
 		} else if (isLastMonth) {
 			groups["Last 30 days"].push(item);
 		} else {
-			groups["Older"].push(item);
+			groups.Older.push(item);
 		}
 	});
 

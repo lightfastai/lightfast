@@ -7,7 +7,7 @@ interface EmptyStateProps {
 export function EmptyState({ className }: EmptyStateProps) {
   return (
     <ScrollArea className={className}>
-      <div className="px-3 py-8 text-center text-muted-foreground">
+      <div className="px-4 py-8 text-center text-muted-foreground">
         <p className="group-data-[collapsible=icon]:hidden text-xs">
           No conversations yet
         </p>

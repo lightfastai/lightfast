@@ -51,7 +51,7 @@ export function ChatInterface({
 	}, []);
 
 	// Create transport for AI SDK v5
-	// PlanetScaleMemory will resolve clientSessionId to database ID as needed
+	// Uses sessionId directly as the primary key
 	const transport = useChatTransport({ 
 		sessionId: sessionId, 
 		agentId 
@@ -89,7 +89,7 @@ export function ChatInterface({
 				// Create the session using mutate (fire and forget)
 				// The mutation has optimistic updates so UI will update immediately
 				// The unique constraint in the database will prevent duplicate sessions
-				createSession.mutate({ clientSessionId: sessionId });
+				createSession.mutate({ id: sessionId });
 			} else {
 				// For existing sessions, just update the URL to ensure consistency
 				window.history.replaceState({}, "", `/${sessionId}`);

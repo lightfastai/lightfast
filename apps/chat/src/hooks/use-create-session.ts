@@ -10,7 +10,7 @@ type Session = RouterOutputs["chat"]["session"]["list"][number];
 type SessionsInfiniteData = InfiniteData<Session[]>;
 
 interface CreateSessionInput {
-	clientSessionId: string;
+	id: string;
 }
 
 /**
@@ -23,7 +23,7 @@ export function useCreateSession() {
 
 	return useMutation(
 		trpc.chat.session.create.mutationOptions({
-			onMutate: async ({ clientSessionId }: CreateSessionInput) => {
+			onMutate: async ({ id }: CreateSessionInput) => {
 				// Cancel any outgoing refetches for session list queries
 				await queryClient.cancelQueries({
 					queryKey: [["chat", "session", "list"]],
@@ -39,15 +39,14 @@ export function useCreateSession() {
 				// Store all previous data for potential rollback
 				const previousDataMap = new Map<string, SessionsInfiniteData>();
 
-				// Create optimistic session with client session ID
+				// Create optimistic session with client-provided ID
 				const now = new Date().toISOString();
-				const optimisticSession: Session & { clientSessionId: string } = {
-					id: clientSessionId, // Use the client session ID as the temporary ID
+				const optimisticSession: Session = {
+					id, // Use the client-provided ID directly
 					title: DEFAULT_SESSION_TITLE,
 					pinned: false,
 					createdAt: now,
 					updatedAt: now,
-					clientSessionId, // Include the client session ID
 				};
 
 				// Update each cached query
@@ -90,7 +89,7 @@ export function useCreateSession() {
 				}
 
 				// Return context for rollback
-				return { previousDataMap, optimisticSession, clientSessionId };
+				return { previousDataMap, optimisticSession, id };
 			},
 
 			onError: (err, _variables, context) => {
@@ -105,68 +104,9 @@ export function useCreateSession() {
 				}
 			},
 
-			onSuccess: (data, variables, context) => {
-				// Replace the temporary optimistic session with the real one
-				if (context?.optimisticSession && data?.id) {
-					const { clientSessionId } = variables;
-
-					// Get all infinite query cache entries
-					const queryCache = queryClient.getQueryCache();
-					const queries = queryCache.findAll({
-						queryKey: [["chat", "session", "list"]],
-						type: "active",
-					});
-
-					// Update each cached query with the real session data
-					queries.forEach((query) => {
-						const queryKey = query.queryKey;
-						const currentData =
-							queryClient.getQueryData<SessionsInfiniteData>(queryKey);
-
-						if (currentData) {
-							queryClient.setQueryData<SessionsInfiniteData>(
-								queryKey,
-								produce(currentData, (draft) => {
-									draft.pages.forEach((page) => {
-										page.forEach((session, index) => {
-											// Replace the optimistic session with the real one
-											if (session.id === clientSessionId) {
-												page[index] = {
-													...session,
-													id: data.id,
-													clientSessionId:
-														data.clientSessionId || clientSessionId,
-												};
-											}
-										});
-									});
-								}),
-							);
-						}
-					});
-
-					// Also update regular queries
-					const regularQueryKey =
-						trpc.chat.session.list.queryOptions({ limit: 20 }).queryKey;
-					const regularData =
-						queryClient.getQueryData<Session[]>(regularQueryKey);
-
-					if (regularData) {
-						queryClient.setQueryData<Session[]>(
-							regularQueryKey,
-							produce(regularData, (draft) => {
-								const index = draft.findIndex((s) => s.id === clientSessionId);
-								if (index !== -1 && draft[index]) {
-									draft[index] = {
-										...draft[index],
-										id: data.id,
-										clientSessionId: data.clientSessionId || clientSessionId,
-									};
-								}
-							}),
-						);
-					}
-				}
+			onSuccess: () => {
+				// No need to replace IDs since we use the same ID throughout
+				// The optimistic update already has the correct ID
 			},
 
 			onSettled: () => {

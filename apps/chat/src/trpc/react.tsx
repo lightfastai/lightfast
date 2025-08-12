@@ -1,7 +1,8 @@
 "use client";
 
+import type {
+	QueryClient} from "@tanstack/react-query";
 import {
-	QueryClient,
 	QueryClientProvider,
 	HydrationBoundary,
 	dehydrate,

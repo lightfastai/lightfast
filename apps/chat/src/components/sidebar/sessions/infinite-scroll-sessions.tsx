@@ -2,9 +2,9 @@
 
 import { useMemo, useCallback } from "react";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
-import { useInfiniteSessions } from "../hooks/use-infinite-sessions";
-import { usePinSession } from "../hooks/use-pin-session";
-import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
+import { useInfiniteSessions } from "~/hooks/sidebar/use-infinite-sessions";
+import { usePinSession } from "~/hooks/sidebar/use-pin-session";
+import { useInfiniteScroll } from "~/hooks/sidebar/use-infinite-scroll";
 import { splitSessionsByPinned, flattenPages } from "../utils/session-helpers";
 import { SessionsLoadingSkeleton } from "../components/session-skeleton";
 import { EmptyState } from "../components/empty-state";
@@ -60,9 +60,11 @@ export function InfiniteScrollSessions({ className }: InfiniteScrollSessionsProp
   // Handle loading state
   if (isLoading) {
     return (
-      <div className={className}>
-        <SessionsLoadingSkeleton />
-      </div>
+      <ScrollArea className={className}>
+        <div className="w-full max-w-full min-w-0 overflow-hidden pr-2">
+          <SessionsLoadingSkeleton />
+        </div>
+      </ScrollArea>
     );
   }
 
@@ -73,7 +75,7 @@ export function InfiniteScrollSessions({ className }: InfiniteScrollSessionsProp
 
   return (
     <ScrollArea className={className}>
-      <div className="w-full max-w-full min-w-0 overflow-hidden">
+      <div className="w-full max-w-full min-w-0 overflow-hidden pr-2">
         <PinnedSessions 
           sessions={pinnedSessions} 
           onPinToggle={handlePinToggle} 

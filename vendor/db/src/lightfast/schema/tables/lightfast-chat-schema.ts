@@ -22,29 +22,18 @@ export const DEFAULT_SESSION_TITLE = "New Session";
 export const LightfastChatSession = mysqlTable("lightfast_chat_session", {
   /**
    * Unique identifier for the session
-   * Generated using uuidv4 for global uniqueness
+   * Client-generated UUID v4 for immediate URL updates and optimistic UI
+   * This is the primary key and the only ID used throughout the system
    */
   id: varchar("id", { length: 191 })
     .notNull()
-    .primaryKey()
-    .$defaultFn(() => uuidv4()),
+    .primaryKey(),
   
   /**
    * Reference to the user who created this session
    * Links to the Clerk user ID for authentication
    */
   clerkUserId: varchar("clerk_user_id", { length: 191 }).notNull(),
-  
-  /**
-   * Client-generated session ID used for optimistic updates
-   * This allows the client to generate a session ID before the server creates the actual session
-   * Useful for immediate URL updates and optimistic UI behavior
-   * MUST be unique to prevent duplicate sessions from race conditions
-   */
-  clientSessionId: varchar("client_session_id", { length: 191 })
-    .notNull()
-    .unique()
-    .$defaultFn(() => uuidv4()),
   
   /**
    * Display title for the session

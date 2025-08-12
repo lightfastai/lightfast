@@ -1,13 +1,15 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useTRPC } from "~/trpc/react";
-import { ITEMS_PER_PAGE } from "../types";
+import { showTRPCErrorToast } from "~/lib/trpc-errors";
+import { ITEMS_PER_PAGE } from "~/components/sidebar/types";
 
 export function useInfiniteSessions() {
   const trpc = useTRPC();
   
-  return useInfiniteQuery({
+  const query = useInfiniteQuery({
     ...trpc.chat.session.list.infiniteQueryOptions(
-      (pageParam) => ({
+      (pageParam: unknown) => ({
         limit: ITEMS_PER_PAGE,
         cursor: pageParam as string | undefined,
       })
@@ -20,4 +22,13 @@ export function useInfiniteSessions() {
       return lastPage[lastPage.length - 1]?.id;
     },
   });
+
+  // Handle errors with useEffect to avoid showing toast on every render
+  useEffect(() => {
+    if (query.error) {
+      showTRPCErrorToast(query.error, "Failed to load sessions");
+    }
+  }, [query.error]);
+
+  return query;
 }

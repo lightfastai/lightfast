@@ -38,6 +38,7 @@
     "braintrust": "catalog:",
     "drizzle-orm": "^0.43.1",
     "exa-js": "catalog:",
+    "immer": "^10.1.1",
     "lucide-react": "catalog:",
     "nanoid": "^5.1.5",
     "next": "catalog:",

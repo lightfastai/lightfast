@@ -14,38 +14,8 @@ import { eq, desc, inArray } from "drizzle-orm";
  */
 export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	/**
-	 * Helper to resolve a sessionId (which might be a clientSessionId) to the actual database ID
-	 * Throws an error if the session doesn't exist to prevent foreign key violations
-	 */
-	private async resolveSessionId(sessionId: string): Promise<string> {
-		// First try to find by clientSessionId
-		const sessionByClientId = await db
-			.select({ id: LightfastChatSession.id })
-			.from(LightfastChatSession)
-			.where(eq(LightfastChatSession.clientSessionId, sessionId))
-			.limit(1);
-
-		if (sessionByClientId[0]) {
-			return sessionByClientId[0].id;
-		}
-
-		// Then try to find by actual database ID
-		const sessionById = await db
-			.select({ id: LightfastChatSession.id })
-			.from(LightfastChatSession)
-			.where(eq(LightfastChatSession.id, sessionId))
-			.limit(1);
-
-		if (sessionById[0]) {
-			return sessionById[0].id;
-		}
-
-		// Session doesn't exist - throw error to prevent foreign key violations
-		throw new Error(`Session not found: ${sessionId}. Ensure session is created before adding messages.`);
-	}
-	/**
 	 * Append a single message to a session
-	 * Resolves clientSessionId to database ID if needed
+	 * Uses the sessionId directly as it's now the primary key
 	 */
 	async appendMessage({
 		sessionId,
@@ -54,23 +24,12 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 		sessionId: string;
 		message: LightfastAppChatUIMessage;
 	}): Promise<void> {
-		try {
-			// Resolve sessionId to actual database ID
-			const actualSessionId = await this.resolveSessionId(sessionId);
-			
-			await db.insert(LightfastChatMessage).values({
-				sessionId: actualSessionId,
-				role: message.role,
-				parts: message.parts,
-				id: message.id,
-			});
-		} catch (error: any) {
-			// If session doesn't exist, provide helpful error message
-			if (error?.message?.includes('Session not found')) {
-				throw new Error(`Cannot append message: ${error.message}`);
-			}
-			throw error;
-		}
+		await db.insert(LightfastChatMessage).values({
+			sessionId,
+			role: message.role,
+			parts: message.parts,
+			id: message.id,
+		});
 	}
 
 
@@ -78,34 +37,22 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	 * Get all messages for a session, ordered by creation time
 	 */
 	async getMessages(sessionId: string): Promise<LightfastAppChatUIMessage[]> {
-		try {
-			// Resolve sessionId to actual database ID
-			const actualSessionId = await this.resolveSessionId(sessionId);
-			
-			const messages = await db
-				.select()
-				.from(LightfastChatMessage)
-				.where(eq(LightfastChatMessage.sessionId, actualSessionId))
-				.orderBy(LightfastChatMessage.createdAt);
+		const messages = await db
+			.select()
+			.from(LightfastChatMessage)
+			.where(eq(LightfastChatMessage.sessionId, sessionId))
+			.orderBy(LightfastChatMessage.createdAt);
 
-			return messages.map((msg) => ({
-				id: msg.id,
-				role: msg.role,
-				parts: msg.parts,
-			})) as LightfastAppChatUIMessage[];
-		} catch (error: any) {
-			// Return empty array if session doesn't exist yet
-			// This is common for new sessions
-			if (error?.message?.includes('Session not found')) {
-				return [];
-			}
-			throw error;
-		}
+		return messages.map((msg) => ({
+			id: msg.id,
+			role: msg.role,
+			parts: msg.parts,
+		})) as LightfastAppChatUIMessage[];
 	}
 
 	/**
 	 * Create a new session
-	 * Uses database constraints to prevent duplicate sessions (handles race conditions)
+	 * Client provides the ID directly, database enforces uniqueness
 	 */
 	async createSession({
 		sessionId,
@@ -119,19 +66,19 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 			const existingSession = await db
 				.select({ id: LightfastChatSession.id })
 				.from(LightfastChatSession)
-				.where(eq(LightfastChatSession.clientSessionId, sessionId))
+				.where(eq(LightfastChatSession.id, sessionId))
 				.limit(1);
 
 			if (existingSession.length > 0) {
 				return; // Session already exists, nothing to do
 			}
 
-			// Attempt to create the session
+			// Attempt to create the session with client-provided ID
 			// This will fail with a unique constraint violation if another request
 			// created the session between our check and insert
 			await db.insert(LightfastChatSession).values({
+				id: sessionId, // Use client-provided ID directly
 				clerkUserId: resourceId, // resourceId is the Clerk user ID
-				clientSessionId: sessionId, // Use sessionId as clientSessionId
 			});
 		} catch (error: any) {
 			// Check if this is a unique constraint violation
@@ -147,25 +94,15 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	}
 
 	/**
-	 * Get session by client session ID or database ID
-	 * First tries to find by clientSessionId, then falls back to id for backward compatibility
+	 * Get session by ID
+	 * Returns the session data with the same ID provided
 	 */
 	async getSession(sessionId: string): Promise<{ resourceId: string; id: string } | null> {
-		// First try to find by clientSessionId
-		let sessions = await db
+		const sessions = await db
 			.select()
 			.from(LightfastChatSession)
-			.where(eq(LightfastChatSession.clientSessionId, sessionId))
+			.where(eq(LightfastChatSession.id, sessionId))
 			.limit(1);
-
-		// If not found, try by id for backward compatibility
-		if (sessions.length === 0) {
-			sessions = await db
-				.select()
-				.from(LightfastChatSession)
-				.where(eq(LightfastChatSession.id, sessionId))
-				.limit(1);
-		}
 
 		if (sessions.length === 0) {
 			return null;
@@ -177,7 +114,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 		}
 		return {
 			resourceId: firstSession.clerkUserId,
-			id: firstSession.id, // Return the actual database ID
+			id: firstSession.id, // Return the same ID
 		};
 	}
 
@@ -193,25 +130,15 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 		sessionId: string;
 		streamId: string;
 	}): Promise<void> {
-		try {
-			// Resolve sessionId to actual database ID
-			const actualSessionId = await this.resolveSessionId(sessionId);
-			
-			// Create the new stream
-			await db.insert(LightfastChatStream).values({
-				id: streamId,
-				sessionId: actualSessionId,
-			});
+		// Create the new stream
+		await db.insert(LightfastChatStream).values({
+			id: streamId,
+			sessionId,
+		});
 
-			// Clean up old streams (keep only the most recent 100)
-			// This prevents unbounded growth of stream records
-			await this.cleanupOldStreams(actualSessionId);
-		} catch (error: any) {
-			if (error?.message?.includes('Session not found')) {
-				throw new Error(`Cannot create stream: ${error.message}`);
-			}
-			throw error;
-		}
+		// Clean up old streams (keep only the most recent 100)
+		// This prevents unbounded growth of stream records
+		await this.cleanupOldStreams(sessionId);
 	}
 
 	/**
@@ -254,24 +181,13 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	 * Returns the most recent streams for resume functionality
 	 */
 	async getSessionStreams(sessionId: string): Promise<string[]> {
-		try {
-			// Resolve sessionId to actual database ID
-			const actualSessionId = await this.resolveSessionId(sessionId);
-			
-			const streams = await db
-				.select()
-				.from(LightfastChatStream)
-				.where(eq(LightfastChatStream.sessionId, actualSessionId))
-				.orderBy(desc(LightfastChatStream.createdAt))
-				.limit(100); // Keep last 100 streams
+		const streams = await db
+			.select()
+			.from(LightfastChatStream)
+			.where(eq(LightfastChatStream.sessionId, sessionId))
+			.orderBy(desc(LightfastChatStream.createdAt))
+			.limit(100); // Keep last 100 streams
 
-			return streams.map((stream) => stream.id);
-		} catch (error: any) {
-			// Return empty array if session doesn't exist
-			if (error?.message?.includes('Session not found')) {
-				return [];
-			}
-			throw error;
-		}
+		return streams.map((stream) => stream.id);
 	}
 }
