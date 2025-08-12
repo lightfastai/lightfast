@@ -22,9 +22,6 @@ export function InfiniteScrollSessions({ className }: InfiniteScrollSessionsProp
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-    isLoading,
-    isPending,
-    isFetching,
   } = useInfiniteSessions();
 
   // Mutations
@@ -32,8 +29,8 @@ export function InfiniteScrollSessions({ className }: InfiniteScrollSessionsProp
 
   // Process data - handle potentially undefined data
   const allSessions = useMemo(() => {
-    return flattenPages(data?.pages ?? []);
-  }, [data?.pages]);
+    return flattenPages(data?.pages);
+  }, [data]);
   
   const { pinnedSessions, unpinnedSessions } = useMemo(
     () => splitSessionsByPinned(allSessions),
@@ -62,16 +59,7 @@ export function InfiniteScrollSessions({ className }: InfiniteScrollSessionsProp
     fetchNextPage: handleFetchNextPage,
   });
 
-  // Handle initial loading state
-  if (isPending || (isFetching && allSessions.length === 0)) {
-    return (
-      <ScrollArea className={className}>
-        <div className="w-full max-w-full min-w-0 overflow-hidden pr-2">
-          <SessionsLoadingSkeleton />
-        </div>
-      </ScrollArea>
-    );
-  }
+  // Note: Loading state is handled by Suspense or other means
 
   // Handle empty state
   if (allSessions.length === 0) {

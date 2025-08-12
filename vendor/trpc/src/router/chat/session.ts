@@ -13,7 +13,7 @@ export const sessionRouter = {
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(20),
-        cursor: z.string().optional(), // Last session ID from previous page
+        cursor: z.string().nullish(), // Last session ID from previous page
       })
     )
     .query(async ({ ctx, input }) => {

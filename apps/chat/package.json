@@ -32,6 +32,7 @@
     "@vendor/db": "workspace:*",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vendor/security": "workspace:*",
     "@vendor/trpc": "workspace:*",
     "@vercel/toolbar": "^0.1.28",
     "ai": "catalog:",

@@ -64,10 +64,10 @@ export function useCreateSession() {
 							produce(previousData, (draft) => {
 								// Add the new session to the first page
 								if (draft.pages.length > 0 && draft.pages[0]) {
-									draft.pages[0].unshift(optimisticSession as Session);
+									draft.pages[0].unshift(optimisticSession);
 								} else {
 									// If no pages exist, create one with the new session
-									draft.pages = [[optimisticSession as Session]];
+									draft.pages = [[optimisticSession]];
 								}
 							}),
 						);
@@ -83,7 +83,7 @@ export function useCreateSession() {
 					queryClient.setQueryData<Session[]>(
 						regularQueryKey,
 						produce(regularData, (draft) => {
-							draft.unshift(optimisticSession as Session);
+							draft.unshift(optimisticSession);
 						}),
 					);
 				}
@@ -98,7 +98,7 @@ export function useCreateSession() {
 				// Rollback all queries on error
 				if (context?.previousDataMap) {
 					context.previousDataMap.forEach((data, keyString) => {
-						const queryKey = JSON.parse(keyString);
+						const queryKey = JSON.parse(keyString) as readonly unknown[];
 						queryClient.setQueryData<SessionsInfiniteData>(queryKey, data);
 					});
 				}

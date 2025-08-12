@@ -68,7 +68,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 				sessionId,
 			});
 
-			return messages;
+			return messages as LightfastAppChatUIMessage[];
 		} catch (error) {
 			console.error('[PlanetScaleMemory] Failed to get messages:', {
 				sessionId,

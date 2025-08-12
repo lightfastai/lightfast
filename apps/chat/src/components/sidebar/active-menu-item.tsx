@@ -20,7 +20,7 @@ export function ActiveMenuItem({
 	size = "default",
 	children,
 	className,
-	...props
+	...linkProps
 }: ActiveMenuItemProps & ComponentProps<typeof Link>) {
 	const pathname = usePathname();
 	
@@ -35,9 +35,8 @@ export function ActiveMenuItem({
 			size={size}
 			isActive={isActive}
 			className={cn("justify-start", className)}
-			{...props}
 		>
-			<Link href={href}>
+			<Link href={href} {...linkProps}>
 				{children}
 			</Link>
 		</SidebarMenuButton>

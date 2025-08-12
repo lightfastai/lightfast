@@ -6,6 +6,7 @@ import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { braintrustEnv } from "@lightfast/core/v2/braintrust-env";
 import { dbEnv } from "@vendor/db/env";
+import { env as securityEnv } from "@vendor/security/env";
 
 export const env = createEnv({
   extends: [
@@ -14,6 +15,7 @@ export const env = createEnv({
     sentryEnv,
     braintrustEnv,
     dbEnv,
+    securityEnv,
   ],
   shared: {
     NODE_ENV: z
@@ -27,6 +29,8 @@ export const env = createEnv({
   server: {
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
     EXA_API_KEY: z.string().min(1),
+    KV_REST_API_URL: z.string().url(),
+    KV_REST_API_TOKEN: z.string().min(1),
   },
 
   /**

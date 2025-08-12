@@ -17,6 +17,17 @@ import { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/types";
 import { auth } from "@clerk/nextjs/server";
 import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
+import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
+import { env } from "~/env";
+import {
+	arcjet,
+	shield,
+	detectBot,
+	slidingWindow,
+	tokenBucket,
+	checkDecision,
+	createErrorResponse,
+} from "@vendor/security";
 
 // Create tools object for c010 agent
 const c010Tools = {
@@ -33,6 +44,38 @@ initLogger({
 	projectName: braintrustConfig.projectName || "chat-app",
 });
 
+// Create Arcjet instance for anonymous users only
+// Strict limit: 10 messages per day
+const anonymousArcjet = arcjet({
+	key: env.ARCJET_KEY,
+	characteristics: ["ip.src"], // Rate limit by IP for anonymous
+	rules: [
+		// Shield protects against common attacks
+		shield({ mode: "LIVE" }),
+		// Block all bots for anonymous users
+		detectBot({ mode: "LIVE", allow: [] }),
+		// Fixed window: 10 requests per day (86400 seconds)
+		slidingWindow({ 
+			mode: "LIVE", 
+			max: 10, 
+			interval: 86400 // 24 hours in seconds
+		}),
+		// Also add per-hour limit to prevent burst usage
+		slidingWindow({ 
+			mode: "LIVE", 
+			max: 3, 
+			interval: 3600 // 1 hour in seconds
+		}),
+		// Token bucket: Very limited for anonymous
+		tokenBucket({
+			mode: "LIVE",
+			refillRate: 1,
+			interval: 8640, // 1 token every 2.4 hours (10 per day)
+			capacity: 2, // Allow only 2 messages in burst
+		}),
+	],
+});
+
 // Handler function that handles auth and calls fetchRequestHandler
 const handler = async (
 	req: Request,
@@ -43,11 +86,35 @@ const handler = async (
 
 	// Extract agentId and sessionId
 	const [agentId, sessionId] = v;
-
-	// Get authenticated user ID from Clerk
-	const { userId } = await auth();
-	if (!userId) {
-		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	
+	// Server determines authentication status - no client control
+	const authResult = await auth();
+	const authenticatedUserId = authResult.userId;
+	
+	// Server decides if this is anonymous based on actual auth state
+	const isAnonymous = !authenticatedUserId;
+	
+	// Apply rate limiting for anonymous users
+	if (isAnonymous) {
+		const decision = await anonymousArcjet.protect(req, { requested: 1 });
+		
+		if (decision.isDenied()) {
+			console.warn(`[Security] Anonymous request denied:`, {
+				sessionId,
+				ip: decision.ip,
+				reason: checkDecision(decision),
+			});
+			return createErrorResponse(decision);
+		}
+	}
+	
+	// Set userId based on authentication status
+	let userId: string;
+	if (isAnonymous) {
+		// For anonymous users, use a special prefix to avoid collision
+		userId = `anon_${sessionId}`;
+	} else {
+		userId = authenticatedUserId;
 	}
 
 	// Validate params
@@ -66,91 +133,102 @@ const handler = async (
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async () => {
 		try {
-			// Create PlanetScale memory instance using tRPC
-			const memory = new PlanetScaleMemory();
-			
+			// Create memory instance based on authentication status
+			const memory = isAnonymous
+				? new RedisMemory({
+						url: env.KV_REST_API_URL,
+						token: env.KV_REST_API_TOKEN,
+					})
+				: new PlanetScaleMemory();
+
 			// Pass everything to fetchRequestHandler with inline agent
 			const response = await fetchRequestHandler({
-			agent: createAgent<C010ToolSchema, AppRuntimeContext>({
-				name: "c010",
-				system: `You are a helpful AI assistant with access to web search capabilities.
+				agent: createAgent<C010ToolSchema, AppRuntimeContext>({
+					name: "c010",
+					system: `You are a helpful AI assistant with access to web search capabilities.
 You can help users find information, answer questions, and provide insights based on current web data.
 When searching, be thoughtful about your queries and provide comprehensive, well-sourced answers.`,
-				tools: c010Tools,
-				createRuntimeContext: ({
-					sessionId: _sessionId,
-					resourceId: _resourceId,
-				}): AppRuntimeContext => ({
-					userId,
-					agentId,
-				}),
-				model: wrapLanguageModel({
-					model: gateway("openai/gpt-4.1-nano"),
-					middleware: BraintrustMiddleware({ debug: true }),
-				}),
-				experimental_transform: smoothStream({
-					delayInMs: 25,
-					chunking: "word",
-				}),
-				experimental_telemetry: {
-					isEnabled: isOtelEnabled(),
-					metadata: {
-						agentId,
-						agentName: "c010",
-						sessionId,
+					tools: c010Tools,
+					createRuntimeContext: ({
+						sessionId: _sessionId,
+						resourceId: _resourceId,
+					}): AppRuntimeContext => ({
 						userId,
+						agentId,
+					}),
+					model: wrapLanguageModel({
+						model: gateway("openai/gpt-4.1-nano"),
+						middleware: BraintrustMiddleware({ debug: true }),
+					}),
+					experimental_transform: smoothStream({
+						delayInMs: 25,
+						chunking: "word",
+					}),
+					experimental_telemetry: {
+						isEnabled: isOtelEnabled(),
+						metadata: {
+							agentId,
+							agentName: "c010",
+							sessionId,
+							userId,
+						},
 					},
+					onChunk: ({ chunk }) => {
+						if (chunk.type === "tool-call") {
+							// Tool called
+						}
+					},
+					onFinish: (result) => {
+						// Log to Braintrust for POST requests
+						if (req.method === "POST") {
+							currentSpan().log({
+								input: {
+									agentId,
+									sessionId,
+									userId,
+								},
+								output:
+									result.response.messages.length > 0
+										? result.response.messages
+										: result.text,
+								metadata: {
+									finishReason: result.finishReason,
+									usage: result.usage,
+								},
+							});
+						}
+					},
+				}),
+				sessionId,
+				memory,
+				req,
+				resourceId: userId,
+				createRequestContext: (req) => ({
+					userAgent: req.headers.get("user-agent") ?? undefined,
+					ipAddress:
+						req.headers.get("x-forwarded-for") ??
+						req.headers.get("x-real-ip") ??
+						undefined,
+				}),
+				generateId: uuidv4,
+				enableResume: true,
+				onError({ error }) {
+					console.error(
+						`[API Error] Agent: ${agentId}, Session: ${sessionId}, User: ${userId}`,
+						{
+							error: error.message,
+							stack: error.stack,
+							agentId,
+							sessionId,
+							userId,
+							method: req.method,
+							url: req.url,
+						},
+					);
 				},
-				onChunk: ({ chunk }) => {
-					if (chunk.type === "tool-call") {
-						// Tool called
-					}
-				},
-				onFinish: (result) => {
-					// Log to Braintrust for POST requests
-					if (req.method === "POST") {
-						currentSpan().log({
-							input: {
-								agentId,
-								sessionId,
-								userId,
-							},
-							output: result.response.messages.length > 0 ? result.response.messages : result.text,
-							metadata: {
-								finishReason: result.finishReason,
-								usage: result.usage,
-							},
-						});
-					}
-				},
-			}),
-			sessionId,
-			memory,
-			req,
-			resourceId: userId,
-			createRequestContext: (req) => ({
-				userAgent: req.headers.get("user-agent") ?? undefined,
-				ipAddress:
-					req.headers.get("x-forwarded-for") ??
-					req.headers.get("x-real-ip") ??
-					undefined,
-			}),
-			generateId: uuidv4,
-			enableResume: true,
-			onError({ error }) {
-				console.error(`[API Error] Agent: ${agentId}, Session: ${sessionId}, User: ${userId}`, {
-					error: error.message,
-					stack: error.stack,
-					agentId,
-					sessionId,
-					userId,
-					method: req.method,
-					url: req.url,
-				});
-			},
-		});
+			});
 
-		return response;
+			return response;
 		} catch (error) {
 			// Defensive catch - fetchRequestHandler should handle all errors,
 			// but this provides a final safety net
@@ -163,11 +241,11 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 				method: req.method,
 				url: req.url,
 			});
-			
+
 			// Return a generic 500 error
 			return Response.json(
 				{ error: "Internal server error", code: "INTERNAL_SERVER_ERROR" },
-				{ status: 500 }
+				{ status: 500 },
 			);
 		}
 	};
@@ -181,7 +259,10 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 			});
 		} catch (error) {
 			// If traced wrapper fails, fall back to direct execution
-			console.warn(`[API Route] Traced wrapper failed, falling back to direct execution:`, error);
+			console.warn(
+				`[API Route] Traced wrapper failed, falling back to direct execution:`,
+				error,
+			);
 			return executeHandler();
 		}
 	}
@@ -192,4 +273,3 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 
 // Export the handler for both GET and POST
 export { handler as GET, handler as POST };
-

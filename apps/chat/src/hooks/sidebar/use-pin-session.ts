@@ -63,7 +63,7 @@ export function usePinSession() {
 				// If the mutation fails, rollback all queries
 				if (context?.previousDataMap) {
 					context.previousDataMap.forEach((data, keyString) => {
-						const queryKey = JSON.parse(keyString);
+						const queryKey = JSON.parse(keyString) as readonly unknown[];
 						queryClient.setQueryData<SessionsInfiniteData>(queryKey, data);
 					});
 				}

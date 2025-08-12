@@ -8,18 +8,15 @@ export function useInfiniteSessions() {
   const trpc = useTRPC();
   
   const query = useInfiniteQuery({
-    ...trpc.chat.session.list.infiniteQueryOptions(
-      (pageParam: unknown) => ({
-        limit: ITEMS_PER_PAGE,
-        cursor: pageParam as string | undefined,
-      })
-    ),
-    initialPageParam: undefined as string | undefined,
+    ...trpc.chat.session.list.infiniteQueryOptions({
+      limit: ITEMS_PER_PAGE,
+    }),
+    initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => {
       // If last page has fewer items than limit, we've reached the end
-      if (lastPage.length < ITEMS_PER_PAGE) return undefined;
+      if (lastPage.length < ITEMS_PER_PAGE) return null;
       // Use the last item's ID as the cursor for the next page
-      return lastPage[lastPage.length - 1]?.id;
+      return lastPage[lastPage.length - 1]?.id ?? null;
     },
   });
 

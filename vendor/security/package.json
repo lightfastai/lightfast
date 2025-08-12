@@ -32,8 +32,8 @@
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@arcjet/decorate": "1.0.0-beta.6",
-    "@arcjet/next": "1.0.0-beta.5",
+    "@arcjet/decorate": "1.0.0-beta.10",
+    "@arcjet/next": "1.0.0-beta.10",
     "js-cookie": "^3.0.5",
     "react": "^19.1.0"
   }

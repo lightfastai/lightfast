@@ -10,7 +10,11 @@ import type { NextRequest } from "next/server";
 const clerkConfig = getClerkMiddlewareConfig("chat");
 
 // Define protected routes - everything except public routes should require auth
-const isPublicRoute = createRouteMatcher(["/", "/api/health"]);
+const isPublicRoute = createRouteMatcher([
+	"/", 
+	"/api/health",
+	"/api/v/(.*)" // Allow anonymous access to AI API routes
+]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
 	// Handle CORS preflight requests

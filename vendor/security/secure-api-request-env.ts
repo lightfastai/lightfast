@@ -1,11 +1,10 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-export const env = createEnv({
+export const secureApiRequestEnv = createEnv({
 	shared: {},
 	server: {
-		ARCJET_ENV: z.enum(["development", "production"]).optional(),
-		ARCJET_KEY: z.string().min(1).startsWith("ajkey_"),
+		REQUEST_ID_SECRET: z.string().min(1).optional(),
 	},
 	client: {},
 	experimental__runtimeEnv: {},
