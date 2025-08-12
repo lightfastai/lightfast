@@ -9,8 +9,8 @@ import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useCreateSession } from "~/hooks/use-create-session";
 import { showAIErrorToast } from "~/lib/ai-errors";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
-import { DEFAULT_MODEL_ID  } from "~/lib/ai/providers";
-import type {ModelId} from "~/lib/ai/providers";
+import { DEFAULT_MODEL_ID } from "~/lib/ai/providers";
+import type { ModelId } from "~/lib/ai/providers";
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -28,8 +28,9 @@ export function ChatInterface({
 	isNewSession = false,
 }: ChatInterfaceProps) {
 	// Model selection state
-	const [selectedModelId, setSelectedModelId] = useState<ModelId>(DEFAULT_MODEL_ID);
-	
+	const [selectedModelId, setSelectedModelId] =
+		useState<ModelId>(DEFAULT_MODEL_ID);
+
 	// Hook for creating sessions optimistically
 	const createSession = useCreateSession();
 
@@ -52,9 +53,9 @@ export function ChatInterface({
 
 	// Create transport for AI SDK v5
 	// Uses sessionId directly as the primary key
-	const transport = useChatTransport({ 
-		sessionId: sessionId, 
-		agentId 
+	const transport = useChatTransport({
+		sessionId: sessionId,
+		agentId,
 	});
 
 	// Use Vercel's useChat directly with transport
@@ -85,7 +86,7 @@ export function ChatInterface({
 			if (isNewSession) {
 				// Update the URL immediately for instant feedback
 				window.history.replaceState({}, "", `/${sessionId}`);
-				
+
 				// Create the session using mutate (fire and forget)
 				// The mutation has optimistic updates so UI will update immediately
 				// The unique constraint in the database will prevent duplicate sessions
@@ -167,3 +168,4 @@ export function ChatInterface({
 		</div>
 	);
 }
+
