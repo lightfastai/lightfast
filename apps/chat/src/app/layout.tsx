@@ -8,6 +8,7 @@ import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { getClerkConfig } from "@repo/url-utils";
+import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 
 export const metadata: Metadata = {
@@ -111,6 +112,8 @@ export default function RootLayout({
         <body className={cn("bg-background dark min-h-screen", fonts)}>
           {children}
           <Toaster />
+          <VercelAnalytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>

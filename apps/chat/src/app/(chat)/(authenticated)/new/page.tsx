@@ -1,23 +1,15 @@
 import { Suspense } from "react";
-import { AuthenticatedChatInterface } from "~/components/chat/authenticated-chat-interface";
-import { uuidv4 } from "@lightfast/core/v2/utils";
+import { NewChatWrapper } from "~/components/chat/new-chat-wrapper";
 
 // Server component for new chats
 export default function NewChatPage() {
 	const agentId = "c010";
-	// Generate a client session ID server-side
-	const clientSessionId = uuidv4();
 
-	// Wrap in Suspense to ensure proper hydration timing
+	// Use client wrapper to ensure stable UUID generation
+	// The UUID needs to be generated client-side to remain stable across re-renders
 	return (
 		<Suspense fallback={null}>
-			<AuthenticatedChatInterface 
-				key={`${agentId}-${clientSessionId}`}
-				agentId={agentId} 
-				sessionId={clientSessionId} 
-				initialMessages={[]} 
-				isNewSession={true}
-			/>
+			<NewChatWrapper agentId={agentId} />
 		</Suspense>
 	);
 }
