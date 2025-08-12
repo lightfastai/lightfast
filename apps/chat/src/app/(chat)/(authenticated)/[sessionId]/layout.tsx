@@ -1,4 +1,4 @@
-import { prefetch, trpc } from "~/trpc/server";
+import { prefetch, trpc, HydrateClient } from "~/trpc/server";
 
 interface SessionLayoutProps {
 	children: React.ReactNode;
@@ -15,5 +15,7 @@ export default async function SessionLayout({ children, params }: SessionLayoutP
 	// This populates the cache so the client component doesn't need to fetch again
 	prefetch(trpc.chat.session.get.queryOptions({ sessionId }));
 
-	return <>{children}</>;
+	// Wrap in HydrateClient to ensure the prefetched session data is included in hydration
+	// This is critical for useSuspenseQuery to work correctly in production
+	return <HydrateClient>{children}</HydrateClient>;
 }

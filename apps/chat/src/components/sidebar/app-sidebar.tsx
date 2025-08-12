@@ -49,18 +49,16 @@ export function AppSidebar() {
 				{/* Sessions list with constrained height for scrolling */}
 				<ScrollArea className="flex-1 min-h-0 w-full group-data-[collapsible=icon]:hidden">
 					<div className="w-full max-w-full min-w-0 overflow-hidden pr-2">
-						{/* Pinned sessions - separate error boundary and suspense */}
+						{/* Pinned sessions with Suspense (uses useSuspenseQuery) */}
 						<ThreadsErrorBoundary>
 							<Suspense fallback={null}>
 								<PinnedSessionsList />
 							</Suspense>
 						</ThreadsErrorBoundary>
-
-						{/* Regular sessions with infinite scroll */}
+						
+						{/* Regular sessions without Suspense (uses regular useInfiniteQuery) */}
 						<ThreadsErrorBoundary>
-							<Suspense fallback={null}>
-								<InfiniteScrollSessions />
-							</Suspense>
+							<InfiniteScrollSessions />
 						</ThreadsErrorBoundary>
 					</div>
 				</ScrollArea>
