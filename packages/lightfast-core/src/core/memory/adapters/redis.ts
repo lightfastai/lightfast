@@ -6,6 +6,9 @@ interface SessionMessagesData<TMessage> {
 	messages: TMessage[];
 }
 
+// Type-safe wrapper for Redis JSON operations
+type RedisJsonData<T> = T & Record<string, unknown>;
+
 interface SessionData {
 	resourceId: string;
 	agentId: string;
@@ -48,23 +51,14 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 		const exists = await this.redis.exists(key);
 
 		if (!exists) {
-			throw new Error(`Cannot append message to non-existent session ${sessionId}. Use createMessages for new sessions.`);
+			// Initialize with the first message if session doesn't exist
+			const data: SessionMessagesData<TMessage> = { messages: [message] };
+			// Type assertion is safe here - we know the structure matches
+			await this.redis.json.set(key, "$", data as RedisJsonData<SessionMessagesData<TMessage>>);
+		} else {
+			// Append to existing messages array
+			await this.redis.json.arrappend(key, "$.messages", message);
 		}
-
-		// Directly append the single message to the messages array
-		await this.redis.json.arrappend(key, "$.messages", message);
-	}
-
-	async createMessages({ sessionId, messages }: { sessionId: string; messages: TMessage[] }): Promise<void> {
-		const key = this.KEYS.sessionMessages(sessionId);
-
-		const data: SessionMessagesData<TMessage> = {
-			messages,
-		};
-
-		// Use JSON.SET to store as a JSON document
-		await this.redis.json.set(key, "$", data as unknown as Record<string, unknown>);
-		// Messages are persisted forever - no TTL
 	}
 
 	async getMessages(sessionId: string): Promise<TMessage[]> {

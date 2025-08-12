@@ -94,6 +94,12 @@ export async function fetchRequestHandler<
 				throw new NoMessagesError();
 			}
 
+			// Extract the single user message (should always be the last one)
+			const message = messages[messages.length - 1];
+			if (!message) {
+				throw new NoMessagesError();
+			}
+
 			// Create system context
 			const systemContext = { sessionId, resourceId };
 
@@ -104,7 +110,7 @@ export async function fetchRequestHandler<
 			const result = await streamChat({
 				agent,
 				sessionId,
-				messages,
+				message,
 				memory,
 				resourceId,
 				systemContext,

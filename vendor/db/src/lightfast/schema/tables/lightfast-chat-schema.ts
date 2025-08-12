@@ -5,6 +5,11 @@ import type { UIMessage } from "ai";
 import { uuidv4 } from "@repo/lib";
 
 /**
+ * Default values for session fields
+ */
+export const DEFAULT_SESSION_TITLE = "New Session";
+
+/**
  * LightfastChatSession table represents a chat experience in the Lightfast Chat application.
  * 
  * Note: We use the term "session" instead of "thread", "chat", or "conversation"
@@ -31,10 +36,21 @@ export const LightfastChatSession = mysqlTable("lightfast_chat_session", {
   clerkUserId: varchar("clerk_user_id", { length: 191 }).notNull(),
   
   /**
+   * Client-generated session ID used for optimistic updates
+   * This allows the client to generate a session ID before the server creates the actual session
+   * Useful for immediate URL updates and optimistic UI behavior
+   * MUST be unique to prevent duplicate sessions from race conditions
+   */
+  clientSessionId: varchar("client_session_id", { length: 191 })
+    .notNull()
+    .unique()
+    .$defaultFn(() => uuidv4()),
+  
+  /**
    * Display title for the session
    * Defaults to "New Session" and can be updated based on conversation content
    */
-  title: varchar("title", { length: 255 }).default("New Session").notNull(),
+  title: varchar("title", { length: 255 }).default(DEFAULT_SESSION_TITLE).notNull(),
   
   /**
    * Whether this session is pinned by the user

@@ -6,23 +6,32 @@ import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { ProviderModelSelector } from "./provider-model-selector";
 import { useChat } from "@ai-sdk/react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
+import { useCreateSession } from "~/hooks/use-create-session";
+import { showAIErrorToast } from "~/lib/ai-errors";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
-import { DEFAULT_MODEL_ID, type ModelId } from "~/lib/ai/providers";
+import { DEFAULT_MODEL_ID  } from "~/lib/ai/providers";
+import type {ModelId} from "~/lib/ai/providers";
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface ChatInterfaceProps {
 	agentId: string;
-	sessionId: string;
+	sessionId: string; // Either a client-generated UUID for new sessions or actual session ID for existing ones
 	initialMessages?: LightfastAppChatUIMessage[];
+	isNewSession?: boolean; // Indicates if this is a new session that needs to be created
 }
 
 export function ChatInterface({
 	agentId,
 	sessionId,
 	initialMessages = [],
+	isNewSession = false,
 }: ChatInterfaceProps) {
 	// Model selection state
 	const [selectedModelId, setSelectedModelId] = useState<ModelId>(DEFAULT_MODEL_ID);
+	
+	// Hook for creating sessions optimistically
+	const createSession = useCreateSession();
 
 	// Load persisted model selection after mount
 	useEffect(() => {
@@ -42,7 +51,11 @@ export function ChatInterface({
 	}, []);
 
 	// Create transport for AI SDK v5
-	const transport = useChatTransport({ sessionId, agentId });
+	// PlanetScaleMemory will resolve clientSessionId to database ID as needed
+	const transport = useChatTransport({ 
+		sessionId: sessionId, 
+		agentId 
+	});
 
 	// Use Vercel's useChat directly with transport
 	const {
@@ -54,7 +67,7 @@ export function ChatInterface({
 		transport,
 		messages: initialMessages,
 		onError: (error) => {
-			console.error("Chat error:", error);
+			showAIErrorToast(error, "Chat error occurred");
 		},
 		resume:
 			initialMessages.length > 0 &&
@@ -67,9 +80,20 @@ export function ChatInterface({
 		}
 
 		try {
-			// Update URL to include sessionId
-			// This happens BEFORE sending the message to match experimental app
-			window.history.replaceState({}, "", `/${sessionId}`);
+			// If this is a new session, create it first before sending the message
+			// This ensures the session exists in the database before messages are added
+			if (isNewSession) {
+				// Update the URL immediately for instant feedback
+				window.history.replaceState({}, "", `/${sessionId}`);
+				
+				// Create the session using mutate (fire and forget)
+				// The mutation has optimistic updates so UI will update immediately
+				// The unique constraint in the database will prevent duplicate sessions
+				createSession.mutate({ clientSessionId: sessionId });
+			} else {
+				// For existing sessions, just update the URL to ensure consistency
+				window.history.replaceState({}, "", `/${sessionId}`);
+			}
 
 			// Generate UUID for the user message
 			const userMessageId = crypto.randomUUID();
@@ -89,7 +113,7 @@ export function ChatInterface({
 				},
 			);
 		} catch (error) {
-			console.error("Failed to send message:", error);
+			showAIErrorToast(error, "Failed to send message");
 		}
 	};
 

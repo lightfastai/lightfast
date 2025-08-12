@@ -22,7 +22,7 @@ export interface StreamChatOptions<
 > {
 	agent: Agent<any, any>;
 	sessionId: string;
-	messages: TMessage[];
+	message: TMessage;
 	memory: Memory<TMessage>;
 	resourceId: string;
 	systemContext: SystemContext;
@@ -63,46 +63,37 @@ export async function validateSession<TMessage extends UIMessage = UIMessage>(
 }
 
 /**
- * Processes incoming messages and manages session state
+ * Processes incoming message and manages session state
  */
-export async function processMessages<TMessage extends UIMessage = UIMessage>(
+export async function processMessage<TMessage extends UIMessage = UIMessage>(
 	memory: Memory<TMessage>,
 	sessionId: string,
-	messages: TMessage[],
+	message: TMessage,
 	resourceId: string,
 	agentId: string,
 	sessionExists: boolean,
 ): Promise<Result<ProcessMessagesResult<TMessage>, NoUserMessageError>> {
-	// Get the most recent user message
-	const recentUserMessage = messages
-		.filter((message) => message.role === "user")
-		.at(-1);
-	if (!recentUserMessage) {
+	// Validate it's a user message
+	if (message.role !== "user") {
 		return Err(new NoUserMessageError());
 	}
 
 	// Create session if it doesn't exist
-	await memory.createSession({
-		sessionId,
-		resourceId,
-		agentId,
-	});
-
-	// Handle messages based on whether session is new or existing
-	let allMessages: TMessage[];
-
 	if (!sessionExists) {
-		// New session - create with initial messages
-		await memory.createMessages({ sessionId, messages });
-		allMessages = messages;
-	} else {
-		// Existing session - append only the recent user message
-		await memory.appendMessage({ sessionId, message: recentUserMessage });
-		// Fetch all messages from memory for full context
-		allMessages = await memory.getMessages(sessionId);
+		await memory.createSession({
+			sessionId,
+			resourceId,
+			agentId,
+		});
 	}
 
-	return Ok({ allMessages, recentUserMessage });
+	// Always append the message (works for both new and existing sessions)
+	await memory.appendMessage({ sessionId, message });
+
+	// Fetch all messages from memory for full context
+	const allMessages = await memory.getMessages(sessionId);
+
+	return Ok({ allMessages, recentUserMessage: message });
 }
 
 /**
@@ -117,7 +108,7 @@ export async function streamChat<
 	const {
 		agent,
 		sessionId,
-		messages,
+		message,
 		memory,
 		resourceId,
 		systemContext,
@@ -136,11 +127,11 @@ export async function streamChat<
 		return sessionValidation;
 	}
 
-	// Process messages
-	const processResult = await processMessages(
+	// Process the single message
+	const processResult = await processMessage(
 		memory,
 		sessionId,
-		messages,
+		message,
 		resourceId,
 		agent.config.name,
 		sessionValidation.value.exists,

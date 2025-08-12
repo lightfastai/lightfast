@@ -14,10 +14,6 @@ export class InMemoryMemory<TMessage extends UIMessage = UIMessage> implements M
 		this.messages.set(sessionId, [...existing, message]);
 	}
 
-	async createMessages({ sessionId, messages }: { sessionId: string; messages: TMessage[] }): Promise<void> {
-		this.messages.set(sessionId, messages);
-	}
-
 	async getMessages(sessionId: string): Promise<TMessage[]> {
 		return this.messages.get(sessionId) || [];
 	}

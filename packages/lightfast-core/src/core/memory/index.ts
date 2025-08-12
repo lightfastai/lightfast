@@ -6,7 +6,6 @@ import type { UIMessage } from "ai";
 export interface Memory<TMessage extends UIMessage = UIMessage> {
 	// Message operations
 	appendMessage(params: { sessionId: string; message: TMessage }): Promise<void>;
-	createMessages(params: { sessionId: string; messages: TMessage[] }): Promise<void>;
 	getMessages(sessionId: string): Promise<TMessage[]>;
 
 	// Session operations
