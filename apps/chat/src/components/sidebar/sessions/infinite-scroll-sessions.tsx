@@ -23,6 +23,8 @@ export function InfiniteScrollSessions({ className }: InfiniteScrollSessionsProp
     isFetchingNextPage,
     fetchNextPage,
     isLoading,
+    isPending,
+    isFetching,
   } = useInfiniteSessions();
 
   // Mutations
@@ -60,7 +62,16 @@ export function InfiniteScrollSessions({ className }: InfiniteScrollSessionsProp
     fetchNextPage: handleFetchNextPage,
   });
 
-  // Note: isLoading is always false due to query configuration
+  // Handle initial loading state
+  if (isPending || (isFetching && allSessions.length === 0)) {
+    return (
+      <ScrollArea className={className}>
+        <div className="w-full max-w-full min-w-0 overflow-hidden pr-2">
+          <SessionsLoadingSkeleton />
+        </div>
+      </ScrollArea>
+    );
+  }
 
   // Handle empty state
   if (allSessions.length === 0) {
