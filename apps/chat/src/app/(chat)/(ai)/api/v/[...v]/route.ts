@@ -60,18 +60,12 @@ const anonymousArcjet = arcjet({
 			max: 10, 
 			interval: 86400 // 24 hours in seconds
 		}),
-		// Also add per-hour limit to prevent burst usage
-		slidingWindow({ 
-			mode: "LIVE", 
-			max: 3, 
-			interval: 3600 // 1 hour in seconds
-		}),
 		// Token bucket: Very limited for anonymous
 		tokenBucket({
 			mode: "LIVE",
 			refillRate: 1,
 			interval: 8640, // 1 token every 2.4 hours (10 per day)
-			capacity: 2, // Allow only 2 messages in burst
+			capacity: 10, // Allow up to 10 messages in burst (full daily limit)
 		}),
 	],
 });
