@@ -20,14 +20,16 @@ import { Err, Ok, type Result } from "./result";
 export interface StreamChatOptions<
 	TMessage extends UIMessage = UIMessage,
 	TRequestContext = {},
+	TFetchContext = {},
 > {
 	agent: Agent<any, any>;
 	sessionId: string;
 	message: TMessage;
-	memory: Memory<TMessage>;
+	memory: Memory<TMessage, TFetchContext>;
 	resourceId: string;
 	systemContext: SystemContext;
 	requestContext: TRequestContext;
+	context?: TFetchContext;
 	generateId?: () => string;
 	enableResume?: boolean;
 }
@@ -45,8 +47,8 @@ export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
 /**
  * Validates session ownership and authorization
  */
-export async function validateSession<TMessage extends UIMessage = UIMessage>(
-	memory: Memory<TMessage>,
+export async function validateSession<TMessage extends UIMessage = UIMessage, TFetchContext = {}>(
+	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	resourceId: string,
 ): Promise<Result<ValidatedSession, ApiError>> {
@@ -71,12 +73,13 @@ export async function validateSession<TMessage extends UIMessage = UIMessage>(
 /**
  * Processes incoming message and manages session state
  */
-export async function processMessage<TMessage extends UIMessage = UIMessage>(
-	memory: Memory<TMessage>,
+export async function processMessage<TMessage extends UIMessage = UIMessage, TFetchContext = {}>(
+	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	message: TMessage,
 	resourceId: string,
 	sessionExists: boolean,
+	context?: TFetchContext,
 ): Promise<Result<ProcessMessagesResult<TMessage>, ApiError>> {
 	// Validate it's a user message
 	if (message.role !== "user") {
@@ -89,11 +92,12 @@ export async function processMessage<TMessage extends UIMessage = UIMessage>(
 			await memory.createSession({
 				sessionId,
 				resourceId,
+				context,
 			});
 		}
 
 		// Always append the message (works for both new and existing sessions)
-		await memory.appendMessage({ sessionId, message });
+		await memory.appendMessage({ sessionId, message, context });
 
 		// Fetch all messages from memory for full context
 		const allMessages = await memory.getMessages(sessionId);
@@ -112,8 +116,9 @@ export async function processMessage<TMessage extends UIMessage = UIMessage>(
 export async function streamChat<
 	TMessage extends UIMessage = UIMessage,
 	TRequestContext = {},
+	TFetchContext = {},
 >(
-	options: StreamChatOptions<TMessage, TRequestContext>,
+	options: StreamChatOptions<TMessage, TRequestContext, TFetchContext>,
 ): Promise<Result<Response, ApiError>> {
 	const {
 		agent,
@@ -123,6 +128,7 @@ export async function streamChat<
 		resourceId,
 		systemContext,
 		requestContext,
+		context,
 		generateId,
 		enableResume,
 	} = options;
@@ -144,6 +150,7 @@ export async function streamChat<
 		message,
 		resourceId,
 		sessionValidation.value.exists,
+		context,
 	);
 
 	if (!processResult.ok) {
@@ -168,7 +175,7 @@ export async function streamChat<
 
 	// Store stream ID for resumption
 	try {
-		await memory.createStream({ sessionId, streamId });
+		await memory.createStream({ sessionId, streamId, context });
 	} catch (error) {
 		// Stream creation errors are not critical, log but continue
 		console.warn(
@@ -205,6 +212,7 @@ export async function streamChat<
 					await memory.appendMessage({
 						sessionId: sid,
 						message: responseMessage,
+						context,
 					});
 				} catch (error) {
 					// Log the error but don't break the stream
@@ -250,8 +258,8 @@ export async function streamChat<
 /**
  * Resumes an existing stream
  */
-export async function resumeStream<TMessage extends UIMessage = UIMessage>(
-	memory: Memory<TMessage>,
+export async function resumeStream<TMessage extends UIMessage = UIMessage, TFetchContext = {}>(
+	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	resourceId: string,
 ): Promise<Result<ReadableStream | null, ApiError>> {

@@ -16,7 +16,7 @@ export const ACTIVE_MODELS = {
 		displayName: "Claude 4 Sonnet",
 		description: "Latest generation superior coding and reasoning model",
 		maxTokens: 200000,
-		costPer1KTokens: { input: 0.003, output: 0.015 },
+		costPer1KTokens: { input: 3.0, output: 15.0 },
 		features: {
 			streaming: true,
 			functionCalling: true,
@@ -24,6 +24,7 @@ export const ACTIVE_MODELS = {
 			thinking: true, // Has extended thinking mode
 			pdfSupport: true,
 		},
+		accessLevel: "authenticated",
 		streamingDelay: 12,
 	}),
 
@@ -44,7 +45,8 @@ export const ACTIVE_MODELS = {
 			thinking: false,
 			pdfSupport: false,
 		},
-		streamingDelay: 25,
+		accessLevel: "anonymous",
+		streamingDelay: 30,
 	}),
 	"openai/gpt-5-mini": ModelConfigSchema.parse({
 		id: "openai/gpt-5-mini",
@@ -62,6 +64,7 @@ export const ACTIVE_MODELS = {
 			thinking: false,
 			pdfSupport: false,
 		},
+		accessLevel: "authenticated",
 		streamingDelay: 18,
 	}),
 	"openai/gpt-5": ModelConfigSchema.parse({
@@ -80,7 +83,8 @@ export const ACTIVE_MODELS = {
 			thinking: false,
 			pdfSupport: false,
 		},
-		streamingDelay: 12,
+		accessLevel: "authenticated",
+		streamingDelay: 15,
 	}),
 
 	// ===== Google Gemini Models =====
@@ -100,6 +104,7 @@ export const ACTIVE_MODELS = {
 			thinking: true, // Gemini 2.5 Flash has thinking capabilities
 			pdfSupport: true, // Supports multimodal document processing
 		},
+		accessLevel: "authenticated",
 		streamingDelay: 15,
 	}),
 	"google/gemini-2.5-pro": ModelConfigSchema.parse({
@@ -118,7 +123,8 @@ export const ACTIVE_MODELS = {
 			thinking: true, // Gemini 2.5 Pro has advanced reasoning/thinking
 			pdfSupport: true, // Supports multimodal document processing
 		},
-		streamingDelay: 10,
+		accessLevel: "authenticated",
+		streamingDelay: 15,
 	}),
 
 	// ===== OpenAI Open Source Models =====
@@ -139,7 +145,8 @@ export const ACTIVE_MODELS = {
 			thinking: false,
 			pdfSupport: false,
 		},
-		streamingDelay: 20,
+		accessLevel: "anonymous",
+		streamingDelay: 30,
 	}),
 
 	// ===== MoonshotAI Models =====
@@ -159,7 +166,7 @@ export const ACTIVE_MODELS = {
 			thinking: false,
 			pdfSupport: true,
 		},
+		accessLevel: "authenticated",
 		streamingDelay: 18,
 	}),
 } as const;
-

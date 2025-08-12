@@ -64,7 +64,7 @@ const anonymousArcjet = arcjet({
 		}),
 		// Token bucket: Very limited for anonymous
 		tokenBucket({
-			mode: "LIVE",
+			mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
 			refillRate: 1,
 			interval: 8640, // 1 token every 2.4 hours (10 per day)
 			capacity: 10, // Allow up to 10 messages in burst (full daily limit)
@@ -147,6 +147,18 @@ const handler = async (
 			// Get model configuration
 			const modelConfig = getModelConfig(selectedModelId);
 			const streamingDelay = getModelStreamingDelay(selectedModelId);
+			
+			// Validate model access based on authentication status
+			if (isAnonymous && modelConfig.accessLevel === "authenticated") {
+				console.warn(`[Security] Anonymous user attempted to use authenticated model: ${selectedModelId}`);
+				return Response.json(
+					{ 
+						error: "Access denied", 
+						message: "This model requires authentication. Please sign in to use this model." 
+					},
+					{ status: 403 }
+				);
+			}
 
 			// For Vercel AI Gateway, use the model name directly
 			// Gateway handles provider routing automatically
@@ -228,6 +240,10 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 				memory,
 				req,
 				resourceId: userId,
+				context: {
+					modelId: selectedModelId,
+					isAnonymous,
+				},
 				createRequestContext: (req) => ({
 					userAgent: req.headers.get("user-agent") ?? undefined,
 					ipAddress:

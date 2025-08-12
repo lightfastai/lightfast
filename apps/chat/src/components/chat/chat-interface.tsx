@@ -10,7 +10,7 @@ import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { showAIErrorToast } from "~/lib/ai-errors";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
-import { DEFAULT_MODEL_ID } from "~/lib/ai/providers";
+import { getDefaultModelForUser } from "~/lib/ai/providers";
 import type { ModelId } from "~/lib/ai/providers";
 import { useState, useCallback, useEffect } from "react";
 
@@ -41,17 +41,21 @@ export function ChatInterface({
 		isLoading: isLimitLoading,
 	} = useAnonymousMessageLimit();
 
-	// Model selection state
+	// Model selection state - default based on authentication
+	const defaultModel = getDefaultModelForUser(isAuthenticated);
 	const [selectedModelId, setSelectedModelId] =
-		useState<ModelId>(DEFAULT_MODEL_ID);
+		useState<ModelId>(defaultModel);
 
 	// Load persisted model selection after mount
 	useEffect(() => {
 		const storedModel = sessionStorage.getItem("selectedModelId");
 		if (storedModel) {
 			setSelectedModelId(storedModel as ModelId);
+		} else {
+			// If no stored model, use the appropriate default for the user's auth status
+			setSelectedModelId(defaultModel);
 		}
-	}, []);
+	}, [defaultModel]);
 
 	// Handle model selection change
 	const handleModelChange = useCallback((value: ModelId) => {
@@ -141,6 +145,7 @@ export function ChatInterface({
 			value={selectedModelId}
 			onValueChange={handleModelChange}
 			disabled={false} // Allow model selection even during streaming
+			isAuthenticated={isAuthenticated}
 		/>
 	);
 
@@ -191,7 +196,7 @@ export function ChatInterface({
 							status === "submitted" ||
 							(!isAuthenticated && hasReachedLimit)
 						}
-						withGradient={true}
+						withGradient={isAuthenticated}
 						withDescription="Lightfast may make mistakes. Use with discretion."
 						modelSelector={modelSelector}
 					/>

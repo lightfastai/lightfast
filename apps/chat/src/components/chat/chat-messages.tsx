@@ -144,10 +144,7 @@ function MessageItem({
 }) {
 	// Determine if the latest part during streaming is a reasoning part
 	const hasActiveReasoningPart = useMemo(() => {
-		if (
-			message.runtimeStatus !== "streaming" ||
-			message.parts.length === 0
-		) {
+		if (message.runtimeStatus !== "streaming" || message.parts.length === 0) {
 			return false;
 		}
 		// Check if the last part is a reasoning part
@@ -157,19 +154,13 @@ function MessageItem({
 
 	// For user messages
 	if (message.role === "user") {
-		const textContent =
-			message.parts
-				.filter(isTextPart)
-				.map((part) => part.text)
-				.join("\n");
+		const textContent = message.parts
+			.filter(isTextPart)
+			.map((part) => part.text)
+			.join("\n");
 
 		return (
-			<div
-				className={cn(
-					"py-3",
-					hasScrollAnchor && "min-h-[100px]",
-				)}
-			>
+			<div className={cn("py-3", hasScrollAnchor && "min-h-[100px]")}>
 				<div className="mx-auto max-w-3xl px-8 flex justify-end">
 					<div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
 						<p className="whitespace-pre-wrap">{textContent}</p>
@@ -241,4 +232,3 @@ function MessageItem({
 		</div>
 	);
 }
-

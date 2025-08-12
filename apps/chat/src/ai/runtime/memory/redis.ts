@@ -1,6 +1,7 @@
 import { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import type { Memory } from "@lightfast/core/agent/memory";
+import type { ChatFetchContext } from "~/ai/types";
 
 interface SessionMessagesData<TMessage> {
 	messages: TMessage[];
@@ -27,7 +28,7 @@ interface StreamData {
  * with automatic expiration and session management
  */
 export class AnonymousRedisMemory<TMessage extends UIMessage = UIMessage>
-	implements Memory<TMessage>
+	implements Memory<TMessage, ChatFetchContext>
 {
 	private redis: Redis;
 
@@ -55,9 +56,11 @@ export class AnonymousRedisMemory<TMessage extends UIMessage = UIMessage>
 	async appendMessage({
 		sessionId,
 		message,
+		context: _context,
 	}: {
 		sessionId: string;
 		message: TMessage;
+		context: ChatFetchContext;
 	}): Promise<void> {
 		const key = this.KEYS.sessionMessages(sessionId);
 
@@ -107,9 +110,11 @@ export class AnonymousRedisMemory<TMessage extends UIMessage = UIMessage>
 	async createSession({
 		sessionId,
 		resourceId,
+		context: _context,
 	}: {
 		sessionId: string;
 		resourceId: string;
+		context: ChatFetchContext;
 	}): Promise<void> {
 		const key = this.KEYS.sessionMetadata(sessionId);
 
@@ -155,9 +160,11 @@ export class AnonymousRedisMemory<TMessage extends UIMessage = UIMessage>
 	async createStream({
 		sessionId,
 		streamId,
+		context: _context,
 	}: {
 		sessionId: string;
 		streamId: string;
+		context: ChatFetchContext;
 	}): Promise<void> {
 		// Store stream data with short TTL
 		const streamData: StreamData = {

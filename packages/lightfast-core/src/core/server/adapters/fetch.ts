@@ -18,12 +18,14 @@ function errorToResponse(error: ApiError): Response {
 export interface FetchRequestHandlerOptions<
 	TAgent extends Agent<any, any>,
 	TRequestContext extends RequestContext = RequestContext,
+	TFetchContext = {},
 > {
 	agent: TAgent;
 	sessionId: string;
-	memory: Memory<UIMessage>;
+	memory: Memory<UIMessage, TFetchContext>;
 	req: Request;
 	resourceId: string;
+	context?: TFetchContext;
 	createRequestContext?: (req: Request) => TRequestContext;
 	generateId?: () => string;
 	enableResume?: boolean;
@@ -76,8 +78,9 @@ export interface FetchRequestHandlerOptions<
 export async function fetchRequestHandler<
 	TAgent extends Agent<any, any>,
 	TRequestContext extends RequestContext = RequestContext,
->(options: FetchRequestHandlerOptions<TAgent, TRequestContext>): Promise<Response> {
-	const { agent, sessionId, memory, req, resourceId, createRequestContext, generateId, enableResume, onError } = options;
+	TFetchContext = {},
+>(options: FetchRequestHandlerOptions<TAgent, TRequestContext, TFetchContext>): Promise<Response> {
+	const { agent, sessionId, memory, req, resourceId, context, createRequestContext, generateId, enableResume, onError } = options;
 
 	try {
 		// Check HTTP method
@@ -115,6 +118,7 @@ export async function fetchRequestHandler<
 				resourceId,
 				systemContext,
 				requestContext,
+				context,
 				generateId,
 				enableResume,
 			});

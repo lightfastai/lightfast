@@ -103,6 +103,13 @@ export const LightfastChatMessage = mysqlTable("lightfast_chat_message", {
   parts: json("parts").$type<UIMessage["parts"]>().notNull(),
   
   /**
+   * The AI model used to generate this message (for assistant messages)
+   * Null for user and system messages
+   * Example: "openai/gpt-5-nano", "anthropic/claude-4-sonnet"
+   */
+  modelId: varchar("model_id", { length: 100 }),
+  
+  /**
    * Timestamp when the message was created
    */
   createdAt: datetime("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),

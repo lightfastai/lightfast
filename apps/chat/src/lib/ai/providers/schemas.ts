@@ -40,6 +40,13 @@ export const ThinkingConfigSchema = z.object({
 });
 export type ThinkingConfig = z.infer<typeof ThinkingConfigSchema>;
 
+// Model access level schema
+export const ModelAccessLevelSchema = z.enum([
+	"anonymous",       // Available to all users (including anonymous)
+	"authenticated",   // Available only to authenticated users
+]);
+export type ModelAccessLevel = z.infer<typeof ModelAccessLevelSchema>;
+
 // Model configuration schema
 export const ModelConfigSchema = z.object({
 	id: z.string(),
@@ -56,6 +63,7 @@ export const ModelConfigSchema = z.object({
 	features: ModelFeaturesSchema,
 	thinkingConfig: ThinkingConfigSchema.optional(),
 	active: z.boolean().default(true),
+	accessLevel: ModelAccessLevelSchema.default("authenticated"),
 	streamingDelay: z
 		.number()
 		.optional()

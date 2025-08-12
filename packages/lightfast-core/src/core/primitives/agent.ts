@@ -65,10 +65,10 @@ export interface AgentConfig extends Omit<StreamTextParameters<ToolSet>, Exclude
 	name: string;
 }
 
-export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRequestContext = {}> {
+export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRequestContext = {}, TMemoryContext = {}> {
 	sessionId: string;
 	messages: TMessage[];
-	memory: Memory<TMessage>;
+	memory: Memory<TMessage, TMemoryContext>;
 	resourceId: string;
 	systemContext: SystemContext;
 	requestContext: TRequestContext;
@@ -153,14 +153,14 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		this.experimental_transform = experimental_transform;
 	}
 
-	async stream<TMessage extends UIMessage = UIMessage, TRequestContext = {}>({
+	async stream<TMessage extends UIMessage = UIMessage, TRequestContext = {}, TMemoryContext = {}>({
 		sessionId,
 		messages,
 		memory,
 		resourceId,
 		systemContext,
 		requestContext,
-	}: StreamOptions<TMessage, TRequestContext>) {
+	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>) {
 		if (!messages || messages.length === 0) {
 			throw new Error("At least one message is required");
 		}

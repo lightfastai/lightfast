@@ -17,10 +17,11 @@ export type {
 	ModelProvider,
 	ModelFeatures,
 	ThinkingConfig,
+	ModelAccessLevel,
 } from "./schemas";
 
 // Export schemas for validators
-export { ModelProviderSchema, IconProviderSchema, ICON_PROVIDER_DISPLAY_NAMES } from "./schemas";
+export { ModelProviderSchema, IconProviderSchema, ICON_PROVIDER_DISPLAY_NAMES, ModelAccessLevelSchema } from "./schemas";
 
 // Export collections for validators
 export const ALL_MODEL_IDS = Object.keys(MODELS) as ModelId[];
@@ -32,6 +33,38 @@ export function getModelConfig(modelId: ModelId): ModelConfig {
 
 export function getVisibleModels(): ModelConfig[] {
 	return Object.values(MODELS).filter((model) => model.active);
+}
+
+// Get models based on authentication status
+export function getModelsForUser(isAuthenticated: boolean): ModelConfig[] {
+	return Object.values(MODELS).filter((model) => {
+		// Must be active
+		if (!model.active) return false;
+		
+		// Anonymous users can only access "anonymous" models
+		// Authenticated users can access both "anonymous" and "authenticated" models
+		if (!isAuthenticated && model.accessLevel === "authenticated") {
+			return false;
+		}
+		
+		return true;
+	});
+}
+
+// Get the default model for a user based on authentication
+export function getDefaultModelForUser(isAuthenticated: boolean): ModelId {
+	// For anonymous users, use gpt-5-nano if available
+	if (!isAuthenticated) {
+		const anonymousModels = getModelsForUser(false);
+		const gpt5Nano = anonymousModels.find(m => m.id === "openai/gpt-5-nano");
+		if (gpt5Nano) return "openai/gpt-5-nano";
+		// Fallback to first available anonymous model
+		const firstAnonymousModel = anonymousModels[0];
+		if (firstAnonymousModel) return firstAnonymousModel.id as ModelId;
+	}
+	
+	// For authenticated users, use the default model
+	return DEFAULT_MODEL_ID;
 }
 
 // Default model ID

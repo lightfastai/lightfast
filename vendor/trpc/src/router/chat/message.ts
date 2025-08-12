@@ -25,6 +25,7 @@ export const messageRouter = {
           id: true,
           role: true,
           parts: true,
+          modelId: true,
         }),
       })
     )
@@ -54,6 +55,7 @@ export const messageRouter = {
         role: input.message.role as "system" | "user" | "assistant",
         parts: input.message.parts,
         id: input.message.id,
+        modelId: input.message.modelId,
       });
 
       // Update session's updatedAt timestamp using MySQL's CURRENT_TIMESTAMP
@@ -105,6 +107,7 @@ export const messageRouter = {
         id: msg.id,
         role: msg.role,
         parts: msg.parts,
+        modelId: msg.modelId,
       }));
     }),
 

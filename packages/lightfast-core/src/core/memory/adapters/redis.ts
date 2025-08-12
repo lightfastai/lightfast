@@ -22,7 +22,7 @@ interface StreamData {
 /**
  * Redis-based implementation of Memory interface
  */
-export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memory<TMessage> {
+export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}> implements Memory<TMessage, TContext> {
 	private redis: Redis;
 
 	// Redis key patterns
@@ -43,7 +43,7 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 		this.redis = new Redis(config);
 	}
 
-	async appendMessage({ sessionId, message }: { sessionId: string; message: TMessage }): Promise<void> {
+	async appendMessage({ sessionId, message, context }: { sessionId: string; message: TMessage; context?: TContext }): Promise<void> {
 		const key = this.KEYS.sessionMessages(sessionId);
 
 		// Check if the key exists first
@@ -75,9 +75,11 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 	async createSession({
 		sessionId,
 		resourceId,
+		context,
 	}: {
 		sessionId: string;
 		resourceId: string;
+		context?: TContext;
 	}): Promise<void> {
 		const key = this.KEYS.sessionMetadata(sessionId);
 
@@ -112,7 +114,7 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 		return { resourceId: sessionData.resourceId };
 	}
 
-	async createStream({ sessionId, streamId }: { sessionId: string; streamId: string }): Promise<void> {
+	async createStream({ sessionId, streamId, context }: { sessionId: string; streamId: string; context?: TContext }): Promise<void> {
 		// Store stream data
 		const streamData: StreamData = {
 			id: streamId,

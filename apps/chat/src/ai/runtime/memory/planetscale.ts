@@ -1,5 +1,6 @@
 import type { Memory } from "@lightfast/core/memory";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import type { ChatFetchContext } from "~/ai/types";
 import { createCaller } from "~/trpc/server";
 import { 
   isTRPCClientError, 
@@ -14,7 +15,7 @@ import {
  * PlanetScale implementation of Memory interface using tRPC for all database operations
  * This ensures consistent authentication and authorization across the app
  */
-export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
+export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, ChatFetchContext> {
 
 	/**
 	 * Append a single message to a session
@@ -22,18 +23,26 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	async appendMessage({
 		sessionId,
 		message,
+		context,
 	}: {
 		sessionId: string;
 		message: LightfastAppChatUIMessage;
+		context: ChatFetchContext;
 	}): Promise<void> {
 		try {
 			const caller = await createCaller();
+			// Only set modelId for assistant messages
+			const modelId = message.role === 'assistant' 
+				? context.modelId 
+				: null;
+			
 			await caller.chat.message.append({
 				sessionId,
 				message: {
 					id: message.id,
 					role: message.role,
 					parts: message.parts,
+					modelId,
 				},
 			});
 		} catch (error) {
@@ -99,9 +108,11 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	async createSession({
 		sessionId,
 		resourceId,
+		context: _context,
 	}: {
 		sessionId: string;
 		resourceId: string;
+		context: ChatFetchContext;
 	}): Promise<void> {
 		try {
 			// The resourceId is the Clerk user ID, but we're already authenticated via tRPC
@@ -148,6 +159,15 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 				id: result.session.id,
 			};
 		} catch (error) {
+			// For read operations, return null for NOT_FOUND (session doesn't exist)
+			// This is expected for new sessions that haven't been created yet
+			if (isNotFound(error)) {
+				// Debug log only - this is normal for new sessions
+				console.debug(`[PlanetScaleMemory] Session ${sessionId} not found (expected for new sessions)`);
+				return null;
+			}
+			
+			// Log actual errors
 			console.error('[PlanetScaleMemory] Failed to get session:', {
 				sessionId,
 				error: isTRPCClientError(error) ? {
@@ -155,12 +175,6 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 					message: getTRPCErrorMessage(error)
 				} : error
 			});
-			
-			// For read operations, return null for NOT_FOUND (session doesn't exist)
-			if (isNotFound(error)) {
-				console.warn(`Session ${sessionId} not found`);
-				return null;
-			}
 			
 			// Handle auth errors
 			if (isUnauthorized(error)) {
@@ -185,9 +199,11 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	async createStream({
 		sessionId,
 		streamId,
+		context: _context,
 	}: {
 		sessionId: string;
 		streamId: string;
+		context: ChatFetchContext;
 	}): Promise<void> {
 		try {
 			const caller = await createCaller();

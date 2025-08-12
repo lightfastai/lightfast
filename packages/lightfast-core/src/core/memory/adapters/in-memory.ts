@@ -4,12 +4,12 @@ import type { Memory } from "../";
 /**
  * In-memory implementation of Memory interface (for testing)
  */
-export class InMemoryMemory<TMessage extends UIMessage = UIMessage> implements Memory<TMessage> {
+export class InMemoryMemory<TMessage extends UIMessage = UIMessage, TContext = {}> implements Memory<TMessage, TContext> {
 	private sessions = new Map<string, { resourceId: string }>();
 	private messages = new Map<string, TMessage[]>();
 	private streams = new Map<string, string[]>();
 
-	async appendMessage({ sessionId, message }: { sessionId: string; message: TMessage }): Promise<void> {
+	async appendMessage({ sessionId, message, context }: { sessionId: string; message: TMessage; context?: TContext }): Promise<void> {
 		const existing = this.messages.get(sessionId) || [];
 		this.messages.set(sessionId, [...existing, message]);
 	}
@@ -21,9 +21,11 @@ export class InMemoryMemory<TMessage extends UIMessage = UIMessage> implements M
 	async createSession({
 		sessionId,
 		resourceId,
+		context,
 	}: {
 		sessionId: string;
 		resourceId: string;
+		context?: TContext;
 	}): Promise<void> {
 		if (!this.sessions.has(sessionId)) {
 			this.sessions.set(sessionId, { resourceId });
@@ -35,7 +37,7 @@ export class InMemoryMemory<TMessage extends UIMessage = UIMessage> implements M
 		return session ? { resourceId: session.resourceId } : null;
 	}
 
-	async createStream({ sessionId, streamId }: { sessionId: string; streamId: string }): Promise<void> {
+	async createStream({ sessionId, streamId, context }: { sessionId: string; streamId: string; context?: TContext }): Promise<void> {
 		const existing = this.streams.get(sessionId) || [];
 		this.streams.set(sessionId, [streamId, ...existing].slice(0, 100)); // Keep last 100
 	}

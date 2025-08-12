@@ -23,6 +23,7 @@ export interface LightfastAppChatUIMessageMetadata {
 	sessionId?: string;
 	resourceId?: string;
 	status?: "thinking" | "streaming" | "done";
+	modelId?: string; // The AI model used for assistant messages
 }
 
 // Main UIMessage type with our custom generics
