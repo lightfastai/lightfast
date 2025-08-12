@@ -127,7 +127,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 							{/* Main input container */}
 							<div className="w-full border border-muted/30 rounded-xl overflow-hidden flex flex-col transition-all bg-transparent dark:bg-input/10">
 								{/* Textarea area - grows with content up to max height */}
-								<div className="flex-1 max-h-[180px] overflow-y-auto chat-input-scroll">
+								<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
 									<Textarea
 										ref={textareaRef}
 										value={message}

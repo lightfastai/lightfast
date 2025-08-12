@@ -37,7 +37,7 @@ const ReasoningBlock = memo(function ReasoningBlock({
 
 	return (
 		<div className="border border-muted rounded-lg max-h-[200px] overflow-hidden">
-			<div className="max-h-[200px] overflow-y-auto">
+			<div className="max-h-[200px] overflow-y-auto scrollbar-thin">
 				<div className="p-4">
 					<p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap break-words">
 						{trimmedText}
@@ -100,31 +100,32 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 	}
 
 	return (
-		<div className="flex-1 relative min-h-0 overflow-hidden">
+		<div className="flex-1 flex flex-col min-h-0">
 			<StickToBottom
-				className="absolute inset-0 overflow-y-auto"
+				className="flex-1 overflow-y-auto scrollbar-thin"
 				resize="smooth"
 				initial="instant"
 				role="log"
 			>
-				<StickToBottom.Content className="flex w-full flex-col">
-					{messagesWithStatus.map((message, index) => {
-						const isFirst = index === 0;
-						const isLast = index === messagesWithStatus.length - 1;
-						const hasScrollAnchor =
-							isLast &&
-							initialMessageCount.current !== null &&
-							messagesWithStatus.length > initialMessageCount.current;
-						return (
-							<MessageItem
-								key={message.id}
-								message={message}
-								hasScrollAnchor={hasScrollAnchor}
-								isFirst={isFirst}
-								isLast={isLast}
-							/>
-						);
-					})}
+				<StickToBottom.Content className="min-h-full flex flex-col">
+					{/* Messages container with proper padding */}
+					<div className="flex-1 py-4">
+						{messagesWithStatus.map((message, index) => {
+							const isLast = index === messagesWithStatus.length - 1;
+							const hasScrollAnchor =
+								isLast &&
+								initialMessageCount.current !== null &&
+								messagesWithStatus.length > initialMessageCount.current;
+							return (
+								<MessageItem
+									key={message.id}
+									message={message}
+									hasScrollAnchor={hasScrollAnchor}
+									isLast={isLast}
+								/>
+							);
+						})}
+					</div>
 				</StickToBottom.Content>
 				<ScrollButton />
 			</StickToBottom>
@@ -135,12 +136,10 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 function MessageItem({
 	message,
 	hasScrollAnchor,
-	isFirst,
 	isLast,
 }: {
 	message: MessageWithRuntimeStatus;
 	hasScrollAnchor?: boolean;
-	isFirst?: boolean;
 	isLast?: boolean;
 }) {
 	// Determine if the latest part during streaming is a reasoning part
@@ -167,10 +166,8 @@ function MessageItem({
 		return (
 			<div
 				className={cn(
-					"pb-12",
-					hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]",
-					isFirst && "pt-3",
-					isLast && "pb-6",
+					"py-3",
+					hasScrollAnchor && "min-h-[100px]",
 				)}
 			>
 				<div className="mx-auto max-w-3xl px-8 flex justify-end">
@@ -187,10 +184,9 @@ function MessageItem({
 	return (
 		<div
 			className={cn(
-				"pb-12",
-				hasScrollAnchor && "min-h-[var(--spacing-scroll-anchor)]",
-				isFirst && "pt-3",
-				isLast && "pb-20",
+				"py-3",
+				hasScrollAnchor && "min-h-[100px]",
+				isLast && "pb-8",
 			)}
 		>
 			<div className="mx-auto max-w-3xl px-4 space-y-4">

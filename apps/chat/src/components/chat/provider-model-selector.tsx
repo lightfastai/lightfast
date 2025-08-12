@@ -24,7 +24,7 @@ import {
 	PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
 import { cn } from "@repo/ui/lib/utils";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface ProviderModelSelectorProps {
@@ -32,6 +32,7 @@ interface ProviderModelSelectorProps {
 	onValueChange: (value: ModelId) => void;
 	disabled?: boolean;
 	className?: string;
+	isAuthenticated?: boolean;
 }
 
 const featureBadges = {
@@ -58,11 +59,12 @@ export function ProviderModelSelector({
 	onValueChange,
 	disabled,
 	className,
+	isAuthenticated = false,
 }: ProviderModelSelectorProps) {
 	const [open, setOpen] = useState(false);
 	const [hoveredModel, setHoveredModel] = useState<ModelId | null>(null);
 
-	// Get all visible models
+	// Get all visible models with accessibility info
 	const allModels = useMemo(() => {
 		return getVisibleModels().map((model) => ({
 			id: model.id as ModelId,
@@ -71,8 +73,10 @@ export function ProviderModelSelector({
 			displayName: model.displayName,
 			description: model.description,
 			features: model.features,
+			accessLevel: model.accessLevel,
+			isAccessible: isAuthenticated || model.accessLevel === "anonymous",
 		}));
-	}, []);
+	}, [isAuthenticated]);
 
 	// Sort models with selected one first
 	const sortedModels = useMemo(() => {
@@ -98,10 +102,15 @@ export function ProviderModelSelector({
 
 	const handleSelect = useCallback(
 		(modelId: string) => {
+			// Check if model is accessible
+			const model = allModels.find(m => m.id === modelId);
+			if (!model?.isAccessible) {
+				return; // Don't select inaccessible models
+			}
 			onValueChange(modelId as ModelId);
 			setOpen(false);
 		},
-		[onValueChange],
+		[onValueChange, allModels],
 	);
 
 	// Global keyboard shortcut for Cmd/Ctrl + .
@@ -164,9 +173,12 @@ export function ProviderModelSelector({
 										keywords={[model.displayName, model.iconProvider]}
 										onSelect={handleSelect}
 										onMouseEnter={() => setHoveredModel(model.id)}
+										disabled={!model.isAccessible}
 										className={cn(
-											"flex items-center gap-3 px-2.5 py-2 text-xs cursor-pointer rounded-none",
+											"flex items-center gap-3 px-2.5 py-2 text-xs rounded-none",
 											model.id === value && "bg-accent text-accent-foreground",
+											!model.isAccessible && "opacity-50 cursor-not-allowed",
+											model.isAccessible && "cursor-pointer",
 										)}
 									>
 										{(() => {
@@ -179,11 +191,16 @@ export function ProviderModelSelector({
 										<span className="truncate text-xs">
 											{model.displayName}
 										</span>
-										{model.id === value && (
-											<span className="ml-auto text-xs text-muted-foreground">
-												Selected
-											</span>
-										)}
+										<div className="ml-auto flex items-center gap-2">
+											{!model.isAccessible && (
+												<Lock className="w-3 h-3 text-muted-foreground" />
+											)}
+											{model.id === value && (
+												<span className="text-xs text-muted-foreground">
+													Selected
+												</span>
+											)}
+										</div>
 									</CommandItem>
 								))}
 							</CommandList>
@@ -254,6 +271,15 @@ export function ProviderModelSelector({
 											)}
 										</div>
 									</div>
+									
+									{!detailModel.isAccessible && (
+										<div className="pt-2 border-t">
+											<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+												<Lock className="w-3 h-3" />
+												<span>Sign in required</span>
+											</div>
+										</div>
+									)}
 								</div>
 							) : (
 								<div className="text-center py-8 text-sm text-muted-foreground">

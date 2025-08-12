@@ -104,22 +104,20 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
     return (
       <div className={`flex-shrink-0 ${className}`}>
-        {/* Gradient overlay */}
-        {withGradient && (
-          <div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none">
-            <div className="chat-container relative h-full !px-0">
+        <div className="chat-container relative">
+          {/* Gradient overlay */}
+          {withGradient && (
+            <div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none">
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
             </div>
-          </div>
-        )}
-        
-        <div className="chat-container relative">
+          )}
+          
           <div className="flex gap-2">
             <div className="flex-1 min-w-0">
               {/* Main input container */}
               <div className="w-full border border-border/30 rounded-xl overflow-hidden flex flex-col transition-all bg-transparent dark:bg-input/10">
                 {/* Textarea area - grows with content up to max height */}
-                <div className="flex-1 max-h-[180px] overflow-y-auto chat-input-scroll">
+                <div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
                   <Textarea
                     ref={textareaRef}
                     value={message}
