@@ -21,15 +21,21 @@ export function AuthenticatedChatInterface({
 	const createSession = useCreateSession();
 
 	// Handle session creation for authenticated users
-	const handleSessionCreation = () => {
+	// Returns a promise so the chat can wait for session creation
+	const handleSessionCreation = async () => {
 		if (isNewSession) {
 			// Update the URL immediately for instant feedback
 			window.history.replaceState({}, "", `/${sessionId}`);
 
-			// Create the session using mutate (fire and forget)
-			// The mutation has optimistic updates so UI will update immediately
-			// The unique constraint in the database will prevent duplicate sessions
-			createSession.mutate({ id: sessionId });
+			// Create the session and wait for it to complete
+			// This ensures the session exists before sending the first message
+			try {
+				await createSession.mutateAsync({ id: sessionId });
+			} catch (error) {
+				// Session creation failed, but we can still proceed
+				// The unique constraint will prevent duplicates
+				console.warn("Session creation failed, proceeding anyway:", error);
+			}
 		} else {
 			// For existing sessions, just update the URL to ensure consistency
 			window.history.replaceState({}, "", `/${sessionId}`);

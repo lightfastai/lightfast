@@ -17,7 +17,7 @@ interface ChatInterfaceProps {
 	sessionId: string; // Either a client-generated UUID for new sessions or actual session ID for existing ones
 	initialMessages?: LightfastAppChatUIMessage[];
 	isNewSession?: boolean; // Indicates if this is a new session that needs to be created
-	onFirstMessage?: () => void; // Optional callback for when the first message is sent (used for session creation in authenticated mode)
+	onFirstMessage?: () => void | Promise<void>; // Optional callback for when the first message is sent (used for session creation in authenticated mode)
 }
 
 export function ChatInterface({
@@ -79,8 +79,10 @@ export function ChatInterface({
 
 		try {
 			// Call the onFirstMessage callback if provided (for authenticated mode session creation)
-			if (onFirstMessage && isNewSession) {
-				onFirstMessage();
+			// Only call when this is truly the first message (no existing messages)
+			// Wait for session creation to complete before sending the message
+			if (onFirstMessage && isNewSession && messages.length === 0) {
+				await onFirstMessage();
 			}
 
 			// Generate UUID for the user message
