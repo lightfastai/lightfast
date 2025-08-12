@@ -32,7 +32,7 @@ export function UserDropdown({ className }: UserDropdownProps) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="outline" size="icon" className={cn("h-8 w-8", className)}>
+				<Button variant="outline" size="icon" className={cn("h-8 w-8 rounded-full", className)}>
 					<User className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>

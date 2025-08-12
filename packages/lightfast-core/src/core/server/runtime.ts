@@ -3,14 +3,27 @@ import { createResumableStreamContext } from "resumable-stream";
 import type { Memory } from "../memory";
 import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
-import type { RequestContext, RuntimeContext, SystemContext } from "./adapters/types";
-import { type ApiError, NoUserMessageError, ThreadForbiddenError, ThreadNotFoundError } from "./errors";
+import type {
+	RequestContext,
+	RuntimeContext,
+	SystemContext,
+} from "./adapters/types";
+import {
+	type ApiError,
+	NoUserMessageError,
+	SessionForbiddenError,
+	SessionNotFoundError,
+	toMemoryApiError,
+} from "./errors";
 import { Err, Ok, type Result } from "./result";
 
-export interface StreamChatOptions<TMessage extends UIMessage = UIMessage, TRequestContext = {}> {
+export interface StreamChatOptions<
+	TMessage extends UIMessage = UIMessage,
+	TRequestContext = {},
+> {
 	agent: Agent<any, any>;
-	threadId: string;
-	messages: TMessage[];
+	sessionId: string;
+	message: TMessage;
 	memory: Memory<TMessage>;
 	resourceId: string;
 	systemContext: SystemContext;
@@ -19,9 +32,9 @@ export interface StreamChatOptions<TMessage extends UIMessage = UIMessage, TRequ
 	enableResume?: boolean;
 }
 
-export interface ValidatedThread {
+export interface ValidatedSession {
 	exists: boolean;
-	thread?: any;
+	session?: any;
 }
 
 export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
@@ -30,90 +43,107 @@ export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
 }
 
 /**
- * Validates thread ownership and authorization
+ * Validates session ownership and authorization
  */
-export async function validateThread<TMessage extends UIMessage = UIMessage>(
+export async function validateSession<TMessage extends UIMessage = UIMessage>(
 	memory: Memory<TMessage>,
-	threadId: string,
+	sessionId: string,
 	resourceId: string,
-): Promise<Result<ValidatedThread, ThreadForbiddenError>> {
-	const existingThread = await memory.getThread(threadId);
+): Promise<Result<ValidatedSession, ApiError>> {
+	try {
+		const existingSession = await memory.getSession(sessionId);
 
-	if (!existingThread) {
-		return Ok({ exists: false });
+		if (!existingSession) {
+			return Ok({ exists: false });
+		}
+
+		if (existingSession.resourceId !== resourceId) {
+			return Err(new SessionForbiddenError());
+		}
+
+		return Ok({ exists: true, session: existingSession });
+	} catch (error) {
+		// Convert memory errors to appropriate API errors
+		return Err(toMemoryApiError(error, "getSession"));
 	}
-
-	if (existingThread.resourceId !== resourceId) {
-		return Err(new ThreadForbiddenError());
-	}
-
-	return Ok({ exists: true, thread: existingThread });
 }
 
 /**
- * Processes incoming messages and manages thread state
+ * Processes incoming message and manages session state
  */
-export async function processMessages<TMessage extends UIMessage = UIMessage>(
+export async function processMessage<TMessage extends UIMessage = UIMessage>(
 	memory: Memory<TMessage>,
-	threadId: string,
-	messages: TMessage[],
+	sessionId: string,
+	message: TMessage,
 	resourceId: string,
-	agentId: string,
-	threadExists: boolean,
-): Promise<Result<ProcessMessagesResult<TMessage>, NoUserMessageError>> {
-	// Get the most recent user message
-	const recentUserMessage = messages.filter((message) => message.role === "user").at(-1);
-	if (!recentUserMessage) {
+	sessionExists: boolean,
+): Promise<Result<ProcessMessagesResult<TMessage>, ApiError>> {
+	// Validate it's a user message
+	if (message.role !== "user") {
 		return Err(new NoUserMessageError());
 	}
 
-	// Create thread if it doesn't exist
-	await memory.createThread({
-		threadId,
-		resourceId,
-		agentId,
-	});
+	try {
+		// Create session if it doesn't exist
+		if (!sessionExists) {
+			await memory.createSession({
+				sessionId,
+				resourceId,
+			});
+		}
 
-	// Handle messages based on whether thread is new or existing
-	let allMessages: TMessage[];
+		// Always append the message (works for both new and existing sessions)
+		await memory.appendMessage({ sessionId, message });
 
-	if (!threadExists) {
-		// New thread - create with initial messages
-		await memory.createMessages({ threadId, messages });
-		allMessages = messages;
-	} else {
-		// Existing thread - append only the recent user message
-		await memory.appendMessages({ threadId, messages: [recentUserMessage] });
 		// Fetch all messages from memory for full context
-		allMessages = await memory.getMessages(threadId);
-	}
+		const allMessages = await memory.getMessages(sessionId);
 
-	return Ok({ allMessages, recentUserMessage });
+		return Ok({ allMessages, recentUserMessage: message });
+	} catch (error) {
+		// Convert memory errors to appropriate API errors
+		// The specific operation will be inferred from the error message
+		return Err(toMemoryApiError(error, "processMessage"));
+	}
 }
 
 /**
  * Streams a chat response from an agent
  */
-export async function streamChat<TMessage extends UIMessage = UIMessage, TRequestContext = {}>(
+export async function streamChat<
+	TMessage extends UIMessage = UIMessage,
+	TRequestContext = {},
+>(
 	options: StreamChatOptions<TMessage, TRequestContext>,
 ): Promise<Result<Response, ApiError>> {
-	const { agent, threadId, messages, memory, resourceId, systemContext, requestContext, generateId, enableResume } =
-		options;
+	const {
+		agent,
+		sessionId,
+		message,
+		memory,
+		resourceId,
+		systemContext,
+		requestContext,
+		generateId,
+		enableResume,
+	} = options;
 
-	// Validate thread
-	const threadValidation = await validateThread(memory, threadId, resourceId);
-	if (!threadValidation.ok) {
-		return threadValidation;
+	// Validate session
+	const sessionValidation = await validateSession(
+		memory,
+		sessionId,
+		resourceId,
+	);
+	if (!sessionValidation.ok) {
+		return sessionValidation;
 	}
 
-	// Process messages
-	const processResult = await processMessages(
+	// Process the single message
+	const processResult = await processMessage(
 		memory,
-		threadId,
-		messages,
+		sessionId,
+		message,
 		resourceId,
-		agent.config.name,
-		threadValidation.value.exists,
+		sessionValidation.value.exists,
 	);
 
 	if (!processResult.ok) {
@@ -126,9 +156,9 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 	const {
 		result,
 		streamId,
-		threadId: tid,
+		sessionId: sid,
 	} = await agent.stream({
-		threadId,
+		sessionId,
 		messages: allMessages,
 		memory,
 		resourceId,
@@ -137,7 +167,16 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 	});
 
 	// Store stream ID for resumption
-	await memory.createStream({ threadId, streamId });
+	try {
+		await memory.createStream({ sessionId, streamId });
+	} catch (error) {
+		// Stream creation errors are not critical, log but continue
+		console.warn(
+			`Failed to create stream ${streamId} for session ${sessionId}:`,
+			error,
+		);
+		// Note: We don't return an error here as the stream itself is working
+	}
 
 	// Create UI message stream response with proper options
 	const streamOptions: UIMessageStreamOptions<TMessage> = {
@@ -146,17 +185,35 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 		onFinish: async ({ messages: finishedMessages, responseMessage }) => {
 			// Save the assistant's response to memory
 			if (responseMessage && responseMessage.role === "assistant") {
-				console.log(`\n[V1 onFinish] responseMessage:`, JSON.stringify(responseMessage, null, 2));
+				console.log(
+					`\n[V1 onFinish] responseMessage:`,
+					JSON.stringify(responseMessage, null, 2),
+				);
 				if (responseMessage.parts) {
-					console.log(`[V1 onFinish] Parts count: ${responseMessage.parts.length}`);
+					console.log(
+						`[V1 onFinish] Parts count: ${responseMessage.parts.length}`,
+					);
 					responseMessage.parts.forEach((part: any, idx: number) => {
-						console.log(`  Part ${idx}: type=${part.type}`, part.type === "tool-result" ? `state=${part.state}` : "");
+						console.log(
+							`  Part ${idx}: type=${part.type}`,
+							part.type === "tool-result" ? `state=${part.state}` : "",
+						);
 					});
 				}
-				await memory.appendMessages({
-					threadId: tid,
-					messages: [responseMessage],
-				});
+
+				try {
+					await memory.appendMessage({
+						sessionId: sid,
+						message: responseMessage,
+					});
+				} catch (error) {
+					// Log the error but don't break the stream
+					console.error(
+						`Failed to save assistant message to memory for session ${sid}:`,
+						error,
+					);
+					// Note: We don't throw here as the response has already been streamed to the client
+				}
 			}
 		},
 	};
@@ -167,22 +224,26 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
 			result.toUIMessageStreamResponse<TMessage>({
 				...streamOptions,
 				headers: {
-					'Content-Encoding': 'none', // Prevent proxy buffering for streaming
+					"Content-Encoding": "none", // Prevent proxy buffering for streaming
 				},
 				async consumeSseStream({ stream }) {
 					// Send the SSE stream into a resumable stream sink
-					const streamContext = createResumableStreamContext({ waitUntil: (promise) => promise });
+					const streamContext = createResumableStreamContext({
+						waitUntil: (promise) => promise,
+					});
 					await streamContext.createNewResumableStream(streamId, () => stream);
 				},
 			}),
 		);
 	} else {
-		return Ok(result.toUIMessageStreamResponse<TMessage>({
-			...streamOptions,
-			headers: {
-				'Content-Encoding': 'none', // Prevent proxy buffering for streaming
-			},
-		}));
+		return Ok(
+			result.toUIMessageStreamResponse<TMessage>({
+				...streamOptions,
+				headers: {
+					"Content-Encoding": "none", // Prevent proxy buffering for streaming
+				},
+			}),
+		);
 	}
 }
 
@@ -191,33 +252,39 @@ export async function streamChat<TMessage extends UIMessage = UIMessage, TReques
  */
 export async function resumeStream<TMessage extends UIMessage = UIMessage>(
 	memory: Memory<TMessage>,
-	threadId: string,
+	sessionId: string,
 	resourceId: string,
-): Promise<Result<ReadableStream | null, ThreadNotFoundError>> {
-	// Check authentication and ownership
-	const thread = await memory.getThread(threadId);
-	if (!thread || thread.resourceId !== resourceId) {
-		return Err(new ThreadNotFoundError());
+): Promise<Result<ReadableStream | null, ApiError>> {
+	try {
+		// Check authentication and ownership
+		const session = await memory.getSession(sessionId);
+		if (!session || session.resourceId !== resourceId) {
+			return Err(new SessionNotFoundError());
+		}
+
+		// Get session streams
+		const streamIds = await memory.getSessionStreams(sessionId);
+
+		if (!streamIds.length) {
+			return Ok(null);
+		}
+
+		const recentStreamId = streamIds[0]; // Redis LPUSH puts newest first
+
+		if (!recentStreamId) {
+			return Ok(null);
+		}
+
+		// Resume the stream using resumable-stream context
+		const streamContext = createResumableStreamContext({
+			waitUntil: (promise) => promise,
+		});
+
+		const resumedStream =
+			await streamContext.resumeExistingStream(recentStreamId);
+		return Ok(resumedStream ?? null);
+	} catch (error) {
+		// Convert memory errors to appropriate API errors
+		return Err(toMemoryApiError(error, "resumeStream"));
 	}
-
-	// Get thread streams
-	const streamIds = await memory.getThreadStreams(threadId);
-
-	if (!streamIds.length) {
-		return Ok(null);
-	}
-
-	const recentStreamId = streamIds[0]; // Redis LPUSH puts newest first
-
-	if (!recentStreamId) {
-		return Ok(null);
-	}
-
-	// Resume the stream using resumable-stream context
-	const streamContext = createResumableStreamContext({
-		waitUntil: (promise) => promise,
-	});
-
-	const resumedStream = await streamContext.resumeExistingStream(recentStreamId);
-	return Ok(resumedStream ?? null);
 }

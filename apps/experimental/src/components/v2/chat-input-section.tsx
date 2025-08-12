@@ -12,11 +12,11 @@ import { cn } from "@repo/ui/lib/utils";
 
 interface ChatInputSectionProps {
 	agentId: string;
-	threadId: string;
+	sessionId: string;
 	initialMessages?: UIMessage[];
 }
 
-export function ChatInputSection({ agentId, threadId, initialMessages = [] }: ChatInputSectionProps) {
+export function ChatInputSection({ agentId, sessionId, initialMessages = [] }: ChatInputSectionProps) {
 	const router = useRouter();
 	const [input, setInput] = useState("");
 	const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
@@ -31,7 +31,7 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 
 	// Use v2 chat hook for streaming
 	const { status, response, sendMessage, reset } = useChat({
-		sessionId: threadId,
+		sessionId: sessionId,
 		apiEndpoint: "/api/v2/stream/init",
 		streamEndpoint: "/api/v2/stream",
 		onChunk: (chunk) => {
@@ -60,9 +60,9 @@ export function ChatInputSection({ agentId, threadId, initialMessages = [] }: Ch
 	const handleSendMessage = async (message: string) => {
 		if (!message.trim() || status === "loading" || status === "streaming") return;
 
-		// Update URL to include threadId
+		// Update URL to include sessionId
 		if (window.location.pathname === `/v2-chat/${agentId}`) {
-			router.replace(`/v2-chat/${agentId}/${threadId}`);
+			router.replace(`/v2-chat/${agentId}/${sessionId}`);
 		}
 
 		// Add user message to messages array

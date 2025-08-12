@@ -26,7 +26,7 @@ const executeFileWrite = wrapTraced(
 	) {
 		try {
 			// Always organize files by thread ID
-			const fullPath = `threads/${context.threadId}/${filename}`;
+			const fullPath = `sessions/${context.sessionId}/${filename}`;
 
 			// Auto-detect content type if not provided
 			const finalContentType = contentType || getContentType(filename) || "text/plain";
@@ -40,7 +40,7 @@ const executeFileWrite = wrapTraced(
 					contentLength: content.length,
 					hasMetadata: !!metadata,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -59,7 +59,7 @@ const executeFileWrite = wrapTraced(
 				url: blob.url,
 				path: fullPath,
 				size: blob.pathname ? blob.pathname.length : content.length,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `File written successfully to ${fullPath}`,
 			};
 		} catch (error) {
@@ -76,7 +76,7 @@ const executeFileWrite = wrapTraced(
 			});
 			return {
 				success: false,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `Failed to write file: ${errorMessage}`,
 			};
 		}
@@ -119,7 +119,7 @@ const executeFileRead = wrapTraced(
 			// If filename provided, construct the URL
 			if (!blobUrl && filename) {
 				// Build the full path based on thread ID
-				fullPath = `threads/${context.threadId}/${filename}`;
+				fullPath = `sessions/${context.sessionId}/${filename}`;
 
 				// Get blob metadata to construct URL
 				const blobMeta = await head(fullPath, {
@@ -139,7 +139,7 @@ const executeFileRead = wrapTraced(
 					fullPath,
 					hasDirectUrl: !!directUrl,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -180,7 +180,7 @@ const executeFileRead = wrapTraced(
 				metadata,
 				size: content.length,
 				contentType,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `File read successfully`,
 			};
 		} catch (error) {
@@ -197,7 +197,7 @@ const executeFileRead = wrapTraced(
 			});
 			return {
 				success: false,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `Failed to read file: ${errorMessage}`,
 			};
 		}
@@ -240,7 +240,7 @@ const executeFileDelete = wrapTraced(
 					filename,
 					hasDirectUrl: !!directUrl,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -252,7 +252,7 @@ const executeFileDelete = wrapTraced(
 				});
 			} else if (filename) {
 				// Build the full path based on thread ID
-				fullPath = `threads/${context.threadId}/${filename}`;
+				fullPath = `sessions/${context.sessionId}/${filename}`;
 
 				await del(fullPath, {
 					token: env.BLOB_READ_WRITE_TOKEN,
@@ -318,7 +318,7 @@ const executeFileStringReplace = wrapTraced(
 	) {
 		try {
 			// Build the full path based on thread ID
-			const fullPath = `threads/${context.threadId}/${filename}`;
+			const fullPath = `sessions/${context.sessionId}/${filename}`;
 
 			// Log metadata
 			currentSpan().log({
@@ -329,7 +329,7 @@ const executeFileStringReplace = wrapTraced(
 					newStringLength: newString.length,
 					replaceAll: !!replaceAll,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -365,7 +365,7 @@ const executeFileStringReplace = wrapTraced(
 				return {
 					success: false,
 					replacements: 0,
-					threadId: context.threadId,
+					threadId: context.sessionId,
 					message: `String "${oldString}" not found in file ${filename}`,
 				};
 			}
@@ -389,7 +389,7 @@ const executeFileStringReplace = wrapTraced(
 			return {
 				success: true,
 				replacements,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `Successfully replaced ${replacements} occurrence(s) of "${oldString}" in ${filename}`,
 			};
 		} catch (error) {
@@ -407,7 +407,7 @@ const executeFileStringReplace = wrapTraced(
 			return {
 				success: false,
 				replacements: 0,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `Failed to replace string in file: ${errorMessage}`,
 			};
 		}
@@ -452,7 +452,7 @@ const executeFindInContent = wrapTraced(
 	) {
 		try {
 			// Build the full path based on thread ID
-			const fullPath = `threads/${context.threadId}/${filename}`;
+			const fullPath = `sessions/${context.sessionId}/${filename}`;
 
 			// Log metadata
 			currentSpan().log({
@@ -463,7 +463,7 @@ const executeFindInContent = wrapTraced(
 					caseSensitive: !!caseSensitive,
 					maxMatches: maxMatches || 10,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -527,7 +527,7 @@ const executeFindInContent = wrapTraced(
 				success: true,
 				matches,
 				totalMatches: matches.length,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `Found ${matches.length} match(es) for pattern "${regex}" in ${filename}`,
 			};
 		} catch (error) {
@@ -547,7 +547,7 @@ const executeFindInContent = wrapTraced(
 				success: false,
 				matches: [],
 				totalMatches: 0,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `Failed to search in file: ${errorMessage}`,
 			};
 		}
@@ -587,7 +587,7 @@ const executeFindByName = wrapTraced(
 	) {
 		try {
 			// Build the thread prefix to list all blobs in this thread
-			const threadPrefix = `threads/${context.threadId}/`;
+			const threadPrefix = `sessions/${context.sessionId}/`;
 
 			// Log metadata
 			currentSpan().log({
@@ -596,7 +596,7 @@ const executeFindByName = wrapTraced(
 					includeContent: !!includeContent,
 					maxContentChars: maxContentChars || 200,
 					contextInfo: {
-						threadId: context.threadId,
+						threadId: context.sessionId,
 						resourceId: context.resourceId,
 					},
 				},
@@ -673,7 +673,7 @@ const executeFindByName = wrapTraced(
 				success: true,
 				files: matchingFiles,
 				totalFiles: matchingFiles.length,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `Found ${matchingFiles.length} file(s) matching pattern "${globPattern}" in thread storage`,
 			};
 		} catch (error) {
@@ -692,7 +692,7 @@ const executeFindByName = wrapTraced(
 				success: false,
 				files: [],
 				totalFiles: 0,
-				threadId: context.threadId,
+				threadId: context.sessionId,
 				message: `Failed to search files by pattern: ${errorMessage}`,
 			};
 		}

@@ -44,7 +44,7 @@ const executeStagehandAct = wrapTraced(
 				url: url || "current page",
 				action,
 				contextInfo: {
-					threadId: context.threadId,
+					sessionId: context.sessionId,
 					resourceId: context.resourceId,
 				},
 			},
@@ -110,7 +110,7 @@ const executeStagehandObserve = wrapTraced(
 				url: url || "current page",
 				instruction,
 				contextInfo: {
-					threadId: context.threadId,
+					sessionId: context.sessionId,
 					resourceId: context.resourceId,
 				},
 			},
@@ -183,7 +183,7 @@ const executeStagehandExtract = wrapTraced(
 				hasSchema: !!schema,
 				useTextExtract: !!useTextExtract,
 				contextInfo: {
-					threadId: context.threadId,
+					sessionId: context.sessionId,
 					resourceId: context.resourceId,
 				},
 			},
@@ -264,7 +264,7 @@ const executeStagehandNavigate = wrapTraced(
 			metadata: {
 				url,
 				contextInfo: {
-					threadId: context.threadId,
+					sessionId: context.sessionId,
 					resourceId: context.resourceId,
 				},
 			},

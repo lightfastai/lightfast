@@ -1,0 +1,260 @@
+import type { Memory } from "@lightfast/core/memory";
+import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import { createCaller } from "~/trpc/server";
+import { 
+  isTRPCClientError, 
+  getTRPCErrorCode, 
+  getTRPCErrorMessage,
+  isNotFound,
+  isForbidden,
+  isUnauthorized 
+} from "~/lib/trpc-errors";
+
+/**
+ * PlanetScale implementation of Memory interface using tRPC for all database operations
+ * This ensures consistent authentication and authorization across the app
+ */
+export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
+
+	/**
+	 * Append a single message to a session
+	 */
+	async appendMessage({
+		sessionId,
+		message,
+	}: {
+		sessionId: string;
+		message: LightfastAppChatUIMessage;
+	}): Promise<void> {
+		try {
+			const caller = await createCaller();
+			await caller.chat.message.append({
+				sessionId,
+				message: {
+					id: message.id,
+					role: message.role,
+					parts: message.parts,
+				},
+			});
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to append message:', {
+				sessionId,
+				messageId: message.id,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// Re-throw with a more descriptive error for the AI SDK
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			if (isForbidden(error) || isNotFound(error)) {
+				throw new Error(`Session ${sessionId} not found or access denied`);
+			}
+			
+			throw new Error(`Failed to append message: ${getTRPCErrorMessage(error)}`);
+		}
+	}
+
+	/**
+	 * Get all messages for a session, ordered by creation time
+	 */
+	async getMessages(sessionId: string): Promise<LightfastAppChatUIMessage[]> {
+		try {
+			const caller = await createCaller();
+			const messages = await caller.chat.message.list({
+				sessionId,
+			});
+
+			return messages as LightfastAppChatUIMessage[];
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to get messages:', {
+				sessionId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// For read operations, we might want to return empty array for NOT_FOUND
+			if (isNotFound(error)) {
+				console.warn(`Session ${sessionId} not found, returning empty messages`);
+				return [];
+			}
+			
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			throw new Error(`Failed to get messages: ${getTRPCErrorMessage(error)}`);
+		}
+	}
+
+	/**
+	 * Create or ensure a session exists
+	 * Uses client-provided sessionId directly as the primary key
+	 */
+	async createSession({
+		sessionId,
+		resourceId,
+	}: {
+		sessionId: string;
+		resourceId: string;
+	}): Promise<void> {
+		try {
+			// The resourceId is the Clerk user ID, but we're already authenticated via tRPC
+			// Use the session router to create/ensure the session exists
+			const caller = await createCaller();
+			await caller.chat.session.create({
+				id: sessionId,
+			});
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to create/ensure session:', {
+				sessionId,
+				resourceId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// Handle specific error cases
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			if (isForbidden(error)) {
+				throw new Error('Forbidden: Session belongs to another user');
+			}
+			
+			throw new Error(`Failed to create session: ${getTRPCErrorMessage(error)}`);
+		}
+	}
+
+	/**
+	 * Get session by ID
+	 * Returns the session data with the same ID provided
+	 */
+	async getSession(sessionId: string): Promise<{ resourceId: string; id: string } | null> {
+		try {
+			const caller = await createCaller();
+			const result = await caller.chat.session.get({
+				sessionId,
+			});
+			
+			return {
+				resourceId: result.session.clerkUserId,
+				id: result.session.id,
+			};
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to get session:', {
+				sessionId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// For read operations, return null for NOT_FOUND (session doesn't exist)
+			if (isNotFound(error)) {
+				console.warn(`Session ${sessionId} not found`);
+				return null;
+			}
+			
+			// Handle auth errors
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			if (isForbidden(error)) {
+				throw new Error(`Session ${sessionId} access denied`);
+			}
+			
+			// For other errors, also return null to be graceful
+			// but log the error for debugging
+			console.warn(`Failed to get session ${sessionId}, returning null: ${getTRPCErrorMessage(error)}`);
+			return null;
+		}
+	}
+
+	/**
+	 * Create a stream ID for a session
+	 * This is used to track active streaming sessions for resume functionality
+	 */
+	async createStream({
+		sessionId,
+		streamId,
+	}: {
+		sessionId: string;
+		streamId: string;
+	}): Promise<void> {
+		try {
+			const caller = await createCaller();
+			await caller.chat.message.createStream({
+				sessionId,
+				streamId,
+			});
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to create stream:', {
+				sessionId,
+				streamId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// Stream creation errors are usually not critical
+			// but we should still handle auth errors
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			if (isNotFound(error) || isForbidden(error)) {
+				throw new Error(`Session ${sessionId} not found or access denied`);
+			}
+			
+			// For other errors, log but don't throw to avoid breaking the stream
+			console.warn(`Stream creation failed but continuing: ${getTRPCErrorMessage(error)}`);
+		}
+	}
+
+	/**
+	 * Get all stream IDs for a session, ordered by creation time (newest first)
+	 * Returns the most recent streams for resume functionality
+	 */
+	async getSessionStreams(sessionId: string): Promise<string[]> {
+		try {
+			const caller = await createCaller();
+			const streamIds = await caller.chat.message.getStreams({
+				sessionId,
+			});
+
+			return streamIds;
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to get stream IDs:', {
+				sessionId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// For read operations, return empty array for NOT_FOUND (session doesn't exist)
+			if (isNotFound(error)) {
+				console.warn(`Session ${sessionId} not found, returning empty stream IDs`);
+				return [];
+			}
+			
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			// For other errors, return empty array to be graceful
+			// but log the error for debugging
+			console.warn(`Failed to get stream IDs for session ${sessionId}, returning empty array: ${getTRPCErrorMessage(error)}`);
+			return [];
+		}
+	}
+}

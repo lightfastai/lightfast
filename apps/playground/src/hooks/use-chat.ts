@@ -7,7 +7,7 @@ import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";
 
 interface UseChatOptions {
   agentId: string;
-  threadId: string;
+  sessionId: string;
   initialMessages?: PlaygroundUIMessage[];
   onError?: (error: Error) => void;
 }
@@ -19,9 +19,9 @@ interface UseChatReturn {
   isLoading: boolean;
 }
 
-export function useChat({ agentId, threadId, initialMessages = [], onError }: UseChatOptions): UseChatReturn {
+export function useChat({ agentId, sessionId, initialMessages = [], onError }: UseChatOptions): UseChatReturn {
   // Create transport for AI SDK with agentId
-  const transport = useChatTransport({ threadId, agentId });
+  const transport = useChatTransport({ sessionId, agentId });
 
   // Auto-resume interrupted streams if the last message was from user
   const shouldAutoResume = initialMessages.length > 0 && initialMessages[initialMessages.length - 1]?.role === "user";
@@ -32,7 +32,7 @@ export function useChat({ agentId, threadId, initialMessages = [], onError }: Us
     sendMessage: vercelSendMessage,
     status,
   } = useVercelChat<PlaygroundUIMessage>({
-    id: `${agentId}-${threadId}`,
+    id: `${agentId}-${sessionId}`,
     transport,
     messages: initialMessages,
     onError:

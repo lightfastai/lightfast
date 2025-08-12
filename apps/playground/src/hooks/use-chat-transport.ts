@@ -6,18 +6,18 @@ import { useMemo } from "react";
 import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";
 
 interface UseChatTransportProps {
-  threadId: string;
+  sessionId: string;
   agentId: string;
 }
 
 /**
  * Hook that creates and configures a DefaultChatTransport for AI integration
  */
-export function useChatTransport({ threadId, agentId }: UseChatTransportProps): ChatTransport<PlaygroundUIMessage> {
+export function useChatTransport({ sessionId, agentId }: UseChatTransportProps): ChatTransport<PlaygroundUIMessage> {
   const transport = useMemo(() => {
-    // Use the agents API endpoint with agentId and threadId in the path
+    // Use the agents API endpoint with agentId and sessionId in the path
     // Note: playground app has basePath: '/playground' in next.config.ts
-    const apiEndpoint = `/playground/api/agents/${agentId}/${threadId}`;
+    const apiEndpoint = `/playground/api/agents/${agentId}/${sessionId}`;
     return new DefaultChatTransport<PlaygroundUIMessage>({
       api: apiEndpoint,
       headers: {
@@ -44,7 +44,7 @@ export function useChatTransport({ threadId, agentId }: UseChatTransportProps): 
         };
       },
     });
-  }, [threadId, agentId]);
+  }, [sessionId, agentId]);
 
   return transport;
 }

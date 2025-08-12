@@ -48,8 +48,8 @@ const handler = async (
 	// Await the params
 	const { all } = await params;
 
-	// Extract agentId and threadId early
-	const [agentId, threadId] = all || [];
+	// Extract agentId and sessionId early
+	const [agentId, sessionId] = all || [];
 
 	// Handle authentication before processing
 	const { userId } = await auth();
@@ -58,9 +58,9 @@ const handler = async (
 	}
 
 	// Validate params
-	if (!agentId || !threadId) {
+	if (!agentId || !sessionId) {
 		return Response.json(
-			{ error: "Invalid path. Expected /api/agents/[agentId]/[threadId]" },
+			{ error: "Invalid path. Expected /api/agents/[agentId]/[sessionId]" },
 			{ status: 400 },
 		);
 	}
@@ -70,8 +70,8 @@ const handler = async (
 		return Response.json({ error: "Agent not found" }, { status: 404 });
 	}
 
-	// Note: Thread ownership validation is handled by the runtime's streamChat function
-	// which checks that threadData.resourceId === userId (passed as resourceId below)
+	// Note: Session ownership validation is handled by the runtime's streamChat function
+	// which checks that sessionData.resourceId === userId (passed as resourceId below)
 
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async () => {
@@ -85,10 +85,10 @@ const handler = async (
 							system: BROWSER_010_SYSTEM_PROMPT,
 							tools: browser010Tools,
 							createRuntimeContext: ({
-								threadId,
+								sessionId,
 								resourceId,
 							}): AppRuntimeContext => ({
-								threadId,
+								sessionId,
 								resourceId,
 							}),
 							model: wrapLanguageModel({
@@ -139,7 +139,7 @@ const handler = async (
 									currentSpan().log({
 										input: {
 											agentId,
-											threadId,
+											sessionId,
 											userId,
 										},
 										output: result.response?.messages || result.text,
@@ -163,7 +163,7 @@ const handler = async (
 								console.error(`Agent error [${agentId}]:`, error);
 							},
 						}),
-						threadId,
+						sessionId,
 						memory,
 						req,
 						resourceId: userId,

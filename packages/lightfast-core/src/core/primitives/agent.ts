@@ -66,7 +66,7 @@ export interface AgentConfig extends Omit<StreamTextParameters<ToolSet>, Exclude
 }
 
 export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRequestContext = {}> {
-	threadId: string;
+	sessionId: string;
 	messages: TMessage[];
 	memory: Memory<TMessage>;
 	resourceId: string;
@@ -81,7 +81,7 @@ export interface AgentOptions<TTools extends ToolSet | ToolFactorySet<any> = Too
 	// Required: tools that will be passed to streamText (can be tool factories or direct tools)
 	tools: TTools | ((context: TRuntimeContext) => TTools);
 	// Required: function to create runtime context from request parameters
-	createRuntimeContext: (params: { threadId: string; resourceId: string }) => TRuntimeContext;
+	createRuntimeContext: (params: { sessionId: string; resourceId: string }) => TRuntimeContext;
 	// Optional: provider-specific cache implementation
 	cache?: ProviderCache;
 	// Optional: tool choice and stop conditions with strong typing based on the resolved tools
@@ -101,7 +101,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 	public readonly config: AgentConfig;
 	private generateId: () => string;
 	private tools: TTools | ((context: TRuntimeContext) => TTools);
-	private createRuntimeContext: (params: { threadId: string; resourceId: string }) => TRuntimeContext;
+	private createRuntimeContext: (params: { sessionId: string; resourceId: string }) => TRuntimeContext;
 	private system: string;
 	private cache?: ProviderCache;
 	private toolChoice?: StreamTextParameters<ResolvedTools<TTools>>["toolChoice"];
@@ -154,7 +154,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 	}
 
 	async stream<TMessage extends UIMessage = UIMessage, TRequestContext = {}>({
-		threadId,
+		sessionId,
 		messages,
 		memory,
 		resourceId,
@@ -168,7 +168,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		const streamId = this.generateId();
 
 		// Create agent-specific runtime context
-		const agentContext = this.createRuntimeContext({ threadId, resourceId });
+		const agentContext = this.createRuntimeContext({ sessionId, resourceId });
 
 		// Merge all three context levels: system -> request -> agent
 		const mergedContext = {
@@ -244,7 +244,7 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		return {
 			result: streamText(streamTextParams),
 			streamId,
-			threadId,
+			sessionId,
 		};
 	}
 }

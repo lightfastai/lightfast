@@ -20,7 +20,7 @@ export interface FetchRequestHandlerOptions<
 	TRequestContext extends RequestContext = RequestContext,
 > {
 	agent: TAgent;
-	threadId: string;
+	sessionId: string;
 	memory: Memory<UIMessage>;
 	req: Request;
 	resourceId: string;
@@ -32,13 +32,18 @@ export interface FetchRequestHandlerOptions<
 
 /**
  * Handles agent streaming requests
+ * 
+ * TODO: Add testing for:
+ * - Test undefined sessionId handling (v1 runtime doesn't error on undefined sessionId)
+ * - Add comprehensive test coverage for error cases
+ * - Test sessionId validation and edge cases
  *
  * @example
  * ```typescript
- * // In your route handler (e.g., app/api/agents/[agentId]/threads/[threadId]/route.ts)
+ * // In your route handler (e.g., app/api/agents/[agentId]/sessions/[sessionId]/route.ts)
  * export async function POST(
  *   req: Request,
- *   { params }: { params: { agentId: string; threadId: string } }
+ *   { params }: { params: { agentId: string; sessionId: string } }
  * ) {
  *   const { userId } = await auth();
  *   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -54,11 +59,11 @@ export interface FetchRequestHandlerOptions<
  *
  *   return fetchRequestHandler({
  *     agent,
- *     threadId: params.threadId,
+ *     sessionId: params.sessionId,
  *     memory,
  *     req,
  *     resourceId: userId,
- *     createRuntimeContext: ({ threadId, resourceId }) => ({
+ *     createRuntimeContext: ({ sessionId, resourceId }) => ({
  *       // Add your runtime context properties here
  *     }),
  *     onError({ error }) {
@@ -72,7 +77,7 @@ export async function fetchRequestHandler<
 	TAgent extends Agent<any, any>,
 	TRequestContext extends RequestContext = RequestContext,
 >(options: FetchRequestHandlerOptions<TAgent, TRequestContext>): Promise<Response> {
-	const { agent, threadId, memory, req, resourceId, createRequestContext, generateId, enableResume, onError } = options;
+	const { agent, sessionId, memory, req, resourceId, createRequestContext, generateId, enableResume, onError } = options;
 
 	try {
 		// Check HTTP method
@@ -89,8 +94,14 @@ export async function fetchRequestHandler<
 				throw new NoMessagesError();
 			}
 
+			// Extract the single user message (should always be the last one)
+			const message = messages[messages.length - 1];
+			if (!message) {
+				throw new NoMessagesError();
+			}
+
 			// Create system context
-			const systemContext = { threadId, resourceId };
+			const systemContext = { sessionId, resourceId };
 
 			// Create request context if function is provided
 			const requestContext = createRequestContext?.(req) || {};
@@ -98,8 +109,8 @@ export async function fetchRequestHandler<
 			// Use the streamChat function from runtime
 			const result = await streamChat({
 				agent,
-				threadId,
-				messages,
+				sessionId,
+				message,
 				memory,
 				resourceId,
 				systemContext,
@@ -116,7 +127,7 @@ export async function fetchRequestHandler<
 		}
 		// Handle GET request (resume)
 		if (req.method === "GET" && enableResume) {
-			const result = await resumeStream(memory, threadId, resourceId);
+			const result = await resumeStream(memory, sessionId, resourceId);
 
 			if (!result.ok) {
 				throw result.error;

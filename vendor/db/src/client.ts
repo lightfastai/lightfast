@@ -10,4 +10,4 @@ const client = new Client({
   password: env.DATABASE_PASSWORD,
 });
 
-export const db = drizzle({ client, schema });
+export const db = drizzle(client, { schema });

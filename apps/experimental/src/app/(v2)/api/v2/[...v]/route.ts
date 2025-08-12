@@ -66,7 +66,7 @@ const v2TestAgent = new Agent<RuntimeContext<AppRuntimeContext>>(
 		tools: v2Tools,
 		// Create runtime context from session
 		createRuntimeContext: ({ sessionId, userId }) => ({
-			threadId: sessionId,
+			sessionId: sessionId,
 			resourceId: userId || "anonymous",
 			// App-specific context would be added here
 		}),

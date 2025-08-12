@@ -68,8 +68,8 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 	// Await the params
 	const { v } = await params;
 
-	// Extract agentId and threadId early
-	const [agentId, threadId] = v || [];
+	// Extract agentId and sessionId early
+	const [agentId, sessionId] = v || [];
 
 	// Handle authentication before tracing
 	const { userId } = await auth();
@@ -78,8 +78,8 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 	}
 
 	// Validate params before tracing
-	if (!agentId || !threadId) {
-		return Response.json({ error: "Invalid path. Expected /api/v/[agentId]/[threadId]" }, { status: 400 });
+	if (!agentId || !sessionId) {
+		return Response.json({ error: "Invalid path. Expected /api/v/[agentId]/[sessionId]" }, { status: 400 });
 	}
 
 	// Validate agent exists before tracing
@@ -114,9 +114,9 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 						recentUserMessagesToCache: 2,
 					}),
 				}),
-				createRuntimeContext: ({ threadId, resourceId }): AppRuntimeContext => ({
+				createRuntimeContext: ({ sessionId, resourceId }): AppRuntimeContext => ({
 					// Create agent-specific context
-					// The agent can use threadId and resourceId if needed
+					// The agent can use sessionId and resourceId if needed
 					// but they're already available in system context
 				}),
 				model: wrapLanguageModel({
@@ -147,7 +147,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 					metadata: {
 						agentId,
 						agentName: "a011",
-						threadId,
+						sessionId,
 						userId,
 					},
 				},
@@ -177,7 +177,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 						currentSpan().log({
 							input: {
 								agentId,
-								threadId,
+								sessionId,
 								userId,
 							},
 							output: result.response?.messages || result.text,
@@ -193,7 +193,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 					}
 				},
 			}),
-			threadId,
+			sessionId,
 			memory,
 			req,
 			resourceId: userId,
@@ -214,7 +214,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 
 	// Only wrap with traced for POST requests
 	if (req.method === "POST") {
-		return traced(executeHandler, { type: "function", name: `POST /api/v/${agentId}/${threadId}` });
+		return traced(executeHandler, { type: "function", name: `POST /api/v/${agentId}/${sessionId}` });
 	}
 
 	// GET requests run without traced wrapper
