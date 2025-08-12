@@ -26,28 +26,6 @@ export const ACTIVE_MODELS = {
 		},
 		streamingDelay: 12,
 	}),
-	"anthropic/claude-4-sonnet-thinking": ModelConfigSchema.parse({
-		id: "anthropic/claude-4-sonnet-thinking",
-		provider: "gateway",
-		iconProvider: "anthropic",
-		name: "anthropic/claude-4-sonnet",
-		displayName: "Claude 4 Sonnet (Thinking)",
-		description: "Claude 4 Sonnet with visible reasoning process",
-		maxTokens: 200000,
-		costPer1KTokens: { input: 0.003, output: 0.015 },
-		features: {
-			streaming: true,
-			functionCalling: true,
-			vision: true,
-			thinking: true,
-			pdfSupport: true,
-		},
-		thinkingConfig: {
-			enabled: true,
-			defaultBudgetTokens: 15000,
-		},
-		streamingDelay: 18,
-	}),
 
 	// ===== OpenAI GPT-5 Models =====
 	"openai/gpt-5-nano": ModelConfigSchema.parse({
@@ -57,8 +35,8 @@ export const ACTIVE_MODELS = {
 		name: "openai/gpt-5-nano",
 		displayName: "GPT-5 Nano",
 		description: "Ultra-efficient GPT-5 model for simple tasks",
-		maxTokens: 1000000,
-		costPer1KTokens: { input: 0.0001, output: 0.0004 },
+		maxTokens: 400000,
+		costPer1KTokens: { input: 0.05, output: 0.4 },
 		features: {
 			streaming: true,
 			functionCalling: true,
@@ -75,8 +53,8 @@ export const ACTIVE_MODELS = {
 		name: "openai/gpt-5-mini",
 		displayName: "GPT-5 Mini",
 		description: "Efficient GPT-5 model for everyday tasks",
-		maxTokens: 128000,
-		costPer1KTokens: { input: 0.00015, output: 0.0006 },
+		maxTokens: 400000,
+		costPer1KTokens: { input: 0.25, output: 2.0 },
 		features: {
 			streaming: true,
 			functionCalling: true,
@@ -93,8 +71,8 @@ export const ACTIVE_MODELS = {
 		name: "openai/gpt-5",
 		displayName: "GPT-5",
 		description: "Most advanced GPT-5 model with enhanced capabilities",
-		maxTokens: 1000000,
-		costPer1KTokens: { input: 0.01, output: 0.04 },
+		maxTokens: 400000,
+		costPer1KTokens: { input: 1.25, output: 10.0 },
 		features: {
 			streaming: true,
 			functionCalling: true,
@@ -114,7 +92,7 @@ export const ACTIVE_MODELS = {
 		displayName: "Gemini 2.5 Flash",
 		description: "Fast and efficient model for most tasks",
 		maxTokens: 1048576,
-		costPer1KTokens: { input: 0.15, output: 0.6 },
+		costPer1KTokens: { input: 0.3, output: 2.5 },
 		features: {
 			streaming: true,
 			functionCalling: true,
@@ -124,24 +102,6 @@ export const ACTIVE_MODELS = {
 		},
 		streamingDelay: 15,
 	}),
-	"google/gemini-2.5-flash-mini": ModelConfigSchema.parse({
-		id: "google/gemini-2.5-flash-mini",
-		provider: "gateway",
-		iconProvider: "google",
-		name: "google/gemini-2.5-flash-mini",
-		displayName: "Gemini 2.5 Flash Mini",
-		description: "Ultra-fast and efficient model for lightweight tasks",
-		maxTokens: 1048576,
-		costPer1KTokens: { input: 0.075, output: 0.3 },
-		features: {
-			streaming: true,
-			functionCalling: true,
-			vision: true,
-			thinking: false,
-			pdfSupport: false,
-		},
-		streamingDelay: 20,
-	}),
 	"google/gemini-2.5-pro": ModelConfigSchema.parse({
 		id: "google/gemini-2.5-pro",
 		provider: "gateway",
@@ -150,7 +110,7 @@ export const ACTIVE_MODELS = {
 		displayName: "Gemini 2.5 Pro",
 		description: "Most advanced Gemini model for complex reasoning",
 		maxTokens: 1048576,
-		costPer1KTokens: { input: 1.25, output: 10.0 },
+		costPer1KTokens: { input: 2.5, output: 10.0 },
 		features: {
 			streaming: true,
 			functionCalling: true,
@@ -169,8 +129,8 @@ export const ACTIVE_MODELS = {
 		name: "openai/gpt-oss-120b",
 		displayName: "GPT OSS 120B",
 		description: "Open source 120B parameter model",
-		maxTokens: 32768,
-		costPer1KTokens: { input: 0.002, output: 0.008 },
+		maxTokens: 131072,
+		costPer1KTokens: { input: 0.1, output: 0.5 },
 		features: {
 			streaming: true,
 			functionCalling: true,
@@ -189,8 +149,8 @@ export const ACTIVE_MODELS = {
 		name: "moonshotai/kimi-k2",
 		displayName: "Kimi K2",
 		description: "Advanced Chinese/English bilingual model",
-		maxTokens: 200000,
-		costPer1KTokens: { input: 0.005, output: 0.02 },
+		maxTokens: 131072,
+		costPer1KTokens: { input: 0.55, output: 2.2 },
 		features: {
 			streaming: true,
 			functionCalling: true,
