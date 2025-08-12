@@ -91,7 +91,9 @@ export const sessionRouter = {
     }),
 
   /**
-   * Create a new session
+   * Create a new session (with upsert behavior)
+   * If the session already exists and belongs to the user, returns success
+   * If it belongs to another user, throws FORBIDDEN error
    */
   create: protectedProcedure
     .input(
@@ -100,18 +102,59 @@ export const sessionRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await db
-        .insert(LightfastChatSession)
-        .values({
-          id: input.id,  // Use client-provided ID directly
-          clerkUserId: ctx.session.userId!,
-        })
-        .execute();
+      try {
+        // Try to create the session
+        await db
+          .insert(LightfastChatSession)
+          .values({
+            id: input.id,  // Use client-provided ID directly
+            clerkUserId: ctx.session.userId!,
+          })
+          .execute();
 
-      return { 
-        id: input.id,  // Return the same ID
-        success: true
-      };
+        return { 
+          id: input.id,
+          success: true,
+          created: true
+        };
+      } catch (error) {
+        // Check if it's a duplicate key error
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorCode = (error as { code?: string })?.code;
+        
+        if (errorCode === 'ER_DUP_ENTRY' || errorMessage.includes('Duplicate entry')) {
+          // Session already exists, verify ownership
+          const session = await db
+            .select({ id: LightfastChatSession.id })
+            .from(LightfastChatSession)
+            .where(
+              and(
+                eq(LightfastChatSession.id, input.id),
+                eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+              )
+            )
+            .limit(1);
+
+          if (!session[0]) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Session exists but belongs to another user",
+            });
+          }
+          
+          return { 
+            id: input.id,
+            success: true,
+            created: false
+          };
+        }
+        
+        // Re-throw other database errors
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to create session: ${errorMessage}`,
+        });
+      }
     }),
 
   /**

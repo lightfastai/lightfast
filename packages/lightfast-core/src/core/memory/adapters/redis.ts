@@ -11,7 +11,6 @@ type RedisJsonData<T> = T & Record<string, unknown>;
 
 interface SessionData {
 	resourceId: string;
-	agentId: string;
 }
 
 interface StreamData {
@@ -76,11 +75,9 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 	async createSession({
 		sessionId,
 		resourceId,
-		agentId,
 	}: {
 		sessionId: string;
 		resourceId: string;
-		agentId: string;
 	}): Promise<void> {
 		const key = this.KEYS.sessionMetadata(sessionId);
 
@@ -92,7 +89,6 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage> implements Memo
 
 		const data: SessionData = {
 			resourceId,
-			agentId,
 		};
 
 		// Sessions are persisted forever - no TTL

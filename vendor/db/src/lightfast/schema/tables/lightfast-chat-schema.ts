@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import { boolean, datetime, json, mysqlTable, varchar } from "drizzle-orm/mysql-core";
 import type { UIMessage } from "ai";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { uuidv4 } from "@repo/lib";
 
@@ -188,3 +189,13 @@ export type InsertLightfastChatMessage = typeof LightfastChatMessage.$inferInser
 // Type exports for Stream
 export type LightfastChatStream = typeof LightfastChatStream.$inferSelect;
 export type InsertLightfastChatStream = typeof LightfastChatStream.$inferInsert;
+
+// Zod Schema exports for validation
+export const insertLightfastChatSessionSchema = createInsertSchema(LightfastChatSession);
+export const selectLightfastChatSessionSchema = createSelectSchema(LightfastChatSession);
+
+export const insertLightfastChatMessageSchema = createInsertSchema(LightfastChatMessage);
+export const selectLightfastChatMessageSchema = createSelectSchema(LightfastChatMessage);
+
+export const insertLightfastChatStreamSchema = createInsertSchema(LightfastChatStream);
+export const selectLightfastChatStreamSchema = createSelectSchema(LightfastChatStream);

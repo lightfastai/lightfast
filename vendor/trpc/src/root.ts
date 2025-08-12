@@ -1,5 +1,6 @@
 import { userRouter } from "./router/auth/user";
 import { sessionRouter } from "./router/chat/session";
+import { messageRouter } from "./router/chat/message";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
@@ -8,6 +9,7 @@ export const appRouter = createTRPCRouter({
 	},
 	chat: {
 		session: sessionRouter,
+		message: messageRouter,
 	},
 });
 

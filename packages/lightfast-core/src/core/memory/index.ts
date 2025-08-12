@@ -9,7 +9,7 @@ export interface Memory<TMessage extends UIMessage = UIMessage> {
 	getMessages(sessionId: string): Promise<TMessage[]>;
 
 	// Session operations
-	createSession(params: { sessionId: string; resourceId: string; agentId: string }): Promise<void>;
+	createSession(params: { sessionId: string; resourceId: string }): Promise<void>;
 	getSession(sessionId: string): Promise<{ resourceId: string } | null>;
 
 	// Stream operations

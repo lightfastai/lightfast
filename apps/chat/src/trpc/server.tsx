@@ -31,6 +31,15 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
 	queryClient: getQueryClient,
 });
 
+/**
+ * Create a tRPC caller for server-side mutations and queries
+ * This is used when you need to call tRPC procedures directly from API routes
+ */
+export const createCaller = cache(async () => {
+	const ctx = await createContext();
+	return appRouter.createCaller(ctx);
+});
+
 export function HydrateClient(props: { children: React.ReactNode }) {
 	const queryClient = getQueryClient();
 	return (

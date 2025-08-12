@@ -65,11 +65,12 @@ const handler = async (
 
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async () => {
-		// Create PlanetScale memory instance
-		const memory = new PlanetScaleMemory();
-		
-		// Pass everything to fetchRequestHandler with inline agent
-		const response = await fetchRequestHandler({
+		try {
+			// Create PlanetScale memory instance using tRPC
+			const memory = new PlanetScaleMemory();
+			
+			// Pass everything to fetchRequestHandler with inline agent
+			const response = await fetchRequestHandler({
 			agent: createAgent<C010ToolSchema, AppRuntimeContext>({
 				name: "c010",
 				system: `You are a helpful AI assistant with access to web search capabilities.
@@ -137,19 +138,52 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 			generateId: uuidv4,
 			enableResume: true,
 			onError({ error }) {
-				console.error(`>>> Agent Error`, error);
+				console.error(`[API Error] Agent: ${agentId}, Session: ${sessionId}, User: ${userId}`, {
+					error: error.message,
+					stack: error.stack,
+					agentId,
+					sessionId,
+					userId,
+					method: req.method,
+					url: req.url,
+				});
 			},
 		});
 
 		return response;
+		} catch (error) {
+			// Defensive catch - fetchRequestHandler should handle all errors,
+			// but this provides a final safety net
+			console.error(`[API Route Error] Unhandled error in route handler:`, {
+				error: error instanceof Error ? error.message : String(error),
+				stack: error instanceof Error ? error.stack : undefined,
+				agentId,
+				sessionId,
+				userId,
+				method: req.method,
+				url: req.url,
+			});
+			
+			// Return a generic 500 error
+			return Response.json(
+				{ error: "Internal server error", code: "INTERNAL_SERVER_ERROR" },
+				{ status: 500 }
+			);
+		}
 	};
 
 	// Only wrap with traced for POST requests
 	if (req.method === "POST") {
-		return traced(executeHandler, {
-			type: "function",
-			name: `POST /api/v/${agentId}/${sessionId}`,
-		});
+		try {
+			return await traced(executeHandler, {
+				type: "function",
+				name: `POST /api/v/${agentId}/${sessionId}`,
+			});
+		} catch (error) {
+			// If traced wrapper fails, fall back to direct execution
+			console.warn(`[API Route] Traced wrapper failed, falling back to direct execution:`, error);
+			return executeHandler();
+		}
 	}
 
 	// GET requests run without traced wrapper

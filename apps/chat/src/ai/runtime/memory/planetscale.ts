@@ -1,21 +1,23 @@
 import type { Memory } from "@lightfast/core/memory";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
-import { db } from "@vendor/db/client";
-import {
-	LightfastChatSession,
-	LightfastChatMessage,
-	LightfastChatStream,
-} from "@vendor/db/lightfast/schema";
-import { eq, desc, inArray } from "drizzle-orm";
+import { createCaller } from "~/trpc/server";
+import { 
+  isTRPCClientError, 
+  getTRPCErrorCode, 
+  getTRPCErrorMessage,
+  isNotFound,
+  isForbidden,
+  isUnauthorized 
+} from "~/lib/trpc-errors";
 
 /**
- * PlanetScale implementation of Memory interface for chat persistence
- * Uses the vendor/db PlanetScale connection with Drizzle ORM
+ * PlanetScale implementation of Memory interface using tRPC for all database operations
+ * This ensures consistent authentication and authorization across the app
  */
 export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
+
 	/**
 	 * Append a single message to a session
-	 * Uses the sessionId directly as it's now the primary key
 	 */
 	async appendMessage({
 		sessionId,
@@ -24,35 +26,75 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 		sessionId: string;
 		message: LightfastAppChatUIMessage;
 	}): Promise<void> {
-		await db.insert(LightfastChatMessage).values({
-			sessionId,
-			role: message.role,
-			parts: message.parts,
-			id: message.id,
-		});
+		try {
+			const caller = await createCaller();
+			await caller.chat.message.append({
+				sessionId,
+				message: {
+					id: message.id,
+					role: message.role as "system" | "user" | "assistant",
+					parts: message.parts,
+				},
+			});
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to append message:', {
+				sessionId,
+				messageId: message.id,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// Re-throw with a more descriptive error for the AI SDK
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			if (isForbidden(error) || isNotFound(error)) {
+				throw new Error(`Session ${sessionId} not found or access denied`);
+			}
+			
+			throw new Error(`Failed to append message: ${getTRPCErrorMessage(error)}`);
+		}
 	}
-
 
 	/**
 	 * Get all messages for a session, ordered by creation time
 	 */
 	async getMessages(sessionId: string): Promise<LightfastAppChatUIMessage[]> {
-		const messages = await db
-			.select()
-			.from(LightfastChatMessage)
-			.where(eq(LightfastChatMessage.sessionId, sessionId))
-			.orderBy(LightfastChatMessage.createdAt);
+		try {
+			const caller = await createCaller();
+			const messages = await caller.chat.message.list({
+				sessionId,
+			});
 
-		return messages.map((msg) => ({
-			id: msg.id,
-			role: msg.role,
-			parts: msg.parts,
-		})) as LightfastAppChatUIMessage[];
+			return messages;
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to get messages:', {
+				sessionId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// For read operations, we might want to return empty array for NOT_FOUND
+			if (isNotFound(error)) {
+				console.warn(`Session ${sessionId} not found, returning empty messages`);
+				return [];
+			}
+			
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			throw new Error(`Failed to get messages: ${getTRPCErrorMessage(error)}`);
+		}
 	}
 
 	/**
-	 * Create a new session
-	 * Client provides the ID directly, database enforces uniqueness
+	 * Create or ensure a session exists
+	 * Uses client-provided sessionId directly as the primary key
 	 */
 	async createSession({
 		sessionId,
@@ -62,34 +104,31 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 		resourceId: string;
 	}): Promise<void> {
 		try {
-			// First check if session already exists (for performance)
-			const existingSession = await db
-				.select({ id: LightfastChatSession.id })
-				.from(LightfastChatSession)
-				.where(eq(LightfastChatSession.id, sessionId))
-				.limit(1);
-
-			if (existingSession.length > 0) {
-				return; // Session already exists, nothing to do
-			}
-
-			// Attempt to create the session with client-provided ID
-			// This will fail with a unique constraint violation if another request
-			// created the session between our check and insert
-			await db.insert(LightfastChatSession).values({
-				id: sessionId, // Use client-provided ID directly
-				clerkUserId: resourceId, // resourceId is the Clerk user ID
+			// The resourceId is the Clerk user ID, but we're already authenticated via tRPC
+			// Use the session router to create/ensure the session exists
+			const caller = await createCaller();
+			await caller.chat.session.create({
+				id: sessionId,
 			});
-		} catch (error: any) {
-			// Check if this is a unique constraint violation
-			// MySQL error code 1062 is for duplicate entry
-			if (error?.code === 'ER_DUP_ENTRY' || error?.message?.includes('Duplicate entry')) {
-				// Session was created by another request, this is fine
-				return;
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to create/ensure session:', {
+				sessionId,
+				resourceId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// Handle specific error cases
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			if (isForbidden(error)) {
+				throw new Error('Forbidden: Session belongs to another user');
 			}
 			
-			// Re-throw other errors
-			throw new Error(`Failed to create session: ${error?.message || 'Unknown error'}`);
+			throw new Error(`Failed to create session: ${getTRPCErrorMessage(error)}`);
 		}
 	}
 
@@ -98,30 +137,54 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	 * Returns the session data with the same ID provided
 	 */
 	async getSession(sessionId: string): Promise<{ resourceId: string; id: string } | null> {
-		const sessions = await db
-			.select()
-			.from(LightfastChatSession)
-			.where(eq(LightfastChatSession.id, sessionId))
-			.limit(1);
-
-		if (sessions.length === 0) {
+		try {
+			const caller = await createCaller();
+			const result = await caller.chat.session.get({
+				sessionId,
+			});
+			
+			if (!result?.session) {
+				return null;
+			}
+			
+			return {
+				resourceId: result.session.clerkUserId,
+				id: result.session.id,
+			};
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to get session:', {
+				sessionId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// For read operations, return null for NOT_FOUND (session doesn't exist)
+			if (isNotFound(error)) {
+				console.warn(`Session ${sessionId} not found`);
+				return null;
+			}
+			
+			// Handle auth errors
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			if (isForbidden(error)) {
+				throw new Error(`Session ${sessionId} access denied`);
+			}
+			
+			// For other errors, also return null to be graceful
+			// but log the error for debugging
+			console.warn(`Failed to get session ${sessionId}, returning null: ${getTRPCErrorMessage(error)}`);
 			return null;
 		}
-
-		const firstSession = sessions[0];
-		if (!firstSession) {
-			return null;
-		}
-		return {
-			resourceId: firstSession.clerkUserId,
-			id: firstSession.id, // Return the same ID
-		};
 	}
 
 	/**
 	 * Create a stream ID for a session
 	 * This is used to track active streaming sessions for resume functionality
-	 * Automatically cleans up old streams to prevent unbounded growth
 	 */
 	async createStream({
 		sessionId,
@@ -130,49 +193,34 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 		sessionId: string;
 		streamId: string;
 	}): Promise<void> {
-		// Create the new stream
-		await db.insert(LightfastChatStream).values({
-			id: streamId,
-			sessionId,
-		});
-
-		// Clean up old streams (keep only the most recent 100)
-		// This prevents unbounded growth of stream records
-		await this.cleanupOldStreams(sessionId);
-	}
-
-	/**
-	 * Clean up old streams for a session, keeping only the most recent ones
-	 * This prevents unbounded growth of stream records in the database
-	 */
-	private async cleanupOldStreams(sessionId: string, keepCount: number = 100): Promise<void> {
 		try {
-			// Get all streams for this session, ordered by creation time
-			const allStreams = await db
-				.select({ id: LightfastChatStream.id, createdAt: LightfastChatStream.createdAt })
-				.from(LightfastChatStream)
-				.where(eq(LightfastChatStream.sessionId, sessionId))
-				.orderBy(desc(LightfastChatStream.createdAt));
-
-			// If we have more than keepCount streams, delete the oldest ones
-			if (allStreams.length > keepCount) {
-				const streamsToDelete = allStreams.slice(keepCount);
-				const idsToDelete = streamsToDelete.map(s => s.id);
-
-				// Delete old streams in batches to avoid query size limits
-				const batchSize = 100;
-				for (let i = 0; i < idsToDelete.length; i += batchSize) {
-					const batch = idsToDelete.slice(i, i + batchSize);
-					
-					// Use Drizzle's inArray for efficient batch deletion
-					await db
-						.delete(LightfastChatStream)
-						.where(inArray(LightfastChatStream.id, batch));
-				}
-			}
+			const caller = await createCaller();
+			await caller.chat.message.createStream({
+				sessionId,
+				streamId,
+			});
 		} catch (error) {
-			// Log but don't throw - cleanup failure shouldn't block stream creation
-			console.error('Failed to cleanup old streams:', error);
+			console.error('[PlanetScaleMemory] Failed to create stream:', {
+				sessionId,
+				streamId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// Stream creation errors are usually not critical
+			// but we should still handle auth errors
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			if (isNotFound(error) || isForbidden(error)) {
+				throw new Error(`Session ${sessionId} not found or access denied`);
+			}
+			
+			// For other errors, log but don't throw to avoid breaking the stream
+			console.warn(`Stream creation failed but continuing: ${getTRPCErrorMessage(error)}`);
 		}
 	}
 
@@ -181,13 +229,36 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage> {
 	 * Returns the most recent streams for resume functionality
 	 */
 	async getSessionStreams(sessionId: string): Promise<string[]> {
-		const streams = await db
-			.select()
-			.from(LightfastChatStream)
-			.where(eq(LightfastChatStream.sessionId, sessionId))
-			.orderBy(desc(LightfastChatStream.createdAt))
-			.limit(100); // Keep last 100 streams
+		try {
+			const caller = await createCaller();
+			const streamIds = await caller.chat.message.getStreams({
+				sessionId,
+			});
 
-		return streams.map((stream) => stream.id);
+			return streamIds;
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to get stream IDs:', {
+				sessionId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// For read operations, return empty array for NOT_FOUND (session doesn't exist)
+			if (isNotFound(error)) {
+				console.warn(`Session ${sessionId} not found, returning empty stream IDs`);
+				return [];
+			}
+			
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			// For other errors, return empty array to be graceful
+			// but log the error for debugging
+			console.warn(`Failed to get stream IDs for session ${sessionId}, returning empty array: ${getTRPCErrorMessage(error)}`);
+			return [];
+		}
 	}
 }
