@@ -216,7 +216,7 @@ function MessageItem({
 					}
 
 					// Reasoning part
-					if (isReasoningPart(part)) {
+					if (isReasoningPart(part) && part.text.length > 1) {
 						return (
 							<div key={`${message.id}-part-${index}`} className="w-full px-8">
 								<ReasoningBlock text={part.text} />
