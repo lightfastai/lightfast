@@ -7,8 +7,11 @@ import {
 	SidebarMenu,
 	SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Icons } from "@repo/ui/components/icons";
+import { Suspense } from "react";
 import { InfiniteScrollSessions } from "./sessions/infinite-scroll-sessions";
+import { PinnedSessionsList } from "./sessions/pinned-sessions-list";
 import { SidebarHoverExpand } from "./sidebar-hover-expand";
 import { ThreadsErrorBoundary } from "./threads-error-boundary";
 import { SidebarTriggerButton } from "./sidebar-trigger-button";
@@ -44,11 +47,23 @@ export function AppSidebar() {
 
 			<SidebarContent className="flex flex-col">
 				{/* Sessions list with constrained height for scrolling */}
-				<div className="flex-1 min-h-0 w-full group-data-[collapsible=icon]:hidden">
-					<ThreadsErrorBoundary>
-						<InfiniteScrollSessions className="h-full w-full" />
-					</ThreadsErrorBoundary>
-				</div>
+				<ScrollArea className="flex-1 min-h-0 w-full group-data-[collapsible=icon]:hidden">
+					<div className="w-full max-w-full min-w-0 overflow-hidden pr-2">
+						{/* Pinned sessions - separate error boundary and suspense */}
+						<ThreadsErrorBoundary>
+							<Suspense fallback={null}>
+								<PinnedSessionsList />
+							</Suspense>
+						</ThreadsErrorBoundary>
+
+						{/* Regular sessions with infinite scroll */}
+						<ThreadsErrorBoundary>
+							<Suspense fallback={null}>
+								<InfiniteScrollSessions />
+							</Suspense>
+						</ThreadsErrorBoundary>
+					</div>
+				</ScrollArea>
 
 				{/* Hover expand zone - only for collapsed state */}
 				<div className="flex-1 relative group-data-[collapsible=icon]:block hidden">

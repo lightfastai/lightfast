@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { SessionChatWrapper } from "~/components/chat/session-chat-wrapper";
-import { getQueryClient, trpc, prefetch } from "~/trpc/server";
+import { ChatLoadingSkeleton } from "~/components/chat/chat-loading-skeleton";
+import { trpc, prefetch } from "~/trpc/server";
 
 interface SessionPageProps {
 	params: Promise<{
@@ -15,22 +16,18 @@ export default async function SessionPage({ params }: SessionPageProps) {
 
 	// Check if session exists on the server using fetchQuery
 	// This will throw if session doesn't exist or user doesn't have access
-	try {
-		const queryClient = getQueryClient();
-		await queryClient.fetchQuery(
-			trpc.chat.session.get.queryOptions({ sessionId })
-		);
-	} catch {
-		// If session not found or user doesn't have access, show 404
-		// This happens during server-side rendering, avoiding the client-side error
-		notFound();
-	}
 
 	// Prefetch the session data to make it instantly available in SessionChatWrapper
 	// This populates the cache so the client component doesn't need to fetch again
 	prefetch(trpc.chat.session.get.queryOptions({ sessionId }));
+	
+	// Prefetch pinned sessions for instant loading with Suspense
+	prefetch(trpc.chat.session.listPinned.queryOptions());
 
-	// Session exists and user has access - render the chat interface
-	return <SessionChatWrapper sessionId={sessionId} agentId={agentId} />;
+	// Session exists and user has access - render the chat interface with Suspense
+	return (
+		<Suspense fallback={<ChatLoadingSkeleton />}>
+			<SessionChatWrapper sessionId={sessionId} agentId={agentId} />
+		</Suspense>
+	);
 }
-

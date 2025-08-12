@@ -15,64 +15,109 @@ export function usePinSession() {
 	return useMutation(
 		trpc.chat.session.setPinned.mutationOptions({
 			onMutate: async ({ sessionId, pinned }) => {
-				// Cancel any outgoing refetches for session list queries
-				await queryClient.cancelQueries({ 
+				// Cancel queries
+				await queryClient.cancelQueries({
 					queryKey: [["chat", "session", "list"]],
 				});
+				await queryClient.cancelQueries({
+					queryKey: [["chat", "session", "listPinned"]],
+				});
 
-				// Get all infinite query cache entries for session list
+				// Get session from infinite list
 				const queryCache = queryClient.getQueryCache();
 				const queries = queryCache.findAll({
 					queryKey: [["chat", "session", "list"]],
-					type: 'active',
+					type: "active",
 				});
 
-				// Store all previous data for potential rollback
-				const previousDataMap = new Map<string, SessionsInfiniteData>();
-				
-				// Update each cached query
+				let session: Session | undefined;
+				queries.forEach((query) => {
+					const data = queryClient.getQueryData<SessionsInfiniteData>(query.queryKey);
+					if (data && !session) {
+						session = data.pages.flat().find(s => s.id === sessionId);
+					}
+				});
+
+				if (!session) return;
+
+				// Update infinite list queries
 				queries.forEach((query) => {
 					const queryKey = query.queryKey;
 					const previousData = queryClient.getQueryData<SessionsInfiniteData>(queryKey);
 					
 					if (previousData) {
-						previousDataMap.set(JSON.stringify(queryKey), previousData);
-						
-						// Optimistically update the cache using immer
 						queryClient.setQueryData<SessionsInfiniteData>(
 							queryKey,
-							produce(previousData, (draft) => {
-								// Properly iterate through pages and sessions with type safety
-								draft.pages.forEach((page) => {
-									page.forEach((session) => {
-										if (session.id === sessionId) {
-											session.pinned = pinned;
-										}
-									});
+							produce(previousData, draft => {
+								draft.pages.forEach(page => {
+									const item = page.find(s => s.id === sessionId);
+									if (item) item.pinned = pinned;
 								});
 							})
 						);
 					}
 				});
 
-				// Return a context object with the snapshotted values
-				return { previousDataMap };
+				// Update pinned list
+				const pinnedQueryKey = trpc.chat.session.listPinned.queryOptions().queryKey;
+				const previousPinned = queryClient.getQueryData<Session[]>(pinnedQueryKey);
+				
+				// Update pinned list with the found session (session is guaranteed to exist here)
+				// Store session in a const for TypeScript to understand it's not undefined
+				const foundSession = session;
+				queryClient.setQueryData<Session[]>(
+					pinnedQueryKey,
+					(old) => {
+						const current = old ?? [];
+						
+						if (pinned) {
+							// Add to pinned list in correct position
+							if (current.find(s => s.id === sessionId)) return current;
+							
+							const newSession: Session = { 
+								id: foundSession.id,
+								title: foundSession.title,
+								pinned: true,
+								createdAt: foundSession.createdAt,
+								updatedAt: foundSession.updatedAt
+							};
+							const sorted = [...current, newSession].sort((a, b) => 
+								new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+							);
+							return sorted;
+						} else {
+							// Remove from pinned list
+							return current.filter(s => s.id !== sessionId);
+						}
+					}
+				);
+
+				return { previousPinned };
 			},
 			onError: (err, _variables, context) => {
 				showTRPCErrorToast(err, "Failed to update pin status");
-				// If the mutation fails, rollback all queries
-				if (context?.previousDataMap) {
-					context.previousDataMap.forEach((data, keyString) => {
-						const queryKey = JSON.parse(keyString) as readonly unknown[];
-						queryClient.setQueryData<SessionsInfiniteData>(queryKey, data);
-					});
+				// Rollback pinned list on error
+				if (context?.previousPinned !== undefined) {
+					const pinnedQueryKey = trpc.chat.session.listPinned.queryOptions().queryKey;
+					queryClient.setQueryData<Session[]>(pinnedQueryKey, context.previousPinned);
 				}
-			},
-			onSettled: () => {
-				// Invalidate all session list queries to ensure consistency
+				// Invalidate to get fresh data
 				void queryClient.invalidateQueries({
 					queryKey: [["chat", "session", "list"]],
-					refetchType: "none", // Don't trigger suspense
+				});
+				void queryClient.invalidateQueries({
+					queryKey: [["chat", "session", "listPinned"]],
+				});
+			},
+			onSettled: () => {
+				// Always invalidate to ensure consistency
+				void queryClient.invalidateQueries({
+					queryKey: [["chat", "session", "list"]],
+					refetchType: "none",
+				});
+				void queryClient.invalidateQueries({
+					queryKey: [["chat", "session", "listPinned"]],
+					refetchType: "none",
 				});
 			},
 		}),

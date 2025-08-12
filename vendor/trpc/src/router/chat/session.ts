@@ -54,6 +54,31 @@ export const sessionRouter = {
     }),
 
   /**
+   * List user's pinned chat sessions
+   */
+  listPinned: protectedProcedure
+    .query(async ({ ctx }) => {
+      const sessions = await db
+        .select({
+          id: LightfastChatSession.id,
+          title: LightfastChatSession.title,
+          pinned: LightfastChatSession.pinned,
+          createdAt: LightfastChatSession.createdAt,
+          updatedAt: LightfastChatSession.updatedAt,
+        })
+        .from(LightfastChatSession)
+        .where(
+          and(
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId!),
+            eq(LightfastChatSession.pinned, true)
+          )
+        )
+        .orderBy(desc(LightfastChatSession.updatedAt));
+
+      return sessions;
+    }),
+
+  /**
    * Get a specific session with its messages
    */
   get: protectedProcedure

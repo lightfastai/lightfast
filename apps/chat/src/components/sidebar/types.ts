@@ -20,4 +20,4 @@ export interface SessionItemProps {
 }
 
 // Constants
-export const ITEMS_PER_PAGE = 5;
+export const ITEMS_PER_PAGE = 20;
