@@ -17,7 +17,7 @@ import { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/types";
 import { auth } from "@clerk/nextjs/server";
 import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
-import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
+import { AnonymousRedisMemory } from "~/ai/runtime/memory/redis";
 import { env } from "~/env";
 import {
 	arcjet,
@@ -135,7 +135,7 @@ const handler = async (
 		try {
 			// Create memory instance based on authentication status
 			const memory = isAnonymous
-				? new RedisMemory({
+				? new AnonymousRedisMemory({
 						url: env.KV_REST_API_URL,
 						token: env.KV_REST_API_TOKEN,
 					})
