@@ -130,6 +130,7 @@ export function ChatInterface({
 						placeholder="Ask anything..."
 						disabled={status === "streaming" || status === "submitted"}
 						modelSelector={modelSelector}
+						withDescription="Lightfast may make mistakes. Use with discretion."
 					/>
 				</div>
 			</div>
@@ -147,7 +148,7 @@ export function ChatInterface({
 						placeholder="Continue the conversation..."
 						disabled={status === "streaming" || status === "submitted"}
 						withGradient={true}
-						withDescription="Chat with Lightfast AI"
+						withDescription="Lightfast may make mistakes. Use with discretion."
 						modelSelector={modelSelector}
 					/>
 				</div>

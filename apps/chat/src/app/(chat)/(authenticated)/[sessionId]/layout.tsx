@@ -14,9 +14,6 @@ export default async function SessionLayout({ children, params }: SessionLayoutP
 	// Prefetch the session data to make it instantly available in SessionChatWrapper
 	// This populates the cache so the client component doesn't need to fetch again
 	prefetch(trpc.chat.session.get.queryOptions({ sessionId }));
-	
-	// Prefetch pinned sessions for instant loading with Suspense
-	prefetch(trpc.chat.session.listPinned.queryOptions());
 
 	return <>{children}</>;
 }
