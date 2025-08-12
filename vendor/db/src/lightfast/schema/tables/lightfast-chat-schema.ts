@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { boolean, json, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, json, mysqlTable, varchar } from "drizzle-orm/mysql-core";
 import type { UIMessage } from "ai";
 
 import { uuidv4 } from "@repo/lib";
@@ -45,16 +45,16 @@ export const LightfastChatSession = mysqlTable("lightfast_chat_session", {
   /**
    * Timestamp when the session was created
    */
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: datetime("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   
   /**
    * Timestamp when the session was last updated
    * Automatically updates on any modification
    */
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
+  updatedAt: datetime("updated_at", { mode: 'string' })
+    .default(sql`CURRENT_TIMESTAMP`)
     .notNull()
-    .$onUpdateFn(() => sql`now()`),
+    .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
 });
 
 /**
@@ -99,16 +99,16 @@ export const LightfastChatMessage = mysqlTable("lightfast_chat_message", {
   /**
    * Timestamp when the message was created
    */
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: datetime("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   
   /**
    * Timestamp when the message was last updated
    * Automatically updates on any modification
    */
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
+  updatedAt: datetime("updated_at", { mode: 'string' })
+    .default(sql`CURRENT_TIMESTAMP`)
     .notNull()
-    .$onUpdateFn(() => sql`now()`),
+    .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
 });
 
 /**
@@ -139,7 +139,7 @@ export const LightfastChatStream = mysqlTable("lightfast_chat_stream", {
   /**
    * Timestamp when the stream was created
    */
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: datetime("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
 /**

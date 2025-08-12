@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { db, LightfastChatSession, LightfastChatMessage } from "@vendor/db";
@@ -70,7 +71,10 @@ export const sessionRouter = {
         .limit(1);
 
       if (!session[0] || session[0].clerkUserId !== ctx.session.userId!) {
-        throw new Error("Session not found");
+        throw new TRPCError({ 
+          code: "NOT_FOUND",
+          message: "Session not found"
+        });
       }
 
       // Get messages for the session
@@ -124,7 +128,10 @@ export const sessionRouter = {
         .limit(1);
 
       if (!session[0]) {
-        throw new Error("Session not found");
+        throw new TRPCError({ 
+          code: "NOT_FOUND",
+          message: "Session not found"
+        });
       }
 
       // Set the pinned status explicitly
@@ -154,7 +161,10 @@ export const sessionRouter = {
         .limit(1);
 
       if (!session[0] || session[0].clerkUserId !== ctx.session.userId!) {
-        throw new Error("Session not found");
+        throw new TRPCError({ 
+          code: "NOT_FOUND",
+          message: "Session not found"
+        });
       }
 
       // Delete messages first
