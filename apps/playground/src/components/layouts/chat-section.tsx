@@ -18,7 +18,7 @@ export function ChatSection({ messages, input }: ChatSectionProps) {
       </div>
       
       {/* Input Area - Fixed at bottom */}
-      <div className="flex-shrink-0 p-4">
+      <div className="flex-shrink-0 relative bg-background p-4">
         {input}
       </div>
     </div>

@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 import "@repo/ui/globals.css";
 
 import { siteConfig } from "@repo/lightfast-config";
-import { Toaster } from "@repo/ui/components/ui/toaster";
+import { Toaster } from "@repo/ui/components/ui/sonner";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";

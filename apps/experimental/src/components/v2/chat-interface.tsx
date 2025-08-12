@@ -3,21 +3,21 @@ import { ChatInputSection } from "./chat-input-section";
 
 interface ChatInterfaceProps {
 	agentId: string;
-	threadId: string;
+	sessionId: string;
 	initialMessages?: UIMessage[];
 }
 
 /**
  * V2 ChatInterface with streaming support
  */
-export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatInterfaceProps) {
-	// Use key prop to force complete remount when threadId changes
+export function ChatInterface({ agentId, sessionId, initialMessages = [] }: ChatInterfaceProps) {
+	// Use key prop to force complete remount when sessionId changes
 	return (
 		<div className="flex-1 flex flex-col relative h-screen">
 			<ChatInputSection
-				key={`${agentId}-${threadId}`}
+				key={`${agentId}-${sessionId}`}
 				agentId={agentId}
-				threadId={threadId}
+				sessionId={sessionId}
 				initialMessages={initialMessages}
 			/>
 		</div>

@@ -8,16 +8,16 @@ export const dynamic = 'force-dynamic';
 /**
  * New playground page at /playground
  * Generates UUID server-side and renders playground interface
- * URL will change to /playground/[threadId] after first message
+ * URL will change to /playground/[sessionId] after first message
  */
 export default function PlaygroundPage() {
-  // Generate a new thread ID server-side
-  const threadId = uuidv4();
+  // Generate a new session ID server-side
+  const sessionId = uuidv4();
 
   // Wrap in Suspense to ensure proper hydration timing
   return (
     <Suspense fallback={null}>
-      <PlaygroundInterface threadId={threadId} initialMessages={[]} />
+      <PlaygroundInterface sessionId={sessionId} initialMessages={[]} />
     </Suspense>
   );
 }

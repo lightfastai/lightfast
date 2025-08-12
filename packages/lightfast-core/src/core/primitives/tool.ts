@@ -14,7 +14,7 @@ export type ToolFactorySet<TRuntimeContext = unknown> = Record<string, ToolFacto
 /**
  * Creates a tool that injects runtime context
  *
- * This wrapper allows tools to access runtime context (like threadId, userId, etc.)
+ * This wrapper allows tools to access runtime context (like sessionId, userId, etc.)
  * that is provided at request time rather than tool creation time.
  *
  * @example
@@ -26,7 +26,7 @@ export type ToolFactorySet<TRuntimeContext = unknown> = Record<string, ToolFacto
  *   }),
  *   execute: async ({ query }, context) => {
  *     // Direct access to runtime context
- *     console.log("Thread ID:", context.threadId);
+ *     console.log("Session ID:", context.sessionId);
  *     console.log("User ID:", context.resourceId);
  *
  *     // Tool implementation

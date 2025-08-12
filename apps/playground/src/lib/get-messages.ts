@@ -4,10 +4,10 @@ import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";
 import { env } from "~/env";
 
 /**
- * Server-side function to fetch messages for a thread
+ * Server-side function to fetch messages for a session
  * Validates ownership and returns messages in the correct format
  */
-export async function getMessages(threadId: string): Promise<PlaygroundUIMessage[]> {
+export async function getMessages(sessionId: string): Promise<PlaygroundUIMessage[]> {
   const { userId } = await auth();
   if (!userId) {
     return [];
@@ -19,14 +19,14 @@ export async function getMessages(threadId: string): Promise<PlaygroundUIMessage
   });
 
   try {
-    // Check thread ownership
-    const thread = await memory.getThread(threadId);
-    if (!thread || thread.resourceId !== userId) {
+    // Check session ownership
+    const session = await memory.getSession(sessionId);
+    if (!session || session.resourceId !== userId) {
       return [];
     }
 
     // Get messages from memory
-    const messages = await memory.getMessages(threadId);
+    const messages = await memory.getMessages(sessionId);
     
     // The messages from memory are already in UIMessage format
     return messages as PlaygroundUIMessage[];

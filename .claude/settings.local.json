@@ -119,7 +119,8 @@
       "Bash(pnpm --filter @lightfast/docs typecheck)",
       "mcp__playwright__browser_resize",
       "mcp__playwright__browser_take_screenshot",
-      "Bash(pnpm --filter @lightfast/cloud typecheck)"
+      "Bash(pnpm --filter @lightfast/cloud typecheck)",
+      "Bash(pnpm --filter @lightfast/chat build)"
     ],
     "deny": []
   },

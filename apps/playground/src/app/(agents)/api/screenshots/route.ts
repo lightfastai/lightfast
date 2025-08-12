@@ -27,36 +27,36 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const threadId = searchParams.get("threadId");
+    const sessionId = searchParams.get("sessionId");
     const limit = parseInt(searchParams.get("limit") || "50");
     const cursor = searchParams.get("cursor") || undefined;
     
-    if (!threadId) {
+    if (!sessionId) {
       return NextResponse.json(
-        { error: "threadId is required" },
+        { error: "sessionId is required" },
         { status: 400 }
       );
     }
 
-    // Security check: Verify thread ownership via memory system
-    // The resourceId in thread metadata stores the userId (owner)
-    const threadData = await memory.getThread(threadId);
-    if (!threadData || threadData.resourceId !== userId) {
+    // Security check: Verify session ownership via memory system
+    // The resourceId in session metadata stores the userId (owner)
+    const sessionData = await memory.getSession(sessionId);
+    if (!sessionData || sessionData.resourceId !== userId) {
       return NextResponse.json(
-        { error: "Forbidden: Access denied to this thread" },
+        { error: "Forbidden: Access denied to this session" },
         { status: 403 }
       );
     }
 
-    // List blobs from the threadId-specific directory
+    // List blobs from the sessionId-specific directory
     const { blobs, cursor: nextCursor } = await list({
-      prefix: `screenshots/${threadId}/`,
+      prefix: `screenshots/${sessionId}/`,
       limit,
       cursor,
       token: env.BLOB_READ_WRITE_TOKEN,
     });
 
-    // Transform blob data to our format (no filtering needed since we're already in the threadId directory)
+    // Transform blob data to our format (no filtering needed since we're already in the sessionId directory)
     const screenshots: ScreenshotBlob[] = blobs
       .map(blob => ({
         url: blob.url,

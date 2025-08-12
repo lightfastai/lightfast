@@ -1,15 +1,23 @@
-import type {
-  ArcjetBotCategory,
-  ArcjetMode,
-  ArcjetWellKnownBot,
+import arcjet, {
+  type ArcjetBotCategory,
+  type ArcjetWellKnownBot,
+  type ArcjetMode,
+  type ArcjetDecision,
+  type ArcjetReason,
+  detectBot,
+  request,
+  shield,
+  tokenBucket,
+  slidingWindow,
+  fixedWindow,
+  protectSignup,
+  sensitiveInfo,
 } from "@arcjet/next";
-import arcjet, { detectBot, request, tokenBucket } from "@arcjet/next";
+import { env } from "../env";
 
-import { env } from "~/env";
-
+// Re-export everything from Arcjet for convenience
 export * from "@arcjet/decorate";
-
-// Re-export the rules to simplify imports inside handlers
+export { default as arcjet } from "@arcjet/next";
 export {
   detectBot,
   fixedWindow,
@@ -19,83 +27,81 @@ export {
   tokenBucket,
   slidingWindow,
   request,
+  type ArcjetBotCategory,
+  type ArcjetWellKnownBot,
+  type ArcjetMode,
+  type ArcjetDecision,
+  type ArcjetReason,
 } from "@arcjet/next";
-
 export { setRateLimitHeaders } from "@arcjet/decorate";
 
-export { arcjet };
+// Export the Arcjet key for apps to create their own instances
+export const ARCJET_KEY = env.ARCJET_KEY;
 
-// Create a base Arcjet instance which can be imported and extended in each route.
-const base = arcjet({
-  // Get your site key from https://app.arcjet.com
-  key: env.ARCJET_KEY,
-  // Identify the user by their IP address
-  characteristics: ["ip.src"],
-  rules: [
-    // // Protect against common attacks with Arcjet Shield
-    // shield({
-    //   // Will block requests. Use "DRY_RUN" to log only
-    //   mode: "LIVE",
-    // }),
-    // Other rules are added in different routes
-  ],
-});
-
-export const secure = async ({
-  mode,
-  allow,
-  sourceRequest,
-}: {
-  mode: ArcjetMode;
-  allow: (ArcjetWellKnownBot | ArcjetBotCategory)[];
-  sourceRequest?: Request;
-}) => {
-  const req = sourceRequest ?? (await request());
-  const aj = base.withRule(detectBot({ mode, allow }));
-  const decision = await aj.protect(req);
-
-  if (decision.isDenied()) {
-    if (decision.reason.isBot()) {
-      throw new Error("No bots allowed");
-    }
-
-    if (decision.reason.isRateLimit()) {
-      throw new Error("Rate limit exceeded");
-    }
-
-    throw new Error("Access denied");
-  }
+/**
+ * Create a base Arcjet instance with just the key
+ * Apps can extend this with their own rules
+ */
+export const createArcjet = (characteristics: string[] = ["ip.src"]) => {
+  return arcjet({
+    key: env.ARCJET_KEY,
+    characteristics,
+    rules: [], // Let apps add their own rules
+  });
 };
 
-// @todo: rework this to be more flexible & modular. perhaps custom Error types too?
-export const secureWithTokenBucket = async ({
-  mode,
-  allow,
-  requested,
-  sourceRequest,
-}: {
-  mode: ArcjetMode;
-  allow: (ArcjetWellKnownBot | ArcjetBotCategory)[];
-  requested: number;
-  sourceRequest?: Request;
-}) => {
-  const req = sourceRequest ?? (await request());
-  const aj = base
-    .withRule(detectBot({ mode, allow }))
-    .withRule(
-      tokenBucket({ mode: "LIVE", refillRate: 5, interval: 10, capacity: 10 }),
-    );
-  const decision = await aj.protect(req, { requested });
-
-  if (decision.isDenied()) {
-    if (decision.reason.isBot()) {
-      throw new Error("No bots allowed");
-    }
-
-    if (decision.reason.isRateLimit()) {
-      throw new Error("Rate limit exceeded");
-    }
-
-    throw new Error("Access denied");
+/**
+ * Helper to check if a decision was denied and why
+ */
+export const checkDecision = (decision: ArcjetDecision) => {
+  if (!decision.isDenied()) {
+    return { denied: false as const };
   }
+
+  const reason = decision.reason;
+  return {
+    denied: true as const,
+    isBot: reason.isBot(),
+    isRateLimit: reason.isRateLimit(),
+    isShield: reason.isShield(),
+    reason: reason,
+    ip: decision.ip,
+  };
+};
+
+/**
+ * Helper to create error responses based on denial reason
+ */
+export const createErrorResponse = (decision: ArcjetDecision): Response => {
+  const check = checkDecision(decision);
+  
+  if (!check.denied) {
+    throw new Error("Decision was not denied");
+  }
+
+  if (check.isBot) {
+    return Response.json(
+      { error: "Bot detection triggered" },
+      { status: 403 }
+    );
+  }
+
+  if (check.isRateLimit) {
+    return Response.json(
+      { error: "Rate limit exceeded. Please slow down." },
+      { status: 429 }
+    );
+  }
+
+  if (check.isShield) {
+    return Response.json(
+      { error: "Request blocked for security reasons" },
+      { status: 403 }
+    );
+  }
+
+  return Response.json(
+    { error: "Access denied" },
+    { status: 403 }
+  );
 };

@@ -9,7 +9,11 @@ interface ThinkingMessageProps {
 	className?: string;
 }
 
-export function ThinkingMessage({ status, show, className }: ThinkingMessageProps) {
+export function ThinkingMessage({
+	status,
+	show,
+	className,
+}: ThinkingMessageProps) {
 	if (!show) return null;
 
 	const statusText = {

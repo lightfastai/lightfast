@@ -10,14 +10,14 @@ import { dotFlowFrames } from "./gsap/dot-flow-frames";
 
 interface BrowserContainerProps {
 	className?: string;
-	threadId: string;
+	sessionId: string;
 }
 
 export enum BrowserContainerViewType {
 	BROWSER = "browser",
 }
 
-export function BrowserContainer({ className, threadId }: BrowserContainerProps) {
+export function BrowserContainer({ className, sessionId }: BrowserContainerProps) {
 	const [activeView, setActiveView] = useState<BrowserContainerViewType>(BrowserContainerViewType.BROWSER);
 	
 	// Use the screenshots query to poll for new screenshots
@@ -30,7 +30,7 @@ export function BrowserContainer({ className, threadId }: BrowserContainerProps)
 		screenshotCount,
 		isLoading,
 		error 
-	} = useScreenshotsQuery(threadId);
+	} = useScreenshotsQuery(sessionId);
 	
 	return (
 		<div className={`flex flex-col h-full ${className || ""}`}>

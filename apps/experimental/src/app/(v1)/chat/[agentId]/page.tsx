@@ -11,18 +11,18 @@ interface NewChatPageProps {
 /**
  * New chat page at /chat/[agentId]
  * Generates UUID server-side and renders chat interface
- * URL will change to /chat/[agentId]/[threadId] after first message
+ * URL will change to /chat/[agentId]/[sessionId] after first message
  */
 export default async function NewChatPage({ params }: NewChatPageProps) {
 	const { agentId } = await params;
 
-	// Generate a new thread ID server-side
-	const threadId = uuidv4();
+	// Generate a new session ID server-side
+	const sessionId = uuidv4();
 
 	// Wrap in Suspense to ensure proper hydration timing
 	return (
 		<Suspense fallback={null}>
-			<ChatInterface agentId={agentId} threadId={threadId} initialMessages={[]} />
+			<ChatInterface agentId={agentId} sessionId={sessionId} initialMessages={[]} />
 		</Suspense>
 	);
 }

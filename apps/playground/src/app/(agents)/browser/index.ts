@@ -232,8 +232,8 @@ export const stagehandScreenshotTool = createTool<RuntimeContext<AppRuntimeConte
       // Include resourceId and timestamp in filename
       const filename = `screenshot-${context.resourceId}-${timestamp}.png`;
 
-      // Upload screenshot to Vercel Blob under threadId directory
-      const blobPath = `screenshots/${context.threadId}/${filename}`;
+      // Upload screenshot to Vercel Blob under sessionId directory
+      const blobPath = `screenshots/${context.sessionId}/${filename}`;
       const blob = await put(blobPath, screenshotBuffer, {
         access: 'public',
         addRandomSuffix: false,

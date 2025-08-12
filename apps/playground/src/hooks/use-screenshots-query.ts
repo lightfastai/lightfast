@@ -16,8 +16,8 @@ interface ScreenshotsResponse {
   nextCursor?: string;
 }
 
-async function fetchScreenshots(threadId: string): Promise<ScreenshotsResponse> {
-  const response = await fetch(`/playground/api/screenshots?threadId=${threadId}`);
+async function fetchScreenshots(sessionId: string): Promise<ScreenshotsResponse> {
+  const response = await fetch(`/playground/api/screenshots?sessionId=${sessionId}`);
   
   if (!response.ok) {
     throw new Error("Failed to fetch screenshots");
@@ -26,13 +26,13 @@ async function fetchScreenshots(threadId: string): Promise<ScreenshotsResponse> 
   return response.json();
 }
 
-export function useScreenshotsQuery(threadId: string, enabled: boolean = true) {
+export function useScreenshotsQuery(sessionId: string, enabled: boolean = true) {
   const [currentIndex, setCurrentIndex] = useState(0);
   
   const query = useQuery({
-    queryKey: ["screenshots", threadId],
-    queryFn: () => fetchScreenshots(threadId),
-    enabled: enabled && !!threadId,
+    queryKey: ["screenshots", sessionId],
+    queryFn: () => fetchScreenshots(sessionId),
+    enabled: enabled && !!sessionId,
     refetchInterval: 2000, // Poll every 2 seconds
     refetchIntervalInBackground: false,
   });
@@ -47,7 +47,7 @@ export function useScreenshotsQuery(threadId: string, enabled: boolean = true) {
     } else {
       setCurrentIndex(0);
     }
-  }, [query.data?.screenshots.length, threadId]);
+  }, [query.data?.screenshots.length, sessionId]);
   
   const screenshots = query.data?.screenshots || [];
   const currentScreenshot = screenshots[currentIndex] || null;

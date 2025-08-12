@@ -1,0 +1,58 @@
+"use client";
+
+import {
+	SidebarMenuAction,
+	SidebarMenuItem,
+} from "@repo/ui/components/ui/sidebar";
+import { cn } from "@repo/ui/lib/utils";
+import { Pin } from "lucide-react";
+import { useCallback } from "react";
+import { ActiveMenuItem } from "../active-menu-item";
+import type { Session } from "../types";
+
+interface SessionItemProps {
+	session: Session;
+	onPinToggle: (sessionId: string) => void;
+}
+
+export function SessionItem({ session, onPinToggle }: SessionItemProps) {
+	const handlePinClick = useCallback(
+		(e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			onPinToggle(session.id);
+		},
+		[onPinToggle, session.id],
+	);
+
+	return (
+		<SidebarMenuItem className="w-full max-w-full min-w-0 overflow-hidden">
+			<ActiveMenuItem
+				sessionId={session.id}
+				href={`/${session.id}`}
+			>
+				{!session.title ? (
+					<div className="relative h-4 w-full flex-1 overflow-hidden rounded">
+						<div className="absolute inset-0 bg-gradient-to-r from-muted/50 via-muted to-muted/50 animate-shimmer" />
+						<div className="absolute inset-0 bg-muted/20 backdrop-blur-[2px]" />
+					</div>
+				) : (
+					<span className="font-medium truncate text-ellipsis overflow-hidden min-w-0 flex-1 text-xs">
+						{session.title}
+					</span>
+				)}
+			</ActiveMenuItem>
+			<SidebarMenuAction
+				showOnHover
+				onClick={handlePinClick}
+				className={cn(
+					session.pinned && "text-primary",
+					// Prevent focus ring overflow
+					"focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-ring",
+				)}
+			>
+				<Pin className={cn("h-3 w-3", session.pinned && "fill-current")} />
+			</SidebarMenuAction>
+		</SidebarMenuItem>
+	);
+}

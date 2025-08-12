@@ -109,24 +109,24 @@ export class AgentNotFoundError extends NotFoundError {
 }
 
 /**
- * Specific error for thread ownership
+ * Specific error for session ownership
  */
-export class ThreadForbiddenError extends ForbiddenError {
-	readonly errorCode = "THREAD_FORBIDDEN";
+export class SessionForbiddenError extends ForbiddenError {
+	readonly errorCode = "SESSION_FORBIDDEN";
 
 	constructor() {
-		super("Thread belongs to another user");
+		super("Session belongs to another user");
 	}
 }
 
 /**
- * Specific error for thread not found
+ * Specific error for session not found
  */
-export class ThreadNotFoundError extends NotFoundError {
-	readonly errorCode = "THREAD_NOT_FOUND";
+export class SessionNotFoundError extends NotFoundError {
+	readonly errorCode = "SESSION_NOT_FOUND";
 
 	constructor() {
-		super("Thread not found or unauthorized");
+		super("Session not found or unauthorized");
 	}
 }
 
@@ -153,6 +153,52 @@ export class NoUserMessageError extends BadRequestError {
 }
 
 /**
+ * Memory operation errors
+ */
+export class MemoryError extends ApiError {
+	readonly statusCode = 500;
+	readonly errorCode = "MEMORY_ERROR";
+
+	constructor(operation: string, cause?: Error) {
+		super(`Memory operation failed: ${operation}`);
+	}
+}
+
+/**
+ * Session creation error
+ */
+export class SessionCreationError extends BadRequestError {
+	readonly errorCode = "SESSION_CREATION_ERROR";
+
+	constructor(message: string) {
+		super(`Session creation failed: ${message}`);
+	}
+}
+
+/**
+ * Message operation error
+ */
+export class MessageOperationError extends BadRequestError {
+	readonly errorCode = "MESSAGE_OPERATION_ERROR";
+
+	constructor(operation: string, message: string) {
+		super(`Message ${operation} failed: ${message}`);
+	}
+}
+
+/**
+ * Stream operation error
+ */
+export class StreamOperationError extends ApiError {
+	readonly statusCode = 500;
+	readonly errorCode = "STREAM_OPERATION_ERROR";
+
+	constructor(operation: string, message: string) {
+		super(`Stream ${operation} failed: ${message}`);
+	}
+}
+
+/**
  * Helper to convert unknown errors to ApiError
  */
 export function toApiError(error: unknown): ApiError {
@@ -165,6 +211,51 @@ export function toApiError(error: unknown): ApiError {
 	}
 
 	return new InternalServerError(String(error));
+}
+
+/**
+ * Helper to convert memory operation errors to appropriate ApiError types
+ * This function intelligently maps common error patterns to the right HTTP status codes
+ */
+export function toMemoryApiError(error: unknown, operation: string): ApiError {
+	if (error instanceof ApiError) {
+		return error;
+	}
+
+	if (error instanceof Error) {
+		const message = error.message.toLowerCase();
+		
+		// Handle authentication/authorization errors
+		if (message.includes('unauthorized') || message.includes('session expired') || message.includes('invalid')) {
+			return new UnauthorizedError(error.message);
+		}
+		
+		if (message.includes('forbidden') || message.includes('access denied') || message.includes('belongs to another user')) {
+			return new SessionForbiddenError();
+		}
+		
+		if (message.includes('not found') && message.includes('session')) {
+			return new SessionNotFoundError();
+		}
+		
+		// Handle specific operation errors
+		if (operation === 'createSession') {
+			return new SessionCreationError(error.message);
+		}
+		
+		if (operation === 'appendMessage' || operation === 'getMessages') {
+			return new MessageOperationError(operation, error.message);
+		}
+		
+		if (operation === 'createStream' || operation === 'getSessionStreams') {
+			return new StreamOperationError(operation, error.message);
+		}
+		
+		// Default to memory error for other cases
+		return new MemoryError(operation, error);
+	}
+
+	return new MemoryError(operation);
 }
 
 /**

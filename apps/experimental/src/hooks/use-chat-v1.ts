@@ -7,7 +7,7 @@ import type { LightfastUIMessage } from "@/types/lightfast-ui-messages";
 
 interface UseChatV1Options {
 	agentId: string;
-	threadId: string;
+	sessionId: string;
 	initialMessages?: LightfastUIMessage[];
 	onError?: (error: Error) => void;
 }
@@ -19,9 +19,9 @@ interface UseChatV1Return {
 	isLoading: boolean;
 }
 
-export function useChatV1({ agentId, threadId, initialMessages = [], onError }: UseChatV1Options): UseChatV1Return {
+export function useChatV1({ agentId, sessionId, initialMessages = [], onError }: UseChatV1Options): UseChatV1Return {
 	// Create transport for AI SDK v5 with agentId
-	const transport = useChatTransport({ threadId, agentId });
+	const transport = useChatTransport({ sessionId, agentId });
 
 	// Auto-resume interrupted streams if the last message was from user
 	const shouldAutoResume = initialMessages.length > 0 && initialMessages[initialMessages.length - 1]?.role === "user";
@@ -32,7 +32,7 @@ export function useChatV1({ agentId, threadId, initialMessages = [], onError }: 
 		sendMessage: vercelSendMessage,
 		status,
 	} = useVercelChat<LightfastUIMessage>({
-		id: `${agentId}-${threadId}`,
+		id: `${agentId}-${sessionId}`,
 		transport,
 		messages: initialMessages,
 		onError:

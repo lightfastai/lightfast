@@ -1,6 +1,6 @@
 // Shared types for agents
 
 export type AppRuntimeContext = {
-	threadId: string;
+	sessionId: string;
 	resourceId: string;
 };

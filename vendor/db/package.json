@@ -19,17 +19,20 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "migrate": "pnpm with-env-lightfast drizzle-kit migrate --config=./src/lightfast/drizzle.config.ts",
-    "migrate:generate": "pnpm with-env-lightfast drizzle-kit generate --config=./src/lightfast/drizzle.config.ts",
-    "studio": "pnpm with-env-lightfast drizzle-kit studio --config=./src/lightfast/drizzle.config.ts",
+    "db:push": "pnpm with-env-lightfast drizzle-kit push --config=./src/lightfast/drizzle.config.ts",
+    "db:generate": "pnpm with-env-lightfast drizzle-kit generate --config=./src/lightfast/drizzle.config.ts",
+    "db:migrate": "pnpm with-env-lightfast drizzle-kit migrate --config=./src/lightfast/drizzle.config.ts",
+    "db:studio": "pnpm with-env-lightfast drizzle-kit studio --config=./src/lightfast/drizzle.config.ts",
+    "db:introspect": "pnpm with-env-lightfast drizzle-kit introspect --config=./src/lightfast/drizzle.config.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --",
-    "with-env-lightfast": "dotenv -e ../../apps/cloud/.vercel/.env.development.local --"
+    "with-env-lightfast": "dotenv -e ../../apps/chat/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@planetscale/database": "^1.19.0",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
+    "ai": "catalog:",
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.7.1",
     "zod": "catalog:"

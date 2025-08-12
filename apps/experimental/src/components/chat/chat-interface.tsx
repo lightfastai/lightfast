@@ -3,7 +3,7 @@ import { ChatInputSection } from "./chat-input-section";
 
 interface ChatInterfaceProps {
 	agentId: string;
-	threadId: string;
+	sessionId: string;
 	initialMessages?: LightfastUIMessage[];
 }
 
@@ -11,16 +11,16 @@ interface ChatInterfaceProps {
  * ChatInterface with optimized server/client boundaries
  * Server-renders static content and progressively enhances with client features
  */
-export function ChatInterface({ agentId, threadId, initialMessages = [] }: ChatInterfaceProps) {
+export function ChatInterface({ agentId, sessionId, initialMessages = [] }: ChatInterfaceProps) {
 	// Always use the client component for the full chat experience
 	// This ensures real-time updates work properly
-	// Use key prop to force complete remount when threadId changes
+	// Use key prop to force complete remount when sessionId changes
 	return (
 		<div className="flex-1 flex flex-col relative">
 			<ChatInputSection
-				key={`${agentId}-${threadId}`}
+				key={`${agentId}-${sessionId}`}
 				agentId={agentId}
-				threadId={threadId}
+				sessionId={sessionId}
 				initialMessages={initialMessages}
 			/>
 		</div>
