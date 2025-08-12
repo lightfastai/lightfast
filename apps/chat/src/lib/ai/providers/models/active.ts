@@ -21,7 +21,7 @@ export const ACTIVE_MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
-			thinking: false,
+			thinking: true, // Has extended thinking mode
 			pdfSupport: true,
 		},
 		streamingDelay: 12,
@@ -40,7 +40,7 @@ export const ACTIVE_MODELS = {
 		features: {
 			streaming: true,
 			functionCalling: true,
-			vision: false,
+			vision: true, // GPT-5 expected to have vision capabilities
 			thinking: false,
 			pdfSupport: false,
 		},
@@ -97,8 +97,8 @@ export const ACTIVE_MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
-			thinking: false,
-			pdfSupport: false,
+			thinking: true, // Gemini 2.5 Flash has thinking capabilities
+			pdfSupport: true, // Supports multimodal document processing
 		},
 		streamingDelay: 15,
 	}),
@@ -115,13 +115,14 @@ export const ACTIVE_MODELS = {
 			streaming: true,
 			functionCalling: true,
 			vision: true,
-			thinking: false,
-			pdfSupport: false,
+			thinking: true, // Gemini 2.5 Pro has advanced reasoning/thinking
+			pdfSupport: true, // Supports multimodal document processing
 		},
 		streamingDelay: 10,
 	}),
 
 	// ===== OpenAI Open Source Models =====
+	// GPT-OSS-120B: Released in 2025 under Apache 2.0 license
 	"openai/gpt-oss-120b": ModelConfigSchema.parse({
 		id: "openai/gpt-oss-120b",
 		provider: "gateway",
@@ -154,11 +155,11 @@ export const ACTIVE_MODELS = {
 		features: {
 			streaming: true,
 			functionCalling: true,
-			vision: false,
+			vision: true, // Kimi K2 has multimodal capabilities
 			thinking: false,
 			pdfSupport: true,
 		},
 		streamingDelay: 18,
 	}),
-
 } as const;
+
