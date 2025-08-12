@@ -54,11 +54,11 @@ const anonymousArcjet = arcjet({
 	rules: [
 		// Shield protects against common attacks
 		shield({ mode: "LIVE" }),
-		// Block all bots for anonymous users
-		detectBot({ mode: "LIVE", allow: [] }),
+		// Block all bots for anonymous users (disabled in dev for testing)
+		detectBot({ mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE", allow: [] }),
 		// Fixed window: 10 requests per day (86400 seconds)
 		slidingWindow({ 
-			mode: "LIVE", 
+			mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE", 
 			max: 10, 
 			interval: 86400 // 24 hours in seconds
 		}),
