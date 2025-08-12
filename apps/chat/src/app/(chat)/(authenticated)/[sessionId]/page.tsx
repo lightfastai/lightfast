@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { SessionChatWrapper } from "~/components/chat/session-chat-wrapper";
-import { getQueryClient, trpc } from "~/trpc/server";
+import { getQueryClient, trpc, prefetch } from "~/trpc/server";
 
 interface SessionPageProps {
 	params: Promise<{
@@ -25,6 +25,10 @@ export default async function SessionPage({ params }: SessionPageProps) {
 		// This happens during server-side rendering, avoiding the client-side error
 		notFound();
 	}
+
+	// Prefetch the session data to make it instantly available in SessionChatWrapper
+	// This populates the cache so the client component doesn't need to fetch again
+	prefetch(trpc.chat.session.get.queryOptions({ sessionId }));
 
 	// Session exists and user has access - render the chat interface
 	return <SessionChatWrapper sessionId={sessionId} agentId={agentId} />;
