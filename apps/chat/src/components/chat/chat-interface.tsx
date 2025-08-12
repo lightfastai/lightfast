@@ -6,7 +6,6 @@ import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { ProviderModelSelector } from "./provider-model-selector";
 import { useChat } from "@ai-sdk/react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
-import { useCreateSession } from "~/hooks/use-create-session";
 import { showAIErrorToast } from "~/lib/ai-errors";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import { DEFAULT_MODEL_ID } from "~/lib/ai/providers";
@@ -18,6 +17,7 @@ interface ChatInterfaceProps {
 	sessionId: string; // Either a client-generated UUID for new sessions or actual session ID for existing ones
 	initialMessages?: LightfastAppChatUIMessage[];
 	isNewSession?: boolean; // Indicates if this is a new session that needs to be created
+	onFirstMessage?: () => void; // Optional callback for when the first message is sent (used for session creation in authenticated mode)
 }
 
 export function ChatInterface({
@@ -25,13 +25,11 @@ export function ChatInterface({
 	sessionId,
 	initialMessages = [],
 	isNewSession = false,
+	onFirstMessage,
 }: ChatInterfaceProps) {
 	// Model selection state
 	const [selectedModelId, setSelectedModelId] =
 		useState<ModelId>(DEFAULT_MODEL_ID);
-
-	// Hook for creating sessions optimistically
-	const createSession = useCreateSession();
 
 	// Load persisted model selection after mount
 	useEffect(() => {
@@ -80,19 +78,9 @@ export function ChatInterface({
 		}
 
 		try {
-			// If this is a new session, create it first before sending the message
-			// This ensures the session exists in the database before messages are added
-			if (isNewSession) {
-				// Update the URL immediately for instant feedback
-				window.history.replaceState({}, "", `/${sessionId}`);
-
-				// Create the session using mutate (fire and forget)
-				// The mutation has optimistic updates so UI will update immediately
-				// The unique constraint in the database will prevent duplicate sessions
-				createSession.mutate({ id: sessionId });
-			} else {
-				// For existing sessions, just update the URL to ensure consistency
-				window.history.replaceState({}, "", `/${sessionId}`);
+			// Call the onFirstMessage callback if provided (for authenticated mode session creation)
+			if (onFirstMessage && isNewSession) {
+				onFirstMessage();
 			}
 
 			// Generate UUID for the user message

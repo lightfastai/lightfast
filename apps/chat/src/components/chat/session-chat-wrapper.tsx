@@ -1,7 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ChatInterface } from "./chat-interface";
+import { AuthenticatedChatInterface } from "./authenticated-chat-interface";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 
@@ -30,10 +30,10 @@ export function SessionChatWrapper({ sessionId, agentId }: SessionChatWrapperPro
 		id: msg.id,
 		role: msg.role,
 		parts: msg.parts,
-	}));
+	})) as LightfastAppChatUIMessage[];
 
 	return (
-		<ChatInterface
+		<AuthenticatedChatInterface
 			key={`${agentId}-${sessionId}`}
 			agentId={agentId}
 			sessionId={sessionId}
