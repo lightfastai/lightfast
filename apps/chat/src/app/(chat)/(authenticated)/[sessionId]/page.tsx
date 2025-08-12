@@ -20,7 +20,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
 		await queryClient.fetchQuery(
 			trpc.chat.session.get.queryOptions({ sessionId })
 		);
-	} catch (error) {
+	} catch {
 		// If session not found or user doesn't have access, show 404
 		// This happens during server-side rendering, avoiding the client-side error
 		notFound();
