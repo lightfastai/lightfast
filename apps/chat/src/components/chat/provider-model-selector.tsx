@@ -4,7 +4,8 @@ import {
 	
 	PROVIDER_ICONS,
 	getModelConfig,
-	getVisibleModels
+	getVisibleModels,
+	getProviderDisplayName
 } from "~/lib/ai/providers";
 import type {ModelId} from "~/lib/ai/providers";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -66,6 +67,7 @@ export function ProviderModelSelector({
 		return getVisibleModels().map((model) => ({
 			id: model.id as ModelId,
 			provider: model.provider,
+			iconProvider: model.iconProvider,
 			displayName: model.displayName,
 			description: model.description,
 			features: model.features,
@@ -129,7 +131,7 @@ export function ProviderModelSelector({
 					<div className="flex items-center gap-2">
 						{(() => {
 							const iconName = PROVIDER_ICONS[
-								selectedModel.provider
+								selectedModel.iconProvider
 							] as keyof typeof Icons;
 							const IconComponent = Icons[iconName];
 							return <IconComponent className="w-4 h-4 shrink-0" />;
@@ -159,7 +161,7 @@ export function ProviderModelSelector({
 									<CommandItem
 										key={model.id}
 										value={model.id}
-										keywords={[model.displayName, model.provider]}
+										keywords={[model.displayName, model.iconProvider]}
 										onSelect={handleSelect}
 										onMouseEnter={() => setHoveredModel(model.id)}
 										className={cn(
@@ -169,7 +171,7 @@ export function ProviderModelSelector({
 									>
 										{(() => {
 											const iconName = PROVIDER_ICONS[
-												model.provider
+												model.iconProvider
 											] as keyof typeof Icons;
 											const IconComponent = Icons[iconName];
 											return <IconComponent className="w-4 h-4 shrink-0" />;
@@ -196,7 +198,7 @@ export function ProviderModelSelector({
 									<div className="flex items-start gap-2">
 										{(() => {
 											const iconName = PROVIDER_ICONS[
-												detailModel.provider
+												detailModel.iconProvider
 											] as keyof typeof Icons;
 											const IconComponent = Icons[iconName];
 											return <IconComponent className="w-6 h-6 shrink-0 mt-0.5" />;
@@ -206,7 +208,7 @@ export function ProviderModelSelector({
 												{detailModel.displayName}
 											</h4>
 											<p className="text-xs text-muted-foreground capitalize">
-												{detailModel.provider}
+												{getProviderDisplayName(detailModel.iconProvider)}
 											</p>
 										</div>
 									</div>

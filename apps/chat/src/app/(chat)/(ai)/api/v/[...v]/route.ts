@@ -1,7 +1,9 @@
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "@lightfast/core/agent";
 import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
-import { smoothStream, wrapLanguageModel } from "ai";
+import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
+import type { ModelId } from "~/lib/ai/providers";
+import { getModelConfig, getModelStreamingDelay } from "~/lib/ai/providers";
 import {
 	BraintrustMiddleware,
 	currentSpan,
@@ -127,6 +129,32 @@ const handler = async (
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async () => {
 		try {
+			// Extract modelId from request body for POST requests
+			let selectedModelId: ModelId = "openai/gpt-5-nano"; // Default model
+			
+			if (req.method === "POST") {
+				try {
+					const requestBody = await req.clone().json() as { modelId?: string };
+					if (requestBody.modelId && typeof requestBody.modelId === "string") {
+						selectedModelId = requestBody.modelId as ModelId;
+					}
+				} catch (error) {
+					// If parsing fails, use default model
+					console.warn("Failed to parse request body for modelId:", error);
+				}
+			}
+
+			// Get model configuration
+			const modelConfig = getModelConfig(selectedModelId);
+			const streamingDelay = getModelStreamingDelay(selectedModelId);
+
+			// For Vercel AI Gateway, use the model name directly
+			// Gateway handles provider routing automatically
+			const gatewayModelString = modelConfig.name;
+
+			// Log model selection for debugging
+			console.log(`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms)`);
+
 			// Create memory instance based on authentication status
 			const memory = isAnonymous
 				? new AnonymousRedisMemory({
@@ -151,13 +179,14 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 						agentId,
 					}),
 					model: wrapLanguageModel({
-						model: gateway("openai/gpt-4.1-nano"),
+						model: gateway(gatewayModelString),
 						middleware: BraintrustMiddleware({ debug: true }),
 					}),
 					experimental_transform: smoothStream({
-						delayInMs: 25,
+						delayInMs: streamingDelay,
 						chunking: "word",
 					}),
+					stopWhen: stepCountIs(10),
 					experimental_telemetry: {
 						isEnabled: isOtelEnabled(),
 						metadata: {
@@ -165,6 +194,8 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 							agentName: "c010",
 							sessionId,
 							userId,
+							modelId: selectedModelId,
+							modelProvider: modelConfig.provider,
 						},
 					},
 					onChunk: ({ chunk }) => {

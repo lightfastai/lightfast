@@ -20,7 +20,7 @@ export type {
 } from "./schemas";
 
 // Export schemas for validators
-export { ModelProviderSchema } from "./schemas";
+export { ModelProviderSchema, IconProviderSchema, ICON_PROVIDER_DISPLAY_NAMES } from "./schemas";
 
 // Export collections for validators
 export const ALL_MODEL_IDS = Object.keys(MODELS) as ModelId[];
@@ -35,7 +35,7 @@ export function getVisibleModels(): ModelConfig[] {
 }
 
 // Default model ID
-export const DEFAULT_MODEL_ID: ModelId = "gpt-4.1-nano";
+export const DEFAULT_MODEL_ID: ModelId = "openai/gpt-5-nano";
 
 // Display name utility
 export function getModelDisplayName(modelId: string): string {
@@ -81,8 +81,6 @@ export { validateApiKey } from "./schemas";
 export {
 	PROVIDER_ICONS,
 	PROVIDER_DISPLAY_NAMES,
-	PROVIDER_COLORS,
 	getProviderIcon,
 	getProviderDisplayName,
-	getProviderColor,
 } from "./icons";

@@ -2,11 +2,26 @@ import { z } from "zod";
 
 // Base schemas
 export const ModelProviderSchema = z.enum([
-	"openai",
-	"anthropic",
-	"openrouter",
+	"gateway",
 ]);
 export type ModelProvider = z.infer<typeof ModelProviderSchema>;
+
+// Icon provider schema for UI display
+export const IconProviderSchema = z.enum([
+	"openai",
+	"anthropic",
+	"google",
+	"moonshot",
+]);
+export type IconProvider = z.infer<typeof IconProviderSchema>;
+
+// Display name mapping for icon providers
+export const ICON_PROVIDER_DISPLAY_NAMES: Record<IconProvider, string> = {
+	openai: "OpenAI",
+	anthropic: "Anthropic", 
+	google: "Google",
+	moonshot: "Moonshot AI",
+};
 
 // Model feature schema
 export const ModelFeaturesSchema = z.object({
@@ -29,6 +44,7 @@ export type ThinkingConfig = z.infer<typeof ThinkingConfigSchema>;
 export const ModelConfigSchema = z.object({
 	id: z.string(),
 	provider: ModelProviderSchema,
+	iconProvider: IconProviderSchema,
 	name: z.string(),
 	displayName: z.string(),
 	description: z.string(),
@@ -50,28 +66,13 @@ export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 // Placeholder type - will be overridden by the actual model IDs from MODELS
 export type ModelId = string;
 
-// API key validation schemas
-export const OpenAIKeySchema = z
-	.string()
-	.min(1)
-	.regex(/^sk-[a-zA-Z0-9]{48,}$/, "Invalid OpenAI API key format");
-
-export const AnthropicKeySchema = z
-	.string()
-	.min(1)
-	.regex(/^sk-ant-[a-zA-Z0-9]{90,}$/, "Invalid Anthropic API key format");
-
-export const OpenRouterKeySchema = z
-	.string()
-	.min(1)
-	.regex(/^sk-or-[a-zA-Z0-9]{50,}$/, "Invalid OpenRouter API key format");
+// Gateway API key schema (Vercel AI Gateway)
+const GatewayKeySchema = z.string().min(1, "Gateway API key is required");
 
 // Validation function
 export function validateApiKey(provider: ModelProvider, key: string) {
 	const schemas = {
-		openai: OpenAIKeySchema,
-		anthropic: AnthropicKeySchema,
-		openrouter: OpenRouterKeySchema,
+		gateway: GatewayKeySchema,
 	};
 
 	return schemas[provider].safeParse(key);

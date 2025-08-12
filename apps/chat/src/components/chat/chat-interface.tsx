@@ -110,7 +110,7 @@ export function ChatInterface({
 		<ProviderModelSelector
 			value={selectedModelId}
 			onValueChange={handleModelChange}
-			disabled={status === "streaming" || status === "submitted"}
+			disabled={false} // Allow model selection even during streaming
 		/>
 	);
 

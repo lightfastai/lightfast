@@ -23,9 +23,9 @@ export function ActiveMenuItem({
 	...linkProps
 }: ActiveMenuItemProps & ComponentProps<typeof Link>) {
 	const pathname = usePathname();
-	
+
 	// Determine if this item is active
-	const isActive = 
+	const isActive =
 		(sessionId === "new" && (pathname === "/new" || pathname === "/")) ||
 		(sessionId !== "new" && pathname.includes(sessionId));
 
@@ -42,3 +42,4 @@ export function ActiveMenuItem({
 		</SidebarMenuButton>
 	);
 }
+

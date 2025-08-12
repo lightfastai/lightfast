@@ -257,4 +257,5 @@ export const sessionRouter = {
 
       return { success: true };
     }),
+
 } satisfies TRPCRouterRecord;
