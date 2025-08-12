@@ -23,6 +23,7 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
           <Link 
             href="https://lightfast.ai" 
             className="text-lg font-semibold hover:text-primary transition-colors"
+            prefetch={false}
           >
             Lightfast
           </Link>
@@ -37,6 +38,7 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
                 ? "bg-primary text-primary-foreground" 
                 : "text-muted-foreground hover:text-foreground"
             )}
+            prefetch={true}
           >
             Docs
           </Link>
@@ -48,6 +50,7 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
+            prefetch={true}
           >
             API
           </Link>
@@ -80,6 +83,7 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
                               ? "bg-accent text-accent-foreground"
                               : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                           )}
+                          prefetch={true}
                         >
                           {page.name}
                         </Link>

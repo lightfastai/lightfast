@@ -8,7 +8,7 @@ import {
 	SidebarMenu,
 	SidebarMenuItem,
 } from "@lightfast/ui/components/ui/sidebar";
-import { MessageSquarePlus } from "lucide-react";
+import { Icons } from "@lightfast/ui/components/icons";
 import { ActiveMenuItem } from "./active-menu-item";
 import { InfiniteScrollThreadsList } from "./infinite-scroll-threads-list";
 import { PlatformSidebarTrigger } from "./platform-sidebar-trigger";
@@ -32,7 +32,7 @@ export function ServerSidebarImplementation() {
 						<SidebarMenu>
 							<SidebarMenuItem>
 								<ActiveMenuItem threadId="new" href="/chat" size="default">
-									<MessageSquarePlus className="w-4 h-4" />
+									<Icons.newChat className="w-4 h-4" />
 									<span className="group-data-[collapsible=icon]:hidden text-xs">
 										New Chat
 									</span>

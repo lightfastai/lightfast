@@ -174,6 +174,7 @@ export const WebSearchV1Tool = memo(function WebSearchV1Tool({
 											target="_blank"
 											rel="noopener noreferrer"
 											className="group flex items-center gap-3 hover:bg-muted/50 rounded-sm p-2 px-3"
+											prefetch={false}
 										>
 											<h4 className="text-xs font-medium text-foreground flex-1 truncate">
 												{result.title}

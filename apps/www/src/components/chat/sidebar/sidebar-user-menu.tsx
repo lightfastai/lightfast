@@ -119,6 +119,7 @@ export function SidebarUserMenu() {
 						target="_blank"
 						rel="noopener noreferrer"
 						className="cursor-pointer"
+						prefetch={false}
 					>
 						<ExternalLink className="mr-2 h-3 w-3" />
 						<span className="text-xs">GitHub</span>

@@ -21,7 +21,7 @@ export default function NotFound() {
 
 				<div className="flex flex-wrap justify-center gap-2">
 					<Button asChild>
-						<Link href="/">
+						<Link href="/" prefetch={true}>
 							<Home className="mr-2 h-4 w-4" />
 							Go home
 						</Link>

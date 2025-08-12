@@ -39,7 +39,7 @@ export function SiteHeader({
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					{showLogo && (
-						<Link href={logoHref}>
+						<Link href={logoHref} prefetch={true}>
 							<Icons.logo className="w-6 h-5 text-foreground" />
 						</Link>
 					)}
@@ -65,7 +65,7 @@ export function SiteHeader({
 					)}
 					{children}
 					{showSignIn && (
-						<Link href={signInHref}>
+						<Link href={signInHref} prefetch={true}>
 							<Button variant="outline">Sign In</Button>
 						</Link>
 					)}

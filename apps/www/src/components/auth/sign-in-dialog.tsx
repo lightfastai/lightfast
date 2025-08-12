@@ -50,6 +50,7 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
 									href={siteConfig.links.terms.href}
 									target="_blank"
 									className="underline"
+									prefetch={false}
 								>
 									terms
 								</Link>{" "}
@@ -58,6 +59,7 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
 									href={siteConfig.links.privacy.href}
 									target="_blank"
 									className="underline"
+									prefetch={false}
 								>
 									privacy policy
 								</Link>

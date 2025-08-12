@@ -210,6 +210,7 @@ export function ApiKeysSection({ userSettings }: ApiKeysSectionProps) {
 										href="https://platform.openai.com/api-keys"
 										target="_blank"
 										className="inline-flex items-center text-muted-foreground hover:underline"
+										prefetch={false}
 									>
 										Get API Key
 										<ExternalLink className="ml-1 h-3 w-3" />
@@ -296,6 +297,7 @@ export function ApiKeysSection({ userSettings }: ApiKeysSectionProps) {
 										href="https://console.anthropic.com/settings/keys"
 										target="_blank"
 										className="inline-flex items-center text-muted-foreground hover:underline"
+										prefetch={false}
 									>
 										Get API Key
 										<ExternalLink className="ml-1 h-3 w-3" />
@@ -382,6 +384,7 @@ export function ApiKeysSection({ userSettings }: ApiKeysSectionProps) {
 										href="https://openrouter.ai/keys"
 										target="_blank"
 										className="inline-flex items-center text-muted-foreground hover:underline"
+										prefetch={false}
 									>
 										Get API Key
 										<ExternalLink className="ml-1 h-3 w-3" />

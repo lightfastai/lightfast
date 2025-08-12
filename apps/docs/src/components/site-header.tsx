@@ -17,6 +17,7 @@ export function SiteHeader() {
 					}
 					aria-label={siteConfig.links.github.title}
 					className="transition-transform duration-200 hover:scale-110"
+					prefetch={false}
 				>
 					<Icons.gitHub className="size-4" />
 				</Link>
@@ -30,6 +31,7 @@ export function SiteHeader() {
 					}
 					aria-label={siteConfig.links.twitter.title}
 					className="transition-transform duration-200 hover:scale-110"
+					prefetch={false}
 				>
 					<Icons.twitter className="size-3" />
 				</Link>
@@ -43,6 +45,7 @@ export function SiteHeader() {
 					}
 					aria-label={siteConfig.links.discord.title}
 					className="transition-transform duration-200 hover:scale-110"
+					prefetch={false}
 				>
 					<Icons.discord className="size-4" />
 				</Link>

@@ -11,6 +11,7 @@ export default function NotFound() {
 				<Link
 					href="/docs"
 					className="mt-4 inline-block text-primary underline-offset-4 hover:underline"
+					prefetch={true}
 				>
 					Return to docs home
 				</Link>
