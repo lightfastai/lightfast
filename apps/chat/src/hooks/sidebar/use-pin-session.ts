@@ -102,19 +102,23 @@ export function usePinSession() {
 					queryClient.setQueryData<Session[]>(pinnedQueryKey, context.previousPinned);
 				}
 				// Invalidate to get fresh data
+				// Invalidate all list queries (both regular and infinite)
 				void queryClient.invalidateQueries({
 					queryKey: [["chat", "session", "list"]],
 				});
+				// Invalidate pinned list
 				void queryClient.invalidateQueries({
 					queryKey: [["chat", "session", "listPinned"]],
 				});
 			},
 			onSettled: () => {
 				// Always invalidate to ensure consistency
+				// Invalidate all list queries (both regular and infinite)
 				void queryClient.invalidateQueries({
 					queryKey: [["chat", "session", "list"]],
 					refetchType: "none",
 				});
+				// Invalidate pinned list
 				void queryClient.invalidateQueries({
 					queryKey: [["chat", "session", "listPinned"]],
 					refetchType: "none",

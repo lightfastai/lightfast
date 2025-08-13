@@ -59,7 +59,7 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 					// Invalidate the session query to refresh from database
 					// This ensures the cache is updated with the latest messages
 					void queryClient.invalidateQueries({
-						queryKey: [["chat", "session", "get"], { input: { sessionId }, type: "query" }],
+						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
 					});
 				}}
 			/>

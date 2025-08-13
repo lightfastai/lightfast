@@ -66,7 +66,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 					// Invalidate the session query to ensure cache is populated
 					// This is important for new sessions that didn't exist in cache before
 					void queryClient.invalidateQueries({
-						queryKey: [["chat", "session", "get"], { input: { sessionId }, type: "query" }],
+						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
 					});
 				}}
 			/>
