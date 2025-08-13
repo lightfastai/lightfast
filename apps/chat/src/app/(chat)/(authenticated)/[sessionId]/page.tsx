@@ -1,6 +1,5 @@
-import { Suspense } from "react";
 import { SessionChatWrapper } from "~/components/chat/session-chat-wrapper";
-import { ChatLoadingSkeleton } from "~/components/chat/chat-loading-skeleton";
+import { HydrateClient } from "~/trpc/server";
 
 interface SessionPageProps {
 	params: Promise<{
@@ -13,11 +12,11 @@ export default async function SessionPage({ params }: SessionPageProps) {
 	const { sessionId } = await params;
 	const agentId = "c010";
 
-	// Session data is prefetched in layout.tsx
-	// Render the chat interface with Suspense
+	// TEST: No prefetch, no Suspense - let useQuery handle everything
+	// This should eliminate any server-side blocking
 	return (
-		<Suspense fallback={<ChatLoadingSkeleton />}>
+		<HydrateClient>
 			<SessionChatWrapper sessionId={sessionId} agentId={agentId} />
-		</Suspense>
+		</HydrateClient>
 	);
 }

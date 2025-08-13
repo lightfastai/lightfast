@@ -1,4 +1,10 @@
-import { prefetch, trpc, HydrateClient } from "~/trpc/server";
+import { trpc, HydrateClient, prefetch } from "~/trpc/server";
+import type React from "react";
+import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
+import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
+import { AppSidebar } from "~/components/sidebar/app-sidebar";
+import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
+import { TRPCReactProvider } from "~/trpc/react";
 
 interface SessionLayoutProps {
 	children: React.ReactNode;
@@ -7,15 +13,37 @@ interface SessionLayoutProps {
 	}>;
 }
 
-// Layout component that prefetches data for all session pages
-export default async function SessionLayout({ children, params }: SessionLayoutProps) {
-	const { sessionId } = await params;
+// Layout component for session pages - includes auth check and UI chrome
+export default async function SessionLayout({
+	children,
+	params,
+}: SessionLayoutProps) {
+	// Removed blocking auth check - middleware handles authentication
+	// This eliminates the blocking call on navigation
 	
-	// Prefetch the session data to make it instantly available in SessionChatWrapper
-	// This populates the cache so the client component doesn't need to fetch again
-	prefetch(trpc.chat.session.get.queryOptions({ sessionId }));
+	// Await params to satisfy Next.js requirements
+	await params;
 
-	// Wrap in HydrateClient to ensure the prefetched session data is included in hydration
-	// This is critical for useSuspenseQuery to work correctly in production
-	return <HydrateClient>{children}</HydrateClient>;
+	// Prefetch pinned sessions for sidebar
+	prefetch(trpc.chat.session.listPinned.queryOptions());
+
+	return (
+		<TRPCReactProvider>
+			<HydrateClient>
+				<TooltipProvider>
+					<SidebarProvider defaultOpen={true}>
+						<div className="flex h-screen w-full">
+							<AppSidebar />
+							<div className="flex border-l border-muted/30 flex-col w-full relative">
+								<AuthenticatedHeader />
+								{/* Content area starts from 0vh */}
+								<div className="flex-1 min-h-0 overflow-hidden">{children}</div>
+							</div>
+						</div>
+					</SidebarProvider>
+				</TooltipProvider>
+			</HydrateClient>
+		</TRPCReactProvider>
+	);
 }
+

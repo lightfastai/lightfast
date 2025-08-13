@@ -1,5 +1,4 @@
-import { getQueryClient, trpc, HydrateClient, prefetch } from "~/trpc/server";
-import { notFound } from "next/navigation";
+import { trpc, HydrateClient, prefetch } from "~/trpc/server";
 import type React from "react";
 import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
@@ -15,14 +14,8 @@ interface AuthenticatedLayoutProps {
 export default async function AuthenticatedLayout({
 	children,
 }: AuthenticatedLayoutProps) {
-	const queryClient = getQueryClient();
-	const session = await queryClient.fetchQuery(
-		trpc.auth.user.getUser.queryOptions(),
-	);
-
-	if (!session.userId) {
-		notFound();
-	}
+	// Removed blocking auth check - middleware handles authentication
+	// This eliminates the blocking call on navigation
 
 	// Prefetch pinned sessions for instant loading with Suspense
 	// This will be available for all authenticated pages (new, [sessionId])
