@@ -63,6 +63,28 @@ export class ChatErrorHandler {
       };
     }
     
+    // Check if it's an enhanced Error object with our custom properties
+    if (error instanceof Error) {
+      const enhancedError = error as Error & { 
+        type?: ChatErrorType; 
+        statusCode?: number;
+        details?: string;
+        metadata?: Record<string, unknown>;
+      };
+      
+      // If the error has our enhanced properties, use them
+      if (enhancedError.type && enhancedError.statusCode) {
+        return {
+          type: enhancedError.type,
+          message: enhancedError.message,
+          details: enhancedError.details ?? enhancedError.message,
+          retryable: false,
+          statusCode: enhancedError.statusCode,
+          metadata: enhancedError.metadata,
+        };
+      }
+    }
+    
     // Fallback for non-API errors (network failures, etc.)
     const errorMessage = error instanceof Error ? error.message : String(error);
     
