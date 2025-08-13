@@ -3,7 +3,7 @@ import { createAgent } from "@lightfast/core/agent";
 import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import type { ModelId } from "~/lib/ai/providers";
-import { getModelConfig, getModelStreamingDelay } from "~/lib/ai/providers";
+import { getModelConfig, getModelStreamingDelay, MODELS } from "~/lib/ai/providers";
 import {
 	BraintrustMiddleware,
 	currentSpan,
@@ -29,7 +29,6 @@ import {
 	slidingWindow,
 	tokenBucket,
 	checkDecision,
-	createErrorResponse,
 } from "@vendor/security";
 
 // Create tools object for c010 agent
@@ -85,8 +84,20 @@ const handler = async (
 	const [agentId, sessionId] = v;
 	
 	// Server determines authentication status - no client control
-	const authResult = await auth();
-	const authenticatedUserId = authResult.userId;
+	let authenticatedUserId: string | null;
+	try {
+		const authResult = await auth();
+		authenticatedUserId = authResult.userId;
+	} catch (error) {
+		console.error(`[API] Authentication check failed:`, error);
+		return Response.json(
+			{ 
+				error: "Authentication service unavailable", 
+				message: "Unable to verify authentication status. Please try again later." 
+			},
+			{ status: 503 }
+		);
+	}
 	
 	// Server decides if this is anonymous based on actual auth state
 	const isAnonymous = !authenticatedUserId;
@@ -96,12 +107,52 @@ const handler = async (
 		const decision = await anonymousArcjet.protect(req, { requested: 1 });
 		
 		if (decision.isDenied()) {
+			const check = checkDecision(decision);
 			console.warn(`[Security] Anonymous request denied:`, {
 				sessionId,
 				ip: decision.ip,
-				reason: checkDecision(decision),
+				reason: check,
 			});
-			return createErrorResponse(decision);
+
+			// Create appropriate error response based on denial reason
+			if (check.isRateLimit) {
+				return Response.json(
+					{ 
+						error: "Rate limit exceeded", 
+						message: "You've reached the daily message limit for anonymous users. Please sign in to continue." 
+					},
+					{ status: 429 }
+				);
+			}
+
+			if (check.isBot) {
+				return Response.json(
+					{ 
+						error: "Bot detection triggered",
+						message: "Automated activity detected. Please verify you're human to continue."
+					},
+					{ status: 403 }
+				);
+			}
+
+			if (check.isShield) {
+				return Response.json(
+					{ 
+						error: "Request blocked",
+						message: "Your request was blocked for security reasons. Please try again."
+					},
+					{ status: 403 }
+				);
+			}
+
+			// Generic denial
+			return Response.json(
+				{ 
+					error: "Access denied",
+					message: "Your request was denied. Please try again later."
+				},
+				{ status: 403 }
+			);
 		}
 	}
 	
@@ -111,7 +162,7 @@ const handler = async (
 		// For anonymous users, use a special prefix to avoid collision
 		userId = `anon_${sessionId}`;
 	} else {
-		userId = authenticatedUserId;
+		userId = authenticatedUserId!; // We know it's not null since isAnonymous is false
 	}
 
 	// Validate params
@@ -165,6 +216,18 @@ const handler = async (
 				}
 			}
 
+			// Validate model exists before getting configuration
+			if (!(selectedModelId in MODELS)) {
+				console.warn(`[API] Invalid model requested: ${selectedModelId}`);
+				return Response.json(
+					{ 
+						error: "Invalid model", 
+						message: `Model '${selectedModelId}' not found. Please select a valid model.` 
+					},
+					{ status: 400 }
+				);
+			}
+
 			// Get model configuration
 			const modelConfig = getModelConfig(selectedModelId);
 			const streamingDelay = getModelStreamingDelay(selectedModelId);
@@ -189,12 +252,24 @@ const handler = async (
 			console.log(`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms)`);
 
 			// Create memory instance based on authentication status
-			const memory = isAnonymous
-				? new AnonymousRedisMemory({
-						url: env.KV_REST_API_URL,
-						token: env.KV_REST_API_TOKEN,
-					})
-				: new PlanetScaleMemory();
+			let memory;
+			try {
+				memory = isAnonymous
+					? new AnonymousRedisMemory({
+							url: env.KV_REST_API_URL,
+							token: env.KV_REST_API_TOKEN,
+						})
+					: new PlanetScaleMemory();
+			} catch (error) {
+				console.error(`[API] Failed to create memory instance:`, error);
+				return Response.json(
+					{ 
+						error: "Service initialization failed", 
+						message: "Unable to initialize chat memory. Please try again later." 
+					},
+					{ status: 503 }
+				);
+			}
 
 			// Pass everything to fetchRequestHandler with inline agent
 			const response = await fetchRequestHandler({

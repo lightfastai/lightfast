@@ -69,39 +69,3 @@ export const checkDecision = (decision: ArcjetDecision) => {
   };
 };
 
-/**
- * Helper to create error responses based on denial reason
- */
-export const createErrorResponse = (decision: ArcjetDecision): Response => {
-  const check = checkDecision(decision);
-  
-  if (!check.denied) {
-    throw new Error("Decision was not denied");
-  }
-
-  if (check.isBot) {
-    return Response.json(
-      { error: "Bot detection triggered" },
-      { status: 403 }
-    );
-  }
-
-  if (check.isRateLimit) {
-    return Response.json(
-      { error: "Rate limit exceeded. Please slow down." },
-      { status: 429 }
-    );
-  }
-
-  if (check.isShield) {
-    return Response.json(
-      { error: "Request blocked for security reasons" },
-      { status: 403 }
-    );
-  }
-
-  return Response.json(
-    { error: "Access denied" },
-    { status: 403 }
-  );
-};

@@ -337,13 +337,9 @@ export class ChatErrorHandler {
   }
 
   private static showErrorToast(error: ChatError): void {
-    // Longer duration for rate limits and auth errors
-    const duration = [
-      ChatErrorType.RATE_LIMIT,
-      ChatErrorType.AUTHENTICATION,
-      ChatErrorType.MODEL_ACCESS_DENIED,
-      ChatErrorType.BOT_DETECTION
-    ].includes(error.type) ? 6000 : 4000;
+    // Standard duration for streaming errors (non-persistent errors)
+    // Persistent errors (rate limit, auth, etc.) now go to error boundaries
+    const duration = 4000;
     
     toast.error(error.message, {
       description: error.details,
@@ -356,12 +352,17 @@ export class ChatErrorHandler {
   }
   
   // Helper to determine if error should show inline in chat
+  // Only for streaming errors that remain in the chat UI
   static shouldShowInline(error: ChatError): boolean {
     return [
-      ChatErrorType.RATE_LIMIT,
-      ChatErrorType.MODEL_ACCESS_DENIED,
-      ChatErrorType.BOT_DETECTION,
-      ChatErrorType.AUTHENTICATION,
+      ChatErrorType.NETWORK,
+      ChatErrorType.TIMEOUT,
+      ChatErrorType.MODEL_UNAVAILABLE,
+      ChatErrorType.NO_CONTENT,
+      ChatErrorType.INVALID_REQUEST,
+      ChatErrorType.INVALID_MESSAGE,
+      ChatErrorType.SERVER_ERROR,
+      ChatErrorType.INTERNAL_ERROR,
     ].includes(error.type);
   }
 

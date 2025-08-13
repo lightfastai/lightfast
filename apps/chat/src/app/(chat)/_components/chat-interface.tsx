@@ -10,6 +10,7 @@ import React from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
+import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import type { ChatError } from "~/lib/errors/chat-error-handler";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -41,12 +42,9 @@ export function ChatInterface({
 	const [failedMessageId, setFailedMessageId] = React.useState<string | null>(
 		null,
 	);
-	const [errorToThrow, setErrorToThrow] = React.useState<Error | null>(null);
 
-	// Throw error to error boundary when set
-	if (errorToThrow) {
-		throw errorToThrow;
-	}
+	// Hook for handling errors that should go to error boundaries
+	const { throwToErrorBoundary, shouldThrowToErrorBoundary, clearError } = useErrorBoundaryHandler();
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
 	console.log("User data:", user);
@@ -83,22 +81,16 @@ export function ChatInterface({
 		messages: initialMessages,
 		onError: (error) => {
 			console.log(error);
-			// First, check if this is a streaming error or a regular API error
-			const isStreamingError = status === "streaming";
 
-			// For non-streaming errors (API errors, rate limits, etc.),
-			// use state to trigger error boundary
-			if (!isStreamingError) {
-				console.error(
-					"[Chat] Non-streaming error, triggering error boundary:",
-					error,
-				);
-				// Set error state which will throw on next render
-				setErrorToThrow(error);
+			// Check if this error should go to error boundary vs. handled in chat
+			if (shouldThrowToErrorBoundary(status)) {
+				// Non-streaming errors go to error boundary (auth, rate limits, etc.)
+				throwToErrorBoundary(error);
 				return;
 			}
 
-			// For streaming errors, handle them in the UI
+			// For streaming errors, handle them in the UI with toast + inline display
+			// These are typically recoverable errors like network issues, timeouts, etc.
 			const chatError = ChatErrorHandler.handleError(error, {
 				showToast: true,
 				onRetry: () => {
@@ -125,7 +117,7 @@ export function ChatInterface({
 			// Clear error state on successful completion
 			setLastError(null);
 			setFailedMessageId(null);
-			setErrorToThrow(null);
+			clearError();
 			onFinish?.();
 		},
 		resume:
