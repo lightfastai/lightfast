@@ -2,7 +2,7 @@
 
 import { SidebarMenuButton, useSidebar } from "@repo/ui/components/ui/sidebar";
 import { Icons } from "@repo/ui/components/icons";
-import { 
+import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
@@ -12,16 +12,16 @@ import { PanelLeftIcon } from "lucide-react";
 export function SidebarTriggerButton() {
 	const { toggleSidebar, state } = useSidebar();
 	const isCollapsed = state === "collapsed";
-	
+
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>
-				<SidebarMenuButton 
+				<SidebarMenuButton
 					onClick={toggleSidebar}
 					className="w-fit group-data-[collapsible=icon]:w-full"
 				>
 					{/* Show logo only when collapsed and not hovering sidebar */}
-					<Icons.logoShort className="size-4 group-data-[collapsible=icon]:block group-data-[collapsible=icon]:group-hover/sidebar:hidden hidden" />
+					<Icons.logoShort className="!size-5 group-data-[collapsible=icon]:block group-data-[collapsible=icon]:group-hover/sidebar:hidden hidden" />
 					{/* Show trigger icon when expanded OR when hovering in collapsed state */}
 					<PanelLeftIcon className="size-4 group-data-[collapsible=icon]:hidden group-data-[collapsible=icon]:group-hover/sidebar:block block" />
 				</SidebarMenuButton>
