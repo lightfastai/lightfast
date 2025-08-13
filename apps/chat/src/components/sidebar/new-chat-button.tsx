@@ -20,6 +20,7 @@ export function NewChatButton() {
 					sessionId="new"
 					href="/new"
 					className="group/newchat group-data-[collapsible=expanded]:pr-2"
+					prefetch={true}
 				>
 					<Icons.newChat className="size-4" />
 					<span className="group-data-[collapsible=icon]:hidden text-xs flex-1 flex items-center justify-between">
