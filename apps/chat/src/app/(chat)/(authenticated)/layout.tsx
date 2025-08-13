@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { trpc, HydrateClient, prefetch } from "~/trpc/server";
 import type React from "react";
 import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
@@ -5,6 +6,7 @@ import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
 import { TRPCReactProvider } from "~/trpc/react";
+import { ChatLoadingSkeleton } from "~/components/chat/chat-loading-skeleton";
 
 interface AuthenticatedLayoutProps {
 	children: React.ReactNode;
@@ -35,7 +37,11 @@ export default function AuthenticatedLayout({
 							<div className="flex border-l border-muted/30 flex-col w-full relative">
 								<AuthenticatedHeader />
 								{/* Content area starts from 0vh */}
-								<div className="flex-1 min-h-0 overflow-hidden">{children}</div>
+								<div className="flex-1 min-h-0 overflow-hidden">
+									<Suspense fallback={<ChatLoadingSkeleton />}>
+										{children}
+									</Suspense>
+								</div>
 							</div>
 						</div>
 					</SidebarProvider>
