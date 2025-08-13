@@ -13,7 +13,7 @@ export function SessionGroup({
   onPinToggle,
 }: SessionGroupProps) {
   return (
-    <SidebarGroup className="pl-4 pr-2 py-2">
+    <SidebarGroup className="pl-4 pr-2 pt-0 pb-2">
       <SidebarGroupLabel className="text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
         {categoryName}
       </SidebarGroupLabel>
