@@ -1,4 +1,6 @@
-import { Suspense } from "react";
+"use client";
+
+import { useRef } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
 import { uuidv4 } from "@lightfast/core/v2/utils";
 
@@ -8,24 +10,31 @@ interface UnauthenticatedChatProps {
 
 /**
  * Component for unauthenticated chat sessions.
- * Generates a server-side session ID and renders ChatInterface directly.
+ * Generates a stable client-side session ID and renders ChatInterface directly.
  * This provides consistency with the authenticated flow architecture.
  */
 export function UnauthenticatedChat({ agentId }: UnauthenticatedChatProps) {
-	// Generate a new session ID server-side
-	const sessionId = uuidv4();
+	// Use useRef to generate a stable ID that persists across renders
+	const sessionIdRef = useRef<string | null>(null);
+	
+	// Generate ID only once, on first render
+	sessionIdRef.current ??= uuidv4();
 
-	// Wrap in Suspense to ensure proper hydration timing
+	// No-op function for session creation (not needed for unauthenticated users)
+	const handleSessionCreation = () => {
+		// Unauthenticated users don't have persistent sessions
+		// This is a no-op handler to satisfy the interface
+	};
+
 	return (
-		<Suspense fallback={null}>
-			<ChatInterface 
-				key={`${agentId}-${sessionId}`}
-				agentId={agentId} 
-				sessionId={sessionId} 
-				initialMessages={[]}
-				isAuthenticated={false}
-				user={null}
-			/>
-		</Suspense>
+		<ChatInterface 
+			key={`${agentId}-${sessionIdRef.current}`}
+			agentId={agentId} 
+			sessionId={sessionIdRef.current} 
+			initialMessages={[]}
+			isNewSession={false} // Unauthenticated sessions are not persisted
+			handleSessionCreation={handleSessionCreation}
+			user={null}
+		/>
 	);
 }

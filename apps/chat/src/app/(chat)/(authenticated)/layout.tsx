@@ -6,7 +6,7 @@ import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
 import { TRPCReactProvider } from "~/trpc/react";
-import { ChatLoadingSkeleton } from "../_components/chat-loading-skeleton";
+import { ChatLoadingSkeleton } from "./_components/chat-loading-skeleton";
 
 interface AuthenticatedLayoutProps {
 	children: React.ReactNode;

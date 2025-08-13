@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
-import { uuidv4 } from "@repo/lib";
-import { AuthenticatedChat } from "./authenticated-chat";
+import { ChatInterface } from "../../_components/chat-interface";
+import { useCreateSession } from "~/hooks/use-create-session";
+import { useSessionId } from "~/hooks/use-session-id";
+import { useTRPC } from "~/trpc/react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -10,22 +12,53 @@ interface NewSessionChatProps {
 
 /**
  * Component for creating new chat sessions.
- * Generates a client-side session ID once per component instance.
+ * Uses useSessionId hook to manage session ID generation and navigation.
+ *
+ * Flow:
+ * 1. User visits /new -> Hook generates a fresh session ID
+ * 2. User types and sends first message
+ * 3. handleSessionCreation() is called -> URL changes to /{sessionId} via replaceState
+ * 4. Component re-renders, hook extracts ID from URL
+ * 5. If user hits back button to /new, a new ID is generated
  */
 export function NewSessionChat({ agentId }: NewSessionChatProps) {
-	// Generate session ID once per component instance using useMemo
-	// This ensures the ID remains stable during the component's lifecycle
-	// but generates a fresh one if the component is unmounted and remounted
-	// This prevents regenerating IDs on soft navigation (back button)
-	const sessionId = useMemo(() => uuidv4(), []);
+	// Use the hook to manage session ID generation and navigation state
+	const { sessionId, isNewSession } = useSessionId();
+
+	// Get user info - using suspense for instant loading
+	const trpc = useTRPC();
+	const { data: user } = useSuspenseQuery({
+		...trpc.auth.user.getUser.queryOptions(),
+		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+	});
+
+	// Hook for creating sessions optimistically
+	const createSession = useCreateSession();
+
+	// Handle session creation when the first message is sent
+	const handleSessionCreation = () => {
+		if (!isNewSession) {
+			// Already transitioned to /{sessionId}, no need to create
+			return;
+		}
+
+		// Update the URL immediately for instant feedback
+		window.history.replaceState({}, "", `/${sessionId}`);
+
+		// Create the session optimistically (fire-and-forget)
+		// The backend will also create it if needed (upsert behavior)
+		// This ensures instant UI updates without blocking message sending
+		createSession.mutate({ id: sessionId });
+	};
 
 	return (
-		<AuthenticatedChat
+		<ChatInterface
 			agentId={agentId}
 			sessionId={sessionId}
 			initialMessages={[]}
-			isNewSession={true}
+			isNewSession={isNewSession}
+			handleSessionCreation={handleSessionCreation}
+			user={user}
 		/>
 	);
 }
-

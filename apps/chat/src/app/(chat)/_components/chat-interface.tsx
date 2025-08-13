@@ -8,34 +8,32 @@ import { RateLimitIndicator } from "./rate-limit-indicator";
 import { useChat } from "@ai-sdk/react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
+import { useModelSelection } from "~/hooks/use-model-selection";
 import { showAIErrorToast } from "~/lib/ai-errors";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
-import { getDefaultModelForUser } from "~/lib/ai/providers";
-import type { ModelId } from "~/lib/ai/providers";
-import { useState, useCallback, useEffect } from "react";
 import type { RouterOutputs } from "@vendor/trpc";
 
 type UserInfo = RouterOutputs["auth"]["user"]["getUser"];
 
 interface ChatInterfaceProps {
 	agentId: string;
-	sessionId: string; // Either a client-generated UUID for new sessions or actual session ID for existing ones
-	initialMessages?: LightfastAppChatUIMessage[];
-	isNewSession?: boolean; // Indicates if this is a new session that needs to be created
-	onFirstMessage?: () => void; // Optional callback for when the first message is sent (used for session creation in authenticated mode)
-	isAuthenticated?: boolean; // Whether the user is authenticated
-	user?: UserInfo | null; // Optional user info from tRPC router
+	sessionId: string;
+	initialMessages: LightfastAppChatUIMessage[];
+	isNewSession: boolean;
+	handleSessionCreation: () => void; // Required - pass no-op function for scenarios where session creation isn't needed
+	user: UserInfo | null; // null for unauthenticated users
 }
 
 export function ChatInterface({
 	agentId,
 	sessionId,
-	initialMessages = [],
-	isNewSession = false,
-	onFirstMessage,
-	isAuthenticated = false,
-	user = null,
+	initialMessages,
+	isNewSession,
+	handleSessionCreation,
+	user,
 }: ChatInterfaceProps) {
+	// Derive authentication status from user presence
+	const isAuthenticated = user !== null;
 	console.log('User data:', user);
 	console.log('isAuthenticated:', isAuthenticated);
 
@@ -48,30 +46,8 @@ export function ChatInterface({
 		isLoading: isLimitLoading,
 	} = useAnonymousMessageLimit();
 
-	// Model selection state - default based on authentication
-	const defaultModel = getDefaultModelForUser(isAuthenticated);
-	const [selectedModelId, setSelectedModelId] =
-		useState<ModelId>(defaultModel);
-
-	// Load persisted model selection after mount
-	useEffect(() => {
-		const storedModel = sessionStorage.getItem("selectedModelId");
-		if (storedModel) {
-			setSelectedModelId(storedModel as ModelId);
-		} else {
-			// If no stored model, use the appropriate default for the user's auth status
-			setSelectedModelId(defaultModel);
-		}
-	}, [defaultModel]);
-
-	// Handle model selection change
-	const handleModelChange = useCallback((value: ModelId) => {
-		setSelectedModelId(value);
-		// Persist to sessionStorage to maintain selection across navigation
-		if (typeof window !== "undefined") {
-			sessionStorage.setItem("selectedModelId", value);
-		}
-	}, []);
+	// Model selection with persistence
+	const { selectedModelId, handleModelChange } = useModelSelection(isAuthenticated);
 
 	// Create transport for AI SDK v5
 	// Uses sessionId directly as the primary key
@@ -112,11 +88,11 @@ export function ChatInterface({
 		}
 
 		try {
-			// Call the onFirstMessage callback if provided (for authenticated mode session creation)
+			// Call handleSessionCreation when this is the first message in a new session
 			// Only call when this is truly the first message (no existing messages)
 			// Fires optimistically - backend will handle session creation if needed
-			if (onFirstMessage && isNewSession && messages.length === 0) {
-				onFirstMessage();
+			if (isNewSession && messages.length === 0) {
+				handleSessionCreation();
 			}
 
 			// Generate UUID for the user message
