@@ -30,6 +30,7 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 			<ActiveMenuItem
 				sessionId={session.id}
 				href={`/${session.id}`}
+				prefetch={true}
 			>
 				{!session.title ? (
 					<div className="relative h-4 w-full flex-1 overflow-hidden rounded">
@@ -60,3 +61,4 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 		</SidebarMenuItem>
 	);
 }
+
