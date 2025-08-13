@@ -1,6 +1,6 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -16,6 +16,7 @@ interface ExistingSessionChatProps {
  */
 export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatProps) {
 	const trpc = useTRPC();
+	const queryClient = useQueryClient();
 	
 	// Get user info - using suspense for instant loading
 	const { data: user } = useSuspenseQuery({
@@ -52,6 +53,13 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 			isNewSession={false}
 			handleSessionCreation={handleSessionCreation}
 			user={user}
+			onFinish={() => {
+				// Invalidate the session query to refresh from database
+				// This ensures the cache is updated with the latest messages
+				void queryClient.invalidateQueries({
+					queryKey: [["chat", "session", "get"], { input: { sessionId }, type: "query" }],
+				});
+			}}
 		/>
 	);
 }

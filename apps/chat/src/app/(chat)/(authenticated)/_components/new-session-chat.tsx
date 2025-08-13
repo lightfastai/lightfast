@@ -4,7 +4,7 @@ import { ChatInterface } from "../../_components/chat-interface";
 import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
 import { useTRPC } from "~/trpc/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -27,6 +27,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 
 	// Get user info - using suspense for instant loading
 	const trpc = useTRPC();
+	const queryClient = useQueryClient();
 	const { data: user } = useSuspenseQuery({
 		...trpc.auth.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
@@ -59,6 +60,13 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 			isNewSession={isNewSession}
 			handleSessionCreation={handleSessionCreation}
 			user={user}
+			onFinish={() => {
+				// Invalidate the session query to ensure cache is populated
+				// This is important for new sessions that didn't exist in cache before
+				void queryClient.invalidateQueries({
+					queryKey: [["chat", "session", "get"], { input: { sessionId }, type: "query" }],
+				});
+			}}
 		/>
 	);
 }

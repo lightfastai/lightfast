@@ -22,6 +22,7 @@ interface ChatInterfaceProps {
 	isNewSession: boolean;
 	handleSessionCreation: () => void; // Required - pass no-op function for scenarios where session creation isn't needed
 	user: UserInfo | null; // null for unauthenticated users
+	onFinish?: () => void; // Optional callback when AI finishes responding
 }
 
 export function ChatInterface({
@@ -31,6 +32,7 @@ export function ChatInterface({
 	isNewSession,
 	handleSessionCreation,
 	user,
+	onFinish,
 }: ChatInterfaceProps) {
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
@@ -68,6 +70,7 @@ export function ChatInterface({
 		onError: (error) => {
 			showAIErrorToast(error, "Chat error occurred");
 		},
+		onFinish: onFinish,
 		resume:
 			initialMessages.length > 0 &&
 			initialMessages[initialMessages.length - 1]?.role === "user",
