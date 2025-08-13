@@ -10,18 +10,14 @@ interface AuthenticatedLayoutProps {
 	children: React.ReactNode;
 }
 
-// Server component layout - provides authentication check and chat UI
+// Shared layout for all authenticated pages (new, [sessionId])
 export default function AuthenticatedLayout({
 	children,
 }: AuthenticatedLayoutProps) {
-	// Removed blocking auth check - middleware handles authentication
-	// This eliminates the blocking call on navigation
-
 	// Prefetch user data for instant loading
 	prefetch(trpc.auth.user.getUser.queryOptions());
 	
-	// Prefetch pinned sessions for instant loading with Suspense
-	// This will be available for all authenticated pages (new, [sessionId])
+	// Prefetch pinned sessions for sidebar
 	prefetch(trpc.chat.session.listPinned.queryOptions());
 
 	// Note: We don't prefetch infinite sessions here because:
