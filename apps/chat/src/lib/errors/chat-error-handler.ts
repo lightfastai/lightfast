@@ -1,369 +1,105 @@
-import { toast } from "sonner";
-import type { AISDKError } from "ai";
 import { ErrorCode } from "@repo/ui/components/lightfast-error-page";
-
-export enum ChatErrorType {
-  // Network & Connection
-  NETWORK = "NETWORK",
-  TIMEOUT = "TIMEOUT",
-  
-  // Rate Limiting & Security
-  RATE_LIMIT = "RATE_LIMIT",
-  BOT_DETECTION = "BOT_DETECTION",
-  
-  // Authentication & Authorization
-  AUTHENTICATION = "AUTHENTICATION",
-  MODEL_ACCESS_DENIED = "MODEL_ACCESS_DENIED",
-  
-  // Model & API Issues
-  MODEL_UNAVAILABLE = "MODEL_UNAVAILABLE",
-  INVALID_MODEL = "INVALID_MODEL",
-  NO_CONTENT = "NO_CONTENT",
-  
-  // Request Issues
-  INVALID_REQUEST = "INVALID_REQUEST",
-  INVALID_MESSAGE = "INVALID_MESSAGE",
-  
-  // Server Issues
-  SERVER_ERROR = "SERVER_ERROR",
-  INTERNAL_ERROR = "INTERNAL_ERROR",
-  
-  // Unknown
-  UNKNOWN = "UNKNOWN",
-}
-
-export interface ChatError {
-  type: ChatErrorType;
-  message: string;
-  details?: string;
-  retryable: boolean;
-  actionLabel?: string;
-  action?: () => void;
-  statusCode?: number;
-}
+import { 
+  ChatErrorType, 
+  type ApiErrorResponse, 
+  type ChatError,
+  isApiErrorResponse 
+} from "./types";
 
 export class ChatErrorHandler {
-  private static parseErrorResponse(error: unknown): { 
-    statusCode?: number; 
-    errorMessage?: string; 
-    errorCode?: string;
-  } {
-    // Handle fetch response errors
-    if (error && typeof error === 'object' && 'status' in error) {
-      return { 
-        statusCode: (error as any).status,
-        errorMessage: (error as any).statusText
-      };
+  // Parse the error to extract API error response if available
+  private static parseApiError(error: unknown): ApiErrorResponse | null {
+    // First check if it's already an API error response
+    if (isApiErrorResponse(error)) {
+      return error;
     }
     
-    // Handle AI SDK errors
-    if (error && typeof error === 'object' && 'name' in error) {
-      const aiError = error as AISDKError;
-      
-      // Extract status code if available
-      let statusCode: number | undefined;
-      if ('statusCode' in aiError) {
-        statusCode = (aiError as any).statusCode;
-      } else if ('cause' in aiError && aiError.cause && typeof aiError.cause === 'object' && 'status' in aiError.cause) {
-        statusCode = (aiError.cause as any).status;
+    // AI SDK wraps our JSON response in an Error object's message field
+    if (error instanceof Error && error.message) {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (isApiErrorResponse(parsed)) {
+          console.log('[Chat Error Handler] Successfully parsed API error from message:', parsed);
+          return parsed;
+        }
+      } catch (e) {
+        // Not valid JSON, continue checking other patterns
       }
-      
+    }
+    
+    // Check if it's wrapped in other properties
+    if (error && typeof error === 'object') {
+      // Check various properties where the error might be nested
+      const possibleProps = ['cause', 'response', 'data', 'body'];
+      for (const prop of possibleProps) {
+        if (prop in error) {
+          const value = (error as any)[prop];
+          if (isApiErrorResponse(value)) {
+            return value;
+          }
+          // Check one level deeper
+          if (value && typeof value === 'object' && 'body' in value) {
+            if (isApiErrorResponse(value.body)) {
+              return value.body;
+            }
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  // Since all errors go to error boundary, we just need to extract the error info
+  static extractErrorInfo(error: unknown): ChatError {
+    // Try to get the API error response
+    const apiError = this.parseApiError(error);
+    
+    if (apiError) {
+      // We have a structured API error, use it directly
       return {
-        statusCode,
-        errorMessage: aiError.message,
-        errorCode: aiError.name
+        type: apiError.type,
+        message: apiError.message,
+        details: apiError.error,
+        retryable: false, // All errors go to error boundary, no retry
+        statusCode: apiError.statusCode,
+        metadata: apiError.metadata,
       };
     }
     
-    // Handle standard Error objects
-    if (error instanceof Error) {
-      return { errorMessage: error.message };
+    // Fallback for non-API errors (network failures, etc.)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Basic classification for non-API errors
+    let type = ChatErrorType.UNKNOWN;
+    let statusCode = 500;
+    
+    if (errorMessage.toLowerCase().includes('network') || 
+        errorMessage.toLowerCase().includes('fetch')) {
+      type = ChatErrorType.NETWORK;
+      statusCode = 503;
+    } else if (errorMessage.toLowerCase().includes('timeout')) {
+      type = ChatErrorType.TIMEOUT;
+      statusCode = 504;
     }
     
-    return {};
+    return {
+      type,
+      message: "Something went wrong",
+      details: errorMessage,
+      retryable: false,
+      statusCode,
+    };
   }
 
-  private static classifyError(error: unknown): ChatErrorType {
-    const { statusCode, errorMessage, errorCode } = this.parseErrorResponse(error);
-    const message = (errorMessage || '').toLowerCase();
-    const code = (errorCode || '').toLowerCase();
-    
-    // Status code based classification
-    if (statusCode) {
-      switch (statusCode) {
-        case 429:
-          return ChatErrorType.RATE_LIMIT;
-        case 401:
-          return ChatErrorType.AUTHENTICATION;
-        case 403:
-          // Check specific 403 reasons
-          if (message.includes('bot')) return ChatErrorType.BOT_DETECTION;
-          if (message.includes('model') || message.includes('access')) return ChatErrorType.MODEL_ACCESS_DENIED;
-          return ChatErrorType.AUTHENTICATION;
-        case 400:
-          return ChatErrorType.INVALID_REQUEST;
-        case 404:
-          if (message.includes('model')) return ChatErrorType.INVALID_MODEL;
-          return ChatErrorType.INVALID_REQUEST;
-        case 500:
-        case 502:
-        case 503:
-        case 504:
-          return ChatErrorType.SERVER_ERROR;
-      }
-    }
-    
-    // AI SDK error code classification
-    if (code.includes('apiCall')) return ChatErrorType.NETWORK;
-    if (code.includes('noContent')) return ChatErrorType.NO_CONTENT;
-    if (code.includes('noSuchModel')) return ChatErrorType.INVALID_MODEL;
-    if (code.includes('invalidMessage')) return ChatErrorType.INVALID_MESSAGE;
-    if (code.includes('retry')) return ChatErrorType.NETWORK;
-    
-    // Message-based classification
-    if (message.includes('network') || message.includes('fetch') || message.includes('connection')) {
-      return ChatErrorType.NETWORK;
-    }
-    if (message.includes('timeout')) {
-      return ChatErrorType.TIMEOUT;
-    }
-    if (message.includes('rate') || message.includes('limit') || message.includes('too many')) {
-      return ChatErrorType.RATE_LIMIT;
-    }
-    if (message.includes('bot')) {
-      return ChatErrorType.BOT_DETECTION;
-    }
-    if (message.includes('model') && message.includes('access')) {
-      return ChatErrorType.MODEL_ACCESS_DENIED;
-    }
-    if (message.includes('model') || message.includes('unavailable')) {
-      return ChatErrorType.MODEL_UNAVAILABLE;
-    }
-    if (message.includes('auth') || message.includes('unauthorized')) {
-      return ChatErrorType.AUTHENTICATION;
-    }
-    if (message.includes('invalid') || message.includes('validation')) {
-      return ChatErrorType.INVALID_REQUEST;
-    }
-    if (message.includes('server') || message.includes('internal')) {
-      return ChatErrorType.SERVER_ERROR;
-    }
-    
-    return ChatErrorType.UNKNOWN;
-  }
-
-  static handleError(
-    error: unknown,
-    options?: {
-      onRetry?: () => void;
-      showToast?: boolean;
-      customMessage?: string;
-    }
-  ): ChatError {
-    const errorType = this.classifyError(error);
-    const { onRetry, showToast = true, customMessage } = options || {};
-    const { statusCode } = this.parseErrorResponse(error);
-    
-    let chatError: ChatError;
-    
-    switch (errorType) {
-      case ChatErrorType.NETWORK:
-        chatError = {
-          type: ChatErrorType.NETWORK,
-          message: customMessage || "Connection issue",
-          details: "Check your internet connection and try again.",
-          retryable: true,
-          actionLabel: "Retry",
-          action: onRetry,
-          statusCode,
-        };
-        break;
-        
-      case ChatErrorType.TIMEOUT:
-        chatError = {
-          type: ChatErrorType.TIMEOUT,
-          message: customMessage || "Request timed out",
-          details: "The request took too long. Please try again.",
-          retryable: true,
-          actionLabel: "Retry",
-          action: onRetry,
-          statusCode,
-        };
-        break;
-        
-      case ChatErrorType.RATE_LIMIT:
-        chatError = {
-          type: ChatErrorType.RATE_LIMIT,
-          message: customMessage || "Rate limit reached",
-          details: "You've sent too many messages. Please wait a moment.",
-          retryable: false,
-          statusCode: 429,
-        };
-        break;
-        
-      case ChatErrorType.BOT_DETECTION:
-        chatError = {
-          type: ChatErrorType.BOT_DETECTION,
-          message: customMessage || "Automated activity detected",
-          details: "Please verify you're human to continue.",
-          retryable: false,
-          statusCode: 403,
-        };
-        break;
-        
-      case ChatErrorType.MODEL_ACCESS_DENIED:
-        chatError = {
-          type: ChatErrorType.MODEL_ACCESS_DENIED,
-          message: customMessage || "Model requires authentication",
-          details: "Sign in to use this AI model.",
-          retryable: false,
-          statusCode: 403,
-        };
-        break;
-        
-      case ChatErrorType.MODEL_UNAVAILABLE:
-        chatError = {
-          type: ChatErrorType.MODEL_UNAVAILABLE,
-          message: customMessage || "Model temporarily unavailable",
-          details: "Try a different model or wait a moment.",
-          retryable: true,
-          actionLabel: "Retry",
-          action: onRetry,
-          statusCode,
-        };
-        break;
-        
-      case ChatErrorType.INVALID_MODEL:
-        chatError = {
-          type: ChatErrorType.INVALID_MODEL,
-          message: customMessage || "Invalid model selected",
-          details: "Please select a different model.",
-          retryable: false,
-          statusCode: 404,
-        };
-        break;
-        
-      case ChatErrorType.NO_CONTENT:
-        chatError = {
-          type: ChatErrorType.NO_CONTENT,
-          message: customMessage || "No response generated",
-          details: "The AI couldn't generate a response. Try rephrasing.",
-          retryable: true,
-          actionLabel: "Retry",
-          action: onRetry,
-          statusCode,
-        };
-        break;
-        
-      case ChatErrorType.AUTHENTICATION:
-        chatError = {
-          type: ChatErrorType.AUTHENTICATION,
-          message: customMessage || "Authentication required",
-          details: "Please sign in to continue.",
-          retryable: false,
-          statusCode: 401,
-        };
-        break;
-        
-      case ChatErrorType.INVALID_REQUEST:
-        chatError = {
-          type: ChatErrorType.INVALID_REQUEST,
-          message: customMessage || "Invalid request",
-          details: "Your message couldn't be processed. Try rephrasing.",
-          retryable: true,
-          actionLabel: "Edit & Retry",
-          action: onRetry,
-          statusCode: 400,
-        };
-        break;
-        
-      case ChatErrorType.INVALID_MESSAGE:
-        chatError = {
-          type: ChatErrorType.INVALID_MESSAGE,
-          message: customMessage || "Message format error",
-          details: "Your message format is invalid. Please try again.",
-          retryable: true,
-          actionLabel: "Retry",
-          action: onRetry,
-          statusCode: 400,
-        };
-        break;
-        
-      case ChatErrorType.SERVER_ERROR:
-        chatError = {
-          type: ChatErrorType.SERVER_ERROR,
-          message: customMessage || "Server error",
-          details: "Our servers are having issues. Please try again.",
-          retryable: true,
-          actionLabel: "Retry",
-          action: onRetry,
-          statusCode: statusCode || 500,
-        };
-        break;
-        
-      case ChatErrorType.INTERNAL_ERROR:
-        chatError = {
-          type: ChatErrorType.INTERNAL_ERROR,
-          message: customMessage || "Something went wrong",
-          details: "An unexpected error occurred. Please try again.",
-          retryable: true,
-          actionLabel: "Retry",
-          action: onRetry,
-          statusCode: 500,
-        };
-        break;
-        
-      default:
-        chatError = {
-          type: ChatErrorType.UNKNOWN,
-          message: customMessage || "Something went wrong",
-          details: error instanceof Error ? error.message : "Please try again later.",
-          retryable: true,
-          actionLabel: "Try Again",
-          action: onRetry,
-          statusCode,
-        };
-    }
+  // Since ALL errors go to error boundary, we just extract and log
+  static handleError(error: unknown): ChatError {
+    const chatError = this.extractErrorInfo(error);
     
     // Log error for debugging
-    console.error(`[Chat Error] Type: ${errorType}, Status: ${statusCode}`, error);
-    
-    // Show toast notification if requested
-    if (showToast) {
-      this.showErrorToast(chatError);
-    }
+    console.error(`[Chat Error] Type: ${chatError.type}, Status: ${chatError.statusCode}`, error);
     
     return chatError;
-  }
-
-  private static showErrorToast(error: ChatError): void {
-    // Standard duration for streaming errors (non-persistent errors)
-    // Persistent errors (rate limit, auth, etc.) now go to error boundaries
-    const duration = 4000;
-    
-    toast.error(error.message, {
-      description: error.details,
-      duration,
-      action: error.action && error.actionLabel ? {
-        label: error.actionLabel,
-        onClick: error.action,
-      } : undefined,
-    });
-  }
-  
-  // Helper to determine if error should show inline in chat
-  // Only for streaming errors that remain in the chat UI
-  static shouldShowInline(error: ChatError): boolean {
-    return [
-      ChatErrorType.NETWORK,
-      ChatErrorType.TIMEOUT,
-      ChatErrorType.MODEL_UNAVAILABLE,
-      ChatErrorType.NO_CONTENT,
-      ChatErrorType.INVALID_REQUEST,
-      ChatErrorType.INVALID_MESSAGE,
-      ChatErrorType.SERVER_ERROR,
-      ChatErrorType.INTERNAL_ERROR,
-    ].includes(error.type);
   }
 
   // Get error page configuration for error boundaries
@@ -371,61 +107,75 @@ export class ChatErrorHandler {
     error: Error & { digest?: string },
     context: "session" | "new" | "unauthenticated"
   ): { errorCode: ErrorCode; description: string } {
-    // Context-specific default descriptions
-    let description = "Something went wrong with the chat.";
-    switch (context) {
-      case "session":
-        description = "Something went wrong with this chat session.";
-        break;
-      case "new":
-        description = "Something went wrong starting a new chat.";
-        break;
-      case "unauthenticated":
-        description = "Something went wrong. Please try again.";
-        break;
-    }
-
-    // Check for status code in error object
-    const status = (error as any)?.status ?? (error as any)?.statusCode;
-    const message = error.message?.toLowerCase() ?? "";
+    // Extract the chat error to get type and status code
+    const chatError = this.extractErrorInfo(error);
     
-    if (status === 429 || message.includes("rate limit")) {
-      return {
-        errorCode: ErrorCode.TooManyRequests,
-        description: "You've sent too many messages. Please wait a moment and try again."
-      };
-    } else if (status === 401 || message.includes("unauthorized")) {
-      return {
-        errorCode: ErrorCode.Unauthorized,
-        description: "Please sign in to continue."
-      };
-    } else if (status === 403 || message.includes("forbidden") || message.includes("bot")) {
-      return {
-        errorCode: ErrorCode.Forbidden,
-        description: message.includes("bot") 
-          ? "Automated activity detected. Please verify you're human."
-          : "Access denied. You don't have permission to access this resource."
-      };
-    } else if (status === 404 || message.includes("not found")) {
-      return {
-        errorCode: ErrorCode.NotFound,
-        description: "The requested resource was not found."
-      };
-    } else if (status === 503 || message.includes("unavailable")) {
-      return {
-        errorCode: ErrorCode.ServiceUnavailable,
-        description: "Service is temporarily unavailable. Please try again later."
-      };
-    } else if (status === 400 || message.includes("bad request")) {
-      return {
-        errorCode: ErrorCode.BadRequest,
-        description: "Invalid request. Please check your input and try again."
-      };
+    // Use the pre-classified error type from API
+    switch (chatError.type) {
+      case ChatErrorType.RATE_LIMIT:
+        return {
+          errorCode: ErrorCode.TooManyRequests,
+          description: chatError.message || "You've sent too many messages. Please wait a moment and try again."
+        };
+        
+      case ChatErrorType.AUTHENTICATION:
+        return {
+          errorCode: ErrorCode.Unauthorized,
+          description: chatError.message || "Please sign in to continue."
+        };
+        
+      case ChatErrorType.BOT_DETECTION:
+      case ChatErrorType.SECURITY_BLOCKED:
+      case ChatErrorType.MODEL_ACCESS_DENIED:
+        return {
+          errorCode: ErrorCode.Forbidden,
+          description: chatError.message || "Access denied. You don't have permission to access this resource."
+        };
+        
+      case ChatErrorType.INVALID_MODEL:
+      case ChatErrorType.INVALID_REQUEST:
+        return {
+          errorCode: ErrorCode.BadRequest,
+          description: chatError.message || "Invalid request. Please check your input and try again."
+        };
+        
+      case ChatErrorType.SERVICE_UNAVAILABLE:
+      case ChatErrorType.MODEL_UNAVAILABLE:
+        return {
+          errorCode: ErrorCode.ServiceUnavailable,
+          description: chatError.message || "Service is temporarily unavailable. Please try again later."
+        };
+        
+      case ChatErrorType.NETWORK:
+      case ChatErrorType.TIMEOUT:
+        return {
+          errorCode: ErrorCode.ServiceUnavailable,
+          description: chatError.message || "Connection issue. Please check your internet and try again."
+        };
+        
+      case ChatErrorType.SERVER_ERROR:
+      case ChatErrorType.UNKNOWN:
+      default:
+        // Context-specific default descriptions for server errors
+        let description = chatError.message || "Something went wrong.";
+        if (!chatError.message) {
+          switch (context) {
+            case "session":
+              description = "Something went wrong with this chat session.";
+              break;
+            case "new":
+              description = "Something went wrong starting a new chat.";
+              break;
+            case "unauthenticated":
+              description = "Something went wrong. Please try again.";
+              break;
+          }
+        }
+        
+        return {
+          errorCode: ErrorCode.InternalServerError,
+          description
+        };
     }
-
-    return {
-      errorCode: ErrorCode.InternalServerError,
-      description
-    };
   }
 }

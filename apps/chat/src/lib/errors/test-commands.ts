@@ -1,4 +1,6 @@
 import { env } from "~/env";
+import { ApiErrors } from "./api-error-builder";
+import { uuidv4 } from "@lightfast/core/v2/utils";
 
 /**
  * Development-only error testing commands
@@ -30,88 +32,48 @@ export function handleTestErrorCommand(message: string): Response | null {
 	const command = message.replace("/test error", "").trim();
 	console.log(`[Test Mode] Triggering error: ${command}`);
 
+	const requestId = uuidv4();
+	
 	switch (command) {
 		case "rate-limit":
 		case "429":
-			return new Response(
-				JSON.stringify({ 
-					error: {
-						message: "Too many requests. Please try again later.",
-						type: "rate_limit_error",
-						code: "rate_limit_exceeded"
-					}
-				}),
-				{ 
-					status: 429,
-					headers: { 'Content-Type': 'application/json' }
-				}
-			);
+			return ApiErrors.rateLimitExceeded({ requestId, isAnonymous: true });
 
 		case "bot":
 		case "bot-detection":
-			return Response.json(
-				{ error: "Bot detection triggered" },
-				{ status: 403 }
-			);
+			return ApiErrors.botDetected({ requestId, isAnonymous: true });
 
 		case "model-access":
 		case "model-denied":
-			return Response.json(
-				{ 
-					error: "Access denied", 
-					message: "This model requires authentication. Please sign in to use this model." 
-				},
-				{ status: 403 }
-			);
+			return ApiErrors.modelAccessDenied("test-model", { requestId, isAnonymous: true });
 
 		case "auth":
 		case "401":
-			return Response.json(
-				{ error: "Unauthorized" },
-				{ status: 401 }
-			);
+			return ApiErrors.authenticationUnavailable({ requestId });
 
 		case "bad-request":
 		case "400":
-			return Response.json(
-				{ error: "Invalid request format" },
-				{ status: 400 }
-			);
+			return ApiErrors.invalidPath({ requestId });
 
 		case "not-found":
 		case "404":
-			return Response.json(
-				{ error: "Resource not found" },
-				{ status: 404 }
-			);
+			return ApiErrors.agentNotFound("test-agent", { requestId });
 
 		case "server":
 		case "500":
-			return Response.json(
-				{ error: "Internal server error", code: "INTERNAL_SERVER_ERROR" },
-				{ status: 500 }
-			);
+			return ApiErrors.internalError(new Error("Test server error"), { requestId });
 
 		case "bad-gateway":
 		case "502":
-			return Response.json(
-				{ error: "Bad gateway" },
-				{ status: 502 }
-			);
+			return ApiErrors.internalError(new Error("Bad gateway"), { requestId });
 
 		case "unavailable":
 		case "503":
-			return Response.json(
-				{ error: "Service temporarily unavailable" },
-				{ status: 503 }
-			);
+			return ApiErrors.memoryInitFailed({ requestId });
 
 		case "timeout":
 		case "504":
-			return Response.json(
-				{ error: "Gateway timeout" },
-				{ status: 504 }
-			);
+			return ApiErrors.internalError(new Error("Gateway timeout"), { requestId });
 
 		case "help":
 			// Return help message as a successful response

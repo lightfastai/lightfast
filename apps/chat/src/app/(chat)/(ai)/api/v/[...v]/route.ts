@@ -3,7 +3,11 @@ import { createAgent } from "@lightfast/core/agent";
 import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import type { ModelId } from "~/lib/ai/providers";
-import { getModelConfig, getModelStreamingDelay, MODELS } from "~/lib/ai/providers";
+import {
+	getModelConfig,
+	getModelStreamingDelay,
+	MODELS,
+} from "~/lib/ai/providers";
 import {
 	BraintrustMiddleware,
 	currentSpan,
@@ -21,7 +25,11 @@ import { auth } from "@clerk/nextjs/server";
 import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
 import { AnonymousRedisMemory } from "~/ai/runtime/memory/redis";
 import { env } from "~/env";
-import { isTestErrorCommand, handleTestErrorCommand } from "~/lib/errors/test-commands";
+import {
+	isTestErrorCommand,
+	handleTestErrorCommand,
+} from "~/lib/errors/test-commands";
+import { ApiErrors } from "~/lib/errors/api-error-builder";
 import {
 	arcjet,
 	shield,
@@ -55,12 +63,15 @@ const anonymousArcjet = arcjet({
 		// Shield protects against common attacks
 		shield({ mode: "LIVE" }),
 		// Block all bots for anonymous users (disabled in dev for testing)
-		detectBot({ mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE", allow: [] }),
+		detectBot({
+			mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+			allow: [],
+		}),
 		// Fixed window: 10 requests per day (86400 seconds)
-		slidingWindow({ 
-			mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE", 
-			max: 10, 
-			interval: 86400 // 24 hours in seconds
+		slidingWindow({
+			mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+			max: 10,
+			interval: 86400, // 24 hours in seconds
 		}),
 		// Token bucket: Very limited for anonymous
 		tokenBucket({
@@ -82,30 +93,26 @@ const handler = async (
 
 	// Extract agentId and sessionId
 	const [agentId, sessionId] = v;
-	
+
 	// Server determines authentication status - no client control
 	let authenticatedUserId: string | null;
+	const requestId = uuidv4();
+
 	try {
 		const authResult = await auth();
 		authenticatedUserId = authResult.userId;
 	} catch (error) {
 		console.error(`[API] Authentication check failed:`, error);
-		return Response.json(
-			{ 
-				error: "Authentication service unavailable", 
-				message: "Unable to verify authentication status. Please try again later." 
-			},
-			{ status: 503 }
-		);
+		return ApiErrors.authenticationUnavailable({ requestId });
 	}
-	
+
 	// Server decides if this is anonymous based on actual auth state
 	const isAnonymous = !authenticatedUserId;
-	
+
 	// Apply rate limiting for anonymous users
 	if (isAnonymous) {
 		const decision = await anonymousArcjet.protect(req, { requested: 1 });
-		
+
 		if (decision.isDenied()) {
 			const check = checkDecision(decision);
 			console.warn(`[Security] Anonymous request denied:`, {
@@ -116,46 +123,22 @@ const handler = async (
 
 			// Create appropriate error response based on denial reason
 			if (check.isRateLimit) {
-				return Response.json(
-					{ 
-						error: "Rate limit exceeded", 
-						message: "You've reached the daily message limit for anonymous users. Please sign in to continue." 
-					},
-					{ status: 429 }
-				);
+				return ApiErrors.rateLimitExceeded({ requestId, isAnonymous: true });
 			}
 
 			if (check.isBot) {
-				return Response.json(
-					{ 
-						error: "Bot detection triggered",
-						message: "Automated activity detected. Please verify you're human to continue."
-					},
-					{ status: 403 }
-				);
+				return ApiErrors.botDetected({ requestId, isAnonymous: true });
 			}
 
 			if (check.isShield) {
-				return Response.json(
-					{ 
-						error: "Request blocked",
-						message: "Your request was blocked for security reasons. Please try again."
-					},
-					{ status: 403 }
-				);
+				return ApiErrors.securityBlocked({ requestId, isAnonymous: true });
 			}
 
 			// Generic denial
-			return Response.json(
-				{ 
-					error: "Access denied",
-					message: "Your request was denied. Please try again later."
-				},
-				{ status: 403 }
-			);
+			return ApiErrors.securityBlocked({ requestId, isAnonymous: true });
 		}
 	}
-	
+
 	// Set userId based on authentication status
 	let userId: string;
 	if (isAnonymous) {
@@ -167,15 +150,12 @@ const handler = async (
 
 	// Validate params
 	if (!agentId || !sessionId) {
-		return Response.json(
-			{ error: "Invalid path. Expected /api/v/[agentId]/[sessionId]" },
-			{ status: 400 },
-		);
+		return ApiErrors.invalidPath({ requestId });
 	}
 
 	// Validate agent exists
 	if (agentId !== "c010") {
-		return Response.json({ error: "Agent not found" }, { status: 404 });
+		return ApiErrors.agentNotFound(agentId, { requestId });
 	}
 
 	// Define the handler function that will be used for both GET and POST
@@ -184,20 +164,21 @@ const handler = async (
 			// Extract modelId and messages from request body for POST requests
 			let selectedModelId: ModelId = "openai/gpt-5-nano"; // Default model
 			let lastUserMessage = "";
-			
+
 			if (req.method === "POST") {
 				try {
-					const requestBody = await req.clone().json() as { 
+					const requestBody = (await req.clone().json()) as {
 						modelId?: string;
 						messages?: { role: string; parts?: { text?: string }[] }[];
 					};
 					if (requestBody.modelId && typeof requestBody.modelId === "string") {
 						selectedModelId = requestBody.modelId as ModelId;
 					}
-					
+
 					// Extract last user message for command detection
 					if (requestBody.messages && Array.isArray(requestBody.messages)) {
-						const lastMessage = requestBody.messages[requestBody.messages.length - 1];
+						const lastMessage =
+							requestBody.messages[requestBody.messages.length - 1];
 						if (lastMessage?.role === "user" && lastMessage.parts?.[0]?.text) {
 							lastUserMessage = lastMessage.parts[0].text;
 						}
@@ -207,7 +188,7 @@ const handler = async (
 					console.warn("Failed to parse request body:", error);
 				}
 			}
-			
+
 			// Development-only: Check for test error commands
 			if (isTestErrorCommand(lastUserMessage)) {
 				const testResponse = handleTestErrorCommand(lastUserMessage);
@@ -219,29 +200,25 @@ const handler = async (
 			// Validate model exists before getting configuration
 			if (!(selectedModelId in MODELS)) {
 				console.warn(`[API] Invalid model requested: ${selectedModelId}`);
-				return Response.json(
-					{ 
-						error: "Invalid model", 
-						message: `Model '${selectedModelId}' not found. Please select a valid model.` 
-					},
-					{ status: 400 }
-				);
+				return ApiErrors.invalidModel(selectedModelId, {
+					requestId,
+					isAnonymous,
+				});
 			}
 
 			// Get model configuration
 			const modelConfig = getModelConfig(selectedModelId);
 			const streamingDelay = getModelStreamingDelay(selectedModelId);
-			
+
 			// Validate model access based on authentication status
 			if (isAnonymous && modelConfig.accessLevel === "authenticated") {
-				console.warn(`[Security] Anonymous user attempted to use authenticated model: ${selectedModelId}`);
-				return Response.json(
-					{ 
-						error: "Access denied", 
-						message: "This model requires authentication. Please sign in to use this model." 
-					},
-					{ status: 403 }
+				console.warn(
+					`[Security] Anonymous user attempted to use authenticated model: ${selectedModelId}`,
 				);
+				return ApiErrors.modelAccessDenied(selectedModelId, {
+					requestId,
+					isAnonymous: true,
+				});
 			}
 
 			// For Vercel AI Gateway, use the model name directly
@@ -249,7 +226,9 @@ const handler = async (
 			const gatewayModelString = modelConfig.name;
 
 			// Log model selection for debugging
-			console.log(`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms)`);
+			console.log(
+				`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms)`,
+			);
 
 			// Create memory instance based on authentication status
 			let memory;
@@ -262,13 +241,7 @@ const handler = async (
 					: new PlanetScaleMemory();
 			} catch (error) {
 				console.error(`[API] Failed to create memory instance:`, error);
-				return Response.json(
-					{ 
-						error: "Service initialization failed", 
-						message: "Unable to initialize chat memory. Please try again later." 
-					},
-					{ status: 503 }
-				);
+				return ApiErrors.memoryInitFailed({ requestId, isAnonymous });
 			}
 
 			// Pass everything to fetchRequestHandler with inline agent
@@ -380,9 +353,9 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 			});
 
 			// Return a generic 500 error
-			return Response.json(
-				{ error: "Internal server error", code: "INTERNAL_SERVER_ERROR" },
-				{ status: 500 },
+			return ApiErrors.internalError(
+				error instanceof Error ? error : new Error(String(error)),
+				{ requestId, agentId, sessionId, userId, isAnonymous },
 			);
 		}
 	};

@@ -71,13 +71,8 @@ export function ErrorTestPanel({ onTriggerError }: ErrorTestPanelProps) {
       }
 
       if (error) {
-        // Use the error handler to process it
-        const chatError = ChatErrorHandler.handleError(error, {
-          showToast: true,
-          onRetry: () => {
-            console.log("Retry clicked");
-          },
-        });
+        // Use the error handler to process it (ALL errors go to error boundary now)
+        const chatError = ChatErrorHandler.handleError(error);
 
         setLastError(`${chatError.type}: ${chatError.message}`);
         
