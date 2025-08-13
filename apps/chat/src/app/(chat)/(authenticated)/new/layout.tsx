@@ -11,7 +11,7 @@ interface AuthenticatedLayoutProps {
 }
 
 // Server component layout - provides authentication check and chat UI
-export default async function AuthenticatedLayout({
+export default function AuthenticatedLayout({
 	children,
 }: AuthenticatedLayoutProps) {
 	// Removed blocking auth check - middleware handles authentication
