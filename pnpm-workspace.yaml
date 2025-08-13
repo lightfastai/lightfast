@@ -46,17 +46,6 @@ catalogs:
     postcss: 8.5.6
     '@tailwindcss/postcss': 4.1.11
     '@tailwindcss/typography': ^0.5.16
-onlyBuiltDependencies:
-  - '@clerk/shared'
-  - '@sentry/cli'
-  - '@tailwindcss/oxide'
-  - '@vercel/speed-insights'
-  - bufferutil
-  - core-js
-  - core-js-pure
-  - esbuild
-  - protobufjs
-  - sharp
 ignoredBuiltDependencies:
   - bufferutil
   - core-js
