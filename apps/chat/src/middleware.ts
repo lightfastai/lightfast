@@ -9,11 +9,12 @@ import type { NextRequest } from "next/server";
 
 const clerkConfig = getClerkMiddlewareConfig("chat");
 
-// Define protected routes - everything except public routes should require auth
-const isPublicRoute = createRouteMatcher([
-	"/", 
-	"/api/health",
-	"/api/v/(.*)" // Allow anonymous access to AI API routes
+// Define routes that need protection
+// Note: /new and /[sessionId] are NOT here because they're already in (authenticated) route group
+// "/" is public, "/api/health" is public, "/api/v/*" is public
+const isProtectedRoute = createRouteMatcher([
+	// Add any routes that need protection here
+	// Currently empty since all our routes are either public or already protected
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
@@ -23,16 +24,16 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 		return preflightResponse;
 	}
 
-	// Get auth state
-	const { userId } = await auth();
-
-	// Redirect authenticated users from / to /new
-	if (userId && req.nextUrl.pathname === "/") {
-		return NextResponse.redirect(new URL("/new", req.url));
+	// Only get auth state when needed for redirects
+	if (req.nextUrl.pathname === "/") {
+		const { userId } = await auth();
+		if (userId) {
+			return NextResponse.redirect(new URL("/new", req.url));
+		}
 	}
 
-	// If it's not a public route, protect it
-	if (!isPublicRoute(req)) {
+	// Only protect routes that explicitly need protection
+	if (isProtectedRoute(req)) {
 		await auth.protect();
 	}
 
