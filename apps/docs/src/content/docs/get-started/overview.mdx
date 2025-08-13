@@ -1,6 +1,119 @@
 ---
 title: Overview
-description: Introduction to Lightfast 
+description: Introduction to Lightfast Core - A modern AI agent framework
 ---
 
-We are currently working on this page
+# Lightfast Core
+
+Lightfast Core is a production-ready AI agent framework built on top of Vercel AI SDK. It provides a streamlined, type-safe way to build AI agents with advanced features like memory management, tool factories, and provider-specific optimizations.
+
+## Why Lightfast Core?
+
+Building production AI agents requires more than just calling an LLM API. You need:
+
+- **Stateful conversations** - Manage conversation history across sessions
+- **Context-aware tools** - Tools that can access runtime context like user IDs and session data
+- **Provider optimizations** - Leverage provider-specific features like Anthropic's prompt caching
+- **Production-ready handlers** - Battle-tested request handlers for Next.js and other frameworks
+- **Type safety** - Full TypeScript support with strong typing throughout
+
+Lightfast Core provides all of this in a clean, composable API that integrates seamlessly with your existing stack.
+
+## Core Architecture
+
+Lightfast Core is built around three main concepts:
+
+### 1. Agents
+Agents are the core abstraction that combines a language model with tools, memory, and system prompts. They handle the complexity of managing conversations while providing a simple streaming interface.
+
+```typescript
+const agent = createAgent({
+  name: "assistant",
+  system: "You are a helpful AI assistant.",
+  model: gateway("anthropic/claude-4-sonnet"),
+  tools: myTools,
+  createRuntimeContext: ({ sessionId, resourceId }) => ({
+    userId: resourceId,
+    sessionId,
+  }),
+});
+```
+
+### 2. Tools with Runtime Context
+Unlike traditional tools, Lightfast tools can access runtime context like user IDs, session data, and request information. This enables building secure, context-aware tools without global state.
+
+```typescript
+const searchTool = createTool({
+  description: "Search the web",
+  inputSchema: z.object({ query: z.string() }),
+  execute: async ({ query }, context) => {
+    // Access runtime context in tool execution
+    console.log("User:", context.userId);
+    return performSearch(query);
+  },
+});
+```
+
+### 3. Memory Adapters
+Memory adapters provide persistent conversation history with support for different backends. The framework includes Redis and in-memory adapters out of the box.
+
+```typescript
+const memory = new RedisMemory({
+  url: process.env.REDIS_URL,
+  token: process.env.REDIS_TOKEN,
+});
+```
+
+## Key Features
+
+- **🚀 Production Ready** - Battle-tested in production environments
+- **🔒 Type Safe** - Full TypeScript support with inference
+- **⚡ Provider Optimized** - Leverage Anthropic caching, OpenAI streaming, and more
+- **🛠 Extensible** - Easy to add custom tools, memory adapters, and handlers
+- **📊 Observable** - Built-in support for Braintrust, OpenTelemetry, and custom logging
+- **🔐 Secure** - Context isolation, rate limiting, and authentication support
+
+## Quick Example
+
+Here's a complete example of creating and using an agent:
+
+```typescript
+import { createAgent } from "@lightfast/core/agent";
+import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
+import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
+import { gateway } from "@ai-sdk/gateway";
+
+// Create your agent
+const agent = createAgent({
+  name: "assistant",
+  system: "You are a helpful AI assistant.",
+  model: gateway("openai/gpt-5-nano"),
+  tools: {
+    // Tools can be defined inline or imported
+    search: webSearchTool,
+  },
+  createRuntimeContext: ({ sessionId, resourceId }) => ({
+    userId: resourceId,
+    sessionId,
+  }),
+});
+
+// Handle requests in your API route
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  
+  return fetchRequestHandler({
+    agent,
+    sessionId: "session-123",
+    memory: new RedisMemory({ /* config */ }),
+    req,
+    resourceId: userId,
+  });
+}
+```
+
+## Next Steps
+
+- [Installation](/get-started/installation) - Set up Lightfast Core in your project
+- [Quick Start](/get-started/quick-start) - Build your first agent
+- [Core Concepts](/core-concepts/agents) - Deep dive into the architecture

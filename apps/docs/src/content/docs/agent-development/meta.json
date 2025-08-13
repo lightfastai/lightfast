@@ -1,0 +1,10 @@
+{
+  "title": "Agent Development",
+  "description": "Building and configuring AI agents",
+  "pages": [
+    "creating-agents",
+    "system-prompts",
+    "tool-factories",
+    "streaming"
+  ]
+}

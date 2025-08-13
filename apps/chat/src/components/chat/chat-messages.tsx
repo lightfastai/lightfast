@@ -163,7 +163,7 @@ function MessageItem({
 			<div className={cn("py-3", hasScrollAnchor && "min-h-[100px]")}>
 				<div className="mx-auto max-w-3xl px-8 flex justify-end">
 					<div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
-						<p className="whitespace-pre-wrap">{textContent}</p>
+						<p className="whitespace-pre-wrap text-sm">{textContent}</p>
 					</div>
 				</div>
 			</div>
@@ -183,7 +183,7 @@ function MessageItem({
 			<div className="mx-auto max-w-3xl px-4 space-y-4">
 				{/* Show thinking animation at top of assistant message based on runtime status */}
 				{message.runtimeStatus && (
-					<div className="px-4">
+					<div className="px-2">
 						<ThinkingMessage
 							status={
 								hasActiveReasoningPart ? "reasoning" : message.runtimeStatus

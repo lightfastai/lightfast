@@ -1,0 +1,606 @@
+---
+title: Creating Agents
+description: Step-by-step guide to building AI agents
+---
+
+# Creating Agents
+
+This guide walks through creating production-ready AI agents with Lightfast Core, from basic setup to advanced configurations.
+
+## Basic Agent Structure
+
+Every agent requires these core components:
+
+```typescript
+import { createAgent } from "@lightfast/core/agent";
+import { gateway } from "@ai-sdk/gateway";
+
+const agent = createAgent({
+  // Required fields
+  name: "my-agent",                    // Unique identifier
+  system: "System prompt here",        // Behavior definition
+  model: gateway("provider/model"),    // Language model
+  tools: {},                          // Available tools
+  createRuntimeContext: (params) => ({ // Context factory
+    // Your context fields
+  }),
+  
+  // Optional configurations
+  cache: cacheProvider,               // Caching strategy
+  toolChoice: "auto",                 // Tool selection
+  stopWhen: condition,                // Stop conditions
+  onFinish: callback,                 // Completion handler
+});
+```
+
+## Step-by-Step Creation
+
+### Step 1: Define the Agent's Purpose
+
+Start with a clear understanding of what your agent should do:
+
+```typescript
+// Example: Customer support agent
+const supportAgent = createAgent({
+  name: "customer-support",
+  system: `You are a helpful customer support agent for an e-commerce platform.
+    You can:
+    - Answer questions about orders, shipping, and returns
+    - Look up order information
+    - Process return requests
+    - Escalate complex issues to human agents
+    
+    Always be polite, empathetic, and solution-focused.`,
+  // ... rest of config
+});
+```
+
+### Step 2: Select the Model
+
+Choose an appropriate model for your use case:
+
+```typescript
+// For complex reasoning
+model: gateway("anthropic/claude-4-sonnet")
+
+// For fast responses
+model: gateway("openai/gpt-5-nano")
+
+// For cost optimization
+model: gateway("anthropic/claude-3.5-haiku")
+
+// With custom configuration
+model: gateway("openai/gpt-5", {
+  headers: {
+    "x-custom-header": "value",
+  },
+})
+```
+
+### Step 3: Add Tools
+
+Equip your agent with necessary tools:
+
+```typescript
+import { createTool } from "@lightfast/core/tool";
+import { z } from "zod";
+
+// Define tools
+const orderLookupTool = createTool({
+  description: "Look up order information by order ID",
+  inputSchema: z.object({
+    orderId: z.string().regex(/^ORD-\d{6}$/),
+  }),
+  execute: async ({ orderId }, context) => {
+    const order = await database.orders.findById(orderId);
+    if (!order || order.userId !== context.userId) {
+      return { error: "Order not found" };
+    }
+    return { order };
+  },
+});
+
+const returnRequestTool = createTool({
+  description: "Process a return request for an order",
+  inputSchema: z.object({
+    orderId: z.string(),
+    reason: z.string(),
+    items: z.array(z.string()),
+  }),
+  execute: async ({ orderId, reason, items }, context) => {
+    const returnId = await processReturn({
+      orderId,
+      reason,
+      items,
+      userId: context.userId,
+    });
+    return { returnId, status: "pending" };
+  },
+});
+
+// Add to agent
+const supportAgent = createAgent({
+  // ... other config
+  tools: {
+    orderLookup: orderLookupTool,
+    returnRequest: returnRequestTool,
+  },
+});
+```
+
+### Step 4: Configure Runtime Context
+
+Define what context your agent and tools need:
+
+```typescript
+interface SupportContext {
+  userId: string;
+  sessionId: string;
+  accountType: "free" | "premium";
+  supportTier: number;
+}
+
+const supportAgent = createAgent<typeof tools, SupportContext>({
+  // ... other config
+  createRuntimeContext: ({ sessionId, resourceId }) => ({
+    userId: resourceId,
+    sessionId,
+    accountType: getUserAccountType(resourceId),
+    supportTier: getSupportTier(resourceId),
+  }),
+});
+```
+
+### Step 5: Add Advanced Features
+
+Enhance your agent with additional capabilities:
+
+```typescript
+import { smoothStream, stepCountIs } from "ai";
+import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfast/core/agent/primitives/cache";
+
+const advancedAgent = createAgent({
+  // ... basic config
+  
+  // Smooth streaming for better UX
+  experimental_transform: smoothStream({
+    delayInMs: 25,
+    chunking: "word",
+  }),
+  
+  // Limit conversation length
+  stopWhen: stepCountIs(20),
+  
+  // Enable caching for Anthropic
+  cache: new AnthropicProviderCache({
+    strategy: new ClineConversationStrategy({
+      cacheSystemPrompt: true,
+      recentUserMessagesToCache: 2,
+    }),
+  }),
+  
+  // Provider-specific options
+  providerOptions: {
+    anthropic: {
+      thinking: {
+        type: "enabled",
+        budgetTokens: 32000,
+      },
+    },
+  },
+  
+  // Event handlers
+  onChunk: ({ chunk }) => {
+    if (chunk.type === "tool-call") {
+      console.log("Tool called:", chunk.toolName);
+    }
+  },
+  
+  onFinish: (result) => {
+    console.log("Conversation completed:", {
+      usage: result.usage,
+      finishReason: result.finishReason,
+    });
+  },
+  
+  onError: ({ error }) => {
+    console.error("Agent error:", error);
+    // Send to error tracking
+  },
+});
+```
+
+## Agent Patterns
+
+### Multi-Model Agent
+
+Use different models based on context:
+
+```typescript
+const smartAgent = createAgent({
+  name: "adaptive-agent",
+  system: "You are an adaptive assistant.",
+  
+  // Dynamic model selection
+  model: (() => {
+    const hour = new Date().getHours();
+    
+    // Use faster model during peak hours
+    if (hour >= 9 && hour <= 17) {
+      return gateway("openai/gpt-5-nano");
+    }
+    
+    // Use more capable model off-peak
+    return gateway("anthropic/claude-4-sonnet");
+  })(),
+  
+  tools: {},
+  createRuntimeContext: () => ({}),
+});
+```
+
+### Specialized Agent Registry
+
+Create multiple specialized agents:
+
+```typescript
+class AgentRegistry {
+  private agents = new Map<string, Agent>();
+  
+  constructor() {
+    // Register specialized agents
+    this.register("support", this.createSupportAgent());
+    this.register("sales", this.createSalesAgent());
+    this.register("technical", this.createTechnicalAgent());
+  }
+  
+  private createSupportAgent() {
+    return createAgent({
+      name: "support",
+      system: "You are a customer support specialist...",
+      model: gateway("openai/gpt-5-nano"),
+      tools: { /* support tools */ },
+      createRuntimeContext: () => ({}),
+    });
+  }
+  
+  private createSalesAgent() {
+    return createAgent({
+      name: "sales",
+      system: "You are a sales assistant...",
+      model: gateway("anthropic/claude-4-sonnet"),
+      tools: { /* sales tools */ },
+      createRuntimeContext: () => ({}),
+    });
+  }
+  
+  private createTechnicalAgent() {
+    return createAgent({
+      name: "technical",
+      system: "You are a technical expert...",
+      model: gateway("anthropic/claude-4-sonnet"),
+      tools: { /* technical tools */ },
+      createRuntimeContext: () => ({}),
+    });
+  }
+  
+  register(name: string, agent: Agent) {
+    this.agents.set(name, agent);
+  }
+  
+  get(name: string): Agent | undefined {
+    return this.agents.get(name);
+  }
+  
+  // Route to appropriate agent based on intent
+  route(intent: string): Agent {
+    switch (intent) {
+      case "order_inquiry":
+      case "return_request":
+        return this.agents.get("support")!;
+      
+      case "product_recommendation":
+      case "pricing_question":
+        return this.agents.get("sales")!;
+      
+      case "bug_report":
+      case "integration_help":
+        return this.agents.get("technical")!;
+      
+      default:
+        return this.agents.get("support")!; // Default fallback
+    }
+  }
+}
+```
+
+### Task-Oriented Agent
+
+Create agents that manage complex workflows:
+
+```typescript
+const taskAgent = createAgent({
+  name: "task-manager",
+  system: `You are a task management specialist that breaks down complex requests into manageable steps.
+    
+    For each request:
+    1. Assess complexity (simple vs multi-step)
+    2. Create a task list for complex requests
+    3. Execute tasks systematically
+    4. Track and report progress
+    5. Handle errors gracefully
+    
+    Use the todo tools to manage task state.`,
+  
+  model: gateway("anthropic/claude-4-sonnet"),
+  
+  tools: {
+    todoWrite: todoWriteTool,
+    todoRead: todoReadTool,
+    todoClear: todoClearTool,
+    // ... execution tools
+  },
+  
+  createRuntimeContext: ({ sessionId }) => ({
+    sessionId,
+    maxTasks: 20,
+    allowParallel: true,
+  }),
+  
+  onChunk: ({ chunk }) => {
+    if (chunk.type === "tool-call" && chunk.toolName === "todoWrite") {
+      console.log("Task list updated");
+    }
+  },
+});
+```
+
+### Collaborative Agents
+
+Agents that work together:
+
+```typescript
+const researchAgent = createAgent({
+  name: "researcher",
+  system: "You specialize in research and information gathering.",
+  tools: {
+    webSearch: webSearchTool,
+    academic: academicSearchTool,
+  },
+  // ...
+});
+
+const writerAgent = createAgent({
+  name: "writer",
+  system: "You specialize in creating well-structured content.",
+  tools: {
+    write: writeDocumentTool,
+    format: formatTool,
+  },
+  // ...
+});
+
+// Orchestrator agent
+const orchestratorAgent = createAgent({
+  name: "orchestrator",
+  system: `You coordinate between specialist agents:
+    - Use 'researcher' for information gathering
+    - Use 'writer' for content creation
+    Delegate tasks appropriately.`,
+  
+  tools: {
+    delegate: createTool({
+      description: "Delegate task to specialist agent",
+      inputSchema: z.object({
+        agent: z.enum(["researcher", "writer"]),
+        task: z.string(),
+      }),
+      execute: async ({ agent, task }, context) => {
+        // Route to appropriate agent
+        const targetAgent = agent === "researcher" ? researchAgent : writerAgent;
+        // Execute with target agent
+        // ...
+      },
+    }),
+  },
+  // ...
+});
+```
+
+## Testing Agents
+
+### Unit Testing
+
+Test agent components in isolation:
+
+```typescript
+import { describe, it, expect } from "vitest";
+import { InMemoryMemory } from "@lightfast/core/memory/adapters/in-memory";
+
+describe("SupportAgent", () => {
+  it("should handle order lookup", async () => {
+    const memory = new InMemoryMemory();
+    const agent = createSupportAgent();
+    
+    const { result } = await agent.stream({
+      sessionId: "test-session",
+      messages: [
+        { role: "user", content: "Check order ORD-123456" },
+      ],
+      memory,
+      resourceId: "test-user",
+      systemContext: { sessionId: "test-session", resourceId: "test-user" },
+      requestContext: {},
+    });
+    
+    // Assert response contains order info
+    const response = await result.text();
+    expect(response).toContain("ORD-123456");
+  });
+});
+```
+
+### Integration Testing
+
+Test with real services:
+
+```typescript
+describe("Agent Integration", () => {
+  it("should process complete conversation", async () => {
+    const agent = createAgent({
+      // ... config
+    });
+    
+    const conversation = [
+      "Hello, I need help with my order",
+      "The order ID is ORD-123456",
+      "I want to return two items",
+    ];
+    
+    const memory = new RedisMemory({ /* config */ });
+    const sessionId = "test-" + Date.now();
+    
+    for (const message of conversation) {
+      const { result } = await agent.stream({
+        sessionId,
+        messages: [{ role: "user", content: message }],
+        memory,
+        resourceId: "test-user",
+        systemContext: { sessionId, resourceId: "test-user" },
+        requestContext: {},
+      });
+      
+      const response = await result.text();
+      console.log("Response:", response);
+    }
+    
+    // Verify conversation state
+    const history = await memory.getMessages(sessionId);
+    expect(history).toHaveLength(conversation.length * 2); // User + assistant messages
+  });
+});
+```
+
+## Performance Optimization
+
+### Token Usage
+
+Monitor and optimize token consumption:
+
+```typescript
+const agent = createAgent({
+  // ... config
+  
+  maxTokens: 2000, // Limit response length
+  
+  stopWhen: ({ usage }) => {
+    // Stop if approaching token limit
+    return usage.totalTokens > 8000;
+  },
+  
+  onFinish: ({ usage }) => {
+    // Track token usage
+    metrics.record("agent.tokens", {
+      prompt: usage.promptTokens,
+      completion: usage.completionTokens,
+      total: usage.totalTokens,
+    });
+  },
+});
+```
+
+### Response Caching
+
+Cache common responses:
+
+```typescript
+const cachedAgent = createAgent({
+  // ... config
+  
+  // Use Anthropic caching
+  cache: new AnthropicProviderCache({
+    strategy: new ClineConversationStrategy({
+      cacheSystemPrompt: true,
+      recentUserMessagesToCache: 3,
+    }),
+  }),
+});
+```
+
+### Lazy Tool Loading
+
+Load tools only when needed:
+
+```typescript
+const agent = createAgent({
+  // ... config
+  
+  tools: (context) => {
+    const baseTools = {
+      search: searchTool,
+    };
+    
+    // Add expensive tools only for premium users
+    if (context.accountType === "premium") {
+      return {
+        ...baseTools,
+        analysis: expensiveAnalysisTool,
+        export: exportTool,
+      };
+    }
+    
+    return baseTools;
+  },
+});
+```
+
+## Deployment Considerations
+
+### Environment Variables
+
+Configure agents based on environment:
+
+```typescript
+const agent = createAgent({
+  name: process.env.AGENT_NAME || "assistant",
+  
+  model: gateway(
+    process.env.MODEL_NAME || "openai/gpt-5-nano"
+  ),
+  
+  system: process.env.SYSTEM_PROMPT || "Default prompt",
+  
+  // ... rest of config
+});
+```
+
+### Feature Flags
+
+Enable features dynamically:
+
+```typescript
+const agent = createAgent({
+  // ... config
+  
+  tools: {
+    ...baseTools,
+    ...(featureFlags.advancedSearch && { advancedSearch: advancedSearchTool }),
+    ...(featureFlags.export && { export: exportTool }),
+  },
+  
+  providerOptions: {
+    anthropic: featureFlags.thinking ? {
+      thinking: {
+        type: "enabled",
+        budgetTokens: 32000,
+      },
+    } : undefined,
+  },
+});
+```
+
+## Next Steps
+
+- Learn about [System Prompts](/agent-development/system-prompts) for effective agent behavior
+- Explore [Tool Factories](/agent-development/tool-factories) for advanced tool patterns
+- Understand [Streaming](/agent-development/streaming) for real-time responses

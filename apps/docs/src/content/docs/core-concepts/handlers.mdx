@@ -1,0 +1,641 @@
+---
+title: Request Handlers
+description: HTTP request handlers and adapters for agent integration
+---
+
+# Request Handlers
+
+Request handlers in Lightfast Core provide the bridge between HTTP requests and agent execution. They manage authentication, session validation, message processing, and response streaming.
+
+## fetchRequestHandler
+
+The primary handler for Next.js and other fetch-based frameworks:
+
+```typescript
+import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
+
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  
+  return fetchRequestHandler({
+    agent: myAgent,
+    sessionId: "session-123",
+    memory: redisMemory,
+    req,
+    resourceId: userId,
+    enableResume: true,
+  });
+}
+```
+
+## Handler Options
+
+The `fetchRequestHandler` accepts these options:
+
+```typescript
+interface FetchRequestHandlerOptions {
+  // Required
+  agent: Agent;                    // The agent to use
+  sessionId: string;              // Conversation session ID
+  memory: Memory;                 // Memory adapter
+  req: Request;                   // HTTP request object
+  resourceId: string;             // User/resource identifier
+  
+  // Optional
+  context?: any;                  // Additional context
+  createRequestContext?: Function; // Extract request metadata
+  generateId?: () => string;      // Custom ID generator
+  enableResume?: boolean;         // Enable stream resumption
+  onError?: (error) => void;      // Error callback
+}
+```
+
+## Request Flow
+
+The handler processes requests through these stages:
+
+### 1. Method Validation
+
+Only POST and GET methods are supported:
+
+```typescript
+// POST - Send new message
+POST /api/chat/session-123
+{
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+
+// GET - Resume stream (if enableResume: true)
+GET /api/chat/session-123
+```
+
+### 2. Authentication & Authorization
+
+The handler validates session ownership:
+
+```typescript
+// Automatic ownership validation
+const session = await memory.getSession(sessionId);
+if (session && session.resourceId !== resourceId) {
+  // Returns 403 Forbidden
+  throw new SessionForbiddenError();
+}
+```
+
+### 3. Message Processing
+
+For POST requests, messages are extracted and validated:
+
+```typescript
+const { messages } = await req.json();
+
+// Validate messages exist
+if (!messages || messages.length === 0) {
+  throw new NoMessagesError(); // 400 Bad Request
+}
+
+// Extract the user message (last in array)
+const userMessage = messages[messages.length - 1];
+if (userMessage.role !== "user") {
+  throw new NoUserMessageError(); // 400 Bad Request
+}
+```
+
+### 4. Context Assembly
+
+Three levels of context are created:
+
+```typescript
+// System context (framework)
+const systemContext = {
+  sessionId,
+  resourceId,
+};
+
+// Request context (from HTTP request)
+const requestContext = createRequestContext?.(req) || {};
+
+// Runtime context (agent-specific)
+const runtimeContext = agent.createRuntimeContext({
+  sessionId,
+  resourceId,
+});
+```
+
+### 5. Stream Generation
+
+The agent generates and streams the response:
+
+```typescript
+const { result, streamId } = await agent.stream({
+  sessionId,
+  messages: allMessages,
+  memory,
+  resourceId,
+  systemContext,
+  requestContext,
+});
+```
+
+### 6. Response Handling
+
+The response is converted to a streaming HTTP response:
+
+```typescript
+return result.toUIMessageStreamResponse({
+  generateMessageId,
+  sendReasoning: true,  // Include thinking in response
+  onFinish: async ({ responseMessage }) => {
+    // Save assistant response to memory
+    await memory.appendMessage({
+      sessionId,
+      message: responseMessage,
+    });
+  },
+});
+```
+
+## Creating Request Context
+
+Extract metadata from HTTP requests:
+
+```typescript
+return fetchRequestHandler({
+  // ... other options
+  createRequestContext: (req: Request) => ({
+    // Standard headers
+    userAgent: req.headers.get("user-agent"),
+    ipAddress: req.headers.get("x-forwarded-for") 
+      || req.headers.get("x-real-ip"),
+    
+    // Custom headers
+    clientVersion: req.headers.get("x-client-version"),
+    platform: req.headers.get("x-platform"),
+    
+    // Request metadata
+    method: req.method,
+    url: req.url,
+    timestamp: Date.now(),
+  }),
+});
+```
+
+This context is available in tools:
+
+```typescript
+const tool = createTool({
+  execute: async (input, context) => {
+    console.log("Request from:", context.userAgent);
+    console.log("IP:", context.ipAddress);
+  },
+});
+```
+
+## Error Handling
+
+The handler provides comprehensive error handling:
+
+### Error Types
+
+```typescript
+// Base error class
+abstract class ApiError extends Error {
+  abstract statusCode: number;
+  abstract errorCode: string;
+  
+  toJSON() {
+    return {
+      error: this.message,
+      code: this.errorCode,
+      statusCode: this.statusCode,
+    };
+  }
+}
+```
+
+### Common Errors
+
+| Error | Status | Code | Description |
+|-------|--------|------|-------------|
+| `NoMessagesError` | 400 | `NO_MESSAGES` | No messages in request |
+| `NoUserMessageError` | 400 | `NO_USER_MESSAGE` | Missing user message |
+| `MethodNotAllowedError` | 405 | `METHOD_NOT_ALLOWED` | Invalid HTTP method |
+| `SessionNotFoundError` | 404 | `SESSION_NOT_FOUND` | Session doesn't exist |
+| `SessionForbiddenError` | 403 | `SESSION_FORBIDDEN` | User doesn't own session |
+| `InternalServerError` | 500 | `INTERNAL_SERVER_ERROR` | Unexpected error |
+
+### Error Callbacks
+
+Handle errors with the `onError` callback:
+
+```typescript
+return fetchRequestHandler({
+  // ... options
+  onError: ({ error }) => {
+    // Log to monitoring service
+    logger.error("Agent error", {
+      error: error.message,
+      code: error.errorCode,
+      statusCode: error.statusCode,
+      sessionId,
+      userId: resourceId,
+    });
+    
+    // Track metrics
+    metrics.increment("agent.errors", {
+      code: error.errorCode,
+    });
+    
+    // Send to error tracking
+    Sentry.captureException(error);
+  },
+});
+```
+
+### Error Responses
+
+Errors are automatically converted to JSON responses:
+
+```typescript
+// Client receives:
+{
+  "error": "Session not found",
+  "code": "SESSION_NOT_FOUND",
+  "statusCode": 404
+}
+```
+
+## Stream Resumption
+
+Enable resumable streams for long-running responses:
+
+```typescript
+return fetchRequestHandler({
+  // ... options
+  enableResume: true,
+});
+```
+
+When enabled:
+1. Each response creates a resumable stream
+2. GET requests resume the most recent stream
+3. Streams expire after 24 hours (Redis)
+
+Client implementation:
+
+```typescript
+// Start conversation
+const response = await fetch("/api/chat/session-123", {
+  method: "POST",
+  body: JSON.stringify({ messages }),
+});
+
+// If connection drops, resume
+const resumeResponse = await fetch("/api/chat/session-123", {
+  method: "GET",
+});
+```
+
+## Custom ID Generation
+
+Provide custom ID generators for messages:
+
+```typescript
+import { v4 as uuidv4 } from "uuid";
+import { customAlphabet } from "nanoid";
+
+const nanoid = customAlphabet("0123456789abcdef", 16);
+
+return fetchRequestHandler({
+  // ... options
+  generateId: () => {
+    // UUID v4
+    return uuidv4();
+    
+    // Or custom format
+    return `msg_${Date.now()}_${nanoid()}`;
+  },
+});
+```
+
+## Authentication Integration
+
+### With Clerk
+
+```typescript
+import { auth } from "@clerk/nextjs/server";
+
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    return Response.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+  
+  return fetchRequestHandler({
+    agent,
+    sessionId: params.sessionId,
+    memory,
+    req,
+    resourceId: userId,
+  });
+}
+```
+
+### With NextAuth
+
+```typescript
+import { getServerSession } from "next-auth";
+
+export async function POST(req: Request) {
+  const session = await getServerSession();
+  
+  if (!session?.user?.id) {
+    return Response.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+  
+  return fetchRequestHandler({
+    agent,
+    sessionId: params.sessionId,
+    memory,
+    req,
+    resourceId: session.user.id,
+  });
+}
+```
+
+### With Custom Auth
+
+```typescript
+export async function POST(req: Request) {
+  const token = req.headers.get("authorization")?.replace("Bearer ", "");
+  
+  const user = await verifyToken(token);
+  if (!user) {
+    return Response.json(
+      { error: "Invalid token" },
+      { status: 401 }
+    );
+  }
+  
+  return fetchRequestHandler({
+    agent,
+    sessionId: params.sessionId,
+    memory,
+    req,
+    resourceId: user.id,
+  });
+}
+```
+
+## Rate Limiting
+
+Protect your API with rate limiting:
+
+```typescript
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "1 m"), // 10 requests per minute
+});
+
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  
+  // Check rate limit
+  const { success, limit, reset, remaining } = await ratelimit.limit(userId);
+  
+  if (!success) {
+    return Response.json(
+      { 
+        error: "Rate limit exceeded",
+        limit,
+        reset,
+        remaining,
+      },
+      { 
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": new Date(reset).toISOString(),
+        },
+      }
+    );
+  }
+  
+  return fetchRequestHandler({
+    // ... options
+  });
+}
+```
+
+## Middleware Integration
+
+### CORS Headers
+
+```typescript
+export async function POST(req: Request) {
+  const response = await fetchRequestHandler({
+    // ... options
+  });
+  
+  // Add CORS headers
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "POST, GET");
+  
+  return response;
+}
+```
+
+### Request Logging
+
+```typescript
+export async function POST(req: Request) {
+  const startTime = Date.now();
+  
+  try {
+    const response = await fetchRequestHandler({
+      // ... options
+    });
+    
+    // Log successful request
+    logger.info("Request completed", {
+      duration: Date.now() - startTime,
+      sessionId,
+      status: 200,
+    });
+    
+    return response;
+  } catch (error) {
+    // Log error
+    logger.error("Request failed", {
+      duration: Date.now() - startTime,
+      sessionId,
+      error: error.message,
+    });
+    
+    throw error;
+  }
+}
+```
+
+### Request Validation
+
+```typescript
+import { z } from "zod";
+
+const requestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(["user", "assistant", "system"]),
+    content: z.string(),
+  })),
+});
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  
+  // Validate request body
+  const result = requestSchema.safeParse(body);
+  if (!result.success) {
+    return Response.json(
+      { 
+        error: "Invalid request",
+        details: result.error.issues,
+      },
+      { status: 400 }
+    );
+  }
+  
+  return fetchRequestHandler({
+    // ... options
+  });
+}
+```
+
+## Creating Custom Handlers
+
+Build custom handlers for other frameworks:
+
+```typescript
+import { Agent } from "@lightfast/core/agent";
+import { Memory } from "@lightfast/core/memory";
+
+export async function expressHandler(
+  agent: Agent,
+  memory: Memory,
+  req: ExpressRequest,
+  res: ExpressResponse
+) {
+  try {
+    const { userId } = req.session;
+    const { sessionId } = req.params;
+    const { messages } = req.body;
+    
+    // Validate session
+    const session = await memory.getSession(sessionId);
+    if (session && session.resourceId !== userId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    // Process message
+    if (!session) {
+      await memory.createSession({ sessionId, resourceId: userId });
+    }
+    await memory.appendMessage({ sessionId, message: messages[0] });
+    
+    // Stream response
+    const { result } = await agent.stream({
+      sessionId,
+      messages: await memory.getMessages(sessionId),
+      memory,
+      resourceId: userId,
+      systemContext: { sessionId, resourceId: userId },
+      requestContext: {
+        userAgent: req.headers["user-agent"],
+        ipAddress: req.ip,
+      },
+    });
+    
+    // Convert to Express response
+    const stream = result.toDataStream();
+    stream.pipe(res);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+```
+
+## Best Practices
+
+### 1. Always Authenticate
+Never skip authentication in production:
+
+```typescript
+// Good
+const { userId } = await auth();
+if (!userId) return unauthorized();
+
+// Bad
+const userId = "anonymous"; // Security risk
+```
+
+### 2. Validate Input
+Always validate request data:
+
+```typescript
+// Good
+if (!messages || messages.length === 0) {
+  return Response.json({ error: "No messages" }, { status: 400 });
+}
+
+// Bad
+const userMessage = messages[0]; // May crash
+```
+
+### 3. Handle Errors Gracefully
+Provide meaningful error messages:
+
+```typescript
+// Good
+onError: ({ error }) => {
+  if (error.code === "RATE_LIMIT") {
+    return { error: "Too many requests. Please slow down." };
+  }
+  return { error: "Something went wrong. Please try again." };
+}
+
+// Bad
+onError: ({ error }) => {
+  throw error; // Exposes internal errors
+}
+```
+
+### 4. Use Appropriate Timeouts
+Set reasonable timeouts for long operations:
+
+```typescript
+const controller = new AbortController();
+setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+return fetchRequestHandler({
+  // ... options
+  req: new Request(req, { signal: controller.signal }),
+});
+```
+
+## Next Steps
+
+- Explore [Creating Agents](/agent-development/creating-agents) for agent setup
+- Learn about [Memory Adapters](/memory-state/memory-adapters) for storage
+- See [Integration Examples](/integration-examples/nextjs-integration) for full examples

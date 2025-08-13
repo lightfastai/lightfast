@@ -1,0 +1,259 @@
+---
+title: Installation
+description: Set up Lightfast Core in your project
+---
+
+# Installation
+
+Get started with Lightfast Core by installing the necessary packages and configuring your environment.
+
+## Prerequisites
+
+Before installing Lightfast Core, ensure you have:
+
+- Node.js 20.16.0 or later
+- pnpm, npm, or yarn package manager
+- TypeScript 5.0 or later (recommended)
+
+## Package Installation
+
+Install the core package and its peer dependencies:
+
+```bash
+pnpm add @lightfast/core ai @ai-sdk/gateway
+```
+
+### Optional Dependencies
+
+Depending on your use case, you may want to install additional packages:
+
+#### For Anthropic Models
+```bash
+pnpm add @ai-sdk/anthropic
+```
+
+#### For OpenAI Models
+```bash
+pnpm add @ai-sdk/openai
+```
+
+#### For Redis Memory
+```bash
+pnpm add @upstash/redis
+```
+
+#### For Observability
+```bash
+pnpm add braintrust
+```
+
+## Environment Setup
+
+Create a `.env.local` file in your project root with the necessary API keys:
+
+```bash
+# AI Gateway Configuration
+GATEWAY_API_KEY=your-gateway-api-key
+
+# For Anthropic
+ANTHROPIC_API_KEY=your-anthropic-key
+
+# For OpenAI
+OPENAI_API_KEY=your-openai-key
+
+# For Redis Memory (Upstash)
+KV_REST_API_URL=your-upstash-url
+KV_REST_API_TOKEN=your-upstash-token
+
+# For Braintrust Observability (optional)
+BRAINTRUST_API_KEY=your-braintrust-key
+BRAINTRUST_PROJECT_NAME=your-project-name
+```
+
+## TypeScript Configuration
+
+Ensure your `tsconfig.json` is configured for modern JavaScript:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "dom"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "jsx": "preserve"
+  }
+}
+```
+
+## Next.js Integration
+
+For Next.js projects, additional configuration may be needed:
+
+### 1. Update next.config.ts
+
+```typescript
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  experimental: {
+    // Enable server actions if using them
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
+  // Add any model provider domains for images
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.anthropic.com",
+      },
+    ],
+  },
+};
+
+export default nextConfig;
+```
+
+### 2. Environment Validation (Optional)
+
+For type-safe environment variables, use `@t3-oss/env-nextjs`:
+
+```bash
+pnpm add @t3-oss/env-nextjs zod
+```
+
+Create `src/env.ts`:
+
+```typescript
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+export const env = createEnv({
+  server: {
+    ANTHROPIC_API_KEY: z.string().min(1),
+    OPENAI_API_KEY: z.string().optional(),
+    KV_REST_API_URL: z.string().url(),
+    KV_REST_API_TOKEN: z.string().min(1),
+    BRAINTRUST_API_KEY: z.string().optional(),
+  },
+  client: {
+    // Add public environment variables here
+  },
+  runtimeEnv: {
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    KV_REST_API_URL: process.env.KV_REST_API_URL,
+    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+    BRAINTRUST_API_KEY: process.env.BRAINTRUST_API_KEY,
+  },
+});
+```
+
+## Vercel Deployment
+
+When deploying to Vercel, set your environment variables in the Vercel dashboard:
+
+1. Go to your project settings
+2. Navigate to Environment Variables
+3. Add each variable for the appropriate environments (Production, Preview, Development)
+
+### Using Vercel AI Gateway
+
+If using Vercel's AI Gateway, additional configuration is needed:
+
+```typescript
+import { gateway } from "@ai-sdk/gateway";
+
+// Configure the gateway with your API key
+const model = gateway("anthropic/claude-4-sonnet", {
+  headers: {
+    "x-vercel-ai-gateway-key": process.env.GATEWAY_API_KEY,
+  },
+});
+```
+
+## Authentication Setup
+
+For authenticated agents, integrate with your auth provider. Example with Clerk:
+
+```bash
+pnpm add @clerk/nextjs
+```
+
+Configure in your API routes:
+
+```typescript
+import { auth } from "@clerk/nextjs/server";
+
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  
+  // Continue with agent setup...
+}
+```
+
+## Verify Installation
+
+Create a simple test file to verify everything is working:
+
+```typescript
+// test-agent.ts
+import { createAgent } from "@lightfast/core/agent";
+import { InMemoryMemory } from "@lightfast/core/agent/memory";
+import { gateway } from "@ai-sdk/gateway";
+
+const agent = createAgent({
+  name: "test-agent",
+  system: "You are a test assistant.",
+  model: gateway("openai/gpt-5-nano"),
+  tools: {},
+  createRuntimeContext: () => ({}),
+});
+
+console.log("Agent created successfully:", agent.config.name);
+```
+
+Run the test:
+
+```bash
+pnpm tsx test-agent.ts
+```
+
+## Common Issues
+
+### Module Resolution Errors
+
+If you encounter module resolution errors, ensure your `package.json` has:
+
+```json
+{
+  "type": "module"
+}
+```
+
+### Runtime Errors with Streaming
+
+Ensure your runtime supports streaming responses. For Next.js App Router, this works out of the box. For other frameworks, you may need additional configuration.
+
+### Memory Adapter Connection Issues
+
+For Redis memory, verify your Upstash credentials and ensure your IP is whitelisted in the Upstash dashboard.
+
+## Next Steps
+
+Now that you have Lightfast Core installed, you're ready to:
+
+- [Build your first agent](/get-started/quick-start)
+- [Learn about core concepts](/core-concepts/agents)
+- [Explore available tools](/agent-development/tool-factories)

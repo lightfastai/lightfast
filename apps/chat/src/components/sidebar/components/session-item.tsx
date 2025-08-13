@@ -38,7 +38,7 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 						<div className="absolute inset-0 bg-muted/20 backdrop-blur-[2px]" />
 					</div>
 				) : (
-					<span className="font-medium truncate text-ellipsis overflow-hidden min-w-0 flex-1 text-sm">
+					<span className="font-medium truncate text-ellipsis overflow-hidden min-w-0 flex-1 text-xs">
 						{session.title}
 					</span>
 				)}

@@ -93,10 +93,10 @@ const components: Partial<Components> = {
     );
   },
 
-  // Heading components with consistent styling
+  // Heading components with consistent styling (reduced by one size)
   h1({ children, ...props }: MarkdownComponentProps) {
     return (
-      <h1 className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6 first:mt-0" {...props}>
+      <h1 className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6 first:mt-0" {...props}>
         {children}
       </h1>
     );
@@ -104,7 +104,7 @@ const components: Partial<Components> = {
 
   h2({ children, ...props }: MarkdownComponentProps) {
     return (
-      <h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3 mt-5" {...props}>
+      <h2 className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-5" {...props}>
         {children}
       </h2>
     );
@@ -112,7 +112,7 @@ const components: Partial<Components> = {
 
   h3({ children, ...props }: MarkdownComponentProps) {
     return (
-      <h3 className="scroll-m-20 text-lg font-semibold tracking-tight mb-2 mt-4" {...props}>
+      <h3 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4" {...props}>
         {children}
       </h3>
     );
@@ -120,7 +120,7 @@ const components: Partial<Components> = {
 
   h4({ children, ...props }: MarkdownComponentProps) {
     return (
-      <h4 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-3" {...props}>
+      <h4 className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-3" {...props}>
         {children}
       </h4>
     );
@@ -128,7 +128,7 @@ const components: Partial<Components> = {
 
   h5({ children, ...props }: MarkdownComponentProps) {
     return (
-      <h5 className="scroll-m-20 text-sm font-semibold tracking-tight mb-1 mt-2" {...props}>
+      <h5 className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2" {...props}>
         {children}
       </h5>
     );
@@ -142,10 +142,10 @@ const components: Partial<Components> = {
     );
   },
 
-  // Paragraph with proper spacing
+  // Paragraph with proper spacing and text-sm
   p({ children, ...props }: MarkdownComponentProps) {
     return (
-      <p className="leading-7 [&:not(:first-child)]:mt-3 break-words" {...props}>
+      <p className="text-sm leading-7 [&:not(:first-child)]:mt-3 break-words" {...props}>
         {children}
       </p>
     );
@@ -170,7 +170,7 @@ const components: Partial<Components> = {
 
   li({ className, children, ...props }: MarkdownComponentProps) {
     return (
-      <li className={cn("leading-7 break-words", className)} {...props}>
+      <li className={cn("text-sm leading-7 break-words", className)} {...props}>
         {children}
       </li>
     );
@@ -185,7 +185,7 @@ const components: Partial<Components> = {
   blockquote({ className, children, ...props }: MarkdownComponentProps) {
     return (
       <blockquote
-        className={cn("mt-3 border-l-4 border-border pl-4 italic text-muted-foreground", className)}
+        className={cn("text-sm mt-3 border-l-4 border-border pl-4 italic text-muted-foreground", className)}
         {...props}
       >
         {children}
@@ -232,7 +232,7 @@ const components: Partial<Components> = {
     return (
       <th
         className={cn(
-          "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 break-words",
+          "text-sm h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 break-words",
           className,
         )}
         {...props}
@@ -244,7 +244,7 @@ const components: Partial<Components> = {
 
   td({ className, children, ...props }: MarkdownComponentProps) {
     return (
-      <td className={cn("p-2 align-middle [&:has([role=checkbox])]:pr-0 break-words", className)} {...props}>
+      <td className={cn("text-sm p-2 align-middle [&:has([role=checkbox])]:pr-0 break-words", className)} {...props}>
         {children}
       </td>
     );

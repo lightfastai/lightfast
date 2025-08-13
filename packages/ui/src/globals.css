@@ -163,6 +163,12 @@
 		@apply max-w-3xl mx-auto px-4;
 	}
 	
+	/* Custom text-2xs utility */
+	.text-2xs {
+		font-size: 0.625rem; /* 10px */
+		line-height: 0.75rem; /* 12px */
+	}
+	
 	/* Unified scrollbar styles */
 	.scrollbar-default {
 		scrollbar-width: thin;

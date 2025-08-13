@@ -1,8 +1,10 @@
 {
   "title": "Get Started",
-  "description": "Get started with Lightfast",
+  "description": "Get started with Lightfast Core",
   "defaultOpen": true,
   "pages": [
-    "overview"
+    "overview",
+    "installation",
+    "quick-start"
   ]
 }

@@ -1,4 +1,12 @@
 {
 	"title": "Documentation",
-	"pages": ["get-started"]
+	"pages": [
+		"get-started",
+		"core-concepts",
+		"agent-development",
+		"memory-state",
+		"advanced-features",
+		"api-reference",
+		"integration-examples"
+	]
 }

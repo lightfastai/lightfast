@@ -1,0 +1,451 @@
+---
+title: Agents
+description: Understanding agents and their lifecycle in Lightfast Core
+---
+
+# Agents
+
+Agents are the core abstraction in Lightfast Core that combine language models, tools, memory, and system prompts into a cohesive unit. They manage the complexity of AI conversations while providing a clean, type-safe API.
+
+## Agent Architecture
+
+An agent in Lightfast Core consists of several key components:
+
+```typescript
+interface AgentOptions {
+  // Required fields
+  name: string;                    // Unique identifier for the agent
+  system: string;                   // System prompt defining behavior
+  model: LanguageModel;            // The AI model to use
+  tools: ToolSet | ToolFactorySet; // Available tools
+  createRuntimeContext: Function;   // Context factory
+  
+  // Optional fields
+  cache?: ProviderCache;           // Provider-specific caching
+  toolChoice?: ToolChoice;         // Tool selection strategy
+  stopWhen?: StopCondition;        // Early termination conditions
+  onFinish?: Callback;            // Completion callback
+  experimental_transform?: Transform; // Stream transformations
+}
+```
+
+## Creating an Agent
+
+The `createAgent` function is the primary way to instantiate agents:
+
+```typescript
+import { createAgent } from "@lightfast/core/agent";
+import { gateway } from "@ai-sdk/gateway";
+
+const agent = createAgent({
+  name: "assistant",
+  system: "You are a helpful AI assistant.",
+  model: gateway("anthropic/claude-4-sonnet"),
+  tools: {
+    search: searchTool,
+    calculate: calculatorTool,
+  },
+  createRuntimeContext: ({ sessionId, resourceId }) => ({
+    userId: resourceId,
+    sessionId,
+    timestamp: Date.now(),
+  }),
+});
+```
+
+## Context Hierarchy
+
+Lightfast Core implements a three-level context hierarchy that provides tools with the information they need:
+
+### 1. System Context
+Provided automatically by the framework:
+
+```typescript
+interface SystemContext {
+  sessionId: string;  // Current conversation session
+  resourceId: string; // User or resource identifier
+}
+```
+
+### 2. Request Context
+Provided by HTTP handlers:
+
+```typescript
+interface RequestContext {
+  userAgent?: string;  // Browser/client information
+  ipAddress?: string;  // Client IP address
+  // Can be extended with custom fields
+}
+```
+
+### 3. Runtime Context
+Created by the agent's `createRuntimeContext` function:
+
+```typescript
+createRuntimeContext: ({ sessionId, resourceId }) => ({
+  // Your custom context fields
+  userId: resourceId,
+  sessionId,
+  environment: process.env.NODE_ENV,
+  features: getUserFeatures(resourceId),
+})
+```
+
+All three contexts are merged and passed to tools during execution:
+
+```typescript
+// Inside a tool's execute function
+execute: async (input, context) => {
+  // context contains all three levels merged:
+  // - sessionId, resourceId (system)
+  // - userAgent, ipAddress (request)
+  // - userId, environment, features (runtime)
+}
+```
+
+## The Agent Lifecycle
+
+Understanding how agents process requests is crucial for building effective AI applications:
+
+### 1. Request Reception
+When a request arrives, the handler validates authentication and extracts the session ID:
+
+```typescript
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  const { sessionId } = params;
+  
+  return fetchRequestHandler({
+    agent,
+    sessionId,
+    memory,
+    req,
+    resourceId: userId,
+  });
+}
+```
+
+### 2. Session Validation
+The framework validates session ownership to ensure users can only access their own conversations:
+
+```typescript
+// Internal validation (handled automatically)
+const session = await memory.getSession(sessionId);
+if (session && session.resourceId !== userId) {
+  throw new SessionForbiddenError();
+}
+```
+
+### 3. Message Processing
+The incoming message is processed and added to conversation history:
+
+```typescript
+// Automatic session creation for new conversations
+if (!sessionExists) {
+  await memory.createSession({ sessionId, resourceId });
+}
+
+// Append the new message
+await memory.appendMessage({ sessionId, message });
+
+// Retrieve full conversation history
+const allMessages = await memory.getMessages(sessionId);
+```
+
+### 4. Context Creation
+The three-level context is assembled:
+
+```typescript
+// System context (framework)
+const systemContext = { sessionId, resourceId };
+
+// Request context (handler)
+const requestContext = createRequestContext(req);
+
+// Runtime context (agent)
+const runtimeContext = agent.createRuntimeContext({ 
+  sessionId, 
+  resourceId 
+});
+
+// Merged for tools
+const context = {
+  ...systemContext,
+  ...requestContext,
+  ...runtimeContext,
+};
+```
+
+### 5. Tool Resolution
+Tool factories are resolved with the runtime context:
+
+```typescript
+// If using tool factories
+const resolvedTools = resolveToolFactories(agent.tools, context);
+
+// Tools now have access to context during execution
+```
+
+### 6. Stream Generation
+The agent streams the response using the configured model:
+
+```typescript
+const { result, streamId } = await agent.stream({
+  sessionId,
+  messages: allMessages,
+  memory,
+  resourceId,
+  systemContext,
+  requestContext,
+});
+```
+
+### 7. Response Persistence
+The assistant's response is automatically saved to memory:
+
+```typescript
+// Handled in onFinish callback
+onFinish: async ({ responseMessage }) => {
+  if (responseMessage?.role === "assistant") {
+    await memory.appendMessage({
+      sessionId,
+      message: responseMessage,
+    });
+  }
+}
+```
+
+## Advanced Agent Configuration
+
+### Model Configuration
+Agents can use any model supported by the Vercel AI SDK:
+
+```typescript
+// Using Vercel AI Gateway
+model: gateway("anthropic/claude-4-sonnet")
+
+// Direct provider usage
+model: anthropic("claude-4-sonnet")
+
+// With custom headers
+model: gateway("openai/gpt-5", {
+  headers: {
+    "x-api-key": process.env.CUSTOM_KEY,
+  },
+})
+```
+
+### Provider Options
+Configure provider-specific features:
+
+```typescript
+const agent = createAgent({
+  // ... other config
+  providerOptions: {
+    anthropic: {
+      // Enable Claude's thinking feature
+      thinking: {
+        type: "enabled",
+        budgetTokens: 32000,
+      },
+    },
+  },
+  headers: {
+    // Provider-specific headers
+    "anthropic-beta": "thinking-2025-05-14",
+  },
+});
+```
+
+### Tool Choice Strategies
+Control how the agent selects tools:
+
+```typescript
+// Always use a specific tool
+toolChoice: { type: "tool", toolName: "search" }
+
+// Let the model decide
+toolChoice: "auto"
+
+// Never use tools
+toolChoice: "none"
+
+// Require some tool usage
+toolChoice: "required"
+```
+
+### Stop Conditions
+Define when to stop generation:
+
+```typescript
+import { stepCountIs } from "ai";
+
+// Stop after 10 steps
+stopWhen: stepCountIs(10)
+
+// Custom stop condition
+stopWhen: ({ usage, finishReason }) => {
+  return usage.totalTokens > 5000;
+}
+```
+
+### Stream Transformations
+Apply transformations to the output stream:
+
+```typescript
+import { smoothStream } from "ai";
+
+experimental_transform: smoothStream({
+  delayInMs: 25,      // Delay between chunks
+  chunking: "word",   // Word-level chunking
+})
+```
+
+## Event Callbacks
+
+Agents support various lifecycle callbacks:
+
+```typescript
+const agent = createAgent({
+  // ... config
+  
+  onChunk: ({ chunk }) => {
+    if (chunk.type === "tool-call") {
+      console.log("Tool called:", chunk.toolName);
+    }
+  },
+  
+  onFinish: (result) => {
+    console.log("Completed:", {
+      usage: result.usage,
+      finishReason: result.finishReason,
+    });
+  },
+  
+  onStepFinish: (step) => {
+    console.log("Step completed:", step);
+  },
+  
+  onError: ({ error }) => {
+    console.error("Agent error:", error);
+  },
+});
+```
+
+## Type Safety
+
+Lightfast Core provides strong TypeScript support throughout:
+
+```typescript
+// Define your tool types
+type MyTools = {
+  search: typeof searchTool;
+  calculate: typeof calculatorTool;
+};
+
+// Define runtime context type
+interface MyContext {
+  userId: string;
+  sessionId: string;
+  features: string[];
+}
+
+// Create strongly-typed agent
+const agent = createAgent<MyTools, MyContext>({
+  // TypeScript will enforce correct types
+  tools: {
+    search: searchTool,
+    calculate: calculatorTool,
+  },
+  createRuntimeContext: (params): MyContext => ({
+    userId: params.resourceId,
+    sessionId: params.sessionId,
+    features: ["advanced"],
+  }),
+  // Callbacks are typed based on your tools
+  onChunk: ({ chunk }) => {
+    if (chunk.type === "tool-call") {
+      // chunk.toolName is typed as "search" | "calculate"
+    }
+  },
+});
+```
+
+## Best Practices
+
+### 1. Keep System Prompts Focused
+Write clear, concise system prompts that define the agent's role and capabilities:
+
+```typescript
+system: `You are a technical support assistant specializing in JavaScript.
+You can help users debug code, explain concepts, and suggest best practices.
+Always provide code examples when relevant.`
+```
+
+### 2. Use Tool Factories for Context
+Prefer tool factories over static tools to access runtime context:
+
+```typescript
+// Good: Tool factory with context
+tools: {
+  search: createTool({
+    execute: async (input, context) => {
+      // Can access context.userId, etc.
+    },
+  }),
+}
+
+// Less flexible: Static tool
+tools: {
+  search: tool({
+    execute: async (input) => {
+      // No access to runtime context
+    },
+  }),
+}
+```
+
+### 3. Handle Errors Gracefully
+Always implement error handling in your agent configuration:
+
+```typescript
+onError: ({ error }) => {
+  // Log to monitoring service
+  logger.error("Agent error", {
+    error: error.message,
+    stack: error.stack,
+    sessionId,
+  });
+  
+  // Don't expose internal errors to users
+  return { error: "An error occurred" };
+}
+```
+
+### 4. Optimize Token Usage
+Use stop conditions and token limits to control costs:
+
+```typescript
+stopWhen: ({ usage }) => usage.totalTokens > 10000,
+maxTokens: 2000,
+```
+
+### 5. Enable Caching When Appropriate
+For Anthropic models, use caching to reduce latency and costs:
+
+```typescript
+import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfast/core/agent/primitives/cache";
+
+cache: new AnthropicProviderCache({
+  strategy: new ClineConversationStrategy({
+    cacheSystemPrompt: true,
+    recentUserMessagesToCache: 2,
+  }),
+})
+```
+
+## Next Steps
+
+- Learn about [Tools](/core-concepts/tools) and how to build context-aware tools
+- Explore [Memory Management](/core-concepts/memory) for conversation persistence
+- Understand [Request Handlers](/core-concepts/handlers) for HTTP integration

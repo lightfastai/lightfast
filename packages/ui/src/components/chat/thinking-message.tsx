@@ -9,7 +9,11 @@ interface ThinkingMessageProps {
 	className?: string;
 }
 
-export function ThinkingMessage({ status, show, className }: ThinkingMessageProps) {
+export function ThinkingMessage({
+	status,
+	show,
+	className,
+}: ThinkingMessageProps) {
 	if (!show) return null;
 
 	const statusText = {
@@ -22,7 +26,8 @@ export function ThinkingMessage({ status, show, className }: ThinkingMessageProp
 	return (
 		<div className={cn("flex items-center gap-2", className)}>
 			<ThinkingAnimation />
-			<span className="text-xs text-muted-foreground">{statusText}</span>
+			<span className="text-2xs text-muted-foreground">{statusText}</span>
 		</div>
 	);
 }
+
