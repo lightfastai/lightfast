@@ -1,9 +1,9 @@
 
 import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { Suspense } from "react";
-import { AppSidebar } from "../sidebar/app-sidebar";
-import { SidebarSkeleton } from "../sidebar/sidebar-skeleton";
-import { UserDropdownMenu } from "../layouts/user-dropdown-menu";
+import { AppSidebar } from "~/components/sidebar/app-sidebar";
+import { SidebarSkeleton } from "~/components/sidebar/sidebar-skeleton";
+import { UserDropdownMenu } from "~/components/layouts/user-dropdown-menu";
 
 interface ChatLayoutProps {
 	children: React.ReactNode;

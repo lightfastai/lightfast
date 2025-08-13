@@ -269,6 +269,9 @@ importers:
       '@lightfast/core':
         specifier: workspace:^
         version: link:../../packages/lightfast-core
+      '@repo/lib':
+        specifier: workspace:^
+        version: link:../../packages/lib
       '@repo/lightfast-config':
         specifier: workspace:*
         version: link:../../packages/lightfast-config

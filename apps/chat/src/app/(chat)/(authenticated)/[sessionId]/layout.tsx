@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
-import { ChatLoadingSkeleton } from "~/components/chat/chat-loading-skeleton";
-import { SessionChatWrapper } from "~/components/chat/session-chat-wrapper";
+import { ChatLoadingSkeleton } from "../../_components/chat-loading-skeleton";
+import { ExistingSessionChat } from "../_components/existing-session-chat";
 import type React from "react";
 
 interface SessionLayoutProps {
@@ -24,7 +24,7 @@ export default async function SessionLayout({ params }: SessionLayoutProps) {
 	return (
 		<HydrateClient>
 			<Suspense fallback={<ChatLoadingSkeleton />}>
-				<SessionChatWrapper sessionId={sessionId} agentId={agentId} />
+				<ExistingSessionChat sessionId={sessionId} agentId={agentId} />
 				{/* Children would go here but we don't need them */}
 			</Suspense>
 		</HydrateClient>

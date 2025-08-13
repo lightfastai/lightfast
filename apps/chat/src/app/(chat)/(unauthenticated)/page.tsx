@@ -1,24 +1,9 @@
-import { Suspense } from "react";
-import { ChatInterface } from "~/components/chat/chat-interface";
-import { uuidv4 } from "@lightfast/core/v2/utils";
+import { UnauthenticatedChat } from "./_components/unauthenticated-chat";
 
-// Server component - generates sessionId server-side
+// Server component for unauthenticated chat
 export default function UnauthenticatedChatPage() {
-	// Generate a new session ID server-side
-	const sessionId = uuidv4();
 	const agentId = "c010";
 
-	// Wrap in Suspense to ensure proper hydration timing
-	return (
-		<Suspense fallback={null}>
-			<ChatInterface 
-				key={`${agentId}-${sessionId}`}
-				agentId={agentId} 
-				sessionId={sessionId} 
-				initialMessages={[]}
-				isAuthenticated={false}
-				user={null}
-			/>
-		</Suspense>
-	);
+	// Use the UnauthenticatedChat component for consistency with authenticated flow
+	return <UnauthenticatedChat agentId={agentId} />;
 }

@@ -18,6 +18,7 @@
     "@ai-sdk/react": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@lightfast/core": "workspace:^",
+    "@repo/lib": "workspace:^",
     "@repo/lightfast-config": "workspace:*",
     "@repo/lightfast-react": "workspace:*",
     "@repo/ui": "workspace:*",

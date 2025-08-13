@@ -1,20 +1,20 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { AuthenticatedChatInterface } from "./authenticated-chat-interface";
+import { AuthenticatedChat } from "./authenticated-chat";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 
-interface SessionChatWrapperProps {
+interface ExistingSessionChatProps {
 	sessionId: string;
 	agentId: string;
 }
 
 /**
- * Client component that fetches session data using useSuspenseQuery
- * With prefetched data from the server, this should render instantly
+ * Client component that loads existing session data and renders the chat interface.
+ * With prefetched data from the server, this should render instantly.
  */
-export function SessionChatWrapper({ sessionId, agentId }: SessionChatWrapperProps) {
+export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatProps) {
 	const trpc = useTRPC();
 	
 	// Use suspense query - will use prefetched data if available
@@ -33,7 +33,7 @@ export function SessionChatWrapper({ sessionId, agentId }: SessionChatWrapperPro
 	})) as LightfastAppChatUIMessage[];
 
 	return (
-		<AuthenticatedChatInterface
+		<AuthenticatedChat
 			key={`${agentId}-${sessionId}`}
 			agentId={agentId}
 			sessionId={sessionId}
