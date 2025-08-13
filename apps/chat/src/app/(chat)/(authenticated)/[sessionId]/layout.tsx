@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { HydrateClient } from "~/trpc/server";
 import { ChatLoadingSkeleton } from "~/components/chat/chat-loading-skeleton";
-import { SessionChatWrapper } from "~/components/chat/session-chat-wrapper";
+import { SessionLoader } from "~/components/chat/session-loader";
 import type React from "react";
 
 interface SessionLayoutProps {
@@ -10,21 +10,16 @@ interface SessionLayoutProps {
 	}>;
 }
 
-// Layout for session pages - handles everything for the session
-export default async function SessionLayout({ params }: SessionLayoutProps) {
-	const { sessionId } = await params;
+// SYNCHRONOUS layout - no async/await, no blocking on navigation
+export default function SessionLayout({ params }: SessionLayoutProps) {
 	const agentId = "c010"; // Default agent ID
 
-	// Prefetch the session data here in layout
-	// Layouts are preserved during navigation, reducing re-execution
-	prefetch(trpc.chat.session.get.queryOptions({ sessionId }));
-
-	// Render the entire chat interface in the layout
-	// The page.tsx will be empty, making navigation instant
+	// No await, no prefetch - completely non-blocking
+	// The SessionLoader client component handles the async params
 	return (
 		<HydrateClient>
 			<Suspense fallback={<ChatLoadingSkeleton />}>
-				<SessionChatWrapper sessionId={sessionId} agentId={agentId} />
+				<SessionLoader params={params} agentId={agentId} />
 				{/* Children would go here but we don't need them */}
 			</Suspense>
 		</HydrateClient>
