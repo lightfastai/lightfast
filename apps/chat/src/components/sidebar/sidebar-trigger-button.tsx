@@ -10,8 +10,7 @@ import {
 import { PanelLeftIcon } from "lucide-react";
 
 export function SidebarTriggerButton() {
-	const { toggleSidebar, state } = useSidebar();
-	const isCollapsed = state === "collapsed";
+	const { toggleSidebar } = useSidebar();
 
 	return (
 		<Tooltip>

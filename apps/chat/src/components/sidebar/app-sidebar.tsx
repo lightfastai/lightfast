@@ -1,6 +1,5 @@
 import {
 	Sidebar,
-	SidebarContent,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarHeader,

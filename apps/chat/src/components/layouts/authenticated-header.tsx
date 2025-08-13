@@ -1,6 +1,6 @@
-import { UserDropdownMenu } from "./user-dropdown-menu";
 import { AuthenticatedMobileNav } from "./authenticated-mobile-nav";
 import { SidebarTrigger } from "@repo/ui/components/ui/sidebar";
+import { UserDropdownMenu } from "./user-dropdown-menu";
 
 export function AuthenticatedHeader() {
 	return (

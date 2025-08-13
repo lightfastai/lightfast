@@ -8,13 +8,14 @@ import { RateLimitIndicator } from "./rate-limit-indicator";
 import { useChat } from "@ai-sdk/react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
-import { useTRPC } from "~/trpc/react";
-import { useQuery } from "@tanstack/react-query";
 import { showAIErrorToast } from "~/lib/ai-errors";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import { getDefaultModelForUser } from "~/lib/ai/providers";
 import type { ModelId } from "~/lib/ai/providers";
 import { useState, useCallback, useEffect } from "react";
+import type { RouterOutputs } from "@vendor/trpc";
+
+type UserInfo = RouterOutputs["auth"]["user"]["getUser"];
 
 interface ChatInterfaceProps {
 	agentId: string;
@@ -22,6 +23,8 @@ interface ChatInterfaceProps {
 	initialMessages?: LightfastAppChatUIMessage[];
 	isNewSession?: boolean; // Indicates if this is a new session that needs to be created
 	onFirstMessage?: () => void; // Optional callback for when the first message is sent (used for session creation in authenticated mode)
+	isAuthenticated?: boolean; // Whether the user is authenticated
+	user?: UserInfo | null; // Optional user info from tRPC router
 }
 
 export function ChatInterface({
@@ -30,18 +33,10 @@ export function ChatInterface({
 	initialMessages = [],
 	isNewSession = false,
 	onFirstMessage,
+	isAuthenticated = false,
+	user = null,
 }: ChatInterfaceProps) {
-	// Check if user is authenticated (presence of onFirstMessage indicates authenticated mode)
-	const isAuthenticated = !!onFirstMessage;
-	
-	// Get user info from tRPC
-	const trpc = useTRPC();
-	const { data: user } = useQuery({
-		...trpc.auth.user.getUser.queryOptions(),
-		enabled: isAuthenticated, // Only query if authenticated
-	});
-	
-	console.log('User data from tRPC:', user);
+	console.log('User data:', user);
 	console.log('isAuthenticated:', isAuthenticated);
 
 	// Anonymous message limit tracking (only for unauthenticated users)

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -13,7 +13,6 @@ import {
 import { useSearchSessions } from "~/hooks/sidebar/use-search-sessions";
 import { formatDistanceToNow } from "date-fns";
 import { MessageSquareIcon } from "lucide-react";
-import { cn } from "@repo/ui/lib/utils";
 
 interface SessionSearchDialogProps {
 	open: boolean;
@@ -82,13 +81,13 @@ export function SessionSearchDialog({
 				{!isSearchLoading && hasResults && (
 					<CommandGroup>
 						{searchResults.map((session) => (
-							<CommandItem 
-								key={session.id} 
+							<CommandItem
+								key={session.id}
 								value={session.id}
 								onSelect={() => {
 									onOpenChange(false);
 									clearSearch();
-									router.push(`/session/${session.id}`);
+									router.push(`/${session.id}`);
 								}}
 								className="flex items-center gap-3 py-3 cursor-pointer"
 							>

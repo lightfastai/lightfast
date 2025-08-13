@@ -57,8 +57,8 @@ export function useSearchSessions() {
 		isSearchLoading: isSearchLoading || searchResults.isLoading,
 		
 		// Search results
-		searchResults: searchResults.data || [],
-		hasResults: (searchResults.data?.length || 0) > 0,
+		searchResults: searchResults.data ?? [],
+		hasResults: (searchResults.data?.length ?? 0) > 0,
 		
 		// Actions
 		handleSearchChange,

@@ -33,18 +33,27 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	const getInitials = () => {
 		if (!user) return "U";
 
-		// Check if user has name field
-		if (user.name) {
-			const nameParts = user.name.split(" ");
-			if (nameParts.length >= 2) {
-				return `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase();
-			}
-			return user.name.slice(0, 2).toUpperCase();
+		// Check if user has firstName and lastName
+		if (user.firstName && user.lastName) {
+			return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+		}
+
+		// Fall back to firstName or lastName alone
+		if (user.firstName) {
+			return user.firstName.slice(0, 2).toUpperCase();
+		}
+		if (user.lastName) {
+			return user.lastName.slice(0, 2).toUpperCase();
+		}
+
+		// Fall back to username
+		if (user.username) {
+			return user.username.slice(0, 2).toUpperCase();
 		}
 
 		// Fall back to email
-		if (user.email) {
-			return user.email[0].toUpperCase();
+		if (user.email && user.email.length > 0) {
+			return user.email.charAt(0).toUpperCase();
 		}
 
 		return "U";

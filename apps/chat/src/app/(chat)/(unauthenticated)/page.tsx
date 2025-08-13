@@ -15,7 +15,9 @@ export default function UnauthenticatedChatPage() {
 				key={`${agentId}-${sessionId}`}
 				agentId={agentId} 
 				sessionId={sessionId} 
-				initialMessages={[]} 
+				initialMessages={[]}
+				isAuthenticated={false}
+				user={null}
 			/>
 		</Suspense>
 	);
