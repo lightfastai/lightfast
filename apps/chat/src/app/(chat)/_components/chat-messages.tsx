@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, AlertCircle, RefreshCw } from "lucide-react";
 import { memo, useMemo, useRef } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { Markdown } from "@repo/ui/components/markdown";
@@ -9,6 +9,8 @@ import { ThinkingMessage } from "@repo/ui/components/chat";
 import { ToolCallRenderer } from "~/components/tool-renderers/tool-call-renderer";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
+import type { ChatError } from "~/lib/chat-error-handler";
+import { ChatErrorHandler } from "~/lib/chat-error-handler";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import {
 	isReasoningPart,
@@ -19,6 +21,9 @@ import {
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
 	status: ChatStatus;
+	error?: ChatError | null;
+	failedMessageId?: string | null;
+	onRetry?: () => void;
 }
 
 // Extended message type that includes runtime status
@@ -66,7 +71,13 @@ function ScrollButton() {
 	);
 }
 
-export function ChatMessages({ messages, status }: ChatMessagesProps) {
+export function ChatMessages({ 
+	messages, 
+	status,
+	error,
+	failedMessageId,
+	onRetry
+}: ChatMessagesProps) {
 	// Track initial message count for scroll anchor
 	const initialMessageCount = useRef<number | null>(null);
 	initialMessageCount.current ??= messages.length;
@@ -116,12 +127,15 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 								isLast &&
 								initialMessageCount.current !== null &&
 								messagesWithStatus.length > initialMessageCount.current;
+							const hasError = failedMessageId === message.id && error;
 							return (
 								<MessageItem
 									key={message.id}
 									message={message}
 									hasScrollAnchor={hasScrollAnchor}
 									isLast={isLast}
+									error={hasError ? error : undefined}
+									onRetry={onRetry}
 								/>
 							);
 						})}
@@ -137,10 +151,14 @@ function MessageItem({
 	message,
 	hasScrollAnchor,
 	isLast,
+	error,
+	onRetry,
 }: {
 	message: MessageWithRuntimeStatus;
 	hasScrollAnchor?: boolean;
 	isLast?: boolean;
+	error?: ChatError;
+	onRetry?: () => void;
 }) {
 	// Determine if the latest part during streaming is a reasoning part
 	const hasActiveReasoningPart = useMemo(() => {
@@ -161,9 +179,40 @@ function MessageItem({
 
 		return (
 			<div className={cn("py-3", hasScrollAnchor && "min-h-[100px]")}>
-				<div className="mx-auto max-w-3xl px-8 flex justify-end">
-					<div className="max-w-[80%] border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
-						<p className="whitespace-pre-wrap text-sm">{textContent}</p>
+				<div className="mx-auto max-w-3xl px-8">
+					<div className="flex justify-end">
+						<div className="max-w-[80%] space-y-2">
+							<div className="border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
+								<p className="whitespace-pre-wrap text-sm">{textContent}</p>
+							</div>
+							{/* Show inline error for failed user messages */}
+							{error && ChatErrorHandler.shouldShowInline(error) && (
+								<div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+									<AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+									<div className="flex-1 space-y-1">
+										<p className="text-sm font-medium text-destructive">
+											{error.message}
+										</p>
+										{error.details && (
+											<p className="text-xs text-muted-foreground">
+												{error.details}
+											</p>
+										)}
+									</div>
+									{error.retryable && onRetry && (
+										<Button
+											size="sm"
+											variant="ghost"
+											onClick={onRetry}
+											className="h-8 px-2"
+										>
+											<RefreshCw className="h-3 w-3 mr-1" />
+											Retry
+										</Button>
+									)}
+							</div>
+						)}
+						</div>
 					</div>
 				</div>
 			</div>

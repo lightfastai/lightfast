@@ -5,6 +5,7 @@ import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
 import { useTRPC } from "~/trpc/react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { ErrorTestPanel } from "~/components/dev/error-test-panel";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -53,20 +54,23 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	};
 
 	return (
-		<ChatInterface
-			agentId={agentId}
-			sessionId={sessionId}
-			initialMessages={[]}
-			isNewSession={isNewSession}
-			handleSessionCreation={handleSessionCreation}
-			user={user}
-			onFinish={() => {
-				// Invalidate the session query to ensure cache is populated
-				// This is important for new sessions that didn't exist in cache before
-				void queryClient.invalidateQueries({
-					queryKey: [["chat", "session", "get"], { input: { sessionId }, type: "query" }],
-				});
-			}}
-		/>
+		<>
+			<ChatInterface
+				agentId={agentId}
+				sessionId={sessionId}
+				initialMessages={[]}
+				isNewSession={isNewSession}
+				handleSessionCreation={handleSessionCreation}
+				user={user}
+				onFinish={() => {
+					// Invalidate the session query to ensure cache is populated
+					// This is important for new sessions that didn't exist in cache before
+					void queryClient.invalidateQueries({
+						queryKey: [["chat", "session", "get"], { input: { sessionId }, type: "query" }],
+					});
+				}}
+			/>
+			<ErrorTestPanel />
+		</>
 	);
 }

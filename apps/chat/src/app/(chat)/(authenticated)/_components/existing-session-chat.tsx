@@ -4,6 +4,7 @@ import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import { ErrorTestPanel } from "~/components/dev/error-test-panel";
 
 interface ExistingSessionChatProps {
 	sessionId: string;
@@ -45,21 +46,24 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 	};
 
 	return (
-		<ChatInterface
-			key={`${agentId}-${sessionId}`}
-			agentId={agentId}
-			sessionId={sessionId}
-			initialMessages={initialMessages}
-			isNewSession={false}
-			handleSessionCreation={handleSessionCreation}
-			user={user}
-			onFinish={() => {
-				// Invalidate the session query to refresh from database
-				// This ensures the cache is updated with the latest messages
-				void queryClient.invalidateQueries({
-					queryKey: [["chat", "session", "get"], { input: { sessionId }, type: "query" }],
-				});
-			}}
-		/>
+		<>
+			<ChatInterface
+				key={`${agentId}-${sessionId}`}
+				agentId={agentId}
+				sessionId={sessionId}
+				initialMessages={initialMessages}
+				isNewSession={false}
+				handleSessionCreation={handleSessionCreation}
+				user={user}
+				onFinish={() => {
+					// Invalidate the session query to refresh from database
+					// This ensures the cache is updated with the latest messages
+					void queryClient.invalidateQueries({
+						queryKey: [["chat", "session", "get"], { input: { sessionId }, type: "query" }],
+					});
+				}}
+			/>
+			<ErrorTestPanel />
+		</>
 	);
 }

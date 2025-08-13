@@ -6,10 +6,11 @@ import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { ProviderModelSelector } from "./provider-model-selector";
 import { RateLimitIndicator } from "./rate-limit-indicator";
 import { useChat } from "@ai-sdk/react";
+import React from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
-import { showAIErrorToast } from "~/lib/ai-errors";
+import { ChatErrorHandler, type ChatError } from "~/lib/chat-error-handler";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { RouterOutputs } from "@vendor/trpc";
 
@@ -34,6 +35,9 @@ export function ChatInterface({
 	user,
 	onFinish,
 }: ChatInterfaceProps) {
+	// State for error handling
+	const [lastError, setLastError] = React.useState<ChatError | null>(null);
+	const [failedMessageId, setFailedMessageId] = React.useState<string | null>(null);
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
 	console.log('User data:', user);
@@ -68,9 +72,32 @@ export function ChatInterface({
 		transport,
 		messages: initialMessages,
 		onError: (error) => {
-			showAIErrorToast(error, "Chat error occurred");
+			const chatError = ChatErrorHandler.handleError(error, {
+				showToast: true,
+				onRetry: () => {
+					// Find last user message and retry
+					const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+					if (lastUserMessage && lastUserMessage.parts[0]?.type === 'text') {
+						handleSendMessage(lastUserMessage.parts[0].text);
+					}
+				},
+			});
+			
+			// Store error for inline display if needed
+			setLastError(chatError);
+			
+			// Mark the last message as failed if it was a user message
+			const lastMessage = messages[messages.length - 1];
+			if (lastMessage?.role === 'user') {
+				setFailedMessageId(lastMessage.id);
+			}
 		},
-		onFinish: onFinish,
+		onFinish: () => {
+			// Clear error state on successful completion
+			setLastError(null);
+			setFailedMessageId(null);
+			onFinish?.();
+		},
 		resume:
 			initialMessages.length > 0 &&
 			initialMessages[initialMessages.length - 1]?.role === "user",
@@ -83,9 +110,12 @@ export function ChatInterface({
 
 		// For unauthenticated users, check if they've reached the limit
 		if (!isAuthenticated && hasReachedLimit) {
-			showAIErrorToast(
-				new Error("Daily message limit reached. Please sign in to continue."),
-				"Message limit reached",
+			ChatErrorHandler.handleError(
+				new Error("Daily message limit reached"),
+				{
+					showToast: true,
+					customMessage: "Message limit reached",
+				}
 			);
 			return;
 		}
@@ -121,7 +151,10 @@ export function ChatInterface({
 				incrementCount();
 			}
 		} catch (error) {
-			showAIErrorToast(error, "Failed to send message");
+			ChatErrorHandler.handleError(error, {
+				showToast: true,
+				customMessage: "Failed to send message",
+			});
 		}
 	};
 
@@ -169,7 +202,17 @@ export function ChatInterface({
 	// Thread view or chat with existing messages
 	return (
 		<div className="flex flex-col h-full">
-			<ChatMessages messages={messages} status={status} />
+			<ChatMessages 
+				messages={messages} 
+				status={status}
+				error={lastError}
+				failedMessageId={failedMessageId}
+				onRetry={() => {
+					if (lastError?.action) {
+						lastError.action();
+					}
+				}}
+			/>
 			<div className="relative bg-background">
 				<div className="max-w-3xl mx-auto p-4">
 					{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}
