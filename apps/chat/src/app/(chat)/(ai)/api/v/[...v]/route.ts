@@ -145,7 +145,8 @@ const handler = async (
 		// For anonymous users, use a special prefix to avoid collision
 		userId = `anon_${sessionId}`;
 	} else {
-		userId = authenticatedUserId!; // We know it's not null since isAnonymous is false
+		// eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style
+		userId = authenticatedUserId as string; // We know it's not null since isAnonymous is false
 	}
 
 	// Validate params

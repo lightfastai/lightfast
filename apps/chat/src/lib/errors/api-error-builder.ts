@@ -1,17 +1,14 @@
 // API error response builder
 // Provides consistent error responses from the API route
 
-import { 
-  ChatErrorType, 
-  type ApiErrorResponse, 
-  ERROR_STATUS_CODES 
-} from "./types";
+import type { ApiErrorResponse } from "./types";
+import { ChatErrorType, ERROR_STATUS_CODES } from "./types";
 
 interface ErrorBuilderOptions {
   requestId?: string;
   modelId?: string;
   isAnonymous?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Create a standardized error response

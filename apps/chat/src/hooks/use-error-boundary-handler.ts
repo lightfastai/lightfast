@@ -132,7 +132,17 @@ export function useErrorBoundaryHandler() {
     // Convert unknown error to Error object
     const errorObj = error instanceof Error 
       ? error 
-      : new Error(error ? String(error) : "Unknown error");
+      : new Error(
+          error === null || error === undefined 
+            ? "Unknown error" 
+            : typeof error === 'object' 
+              ? JSON.stringify(error) 
+              : typeof error === 'string'
+                ? error
+                : typeof error === 'number' || typeof error === 'boolean'
+                  ? String(error)
+                  : "Unknown error"
+        );
 
     console.error(
       "[Error Boundary Handler] Non-streaming error, triggering error boundary:",

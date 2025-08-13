@@ -61,13 +61,27 @@ export function ErrorTestPanel({ onTriggerError }: ErrorTestPanelProps) {
       let error: unknown;
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-        error = new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
-        (error as any).status = response.status;
-        (error as any).statusText = response.statusText;
+        interface ErrorData {
+          error?: string;
+          message?: string;
+        }
+        const errorData = await response.json().catch((): ErrorData => ({ error: "Unknown error" })) as ErrorData;
+        const errorMessage = errorData.error ?? errorData.message ?? `HTTP ${response.status}`;
+        interface HttpError extends Error {
+          status?: number;
+          statusText?: string;
+        }
+        const httpError = new Error(errorMessage) as HttpError;
+        httpError.status = response.status;
+        httpError.statusText = response.statusText;
+        error = httpError;
       } else if (errorType === "no-content") {
-        error = new Error("No content was generated");
-        (error as any).name = "NoContentGeneratedError";
+        interface NamedError extends Error {
+          name: string;
+        }
+        const namedError = new Error("No content was generated") as NamedError;
+        namedError.name = "NoContentGeneratedError";
+        error = namedError;
       }
 
       if (error) {

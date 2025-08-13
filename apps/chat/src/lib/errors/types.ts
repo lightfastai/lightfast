@@ -42,7 +42,7 @@ export interface ApiErrorResponse {
     timestamp?: number;
     modelId?: string;
     isAnonymous?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -54,7 +54,7 @@ export interface ChatError {
   details?: string;
   retryable: false; // Always false - all errors go to error boundary
   statusCode?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Type guard to check if an error is an API error response
@@ -66,7 +66,7 @@ export function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
     'error' in error &&
     'message' in error &&
     'statusCode' in error &&
-    Object.values(ChatErrorType).includes((error as any).type)
+    Object.values(ChatErrorType).includes((error as Record<string, unknown>).type as ChatErrorType)
   );
 }
 

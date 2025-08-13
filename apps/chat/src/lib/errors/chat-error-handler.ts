@@ -1,10 +1,6 @@
 import { ErrorCode } from "@repo/ui/components/lightfast-error-page";
-import { 
-  ChatErrorType, 
-  type ApiErrorResponse, 
-  type ChatError,
-  isApiErrorResponse 
-} from "./types";
+import type { ApiErrorResponse, ChatError } from "./types";
+import { ChatErrorType, isApiErrorResponse } from "./types";
 
 export class ChatErrorHandler {
   // Parse the error to extract API error response if available
@@ -17,12 +13,12 @@ export class ChatErrorHandler {
     // AI SDK wraps our JSON response in an Error object's message field
     if (error instanceof Error && error.message) {
       try {
-        const parsed = JSON.parse(error.message);
+        const parsed = JSON.parse(error.message) as unknown;
         if (isApiErrorResponse(parsed)) {
           console.log('[Chat Error Handler] Successfully parsed API error from message:', parsed);
           return parsed;
         }
-      } catch (e) {
+      } catch {
         // Not valid JSON, continue checking other patterns
       }
     }
@@ -33,7 +29,7 @@ export class ChatErrorHandler {
       const possibleProps = ['cause', 'response', 'data', 'body'];
       for (const prop of possibleProps) {
         if (prop in error) {
-          const value = (error as any)[prop];
+          const value = (error as Record<string, unknown>)[prop];
           if (isApiErrorResponse(value)) {
             return value;
           }
@@ -155,7 +151,7 @@ export class ChatErrorHandler {
         
       case ChatErrorType.SERVER_ERROR:
       case ChatErrorType.UNKNOWN:
-      default:
+      default: {
         // Context-specific default descriptions for server errors
         let description = chatError.message || "Something went wrong.";
         if (!chatError.message) {
@@ -176,6 +172,7 @@ export class ChatErrorHandler {
           errorCode: ErrorCode.InternalServerError,
           description
         };
+      }
     }
   }
 }

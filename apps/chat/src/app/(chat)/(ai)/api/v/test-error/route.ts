@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { errorType } = await req.json();
+  interface ErrorRequest {
+    errorType: string;
+  }
+  const { errorType } = await req.json() as ErrorRequest;
 
   // Simulate different error scenarios
   switch (errorType) {
@@ -82,7 +85,7 @@ export async function POST(req: NextRequest) {
         }
       );
 
-    case "stream-error":
+    case "stream-error": {
       // Start streaming then error
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
@@ -101,6 +104,7 @@ export async function POST(req: NextRequest) {
           'Connection': 'keep-alive',
         },
       });
+    }
 
     default:
       return NextResponse.json(
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export function GET() {
   if (env.NODE_ENV !== "development") {
     return NextResponse.json(
       { error: "Test endpoint only available in development" },

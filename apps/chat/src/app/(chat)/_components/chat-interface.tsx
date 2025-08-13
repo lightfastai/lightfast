@@ -12,6 +12,7 @@ import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
+import type { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { RouterOutputs } from "@vendor/trpc";
 
@@ -78,15 +79,21 @@ export function ChatInterface({
 			// ALL errors from API go to error boundary
 			// Extract the chat error information
 			const chatError = ChatErrorHandler.handleError(error);
-			
+
 			// Create an error with our extracted information
 			// This ensures the error boundary gets the right status code
-			const errorForBoundary = new Error(chatError.message);
-			(errorForBoundary as any).statusCode = chatError.statusCode;
-			(errorForBoundary as any).type = chatError.type;
-			(errorForBoundary as any).details = chatError.details;
-			(errorForBoundary as any).metadata = chatError.metadata;
-			
+			interface EnhancedError extends Error {
+				statusCode?: number;
+				type?: ChatErrorType;
+				details?: string;
+				metadata?: Record<string, unknown>;
+			}
+			const errorForBoundary = new Error(chatError.message) as EnhancedError;
+			errorForBoundary.statusCode = chatError.statusCode;
+			errorForBoundary.type = chatError.type;
+			errorForBoundary.details = chatError.details;
+			errorForBoundary.metadata = chatError.metadata;
+
 			// Throw to error boundary with our extracted information
 			throwToErrorBoundary(errorForBoundary);
 		},
@@ -107,8 +114,11 @@ export function ChatInterface({
 		// For unauthenticated users, check if they've reached the limit
 		if (!isAuthenticated && hasReachedLimit) {
 			// This is a client-side check - throw to error boundary
-			const limitError = new Error("Daily message limit reached");
-			(limitError as any).statusCode = 429;
+			interface LimitError extends Error {
+				statusCode?: number;
+			}
+			const limitError = new Error("Daily message limit reached") as LimitError;
+			limitError.statusCode = 429;
 			throwToErrorBoundary(limitError);
 			return;
 		}
@@ -194,10 +204,7 @@ export function ChatInterface({
 	// Thread view or chat with existing messages
 	return (
 		<div className="flex flex-col h-full">
-			<ChatMessages
-				messages={messages}
-				status={status}
-			/>
+			<ChatMessages messages={messages} status={status} />
 			<div className="relative bg-background">
 				<div className="max-w-3xl mx-auto p-4">
 					{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}
