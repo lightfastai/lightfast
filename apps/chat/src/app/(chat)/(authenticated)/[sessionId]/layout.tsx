@@ -18,12 +18,12 @@ export default async function SessionLayout({
 	children,
 	params,
 }: SessionLayoutProps) {
-	// Removed blocking auth check - middleware handles authentication
-	// This eliminates the blocking call on navigation
-	
 	// Await params to satisfy Next.js requirements
 	await params;
 
+	// Prefetch user data for instant loading
+	prefetch(trpc.auth.user.getUser.queryOptions());
+	
 	// Prefetch pinned sessions for sidebar
 	prefetch(trpc.chat.session.listPinned.queryOptions());
 

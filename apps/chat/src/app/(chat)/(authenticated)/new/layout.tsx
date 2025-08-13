@@ -17,6 +17,9 @@ export default function AuthenticatedLayout({
 	// Removed blocking auth check - middleware handles authentication
 	// This eliminates the blocking call on navigation
 
+	// Prefetch user data for instant loading
+	prefetch(trpc.auth.user.getUser.queryOptions());
+	
 	// Prefetch pinned sessions for instant loading with Suspense
 	// This will be available for all authenticated pages (new, [sessionId])
 	prefetch(trpc.chat.session.listPinned.queryOptions());

@@ -4,7 +4,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { useClerk } from "@clerk/nextjs";
 import { useTRPC } from "~/trpc/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -19,10 +19,11 @@ interface UserDropdownMenuProps {
 export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	const { signOut } = useClerk();
 
-	// Get user info from tRPC
+	// Get user info from tRPC - using suspense for instant loading
 	const trpc = useTRPC();
-	const { data: user } = useQuery({
+	const { data: user } = useSuspenseQuery({
 		...trpc.auth.user.getUser.queryOptions(),
+		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 	});
 
 	const handleSignOut = async () => {
@@ -30,8 +31,8 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	};
 
 	// Get user initials for fallback
+	// Note: user is guaranteed to exist with useSuspenseQuery
 	const getInitials = () => {
-		if (!user) return "U";
 
 		// Check if user has firstName and lastName
 		if (user.firstName && user.lastName) {

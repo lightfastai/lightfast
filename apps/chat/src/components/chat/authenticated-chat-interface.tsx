@@ -4,7 +4,7 @@ import { ChatInterface } from "./chat-interface";
 import { useCreateSession } from "~/hooks/use-create-session";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import { useTRPC } from "~/trpc/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 interface AuthenticatedChatInterfaceProps {
 	agentId: string;
@@ -19,10 +19,11 @@ export function AuthenticatedChatInterface({
 	initialMessages = [],
 	isNewSession = false,
 }: AuthenticatedChatInterfaceProps) {
-	// Get user info from tRPC
+	// Get user info from tRPC - using suspense for instant loading
 	const trpc = useTRPC();
-	const { data: user } = useQuery({
+	const { data: user } = useSuspenseQuery({
 		...trpc.auth.user.getUser.queryOptions(),
+		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 	});
 
 	// Hook for creating sessions optimistically - only in authenticated context
