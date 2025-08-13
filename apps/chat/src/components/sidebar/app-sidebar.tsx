@@ -7,20 +7,15 @@ import {
 	SidebarMenu,
 	SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
-import { Icons } from "@repo/ui/components/icons";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
+import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { Suspense } from "react";
 import { InfiniteScrollSessions } from "./sessions/infinite-scroll-sessions";
 import { PinnedSessionsList } from "./sessions/pinned-sessions-list";
 import { SidebarHoverExpand } from "./sidebar-hover-expand";
 import { ThreadsErrorBoundary } from "./threads-error-boundary";
 import { SidebarTriggerButton } from "./sidebar-trigger-button";
-import { ActiveMenuItem } from "./active-menu-item";
+import { NewChatButton } from "./new-chat-button";
+import { SearchButton } from "./search-button";
 import { ScrollAreaWithBorder } from "./scroll-area-with-border";
 
 // Main server component - renders static parts with reactive sessions list
@@ -48,36 +43,11 @@ export function AppSidebar() {
 					<SidebarGroup className="px-4 pb-8">
 						<SidebarGroupContent>
 							<SidebarMenu className="space-y-1">
-								<SidebarMenuItem className="group-data-[collapsible=icon]:contents">
-									{/* Only show tooltip when collapsed */}
-									<Tooltip>
-										<TooltipTrigger
-											asChild
-											className="group-data-[collapsible=expanded]:cursor-default"
-										>
-											<div className="group-data-[collapsible=expanded]:contents">
-												<ActiveMenuItem
-													sessionId="new"
-													href="/new"
-													className="group/newchat group-data-[collapsible=expanded]:pr-2"
-												>
-													<Icons.newChat className="size-4" />
-													<span className="group-data-[collapsible=icon]:hidden text-xs flex-1 flex items-center justify-between">
-														<span>New Chat</span>
-														<span className="text-muted-foreground ml-2 opacity-0 group-hover/newchat:opacity-100 transition-opacity">
-															⌘⇧O
-														</span>
-													</span>
-												</ActiveMenuItem>
-											</div>
-										</TooltipTrigger>
-										<TooltipContent
-											side="right"
-											className="group-data-[collapsible=icon]:block hidden"
-										>
-											<p className="text-xs">New chat (⌘⇧O)</p>
-										</TooltipContent>
-									</Tooltip>
+								<SidebarMenuItem>
+									<NewChatButton />
+								</SidebarMenuItem>
+								<SidebarMenuItem>
+									<SearchButton />
 								</SidebarMenuItem>
 							</SidebarMenu>
 						</SidebarGroupContent>

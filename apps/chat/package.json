@@ -38,6 +38,7 @@
     "@vercel/toolbar": "^0.1.28",
     "ai": "catalog:",
     "braintrust": "catalog:",
+    "date-fns": "^4.1.0",
     "drizzle-orm": "^0.43.1",
     "exa-js": "catalog:",
     "immer": "^10.1.1",
@@ -48,6 +49,7 @@
     "react-dom": "catalog:react19",
     "server-only": "^0.0.1",
     "superjson": "2.2.1",
+    "use-debounce": "^10.0.5",
     "use-stick-to-bottom": "1.1.1",
     "zod": "catalog:"
   },

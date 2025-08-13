@@ -37,7 +37,7 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 						<div className="absolute inset-0 bg-muted/20 backdrop-blur-[2px]" />
 					</div>
 				) : (
-					<span className="font-medium truncate text-ellipsis overflow-hidden min-w-0 flex-1 text-xs">
+					<span className="font-medium truncate text-ellipsis overflow-hidden min-w-0 flex-1 text-sm">
 						{session.title}
 					</span>
 				)}
@@ -49,6 +49,10 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 					session.pinned && "text-primary",
 					// Prevent focus ring overflow
 					"focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-ring",
+					// Slide in animation from right on hover
+					"transition-transform duration-200 ease-out",
+					"group-hover/menu-item:translate-x-0",
+					"translate-x-1",
 				)}
 			>
 				<Pin className={cn("h-3 w-3", session.pinned && "fill-current")} />

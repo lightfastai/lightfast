@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { db, LightfastChatSession, LightfastChatMessage } from "@vendor/db";
-import { desc, eq, lt, and } from "drizzle-orm";
+import { desc, eq, lt, and, like, sql } from "drizzle-orm";
 
 export const sessionRouter = {
   /**
@@ -74,6 +74,49 @@ export const sessionRouter = {
           )
         )
         .orderBy(desc(LightfastChatSession.updatedAt));
+
+      return sessions;
+    }),
+
+  /**
+   * Search sessions by title
+   */
+  search: protectedProcedure
+    .input(
+      z.object({
+        query: z.string().min(1).max(100),
+        limit: z.number().min(1).max(50).default(20),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      // Prepare search term for LIKE query (case-insensitive)
+      const searchTerm = `%${input.query}%`;
+      
+      const sessions = await db
+        .select({
+          id: LightfastChatSession.id,
+          title: LightfastChatSession.title,
+          pinned: LightfastChatSession.pinned,
+          createdAt: LightfastChatSession.createdAt,
+          updatedAt: LightfastChatSession.updatedAt,
+        })
+        .from(LightfastChatSession)
+        .where(
+          and(
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId!),
+            like(LightfastChatSession.title, searchTerm)
+          )
+        )
+        .orderBy(
+          // Order by relevance: exact match first, then starts with, then contains
+          sql`CASE 
+            WHEN ${LightfastChatSession.title} = ${input.query} THEN 0
+            WHEN ${LightfastChatSession.title} LIKE ${input.query + '%'} THEN 1
+            ELSE 2
+          END`,
+          desc(LightfastChatSession.updatedAt)
+        )
+        .limit(input.limit);
 
       return sessions;
     }),

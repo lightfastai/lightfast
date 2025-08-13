@@ -14,7 +14,7 @@ export function SessionGroup({
 }: SessionGroupProps) {
   return (
     <SidebarGroup className="pl-4 pr-2 pt-0 pb-2">
-      <SidebarGroupLabel className="text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel className="text-sm font-normal text-muted-foreground group-data-[collapsible=icon]:hidden">
         {categoryName}
       </SidebarGroupLabel>
       <SidebarGroupContent className="w-full max-w-full overflow-hidden">

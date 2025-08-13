@@ -8,6 +8,8 @@ import { RateLimitIndicator } from "./rate-limit-indicator";
 import { useChat } from "@ai-sdk/react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
+import { useTRPC } from "~/trpc/react";
+import { useQuery } from "@tanstack/react-query";
 import { showAIErrorToast } from "~/lib/ai-errors";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import { getDefaultModelForUser } from "~/lib/ai/providers";
@@ -31,6 +33,16 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
 	// Check if user is authenticated (presence of onFirstMessage indicates authenticated mode)
 	const isAuthenticated = !!onFirstMessage;
+	
+	// Get user info from tRPC
+	const trpc = useTRPC();
+	const { data: user } = useQuery({
+		...trpc.auth.user.getUser.queryOptions(),
+		enabled: isAuthenticated, // Only query if authenticated
+	});
+	
+	console.log('User data from tRPC:', user);
+	console.log('isAuthenticated:', isAuthenticated);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -158,6 +170,11 @@ export function ChatInterface({
 						<AppEmptyState
 							title="Chat"
 							description="Experience the power of Lightfast AI. Start chatting to explore."
+							prompt={
+								user?.email
+									? `Welcome back, ${user.email}`
+									: "What can I do for you?"
+							}
 						/>
 					</div>
 					<ChatInput
@@ -169,7 +186,6 @@ export function ChatInterface({
 							(!isAuthenticated && hasReachedLimit)
 						}
 						modelSelector={modelSelector}
-						withDescription="Lightfast may make mistakes. Use with discretion."
 					/>
 				</div>
 			</div>
@@ -197,7 +213,7 @@ export function ChatInterface({
 							(!isAuthenticated && hasReachedLimit)
 						}
 						withGradient={isAuthenticated}
-						withDescription="Lightfast may make mistakes. Use with discretion."
+						withDescription={messages.length > 0 ? "Lightfast may make mistakes. Use with discretion." : undefined}
 						modelSelector={modelSelector}
 					/>
 				</div>
