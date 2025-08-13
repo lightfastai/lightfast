@@ -9,8 +9,8 @@ import { ThinkingMessage } from "@repo/ui/components/chat";
 import { ToolCallRenderer } from "~/components/tool-renderers/tool-call-renderer";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
-import type { ChatError } from "~/lib/chat-error-handler";
-import { ChatErrorHandler } from "~/lib/chat-error-handler";
+import type { ChatError } from "~/lib/errors/chat-error-handler";
+import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import {
 	isReasoningPart,

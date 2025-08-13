@@ -21,6 +21,7 @@ import { auth } from "@clerk/nextjs/server";
 import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
 import { AnonymousRedisMemory } from "~/ai/runtime/memory/redis";
 import { env } from "~/env";
+import { isTestErrorCommand, handleTestErrorCommand } from "~/lib/errors/test-commands";
 import {
 	arcjet,
 	shield,
@@ -129,18 +130,38 @@ const handler = async (
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async () => {
 		try {
-			// Extract modelId from request body for POST requests
+			// Extract modelId and messages from request body for POST requests
 			let selectedModelId: ModelId = "openai/gpt-5-nano"; // Default model
+			let lastUserMessage = "";
 			
 			if (req.method === "POST") {
 				try {
-					const requestBody = await req.clone().json() as { modelId?: string };
+					const requestBody = await req.clone().json() as { 
+						modelId?: string;
+						messages?: { role: string; parts?: { text?: string }[] }[];
+					};
 					if (requestBody.modelId && typeof requestBody.modelId === "string") {
 						selectedModelId = requestBody.modelId as ModelId;
 					}
+					
+					// Extract last user message for command detection
+					if (requestBody.messages && Array.isArray(requestBody.messages)) {
+						const lastMessage = requestBody.messages[requestBody.messages.length - 1];
+						if (lastMessage?.role === "user" && lastMessage.parts?.[0]?.text) {
+							lastUserMessage = lastMessage.parts[0].text;
+						}
+					}
 				} catch (error) {
 					// If parsing fails, use default model
-					console.warn("Failed to parse request body for modelId:", error);
+					console.warn("Failed to parse request body:", error);
+				}
+			}
+			
+			// Development-only: Check for test error commands
+			if (isTestErrorCommand(lastUserMessage)) {
+				const testResponse = handleTestErrorCommand(lastUserMessage);
+				if (testResponse) {
+					return testResponse;
 				}
 			}
 

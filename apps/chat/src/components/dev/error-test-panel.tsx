@@ -2,7 +2,7 @@
 
 import { Button } from "@repo/ui/components/ui/button";
 import { useState } from "react";
-import { ChatErrorHandler } from "~/lib/chat-error-handler";
+import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { Bug, X } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { env } from "~/env";

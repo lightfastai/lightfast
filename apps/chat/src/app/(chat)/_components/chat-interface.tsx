@@ -10,7 +10,8 @@ import React from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
-import { ChatErrorHandler, type ChatError } from "~/lib/chat-error-handler";
+import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
+import type { ChatError } from "~/lib/errors/chat-error-handler";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { RouterOutputs } from "@vendor/trpc";
 
@@ -37,11 +38,19 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
 	// State for error handling
 	const [lastError, setLastError] = React.useState<ChatError | null>(null);
-	const [failedMessageId, setFailedMessageId] = React.useState<string | null>(null);
+	const [failedMessageId, setFailedMessageId] = React.useState<string | null>(
+		null,
+	);
+	const [errorToThrow, setErrorToThrow] = React.useState<Error | null>(null);
+
+	// Throw error to error boundary when set
+	if (errorToThrow) {
+		throw errorToThrow;
+	}
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
-	console.log('User data:', user);
-	console.log('isAuthenticated:', isAuthenticated);
+	console.log("User data:", user);
+	console.log("isAuthenticated:", isAuthenticated);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -53,7 +62,8 @@ export function ChatInterface({
 	} = useAnonymousMessageLimit();
 
 	// Model selection with persistence
-	const { selectedModelId, handleModelChange } = useModelSelection(isAuthenticated);
+	const { selectedModelId, handleModelChange } =
+		useModelSelection(isAuthenticated);
 
 	// Create transport for AI SDK v5
 	// Uses sessionId directly as the primary key
@@ -72,23 +82,42 @@ export function ChatInterface({
 		transport,
 		messages: initialMessages,
 		onError: (error) => {
+			console.log(error);
+			// First, check if this is a streaming error or a regular API error
+			const isStreamingError = status === "streaming";
+
+			// For non-streaming errors (API errors, rate limits, etc.),
+			// use state to trigger error boundary
+			if (!isStreamingError) {
+				console.error(
+					"[Chat] Non-streaming error, triggering error boundary:",
+					error,
+				);
+				// Set error state which will throw on next render
+				setErrorToThrow(error);
+				return;
+			}
+
+			// For streaming errors, handle them in the UI
 			const chatError = ChatErrorHandler.handleError(error, {
 				showToast: true,
 				onRetry: () => {
 					// Find last user message and retry
-					const lastUserMessage = messages.filter(m => m.role === 'user').pop();
-					if (lastUserMessage && lastUserMessage.parts[0]?.type === 'text') {
-						handleSendMessage(lastUserMessage.parts[0].text);
+					const lastUserMessage = messages
+						.filter((m) => m.role === "user")
+						.pop();
+					if (lastUserMessage && lastUserMessage.parts[0]?.type === "text") {
+						void handleSendMessage(lastUserMessage.parts[0].text);
 					}
 				},
 			});
-			
+
 			// Store error for inline display if needed
 			setLastError(chatError);
-			
+
 			// Mark the last message as failed if it was a user message
 			const lastMessage = messages[messages.length - 1];
-			if (lastMessage?.role === 'user') {
+			if (lastMessage?.role === "user") {
 				setFailedMessageId(lastMessage.id);
 			}
 		},
@@ -96,6 +125,7 @@ export function ChatInterface({
 			// Clear error state on successful completion
 			setLastError(null);
 			setFailedMessageId(null);
+			setErrorToThrow(null);
 			onFinish?.();
 		},
 		resume:
@@ -110,13 +140,10 @@ export function ChatInterface({
 
 		// For unauthenticated users, check if they've reached the limit
 		if (!isAuthenticated && hasReachedLimit) {
-			ChatErrorHandler.handleError(
-				new Error("Daily message limit reached"),
-				{
-					showToast: true,
-					customMessage: "Message limit reached",
-				}
-			);
+			ChatErrorHandler.handleError(new Error("Daily message limit reached"), {
+				showToast: true,
+				customMessage: "Message limit reached",
+			});
 			return;
 		}
 
@@ -202,8 +229,8 @@ export function ChatInterface({
 	// Thread view or chat with existing messages
 	return (
 		<div className="flex flex-col h-full">
-			<ChatMessages 
-				messages={messages} 
+			<ChatMessages
+				messages={messages}
 				status={status}
 				error={lastError}
 				failedMessageId={failedMessageId}
@@ -230,7 +257,11 @@ export function ChatInterface({
 							(!isAuthenticated && hasReachedLimit)
 						}
 						withGradient={isAuthenticated}
-						withDescription={messages.length > 0 ? "Lightfast may make mistakes. Use with discretion." : undefined}
+						withDescription={
+							messages.length > 0
+								? "Lightfast may make mistakes. Use with discretion."
+								: undefined
+						}
 						modelSelector={modelSelector}
 					/>
 				</div>

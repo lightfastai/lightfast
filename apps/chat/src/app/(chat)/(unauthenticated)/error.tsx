@@ -8,21 +8,21 @@ import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-cus
 import { LightfastErrorPage } from "@repo/ui/components/lightfast-error-page";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 
-interface NewChatErrorProps {
+interface UnauthenticatedChatErrorProps {
 	error: Error & { digest?: string };
 	reset: () => void;
 }
 
-export default function NewChatError({ error, reset }: NewChatErrorProps) {
+export default function UnauthenticatedChatError({ error, reset }: UnauthenticatedChatErrorProps) {
 	useEffect(() => {
-		// Capture all errors to Sentry for new chat page
+		// Capture all errors to Sentry for unauthenticated chat page
 		captureException(error);
 		
 		// Always log for local debugging
-		console.error("New chat error:", error);
+		console.error("Unauthenticated chat error:", error);
 	}, [error]);
 
-	const { errorCode, description } = ChatErrorHandler.getErrorPageConfig(error, "new");
+	const { errorCode, description } = ChatErrorHandler.getErrorPageConfig(error, "unauthenticated");
 
 	return (
 		<LightfastCustomGridBackground.Root

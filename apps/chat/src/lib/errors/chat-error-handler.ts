@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import type { AISDKError } from "ai";
+import { ErrorCode } from "@repo/ui/components/lightfast-error-page";
 
 export enum ChatErrorType {
   // Network & Connection
@@ -362,5 +363,68 @@ export class ChatErrorHandler {
       ChatErrorType.BOT_DETECTION,
       ChatErrorType.AUTHENTICATION,
     ].includes(error.type);
+  }
+
+  // Get error page configuration for error boundaries
+  static getErrorPageConfig(
+    error: Error & { digest?: string },
+    context: "session" | "new" | "unauthenticated"
+  ): { errorCode: ErrorCode; description: string } {
+    // Context-specific default descriptions
+    let description = "Something went wrong with the chat.";
+    switch (context) {
+      case "session":
+        description = "Something went wrong with this chat session.";
+        break;
+      case "new":
+        description = "Something went wrong starting a new chat.";
+        break;
+      case "unauthenticated":
+        description = "Something went wrong. Please try again.";
+        break;
+    }
+
+    // Check for status code in error object
+    const status = (error as any)?.status ?? (error as any)?.statusCode;
+    const message = error.message?.toLowerCase() ?? "";
+    
+    if (status === 429 || message.includes("rate limit")) {
+      return {
+        errorCode: ErrorCode.TooManyRequests,
+        description: "You've sent too many messages. Please wait a moment and try again."
+      };
+    } else if (status === 401 || message.includes("unauthorized")) {
+      return {
+        errorCode: ErrorCode.Unauthorized,
+        description: "Please sign in to continue."
+      };
+    } else if (status === 403 || message.includes("forbidden") || message.includes("bot")) {
+      return {
+        errorCode: ErrorCode.Forbidden,
+        description: message.includes("bot") 
+          ? "Automated activity detected. Please verify you're human."
+          : "Access denied. You don't have permission to access this resource."
+      };
+    } else if (status === 404 || message.includes("not found")) {
+      return {
+        errorCode: ErrorCode.NotFound,
+        description: "The requested resource was not found."
+      };
+    } else if (status === 503 || message.includes("unavailable")) {
+      return {
+        errorCode: ErrorCode.ServiceUnavailable,
+        description: "Service is temporarily unavailable. Please try again later."
+      };
+    } else if (status === 400 || message.includes("bad request")) {
+      return {
+        errorCode: ErrorCode.BadRequest,
+        description: "Invalid request. Please check your input and try again."
+      };
+    }
+
+    return {
+      errorCode: ErrorCode.InternalServerError,
+      description
+    };
   }
 }
