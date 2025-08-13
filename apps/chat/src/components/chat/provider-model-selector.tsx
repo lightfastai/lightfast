@@ -1,13 +1,12 @@
 "use client";
 
 import {
-	
 	PROVIDER_ICONS,
 	getModelConfig,
 	getVisibleModels,
-	getProviderDisplayName
+	getProviderDisplayName,
 } from "~/lib/ai/providers";
-import type {ModelId} from "~/lib/ai/providers";
+import type { ModelId } from "~/lib/ai/providers";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -103,7 +102,7 @@ export function ProviderModelSelector({
 	const handleSelect = useCallback(
 		(modelId: string) => {
 			// Check if model is accessible
-			const model = allModels.find(m => m.id === modelId);
+			const model = allModels.find((m) => m.id === modelId);
 			if (!model?.isAccessible) {
 				return; // Don't select inaccessible models
 			}
@@ -152,7 +151,10 @@ export function ProviderModelSelector({
 					<ChevronDown className="h-3 w-3 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent align="end" className="w-[500px] p-0">
+			<PopoverContent
+				align="end"
+				className="w-[500px] p-0 rounded-2xl overflow-hidden"
+			>
 				<div className="flex h-[300px]">
 					{/* Model list */}
 					<div className="flex-1 border-r flex flex-col">
@@ -218,7 +220,9 @@ export function ProviderModelSelector({
 												detailModel.iconProvider
 											] as keyof typeof Icons;
 											const IconComponent = Icons[iconName];
-											return <IconComponent className="w-6 h-6 shrink-0 mt-0.5" />;
+											return (
+												<IconComponent className="w-6 h-6 shrink-0 mt-0.5" />
+											);
 										})()}
 										<div className="flex-1 min-w-0">
 											<h4 className="font-medium truncate">
@@ -251,10 +255,11 @@ export function ProviderModelSelector({
 											{Object.entries(detailModel.features).map(
 												([feature, enabled]) => {
 													if (!enabled) return null;
-													const featureKey = feature as keyof typeof featureBadges;
+													const featureKey =
+														feature as keyof typeof featureBadges;
 													const badge = featureBadges[featureKey];
 													if (!(feature in featureBadges)) return null;
-													
+
 													return (
 														<Badge
 															key={feature}
@@ -267,11 +272,11 @@ export function ProviderModelSelector({
 															{badge.label}
 														</Badge>
 													);
-												}
+												},
 											)}
 										</div>
 									</div>
-									
+
 									{!detailModel.isAccessible && (
 										<div className="pt-2 border-t">
 											<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -293,3 +298,4 @@ export function ProviderModelSelector({
 		</Popover>
 	);
 }
+
