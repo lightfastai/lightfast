@@ -6,12 +6,14 @@ export function AuthenticatedHeader() {
 	return (
 		<>
 			{/* Mobile/Tablet header - relative positioning */}
-			<header className="lg:hidden relative h-14 flex items-center justify-between px-4 bg-background border-b border-border/50 z-10">
-				{/* Left side - Sidebar trigger */}
-				<SidebarTrigger />
+			<header className="lg:hidden relative h-14 flex items-center justify-between px-2 bg-background border-b border-border/50 z-10">
+				{/* Left side - Sidebar trigger with padding to match sidebar */}
+				<div className="pl-2">
+					<SidebarTrigger />
+				</div>
 
 				{/* Right side - Mobile menu */}
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-2 pr-2">
 					<AuthenticatedMobileNav />
 				</div>
 			</header>

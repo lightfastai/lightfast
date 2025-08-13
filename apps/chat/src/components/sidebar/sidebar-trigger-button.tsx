@@ -19,10 +19,10 @@ export function SidebarTriggerButton() {
 					onClick={toggleSidebar}
 					className="w-fit group-data-[collapsible=icon]:w-full"
 				>
-					{/* Show logo only when collapsed and not hovering sidebar */}
-					<Icons.logoShort className="!size-5 group-data-[collapsible=icon]:block group-data-[collapsible=icon]:group-hover/sidebar:hidden hidden" />
-					{/* Show trigger icon when expanded OR when hovering in collapsed state */}
-					<PanelLeftIcon className="size-4 group-data-[collapsible=icon]:hidden group-data-[collapsible=icon]:group-hover/sidebar:block block" />
+					{/* Show logo only when collapsed on desktop and not hovering sidebar */}
+					<Icons.logoShort className="!size-5 hidden lg:group-data-[collapsible=icon]:block lg:group-data-[collapsible=icon]:group-hover/sidebar:hidden" />
+					{/* Show trigger icon: always on mobile/tablet, or when expanded on desktop, or when hovering in collapsed state on desktop */}
+					<PanelLeftIcon className="size-4 block lg:group-data-[collapsible=icon]:hidden lg:group-data-[collapsible=icon]:group-hover/sidebar:block" />
 				</SidebarMenuButton>
 			</TooltipTrigger>
 			<TooltipContent side="right">

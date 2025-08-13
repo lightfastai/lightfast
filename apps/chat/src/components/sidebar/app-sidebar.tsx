@@ -27,8 +27,8 @@ export function AppSidebar() {
 				className="w-64 max-w-64 p-0 border-r border-border/50 group/sidebar"
 			>
 				<SidebarHeader className="p-0">
-					{/* Trigger button group */}
-					<SidebarGroup className="p-4 pb-2">
+					{/* Trigger button group - aligned to top */}
+					<SidebarGroup className="px-4 py-3">
 						<SidebarGroupContent>
 							<SidebarMenu>
 								<SidebarMenuItem>
