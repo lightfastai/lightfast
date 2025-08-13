@@ -19,6 +19,12 @@ export function SiteHeader() {
             >
               Docs
             </Link>
+            <Link
+              href="/download"
+              className="text-foreground/70 hover:text-foreground text-sm font-medium transition-colors"
+            >
+              Download
+            </Link>
           </nav>
         </div>
         <Button asChild variant="outline">

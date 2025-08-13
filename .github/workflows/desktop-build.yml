@@ -1,0 +1,117 @@
+name: Desktop App Build
+
+on:
+  push:
+    tags:
+      - 'desktop-v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            arch: universal
+          - os: windows-latest
+            platform: win
+            arch: x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm turbo run build --filter=@lightfast/desktop^...
+
+      - name: Build Electron app for macOS
+        if: matrix.platform == 'mac'
+        run: pnpm dist:desktop:mac
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERTS }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Build Electron app for Windows
+        if: matrix.platform == 'win'
+        run: pnpm dist:desktop:win
+        env:
+          CSC_LINK: ${{ secrets.WIN_CERTS }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTS_PASSWORD }}
+
+      - name: Build Electron app for Linux
+        if: matrix.platform == 'linux'
+        run: pnpm dist:desktop:linux
+
+      - name: Upload artifacts - macOS
+        if: matrix.platform == 'mac'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightfast-desktop-mac
+          path: |
+            apps/desktop/out/*.dmg
+            apps/desktop/out/*.zip
+
+      - name: Upload artifacts - Windows
+        if: matrix.platform == 'win'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightfast-desktop-win
+          path: apps/desktop/out/*.exe
+
+      - name: Upload artifacts - Linux
+        if: matrix.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightfast-desktop-linux
+          path: |
+            apps/desktop/out/*.AppImage
+            apps/desktop/out/*.deb
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            lightfast-desktop-mac/*.dmg
+            lightfast-desktop-mac/*.zip
+            lightfast-desktop-win/*.exe
+            lightfast-desktop-linux/*.AppImage
+            lightfast-desktop-linux/*.deb
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

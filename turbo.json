@@ -47,6 +47,26 @@
     "eval": {
       "cache": false,
       "interactive": true
+    },
+    "dist": {
+      "dependsOn": ["build"],
+      "outputs": ["out/**"],
+      "cache": false
+    },
+    "dist:mac": {
+      "dependsOn": ["build"],
+      "outputs": ["out/**"],
+      "cache": false
+    },
+    "dist:win": {
+      "dependsOn": ["build"],
+      "outputs": ["out/**"],
+      "cache": false
+    },
+    "dist:linux": {
+      "dependsOn": ["build"],
+      "outputs": ["out/**"],
+      "cache": false
     }
   },
   "globalEnv": [
