@@ -133,7 +133,10 @@ export function ProviderModelSelector({
 				<Button
 					variant="outline"
 					size="sm"
-					className={cn("justify-between", className)}
+					className={cn(
+						"justify-between rounded-full dark:border-border/30",
+						className,
+					)}
 					disabled={disabled}
 				>
 					<div className="flex items-center gap-2">
@@ -298,4 +301,3 @@ export function ProviderModelSelector({
 		</Popover>
 	);
 }
-
