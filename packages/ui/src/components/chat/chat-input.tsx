@@ -124,7 +124,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 					<div className="flex gap-2">
 						<div className="flex-1 min-w-0">
 							{/* Main input container */}
-							<div className="w-full border border-border/50 rounded-3xl overflow-hidden flex flex-col transition-all bg-background dark:bg-background">
+							<div className="w-full border border-border/50 p-2 rounded-4xl overflow-hidden flex flex-col transition-all bg-input-bg dark:bg-input-bg">
 								{/* Textarea area - grows with content up to max height */}
 								<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
 									<Textarea
@@ -133,7 +133,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 										onChange={handleMessageChange}
 										onKeyPress={handleKeyPress}
 										placeholder={placeholder}
-										className="w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3 !bg-transparent focus:!bg-transparent hover:!bg-transparent disabled:!bg-transparent dark:!bg-transparent outline-none min-h-0"
+										className="w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3 !bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg outline-none min-h-0"
 										maxLength={maxLength}
 										autoComplete="off"
 										autoCorrect="off"
@@ -147,7 +147,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 								</div>
 
 								{/* Controls area - always at bottom */}
-								<div className="flex items-center justify-end p-2 bg-background dark:bg-background transition-[color,box-shadow]">
+								<div className="flex items-center justify-end p-2 bg-input-bg dark:bg-input-bg transition-[color,box-shadow]">
 									<div className="flex items-center gap-2">
 										{/* Model selector */}
 										{modelSelector}
