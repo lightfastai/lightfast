@@ -1,6 +1,6 @@
 "use client";
 
-import { AppEmptyState } from "@repo/ui/components/app-empty-state";
+import { ChatEmptyState } from "./chat-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { ProviderModelSelector } from "./provider-model-selector";
@@ -175,10 +175,8 @@ export function ChatInterface({
 		return (
 			<div className="h-full flex items-center justify-center">
 				<div className="w-full max-w-3xl px-4">
-					<div className="px-4">
-						<AppEmptyState
-							title="Chat"
-							description="Experience the power of Lightfast AI. Start chatting to explore."
+					<div className="px-4 mb-8">
+						<ChatEmptyState
 							prompt={
 								user?.email
 									? `Welcome back, ${user.email}`
