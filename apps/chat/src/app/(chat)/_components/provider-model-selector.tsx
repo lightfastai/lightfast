@@ -134,7 +134,7 @@ export function ProviderModelSelector({
 					variant="outline"
 					size="sm"
 					className={cn(
-						"justify-between rounded-full dark:border-border/30",
+						"justify-between rounded-full dark:border-border/30 shadow-sm",
 						className,
 					)}
 					disabled={disabled}

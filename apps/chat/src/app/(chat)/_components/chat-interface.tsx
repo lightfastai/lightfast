@@ -5,6 +5,7 @@ import { ChatMessages } from "./chat-messages";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { ProviderModelSelector } from "./provider-model-selector";
 import { RateLimitIndicator } from "./rate-limit-indicator";
+import { PromptSuggestions } from "./prompt-suggestions";
 import { useChat } from "@ai-sdk/react";
 import React from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
@@ -173,7 +174,7 @@ export function ChatInterface({
 	// For new chats (no messages yet), show centered layout
 	if (messages.length === 0) {
 		return (
-			<div className="h-full flex items-center justify-center">
+			<div className="h-full flex flex-col items-center justify-center">
 				<div className="w-full max-w-3xl px-4">
 					<div className="px-4 mb-8">
 						<ChatEmptyState
@@ -194,6 +195,12 @@ export function ChatInterface({
 						}
 						modelSelector={modelSelector}
 					/>
+					{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
+					<div className="hidden md:block relative mt-4 h-12">
+						<div className="absolute top-0 left-0 right-0 px-4">
+							<PromptSuggestions onSelectPrompt={handleSendMessage} />
+						</div>
+					</div>
 				</div>
 			</div>
 		);

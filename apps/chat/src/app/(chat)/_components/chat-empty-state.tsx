@@ -9,7 +9,7 @@ export function ChatEmptyState({
 }: ChatEmptyStateProps) {
 	return (
 		<div className="flex flex-col items-center justify-center">
-			<p className="text-2xl font-medium font-semibold text-center">{prompt}</p>
+			<p className="text-3xl font-medium font-semibold text-center">{prompt}</p>
 		</div>
 	);
 }

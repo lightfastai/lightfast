@@ -25,7 +25,7 @@
 	--destructive-foreground: oklch(1 0 0);
 	--border: oklch(0.8576 0 0);
 	--input: oklch(0.9067 0 0);
-	--input-bg: oklch(0.9702 0 0); /* Using card color for subtle contrast */
+	--input-bg: oklch(0.98 0 0); /* Lighter shade for input backgrounds */
 	--ring: oklch(0.4891 0 0);
 	--chart-1: oklch(0.4891 0 0);
 	--chart-2: oklch(0.4863 0.0361 196.0278);
@@ -61,7 +61,7 @@
 	--destructive-foreground: oklch(1 0 0);
 	--border: oklch(0.329 0 0);
 	--input: oklch(0.3092 0 0);
-	--input-bg: oklch(0.2435 0 0); /* Using card color for subtle contrast */
+	--input-bg: oklch(0.26 0 0); /* Lighter shade for input backgrounds */
 	--ring: oklch(0.7058 0 0);
 	--chart-1: oklch(0.7058 0 0);
 	--chart-2: oklch(0.6714 0.0339 206.3482);
