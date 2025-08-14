@@ -1,36 +1,40 @@
 "use client";
 import * as React from "react";
+import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { EmailInput } from "./email-input";
 import { CodeVerification } from "./code-verification";
 import { OAuthSignIn } from "./oauth-sign-in";
 
 interface SignInFormProps {
-	verificationStep?: 'email' | 'code';
-	onVerificationStepChange?: (step: 'email' | 'code') => void;
+	verificationStep?: "email" | "code";
+	onVerificationStepChange?: (step: "email" | "code") => void;
 }
 
-export function SignInForm({ 
+export function SignInForm({
 	verificationStep: controlledStep,
-	onVerificationStepChange 
+	onVerificationStepChange,
 }: SignInFormProps = {}) {
-	const [internalStep, setInternalStep] = React.useState<'email' | 'code'>('email');
+	const [internalStep, setInternalStep] = React.useState<"email" | "code">(
+		"email",
+	);
 	const verificationStep = controlledStep ?? internalStep;
 	const setVerificationStep = onVerificationStepChange ?? setInternalStep;
-	
-	const [emailAddress, setEmailAddress] = React.useState('');
-	const [error, setError] = React.useState('');
+
+	const [emailAddress, setEmailAddress] = React.useState("");
+	const [error, setError] = React.useState("");
 
 	function handleEmailSuccess(email: string) {
 		setEmailAddress(email);
-		setVerificationStep('code');
-		setError('');
+		setVerificationStep("code");
+		setError("");
 	}
 
 	function handleReset() {
-		setVerificationStep('email');
-		setError('');
-		setEmailAddress('');
+		setVerificationStep("email");
+		setError("");
+		setEmailAddress("");
 	}
 
 	function handleError(errorMessage: string) {
@@ -38,48 +42,43 @@ export function SignInForm({
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="w-full space-y-8">
 			{/* Header */}
-			<div className="text-center space-y-2">
-				<h1 className="text-lg font-bold text-foreground">
-					Sign in to Lightfast
+			<div className="text-center">
+				<h1 className="text-3xl font-semibold text-foreground">
+					Log in to Lightfast
 				</h1>
-				{verificationStep === 'code' && emailAddress && (
-					<p className="text-sm text-muted-foreground">
+				{verificationStep === "code" && emailAddress && (
+					<p className="text-sm text-muted-foreground mt-2">
 						We sent a verification code to {emailAddress}
 					</p>
 				)}
 			</div>
 
-			<div className="space-y-4 mt-8">
+			<div className="space-y-4">
 				{error && (
 					<div className="space-y-4">
-						<div className="rounded-md bg-destructive/15 p-3">
-							<p className="text-sm text-destructive">{error}</p>
+						<div className="rounded-lg bg-red-50 border border-red-200 p-3">
+							<p className="text-sm text-red-800">{error}</p>
 						</div>
-						<Button onClick={handleReset} variant="outline" className="w-full">
+						<Button onClick={handleReset} variant="outline" className="w-full h-12">
 							Try again
 						</Button>
 					</div>
 				)}
 
-				{!error && verificationStep === 'email' && (
+				{!error && verificationStep === "email" && (
 					<>
 						{/* Email Sign In */}
-						<EmailInput 
-							onSuccess={handleEmailSuccess}
-							onError={handleError}
-						/>
+						<EmailInput onSuccess={handleEmailSuccess} onError={handleError} />
 
-						{/* Divider */}
-						<div className="relative my-4">
+						{/* Separator */}
+						<div className="relative">
 							<div className="absolute inset-0 flex items-center">
-								<span className="w-full border-t border-border/50" />
+								<Separator className="w-full" />
 							</div>
 							<div className="relative flex justify-center text-xs uppercase">
-								<span className="bg-background px-2 text-muted-foreground">
-									Or
-								</span>
+								<span className="bg-background px-2 text-muted-foreground">Or</span>
 							</div>
 						</div>
 
@@ -88,8 +87,8 @@ export function SignInForm({
 					</>
 				)}
 
-				{!error && verificationStep === 'code' && (
-					<CodeVerification 
+				{!error && verificationStep === "code" && (
+					<CodeVerification
 						email={emailAddress}
 						onReset={handleReset}
 						onError={handleError}
@@ -98,19 +97,18 @@ export function SignInForm({
 			</div>
 
 			{/* Sign Up Link - only show on email step */}
-			{verificationStep === 'email' && (
+			{verificationStep === "email" && (
 				<div className="text-center text-sm">
-					<span className="text-muted-foreground">
-						Don't have an account?{" "}
-					</span>
-					<a
+					<span className="text-muted-foreground">Don't have an account? </span>
+					<Link
 						href="/sign-up"
-						className="text-primary hover:text-primary/80 underline"
+						className="text-primary hover:text-primary/80 transition-colors"
 					>
-						Sign up
-					</a>
+						Sign Up
+					</Link>
 				</div>
 			)}
 		</div>
 	);
 }
+

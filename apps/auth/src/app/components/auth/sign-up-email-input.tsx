@@ -76,7 +76,8 @@ export function SignUpEmailInput({ onSuccess, onError }: SignUpEmailInputProps) 
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="Email Address"
+                  className="h-12"
                   {...field}
                 />
               </FormControl>
@@ -87,7 +88,7 @@ export function SignUpEmailInput({ onSuccess, onError }: SignUpEmailInputProps) 
         
         <Button 
           type="submit" 
-          className="w-full" 
+          className="w-full h-12" 
           disabled={!isLoaded || form.formState.isSubmitting}
         >
           {form.formState.isSubmitting ? (
@@ -96,7 +97,7 @@ export function SignUpEmailInput({ onSuccess, onError }: SignUpEmailInputProps) 
               Sending...
             </>
           ) : (
-            'Sign Up with Email'
+            'Continue with Email'
           )}
         </Button>
       </form>

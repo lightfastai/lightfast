@@ -131,6 +131,7 @@ export function CodeVerification({
 									<Input
 										type="text"
 										placeholder="Enter verification code"
+										className="h-12"
 										autoFocus
 										{...field}
 									/>
@@ -142,7 +143,7 @@ export function CodeVerification({
 
 					<Button
 						type="submit"
-						className="w-full"
+						className="w-full h-12"
 						disabled={form.formState.isSubmitting}
 					>
 						{form.formState.isSubmitting ? (
@@ -163,7 +164,7 @@ export function CodeVerification({
 					<button
 						onClick={handleResendCode}
 						disabled={isResending}
-						className="text-primary hover:text-primary/80 underline disabled:opacity-50 disabled:cursor-not-allowed"
+						className="text-primary hover:text-primary/80 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{isResending && <Icons.spinner className="inline h-3 w-3 animate-spin mr-1" />}
 						Resend

@@ -90,6 +90,7 @@ export function SignUpCodeVerification({
 									<Input
 										type="text"
 										placeholder="Enter verification code"
+										className="h-12"
 										autoFocus
 										{...field}
 									/>
@@ -101,7 +102,7 @@ export function SignUpCodeVerification({
 
 					<Button
 						type="submit"
-						className="w-full"
+						className="w-full h-12"
 						disabled={form.formState.isSubmitting}
 					>
 						{form.formState.isSubmitting ? (
@@ -116,7 +117,7 @@ export function SignUpCodeVerification({
 				</form>
 			</Form>
 
-			<Button onClick={onReset} variant="ghost" className="w-full text-sm">
+			<Button onClick={onReset} variant="ghost" className="w-full h-12 text-sm">
 				Use a different email
 			</Button>
 		</div>

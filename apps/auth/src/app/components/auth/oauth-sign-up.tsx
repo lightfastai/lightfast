@@ -34,21 +34,7 @@ export function OAuthSignUp() {
     <div className="space-y-3">
       <Button
         variant="outline"
-        className="w-full"
-        onClick={() => signUpWith('oauth_github')}
-        disabled={!isLoaded || loading !== null}
-      >
-        {loading === 'oauth_github' ? (
-          <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Icons.gitHub className="mr-2 h-4 w-4" />
-        )}
-        Sign up with GitHub
-      </Button>
-      
-      <Button
-        variant="outline"
-        className="w-full"
+        className="w-full h-12"
         onClick={() => signUpWith('oauth_google')}
         disabled={!isLoaded || loading !== null}
       >
@@ -68,7 +54,21 @@ export function OAuthSignUp() {
             />
           </svg>
         )}
-        Sign up with Google
+        Continue with Google
+      </Button>
+      
+      <Button
+        variant="outline"
+        className="w-full h-12"
+        onClick={() => signUpWith('oauth_github')}
+        disabled={!isLoaded || loading !== null}
+      >
+        {loading === 'oauth_github' ? (
+          <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Icons.gitHub className="mr-2 h-4 w-4" />
+        )}
+        Continue with GitHub
       </Button>
     </div>
   )
