@@ -13,7 +13,7 @@ function SubmitButton() {
 	const { pending } = useFormStatus();
 
 	return (
-		<Button type="submit" disabled={pending} className="w-full">
+		<Button type="submit" disabled={pending} className="w-full h-12">
 			{pending ? "Joining..." : "Join the waitlist"}
 		</Button>
 	);
@@ -42,12 +42,13 @@ export function WaitlistForm() {
 
 	return (
 		<div className="w-full space-y-16">
-			<form action={formAction} className="w-full flex flex-col gap-2">
+			<form action={formAction} className="w-full flex flex-col gap-3">
 				<Input
 					type="email"
 					name="email"
-					placeholder="placeholder@example.com"
+					placeholder="Email Address"
 					required
+					className="h-12 bg-background dark:bg-background"
 					aria-describedby="email-error"
 					aria-invalid={state.status === "validation_error" && !!state.fieldErrors.email}
 				/>
@@ -64,11 +65,17 @@ export function WaitlistForm() {
 
 			<div className="text-xs text-muted-foreground text-center">
 				By continuing, you agree to Lightfast's{" "}
-				<Link href={`${wwwUrl}/legal/terms`} className="underline">
+				<Link 
+					href={`${wwwUrl}/legal/terms`} 
+					className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 underline transition-colors"
+				>
 					Terms of Service
 				</Link>{" "}
 				and acknowledge our{" "}
-				<Link href={`${wwwUrl}/legal/privacy`} className="underline">
+				<Link 
+					href={`${wwwUrl}/legal/privacy`} 
+					className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 underline transition-colors"
+				>
 					Privacy Policy
 				</Link>
 				.

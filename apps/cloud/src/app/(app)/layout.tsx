@@ -15,7 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 						<Icons.logo className="h-5 w-auto" />
 					</Link>
 
-					<Button variant="secondary" size="lg" asChild>
+					<Button variant="outline" size="lg" asChild>
 						<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
 							Go to Lightfast Chat
 						</Link>
