@@ -1,4 +1,4 @@
-import { type LucideProps } from "lucide-react";
+import type {LucideProps} from "lucide-react";
 
 // Provider icons
 export function OpenAIIcon(props: LucideProps) {

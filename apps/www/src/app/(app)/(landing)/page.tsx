@@ -1,36 +1,17 @@
 import React from "react";
-import Link from "next/link";
-import { ZapIcon } from "lucide-react";
-
-import { siteConfig } from "@repo/lightfast-config";
-import { Icons } from "@repo/ui/components/icons";
-import { Button } from "@repo/ui/components/ui/button";
+import { HeroSection } from "~/components/landing/hero-section";
+import { PlatformSection } from "~/components/landing/platform-section";
+import { FrameworkSection } from "~/components/landing/framework-section";
+import { TemplatesSection } from "~/components/landing/templates-section";
 
 export default function HomePage() {
 	return (
-		<div className="flex items-center justify-center min-h-[calc(100vh-80px)] overflow-hidden">
-			<div className="relative w-[90vw] lg:w-[60vw] max-w-6xl h-[70vh] border border-border/50 p-12">
-				<div className="absolute top-8 left-8 right-8">
-					<p className="text-foreground max-w-2xl text-2xl font-bold sm:text-3xl lg:text-4xl">
-						Crafting tomorrow's AI backbone with open-source infrastructure.
-					</p>
-				</div>
-
-				<div className="absolute bottom-8 left-8">
-					<Icons.logoShort className="text-primary w-10 h-6" />
-				</div>
-
-				<div className="absolute right-8 bottom-8">
-					<Button asChild variant="outline">
-						<Link
-							className="text-foreground flex items-center"
-							href={siteConfig.links.chat.href}
-						>
-							<ZapIcon className="mr-1 h-4 w-4" />
-							Try Chat
-						</Link>
-					</Button>
-				</div>
+		<div className="px-6 sm:px-8 lg:px-4 py-20 sm:py-24 lg:py-32">
+			<div className="mx-auto max-w-6xl space-y-20 sm:space-y-24 lg:space-y-32">
+				<HeroSection />
+				<PlatformSection />
+				<FrameworkSection />
+				<TemplatesSection />
 			</div>
 		</div>
 	);

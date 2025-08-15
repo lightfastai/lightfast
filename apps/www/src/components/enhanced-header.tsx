@@ -22,48 +22,55 @@ export function EnhancedHeader() {
 	return (
 		<header className="h-14 flex items-center justify-between app-container bg-background">
 			<div className="flex items-center">
-				<Button variant="outline" size="xs" asChild>
+				<Button variant="ghost" size="lg" asChild>
 					<Link href="/">
-						<Icons.logoShort className="h-4 w-4" />
+						<Icons.logoShort className="size-6 text-foreground" />
 					</Link>
 				</Button>
+
 				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
 
 				{/* Navigation Menu */}
-				<NavigationMenu className="hidden md:flex">
+				<NavigationMenu className="hidden md:flex ml-4">
 					<NavigationMenuList>
 						{/* Products */}
 						<NavigationMenuItem>
 							<NavigationMenuTrigger
-								className={buttonVariants({ variant: "ghost", size: "sm" })}
+								className={buttonVariants({ variant: "ghost", size: "lg" })}
 							>
 								Products
 							</NavigationMenuTrigger>
 							<NavigationMenuContent>
-								<div className="grid gap-2 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-									<Link
-										href={cloudUrl}
-										className="row-span-3 from-muted/50 to-muted flex h-full w-full flex-col justify-end rounded-md bg-gradient-to-b p-6 no-underline outline-none select-none focus:shadow-md hover:opacity-90"
-									>
-										<div className="mt-4 mb-2 text-lg font-medium">Cloud</div>
-										<p className="text-muted-foreground text-sm leading-tight">
-											Enterprise-grade AI infrastructure built for scale and
-											reliability.
-										</p>
-									</Link>
-									<Link
-										href={chatUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="block p-3 hover:bg-accent rounded-md"
-									>
-										<div className="text-sm font-medium leading-none">Chat</div>
-										<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
-											Interactive AI chat experiences for your applications.
-										</p>
-									</Link>
+								<div className="flex gap-2 md:w-[500px] lg:w-[300px]">
+									<div className="flex flex-col gap-2 flex-1">
+										<Link
+											href={cloudUrl}
+											className="block p-3 hover:bg-accent rounded-md transition-colors"
+										>
+											<div className="text-sm font-medium leading-none">
+												Cloud
+											</div>
+											<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
+												Enterprise-grade AI infrastructure built for scale and
+												reliability.
+											</p>
+										</Link>
+										<Link
+											href={chatUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="block p-3 hover:bg-accent rounded-md transition-colors"
+										>
+											<div className="text-sm font-medium leading-none">
+												Chat
+											</div>
+											<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
+												Interactive AI chat experiences for your applications.
+											</p>
+										</Link>
+									</div>
 								</div>
 							</NavigationMenuContent>
 						</NavigationMenuItem>
@@ -72,7 +79,7 @@ export function EnhancedHeader() {
 						<NavigationMenuItem>
 							<Link
 								href="/docs"
-								className={buttonVariants({ variant: "ghost", size: "sm" })}
+								className={buttonVariants({ variant: "ghost", size: "lg" })}
 							>
 								Docs
 							</Link>
@@ -82,7 +89,7 @@ export function EnhancedHeader() {
 						<NavigationMenuItem>
 							<Link
 								href="/pricing"
-								className={buttonVariants({ variant: "ghost", size: "sm" })}
+								className={buttonVariants({ variant: "ghost", size: "lg" })}
 							>
 								Pricing
 							</Link>
@@ -92,11 +99,13 @@ export function EnhancedHeader() {
 			</div>
 
 			{/* Right side actions */}
-			<div className="flex items-center">
-				<Button size="sm" asChild>
-					<Link href={chatUrl}>Try Chat</Link>
+			<div className="flex items-center gap-2">
+				<Button variant="default" asChild>
+					<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
+						Try Chat
+					</Link>
 				</Button>
-				<div className="flex h-4 items-center px-4">
+				<div className="flex h-4 items-center px-3">
 					<Separator orientation="vertical" />
 				</div>
 				<Button variant="ghost" size="xs" asChild>

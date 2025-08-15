@@ -17,7 +17,16 @@ export const metadata: Metadata = {
 	},
 	metadataBase: new URL(siteConfig.url),
 	description: `Authentication portal for ${siteConfig.name} platform`,
-	keywords: [siteConfig.name, "Auth", "Authentication", "Sign In", "Login"],
+	keywords: [
+		"Lightfast Auth",
+		"AI platform authentication",
+		"secure login",
+		"developer authentication",
+		"SSO",
+		"OAuth",
+		"API authentication",
+		"agent platform login",
+	],
 	authors: [
 		{
 			name: siteConfig.name,

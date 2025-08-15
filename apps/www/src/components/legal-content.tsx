@@ -1,4 +1,4 @@
-import { Mdx } from "@repo/ui/components/mdx-components";
+import { Markdown } from "@repo/ui/components/markdown";
 
 import { privacyContent } from "~/content/legal/privacy";
 import { termsContent } from "~/content/legal/terms";
@@ -13,9 +13,5 @@ const content = {
 } as const;
 
 export function LegalContent({ type }: LegalContentProps) {
-  return (
-    <div className="max-w-none">
-      <Mdx>{content[type]}</Mdx>
-    </div>
-  );
+  return <Markdown>{content[type]}</Markdown>;
 }

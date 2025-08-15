@@ -1,6 +1,7 @@
 "use client";
 
-import { ComponentProps, useCallback, useEffect, useRef, memo } from "react";
+import type { ComponentProps} from "react";
+import { useCallback, useEffect, useRef, memo } from "react";
 import { cn } from "@repo/ui/lib/utils";
 
 type DotLoaderProps = {

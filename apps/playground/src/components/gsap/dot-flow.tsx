@@ -5,7 +5,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { DotLoader } from "./dot-loader";
 
-export type DotFlowProps = {
+export interface DotFlowProps {
 	items: {
 		title: string;
 		frames: number[][];
@@ -13,7 +13,7 @@ export type DotFlowProps = {
 		repeatCount?: number;
 	}[];
 	isPlaying?: boolean;
-};
+}
 
 export const DotFlow = ({ items, isPlaying = true }: DotFlowProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);

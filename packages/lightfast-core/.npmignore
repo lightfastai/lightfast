@@ -1,0 +1,48 @@
+# Source files - only ship built dist/
+src/
+*.ts
+*.tsx
+!*.d.ts
+
+# Development files
+tsconfig.json
+tsconfig.build.json
+tsup.config.ts
+eslint.config.js
+.turbo/
+.cache/
+
+# Build artifacts that shouldn't be published
+dist/.tsbuildinfo
+*.tsbuildinfo
+
+# Tests (if any added later)
+__tests__/
+*.test.ts
+*.spec.ts
+
+# Development dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Only include v1 - exclude v2 entirely from npm package
+src/core/v2/
+src/v2/

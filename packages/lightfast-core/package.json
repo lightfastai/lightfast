@@ -1,97 +1,94 @@
 {
 	"name": "@lightfast/core",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
+	"keywords": ["ai", "agents", "llm", "typescript", "workflow"],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/lightfastai/lightfast.git",
+		"directory": "packages/lightfast-core"
+	},
+	"homepage": "https://lightfast.ai",
+	"bugs": "https://github.com/lightfastai/lightfast/issues",
+	"license": "MIT",
+	"author": "Lightfast Team",
+	"main": "./dist/agent.cjs",
+	"module": "./dist/agent.js",
+	"types": "./dist/agent.d.ts",
 	"type": "module",
 	"exports": {
 		"./agent": {
-			"types": "./src/core/primitives/agent.ts",
-			"default": "./src/core/primitives/agent.ts"
+			"types": "./dist/agent.d.ts",
+			"import": "./dist/agent.js",
+			"require": "./dist/agent.cjs"
 		},
 		"./tool": {
-			"types": "./src/core/primitives/tool.ts",
-			"default": "./src/core/primitives/tool.ts"
+			"types": "./dist/tool.d.ts",
+			"import": "./dist/tool.js",
+			"require": "./dist/tool.cjs"
 		},
 		"./agent/handlers": {
-			"types": "./src/core/server/adapters/fetch.ts",
-			"default": "./src/core/server/adapters/fetch.ts"
+			"types": "./dist/agent/handlers.d.ts",
+			"import": "./dist/agent/handlers.js",
+			"require": "./dist/agent/handlers.cjs"
 		},
 		"./agent/server/adapters/fetch": {
-			"types": "./src/core/server/adapters/fetch.ts",
-			"default": "./src/core/server/adapters/fetch.ts"
+			"types": "./dist/agent/server/adapters/fetch.d.ts",
+			"import": "./dist/agent/server/adapters/fetch.js",
+			"require": "./dist/agent/server/adapters/fetch.cjs"
 		},
 		"./agent/server/adapters/types": {
-			"types": "./src/core/server/adapters/types.ts",
-			"default": "./src/core/server/adapters/types.ts"
+			"types": "./dist/agent/server/adapters/types.d.ts",
+			"import": "./dist/agent/server/adapters/types.js",
+			"require": "./dist/agent/server/adapters/types.cjs"
 		},
 		"./agent/memory": {
-			"types": "./src/core/memory/index.ts",
-			"default": "./src/core/memory/index.ts"
+			"types": "./dist/agent/memory.d.ts",
+			"import": "./dist/agent/memory.js",
+			"require": "./dist/agent/memory.cjs"
 		},
 		"./memory": {
-			"types": "./src/core/memory/index.ts",
-			"default": "./src/core/memory/index.ts"
+			"types": "./dist/memory.d.ts",
+			"import": "./dist/memory.js",
+			"require": "./dist/memory.cjs"
 		},
 		"./memory/adapters/in-memory": {
-			"types": "./src/core/memory/adapters/in-memory.ts",
-			"default": "./src/core/memory/adapters/in-memory.ts"
+			"types": "./dist/memory/adapters/in-memory.d.ts",
+			"import": "./dist/memory/adapters/in-memory.js",
+			"require": "./dist/memory/adapters/in-memory.cjs"
 		},
 		"./agent/memory/adapters/redis": {
-			"types": "./src/core/memory/adapters/redis.ts",
-			"default": "./src/core/memory/adapters/redis.ts"
+			"types": "./dist/agent/memory/adapters/redis.d.ts",
+			"import": "./dist/agent/memory/adapters/redis.js",
+			"require": "./dist/agent/memory/adapters/redis.cjs"
 		},
 		"./agent/memory/redis": {
-			"types": "./src/core/memory/adapters/redis.ts",
-			"default": "./src/core/memory/adapters/redis.ts"
+			"types": "./dist/agent/memory/redis.d.ts",
+			"import": "./dist/agent/memory/redis.js",
+			"require": "./dist/agent/memory/redis.cjs"
 		},
 		"./agent/redis-memory": {
-			"types": "./src/core/memory/adapters/redis.ts",
-			"default": "./src/core/memory/adapters/redis.ts"
+			"types": "./dist/agent/redis-memory.d.ts",
+			"import": "./dist/agent/redis-memory.js",
+			"require": "./dist/agent/redis-memory.cjs"
 		},
 		"./agent/primitives/cache": {
-			"types": "./src/core/primitives/cache/index.ts",
-			"default": "./src/core/primitives/cache/index.ts"
+			"types": "./dist/agent/primitives/cache.d.ts",
+			"import": "./dist/agent/primitives/cache.js",
+			"require": "./dist/agent/primitives/cache.cjs"
 		},
 		"./providers": {
-			"types": "./src/utils/providers.ts",
-			"default": "./src/utils/providers.ts"
-		},
-		"./v2/utils": {
-			"types": "./src/core/v2/utils/index.ts",
-			"default": "./src/core/v2/utils/index.ts"
-		},
-		"./v2/server": {
-			"types": "./src/v2/server.ts",
-			"default": "./src/v2/server.ts"
-		},
-		"./v2/react": {
-			"types": "./src/core/v2/react/index.ts",
-			"default": "./src/core/v2/react/index.ts"
-		},
-		"./v2/events": {
-			"types": "./src/core/v2/events/index.ts",
-			"default": "./src/core/v2/events/index.ts"
-		},
-		"./v2": {
-			"types": "./src/core/v2/index.ts",
-			"default": "./src/core/v2/index.ts"
-		},
-		"./v2/core": {
-			"types": "./src/core/v2/core.ts",
-			"default": "./src/core/v2/core.ts"
-		},
-		"./v2/env": {
-			"types": "./src/core/v2/env.ts",
-			"default": "./src/core/v2/env.ts"
-		},
-		"./v2/braintrust-env": {
-			"types": "./src/core/v2/braintrust-env.ts",
-			"default": "./src/core/v2/braintrust-env.ts"
+			"types": "./dist/providers.d.ts",
+			"import": "./dist/providers.js",
+			"require": "./dist/providers.cjs"
 		}
 	},
 	"scripts": {
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
-		"build": "tsc",
+		"build": "tsup && pnpm build:types",
+		"build:js": "tsup",
+		"build:types": "tsc --project tsconfig.build.json",
+		"build:turbo": "tsc",
 		"dev": "tsc",
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
 		"lint": "biome check --write ."
@@ -115,6 +112,7 @@
 		"@types/node": "^24.0.15",
 		"@types/react": "^19.1.8",
 		"@types/uuid": "^10.0.0",
+		"tsup": "^8.5.0",
 		"typescript": "catalog:"
 	}
 }

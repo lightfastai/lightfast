@@ -1,6 +1,6 @@
 // Shared types for agents
 
-export type AppRuntimeContext = {
+export interface AppRuntimeContext {
 	sessionId: string;
 	resourceId: string;
-};
+}

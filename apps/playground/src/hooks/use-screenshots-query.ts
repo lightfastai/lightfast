@@ -26,7 +26,7 @@ async function fetchScreenshots(sessionId: string): Promise<ScreenshotsResponse>
   return response.json();
 }
 
-export function useScreenshotsQuery(sessionId: string, enabled: boolean = true) {
+export function useScreenshotsQuery(sessionId: string, enabled = true) {
   const [currentIndex, setCurrentIndex] = useState(0);
   
   const query = useQuery({

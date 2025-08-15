@@ -7,20 +7,20 @@ import { useMemo } from 'react';
  * Client logger interface that matches the Logtail Logger
  */
 export interface ClientLogger {
-  debug: (message: string, args?: { [key: string]: any }) => void;
-  info: (message: string, args?: { [key: string]: any }) => void;
-  warn: (message: string, args?: { [key: string]: any }) => void;
-  error: (message: string, args?: { [key: string]: any }) => void;
+  debug: (message: string, args?: Record<string, any>) => void;
+  info: (message: string, args?: Record<string, any>) => void;
+  warn: (message: string, args?: Record<string, any>) => void;
+  error: (message: string, args?: Record<string, any>) => void;
 }
 
 /**
  * Console logger that matches the Logtail interface
  */
 const consoleLogger: ClientLogger = {
-  debug: (message: string, args?: { [key: string]: any }) => console.debug(message, args),
-  info: (message: string, args?: { [key: string]: any }) => console.info(message, args),
-  warn: (message: string, args?: { [key: string]: any }) => console.warn(message, args),
-  error: (message: string, args?: { [key: string]: any }) => console.error(message, args),
+  debug: (message: string, args?: Record<string, any>) => console.debug(message, args),
+  info: (message: string, args?: Record<string, any>) => console.info(message, args),
+  warn: (message: string, args?: Record<string, any>) => console.warn(message, args),
+  error: (message: string, args?: Record<string, any>) => console.error(message, args),
 };
 
 /**

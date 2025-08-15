@@ -18,9 +18,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   description: siteConfig.description,
   keywords: [
-    "Lightfast",
-    "App",
-    "Application",
+    "Lightfast Cloud",
+    "AI cloud platform",
+    "agent deployment",
+    "cloud infrastructure",
+    "serverless AI",
+    "managed AI agents",
+    "scalable AI platform",
+    "cloud-native agents",
   ],
   authors: [
     {

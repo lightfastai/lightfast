@@ -117,7 +117,7 @@ export const stagehandNavigateTool = createTool<RuntimeContext<AppRuntimeContext
   inputSchema: z.object({
     url: z.string().transform((val) => {
       // If URL doesn't start with protocol, add https://
-      if (!val.match(/^https?:\/\//i)) {
+      if (!(/^https?:\/\//i.exec(val))) {
         val = `https://${val}`;
       }
       // Validate the URL

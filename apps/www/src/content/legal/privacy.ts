@@ -234,7 +234,7 @@ The Services are not directed to children under 13 (or other age as required by 
 
 If you have any questions about our privacy practices or this Privacy Policy, or to exercise your rights as detailed in this Privacy Policy, please contact us at:
 
-Lightfast, Inc.
+Lightfast Pty Ltd.
 51 Grosvenor St
 South Yarra, Melbourne
 Australia

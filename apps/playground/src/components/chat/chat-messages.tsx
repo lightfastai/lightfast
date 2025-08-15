@@ -204,7 +204,7 @@ function MessageItem({
 							<div key={`${message.id}-part-${index}`} className="w-full">
 								<ToolRenderer
 									toolPart={toolPart}
-									toolName={toolName as string}
+									toolName={toolName}
 								/>
 							</div>
 						);

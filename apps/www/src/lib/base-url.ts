@@ -49,22 +49,8 @@ const createEnvironmentUrl = (suffix: UrlSuffix = ""): string => {
 };
 
 /**
- * Gets the base API URL for the application.
- * Appends '/api' to the base URL.
- *
- * @returns {string} The complete API base URL
- */
-export const createBaseApiUrl = (): string => createEnvironmentUrl("/api");
-
-/**
  * Gets the base URL for the application.
  *
  * @returns {string} The complete base URL for the current environment
  */
 export const createBaseUrl = (): string => createEnvironmentUrl();
-
-/**
- * Gets the Posthog API URL for the application.
- */
-export const createPosthogApiUrl = (): string =>
-  createEnvironmentUrl("/ingest");

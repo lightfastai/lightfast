@@ -18,7 +18,7 @@ export const sessionRouter = {
     )
     .query(async ({ ctx, input }) => {
       const whereConditions = [
-        eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+        eq(LightfastChatSession.clerkUserId, ctx.session.userId)
       ];
 
       // If cursor is provided, get sessions older than the cursor
@@ -69,7 +69,7 @@ export const sessionRouter = {
         .from(LightfastChatSession)
         .where(
           and(
-            eq(LightfastChatSession.clerkUserId, ctx.session.userId!),
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId),
             eq(LightfastChatSession.pinned, true)
           )
         )
@@ -103,7 +103,7 @@ export const sessionRouter = {
         .from(LightfastChatSession)
         .where(
           and(
-            eq(LightfastChatSession.clerkUserId, ctx.session.userId!),
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId),
             like(LightfastChatSession.title, searchTerm)
           )
         )
@@ -138,7 +138,7 @@ export const sessionRouter = {
         .where(eq(LightfastChatSession.id, input.sessionId))
         .limit(1);
 
-      if (!session[0] || session[0].clerkUserId !== ctx.session.userId!) {
+      if (!session[0] || session[0].clerkUserId !== ctx.session.userId) {
         throw new TRPCError({ 
           code: "NOT_FOUND",
           message: "Session not found"
@@ -176,7 +176,7 @@ export const sessionRouter = {
           .insert(LightfastChatSession)
           .values({
             id: input.id,  // Use client-provided ID directly
-            clerkUserId: ctx.session.userId!,
+            clerkUserId: ctx.session.userId,
           })
           .execute();
 
@@ -198,7 +198,7 @@ export const sessionRouter = {
             .where(
               and(
                 eq(LightfastChatSession.id, input.id),
-                eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+                eq(LightfastChatSession.clerkUserId, ctx.session.userId)
               )
             )
             .limit(1);
@@ -243,7 +243,7 @@ export const sessionRouter = {
         .where(
           and(
             eq(LightfastChatSession.id, input.sessionId),
-            eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
           )
         )
         .limit(1);
@@ -281,7 +281,7 @@ export const sessionRouter = {
         .where(eq(LightfastChatSession.id, input.sessionId))
         .limit(1);
 
-      if (!session[0] || session[0].clerkUserId !== ctx.session.userId!) {
+      if (!session[0] || session[0].clerkUserId !== ctx.session.userId) {
         throw new TRPCError({ 
           code: "NOT_FOUND",
           message: "Session not found"

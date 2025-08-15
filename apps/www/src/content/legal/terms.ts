@@ -2,7 +2,7 @@ export const termsContent = `# Lightfast Terms of Service
 
 Last Updated: June 17, 2025
 
-Please read these Terms of Service ("Terms") and our Privacy Policy ("Privacy Policy") carefully because they govern your use of the website located at https://lightfast.ai/ (the "Site"), services offered in connection with Site, and application programming interfaces ("APIs"), software development kits ("SDKs"), and other resources (collectively, the "Services") offered by Lightfast, Inc. ("Lightfast," "we" and "us").
+Please read these Terms of Service ("Terms") and our Privacy Policy ("Privacy Policy") carefully because they govern your use of the website located at https://lightfast.ai/ (the "Site"), services offered in connection with Site, and application programming interfaces ("APIs"), software development kits ("SDKs"), and other resources (collectively, the "Services") offered by Lightfast Pty Ltd ("Lightfast," "we" and "us").
 
 **IMPORTANT NOTICE: THESE TERMS ARE GOVERNED BY AUSTRALIAN LAW. BY USING OUR SERVICES, YOU AGREE TO THE EXCLUSIVE JURISDICTION OF AUSTRALIAN COURTS FOR ANY DISPUTES ARISING FROM THESE TERMS, SUBJECT TO THE DISPUTE RESOLUTION PROCEDURES IN SECTION 17.**
 

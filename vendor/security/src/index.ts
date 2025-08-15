@@ -1,9 +1,9 @@
 import arcjet, {
-  type ArcjetBotCategory,
-  type ArcjetWellKnownBot,
-  type ArcjetMode,
-  type ArcjetDecision,
-  type ArcjetReason,
+  
+  
+  
+  
+  
   detectBot,
   request,
   shield,
@@ -11,8 +11,9 @@ import arcjet, {
   slidingWindow,
   fixedWindow,
   protectSignup,
-  sensitiveInfo,
+  sensitiveInfo
 } from "@arcjet/next";
+import type {ArcjetBotCategory, ArcjetWellKnownBot, ArcjetMode, ArcjetDecision, ArcjetReason} from "@arcjet/next";
 import { env } from "../env";
 
 // Re-export everything from Arcjet for convenience
