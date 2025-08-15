@@ -36,8 +36,10 @@
     "next": "catalog:",
     "react": "catalog:react19",
     "react-confetti": "^6.4.0",
+    "react-devicons": "^2.16.2",
     "react-dom": "catalog:react19",
     "react-hook-form": "^7.61.1",
+    "shiki": "^3.9.2",
     "zustand": "catalog:"
   },
   "devDependencies": {

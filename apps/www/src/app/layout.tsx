@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-import "@repo/ui/globals.css";
+import "~/styles/globals.css";
 
 import { siteConfig } from "@repo/lightfast-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
@@ -107,12 +107,12 @@ export default function RootLayout({
 		<html lang="en" className="dark">
 			<head />
 			<body className={cn("bg-background min-h-screen dark", fonts)}>
-					<PostHogProvider baseUrl={createBaseUrl()}>
-						{children}
-						<Toaster />
-						<VercelAnalytics />
-						<SpeedInsights />
-					</PostHogProvider>
+				<PostHogProvider baseUrl={createBaseUrl()}>
+					{children}
+					<Toaster />
+					<VercelAnalytics />
+					<SpeedInsights />
+				</PostHogProvider>
 			</body>
 		</html>
 	);
