@@ -4,6 +4,7 @@ import { ChatEmptyState } from "./chat-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { ProviderModelSelector } from "./provider-model-selector";
+import { AuthPromptSelector } from "./auth-prompt-selector";
 import { RateLimitIndicator } from "./rate-limit-indicator";
 import { PromptSuggestions } from "./prompt-suggestions";
 import { useChat } from "@ai-sdk/react";
@@ -161,14 +162,16 @@ export function ChatInterface({
 		}
 	};
 
-	// Create model selector component
-	const modelSelector = (
+	// Create model selector component - show auth prompt for unauthenticated users
+	const modelSelector = isAuthenticated ? (
 		<ProviderModelSelector
 			value={selectedModelId}
 			onValueChange={handleModelChange}
 			disabled={false} // Allow model selection even during streaming
 			isAuthenticated={isAuthenticated}
 		/>
+	) : (
+		<AuthPromptSelector />
 	);
 
 	// For new chats (no messages yet), show centered layout
