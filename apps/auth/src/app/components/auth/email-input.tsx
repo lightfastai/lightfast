@@ -86,7 +86,7 @@ export function EmailInput({ onSuccess, onError }: EmailInputProps) {
                 <Input
                   type="email"
                   placeholder="Email Address"
-                  className="h-12"
+                  className="h-12 bg-background dark:bg-background"
                   {...field}
                 />
               </FormControl>

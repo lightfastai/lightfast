@@ -103,7 +103,7 @@ export default function RootLayout({
 		>
 			<html lang="en" suppressHydrationWarning>
 				<head />
-				<body className={cn("bg-background dark min-h-screen", fonts)}>
+				<body className={cn("bg-background min-h-screen", fonts)}>
 					{children}
 					<Toaster />
 					<VercelAnalytics />
